@@ -117,7 +117,16 @@ exception to argue for. The result in practice is an invented check — most oft
 brief itself contains, which the skill already names as "the commonest way a unit looks done and is not"
 (SKILL.md line 283). The two statements exist and do not point at each other.
 
-**Not a core defect.** The core's intent is already lean; only the executable phrasing needs the named case.
+**A second instance of the same defect, on the checking side.** `.claude/commands/work-loop-v2.md` Step 2
+requires an inspection record on **every** run, for **every** claim — "The record appears even when nothing
+is wrong". For a unit with load-bearing premises that is exactly right. For Direct Work, or a prose change
+whose only premise is text visible in the diff, it produces a block of claims invented to satisfy the
+format. The relief clause covers *evidence of a change* but no clause covers *evidence of a check*, so the
+one ceremony the plan's own OD-1 targets survives in the place it is least likely to be questioned.
+
+**Not a core defect** in either instance. The core's intent is already lean — core § 6 rules 1 and 3 require
+checking a claim and saying what was searched, and neither says a record must exist where there is no claim.
+Only the executable phrasing needs the named cases.
 
 ### RC-5 — Nothing binds the execution checkout before the task file is created *(executable defect + product hazard)*
 
@@ -246,10 +255,12 @@ rule is stated twice.
 | 4 | No adjacent improvements mid-unit | core § 5 *Deferral* + command Step 4 — **already exists, unchanged** | — |
 | 5 | Verification runs once; when Codex may reproduce | `SKILL.md` § Assessing the result | — |
 | 6 | Prose/documentation is the standard no-regression-check case | `.claude/commands/work-loop-v2.md` § The unit's mode → Implementation | core § 3 relief clause (unchanged, cited) |
+| 6 | When an inspection record is required, and when it may be absent | `.claude/commands/work-loop-v2.md` **Step 2** | `logs/scripts/work-loop-v2-slice-1.test.sh` follows it — it does not define it |
 | 7 | Project-pipeline orientation and its output line | `SKILL.md` § Routing → "Continue this project" | — |
 | 8 | The checkout is bound before the task file exists; a mismatch stops; never copy | `SKILL.md` § The seam | `dispatch.sh` containment check (already enforced, unchanged) |
 | 9 | Runtime state is checkout-scoped and cannot collide | `dispatch.sh` — `LOG_DIR` default and `RUN_ID` | — |
-| 10 | Post-compaction reorientation from durable sources | `.codex/hooks.json` + new `.codex/hooks/work-loop-reorient.sh` | — |
+| 10 | *Which* pointers survive a compaction | `AGENTS.md` § *Compaction* — the existing preservation list, extended | — |
+| 10 | Re-reading them afterwards, and the checkout identity | `.codex/hooks.json` (one `SessionStart`/`compact` entry) + new `.codex/hooks/work-loop-reorient.sh` | — |
 | 11 | Clean new-Codex-task handoff, local vs. worktree, cwd verification | `SKILL.md` § The seam → *Starting a new Codex task* | — |
 
 **Nothing in this map changes the state file's five-field ceiling, adds a frontmatter key, or adds a
@@ -274,20 +285,36 @@ implementer chooses the phrasing.
 **With** a description that carries positive triggers and explicit non-triggers. Required properties, in
 order of importance:
 
-1. **Positive triggers, named:** bounded repository or project work that no specific capability was named
-   for; "continue this project" / "what is next on this project"; framing or assessing a Work Loop unit;
-   an existing `logs/work-loop/{task-id}.md` task.
-2. **Explicit non-triggers, named:** a request that names a command, skill or agent to run; a question
-   answered by reading or explaining, with no repository change; a small reversible fix (Direct Work);
-   work already inside another skill's flow.
+1. **Positive triggers, named — and this is a closed list, not an illustrative one:**
+   - an explicit request for the Work Loop by name;
+   - an existing `logs/work-loop/{task-id}.md` task, hand-off or assessment to act on;
+   - the explicit continuation and orientation shapes — "continue this project", "what is next on this
+     project";
+   - a request that specifically asks Codex to frame a bounded unit for another actor to execute.
+2. **Explicit non-triggers, named:**
+   - **an ordinary repository or project change described in natural language without naming a
+     capability** — this is Direct Work and must not load the Work Loop;
+   - a request that names a command, skill or agent to run;
+   - a question answered by reading or explaining, with no repository change;
+   - a small reversible fix;
+   - work already inside another skill's flow.
 3. **Front-loaded**, because a host may shorten the description, and length-capped — Codex loads all skill
    descriptions at startup under a shared budget of roughly 2% of the context window.
 
 The `description` remains the *only* activation control. Do not add a second gate, a router file, or an
 activation allowlist.
 
-**Failure mode this must not create:** under-activation. "Continue this project" must remain a positive
-trigger, and the non-triggers must describe request *shapes*, never subject matter.
+**What this deliberately gives up, and why that is the point.** The v0.1 draft of this section kept
+"bounded repository or project work that no specific capability was named for" as a positive trigger. That
+is the catch-all: it makes the Work Loop load whenever the operator speaks in ordinary language, which is
+almost always, and it is the direct cause of RC-1. It is removed. Ordinary implementation work described
+without naming a capability is **Direct Work** and must not activate the skill; the operator reaches the
+loop by naming it, by pointing at an existing task, or through the two continuation shapes.
+
+**Failure mode this must not create:** the four positive triggers must keep firing — in particular
+"continue this project" and existing-task pickup — and the non-triggers must describe request *shapes*,
+never subject matter. Under-activation now means one of those four stopped working, not that an unnamed
+ordinary request was let through.
 
 ### 4.2 — Sequence the core read after ownership *(OD-4, req. 3)*
 
@@ -383,10 +410,51 @@ for. Required content:
 - **Where the artifact is executable** — a script, a hook, a test harness — the failing case is still
   required, unchanged.
 
-**Do not touch Step 2's inspection record.** It stays mandatory on every run for every claim, including
-the ones that hold. It is bound by `logs/scripts/work-loop-v2-slice-1.test.sh` (present, executable), and
-it is the cheapest honest artifact in the loop: removing it would make inspection indistinguishable from
-assumption. Proportionality applies to *evidence of a change*, not to *evidence of a check*.
+#### Step 2's inspection record becomes proportional too
+
+**The v0.1 draft ring-fenced this and was wrong to.** It argued the record must stay mandatory on every run
+because `logs/scripts/work-loop-v2-slice-1.test.sh` binds to it. That reasoning is circular: the harness is
+this project's own implementation, not operator authority, so "the test asserts it" cannot be the reason
+the behaviour is right. The harness follows the contract; it does not set it.
+
+**What survives, unchanged.** Premise checking itself. Where a load-bearing claim is uncertain and could
+change the work, it is checked by inspection before acting, and what was inspected is written down —
+core § 6 rules 1 and 3 are untouched, and § 4.3's proportionality clause never licenses skipping a check
+that could change the outcome.
+
+**What becomes proportional.** The *record*, scaled to the unit:
+
+- **A unit with load-bearing claims** — every claim still gets its line, including the ones that hold. No
+  change.
+- **Direct Work** — no state file exists, so no record arises. Already true; stated so it cannot be read
+  back the other way.
+- **A simple prose or documentation change with no meaningful premise to test** — the record may be
+  **absent**. In its place, one line saying there was no load-bearing premise to check. That line is
+  cheaper than a fabricated claim and more honest than a record listing claims invented to fill it.
+
+**The judgment, stated so it cannot slide.** The question is not "is this unit small?" but "would being
+wrong about a premise here change the work?" A one-line prose fix that rests on a file existing where the
+brief says it does still has a premise worth checking. A documentation rewrite whose only premise is the
+current text — visible in the diff — does not.
+
+**Amendments this requires, named:**
+
+- `ai-resources/.claude/commands/work-loop-v2.md` **Step 2** — the rule currently reads "Every claim gets a
+  line, including the ones that hold. The record appears even when nothing is wrong". Keep that sentence
+  for units that have claims, and add the two cases above where the record is legitimately absent, with the
+  one-line no-premise statement replacing it.
+- `ai-resources/logs/scripts/work-loop-v2-slice-1.test.sh` — cases **1.2a** and **2.1** assert that a
+  record was written. Both run against fixtures that *do* carry claims (`fixture-slice1-true.md`,
+  `fixture-slice2-fresh.md`), so both stay valid and need no change. What the harness lacks is the opposite
+  case, and adding it is the amendment: a no-premise prose fixture whose run legitimately produces no
+  record. Without it the harness silently keeps asserting the old universal rule the moment anyone
+  generalises those two cases.
+
+**The trap this must not fall into.** Do not replace the removed record with a new mandatory artifact — a
+"proportionality statement", a justification field, or a checklist asking which tier applies. That would
+trade one ceremony for another and cost more than the record it replaced. The absence of a record *is* the
+lighter path; if implementing it produces something to fill in on every run, the implementation has failed
+and P-3a is what catches it.
 
 ### 4.6 — Add project-pipeline orientation *(OD-7, req. 7)*
 
@@ -531,51 +599,92 @@ Same-checkout, same-task concurrency stays refused by the lock (exit 17); this c
 
 ### 4.9 — Post-compaction reorientation *(OD-5, req. 10)*
 
-**Files:** `ai-resources/.codex/hooks.json` (amend) and `ai-resources/.codex/hooks/work-loop-reorient.sh`
-(new).
+**Files:** `ai-resources/AGENTS.md` § *Compaction* (amend — the preservation owner),
+`ai-resources/.codex/hooks.json` (amend — one registration) and
+`ai-resources/.codex/hooks/work-loop-reorient.sh` (new, small, read-only).
 
-A new hook **script** is justified: there is no existing compaction hook to amend, and a hook script is
-none of the artifact kinds § 7 forbids. It is not a command, a state field, a context pack, a session diary
-or a second state system.
+**The v0.1 draft's design was wrong in two ways, and this section replaces it.** It registered *two*
+events, so one compaction produced two reorientations; and it identified the active task by scanning
+`logs/work-loop/*.md` for every open `turn:`.
 
-**Registration.** Add to `.codex/hooks.json`, following the shape the file already uses (`type: command`,
-absolute `bash '<path>'`, `timeout`, `statusMessage`):
+Run that scan against this repository and it returns **18 files** — five real open tasks and **thirteen
+test fixtures**, because the acceptance-harness fixtures under `logs/work-loop/` carry a `turn:` line by
+construction. So the design could not name *the* active task, and worse, it would have injected fixture
+task names and fixture next-actions into a live session as though they were work. A reorientation that
+points at `fixture-slice2-foreign.md` is not a smaller version of the right answer; it is a wrong one, and
+it arrives at precisely the moment the model has lost the context needed to notice.
 
-- **`PostCompact`**, matcher `.*` — fires after both manual and automatic compaction. `PostCompact` filters
-  the trigger (`manual` or `auto`); matching both is deliberate, because OD-5 names both.
-- **`SessionStart`**, matcher `compact` — the documented `SessionStart` sources are `startup`, `resume`,
-  `clear`, `compact`, and the existing unmatched `SessionStart` entry
-  (`friday-checkup-reminder.sh`) is left exactly as it is.
+The correction splits the job between an existing owner and a much smaller hook.
 
-`PreCompact` is **not** registered. It would run before the loss and has nothing to re-inject.
+#### Who preserves what
 
-**What the script emits.** On stdout, JSON carrying
-`hookSpecificOutput.additionalContext` — the documented field for adding developer context back to the
-model. Content, all of it read from disk at fire time:
+**The session's own active pointers are preserved by the existing compaction authority, not discovered by
+the hook.** `ai-resources/AGENTS.md` § *Compaction* (lines 70–77) already names what must survive a
+compaction, in exactly this shape:
 
-1. The **exact active task file path**, absolute — found by scanning `logs/work-loop/*.md` for
-   `^turn: (claude|codex)$` and reporting every match. Two open files are reported as two; the script never
-   picks one.
-2. The **checkout** — the `cwd` the hook received on stdin, plus the git common dir, so a worktree is
-   distinguishable from its local checkout.
-3. The **governing plan path** and the **workflow/phase**, as read from the state file's own fields — not
-   summarised.
-4. The **next action**, quoted from the state file's `## Next action`.
-5. One instruction: **re-read these files before the next move; do not continue from the compacted
-   summary.**
+> "When `/compact` fires, preserve: … Auto-compact defaults drop these by priority; name them explicitly so
+> they survive."
+
+**Amend that list** — it is an existing owner, so this satisfies "prefer amendments to existing owners" and
+adds no artifact. Add, as further bullets, the Work Loop pointers OD-5 names:
+
+- the **exact active** `logs/work-loop/{task-id}.md` path;
+- the **bound checkout** the task is running in;
+- the **governing plan** path, and the **workflow and phase**;
+- the current **`## Next action`**.
+
+Preserving them is what makes them *the session's own* — the model already knows which task it is on, so
+nothing has to be inferred from the filesystem.
+
+#### The one registration
+
+**One event, `SessionStart` with matcher `compact`.** Added to `.codex/hooks.json` in the shape the file
+already uses (`type: command`, absolute `bash '<path>'`, `timeout`, `statusMessage`). The existing
+unmatched `SessionStart` entry (`friday-checkup-reminder.sh`) is left exactly as it is.
+
+Why this event and not `PostCompact`:
+
+- It is the only one of the two whose documented output supports
+  **`hookSpecificOutput.additionalContext`**, the field that adds developer context back to the model.
+  `PostCompact` documents `continue`, `stopReason`, `systemMessage` and `suppressOutput` — no
+  `additionalContext`. Choosing `PostCompact` would mean choosing the event that cannot do the job.
+- The documentation states that after Codex compacts a root session, `SessionStart` hooks matching
+  `source: "compact"` run **before the next model request** — which is the moment reorientation has to
+  land.
+- It does not distinguish manual from automatic compaction, so one registration covers both, which is what
+  OD-5 asks for. `PostCompact`'s `manual`/`auto` matcher is what tempted the v0.1 draft into a second
+  registration; it buys nothing here.
+
+`PreCompact` is still **not** registered — it runs before the loss and has nothing to re-inject.
+
+#### What the script emits
+
+JSON on stdout carrying `hookSpecificOutput.additionalContext`, containing only:
+
+1. The **checkout identity** — the `cwd` the hook received on stdin, plus the git common dir, so a worktree
+   is distinguishable from its local checkout. This is the one fact the hook genuinely holds and the
+   session cannot restate for itself.
+2. One **instruction**: re-read the active Work Loop pointers preserved under `AGENTS.md` § *Compaction* —
+   the task file, the governing plan, the workflow and phase, and the next action — from disk, before the
+   next move; do not continue from the compacted summary.
 
 **Hard constraints on the script:**
 
-- **Pointers, not summaries.** It emits paths and quoted lines. A paraphrase would be a second, lossy copy
-  of the truth — the drift OD-5 exists to prevent.
-- **It writes nothing.** No scratchpad, no cache, no log. Read-only against the repository.
-- **It never decides.** It does not choose the active task where more than one qualifies, and it does not
-  set `turn:`.
-- **Budget.** `additionalContextLimit` defaults to roughly 2,500 tokens before Codex spills the text to
-  disk. The output is pointers and a handful of quoted lines, so it stays well inside that; if it cannot,
-  it truncates the quoted `## Next action` and says it truncated.
-- **Fail open.** A missing directory, an unreadable file or a `jq` absence exits 0 with no
-  `additionalContext`. A reorientation hook that blocks a session is worse than one that is silent.
+- **It does not identify the task.** No scan of `logs/work-loop/`, no `turn:` search, no "most recently
+  modified" heuristic, no registry, no state field, no cache. Where the preserved pointers are missing, the
+  correct behaviour is to say the pointers are missing — not to go looking.
+- **Pointers and an instruction, never a summary.** A paraphrase would be a second, lossy copy of the truth,
+  which is the drift OD-5 exists to prevent.
+- **It writes nothing** and reads no repository file. Read-only, and in practice it touches only its stdin.
+- **It never decides.** It does not choose a task and it does not set `turn:`.
+- **Budget.** `additionalContextLimit` defaults to roughly 2,500 tokens. This output is two short items, so
+  the limit is not a live constraint — which is itself a benefit of not emitting quoted file content.
+- **Fail open.** A missing field, an unreadable stdin or a `jq` absence exits 0 with no `additionalContext`.
+  A reorientation hook that blocks a session is worse than one that is silent.
+
+**What this gives up, stated plainly.** The hook no longer tells the model *which* task it was on. That job
+moved to the preservation rule, where it belongs: the compacting session knows its own task, and a hook
+firing afterwards can only guess. A guess that names the wrong task is worse than no name at all.
 
 ---
 
@@ -589,10 +698,10 @@ value per unit of risk.
 | **S0** | *(precondition, not work)* the open `work-loop-v2-contained-unattended-profile` unit reaches its closing record | — | its own |
 | **S1** | § 4.1 activation narrowing + § 4.2 core-read sequencing | — | P-1 |
 | **S2** | § 4.3 core § 3 proportionality clause | — | P-2a |
-| **S3** | § 4.4 verification assigned once + § 4.5 prose evidence | S2 (cites it) | P-2, P-3 |
+| **S3** | § 4.4 verification assigned once + § 4.5 prose evidence **and the proportional inspection record** (command Step 2 + the acceptance harness) | S2 (cites it) | P-2, P-3, P-3a |
 | **S4** | § 4.7 checkout binding, isolation policy, fresh-task handoff | — | P-4, P-8 |
 | **S5** | § 4.6 orientation | S4 (fresh-task boundary) | P-9 |
-| **S6** | § 4.9 compaction hook + script | — | P-7 |
+| **S6** | § 4.9 `AGENTS.md` preservation list + **one** `SessionStart`/`compact` registration + script | — | P-7 |
 | **S7** | § 4.8 dispatcher `LOG_DIR` + `RUN_ID` | **S0** | P-5, P-6 |
 
 **S1 first, deliberately.** It is the only change that reduces cost on requests the loop does not own,
@@ -629,12 +738,18 @@ Each case names the failing witness first. A case that would pass whether or not
 not listed.
 
 **P-1 — False activation** *(S1)*
-*Fails today if:* in a fresh Codex thread, a request that names a capability ("run /token-audit on this
-repo") or an ordinary read-only question activates `work-loop-v2` and pulls in the executable core.
-*Passes when:* neither request activates the skill; a request with no named capability and a bounded
-repository outcome still does; "continue this project" still does.
-*Read differently how:* activation is observable — the skill either fired or it did not. Run all four
-request shapes; a change that suppresses the last two has over-corrected.
+*Fails today if:* in a fresh Codex thread, **any** of these activates `work-loop-v2` and pulls in the
+executable core — (a) an unnamed ordinary implementation request, phrased as the operator normally phrases
+one ("add a follow-up date to the contact model"); (b) a request that names a capability ("run
+/token-audit on this repo"); (c) an ordinary read-only question.
+Case (a) is the one this correction adds, and it is the case the v0.1 draft would have *passed* while the
+defect remained: the removed catch-all trigger made (a) a positive trigger by design.
+*Passes when:* none of (a), (b) or (c) activates the skill, **and** all four positive triggers still do —
+naming the Work Loop; pointing at an existing `logs/work-loop/{task-id}.md`; "continue this project" /
+"what is next on this project"; and asking Codex to frame a bounded unit for another actor.
+*Read differently how:* activation is observable — the skill either fired or it did not. Run all seven
+shapes. Suppressing (a) while also suppressing any of the four positive triggers is an over-correction and
+fails this case just as loudly as the original defect.
 
 **P-2 — Duplicated verification** *(S3)*
 *Fails today if:* Codex's assessment reply re-runs a grep or a script whose result Claude already reported
@@ -658,6 +773,22 @@ supplied.
 automated check distinguishes success from failure.
 *Guard against over-correction:* run a second unit that changes a shell script. It must still return a
 failing case. A change that let the script unit skip its failing case has broken core § 6 rule 5.
+
+**P-3a — The inspection record is proportional, and nothing replaced it** *(S3)*
+*Fails today if:* a documentation-only unit with no load-bearing premise still has to write a full
+`Inspected (YYYY-MM-DD):` block, listing claims that were invented to fill it.
+*Passes when:* that unit's `## Latest result` carries one line stating there was no load-bearing premise to
+check, and no `Inspected` block — **and** a unit that does carry claims still writes a line for every one
+of them, including those that hold.
+*The over-correction this exists to catch:* run a third unit and inspect what the change actually asks for
+on every run. If the implementation introduced a proportionality statement, a tier label, a justification
+field or any other thing to fill in each time, it has swapped one ceremony for another and **fails** —
+even though the `Inspected` block is gone.
+*Fail-capable how:* all three observations are binary and read off the committed state file — the block is
+present or absent, the per-claim lines are complete or not, and the new mandatory field either exists or
+does not.
+*Harness half:* `logs/scripts/work-loop-v2-slice-1.test.sh` gains the no-premise fixture case described in
+§ 4.5. It must fail before that slice ships and pass after.
 
 **P-4 — Wrong-checkout handoff** *(S4)*
 *Fails today if:* with `logs/work-loop/{task}.md` present in checkout A and Codex operating in checkout B,
@@ -683,14 +814,25 @@ made run IDs unique by weakening the lock has failed this case, not passed it.
 **P-7 — Post-compaction recovery** *(S6)*
 *Fails today if:* after `/compact`, the model's next move proceeds from the compacted summary and does not
 re-read the state file.
-*Passes when:* `additionalContext` carries the exact task path, checkout, plan path, workflow/phase and the
-quoted next action, and the next move opens those files.
+*Passes when:* the next move opens the **exact** active task file, the governing plan and the workflow/phase
+source before acting, and its first action matches that file's `## Next action`.
 *Control, without which this proves nothing:* CE-9's design applies here too. Construct the case so the
 durable sources hold **one material fact the transcript does not carry**, then compact and observe whether
 that fact reaches the next move. Also run the same compaction with the hook unregistered — if the two
 outcomes are indistinguishable, the trial has measured nothing.
-*Second, cheaper witness:* the hook's own stdout. Run the script by hand with a synthetic stdin payload and
-diff its JSON against the state file it claims to describe.
+*Second witness — the one the correction adds, and it must fail on the v0.1 design.* Run the case in a
+repository with **at least three open Work Loop tasks** (this repository qualifies today). The v0.1 design
+scanned for every open `turn:` and reported them all, so it would have injected three task pointers where
+one was active — and this witness is what exposes that. **Passes only when exactly one task is reoriented
+to: the one the session was on.** A design that names several, or that names the wrong one, fails here even
+though it would have looked healthy in a single-task repository.
+*Third, cheapest witness:* the hook's own stdout. Run the script by hand with a synthetic stdin payload and
+confirm it emits the checkout identity and the re-read instruction — and that it emits **no task path at
+all**, because identifying the task is no longer its job. A script that names a task has regressed to the
+v0.1 design.
+*Fourth witness, on the preservation half:* compact a session and inspect the retained context for the four
+`AGENTS.md` pointers. If they did not survive, the hook's instruction points at nothing and S6 is not done,
+whatever the hook emits.
 
 **P-8 — Fresh-task recovery** *(S4)*
 *Fails today if:* a new Codex task given a one-line continuation request produces a brief drafted from the
@@ -728,17 +870,24 @@ stated ground.
 | Promoting run evidence to task truth | Plan, state file and brief remain the semantic continuity system. Core § 4: a courier's output is never authoritative. |
 | A broad test suite for these changes | § 6 specifies the smallest proof per change. A suite would be the ceremony OD-2 excludes. |
 | A `PreCompact` hook | It fires before the loss and has nothing to re-inject (§ 4.9). |
+| A `PostCompact` registration alongside `SessionStart` | Two events, one compaction, two reorientations — and `PostCompact` cannot emit `additionalContext` anyway (§ 4.9). |
+| Identifying the active task by scanning open state files | Several tasks are open at once here; a scan cannot name *the* active one, and a wrong name is worse than none (§ 4.9). |
+| A task registry, or a "current task" state field | The compacting session already knows its task; preserving that is `AGENTS.md`'s existing job, and a registry would be a second state system (§ 4.9). |
+| A proportionality statement, tier label or justification field replacing the inspection record | It would trade one per-run ceremony for another. P-3a fails the implementation that adds one (§ 4.5). |
 | A second activation gate beside the description | The description is Codex's only activation control; a second gate would be a rule with two owners. |
 
 ---
 
 ## 8. Risks, rollout and hook trust
 
-**R-1 — Under-activation after narrowing (S1).** *Likelihood:* moderate. *Effect:* the operator has to name
-the loop for work it should have taken. *Mitigation:* keep "continue this project" and existing-task
-pickup as explicit positive triggers; write non-triggers as request *shapes*, never subject matter;
-P-1 runs all four shapes, not just the two that should be suppressed. *Reversal:* one frontmatter field,
-one commit.
+**R-1 — Under-activation after narrowing (S1).** *Likelihood:* moderate, and higher after the correction
+that removed the catch-all trigger. *Effect:* the operator has to name the loop for work it should have
+taken. *Accepted deliberately:* this is the cost OD-4 chose. An ordinary request that no longer activates
+the loop is Direct Work, which is the default the core already sets — so the failure is one extra sentence
+from the operator, not lost work. *Mitigation:* keep the four positive triggers explicit, with "continue
+this project" and existing-task pickup named verbatim; write non-triggers as request *shapes*, never
+subject matter; P-1 runs all seven shapes, not just the three that should be suppressed. *Reversal:* one
+frontmatter field, one commit.
 
 **R-2 — Amending a document still marked draft (S2).** The core's header reads *draft for operator
 approval*. *Mitigation:* follow the courier-clause precedent exactly — a dated note that this clause was
@@ -755,10 +904,13 @@ before editing rather than trusting this plan's line numbers.
 
 - **Blast radius.** The script runs on every compaction in this repository, for every session, whatever the
   work. It must be read-only and must exit 0 on every error path (§ 4.9, *fail open*). A hook that can
-  block a session is a worse failure than the drift it prevents.
-- **Trust of injected content.** `additionalContext` is developer context the model will act on. Because
-  the script emits only paths and lines quoted from files already in the repository, it adds no new trust
-  surface — but that property is exactly what an implementer must preserve. Do not let it compose prose.
+  block a session is a worse failure than the drift it prevents. The correction shrank this radius: the
+  script no longer reads any repository file, so its only inputs are its own stdin.
+- **Trust of injected content.** `additionalContext` is developer context the model will act on. The script
+  emits the checkout it was handed and a fixed instruction — no repository content, no composed prose — so
+  it adds no new trust surface. That property is what an implementer must preserve; the moment the script
+  starts reading and quoting state files it has both regained the trust surface and returned to the
+  task-identification design this correction removed.
 - **No conflict with the Claude-side harness.** `.claude/references/harness-rules.md` hard rule 6 says
   "the governor owns post-compaction rehydration; `PreCompact`/`PostCompact` hooks log events but do not
   drive control." That rule governs the Claude-side Phase 3 session-governor harness. This hook is
@@ -771,8 +923,9 @@ three real orientations, not just once.
 
 **Rollout.** Slices ship as separate commits in the § 5 order. There is no migration: no file moves, no
 schema changes, no existing state file is rewritten, and existing run logs stay where they are. Each slice
-is reversible by reverting its commit, with one qualification — S6 also needs the two `hooks.json` entries
-removed, since a revert of the script alone would leave two registrations pointing at a missing file.
+is reversible by reverting its commit, with one qualification — S6 also needs its single `hooks.json` entry
+removed, since a revert of the script alone would leave a registration pointing at a missing file. The
+`AGENTS.md` bullets are inert once the hook is gone and may be left or reverted independently.
 
 ---
 
@@ -807,8 +960,10 @@ depends on the conversation that produced it.
 - `ai-resources/.agents/skills/work-loop-v2/SKILL.md` — S1, S3, S4, S5
 - `ai-resources/plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` — S2
 - `ai-resources/.claude/commands/work-loop-v2.md` — S3
-- `ai-resources/.codex/hooks.json` — S6
+- `ai-resources/AGENTS.md` — S6 (§ *Compaction* preservation list only)
+- `ai-resources/.codex/hooks.json` — S6 (exactly one new entry)
 - `ai-resources/.codex/hooks/work-loop-reorient.sh` — S6 (new)
+- `ai-resources/logs/scripts/work-loop-v2-slice-1.test.sh` — S3 (see § 4.5)
 - `ai-resources/plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` — S7, after S0
 - the spike `README.md` — S7, only if its worked invocation depends on the old `--log-dir` default
 
@@ -816,10 +971,15 @@ depends on the conversation that produced it.
 
 - The 85–90% target lives in core § 3 and nowhere else (§ 4.3).
 - The checkout binding uses the task file's location; no state field is added (§ 4.7a).
-- `PreCompact` is not registered (§ 4.9).
+- `PreCompact` is not registered, and neither is `PostCompact` — exactly one `SessionStart`/`compact`
+  registration, because it is the only one whose output supports `additionalContext` (§ 4.9).
+- The hook does not identify the active task. Preservation of the active pointers is `AGENTS.md`'s job
+  (§ 4.9).
 - Orientation reuses `/project-next-steps`' read cascade approach and does not merge with it (§ 4.6).
 - The fresh-task fallback is a permanent, user-created worktree opened as a Local checkout (§ 4.7c).
-- Step 2's inspection record stays mandatory on every run (§ 4.5).
+- Step 2's inspection record is proportional: mandatory per-claim where load-bearing claims exist, and
+  legitimately absent for Direct Work or a no-premise prose change (§ 4.5). Nothing new is mandatory in its
+  place.
 
 **Open questions carried forward** — none blocking. One is worth the implementer's attention: whether the
 Codex harness can express "load this file later in the skill body" as anything stronger than an
@@ -837,6 +997,12 @@ instruction. § 4.2 is satisfied by the instruction alone if it cannot; if it ca
 - **Codex product behaviour was verified against current official documentation and one closed issue, not
   by running the app.** § 4.7c's fallback is derived from what the documentation does and does not describe;
   the first implementer to exercise it should confirm it behaves as stated and correct § 4.7c if not.
+- **`SessionStart`/`compact` is documented for a *root* session.** The documentation states that after Codex
+  compacts a **root** session, `SessionStart` hooks matching `source: "compact"` run before the next model
+  request. It does not say what happens for a sub-session or a nested agent. § 4.9 is written for the root
+  case, which is the case OD-5 describes; if compaction inside a sub-session turns out not to fire the
+  event, S6 covers less than it appears to and the gap should be recorded rather than patched with a second
+  registration — the event that could cover it, `PostCompact`, still cannot emit `additionalContext`.
 - **No automated regression test exists for this plan itself**, and inventing one would be the ceremony
   OD-2 excludes. The fail-capable checks are § 6's proof cases, each of which is executed during the slice
   that earns it.

@@ -182,118 +182,67 @@ ends at `turn: codex`.
 
 ## Latest result
 
-Inspected (2026-08-07):
+Reproduced (2026-08-07) — each frozen finding checked by inspection in the plan before any edit:
 
-- Claim (1): HOLDS — read `.agents/skills/work-loop-v2/SKILL.md`; the frontmatter `description` (line 3)
-  ends "Use whenever work is described without naming the capability to use, including 'continue this
-  project'." The opening instruction (line 10) reads "Read
-  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` **before your first move in any task**",
-  and the skill's own first move is Routing step 1 (line 119), whose outcome is usually another owner.
-- Claim (2): HOLDS — read `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`. § 2 line 40:
-  "**Direct Work is the default.**" § 3 lines 130–131: "**Implementation does not demand ceremonial
-  tests.** Where a change has no meaningful regression check, say so and say why…". § 3 lines 142–146
-  (*The "good enough, proceed" judgment*): "The quality bar is pilot quality with limitations written
-  down, not completeness." § 6 rule 5, lines 430–431: "**Evidence must be able to fail.** … Build the
-  failing case first, then show it passing." The core's intent is already lean; no 85–90% target and no
-  minimum-necessary-work statement is present anywhere in it — searched the whole file for `85`, `90`,
-  `minimum`, `perfection`; no match.
-- Claim (3): HOLDS — read `.claude/commands/work-loop-v2.md`. Line 50 binds the inspection record to the
-  acceptance harness (`logs/scripts/work-loop-v2-slice-1.test.sh`, present, 84804 bytes, executable), and
-  Step 2 requires a line for **every** claim on **every** run, including claims that hold. Line 89 states
-  Implementation evidence as "the failing case, the implemented result, and the regression protection",
-  with the no-meaningful-check relief in the same sentence. Searched the file for `prose`, `documentation`,
-  `docs` — no match, so the relief clause names no standard case.
-- Claim (4): HOLDS — read `plans/work-loop-v2-v0.2/context-engineering-spec-v0.1.md`. CE-9 at line 663
-  with its *fresh-session recovery* clause at lines 671–681 (seven recovered items; conversational memory
-  may locate a source but never establishes authority) and its memory-only-control evidence design at
-  lines 695–700. CE-15 at line 811 (one execution handoff artifact, two audiences; "the test is
-  duplication, not mention"). Both are already carried into `SKILL.md` — fresh-thread recovery at line
-  307, "Continue this project" at line 135, one-brief-two-audiences at line 291. Searched `SKILL.md` for
-  `working directory`, `cwd`, `worktree` outside § Unattended runs — no fresh-task handoff shape is
-  specified.
-- Claim (5): HOLDS — read `.claude/commands/project-next-steps.md`. Step 2 (lines 46–86) is the token-lean
-  cascade: plan spine → current position (authoritative completion signal first, stop when confident) →
-  supporting context read lightly → git ground-truth check. Lines 64–68 record that `/prime` Step 1c
-  already reuses this cascade with one deliberate inversion. Step 4 (lines 129–132) fixes the ownership
-  boundary: the A–D report prints inline and the command writes nothing anywhere.
-- Claim (6): HOLDS, with the repository side and the product side settling opposite ways.
-  *Repository:* searched `.codex/hooks.json` and `.codex/config.toml` for `PreCompact|PostCompact|compact|
-  SessionStart` — the only match is `SessionStart` at `.codex/hooks.json:51`, one unmatched hook
-  (`friday-checkup-reminder.sh`). No compaction hook exists; `.codex/config.toml` registers no hooks at all
-  (it holds only `[shell_environment_policy]`, including `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "80"`, which is
-  a Claude env var and not a Codex hook).
-  *Product, verified against current official Codex documentation (`learn.chatgpt.com/docs/hooks`, the
-  current destination of `developers.openai.com/codex/hooks`):* `PreCompact` and `PostCompact` are
-  supported hook events; hooks are discovered from `<repo>/.codex/hooks.json` — the sidecar this repo
-  already uses; `matcher` filters the trigger (`manual`/`auto`) for the compaction events and the source
-  (`startup`/`resume`/`clear`/`compact`) for `SessionStart`; hooks receive `session_id`,
-  `transcript_path`, `cwd`, `hook_event_name`, `model`, `permission_mode` on stdin; and
-  `hookSpecificOutput.additionalContext` injects developer context back to the model, with
-  `additionalContextLimit` defaulting to ~2,500 tokens. Skill activation is implicit and driven by the
-  frontmatter `description`, with only names and descriptions loaded at startup under a ~2%-of-context
-  budget (`learn.chatgpt.com/docs/build-skills`). Local checkout / Worktree / Handoff are documented
-  (`learn.chatgpt.com/docs/environments/git-worktrees`), a new chat picks Local or Worktree explicitly, and
-  the docs do **not** describe pointing a new non-forked chat at an existing worktree directory;
-  `openai/codex` issue #21432 (closed) records "Fork into new worktree" leaving the thread's terminal in
-  the original checkout. **No stop condition fires** — every mechanism this plan makes normative is
-  supported.
-- Claim (7): HOLDS — read `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` (1366 lines).
-  Already checkout-scoped: `--checkout` canonicalised and git-verified (lines 317–320); state file
-  resolved only under `$CHECKOUT/logs/work-loop` with a realpath containment check (lines 322–329); lock
-  key `sha256(checkout|task)` truncated to 16 chars under `$TMPDIR` (lines 419–420); actors launched inside
-  the checkout — `-C "$CHECKOUT"` for Codex (line 1050), `cd "$CHECKOUT"` for Claude (line 1072). Still
-  collidable or invisible: `LOG_DIR` defaults to `$SPIKE_DIR/runs` where `SPIKE_DIR` is the script's own
-  directory (lines 179, 607, mirrored at 590), so driving checkout B with checkout A's copy writes B's
-  evidence into A; and `RUN_ID="$(date '+%Y%m%dT%H%M%S')-$TASK"` (line 619) carries no checkout
-  discriminator, so two checkouts running one task-id into a shared log directory in the same second
-  overwrite each other's `.log`, `.hopN.<actor>.out` and `.unattended-settings.json`.
-- Claim (8): HOLDS — and it moved during the unit, which is the finding. At the unit's start
-  `git status --porcelain` showed 5 modified and 4 untracked paths, including 246/309/71 changed lines in
-  `dispatch.sh`, `dispatch.test.sh` and the spike `README.md` belonging to the open
-  `work-loop-v2-contained-unattended-profile` task. Re-run after the plan was drafted: another session had
-  committed that work (`9c66f26`, `0259275`), those paths are now clean, and that task's state file is
-  tracked at `turn: operator` but **not closed** — its active fields survive and `## Next action` holds a
-  three-option operator decision, two options of which change `dispatch.sh` again. No path outside this
-  unit was written, staged or reformatted.
+- Finding (1): REPRODUCES — read § 4.1 of the plan. Positive trigger 1 read "bounded repository or project
+  work that no specific capability was named for", and P-1's *Passes when* clause required that exact shape
+  to still activate the skill. So the catch-all was prescribed in two places, not one.
+- Finding (2): REPRODUCES — read § 4.9. It registered `PostCompact` (matcher `.*`) **and**
+  `SessionStart` (matcher `compact`) — two events for one compaction — and identified the active task by
+  "scanning `logs/work-loop/*.md` for `^turn: (claude|codex)$` and reporting every match". Ran that exact
+  scan: `grep -lE '^turn:[[:space:]]*(claude|codex)$' logs/work-loop/*.md | wc -l` → **18** — five real
+  open tasks (`…proportionality-continuity-plan`, `…contained-unattended-profile`, `…intake-router`,
+  `…production-readiness-policy`, `project-progression-candidate-review-correction`) **and thirteen
+  acceptance-harness fixtures**, which carry a `turn:` line by construction. The finding is worse than
+  stated: the design could not name the active task, and would have injected fixture names and fixture
+  next-actions into a live session. § 4.9 now records the measured 18, not the "three" I first wrote.
+- Finding (3): REPRODUCES — read § 4.5. Its closing paragraph read "**Do not touch Step 2's inspection
+  record.** It stays mandatory on every run for every claim", grounded on the acceptance harness. Confirmed
+  the circularity is real by reading the harness: `logs/scripts/work-loop-v2-slice-1.test.sh` cases 1.2a
+  (line 56) and 2.1 (line 192) assert a record was written — it is this project's own implementation, not
+  operator authority.
 
-Result: the implementation plan exists at
-`plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md` (v0.1,
-~700 lines). It states nine verified root causes separating executable defect from already-lean core
-intent (§ 2), maps each of the brief's requirements to exactly one owner (§ 3), gives anchor-text-level
-amendment targets for six files plus one new hook script (§ 4), orders eight slices with their dependency
-on the still-open unattended task (§ 5), gives ten fail-capable proof cases with the controls that make
-three of them mean anything (§ 6), lists twelve non-adoptions with grounds (§ 7), covers risk, rollout,
-migration and hook trust (§ 8), and ends with a self-contained implementation handoff (§ 9). Two findings
-changed the plan from what the brief anticipated: the brief's "removes mandatory red/green ceremony" is
-scoped in § 4.5 to *evidence of a change* and explicitly **not** to Step 2's inspection record, which stays
-mandatory on every run; and the § 5 dependency was corrected mid-unit after the concurrent commit.
+Result: the same plan was revised in place at
+`plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md`
+(842 → 1002 lines). (1) § 4.1's positive triggers are now the closed list of four Codex named, with an
+unnamed ordinary request added as an explicit non-trigger; P-1 gained that request as its first failing
+case and now runs seven shapes. (2) § 4.9 was rewritten: one registration (`SessionStart`/`compact`, the
+only event whose output supports `additionalContext`), the active pointers preserved by amending the
+existing `AGENTS.md` § *Compaction* list, and the script forbidden from identifying the task at all.
+(3) § 4.5 gained a subsection making the inspection record proportional — per-claim where load-bearing
+claims exist, legitimately absent for Direct Work or a no-premise prose change — naming both the command
+Step 2 amendment and the harness amendment, plus new proof case P-3a which fails any implementation that
+replaces the record with another mandatory field. No target change was implemented.
 
 Evidence:
 
-- *Before:* `ls plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md`
-  → "No such file or directory". `grep -rln "proportionality" plans/` returned two unrelated files
-  (`the-work-loop-explained-complete-system-v0.2.md`, `project-progression-protocol-original-proposal.md`),
-  neither an implementation plan for this objective.
-- *After:* the file exists at that exact path. Each of the seven governing operator decisions appears as
-  `OD-1`…`OD-7` in § 1's discharge table and is cited again at the section that discharges it (`grep -c`
-  per decision: 3, 6, 4, 4, 4, 6, 6 — every one ≥ 2, so none is listed and then dropped). Ten proof cases
-  are present (`grep -nE "^\*\*P-[0-9a]+ —"` → P-1, P-2, P-2a, P-3, P-4, P-5, P-6, P-7, P-8, P-9), covering
-  every scenario the brief named: false activation, duplicate verification, prose-test ceremony,
-  wrong-checkout handoff, cross-project concurrency, same-repository concurrency, post-compaction recovery,
-  fresh-task recovery, and project orientation.
-- *The plan implements none of the target changes* — the fail-capable half. `git status --porcelain` and
-  `git diff --stat` over every file the plan names as an amendment target return **empty**:
+- *Finding 1 resolved:* a phrase count is **not** the check here, and my first attempt at one was wrong —
+  the catch-all occurs once before and once after (it survives inside the paragraph that explains its
+  removal), and a naive line-wise grep returned 0 on the parent only because the phrase wrapped across two
+  lines there. The decisive check is the content of § 4.1's positive-trigger list:
+  `sed -n '/^1\. \*\*Positive triggers/,/^2\. \*\*Explicit non-triggers/p'` returns "bounded repository or
+  project work that no specific capability was named for" on the parent, and on the revision returns four
+  bullets, none of which is that shape. The same request shape now appears under non-triggers. P-1 contains
+  "unnamed ordinary implementation request" (1 match, 0 on the parent) as its case (a).
+- *Finding 2 resolved:* `grep -cE '^- \*\*`PostCompact`\*\*, matcher'` → **0** (was 1). "One event,
+  `SessionStart` with matcher" → 1. "It does not identify the task" → 1. `AGENTS.md § *Compaction*` is
+  named 4 times, and appears in § 3's owner map, § 5's S6 row and § 9's authorised-files list.
+- *Finding 3 resolved:* `grep -c "It stays mandatory on every run for every claim"` → **0** (was 1).
+  The proportional subsection is present, P-3a is present, and the proof-case count went 10 → 11
+  (P-1, P-2, P-2a, P-3, **P-3a**, P-4…P-9).
+- *Fail-capable how:* each check above reads differently against the committed parent
+  (`git show b155316:<plan>`) than against the working file — the four counts that are now 0 were 1 there,
+  and the two that are now 1 were 0. Re-running them on the old revision reproduces the findings, which is
+  what makes them evidence of a correction rather than assertions about one.
+- *Still no target change implemented* — the unchanged half of the original evidence, re-run:
+  `git status --porcelain` over every amendment target the plan names returns **empty** for
   `.agents/skills/work-loop-v2/SKILL.md`, `.claude/commands/work-loop-v2.md`,
-  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, `.codex/hooks.json`,
-  `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`. The new hook script the plan specifies
-  does not exist: `ls .codex/hooks/work-loop-reorient.sh` → "No such file or directory". This check reads
-  differently the moment any slice is executed, which is what makes it evidence rather than assertion.
-- *Why no automated regression test is meaningful here.* The artifact is a planning document; no automated
-  check could distinguish a good plan from a bad one, and a grep for a term the brief supplied would pass
-  whatever was written — the failure mode the core's § 6 rule 5 names. The fail-capable checks are the two
-  above: the requirement-to-owner and decision-to-section coverage counts, and the empty diff across every
-  named target. Both would read differently had the unit implemented instead of planned.
-- *Commit:* `b155316` — two files, 1167 insertions, no deletions: this state file and the plan. No other path staged.
+  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, `.codex/hooks.json`, `AGENTS.md`,
+  `logs/scripts/work-loop-v2-slice-1.test.sh` and `dispatch.sh`; and
+  `ls .codex/hooks/work-loop-reorient.sh` → "No such file or directory".
+- *No adjacent file touched:* the only paths this round staged are the plan and this state file. The three
+  other dirty paths in the tree (`logs/friction-log.md`, `…project-progression-candidate-review-correction.md`,
+  `…contained-unattended-profile.md`) belong to other tasks and were not read into, written or staged.
 
 ## Blocker
 
@@ -301,25 +250,27 @@ None.
 
 ## Next action
 
-Codex: assess the plan at
-`plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md` against the
-brief's thirteen required outcomes and the completion condition — is it specific enough for a fresh Claude
-session to execute without design guessing, and proportionate to the demonstrated failures?
+Codex: run the closure check on the three frozen findings only — are (1), (2) and (3) resolved, and did the
+correction break anything? Nothing outside those three was changed.
 
-Three points need your judgment rather than acceptance:
+One point is honestly partial, and is flagged rather than stretched:
 
-1. **§ 4.5 narrows the brief's requirement 6.** The brief asked to remove mandatory red/green ceremony;
-   the plan removes it for *evidence of a change* and explicitly keeps Step 2's inspection record mandatory
-   on every run, on the ground that it is bound by the acceptance harness and is what separates inspection
-   from assumption. Confirm or correct that reading.
-2. **§ 4.9 adds a new hook script** (`.codex/hooks/work-loop-reorient.sh`). The plan argues it is not one
-   of the artifact kinds the constraints forbid and that no existing owner could be amended instead.
-   Confirm it clears the "prefer amendments to existing owners" constraint.
-3. **S7 is gated on another open task.** `work-loop-v2-contained-unattended-profile` is at `turn: operator`
-   with a pending three-option decision, two options of which change `dispatch.sh`. The plan sequences the
-   dispatcher slice behind that task's closing record. Confirm the sequencing, and note that the operator
-   decision is the real gate.
+- **Finding 2's mechanism is documented for a *root* session.** The docs say `SessionStart` hooks matching
+  `source: "compact"` run before the next model request after Codex compacts a **root** session; they do not
+  say what happens inside a sub-session or nested agent. § 4.9 is written for the root case, which is the
+  case OD-5 describes, and the gap is now recorded under the plan's Limitations rather than papered over
+  with a second registration — the only other candidate, `PostCompact`, still cannot emit
+  `additionalContext`. If you consider sub-session coverage in scope, that is a reframe, not a correction.
 
-One deferral, recorded and not done: `.codex/config.toml` sets `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE = "80"` —
-a Claude environment variable living in the Codex config directory. It was noticed while inspecting claim
-(6) and is outside this unit's scope, which is limited to producing the plan.
+Two deferrals, recorded and not done — both noticed during this round, neither implemented:
+
+1. **The S7 dependency moved, and § 5 now understates it.** `work-loop-v2-contained-unattended-profile` was
+   **closed** at `7e1c375`, then re-opened in the working tree: it currently reads `turn: claude`, carries no
+   closing-record headings, and is uncommitted. § 5 and § 9 still describe it as open at `turn: operator`
+   with a three-option decision. You ruled the S7 dependency accepted and not to be reopened, so I left the
+   text alone. It is worth a look because S7's real gate has changed shape since the text was written.
+2. **A dispatcher lock can outlive its checkout.** Two `work-loop-dispatch-*.lock` directories from 11:08
+   and 11:14 could not be matched back to any task in any live worktree, because the lock key is
+   `sha256(checkout|task)` and their checkout no longer exists — so nothing could name their owner, and
+   `--status` cannot help without the checkout. This is the same root cause as § 4.8's `RUN_ID`/`LOG_DIR`
+   collision, one surface further on. Not added to the plan; § 4.8 is not one of the frozen findings.
