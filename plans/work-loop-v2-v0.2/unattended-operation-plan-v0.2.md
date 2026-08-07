@@ -7,19 +7,36 @@ Author: Claude. Revised after independent Codex review of v0.1.
 >
 > | Item | State |
 > |---|---|
-> | **Phase 0** — attended launcher proof (0a nested launch, 0b detached checklist, 0c multi-hop) | **not started** — needs the operator at the keyboard with Codex; cannot be done by Claude alone |
-> | **1a** stoppable run | **done.** Defect confirmed by execution first (`runs/probe-interruption-2026-08-07.md`), then fixed. Exit `28`. Tests: case 27 |
+> | **Phase 0** — attended launcher proof (0a nested launch, 0b detached checklist, 0c multi-hop) | **COMPLETE** — run by Codex, `runs/phase0-attended-launcher-proof-2026-08-07.md`. Nested launch works but only *outside* the ordinary command sandbox. **The detached shape does not survive**: a `nohup … &` launch from a Codex command is reaped before the dispatcher starts, so the supervised terminal fallback is the only viable launch. 0c ran five hops unattended and closed correctly at `turn: operator` |
+> | **1a** stoppable run | **PARTIAL — still blocking.** The group kill works (exit `28`, case 27, and observed live in Phase 0 § 0b item 4). **A descendant that leaves the actor's process group survives it** — asserted deliberately by case 27b. Stop control is a process-*group* boundary, not a whole-tree one |
 > | **1b** true deadline | **done.** `--deadline`, clamps the actor timeout before every launch and every retry. Exit `29`. Tests: cases 28–28d |
 > | **1c** committed-path check | **done.** Exit `30`. Tests: cases 29–29c |
 > | **1d** unattended authority | **policy SETTLED by the operator; dispatcher integration NOT built.** The contained profile is proven (`runs/probe-contained-authority-2026-08-07.md`) and chosen: no push, no tool-side network. The existing `--claude-deny` plumbing is *not* that profile and does not deliver it |
 > | **1e** no sleep | **done as documentation** — `caffeinate -i` in the worked invocation, spike `README.md` |
-> | **1f** branch isolation | **done as documentation** — branch + clean tree + the worktree blocker, spike `README.md` § Safety boundaries |
-> | **1g** read-only status | **done.** `--status`. Tests: cases 30–30c |
-> | **Phase 2** — walk-away pilot | **blocked**, correctly. 1d's *policy* is now settled, but four blockers remain: Phase 0 has not run; the contained profile is not wired into the dispatcher; `--status` returns a false `STALE LOCK` under PID-visibility denial; and clean branch/isolation proof plus the supervised `caffeinate -i` launch are outstanding |
+> | **1f** branch isolation | **UNPROVEN — still blocking.** Documented only (branch + clean tree + the worktree blocker, spike `README.md` § Safety boundaries). No run has demonstrated a clean branch/isolation boundary in practice. Written down is not proven |
+> | **1g** read-only status | **PARTIAL — still blocking.** `--status` works unsandboxed (cases 30–30c, and observed live in Phase 0 § 0b item 3). **It reports a live run as `STALE LOCK` when `kill -0` is refused by sandbox policy** — it cannot tell "permission denied while checking" from "PID does not exist". Measured in Phase 0. This is the failure mode that matters most, because it misreports a *running* dispatcher as dead |
+> | **Phase 2** — walk-away pilot | **BLOCKED**, correctly. Phase 0 is no longer among the blockers; 1d's *policy* is settled. **Five remain — see the list below the table.** None is a decision; all are unbuilt or unproven work |
 > | **Phase 3** — documentation (3a–3h) | **done, except 3c and 3d, both RE-OPENED by the 1d correction.** `SKILL.md` § Courier mode + § The seam and spike `README.md` stand. 3c (what stays forbidden) and 3d (the risk envelope) describe a pre-sandbox world and must be rewritten once the contained profile is built |
 > | Core § 4 decision | **recorded** in `logs/decisions.md`, 2026-08-07 |
 >
-> Suite: **149 pass, 0 fail** — all simulated. **No live unattended run has happened.**
+> Suite: **149 pass, 0 fail** — all simulated. **One live multi-hop run has now happened** (Phase 0c:
+> five hops, three commits, closed at `turn: operator`, no operator transport during the run). It was
+> launched from a supervised terminal by the operator and ran **without** the contained profile.
+> **The Phase 2 walk-away pilot has not happened**, and the five blockers below stand between here
+> and it.
+>
+> ### Phase 2 blockers — all five, none of them a decision
+>
+> | # | Blocker | Why it blocks a walk-away run |
+> |---|---|---|
+> | 1 | **Contained profile not wired into the dispatcher** (1d) | The policy is settled and proven; nothing applies it. A run today has an open network |
+> | 2 | **`--status` false `STALE LOCK`** (1g) | A live run reads as dead whenever PID inspection is refused. The operator's one read-only instrument lies in exactly the situation it exists for |
+> | 3 | **Escaped descendants survive the stop** (1a) | `kill -TERM` reaches the actor's process *group*. Anything that calls `setsid` outlives the run, unsupervised and unbounded |
+> | 4 | **Branch/isolation unproven** (1f) | Documented, never demonstrated. The claim that `main` is protected has not been exercised |
+> | 5 | **Detached launch does not survive** (Phase 0b) | A `nohup … &` launch from a Codex command is reaped before the dispatcher starts. Only a supervised terminal works, which constrains what "walk away" can mean |
+>
+> Blockers 2 and 3 are the ones that would hurt most unattended: one misreports a running system as
+> stopped, the other leaves a process running after the operator believes everything is stopped.
 >
 > **~~One finding changes the plan's own text.~~ WITHDRAWN 2026-08-07 — the finding was wrong, and
 > § 1d's original "no push, no network" stands as first written.** The withdrawn text said the
@@ -49,7 +66,7 @@ Author: Claude. Revised after independent Codex review of v0.1.
 >
 > | # | Finding | Disposition |
 > |---|---|---|
-> | 1 | Phase 0 gate skipped | **Disputed in part.** Phase 0 genuinely has not run and Phase 2 stays blocked — that conclusion stands and was already this plan's own status. But it was a *disclosed* deviation, not a skip: 0a/0c need the operator at the keyboard with Codex, and 1a/1b/1c/1g are dispatcher-internal — none changes shape with the launch path. The plan's own 0b item 4 makes the *stop* question depend on 1a, not the reverse. |
+> | 1 | Phase 0 gate skipped | **Disputed in part.** Phase 0 genuinely has not run and Phase 2 stays blocked — that conclusion stands and was already this plan's own status. But it was a *disclosed* deviation, not a skip: 0a/0c need the operator at the keyboard with Codex, and 1a/1b/1c/1g are dispatcher-internal — none changes shape with the launch path. The plan's own 0b item 4 makes the *stop* question depend on 1a, not the reverse. **— SUPERSEDED 2026-08-07: Phase 0 has since run (Codex). The reviewer's underlying point was better than this reply allowed: Phase 0 found two defects in items called "dispatcher-internal" here — the `--status` false `STALE LOCK` (1g) is *only* visible under a real sandboxed launch, and the detached shape's failure changes what launch paths exist at all. "None changes shape with the launch path" was wrong.** |
 > | 2 | `--claude-deny` had no end-to-end test | **Accepted.** Cases 31 / 31b added: a fake `claude` binary records the argv the dispatcher builds, asserting the flag reaches the child (metacharacters intact, repeatable) and that its absence changes nothing. |
 > | 3 | "Whole process tree" overstated | **Accepted — the sharpest finding.** It is a process-*group* kill. Wording corrected in `dispatch.sh`, the probe record and `README.md`; case 27b now asserts the real boundary (a `setsid`'d descendant survives, and the case fails if that silently changes). |
 > | 4 | Deadline clock start, grace period, loose test | **Accepted, all three.** `RUN_START` moved to the script's first statement; the worst-case overrun is now stated as `1s poll + 5s TERM→KILL grace + reaping ≈ 6s` instead of "the poll interval"; case 28's bound tightened from `< 20s` to `<= 11s` derived from that arithmetic. Case 28b was also rewritten — it was asserting a timing-dependent hop count and could land on the wrong branch. |
@@ -183,6 +200,15 @@ incident waiting for a name.*
 > while the first was still running. The signal did not stop the run — it *unlocked* it.
 > Fixed: the actor now runs in its own process group (`set -m`) and the handler terminates the group,
 > releases the lock once, and exits `28`.
+>
+> **STILL PARTIAL, and still a Phase 2 blocker (2026-08-07).** The fix reaches the actor's process
+> **group** — not its whole tree. An earlier draft of this work said "whole process tree"; that
+> overstated it and was caught in review. Case 27b now asserts the real boundary deliberately: a
+> descendant that calls `setsid` leaves the group and **survives** the stop. It is expected to
+> survive, and the case fails if that ever silently changes. Phase 0 § 0b item 4 observed the group
+> kill working live (`terminating actor process group 79425`, exit `28`) — which confirms the
+> mechanism, not the reach. So "stop control proven" below means *proven for the group*: after a
+> stop, an escaped descendant can still be running while the operator believes everything halted.
 
 **Evidence status: INFERRED** *(as written 2026-08-06; superseded by the note above)*. Derived from
 `dispatch.sh:190` (`trap 'release_lock' EXIT INT TERM`)
@@ -320,16 +346,39 @@ This does double duty. It answers *"is it still going?"* on return, and it gives
 instead of something to remember. The lock stops a second dispatcher (`dispatch.sh:177-192`, exit 17);
 it does not stop the parent Codex task from editing the file by hand.
 
+> **BUILT BUT NOT TRUSTWORTHY — Phase 2 blocker (2026-08-07).** Phase 0 § 0b item 3 ran `--status`
+> against a genuinely live dispatcher (pid 79266) from inside the ordinary Codex command sandbox. It
+> answered **`STALE LOCK`**. The cause: `kill -0` was refused by sandbox policy, and the check treats
+> a refusal as "the process does not exist."
+>
+> This inverts the instrument's purpose. `--status` exists so the operator can ask *"is it still
+> going?"* without touching anything — and it answers "no, it's dead" about a run that is very much
+> alive. Worse, it is the *sandboxed* call that lies, which is the call the originating Codex task
+> would naturally make. Acting on that answer means hand-editing a state file mid-hop, the exact
+> corruption path the skill's rule exists to prevent.
+>
+> The fix must distinguish three states, not two: running, gone, and **cannot tell**. "Cannot tell"
+> must never render as `STALE LOCK`. Cases 30–30c pass and did not catch this, because they run
+> where PID inspection is permitted — a reminder that the suite is simulated.
+
 ---
 
 ## Phase 2 — The bounded walk-away pilot
 
 Only after every Phase 1 item lands, with 1d settled by the operator.
 
-- one task, one isolated location (1f), on a branch off a clean tree;
+> **DO NOT RUN — 2026-08-07.** 1d's decision is settled, but Phase 1 has *not* landed. Five blockers
+> stand (listed in full in the status block at the top of this document): the contained profile is
+> unbuilt, `--status` lies under PID-visibility denial, escaped descendants survive the stop, branch
+> isolation is unproven, and the detached launch shape does not survive. The preconditions below are
+> the *target*, not the current state — read every one of them as unmet.
+
+- one task, one isolated location (1f — **unproven**, documented only), on a branch off a clean tree;
 - a hard ~40-minute deadline (1b), hop limit as a secondary bound;
 - no push, no merge, no deployment, no external side effects;
-- sleep prevented (1e), stop control proven (1a), status readable (1g);
+- sleep prevented (1e), stop control proven (1a — **group only; escaped descendants survive**),
+  status readable (1g — **built, but reports a live run as `STALE LOCK` when it cannot inspect the
+  PID**);
 - an end-state notification — the Codex task-completion notification if it serves, rather than a
   custom observer process.
 

@@ -155,6 +155,26 @@ bash dispatch.sh \
 
 ### The walk-away invocation, as a worked example
 
+> # ⛔ DO NOT RUN — 2026-08-07
+>
+> **This is a worked example of a shape that is not cleared for use.** Five Phase 2 blockers stand
+> between it and a real walk-away run (full list: `unattended-operation-plan-v0.2.md`, status block).
+> Four of them change how *this very command* behaves:
+>
+> 1. **The contained profile is not wired in.** Nothing below restricts the child. The run has an
+>    open network and full file authority, whatever the settled 1d policy says.
+> 2. **`--status` (step 4) can lie.** Against a live run it reports `STALE LOCK` whenever it cannot
+>    inspect the PID — measured in Phase 0 from inside a Codex sandbox. The one instrument this
+>    example offers for checking on the run is the one that misreports it as dead.
+> 3. **The stop (step 3) reaches a process group, not a tree.** A descendant that calls `setsid`
+>    survives `kill`, after you believe the run is stopped.
+> 4. **The `… &` detached shape does not survive a Codex-command launch.** Phase 0 § 0b: the
+>    background process is reaped before the dispatcher starts — empty console, no lock, no run log.
+>    A supervised terminal is currently the only launch that works, so `&` here is misleading.
+>
+> Keep this example for its structure — the four surrounding steps are right. Do not execute it
+> until the blockers are cleared and this notice is removed.
+
 Four things around the command matter as much as the command. Copying the middle line alone is not
 the invocation.
 
@@ -411,7 +431,7 @@ leaving rather than after:
 | One task, one checkout, serial (the lock) | Anything outside the checkout — the filesystem at large |
 | Local commits on a branch off a clean tree | `main` is protected; the *network* is not |
 | A hard `--deadline`, plus `--max-hops` | Nothing bounds what a single hop *does* within its allowlist |
-| Stop control that reaches the actor's whole tree (`28`) | An effect that landed before the signal — never retried, always inspected |
+| Stop control that reaches the actor's process **group** (`28`) | **A descendant that leaves the group survives the stop** — anything that calls `setsid` outlives the run. Asserted, not assumed: case 27b. Also: an effect that landed before the signal — never retried, always inspected |
 | Allowlist on working tree (`18`/`24`) **and** commits (`30`) | Both are **detection, not prevention**. The change has happened; the run stops rather than compounding |
 | `--claude-deny 'Bash(git push:*)'` if the operator chooses it | Network access. Denying `WebFetch` sends the child to `curl` — measured, `runs/probe-unattended-authority-2026-08-07.md` |
 
