@@ -11,31 +11,41 @@ Author: Claude. Revised after independent Codex review of v0.1.
 > | **1a** stoppable run | **PARTIAL — still blocking.** The group kill works (exit `28`, case 27, and observed live in Phase 0 § 0b item 4). **A descendant that leaves the actor's process group survives it** — asserted deliberately by case 27b. Stop control is a process-*group* boundary, not a whole-tree one |
 > | **1b** true deadline | **done.** `--deadline`, clamps the actor timeout before every launch and every retry. Exit `29`. Tests: cases 28–28d |
 > | **1c** committed-path check | **done.** Exit `30`. Tests: cases 29–29c |
-> | **1d** unattended authority | **policy SETTLED by the operator; dispatcher integration NOT built.** The contained profile is proven (`runs/probe-contained-authority-2026-08-07.md`) and chosen: no push, no tool-side network. The existing `--claude-deny` plumbing is *not* that profile and does not deliver it |
+> | **1d** unattended authority | **COMPLETE — built, measured live, NOT blocking.** Policy settled by the operator (`runs/probe-contained-authority-2026-08-07.md`); integration shipped as `dispatch.sh --unattended`, delivered by CLI `--settings` on every Claude hop because `strictAllowlist` has no effect from a repository settings file. Fails closed, exit `31`, on a non-Darwin host, an unresolvable binary, claude < 2.1.219 or an unreadable version string; refuses to combine with `--actor-cmd`; `--claude-deny` composes and is additive. Simulated suite **273/0** (matched red pair **212/22** against the pre-change dispatcher). **Effective policy measured from inside a child the dispatcher launched** (`runs/probe-unattended-integration-2026-08-07.md`, **18/0**): network refused, write outside the checkout refused, home read refused, `git push` denied before execution, sentinel cloud credential scrubbed from the subprocess, tools `Bash, Skill`, no MCP, and a repository-declared `SessionStart` hook that never fired — measured by its absent marker file, not reported by the model. **One named exception inside the denied home tree:** `denyRead: ["~/"]` also blocked `~/.gitconfig`, which Git reads every invocation, so the child's Git exited 128 before touching the repository; check 6b established the repository was reachable and config discovery was the only obstacle. The zero-read alternative (`GIT_CONFIG_GLOBAL=/dev/null`) was rejected on evidence — the identity lives only in the global config here, so that child could not commit, and core § 4 has Claude commit every hop. Operator decision 2026-08-07: allow the minimum Git configuration paths, broaden home no further. `allowRead` carries `~/.gitconfig` and nothing else; `~/.config/git/config` proved unnecessary. Guarded at both ends — live: `~/.gitconfig` readable **and** `~/.config` still refused; simulated: no widening form in `allowRead`, the broad `denyRead` still present, exactly three entries. Residual, measured: `~/.gitconfig` names credential helpers, and the child obtained **no** token (`gh` credentials stay under the denied `~/.config/gh/`) — **if a real secret is ever put in `~/.gitconfig`, this exception stops being safe.** The old `--claude-deny` plumbing is still *not* this profile; it is the narrowing flag that composes with it |
 > | **1e** no sleep | **done — observed in the supervised Phase 0 proof under `caffeinate -i`.** The 0c run held the machine awake across five hops and 301 seconds of actor time without dying mid-hop. Also documented in the worked invocation, spike `README.md` |
 > | **1f** branch isolation | **UNPROVEN — still blocking.** Documented only (branch + clean tree + the worktree blocker, spike `README.md` § Safety boundaries). No run has demonstrated a clean branch/isolation boundary in practice. Written down is not proven |
 > | **1g** read-only status | **COMPLETE — independently accepted, NOT blocking.** `--status` answers in **three** states: `IN FLIGHT` (pid visibly alive), `STALE LOCK` (pid **positively** absent — `kill -0` said *no such process*) and `UNKNOWN — CANNOT INSPECT` (permission denied, unreadable or invalid pid, or any ambiguous failure). `UNKNOWN` says the lock may belong to a live dispatcher, still reports pid/lock/state/log, and **never** recommends removing the lock. Read-only and exit-`0` contracts unchanged. A valid lock pid must match `[1-9][0-9]*`; empty, non-numeric, zero and zero-prefixed values (`0`, `00`, `007`) report `UNKNOWN` and emit no `IN FLIGHT`, `STALE LOCK`, `kill -TERM` or `rm -rf`. Tests: 30d (forced `EPERM`), 30f (unreadable, non-numeric and invalid-numeric pids, plus `1`/`10` pinned valid), **30e positive control** (a genuinely absent pid must still read `STALE LOCK`) — red-to-green `162/9 → 171/0` against `c8b2172`, then `186/12 → 198/0` against `e1ebb2f`. **Independently accepted by Codex against the CORRECTED build (2026-08-07):** all three live status states passed — sandbox-hidden live PID → `UNKNOWN`, the same PID outside the sandbox → `IN FLIGHT`, terminated PID → `STALE LOCK` — the invalid-PID checks passed, and the suite passed **198/0**. The temporary review lock and process were removed; no repository files were changed by the check. Nothing outstanding |
-> | **Phase 2** — walk-away pilot | **BLOCKED**, correctly. Phase 0 is no longer among the blockers; 1d's *policy* is settled; 1g is complete and cleared. **Three remain — see the list below the table.** None is a decision; all are unbuilt or unproven work |
-> | **Phase 3** — documentation (3a–3h) | **done, except 3c and 3d, both RE-OPENED by the 1d correction.** `SKILL.md` § Courier mode + § The seam and spike `README.md` stand. 3c (what stays forbidden) and 3d (the risk envelope) describe a pre-sandbox world and must be rewritten once the contained profile is built |
+> | **Phase 2** — walk-away pilot | **BLOCKED**, correctly. Phase 0 is no longer among the blockers; 1d is complete and cleared; 1g is complete and cleared. **Two remain — see the list below the table.** Neither is a decision; both are unbuilt or unproven work |
+> | **Phase 3** — documentation (3a–3h) | **done, except 3c and 3d, both RE-OPENED by the 1d correction and now UNBLOCKED.** `SKILL.md` § Courier mode, § The seam and § Unattended runs (which now carries the `--unattended` guidance) stand, as does spike `README.md`. 3c (what stays forbidden) and 3d (the risk envelope) still describe a pre-sandbox world. They were waiting on the contained profile being built; it is built and measured, so they are writable now and are the natural next documentation unit — they are **not** Phase 2 blockers |
 > | Core § 4 decision | **recorded** in `logs/decisions.md`, 2026-08-07 |
 >
-> Suite: **198 pass, 0 fail** — all simulated (149 at `c8b2172`, plus 22 for the 1g three-state fix
-> and 27 for the pid-validation correction that followed it). **One live multi-hop run has now happened** — Phase 0c,
-> **an attended five-hop live run with no operator transport during the run**: three commits, closed
-> at `turn: operator`. The operator was present at a supervised terminal throughout; it was not a
-> walk-away run and it ran **without** the contained profile. **The Phase 2 walk-away pilot has never
-> happened**, and the three blockers below stand between here and it.
+> Suite: **273 pass, 0 fail** — all simulated (149 at `c8b2172`, plus 22 for the 1g three-state fix,
+> 27 for the pid-validation correction that followed it, and 70 for the 1d contained-profile
+> integration). **Two live shapes have now happened.** Phase 0c — **an attended five-hop live run with
+> no operator transport during the run**: three commits, closed at `turn: operator`, the operator
+> present at a supervised terminal, and **without** the contained profile. And the 1d integration
+> probe — **an attended single-hop live run WITH the contained profile**, in which the Work Loop's own
+> mode rule caught a defect in the fixture brief and handed back correctly, using no built-in file
+> tools. **The Phase 2 walk-away pilot has never happened**, and the two blockers below stand between
+> here and it.
 >
-> ### Phase 2 blockers — all three, none of them a decision
+> ### Phase 2 blockers — both remaining, neither of them a decision
 >
 > | # | Blocker | Why it blocks a walk-away run |
 > |---|---|---|
-> | 1 | **Contained profile not wired into the dispatcher** (1d) | The policy is settled and proven; nothing applies it. A run today has an open network |
-> | 2 | **Escaped descendants survive the stop** (1a) | `kill -TERM` reaches the actor's process *group*. Anything that calls `setsid` outlives the run, unsupervised and unbounded |
-> | 3 | **Branch/isolation unproven** (1f) | Documented, never demonstrated. The claim that `main` is protected has not been exercised |
+> | 1 | **Escaped descendants survive the stop** (1a) | `kill -TERM` reaches the actor's process *group*. Anything that calls `setsid` outlives the run, unsupervised and unbounded |
+> | 2 | **Branch/isolation unproven** (1f) | Documented, never demonstrated. The claim that `main` is protected has not been exercised |
 >
-> Blocker 2 is the one that would hurt most unattended: it leaves a process running after the operator
+> Blocker 1 is the one that would hurt most unattended: it leaves a process running after the operator
 > believes everything is stopped.
+>
+> **Cleared 2026-08-07: the contained profile (1d).** It was blocker 1 of the previous three. Built as
+> `dispatch.sh --unattended`, covered by the simulated suite (**273/0**, matched red pair **212/22**),
+> and — the part that actually cleared it — **measured from inside a child the dispatcher launched**
+> (`runs/probe-unattended-integration-2026-08-07.md`, **18/0**). Recorded as closed rather than
+> deleted, because the run that cleared it also found the defect that nearly did not clear it: the
+> ratified profile blocked Git, and finding that needed a live child rather than a harness. The
+> operator settled it the same day with a one-file exception, guarded at both ends.
 >
 > **Cleared 2026-08-07: the `--status` false `STALE LOCK` (1g).** It was blocker 2 of the previous
 > four. Fixed, harness-proven (cases 30d/30e/30f) and **independently accepted by Codex against the
@@ -435,10 +445,10 @@ it does not stop the parent Codex task from editing the file by hand.
 
 Only after every Phase 1 item lands, with 1d settled by the operator.
 
-> **DO NOT RUN — 2026-08-07.** 1d's decision is settled and 1g is complete and cleared, but Phase 1
-> has *not* landed. **Three blockers stand** (full list in the status block at the top of this
-> document): the contained profile is unbuilt, escaped descendants survive the stop, and branch
-> isolation is unproven. The preconditions below are the *target*, not the current state.
+> **DO NOT RUN — 2026-08-07.** 1d is complete and cleared and 1g is complete and cleared, but Phase 1
+> has *not* landed. **Two blockers stand** (full list in the status block at the top of this
+> document): escaped descendants survive the stop, and branch isolation is unproven. The
+> preconditions below are the *target*, not the current state.
 >
 > The launch shape is **not** among the blockers: Phase 0 settled it as a supervised terminal under
 > `caffeinate -i`, which is § 0b's own stated fallback.

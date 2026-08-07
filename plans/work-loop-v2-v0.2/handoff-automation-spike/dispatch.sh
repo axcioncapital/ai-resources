@@ -697,6 +697,31 @@ write_unattended_profile() { # path -> 0 on success
   gitdir="$(git -C "$CHECKOUT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)"
   [ -n "$gitdir" ] || gitdir="$CHECKOUT/.git"
 
+  # `~/.gitconfig` is the ONE named exception inside the denied home tree, and it
+  # is there because the profile without it does not merely inconvenience the
+  # child — it stops Git working at all. Git reads that file on every invocation
+  # and exits 128 before touching the repository when the read is refused:
+  #   fatal: unable to access '/Users/…/.gitconfig': Operation not permitted
+  # Measured, not reasoned: runs/probe-unattended-integration-2026-08-07.md.
+  #
+  # Why not neutralise Git's config discovery instead, which would grant no read
+  # at all: the identity lives only in the global config in this repository
+  # (`git config --local --get user.email` is empty), and core § 4 has Claude
+  # commit every hop. A child without an identity fails every hop.
+  #
+  # Operator decision, 2026-08-07: allow the minimum Git configuration paths and
+  # broaden home access no further. So this is a single FILE, not `~/.config/`,
+  # not `~/.git*`, and not a directory. `~/.config/git/config` is deliberately
+  # absent — it does not exist on the settled host, and the live probe confirms
+  # Git works without it. Add it only if a run proves it necessary.
+  #
+  # KNOWN AND MEASURED: this file also carries credential-helper commands. The
+  # child can therefore read that `gh auth git-credential` is configured. It
+  # cannot get a token from it — `gh` reads its own credentials from
+  # `~/.config/gh/`, which stays denied — and the probe asserts that rather than
+  # assuming it. If a real secret is ever put in `~/.gitconfig`, this exception
+  # stops being safe and must be revisited.
+
   # Minimal JSON string escaping. Paths can legitimately contain spaces (this
   # workspace's own do) and backslashes; unescaped they would produce a settings
   # file the child rejects, which reads as "sandbox unavailable" rather than as
@@ -716,7 +741,7 @@ write_unattended_profile() { # path -> 0 on success
     },
     "filesystem": {
       "denyRead": ["~/"],
-      "allowRead": ["$esc_checkout", "$esc_gitdir"]
+      "allowRead": ["$esc_checkout", "$esc_gitdir", "~/.gitconfig"]
     }
   },
   "disableAllHooks": true,
@@ -775,7 +800,9 @@ if [ "$UNATTENDED" -eq 1 ]; then
   say "  gate: claude $UNATTENDED_VERSION >= $UNATTENDED_MIN_VERSION at $UNATTENDED_BIN, platform $u_os"
   say "  sandbox: enabled, failIfUnavailable, allowUnsandboxedCommands=false"
   say "  network: allowedDomains=[] strictAllowlist=true (no Bash network, no approval prompt)"
-  say "  filesystem: denyRead ~/ ; allowRead <checkout> and its git common dir"
+  say "  filesystem: denyRead ~/ ; allowRead <checkout>, its git common dir, and ~/.gitconfig"
+  say "    ~/.gitconfig is the ONE named file re-opened inside the denied home tree — without it Git"
+  say "    exits 128 before touching the repository. No directory under ~/ is re-opened."
   say "  tools: Bash,Skill only — no built-in Read/Edit/Write, so file access goes through the sandbox"
   say "  mcp: --strict-mcp-config with no config — no MCP tools"
   say "  deny: ${UNATTENDED_BASE_DENY[*]}"

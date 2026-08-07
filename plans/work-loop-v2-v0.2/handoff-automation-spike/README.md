@@ -235,27 +235,36 @@ costs a real model call and is deliberately not part of `dispatch.test.sh`.
 **Codex hops are not covered by this profile.** Their containment is Codex's own
 `--sandbox workspace-write`. The run log says so, so no reader has to infer it.
 
-> ### NOT READY FOR A WALK-AWAY RUN — one open defect, 2026-08-07
+> ### Measured from inside a live child — 2026-08-07
 >
-> Containment was measured from inside a live dispatcher-launched child and holds on every dimension
-> checked: network refused, write outside the checkout refused, home read refused, `git push` denied
-> before execution, credentials scrubbed from subprocesses, tools `Bash, Skill` only, no MCP, and a
-> repository-declared `SessionStart` hook that never fired. Record:
+> Containment was measured from inside a child that **the dispatcher launched**, not from a profile
+> assembled around it. Every check holds: network refused, write outside the checkout refused, home
+> read refused, `git push` denied before execution, credentials scrubbed from subprocesses, tools
+> `Bash, Skill` only, no MCP, and a repository-declared `SessionStart` hook that never fired. Git
+> works. Final run **18 pass, 0 fail**. Record:
 > `runs/probe-unattended-integration-2026-08-07.md`.
 >
-> **`denyRead: ["~/"]` also breaks Git.** Git reads `~/.gitconfig` on every invocation, the sandbox
-> refuses, and Git exits 128 *before touching the repository*:
-> `fatal: unable to access '/Users/…/.gitconfig': Operation not permitted`. The repository itself is
-> reachable — the same command succeeds with Git's config discovery neutralised — so `allowRead` is
-> working and the obstacle is config discovery alone.
+> **One named exception exists inside the denied home tree, and it is one file.** `denyRead: ["~/"]`
+> also blocks `~/.gitconfig`, which Git reads on every invocation — the child's Git exited 128
+> *before touching the repository*. The repository itself was always reachable; the obstacle was
+> Git's config discovery alone. Operator decision, 2026-08-07: allow the minimum Git configuration
+> paths and broaden home no further. So `allowRead` carries `~/.gitconfig` and **nothing else** —
+> `~/.config/git/config` is not included, because the probe recorded that Git needed no further help.
 >
-> **The obvious workaround does not survive contact with this repo.** `GIT_CONFIG_GLOBAL=/dev/null`
-> works only where the identity is set locally. In `ai-resources` it is set **only** globally, so a
-> child launched that way would have no Git identity and every hop's commit would fail — and core § 4
-> makes Claude commit every hop.
+> The zero-read alternative was rejected on evidence, not preference: `GIT_CONFIG_GLOBAL=/dev/null`
+> grants no new read but works only where the identity is set inside the repository, and in
+> `ai-resources` it lives only in the global config — so that child would have no Git identity and
+> every hop's commit would fail.
 >
-> Fixing this changes a profile the operator ratified, so it is **an operator decision, not a patch**.
-> Item 1d stays open and the Phase 2 blocker count stays at **three** until it is settled.
+> **The exception is guarded at both ends**, because "Git works now" is also true of a profile that
+> re-opened all of home. Live: `~/.gitconfig` readable **and** `~/.config` still refused. Simulated:
+> no `~/`, `~`, `~/.config`, `~/*`, `~/.*` or `$HOME` entry in `allowRead`, the broad `denyRead` still
+> present, and exactly three `allowRead` entries.
+>
+> **Residual risk, measured not assumed.** `~/.gitconfig` names credential helpers, so the child can
+> read that a GitHub credential path is configured. It cannot get a token — `gh` keeps its own
+> credentials under the still-denied `~/.config/gh/`, and the probe asserts that rather than reasoning
+> it. **If a real secret is ever put in `~/.gitconfig`, this exception stops being safe.**
 
 `--carry-one` is a **terminal condition on loop mode**, not a fourth mode: it launches exactly the
 actor the current `turn:` names, applies every validation and post-hop check unchanged, and then
@@ -455,16 +464,17 @@ The suite builds throwaway sandbox checkouts under `TMPDIR` and removes them on 
 real repository. It ends with a summary line and exits `1` if any case failed:
 
 ```
-pass=198 fail=0  (all cases SIMULATED — no live product transport)
+pass=273 fail=0  (all cases SIMULATED — no live product transport)
 ```
 
 > **This count drifts, twice over now.** It read `pass=69` until 2026-08-06, when the suite actually
 > stood at 82 — cases had been added without updating the line. Re-measured that day: the
 > pre-`--carry-one` suite from `HEAD` returns **82**, and cases 23–26 brought it to **99**. The line
 > then sat at `99` while Phase 1 took the suite to **149** (commit `c8b2172`), the `--status`
-> three-state fix on 2026-08-07 added 22 to reach **171**, and the pid-validation correction that
-> followed it added 27 more to reach **198**. A hand-maintained count drifts silently every time;
-> treat the number as documentation and the run as the evidence.
+> three-state fix on 2026-08-07 added 22 to reach **171**, the pid-validation correction that
+> followed it added 27 more to reach **198**, and the 1d contained-profile integration the same day
+> added 75 to reach **273**. A hand-maintained count drifts silently every time; treat the number as
+> documentation and the run as the evidence.
 
 **Case 0 is the harness's own falsifiability proof:** it points the suite at an *absent* dispatcher
 and asserts that the suite fails. A harness that stays green with the thing under test removed is not

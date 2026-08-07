@@ -1,6 +1,6 @@
 ---
 task: work-loop-v2-contained-unattended-profile
-turn: operator
+turn: codex
 ---
 
 ## Objective and scope
@@ -110,9 +110,15 @@ to settle ("verify whether … partial work, complete work, or have changed agai
 conclusion to the exact paths searched"), so a contrary answer is the inspection working, not a false
 premise. Claim (3)'s README third is a deviation this session caused, reported above.
 
-Result: required outcomes 1, 2, 3 and 5(partly) are built and proven. Outcome 4 is **measured and
-one check failed**, so the unit stops for the operator rather than completing. 1d is **not** marked
-complete and the Phase 2 blocker count is **unchanged at three**.
+Result: **all five required outcomes are met.** 1d is complete and the Phase 2 blocker count drops
+from three to **two** (1a escaped descendants, 1f branch isolation). Phase 2 remains forbidden and
+was not begun; neither were 1a or 1f.
+
+The unit ran in two parts. The first built and measured the mode, and **stopped for the operator**:
+containment held on every dimension, but the ratified profile also stopped the child using Git. The
+operator settled it on 2026-08-07 — *allow the minimum Git configuration paths, broaden home no
+further* — and the second part implemented exactly that, re-ran both proofs, and reconciled the
+documentation.
 
 - **Outcome 1 — one explicit unattended mode, delivered by CLI `--settings`.** `--unattended` writes
   a per-run profile to the evidence directory and passes it as `--settings` on every Claude hop, plus
@@ -124,19 +130,48 @@ complete and the Phase 2 blocker count is **unchanged at three**.
 - **Outcome 3 — attended and courier launches unchanged.** Asserted directly: no `--settings`,
   `--tools`, `--strict-mcp-config`, `--no-session-persistence`, no profile file and no credential
   scrub without the flag.
-- **Outcome 4 — effective policy: nine of ten hold, one does not.** See the blocker.
-- **Outcome 5 — partial, deliberately.** The spike `README.md` carries the mode and a
-  **NOT READY FOR A WALK-AWAY RUN** note naming the open defect. The plan and `SKILL.md` are **left
-  unreconciled**: required evidence 6 conditions reconciliation on the live proof passing, and it did
-  not. The plan's line 14 ("dispatcher integration NOT built") is therefore now inaccurate in the
-  other direction, and is named here rather than silently corrected.
+- **Outcome 4 — effective policy measured from inside a dispatcher-launched child: 18/0.** Network
+  refused, write outside the checkout refused, home read refused, `git push` denied before execution,
+  repository readable, `~/.gitconfig` readable but `~/.config` still refused, `gh auth token`
+  blocked, sentinel cloud credential scrubbed, tools `Bash, Skill`, no MCP, and a repository-declared
+  `SessionStart` hook that never fired — measured by its absent marker file, not reported.
+- **Outcome 5 — reconciled, after everything passed.** Plan (1d row, blocker table 3→2, suite count,
+  the `DO NOT RUN` note), spike `README.md`, and `SKILL.md`'s *Unattended runs* section now agree on
+  what is built, what is proven, and what remains blocked.
+
+**The Git exception, and why it is one file.** `denyRead: ["~/"]` also blocked `~/.gitconfig`, which
+Git reads every invocation, so the child's Git exited 128 *before touching the repository*. Check 6b
+established the repository was reachable and config discovery was the only obstacle. The zero-read
+alternative (`GIT_CONFIG_GLOBAL=/dev/null`) was rejected on evidence, not preference: the identity
+lives only in the global config here, so that child could not commit, and core § 4 has Claude commit
+every hop. Per the operator's decision, `allowRead` carries `~/.gitconfig` and nothing else —
+`~/.config/git/config` proved unnecessary (`PROBE_REPO_6B_SKIPPED`).
+
+**The exception is guarded at both ends**, because "Git works now" is equally true of a profile that
+re-opened all of home. Live: `~/.gitconfig` readable **and** `~/.config` refused. Simulated: no `~/`,
+`~`, `~/.config`, `~/*`, `~/.*` or `$HOME` entry in `allowRead`, the broad `denyRead` still present,
+and exactly three `allowRead` entries.
+
+**Residual risk, measured rather than reasoned.** `~/.gitconfig` also names credential helpers, so
+the child can read that a GitHub credential path is configured. It obtained **no** token — `gh` keeps
+its credentials under the still-denied `~/.config/gh/` — and `PROBE_GH_TOKEN_BLOCKED` is the
+observation, not the inference. **If a real secret is ever put in `~/.gitconfig`, this exception
+stops being safe**, recorded at the exception in `dispatch.sh` and not only here.
 
 Evidence:
 
 - **Simulated suite — RED before, GREEN after, matched pair on the same test file.**
-  `bash dispatch.test.sh` → **258 pass, 0 fail**. The same file against the pre-change dispatcher
-  recovered from `git show HEAD:…/dispatch.sh` → **212 pass, 22 fail**. The 22 are the new cases
-  failing against the thing they were written to catch.
+  `bash dispatch.test.sh` → **273 pass, 0 fail**. The same file against the pre-change dispatcher
+  recovered from `git show HEAD:…/dispatch.sh` → **212 pass, 22 fail**.
+- **The red pair does not cover the minimality guards, and case 32m exists because of that.**
+  Those assertions sit inside a "a profile was written" branch, so against a dispatcher that writes
+  no profile they never execute — the red count stayed 22 while the green pass count rose. An
+  assertion that does not run in the red half is not shown capable of failing by it (core § 6
+  rule 5). Case 32m builds a real profile from the dispatcher, widens it four ways — the whole home
+  tree, a config directory, an extra fourth entry, and the broad `denyRead` removed — and asserts the
+  guards fire on each, with the shipping profile as a positive control that they stay silent on.
+  The fourth-entry case is the one no named pattern would have caught, which is why the entry-count
+  assertion sits beside the pattern list.
 - **Live, through the dispatcher** — `runs/probes/unattended-effective-policy.sh`, recorded in
   `runs/probe-unattended-integration-2026-08-07.md`, raw capture in
   `runs/probes/unattended-effective-policy-2026-08-07.raw.txt`. The child is launched by
@@ -176,51 +211,31 @@ Deferrals — noticed, not done:
   this run measured the containment *this host* produces. Another checkout is not covered.
 
 ## Blocker
-**The settled profile contains the child and also stops it using Git.** Not a wiring defect — a
-property of the ratified profile.
+None.
 
-`denyRead: ["~/"]` blocks `~/.gitconfig`, which Git reads on every invocation, so Git exits **128
-before touching the repository**:
-
-```
-fatal: unable to access '/Users/patrik.lindeberg/.gitconfig': Operation not permitted
-```
-
-The repository itself is reachable: check 6b ran the same command with Git's config discovery
-neutralised and it **succeeded** (`PROBE_REPO_OK_NOCONFIG`). So `allowRead` is doing its job and the
-obstacle is config discovery alone.
-
-**The obvious workaround does not survive contact with this repo.** The child completed its own
-commit using `GIT_CONFIG_GLOBAL=/dev/null GIT_CONFIG_SYSTEM=/dev/null` — but only because the fixture
-sets `user.email` locally. In `ai-resources`, `git config --local --get user.email` is **empty** and
-the identity lives **only** in the global config. A child launched that way would have no Git
-identity, and core § 4 makes Claude commit every hop, so every hop would fail. That route breaks the
-loop rather than containing it.
-
-Resolving this changes a profile the operator ratified, which core § 7 and this brief's own stop
-condition both send to the operator rather than to a fix here.
+*Resolved during this unit, kept because it is the reason 1d nearly did not clear:* the settled
+profile contained the child and also stopped it using Git — a property of the ratified profile, not
+a wiring defect, and one only a live child could find. Settled by operator decision on 2026-08-07
+and implemented as the one-file exception above.
 
 ## Next action
-**Operator decision — how should the contained profile let Git work?** Both options change the
-ratified 1d profile, which is why neither was taken here. Stated with their real costs:
+Codex: assess this unit. The two questions are whether the five required outcomes are met, and
+whether the Git exception is genuinely minimal rather than merely working.
 
-- **A — allow the Git config files.** Add `~/.gitconfig` (and `~/.config/git/`) to
-  `sandbox.filesystem.allowRead`. Narrow and surgical; the child keeps your identity and global Git
-  settings. **Cost:** it re-opens two named paths inside the denied home tree, and `~/.gitconfig` is a
-  file you may later put something in that an unattended child should not read.
-- **B — supply the identity at launch instead.** Neutralise config discovery
-  (`GIT_CONFIG_GLOBAL=/dev/null`) and pass identity explicitly via `GIT_AUTHOR_*` / `GIT_COMMITTER_*`.
-  **Grants no new read at all.** **Cost:** unattended hops then run without your global Git settings
-  entirely, and the identity has to be configured somewhere the dispatcher can reach — a new thing to
-  keep correct, and a silent-failure path if it drifts.
+Specifically worth checking rather than taking on trust:
 
-A third option exists and should be said out loud rather than hidden: **C — decide the profile is
-right and the loop is wrong**, i.e. an unattended child should not be committing at all, and the
-dispatcher should carry commits itself. That is a larger change and would reopen core § 4's
-"Claude commits", so it is named as an option, not recommended.
+- The exception is **one file**, not a tree — `allowRead` holds exactly three entries and no widening
+  form, and `~/.config` is refused live. Both halves are asserted; a profile that re-opened all of
+  home would satisfy "Git works" alone.
+- The documentation reconciliation is **not ahead of the evidence**: plan, README and `SKILL.md` say
+  1d is complete and the blocker count is two, and nothing in them claims a walk-away pilot, Phase 2
+  readiness, or reliability from one attended run on one host.
+- The three probe defects are recorded as defects, not smoothed away, and the probe's evidence
+  surface can still fail.
 
-Claude's recommendation is **A**, on the grounds that it is the smallest change, keeps commit
-authorship truthful, and re-opens two config files rather than a directory tree — but this is a
-profile the operator settled, so the recommendation is not acted on.
+Deferrals for a later unit, recorded and not done: Phase 3 items **3c** and **3d** are re-opened by
+1d and describe a pre-sandbox world — they are now unblocked and should be rewritten against the
+contained profile. **Scope merging across settings scopes remains untested**; closing it needs
+managed settings the dispatcher cannot set.
 
-Nothing was begun on Phase 2, 1a or 1f. Nothing was approved, adopted, installed or pushed.
+Do not begin Phase 2, 1a or 1f. Nothing was approved, adopted, installed or pushed.

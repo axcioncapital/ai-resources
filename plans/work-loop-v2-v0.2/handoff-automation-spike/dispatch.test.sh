@@ -1351,6 +1351,40 @@ if [ -n "$PROF" ] && [ -s "$PROF" ]; then
   grep -Fq "$d_canon" "$PROF" \
     && ok "filesystem.allowRead re-opens the checkout, by its canonical path" \
     || bad "filesystem.allowRead re-opens the checkout by canonical path" "wanted $d_canon in $PROF"
+
+  # The one named exception inside the denied home tree (operator decision A,
+  # 2026-08-07). Without it Git exits 128 before touching the repository.
+  grep -Fq '"~/.gitconfig"' "$PROF" \
+    && ok "filesystem.allowRead re-opens ~/.gitconfig, so Git works inside the child" \
+    || bad "filesystem.allowRead re-opens ~/.gitconfig" "profile: $PROF"
+
+  # ...and the guard that the exception STAYED an exception. The operator's
+  # decision was "the minimum Git configuration paths, do not broaden home
+  # access", so widening is the regression to catch — and it is the kind that
+  # would otherwise pass every other assertion in this file. Each pattern below
+  # is a way the single file could quietly become a tree.
+  prof_allow="$(sed -n '/"allowRead"/,/\]/p' "$PROF")"
+  for widened in '"~/"' '"~"' '"~/.config"' '"~/.config/"' '"~/*"' '"~/.*"' '"$HOME"'; do
+    if printf '%s' "$prof_allow" | grep -Fq "$widened"; then
+      bad "allowRead does not broaden home access" "found $widened in allowRead"
+    else
+      ok "allowRead does not broaden home access with $widened"
+    fi
+  done
+  # denyRead must still be there. An allowRead exception is only narrow if the
+  # broad deny it sits inside is still in force.
+  grep -Eq '"denyRead"[[:space:]]*:[[:space:]]*\["~/"\]' "$PROF" \
+    && ok "the broad home denyRead is still in force around that exception" \
+    || bad "the broad home denyRead is still in force" "profile: $PROF"
+  # Exactly three allowRead entries: checkout, git common dir, ~/.gitconfig.
+  # A count assertion catches a fourth entry that none of the named patterns above
+  # would have anticipated.
+  # Count the quoted entries BETWEEN the brackets, so the "allowRead" key itself
+  # is not counted as one of its own values.
+  n_allow="$(printf '%s' "$prof_allow" | sed -n 's/.*\[\(.*\)\].*/\1/p' | grep -o '"[^"]*"' | wc -l | tr -d ' ')"
+  [ "$n_allow" -eq 3 ] \
+    && ok "allowRead holds exactly three entries (checkout, git dir, ~/.gitconfig)" \
+    || bad "allowRead holds exactly three entries" "counted $n_allow in: $prof_allow"
   # The argv --settings path must be the file that was actually written.
   argv_has "$WL_ARGV_FILE" "$PROF" \
     && ok "the --settings argument points at exactly the profile that was written" \
@@ -1540,6 +1574,69 @@ export WL_FAKE_VERSION="2.1.218 (Claude Code)"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task dryunatt-task --log-dir "$d/runs" \
       --dry-run --claude-bin "$FAKE2" --unattended 2>&1)"; RC=$?
 expect_rc 31 "$RC" "the dry-run preflight refuses an under-version host too" "$OUT"
+echo
+echo "Case 32m — the allowRead minimality guards can actually fail"
+# Why this case exists. The red-to-green pair does NOT cover the guards added for
+# the operator's 2026-08-07 decision ("allow the minimum Git configuration paths,
+# do not broaden home access"). Those assertions live inside a "a profile was
+# written" branch, so against the pre-change dispatcher — which writes no profile
+# — they do not run at all: the red count stayed 22 while the green pass count
+# rose. Assertions that never execute in the red half are not proven capable of
+# failing by it, and core § 6 rule 5 wants that shown, not assumed.
+#
+# So this case builds a real profile from the dispatcher, widens it the ways a
+# future edit plausibly would, and asserts the guards go red on each. It is the
+# guard on the guard.
+d="$(new_sandbox)"; state_file "$d" "widen-task" "claude"
+export WL_FAKE_VERSION="2.1.220 (Claude Code)"
+bash "$DISPATCH_BIN" --checkout "$d" --task widen-task --log-dir "$d/runs" \
+      --dry-run --claude-bin "$FAKE2" --unattended >/dev/null 2>&1
+BASEPROF="$(ls -t "$d"/runs/*.unattended-settings.json 2>/dev/null | head -1)"
+
+# The same predicates the real assertions use, applied to an arbitrary file.
+# Returns 0 when at least one guard fires — i.e. the file would be rejected.
+guards_fire() { # profile-path
+  local f="$1" a w n
+  a="$(sed -n '/"allowRead"/,/\]/p' "$f")"
+  for w in '"~/"' '"~"' '"~/.config"' '"~/.config/"' '"~/*"' '"~/.*"' '"$HOME"'; do
+    printf '%s' "$a" | grep -Fq "$w" && return 0
+  done
+  n="$(printf '%s' "$a" | sed -n 's/.*\[\(.*\)\].*/\1/p' | grep -o '"[^"]*"' | wc -l | tr -d ' ')"
+  [ "$n" -ne 3 ] && return 0
+  grep -Eq '"denyRead"[[:space:]]*:[[:space:]]*\["~/"\]' "$f" || return 0
+  return 1
+}
+
+if [ -n "$BASEPROF" ] && [ -s "$BASEPROF" ]; then
+  # Positive control first. If the guards fired on the profile that actually
+  # ships, they would be catching everything and proving nothing.
+  guards_fire "$BASEPROF" \
+    && bad "the guards stay silent on the shipping profile" "they fired on $BASEPROF" \
+    || ok "the guards stay silent on the shipping profile (positive control)"
+
+  # Each mutation is a way the one-file exception could plausibly become a tree.
+  sed 's|"~/.gitconfig"|"~/"|'                        "$BASEPROF" >"$SANDBOX_ROOT/w-home.json"
+  sed 's|"~/.gitconfig"|"~/.config"|'                 "$BASEPROF" >"$SANDBOX_ROOT/w-cfgdir.json"
+  sed 's|"~/.gitconfig"|"~/.gitconfig", "~/.ssh/id"|' "$BASEPROF" >"$SANDBOX_ROOT/w-extra.json"
+  sed 's|"denyRead": \["~/"\]|"denyRead": []|'        "$BASEPROF" >"$SANDBOX_ROOT/w-nodeny.json"
+
+  guards_fire "$SANDBOX_ROOT/w-home.json" \
+    && ok "widening the exception to the whole home tree is caught" \
+    || bad "widening to the whole home tree is caught" "guards stayed silent"
+  guards_fire "$SANDBOX_ROOT/w-cfgdir.json" \
+    && ok "widening the exception to a config DIRECTORY is caught" \
+    || bad "widening to a config directory is caught" "guards stayed silent"
+  # The one a named-pattern list would miss on its own — which is why the entry
+  # count assertion exists alongside the patterns.
+  guards_fire "$SANDBOX_ROOT/w-extra.json" \
+    && ok "an extra fourth allowRead entry is caught, even though it matches no named pattern" \
+    || bad "an extra fourth allowRead entry is caught" "guards stayed silent"
+  guards_fire "$SANDBOX_ROOT/w-nodeny.json" \
+    && ok "removing the broad home denyRead is caught" \
+    || bad "removing the broad home denyRead is caught" "guards stayed silent"
+else
+  bad "a profile was generated for the widening check" "nothing under $d/runs"
+fi
 unset WL_ARGV_FILE WL_ENV_FILE WL_SF WL_CO WL_FAKE_VERSION
 
 # ==================================================================== done
