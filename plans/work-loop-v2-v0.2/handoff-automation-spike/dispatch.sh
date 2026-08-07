@@ -303,11 +303,22 @@ file_hash() { shasum -a 256 "$1" 2>/dev/null | cut -d' ' -f1; }
 # — the reason line printed empty.
 pid_state() { # pid -> "LIVE|reason" / "ABSENT|reason" / "UNKNOWN|reason"
   local pid="${1:-}" err rc
-  # The reason text must not contain '|', or the caller's split would truncate
-  # it; the wordings below and strerror's are both free of it.
+  # A valid pid matches [1-9][0-9]* — and "numeric" is NOT the same test.
+  # `0` and `00` are numeric and were accepted here until 2026-08-07; both are
+  # catastrophic to pass to kill(2), because pid 0 means "every process in the
+  # CALLER'S OWN process group". `kill -0 0` therefore SUCCEEDS, so a lock
+  # holding `0` reported `IN FLIGHT — dispatcher pid 0` and told the operator to
+  # run `kill -TERM 0` — which would signal their own shell and everything in it.
+  # A zero-PREFIXED value is a quieter version of the same bug: `007` reaches
+  # kill(2) as pid 7, so the verdict is a true statement about an unrelated
+  # process presented as a statement about this lock.
+  #
+  # None of these is evidence about the dispatcher. They are a corrupt lock, and
+  # a corrupt lock is something this function cannot inspect — UNKNOWN.
   case "$pid" in
     '')       printf 'UNKNOWN|the lock directory holds no readable pid file\n'; return 0 ;;
     *[!0-9]*) printf "UNKNOWN|the lock's pid is not a number: '%s'\\n" "$pid"; return 0 ;;
+    0*)       printf "UNKNOWN|the lock's pid is not a usable process id: '%s' — a real pid matches [1-9][0-9]*, and 0 would mean this caller's own process group\\n" "$pid"; return 0 ;;
   esac
 
   err="$(LC_ALL=C kill -0 "$pid" 2>&1)"; rc=$?

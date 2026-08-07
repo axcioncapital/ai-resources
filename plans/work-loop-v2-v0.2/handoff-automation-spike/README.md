@@ -65,7 +65,17 @@ caller is merely not allowed to look (`EPERM`).
 |---|---|---|
 | `IN FLIGHT — dispatcher pid N` | The pid is visibly alive and signallable | Leave the state file alone. `kill -TERM N` to stop it |
 | `STALE LOCK` | The pid is **positively** absent — `kill -0` said *no such process* | Clear it: the command prints the exact `rm -rf` |
-| `UNKNOWN — CANNOT INSPECT` | The pid could **not be inspected** — permission denied, no pid file, a non-numeric pid, or an unrecognised error | **Nothing destructive.** Assume the run may be live. Re-run `--status` from somewhere permitted to inspect processes |
+| `UNKNOWN — CANNOT INSPECT` | The pid could **not be inspected** — permission denied, no pid file, an unrecognised error, or a pid that is not a usable process id (see below) | **Nothing destructive.** Assume the run may be live. Re-run `--status` from somewhere permitted to inspect processes |
+
+**A valid lock pid matches `[1-9][0-9]*`, and "numeric" is not that test.** `0` and `00` are numeric
+but must never reach `kill(2)`: pid `0` means *every process in the caller's own process group*, so
+`kill -0 0` **succeeds**. Until 2026-08-07 a lock holding `0` therefore reported
+`IN FLIGHT — dispatcher pid 0` and instructed `kill -TERM 0` — which would have signalled the
+operator's own shell and everything in it. A zero-*prefixed* value is the quieter form of the same
+bug: `007` reaches `kill(2)` as pid 7, so the verdict was a true statement about an unrelated
+process, printed as a statement about this lock. All of these are a corrupt lock, which is something
+`--status` cannot inspect — so they report `UNKNOWN`, and the output contains no `IN FLIGHT`, no
+`STALE LOCK`, no `kill -TERM` and no `rm -rf`. Case `30f` pins each one.
 
 Only the first two are conclusions. `UNKNOWN` prints the evidence for its own verdict on a `why:`
 line, still reports the pid, lock path, state file and latest run log, and **never** recommends
@@ -185,22 +195,21 @@ bash dispatch.sh \
 
 > # ⛔ DO NOT RUN — 2026-08-07
 >
-> **This is a worked example of a shape that is not cleared for use.** Four Phase 2 blockers stand
+> **This is a worked example of a shape that is not cleared for use.** Three Phase 2 blockers stand
 > between it and a real walk-away run (full list: `unattended-operation-plan-v0.2.md`, status block).
-> Three of them change how *this very command* behaves:
+> Two of them change how *this very command* behaves:
 >
 > 1. **The contained profile is not wired in.** Nothing below restricts the child. The run has an
 >    open network and full file authority, whatever the settled 1d policy says.
-> 2. **`--status` (step 4) — fixed in this checkout, NOT yet live-accepted.** It no longer collapses
->    "cannot inspect the PID" into `STALE LOCK`; it now answers `UNKNOWN — CANNOT INSPECT` and
->    refuses to recommend removing the lock (cases 30d/30e/30f). But the fix has only been proven
->    against a *forced* permission denial in the harness. **The originating Codex sandbox has not
->    re-run the real cross-sandbox check that found the defect**, so this stays a blocker until it
->    does. Until then, still prefer step 4 from an ordinary terminal.
+> 2. **`--status` (step 4) — FIXED and independently live-accepted; no longer a blocker.** It no
+>    longer collapses "cannot inspect the PID" into `STALE LOCK`; it answers `UNKNOWN — CANNOT
+>    INSPECT` and refuses to recommend removing the lock (cases 30d/30e/30f). Confirmed live by the
+>    Codex sandbox that found the defect, 2026-08-07: hidden live PID → `UNKNOWN`, the same PID
+>    unsandboxed → `IN FLIGHT`, terminated PID → `STALE LOCK`.
 > 3. **The stop (step 3) reaches a process group, not a tree.** A descendant that calls `setsid`
 >    survives `kill`, after you believe the run is stopped.
 >
-> The fourth, **branch/isolation unproven**, is what step 1 below is *supposed* to guarantee and has
+> The third, **branch/isolation unproven**, is what step 1 below is *supposed* to guarantee and has
 > never been demonstrated in a live run.
 >
 > **The launch shape below has been corrected and is no longer a blocker.** Phase 0 proved the
@@ -248,12 +257,11 @@ bash dispatch.sh --checkout "$REPO" --task "$TASK" --status
 ```
 
 Two cautions on step 4, both measured rather than assumed. First: from inside a Codex command sandbox
-`--status` cannot inspect the PID. It no longer calls that `STALE LOCK` — it now answers
-`UNKNOWN — CANNOT INSPECT` and tells you the lock may still be live — but `UNKNOWN` is not an answer
-to *"is it still going?"*, so run step 4 from an ordinary terminal when you need a real one. That
-change is harness-proven only; the live cross-sandbox check has not been repeated. Second: a `28`
-stop reaches the actor's process *group*, so a descendant that called `setsid` is still running
-afterwards.
+`--status` cannot inspect the PID. It no longer calls that `STALE LOCK` — it answers
+`UNKNOWN — CANNOT INSPECT` and tells you the lock may still be live, confirmed live cross-sandbox on
+2026-08-07 — but `UNKNOWN` is still not an answer to *"is it still going?"*, so run step 4 from an
+ordinary terminal when you need a real one. Second: a `28` stop reaches the actor's process *group*,
+so a descendant that called `setsid` is still running afterwards.
 
 - **`--deadline 2400`** is the forty minutes. `--max-hops 12` is the secondary bound.
 - **`--allow-path` is a per-task input, not boilerplate.** `1c` checks what the actor *committed*
@@ -343,15 +351,16 @@ The suite builds throwaway sandbox checkouts under `TMPDIR` and removes them on 
 real repository. It ends with a summary line and exits `1` if any case failed:
 
 ```
-pass=171 fail=0  (all cases SIMULATED — no live product transport)
+pass=198 fail=0  (all cases SIMULATED — no live product transport)
 ```
 
 > **This count drifts, twice over now.** It read `pass=69` until 2026-08-06, when the suite actually
 > stood at 82 — cases had been added without updating the line. Re-measured that day: the
 > pre-`--carry-one` suite from `HEAD` returns **82**, and cases 23–26 brought it to **99**. The line
-> then sat at `99` while Phase 1 took the suite to **149** (commit `c8b2172`), and the `--status`
-> three-state fix on 2026-08-07 added 22 more to reach **171**. A hand-maintained count drifts
-> silently every time; treat the number as documentation and the run as the evidence.
+> then sat at `99` while Phase 1 took the suite to **149** (commit `c8b2172`), the `--status`
+> three-state fix on 2026-08-07 added 22 to reach **171**, and the pid-validation correction that
+> followed it added 27 more to reach **198**. A hand-maintained count drifts silently every time;
+> treat the number as documentation and the run as the evidence.
 
 **Case 0 is the harness's own falsifiability proof:** it points the suite at an *absent* dispatcher
 and asserts that the suite fails. A harness that stays green with the thing under test removed is not
@@ -400,14 +409,22 @@ Cases `30d`/`30e`/`30f` were added on 2026-08-07 for the `--status` three-state 
 red-to-green against the controller that preceded them (`c8b2172`):
 
 ```
-30d/30e/30f  pass=162 fail=9  →  pass=171 fail=0
+30d/30e/30f          pass=162 fail=9   →  pass=171 fail=0
+30f (pid validation) pass=186 fail=12  →  pass=198 fail=0
 ```
+
+The second line is the follow-up correction: the first cut of the three-state fix validated the lock
+pid as *numeric*, which admits `0`, `00` and `007`. Review caught it, and the red-to-green ran
+against the three-state commit (`e1ebb2f`) rather than against the pre-fix controller — each fix is
+measured against the thing it actually changed.
 
 They are a **matched pair plus a control**, and only mean something together. `30d` forces a real
 permission denial — the lock's pid is `1` (launchd: always alive, always `EPERM` for a non-root
 caller), which is a genuine uninspectable live process rather than a simulated one — and asserts
-`UNKNOWN`, no `STALE LOCK`, and no `rm -rf`. `30f` does the same for an unreadable and a non-numeric
-pid. `30e` is the **positive control**: a reaped pid must still report `STALE LOCK`. Without `30e`, a
+`UNKNOWN`, no `STALE LOCK`, and no `rm -rf`. `30f` does the same for an unreadable pid, a non-numeric
+pid, and the invalid-but-*numeric* pids `0`, `00`, `007` and `0000000` — and it also pins `1` and `10`
+as **valid**, so the zero rule cannot quietly widen into rejecting legitimate pids.
+`30e` is the **positive control**: a reaped pid must still report `STALE LOCK`. Without `30e`, a
 "fix" that answered `UNKNOWN` to every failed check would pass `30d` and `30f` while quietly
 destroying the stale-lock report — and indeed `30e` passes against the *pre-fix* dispatcher too,
 which is exactly what makes it a control rather than another regression test. `30d` skips itself

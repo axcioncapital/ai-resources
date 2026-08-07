@@ -14,12 +14,13 @@ Author: Claude. Revised after independent Codex review of v0.1.
 > | **1d** unattended authority | **policy SETTLED by the operator; dispatcher integration NOT built.** The contained profile is proven (`runs/probe-contained-authority-2026-08-07.md`) and chosen: no push, no tool-side network. The existing `--claude-deny` plumbing is *not* that profile and does not deliver it |
 > | **1e** no sleep | **done — observed in the supervised Phase 0 proof under `caffeinate -i`.** The 0c run held the machine awake across five hops and 301 seconds of actor time without dying mid-hop. Also documented in the worked invocation, spike `README.md` |
 > | **1f** branch isolation | **UNPROVEN — still blocking.** Documented only (branch + clean tree + the worktree blocker, spike `README.md` § Safety boundaries). No run has demonstrated a clean branch/isolation boundary in practice. Written down is not proven |
-> | **1g** read-only status | **IMPLEMENTED — awaiting independent live acceptance; still blocking until then.** The false `STALE LOCK` is fixed: `--status` now answers in **three** states — `IN FLIGHT` (pid visibly alive), `STALE LOCK` (pid **positively** absent, i.e. `kill -0` said *no such process*) and `UNKNOWN — CANNOT INSPECT` (permission denied, unreadable pid, or any ambiguous failure). `UNKNOWN` says the lock may belong to a live dispatcher, still reports pid/lock/state/log, and **never** recommends removing the lock. Read-only and exit-`0` contracts unchanged. Tests: 30d (forced `EPERM`), 30f (unreadable/non-numeric pid), **30e positive control** (a genuinely absent pid must still read `STALE LOCK`) — red-to-green `162/9 → 171/0` against `c8b2172`. **What is NOT yet proven:** the fix is verified only against a *forced* permission denial inside the harness. **The originating Codex sandbox has not repeated the real cross-sandbox check that found the defect**, so 1g stays a Phase 2 blocker until it does |
+> | **1g** read-only status | **IMPLEMENTED; original defect INDEPENDENTLY LIVE-ACCEPTED. One residual confirmation outstanding — see the end of this cell.** The false `STALE LOCK` is fixed: `--status` now answers in **three** states — `IN FLIGHT` (pid visibly alive), `STALE LOCK` (pid **positively** absent, i.e. `kill -0` said *no such process*) and `UNKNOWN — CANNOT INSPECT` (permission denied, unreadable pid, or any ambiguous failure). `UNKNOWN` says the lock may belong to a live dispatcher, still reports pid/lock/state/log, and **never** recommends removing the lock. Read-only and exit-`0` contracts unchanged. A valid lock pid must match `[1-9][0-9]*`; empty, non-numeric, zero and zero-prefixed values (`0`, `00`, `007`) report `UNKNOWN` and emit no `IN FLIGHT`, `STALE LOCK`, `kill -TERM` or `rm -rf`. Tests: 30d (forced `EPERM`), 30f (unreadable, non-numeric and invalid-numeric pids, plus `1`/`10` pinned valid), **30e positive control** (a genuinely absent pid must still read `STALE LOCK`) — red-to-green `162/9 → 171/0` against `c8b2172`, then `186/12 → 198/0` for the pid-validation correction against `e1ebb2f`. **Independently confirmed live** (Codex, 2026-08-07): sandbox-hidden live PID → `UNKNOWN`; the same PID outside the sandbox → `IN FLIGHT`; terminated PID → `STALE LOCK`. **What is NOT yet proven:** that live check was run against the three-state build *before* the pid-validation correction, so 1g stays a Phase 2 blocker pending one confirmation against the corrected dispatcher |
 > | **Phase 2** — walk-away pilot | **BLOCKED**, correctly. Phase 0 is no longer among the blockers; 1d's *policy* is settled. **Four remain — see the list below the table.** None is a decision; all are unbuilt or unproven work |
 > | **Phase 3** — documentation (3a–3h) | **done, except 3c and 3d, both RE-OPENED by the 1d correction.** `SKILL.md` § Courier mode + § The seam and spike `README.md` stand. 3c (what stays forbidden) and 3d (the risk envelope) describe a pre-sandbox world and must be rewritten once the contained profile is built |
 > | Core § 4 decision | **recorded** in `logs/decisions.md`, 2026-08-07 |
 >
-> Suite: **171 pass, 0 fail** — all simulated (149 at `c8b2172`, plus 22 for the 1g three-state fix). **One live multi-hop run has now happened** — Phase 0c,
+> Suite: **198 pass, 0 fail** — all simulated (149 at `c8b2172`, plus 22 for the 1g three-state fix
+> and 27 for the pid-validation correction that followed it). **One live multi-hop run has now happened** — Phase 0c,
 > **an attended five-hop live run with no operator transport during the run**: three commits, closed
 > at `turn: operator`. The operator was present at a supervised terminal throughout; it was not a
 > walk-away run and it ran **without** the contained profile. **The Phase 2 walk-away pilot has never
@@ -30,7 +31,7 @@ Author: Claude. Revised after independent Codex review of v0.1.
 > | # | Blocker | Why it blocks a walk-away run |
 > |---|---|---|
 > | 1 | **Contained profile not wired into the dispatcher** (1d) | The policy is settled and proven; nothing applies it. A run today has an open network |
-> | 2 | **`--status` three-state fix not live-accepted** (1g) | The false `STALE LOCK` is **fixed and harness-proven** (`UNKNOWN — CANNOT INSPECT`, cases 30d/30e/30f). It is **not** independently accepted: the defect was found by a real Codex sandbox, and only that sandbox re-running the check can close it. A fix verified solely by the party that wrote it, against a *simulated* denial, is not acceptance |
+> | 2 | **`--status` — original defect CLEARED; one residual confirmation** (1g) | The false `STALE LOCK` is fixed, harness-proven (cases 30d/30e/30f) **and independently live-accepted by Codex on 2026-08-07**: sandbox-hidden live PID → `UNKNOWN`, the same PID unsandboxed → `IN FLIGHT`, terminated PID → `STALE LOCK`. **What the original blocker described is closed.** Residual: that live check ran against the 171-case build (`e1ebb2f`); the pid-validation correction landed after it and has not been live-re-checked. The correction only rejects pid values a real dispatcher never writes (`$$` is always valid), so it cannot plausibly regress the confirmed behaviour — **whether this residual still counts as blocking is the operator's call, not a defect** |
 > | 3 | **Escaped descendants survive the stop** (1a) | `kill -TERM` reaches the actor's process *group*. Anything that calls `setsid` outlives the run, unsupervised and unbounded |
 > | 4 | **Branch/isolation unproven** (1f) | Documented, never demonstrated. The claim that `main` is protected has not been exercised |
 >
@@ -386,10 +387,30 @@ it does not stop the parent Codex task from editing the file by hand.
 > a lazy "answer UNKNOWN to everything" fix from passing. Red-to-green against `c8b2172`:
 > `pass=162 fail=9 → pass=171 fail=0`, with 30e green on **both** sides.
 >
-> **Why this is still a Phase 2 blocker.** The fix is proven only against a *forced* denial inside
-> the harness, by the same party that wrote it. The defect was found by a real Codex sandbox, and
-> **that sandbox has not repeated the cross-sandbox check**. Until it reports `UNKNOWN — CANNOT
-> INSPECT` against a genuinely live unsandboxed dispatcher, 1g is implemented but not accepted.
+> **A second defect, found in review of the fix itself (2026-08-07).** The first cut validated the
+> lock pid as *numeric*, which is not the same test as *valid*. `0` and `00` are numeric, and pid `0`
+> means **every process in the caller's own process group** — so `kill -0 0` succeeds, and a lock
+> holding `0` reported `IN FLIGHT — dispatcher pid 0` with the instruction `kill -TERM 0`. Following
+> it would have signalled the operator's own shell. A zero-*prefixed* value is the quiet form of the
+> same bug: `007` reaches `kill(2)` as pid 7, so a true verdict about an unrelated process was
+> printed as a verdict about this lock. A valid pid now must match `[1-9][0-9]*`; everything else is
+> a corrupt lock, reported `UNKNOWN` with no `IN FLIGHT`, `STALE LOCK`, `kill -TERM` or `rm -rf` in
+> the output. Case 30f pins `0`, `00`, `007` and `0000000`, and pins `1` and `10` as valid so the
+> rule cannot widen. Red-to-green `186/12 → 198/0` against `e1ebb2f`.
+>
+> **Independent live acceptance — RECEIVED (Codex, 2026-08-07).** Against a real cross-sandbox run:
+> a sandbox-hidden live PID reported `UNKNOWN`, the **same** PID inspected from outside the sandbox
+> reported `IN FLIGHT`, and a terminated PID reported `STALE LOCK`. That is the check that found the
+> original defect, repeated by the party that found it, and it distinguishes all three states
+> correctly. **The blocker as originally written is closed.** The temporary review lock and process
+> were removed; no repository files were changed by that check.
+>
+> **The one residual.** The live acceptance ran against the 171-case build (`e1ebb2f`); the
+> pid-validation correction landed after it. That correction only rejects pid values a real
+> dispatcher never writes — it writes `$$`, which always matches `[1-9][0-9]*` — so it cannot
+> plausibly regress the confirmed behaviour, and no live path exercises it. Whether to re-confirm
+> before Phase 2, or to treat 1g as closed on the evidence in hand, is an operator judgment rather
+> than an open defect.
 
 ---
 
@@ -397,12 +418,12 @@ it does not stop the parent Codex task from editing the file by hand.
 
 Only after every Phase 1 item lands, with 1d settled by the operator.
 
-> **DO NOT RUN — 2026-08-07.** 1d's decision is settled, but Phase 1 has *not* landed. Four blockers
-> stand (listed in full in the status block at the top of this document): the contained profile is
-> unbuilt, the `--status` three-state fix is harness-proven but not live-accepted by the Codex
-> sandbox that found the defect, escaped descendants survive the stop, and branch isolation is
-> unproven. The preconditions below are the *target*, not the current state — read every one of them
-> as unmet.
+> **DO NOT RUN — 2026-08-07.** 1d's decision is settled, but Phase 1 has *not* landed. Of the four
+> blockers listed in the status block at the top of this document, **three stand unchanged**: the
+> contained profile is unbuilt, escaped descendants survive the stop, and branch isolation is
+> unproven. The fourth — the `--status` false `STALE LOCK` (1g) — is **fixed and independently
+> live-accepted**, with one residual re-confirmation that is an operator judgment rather than a
+> defect. The preconditions below are the *target*, not the current state.
 >
 > The launch shape is **not** among the blockers: Phase 0 settled it as a supervised terminal under
 > `caffeinate -i`, which is § 0b's own stated fallback.
@@ -411,8 +432,8 @@ Only after every Phase 1 item lands, with 1d settled by the operator.
 - a hard ~40-minute deadline (1b), hop limit as a secondary bound;
 - no push, no merge, no deployment, no external side effects;
 - sleep prevented (1e), stop control proven (1a — **group only; escaped descendants survive**),
-  status readable (1g — **three-state fix built and harness-proven; the false `STALE LOCK` is gone,
-  but the originating Codex sandbox has not re-run the live cross-sandbox check that found it**);
+  status readable (1g — **met.** Three states, harness-proven and independently live-accepted by
+  Codex: hidden live PID → `UNKNOWN`, same PID unsandboxed → `IN FLIGHT`, terminated → `STALE LOCK`);
 - an end-state notification — the Codex task-completion notification if it serves, rather than a
   custom observer process.
 

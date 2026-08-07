@@ -1109,6 +1109,52 @@ printf 'not-a-pid\n' >"$LK/pid"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nopid --status 2>&1)"; RC=$?
 printf '%s' "$OUT" | grep -q "CANNOT INSPECT" \
   && ok "a non-numeric pid reports UNKNOWN" || bad "a non-numeric pid reports UNKNOWN" "$OUT"
+
+# "numeric" is not the same test as "a valid pid". These three were accepted by
+# the first cut of the three-state fix, and each produced a confident answer:
+#
+#   0    kill -0 0 SUCCEEDS — pid 0 means the CALLER'S OWN process group — so
+#        --status said "IN FLIGHT — dispatcher pid 0" and instructed
+#        "kill -TERM 0", which would signal the operator's own shell.
+#   00   same, via the same route.
+#   007  reaches kill(2) as pid 7: a true verdict about an unrelated process,
+#        printed as a verdict about this lock (observed: STALE LOCK + rm -rf).
+#
+# A valid pid matches [1-9][0-9]*. Anything else is a corrupt lock, which is a
+# thing that cannot be inspected — never a conclusion about the dispatcher.
+for BADPID in 0 00 007 0000000; do
+  printf '%s\n' "$BADPID" >"$LK/pid"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nopid --status 2>&1)"; RC=$?
+  expect_rc 0 "$RC" "pid '$BADPID': exits 0 (the exit-code contract is unchanged)" "$OUT"
+  printf '%s' "$OUT" | grep -q "CANNOT INSPECT" \
+    && ok "pid '$BADPID' reports UNKNOWN — CANNOT INSPECT" \
+    || bad "pid '$BADPID' reports UNKNOWN — CANNOT INSPECT" "$OUT"
+  # No conclusion, and above all no instruction: `kill -TERM 0` and `rm -rf` are
+  # the two ways this output can destroy something.
+  for FORBIDDEN in "IN FLIGHT" "STALE LOCK" "kill -TERM" "rm -rf"; do
+    printf '%s' "$OUT" | grep -qF "$FORBIDDEN" \
+      && bad "pid '$BADPID' output contains no '$FORBIDDEN'" "$OUT" \
+      || ok "pid '$BADPID' output contains no '$FORBIDDEN'"
+  done
+done
+
+# The boundary the rule turns on: 1 is the smallest valid pid and must NOT be
+# swept up by the zero rule. Without this, "reject 0*" could quietly become
+# "reject anything starting with a digit ≤ some bound" and nobody would notice.
+printf '1\n' >"$LK/pid"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nopid --status 2>&1)"; RC=$?
+printf '%s' "$OUT" | grep -q "pid 1 " \
+  && ok "pid 1 is still treated as a valid pid and inspected" \
+  || bad "pid 1 is still treated as a valid pid and inspected" "$OUT"
+printf '%s' "$OUT" | grep -qi "not a usable process id" \
+  && bad "pid 1 is not rejected by the zero rule" "$OUT" \
+  || ok "pid 1 is not rejected by the zero rule"
+# 10 exercises the other side: a valid pid that merely CONTAINS a zero.
+printf '10\n' >"$LK/pid"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nopid --status 2>&1)"; RC=$?
+printf '%s' "$OUT" | grep -qi "not a usable process id" \
+  && bad "a pid containing a zero (10) is not rejected" "$OUT" \
+  || ok "a pid containing a zero (10) is not rejected"
 rm -rf "$LK"
 
 # ================================================================= case 31
