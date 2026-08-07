@@ -317,7 +317,7 @@ stdout, removing the subshell at all six call sites so the two results cannot be
   core, skill, command or unrelated state file was touched. A concurrent session moved `HEAD`
   `5680a44` → `b500c29` during this round, touching only its own S3 files; `dispatch.sh` is
   byte-identical at both commits, so the red baseline is unaffected.
-- **Implementation commit `PENDING`.**
+- **Correction commit `5dd1d60`.** Round 1 was `cd87e5b` / `145a7b3`.
 
 ### Candidate deferrals, recorded and not done
 
