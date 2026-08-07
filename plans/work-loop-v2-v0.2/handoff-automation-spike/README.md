@@ -43,7 +43,7 @@ built from it.
 | `--claude-deny RULE` | none — repeatable; passed to the Claude child as `--disallowedTools RULE` |
 | `--log-dir DIR` | `<spike>/runs` |
 | `--dry-run` | off |
-| `--status` | off — read-only report; takes no lock, writes nothing |
+| `--status` | off — read-only report; takes no lock, writes nothing; answers IN FLIGHT / STALE LOCK / UNKNOWN — CANNOT INSPECT |
 | `--actor-cmd CMD` | none |
 
 ### The four modes
@@ -53,6 +53,34 @@ built from it.
   the state file says, which branch `HEAD` is on, and where the run log is. It takes **no lock**,
   creates **no log directory**, and writes nothing at all, so it is safe to run against a live run —
   which is the whole point of it. Returns `0` even while another dispatcher holds the lock.
+  It answers about the lock in **three states, never two** — see below.
+
+#### The three lock states
+
+`--status` reads the lock's pid and reports one of three things. The third exists because a failed
+`kill -0` is not proof of death: it fails both when the process is gone (`ESRCH`) and when the
+caller is merely not allowed to look (`EPERM`).
+
+| `run:` line | What it means | What the operator should do |
+|---|---|---|
+| `IN FLIGHT — dispatcher pid N` | The pid is visibly alive and signallable | Leave the state file alone. `kill -TERM N` to stop it |
+| `STALE LOCK` | The pid is **positively** absent — `kill -0` said *no such process* | Clear it: the command prints the exact `rm -rf` |
+| `UNKNOWN — CANNOT INSPECT` | The pid could **not be inspected** — permission denied, no pid file, a non-numeric pid, or an unrecognised error | **Nothing destructive.** Assume the run may be live. Re-run `--status` from somewhere permitted to inspect processes |
+
+Only the first two are conclusions. `UNKNOWN` prints the evidence for its own verdict on a `why:`
+line, still reports the pid, lock path, state file and latest run log, and **never** recommends
+removing the lock. All three exit `0` — the exit code answers "did status run?", not "is the run
+alive?", so read the `run:` line and never the exit status.
+
+> **Why the third state exists.** Phase 0 § 0b item 3 ran `--status` against a genuinely live
+> dispatcher (pid 79266) from inside the ordinary Codex command sandbox. Sandbox policy refused
+> `kill -0`, the old two-state check read that refusal as death, and the output reported `STALE LOCK`
+> and told the operator to `rm -rf` a lock that was doing its job. Acting on that answer means
+> hand-editing a state file mid-hop — the exact corruption the skill's rule exists to prevent. The
+> bias is deliberate and one-directional: a false `UNKNOWN` costs one more look, a false `STALE LOCK`
+> costs a live run. Cases 30d/30f cover the uninspectable pid; **case 30e is the positive control**
+> that keeps a genuinely absent pid reporting `STALE LOCK` rather than everything collapsing to
+> `UNKNOWN`.
 - **`--dry-run`** (`mode=dry-run`) — validates the checkout, the task id, the state file and the
   restart condition, then names the actor it *would* launch and stops. Launches nothing and writes
   nothing to the state file. Unlike `--status`, it **does** take the lock.
@@ -163,9 +191,12 @@ bash dispatch.sh \
 >
 > 1. **The contained profile is not wired in.** Nothing below restricts the child. The run has an
 >    open network and full file authority, whatever the settled 1d policy says.
-> 2. **`--status` (step 4) can lie.** Against a live run it reports `STALE LOCK` whenever it cannot
->    inspect the PID — measured in Phase 0 from inside a Codex sandbox. The one instrument this
->    example offers for checking on the run is the one that misreports it as dead.
+> 2. **`--status` (step 4) — fixed in this checkout, NOT yet live-accepted.** It no longer collapses
+>    "cannot inspect the PID" into `STALE LOCK`; it now answers `UNKNOWN — CANNOT INSPECT` and
+>    refuses to recommend removing the lock (cases 30d/30e/30f). But the fix has only been proven
+>    against a *forced* permission denial in the harness. **The originating Codex sandbox has not
+>    re-run the real cross-sandbox check that found the defect**, so this stays a blocker until it
+>    does. Until then, still prefer step 4 from an ordinary terminal.
 > 3. **The stop (step 3) reaches a process group, not a tree.** A descendant that calls `setsid`
 >    survives `kill`, after you believe the run is stopped.
 >
@@ -216,10 +247,13 @@ caffeinate -i bash dispatch.sh \
 bash dispatch.sh --checkout "$REPO" --task "$TASK" --status
 ```
 
-Two cautions on step 4, both measured rather than assumed. Run it from an ordinary terminal, **not**
-from inside a Codex command sandbox — there it cannot inspect the PID and reports a live run as
-`STALE LOCK`. And a `28` stop reaches the actor's process *group*: a descendant that called `setsid`
-is still running afterwards.
+Two cautions on step 4, both measured rather than assumed. First: from inside a Codex command sandbox
+`--status` cannot inspect the PID. It no longer calls that `STALE LOCK` — it now answers
+`UNKNOWN — CANNOT INSPECT` and tells you the lock may still be live — but `UNKNOWN` is not an answer
+to *"is it still going?"*, so run step 4 from an ordinary terminal when you need a real one. That
+change is harness-proven only; the live cross-sandbox check has not been repeated. Second: a `28`
+stop reaches the actor's process *group*, so a descendant that called `setsid` is still running
+afterwards.
 
 - **`--deadline 2400`** is the forty minutes. `--max-hops 12` is the secondary bound.
 - **`--allow-path` is a per-task input, not boilerplate.** `1c` checks what the actor *committed*
@@ -271,6 +305,8 @@ where the code's meaning actually differs.
 - `--help` returns `0` after printing the header. Nothing was validated.
 - `--status` returns `0` after reporting what it could read. Nothing was validated beyond
   readability, nothing was launched, nothing was written — including when a run is in flight.
+  `0` does **not** mean the report was conclusive: an `UNKNOWN — CANNOT INSPECT` lock verdict exits
+  `0` too. Read the `run:` line, never the exit code.
 - A completed `--dry-run` returns `0` after validation. **No turn was taken.**
 - A `--carry-one` run returns `0` when the turn moved exactly once in an allowed direction — **or**
   when `turn:` was already `operator` and nothing was carried. Read `turn:` from the state file to
@@ -307,13 +343,15 @@ The suite builds throwaway sandbox checkouts under `TMPDIR` and removes them on 
 real repository. It ends with a summary line and exits `1` if any case failed:
 
 ```
-pass=99 fail=0  (all cases SIMULATED — no live product transport)
+pass=171 fail=0  (all cases SIMULATED — no live product transport)
 ```
 
-> **This count was stale.** It read `pass=69` until 2026-08-06, when the suite actually stood at 82 —
-> cases had been added without updating the line. Re-measured that day: the pre-`--carry-one` suite
-> from `HEAD` returns **82**, and cases 23–26 bring it to **99**. A hand-maintained count drifts
-> silently, so treat the number as documentation and the run as the evidence.
+> **This count drifts, twice over now.** It read `pass=69` until 2026-08-06, when the suite actually
+> stood at 82 — cases had been added without updating the line. Re-measured that day: the
+> pre-`--carry-one` suite from `HEAD` returns **82**, and cases 23–26 brought it to **99**. The line
+> then sat at `99` while Phase 1 took the suite to **149** (commit `c8b2172`), and the `--status`
+> three-state fix on 2026-08-07 added 22 more to reach **171**. A hand-maintained count drifts
+> silently every time; treat the number as documentation and the run as the evidence.
 
 **Case 0 is the harness's own falsifiability proof:** it points the suite at an *absent* dispatcher
 and asserts that the suite fails. A harness that stays green with the thing under test removed is not
@@ -357,6 +395,24 @@ The chain is the point. `21` said "no `## Blocker` and no `## Next action` means
 not sufficient, so a hop that died mid-reduction was announced as a clean close. `22` required the
 four headings and nothing else — but compared them through `sort -u`, so the same four shuffled, or
 one of them written twice, still passed. The classifier now compares the literal heading sequence.
+
+Cases `30d`/`30e`/`30f` were added on 2026-08-07 for the `--status` three-state fix, with the same
+red-to-green against the controller that preceded them (`c8b2172`):
+
+```
+30d/30e/30f  pass=162 fail=9  →  pass=171 fail=0
+```
+
+They are a **matched pair plus a control**, and only mean something together. `30d` forces a real
+permission denial — the lock's pid is `1` (launchd: always alive, always `EPERM` for a non-root
+caller), which is a genuine uninspectable live process rather than a simulated one — and asserts
+`UNKNOWN`, no `STALE LOCK`, and no `rm -rf`. `30f` does the same for an unreadable and a non-numeric
+pid. `30e` is the **positive control**: a reaped pid must still report `STALE LOCK`. Without `30e`, a
+"fix" that answered `UNKNOWN` to every failed check would pass `30d` and `30f` while quietly
+destroying the stale-lock report — and indeed `30e` passes against the *pre-fix* dispatcher too,
+which is exactly what makes it a control rather than another regression test. `30d` skips itself
+loudly (as a failure, not a silent pass) if the suite is ever run as root, since `kill -0 1` would
+then succeed and the permission-denied state could not be forced at all.
 
 **Live product evidence lives in `runs/`, never in this suite.** `runs/live-permission-denial-2026-08-05.md`
 records what the real binary does when it is refused permission — the half of safety cluster 1 no

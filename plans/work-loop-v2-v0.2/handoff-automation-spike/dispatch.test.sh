@@ -987,6 +987,130 @@ d="$(new_sandbox)"; state_file "$d" "bothmodes" "claude"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task bothmodes --status --dry-run 2>&1)"; RC=$?
 expect_rc 10 "$RC" "refuses --status --dry-run together rather than silently picking one" "$OUT"
 
+# ================================================================ case 30d/e
+# The Phase 0 § 0b item 3 defect: `--status` reported a genuinely live dispatcher
+# (pid 79266) as STALE LOCK because sandbox policy refused `kill -0`, and then
+# told the operator to `rm -rf` the live lock.
+#
+# Cases 30–30c did not catch it, because they all run where PID inspection is
+# permitted. These two cases are a MATCHED PAIR and only mean something together:
+#
+#   30d  a pid that cannot be inspected  -> must be UNKNOWN, must not say rm -rf
+#   30e  a pid that is positively absent -> must STILL be STALE LOCK
+#
+# 30e is the positive control. Without it, a "fix" that answered UNKNOWN to every
+# failed check would pass 30d while destroying the stale-lock report entirely.
+#
+# Forcing a real permission denial, with no mocking: pid 1 is launchd. It always
+# exists, it is owned by root, and `kill -0 1` as a non-root user returns EPERM
+# — the same errno the Codex sandbox produced. That is a genuine uninspectable
+# live process, not a simulation of one. It only works as non-root, so the case
+# refuses to score itself rather than passing vacuously under root.
+lock_path_for() { # checkout task -> lock dir
+  printf '%s/work-loop-dispatch-%s.lock' "${TMPDIR:-/tmp}" \
+    "$(printf '%s|%s' "$(cd "$1" && pwd -P)" "$2" | shasum -a 256 | cut -c1-16)"
+}
+
+echo
+echo "Case 30d — a pid that CANNOT be inspected reports UNKNOWN, never STALE LOCK"
+if [ "$(id -u)" -eq 0 ]; then
+  bad "case 30d can run (needs a non-root uid so kill -0 1 is refused)" \
+      "running as root: pid 1 is inspectable, so the permission-denied state cannot be forced"
+else
+  d="$(new_sandbox)"; state_file "$d" "denied" "claude"
+  LK="$(lock_path_for "$d" denied)"
+  mkdir -p "$LK"; printf '1\n' >"$LK/pid"     # pid 1 = alive, uninspectable
+  before="$(shasum -a 256 "$d/logs/work-loop/denied.md" | cut -d' ' -f1)"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task denied --status 2>&1)"; RC=$?
+
+  expect_rc 0 "$RC" "exits 0 — the exit-code contract is unchanged by the new state" "$OUT"
+  printf '%s' "$OUT" | grep -q "CANNOT INSPECT" \
+    && ok "reports UNKNOWN — CANNOT INSPECT" || bad "reports UNKNOWN — CANNOT INSPECT" "$OUT"
+  # The regression itself. This is the assertion that fails against the pre-fix
+  # dispatcher, which printed STALE LOCK here.
+  printf '%s' "$OUT" | grep -q "STALE LOCK" \
+    && bad "does NOT claim STALE LOCK about a pid it could not inspect" "$OUT" \
+    || ok "does NOT claim STALE LOCK about a pid it could not inspect"
+  # The dangerous half of the old output: acting on it corrupts a live run.
+  printf '%s' "$OUT" | grep -q "rm -rf" \
+    && bad "never recommends removing the lock when it cannot inspect the pid" "$OUT" \
+    || ok "never recommends removing the lock when it cannot inspect the pid"
+  printf '%s' "$OUT" | grep -qi "MAY BELONG TO A LIVE DISPATCHER" \
+    && ok "says the lock may belong to a live dispatcher" \
+    || bad "says the lock may belong to a live dispatcher" "$OUT"
+  # UNKNOWN must show its evidence. The first cut of this fix printed an empty
+  # reason line: pid_state() set a global, but the caller read it through $( ),
+  # which is a subshell, so the assignment was discarded. A blank "why:" would
+  # have satisfied every other assertion here.
+  printf '%s' "$OUT" | grep -qE '^ *why: *[^ ]' \
+    && ok "shows the evidence for the UNKNOWN verdict, not a blank reason" \
+    || bad "shows the evidence for the UNKNOWN verdict" "$OUT"
+  printf '%s' "$OUT" | grep -qi "why:.*not permitted" \
+    && ok "names the permission denial as the reason it cannot inspect" \
+    || bad "names the permission denial as the reason" "$OUT"
+  # UNKNOWN is still a report, not a shrug: the operator needs the identifiers.
+  printf '%s' "$OUT" | grep -q "pid 1" && ok "still identifies the pid" || bad "still identifies the pid" "$OUT"
+  printf '%s' "$OUT" | grep -qF "$LK" && ok "still identifies the lock path" || bad "still identifies the lock path" "$OUT"
+  printf '%s' "$OUT" | grep -q "turn=claude" \
+    && ok "still reports the state file and its turn" || bad "still reports the state file and its turn" "$OUT"
+  # Read-only holds in the new branch too — it is the branch most likely to be
+  # run against a live dispatcher, so this matters more here than anywhere.
+  [ "$before" = "$(shasum -a 256 "$d/logs/work-loop/denied.md" | cut -d' ' -f1)" ] \
+    && ok "the state file is byte-identical after an UNKNOWN report" \
+    || bad "the state file is byte-identical after an UNKNOWN report"
+  [ ! -d "$d/runs" ] && ok "created no run-log directory while reporting UNKNOWN" \
+                     || bad "created no run-log directory while reporting UNKNOWN" "$d/runs exists"
+  [ "$(calls "$d")" = "0" ] && ok "launched no actor while reporting UNKNOWN" \
+                            || bad "launched no actor while reporting UNKNOWN" "calls=$(calls "$d")"
+  # --status must not have touched the lock it could not inspect.
+  [ -d "$LK" ] && [ "$(cat "$LK/pid")" = "1" ] \
+    && ok "left the lock exactly as it found it" || bad "left the lock exactly as it found it"
+  rm -rf "$LK"
+fi
+
+echo
+echo "Case 30e — POSITIVE CONTROL: a pid that IS gone still reports STALE LOCK"
+# Guards against a fix that simply answers UNKNOWN to everything. A reaped pid
+# yields a real ESRCH, which is the only evidence that proves absence.
+d="$(new_sandbox)"; state_file "$d" "reaped" "claude"
+LK="$(lock_path_for "$d" reaped)"
+mkdir -p "$LK"
+DEADPID="$(bash -c 'exec 2>/dev/null; sleep 0 & echo $!')"
+wait 2>/dev/null; sleep 1
+printf '%s\n' "$DEADPID" >"$LK/pid"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task reaped --status 2>&1)"; RC=$?
+expect_rc 0 "$RC" "exits 0" "$OUT"
+printf '%s' "$OUT" | grep -q "STALE LOCK" \
+  && ok "still reports STALE LOCK for a positively-absent pid" \
+  || bad "still reports STALE LOCK for a positively-absent pid" "$OUT"
+printf '%s' "$OUT" | grep -q "CANNOT INSPECT" \
+  && bad "does not blur a proven-absent pid into UNKNOWN" "$OUT" \
+  || ok "does not blur a proven-absent pid into UNKNOWN"
+printf '%s' "$OUT" | grep -q "rm -rf" \
+  && ok "still tells the operator how to clear a genuinely stale lock" \
+  || bad "still tells the operator how to clear a genuinely stale lock" "$OUT"
+rm -rf "$LK"
+
+echo
+echo "Case 30f — an unreadable or malformed lock pid is UNKNOWN, not STALE LOCK"
+# The old code read an empty pid file as "not running" and recommended rm -rf.
+# An empty or garbled pid is a failure to inspect, not evidence of death.
+d="$(new_sandbox)"; state_file "$d" "nopid" "claude"
+LK="$(lock_path_for "$d" nopid)"
+mkdir -p "$LK"                                   # lock dir with no pid file at all
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nopid --status 2>&1)"; RC=$?
+expect_rc 0 "$RC" "exits 0" "$OUT"
+printf '%s' "$OUT" | grep -q "CANNOT INSPECT" \
+  && ok "an absent pid file reports UNKNOWN" || bad "an absent pid file reports UNKNOWN" "$OUT"
+printf '%s' "$OUT" | grep -q "rm -rf" \
+  && bad "does not recommend removing a lock whose pid it never read" "$OUT" \
+  || ok "does not recommend removing a lock whose pid it never read"
+printf 'not-a-pid\n' >"$LK/pid"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nopid --status 2>&1)"; RC=$?
+printf '%s' "$OUT" | grep -q "CANNOT INSPECT" \
+  && ok "a non-numeric pid reports UNKNOWN" || bad "a non-numeric pid reports UNKNOWN" "$OUT"
+rm -rf "$LK"
+
 # ================================================================= case 31
 # --claude-deny had NO dispatcher-level coverage when it was added (caught in
 # review, 2026-08-07). --actor-cmd cannot exercise it, because the flag only

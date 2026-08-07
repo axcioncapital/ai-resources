@@ -46,6 +46,12 @@
 #                       checkout+task, and what the state file says. Acquires no
 #                       lock, creates no log, writes nothing at all. Safe to run
 #                       against a live run — that is the point of it.
+#                       Answers in THREE states, never two: IN FLIGHT (the pid is
+#                       visibly alive), STALE LOCK (the pid is positively absent),
+#                       and UNKNOWN — CANNOT INSPECT (the pid could not be
+#                       inspected, so the lock may still belong to a live run).
+#                       Only IN FLIGHT and STALE LOCK are conclusions; UNKNOWN
+#                       never recommends removing the lock. See pid_state().
 #   --carry-one         COURIER MODE. Launch exactly the actor named by the
 #                       current turn:, then stop once the turn has moved in an
 #                       allowed direction — exit 0 rather than continuing to the
@@ -94,7 +100,9 @@
 # The five meanings of 0 — do NOT read one as another:
 #   --help          printed the header. Nothing was validated, nothing launched.
 #   --status        reported what it could read. Nothing was validated beyond
-#                   readability, nothing launched, nothing written.
+#                   readability, nothing launched, nothing written. 0 does NOT
+#                   mean the report was conclusive — an UNKNOWN — CANNOT INSPECT
+#                   lock verdict also exits 0. Read the run: line, not the code.
 #   --dry-run       validation passed and the actor was named. NO turn was taken.
 #   --carry-one     EITHER the turn moved exactly once in an allowed direction,
 #                   OR turn: was already operator and nothing was carried. Read
@@ -265,6 +273,57 @@ fm_value() { # file key -> value on stdout, empty if absent
 
 file_hash() { shasum -a 256 "$1" 2>/dev/null | cut -d' ' -f1; }
 
+# ------------------------------------------------- PID inspection (3 states)
+# `kill -0` failing is NOT proof that a process is gone. It fails for two very
+# different reasons, and telling them apart is the whole of this function:
+#
+#   ESRCH  "no such process"          -> the PID really is absent
+#   EPERM  "operation not permitted"  -> the PID may well be ALIVE; this caller
+#                                        is simply not allowed to look at it
+#
+# Phase 0 § 0b item 3 measured the cost of conflating the two. `--status` run
+# from inside the ordinary Codex command sandbox reported a genuinely live
+# dispatcher (pid 79266) as STALE LOCK, and told the operator to `rm -rf` a lock
+# that was doing its job. Sandbox policy refused the signal; the old check read
+# that refusal as a death certificate.
+#
+# So only a message that positively says "no such process" may conclude ABSENT.
+# Everything else — a refusal, an empty pid file, a non-numeric pid, an error
+# text not recognised here — is UNKNOWN. The asymmetry is deliberate and points
+# one way on purpose: a false UNKNOWN costs the operator one more look, a false
+# ABSENT costs them a hand-edited state file in the middle of a live hop.
+#
+# LC_ALL=C so the matched text is the C-locale wording rather than whatever the
+# ambient locale renders. Matched case-insensitively because the two shells that
+# run this differ: bash says "No such process", zsh "no such process".
+#
+# Emits ONE line, "STATE|reason", rather than setting a global alongside its
+# return value: callers read it through $( ), which is a subshell, so a global
+# assigned in here would be discarded on the way out. Caught in demonstration
+# — the reason line printed empty.
+pid_state() { # pid -> "LIVE|reason" / "ABSENT|reason" / "UNKNOWN|reason"
+  local pid="${1:-}" err rc
+  # The reason text must not contain '|', or the caller's split would truncate
+  # it; the wordings below and strerror's are both free of it.
+  case "$pid" in
+    '')       printf 'UNKNOWN|the lock directory holds no readable pid file\n'; return 0 ;;
+    *[!0-9]*) printf "UNKNOWN|the lock's pid is not a number: '%s'\\n" "$pid"; return 0 ;;
+  esac
+
+  err="$(LC_ALL=C kill -0 "$pid" 2>&1)"; rc=$?
+  if [ "$rc" -eq 0 ]; then
+    printf 'LIVE|kill -0 succeeded — the process is visible and signallable\n'; return 0
+  fi
+
+  if printf '%s' "$err" | grep -qi 'no such process'; then
+    printf 'ABSENT|kill -0 reported: no such process\n'; return 0
+  fi
+
+  printf 'UNKNOWN|kill -0 failed WITHOUT proving absence: %s\n' \
+    "$(printf '%s' "${err:-<no error text>}" | tr '|\n' '  ')"
+  return 0
+}
+
 # ------------------------------------------------------------------- lock
 LOCK_KEY="$(printf '%s|%s' "$CHECKOUT" "$TASK" | shasum -a 256 | cut -c1-16)"
 LOCK_DIR="${TMPDIR:-/tmp}/work-loop-dispatch-$LOCK_KEY.lock"
@@ -388,14 +447,34 @@ if [ "$STATUS_MODE" -eq 1 ]; then
 
   if [ -d "$LOCK_DIR" ]; then
     st_pid="$(cat "$LOCK_DIR/pid" 2>/dev/null)"
-    if [ -n "$st_pid" ] && kill -0 "$st_pid" 2>/dev/null; then
-      printf 'run: IN FLIGHT — dispatcher pid %s holds %s\n' "$st_pid" "$LOCK_DIR"
-      printf '     do not edit the state file by hand until it exits.\n'
-      printf '     to stop it: kill -TERM %s   (it terminates the actor and exits 28)\n' "$st_pid"
-    else
-      printf 'run: STALE LOCK — %s exists but pid %s is not running.\n' "$LOCK_DIR" "${st_pid:-<unreadable>}"
-      printf '     a dispatcher died without releasing it. Remove the directory to unblock: rm -rf %s\n' "$LOCK_DIR"
-    fi
+    # Three states, not two. See pid_state() above for why "kill -0 failed" is
+    # not the same question as "the process is gone".
+    st_probe="$(pid_state "$st_pid")"
+    st_pid_state="${st_probe%%|*}"    # LIVE | ABSENT | UNKNOWN
+    st_pid_why="${st_probe#*|}"       # the evidence behind that verdict
+    case "$st_pid_state" in
+      LIVE)
+        printf 'run: IN FLIGHT — dispatcher pid %s holds %s\n' "$st_pid" "$LOCK_DIR"
+        printf '     do not edit the state file by hand until it exits.\n'
+        printf '     to stop it: kill -TERM %s   (it terminates the actor and exits 28)\n' "$st_pid"
+        ;;
+      ABSENT)
+        printf 'run: STALE LOCK — %s exists but pid %s is not running.\n' "$LOCK_DIR" "$st_pid"
+        printf '     a dispatcher died without releasing it. Remove the directory to unblock: rm -rf %s\n' "$LOCK_DIR"
+        ;;
+      *)
+        # Deliberately NOT actionable. This branch knows one thing — that it does
+        # not know — and the only honest instruction is to go and look properly.
+        printf 'run: UNKNOWN — CANNOT INSPECT pid %s holding %s\n' "${st_pid:-<unreadable>}" "$LOCK_DIR"
+        printf '     why: %s\n' "$st_pid_why"
+        printf '     THIS LOCK MAY BELONG TO A LIVE DISPATCHER. Treat the run as possibly in flight:\n'
+        printf '     do not remove the lock, and do not edit the state file by hand on this answer.\n'
+        printf '     The usual cause is that this caller cannot see the PID (sandbox policy or a\n'
+        printf '     different owner), not that the run has ended. Re-run --status from somewhere\n'
+        printf '     permitted to inspect processes — outside the tool sandbox — before concluding\n'
+        printf '     anything. Everything below is what could still be read.\n'
+        ;;
+    esac
   else
     printf 'run: none in flight (no lock at %s)\n' "$LOCK_DIR"
   fi
