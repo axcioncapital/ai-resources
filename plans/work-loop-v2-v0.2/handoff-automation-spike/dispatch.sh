@@ -594,12 +594,56 @@ TREE_MARKER_FD=9
 # an empty result from an incomplete census means "cannot establish", never "gone".
 CENSUS_UNKNOWN=""
 
-signallable_pid() { # pid -> 0 if this dispatcher may signal it
-  local pid="${1:-}"
+# Set by census_pid when it could not decide whether a pid is alive.
+CENSUS_PID_UNKNOWN=""
+
+# Should this pid be counted as a live member of the actor's tree?
+#
+# THE OLD VERSION COLLAPSED THREE ANSWERS INTO TWO. It ran `ps -p <pid>` and
+# treated ANY failure as "not live" — so a pid this dispatcher merely could not
+# INSPECT counted exactly like a pid that had genuinely exited, and the census
+# then reported an empty tree. That is the same class of defect as a silent
+# `teardown verified`: an inability to look, recorded as a look that found
+# nothing. Three answers are needed and all three are returned:
+#
+#   0                        alive, count it  (INCLUDING alive-but-unsignallable:
+#                                             a descendant we may not signal is
+#                                             still a descendant that is running,
+#                                             and must be reported as a survivor
+#                                             rather than quietly dropped)
+#   1, CENSUS_PID_UNKNOWN=""  genuinely gone, or deliberately excluded
+#   1, CENSUS_PID_UNKNOWN set could not tell — the caller must treat the whole
+#                            census as incomplete
+census_pid() { # pid -> 0 if it belongs in the census
+  local pid="${1:-}" out rc kerr
+  CENSUS_PID_UNKNOWN=""
   case "$pid" in ''|*[!0-9]*|0*) return 1 ;; esac
+  # Never our own ancestry: pid 0 means "the caller's process group", and
+  # signalling an ancestor reaches the operator's shell. A census is untrusted
+  # input and this is its filter.
   case "$SELF_PIDS" in *" $pid "*) return 1 ;; esac
-  ps -p "$pid" -o pid= >/dev/null 2>&1 || return 1   # liveness WITHOUT needing
-  return 0                                          # signal permission
+
+  out="$(ps -p "$pid" -o pid= 2>/dev/null)"; rc=$?
+  if [ "$rc" -eq 0 ] && [ -n "$out" ]; then return 0; fi
+
+  # `ps` did not confirm it. That means "gone" only if `ps` is working at all —
+  # so ask `ps` something whose answer is known before believing its silence.
+  if ! ps -p "$$" -o pid= >/dev/null 2>&1; then
+    CENSUS_PID_UNKNOWN="\`ps -p\` cannot inspect processes here, so pid $pid could not be confirmed gone"
+    return 1
+  fi
+
+  # `ps` works and says nothing. Second opinion, because the two errnos differ:
+  # ESRCH is really gone, EPERM is alive and not ours to signal.
+  kerr="$( { kill -0 "$pid"; } 2>&1 )"
+  [ -z "$kerr" ] && return 0
+  case "$kerr" in
+    *[Pp]ermission*|*"not permitted"*)
+      # Alive. Counted, so teardown reports it as a survivor and pins the lock,
+      # instead of the operator being told the tree is clear.
+      return 0 ;;
+  esac
+  return 1
 }
 
 # The union of the three usable handles, filtered and deduplicated. Live pids
@@ -621,7 +665,7 @@ signallable_pid() { # pid -> 0 if this dispatcher may signal it
 CENSUS_PIDS=""
 actor_tree_census() { # pgid, markerfile -> sets CENSUS_PIDS and CENSUS_UNKNOWN
   local pgid="${1:-}" marker="${2:-}" acc="" seen="" p pid pgrp frontier next kid c
-  local ps_out rc out=""
+  local ps_out rc out="" kids
   CENSUS_UNKNOWN=""
   CENSUS_PIDS=""
 
@@ -630,8 +674,17 @@ actor_tree_census() { # pgid, markerfile -> sets CENSUS_PIDS and CENSUS_UNKNOWN
   # the dispatcher's group and this sweep would enumerate the operator's other
   # jobs. Refusing is right, but it is NOT an empty tree — say so, or the refusal
   # would read as proof that nothing is running.
-  if [ -n "$SELF_PGID" ] && [ "$pgid" = "$SELF_PGID" ]; then
-    CENSUS_UNKNOWN="the actor shares this dispatcher's process group, so no sweep can distinguish its descendants from the operator's own jobs"
+  #
+  # COMPARE THE ACTOR'S REAL GROUP, NOT ITS PID. The first version compared the
+  # caller's argument — which is the actor's *pid* — against this dispatcher's
+  # *pgid*. Those are different kinds of number, and they can only be equal by
+  # coincidence, so the guard could not fire in the situation it was written for:
+  # when `set -m` fails the actor keeps its own pid and joins OUR group, which is
+  # exactly the case that slipped through. Ask what group the actor is actually in.
+  local actor_pgid
+  actor_pgid="$(ps -o pgid= -p "$pgid" 2>/dev/null | tr -d ' ')"
+  if [ -n "$SELF_PGID" ] && { [ "$pgid" = "$SELF_PGID" ] || [ "$actor_pgid" = "$SELF_PGID" ]; }; then
+    CENSUS_UNKNOWN="the actor shares this dispatcher's process group (pgid $SELF_PGID), so no sweep can distinguish its descendants from the operator's own jobs"
     return 0
   fi
 
@@ -656,7 +709,16 @@ EOF
     while [ -n "$frontier" ]; do
       next=""
       for kid in $frontier; do
-        for c in $(pgrep -P "$kid" 2>/dev/null); do
+        # `pgrep` exit codes are three-valued and the difference matters:
+        # 0 = matches, 1 = no matches (a real answer), >=2 = pgrep itself failed.
+        # Discarding the third is how "the walk broke" became "the walk found no
+        # children".
+        kids="$(pgrep -P "$kid" 2>/dev/null)"; rc=$?
+        if [ "$rc" -ge 2 ]; then
+          CENSUS_UNKNOWN="${CENSUS_UNKNOWN:+$CENSUS_UNKNOWN; }\`pgrep -P $kid\` failed (exit $rc), so the ancestry walk is incomplete"
+          continue
+        fi
+        for c in $kids; do
           case "$seen" in *" $c "*) continue ;; esac
           seen="$seen$c "; next="$next $c"; acc="$acc $c"
         done
@@ -671,13 +733,34 @@ EOF
   elif [ -z "$marker" ] || [ ! -e "$marker" ]; then
     CENSUS_UNKNOWN="${CENSUS_UNKNOWN:+$CENSUS_UNKNOWN; }the hop's tree marker file is missing (${marker:-<unset>}), so the inherited-descriptor handle had nothing to consult"
   else
-    acc="$acc $(lsof -t -- "$marker" 2>/dev/null | tr '\n' ' ')"
+    # `lsof -t` exits 1 BOTH when nobody holds the file and when lsof could not
+    # look, so the exit code alone cannot separate the two. Its diagnostics go to
+    # stderr and an ordinary "no holders" answer is silent, so stderr is what
+    # distinguishes them. Captured separately rather than sent to /dev/null,
+    # which is where the first version lost this.
+    local lsof_err lsof_out
+    lsof_err="$(mktemp "${TMPDIR:-/tmp}/wl2-lsof-err.XXXXXX" 2>/dev/null)"
+    if [ -n "$lsof_err" ]; then
+      lsof_out="$(lsof -t -- "$marker" 2>"$lsof_err")"; rc=$?
+      if [ -s "$lsof_err" ]; then
+        CENSUS_UNKNOWN="${CENSUS_UNKNOWN:+$CENSUS_UNKNOWN; }\`lsof\` failed on the tree marker (exit $rc: $(tr '\n' ' ' <"$lsof_err" | cut -c1-160)), so descendants outside the group and the ancestry chain could not be looked for"
+      else
+        acc="$acc $(printf '%s' "$lsof_out" | tr '\n' ' ')"
+      fi
+      rm -f "$lsof_err" 2>/dev/null
+    else
+      CENSUS_UNKNOWN="${CENSUS_UNKNOWN:+$CENSUS_UNKNOWN; }no temporary file could be created to capture lsof's diagnostics, so its result could not be trusted"
+    fi
   fi
 
   seen=" "
   for p in $acc; do
     case "$seen" in *" $p "*) continue ;; esac
-    signallable_pid "$p" || continue
+    if ! census_pid "$p"; then
+      [ -n "$CENSUS_PID_UNKNOWN" ] &&
+        CENSUS_UNKNOWN="${CENSUS_UNKNOWN:+$CENSUS_UNKNOWN; }$CENSUS_PID_UNKNOWN"
+      continue
+    fi
     seen="$seen$p "
     out="$out $p"
   done
@@ -863,16 +946,31 @@ if [ "$STATUS_MODE" -eq 1 ]; then
     printf '     %s\n' "$LOCK_DIR"
     sed 's/^/     /' "$LOCK_DIR/survivors" 2>/dev/null
     printf '     a new dispatcher is REFUSED (exit 17) until this is cleared by hand.\n'
-    st_left=""
+    # Re-check the recorded pids through pid_state(), NOT through a bare
+    # `kill -0`. A bare `kill -0` fails for two unrelated reasons — the process
+    # is gone, or it is alive and not ours to signal — and a survivor left by a
+    # stopped actor is quite likely to be the second. Reading that as "gone" is
+    # how this command would end up saying the lock is safe to remove while the
+    # process it exists to protect against is still running. Same three-valued
+    # rule as the census and as the lock's own pid check.
+    st_left=""; st_maybe=""
     while read -r st_p; do
       case "$st_p" in ''|*[!0-9]*) continue ;; esac
-      kill -0 "$st_p" 2>/dev/null && st_left="$st_left $st_p"
+      case "$(pid_state "$st_p")" in
+        LIVE*)    st_left="$st_left $st_p" ;;
+        UNKNOWN*) st_maybe="$st_maybe $st_p" ;;
+      esac
     done <<EOF
 $(sed -n 's/^descendants still running: //p' "$LOCK_DIR/survivors" 2>/dev/null | tr ' ' '\n')
 EOF
     if [ -n "$st_left" ]; then
       printf '     STILL ALIVE NOW:%s — kill these before removing the lock.\n' "$st_left"
-    else
+    fi
+    if [ -n "$st_maybe" ]; then
+      printf '     STILL ALIVE NOW (cannot inspect, so treat as running):%s — this uid may not\n' "$st_maybe"
+      printf '     inspect or signal them. Check from an account that can before removing the lock.\n'
+    fi
+    if [ -z "$st_left" ] && [ -z "$st_maybe" ]; then
       printf '     none of the recorded pids is alive now; the lock is safe to remove once you have checked.\n'
     fi
   elif [ -d "$LOCK_DIR" ]; then

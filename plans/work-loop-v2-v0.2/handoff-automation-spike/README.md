@@ -665,14 +665,23 @@ Three scripts exist for the two-worktree proof and are not used by the single-ch
   > teardown killed exactly that process. The marker `${hop}.tree` is opened just before the actor is
   > backgrounded and closed in the dispatcher immediately after, so only the actor's tree holds it.
   >
-  > **A sweep that cannot see says so.** Missing `lsof` or `pgrep`, a failing `ps`, a missing marker
-  > or an actor sharing the dispatcher's own process group all yield `teardown UNVERIFIED` with the
-  > reason — never a silent `teardown verified` on an empty census.
+  > **A sweep that cannot see says so.** Six distinct ways discovery can break — `lsof` absent,
+  > `lsof` failing at runtime, `pgrep` absent, `pgrep` failing at runtime, `ps -ax` failing, the
+  > marker missing, and the actor sharing the dispatcher's own process group — all yield
+  > `teardown UNVERIFIED` with the reason, never a silent `teardown verified` on an empty census.
+  > Each has its own case (27j, 27m–27q), because the two that were only reasoned about turned out to
+  > be wrong: a *failing* `pgrep` read as "no children", and a *failing* `lsof` read as "nobody holds
+  > the marker". `lsof -t` exits 1 both when it found nothing and when it broke, so only its stderr
+  > separates them.
   >
   > **Survivors, or an unverifiable sweep, PIN THE LOCK.** The lock is deliberately not released, a
   > `survivors` file inside it records what was left, the next dispatcher is refused with exit `17`,
   > and `--status` reports `PINNED LOCK` rather than calling it stale. Clear it by hand once the pids
-  > are confirmed gone.
+  > are confirmed gone. `--status` re-checks each recorded pid through the same three-valued test the
+  > lock uses: **alive**, **gone**, or **could not inspect — treat as running**. A bare `kill -0`
+  > would collapse the last two, and a survivor left by a stopped actor is quite likely to be a
+  > process this account may not signal; case 27L is the one that caught `--status` calling such a
+  > lock safe to remove.
   >
   > **The residual, and it is still a Phase 2 blocker.** A descendant that double-forks, leaves the
   > session **and** drops every inherited descriptor — a conventional daemon — escapes all three
@@ -718,7 +727,7 @@ to narrow further. Without `--unattended` it is held only by a CLAUDE.md rule �
 which is weakest exactly when nobody is watching.
 
 **What the left column rests on.** The simulated suite proves the dispatcher *requests* the profile
-(**284/0** as the suite stood at 1d's close, **325/0** since the 1a teardown work; matched red pair
+(**284/0** as the suite stood at 1d's close, **368/0** since the 1a teardown work; matched red pair
 **216/24** against the pre-1d dispatcher `22fedf8`). The effective policy
 was measured **once, on one host**, from inside a child this dispatcher launched
 (`runs/probe-unattended-integration-2026-08-07.md`, **21/0**). That is a Phase 1 safety check, not a

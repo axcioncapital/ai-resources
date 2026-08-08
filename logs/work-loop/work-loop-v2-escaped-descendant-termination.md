@@ -199,154 +199,123 @@ attended or safety behaviour would need to weaken.
 
 ## Latest result
 
-### The four frozen findings, reproduced by inspection first
+### The final tightly-bounded fix — core § 3 menu choice, not a second correction
 
-All four were reproduced against the pre-round dispatcher (`5680a44`, extracted read-only), before
-anything was corrected.
+Codex's closure check accepted finding 1's evidence-backed stop and finding 3's private marker, and
+named two remaining gaps in findings 2 and 4. Only those two were worked. Finding 1 was not reopened,
+no supervisor was selected, 1f was not touched and Phase 2 was not run.
 
-- **Finding 1: REPRODUCES.** Read `dispatch.sh:491-496` (the residual comment) and
-  `dispatch.test.sh` case 27h. Case 27h deliberately builds a descendant that closes its inherited
-  descriptors, asserts it **survives** the stop, and passes. Confirmed live again in this round's
-  probe Part B: the daemon is `ALIVE` after the dispatcher exits 28. Codex's reading is correct — the
-  success sentence was narrowed, the objective was not.
-- **Finding 2: REPRODUCES.** Read `dispatch.sh:679-699` (`on_signal`) and `:1176-1199`
-  (`run_bounded`). `terminate_actor_tree` and `report_teardown` both return a value; both call sites
-  discard it. `on_signal` falls through to `release_lock` at `:698` and `exit 28` at `:699`
-  regardless; the timeout branch returns 124 and the EXIT trap at `:702` releases the lock. Searched
-  the whole file for any other consumer of those return values — none.
-- **Finding 3: REPRODUCES, BY EXECUTION.** `dispatch.sh:561` censuses `lsof -t -- "$out"` on the
-  **public** hop log, and `signallable_pid` (`:519-525`) filters only this dispatcher's own ancestry
-  plus liveness — it never establishes descent. New case 27i parks an unrelated `tail -f` on that
-  log; against the pre-round dispatcher it is **killed** (`pid 51936 was killed — teardown is
-  signalling processes it does not own`, and the shell reports `Terminated: 15`).
-- **Finding 4: REPRODUCES.** `report_teardown` (`:632-654`) prints `teardown verified` and returns 0
-  whenever `TEARDOWN_SURVIVORS` is empty, with no reference to `FD_HANDLE`; the `lsof`-absent NOTE at
-  `:648-652` sits inside the survivors branch only. `actor_tree_census` also returns empty — not
-  unknown — on a failing `ps` (`:543`), absent `pgrep` (`:551`), a missing output file (`:560`) and a
-  self-pgid match (`:538`). Case 27j confirms by execution: with `lsof` off `PATH`, the pre-round
-  dispatcher prints `teardown verified`.
+### Gap 1 — the survivor branch, now tested
 
-### Result
+Case 27k pinned the lock for a sweep that could not *look*. The survivor path — the sweep looks,
+**finds** a live descendant and cannot clear it — is a different branch (`TEARDOWN_SURVIVORS` rather
+than `TEARDOWN_UNKNOWN`) and had no case. **Case 27L** builds it without mocking `kill`: a root-owned
+pid is alive, `ps` confirms it, and `kill` from a non-root uid returns `EPERM`. It is injected into
+the census through a stubbed `lsof`, which is the handle that reports marker holders, so the
+dispatcher genuinely treats it as a descendant. Two guards, because the case makes the dispatcher
+signal a pid it did not create: it refuses to run as root, **and** it re-checks that the pid really
+is unsignallable first. It also asserts afterwards that the process is still alive.
 
-**Findings 2, 3 and 4 are corrected. Finding 1 is not fixable inside this brief's authority and is
-handed back as an evidence-backed stop, with 1a still blocking.** That is the branch finding 1
-itself authorises.
+**The branch itself was already correct — 12 of the case's 13 assertions pass against the pre-fix
+dispatcher.** The survivor is reported, named in the warning, written to the `survivors` file, the
+lock is pinned, and a second dispatcher gets exit 17. Reported plainly rather than dressed up as a
+red-to-green result.
 
-**Finding 1 — not fixed, and why.** The probe was extended from four handles against three escape
-shapes to **six against four**, adding the shape Codex named (double fork + `setsid` +
-`closerange(0,1024)`). Measured on this host:
+**The thirteenth assertion found a real defect, and a consequential one.** `--status` re-checked each
+recorded survivor with a bare `kill -0`. That fails both when a process is gone and when it is alive
+but not ours to signal — and a survivor left behind by a stopped actor is quite likely to be the
+second. So `--status` printed *"none of the recorded pids is alive now; the lock is safe to remove"*
+while pid 242 was running. That is the pinned lock advising its own removal. It now uses the same
+three-valued `pid_state()` the lock's own check uses and reports an uninspectable pid as
+**STILL ALIVE NOW (cannot inspect, so treat as running)**.
 
-| handle | in-group | setsid | orphan | **detached daemon** |
-|---|---|---|---|---|
-| process group | reaches | MISSES | MISSES | MISSES |
-| recursive PPID walk | reaches | reaches | MISSES | MISSES |
-| environment tag (`ps -E`) | MISSES | reaches | MISSES | MISSES |
-| inherited fd — public hop log | reaches | reaches | reaches | MISSES |
-| inherited fd — private marker | reaches | reaches | reaches | MISSES |
-| inherited **cwd** | reaches | reaches | reaches | **reaches** |
+### Gap 2 — every discovery-failure route distinguished and tested
 
-The `cwd` handle is the only one that reaches the daemon, so the whole question is whether it can be
-used. It was measured, not argued: an unrelated process was parked in the same directory holding
-nothing of the actor's, and the handle returned it — `handle 6 now returns [60077 60080 60081 60086
-60087 60190]`, where `60190` is the bystander. **A handle broad enough to catch the daemon is broad
-enough to kill the operator's shell — which is finding 3, the defect Codex just ruled out.** Findings
-1 and 3 bound the outcome from opposite sides and no handle on this host satisfies both. Two further
-candidates stay closed by measurement, not opinion: `ps -E` cannot read SIP-protected platform
-binaries (`/bin/sleep` and `/bin/bash` both refuse; a user-installed `python3` does not), and kqueue
-`NOTE_TRACK` returns `[Errno 45] Operation not supported`. Closing 1a needs a supervisor that tracks
-descendants at creation time — cgroup-equivalent, launchd job or ptrace-class — each a new subsystem
-and a new authority, and an operator decision rather than a bounded fix. **No broader mechanism was
-improvised, 1f and Phase 2 were not touched, and the status claims round 1 made are reverted.**
+One case per materially distinct route, each asserting the same three things: no success line, a
+reason naming the route, and a pinned lock.
 
-**Finding 2 — corrected.** `report_teardown` now calls `pin_lock` on survivors *or* on an
-unverifiable sweep: the lock is deliberately not released, a `survivors` file inside it records what
-was left and why, `release_lock` no-ops when pinned (checked in one place, because every exit path
-routes through it), `acquire_lock` refuses a second dispatcher with **exit 17** and prints the
-reason, and `--status` gained a `PINNED LOCK` branch **before** the pid checks so it never calls a
-pinned lock stale. Interruption, timeout, deadline, retry and exit-code semantics are unchanged — 27k
-asserts the interrupted run still exits 28, and the 27b–27f/28-series cases still assert 21/28/29.
+| case | route | against the pre-fix dispatcher |
+|---|---|---|
+| 27j | `lsof` absent (retained control) | already correct |
+| 27m | `ps -ax` **failing** | already correct |
+| 27p | tree marker missing | already correct |
+| 27n | `pgrep` **failing at runtime** | **RED — read as "the actor has no children"** |
+| 27o | `lsof` **failing at runtime** | **RED — read as "nobody holds the marker"** |
+| 27q | actor shares the dispatcher's process group | **RED — the guard could not fire at all** |
 
-**Finding 3 — corrected.** The census handle moved from the public hop log to a **private per-hop
-marker** `${out%.out}.tree`, opened on fd 9 immediately before the actor is backgrounded and closed
-in the dispatcher immediately after, so the actor's tree inherits it and nothing else has a reason to
-hold it. `ACTOR_OUT` became `ACTOR_MARKER`. Same reach, no bystanders — probe Part B shows the marker
-held by nobody after teardown while the operator's `tail -f` still holds the hop log and is `ALIVE`.
+Three routes were already right and their cases are regression protection, not proof of a fix. The
+other three were wrong:
 
-**Finding 4 — corrected, and the first attempt at it was itself defective.** `CENSUS_UNKNOWN` /
-`TEARDOWN_UNKNOWN` now distinguish *could not see* from *saw nothing*: absent `lsof` or `pgrep`, a
-failing `ps`, a missing marker, or an actor sharing the dispatcher's own pgid all yield unknown, and
-`report_teardown` gained a third state, `teardown UNVERIFIED` with the reason. **The version of this
-carried into the round did not work**, and case 27j caught it: every call site read the census
-through `census="$(actor_tree_census ...)"` — a **command substitution**, hence a subshell — so
-`CENSUS_UNKNOWN` was assigned in a child that then exited, and the parent read the empty string it
-had cleared a moment earlier. The degraded sweep still printed `teardown verified`, which is exactly
-the defect finding 4 names. Fixed by returning results through globals (`CENSUS_PIDS`) instead of
-stdout, removing the subshell at all six call sites so the two results cannot be separated again.
+- **`pgrep` failing.** Its exit code is three-valued — 0 matches, 1 no matches, ≥2 pgrep itself
+  failed — and the code discarded it, so a broken ancestry walk was indistinguishable from a
+  childless actor.
+- **`lsof` failing.** `lsof -t` exits 1 both when nobody holds the file and when it could not look,
+  so the exit code cannot separate them; only stderr can, and stderr was going to `/dev/null`.
+- **The process-group collision guard was dead code.** It compared the caller's argument — the
+  actor's *pid* — against the dispatcher's *pgid*. Those are different kinds of number and can match
+  only by coincidence, so the guard could never fire in the one situation it was written for: `set
+  -m` failing and the actor joining the dispatcher's group. It now reads the actor's real group.
+
+Also corrected under this gap: `census_pid` (formerly `signallable_pid`) collapsed three answers into
+two, treating any `ps -p` failure as "not live". It now returns *alive*, *gone*, or *cannot tell*, and
+counts an alive-but-unsignallable pid as a **survivor** rather than dropping it — a descendant we may
+not signal is still a descendant that is running.
+
+**All four defects are the same mistake in different places: an inability to look, recorded as a look
+that found nothing.** That is the mistake this whole item is about, which is why Codex was right that
+executable coverage was mandatory rather than a permissible deferral.
 
 ### Evidence
 
-- **Matched red pair, same 325 assertions in both runs.** Red: the current test file against the
-  pre-round dispatcher at `5680a44` — **317 pass, 8 fail**. Green: the same file against the
-  correction — **325 pass, 0 fail**.
-- **Each red failure is for its own reason, and the controls hold.** 27i: the unrelated hop-log
-  reader is killed (finding 3). 27j: `teardown verified` printed with `lsof` absent, no reason
-  given, lock not pinned (finding 4). 27k: a second dispatcher is admitted (got 22, expected 17), no
-  `PINNED` in the refusal, `--status` does not report a pinned lock (finding 2). Every control passed
-  on the red run — including 27g, which shows a group-only kill reaches an in-group child and does
-  **not** reach the escapee, and 27j's own control confirming `lsof` really was off `PATH`.
-- **Effective Darwin evidence, re-run and revised:**
-  `runs/probe-escaped-descendants-2026-08-07.md`, script
-  `runs/probes/escaped-descendants-2026-08-07.sh`, raw capture
-  `runs/probes/escaped-descendants-2026-08-07.raw.txt`. Simulated transport (`--actor-cmd`), real
-  Darwin processes — the record states both rather than merging them. Part B's post-stop state:
-  actor GONE, setsid escapee GONE, double-fork orphan GONE, **detached daemon ALIVE**, **unrelated
-  `tail -f` ALIVE**, marker held by nobody. Self-cleaning; Part A reports every shape GONE and Part B
-  reaps the daemon and the bystander before exit.
-- **Non-regression:** full suite green, including exit codes 21/28/29, the deadline semantics
-  (28, 28b–28d), the lock lifecycle (27, 30), the attended and `--unattended` paths (32-series), and
-  every existing guard. Case 27b stays inverted from round 1 — its old expectation *was* the defect.
-- **Docs reverted to what is proved:** `unattended-operation-plan-v0.2.md` (1a row, Phase 2 row,
-  suite arithmetic, the blockers table back to two, § 1a's note, the Phase 2 DO-NOT-RUN block, the
-  exit-criteria line, open question 1) and spike `README.md` (DO-NOT-RUN block, Safety boundaries,
-  the boundaries table, the exit-`28` row, the stop instruction, the suite figure).
+- **Matched red pair, same 368 assertions in both runs.** Red: the current test file against the
+  pre-fix dispatcher at `5dd1d60` — **355 pass, 13 fail**. Green: the same file against the final
+  fix — **368 pass, 0 fail**.
+- **The 13 red failures are exactly the four defects** — 1 for `--status` (27L), 4 each for 27n, 27o
+  and 27q — and every control passed on the red run, including each stub's own control proving the
+  tool really was broken and still on `PATH` (failure, not absence).
+- **Non-regression:** the full suite is green, including exit codes 21/28/29, the deadline arithmetic
+  (28, 28b–28d), the lock lifecycle (27, 30, 30d–30f), the attended and `--unattended` paths
+  (32-series), and cases 27b–27k unchanged in meaning. Every new case reaps its own processes; 27L
+  additionally asserts the root-owned process it borrows is untouched.
+- **The probe is unchanged and was not re-run.** It measures *reach*, and this fix changed no handle
+  and no reach. Its record carries a dated note saying where the degraded-route evidence now lives.
+  Stating that is more honest than re-running it to produce an identical table.
 - **Changed paths:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`,
   `.../dispatch.test.sh`, `.../README.md`, `.../runs/probe-escaped-descendants-2026-08-07.md`,
-  `.../runs/probes/escaped-descendants-2026-08-07.sh`,
-  `.../runs/probes/escaped-descendants-2026-08-07.raw.txt`,
-  `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md`, and this state file. No Work Loop
-  core, skill, command or unrelated state file was touched. A concurrent session moved `HEAD`
-  `5680a44` → `b500c29` during this round, touching only its own S3 files; `dispatch.sh` is
-  byte-identical at both commits, so the red baseline is unaffected.
-- **Correction commit `5dd1d60`.** Round 1 was `cd87e5b` / `145a7b3`.
+  `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md`, and this state file. No Work Loop core,
+  skill, command or unrelated state file was touched. `HEAD` moved several times under this unit from
+  a concurrent session (`5dd1d60` → `43b5743`), touching only its own Work Loop skill and state files;
+  `dispatch.sh` is byte-identical across that range, so the red baseline is unaffected.
+- **Final-fix commit `PENDING`.** Correction round was `5dd1d60`; round 1 was `cd87e5b` / `145a7b3`.
 
-### Candidate deferrals, recorded and not done
+### Deferral, recorded and not done
 
-- **Degraded-path coverage is partial.** Case 27j exercises the `lsof`-absent path. The other
-  unknown-yielding conditions — absent `pgrep`, a failing `ps`, a missing marker, an actor sharing
-  the dispatcher's pgid — are implemented and reachable but not each separately tested. Covering them
-  means shadowing more tools on `PATH` per case, which is wider than this frozen round.
-- **The teardown cost is now disclosed but not tuned.** Worst case ~13s, deadline overrun bound ~9s.
-  If 1a is later closed by a supervisor, both should be revisited rather than inherited.
+The teardown cost is disclosed but not tuned — worst case ~13s, deadline overrun bound ~9s. If 1a is
+ever closed by a creation-time supervisor, both should be re-derived rather than inherited. The
+earlier deferral about partial degraded-path coverage is now **discharged**, not carried: that was
+this fix.
 
 ## Blocker
-**Phase 1 item 1a cannot be completed under this brief's authority.** Full-descendant termination
-requires reaching a fully detached daemon, and the only handle on this host that does so also reaches
-unrelated processes, which reintroduces the bystander-kill defect of finding 3. Closing it needs a
-creation-time supervisor (cgroup-equivalent, launchd job or ptrace-class) — a new subsystem and new
-authority, which this unit's scope excludes and which is an operator decision. 1a therefore remains a
-Phase 2 blocker alongside 1f, and Phase 2 stays forbidden.
+**Unchanged, and not reopened by this fix. Phase 1 item 1a cannot be completed under this brief's
+authority.** Reaching a fully detached daemon requires the inherited-working-directory handle, which
+also reaches unrelated processes and so reintroduces finding 3's bystander kills. Closing 1a needs a
+creation-time supervisor — a new subsystem and new authority, which this unit's scope excludes and
+which is an operator decision. 1a remains a Phase 2 blocker alongside 1f, and Phase 2 stays forbidden.
 
 ## Next action
-Codex: closure check on the four frozen findings only — are findings 1–4 resolved, and did the
-correction break anything?
+Codex: closure check on this final fix only — are the two named gaps resolved, and did the fix break
+anything? Per core § 3 this fix gets no new broad review, and findings 1 and 3 are settled.
 
-For finding 1 the question is not whether the daemon was killed; it was not, and the unit says so.
-It is whether the **evidence-backed stop** is the resolution finding 1 authorised: the measurement
-that the only sufficient handle over-reaches, the reverted status claims, and 1a retained as a
-blocker. If instead the expectation was a broader mechanism, that is an operator decision about new
-authority, not a second correction round.
+Gap 1 is claimed resolved with one honest qualification: the survivor branch was **already correct**
+and its case is largely regression protection, but writing the case exposed a genuine `--status`
+defect that is now fixed. Gap 2 is claimed resolved for all six routes, three of which were already
+correct and three of which were red.
 
-Findings 2, 3 and 4 are claimed as resolved, with the red pair as the check. Note that finding 4's
-first correction was itself defective and is described as such rather than smoothed over.
+Worth Codex's attention specifically: case 27L makes the dispatcher send TERM and KILL to a
+root-owned pid it did not create. That is deliberate — it is the only way to get "alive but
+unclearable" without mocking `kill`, and it is the same device case 30d already uses — but it is
+double-guarded (non-root only, and the pid re-checked as unsignallable first), and the case asserts
+the borrowed process survives. If that trade is judged wrong, say so and the case can be dropped for
+a weaker one rather than defended.
 
-Two candidate deferrals are recorded above; neither is implemented.
+One deferral is recorded above; the previous deferral about degraded-path coverage is discharged.

@@ -175,6 +175,15 @@ a double fork, re-parenting to pid 1 and SIP-protected binaries are all covered,
 verified before the lock is released, an unverifiable sweep says so instead of claiming success, and
 a stop that cannot account for the tree pins the lock rather than admitting a second dispatcher.
 
+> **Added by the final bounded fix, 2026-08-08.** This probe measures *reach*. The claim that an
+> unverifiable sweep says so is a separate property, and it is proved in the harness rather than
+> here, one case per way discovery can break: `lsof` absent (27j), a failing `ps -ax` (27m), a
+> runtime-failing `pgrep` (27n), a runtime-failing `lsof` (27o), a missing marker (27p), and an actor
+> sharing the dispatcher's process group (27q). Case 27L covers the other half — a survivor the sweep
+> can see but cannot clear. Writing those cases found four more places where an inability to look was
+> being recorded as a look that found nothing; they are listed in the plan's § 1a note. None of it
+> changes the reach measured above, and none of it closes 1a.
+
 **What was not achieved.** Full-descendant termination, which is what § 1a asks for. A conventional
 detached daemon survives, and the measurement above shows the remaining handle cannot be used without
 reintroducing bystander kills.

@@ -821,6 +821,14 @@ drop_lock() { # sandbox task
   rm -rf "${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$1" && pwd -P)" "$2" | shasum -a 256 | cut -c1-16).lock" 2>/dev/null
 }
 
+# Defined out here, not beside its first user: the degraded-sweep cases that use
+# it sit inside the python3 guard below, but case 30d does not, and a host
+# without python3 would otherwise reach 30d with this function undefined.
+lock_path_for() { # checkout task -> lock dir
+  printf '%s/work-loop-dispatch-%s.lock' "${TMPDIR:-/tmp}" \
+    "$(printf '%s|%s' "$(cd "$1" && pwd -P)" "$2" | shasum -a 256 | cut -c1-16)"
+}
+
 if ! command -v python3 >/dev/null 2>&1; then
   echo
   echo "Cases 27b-27h — SKIP: python3 unavailable; cannot create a detached session portably"
@@ -1250,6 +1258,286 @@ fi
 reap "$EPID" "$APID" "$DPID"
 drop_lock "$d" pinned-task
 
+# ==================================================== cases 27L .. 27q
+# DISCOVERY FAILURE, ROUTE BY ROUTE.
+#
+# Case 27j covers ONE route into "cannot establish": lsof missing from PATH.
+# The dispatcher has several others, and an untested route is where the first
+# correction's bug lived — every call site read the census through a command
+# substitution, so the unknown-reason was assigned in a subshell and thrown away,
+# and a degraded sweep still printed `teardown verified`. Only 27j caught it.
+# So each materially distinct route gets its own fail-capable case, and each
+# asserts the same three things: no success line, a reason naming the route, and
+# a PINNED lock.
+#
+# The stubs shadow ONE tool each by prepending a directory to PATH, and every
+# stub passes everything it is not simulating through to the real tool. A stub
+# that starved the dispatcher of unrelated tools would make a case pass without
+# testing anything — that failure mode was hit while building 27j and is the
+# reason this helper exists.
+mk_stubdir() { # name body -> prints a PATH with the stub first
+  local dir real
+  dir="$(mktemp -d "$SANDBOX_ROOT/stub-$1.XXXXXX")"
+  real="$(command -v "$1" 2>/dev/null)"
+  {
+    printf '#!/bin/bash\n'
+    printf 'REAL=%q\n' "$real"
+    printf '%s\n' "$2"
+  } >"$dir/$1"
+  chmod +x "$dir/$1"
+  printf '%s:%s' "$dir" "$PATH"
+}
+
+# Asserts the shared shape of every degraded-sweep case, so the six cases below
+# differ only in HOW discovery was broken.
+assert_unverified() { # label outfile sandbox task reason-pattern
+  local lab="$1" out="$2" d="$3" task="$4" pat="$5" LK
+  grep -q "teardown UNVERIFIED" "$out" \
+    && ok "$lab — reports UNVERIFIED" \
+    || bad "$lab — reports UNVERIFIED" "$(grep -i 'teardown' "$out" | head -2)"
+  grep -q "teardown verified" "$out" \
+    && bad "$lab — must NOT print the success line" "it claimed verified teardown on a sweep that could not look" \
+    || ok "$lab — does NOT print the success line"
+  grep -q "$pat" "$out" \
+    && ok "$lab — the reason names the broken route" \
+    || bad "$lab — the reason names the broken route" "$(grep -i -A2 'UNVERIFIED' "$out" | head -4)"
+  LK="$(lock_path_for "$d" "$task")"
+  [ -f "$LK/survivors" ] \
+    && ok "$lab — the lock is PINNED" \
+    || bad "$lab — the lock is PINNED" "no survivors file at $LK"
+}
+
+# Runs one degraded-sweep case end to end: launch under a stubbed PATH, let the
+# actor and its escapee start, SIGTERM the dispatcher, wait out the escalation.
+run_degraded() { # sandbox task stubpath extra-setup-fn -> $SR/out
+  local d="$1" task="$2" spath="$3" setup="${4:-}"
+  ACT="$(mk_stubborn "$SR/escapee.pid")
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+  PATH="$spath" bash "$DISPATCH_BIN" --checkout "$d" --task "$task" --log-dir "$d/runs" \
+    --timeout 300 --actor-cmd "$ACT" >"$SR/out" 2>&1 &
+  DPID=$!
+  wait_for "$SR/escapee.pid" "$SR/actor.pid"
+  sleep 1
+  EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+  [ -n "$setup" ] && "$setup" "$d"
+  kill -TERM "$DPID" 2>/dev/null
+  sleep 11
+  wait "$DPID" 2>/dev/null; SRC=$?
+}
+
+# ================================================================ case 27L
+# THE SURVIVOR BRANCH, which case 27k does not reach. 27k pins the lock because
+# the sweep could not LOOK; this one pins it because the sweep looked, FOUND a
+# live descendant, and could not clear it. Those are different code paths —
+# TEARDOWN_SURVIVORS versus TEARDOWN_UNKNOWN — and the frozen finding names the
+# survivor one.
+#
+# Forcing "alive and unkillable" without mocking the kill: a root-owned process
+# is alive, `ps` confirms it, and `kill` from a non-root uid returns EPERM. Same
+# device case 30d already uses for an uninspectable pid. It is injected into the
+# census through a stubbed `lsof`, which is the handle that reports marker
+# holders — so the dispatcher genuinely believes it is a descendant.
+#
+# TWO guards, not one, because this case makes the dispatcher signal a pid it
+# did not create: the case refuses to run as root, AND it re-checks that the pid
+# really is unsignallable before proceeding. Under both guards the TERM and KILL
+# are guaranteed no-ops.
+echo
+echo "Case 27L — a survivor the sweep CAN see but cannot clear pins the lock"
+ROOTPID=""
+if [ "$(id -u)" -eq 0 ]; then
+  bad "case 27L can run (needs a non-root uid so the survivor is unkillable)" \
+      "running as root: every pid is killable, so 'sees it but cannot clear it' cannot be forced"
+else
+  # Lowest root-owned pid above 1 that is not in this test's own ancestry.
+  ROOTPID="$(ps -axo pid=,uid= 2>/dev/null | awk '$2==0 && $1>1 {print $1}' | sort -n | head -1)"
+  # Alive is established with `ps` and NOT with `kill -0`, because for this pid
+  # `kill -0` is expected to fail — that is the whole point of choosing it.
+  if [ -z "$ROOTPID" ] || ! ps -p "$ROOTPID" -o pid= >/dev/null 2>&1; then
+    bad "case 27L — control: a live root-owned pid is available" \
+        "pid '${ROOTPID:-<none>}' is not visible to ps; the case would prove nothing"
+    ROOTPID=""
+  elif kill -0 "$ROOTPID" 2>/dev/null; then
+    bad "case 27L — control: that pid is NOT signallable by this uid" \
+        "pid $ROOTPID accepted kill -0, so teardown could really kill it and the case is unsafe"
+    ROOTPID=""
+  else
+    ok "27L — control: pid $ROOTPID is alive (ps) and this uid may NOT signal it (kill -0 refused)"
+  fi
+fi
+if [ -n "$ROOTPID" ]; then
+  d="$(new_sandbox)"; state_file "$d" "survivor-task" "claude"
+  SR="$SANDBOX_ROOT/sig27L"; mkdir -p "$SR"
+  # Real holders, plus one that will never die.
+  SP27L="$(mk_stubdir lsof "
+out=\"\$(\"\$REAL\" \"\$@\" 2>/dev/null)\"
+printf '%s\n' \"\$out\" | grep -v '^\$'
+printf '%s\n' $ROOTPID
+exit 0")"
+  run_degraded "$d" survivor-task "$SP27L"
+  expect_rc 28 "$SRC" "the interrupted run still exits 28 (an unclearable survivor does not change it)" "$(cat "$SR/out")"
+  grep -q "teardown could NOT confirm" "$SR/out" \
+    && ok "teardown reports the survivor rather than claiming success" \
+    || bad "teardown reports the survivor rather than claiming success" "$(grep -i teardown "$SR/out" | head -3)"
+  grep -q "teardown verified" "$SR/out" \
+    && bad "a sweep with a known survivor must NOT print the success line" "it did" \
+    || ok "a sweep with a known survivor does NOT print the success line"
+  grep -q "Still running:.*$ROOTPID" "$SR/out" \
+    && ok "the surviving pid is named in the warning" \
+    || bad "the surviving pid is named in the warning" "$(grep -i 'still running' "$SR/out" | head -2)"
+  LK="$(lock_path_for "$d" survivor-task)"
+  if [ -f "$LK/survivors" ]; then
+    ok "the lock is PINNED after a survivor is left behind"
+    grep -q "descendants still running:.*$ROOTPID" "$LK/survivors" \
+      && ok "the survivors file records the pid, so the operator can find it" \
+      || bad "the survivors file records the pid" "$(cat "$LK/survivors")"
+  else
+    bad "the lock is PINNED after a survivor is left behind" "no survivors file at $LK"
+  fi
+  # The invariant, as the next dispatcher experiences it.
+  run_dispatch "$d" survivor-task --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "a SECOND dispatcher is REFUSED while a known survivor is alive" "$OUT"
+  printf '%s' "$OUT" | grep -q "PINNED" \
+    && ok "the refusal says the lock is pinned" || bad "the refusal says the lock is pinned" "$OUT"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task survivor-task --log-dir "$d/runs" --status 2>&1)"; RC=$?
+  expect_rc 0 "$RC" "--status stays read-only and exits 0 over the pinned lock" "$OUT"
+  printf '%s' "$OUT" | grep -q "PINNED LOCK" \
+    && ok "--status explains the pin" || bad "--status explains the pin" "$OUT"
+  printf '%s' "$OUT" | grep -q "STILL ALIVE NOW" \
+    && ok "--status re-checks the recorded pid and says it is still alive" \
+    || bad "--status re-checks the recorded pid" "$OUT"
+  # The root process must be untouched — the whole case rests on TERM/KILL being
+  # refused, so if it died something far worse than a test failure happened.
+  # `ps`, not `kill -0`: this pid refuses kill -0 by design, so kill -0 would
+  # report "untouched" even if teardown had actually killed it.
+  ps -p "$ROOTPID" -o pid= >/dev/null 2>&1 \
+    && ok "the unrelated root process is untouched (TERM and KILL were refused, as designed)" \
+    || bad "the unrelated root process was killed" "pid $ROOTPID is gone — teardown removed a process it does not own"
+  reap "$EPID" "$APID" "$DPID"
+  drop_lock "$d" survivor-task
+fi
+
+# ================================================================ case 27m
+# `ps -ax` FAILING. The group-membership handle is the one that reaches ordinary
+# in-group children, so losing it is not cosmetic. The stub fails only the `-ax`
+# form; every other ps query the dispatcher makes still works, so this case
+# isolates one handle instead of breaking the script.
+echo
+echo "Case 27m — a FAILING \`ps -ax\` is unknown, not an empty tree"
+d="$(new_sandbox)"; state_file "$d" "psfail-task" "claude"
+SR="$SANDBOX_ROOT/sig27m"; mkdir -p "$SR"
+SP27M="$(mk_stubdir ps '
+for a in "$@"; do case "$a" in -ax|-axo|*ax*) exit 1 ;; esac; done
+exec "$REAL" "$@"')"
+if PATH="$SP27M" ps -ax -o pid= >/dev/null 2>&1; then
+  bad "27m — control: \`ps -ax\` really fails under the stub" "it still succeeded; the case would prove nothing"
+else
+  ok "27m — control: \`ps -ax\` fails under the stub, and other ps forms still work"
+  run_degraded "$d" psfail-task "$SP27M"
+  expect_rc 28 "$SRC" "the interrupted run still exits 28" "$(cat "$SR/out")"
+  assert_unverified "27m" "$SR/out" "$d" psfail-task "ps -ax"
+  reap "$EPID" "$APID" "$DPID"
+  drop_lock "$d" psfail-task
+fi
+
+# ================================================================ case 27n
+# `pgrep` FAILING AT RUNTIME, as opposed to being absent. pgrep exits 1 for "no
+# matches" and >=2 for its own failure; the first version discarded the exit code
+# entirely, so a broken ancestry walk was indistinguishable from an actor with no
+# children.
+echo
+echo "Case 27n — a RUNTIME-FAILING \`pgrep\` is unknown, not a childless actor"
+d="$(new_sandbox)"; state_file "$d" "pgrepfail-task" "claude"
+SR="$SANDBOX_ROOT/sig27n"; mkdir -p "$SR"
+SP27N="$(mk_stubdir pgrep 'echo "pgrep: fatal" >&2; exit 3')"
+if PATH="$SP27N" pgrep -P 1 >/dev/null 2>&1; then
+  bad "27n — control: pgrep really fails under the stub" "it succeeded; the case would prove nothing"
+else
+  ok "27n — control: pgrep exits 3 under the stub, and is still ON PATH (so this is failure, not absence)"
+  run_degraded "$d" pgrepfail-task "$SP27N"
+  expect_rc 28 "$SRC" "the interrupted run still exits 28" "$(cat "$SR/out")"
+  assert_unverified "27n" "$SR/out" "$d" pgrepfail-task "pgrep -P"
+  reap "$EPID" "$APID" "$DPID"
+  drop_lock "$d" pgrepfail-task
+fi
+
+# ================================================================ case 27o
+# `lsof` FAILING AT RUNTIME. Distinct from 27j (absent) because `lsof -t` exits 1
+# both for "nobody holds it" and for its own errors, so the exit code cannot
+# separate them and the dispatcher has to read stderr. Sending stderr to
+# /dev/null — which the first version did — makes a broken handle look like an
+# empty one.
+echo
+echo "Case 27o — a RUNTIME-FAILING \`lsof\` is unknown, not an unheld marker"
+d="$(new_sandbox)"; state_file "$d" "lsoffail-task" "claude"
+SR="$SANDBOX_ROOT/sig27o"; mkdir -p "$SR"
+SP27O="$(mk_stubdir lsof 'echo "lsof: status error on marker: Permission denied" >&2; exit 1')"
+if PATH="$SP27O" lsof -t -- /etc/hosts 2>/dev/null | grep -q .; then
+  bad "27o — control: lsof really fails under the stub" "it returned holders; the case would prove nothing"
+else
+  ok "27o — control: lsof exits 1 with a diagnostic on stderr, and is still ON PATH"
+  run_degraded "$d" lsoffail-task "$SP27O"
+  expect_rc 28 "$SRC" "the interrupted run still exits 28" "$(cat "$SR/out")"
+  assert_unverified "27o" "$SR/out" "$d" lsoffail-task "lsof\` failed on the tree marker"
+  reap "$EPID" "$APID" "$DPID"
+  drop_lock "$d" lsoffail-task
+fi
+
+# ================================================================ case 27p
+# THE MARKER GONE. The fd handle is the only one that reaches an escaped
+# descendant at all, so if its file has vanished the census has lost the reach
+# this whole work exists to provide. Deleted mid-run, which is also the realistic
+# shape: a tmp-cleaner, or an operator tidying the runs directory.
+echo
+echo "Case 27p — a MISSING tree marker is unknown, not an empty census"
+d="$(new_sandbox)"; state_file "$d" "nomarker-task" "claude"
+SR="$SANDBOX_ROOT/sig27p"; mkdir -p "$SR"
+eat_marker() { rm -f "$1"/runs/*.tree 2>/dev/null; }
+run_degraded "$d" nomarker-task "$PATH" eat_marker
+if ls "$d"/runs/*.tree >/dev/null 2>&1; then
+  bad "27p — control: the marker really was removed before the stop" "a .tree file is still present"
+else
+  ok "27p — control: the marker was removed before the stop"
+  expect_rc 28 "$SRC" "the interrupted run still exits 28" "$(cat "$SR/out")"
+  assert_unverified "27p" "$SR/out" "$d" nomarker-task "tree marker file is missing"
+fi
+reap "$EPID" "$APID" "$DPID"
+drop_lock "$d" nomarker-task
+
+# ================================================================ case 27q
+# ACTOR / DISPATCHER PROCESS-GROUP COLLISION. If `set -m` ever stops isolating the
+# actor, the sweep would enumerate the operator's own jobs, so the dispatcher
+# refuses to census its own group — and that refusal must read as "cannot
+# establish", never as an empty tree.
+#
+# This case also pins a REAL BUG in the first version of the guard, which compared
+# the caller's argument — the actor's *pid* — against the dispatcher's *pgid*.
+# Those are different kinds of number and can only match by coincidence, so the
+# guard could not fire in the one situation it existed for. The guard now asks
+# what group the actor is actually in, which is what this stub manipulates.
+echo
+echo "Case 27q — an actor sharing the dispatcher's process group is unknown, not empty"
+d="$(new_sandbox)"; state_file "$d" "samegroup-task" "claude"
+SR="$SANDBOX_ROOT/sig27q"; mkdir -p "$SR"
+# Every `-o pgid=` answer becomes the same number, so the actor's group and the
+# dispatcher's group are identical however the processes really sit.
+SP27Q="$(mk_stubdir ps '
+want_pgid=0
+for a in "$@"; do case "$a" in pgid=|*pgid=*) want_pgid=1 ;; esac; done
+case "$*" in *-ax*) exec "$REAL" "$@" ;; esac
+if [ "$want_pgid" -eq 1 ]; then echo "  424242"; exit 0; fi
+exec "$REAL" "$@"')"
+if [ "$(PATH="$SP27Q" ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')" != "424242" ]; then
+  bad "27q — control: the stub really forces one shared pgid" "it did not; the case would prove nothing"
+else
+  ok "27q — control: every -o pgid= query returns the same group, forcing the collision"
+  run_degraded "$d" samegroup-task "$SP27Q"
+  expect_rc 28 "$SRC" "the interrupted run still exits 28" "$(cat "$SR/out")"
+  assert_unverified "27q" "$SR/out" "$d" samegroup-task "shares this dispatcher's process group"
+  reap "$EPID" "$APID" "$DPID"
+  drop_lock "$d" samegroup-task
+fi
+
 fi   # python3 available
 
 # ================================================================= case 28
@@ -1439,10 +1727,9 @@ expect_rc 10 "$RC" "refuses --status --dry-run together rather than silently pic
 # — the same errno the Codex sandbox produced. That is a genuine uninspectable
 # live process, not a simulation of one. It only works as non-root, so the case
 # refuses to score itself rather than passing vacuously under root.
-lock_path_for() { # checkout task -> lock dir
-  printf '%s/work-loop-dispatch-%s.lock' "${TMPDIR:-/tmp}" \
-    "$(printf '%s|%s' "$(cd "$1" && pwd -P)" "$2" | shasum -a 256 | cut -c1-16)"
-}
+#
+# `lock_path_for` is defined once, with the 27L-27q degraded-sweep cases above,
+# which are the first users of it.
 
 echo
 echo "Case 30d — a pid that CANNOT be inspected reports UNKNOWN, never STALE LOCK"
