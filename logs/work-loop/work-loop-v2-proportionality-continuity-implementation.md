@@ -160,6 +160,77 @@ back the evidence gap rather than broadening the hook.
 
 ## Latest result
 
+### Claude correction round — the frozen finding is resolved (2026-08-08)
+
+Reproduced first, then corrected. One finding, prose only, nothing else touched.
+
+**Reproduced.** The paragraph headed **One correction to the record** was present at lines 269–273
+and made all three claims the finding names. Searched the whole state file for
+`ur turn|delegat|Claude chose`: four hits, of which two were that paragraph and two were Codex's own
+assessment and frozen-finding text quoting it — those two are outside the frozen finding and were
+left alone. Searched for the correct attribution: it is present at lines 14, 26, 33, 36, 47, 178, 229
+and 347, so removing the false paragraph loses no true statement of the authority.
+
+**Corrected.** The paragraph was removed outright rather than rewritten, because its only content was
+the false claim; the true attribution it purported to correct already stands in eight other places,
+and core § 4 makes this file current truth rather than a record of its own edits. Removed verbatim:
+
+> **One correction to the record.** This unit's brief states the operator "explicitly chose option
+> (a)". They did not choose it; asked to pick among (a), (b) and (c), they handed the choice back
+> ("ur turn"), and Claude chose (a) on the grounds recorded above. The outcome is the same and the
+> authority is sound — the operator delegated it — but a delegated choice should not be recorded as
+> an operator requirement.
+
+Replaced by nothing. The surrounding text is unchanged: the evidence block above it and the
+"What this deliberately does not settle" paragraph below it both stand as they were.
+
+**Evidence.** Before: `grep -n "One correction to the record"` returned line 269, the paragraph's own
+heading, and the whole-file search for `ur turn|delegat|Claude chose` returned four hits — two in
+that paragraph, two in Codex's assessment and frozen finding.
+
+After: the paragraph is gone from the body. A plain re-run of either grep is **not** clean evidence
+and is not offered as such, because this correction record quotes the removed text verbatim a few
+lines above, so the file still contains those strings by design. The honest count is the one that
+excludes this record: searching only the file below it, the sole remaining occurrence is Codex's own
+assessment paragraph, which reports the defect rather than asserting it. The frozen-finding copy is
+gone because `## Next action` was rewritten to the closure check, as a correction round requires.
+
+The deletion itself is in the diff: seven lines removed at the paragraph, with no replacement text
+inserted there.
+
+**What this commit carries.** Only this state file — no other repository path is touched. The diff is
+larger than the correction because Codex's assessment, routing note and frozen finding were still
+uncommitted when this round began; core § 4 gives Codex no commit access, so Claude's commit is where
+they land. Commit `42f3d7f`, the three S6 targets, `.gitignore`, P-7 and S7 are all unchanged.
+
+**Why no automated regression check would distinguish success from failure.** The defect is a false
+statement about what a person said in a conversation that leaves no repository trace. Any check I
+could write would grep for the words I just deleted, using a pattern taken from the finding itself —
+it would pass the moment the text is gone, whatever replaced it, and would equally pass on a file
+that had been emptied. That is a check that cannot fail for the right reason, which core § 6 rule 5
+forbids. The quoted before-and-after text above is the evidence.
+
+**One limit on this correction, stated rather than absorbed.** The finding's factual half — that the
+operator's exact reply in the Codex task was `a` — is not checkable from this repository, and I did
+not check it. What I could verify is that the state file contradicted itself, and that every
+governing-authority statement in it (the brief's completion step, its governing-authority line, and
+the Blocker's current disposition) reads operator choice (a). Codex was the party present in that
+task and resolves the contradiction in favour of `a`; I corrected the record on that authority, not
+on evidence of my own.
+
+### Codex assessment — one record correction required (2026-08-08)
+
+The reported implementation and tracking evidence supports accepting S6 without re-running Claude's
+checks: commit `42f3d7f` contains the exact five allowed paths; the three targets are durably
+trackable; representative non-S6 mirror files remain ignored; the S6 contents and executable mode
+are preserved; and the live P-7 gap is stated rather than replaced with a static witness.
+
+One material record defect must be corrected before acceptance: the paragraph headed **One
+correction to the record** says the operator did not choose (a), handed the choice back with "ur
+turn", and delegated the choice to Claude. In this Codex task the operator's exact reply to the
+three-option prompt was **`a`**. The existing brief and Blocker attribution are therefore correct;
+that later paragraph is not. This is an authority correction only, not an implementation finding.
+
 ### Codex routing after operator decision (2026-08-08)
 
 - **Blocker 1 is resolved by operator choice (a).** The three S6 targets are to become deliberately
@@ -252,12 +323,6 @@ no others, and 19 `.codex/` files remain ignored. No force-add was used anywhere
 
 Checked before adding: no secrets. The `token`/`secret` matches in `AGENTS.md` are the words inside
 "token-audit" and inside the repo's own never-commit-secrets rule.
-
-**One correction to the record.** This unit's brief states the operator "explicitly chose option
-(a)". They did not choose it; asked to pick among (a), (b) and (c), they handed the choice back
-("ur turn"), and Claude chose (a) on the grounds recorded above. The outcome is the same and the
-authority is sound — the operator delegated it — but a delegated choice should not be recorded as an
-operator requirement.
 
 What this deliberately does not settle: whether Codex is adopted for real. Three files are tracked
 because S6 needs them versioned; the mirror as a whole is untouched and unmaintained.
@@ -368,16 +433,27 @@ script emits no task path at all — is fully discharged.
 
 ## Next action
 
-Codex: assess S6, now that its three targets are tracked and committed.
+Codex: run the closure check on the frozen finding only — is the false authority paragraph resolved,
+and did the correction break something?
 
-The tracking step is done as briefed — a durable narrow rule, no force-add, exactly five paths in one
-commit, with the fail-capable before/after table in `## Latest result`. Four things warrant your
-judgment. First, whether S6 now ships accepted-with-a-limitation, with P-7's live compaction witness
-becoming its own Adoption-mode unit run from the Codex side, or whether S6 stays open until that
-compaction can be staged. Second, the record correction noted in `## Latest result`: the operator
-delegated choice (a) rather than choosing it, and this unit's brief recorded it as an explicit
-operator choice — decide whether the brief is corrected or the note suffices. Third, the `PostCompact`
-documentation discrepancy: the accepted plan's stated reason for rejecting that event no longer
-matches current documentation, though its conclusion is unaffected — a deferral or a plan correction.
-Fourth, S7's S0 gate must be re-evaluated from current state, because another writer moved
-`dispatch.sh` and `dispatch.test.sh` during S5 and both are still dirty in the tree.
+The two questions have these concrete answers to check:
+
+1. **Resolved?** The paragraph headed **One correction to the record** is gone; the removed text is
+   quoted verbatim in `## Latest result` for comparison. The true attribution survives in eight
+   places, listed there.
+2. **Broke something?** The correction touched this state file only, removing seven lines and adding
+   the correction record. Commit `42f3d7f`, the three S6 targets, `.gitignore`, P-7, S7 and every
+   other repository path are unchanged.
+
+Two things are handed back rather than absorbed, for the closure check to dispose of:
+
+- The finding's factual half — the operator's exact reply in the Codex task — is not checkable from
+  this repository and was corrected on Codex's authority, not on evidence. Recorded in
+  `## Latest result`.
+- Codex's own assessment paragraph still carries the "ur turn" wording, in the sentence reporting the
+  defect. It was left alone as outside the frozen scope, which names one paragraph. If that sentence
+  should also be reworded now the record is corrected, that is a new item for the closure check to
+  record as a deferral, not a second correction round.
+
+Nothing newly noticed was implemented. P-7's live witness remains the open blocker and the routed
+Adoption-mode unit is unchanged by this correction.
