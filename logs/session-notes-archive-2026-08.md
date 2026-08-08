@@ -2463,3 +2463,132 @@ mission thread before re-opening it as if still outstanding.
 
 ### Open Questions
 None.
+## 2026-08-06 — Session S1-a7b — Work Loop v2 parallel-worktree proof closed, tripwire root cause found
+
+**Work:** Work Loop v2 — write and commit the closing record for work-loop-v2-parallel-worktree-proof on Codex's close verdict
+- Files in scope: logs/work-loop/work-loop-v2-parallel-worktree-proof.md, logs/session-notes.md, logs/session-notes-archive-2026-08.md, logs/improvement-log.md, logs/next-up.md, logs/friction-log.md
+- Required outputs: logs/runs/2026-08-06-S1-a7b.json
+- Mission: work-loop-v2-mvp
+
+Footprint declared mid-session, on operator instruction, because `check-foreign-staging.sh` blocked
+the closing commit. Root cause: this session ran `/work-loop-v2` directly from `/prime`'s wait state,
+so `/prime` Step 8h never ran and no marker was allocated; the guard anchors on `logs/.session-marker`,
+which still read `2026-08-03 S3-018` (three days stale), and judged this commit against that unrelated
+session's footprint. The three 2026-08-05 entries declare no footprint for the same reason. Resolved by
+running the sanctioned allocator (`logs/scripts/prime-session-entry.sh`) rather than overriding the
+guard; no override was used and the repository `pre-commit` hook stayed active.
+
+### Summary
+Ran `/prime`, then the operator picked "close the parallel-worktree-proof task" from the menu and
+invoked `/work-loop-v2` directly. Read Codex's close verdict on `work-loop-v2-parallel-worktree-proof`,
+reduced the state file to the core § 4 closing record (four headings, `turn: operator`), and attempted
+to commit. The closing commit was blocked by `check-foreign-staging.sh` on a stale-footprint false
+positive — the same failure mode as yesterday, but this time traced to its actual mechanism rather than
+assumed. Resolved by running the sanctioned marker allocator mid-session and declaring an honest
+footprint, then committed clean (`11e077a`).
+
+### Decisions Made
+- **Closed `work-loop-v2-parallel-worktree-proof`** on Codex's close verdict. State file reduced to
+  the closing record; commit `11e077a`. The verdict asked the closing record to "add the closing-record
+  commit identifier" — not done literally (the id can't be inside the commit that creates it); recorded
+  a resolvable pointer instead and disclosed the gap to the operator rather than silently satisfying the
+  instruction.
+- **Diagnosed the staging-tripwire block correctly on the second attempt.** First guess (guard falls
+  back to the *newest* declared footprint) was wrong and would have produced a second unreadable
+  hand-written header. Traced the actual anchor — exact date + S-number match against
+  `logs/.session-marker` — by reading the guard's own code rather than trusting yesterday's record.
+- **Resolved via the guard's sanctioned remedy, on operator instruction, not via override.** Ran
+  `logs/scripts/prime-session-entry.sh` to allocate a real marker (`S1-a7b`) and declared an honest
+  footprint in `logs/session-notes.md`. No `check-foreign-staging.sh` override was used this session.
+- **Queued the root cause as a finding rather than fixing it inline.** `/work-loop-v2`'s documented
+  direct-invocation shape structurally skips marker allocation, so this block recurs for every such
+  session. Logged to `improvement-log.md` at `high` rather than patched — the exact attach point needs
+  verification by execution, per this repo's own premise-check discipline, and that's a separate unit.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None. The staging tripwire was resolved by declaring an honest footprint through the guard's own
+sanctioned mechanism — no override, no hook bypass. The repository's `pre-commit` hook stayed active
+throughout.
+
+### Findings Declined
+- **The closing record can't literally carry its own commit identifier.** Codex's close verdict asked
+  for it; doing so would require a second commit chasing the first one's id — the same regress the
+  closed record itself already stopped deliberately at `d8349b8`. Declined: already accepted and
+  disclosed inside the artifact, no new consequence.
+
+### Session Assessment
+Feedback collection skipped (not requested).
+
+### Next Steps
+- `work-loop-v2-production-readiness-policy` (a discovery unit, `turn: claude`) is still open and was
+  offered but not picked up this session — the recommended next `/work-loop-v2` pickup.
+- The queued finding above (`improvement-log.md`, 2026-08-06) needs a real fix session: either
+  `/work-loop-v2` self-allocates a marker on Step 1 Orient, or the guard degrades to warn-only when no
+  same-day marker exists. Verify the attach point by execution before building.
+- `logs/next-up.md` still carries the large `[urgent]` backlog from 2026-08-05, unchanged this session.
+
+### Open Questions
+None.
+
+## 2026-08-06 — Session S2-2de
+**Mandate:** Evaluate the project-progression-protocol original proposal against the live Work Loop v2 system and deliver a chat-only recommendation — done when: the recommendation with all seven components (verdict, reasoning, minimum scope, non-goals, affected seams, two-month trial approach, operator decisions) is delivered in chat
+- Out of scope: implementation or any repo file change this pass; a competing universal project lifecycle; duplicating specialist workflows, reviews, or project-state systems; mandatory artifacts, checklists, scoring, or calendar gates; the multi-unit Continue ambiguity (separate track); running the investigation under Work Loop v2 itself
+- Files in scope: (investigation itself touched no repo file — deliverable is a chat recommendation. Wrap-time footprint, added at close: logs/session-notes.md, logs/session-notes-archive-2026-08.md, logs/decisions.md, logs/friction-log.md, logs/session-plan-2026-08-06-S2-2de.md, logs/runs/2026-08-06-S2-2de.json)
+- Stop if: the evaluation cannot proceed without a repo write or without routing the work through Work Loop v2 itself
+- Allowed inputs: plans/work-loop-v2-v0.2/, the Work Loop v2 core doc, .claude/commands/work-loop-v2.md, the Codex skill file, mission state (work-loop-v2-mvp) and logs/work-loop/, EmailOS and Systems Builder project directories
+- Mission: work-loop-v2-mvp
+
+**Work:** Evaluate the Work Loop v2 project-progression proposal — recommendation only, no repo changes
+
+### Summary
+Read the operator-supplied `project-progression-protocol-original-proposal.md` against the live Work Loop v2
+system (executable core, `.claude/commands/work-loop-v2.md`, the Codex-side skill at
+`.agents/skills/work-loop-v2/SKILL.md`), the `work-loop-v2-mvp` mission state and pilot log, and
+project-pipeline evidence from EmailOS/Systems Builder rehaul docs and the CRM project state. Delivered a
+first recommendation (adopt with revisions; smaller than proposed) covering all seven requested points. The
+operator agreed with the direction but sent back four corrections — workflow-owner routing ahead of
+discovery/delivery classification, `Continue`'s real seam footprint, corrected review sizing, and
+records/mission placement — and Claude delivered a revised recommendation applying all four. No repo file
+was changed; the whole session was read-only analysis producing two chat deliverables.
+
+### Decisions Made
+- **Operator: adopt the proposal's core idea with revisions**, not as originally written — keep the
+  governing question and next-move classification, reject the standalone protocol document and the
+  seven-state lifecycle as authority (fallback-only).
+- **Operator: four corrections to Claude's first recommendation** — (1) route the next move by owner
+  (operator / specialist workflow / Work Loop) before classifying a Work Loop unit as discovery or delivery,
+  and treat "real-use observation" as a discovery unit rather than a new core unit type; (2) size `Continue`
+  as a real seam change (core outcome + skill assessment mechanics + behavioral tests), not one small edit;
+  (3) correct review sizing to one coherent-capability Codex review by default, risk-aware only if
+  blast-radius inspection proves it structurally high-consequence; (4) do not revise the historical Step 6
+  acceptance record — a new candidate/review record is created instead — and place this work under the
+  existing post-MVP v0.2 rework thread on `work-loop-v2-mvp` rather than a new mission.
+- **Operator's final verdict:** approve the design direction after those corrections; **do not** approve
+  implementation scope yet. A concrete implementation proposal (skill/core wording, unit boundaries and
+  sequencing, blast-radius inspection, review brief, trial project selection) is owed back before any edit
+  is made.
+
+### Risky actions
+None. Read-only investigation session; no repository file was changed, no Work Loop task was opened, and the
+operator's instruction to respond "directly and without opening a Work Loop task" was followed.
+
+### Next Steps
+- Prepare the concrete implementation proposal for operator scope approval: the actual Codex-skill wording
+  for the ownership-routing subsection, the core's `Continue` outcome and its behavioral test(s), the
+  blast-radius/consumer inspection that decides normal-vs-risk-aware review, and trial-project selection
+  (recommended: EmailOS rehaul + one project without a native phase model).
+- File the accepted direction as a new open thread under the `work-loop-v2-mvp` mission's existing post-MVP
+  v0.2 rework entry (`logs/missions/work-loop-v2-mvp.md`), not a new mission.
+- `work-loop-v2-production-readiness-policy` (the discovery unit) is still open from the prior session and
+  was not touched this session.
+- `logs/next-up.md` still carries the large `[urgent]` backlog — unchanged this session.
+
+### Open Questions
+- Sequencing of the `Continue` core edit and the Codex-skill ownership-routing edit — one combined change or
+  two sequential units — deferred to the implementation proposal per the operator's correction 2.

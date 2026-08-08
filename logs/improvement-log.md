@@ -2990,3 +2990,30 @@ reopen only if the same shape of partial-read error surfaces again in an inspect
 - **Not fixed here** — this wrap excluded the affected file from its own commit once the concurrent
   write was noticed, so no harm occurred this time. The finding is that the guard didn't catch it
   structurally; a future wrap without a manual diff habit would not be protected the same way.
+
+## 2026-08-08 — `SPIKE_DIR` survives in the dispatcher with no reader, one commit after the coupling it encoded was removed
+- **Severity:** low — `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` line 185 still
+  computes `SPIKE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`. After S7 (commit `23b6e3d`)
+  nothing reads it: `grep -n 'SPIKE_DIR' dispatch.sh` returns the assignment and one mention inside a
+  comment, nothing else. It was the script's own directory, and the whole point of plan § 4.8 was to
+  stop the dispatcher filing a driven checkout's run evidence against the script's location instead of
+  against that checkout.
+- **Category:** dead code that encodes a removed assumption — Work Loop v2 handoff-automation spike.
+- **Source:** ai-resources, 2026-08-08 S7 implementation unit; noticed during the change and deferred
+  in the same unit because plan § 4.8 authorises exactly two changes and says everything else "must
+  not be touched". Codex accepted the deferral at assessment.
+
+**Why it matters, and why it is only low.** No behaviour depends on it today, so nothing is broken and
+nothing is at risk right now. The cost is that a variable named for "the script's own directory" sits
+in scope, one line above code that deliberately no longer uses that concept. The next person needing a
+base path has a ready-made one that reintroduces exactly the coupling S7 removed, and it would look
+idiomatic because the variable was already there.
+
+**What would catch it.** Nothing mechanical is proposed for a single unused shell variable; a linter
+rule for the whole script would be more machinery than the problem. The fix is the deletion itself:
+remove line 185 and the stale `$SPIKE_DIR/runs` phrasing in the § 4.8 comment that still names it as
+the old default.
+
+**Target file:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`. Direct Work scale —
+one deletion plus a comment reword, no state file, no loop unit. Reopen immediately if anyone adds a
+second reader of `SPIKE_DIR`, which would turn this from cleanup into a live regression.

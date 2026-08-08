@@ -136,3 +136,39 @@ user-requested task; it changes no files, Git refs, permissions, models, or
 existing threads. The Brief stays within a five-field ceiling. Repository state
 remains event-driven under its governing workflow; the handoff creates no
 snapshot, checkpoint, progress log, or diary.
+
+## 2026-08-08 — Ship S7's dispatcher default with its untracked-ancestor boundary written down, rather than widening a guard to remove it
+
+**Context.** Work Loop v2 plan § 4.8 authorises exactly two changes to the handoff dispatcher:
+bind the default run-evidence directory to the checkout being driven, and discriminate the run id
+so same-second runs of one task from different checkouts cannot overwrite each other. Making the
+default land *inside* the driven checkout put the dispatcher's own evidence under the same
+working-tree guard that stops a run when out-of-allowlist changes are already present. The guard
+reads `git status --porcelain`, and git collapses an untracked *directory* to its shortest path.
+So in a checkout where an ancestor such as `plans/` is itself untracked, the dispatcher's new
+evidence is reported as `?? plans/`, the allowlist entry for the run directory does not match, and
+the run stops at exit `18` before any actor launches. Measured, not predicted.
+
+**Decision.** Ship the two authorised changes, prove them, and record the boundary as an accepted
+limitation in the spike README beside the paragraph it qualifies. Do not fix it inside this slice.
+
+**Rationale.** The failure is fail-closed and prints a recoverable next action; it destroys
+nothing. Every real checkout of this repository tracks `plans/`, and the realistic-checkout case
+was verified to run through the gate and file its evidence under the driven checkout. Against
+that, both available fixes cost more than the defect: they change behaviour the slice was
+explicitly told not to touch, and one of them weakens a safety guard.
+
+**Alternatives considered.**
+1. *Widen the allowlist to the ancestor* — rejected outright. Allowlisting `^plans/` would let
+   genuinely foreign changes anywhere under `plans/` pass the guard unseen. That trades a visible
+   stop for an invisible hole, which is the wrong direction for a guard.
+2. *Switch the pre-hop gate to `git status --untracked-files=all`* — technically correct, since
+   `-uall` never collapses. Rejected as out of scope: it changes a guard § 4.8 does not authorise,
+   and it alters behaviour for every run, not just the new default's. Left as the named candidate
+   if the boundary is ever reached in practice.
+3. *Keep the old script-local default* — rejected. It is the defect § 4.8 exists to remove: a
+   dispatcher driving a second checkout filed that checkout's evidence in the first, so a run's
+   log did not live with the work it described.
+
+**Consequence.** A shipped tool has a known, documented refusal shape. Codex assessed and accepted
+this as a written limitation rather than a correction.
