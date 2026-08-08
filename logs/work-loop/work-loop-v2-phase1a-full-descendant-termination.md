@@ -5,732 +5,559 @@ turn: codex
 
 ## Objective and scope
 
-Close Phase 1 item 1a as it is currently written: every controlled stop of the dispatcher must
-terminate and verify the actor's full descendant tree, including a descendant that calls `setsid`,
-double-forks, closes every inherited descriptor and `exec`s another program. A stop must not signal
-an unrelated process, and it must never claim success when termination or verification is incomplete.
+Close Phase 1 item 1a literally: every controlled dispatcher stop must terminate and verify the
+actor's full descendant tree, including a descendant that calls `setsid`, double-forks, closes every
+inherited descriptor and `exec`s another program. A stop must not signal an unrelated process and
+must never claim success when termination or verification is incomplete.
 
-The operator decided on 2026-08-08 to **preserve the literal 1a guarantee**. Reachable-tree
-termination plus containment is therefore not an acceptable substitute. This decision authorizes
-the guarantee-preserving dedicated-identity route to be investigated and prepared; it does not by
-itself authorize any specific macOS account, privilege, credential, privacy or filesystem mutation.
+The operator preserved this guarantee on 2026-08-08. The operator has now authorized **Stages B and
+C only**: a temporary, non-admin actor account and the bounded feasibility checks for actor-owned
+Claude/Codex authentication, UID-scoped termination and read-only Git access. Stages D and E are not
+authorized: no operator-home permission or ACL change, `sudoers`, permanent launch wrapper,
+dispatcher implementation or permanent production setup may occur.
 
 The task closes only after the guarantee is implemented and supported by fail-capable simulated
-regression evidence plus effective live Darwin evidence for the process boundary the harness cannot
-establish. Phase 1f and every Phase 2 action remain outside this task; Phase 2 stays forbidden.
+regression evidence plus effective live Darwin evidence. Phase 1f and every Phase 2 action remain
+outside this task; Phase 2 stays forbidden.
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 2 — establish whether a dedicated macOS actor identity can support
-the real dispatcher actors without weakening the already-settled unattended authority boundary, and
-return the smallest exact operator-owned setup needed for a later implementation unit.
+Standard. Discovery mode. Unit 3 — produce one complete, guarded, operator-executable Stage B/C
+runbook and C5 fixture without running either.
 
-Named reason for the loop: this is a safety-critical dispatcher task whose literal guarantee now
-depends on host identity, privilege and credential boundaries. The result needs an evidence-backed
-design before the operator makes hard-to-reverse system changes or Claude edits the dispatcher.
+Named reason for the loop: the next action creates an OS account, authenticates two paid tools and
+tests a UID-wide signal boundary. Its procedure must be independently checked before the operator
+executes it, and the result must survive the session because it gates the later dispatcher design.
 
-Plan justification: the governing unattended-operation plan keeps 1a open because a fully detached
-daemon survives and forbids Phase 2 until 1a and 1f close. Unit 1 established that the dedicated
-identity assumed by the first implementation brief does not exist. The operator has now preserved
-the guarantee rather than accepting the containment scope change, so the nearest unmet condition is
-to settle the dedicated identity's operational viability and exact least-authority setup.
+Plan justification: the governing unattended-operation plan still blocks Phase 2 on 1a and 1f.
+Accepted Unit 2 evidence found a coherent dedicated-identity route but left three live questions for
+Stages B/C. The operator has authorized those stages, so the smallest justified unit is to make their
+operator procedure exact and safe; running the procedure and interpreting its live result come next.
 
-Codex framing decision: this unit is read-only discovery because creating an account, changing
-privilege policy, changing ACLs or permissions, authenticating a second identity and altering macOS
-privacy state are consequential host actions. It prepares those actions for an operator decision;
-it does not perform them. Product implementation, live account creation and Phase 1f are held back
-until this unknown is resolved.
+Codex framing decision: this remains discovery because it prepares and checks a host probe rather
+than operating the host or implementing the dispatcher. This unit may change only this state file.
+No probe file under `runs/` is authorized in this unit; if code is needed, return it inline in the
+runbook after syntax-checking a self-cleaning temporary copy.
 
 ## Brief
 
-The operator has kept the original safety promise: a stopped run must leave no actor-owned process
-behind. Unit 1 showed that the required ownership boundary is absent, so this unit must prove whether
-that boundary can be introduced without exposing the operator's home or credentials. It must return
-one decision-ready setup and validation path, not create the boundary or edit the product.
+The dedicated-identity route now turns on three facts that only a real account can settle. Before the
+operator creates that account, convert the draft chat instructions into one complete runbook whose
+guards make a wrong account, an occupied UID, an unlocked GUI session or an over-broad signal a
+visible stop. This unit writes and validates that runbook; it does not execute it.
 
 ### Governing sources and dispositions
 
-- **Current operator decision:** preserve Phase 1a literally, given in the Work Loop hand-back on
-  2026-08-08. It governs the guarantee and continues the dedicated-identity investigation. It does
-  not silently authorize a particular system mutation.
-- **Governing implementation plan:**
-  `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md`, especially its status block, Phase 1
-  § 1a, Phase 2 prohibition and Sequencing. Its statement that no operator questions remain is
-  superseded for 1a by the later discovery, Unit 1 result and current operator decision.
-- **Authoritative current task state:** this file's accepted Unit 1 result. It establishes that no
-  suitable dedicated actor account exists on this host and that the prior implementation unit made
-  no product change.
-- **Accepted supervision discovery:**
-  `logs/work-loop/work-loop-v2-descendant-supervision-discovery.md`. It found no present-authority
-  mechanism that closes the fully detached case and selected a dedicated actor OS identity as the
-  smallest guarantee-preserving authority change. Its audit-session note is a deferral, not a second
-  route to investigate unless evidence disproves the dedicated identity's viability.
-- **Settled unattended authority:**
-  `logs/work-loop/work-loop-v2-contained-unattended-profile.md`, together with
-  `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, `README.md` and the cited 1d live
-  record. The dedicated identity must preserve the operator decision to broaden home access no
-  further than the minimum Git configuration exception. Do not treat a second UID's `HOME`, config
-  resolution or sandbox expansion as equivalent to the currently proved uid-501 behavior without
-  evidence.
-- **Later accepted containment qualification:**
-  `logs/work-loop/work-loop-v2-descendant-supervision-discovery.md` records that its detached
-  generated-profile probe was a direct Claude invocation, not an end-to-end dispatcher run, and did
-  not establish full filesystem write confinement. Where that later record qualifies broader plan or
-  README wording, carry the qualification visibly; do not reopen 1d or use its broader wording as a
-  premise for credential safety.
+- **Current operator decision:** Stages B and C are authorized; D and E are not. This governs the
+  host-action boundary and supersedes this file's former `turn: operator` decision request.
+- **Governing plan:**
+  `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md`, especially the status block, Phase 1
+  item 1a, the two remaining Phase 2 blockers and the Phase 2 prohibition.
+- **Accepted Unit 2 result:** the corrected dedicated-identity discovery committed by Claude at
+  `cd88efa`, together with Codex's accepted closure check previously recorded in this file. Verify
+  the live repository before relying on the commit or its content. The settled design is one
+  non-admin actor identity per checkout, an eventual actor-UID lock, actor-owned Claude/Codex
+  authentication and a later UID-scoped termination boundary. Unit 2 did not prove that boundary.
+- **Existing detached-process fixture and evidence:**
+  `plans/work-loop-v2-v0.2/handoff-automation-spike/runs/probes/escaped-descendants-2026-08-07.sh`,
+  `runs/probe-escaped-descendants-2026-08-07.md`, and the matching cases in `dispatch.test.sh`.
+  Reuse their already-proved escape shape where suitable; do not invent a weaker stand-in.
+- **Current dispatcher and safety behavior:** `dispatch.sh`, `dispatch.test.sh`, spike `README.md`,
+  the interruption record and Phase 0 evidence. They govern bystander protection, stop semantics,
+  retry prohibition, lock behavior, exit-code honesty and the effective detached shape.
 - **Workflow contract:** `.agents/skills/work-loop-v2/SKILL.md` and
-  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`. This is a discovery unit: inspect and
-  return evidence, change nothing beyond this state file, and hand back for reframing or an operator
-  decision.
+  `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`. This is a discovery unit: change
+  nothing except this state file, return the evidence and hand back.
+- **Non-governing draft:** Claude's chat procedure beginning with `sudo sysadminctl -addUser
+  wlactor`. Treat it as candidate material to verify, not as an approved command sequence. In
+  particular, it did not establish how a fresh actor invokes `claude install`, and it omitted C5.
 
-### Named unknown and required outcome
+### Required outcome
 
-Establish whether one dedicated, non-admin macOS actor identity can be an exclusive ownership
-boundary for the current serial dispatcher and still run the actual Claude and Codex binaries,
-authenticate each actor independently, read and modify only the bound checkout and Git common
-directory, commit with a valid Git identity, and retain the effective unattended restrictions that
-1d settled.
+Return one ordered runbook that the operator can execute without inventing a command or safety step.
+It must cover preflight, Stage B, every Stage C check, the full C5 fixture, pass/fail interpretation,
+evidence to bring back, and rollback. Commands must be backed by local help/manual behavior or an
+explicitly cited primary source, and every runtime-dependent premise must remain a visible operator
+check rather than being promoted to fact.
 
-Return one evidence-backed candidate design that answers all of the following. If no design meets
-all of them, return **not viable** and the exact conflict rather than weakening 1a or 1d.
+The runbook must make these outcomes unambiguous:
 
-1. **Identity lifecycle:** the account properties needed for a dedicated, non-admin actor; how its
-   UID remains exclusive to dispatcher actors; how pre-existing processes under that UID are detected
-   before launch; and how one run cannot kill another run that shares the identity. Keep the current
-   project boundary — one task, one checkout, serial — explicit rather than implying support for
-   concurrent unattended runs.
-2. **Least launch, termination and inspection authority:** the narrow capabilities uid 501 would
-   need to launch the selected actor as the dedicated identity, signal only that identity's
-   processes, and verify that the boundary is empty. Select the concrete mechanism only after
-   inspecting current Darwin tools and their effective semantics. Distinguish what can be limited by
-   executable, target identity and arguments from any capability that would grant general root or
-   arbitrary cross-user execution.
-3. **Claude authentication and configuration:** how the installed Claude binary resolves its own
-   authentication and configuration under the dedicated identity, and whether a separate supported
-   login can be established without copying the operator's live credential files, reading the
-   operator's home or granting an interactive GUI login permanently.
-4. **Codex authentication and configuration:** the same answer for the Codex binary that the
-   dispatcher launches from `/Applications/ChatGPT.app/Contents/Resources/codex`. Do not assume that
-   the ChatGPT desktop session, Keychain state or the operator's `~/.codex` state transfers across a
-   UID boundary.
-5. **Checkout and Git access:** the minimum path traversal, read and write access the actor would
-   need for this exact checkout, its Git common directory and the task state file; where Git identity
-   would live for the actor; and whether that can be provided without opening the rest of
-   `/Users/patrik.lindeberg` or copying credential-helper secrets.
-6. **Contained unattended behavior under a different UID:** how `~/`, `$HOME`, user settings,
-   `~/.gitconfig`, the generated profile, credential scrubbing and the effective tool/network/home
-   restrictions resolve when the Claude process runs as the dedicated identity. Identify each 1d
-   assertion that must be re-proved live after account setup. Do not infer it from the current
-   operator-UID evidence.
-7. **macOS privacy behavior:** which TCC or Keychain operations may prompt or differ for the new UID,
-   whether they can be prepared while attended, and which cannot be claimed until an actual actor
-   run exists.
-8. **Operator setup and rollback:** the smallest ordered host procedure that would create and prepare
-   the boundary, the exact decision or approval required at each consequential step, a rollback for
-   each persistent change, and a later validation checklist that can fail before any dispatcher
-   implementation starts.
+1. **C3 fails:** stop immediately and safely remove the temporary boundary.
+2. **C3 passes but C4, C5 or C6 fails:** stop, preserve the exact non-secret evidence, and offer a
+   complete rollback; do not proceed to D.
+3. **All Stage C checks pass:** stop with D and E still forbidden, report exactly what was proved,
+   and state whether the temporary account remains or is rolled back pending a new operator decision.
 
-### Check before concluding
+Do not call the dedicated route viable merely because the commands are well formed. Only the later
+operator run can supply the missing host evidence, and 1a remains open even if every C check passes.
 
-1. Re-read the governing plan, the two closed predecessor state files, the current dispatcher launch
-   paths and the unattended profile. Confirm that the literal 1a guarantee, 1d authority decision,
-   exact-task locking, serial scope and Phase 2 prohibition still read as described above.
-2. Confirm the current host/account premise from read-only surfaces without repeating an already
-   sufficient probe merely for comfort. The prior `dscl` result may be accepted unless a direct
-   repository or host fact now contradicts it. Do not create or repurpose an account.
-3. Resolve the exact installed Claude and Codex versions, binary paths, supported login/status/config
-   interfaces and documented configuration-location controls. Prefer local binary behavior and
-   official primary documentation. Separate observed behavior from documented behavior and from an
-   inference.
-4. Inspect only credential metadata needed to locate the boundary: existence, owner, mode, directory
-   or Keychain class, and a supported redacted status command. Never print, copy, decode, export or
-   compare token, cookie, key, credential-helper response or secret value.
-5. Inspect current path ownership and traversal requirements for the checkout and Git common
-   directory without changing permissions, ownership, ACLs or location. Do not create a replacement
-   checkout or worktree.
-6. Inspect the semantics of the candidate run-as, process enumeration, signal and verification tools
-   on this Darwin host. A non-interactive privilege listing may be attempted only read-only and
-   non-prompting. If the tool layer refuses it, record the exact operator-run check and the result
-   that would make the design viable; do not retry through a broader route.
-7. Reconcile the design against all five current dispatcher launch paths: simulated `--actor-cmd`,
-   Codex, attended Claude, Claude with `--claude-deny`, and contained `--unattended` Claude. Say which
-   are part of the eventual ownership boundary and which test seam must remain simulated.
+### Claims to verify before writing the runbook
+
+1. **Current state and scope.** Re-read the current state, plan and named evidence. Confirm that the
+   operator authorized B/C only, that no Stage B/C host action is recorded as already executed, and
+   that Phase 2 remains forbidden.
+2. **Account preflight and rollback.** Inspect local `sysadminctl`, `dscl`, `id` and relevant manual
+   behavior read-only. Establish a collision-safe account name for this checkout, a guard that
+   refuses if the name, UID or home path already belongs to anything, how the password is entered
+   without appearing in argv, history, the state file or captured evidence, how non-admin status is
+   proved, and what account deletion does to the home. The rollback must never delete or repurpose a
+   pre-existing account and must not use an unguarded recursive deletion.
+3. **Claude bootstrap.** Verify the live install layout and a fresh login shell's executable search
+   path. The current operator binary is under `/Users/patrik.lindeberg/.local/bin`; a new actor has no
+   demonstrated `claude` command with which to run `claude install`. Select and justify a supported,
+   one-time bootstrap that installs into the actor's own home without copying credentials or making
+   the operator-home binary a steady-state dependency. Do not download or install anything now.
+4. **Attended login versus the decisive non-GUI check.** Establish the exact supported Claude and
+   Codex login/status commands and their non-secret success/failure output. The runbook must allow an
+   attended actor login if required, then require a **full actor GUI logout**, not fast user
+   switching, and positively check that no actor GUI session remains before C3. Resolve when hiding
+   the account is safe; do not hide or disable the only login route before the attended setup that
+   needs it.
+5. **C5 target derivation and ordering.** Determine an ordering that makes the empty-UID premise
+   truthful. Before any UID-wide signal, enumerate the actor UID and refuse to signal if any process
+   exists other than the fixture's exact expected members and the signalling command's documented
+   exclusions. Never treat an unexpected actor process as cleanup permission.
+6. **C5 fixture.** Return the full executable fixture inline, or an exact safe invocation of an
+   existing script if it already provides the required boundary. It must create an actor-owned fully
+   detached daemon that performs `setsid`, double-forks, closes inherited descriptors and execs a
+   normal system binary; create a uid-501 bystander; prove the target has the expected actor UID and
+   escape properties before signalling; run the exact TERM/grace/KILL/empty-census sequence; prove
+   the daemon is gone and the bystander remains alive; distinguish exit 0, 1 and `>=2`; and clean up
+   every fixture process on every exit. It must refuse root, uid 501, an empty/malformed UID, a UID
+   that no longer maps to the intended account, and any unbounded or unexpected target census.
+7. **Read-only C6.** Verify the minimum Git configuration needed for the actor to read this checkout
+   across the ownership boundary. C6 may prove traversal, repository recognition and
+   `safe.directory`; it must not claim write or commit ability before D2. Avoid optional index writes
+   where Git provides a supported read-only mode, and do not collect credential-helper output.
+8. **Rollback and residue.** Pair every persistent Stage B/C change with a checked rollback. Include
+   a final process census, authentication logout where supported, account deletion, account/home
+   absence checks and treatment of a logout command that cannot reach a locked keychain. State what
+   remains after a successful C run and what the operator must decide before anything else happens.
 
 ### Required evidence
 
-Evidence must be capable of returning **viable**, **not viable** or **operator check required**.
+Evidence must be capable of rejecting the proposed runbook.
 
-- A redacted actor-readiness matrix for Claude, Codex and Git. For each, name the executable, the
-  config/auth surface it actually uses, the proposed dedicated-identity source, the checkout access
-  needed, the observed or documented support, and the unresolved live check. No secret values.
-- A capability table for launch, enumeration, TERM, KILL and empty-boundary verification. For each,
-  name the effective caller and target identity, whether privilege is required, the smallest
-  constrainable surface and a negative boundary that must remain impossible. A design that can target
-  uid 501, root or an arbitrary UID without an additional guard is not viable.
-- A path-access table covering every parent traversal path, the checkout, Git common directory,
-  actor home and Git config. It must show that the operator's home remains closed except for explicit
-  task paths. If this cannot be done without broad home access, the candidate is not viable.
-- A 1d revalidation list whose checks read differently under the operator UID and dedicated UID:
-  effective tool roster, MCP absence, network denial, home-read denial, outside-write behavior,
-  push denial, credential scrub, hook absence, Git operation and the exact `HOME`/config path the
-  profile resolved. Label every item that requires the future live account.
-- One exact, ordered operator procedure with persistent changes, risks and rollback paired line by
-  line. Commands may be proposed only when backed by the inspected host semantics. Mark commands that
-  require administrator approval and commands that merely validate. Do not execute them.
-- A fail-capable pre-implementation validation plan. It must include positive controls that the real
-  Claude and Codex actors can authenticate and commit under the dedicated identity, negative controls
-  that operator processes and files outside the explicit paths remain unreachable, and proof that an
-  empty identity boundary is required before launch.
-- A clear conclusion: **viable**, **not viable**, or **operator check required**. State exactly what
-  Unit 3 may implement if viable, or what operator evidence is still needed. Do not call 1a complete.
+- A command-support table citing the local help/manual or primary source for account creation and
+  deletion, password handling, actor-owned Claude bootstrap, Claude/Codex login and status, GUI
+  logout/session detection, `pkill -U`/`pgrep -U`, and read-only Git status behavior.
+- A stage table with every command marked `[READ-ONLY]`, `[ADMIN]`, `[ATTENDED]`, `[SIGNAL]` or
+  `[ROLLBACK]`, plus its pass result, fail result, stop point and captured evidence. Secret values and
+  passwords must never be captured.
+- The exact C5 shell content syntax-checked with `bash -n` using only a temporary, self-cleaning file.
+  Also provide a static signal audit listing every `kill`, `pkill` or equivalent invocation and the
+  guard that proves its target. Do not execute any UID-wide signal in this unit.
+- A fail-capability matrix showing at least: existing-name collision; malformed, root, operator or
+  mismatched UID; occupied actor UID; failed Claude bootstrap; incomplete GUI logout; locked
+  keychain; failed Codex status; C5 daemon survivor; C5 bystander death; `pkill`/`pgrep` exit `>=2`;
+  read-only Git failure; rollback failure. Each must lead to a visible stop, not continued setup.
+- A concise operator evidence template containing only the outputs needed for Codex assessment after
+  the real run. It must not ask for passwords, tokens, credential files, Keychain contents or browser
+  data.
 
 ### Scope and stop conditions
 
 Allowed repository path: this state file only.
 
-Read-only inspection may cover the named repository sources, the installed Claude and Codex command
-interfaces, account metadata, file metadata, current non-secret authentication status, local manual
-pages and official primary documentation. Self-cleaning temporary probe material may be used only if
-it changes no account, privilege, permission, Keychain, TCC, settings or repository state and contains
-no credential data.
+Allowed work: read the named repository sources; inspect local binary paths, versions, `--help`,
+manual pages and non-secret file/account metadata; consult official primary documentation only where
+the local interface is insufficient; create and remove self-cleaning temporary material solely to
+syntax-check the proposed C5 code.
 
-Excluded: product edits; account creation, deletion or repurposing; `sudoers` or other privilege-policy
-changes; `launchd` or managed-settings changes; ACL, owner, mode or checkout-location changes;
-authentication or logout; credential copying/export; Keychain or TCC mutation; writing a second plan,
-requirements document or evidence artifact; weakening 1a; reopening the settled 1d policy; Phase 1f;
-every Phase 2 action; push, merge, deployment, installation and unrelated cleanup.
+Forbidden in this unit: `sudo`; account creation, deletion, hiding or repurposing; password prompts;
+Claude/Codex installation, authentication or logout; Keychain or TCC mutation; any signal against a
+real UID or process; ACL, mode, owner, operator-home, `sudoers`, wrapper, dispatcher, test or README
+changes; any repository artifact besides this state file; Phase 1f; Phase 2; push, merge or deployment.
 
-Stop and hand back if inspection would reveal a secret; a check needs interactive authentication or
-administrator approval; the viable design requires broad operator-home access, copied credentials,
-general root authority or an interactive account that cannot be disabled after setup; the two actor
-products cannot share one safe identity design; the mechanism cannot exclude operator and bystander
-processes; an authority or 1d scope change is required; an applicable source conflict cannot be
-reconciled; or the required evidence cannot be produced read-only.
+Stop and hand back rather than improvise if a safe bootstrap cannot be established; account rollback
+semantics remain ambiguous; the C5 target cannot be bounded strongly enough to protect uid 501 and
+pre-existing actor processes; complete evidence would require a secret; the runbook needs D/E
+authority; a governing premise is false; or the required evidence cannot be produced without running
+the authorized host actions prematurely.
 
-Unit completion: Claude changes and commits only this state file, reports every check and the redacted
-evidence above in `## Latest result`, identifies the conclusion and exact next owner, sets
-`turn: codex` when repository-resolvable evidence is sufficient for assessment or `turn: operator`
-when one specific protected host check or decision remains, and stops. Do not implement and do not
-push.
+Unit completion: Claude changes and commits only this state file, replaces `## Latest result` with
+the verified runbook and evidence, leaves 1a open, sets `turn: codex`, and stops. Do not execute the
+runbook, create another artifact or push.
 
 ## Latest result
 
-Inspected (2026-08-08). Read-only throughout; no account, privilege, permission, Keychain, TCC,
-settings or product file was changed. No secret value was printed, copied, decoded or compared.
+Inspected (2026-08-08). Read-only throughout. No `sudo`, no account action, no installation, no
+authentication, no signal against any real UID, and no repository file other than this one. The only
+temporary material was one scratch copy of the C5 script, syntax-checked with `bash -n` and removed.
 
-- Check (1): HOLDS — re-read the governing plan and both closed predecessors. § 1a still states the
-  objective "says the actor's *full descendant tree*"; the status block still lists exactly two Phase 2
-  blockers (1a, 1f) with Phase 2 `BLOCKED`; `work-loop-v2-contained-unattended-profile.md` opens
-  `turn: operator` and still records "One named read exception inside the denied home tree:
-  `~/.gitconfig`, and nothing else" with the operator decision "broaden home no further";
-  `dispatch.sh` still locks per exact task (`LOCK_DIR="${TMPDIR:-/tmp}/work-loop-dispatch-$LOCK_KEY.lock"`,
-  `acquire_lock`, `pin_lock`, exit 17) and still carries "ONE exact Work Loop task ... in ONE checkout".
-- Check (2): HOLDS — Unit 1's `dscl` result accepted, not repeated. Nothing inspected this unit
-  contradicts it; no account was created or repurposed.
-- Check (3): HOLDS — resolved by running each binary. `claude` 2.1.220 at
-  `/Users/patrik.lindeberg/.local/bin/claude` → symlink → `~/.local/share/claude/versions/2.1.220`
-  (Mach-O, mode 755). `codex-cli 0.147.0-alpha.1.2` at
-  `/Applications/ChatGPT.app/Contents/Resources/codex` (mode 755). Supported interfaces observed:
-  `claude auth login|logout|status`, `claude setup-token`; `codex login [status] --with-api-key
-  --with-access-token`, `codex logout`, `codex doctor`. Configuration-location control observed:
-  `codex doctor` reports `CODEX_HOME  ~/.codex (dir)`. `CLAUDE_CONFIG_DIR` is **unresolved** — the
-  scratchpad probe that would have settled it was refused at the tool-permission layer and was not
-  retried by a broader route.
-- Check (4): HOLDS — metadata only. `claude auth status` (a supported redacted command) returns
-  `loggedIn: true`, `authMethod: claude.ai`, `apiProvider: firstParty`, `subscriptionType: max`.
-  Claude's credential is a **Keychain generic item**, service `Claude Code-credentials`, account
-  `patrik.lindeberg`; attributes read, value never requested (no `-w`, no `-g`). No
-  `~/.claude/.credentials*` file exists — searched `~/.claude` for `.credentials*`, no match. Codex's
-  credential is a **file**: `codex doctor` reports `auth storage mode File`, `auth file ~/.codex/auth.json`,
-  `stored auth mode chatgpt`; `ls -l` shows mode `600`, owner 501, never opened. `codex login status`
-  returns `Logged in using ChatGPT`. `~/.gitconfig` is mode `644` and its credential-helper **key names**
-  were listed with `--name-only`; no value was read.
-- Check (5): HOLDS — ownership and traversal inspected, nothing changed. Full chains recorded in the
-  path table below. `git rev-parse --git-common-dir` → `<checkout>/.git` (not a linked worktree).
-  Git identity resolves from `file:/Users/patrik.lindeberg/.gitconfig`; `git config --local --get
-  user.email` is empty, so identity is global-only — the same fact 1d relied on.
-- Check (6): PARTIAL, and recorded as exactly that. Observed by effective probe: `pgrep -U 501`
-  enumerates cross-process without privilege (419 pids for uid 501, exit 0), so **verification needs no
-  privilege**. Observed from `man 2 kill`: EPERM unless "the super-user" or matching effective uid — so
-  **uid 501 cannot signal another UID's processes**, and termination needs privilege or must run as the
-  actor. Run-as tools present: `/usr/bin/sudo` (mode 4111 setuid root), `/usr/bin/su` (4755),
-  `/bin/launchctl`. **Not resolvable read-only:** whether a constrained non-interactive `sudo` rule
-  exists or is acceptable. The `sudo -n -l` listing was refused at the tool-permission layer in Unit 1
-  and was not retried here through any broader route. The exact operator-run check and its
-  design-deciding result are named in the validation plan below.
-- Check (7): HOLDS — reconciled against all five launch paths in `launch_actor()` (dispatch.sh
-  1554–1644). Disposition in the capability section below.
+- Claim (1): HOLDS — re-read this file, the governing plan and the named evidence. Stages B and C are
+  authorized and D/E are not (`## Objective and scope`, `## Lane and unit`). No Stage B/C host action
+  has been executed: `id -u wlactor` and `id -u wlactor-airesources` both return "no such user", and
+  `dscl . -list /Users UniqueID` filtered to uid ≥ 500 still returns exactly `patrik.lindeberg 501` and
+  `com.malwarebytes.mbam.nobody 1000`. The plan still lists 1a and 1f as the two Phase 2 blockers with
+  Phase 2 `BLOCKED`.
+- Claim (2): HOLDS with one premise deliberately left as an operator check. `/usr/sbin/sysadminctl`,
+  `/usr/bin/dscl`, `/usr/sbin/dseditgroup`, `/usr/bin/dsmemberutil` and `/usr/bin/id` are all present.
+  `sysadminctl` usage shows `-addUser <name> [-fullName] [-UID] [-GID] [-shell] [-password] [-hint]
+  [-home] [-admin] [-roleAccount] …` and `-deleteUser <name> [-secure || -keepHome]`. Both candidate
+  names are free (checked by `id`, `dscl . -read /Users/<name>` → `eDSRecordNotFound`, and `ls -ld
+  /Users/<name>` → no such file). Non-admin status is provable read-only: `dseditgroup -o checkmember
+  -m patrik.lindeberg admin` returns "yes patrik.lindeberg is a member of admin", so the same command
+  against the actor must return "no". **Left as an operator check:** the local usage does not state
+  what `-deleteUser` does to the home when neither `-secure` nor `-keepHome` is given, so the runbook
+  mandates `-keepHome` and removes the home separately under guards. Nothing here is promoted to fact.
+- Claim (3): HOLDS, and it confirms the gap Codex named. `/etc/paths` contains `/usr/local/bin`,
+  `/System/Cryptexes/App/usr/bin`, `/usr/bin`, `/bin`, `/usr/sbin`, `/sbin`; `/etc/paths.d` adds
+  cryptex paths and `/opt/homebrew/bin`. **None of them is `$HOME/.local/bin`**, so a fresh actor
+  login shell has no `claude` command and cannot run `claude install` unaided. The operator's own
+  install is `~/.local/bin/claude` → `~/.local/share/claude/versions/2.1.220`, i.e. a per-user native
+  install, and `claude install [target]` / `claude update` / `claude doctor` are supported commands.
+  The selected bootstrap is therefore **one invocation of the operator's existing binary under the
+  actor's identity and HOME**, which is one-time and leaves no steady-state dependency — verified by
+  the runbook's own post-check that `/Users/<actor>/.local/bin/claude` exists afterwards. Nothing was
+  downloaded or installed.
+- Claim (4): HOLDS — `claude auth login|logout|status`, `claude setup-token`, `codex login [status]`,
+  `codex logout` and `codex doctor` are the supported interfaces. Non-secret success output is known
+  from this host: `claude auth status` emits JSON including `"loggedIn": true` and `"authMethod"`, and
+  `codex login status` emits `Logged in using ChatGPT`. A positive "no actor GUI session" check exists
+  and needs no privilege: `stat -f '%Su' /dev/console` returns the console owner (`patrik.lindeberg`
+  now), `who` lists console sessions, and `pgrep -U <actor-uid>` returning exit 1 proves the actor owns
+  no processes at all — a live GUI session always owns some. Hiding the account is safe only **after**
+  the attended login, because hiding removes the login route that attended setup may need.
+- Claim (5): HOLDS — ordering is settled in the fixture below. The empty-UID premise is made truthful
+  by checking it *before* the fixture is created (`pgrep -U` must exit 1), and the signal is gated on a
+  second census that must equal the fixture's exact expected member set. An unexpected actor process
+  aborts the probe and is never treated as cleanup permission.
+- Claim (6): HOLDS — the fixture is returned inline below, reusing the proven escape shape from
+  `runs/probes/escaped-descendants-2026-08-07.sh` lines 107–116 (double fork → `setsid` → double fork →
+  report pid → `closerange(0,1024)` → `execv("/bin/sleep")`). `/usr/bin/python3` (3.9.6, root-owned,
+  mode 755) and `/bin/sleep` (root-owned, 755) are both outside the operator's home, so the actor can
+  execute them. `bash -n` returned exit 0 on a temporary copy, which was then removed.
+- Claim (7): HOLDS — `git --no-optional-locks -C <checkout> status --porcelain` runs and exits 0 on
+  this host, so Git's supported read-only mode is available and C6 needs no index write. `git` is
+  `/usr/bin/git`, outside the operator's home. C6 proves traversal, repository recognition and
+  `safe.directory` only; the commit test correctly belongs to D5, because the checkout is `755`/`644`
+  under uid 501 and the actor has no write access before D2. No credential-helper output is collected.
+- Claim (8): HOLDS — every persistent Stage B/C change is paired with a checked rollback below,
+  including the case where `claude auth logout` cannot reach a locked keychain.
 
-Corrected (2026-08-08) — bounded round, frozen findings 1–3, each reproduced by inspection first:
+### Command-support table
 
-- Finding (1): REPRODUCED and RESOLVED. Reproduced by reading `dispatch.sh:451` —
-  `LOCK_KEY="$(printf '%s|%s' "$CHECKOUT" "$TASK" | shasum -a 256 | cut -c1-16)"` — and `README.md`
-  § Safety boundaries, which records "Two *instances* in two linked worktrees were proven to overlap
-  safely on 2026-08-05". So concurrent runs are a demonstrated shape, not a hypothetical, and the
-  Unit 2 sentence "two runs cannot exist" was simply false. The corrected boundary is in
-  *Identity lifecycle* below.
-- Finding (2): REPRODUCED and RESOLVED BY MEASUREMENT, with one part explicitly still unproved.
-  Reproduced by reading `/usr/share/man/man1/pkill.1`: the SYNOPSIS prints `pattern ...` *outside* the
-  optional brackets while the DESCRIPTION says "**If any** `pattern` operands are specified" — the page
-  contradicts itself. Unit 2's evidence exercised `pgrep`, never `pkill`. Settled this round by a
-  bounded self-owned probe; see *The termination primitive* below. What remains unproved, and is named
-  rather than assumed, is `pkill -U` specifically.
-- Finding (3): REPRODUCED and RESOLVED. Reproduced by re-reading Unit 2's own V1–V3: each presupposed
-  the account, the login and the sudoers rule that the checks existed to justify. Also reproduced: the
-  setup proposed six ACL grants reaching into the operator's home for the Claude binary, with no
-  comparison against an actor-owned installation. Both are replaced below by *Staged operator path*
-  and the install comparison in the readiness matrix.
+| Purpose | Command | Support basis |
+|---|---|---|
+| create account | `sysadminctl -addUser … -shell /bin/zsh` | local `sysadminctl` usage output |
+| delete account | `sysadminctl -deleteUser <name> -keepHome` | local usage output; `-keepHome` chosen so home handling is explicit |
+| prove non-admin | `dseditgroup -o checkmember -m <name> admin` | run read-only against the operator; returns a yes/no sentence |
+| resolve / reverse-resolve uid | `id -u <name>` / `id -un <uid>` | local, run this unit |
+| account absence | `dscl . -read /Users/<name> RecordName` → `eDSRecordNotFound` | local, run this unit |
+| Claude bootstrap | `<operator-claude> install` under the actor's HOME | `claude install [target]` in local `--help`; operator's own install is per-user |
+| Claude login / status | `claude auth login`, `claude auth status` | local `claude auth --help`; status output observed |
+| Codex login / status | `codex login`, `codex login status` | local `codex login --help`; status output observed |
+| GUI session detection | `stat -f '%Su' /dev/console`, `who`, `pgrep -U <uid>` | all run read-only this unit |
+| select / signal by uid | `pgrep -U <uid>`, `pkill -TERM\|-KILL -U <uid>` | `pkill.1` DESCRIPTION; pattern-free selector measured in Unit 2 via `-g` |
+| read-only Git status | `git --no-optional-locks -C <path> status --porcelain` | run read-only this unit, exit 0 |
 
-Nothing outside the three frozen findings was changed. Three things newly noticed are recorded as
-deferrals at the end of this result, not implemented.
+**One caution carried forward:** `pkill.1`'s SYNOPSIS prints `pattern ...` outside the optional
+brackets while its own DESCRIPTION says "If any `pattern` operands are specified". The measurement in
+Unit 2 settles it in favour of the DESCRIPTION. C5 is the check that confirms it for `-U`.
 
-### Conclusion — OPERATOR CHECK REQUIRED
+### The runbook
 
-Unchanged in disposition, and now resting on a corrected design. The dedicated-identity route is
-coherent and nothing found makes it *not viable*. It still cannot be called viable from uid 501 alone,
-because the decisive check — whether the actor's Claude authentication can be read in a non-GUI
-session — needs the account to exist first. What changed is that reaching that check no longer
-requires the privilege rule or any change to the operator's home, so the operator can now get a real
-answer from a small, fully reversible step. Nothing here calls 1a complete.
+Account name for this checkout: **`wlactor-airesources`** (free, checked above). Checkout:
+`/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`.
 
-### Actor-readiness matrix (redacted)
+**Password handling, before anything else.** No command below contains a password literal. `sudo`
+prompts for the administrator password itself and does not echo it or place it in `argv`. For account
+creation, `sysadminctl -addUser` is run **without** `-password`, so it prompts interactively; if it
+does **not** prompt, abort and create the account in System Settings → Users & Groups instead, then
+resume at P4. Never paste a password into a command, this file, or the evidence you bring back.
 
-| Actor | Executable | Config/auth surface actually used | Dedicated-identity source | Checkout access needed | Support | Unresolved live check |
-|---|---|---|---|---|---|---|
-| **Claude** | **corrected (finding 3):** the actor's **own** install in the actor's home, not the operator's binary under `~/.local` | macOS **login Keychain**, svce `Claude Code-credentials`, acct = the login user. No credentials file on this host | actor runs its own `claude auth login` (or `claude setup-token`); item lands in the **actor's** login keychain | read + write (Claude commits, per core § 4) | `claude install [target]` and `claude update` are first-class commands, and the operator's own install is already per-user — observed | **Decisive:** can a non-GUI `sudo -u` session read the actor's login keychain? A login keychain is unlocked by GUI login, not by `sudo`. Also unresolved: whether `CLAUDE_CONFIG_DIR` relocates state, and whether a file fallback exists when the keychain is locked |
-| **Codex** | `/Applications/ChatGPT.app/Contents/Resources/codex` — **outside the home** | **file** `$CODEX_HOME/auth.json`, mode 600; `CODEX_HOME` defaults to `~/.codex` | actor runs its own `codex login` (ChatGPT OAuth, one-time attended) — **or** `codex login --with-api-key` from stdin, which is a *different* credential and a billing/authority decision | read + write (`codex exec --sandbox workspace-write`) | `login status`, `doctor`, `CODEX_HOME` all observed | whether `codex login` completes without a GUI browser session for the actor. File-based storage means **no keychain-unlock problem** once created |
-| **Git** | `/usr/bin/git` — **outside the home** | actor's own `~/.gitconfig` | actor's own `user.name` / `user.email` — **not secrets** | read + write on the checkout **and** `.git` | observed | commits would carry the actor's author identity unless it is set to the operator's name/email (public data, not a credential) |
-
-Two consequences worth stating plainly. **No credential copying is required by this design** — each
-identity authenticates itself, and `~/.codex/auth.json` and the operator's keychain item are never
-read. And **Git needs no credential at all here**, because commits do not authenticate; only push
-does, and push stays out of scope.
-
-**Where the Claude binary comes from — the comparison Unit 2 owed and did not make (finding 3):**
-
-| Option | Access needed inside the operator's home | Cost | Verdict |
-|---|---|---|---|
-| Execute the operator's binary at `~/.local/share/claude/versions/2.1.220` | **six** grants: `search` on `~`, `~/.local`, `~/.local/share`, `~/.local/share/claude`, `~/.local/share/claude/versions`, plus `read,execute` on the binary | none extra | **rejected** |
-| **Actor installs its own copy** | **none** | a second ~257 MB copy; `claude update` must be run per account; the two installs can drift apart in version | **preferred, on evidence** |
-
-The evidence is that per-user installation is the product's normal shape here, not a workaround: the
-operator's own `claude` is a symlink `~/.local/bin/claude` → `~/.local/share/claude/versions/2.1.220`
-placed under a home directory with no root involved, and `claude install [target]` / `claude update`
-exist as supported commands.
-
-**Net effect: every `~/.local` ACL proposed by Unit 2 is withdrawn.** After this choice the only
-remaining reason the actor must touch the operator's home is the **checkout itself** — Codex lives in
-`/Applications`, Git is `/usr/bin/git`, and Claude is now the actor's own. The minimum becomes three
-`search` grants along `~` → `~/Claude Code` → `~/Claude Code/Axcion AI Repo`, plus one inherited
-read/write grant on the checkout subtree.
-
-One hard requirement the inspection surfaced: the checkout is owned by uid 501, so the actor's `git`
-will refuse it as **dubious ownership** unless the actor's own gitconfig adds `safe.directory` for
-this exact path. Documented Git behaviour, not measured under a second UID.
-
-### Identity lifecycle — corrected (finding 1)
-
-The account is **non-admin**, holds no membership in `admin` or any privilege group, is hidden from the
-login window once setup is done, and exists for dispatcher actors and nothing else.
-
-**One actor account per checkout, not one for the host.** The concurrency the dispatcher actually has,
-and has proved, is across checkouts: two instances in two linked worktrees overlapped safely on
-2026-08-05. Binding the identity to the checkout preserves that exactly — two such runs hold different
-UIDs, so a UID-wide stop in one cannot reach the other, and the kernel enforces it rather than a
-convention (`man 2 kill`: EPERM unless the effective uids match).
-
-**A second lock closes the remaining race, and the existing lock is untouched.** `LOCK_KEY` is
-`sha256(checkout|task)`, so two runs in the *same* checkout under *different* task ids do not contend
-today. Two of them would share one actor UID, and worse, both could observe an empty boundary and
-launch. The fix is one **additional** lock keyed on the actor UID, taken with the same atomic `mkdir`
-the existing lock already uses, and **held across both the empty-boundary check and the launch** — the
-check is meaningless outside it. A dispatcher must hold both locks. The existing exact-task lock keeps
-its key, its `pin_lock` behaviour and its exit 17; nothing about it is weakened or replaced. Both locks
-live in the operator's `$TMPDIR`, which is correct: every contending dispatcher runs as uid 501, so
-they can all see each other's locks, while the actor cannot see either.
-
-**Fail closed, and claim no more than that.** A run that cannot claim its actor UID stops rather than
-sharing one. Concurrency is therefore supported **up to the number of provisioned actor accounts, one
-per checkout** — and no further. Beyond that, runs are refused, not queued. That is the whole of what
-this design can prove, and it is deliberately less than "the dispatcher supports concurrency".
-
-### Capability table — launch, enumerate, terminate, verify
-
-| Capability | Effective caller → target | Privilege required | Smallest constrainable surface | Negative boundary that must stay impossible |
+| # | Command | Kind | Pass | Fail → stop |
 |---|---|---|---|---|
-| **Launch** actor as the dedicated identity | uid 501 → actor uid | **yes** — `sudo -u <actor>` | a `sudoers` drop-in whose `Runas_Spec` is **the actor account only**, and whose command list is a single root-owned wrapper with a fixed argument shape | `sudo -u root …`, `sudo -u patrik.lindeberg …`, `ALL=(ALL)`, or any rule accepting an arbitrary command must be refused |
-| **Enumerate** the boundary | uid 501 → actor uid | **no** — measured: `pgrep -U` works unprivileged | `pgrep -U <actor-uid>` | must never be widened to a name/pattern match that can select uid 501 processes |
-| **TERM / KILL** the boundary | actor uid → actor uid | **no root needed** if the killer itself runs as the actor: `sudo -u <actor> /usr/bin/pkill -TERM -U <actor-uid>` | reuse of the same run-as rule; no root `pkill` rule is required | a root `pkill`, or any rule permitting `-U 501`/`-U 0`. `man 2 kill` guarantees the actor cannot signal uid 501. **Selector-without-pattern measured; the `-U` pair itself still to be proved — see *The termination primitive*** |
-| **Verify empty** before release | uid 501 → actor uid | **no** | `pgrep -U <actor-uid>`; exit 1 = empty | exit `>= 2` means "could not look" and must pin the lock, never be read as "empty" |
-| **Precondition** — empty before launch | uid 501 → actor uid | **no** | same `pgrep -U`, asserted **inside the actor-UID lock** and before the first hop | a non-empty boundary must fail closed. Outside that lock the check races two dispatchers into the same UID |
+| P1 | `id -u wlactor-airesources` | `[READ-ONLY]` | "no such user" | any uid printed → name collision, pick another name |
+| P2 | `ls -ld /Users/wlactor-airesources` | `[READ-ONLY]` | "No such file or directory" | path exists → stop, do not reuse it |
+| P3 | `dscl . -read /Users/wlactor-airesources RecordName` | `[READ-ONLY]` | `eDSRecordNotFound` | a record exists → stop |
+| P4 | `stat -f '%Su' /dev/console` | `[READ-ONLY]` | `patrik.lindeberg` | anything else → an unexpected GUI session owns the console |
+| **B1** | `sudo sysadminctl -addUser wlactor-airesources -fullName "Work Loop Actor (ai-resources)" -shell /bin/zsh` | `[ADMIN]` | account created | any error → stop, nothing else has changed |
+| B2 | `id -u wlactor-airesources` | `[READ-ONLY]` | a uid ≥ 500 | non-numeric or < 500 → stop and roll back |
+| B3 | `dseditgroup -o checkmember -m wlactor-airesources admin` | `[READ-ONLY]` | "no … is not a member" | "yes" → **stop and roll back**, the account is an admin |
+| B4 | `pgrep -U $(id -u wlactor-airesources); echo $?` | `[READ-ONLY]` | exit `1` | exit `0` → the UID is occupied; exit ≥2 → cannot look, stop |
+| **C1a** | `sudo -u wlactor-airesources -H /Users/patrik.lindeberg/.local/bin/claude install` | `[ATTENDED]` | completes | error → stop, roll back |
+| C1b | `ls -l /Users/wlactor-airesources/.local/bin/claude` | `[READ-ONLY]` | exists | missing → bootstrap did not install into the actor's home; stop |
+| C1c | `sudo -u wlactor-airesources -H /Users/wlactor-airesources/.local/bin/claude auth login` | `[ATTENDED]` | login completes | if it needs a browser it cannot reach, log into the actor's desktop session and do C1c/C2 there |
+| C2 | `sudo -u wlactor-airesources -H /Applications/ChatGPT.app/Contents/Resources/codex login` | `[ATTENDED]` | login completes | error → stop, roll back |
+| **G** | **If you used the actor's desktop session: log fully out of it. Not fast user switching — log out.** | `[ATTENDED]` | — | — |
+| G1 | `stat -f '%Su' /dev/console` | `[READ-ONLY]` | **not** the actor | actor owns the console → C3 would pass for the wrong reason; log out and repeat |
+| G2 | `who` | `[READ-ONLY]` | no actor row | actor row present → same, log out |
+| G3 | `pgrep -U $(id -u wlactor-airesources); echo $?` | `[READ-ONLY]` | exit `1` | exit `0` → a session survives; exit ≥2 → cannot look, stop |
+| **C3** | `sudo -u wlactor-airesources -H /Users/wlactor-airesources/.local/bin/claude auth status` | `[READ-ONLY]` | JSON with `"loggedIn": true` | **anything else → STOP AND ROLL BACK.** This is the decisive check |
+| C4 | `sudo -u wlactor-airesources -H /Applications/ChatGPT.app/Contents/Resources/codex login status` | `[READ-ONLY]` | `Logged in using ChatGPT` | anything else → stop, preserve output, offer rollback |
+| **C5** | the fixture below, run as the operator | `[SIGNAL]` | `C5 PASS` | any other verdict → stop, preserve output, offer rollback |
+| C6a | `sudo -u wlactor-airesources -H git config --global user.name "Patrik Lindeberg"` | `[ATTENDED]` | — | — |
+| C6b | `sudo -u wlactor-airesources -H git config --global user.email "<the address in ~/.gitconfig>"` | `[ATTENDED]` | — | — |
+| C6c | `sudo -u wlactor-airesources -H git config --global --add safe.directory "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"` | `[ATTENDED]` | — | — |
+| C6d | `sudo -u wlactor-airesources -H git --no-optional-locks -C "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources" status --porcelain` | `[READ-ONLY]` | exits 0 and prints a status | "dubious ownership" → C6c did not take; permission denied → traversal is blocked; either way stop |
+| H | `sudo dscl . -create /Users/wlactor-airesources IsHidden 1` | `[ADMIN]` | hidden | run **only** after C1–C6; hiding earlier removes the login route setup needs |
 
-Running the killer *as the actor* rather than as root is the one design choice that keeps this inside a
-narrow authority: it removes root from the termination path entirely, and the kernel's own EPERM rule
-then makes "signal uid 501" impossible rather than merely disallowed by policy.
+### C5 — the fixture, inline and syntax-checked
 
-### The termination primitive — corrected (finding 2)
+Run as the operator (uid 501), attended. `bash -n` returned exit 0 on a temporary copy of exactly this
+content; the copy was removed and no part of it was executed in this unit.
 
-**Measured this round, on a bounded self-owned fixture.** No unbounded UID was signalled and no real
-bystander was touched. The fixture was three processes in one process group created with `set -m` —
-the same mechanism `dispatch.sh:1465` uses — with a fourth process in a different group as the control,
-and a guard that refused to signal if the target group was empty, was pid ≤ 1, or was the probe's own
-group:
+```bash
+#!/bin/bash
+# C5 — actor-UID termination boundary probe.
+# RUN AS THE OPERATOR (uid 501), attended. Creates ONE actor-owned fully detached
+# daemon and ONE uid-501 bystander, proves the boundary before signalling it, then
+# runs the exact TERM/grace/KILL/census sequence.
+#
+# It signals a UID only after five identity guards and one exact-census guard pass.
+set -u
 
+ACTOR_NAME="${1:?usage: c5.sh <actor-account-name> <checkout-path>}"
+CHECKOUT="${2:?usage: c5.sh <actor-account-name> <checkout-path>}"
+GRACE=3
+
+DAEMON=""
+BYSTANDER=""
+
+say() { printf '%s\n' "$*"; }
+
+# Kill one recorded actor pid, but ONLY if it still belongs to the actor.
+# Guards against pid reuse handing us someone else's process.
+kill_actor_pid() {
+  local p="$1" owner
+  [ -n "$p" ] || return 0
+  owner="$(ps -o uid= -p "$p" 2>/dev/null | tr -d ' ')"
+  [ "$owner" = "${ACTOR_UID:-x}" ] || return 0
+  sudo -u "$ACTOR_NAME" /bin/kill -KILL "$p" 2>/dev/null
+}
+
+cleanup() {
+  [ -n "$BYSTANDER" ] && kill "$BYSTANDER" 2>/dev/null
+  kill_actor_pid "$DAEMON"
+  return 0
+}
+trap cleanup EXIT INT TERM
+
+# ---------------------------------------------------------------- guard 1: uid
+ACTOR_UID="$(id -u "$ACTOR_NAME" 2>/dev/null)"
+case "${ACTOR_UID:-}" in
+  ''|*[!0-9]*) say "REFUSE: '$ACTOR_NAME' does not resolve to a numeric uid"; exit 2 ;;
+esac
+[ "$ACTOR_UID" -ne 0 ]          || { say "REFUSE: target uid is root";                exit 2; }
+[ "$ACTOR_UID" -ne "$(id -u)" ] || { say "REFUSE: target uid is the caller";          exit 2; }
+[ "$ACTOR_UID" -ge 500 ]        || { say "REFUSE: uid $ACTOR_UID is a system uid";    exit 2; }
+BACK="$(id -un "$ACTOR_UID" 2>/dev/null)"
+[ "${BACK:-}" = "$ACTOR_NAME" ] || { say "REFUSE: uid $ACTOR_UID maps to '${BACK:-<none>}', not '$ACTOR_NAME'"; exit 2; }
+say "guard 1 OK: $ACTOR_NAME = uid $ACTOR_UID, not root, not caller, maps back"
+
+# ------------------------------------------------- guard 2: boundary is empty
+PRE="$(pgrep -U "$ACTOR_UID" 2>/dev/null)"; PRE_RC=$?
+case "$PRE_RC" in
+  1) say "guard 2 OK: actor boundary is empty (pgrep exit 1)" ;;
+  0) say "REFUSE: actor uid already has processes; this probe never cleans up a boundary it did not create:"; say "$PRE"; exit 2 ;;
+  *) say "REFUSE: pgrep exit $PRE_RC — cannot prove the boundary is empty, so nothing is signalled"; exit 2 ;;
+esac
+
+# ------------------------------------------------------------------- fixture
+# The proven escape shape, reused from runs/probes/escaped-descendants-2026-08-07.sh:
+# double fork -> setsid -> double fork -> report pid -> closerange -> exec a system binary.
+# The pid is written to stdout BEFORE the descriptors go, because writing needs one.
+DAEMON="$(sudo -u "$ACTOR_NAME" /usr/bin/python3 -c '
+import os,sys
+if os.fork() > 0: os._exit(0)
+os.setsid()
+if os.fork() > 0: os._exit(0)
+sys.stdout.write(str(os.getpid()) + "\n"); sys.stdout.flush()
+os.closerange(0, 1024)
+os.execv("/bin/sleep", ["sleep", "300"])
+')"
+case "${DAEMON:-}" in
+  ''|*[!0-9]*) say "REFUSE: daemon did not report a numeric pid"; exit 2 ;;
+esac
+
+( cd "$CHECKOUT" && exec /bin/sleep 300 ) &
+BYSTANDER=$!
+sleep 1
+
+# ------------------------------------- guard 3: the fixture is what we think
+D_UID="$(ps -o uid=  -p "$DAEMON" 2>/dev/null | tr -d ' ')"
+D_PPID="$(ps -o ppid= -p "$DAEMON" 2>/dev/null | tr -d ' ')"
+D_PGID="$(ps -o pgid= -p "$DAEMON" 2>/dev/null | tr -d ' ')"
+say "daemon pid=$DAEMON uid=$D_UID ppid=$D_PPID pgid=$D_PGID"
+say "bystander pid=$BYSTANDER uid=$(id -u) cwd=<checkout>"
+[ "$D_UID"  = "$ACTOR_UID" ] || { say "REFUSE: daemon uid $D_UID is not the actor uid"; exit 2; }
+[ "$D_PPID" = "1" ]          || { say "REFUSE: daemon ppid $D_PPID != 1 — it did not fully detach"; exit 2; }
+[ "$D_PGID" = "$DAEMON" ]    || { say "REFUSE: daemon is not in its own process group"; exit 2; }
+FDS="$(sudo -u "$ACTOR_NAME" /usr/sbin/lsof -p "$DAEMON" -a -d 0-1024 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')"
+say "inherited descriptors held by the daemon: ${FDS:-<could not inspect>}"
+
+# ------------------------------- guard 4: census matches the expected set EXACTLY
+CENSUS="$(pgrep -U "$ACTOR_UID" 2>/dev/null)"; C_RC=$?
+[ "$C_RC" -eq 0 ] || { say "REFUSE: census exit $C_RC before signalling"; exit 2; }
+ACTUAL="$(printf '%s\n' $CENSUS | sort -n | tr '\n' ' ')"
+[ "$ACTUAL" = "$DAEMON " ] || { say "REFUSE: actor boundary holds unexpected processes [$ACTUAL]; expected exactly [$DAEMON]"; exit 2; }
+say "guard 4 OK: boundary holds exactly the fixture daemon"
+
+# ------------------------------------------------ the sequence under test
+say "--- TERM ---"
+sudo -u "$ACTOR_NAME" /usr/bin/pkill -TERM -U "$ACTOR_UID"; T_RC=$?
+say "pkill -TERM -U $ACTOR_UID exit=$T_RC   (0 signalled | 1 none | >=2 ERROR)"
+[ "$T_RC" -ge 2 ] && { say "STOP: pkill error, boundary state unknown"; exit 2; }
+sleep "$GRACE"
+
+MID="$(pgrep -U "$ACTOR_UID" 2>/dev/null)"; M_RC=$?
+say "after grace: pgrep exit=$M_RC survivors=[$(printf '%s' "$MID" | tr '\n' ' ')]"
+if [ "$M_RC" -eq 0 ]; then
+  say "--- KILL ---"
+  sudo -u "$ACTOR_NAME" /usr/bin/pkill -KILL -U "$ACTOR_UID"; K_RC=$?
+  say "pkill -KILL -U $ACTOR_UID exit=$K_RC"
+  [ "$K_RC" -ge 2 ] && { say "STOP: pkill error, boundary state unknown"; exit 2; }
+  sleep 1
+elif [ "$M_RC" -ge 2 ]; then
+  say "STOP: census error after TERM — cannot tell, so this is NOT a pass"; exit 2
+fi
+
+# -------------------------------------------------------------- the verdict
+FINAL="$(pgrep -U "$ACTOR_UID" 2>/dev/null)"; F_RC=$?
+say "--- RESULT ---"
+say "final census exit=$F_RC   (1 = boundary empty | 0 = survivors | >=2 = could not look)"
+ps -p "$DAEMON"    >/dev/null 2>&1 && D_STATE=ALIVE || D_STATE=GONE
+ps -p "$BYSTANDER" >/dev/null 2>&1 && B_STATE=ALIVE || B_STATE=GONE
+say "detached daemon : $D_STATE   (must be GONE)"
+say "uid-501 bystander: $B_STATE  (must be ALIVE)"
+
+RC=1
+if [ "$F_RC" -eq 1 ] && [ "$D_STATE" = GONE ] && [ "$B_STATE" = ALIVE ]; then
+  say "C5 PASS — the actor UID boundary terminated a fully detached descendant and did not overreach"
+  RC=0
+elif [ "$F_RC" -ge 2 ]; then
+  say "C5 FAIL-CLOSED — the census could not run; an inability to look is not a clean boundary"
+else
+  say "C5 FAIL — daemon=$D_STATE bystander=$B_STATE final-census-exit=$F_RC"
+fi
+exit "$RC"
 ```
-target group members BEFORE : 3      control pgid: different group
-pkill -g <pgid>   (NO pattern)  ->  exit 0
-target group members AFTER  : 0
-control                      :  ALIVE   <- did not overreach
-pgrep on the now-empty group ->  exit 1
-```
 
-That settles the disputed point: **`pkill` accepts a selector with no pattern and signals every
-process the selector matches.** The manual's own SYNOPSIS is wrong on this host; its DESCRIPTION
-("If any `pattern` operands are specified") is right, and the measurement agrees with the prose.
+### Static signal audit
 
-The probe could fail, and its first run did. A first attempt built the fixture in the wrong process
-group, so `pkill -g` matched nothing and returned **exit 1**. That run is kept because it carries its
-own lesson: exit 1 is *no match*, not *invalid options* (which is 2), so even the null case shows the
-command line was accepted rather than rejected for a missing pattern.
+Every signalling call in the fixture, and what bounds its target. There are four, and no fifth.
 
-**The exact sequence proposed**, each command with the exit codes that must be distinguished:
-
-```
-# inside the actor-UID lock, run AS the actor
-sudo -u <actor> /usr/bin/pkill -TERM -U <actor-uid>    # 0 signalled | 1 none | >=2 ERROR
-   … grace period, unchanged from today's policy …
-sudo -u <actor> /usr/bin/pgrep        -U <actor-uid>    # census between TERM and KILL
-sudo -u <actor> /usr/bin/pkill -KILL -U <actor-uid>
-# verify empty, unprivileged, from uid 501
-pgrep -U <actor-uid>                                    # 1 = empty | 0 = survivors | >=2 = CANNOT TELL
-```
-
-**`>= 2` must never be read as empty.** It means the census could not run, and it must pin the lock —
-this is precisely the defect the 1a final fix already corrected once, where a runtime-failing `pgrep`
-was read as "the actor has no children".
-
-**How the match excludes everything it must exclude:**
-
-| Must not be signalled | What excludes it |
-|---|---|
-| the `pkill` process itself | documented: "the current `pgrep` or `pkill` process **and all of its ancestors** are excluded" |
-| the `sudo` chain and the dispatcher | same ancestor rule, and they are uid 501 so `-U <actor-uid>` never matches them |
-| the operator's processes and any bystander | the **kernel**, not policy — a pkill running as the actor gets EPERM against uid 501 |
-| another run's actor | a different checkout means a different actor UID (finding 1) |
-
-**What is still unproved, named rather than assumed.** `pkill -U` itself was **not** exercised. The
-only UID available to this session is 501, and signalling it is an unbounded kill of the operator's own
-session — forbidden by this correction's boundary. What is proved is that `pkill` signals every match
-of a pattern-free selector (`-g`, measured) and that `-U` selects pattern-free in `pgrep` (measured,
-419 pids, exit 0), with `-U` and `-g` documented in the same list under identical "Restrict matches
-to…" wording. That is strong, and it is not proof.
-
-**The exact later check.** Once the actor account exists: from a session running as the actor, run the
-TERM-then-KILL pair above against a fixture of at least three actor-owned processes that includes one
-fully detached daemon (`setsid`, double fork, `closerange`, `exec` a SIP-protected binary), with a
-uid-501 process sharing the same checkout as the bystander control. The primitive is viable only if
-the detached daemon is gone and the bystander is alive. Until that returns, **the primitive is not
-called viable.**
-
-**Two mechanism findings that change the existing dispatcher, recorded and not implemented.**
-
-1. **`sudo` closes inherited descriptors** (documented `closefrom` behaviour — *not* measured here, and
-   the `man sudo` read returned nothing in this environment). The private per-hop tree marker is fd 9
-   (`TREE_MARKER_FD=9`, dispatch.sh 1466), inherited by the actor. Under a `sudo -u` launch that
-   descriptor is expected to be closed, so **one of the three current handles stops working for live
-   actors**. The UID boundary strictly dominates it, so this is requirement 9's "demonstrably
-   redundant" case — but it needs its own fail-capable evidence, and `closefrom_override` must **not**
-   be used to rescue the marker, because that widens sudo authority.
-2. **`sudo` resets the environment** (`env_reset`), so `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` and the
-   other per-hop variables set at 1561–1563 and 1623 will not survive the boundary unless the wrapper
-   sets them itself. Silently losing the credential scrub would be a regression of 1d.
-
-**Launch-path disposition (check 7).** In the ownership boundary: live `codex exec` (1573), attended
-`claude` (1637), `claude` with `--claude-deny` (1633), contained `--unattended claude` (1624). Outside
-it: the simulated `--actor-cmd` seam (1563), which **must remain simulated** and continue to run as
-uid 501 — it is the harness's stand-in and gains nothing from a real identity, and the existing marker
-and process-group handles must be kept for it.
-
-### Path-access table
-
-| Path | Owner / mode now | Actor needs | Reachable today? |
-|---|---|---|---|
-| `/Users` | root:admin `755` | search | yes |
-| `/Users/patrik.lindeberg` | 501 `755+` (ACL is only `everyone deny delete`) | search **only** | yes — and this is the problem: `o+rx` currently exposes the whole world-readable home |
-| `~/.local` → `share` → `claude` → `versions` | 501 `755` each | **nothing — withdrawn (finding 3)** | n/a; the actor installs its own Claude |
-| `~/.local/share/claude/versions/2.1.220` | 501 `755` | **nothing — withdrawn (finding 3)** | n/a |
-| `~/Claude Code` → `Axcion AI Repo` | 501 `755` | search | yes |
-| `<checkout>` (`ai-resources`) | 501 `755` | read + **write** | **read only — no write** |
-| `<checkout>/.git`, `.git/objects`, `.git/config` | 501 `755` / `644` | read + **write** | **read only — no write** |
-| `<checkout>/plans/.../runs/` (`LOG_DIR`, generated profile, `.tree` marker) | inside the checkout | read (profile) | read yes, write no |
-| operator `$TMPDIR` (`LOCK_DIR`) | 501 `700` | **nothing** | correctly unreachable — the lock stays with the dispatcher at uid 501 |
-| actor `$HOME`, `~/.gitconfig`, `$CODEX_HOME` | would not exist yet | full | n/a |
-
-Two gaps follow directly, and both need operator-owned mutations that this unit deliberately did not
-perform:
-
-- **Write access.** The checkout and `.git` are `755`/`644` under uid 501, so the actor can read but
-  cannot commit. Write must be granted — by ACL on the checkout subtree, not by loosening modes.
-- **The home is open, not closed.** The brief requires the operator's home closed except for explicit
-  task paths. Today `/Users/patrik.lindeberg` is `o+rx`, so a new UID would read every world-readable
-  file in it. Closing it (`chmod o-rx`) and re-granting exactly the traversal chain above by ACL is
-  what makes the required statement true. This is achievable — it does **not** force broad home access,
-  so the candidate does not fail here — but it is a persistent permission change, and it is listed with
-  its rollback below. **Corrected (finding 3):** only **one** thing the actor must reach now lives
-  inside the operator's home — the checkout. The Claude binary no longer does, because the actor
-  installs its own.
-
-### 1d revalidation list — items that read differently under a second UID
-
-Every line requires the future live account; none can be claimed from the current uid-501 evidence.
-
-1. **`denyRead: ["~/"]` — the one that silently inverts.** `write_unattended_profile` (dispatch.sh
-   1213) writes a tilde. Under the actor UID, `~/` resolves to the *actor's* home, so the **operator's**
-   home stops being denied by the profile and is protected only by POSIX mode. Left unchanged this is a
-   regression of the 1d decision. The fix shape is already proven inside the same profile — an absolute
-   `denyRead` on the operator's home with `allowRead` on the checkout beneath it is exactly what the
-   file does today.
-2. **`allowRead: ["~/.gitconfig"]`** now targets the actor's gitconfig — the right file, but it must
-   exist and carry the identity and `safe.directory`.
-3. **Effective tool roster and MCP absence**, re-read from the hop's `system/init` event — user-level
-   MCP config now comes from the actor's home.
-4. **Network denial** (`allowedDomains: []`, `strictAllowlist: true`).
-5. **Home-read denial** — see item 1.
-6. **Outside-write behaviour** — the accepted discovery already records that the profile confines no
-   writes; under a second UID the actor additionally loses write to the operator's home, which
-   *strengthens* the position but must be measured, not assumed.
-7. **Push denial** — expected to fail for a second, independent reason (no credential helper for the
-   actor).
-8. **Credential scrub** `CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1` — see the `env_reset` finding.
-9. **Hook absence** (`disableAllHooks: true`) — user-level hooks now resolve from the actor's home.
-10. **Git operation inside the sandbox** — this is what broke in 1d; re-prove it end to end.
-11. **The exact `HOME` and config path the profile resolved**, captured from the run rather than
-    inferred.
-
-### macOS privacy behaviour
-
-- The checkout is **not** under Desktop, Documents or Downloads, so no TCC folder prompt is expected
-  for it. Path inspected; behaviour documented, not measured.
-- **Keychain is the real exposure.** Claude's credential lives in the login keychain, which is unlocked
-  by GUI login. A `sudo -u` session is not a GUI login. This is the decisive unknown in the matrix.
-- A new UID carries **no** TCC grants. Any prompt that does appear cannot be answered by an unattended
-  run, so the design must fail closed rather than hang.
-- Preparable while attended: the one-time `codex login` and `claude auth login`, done from a temporary
-  GUI session for the actor. Not claimable until a real actor run exists: everything in the 1d list.
-
-### Staged operator path — corrected (finding 3)
-
-Unit 2's V1–V3 could not be run, because each needed the account, the login and the privilege rule
-that the checks were meant to justify. **The circularity had one cause and one fix.** The cause was
-assuming validation must go through the narrow `sudoers` rule. It does not: uid 501 is in `admin`
-(measured in Unit 1's `id` output), so the operator can already run `sudo -u <actor> …` under their
-existing authority. The narrow rule is needed only for *unattended production*, where the dispatcher
-must launch with nobody present. So **validation comes before the privilege rule, not after it** — and
-before any change to the operator's home.
-
-Each stage below is a decision point. Nothing in a later stage is authorized by approving an earlier
-one. `[ADMIN]` needs administrator approval; `[ATTENDED]` needs a person present once; `[VALIDATE]`
-only reads. Nothing here was executed.
-
-**Stage A — before any mutation. Nothing to roll back.**
-
-| # | Step | Why it is not circular |
+| Line | Call | What proves the target is safe |
 |---|---|---|
-| A1 | `[VALIDATE]` operator runs `sudo -l` and reads their current authority | needs no account and no new rule — this is what Unit 2's V1 should have been |
-| A2 | `[VALIDATE]` confirm no suitable account exists | already done in Unit 1 (`dscl`) |
-| A3 | `[VALIDATE]` confirm the termination selector accepts no pattern | **done this round** — see *The termination primitive* |
+| `kill_actor_pid` | `sudo -u <actor> /bin/kill -KILL "$p"` | `$p` is a pid this script recorded, **and** `ps -o uid=` must still show it owned by `$ACTOR_UID` — this is the pid-reuse guard |
+| `cleanup` | `kill "$BYSTANDER"` | `$BYSTANDER` is this script's own child, owned by uid 501, signalled by its own owner |
+| TERM | `sudo -u <actor> pkill -TERM -U "$ACTOR_UID"` | guards 1–4: numeric uid, not root, not the caller, ≥ 500, reverse-maps to the intended name, boundary was empty before the fixture, and the census equals exactly `[$DAEMON]` |
+| KILL | `sudo -u <actor> pkill -KILL -U "$ACTOR_UID"` | same guards; only reached when TERM left survivors and the census could be read |
 
-**Stage B — the smallest reversible preparation. One step, one rollback.**
+Because both `pkill` calls run **as the actor**, `man 2 kill`'s EPERM rule makes signalling uid 501 or
+root impossible regardless of what the guards did. The guards protect against the actor's *own*
+unexpected processes; the kernel protects everyone else.
 
-| # | Step | Persistent change | Rollback |
+### Fail-capability matrix
+
+Every row is a way this runbook can return "no". None of them continues setup.
+
+| # | Failure | Detected by | Result |
 |---|---|---|---|
-| B1 | `[ADMIN]` create one non-admin account for **this checkout**, hidden from the login window | the account and its home | delete the account and its home |
+| 1 | existing-name collision | P1–P3 | stop before B1; nothing created |
+| 2 | malformed / non-numeric uid | C5 guard 1 | refuse, exit 2 |
+| 3 | uid is root | C5 guard 1 | refuse, exit 2 |
+| 4 | uid is the operator | C5 guard 1 | refuse, exit 2 |
+| 5 | uid no longer maps to the intended account | C5 guard 1 reverse-map | refuse, exit 2 |
+| 6 | actor UID already occupied | B4 and C5 guard 2 | refuse; never treated as cleanup permission |
+| 7 | account was created as an admin | B3 | stop and roll back |
+| 8 | Claude bootstrap did not install into the actor's home | C1b | stop and roll back |
+| 9 | incomplete GUI logout | G1, G2, G3 | stop; C3 would otherwise pass for the wrong reason |
+| 10 | locked keychain / Claude not authenticated | C3 | **stop and roll back** — the decisive failure |
+| 11 | Codex status not logged in | C4 | stop, preserve output, offer rollback |
+| 12 | C5 daemon survives | final census / `ps -p $DAEMON` | `C5 FAIL` |
+| 13 | C5 bystander dies | `ps -p $BYSTANDER` | `C5 FAIL` — overreach |
+| 14 | `pgrep`/`pkill` exit ≥ 2 | every census site | `C5 FAIL-CLOSED`; an inability to look is never a pass |
+| 15 | read-only Git fails | C6d | stop; traversal or `safe.directory` is wrong |
+| 16 | rollback itself fails | R4, R5 | report exactly what remains; do not claim a clean host |
 
-Nothing else. No ACLs, no `sudoers`, no `chmod`, nothing touched in the operator's home.
+### The three outcomes, unambiguously
 
-**Stage C — validation that can return no, using the operator's existing admin authority.**
+**C3 fails.** Stop at once. Run rollback R1–R5. Nothing outside the actor's own account was ever
+touched — no ACL, no `sudoers`, no change to the operator's home — so the host returns to its prior
+state. Report the exact C3 output, redacted per the template.
 
-| # | Step | Kind |
-|---|---|---|
-| C1 | as the actor: `claude install`, then `claude auth login` | `[ATTENDED]` once |
-| C2 | as the actor: `codex login` | `[ATTENDED]` once |
-| C3 | **the decisive check** — from a non-GUI context, `sudo -u <actor> -H <actor-claude> auth status` must report logged in | `[VALIDATE]` |
-| C4 | `sudo -u <actor> -H <codex> login status` | `[VALIDATE]` |
-| C5 | the `pkill -U` pair against an actor-owned fixture with a uid-501 bystander control — the later check named in *The termination primitive* | `[VALIDATE]` |
-| C6 | as the actor: set `user.name`, `user.email` and `safe.directory` in the actor's own `~/.gitconfig`; then `sudo -u <actor> git -C <checkout> status` | `[ATTENDED]` + `[VALIDATE]` |
+**C3 passes but C4, C5 or C6 fails.** Stop. Do **not** proceed to D. Preserve the exact non-secret
+output of the failing check plus the checks that passed before it. Rollback R1–R5 is available and is
+offered, not forced — the operator may prefer to keep the account to retry the failing check.
 
-**If C3 fails because the actor's login keychain is locked, stop here.** Roll back with
-`claude auth logout`, `codex logout` and deleting the account. At that point the operator's home has
-never been touched and no privilege policy has been changed — which is the whole point of putting C
-before D.
+**All Stage C checks pass.** Stop with **D and E still forbidden**. What is proved is exactly: a
+non-admin actor account can authenticate Claude and Codex on its own credentials, can read this
+checkout across the ownership boundary, and its UID is a working termination boundary against a fully
+detached descendant without touching a bystander. What is **not** proved: anything about writing or
+committing (needs D2), the narrow privilege rule (D4), the dispatcher integration (Unit 3+), or Phase
+1a itself — **1a remains open even if every C check passes.** Recommendation: the account **remains**,
+hidden by step H, holding no `sudoers` rule, no ACL and no write access to the checkout. Deleting it
+would discard the only evidence-bearing artifact and force B and C to be repeated. That the account
+persists is itself a new operator decision, not something Stage C authorizes.
 
-**Stage D — only if Stage C passes: the persistent host changes.**
+### Rollback
 
-| # | Step | Persistent change | Rollback |
+| # | Command | Kind | Checked by |
 |---|---|---|---|
-| D1 | `[ADMIN]` `chmod o-rx /Users/patrik.lindeberg` | home no longer world-readable | `chmod o+rx /Users/patrik.lindeberg` |
-| D2 | `[ADMIN]` ACL: `search` for the actor on `~`, `~/Claude Code`, `~/Claude Code/Axcion AI Repo`; inherited `read,write,search` on the checkout subtree including `.git` | four ACL entries | remove each (`chmod -a#`) |
-| D3 | `[ADMIN]` install a **root-owned**, non-writable launch wrapper with a fixed argument shape, which also sets the per-hop environment that `env_reset` strips | one file | delete it |
-| D4 | `[ADMIN]` `visudo -f /etc/sudoers.d/…` — operator `ALL=(<actor>) NOPASSWD:` the wrapper and `/usr/bin/pkill`, `Runas` limited to the actor alone | privilege policy | delete the drop-in |
-| D5 | `[VALIDATE]` re-run C3–C6 **through the narrow rule**, plus every negative control below | none | n/a |
-| D6 | `[ADMIN]` disable GUI login for the actor account | login policy | re-enable |
+| R1 | `pgrep -U $(id -u wlactor-airesources)` — census before removing anything | `[READ-ONLY]` | exit 1 expected; exit 0 → list and terminate those pids first via the fixture's guarded path |
+| R2 | `sudo -u wlactor-airesources -H /Users/wlactor-airesources/.local/bin/claude auth logout` | `[ROLLBACK]` | if it fails because the keychain is locked, that is expected — record it and continue; R4 removes the account and its keychain with it |
+| R3 | `sudo -u wlactor-airesources -H /Applications/ChatGPT.app/Contents/Resources/codex logout` | `[ROLLBACK]` | file-based, so this should succeed; R4 removes `~/.codex` regardless |
+| R4 | `sudo sysadminctl -deleteUser wlactor-airesources -keepHome` | `[ROLLBACK]` | `-keepHome` is explicit so home handling is never implicit |
+| R5 | `id -u wlactor-airesources` → "no such user"; `dscl . -read /Users/wlactor-airesources RecordName` → `eDSRecordNotFound` | `[READ-ONLY]` | both must hold; if either does not, report it rather than retrying blind |
+| R6 | the home at `/Users/wlactor-airesources` remains after R4. Remove it **by hand** only after confirming with `ls -ld` that it is a directory, not a symlink, and that R5 passed | `[ADMIN]` | deliberately not scripted — no unguarded recursive deletion appears in this runbook |
 
-D4 is the step that carries real risk: any rule permitting an arbitrary command, or any `Runas` target
-other than the actor, turns this from a containment boundary into a privilege-escalation surface.
+**No rollback step deletes or repurposes a pre-existing account.** Every one names
+`wlactor-airesources` literally, and R5 proves the account it removed is the one it meant to remove.
 
-**Stage E — Unit 3, the dispatcher implementation.** Only after D5 passes.
+### Operator evidence template
 
-### Fail-capable pre-implementation validation plan
+Bring back only this. No passwords, tokens, credential files, Keychain contents or browser data.
 
-It must be possible for this plan to return "no". Every check has a stated failing outcome, and each
-one is now attached to the stage that can actually run it — that is the correction.
-
-**The decisive check is C3** (Claude auth in a non-GUI session). It runs after Stage B and needs no
-privilege rule and no change to the operator's home. If it fails because the actor's login keychain is
-locked, the route is blocked until one of these is shown to work **without copying the operator's
-credential**: a documented file fallback, `CLAUDE_CONFIG_DIR` relocation, or a long-lived token the
-actor obtains itself. An `ANTHROPIC_API_KEY` in the environment is a different authentication and a
-different billing decision, and it collides with the credential scrub — treat it as an operator
-decision, not a workaround.
-
-**Positive controls (Stage C, repeated through the narrow rule at D5):** `sudo -u <actor> git -C
-<checkout> status` succeeds (proves traversal, read and `safe.directory`); the actor creates a scratch
-commit on a throwaway branch and it lands with the actor's identity (proves write on `.git`); a live
-`--unattended` hop reaches its `system/init` event (proves the profile is readable and the sandbox
-applies).
-
-**Negative controls, each of which must FAIL to pass the test (D5):** the actor reading
-`~/.claude.json`; the actor listing `~/Documents`; uid 501 sending `kill -0` to an actor process (must
-be EPERM — this is the boundary itself); `sudo -u <actor> /usr/bin/pkill -U 501` leaving a chosen
-operator bystander alive; `sudo -u root …` and `sudo -u patrik.lindeberg …` being refused by the rule.
-
-**Concurrency control, new with finding 1 (D5):** start a second dispatcher on a *different* task in
-the same checkout while the first is running. It must be refused by the actor-UID lock rather than
-admitted, and stopping the first run must leave a second run's actor in another checkout untouched.
-
-**Empty-boundary precondition:** `pgrep -U <actor-uid>` must be empty before the first hop, asserted
-**inside the actor-UID lock**; a non-empty result must fail closed with a distinct exit rather than
-launch, and an exit `>= 2` must pin the lock rather than be read as empty.
-
-**The 1a case itself, red then green:** the existing fully detached shape — `setsid`, double fork,
-`closerange`, `exec` a SIP-protected binary — must still be ALIVE after a stop under today's dispatcher
-(already recorded), and GONE after `sudo -u <actor> pkill -U <actor-uid>` under the boundary, while a
-uid-501 bystander sharing the checkout survives. That pair is what would let a later unit claim the
-literal guarantee; nothing short of it does.
-
-**The 1a case itself, red then green** — the final gate before any claim about the guarantee. The
-existing fully detached shape (`setsid`, double fork, `closerange`, `exec` a SIP-protected binary) must
-still be ALIVE after a stop under today's dispatcher — already recorded — and GONE after the TERM/KILL
-pair under the boundary, while a uid-501 bystander sharing the checkout survives. Nothing short of that
-pair supports the literal guarantee.
-
-### What Unit 3 may implement, if and only if Stage D5 passes
-
-Dispatcher changes only, inside the already-allowed paths: add the **actor-UID lock** alongside the
-existing exact-task lock, and take the empty-boundary check inside it; launch live actors through the
-wrapper; add UID-based teardown and verification with the exit-code rule above; absolutise the
-profile's `denyRead` to the operator's home; carry the per-hop environment across `env_reset` inside
-the wrapper; keep the simulated seam at uid 501 with its existing handles; and retire the marker handle
-for live actors only, with its own fail-capable evidence. Phase 1a stays open until the red/green pair
-exists. Phase 1f and every Phase 2 action remain outside.
+```
+B2  uid                       : <number>
+B3  admin membership          : <the yes/no sentence>
+B4  pre-launch census exit    : <0|1|>=2>
+C1b actor claude present      : <yes|no>
+G1  console owner             : <name>
+G3  actor process census exit : <0|1|>=2>
+C3  claude auth status        : loggedIn=<true|false>  authMethod=<value>   [REDACT email and orgId]
+C4  codex login status        : <the one-line output>
+C5  full stdout of the fixture (it contains no secrets)
+C6d git status exit           : <0|non-zero>  first line: <text or "clean">
+Anything that stopped early   : which step, and its exact non-secret output
+```
 
 ### Result and evidence
 
-Result: all three frozen findings are resolved, one of them with a named residual. Finding 1's design
-error is replaced by a per-checkout actor identity plus an additional actor-UID lock that makes the
-empty-boundary check atomic, leaving the existing exact-task lock unchanged. Finding 2's disputed
-primitive is settled by measurement for the pattern-free selector, with `pkill -U` itself explicitly
-still unproved and its exact later check named. Finding 3's circular plan is replaced by five staged
-decision points in which the decisive check runs after one reversible step, and the Claude binary
-question is resolved in favour of an actor-owned install, which withdraws six proposed ACL grants into
-the operator's home. The correction broke nothing: no product file was touched, the disposition is
-still OPERATOR CHECK REQUIRED, and no claim about Phase 1a moved.
+Result: the runbook is complete and internally checked. Preflight, Stage B, C1–C6, the GUI-logout
+gate, the C5 fixture, the three outcomes, rollback and an evidence template are all present, and every
+command is backed by a local interface this unit actually ran read-only. Three premises that only a
+live run can settle — `sysadminctl -deleteUser` home behaviour, whether `claude install` installs into
+the invoking user's home, and whether `-password` prompts — are left as visible operator checks with
+explicit abort paths rather than promoted to fact. Nothing was executed: no `sudo`, no account action,
+no login, no signal.
 
-Evidence: the termination probe is the one new measurement, and it could fail — its first run did,
-returning `exit 1` on an empty target group, which is recorded above rather than discarded. Its second
-run built the fixture with `set -m` (the dispatcher's own mechanism), guarded against signalling its
-own group or an empty target, and returned `3 members before → pkill -g <pgid> exit 0 → 0 members
-after`, with the control process in a different group still ALIVE. Findings 1 and 3 are corrections to
-reasoning rather than to the host, so their evidence is the inspection that reproduced each error —
-`dispatch.sh:451`, `README.md` § Safety boundaries, and Unit 2's own V1–V3 text — each quoted above.
+Evidence: `bash -n` returned exit 0 on a temporary copy of the exact C5 content above, and the copy was
+removed (`[ -f ] → GONE`). The static signal audit lists four signalling calls and the guard bounding
+each; a fifth would have shown up in the `grep` over the same file, and none did. The fail-capability
+matrix has sixteen rows, each terminating in a stop rather than continued setup — so a reader can
+check the claim "this can return no" against specific mechanisms instead of taking it on assurance.
+The read-only host facts behind the tables were each produced by a command run in this unit: `id`,
+`dscl`, `dseditgroup`, `stat -f '%Su' /dev/console`, `who`, `/etc/paths`, `ls -l` on
+`/usr/bin/python3`, `/bin/sleep`, `/usr/sbin/lsof`, and `git --no-optional-locks … status`.
 
-### Deferrals — newly noticed this round, recorded and not done
-
-1. **Same-checkout, different-task concurrency is permitted by the existing lock but documented
-   unsafe.** `LOCK_KEY` is `sha256(checkout|task)`, while `README.md` § Safety boundaries says
-   same-checkout concurrency is still unsafe. Nothing enforces that today. It is a pre-existing gap
-   independent of the actor identity, and the actor-UID lock proposed above would incidentally close it
-   for unattended runs only. Not this unit's finding and not fixed here.
-2. **`pkill(1)`'s SYNOPSIS contradicts its own DESCRIPTION on this host.** Recorded because it caused
-   this round, and because a future reader consulting the synopsis alone would reach the wrong
-   conclusion again. Nothing now depends on it — the behaviour is measured.
-3. **An actor-owned Claude install can drift in version from the operator's.** `--unattended` already
-   gates on `claude >= 2.1.219`, so a later unit may want to assert which install the gate inspected.
-   Noted so the choice made above carries its own cost visibly.
+The runbook being well formed proves nothing about the route. Only the operator's later run supplies
+the missing host evidence, and **Phase 1a stays open even if every Stage C check passes.**
 
 ## Blocker
 
-**One check decides the route, and it now sits behind a single reversible step rather than behind the
-whole setup.** Whether the actor's Claude authentication can be read in a non-GUI session is still
-unknown, because Claude's credential lives in the login keychain and a `sudo -u` session does not
-unlock one. That is Stage C3. Reaching it requires Stage B — creating one account — and nothing else:
-no privilege rule, no ACLs, no change to the operator's home. If C3 fails, Stage B is deleted and the
-host is exactly as it was.
-
-Two further unknowns ride behind the same account and are answered in the same stage: whether the actor
-can complete its own ChatGPT login without a permanent GUI account (C4), and whether `pkill -U`
-behaves as the measured `-g` case predicts (C5).
+None for this unit. The dedicated route remains blocked on the operator's later execution of C3, C4,
+C5 and C6, which this unit must not and did not manufacture.
 
 ## Next action
 
-Codex: closure check on the three frozen findings only.
+Codex: assess the runbook against the brief's eight claims and its required evidence — in particular
+whether the C5 guards bound the signal tightly enough, whether the three runtime-dependent premises are
+correctly left as operator checks rather than asserted, and whether the fail-capability matrix would
+actually stop a bad run rather than merely describe one.
 
-1. Finding 1 — is the per-checkout actor identity plus the additional actor-UID lock a race-free
-   boundary that preserves the proven cross-worktree concurrency, leaves the exact-task lock unchanged,
-   and claims no support beyond the number of provisioned accounts?
-2. Finding 2 — is the pattern-free selector now established by evidence that could have failed, is the
-   TERM/KILL and empty-boundary command sequence exact, and is the remaining `pkill -U` gap stated
-   honestly rather than closed by inference?
-3. Finding 3 — is the staged path non-circular, does the decisive check now run behind one reversible
-   step, and is the actor-owned Claude install justified by evidence rather than preference?
-
-And: did the correction break anything? No product file was touched and only this state file changed.
-
-Three deferrals are recorded at the end of `## Latest result`. They are candidates for a later unit,
-not a fourth finding.
-
----
-
-*Superseded — the frozen findings this round corrected, kept for the closure check:*
-
-Correct once — frozen findings:
-
-1. **The proposed UID-wide termination boundary does not preserve the dispatcher's existing
-   concurrency behavior.** The current lock is keyed to `checkout|task`, and the README records that
-   two dispatcher instances in separate worktrees have overlapped. Correct the design so two
-   different tasks or checkouts cannot race through an empty-UID check and then share one actor UID,
-   and so stopping one run cannot terminate the other. Select a race-free, evidence-backed boundary;
-   do not assume the exact-task lock is global, do not weaken the existing lock, and do not imply
-   support beyond what the corrected design can prove.
-2. **The exact Darwin termination primitive is unproved.** The local `pkill(1)` synopsis requires a
-   pattern while its prose is less clear; the recorded evidence exercised `pgrep`, not `pkill`.
-   Establish the exact TERM-then-KILL and empty-boundary command behavior needed to target every
-   actor-owned process, including how the match excludes the killer, dispatcher, operator and
-   bystanders. Use only a safely bounded self-owned fixture if an effective probe is possible; never
-   signal an unbounded UID or a real bystander. If this cannot be established without the future
-   actor account or operator authority, state the precise later check and do not call the primitive
-   viable.
-3. **The operator validation plan is circular and the proposed home access was not shown to be the
-   smallest safe setup.** V1–V3 require the account, privilege rule and actor authentication they are
-   supposed to justify, so the operator cannot run them from the current state. Replace that sequence
-   with a staged, decision-ready path that separates checks possible before mutation, the smallest
-   explicitly authorized and reversible host preparation, validation that can return no, and rollback
-   before broader setup or product implementation. Compare an actor-owned Claude installation with
-   executing the operator-owned binary under `~/.local`; prefer neither without evidence, and remove
-   every proposed operator-home ACL that the safer viable choice makes unnecessary.
-
-Correction boundary: these three findings only. Change and commit only this state file. Do not create
-an account, change privilege policy, permissions, ACLs, authentication, Keychain, TCC or settings, and
-do not edit the dispatcher or any product file. Anything newly noticed is a deferral, not a fourth
-finding. Report whether each frozen finding is resolved and whether the correction broke anything,
-set `turn: codex`, and stop. Do not push.
+Then the operator executes Stages B and C. D and E stay forbidden, and 1a stays open regardless of the
+Stage C outcome.
