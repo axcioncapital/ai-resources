@@ -1,6 +1,6 @@
 ---
 task: work-loop-v2-proportionality-continuity-implementation
-turn: codex
+turn: operator
 ---
 
 ## Objective and scope
@@ -10,27 +10,61 @@ independently committable slices. The task exit condition is that the accepted p
 are implemented in their governed dependency order with their proof cases, or a verified blocker is
 handed back rather than worked around.
 
-The current unit is **S6 only**: complete the accepted post-compaction slice under the operator's
-2026-08-08 choice (a) by making its three implemented targets deliberately tracked without adopting
-the rest of the Codex mirror.
+The current unit is **P-7's live S6 evidence only**: observe the tracked post-compaction mechanism
+under an actual Codex root compaction before deciding whether S6 enters normal operation with full
+evidence, with a written limitation, or not yet.
 
-Excluded are S7; changes to S1–S5; edits to the executable core, Claude command, Work Loop skill,
-harness, fixtures, dispatcher or another task file; any `.codex/` path except the two exact S6
-targets; `PreCompact` or `PostCompact` registration; a task scan, task registry, phase copy, new
-state field, cached summary or second hook; installation, propagation, worktrees, branches, pushes
-and unrelated cleanup.
+Excluded are S7; changes to S1–S6; edits to `.gitignore`, `AGENTS.md`, `.codex/hooks.json`, the
+reorientation script, executable core, Claude command, Work Loop skill, harness, fixtures,
+dispatcher or another task file; `PreCompact` or `PostCompact` registration; a task scan, task
+registry, phase copy, new state field, cached summary or second hook; installation, propagation,
+worktrees, branches, pushes and unrelated cleanup. The current preparation step may edit only this
+state file.
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 6 — complete accepted plan slice S6 by deliberately tracking
-its three implemented targets under operator choice (a).
+Standard. Adoption mode. Unit 6A — collect P-7's live registered and control evidence for the
+tracked S6 mechanism, beginning with a durable-source-only witness for the registered run.
 
 Named reason for the loop: this hook runs at a continuity boundary across every root compaction in
 the repository, so its scope and fail-open evidence need independent assessment before it counts.
 
 ## Brief
 
-### Current completion step — operator choice (a), 2026-08-08
+### Current P-7 preparation step — registered live run
+
+S6's implementation and versioning are accepted; what remains unknown is whether the installed
+mechanism actually restores the correct durable orientation after a Codex root compaction. This
+Adoption-mode unit will collect P-7's live operation evidence before the lifecycle decision. The
+current Claude step prepares the registered-run witness only; it does not operate Codex, change the
+hook, begin the unregistered control, or open S7.
+
+**Required outcome.** In this state file only, create one short, unique witness value that has never
+appeared in the Codex conversation and make it materially determine the post-compaction next move.
+Place it in the current `## Next action` together with the exact active state-file path, bound Local
+checkout, governing plan path, Work Loop v2 workflow, Adoption-mode Unit 6A, and an instruction for
+the operator to return to the existing Codex task and invoke `/compact` as their very next input
+without quoting or paraphrasing the witness. The next action must also tell post-compaction Codex to
+re-read those durable sources, report the witness it found, and record the registered observation
+before any further move.
+
+**Why Claude owns this preparation.** Codex must not see the witness before compaction or the test
+would not distinguish durable reorientation from conversational memory. Claude chooses and writes
+the value; the operator carries only the `/compact` action and does not paste the value into chat.
+
+**Governing sources.** This state file; accepted plan § 4.9 and § 6/P-7; executable core §§ 3–7;
+Work Loop v2 skill; `AGENTS.md` § *Compaction*; the committed S6 result. The state file remains the
+single interface. No new fixture, log, registry or evidence file is created.
+
+**Required evidence and boundary.** Report the chosen value in the state file, show that it was
+absent from the file before this preparation and present afterward, and commit only this state file.
+Do not put the value in a message the operator must paste into Codex. Set `turn: operator`; this is
+an intentional operational hand-off, not completion of Unit 6A. The registered run, pointer-retention
+observation, multi-open-task observation and later unregistered control remain to be performed from
+Codex. Stop if the witness cannot be kept out of the Codex transcript or if preparation would touch
+another path.
+
+### Accepted S6 completion step — operator choice (a), 2026-08-08
 
 S6 is implemented and deterministically proved on disk; the remaining implementation step is to
 make that exact result versioned. The operator explicitly chose option (a): deliberately track
@@ -159,6 +193,48 @@ filesystem scan, any nonzero error path in the script, or any excluded path or r
 back the evidence gap rather than broadening the hook.
 
 ## Latest result
+
+### Claude preparation for P-7's registered live run (2026-08-08)
+
+Adoption-mode preparation only. Nothing was implemented, no hook or S6 file was touched, and the
+lifecycle decision is not taken here.
+
+**What was prepared.** One short witness token was chosen and written into the Next action below,
+paired with a report-first instruction that materially changes what post-compaction Codex must do.
+The token is recorded in this file and nowhere else.
+
+**Absence before, presence after — the fail-capable half.** Before this preparation the token
+appeared **0 times in this state file** and **0 times anywhere in the tracked repository**
+(`git grep -c` returned no match). After it, it appears in the Next action only. The token was
+generated with `secrets.token_hex` inside the writing step and never echoed into the Claude
+conversation, so the only surface carrying it is this committed file.
+
+**The limit, stated rather than absorbed.** Whether the token has never appeared in the Codex
+conversation is not checkable from this repository — that transcript cannot be read from here. What
+is checkable, and was checked, is that the value existed nowhere in this repository before it was
+generated, and that it was never emitted into the Claude conversation. The remaining half rests on
+the operator carrying only the `/compact` action, which the Next action states as their one
+instruction.
+
+**Why no automated regression check applies.** The deliverable is a value placed in a file so that a
+different model, in a different session, after a context loss, either reproduces it or does not. Any
+check written here would grep this file for the token just written, and would pass whatever happens
+on the Codex side — the only side the trial is about. The before/after counts are the evidence; the
+trial's result is the observation Codex records next.
+
+### Codex closure check and continuation (2026-08-08)
+
+The frozen authority finding is resolved: the false paragraph was removed, the correct explicit
+operator choice (a) remains throughout the governing state, and the correction reports no change to
+the S6 implementation or any other repository path. The correction introduced no material break.
+The surviving occurrence of "ur turn" is Codex's historical description of the defect it found,
+not a current authority claim; it needs neither another correction nor a deferral.
+
+S6's implementation is accepted at the 85–90% bar on commit `42f3d7f`: the deterministic evidence,
+narrow tracking result and bounded correction all pass. The live P-7 witness is not silently waived
+or replaced by static evidence; the task continues into Adoption-mode Unit 6A to collect it before
+the S6 lifecycle decision. S7 remains unopened and its ownership gate will be re-read only after
+Unit 6A reaches a disposition.
 
 ### Claude correction round — the frozen finding is resolved (2026-08-08)
 
@@ -396,11 +472,9 @@ state rather than the plan snapshot.
 
 ## Blocker
 
-**Current disposition (2026-08-08).** Blocker 1 is resolved by the operator's explicit choice (a)
-and is now the bounded completion step in `## Brief`. Blocker 2 remains an evidence gap, routed to a
-later Adoption-mode live trial; it does not authorise a static substitute or S7 work. The detailed
-evidence below is retained because Claude needs it to make the tracking change without broadening
-the 2026-07-13 decision.
+**Current disposition (2026-08-08).** Blocker 1 is resolved and S6's implementation is accepted.
+The remaining P-7 evidence gap is now the active Adoption-mode unit rather than a reason to alter
+the implementation or begin S7. The registered-run preparation may change only this state file.
 
 Blocker 1 — the gitignore refusal — is **resolved**. The three S6 targets are tracked through narrow
 `.gitignore` negations and committed; the evidence is in `## Latest result`. The 2026-07-13 decision
@@ -433,27 +507,42 @@ script emits no task path at all — is fully discharged.
 
 ## Next action
 
-Codex: run the closure check on the frozen finding only — is the false authority paragraph resolved,
-and did the correction break something?
+**Operator — one action only: return to the existing Codex task and make `/compact` your very next
+input.** Do not quote, paraphrase or summarise any part of this file into that chat beforehand, and
+do not read the witness block below into it. Carrying the turn is the whole of your part here. If
+anything from this file reaches the Codex conversation before the compaction, the trial measures
+conversational memory instead of durable reorientation, and it must be restarted with a fresh witness.
 
-The two questions have these concrete answers to check:
+**Preserved pointers for the post-compaction session** — the four `AGENTS.md` Compaction names:
 
-1. **Resolved?** The paragraph headed **One correction to the record** is gone; the removed text is
-   quoted verbatim in `## Latest result` for comparison. The true attribution survives in eight
-   places, listed there.
-2. **Broke something?** The correction touched this state file only, removing seven lines and adding
-   the correction record. Commit `42f3d7f`, the three S6 targets, `.gitignore`, P-7, S7 and every
-   other repository path are unchanged.
+- **Active task file:** `logs/work-loop/work-loop-v2-proportionality-continuity-implementation.md`
+- **Bound checkout (Local):** `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`
+- **Governing plan:** `plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md`
+- **Workflow and phase:** Work Loop v2 — Standard lane, **Adoption mode, Unit 6A**
 
-Two things are handed back rather than absorbed, for the closure check to dispose of:
+**Codex, after the compaction, before any other move:**
 
-- The finding's factual half — the operator's exact reply in the Codex task — is not checkable from
-  this repository and was corrected on Codex's authority, not on evidence. Recorded in
-  `## Latest result`.
-- Codex's own assessment paragraph still carries the "ur turn" wording, in the sentence reporting the
-  defect. It was left alone as outside the frozen scope, which names one paragraph. If that sentence
-  should also be reworded now the record is corrected, that is a new item for the closure check to
-  record as a deferral, not a second correction round.
+1. Re-read the four sources above **from disk**. Do not continue from the compacted summary.
+2. Quote the witness token in the block below **verbatim**. If you cannot produce it from the file,
+   say so plainly — that is the trial's result, not a failure to be worked around.
+3. The witness block also names **which single P-7 observation you report first**. Report that one
+   first, then the remaining three in any order. The natural order is 1 to 4, so starting at 1 is
+   itself the signal that the file was not read.
+4. Then record the registered observation: whether the reorientation hook fired, what it injected,
+   whether exactly one task was named, and whether the four pointers survived. Only then choose the
+   next move.
 
-Nothing newly noticed was implemented. P-7's live witness remains the open blocker and the routed
-Adoption-mode unit is unchanged by this correction.
+**Registered-run witness — durable source only, never stated in the Codex conversation:**
+
+```
+WITNESS-TOKEN: P7-08815DD9
+REPORT-FIRST: observation 4 — pointer retention (did the four AGENTS.md Compaction pointers
+              survive in the retained context?)
+```
+
+Neither line has ever appeared in the Codex chat. A session continuing from a compacted summary can
+produce neither the token nor the report-first instruction; a session that re-read this file produces
+both. That is the whole of the control.
+
+Still to come in Unit 6A, and not part of this step: the unregistered control, the multi-open-task
+observation, and the lifecycle decision — adopt, revise, continue the trial or stop.
