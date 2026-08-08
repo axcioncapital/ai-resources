@@ -286,7 +286,7 @@ executable coverage was mandatory rather than a permissible deferral.
   skill, command or unrelated state file was touched. `HEAD` moved several times under this unit from
   a concurrent session (`5dd1d60` → `43b5743`), touching only its own Work Loop skill and state files;
   `dispatch.sh` is byte-identical across that range, so the red baseline is unaffected.
-- **Final-fix commit `PENDING`.** Correction round was `5dd1d60`; round 1 was `cd87e5b` / `145a7b3`.
+- **Final-fix commit `7aaae68`.** Correction round was `5dd1d60`; round 1 was `cd87e5b` / `145a7b3`.
 
 ### Deferral, recorded and not done
 
