@@ -125,12 +125,16 @@ Corrected (2026-08-08) — bounded round, frozen findings 1–3, each reproduced
   not Darwin `ptrace(2)`. Now measured against `man 2 ptrace` and `sys/ptrace.h` directly (no
   fork-following request exists) and the cgroup-equivalent-runtime candidate (none installed). See
   the ptrace and runtime evidence below. Disposition unchanged.
-- Finding (2): REPRODUCED then RESOLVED by probe (not downgraded) — the recommendation depended on
-  the shipped `--unattended` boundary following a detached daemon, and the prior evidence used a
-  custom `sandbox-exec` profile. A safe attended probe of the product path was possible and was run,
-  with both controls; network containment inherits through the full detach. Two honest limits are
-  now recorded (write confinement is not attempted; the actor refused the escape script). See the
-  Seatbelt evidence below and residual risks 1 and 4.
+- Finding (2): REPRODUCED and corrected (final fix, 2026-08-08) — the prior evidence used a custom
+  `sandbox-exec` profile; the correction improved on it by testing the profile
+  `write_unattended_profile` generates, but then overreached in *labelling* that test as the "actual
+  product path" / the shipped `--unattended` boundary. It was a direct `claude -p … --settings
+  <generated-profile>` invocation, not `dispatch.sh --unattended`. The affected claims are now
+  reworded to state exactly what was exercised — network denial from the dispatcher-generated profile
+  inheriting through the fully detached process — and actual dispatcher integration is marked
+  unverified (the actor refused the escape step, so no dispatcher-path result exists). The
+  scope-change option is downgraded from a proven recommendation to a conditional operator option.
+  See the Seatbelt evidence below and residual risks 1 and 4.
 - Finding (3): REPRODUCED then RESOLVED — `git status --short` cannot prove a commit's path set;
   replaced by `git diff-tree`, which shows commit `d1759f6` touched exactly the one state file. See
   the Evidence section.
@@ -139,11 +143,13 @@ Nothing outside the three frozen findings was changed. Two things newly surfaced
 the profile's lack of write confinement and the actor's escape-script refusal — are recorded inside
 finding 2's evidence as context for it, not as new work.
 
-Result: the discovery ran, the correction round tightened its evidence, and it returns **OPERATOR
-DECISION REQUIRED** unchanged. No mechanism available within the present authority terminates a fully
-detached descendant. One mechanism — already in service — **contains** it (network + home-read, not
-writes), and adopting that is a change to 1a's guarantee, which core § 6 rule 4 sends to the operator
-rather than to a bounded fix.
+Result: the discovery ran, the correction round and one final fix tightened its evidence and
+relabelled finding 2 to what was actually exercised, and it returns **OPERATOR DECISION REQUIRED**
+unchanged. No mechanism available within the present authority terminates a fully detached
+descendant. One mechanism — already in service — **contains** it (network + home-read, not writes),
+but the dispatcher-integration evidence is a generated-profile test, not the `dispatch.sh
+--unattended` path, so the scope-change option is conditional. Adopting containment is a change to
+1a's guarantee, which core § 6 rule 4 sends to the operator rather than to a bounded fix.
 
 Host: macOS 26.5.2, `Darwin 25.5.0`, `arm64` (`RELEASE_ARM64_T8142`), SIP **enabled**, uid 501 in
 `admin`. Escape shape used throughout: `setsid` → double fork → `closerange(0,1024)` → `exec`.
@@ -163,7 +169,7 @@ Host: macOS 26.5.2, `Darwin 25.5.0`, `arm64` (`RELEASE_ARM64_T8142`), SIP **enab
 | **dtrace** | `/usr/sbin/dtrace` | **root, and SIP disabled** | n/a | n/a | rejected on authority |
 | **ktrace** | `/usr/bin/ktrace` | **root** | n/a | n/a | rejected on authority |
 | **Dedicated OS user** | n/a | **create an account** — forbidden by this brief | yes; uid is inherited and unchangeable unprivileged | yes (`pkill -U`) | **authority change** |
-| **Seatbelt sandbox** | `/usr/bin/sandbox-exec`, and already shipped as `--unattended` (1d) | **none** | **yes — measured on the product path; contains network + home-read, does NOT terminate or confine writes** | yes, structurally — it signals nothing | **scope change** |
+| **Seatbelt sandbox** | `/usr/bin/sandbox-exec`, and already shipped as `--unattended` (1d) | **none** | **network denial inherited through the detach in the generated profile (direct `claude -p`); `dispatch.sh --unattended` integration unverified. Contains network + home-read, does NOT terminate or confine writes** | yes, structurally — it signals nothing | **scope change (conditional)** |
 
 ### Evidence
 
@@ -171,12 +177,17 @@ All probes ran outside the repository, without root, and are self-cleaning. Scri
 `probe-sandbox.sh`, `probe-others.sh`, `daemonize.py`, and the correction-round product-path probes,
 run under the session scratch directory.
 
-**The first commit changed exactly one path — verified by the right primitive (finding 3,
-2026-08-08).** `git status --short` cannot prove a *commit's* contents, so it is replaced here by
-`git diff-tree --no-commit-id --name-only -r d1759f6`, which returns exactly one line:
-`logs/work-loop/work-loop-v2-descendant-supervision-discovery.md` (`git show --stat` agrees:
-"1 file changed, 260 insertions(+)"). The commit this correction round produces is verified the same
-way in `## Latest result`.
+**Each commit in this task changed exactly one path — verified by the right primitive (finding 3,
+2026-08-08).** `git status --short` cannot prove a *commit's* contents, so it is replaced by
+`git diff-tree --no-commit-id --name-only -r <hash>`:
+
+- Discovery commit `d1759f6` → one line, `logs/work-loop/work-loop-v2-descendant-supervision-discovery.md`
+  (`git show --stat` agrees: "1 file changed, 260 insertions(+)").
+- Correction commit `8c15cef` → one line, the same state file.
+- This final-fix commit is verified identically the moment it lands —
+  `git diff-tree --no-commit-id --name-only -r HEAD` must return that one path and no other. A
+  concurrent Codex session's writes to other files are deliberately left unstaged so they cannot ride
+  along; the explicit-pathspec `git add` is what enforces it.
 
 **launchd does not reach a detached descendant.** A transient job (`launchctl submit`, no plist
 installed) ran a script that spawned the daemon and then held the foreground:
@@ -258,42 +269,52 @@ effective probe, the mechanism failed before the bystander question could arise.
 failure mode is the one this task exists to avoid: an inability to observe, read as an observation.
 The corrected profile allows `/dev/null` and produced the table above.
 
-**The product path itself follows the escape — measured 2026-08-08 against the SHIPPED
-`--unattended` boundary, closing finding 2.** The prior block used a hand-written `sandbox-exec`
-profile; this uses the profile `write_unattended_profile` in `dispatch.sh` generates, extracted
-verbatim from the shipped source and delivered exactly as the dispatcher delivers it —
-`claude -p … --settings <profile> --tools Bash --strict-mcp-config --no-session-persistence`,
-`claude 2.1.220 ≥ 2.1.219`. The enforced dimension is the network (`strictAllowlist: true`,
-`allowedDomains: []`); the profile sets **no** write confinement, and denies reads only under `~/`.
-Tested on the network dimension with both fail-capable controls:
+**The dispatcher-generated profile follows the escape — measured 2026-08-08 on the network
+dimension.** Scope of the claim, stated exactly so it does not overreach: this test used the profile
+that `write_unattended_profile` produces, extracted verbatim from the current `dispatch.sh` source
+and passed to a **direct** `claude -p … --settings <profile> --tools Bash --strict-mcp-config
+--no-session-persistence` invocation (`claude 2.1.220 ≥ 2.1.219`). It did **not** run
+`dispatch.sh --unattended`; the dispatcher's own gating, launch and env-scrub path was not exercised,
+and this state file holds no dispatcher invocation, run log or exit code. What is measured is the
+generated Seatbelt policy, not the dispatcher path. The enforced dimension is the network
+(`strictAllowlist: true`, `allowedDomains: []`); the profile sets **no** write confinement, and
+denies reads only under `~/`. Tested with both fail-capable controls:
 
 ```
-CONTROL  unsandboxed + detached (run directly)   child ppid 1  ->  NET-OK
-TEST     shipped --unattended + detached (actor)  child ppid 1, pgid own, 0 inherited fds  ->  NET-BLOCKED
+CONTROL  unsandboxed + detached (run directly)         child ppid 1  ->  NET-OK
+TEST     generated profile via direct claude -p (actor) child ppid 1, pgid own, 0 inherited fds  ->  NET-BLOCKED
 ```
 
 The escapee is re-parented to pid 1, holds zero inherited descriptors — the exact shape that
 defeats every termination handle — and the outbound connection is still refused, while the
-unsandboxed control at the same shape reaches the network. So Claude Code's own sandbox inherits
-network containment through the full detach, not merely `sandbox-exec` in the abstract.
+unsandboxed control at the same shape reaches the network. So **network denial from the generated
+profile inherited through the fully detached process** in this test — a stronger result than the
+earlier hand-written `sandbox-exec` profile, because the policy under test is the one the dispatcher
+would generate. It is **not** a measurement that `dispatch.sh --unattended` itself contains a detached
+descendant end to end; that integration is unverified (see below).
 
 **Two honest limits on that result.** First, the containment the profile applies is **network +
 home-read denial only**; it does **not** confine writes to the checkout. An out-of-checkout write to
-`/private/tmp` was created under the shipped profile — not a bug, because that path is not under the
+`/private/tmp` was created under the generated profile — not a bug, because that path is not under the
 profile's only denied region (`~/`), but it means a contained escapee can still write anywhere the OS
 allows outside `~/`. Second, **the actor refused to author the escape script** under several
 framings, calling it a "sandbox-escape and persistence mechanism," and cooperated only with an honest
-containment self-test whose desired outcome was blocking. That refusal is a real additional barrier at
-the product path — but it says nothing about a descendant that a *legitimate* tool (a dev server, a
-build step) detaches by accident, which is the actual Phase 2 risk. So the behavioural refusal does
-not substitute for the sandbox, and the sandbox is what the measurement above credits.
+containment self-test whose desired outcome was blocking. Because of that refusal no dispatcher-path
+result was produced, so actual `dispatch.sh --unattended` integration against a detached descendant is
+**unverified**. The refusal is also a real behavioural barrier, but it says nothing about a descendant
+that a *legitimate* tool (a dev server, a build step) detaches by accident, which is the actual
+Phase 2 risk — so it does not substitute for the sandbox, and only the generated-profile network
+result above is credited.
 
 ### Residual risks
 
-1. **RESOLVED for the network dimension (2026-08-08).** The product path — Claude Code's own sandbox
-   from the shipped `--unattended` profile — was measured to inherit network containment through the
-   full detach, with both controls (see the Seatbelt evidence above). What remains open is a
-   *different* dimension, now risk 4.
+1. **Network dimension shown for the generated profile; dispatcher integration still unverified
+   (2026-08-08).** The profile `write_unattended_profile` generates was measured — via a direct
+   `claude -p … --settings` invocation, not `dispatch.sh --unattended` — to inherit network denial
+   through the full detach, with both controls (see the Seatbelt evidence above). What remains open:
+   an effective test of the actual dispatcher `--unattended` path against a detached descendant (the
+   actor refused the escape step, so it was not produced), plus the *different* write dimension in
+   risk 4.
 2. **Containment is not a time bound.** A contained escapee still consumes CPU and memory
    indefinitely. "Walk away" would need a separate statement about resource exhaustion.
 3. **Containment covers only hops that actually run contained.** A hop run without `--unattended`,
@@ -332,30 +353,34 @@ that follows the escape contains rather than terminates, so using it changes wha
 **The two operator options, as the corrected evidence leaves them** (for Codex to put to the
 operator; neither implemented):
 
-- **Smallest scope change.** Restate 1a as *terminate every reachable descendant* (built and proved
-  at `7aaae68`, 368/0) *plus contain every descendant from creation*. The containment primitive is
-  `--unattended`, already shipped (1d), and it is now measured to follow the full detach on the
-  product path — **but containment here means no network and no home-tree reads, not filesystem
-  confinement** (residual risk 4). Its remaining entry test is whether write behaviour, in and out of
-  the checkout, is acceptable for a walk-away run, and whether resource exhaustion (risk 2) needs a
-  separate bound.
+- **Smallest scope change (conditional).** Restate 1a as *terminate every reachable descendant*
+  (built and proved at `7aaae68`, 368/0) *plus contain every descendant from creation*. The
+  containment primitive is `--unattended`, already shipped (1d). The dispatcher-*generated* profile
+  was measured to carry network denial through the full detach, but **`dispatch.sh --unattended`
+  integration against a detached descendant is unverified**, so this option is conditional on a later
+  effective dispatcher test. It also depends on explicit acceptance of the containment's limits:
+  **it means no network and no home-tree reads, not filesystem confinement** (risk 4 — writes outside
+  `~/` still succeed), and it sets no resource bound (risk 2).
 - **Smallest authority change.** A dedicated OS user for the actor, giving `pkill -U` as a true
   ownership boundary and preserving 1a's guarantee as literally written. This creates an account, so
   it is the operator's decision and was deliberately not probed.
 
 ## Next action
 
-Codex: closure check on the three frozen findings only — are findings 1, 2 and 3 resolved, and did
-the correction break anything?
+Codex: final closure check on the finding-2 fix only — is the evidence now labelled accurately, and
+did the edit break anything?
 
-- Finding 1 (ptrace-class evidence): resolved — `ptrace(2)` examined directly (no fork-following
-  request), cgroup-equivalent runtime absence measured; disposition unchanged.
-- Finding 2 (product-path dependency): resolved by probe, not downgrade — the shipped `--unattended`
-  boundary inherits network containment through the full detach, both controls run; two honest limits
-  recorded (no write confinement; actor escape-script refusal).
-- Finding 3 (commit-scope proof): resolved — `git diff-tree` replaces `git status --short`; commit
-  `d1759f6` touched exactly the one state file.
+What the final fix did (no new probe was run):
 
-Nothing outside these three was changed; the write-confinement gap and the actor refusal are recorded
-as context inside finding 2, not as new work. Phase 1f and every Phase 2 action remain untouched and
-forbidden.
+1. Every affected claim now states exactly what was exercised — the profile
+   `write_unattended_profile` generates, extracted from current source and used in a **direct**
+   `claude -p … --settings` invocation, **not** `dispatch.sh --unattended`. The valid observation is
+   preserved: network denial inherited through the fully detached process in that test.
+2. Actual `dispatch.sh --unattended` integration is marked **unverified** (the actor refused the
+   escape step, so no dispatcher-path result exists). The scope-change option is downgraded to an
+   operator option conditional on a later effective dispatcher test and on accepting its write- and
+   resource-bound limits. The separate dedicated-user authority option is preserved unchanged.
+3. Findings 1 and 3 are unchanged. The final-fix commit's path set is verified in `## Latest result`
+   with the exact command and result.
+
+Phase 1f and every Phase 2 action remain untouched and forbidden.
