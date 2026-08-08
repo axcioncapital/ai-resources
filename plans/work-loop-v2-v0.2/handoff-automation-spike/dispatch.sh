@@ -78,7 +78,9 @@
 #                       scope on this machine can widen what the child may read.
 #                       Only a live check from INSIDE the child establishes the
 #                       EFFECTIVE policy — runs/probes/unattended-effective-policy.sh.
-#   --log-dir DIR       run evidence directory (default <spike>/runs)
+#   --log-dir DIR       run evidence directory. Default: the spike's runs/
+#                       directory INSIDE THE CHECKOUT BEING DRIVEN, not inside
+#                       whichever checkout this script happens to live in.
 #   --dry-run           validate and route; launch nothing
 #   --status            READ-ONLY. Report whether a run is in flight for this
 #                       checkout+task, and what the state file says. Acquires no
@@ -332,6 +334,22 @@ fi
 CHECKOUT="$(cd "$CHECKOUT" && pwd -P)" || { printf 'STOP [11] cannot canonicalize checkout\n' >&2; exit 11; }
 git -C "$CHECKOUT" rev-parse --git-dir >/dev/null 2>&1 \
   || { printf 'STOP [11] not a git checkout: %s\n' "$CHECKOUT" >&2; exit 11; }
+
+# ------------------------------------------------ default run-evidence directory
+# Run evidence belongs to the checkout being driven, not to wherever this script
+# happens to sit. The default used to be "$SPIKE_DIR/runs", so a dispatcher run
+# from one checkout against a second checkout filed the second checkout's
+# evidence in the first — the run's own log did not live with the work it
+# described. The path below is deliberately the same relative location the spike
+# occupies, so driving this repository's own checkout still resolves to exactly
+# the directory the existing logs are already in: nothing is moved, and --status
+# keeps finding them.
+#
+# Resolved ONCE, here, and read by both the --status branch and the run branch.
+# Those two are required to agree — a --status that names a different directory
+# from the one a real run writes to is a status report about nothing — and the
+# only durable way to keep them in step is to give them a single source.
+DEFAULT_LOG_DIR="$CHECKOUT/plans/work-loop-v2-v0.2/handoff-automation-spike/runs"
 
 STATE_DIR="$CHECKOUT/logs/work-loop"
 STATE_FILE="$STATE_DIR/$TASK.md"
@@ -1024,7 +1042,7 @@ EOF
     "$(git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null)" \
     "$(git -C "$CHECKOUT" rev-parse --abbrev-ref HEAD 2>/dev/null)"
 
-  st_logdir="$LOG_DIR"; [ -n "$st_logdir" ] || st_logdir="$SPIKE_DIR/runs"
+  st_logdir="$LOG_DIR"; [ -n "$st_logdir" ] || st_logdir="$DEFAULT_LOG_DIR"
   st_last="$(ls -t "$st_logdir"/*-"$TASK".log 2>/dev/null | head -1)"
   if [ -n "$st_last" ]; then
     printf 'logs: %s\n' "$st_last"
@@ -1041,7 +1059,7 @@ EOF
 fi
 
 # ------------------------------------------------------------ run evidence
-[ -n "$LOG_DIR" ] || LOG_DIR="$SPIKE_DIR/runs"
+[ -n "$LOG_DIR" ] || LOG_DIR="$DEFAULT_LOG_DIR"
 mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
 # The dispatcher's own evidence directory is not "foreign work". When --log-dir
 # points inside the checkout, the run log this process is about to write would
@@ -1053,7 +1071,22 @@ if [ "$LOG_DIR_ABS" != "$CHECKOUT" ] && [ "${LOG_DIR_ABS#"$CHECKOUT"/}" != "$LOG
   ALLOW_PATHS+=("^$(printf '%s' "$LOG_REL" | sed 's|[][\.*^$]|\\&|g')/")
 fi
 
-RUN_ID="$(date '+%Y%m%dT%H%M%S')-$TASK"
+# The run id has to survive two runs of the SAME task, started in the SAME
+# second, from DIFFERENT checkouts, writing into ONE shared --log-dir. A
+# second-resolution timestamp plus the task id does not: both runs computed the
+# same id and silently overwrote each other's run log, hop captures and
+# unattended profile. The same-checkout case is not the concern — the lock
+# refuses that at exit 17, and this change does not touch the lock.
+#
+# The discriminator is the one already computed: LOCK_KEY is sha256(checkout|task),
+# so within a single task it varies exactly when the checkout does. The pid
+# separates two runs that somehow share both. No new concept is introduced.
+#
+# Field order is load-bearing, both ends:
+#   timestamp FIRST — the directory still sorts chronologically by name;
+#   task id LAST    — --status globs "*-$TASK.log", which stays an exact match
+#                     and keeps matching run logs written before this change.
+RUN_ID="$(date '+%Y%m%dT%H%M%S')-${LOCK_KEY:0:8}-$$-$TASK"
 RUN_LOG="$LOG_DIR/$RUN_ID.log"
 : >"$RUN_LOG"
 

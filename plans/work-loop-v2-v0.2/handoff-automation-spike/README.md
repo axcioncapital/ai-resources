@@ -41,7 +41,7 @@ built from it.
 | `--claude-bin PATH` | `claude` resolved from `PATH` |
 | `--allow-path RE` | `^logs/work-loop/` and `^plans/work-loop-v2-v0\.2/handoff-automation-spike/` (repeatable; supplying any replaces both defaults) |
 | `--claude-deny RULE` | none — repeatable; passed to the Claude child as `--disallowedTools RULE` |
-| `--log-dir DIR` | `<spike>/runs` |
+| `--log-dir DIR` | `<checkout>/plans/work-loop-v2-v0.2/handoff-automation-spike/runs` — the spike's `runs/` **inside the checkout being driven**, not inside whichever checkout this script lives in. Driving this checkout resolves to the same directory as before, so nothing moved. |
 | `--dry-run` | off |
 | `--status` | off — read-only report; takes no lock, writes nothing; answers IN FLIGHT / STALE LOCK / UNKNOWN — CANNOT INSPECT |
 | `--actor-cmd CMD` | none |
@@ -384,7 +384,7 @@ caffeinate -i bash dispatch.sh \
   --deadline 2400 \
   --allow-path '^logs/work-loop/' \
   --allow-path '<what THIS unit may legitimately touch>' \
-  2>&1 | tee "runs/walkaway-$TASK.console"
+  2>&1 | tee "$REPO/plans/work-loop-v2-v0.2/handoff-automation-spike/runs/walkaway-$TASK.console"
 
 # 3. How you stop it: Ctrl-C in this terminal, or from another one:
 #    dispatch.sh --status prints the pid and the exact kill command.
@@ -613,8 +613,18 @@ Three scripts exist for the two-worktree proof and are not used by the single-ch
 - **An allowlist** bounds which repo-relative paths an actor may change; anything else stops the run.
   It is checked in three directions: as a *delta* across each hop's working tree (`24`), as a
   **pre-hop gate** on work that was already there (`18`), and against what the actor **committed**
-  between the hop's before- and after-`HEAD` (`30`). The dispatcher's own `--log-dir` is added to the
-  allowlist when it sits inside the checkout, so a run never flags its own evidence as foreign work.
+  between the hop's before- and after-`HEAD` (`30`). The dispatcher's own log directory is added to
+  the allowlist when it sits inside the checkout, so a run does not flag its own evidence as foreign
+  work. Since the default log directory now sits inside the driven checkout, that allowlisting is on
+  the ordinary path rather than only on an explicit `--log-dir`.
+  > **One measured limit.** The allowlist entry is the run directory's exact repo-relative path, and
+  > `git status --porcelain` collapses an untracked *directory* to its shortest path. In a checkout
+  > where an ancestor such as `plans/` is itself untracked, the dispatcher's own new evidence is
+  > reported as `?? plans/`, which that entry does not match, and the pre-hop gate stops the run at
+  > `18` before any actor is launched. Every real checkout of this repository tracks `plans/`, so this
+  > is reached only by a checkout that does not carry the spike tree. It fails closed and prints a
+  > recoverable next action; it is recorded rather than fixed, because widening the allowlist to an
+  > ancestor would let genuinely foreign changes under that ancestor pass unseen.
   > **The committed-path check (`30`) closed a real gap, and it is not free.** `18`/`24` read
   > `git status --porcelain`. Claude commits its work each hop, so a clean tree passed them no matter
   > what went into the commit — only stray *uncommitted* files ever tripped the guard. `30` compares
