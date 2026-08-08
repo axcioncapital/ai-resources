@@ -60,14 +60,30 @@ output/
 # the canonical fix (id-55) — a third copy nobody maintains is exactly the drift this repo keeps paying for.
 # Ignored so it cannot be committed by accident. If Codex is ever adopted for real, the decision to track
 # and sync this mirror is a deliberate one to make — not an outcome of a wildcard staging command.
-.codex/
+#
+# THREE FILES ARE NOW DELIBERATELY TRACKED (operator choice (a), 2026-08-08, Work Loop v2 slice S6).
+# This is the deliberate decision the note above reserves, and it is narrowed to three named paths —
+# it does NOT adopt or maintain the rest of the mirror. S6's post-compaction reorientation lives in
+# these files, so leaving them untracked meant `git clean -x` could delete the slice silently and no
+# commit could revert it. The remaining ~60 `.codex/` files stay ignored and unmaintained.
+#
+# Same ladder reason as the `.agents/` block below: git does not descend into an excluded directory,
+# so `.codex/` had to become `.codex/*` before any negation inside it could be evaluated. `AGENTS.md`
+# stays ignored at every depth; only the repository-root one is re-included, via the leading slash.
+# Verified with `git check-ignore -v` after the edit.
+.codex/*
+!.codex/hooks.json
+!.codex/hooks/
+.codex/hooks/*
+!.codex/hooks/work-loop-reorient.sh
 AGENTS.md
+!/AGENTS.md
 
 # `.agents/` stays ignored EXCEPT the skills deliberately adopted (operator call, 2026-07-28 S3;
 # extended to work-loop-v2, 2026-08-01 S6, and handoff-thread, 2026-08-07). This is the "deliberate
 # decision to track" the note above reserves — narrowed to named subtrees, not an adoption of the
-# mirror. `.codex/`, `AGENTS.md`, the four `source-command-*` skills and the `wl2-probe` throwaway
-# remain ignored and unmaintained.
+# mirror. The four `source-command-*` skills and the `wl2-probe` throwaway remain ignored and
+# unmaintained; the Codex mirror does too, apart from the three S6 files named in the block above.
 #
 # Why a ladder and not one `!.agents/skills/work-loop/`: git does not descend into an excluded
 # directory, so a negation for a path inside `.agents/` never gets evaluated. Each level must be

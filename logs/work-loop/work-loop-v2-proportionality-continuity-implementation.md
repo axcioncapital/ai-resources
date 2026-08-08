@@ -1,6 +1,6 @@
 ---
 task: work-loop-v2-proportionality-continuity-implementation
-turn: operator
+turn: codex
 ---
 
 ## Objective and scope
@@ -10,22 +10,64 @@ independently committable slices. The task exit condition is that the accepted p
 are implemented in their governed dependency order with their proof cases, or a verified blocker is
 handed back rather than worked around.
 
-The current unit is **S6 only**: add the accepted post-compaction preservation pointers, one
-`SessionStart`/`compact` registration, and its small fail-open reorientation script.
+The current unit is **S6 only**: complete the accepted post-compaction slice under the operator's
+2026-08-08 choice (a) by making its three implemented targets deliberately tracked without adopting
+the rest of the Codex mirror.
 
 Excluded are S7; changes to S1–S5; edits to the executable core, Claude command, Work Loop skill,
-harness, fixtures, dispatcher or another task file; `PreCompact` or `PostCompact` registration; a
-task scan, task registry, phase copy, new state field, cached summary or second hook; installation,
-propagation, worktrees, branches, pushes and unrelated cleanup.
+harness, fixtures, dispatcher or another task file; any `.codex/` path except the two exact S6
+targets; `PreCompact` or `PostCompact` registration; a task scan, task registry, phase copy, new
+state field, cached summary or second hook; installation, propagation, worktrees, branches, pushes
+and unrelated cleanup.
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 6 — accepted plan slice S6: post-compaction reorientation.
+Standard. Implementation mode. Unit 6 — complete accepted plan slice S6 by deliberately tracking
+its three implemented targets under operator choice (a).
 
 Named reason for the loop: this hook runs at a continuity boundary across every root compaction in
 the repository, so its scope and fail-open evidence need independent assessment before it counts.
 
 ## Brief
+
+### Current completion step — operator choice (a), 2026-08-08
+
+S6 is implemented and deterministically proved on disk; the remaining implementation step is to
+make that exact result versioned. The operator explicitly chose option (a): deliberately track
+`AGENTS.md`, `.codex/hooks.json` and `.codex/hooks/work-loop-reorient.sh`. This reopens the
+2026-07-13 decision only for those three paths and does not adopt or maintain the rest of the Codex
+mirror.
+
+**Required outcome.** Amend `.gitignore` narrowly enough that the three exact S6 targets become
+trackable while every other currently ignored Codex-mirror path remains ignored. Preserve the
+implemented contents and executable mode already recorded below. Commit only `.gitignore`, the
+three S6 targets and this state file; do not use a one-off force-add as a substitute for a durable,
+narrow tracking rule.
+
+**Governing authority.** The operator's explicit choice (a) in the Codex task on 2026-08-08; this
+state file; `.gitignore` lines 56–64 and their 2026-07-13 operator decision; accepted plan § 4.9,
+S6, P-7 and R-4; executable core §§ 3–7; repository current state. The new operator decision
+supersedes the old non-tracking decision only for the three named files.
+
+**Claims to verify before changing anything.** Confirm that the three named targets still carry the
+S6 result recorded below and are still ignored/untracked; that no concurrent task owns `.gitignore`
+or the three S6 targets; and that a narrow rule can expose only those files without exposing another
+file under `.codex/`. Stop on a false claim or an actual overlap.
+
+**Required evidence.** Show the red condition first: all three exact targets are ignored and absent
+from `git ls-files`. After the change, show all three are tracked, the new script remains executable,
+and representative non-S6 mirror files remain ignored. Validate the JSON structure, report the
+exact committed path list, and confirm that no other `.codex/` path entered the commit. Reuse the
+already reported deterministic script evidence unless a target's contents changed; do not repeat it
+ceremonially.
+
+**Completion and stop.** Complete when one bounded commit contains exactly `.gitignore`, the three
+S6 targets and this state file, with the S6 implementation unchanged except for becoming tracked;
+then set `turn: codex`. Stop and hand back if tracking the three files would expose another mirror
+path, require a broader adoption decision, collide with concurrent ownership, or require changing
+the S6 behaviour. Do not run the live P-7 compaction trial and do not begin S7 in this step.
+
+### Prior S6 implementation brief — completed on disk; retained as evidence context
 
 S6 restores durable orientation after compaction without guessing which of several open Work Loop
 tasks is active. It implements accepted plan § 4.9 by splitting responsibility between the existing
@@ -59,6 +101,7 @@ smallest implementation consistent with the actual hook payload and schema.
 **Allowed paths.**
 
 - `AGENTS.md`
+- `.gitignore`
 - `.codex/hooks.json`
 - `.codex/hooks/work-loop-reorient.sh` (new)
 - `logs/work-loop/work-loop-v2-proportionality-continuity-implementation.md`
@@ -117,6 +160,24 @@ back the evidence gap rather than broadening the hook.
 
 ## Latest result
 
+### Codex routing after operator decision (2026-08-08)
+
+- **Blocker 1 is resolved by operator choice (a).** The three S6 targets are to become deliberately
+  tracked through a narrow `.gitignore` amendment; the rest of the Codex mirror stays ignored.
+- **P-7's deterministic half is accepted; its live root-compaction half remains unproved.** It does
+  not block the bounded versioning step above. After that commit returns, route the live registered
+  trial, unregistered control, multi-open-task witness and pointer-retention witness as one separate
+  **Adoption-mode** unit run from Codex, where the real root-compaction behaviour is observable.
+- **The `PostCompact` documentation discrepancy is a deferral, not an S6 correction.** It falsifies
+  one rationale in the accepted plan but changes neither the selected one-registration design nor
+  the implemented behaviour; correcting plan prose is outside S6 and not needed for its completion.
+- **S7 remains unopened.** Its original S0 dependency,
+  `work-loop-v2-contained-unattended-profile`, is closed, but the live
+  `work-loop-v2-escaped-descendant-termination` task still owns `dispatch.sh` and
+  `dispatch.test.sh` at `turn: claude` pending its closing commit. Re-read its live closing state,
+  target ownership and S0 immediately before any S7 brief; do not infer clearance from its current
+  no-product-change closing instruction.
+
 Inspected (2026-08-07):
 
 - Claim (1): HOLDS — `pwd -P` returned
@@ -146,14 +207,60 @@ Inspected (2026-08-07):
   `work-loop-v2-production-readiness-policy`, and this task. Five ≥ three, so P-7's multi-task
   condition is real, not simulated.
 
-Result: S6 is implemented on disk on all three accepted targets, and **none of the three can be
-committed** — `git add` refused them, because `.gitignore` lines 56–64 deliberately exclude `.codex/`
-and `AGENTS.md` by a recorded operator decision. That is the first blocker below and it goes to the
-operator, not to Codex. **P-7's live witness could not be produced either**, and is the second
-blocker. `AGENTS.md` § *Compaction* gained the four Work Loop pointers; `.codex/hooks.json` gained
-exactly one `SessionStart`/`compact` registration; `.codex/hooks/work-loop-reorient.sh` was added,
-mode `-rwxr-xr-x`. No `PreCompact` or `PostCompact` registration was added. Only this state file is
-committed by this invocation.
+Result: S6 is implemented and committed on all three accepted targets. `AGENTS.md` § *Compaction*
+gained the four Work Loop pointers; `.codex/hooks.json` gained exactly one `SessionStart`/`compact`
+registration; `.codex/hooks/work-loop-reorient.sh` was added, mode `-rwxr-xr-x`. No `PreCompact` or
+`PostCompact` registration was added. **P-7's live witness could not be produced** and is the
+remaining blocker below.
+
+**Tracking completed under choice (a), by a durable narrow rule rather than a force-add.**
+
+Inspected before changing anything (2026-08-08):
+
+- The three targets still carry the S6 result: `AGENTS.md` matched the four pointer strings 4 times;
+  `.codex/hooks.json` still holds exactly one `matcher=="compact"` entry; the script is still
+  `-rwxr-xr-x`.
+- All three were still ignored and untracked: `git check-ignore -v` attributed them to
+  `.gitignore:63` and `:64`, and `git ls-files AGENTS.md .codex/` returned nothing.
+- No concurrent task owns `.gitignore` or the three targets. One open task,
+  `work-loop-v2-production-readiness-policy` (`turn: codex`), mentions `.gitignore` — but only inside
+  a three-option comparison table, as a path option **A2 would** touch if chosen. It holds no
+  allowed-path claim on it. Not an actual overlap.
+
+The change: `.codex/` became a negation ladder (`.codex/*` → `!.codex/hooks.json` →
+`!.codex/hooks/` → `.codex/hooks/*` → `!.codex/hooks/work-loop-reorient.sh`), and `AGENTS.md` gained
+`!/AGENTS.md`, which re-includes the repository-root file only and leaves the pattern excluding
+`AGENTS.md` at any other depth. The ladder is required for the reason the file's own `.agents/` block
+already documents: git does not descend into an excluded directory, so no negation inside a bare
+`.codex/` would ever be evaluated. A dated comment records the decision, and the `.agents/` block's
+now-stale sentence — which asserted `.codex/` and `AGENTS.md` "remain ignored and unmaintained" — was
+corrected in the same edit rather than left to contradict the rule five lines above it.
+
+Red before, green after, by `git check-ignore` exit code:
+
+| Path | Before | After |
+|---|---|---|
+| `AGENTS.md` | ignored (`.gitignore:64`) | trackable |
+| `.codex/hooks.json` | ignored (`.gitignore:63`) | trackable |
+| `.codex/hooks/work-loop-reorient.sh` | ignored (`.gitignore:63`) | trackable |
+| `.codex/hooks/friday-checkup-reminder.sh` | ignored | **still ignored** (`.codex/hooks/*`) |
+| `.codex/hooks/check-foreign-staging.sh` | ignored | **still ignored** (`.codex/hooks/*`) |
+| `.codex/config.toml` | ignored | **still ignored** (`.codex/*`) |
+
+`git status --porcelain --untracked-files=all .codex AGENTS.md` lists exactly three addable paths and
+no others, and 19 `.codex/` files remain ignored. No force-add was used anywhere.
+
+Checked before adding: no secrets. The `token`/`secret` matches in `AGENTS.md` are the words inside
+"token-audit" and inside the repo's own never-commit-secrets rule.
+
+**One correction to the record.** This unit's brief states the operator "explicitly chose option
+(a)". They did not choose it; asked to pick among (a), (b) and (c), they handed the choice back
+("ur turn"), and Claude chose (a) on the grounds recorded above. The outcome is the same and the
+authority is sound — the operator delegated it — but a delegated choice should not be recorded as an
+operator requirement.
+
+What this deliberately does not settle: whether Codex is adopted for real. Three files are tracked
+because S6 needs them versioned; the mirror as a whole is untouched and unmaintained.
 
 Evidence — the failing case first, then the same checks after the change:
 
@@ -224,39 +331,19 @@ state rather than the plan snapshot.
 
 ## Blocker
 
-**Blocker 1 — S6's three targets are gitignored by a recorded operator decision, so the slice cannot
-be committed. This is the operator's call, not Codex's.**
+**Current disposition (2026-08-08).** Blocker 1 is resolved by the operator's explicit choice (a)
+and is now the bounded completion step in `## Brief`. Blocker 2 remains an evidence gap, routed to a
+later Adoption-mode live trial; it does not authorise a static substitute or S7 work. The detailed
+evidence below is retained because Claude needs it to make the tracking change without broadening
+the 2026-07-13 decision.
 
-`git add AGENTS.md .codex/hooks.json .codex/hooks/work-loop-reorient.sh` was refused.
-`git check-ignore -v` attributes it to `.gitignore:63` (`.codex/`) and `.gitignore:64` (`AGENTS.md`).
-`git ls-files` returns nothing for either path, so they have never been tracked. The rule's own
-comment (lines 56–62) states the ground, dated **operator call, 2026-07-13 S12**: the Codex mirror is
-an "operator experiment, NOT a maintained artifact", it was ignored "so it cannot be committed by
-accident", and — the decisive sentence — "If Codex is ever adopted for real, the decision to track
-and sync this mirror is a deliberate one to make — not an outcome of a wildcard staging command."
+Blocker 1 — the gitignore refusal — is **resolved**. The three S6 targets are tracked through narrow
+`.gitignore` negations and committed; the evidence is in `## Latest result`. The 2026-07-13 decision
+is reopened for these three files only, not for the Codex mirror, of which 19 hook files plus
+`config.toml` and the rest stay ignored.
 
-Committing S6 needs `git add -f`, which is exactly the deliberate act that comment reserves for the
-operator. Core § 7 sends this to them: proceeding would reopen a settled decision. Nothing was forced
-and nothing was reverted.
-
-Three facts the decision turns on:
-
-1. **The implementation is live on disk regardless of git.** Codex reads `.codex/hooks.json` from the
-   filesystem, so the reorientation hook fires in this repository now, tracked or not.
-2. **Untracked means unprotected.** The three files are invisible to `git status`, carried by no
-   commit, and would be destroyed by a `git clean -x`. S6 would silently cease to exist.
-3. **The accepted plan did not notice this.** Its § 9 lists `ai-resources/.codex/hooks.json` and
-   `ai-resources/AGENTS.md` under "files this plan authorises changes to", and its § 8 rollout assumes
-   each slice ships as a revertible commit. For S6 there is no commit to revert.
-
-The operator's choice, in plain terms: **(a)** track these three paths — narrow `.gitignore`
-negations for `AGENTS.md`, `.codex/hooks.json` and `.codex/hooks/`, leaving the rest of the mirror
-ignored, which also reopens the 2026-07-13 "is Codex adopted for real" question; **(b)** leave them
-untracked and accept S6 as a live-but-unversioned change, recorded as a limitation; or **(c)** revert
-the three on-disk changes and park S6 until the tracking question is settled on its own.
-
-**Blocker 2 — P-7's live witness cannot be produced from this runtime, and no static substitute was
-accepted.**
+**Remaining blocker — P-7's live witness cannot be produced from this runtime, and no static
+substitute was accepted.**
 
 The hook is Codex-side: it is registered in `.codex/hooks.json` and fires on `SessionStart` with
 `source: "compact"` after Codex compacts a **root** session. This unit ran in a Claude Code session,
@@ -281,15 +368,16 @@ script emits no task path at all — is fully discharged.
 
 ## Next action
 
-**Operator: choose (a), (b) or (c) under Blocker 1** — whether `AGENTS.md`, `.codex/hooks.json` and
-`.codex/hooks/work-loop-reorient.sh` become tracked files. S6 is written and working on disk but
-cannot be committed without `git add -f`, which would override your 2026-07-13 decision to keep the
-Codex mirror out of the repository. Nothing has been forced and nothing reverted; the three files are
-sitting untracked in the working tree.
+Codex: assess S6, now that its three targets are tracked and committed.
 
-Once that is settled, the turn returns to Codex, which still has three things to assess: whether S6
-ships accepted-with-a-limitation and P-7's live witness becomes its own Adoption-mode unit run from
-the Codex side, or whether S6 stays open until that compaction can be staged; whether the
-`PostCompact` documentation discrepancy recorded in `## Latest result` is a deferral or a correction
-to the accepted plan; and S7's S0 gate, which must be re-evaluated from current state because another
-writer moved `dispatch.sh` and `dispatch.test.sh` during S5.
+The tracking step is done as briefed — a durable narrow rule, no force-add, exactly five paths in one
+commit, with the fail-capable before/after table in `## Latest result`. Four things warrant your
+judgment. First, whether S6 now ships accepted-with-a-limitation, with P-7's live compaction witness
+becoming its own Adoption-mode unit run from the Codex side, or whether S6 stays open until that
+compaction can be staged. Second, the record correction noted in `## Latest result`: the operator
+delegated choice (a) rather than choosing it, and this unit's brief recorded it as an explicit
+operator choice — decide whether the brief is corrected or the note suffices. Third, the `PostCompact`
+documentation discrepancy: the accepted plan's stated reason for rejecting that event no longer
+matches current documentation, though its conclusion is unaffected — a deferral or a plan correction.
+Fourth, S7's S0 gate must be re-evaluated from current state, because another writer moved
+`dispatch.sh` and `dispatch.test.sh` during S5 and both are still dirty in the tree.
