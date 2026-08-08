@@ -1,6 +1,6 @@
 ---
 task: work-loop-v2-proportionality-continuity-implementation
-turn: operator
+turn: codex
 ---
 
 ## Objective and scope
@@ -193,6 +193,80 @@ filesystem scan, any nonzero error path in the script, or any excluded path or r
 back the evidence gap rather than broadening the hook.
 
 ## Latest result
+
+### Codex registered-run observation after an actual root compaction (2026-08-08)
+
+**Report-first observation 2 — the unregistered control.** It is still required for full P-7
+causal proof. The registered run recovered the durable orientation, but without the same compaction
+run with the hook unregistered, that recovery could have come from the retained compacted summary
+or the AGENTS.md preservation rule rather than the hook. The registered run alone therefore shows
+the desired outcome occurred; it does not isolate what caused it.
+
+**Durable-only witness recovered from disk:** `P7-F2536064F1`. This value was absent from the
+pre-compaction Codex conversation and was produced only after Codex re-opened this state file. The
+file also required observation 2 to be reported first rather than the natural observation 1 or the
+invalidated attempt's observation 4; that instruction was likewise recovered correctly.
+
+**Registered observation.** A real Codex root compaction occurred. Before answering or advancing
+the project, post-compaction Codex verified the bound checkout and re-read this state file, the
+governing implementation plan, the Work Loop v2 skill and the executable core from disk. The next
+move therefore matched this file's `## Next action`: recover and report the hidden witness, then
+record the observation before anything else.
+
+- **Hook firing and injection:** no hook-specific `additionalContext` message or hook event was
+  separately visible in the model-visible post-compaction context, so Codex cannot honestly claim
+  that the hook fired or quote a live injected value. The on-disk registration and script still
+  show the registered mechanism and its intended fixed injection, but those are deterministic
+  implementation evidence, not proof of this live firing.
+- **Exactly one task:** the retained context named exactly this active task,
+  `logs/work-loop/work-loop-v2-proportionality-continuity-implementation.md`; it named no competing
+  Work Loop task. The script read from disk still contains no task-selection mechanism and emits no
+  task path.
+- **Four retained pointers:** the post-compaction context retained the exact active task path, the
+  bound Local checkout, the governing plan plus Work Loop v2 / Standard lane / Adoption-mode Unit
+  6A, and the current instruction to re-read the durable next action and record the registered
+  observation. The hidden witness itself was deliberately absent and was recovered from the state
+  file, which is the control's material fact.
+
+**Disposition of this observation:** the durable reorientation, single-task outcome and pointer
+retention were observed; live hook firing and causality remain unproved. Nothing outside this state
+file changed, the unregistered control has not begun, and S7 remains unopened.
+
+### Claude verification of the registered-run witness (2026-08-08)
+
+Claude did not observe the compaction and does not restate Codex's account of its own context. What
+Claude owns is the repository half of the control, and that half is checkable here.
+
+Inspected (2026-08-08):
+
+- Claim (1): HOLDS — read this file's frontmatter; `task:` is
+  `work-loop-v2-proportionality-continuity-implementation`, matching the filename, and the incoming
+  `turn:` was `claude`.
+- Claim (2): HOLDS — read the prepared witness back out of the committed blob with
+  `git show 2829915:logs/work-loop/work-loop-v2-proportionality-continuity-implementation.md` and
+  compared it to the value quoted above: the two strings are equal. Compared against the commit, not
+  against what Claude remembers writing.
+- Claim (3): HOLDS — the same comparison for the `REPORT-FIRST:` line. The file required
+  observation 2 and observation 2 is what was reported first. That is neither the natural opening
+  (observation 1) nor the invalidated attempt's (observation 4).
+- Claim (4): HOLDS — ran `git status --short` before staging; the only Work Loop path modified is
+  this state file. `logs/friction-log.md`, `logs/session-notes.md` and two untracked
+  `handoff-automation-spike/runs/*.log` files are pre-existing dirty paths from earlier work, and
+  were neither touched nor staged. No S6 target and no `.codex/` path is in this commit.
+- Claim (5): HOLDS — searched the working file for `WITNESS-TOKEN:` at a line start; none remain.
+  The spent value cannot be presented as a fresh witness by a later run.
+
+Result: the registered half of P-7's live trial is recorded, and its durable-source control passed
+on the repository side. Both hidden values — the token and the report-first observation — came back
+exactly as this file held them, from a session whose conversation never carried either of them.
+
+Evidence: the two equality checks above, taken against the committed blob at `2829915`. The check is
+capable of failing, and this is the run where it mattered: a session answering from its compacted
+summary can produce neither string, the first attempt was invalidated precisely because that
+separation broke, and of the observations available to guess, the habitual choice (1) was among the
+wrong ones. What the check does **not** show is causality. Codex records that no hook-specific
+injection was separately visible in its post-compaction context, so the registered mechanism's own
+firing remains unproved by this run, and the unregistered control is still owed.
 
 ### Registered-run preparation invalidated before compaction (2026-08-08)
 
@@ -556,47 +630,15 @@ script emits no task path at all — is fully discharged.
 
 ## Next action
 
-**Operator — one action only: return to the existing Codex task and make `/compact` your very next
-input.** Do not quote, paraphrase or summarise any part of this file into that chat beforehand, and
-do not open this file in that session for any reason — including to work out whose turn it is.
-Carrying the turn is the whole of your part here. The first attempt failed exactly there: `u go` was
-sent instead of `/compact`, Codex opened this file to resolve the turn, and this preparation's
-content reached its context before any compaction ran. If that happens again the trial measures
-conversational memory instead of durable reorientation, and it must be restarted again with a third
-witness.
+Codex: assess the registered-run observation together with Claude's verification, and decide Unit
+6A's next step. The registered half is recorded and its durable-source control passed; live hook
+firing is unproved, the unregistered control has not run, and the multi-open-task observation rests
+on the same single run. Decide whether the control runs, and what evidence the S6 lifecycle decision
+— adopt, revise, continue the trial or stop — will rest on.
 
-**Preserved pointers for the post-compaction session** — the four `AGENTS.md` Compaction names:
+One repository fact that constrains the choice: **this witness is spent.** It stands in this file's
+`## Latest result`, in commit `2829915`, and now in the Codex conversation. A control run needs a
+newly generated value prepared the same way, or it measures nothing.
 
-- **Active task file:** `logs/work-loop/work-loop-v2-proportionality-continuity-implementation.md`
-- **Bound checkout (Local):** `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`
-- **Governing plan:** `plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md`
-- **Workflow and phase:** Work Loop v2 — Standard lane, **Adoption mode, Unit 6A**
-
-**Codex, after the compaction, before any other move:**
-
-1. Re-read the four sources above **from disk**. Do not continue from the compacted summary.
-2. Quote the witness token in the block below **verbatim**. If you cannot produce it from the file,
-   say so plainly — that is the trial's result, not a failure to be worked around. The invalidated
-   attempt's token is deleted from this file; producing that one instead is a failure, not a pass.
-3. The witness block also names **which single P-7 observation you report first**. Report that one
-   first, then the remaining three in any order. It is not observation 4, which the invalidated
-   attempt named, and the natural order is 1 to 4 — so neither starting at 1 by habit nor repeating
-   the earlier choice shows that this file was read.
-4. Then record the registered observation: whether the reorientation hook fired, what it injected,
-   whether exactly one task was named, and whether the four pointers survived. Only then choose the
-   next move.
-
-**Registered-run witness — durable source only, never stated in the Codex conversation:**
-
-```
-WITNESS-TOKEN: P7-F2536064F1
-REPORT-FIRST: observation 2 — the unregistered control (state what it still requires and why the registered run alone proves nothing without it)
-```
-
-Neither line has ever appeared in the Codex chat, and neither reuses the invalidated attempt's
-value. A session continuing from a compacted summary can produce neither the token nor the
-report-first instruction; a session that re-read this file produces both. That is the whole of the
-control.
-
-Still to come in Unit 6A, and not part of this step: the unregistered control, the multi-open-task
-observation, and the lifecycle decision — adopt, revise, continue the trial or stop.
+Nothing outside this state file changed. S6 is untouched, S7 remains unopened, and its ownership gate
+is still to be re-read from current state rather than from the plan's snapshot when it is opened.
