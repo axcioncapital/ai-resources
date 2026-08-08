@@ -119,10 +119,31 @@ Inspected (2026-08-08):
   (21) and the deadline (29)"). Exits 17, 28 and 31, `pin_lock`, the never-retried rule in
   `on_signal`, and the `--unattended` guards are all still present.
 
-Result: the discovery ran and returns **OPERATOR DECISION REQUIRED**. No mechanism available within
-the present authority terminates a fully detached descendant. One mechanism — already in service —
-**contains** it, and adopting that is a change to 1a's guarantee, which core § 6 rule 4 sends to the
-operator rather than to a bounded fix.
+Corrected (2026-08-08) — bounded round, frozen findings 1–3, each reproduced by inspection first:
+
+- Finding (1): REPRODUCED then RESOLVED — the prior evidence examined kqueue/dtrace/ktrace/taskinfo,
+  not Darwin `ptrace(2)`. Now measured against `man 2 ptrace` and `sys/ptrace.h` directly (no
+  fork-following request exists) and the cgroup-equivalent-runtime candidate (none installed). See
+  the ptrace and runtime evidence below. Disposition unchanged.
+- Finding (2): REPRODUCED then RESOLVED by probe (not downgraded) — the recommendation depended on
+  the shipped `--unattended` boundary following a detached daemon, and the prior evidence used a
+  custom `sandbox-exec` profile. A safe attended probe of the product path was possible and was run,
+  with both controls; network containment inherits through the full detach. Two honest limits are
+  now recorded (write confinement is not attempted; the actor refused the escape script). See the
+  Seatbelt evidence below and residual risks 1 and 4.
+- Finding (3): REPRODUCED then RESOLVED — `git status --short` cannot prove a commit's path set;
+  replaced by `git diff-tree`, which shows commit `d1759f6` touched exactly the one state file. See
+  the Evidence section.
+
+Nothing outside the three frozen findings was changed. Two things newly surfaced during the round —
+the profile's lack of write confinement and the actor's escape-script refusal — are recorded inside
+finding 2's evidence as context for it, not as new work.
+
+Result: the discovery ran, the correction round tightened its evidence, and it returns **OPERATOR
+DECISION REQUIRED** unchanged. No mechanism available within the present authority terminates a fully
+detached descendant. One mechanism — already in service — **contains** it (network + home-read, not
+writes), and adopting that is a change to 1a's guarantee, which core § 6 rule 4 sends to the operator
+rather than to a bounded fix.
 
 Host: macOS 26.5.2, `Darwin 25.5.0`, `arm64` (`RELEASE_ARM64_T8142`), SIP **enabled**, uid 501 in
 `admin`. Escape shape used throughout: `setsid` → double fork → `closerange(0,1024)` → `exec`.
@@ -136,17 +157,26 @@ Host: macOS 26.5.2, `Darwin 25.5.0`, `arm64` (`RELEASE_ARM64_T8142`), SIP **enab
 | **launchd job** | `/bin/launchctl` | none for the user domain | **no — measured this unit** | n/a | **rejected on measurement** |
 | **Audit session (ASID)** | syscalls present, `bsm/audit.h` in SDK | **root to create, root to read** | yes — inherited | cannot tell: not enumerable | rejected on authority |
 | **Coalitions** | `/usr/bin/taskinfo` | **root** | untested | untested | authority boundary, not crossed |
+| **`ptrace(2)`** | present (`sys/ptrace.h`) | same-UID or root; stops the target | **no — no fork-following request exists on Darwin** | per-pid attach, no tree | **rejected on the interface itself** |
+| **cgroup-equivalent runtime** | **none installed** (docker/podman/colima/lima/orbstack/Apple `container` all absent; no `/sys/fs/cgroup`) | n/a | n/a | n/a | **no implementation present** |
 | **kqueue `NOTE_TRACK`** | `EVFILT_PROC` present | none | n/a | n/a | **`ENOTSUP`** |
 | **dtrace** | `/usr/sbin/dtrace` | **root, and SIP disabled** | n/a | n/a | rejected on authority |
 | **ktrace** | `/usr/bin/ktrace` | **root** | n/a | n/a | rejected on authority |
 | **Dedicated OS user** | n/a | **create an account** — forbidden by this brief | yes; uid is inherited and unchangeable unprivileged | yes (`pkill -U`) | **authority change** |
-| **Seatbelt sandbox** | `/usr/bin/sandbox-exec`, and already shipped as `--unattended` (1d) | **none** | **yes — but it contains, it does not terminate** | yes, structurally — it signals nothing | **scope change** |
+| **Seatbelt sandbox** | `/usr/bin/sandbox-exec`, and already shipped as `--unattended` (1d) | **none** | **yes — measured on the product path; contains network + home-read, does NOT terminate or confine writes** | yes, structurally — it signals nothing | **scope change** |
 
 ### Evidence
 
 All probes ran outside the repository, without root, and are self-cleaning. Scripts:
-`probe-sandbox.sh`, `probe-others.sh`, `daemonize.py`, run under the session scratch directory.
-**No repository file except this one was changed** — verified by `git status --short`.
+`probe-sandbox.sh`, `probe-others.sh`, `daemonize.py`, and the correction-round product-path probes,
+run under the session scratch directory.
+
+**The first commit changed exactly one path — verified by the right primitive (finding 3,
+2026-08-08).** `git status --short` cannot prove a *commit's* contents, so it is replaced here by
+`git diff-tree --no-commit-id --name-only -r d1759f6`, which returns exactly one line:
+`logs/work-loop/work-loop-v2-descendant-supervision-discovery.md` (`git show --stat` agrees:
+"1 file changed, 260 insertions(+)"). The commit this correction round produces is verified the same
+way in `## Latest result`.
 
 **launchd does not reach a detached descendant.** A transient job (`launchctl submit`, no plist
 installed) ran a script that spawned the daemon and then held the foreground:
@@ -171,7 +201,24 @@ pid 1, so the set cannot be enumerated at all. Inherited-but-unreadable is not a
 constant was taken from `bsm/audit.h` line 117 after a first run used a wrong value; the corrected
 run is the one quoted.)
 
-**ptrace-class supervision is dead on this host, re-measured rather than inherited:**
+**ptrace-class supervision is dead on this host — measured against Darwin's actual
+`ptrace(2)`, corrected 2026-08-08.** The earlier evidence examined kqueue, dtrace, ktrace and
+taskinfo but not the named `ptrace(2)` interface itself; that gap is closed here.
+
+`man 2 ptrace` and `sys/ptrace.h` (SDK, lines 76–95) list every request Darwin's ptrace supports:
+`PT_TRACE_ME`, `PT_READ_*`/`PT_WRITE_*`, `PT_CONTINUE`, `PT_STEP`, `PT_KILL`, `PT_ATTACHEXC`,
+`PT_DETACH`, `PT_SIGEXC`, `PT_THUPDATE`, `PT_DENY_ATTACH`, `PT_FORCEQUOTA`. Two facts settle it:
+
+- **No fork-following request exists.** There is no Darwin equivalent of Linux's
+  `PTRACE_O_TRACEFORK`/`TRACEVFORK`/`TRACECLONE`. Searched the whole SDK include tree
+  (`grep -rlE 'TRACEFORK|TRACECLONE|TRACEVFORK|PTRACE_O_|PT_FOLLOW'`): the only hit is
+  `curl/curl.h`'s unrelated `CURLOPT_FOLLOWLOCATION`. A tracer must `PT_ATTACHEXC` each pid
+  individually, and cannot be attached to a descendant it never stopped — exactly the process the
+  double fork creates. So ptrace cannot follow the escape it would need to follow.
+- **`PT_ATTACHEXC` needs same-UID or root and stops the target**, turning every hop into a debugger
+  session; it is a per-pid debug primitive, not a tree-ownership boundary.
+
+The adjacent tracing facilities are also unavailable, recorded so the family is closed on all fronts:
 
 ```
 kqueue EVFILT_PROC/NOTE_TRACK = rc -1 errno 45 (Operation not supported)
@@ -179,6 +226,13 @@ dtrace   -> "system integrity protection is on" / "DTrace requires additional pr
 ktrace   -> "ktrace must be run as root when tracing the current system"
 taskinfo -> "must be run as root, running as uid:501 euid:501"
 ```
+
+**No per-run cgroup-equivalent runtime is installed, checked this round.** `docker`, `podman`,
+`nerdctl`, `containerd`, `lima`/`limactl`, `colima`, `orb`/`orbstack`, `systemd-run`, `rkt`,
+`vagrant`, `multipass` and Apple's native `container` CLI are all absent from `PATH`; no
+`Docker.app`/`OrbStack.app`/`Podman`/`Rancher` under `/Applications`; and Darwin has no
+`/sys/fs/cgroup`. So the "cgroup-equivalent" candidate the closing record named has no
+implementation present to build on.
 
 **Seatbelt follows the full escape and still contains — the decisive measurement, with both
 controls, and they read differently:**
@@ -204,20 +258,53 @@ effective probe, the mechanism failed before the bystander question could arise.
 failure mode is the one this task exists to avoid: an inability to observe, read as an observation.
 The corrected profile allows `/dev/null` and produced the table above.
 
+**The product path itself follows the escape — measured 2026-08-08 against the SHIPPED
+`--unattended` boundary, closing finding 2.** The prior block used a hand-written `sandbox-exec`
+profile; this uses the profile `write_unattended_profile` in `dispatch.sh` generates, extracted
+verbatim from the shipped source and delivered exactly as the dispatcher delivers it —
+`claude -p … --settings <profile> --tools Bash --strict-mcp-config --no-session-persistence`,
+`claude 2.1.220 ≥ 2.1.219`. The enforced dimension is the network (`strictAllowlist: true`,
+`allowedDomains: []`); the profile sets **no** write confinement, and denies reads only under `~/`.
+Tested on the network dimension with both fail-capable controls:
+
+```
+CONTROL  unsandboxed + detached (run directly)   child ppid 1  ->  NET-OK
+TEST     shipped --unattended + detached (actor)  child ppid 1, pgid own, 0 inherited fds  ->  NET-BLOCKED
+```
+
+The escapee is re-parented to pid 1, holds zero inherited descriptors — the exact shape that
+defeats every termination handle — and the outbound connection is still refused, while the
+unsandboxed control at the same shape reaches the network. So Claude Code's own sandbox inherits
+network containment through the full detach, not merely `sandbox-exec` in the abstract.
+
+**Two honest limits on that result.** First, the containment the profile applies is **network +
+home-read denial only**; it does **not** confine writes to the checkout. An out-of-checkout write to
+`/private/tmp` was created under the shipped profile — not a bug, because that path is not under the
+profile's only denied region (`~/`), but it means a contained escapee can still write anywhere the OS
+allows outside `~/`. Second, **the actor refused to author the escape script** under several
+framings, calling it a "sandbox-escape and persistence mechanism," and cooperated only with an honest
+containment self-test whose desired outcome was blocking. That refusal is a real additional barrier at
+the product path — but it says nothing about a descendant that a *legitimate* tool (a dev server, a
+build step) detaches by accident, which is the actual Phase 2 risk. So the behavioural refusal does
+not substitute for the sandbox, and the sandbox is what the measurement above credits.
+
 ### Residual risks
 
-1. **The containment measurement used `sandbox-exec` with my own profile, not Claude Code's
-   sandbox.** The `--unattended` profile (`write_unattended_profile`, `dispatch.sh` line 1128) is
-   applied through Claude Code's `sandbox.enabled` settings, and whether *that* implementation
-   inherits the same way through a detached descendant is **unverified**. This is the falsifiable
-   test any adoption would have to pass first.
+1. **RESOLVED for the network dimension (2026-08-08).** The product path — Claude Code's own sandbox
+   from the shipped `--unattended` profile — was measured to inherit network containment through the
+   full detach, with both controls (see the Seatbelt evidence above). What remains open is a
+   *different* dimension, now risk 4.
 2. **Containment is not a time bound.** A contained escapee still consumes CPU and memory
    indefinitely. "Walk away" would need a separate statement about resource exhaustion.
 3. **Containment covers only hops that actually run contained.** A hop run without `--unattended`,
    or anything spawned before the sandbox applies, is outside it. Phase 2 would have to require it.
-4. **The escapee may still be able to write inside the checkout.** The 1d profile constrains reads
-   explicitly; its write policy was not measured here. A contained escapee that can still edit the
-   repository is a different risk from one that cannot, and it is unmeasured either way.
+4. **The shipped profile does not confine writes to the checkout — measured, not assumed.** Its
+   filesystem policy denies reads under `~/` and allows reads to the checkout; it sets no write
+   restriction, so a contained escapee can still write anywhere outside `~/` (an out-of-checkout
+   write to `/private/tmp` succeeded under the profile). Whether it can write *inside* the checkout,
+   and whether any write confinement would inherit through the detach, is still unmeasured. This is
+   the residual the "contain from creation" recommendation must name honestly: containment here means
+   no network and no home-tree reads — not filesystem confinement.
 
 ### Checked and clean — recorded so it is not re-derived
 
@@ -237,24 +324,38 @@ enumeration, which makes the dedicated user strictly cheaper for the same guaran
 
 **No mechanism within the present authority can terminate a fully detached descendant.** Every
 termination candidate is now rejected on measurement (process group, ancestry, descriptors, launchd),
-on host support (`NOTE_TRACK` `ENOTSUP`), or on authority (root for dtrace, ktrace, coalitions and
-audit sessions; an account for a dedicated uid). The one mechanism that follows the escape contains
-rather than terminates, so using it changes what 1a guarantees.
+on the interface itself (`ptrace(2)` has no fork-following request), on host support (`NOTE_TRACK`
+`ENOTSUP`), on missing implementation (no cgroup-equivalent runtime installed), or on authority (root
+for dtrace, ktrace, coalitions and audit sessions; an account for a dedicated uid). The one mechanism
+that follows the escape contains rather than terminates, so using it changes what 1a guarantees.
 
-## Next action
+**The two operator options, as the corrected evidence leaves them** (for Codex to put to the
+operator; neither implemented):
 
-Codex: assess this discovery and decide which of the two named changes to put to the operator. Do not
-read the evidence as permission to implement either.
-
-- **Smallest scope change (recommended).** Restate 1a as *terminate every reachable descendant* —
-  built and proved at `7aaae68`, 368/0 — *plus contain every descendant from creation* so an escapee
-  cannot act outside the run's authority. No new subsystem and no new authority: the containment
-  primitive is `--unattended`, already shipped as 1d. Its falsifiable entry test is residual risk 1 —
-  a live `--unattended` hop that spawns a detached daemon, which must be observed **alive and still
-  denied both the network and writes outside the checkout**, with an unsandboxed control that is
-  observed doing both.
+- **Smallest scope change.** Restate 1a as *terminate every reachable descendant* (built and proved
+  at `7aaae68`, 368/0) *plus contain every descendant from creation*. The containment primitive is
+  `--unattended`, already shipped (1d), and it is now measured to follow the full detach on the
+  product path — **but containment here means no network and no home-tree reads, not filesystem
+  confinement** (residual risk 4). Its remaining entry test is whether write behaviour, in and out of
+  the checkout, is acceptable for a walk-away run, and whether resource exhaustion (risk 2) needs a
+  separate bound.
 - **Smallest authority change.** A dedicated OS user for the actor, giving `pkill -U` as a true
   ownership boundary and preserving 1a's guarantee as literally written. This creates an account, so
   it is the operator's decision and was deliberately not probed.
 
-Phase 1f and every Phase 2 action remain untouched and forbidden.
+## Next action
+
+Codex: closure check on the three frozen findings only — are findings 1, 2 and 3 resolved, and did
+the correction break anything?
+
+- Finding 1 (ptrace-class evidence): resolved — `ptrace(2)` examined directly (no fork-following
+  request), cgroup-equivalent runtime absence measured; disposition unchanged.
+- Finding 2 (product-path dependency): resolved by probe, not downgrade — the shipped `--unattended`
+  boundary inherits network containment through the full detach, both controls run; two honest limits
+  recorded (no write confinement; actor escape-script refusal).
+- Finding 3 (commit-scope proof): resolved — `git diff-tree` replaces `git status --short`; commit
+  `d1759f6` touched exactly the one state file.
+
+Nothing outside these three was changed; the write-confinement gap and the actor refusal are recorded
+as context inside finding 2, not as new work. Phase 1f and every Phase 2 action remain untouched and
+forbidden.
