@@ -983,7 +983,7 @@ AX_PRIMARY="/work-loop-v2 /develop-ai-resource /scope-project /new-project /proj
 /consult /pm /tech-consult /open-items /resolve-repo-problem /resolve-incident /repo-dd \
 /analyze-workflow /lean-repo /implementation-triage /reconcile"
 AX_SPECIALIST="/audit-repo /architecture-review /systems-review /token-audit /permission-sweep \
-/pipeline-review /blindspot-scan /contract-check /expert-check"
+/pipeline-review /blindspot-scan /contract-check /expert-check /memory-search"
 MATT_PRIMARY="grill-with-docs grill-me wayfinder diagnosing-bugs triage implement prototype \
 research resolving-merge-conflicts wizard to-questionnaire teach improve-codebase-architecture"
 MATT_PHASE="to-spec to-tickets tdd code-review grilling handoff"
@@ -1014,7 +1014,7 @@ IDX_ALL=$(printf '%s\n%s\n%s\n%s\n%s\n' "$IDX_AXP" "$IDX_AXS" "$IDX_MP" "$IDX_MP
 # --- inventory: every accepted name present, exactly where its class requires --
 check "ridx  the 16 Axcíon primary commands are indexed as owners" \
   "same_set \"\$IDX_AXP\" \"\$AX_PRIMARY\""
-check "ridx  the 9 Axcíon narrow specialists are indexed as specialists" \
+check "ridx  the 10 Axcíon narrow specialists are indexed as specialists" \
   "same_set \"\$IDX_AXS\" \"\$AX_SPECIALIST\""
 check "ridx  the 13 Matt primary routes are indexed as owners" \
   "same_set \"\$IDX_MP\" \"\$MATT_PRIMARY\""
@@ -1030,15 +1030,15 @@ check "ridx  all 25 installed Matt skills are classified exactly once" \
 # three pass vacuously — verified on the red run, which is why the counts are here.
 # The predicates run in subshells: `check` evals in the current shell, so a bare
 # `exit` inside one would kill the harness (also learned on the red run).
-check "ridx  the index holds 50 entries, none classified twice" \
-  "[ \"\$(printf '%s\n' \"\$IDX_ALL\" | grep -c .)\" = 50 ] && [ -z \"\$(printf '%s\n' \"\$IDX_ALL\" | sort | uniq -d)\" ]"
+check "ridx  the index holds 51 entries, none classified twice" \
+  "[ \"\$(printf '%s\n' \"\$IDX_ALL\" | grep -c .)\" = 51 ] && [ -z \"\$(printf '%s\n' \"\$IDX_ALL\" | sort | uniq -d)\" ]"
 # Cross-check against the LIVE installation, so a renamed or retired skill breaks
 # this rather than drifting silently — the failure mode that left the README wrong.
 check "ridx  all 25 indexed Matt names resolve under ~/.claude/skills/" \
   "[ \"\$(printf '%s\n%s\n%s\n' \"\$IDX_MP\" \"\$IDX_MPH\" \"\$IDX_MH\" | grep -c .)\" = 25 ] && \
    ( for n in \$IDX_MP \$IDX_MPH \$IDX_MH; do [ -f \"\$HOME/.claude/skills/\$n/SKILL.md\" ] || exit 1; done )"
-check "ridx  all 25 indexed Axcíon commands resolve under .claude/commands/" \
-  "[ \"\$(printf '%s\n%s\n' \"\$IDX_AXP\" \"\$IDX_AXS\" | grep -c .)\" = 25 ] && \
+check "ridx  all 26 indexed Axcíon commands resolve under .claude/commands/" \
+  "[ \"\$(printf '%s\n%s\n' \"\$IDX_AXP\" \"\$IDX_AXS\" | grep -c .)\" = 26 ] && \
    ( for c in \$IDX_AXP \$IDX_AXS; do [ -f \".claude/commands/\${c#/}.md\" ] || exit 1; done )"
 
 # --- Claude-side-only markers, cross-checked against both installations -------
@@ -1076,10 +1076,10 @@ check "ridx  the router forbids naming a colliding capability bare" \
   "collide | grep -qi 'never a bare name'"
 
 # --- nothing excluded was promoted into a route ------------------------------
-check "ridx  the index holds 50 entries, none of them excluded names" \
-  "[ \"\$(printf '%s\n' \"\$IDX_ALL\" | grep -c .)\" = 50 ] && \
+check "ridx  the index holds 51 entries, none of them excluded names" \
+  "[ \"\$(printf '%s\n' \"\$IDX_ALL\" | grep -c .)\" = 51 ] && \
    ( for n in \$NEVER_ROUTES; do printf '%s\n' \"\$IDX_ALL\" | grep -qxF \"\$n\" && exit 1; done; exit 0 )"
-check "ridx  the non-route classes are named without listing all 94 commands" \
+check "ridx  the non-route classes are named without listing all 95 commands" \
   "[ -n \"\$(awk '/^### The index — names that are not routes/{f=1;next} /^### /{f=0} f' '$RIDX_F')\" ]"
 check "ridx  /leverage-idea is named as excluded, with its router-within-router reason" \
   "grep -q 'leverage-idea' '$RIDX_F' && grep -qi 'router' '$RIDX_F'"

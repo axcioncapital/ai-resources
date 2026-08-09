@@ -315,7 +315,7 @@ The index names triggers, boundaries and hand-offs — never a capability's meth
 - `/implementation-triage` — is this proposed implementation worth doing.
 - `/reconcile` — did the output actually fulfil its mandate.
 
-### The index — Axcíon narrow specialist destinations (9)
+### The index — Axcíon narrow specialist destinations (10)
 
 Selected only where the request names their purpose. Never a generic fallback.
 
@@ -328,6 +328,7 @@ Selected only where the request names their purpose. Never a generic fallback.
 - `/blindspot-scan` — an adversarial blind-spot scan; operator-invoked only.
 - `/contract-check` — has the artifact drifted from its original mandate.
 - `/expert-check` — a draft against reference principles.
+- `/memory-search` — has this been seen before; the recorded history in `logs/` and `audits/`. Returns historical evidence, never current state, so it never owns a live fault — `/resolve-repo-problem` and `/resolve-incident` keep that.
 
 ### The index — Matt skills that may own a request (13)
 
@@ -371,7 +372,7 @@ Discoverable, never a first route.
 
 ### The index — names that are not routes
 
-Named by class, not enumerated. The Axcíon surface is 94 commands and this index carries 25 of them on purpose; the rest are reachable, just not as first owners.
+Named by class, not enumerated. The Axcíon surface is 95 commands and this index carries 26 of them on purpose; the rest are reachable, just not as first owners.
 
 - **Lifecycle phases** — `/create-skill`, `/improve-skill`, `/request-skill`, `/migrate-skill`, `/graduate-resource`: build phases under durable-resource work, reached by its owner.
 - **Conversational controls** — operator controls and duplicate entry points, not capability owners.
@@ -519,6 +520,8 @@ Context Engineering is live in the sections above, and governs how you prepare t
 The project-progression change (2026-08-06) adds the Routing section above and the core's fourth assessment outcome, Continue.
 
 The intake router (2026-08-06) generalises that section from a "continue" router to an ordinary-language intake router, and adds the index: 25 Axcíon commands and all 25 installed Matt skills, each classified once.
+
+`/memory-search` (2026-08-09) joins the index as a narrow specialist, taking the Axcíon side to 26. It adds no routing rule: a request naming past precedent has an owner it did not have before.
 
 The mode contract (2026-08-06) makes Discovery, Implementation and Adoption operational. Core § 3 *The unit's mode* owns the definitions; you classify at routing step 4 and record the mode inside `## Lane and unit`. No state field, lane, unit kind or project phase was added.
 
