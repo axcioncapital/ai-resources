@@ -120,6 +120,18 @@ expect_rc() { # want got label [detail]
   if [ "$2" -eq "$1" ]; then ok "$3"; else bad "$3" "expected exit $1, got $2 — ${4:-}"; fi
 }
 
+# Exactly one occurrence of FLAG in a recorded argv, immediately followed by
+# VALUE on the next line. Two separate `grep -Fqx` calls would pass on an argv
+# that carried the flag and the value in unrelated positions — which is not the
+# same claim as "the pair was passed". The count is part of it: a flag repeated
+# with a different value is a policy the log line cannot describe.
+argv_pair() { # argv-file flag value
+  local f="$1" flag="$2" value="$3" n
+  n="$(grep -Fxc -- "$flag" "$f" 2>/dev/null || printf '0')"
+  [ "$n" = "1" ] || return 1
+  grep -A1 -Fx -- "$flag" "$f" | tail -1 | grep -Fqx -- "$value"
+}
+
 # ================================================================== case 0
 echo
 echo "Case 0 — harness falsifiability (dispatcher absent)"
@@ -1925,12 +1937,23 @@ if [ -f "$WL_ARGV_FILE" ]; then
   grep -qx -- "-p" "$WL_ARGV_FILE" && grep -q "work-loop-v2 deny-task" "$WL_ARGV_FILE" \
     && ok "the normal prompt arguments are unchanged" \
     || bad "the normal prompt arguments are unchanged" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  # P0-F. The attended child must not inherit this checkout's bypassPermissions:
+  # the discovery run read `permissionMode: bypassPermissions` off the runtime's
+  # own system/init event and the v0.2 plan forbids it for an actor launch.
+  # The fix is a launch-time request, so the argv is where it is provable —
+  # and it must hold on the --claude-deny branch too, not only the plain one.
+  argv_pair "$WL_ARGV_FILE" "--permission-mode" "default" \
+    && ok "the attended child is launched with --permission-mode default, even with denies set" \
+    || bad "the attended child is launched with --permission-mode default, even with denies set" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
 else
   bad "the fake claude binary was invoked" "no argv file at $WL_ARGV_FILE"
 fi
 printf '%s' "$OUT" | grep -q "claude_deny=Bash(git push:\*) WebFetch" \
   && ok "the run log records the deny rules the run was launched under" \
   || bad "the run log records the deny rules" "$OUT"
+printf '%s' "$OUT" | grep -q -- "--permission-mode default" \
+  && ok "the logged command states the explicit permission mode (deny branch)" \
+  || bad "the logged command states the explicit permission mode (deny branch)" "$OUT"
 
 echo
 echo "Case 31b — WITHOUT --claude-deny the child's arguments are unchanged"
@@ -1945,12 +1968,26 @@ if [ -f "$WL_ARGV_FILE" ]; then
   grep -qx -- "--disallowedTools" "$WL_ARGV_FILE" \
     && bad "no --disallowedTools is passed when none was asked for" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
     || ok "no --disallowedTools is passed when none was asked for"
+  # P0-F, the plain attended shape. Separate from case 31's assertion because
+  # these are two distinct branches of launch_actor: a fix applied to one of
+  # them leaves the other silently inheriting bypassPermissions.
+  argv_pair "$WL_ARGV_FILE" "--permission-mode" "default" \
+    && ok "the attended child is launched with --permission-mode default with no denies set" \
+    || bad "the attended child is launched with --permission-mode default with no denies set" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  # The correction is a permission POLICY, not a bypass. The opposite flag must
+  # never appear on any path this suite drives.
+  grep -q -- "dangerously-skip-permissions" "$WL_ARGV_FILE" \
+    && bad "no --dangerously-skip-permissions is ever passed" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+    || ok "no --dangerously-skip-permissions is ever passed"
 else
   bad "the fake claude binary was invoked" "no argv file"
 fi
 printf '%s' "$OUT" | grep -q "claude_deny=none" \
-  && ok "the run log says plainly that the child holds normal authority" \
-  || bad "the run log says plainly that the child holds normal authority" "$OUT"
+  && ok "the run log says plainly that no extra tool denial was applied" \
+  || bad "the run log says plainly that no extra tool denial was applied" "$OUT"
+printf '%s' "$OUT" | grep -q -- "--permission-mode default" \
+  && ok "the logged command states the explicit permission mode (plain branch)" \
+  || bad "the logged command states the explicit permission mode (plain branch)" "$OUT"
 unset WL_ARGV_FILE WL_SF WL_CO
 
 # ================================================================= case 32
@@ -2032,6 +2069,12 @@ if [ -f "$WL_ARGV_FILE" ]; then
   argv_has "$WL_ARGV_FILE" "json" \
     && bad "the plain json output format is NOT used under --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
     || ok "the plain json output format is NOT used under --unattended"
+  # The P0-F attended correction must not leak the other way either. The
+  # contained profile is unchanged by that unit, and its authority question is
+  # answered by the OS sandbox and the deny set, not by a permission mode.
+  argv_has "$WL_ARGV_FILE" "--permission-mode" \
+    && bad "no --permission-mode under --unattended (the contained profile is unchanged)" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+    || ok "no --permission-mode under --unattended (the contained profile is unchanged)"
 else
   bad "the fake claude binary was invoked" "no argv file at $WL_ARGV_FILE"
 fi
@@ -2273,6 +2316,14 @@ if [ -f "$WL_ARGV_FILE" ]; then
       && bad "no $f without --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
       || ok "no $f without --unattended"
   done
+  # "Unchanged" now means unchanged EXCEPT the explicit permission mode (P0-F).
+  # The attended correction is a Claude permission policy; --unattended is OS
+  # containment. This case is where the two are kept distinct, so the attended
+  # requirement is asserted here as well as in case 31b — a courier hop is the
+  # shape the harness actually runs in normal operation.
+  argv_pair "$WL_ARGV_FILE" "--permission-mode" "default" \
+    && ok "an attended/courier hop asks for --permission-mode default" \
+    || bad "an attended/courier hop asks for --permission-mode default" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
 else
   bad "the fake claude binary was invoked" "no argv file"
 fi

@@ -41,6 +41,7 @@ built from it.
 | `--claude-bin PATH` | `claude` resolved from `PATH` |
 | `--allow-path RE` | `^logs/work-loop/` and `^plans/work-loop-v2-v0\.2/handoff-automation-spike/` (repeatable; supplying any replaces both defaults) |
 | `--claude-deny RULE` | none — repeatable; passed to the Claude child as `--disallowedTools RULE` |
+| *(no flag)* | every attended Claude hop is launched with `--permission-mode default` — always on, cannot be turned off (see below) |
 | `--log-dir DIR` | `<checkout>/plans/work-loop-v2-v0.2/handoff-automation-spike/runs` — the spike's `runs/` **inside the checkout being driven**, not inside whichever checkout this script lives in. Driving this checkout resolves to the same directory as before, so nothing moved. |
 | `--dry-run` | off |
 | `--status` | off — read-only report; takes no lock, writes nothing; answers IN FLIGHT / STALE LOCK / UNKNOWN — CANNOT INSPECT |
@@ -142,8 +143,10 @@ partial-effect risk as an interruption, so it is **never** retried automatically
 
 ### `--claude-deny` — narrowing the unattended child's authority
 
-Plumbing, not a policy. With no `--claude-deny` the Claude launch is byte-for-byte what it always
-was, and the child holds the checkout's normal authority.
+Plumbing, not a policy. With no `--claude-deny` no tool is denied beyond what the child's own policy
+already denies. That policy is **not** this checkout's `bypassPermissions` on an attended hop — the
+dispatcher states `--permission-mode default` at launch (see *The attended child's permission mode*)
+— and `--claude-deny` composes on top of it rather than replacing it.
 
 What it is for: a run nobody is watching may warrant less authority than an attended one. A rule
 passed here reaches the child as `--disallowedTools`, applies to **that child only**, and does not
@@ -235,8 +238,10 @@ at every launch rather than in a document nobody opens mid-incident:
   **effective** one.
 
 **What the harness proves, and what it does not.** Cases 32–32l prove the dispatcher *requests* the
-profile: correct argv, correct JSON, correct delivery scope, a gate that fails closed, and attended
-and courier launches left byte-for-byte unchanged. They cannot prove the effective policy, because
+profile: correct argv, correct JSON, correct delivery scope, a gate that fails closed, and none of it
+reaching an attended or courier launch. (Case 32j also asserts what those launches *do* carry — the
+`--permission-mode default` pair — and case 32 asserts the contained profile carries no permission
+mode of its own, so the two policies cannot silently merge.) They cannot prove the effective policy, because
 they contain no real child. That is `runs/probes/unattended-effective-policy.sh`, which builds the
 profile *by asking the dispatcher for it* and then observes containment from inside a live child. It
 costs a real model call and is deliberately not part of `dispatch.test.sh`.
@@ -299,11 +304,41 @@ In live mode the launches are:
 
 ```
 codex exec --sandbox workspace-write -C <checkout> --json <prompt>
-claude -p "/work-loop-v2 <task-id>" --output-format json      (cwd = <checkout>)
+claude -p "/work-loop-v2 <task-id>" --output-format json --permission-mode default   (cwd = <checkout>)
 ```
 
-The dispatcher adds no permission flags of its own unless `--claude-deny` is given — otherwise the
-Claude child inherits the project's normal settings policy.
+With `--claude-deny` the Claude line gains `--disallowedTools <rule>…` after the permission mode;
+nothing else about it changes. Under `--unattended` the Claude line is a different one entirely — see
+that section.
+
+### The attended child's permission mode
+
+**Every attended Claude hop is launched with `--permission-mode default`.** It is not an option, and
+there is no flag that turns it off.
+
+Before 2026-08-09 the dispatcher passed no permission flag at all, so the child **inherited this
+checkout's `defaultMode: bypassPermissions`** — measured, not assumed: the discovery run read
+`permissionMode: bypassPermissions` off the runtime's own `system/init` event. That handed a launched
+actor bypass authority nobody had asked for, which the v0.2 plan forbids for an actor launch. The
+same discovery's fail-capable green control launched with `--permission-mode default` and read
+`default` back off the same event, with no settings file in any layer changed.
+
+Two things follow, and they are easy to run together by mistake:
+
+- **This is a permission policy, not containment.** It makes the child *ask* before an action its
+  policy gates. It sandboxes nothing, isolates no network, and restricts no filesystem. A run under
+  it is still an uncontained run.
+- **`--unattended` is the containment**, and it is separate. It carries **no permission mode of its
+  own** and this change did not give it one: its authority answer is the OS sandbox plus the deny
+  set. `dispatch.test.sh` asserts the separation in both directions — the attended argv must carry
+  the pair, the unattended argv must not.
+
+`--dangerously-skip-permissions` is passed on **no** path, ever. The suite asserts its absence.
+
+Because `default` means the child stops and asks, an attended hop can block on a prompt nobody is
+there to answer. That is the intended failure: the actor is killed on the clock and the capture shows
+it stopped *on* the prompt, rather than the dispatcher quietly widening authority to get past it
+(exit-code table, `14`).
 
 ### Example
 
@@ -500,7 +535,7 @@ The suite builds throwaway sandbox checkouts under `TMPDIR` and removes them on 
 real repository. It ends with a summary line and exits `1` if any case failed:
 
 ```
-pass=284 fail=0  (all cases SIMULATED — no live product transport)
+pass=375 fail=0  (all cases SIMULATED — no live product transport)
 ```
 
 > **This count drifts, twice over now.** It read `pass=69` until 2026-08-06, when the suite actually
@@ -509,7 +544,8 @@ pass=284 fail=0  (all cases SIMULATED — no live product transport)
 > then sat at `99` while Phase 1 took the suite to **149** (commit `c8b2172`), the `--status`
 > three-state fix on 2026-08-07 added 22 to reach **171**, the pid-validation correction that
 > followed it added 27 more to reach **198**, the 1d contained-profile integration the same day added
-> 75 to reach **273**, and the 1d correction later that day added 11 to reach **284**. A
+> 75 to reach **273**, the 1d correction later that day added 11 to reach **284**, the 1a teardown
+> work took it to **368**, and P0-F's attended permission-mode assertions added 7 to reach **375**. A
 > hand-maintained count drifts silently every time; treat the number as documentation and the run as
 > the evidence. **The correction was itself an instance of the drift:** the red-pair figure recorded
 > alongside this one read `212/22` when the current test file actually returns `216/24` against the
@@ -583,6 +619,21 @@ destroying the stale-lock report — and indeed `30e` passes against the *pre-fi
 which is exactly what makes it a control rather than another regression test. `30d` skips itself
 loudly (as a failure, not a silent pass) if the suite is ever run as root, since `kill -0 1` would
 then succeed and the permission-denied state could not be forced at all.
+
+**P0-F — the attended permission mode**, 2026-08-09. Seven assertions across cases `31`, `31b` and
+`32j`, with the same red-to-green against the dispatcher that immediately preceded them (`b13b3f9`):
+
+```
+P0-F attended mode   pass=370 fail=5   →  pass=375 fail=0
+```
+
+The five reds are the two attended argv shapes (plain and `--claude-deny`), their two logged command
+lines, and the courier hop in `32j`. The other two assertions are **controls and stay green in the
+red half**: no `--dangerously-skip-permissions` on any path, and no `--permission-mode` under
+`--unattended`. They are there to catch a fix that overshoots — a bypass flag, or the attended policy
+leaking into the contained profile — which a red-to-green pair on its own cannot detect. The argv
+check requires **exactly one** `--permission-mode` token with `default` on the next line, so a flag
+passed twice with different values fails rather than matching by coincidence.
 
 **Live product evidence lives in `runs/`, never in this suite.** `runs/live-permission-denial-2026-08-05.md`
 records what the real binary does when it is refused permission — the half of safety cluster 1 no
@@ -722,6 +773,10 @@ right-hand column is larger: the child has an open network and ordinary file aut
 three "prevented" rows drop back to detection. The table changed on 2026-08-07, when the contained
 profile was built and measured.
 
+An attended run is not contained, but since 2026-08-09 it is no longer running on inherited bypass
+authority either — it is launched with `--permission-mode default`. That is a smaller guarantee than
+this table's left column and must not be read into it.
+
 | Contains it | Does **not** contain it |
 |---|---|
 | One task, one checkout, serial (the lock) | Anything outside the checkout — the filesystem at large is **denied by the sandbox**, but the *Claude process itself* runs outside that sandbox |
@@ -732,13 +787,17 @@ profile was built and measured.
 | **Prevented, not detected, under `--unattended`:** non-allowlisted network, writes outside the checkout, reads under `~/`, `git push`, MCP, hooks, built-in file tools, credentials reaching subprocesses | **The profile can be widened from another settings scope.** Array keys such as `allowRead` merge across scopes, and `strictAllowlist` is ignored entirely from a *repository* settings file — which is why the dispatcher delivers the profile by CLI `--settings`. Closing this needs managed settings, which no dispatcher can set for itself |
 | The version gate: below `2.1.219` there is no strict allowlist, so the run **refuses to start** (exit `31`) rather than running uncontained | **One named exception inside the denied home tree:** `~/.gitconfig`, because Git exits 128 before touching the repository without it. It names credential helpers; the child obtained no token, but **if a real secret is ever put in that file the exception stops being safe** |
 
-`git push` is held at the permission layer under `--unattended`, and `--claude-deny` composes on top
-to narrow further. Without `--unattended` it is held only by a CLAUDE.md rule — a model-side rule,
-which is weakest exactly when nobody is watching.
+`git push` is held at the permission layer under `--unattended`, by an explicit deny rule, and
+`--claude-deny` composes on top to narrow further. Without `--unattended` there is **no deny rule**:
+the attended child is launched under `--permission-mode default`, so a gated action reaches an
+approval prompt rather than running on inherited bypass authority — but *which* actions that mode
+gates has not been measured here, and a CLAUDE.md rule is still doing part of the work. Treat the
+attended posture as "asks", not as "cannot".
 
 **What the left column rests on.** The simulated suite proves the dispatcher *requests* the profile
-(**284/0** as the suite stood at 1d's close, **368/0** since the 1a teardown work; matched red pair
-**216/24** against the pre-1d dispatcher `22fedf8`). The effective policy
+(**284/0** as the suite stood at 1d's close, **368/0** after the 1a teardown work, **375/0** since
+P0-F added the attended permission-mode assertions; matched red pair **216/24** against the pre-1d
+dispatcher `22fedf8`, and **370/5** for the P0-F pair against the pre-P0-F dispatcher). The effective policy
 was measured **once, on one host**, from inside a child this dispatcher launched
 (`runs/probe-unattended-integration-2026-08-07.md`, **21/0**). That is a Phase 1 safety check, not a
 reliability claim and not the Phase 2 walk-away pilot — which has still never happened.

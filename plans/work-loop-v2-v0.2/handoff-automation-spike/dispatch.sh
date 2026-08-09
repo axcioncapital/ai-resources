@@ -31,15 +31,27 @@
 #   --allow-path RE     repeatable regex of repo-relative paths actors may change
 #   --claude-deny RULE  repeatable. Passed to the Claude child as
 #                       --disallowedTools RULE, e.g. 'Bash(git push:*)'.
-#                       DEFAULT: none — the child's policy is unchanged from
-#                       today. This is plumbing, not a policy: it exists so an
-#                       unattended run CAN be given a narrower authority than the
-#                       operator's interactive sessions without editing any
-#                       settings.json. A deny passed this way beats
-#                       bypassPermissions and is scoped to this child alone —
-#                       OBSERVED, runs/probe-unattended-authority-2026-08-07.md.
+#                       DEFAULT: none — no tool is denied beyond what the child's
+#                       own policy already denies. This is plumbing, not a
+#                       policy: it exists so an unattended run CAN be given a
+#                       narrower authority than the operator's interactive
+#                       sessions without editing any settings.json. A deny passed
+#                       this way beats bypassPermissions and is scoped to this
+#                       child alone — OBSERVED,
+#                       runs/probe-unattended-authority-2026-08-07.md.
 #                       It does NOT buy network isolation: denying WebFetch just
 #                       sends the child to curl. See the same record.
+#
+# ATTENDED PERMISSION POLICY (P0-F, 2026-08-09). Every attended Claude hop is
+# launched with `--permission-mode default`, with or without --claude-deny. It is
+# not an option and there is no flag to turn it off. Before this, the child
+# INHERITED this checkout's `defaultMode: bypassPermissions` — measured off the
+# runtime's own system/init event — so the dispatcher was handing an actor bypass
+# authority nobody had asked for. Stating the mode at launch fixes that without
+# touching any settings.json, and leaves the operator's own interactive sessions
+# alone. It is a permission policy only: it makes the child ask, it does not
+# contain it. For OS-level containment see --unattended, which is separate and
+# carries no permission mode of its own.
 #   --unattended        CONTAINED MODE. Apply the operator-settled 1d profile to
 #                       every Claude hop: OS-backed Bash sandbox, strict empty
 #                       network allowlist, shell + Skill tools only, no MCP, web,
@@ -1110,11 +1122,13 @@ say "allow_paths=${ALLOW_PATHS[*]}"
 if [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
   say "claude_deny=${CLAUDE_DENY[*]}"
 else
-  # Said out loud because it is the risk the operator walks away on. A deny here
-  # would beat bypassPermissions; none is set, so the child holds the checkout's
-  # normal authority. Network is NOT coverable this way in any case —
+  # Said out loud because it is the risk the operator walks away on. No tool is
+  # denied beyond what the child's own policy denies. That policy is no longer
+  # this checkout's bypassPermissions on an attended hop — P0-F states
+  # --permission-mode default at launch — but a permission mode only makes the
+  # child ASK, and network is not coverable this way in any case:
   # runs/probe-unattended-authority-2026-08-07.md.
-  say "claude_deny=none — the Claude child holds this checkout's normal authority"
+  say "claude_deny=none — no tool denied beyond the child's own policy (attended hops run --permission-mode default)"
 fi
 
 # ------------------------------------------------- unattended contained profile
@@ -1287,7 +1301,12 @@ if [ "$UNATTENDED" -eq 1 ]; then
   say "  LIMIT: only a check from INSIDE a live child establishes the EFFECTIVE policy —"
   say "         runs/probes/unattended-effective-policy.sh"
 elif [ "$MODE" = "live" ]; then
-  say "unattended=off — Claude hops run with this checkout's normal authority, including network"
+  say "unattended=off — Claude hops are NOT contained: open network, open filesystem, full tool set"
+  # Said in the same breath, because the two are easy to confuse and the whole
+  # point of P0-F is that they are not the same guarantee. The permission mode
+  # makes the child ask; only --unattended contains what it can reach.
+  say "  permission mode: default — asked for explicitly, so the child does NOT inherit this checkout's bypassPermissions"
+  say "  that is a permission policy, not containment"
 fi
 
 # ------------------------------------------------------- state file reading
@@ -1580,14 +1599,29 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
       [ -n "$cb" ] && [ -x "$cb" ] || die 20 "claude binary not resolvable"
       local vv; vv="$("$cb" --version 2>&1 | head -1)"
       say "  launch: mode=live actor=claude timeout=${limit}s bin=$cb version=$vv"
-      # No --dangerously-skip-permissions. The project's own settings.json
-      # already declares defaultMode: bypassPermissions; the child inherits the
-      # project's normal policy and this dispatcher widens nothing.
+      # No --dangerously-skip-permissions, on any path. The attended child asks
+      # for --permission-mode default instead — the opposite flag.
       #
-      # --claude-deny NARROWS it, for this child only, and only when asked for.
-      # With no --claude-deny the command below is byte-for-byte what it always
-      # was, so the unattended authority question stays the operator's to answer
-      # rather than being answered by a default nobody chose.
+      # Why the request is explicit (P0-F, 2026-08-09). This checkout's own
+      # settings.json declares defaultMode: bypassPermissions, and an attended
+      # child INHERITED it: the discovery run read `permissionMode:
+      # bypassPermissions` off the runtime's own system/init event. A dispatcher
+      # that launches an actor with bypass authority nobody asked for is what
+      # the v0.2 plan forbids, so the mode is now stated at launch time rather
+      # than left to whatever the checkout happens to declare. The same
+      # discovery's green control proved this reaches the child — system/init
+      # reported `default` — and that no settings file in any layer had to
+      # change for it. Full record: ../../../logs/work-loop/…-phase0-p0-f.md in
+      # the root repository, commit 7bb3abf.
+      #
+      # This is a PERMISSION POLICY, not containment. It makes the child ask
+      # before an action its policy gates; it does not sandbox anything. OS-level
+      # containment is --unattended, which is a separate branch below and is
+      # deliberately left carrying no permission mode of its own.
+      #
+      # --claude-deny NARROWS it further, for this child only, and only when
+      # asked for. It composes with the mode rather than replacing it, so both
+      # attended shapes below carry the same pair.
       # Deliberately NOT `( cd ... && run_bounded ... )`. A subshell would confine
       # run_bounded's assignment to ACTOR_PGID, leaving the signal handler with
       # nothing to terminate on exactly the hops that matter most — the live
@@ -1629,12 +1663,14 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
           --no-session-persistence \
           --disallowedTools "${u_deny[@]}"
       elif [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
-        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --disallowedTools ${CLAUDE_DENY[*]} (cwd=<checkout>)"
+        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default --disallowedTools ${CLAUDE_DENY[*]} (cwd=<checkout>)"
         run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
+          --permission-mode default \
           --disallowedTools "${CLAUDE_DENY[@]}"
       else
-        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json (cwd=<checkout>)"
-        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json
+        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default (cwd=<checkout>)"
+        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
+          --permission-mode default
       fi
       rc_claude=$?
       cd "$prev_pwd" || true
