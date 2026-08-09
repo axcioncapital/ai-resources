@@ -562,12 +562,29 @@ TMPD=""
 t_say()  { printf '%s\n' "$*"; }
 t_stop() { printf 'C5-T STOP: %s\n' "$*"; exit 2; }
 
+# One rule for removing a C5-T directory. It considers exactly one path and never
+# expands a glob, so it cannot reach a second directory. Four conditions: the path
+# is non-empty, it has the exact generated name shape, it is a real directory and
+# not a symlink, and its parent resolves to the temp root itself. The recovery
+# block further below repeats this rule verbatim for manual use.
+t_rmdir() {
+  t_d="$1"
+  [ -n "$t_d" ] || { printf 'C5-T: refusing — no path given\n'; return 2; }
+  case "$t_d" in
+    */wl-c5.????????) ;;
+    *) printf 'C5-T: refusing — [%s] is not a C5-T directory name\n' "$t_d"; return 2 ;;
+  esac
+  [ -d "$t_d" ] && [ ! -L "$t_d" ] || { printf 'C5-T: refusing — [%s] is not a directory\n' "$t_d"; return 2; }
+  t_root="$(cd "${TMPDIR:-/tmp}" 2>/dev/null && pwd -P)" || { printf 'C5-T: refusing — cannot resolve the temp root\n'; return 2; }
+  t_par="$(cd "$(dirname "$t_d")" 2>/dev/null && pwd -P)" || { printf 'C5-T: refusing — cannot resolve the parent of [%s]\n' "$t_d"; return 2; }
+  [ "$t_par" = "$t_root" ] || { printf 'C5-T: refusing — [%s] resolves outside the temp root [%s]\n' "$t_d" "$t_root"; return 2; }
+  rm -rf "$t_par/$(basename "$t_d")"
+  return 0
+}
+
 t_clean() {
   [ -n "$TMPD" ] || return 0
-  case "$TMPD" in
-    */wl-c5.??????*) rm -rf "$TMPD" ;;
-    *) printf 'C5-T: refusing to remove unexpected path [%s] — remove it by hand\n' "$TMPD" ;;
-  esac
+  t_rmdir "$TMPD" || printf 'C5-T: the temporary directory was left in place — see the refusal above\n'
   return 0
 }
 trap t_clean EXIT
@@ -596,6 +613,9 @@ LE="$(grep -n -x -F -- "$END_MARK" "$STATE" | cut -d: -f1)"
 TMPD="$(mktemp -d "${TMPDIR:-/tmp}/wl-c5.XXXXXXXX")" || t_stop "could not create a temporary directory"
 chmod 700 "$TMPD"
 SCRIPT="$TMPD/c5.sh"
+# Printed BEFORE the fixture launches. This exact path is the only thing the
+# recovery block below will ever accept, so note it now.
+t_say "C5-T: temporary directory: $TMPD"
 
 # --- extract the fixture. buf[1] is the opening fence and buf[n] the closing one,
 # so printing 2..n-1 yields the fixture and nothing else. No backtick matching is
@@ -651,10 +671,55 @@ that directory. The directory and the fixture script are removed on success, on 
 handled interrupt. The **output file is deliberately kept** — it is the evidence the template asks
 for, and it contains no secrets.
 
-**One accepted limitation.** If the C5-T shell itself is `SIGKILL`ed, no trap can run and the
-temporary directory survives. Measured: the leftover holds only `c5.sh` — the same public bytes as
-this file, checksum `65b50d19…` — and a two-byte status file. Remove it by hand with
-`rm -rf "${TMPDIR:-/tmp}"/wl-c5.*` if that ever happens.
+**One accepted limitation, and its exact recovery.** If the C5-T shell itself is `SIGKILL`ed, no trap
+can run — `SIGKILL` cannot be trapped by anything — and the temporary directory survives. Measured:
+the leftover holds only `c5.sh`, the same public bytes as this file, checksum `65b50d19…`, plus a
+short status file. Nothing secret is in it.
+
+**Recover it by exact path, never by wildcard.** C5-T prints `C5-T: temporary directory: …` before
+the fixture launches; that line is the recovery target. Paste it into `LEFTOVER` below and run the
+block. A wildcard would be wrong here: two C5-T runs can leave two directories side by side, and a
+glob selects both — measured this round, `"${TMPDIR:-/tmp}"/wl-c5.*` expanded to **2** paths against
+two plausible generated directories. This block expands no glob and considers exactly one path.
+
+```bash
+# C5-T-RECOVER — remove ONE leftover C5-T directory, by its exact path.
+# Only needed after a SIGKILL. It refuses an empty, malformed, non-directory,
+# symlinked or outside-the-temp-root target, and it never expands a wildcard.
+# Set DRY=1 first to see what it would remove without removing anything.
+LEFTOVER=''   # <- paste the exact path C5-T printed, between the quotes
+DRY="${DRY:-0}"
+
+r_rmdir() {
+  r_d="$1"
+  [ -n "$r_d" ] || { printf 'RECOVER: refusing — no path given\n'; return 2; }
+  case "$r_d" in
+    */wl-c5.????????) ;;
+    *) printf 'RECOVER: refusing — [%s] is not a C5-T directory name\n' "$r_d"; return 2 ;;
+  esac
+  [ -d "$r_d" ] && [ ! -L "$r_d" ] || { printf 'RECOVER: refusing — [%s] is not a directory\n' "$r_d"; return 2; }
+  r_root="$(cd "${TMPDIR:-/tmp}" 2>/dev/null && pwd -P)" || { printf 'RECOVER: refusing — cannot resolve the temp root\n'; return 2; }
+  r_par="$(cd "$(dirname "$r_d")" 2>/dev/null && pwd -P)" || { printf 'RECOVER: refusing — cannot resolve the parent of [%s]\n' "$r_d"; return 2; }
+  [ "$r_par" = "$r_root" ] || { printf 'RECOVER: refusing — [%s] resolves outside the temp root [%s]\n' "$r_d" "$r_root"; return 2; }
+  r_target="$r_par/$(basename "$r_d")"
+  if [ "$DRY" = "1" ]; then
+    printf 'RECOVER (dry run): would remove exactly one directory: %s\n' "$r_target"
+    return 0
+  fi
+  printf 'RECOVER: removing exactly one directory: %s\n' "$r_target"
+  rm -rf "$r_target"
+  [ -e "$r_target" ] && { printf 'RECOVER: %s is still present\n' "$r_target"; return 2; }
+  printf 'RECOVER: removed\n'
+  return 0
+}
+
+r_rmdir "$LEFTOVER"
+```
+
+The same four conditions govern C5-T's own automatic cleanup, so the automatic and manual paths
+cannot disagree about what is removable. The automatic cleanup is unchanged in strength — its name
+test is now stricter (`wl-c5.` plus exactly the eight characters `mktemp` generates, rather than six
+or more) and it gained the containment check.
 
 ### Static signal audit
 
@@ -708,6 +773,8 @@ Every row is a way this runbook can return "no". None of them continues setup.
 | 27 | the extraction picks up the wrong lines | C5-T guard 5 line count **and** checksum | `C5-T STOP`, exit 2 |
 | 28 | the extracted fixture will not parse | C5-T guard 6 `bash -n` | `C5-T STOP`, exit 2 — stops before the fixture can signal |
 | 29 | the fixture is cut short and exits 0 without a verdict | C5-T `C5 PASS` corroboration | `C5-T STOP`, exit 2 — an exit code alone is never read as a pass |
+| 30 | manual recovery aimed at an empty, malformed, non-directory, symlinked or outside-the-temp-root path | C5-T-RECOVER's four conditions | refusal printed, exit 2, nothing removed |
+| 31 | manual recovery would reach a second C5-T directory | C5-T-RECOVER takes one exact path and expands no glob | impossible by construction; measured with two directories present |
 
 ### The three outcomes, unambiguously
 
@@ -831,6 +898,37 @@ Rollback, if run                : R1's printed verdict; whether R6 ran; R7's res
                                   (if R6 did not run, say so — the keychain and ~/.codex are still there)
 ```
 
+### The correction round — findings 1 and 2
+
+Both reproduced by inspection before either was corrected.
+
+- **Finding 1: REPRODUCES, and the danger is real.** The recovery instruction read
+  `rm -rf "${TMPDIR:-/tmp}"/wl-c5.*`. Demonstrated without deleting anything: two plausible generated
+  directories were created (`wl-c5.HXsVqNkO`, `wl-c5.EMPfDhEq`) and the glob was expanded into the
+  positional parameters — **it selected 2 paths**, not one. A second, unrelated C5-T run's directory
+  would have been destroyed by a recovery aimed at the first. Both scratch directories were then
+  removed with `rmdir`; no `rm -rf` was used to show this.
+- **Finding 2: REPRODUCES.** The audit table claimed "Six sites, no seventh" and listed six rows.
+  `{ …; } 2>&1 | tee "$OUT"` writes the captured fixture output and was not one of them.
+
+**Correction 1 — recovery is by exact path, never by wildcard.** C5-T now prints
+`C5-T: temporary directory: <path>` immediately after creating it and **before the fixture launches**,
+so the operator holds the exact recovery target in advance. A new **C5-T-RECOVER** block takes that
+one path and removes it behind four conditions: non-empty, the exact `wl-c5.` + eight-character
+generated name, a real directory that is not a symlink, and a parent that resolves — via `pwd -P`, so
+symlinked temp roots cannot smuggle a path in — to the temp root itself. It expands no glob, and it
+has a `DRY=1` mode. The same four conditions were factored into `t_rmdir` and are now used by C5-T's
+own automatic cleanup, so the automatic and manual paths cannot disagree. The automatic cleanup is not
+weakened: its name test went from `wl-c5.??????*` (six or more characters) to exactly the eight
+`mktemp` generates, and it gained the containment check. Nothing here claims `SIGKILL` can be
+trapped — it cannot, and the limitation is still recorded as a limitation.
+
+**Correction 2 — the audit is now mechanical and complete.** The write/delete/privilege enumeration is
+run by a stated `grep` over the exact C5-T block rather than by reading it. It returns 7 non-comment
+lines carrying 8 write invocations, presented as 7 rows with the `$TMPD/rc` pair grouped explicitly.
+`tee "$OUT"` is now named, with what constrains its destination and why its retained contents hold no
+secret. The C5-T-RECOVER block is audited the same way and returns exactly one site.
+
 ### Result and evidence
 
 Result: the runbook now says how the operator runs C5. **C5-T** is added directly after the fixture,
@@ -881,22 +979,56 @@ Evidence — every item below was produced this unit, read-only, with the fixtur
   | fixture returns 1 | stub prints `C5 FAIL` | **1** | status survives |
   | fixture returns 2 | stub prints `REFUSE:` | **2** | status survives |
   | fixture cut short, exits 0, no verdict | stub interrupted mid-run | 2 | `STOP: never printed its 'C5 PASS' verdict` |
-  | unexpected temp path | `TMPD=/etc` | 2 | `refusing to remove unexpected path [/etc]`; `/etc` untouched |
+  | unexpected temp path | `TMPD=/etc` | 2 | refusal printed; `/etc` untouched |
 
-- **Static audit of everything C5-T writes, deletes or elevates.** Six sites, no seventh:
+- **Every recovery guard was exercised too**, with two real generated directories present at once so
+  the one-target claim could fail. `DRY=1` was used for the selection demonstration, so nothing was
+  deleted to prove it:
 
-  | site | what | guard |
-  |---|---|---|
-  | `mktemp -d …/wl-c5.XXXXXXXX` | creates the private dir | `mktemp` failure stops; `chmod 700` follows |
-  | `chmod 700 "$TMPD"` | tightens it | operates only on the just-created dir |
-  | `awk … > "$SCRIPT"` | writes the fixture | path is inside `$TMPD`; guards 3–5 bound the content |
-  | `mktemp …/wl-c5-output.XXXXXXXX` | creates the output file | kept deliberately; contains no secrets |
-  | `echo … > "$TMPD/rc"` | records the status | inside `$TMPD` |
-  | `rm -rf "$TMPD"` | cleanup | runs only when `$TMPD` matches `*/wl-c5.??????*`; anything else prints a refusal and deletes nothing — measured with `TMPD=/etc` |
+  | recovery input | result |
+  |---|---|
+  | directory A (dry run) | `would remove exactly one directory: …/wl-c5.ApTskvsi` |
+  | directory B (dry run) | `would remove exactly one directory: …/wl-c5.uHlA1ihJ` — a **different** single path |
+  | empty path | `refusing — no path given` |
+  | malformed name (`…/not-a-c5-dir`) | `refusing — is not a C5-T directory name` |
+  | correct name shape but **outside** the temp root | `refusing — resolves outside the temp root [/private/var/…/T]` |
+  | symlink pointing at A | `refusing — is not a directory` |
+  | path that does not exist | `refusing — is not a directory` |
+  | the temp root itself | `refusing — is not a C5-T directory name` |
+  | **A, for real** (`DRY=0`) | `RECOVER: removed` — and **B was still present afterwards**, which is the whole point |
 
-  There is **no** `sudo`, `kill`, `pkill` or privilege-bearing call anywhere in C5-T. The only
-  privileged commands in the whole C5 step are the ones already inside the accepted fixture, which is
-  unchanged.
+- **Static audit of everything C5-T writes, deletes or elevates.** Enumerated mechanically, not by
+  reading, so the completeness claim can fail. The enumeration run over the exact C5-T block was:
+
+  ```
+  grep -nE 'mktemp|chmod|(^|[^-[:alnum:]])rm[[:space:]]|tee[[:space:]]|[^0-9<>]>[[:space:]]*"|sudo|[^_[:alnum:]]kill[[:space:]]|pkill' <block> | grep -v '^[0-9]*: *#'
+  ```
+
+  It returns **7 non-comment lines**, and one of those lines carries **two** write invocations, so
+  **8 invocations in 7 table rows** — the `$TMPD/rc` pair is grouped explicitly:
+
+  | line | site | what it writes or removes | what constrains it |
+  |---|---|---|---|
+  | 67 | `mktemp -d …/wl-c5.XXXXXXXX` | creates the private directory | random trailing name, never a fixed path; failure stops the run |
+  | 68 | `chmod 700 "$TMPD"` | tightens that directory | operates only on the just-created path |
+  | 82 | `awk … > "$SCRIPT"` | writes the extracted fixture | destination is inside `$TMPD`; guards 3–5 bound the content before it can run |
+  | 100 | `mktemp …/wl-c5-output.XXXXXXXX` | creates the output file | random trailing name; **deliberately kept** — see below |
+  | 101, 102 | `echo … > "$TMPD/rc"` (**two invocations**: the `unfinished` pre-seed and the real status) | records the fixture's exit status | destination is inside `$TMPD` |
+  | 102 | `… \| tee "$OUT"` | writes the fixture's captured stdout | destination is the `mktemp` file from line 100 and nothing else; this is the write the previous version of this audit missed |
+  | 35 | `rm -rf "$t_par/$(basename "$t_d")"` | the only deletion | reached only through `t_rmdir`: non-empty path, exact `wl-c5.` + 8-character name, a real directory and not a symlink, and a parent that resolves to the temp root. No glob is expanded, so exactly one path is ever considered |
+
+  **Why the retained output is non-secret.** `$OUT` holds only the fixture's own stdout. The fixture
+  prints pids, uids, process-group ids, `pgrep`/`pkill` exit codes and its verdict lines. It reads no
+  credential, runs no authentication command, and prints no password, token, keychain item or file
+  content. The account name and checkout path it echoes are both already written in this file.
+
+  There is **no** `sudo`, `kill`, `pkill` or other privilege-bearing call anywhere in C5-T — the same
+  enumeration returns **0** matches for those three. The only privileged commands in the whole C5 step
+  are the ones already inside the accepted fixture, which is unchanged.
+
+- **The recovery block audits to one site.** The same enumeration over C5-T-RECOVER returns exactly
+  **1** line: `rm -rf "$r_target"`, where `$r_target` is rebuilt from the resolved parent and base
+  name only after the same four conditions pass. It creates and modifies nothing.
 - **Cleanup was checked, not assumed.** After every passing and failing run above, `ls -d
   "${TMPDIR:-/tmp}"/wl-c5.*` returned no matches, and the output file was still present.
 
@@ -905,9 +1037,10 @@ wrong, the `GRACE=3 → 4` mutation would have run anyway; had the verdict corro
 the interrupted stub would still report a pass, as it demonstrably did before the fix.
 
 **One accepted limitation.** A `SIGKILL` against the C5-T shell leaves the temporary directory behind,
-because no trap can run. Measured: the leftover holds only the extracted `c5.sh` — the same public
-bytes as this file — and a two-byte status file. It is recorded in the runbook with the one-line
-manual cleanup.
+because `SIGKILL` cannot be trapped by any program. Measured: the leftover holds only the extracted
+`c5.sh` — the same public bytes as this file — and a short status file. The runbook records this, and
+its recovery is now the exact-path C5-T-RECOVER block, whose target C5-T prints before the fixture
+launches. The wildcard that previously stood there is gone.
 
 Nothing about the route itself is settled by this. C5-T only makes the authorized probe runnable.
 **Phase 1a stays open, and stays open even if every Stage C check later passes.**
@@ -935,24 +1068,32 @@ C5 and C6, which this unit must not and did not manufacture.
 
 ## Next action
 
-Codex: assess Unit 4. The C5 transport is implemented as **C5-T**, directly after the accepted
-fixture, and the C5 stage row points at it. Judge whether it satisfies the brief's required outcome
-and required evidence, then close, continue, correct once or stop.
+Codex: the closure check on these two frozen findings only — is the wildcard recovery replaced by an
+exact-path target that cannot reach a second directory, and is the write audit now complete? Did the
+correction break anything that previously worked?
 
-Three things to weigh, stated plainly rather than buried:
+What changed, and nothing else changed:
 
-1. **The mechanism is extraction from this state file itself**, bounded by two markdown-comment
-   markers outside the fence. That keeps the accepted fixture byte-identical (verified: 210 lines,
-   sha256 `65b50d19…a8f9`, equal to `3356c8c`) and needs no `runs/` artifact. It does mean the state
-   file is now load-bearing at run time — if Codex considers that coupling wrong, say so and the unit
-   is reframed rather than corrected.
-2. **Two defects were found by testing and fixed inside this unit**, both recorded in
-   `### Result and evidence`: a `mktemp` template that produced a fixed path, and an interrupted run
-   that reported a pass. The second is the reason C5-T now requires the fixture's own `C5 PASS` line
-   to corroborate an exit of 0.
-3. **One accepted limitation:** a `SIGKILL` against the C5-T shell leaves the temporary directory
-   behind. No trap can prevent that. The leftover holds only the public fixture bytes, and the
-   runbook gives the one-line manual cleanup.
+- **Finding 1.** C5-T prints its temporary directory before the fixture launches. `C5-T-RECOVER` takes
+  that one path behind four conditions — non-empty, exact generated name, real directory not a
+  symlink, parent resolving via `pwd -P` to the temp root — and expands no glob. The same four
+  conditions were factored into `t_rmdir`, which C5-T's automatic cleanup now calls, so both paths
+  share one rule. The automatic cleanup is stricter than before, not weaker. `SIGKILL` is still stated
+  as untrappable.
+- **Finding 2.** The audit is produced by a stated `grep` over the exact C5-T block: 7 non-comment
+  lines, 8 write invocations, 7 rows with the `$TMPD/rc` pair grouped explicitly. `tee "$OUT"` is
+  named, with its destination constraint and why the retained output holds no secret. C5-T-RECOVER is
+  audited the same way and returns one site.
 
-Nothing was executed against the host: no `sudo`, no account command, no authentication, no signal,
-no Git write. Three deferrals remain, all outside Stages B and C. **Phase 1a stays open.**
+Two scope notes, so the check can reverse either:
+
+1. I added **two rows (30, 31) to the fail-capability matrix** for the new recovery refusals. A new
+   block with new refusal paths seemed to belong there, but it is an addition beyond the two findings.
+2. I audited **C5-T-RECOVER** as well as C5-T. Finding 2 names the C5-T block; leaving a newly added
+   `rm -rf` unaudited would have reproduced the very defect finding 2 raised.
+
+Preserved and re-verified: the accepted 210-line C5 fixture is byte-identical to `3356c8c`
+(sha256 `65b50d19…a8f9`), the caller and integrity guards, real exit-status handling, the `C5 PASS`
+corroboration, handled-interrupt cleanup, runbook ordering, rollback, Stages B/C-only authority and
+every exclusion. Nothing was executed against the host: no C5 run, no `sudo`, no signal, no account or
+authentication command, no Git write. **Phase 1a stays open.**
