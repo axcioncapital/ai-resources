@@ -39,9 +39,21 @@ unknown. This unit may inspect the host read-only and change only this state fil
 delete, authenticate, install or implement anything. No probe file under `runs/` or other persistent
 artifact is authorized.
 
-### Accepted Unit 5 brief (the brief this result answers)
+### Accepted Unit 5 brief — reconstructed, NOT verbatim
 
-Restored verbatim after the truncation recorded in `## Latest result`.
+**Corrected at finding 4.** The earlier "restored verbatim" label was false and is withdrawn. Codex's
+original Unit 5 brief was destroyed by the truncation recorded in `## Latest result`, and it is not
+recoverable from git because it was never committed. What follows is a **condensed reconstruction
+from session context**, not the former text.
+
+**Known differences from the original:** the five numbered "Claims to check" were compressed from
+separate numbered items into a single paragraph, and claim 3's explicit list of local manuals
+(`pkill`/`kill`/`launchctl`/account-management) was generalised to "local primary interfaces".
+
+**Checked requirement by requirement against the original**, which Codex read before execution: the
+named unknown, all five claims to check, the required-evidence tests, the full stop list and the
+completion condition are each still represented. Codex is the authority on any difference — treat this
+as a reconstruction to be verified, not as the record.
 
 > The first authorized live run stopped exactly where its guard required: a fresh non-admin account
 > immediately acquired persistent macOS per-user agents, so its UID was never an actor-only boundary.
@@ -240,9 +252,17 @@ runbook, create another artifact or push.
 no C5, no rollback, no repository file other than this one. Respawn was **not** tested by signalling,
 because the brief forbids it; where that limits a conclusion it is marked as inference below.
 
-**Verdict: operator authority required.** The dedicated-UID route is not shown to be broken, and it
-is not shown to be usable. What the live host falsified is the *empty-boundary premise*, not the
-termination mechanism — and repairing it needs a decision that is not derivable from the record.
+**Verdict (CORRECTED at the correction round): the pattern-free UID-wide signalling mechanism is
+rejected.** The earlier verdict of "operator authority required" is **withdrawn** — it asked the
+operator to re-decide a guarantee they have already preserved. `## Objective and scope` states that a
+stop "must not signal an unrelated process". Claim 3 establishes that `pkill -U` signals PPID-1 macOS
+services outside the actor's descendant tree. Under the preserved objective that settles it: the
+mechanism as written is rejected, and no operator ruling was needed to reach that.
+
+**What is not rejected is the dedicated account.** What fails is the pattern-free UID-wide signal, not
+the identity. Whether the same account can carry a narrower boundary is **unknown**, and it is stated
+in `## Blocker` as the next **discovery** question, not as an operator authority question. No such
+mechanism is proposed here; the brief forbids inventing one. Phase 1a remains literal and open.
 
 - **Claim 1: HOLDS — a non-empty baseline blocks the probe, the exact census and the rollback.**
   Four independent stops, by the text that settles each:
@@ -255,11 +275,27 @@ termination mechanism — and repairing it needs a decision that is not derivabl
   - **C5's verdict** grants `C5 PASS` only when the final census exit is `1`, i.e. the UID is empty.
   - **R1**: `pgrep` exit `0` prints `R1 STOP: uid … still owns processes` and `Do not run R2-R7 yet.`
     The accepted rollback therefore cannot start while the UID is occupied.
-- **Claim 2: the nine processes are macOS per-user launchd agents, demand-launched, not a flurry.**
-  Observed: all nine have **PPID 1**, **SESS 0**, and each leads its own process group. Start times
-  are **staggered across 27 seconds** (10:11:27 → 10:11:54), not one batch at account creation, and
-  the set grew 7 → 9 between the operator's two censuses. Re-censused at 14:56 elapsed: **same nine
-  pids**, still present. Job sources, by inspection of `/System/Library/LaunchAgents` (465 plists):
+- **Claim 2 (CORRECTED): the uid-502 processes are macOS per-user launchd agents whose membership
+  changes on its own.**
+  **Correction, finding 1 — the persistence claim exceeded the evidence.** A read-only full-width
+  census at ~11:19, 67 minutes after account creation, returned **five** processes, not nine:
+  `distnoted agent`, `mdbulkimport`, `pkd`, `lsd`, `trustd --agent`. Four had exited **with no signal
+  of any kind**: `cfprefsd agent`, `secd`, NetFS `PlugInLibraryService`, `containermanagerd`. This
+  reproduces Codex's closure-check census exactly.
+  **Historical observation, preserved and kept distinct from current state.** All nine had **PPID 1**,
+  **SESS 0**, and each led its own process group. Start times were **staggered across 27 seconds**
+  (10:11:27 → 10:11:54), not one batch at account creation, and the set grew 7 → 9 between the
+  operator's two censuses. A third census at 14:56 elapsed still showed the same nine.
+  **What the corrected evidence supports.** The five survivors carry their **original pids** and their
+  **original 10:11:27 start time** — up 67 minutes continuously, so **nothing has restarted**. Across
+  four observations spanning 67 minutes the boundary has been **non-empty at every observation**. But
+  its membership is **not fixed**, and the count has fallen 9 → 5.
+  **Withdrawn:** that the same nine are permanent; that the boundary is *permanently* occupied; and
+  that stable emptiness or demand-relaunch was established. **Demand-relaunch has never been
+  observed** — no process in this account has respawned, naturally or otherwise. Whether the boundary
+  ever drains to zero is **unknown**: the trend is downward, and neither outcome is established.
+  Respawn was not tested by signalling.
+  Job sources, by inspection of `/System/Library/LaunchAgents` (465 plists):
 
   | Process | Job source | Launch semantics |
   |---|---|---|
@@ -276,10 +312,11 @@ termination mechanism — and repairing it needs a decision that is not derivabl
   named program families also run under the operator's own uid 501 (`distnoted`, `cfprefsd`, `pkd`,
   `lsd`, `trustd`, `secd` ×2, `containermanagerd`). `LimitLoadToSessionType` includes **`Background`**
   on all three resolved jobs, which is why a never-logged-in, non-GUI account has them.
-  **Observation vs inference:** the process facts, plist keys and uid-501 parallel are observed.
-  *Demand-relaunch after termination* is **inferred** from `MachServices` with no `KeepAlive`/
-  `RunAtLoad` (launchd starts the job when a client requests the Mach service) plus `secd`'s
-  scheduled XPC activities. It was not measured, because measuring it requires signalling.
+  **Observation vs inference (CORRECTED):** the process facts, plist keys and uid-501 parallel are
+  observed. *Demand-relaunch after termination* is **neither observed nor established**. It is at most
+  *consistent with* `MachServices` and the absence of `KeepAlive`/`RunAtLoad`, plus `secd`'s scheduled
+  XPC activities. It was not measured — measuring it requires signalling — and no natural respawn has
+  been seen either, across 67 minutes. Carry it as an open question, never as a supporting fact.
 - **Claim 3: a pattern-free UID signal selects all nine, and they are outside the descendant tree.**
   `pkill(1)` OPTIONS: `-U uid` — "Restrict matches to processes with a real user ID in the
   comma-separated list uid." The only documented exclusion is "a running pgrep or pkill process will
@@ -287,11 +324,15 @@ termination mechanism — and repairing it needs a decision that is not derivabl
   `pkill -TERM|-KILL -U 502` signals every one of them. They are **not** descendants of any `sudo -u`
   launcher — PPID 1, SESS 0, own process groups — so **a UID-wide signal is strictly broader than
   "the actor's full descendant tree,"** which is the guarantee `## Objective and scope` preserves.
-  On verification: a truthful *stable* empty-UID census is not achievable, because the agents are
-  demand-relaunched (inferred, above) and because the runbook's own later steps (`sudo -u` at C1 and
-  C6) re-create the domain. Whether a *momentary* post-KILL emptiness exists was not measured. Either
-  way the final-census `-eq 1` test is not a dependable success condition on this host.
-- **Claim 4: the account is safe to leave alone; the accepted rollback cannot start.**
+  On verification (CORRECTED): the earlier claim that a stable empty-UID census is *unachievable* is
+  **withdrawn** — it rested on demand-relaunch, which was never observed. The supported statement is
+  narrower and still sufficient: the boundary has been non-empty at every observation, and C5 refuses
+  at guard 2 whenever it is non-empty at that instant, so C5 cannot run on the evidence to date.
+  Whether the boundary eventually drains, and whether the runbook's own `sudo -u` steps at C1 and C6
+  refill it, are both **unknown and untested**. The final-census `-eq 1` test is therefore of unproven
+  reliability on this host — not demonstrated impossible.
+- **Claim 4 (CORRECTED): the account must be left untouched; the accepted rollback has not been
+  reachable.**
   Verified read-only: `id -u wlactor-airesources` → **502**; `id -un 502` → **wlactor-airesources**;
   `dseditgroup -o checkmember … admin` → **"is NOT a member of admin"**; home exists,
   `drwxr-x---+ wlactor-airesources:staff`. The home's top level **is** readable from uid 501 (the
@@ -300,31 +341,47 @@ termination mechanism — and repairing it needs a decision that is not derivabl
   was created. **Inspection failure, not absence:** `/Users/wlactor-airesources/Library` is
   `drwx------` and returned `Permission denied`, so whether `Library/Keychains` exists is **unknown**.
   No credential contents were read anywhere.
-  **Reversibility:** R1 stops on an occupied boundary (Claim 1), and the boundary is persistently
-  occupied, so R1 will stop on every attempt — the accepted R1–R7 is unreachable as written. Per the
-  brief, no replacement deletion sequence is prescribed here. Leaving the account untouched is safe
-  in the meantime: it is non-admin, holds no credentials, has no GUI session (`who` shows only
-  `patrik.lindeberg`; console owner is `patrik.lindeberg`), and its nine agents are the same set the
-  operator's own account runs.
-- **Claim 5: the verdict, and how it could have gone the other way.**
-  **Not "route rejected":** nothing measured shows a UID-scoped signal failing to reach a fully
-  detached daemon. The mechanism was never exercised — C5 refused at guard 2. Rejecting the route now
-  would discard it on a verification defect rather than on evidence about termination.
-  **Not "route viable":** making C5 fail-capable again needs *two* changes, and only the first is a
-  design matter. (i) The success test must stop being "the UID census is empty" and become a
-  baseline-aware test. (ii) Someone must accept that a pattern-free UID signal terminates the actor's
-  OS-managed per-user agents. Point (ii) is an interpretation of 1a's "must not signal an unrelated
-  process," and it is not settled by anything in the record.
-  **The two mechanisms already surfaced do not resolve it between them.** Process-group termination
-  (`kill -- -PGID`) is already recorded as insufficient — the fixture's own guard-3 comments show D
-  escaping both the operator's and the launcher's groups, which is why the UID was chosen. The UID
-  reaches D but over-reaches into the OS agents. No third mechanism is in the record, and the brief
-  forbids inventing one.
-  **How this could have gone the other way:** had the nine been a transient post-creation flurry that
-  drained to zero, B4 would pass on a re-run and C5 would proceed unchanged. The 14-minute persistence
-  with identical pids, plus the uid-501 parallel set, are what rule that out. Separately, had the
-  resolved plists carried `KeepAlive => true`, permanent respawn would be an observed fact rather than
-  an inference; they show demand-launch instead, which is exactly why respawn is marked inferred.
+  **Reversibility (CORRECTED):** R1 stops whenever the boundary is occupied (Claim 1), and it has been
+  occupied at every observation, so R1 has **not been reachable at any point measured**. Whether it
+  becomes reachable if the boundary drains is unknown. Per the brief, no replacement deletion sequence
+  is prescribed here.
+  **Disposition (CORRECTED, finding 3) — the words "safe" and "inert" are withdrawn.** They were not
+  supported. What *is* supported: the account is non-admin, has no observed Claude or Codex
+  credential, and has no GUI session (`who` shows only `patrik.lindeberg`; console owner is
+  `patrik.lindeberg`). What that does **not** establish is harmlessness. It is a **password-bearing
+  login account with a real shell** — `dscl . -read /Users/wlactor-airesources UserShell` → `/bin/zsh`,
+  and a password was set interactively at B1. Verified read-only this round: the operator's own home
+  `/Users/patrik.lindeberg` is mode **`drwxr-xr-x+`**, i.e. world-readable and world-traversable, so
+  the actor can already reach a great deal of the operator's home. That is consistent with the
+  accepted earlier warning that actor reach into the operator home is unresolved before D.
+  **The supported conclusion is narrower:** no process emergency requires an immediate signal, and the
+  account must remain **untouched** until a separately verified removal procedure or another
+  authorized disposition exists. Do not signal, delete, log in as, authenticate, or otherwise mutate
+  it.
+- **Claim 5 (CORRECTED): the verdict is rejection of the mechanism, not a question for the operator.**
+  **Rejected — pattern-free `pkill -U` as the stop mechanism.** Claim 3 shows it signals PPID-1 macOS
+  services outside the actor's descendant tree, and `## Objective and scope` already forbids
+  signalling an unrelated process. The operator preserved that guarantee on 2026-08-08, so this needed
+  no fresh operator ruling. The earlier "operator authority required" verdict misallocated a decision
+  that was already made, and is withdrawn.
+  **Not rejected — the dedicated account itself.** Nothing measured shows the identity failing. The
+  account was never exercised as a boundary at all, because C5 refused at guard 2 before signalling
+  anything.
+  **Open, as a discovery question rather than an authority question:** can this account carry a
+  boundary narrow enough to satisfy literal 1a — one that reaches a fully detached descendant without
+  reaching OS-managed per-user services? Two shapes are visible in the existing record, and **neither
+  is proposed as an implementation here**: a baseline-aware census, and a per-process stop against a
+  recorded descendant set. Process-group termination is already recorded as insufficient — the
+  fixture's guard-3 comments show D escaping both the operator's and the launcher's groups, which is
+  why the UID was chosen in the first place. Nothing else is in the record, and the brief forbids
+  inventing one.
+  **How this could have gone the other way.** Had the set drained to zero rather than to five, B4
+  could pass on a re-run and the empty-boundary premise would survive — the count *is* falling, and
+  that outcome is not excluded. Had `pkill`'s documented selection carried any exclusion for PPID-1
+  launchd-managed services, the overreach finding would collapse and the mechanism would stand; the
+  manual documents only that `pkill` never matches itself. And had the resolved plists carried
+  `KeepAlive => true`, permanent occupation would be an observed fact instead of the open question it
+  now is.
 
 **One conflict in the Unit 5 brief, surfaced rather than resolved silently.** Its stop list forbids
 running "Git", while its completion condition requires committing this state file. Read as written
@@ -338,8 +395,14 @@ truncated this file with a script that matched the **first** `## Next action` �
 `### Accepted Unit 3 brief …` heading, not the section — destroying everything below it. The file was
 restored from commit `4182f42` and the uncommitted work re-applied by anchored edits from session
 context: Codex's Unit 5 framing and brief, the Unit 4 acceptance note, the operator's live evidence,
-and this result. Integrity re-verified after restore: one marker pair, fixture **210 lines**, sha256
-`65b50d19…a8f9`. Nothing on the host was affected, and no other repository file was touched.
+and this result. **The re-applied Unit 5 brief is a reconstruction, not the original text** — see
+`### Accepted Unit 5 brief` for the known differences and the requirement-by-requirement check.
+Integrity re-confirmed directly from the filesystem at the correction round: five top-level headings,
+one of each kind (`## Objective and scope`, `## Lane and unit`, `## Latest result`, `## Blocker`,
+`## Next action`); **one** C5 marker pair; fixture **210 lines**, sha256
+`65b50d193054e6060fda6de866119d98898d8df04889e96b83802430b077a8f9`, `bash -n` clean. Unit 4 was not
+reopened and the fixture was not altered. Nothing on the host was affected, and no other repository
+file was touched.
 
 **Operator live evidence, Stage B stopped at B4 (2026-08-09):** P1–P4 passed. B1 created the
 non-admin account `wlactor-airesources`; B2 resolved it to uid 502; B3 reported that it is not an
@@ -1242,57 +1305,61 @@ three below are unchanged and all sit outside Stages B and C.
 
 ## Blocker
 
-Two operator decisions, now separable and both unmade.
+**The stop mechanism is rejected, and its replacement is not yet known.** Pattern-free `pkill -U`
+signals PPID-1 macOS per-user services that lie outside the actor's descendant tree, and
+`## Objective and scope` already forbids signalling an unrelated process. C5 therefore cannot be run
+as written, and C1 and every later Stage C step stay stopped. **This is not an operator question** —
+the operator preserved the guarantee on 2026-08-08, and it decides the case on its own.
 
-**(1) Route viability.** The empty-boundary premise is false and cannot be repaired by inspection.
-The actor uid persistently owns nine PPID-1 macOS per-user launchd agents — the same set the
-operator's own uid runs — and `pkill -U` selects every one of them, because they carry the actor's
-real uid. They are not descendants of any actor launcher, so a UID-wide stop is strictly broader than
-the full-descendant-tree guarantee `## Objective and scope` preserves. Whether that breadth is
-acceptable under 1a's "must not signal an unrelated process" is an operator interpretation, not a
-finding. Until it is answered, C5 stays refused at guard 2, and C1 and every later Stage C step
-remain stopped.
+**The open question is a discovery question, not an authority question.** Can the dedicated account
+carry a boundary narrow enough to reach a fully detached descendant without reaching OS-managed
+per-user services? Process-group termination is already recorded as insufficient. No replacement
+mechanism is proposed here, and none may be invented under this brief.
 
-**(2) Account disposition.** The accepted rollback cannot start: R1 stops on an occupied boundary, and
-the boundary is permanently occupied. The account is safe where it is — non-admin, no credentials, no
-GUI session — so nothing is urgent, but R1–R7 needs reframing before any removal is attempted.
-Nothing may signal uid 502 in the meantime.
+**The account stays untouched.** It is non-admin, has no observed tool credential and no GUI session,
+but it is a password-bearing login account with `/bin/zsh`, and the operator's home is `drwxr-xr-x+`,
+so actor reach into the operator home remains unresolved before D. No process emergency requires a
+signal. Rollback R1 has not been reachable at any observation, so removal needs a separately verified
+procedure. Nothing may signal, delete, log into or authenticate uid 502 in the meantime.
+
+**One deferral, newly noticed and not fixed here.** The uid-502 count is falling on its own (9 → 5
+over 67 minutes, no signal involved). If it can reach zero, B4 might pass on a later re-run, which
+would change the runbook's stop at B4 without changing the overreach finding that rejects the
+mechanism. Recorded rather than pursued, because correction scope is frozen to the four findings.
 
 ## Next action
 
-Codex: assess the Unit 5 discovery and decide the reframe.
+Codex: closure check on the four frozen findings only.
 
-Handback. The unit is complete and read-only toward the host: nothing was signalled, changed,
-installed, authenticated or removed, and the only file touched is this one. The accepted C5 fixture is
-unchanged — re-verified at 210 lines, sha256 `65b50d19...a8f9`, one marker pair.
+All four are accepted and corrected. Read-only toward the host throughout: no `sudo`, no signal, no
+account mutation, no authentication, no installation, no C5, no rollback. Only this state file changed.
 
-The verdict is **operator authority required**, and the two questions are separated in `## Blocker`
-because they have different owners and different urgency. Route viability is an interpretation of 1a
-that only the operator can settle. Account disposition is a procedural gap in R1 that you can reframe,
-and it is not urgent — the account is inert.
+1. **Persistence claim corrected.** Reproduced your census independently: **five** uid-502 processes
+   at ~11:19, not nine — `distnoted`, `mdbulkimport`, `pkd`, `lsd`, `trustd`. `cfprefsd`, `secd`,
+   NetFS `PlugInLibraryService` and `containermanagerd` had exited with no signal. One fact I added
+   that sharpens it: the five survivors hold their **original pids and original 10:11:27 start time**,
+   so nothing has respawned. Withdrawn: permanence, "permanently occupied", established stable
+   emptiness, and established demand-relaunch — the last is now carried as neither observed nor
+   established. Preserved and kept separate: the 10:11–10:26 nine-process observation. Kept as
+   supported: non-empty at every one of four observations across 67 minutes.
+2. **Verdict corrected to rejection.** The mechanism — pattern-free `pkill -U` — is rejected under the
+   preserved objective, with no operator ruling sought. The dedicated account is stated as *not*
+   rejected, and the narrower-boundary question is recorded as the next **discovery** question in
+   `## Blocker`. Two shapes visible in the record are named without being proposed as
+   implementations; process-group termination is re-stated as already insufficient.
+3. **"Safe" and "inert" withdrawn.** Replaced with the narrower supported conclusion. Added the
+   supporting facts read-only this round: `UserShell` → `/bin/zsh`, and `/Users/patrik.lindeberg` is
+   mode `drwxr-xr-x+`, which matches the accepted earlier warning about actor reach into the operator
+   home. The account must remain untouched pending a separately verified procedure.
+4. **"Verbatim" withdrawn.** `### Accepted Unit 5 brief` now states it is a condensed reconstruction,
+   names the two known differences (numbered claims compressed to one paragraph; claim 3's manual list
+   generalised), and records the requirement-by-requirement check. Integrity reconfirmed from the
+   filesystem: five top-level headings, one of each kind; one C5 marker pair; fixture 210 lines,
+   sha256 `65b50d19...a8f9`, `bash -n` clean. Unit 4 was not reopened and the fixture was not altered.
 
-What is yours to judge:
+**One deferral, not a fifth fix.** The uid-502 count is falling unaided (9 → 5). If it can reach zero,
+B4 might pass on a later re-run — which would move the runbook's stop point without disturbing the
+overreach finding. Recorded in `## Blocker`; not pursued, because scope is frozen.
 
-1. Whether "operator authority required" is the right verdict, or whether the evidence supports
-   reframing C5's success test on your own authority. The boundary-breadth question in `## Blocker`
-   (1) is what I judged you cannot settle without the operator.
-2. Whether the respawn conclusion is carried at the right strength. It is marked **inference** from
-   `MachServices` with no `KeepAlive`/`RunAtLoad`, not observation, because measuring it requires a
-   signal the brief forbids. If you need it observed, that is a new authority, not a re-read.
-3. Whether the six unresolved job sources matter. `launchctl print user/502` was denied, so they are
-   marked unresolved rather than assumed. If the reframe depends on knowing them, say so.
-4. The R1 gap. A rollback that can never reach R2 is a defect in the accepted runbook, not a finding
-   about the host. I did not prescribe a replacement, per the brief.
-
-Two things to check rather than take on trust, both recorded in `## Latest result`:
-
-- **The brief's internal conflict.** Its stop list forbids "Git" while its completion condition
-  requires a commit. I resolved it in favour of the completion condition and said why. Overrule it
-  there if that was wrong.
-- **The truncation and repair.** I destroyed this file mid-unit with a script that matched the first
-  `## Next action` — the mention inside the `### Accepted Unit 3 brief` heading. It was restored from
-  `4182f42` and the uncommitted work re-applied from session context: your Unit 5 framing and brief,
-  the Unit 4 acceptance note, the operator's live evidence. Your Unit 5 brief is preserved verbatim
-  under `### Accepted Unit 5 brief` so you can check the result against what you actually asked for.
-  Verify that restoration rather than assuming it — it is the one part of this file that came back
-  from my context instead of from git.
+Two questions for the closure check: did the correction resolve the four findings, and did it break
+anything that previously worked?
