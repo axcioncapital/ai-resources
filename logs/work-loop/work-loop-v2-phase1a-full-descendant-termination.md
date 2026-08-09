@@ -22,8 +22,8 @@ outside this task; Phase 2 stays forbidden.
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 8 — determine whether Darwin process persona (`prsna`) can provide a
-per-run boundary that survives the accepted escape without selecting an unrelated process.
+Standard. Discovery mode. Unit 8 — one correction round, frozen to the two findings in
+`## Next action`, before the persona verdict can be accepted.
 
 Named reason for the loop: literal Phase 1a still needs a Darwin supervision mechanism. Unit 7's
 correction is accepted: ASID has useful granularity but is unusable under current authority, and its
@@ -319,34 +319,45 @@ runbook, create another artifact or push.
 
 ## Latest result
 
-**Unit 8 (Discovery) — Darwin persona is REJECTED, and the conflict is an Apple-private code-signing
-entitlement rather than a privilege the operator could grant.** Read-only throughout. No `sudo`, no
-signal, no `launchctl` mutation, no account action, no login, no authentication, no installation, no
-C5, no rollback, no process or fixture launch, no persona created or changed, nothing compiled,
-nothing executed under test, no product edit, no test run, and no repository file other than this one.
-No credential contents were read. The live account was preserved untouched. Local primary surfaces
-were inspected first; Apple's published XNU source was used where the semantics are absent locally,
-with its version gap stated.
+**Unit 8 (Discovery, CORRECTED at the correction round) — Darwin persona is unusable under current
+authority, and whether the entitlement it needs is obtainable is UNRESOLVED.** Read-only throughout.
+No `sudo`, no signal, no `launchctl` mutation, no account action, no login, no authentication, no
+installation, no C5, no rollback, no process or fixture launch, no persona created or changed, nothing
+compiled, nothing signed, nothing executed under test, no product edit, no test run, and no repository
+file other than this one. No credential contents were read. The live account was preserved untouched.
+The correction added two read-only sources: `codesign -d --entitlements` metadata for 1,788 local
+executables, and Apple's published XNU test entitlements.
 
-**Verdict: candidate rejected.** Persona has, on the evidence, the **best intrinsic properties of any
-candidate examined in this task** — it is inherited across `fork`, survives `exec`, `setsid` and the
-double fork, has **no runtime interface by which a process can shed or switch it**, and its value is
-externally readable for arbitrary pids through a shipped tool. It fails on one thing only, and that
-one thing is decisive: **nothing can be placed into a persona without the entitlement
-`com.apple.private.persona-mgmt`.** Both doors are shut by the same check —
-`kpersona_alloc` (creating a persona) and `posix_spawn` into an existing one — and **neither door has
-a superuser alternative**. Root does not satisfy an entitlement check.
+**The verdict "candidate rejected" is WITHDRAWN and replaced.** The corrected verdict is:
 
-**What that means for authority, stated at the width the evidence carries.** This is not "unusable
-under current authority" in the sense Unit 7 corrected ASID to. Entitlements are granted by Apple in
-a binary's code signature and enforced by AMFI; the operator cannot grant
-`com.apple.private.persona-mgmt` to `dispatch.sh`, to `claude`, or to `codex`, and no `sudo`, account
-change or Stage D/E authority within this task's reach would change that. The one theoretical route —
-disabling the platform's signature enforcement and re-signing binaries — is a host-security change of
-a completely different order, is outside this task and every stage the operator has authorized, and is
-**not requested and not recommended here**. So: rejected for every authority in the operator's gift,
-which is the honest scope. It is not a claim that persona is impossible in every conceivable machine
-configuration.
+- **Proved, and unchanged.** Nothing can be placed into a persona without the entitlement
+  `com.apple.private.persona-mgmt`. Both doors carry the same check — `kpersona_alloc_syscall()`
+  (creating one) and `spawn_validate_persona()` (spawning into an existing one) — and **neither has a
+  superuser alternative**, while `GET`/`INFO`/`FIND` in the same file are gated `root || entitlement`.
+  Root does not satisfy an entitlement check.
+- **Proved, and unchanged.** Nothing the dispatcher runs carries that entitlement, so **under current
+  authority persona cannot be used**, exactly as ASID could not.
+- **UNRESOLVED — and previously overclaimed.** Whether the operator could obtain
+  `com.apple.private.persona-mgmt` through a supported signing or provisioning path is **not
+  established**. The earlier claim that the entitlement "can only be granted by Apple", that no
+  operator-signable binary could carry it, and that disabling signature enforcement was the only
+  theoretical route, rested on no inspection of macOS restricted-entitlement authorization,
+  provisioning profiles, local or development signing, or AMFI's treatment of this key. **All of it is
+  withdrawn.** Settling it would need a signed test binary actually run, which this correction forbids.
+
+**Why the distinction is material rather than pedantic.** If the entitlement is unobtainable, persona
+is dead. If it is obtainable by some supported path, persona becomes the **strongest candidate in this
+task** — creation and spawn-into both become possible, and the properties in claim 2 make it a better
+boundary than anything else examined. The verdict therefore turns on a question this unit did not
+answer, and it is named as open rather than closed by assertion.
+
+**Deferral 8's lead was half wrong, and the correction matters.** It recorded persona as "readable for
+arbitrary processes without privilege — the property ASID lacks". The syscall is **not** unprivileged:
+`kpersona_pidinfo` returns `EPERM` to a non-root caller for any pid but its own. The column is readable
+only because **`/bin/ps` is setuid root** (`-rwsr-xr-x root wheel`, measured) — and, as the correction
+round found, `/bin/ps` **also carries the persona-mgmt entitlement itself**. The practical conclusion
+survives — an unprivileged supervisor *can* obtain the value by shelling out to `ps` — but the reason
+is a shipped privileged helper, not an open syscall.
 
 **Deferral 8's lead was half wrong, and the correction matters.** It recorded persona as "readable for
 arbitrary processes without privilege — the property ASID lacks". The syscall is **not** unprivileged:
@@ -362,6 +373,71 @@ Evidence: `sys/persona.h` and `bsd/kern/sys_persona.c`, `bsd/kern/kern_persona.c
 `ls -l /bin/ps`; `ps -axo pid=,uid=,prsna=,comm=`; `man 1 ps`; the full `pgrep`/`pkill` usage; and
 `dispatch.sh`. Each is quoted below. Each of the three possible verdicts is shown against what would
 have had to be true for it, at the end.
+
+### The correction round — findings 1 and 2
+
+Both reproduced by inspection before either was corrected.
+
+- **Finding 1: REPRODUCES.** The result said "Entitlements are granted by Apple in a binary's code
+  signature … the operator cannot grant `com.apple.private.persona-mgmt` to `dispatch.sh`, to
+  `claude`, or to `codex`", called disabling signature enforcement "the one theoretical route", and
+  concluded "rejected for every authority in the operator's gift". The evidence list behind those
+  sentences contains **no** inspection of restricted-entitlement authorization, provisioning profiles,
+  local or development signing, or AMFI's handling of this key. The kernel gate was proved; the
+  obtainability claim was assumed on the strength of the `com.apple.private.*` prefix.
+- **Correction 1 — the obtainability claim is withdrawn and the verdict is narrowed**, in the replaced
+  opening above. What the correction *did* establish, bounded and read-only:
+  - **Apple's own XNU tests declare this key by ordinary means.** `tests/persona.entitlements` is a
+    plain plist whose entire content is `com.apple.private.persona-mgmt` → `<true/>`, and
+    `tests/Makefile` line 2053 applies it with `persona: CODE_SIGN_ENTITLEMENTS =
+    persona.entitlements`. A second file, `tests/persona_adoption.entitlements`, adds
+    `com.apple.private.persona.modify` and `com.apple.private.xpc.persona-manager`. **Disposition:**
+    this shows the key is requested through the same `CODE_SIGN_ENTITLEMENTS` mechanism any developer
+    uses — it does **not** show whether AMFI honours it on a SIP-enabled release Mac for a
+    non-Apple signing identity. It cuts against the withdrawn claim without settling the question.
+  - **On this host, only Apple platform binaries carry it** — five of 1,788 scanned, listed under
+    claim 2 below. No third-party or operator-signed binary carries it. That is a real signal and is
+    **not** proof of denial.
+  - **What was not obtainable read-only.** Apple's developer documentation on restricted entitlements
+    could not be retrieved as primary text this round; the one fetch attempted returned no page
+    content, and a summariser's recollection is not evidence and was not used. No local list of
+    AMFI-restricted keys was found. The decisive test — sign a binary with the key and see whether it
+    runs — is exactly the compile/sign/execute probe this correction forbids.
+  - Therefore the second branch the finding permits is taken: **narrow the verdict, leave obtainability
+    unresolved.**
+- **Finding 2: REPRODUCES, and the first binary checked disproved the claim.** The result asserted "no
+  runtime interface by which a process can shed or switch it", "no persona-changing helper exists to
+  exec" (table row (e)), and called the boundary "unsheddable" in the verdict, claim 2 and deferral 3.
+  The brief had explicitly required a bounded helper inspection; **no entitlement or import inventory
+  was run**. The absence of an in-place syscall proves only that the *current executable* cannot leave
+  its persona — and `exec` replaces the executable together with its entitlements, so the claim never
+  covered the case it needed to.
+- **Correction 2 — the inventory the brief asked for, and every unsheddability claim narrowed to it.**
+  Scanned with `codesign -d --entitlements -`: **1,788 executable files** across `/bin`, `/sbin`,
+  `/usr/bin`, `/usr/sbin` and `/usr/libexec`. **Five carry `com.apple.private.persona-mgmt`**, and
+  their persona API imports (`nm -u`) are measured, not assumed:
+
+  | Binary | Mode | Persona API imported | What that permits |
+  |---|---|---|---|
+  | `/bin/ps` | `-rwsr-xr-x root wheel` | `_kpersona_pidinfo` | read a pid's persona; **no** create, no spawn |
+  | `/sbin/launchd` | `-rwxr-xr-x root wheel` | `_posix_spawnattr_set_persona_np`, `…_uid_np`, `…_gid_np` | spawn into a persona — but it is PID 1, reached through its XPC interface, not by exec |
+  | `/usr/bin/umtool` | `-rwxr-xr-x root wheel` | `_kpersona_find_by_type`, `_kpersona_getpath`, `_kpersona_info` | read only; **no** create, no spawn |
+  | `/usr/libexec/keybagd` | `-rwxr-xr-x root wheel` | *(none)* | entitled but imports no persona API |
+  | `/usr/libexec/usermanagerd` | `-rwxr-xr-x root wheel` | `_kpersona_alloc`, `_kpersona_palloc`, `_kpersona_dealloc`, `_kpersona_info`, `_kpersona_pidinfo` | **creates and destroys personas** — a system daemon, reached through its service interface |
+
+  **What this establishes:** exec'ing an entitled binary runs *that binary's own code*, so an actor
+  descendant gains nothing from `ps` or `umtool`, which only read. **What it does not establish:**
+  whether `usermanagerd` or `launchd` can be *induced*, through their service interfaces, to place a
+  caller-chosen process into a persona. That would need interface analysis well beyond a read-only
+  inspection and was not attempted. **The bound is stated rather than glossed:** five directories,
+  1,788 files. `/System/Library`, framework bundles, XPC services and `/Applications` were **not**
+  scanned, so this is not a whole-host claim and no whole-host absence is asserted.
+- **Does the verdict still follow without the unsheddability claim? Yes — because it never rested on
+  it.** The blocking fact is that the dispatcher cannot *establish* the boundary: it can neither create
+  a persona nor spawn into one, both entitlement-gated. Sheddability would matter only for a boundary
+  that exists. If persona turned out to be sheddable through some induced daemon path, that would make
+  it a **worse** candidate, not a viable one. So finding 2 removes a supporting property and a piece of
+  the "best intrinsic properties" framing; it does not disturb the corrected verdict.
 
 ### Inspection record — the brief's verify-first premises
 
@@ -413,14 +489,19 @@ Inspected (2026-08-09):
     as `p->p_persona`, and none of those paths touches it. In XNU the only kernel-side removal is
     `persona_proc_drop()`, reached from the **exit** path (`kern_fork.c` line 811) — that is, when the
     process dies, which is precisely the event a stop wants to observe.
-  - **Not sheddable at runtime, and this is structural rather than a privilege rule.** The nine
+  - **CORRECTED — no *in-place* interface exists, which is narrower than "unsheddable".** The nine
     syscall operations contain **no operation that adopts, drops or changes the calling process's
     persona**. Adoption happens only at `posix_spawn` time, via `_posix_spawn_persona_info` →
-    `spawn_validate_persona()` → `spawn_persona_adopt()` (`kern_exec.c` 3967-4046, 4534, 4977). A
-    process that is already running has no interface to leave. **This is the property real GID lacked**
-    — Unit 6 killed that route because setuid-root `newgrp` shed the attribute with no password — and
-    the bounded helper check the brief asked for finds no analogue here: the shed would need an
-    operation that does not exist, not merely a privilege the descendant lacks.
+    `spawn_validate_persona()` → `spawn_persona_adopt()` (`kern_exec.c` 3967-4046, 4534, 4977). So the
+    **currently running executable** cannot leave its persona. **What that does not cover, and what was
+    wrongly claimed:** `exec` replaces the executable *and its entitlements*, so an executable carrying
+    `com.apple.private.persona-mgmt` could use the spawn path to put a descendant in another persona.
+    The bounded inventory in the correction round finds five such binaries on this host; two of them
+    (`launchd`, `usermanagerd`) touch creation or spawn, and whether either can be induced to do it for
+    a caller was **not** established. So the honest form is: no in-place shed exists, and the
+    exec-an-entitled-helper route is **unresolved within a bounded search**. The earlier flat
+    comparison to Unit 6's `newgrp` — that "the shed would need an operation that does not exist" —
+    is withdrawn.
   - **The privilege rules, quoted.** `kpersona_alloc_syscall`: `if
     (!IOCurrentTaskHasEntitlement(PERSONA_MGMT_ENTITLEMENT)) { return EPERM; }`. Same first line in
     `kpersona_dealloc_syscall`. `spawn_validate_persona()`, `kern_exec.c` line 3973: `if
@@ -473,10 +554,15 @@ Inspected (2026-08-09):
   and widen `report_teardown()`'s scoped sentence, which `dispatch.test.sh` case 27h fails on so that
   the change would have to be deliberate. Retained as a description of where a future boundary must
   fit. Neither dispatcher file mentions persona today (searched; zero matches), so nothing regresses.
-- **Claim (7): candidate rejected**, per the verdict above. Not "ready for a probe": there is no probe
-  runnable under any authority in the operator's gift, because the blocking check is an entitlement
-  and not a privilege. Not "operator authority required": the read-only evidence does reach a
-  conclusion, so turning it into an operator decision would be the exact move the brief forbids.
+- **Claim (7): CORRECTED — persona is unusable under current authority, and its obtainability question
+  is named rather than closed.** "Candidate rejected" is withdrawn. Not "ready for a probe" either: no
+  probe is runnable today, because nothing the dispatcher runs carries the entitlement and no root
+  grant supplies one. And **not "operator authority required"** — that verdict would assert the open
+  question can only be settled by a privilege-bearing check, which this unit has not shown. The
+  accurate statement is that one bounded, read-only question remains and was not answered here:
+  whether `com.apple.private.persona-mgmt` can be authorized through any supported signing or
+  provisioning path available to the operator. Until that is settled, persona is neither viable nor
+  rejected. Whether it is worth a further unit is Codex's call.
 
 ### False positive, false negative and race, by case
 
@@ -489,8 +575,8 @@ specific rather than dismissive.
 | (a) uid-502 service present at baseline | correct exclusion | correct exclusion | **correct exclusion** — launchd starts it with no persona (`-`) |
 | (b) uid-502 service launched during the run | correct exclusion | correct exclusion | **correct exclusion** — same reason; nothing inherits a persona it was not spawned into |
 | (c) uid-501 bystander | correct exclusion | correct exclusion | **correct exclusion** — unless it is an app extension, which carries `1004`/`99`, not a run value |
-| (d) fully detached daemon: `setsid`, double fork, descriptors closed, `exec` | reached, then **shed via `newgrp`** | reached | **reached, and it cannot shed** — no syscall operation leaves a persona |
-| (e) descendant execs a setuid-root helper | **FALSE NEGATIVE — decisive** (`newgrp`) | correctly excluded (`login`/`su` authenticate) | **correctly excluded** — no persona-changing helper exists to exec; the operation itself is absent |
+| (d) fully detached daemon: `setsid`, double fork, descriptors closed, `exec` | reached, then **shed via `newgrp`** | reached | reached; **no in-place shed exists** — no syscall operation leaves a persona |
+| (e) descendant execs an entitled helper | **FALSE NEGATIVE — decisive** (`newgrp`) | correctly excluded (`login`/`su` authenticate) | **UNRESOLVED** — five entitled binaries found in the five scanned directories; `ps`/`umtool` only read, but whether `launchd` or `usermanagerd` can be induced to spawn into a persona for a caller was not established |
 | (f) two concurrent runs, different checkouts | not applicable | not applicable | **correct separation** — if each run could allocate its own value |
 | (g) two concurrent runs, one checkout | not applicable | not applicable | **correct separation** — same condition |
 | (h) value collision or reuse of a live system value | not applicable | not applicable | **FALSE POSITIVE** — reusing `1004` would signal seven unrelated app extensions |
@@ -524,21 +610,27 @@ specific rather than dismissive.
 - **"Candidate ready for a probe" would have required the entitlement gate to have a superuser
   alternative.** It very nearly does elsewhere in the same file: `GET`, `INFO` and `FIND` are written
   `!issuser && !entitlement`, and had `ALLOC` and `spawn_validate_persona` been written the same way,
-  persona would have been the strongest candidate in this task — inherited, unsheddable, externally
+  persona would have been the strongest candidate in this task — inherited, no in-place shed, externally
   readable, cheap to wire — and the unit would have ended by naming what a root-bearing probe must
   falsify. Both are entitlement-only. That single missing `||` is the whole difference.
-- **"Operator authority required" would have required the read-only evidence to run out.** It does
-  not: the gate is stated in the kernel source and there is no authority question left open that a
-  privilege-bearing check could answer, because no privilege satisfies an entitlement.
-- **"Candidate rejected" would have collapsed had `ps -axo prsna=` proved unprivileged at the syscall
-  level**, since that was deferral 8's premise and the query side is the half ASID failed. It went the
-  other way: `kpersona_pidinfo` is root-gated and `/bin/ps` is setuid root. The verdict does not rest
-  on this — creation alone settles it — but the lead that motivated the unit did not survive.
+- **"Candidate rejected" would have held had the entitlement been shown unobtainable.** It was not
+  shown. The correction round found the opposite kind of evidence pointing both ways: only Apple
+  platform binaries carry the key among the 1,788 scanned, which suggests denial; but Apple's own XNU
+  tests request it through the ordinary `CODE_SIGN_ENTITLEMENTS` mechanism, which is what any developer
+  uses. Neither settles it, and the deciding test is forbidden here.
+- **"Operator authority required" would have required this to be a privilege question.** It is not.
+  The open question is whether a *signing or provisioning path* exists, which is answerable read-only
+  by someone with the right primary documentation — so escalating it to the operator now would turn an
+  unresolved read-only question into a decision, which the brief forbids.
+- **The whole unit would have collapsed had `ps -axo prsna=` proved unprivileged at the syscall
+  level**, since that was deferral 8's premise. It went the other way: `kpersona_pidinfo` is
+  root-gated, and `/bin/ps` is both setuid root and entitled.
 
 ### Deferrals — carried forward and newly recorded
 
-None is implemented. Items 1-7 are carried from Units 4 and 6. Item 8 is **discharged by this unit**.
-Items 9-10 are carried from Unit 7. Item 11 is new.
+None is implemented. Items 1-7 are carried from Units 4 and 6. Item 8 is **partly discharged**. Items
+9-10 are carried from Unit 7. Item 11 was recorded by the unit; items 12 and 13 by the correction
+round, which is why they are recorded rather than worked.
 
 1. **The plist count is inconsistent.** Unit 5's result said `/System/Library/LaunchAgents` held 465
    plists; a later bounded count returned 456. It affects no mechanism verdict. Correct it only if a
@@ -547,10 +639,12 @@ Items 9-10 are carried from Unit 7. Item 11 is new.
    This unit replaced the previous result rather than appending and removed the Unit 7 brief as
    prior-unit history; the accepted artifacts are untouched. Further reduction is an assessment
    decision.
-3. **No audit exists of the host's setuid-root helpers that can change a process's own credentials.**
-   Partly discharged in Unit 7 for audit credentials, and further narrowed here for persona: no helper
-   can change a persona because no interface to change one exists at all. The general question — every
-   credential class — remains open.
+3. **No audit exists of the host's privileged helpers that can change a process's own credentials.**
+   Partly discharged in Unit 7 for audit credentials. **The persona claim here is corrected:** the
+   earlier wording — "no helper can change a persona because no interface to change one exists at all"
+   — is withdrawn. The correction round's bounded inventory found five entitled binaries, two of which
+   touch persona creation or spawn. The general question remains open for every credential class, and
+   is now known to need an *entitlement* inventory and not only a setuid one.
 4. **The uid-502 census fell 9 → 5 → 3 with no signal.** Re-measured this unit at 15:33 EEST and
    **still 3**, same services, same 10:11:27 start times. Recorded because it was measured; not pursued.
 5. **Codex has no actor-owned bootstrap.** Every Codex command still runs
@@ -561,7 +655,12 @@ Items 9-10 are carried from Unit 7. Item 11 is new.
    D4 narrow-privilege question, which is unauthorized.
 7. **C3b and C4b spend a little of the actor's own quota.** The only checks in the runbook with an
    external cost. Worth the operator knowing before they run it; not a defect.
-8. **DISCHARGED — persona is no longer an unexamined attribute.** This unit is its disposition.
+8. **PARTLY DISCHARGED — persona's mechanics are established; its obtainability is not.** This unit
+   settles inheritance, in-place mutability, query and signalling, and proves the entitlement gate.
+   What remains open, after the correction round withdrew the claim that it was closed, is whether
+   `com.apple.private.persona-mgmt` is obtainable through a supported operator-accessible signing or
+   provisioning path. Persona is therefore no longer an *unexamined* attribute, but it is not a closed
+   one either.
 9. **The `/dev/auditsessions` lifecycle stream was not evaluated as a *verification* aid.**
    `AUE_SESSION_END` means "all the processes in the session have exited", which is what a truthful
    teardown wants — but it needs `AU_SDEVF_ALLSESSIONS`, marked "(Requires privilege.)" in the header,
@@ -577,6 +676,16 @@ Items 9-10 are carried from Unit 7. Item 11 is new.
     inherits a dependency on that binary keeping its setuid bit and its behaviour — the same class of
     shipped-helper dependency that killed the real-GID route in Unit 6, pointing the other way. Not
     pursued: no such boundary currently exists.
+12. **Whether `com.apple.private.persona-mgmt` is obtainable is the open question this unit leaves.**
+    Named here so it is not lost: settling it needs macOS restricted-entitlement authorization,
+    provisioning-profile support and AMFI's treatment of this exact key, from primary documentation —
+    and, to be conclusive, a signed binary actually run, which every scope so far forbids. Not worked:
+    the correction scope is frozen to findings 1 and 2, and this is the residue one of them leaves.
+13. **Two entitled system daemons were not analysed for an induced-spawn path.** `usermanagerd`
+    imports `_kpersona_alloc`/`_palloc`/`_dealloc` and `launchd` imports the persona spawn attributes.
+    Whether either can be driven, through its service interface, to place a caller-chosen process into
+    a persona is unknown. It matters for the escape question rather than for the verdict, and interface
+    analysis is far outside a read-only bounded inspection. Recorded, not started.
 
 ### Command-support table
 
@@ -1265,36 +1374,44 @@ Rollback, if run                : R1's printed verdict; whether R6 ran; R7's res
 
 ## Blocker
 
-**Every candidate named so far has now been examined, and none is usable.** That is a statement about
-the search to date, not a proof that the space is empty — the same distinction Unit 7's correction
-established, and it holds here. The closed supervision discovery excluded process group,
-ancestry-at-stop, environment tag, working directory, `kqueue NOTE_TRACK`, launchd job removal, Darwin
-`ptrace`, containers and coalitions. Unit 5 excluded the pattern-free UID signal as over-broad. Unit 6
-excluded the real GID as sheddable through setuid-root `newgrp`. Unit 7 found the audit session
-unusable under current authority, with its root-bearing form unassessed. Unit 8 rejects persona: the
-best intrinsic properties of any candidate — inherited, unsheddable, externally readable — behind an
-Apple-private entitlement that no authority in the operator's gift can supply.
+**Every candidate named so far has been examined, and none is usable under current authority.** That
+is a statement about the search to date, not a proof that the space is empty. The closed supervision
+discovery excluded process group, ancestry-at-stop, environment tag, working directory,
+`kqueue NOTE_TRACK`, launchd job removal, Darwin `ptrace`, containers and coalitions. Unit 5 excluded
+the pattern-free UID signal as over-broad. Unit 6 excluded the real GID as sheddable through
+setuid-root `newgrp`. Unit 7 found the audit session unusable under current authority, with its
+root-bearing form unassessed. Unit 8 finds persona unusable under current authority — nothing the
+dispatcher runs carries `com.apple.private.persona-mgmt`, and root does not supply it.
 
-**No further candidate is currently named.** Deferral 8, the one recorded unexamined attribute, is
-discharged by this unit. Nothing in this file now points at a next mechanism to test, and no claim is
-made that none exists.
+**Two mechanism questions are open, and neither is closed by assertion.** Unit 7 left ASID's
+root-bearing form unassessed. Unit 8's correction leaves persona's entitlement **obtainability**
+unresolved: whether any supported operator-accessible signing or provisioning path can authorize
+`com.apple.private.persona-mgmt` was not established, and the evidence found this round points both
+ways — only Apple platform binaries carry the key among the 1,788 scanned, yet Apple's own XNU tests
+request it through the ordinary `CODE_SIGN_ENTITLEMENTS` mechanism. If it is obtainable, persona
+becomes the strongest candidate in this task; if it is not, persona is dead. That question is
+read-only and was not answered here.
+
+**One escape question is open too.** Whether an actor descendant could exec an entitled helper to
+leave or change its persona is unresolved within a bounded search: five entitled binaries exist in the
+five directories scanned, `ps` and `umtool` only read, and `launchd` and `usermanagerd` were not
+analysed for an induced-spawn path. This bears on how good persona would be if it were usable at all;
+it does not affect the current-authority finding.
 
 **The dispatcher's current reach is unchanged and is the honest fallback position.** The
 inherited-descriptor handle in `dispatch.sh` reaches further than any candidate examined, and
 `dispatch.test.sh` case 27h pins the surviving hole: a descendant that closes every inherited
 descriptor still survives it. That hole is exactly literal 1a's escaped shape.
 
-**What comes next is not asserted here.** Two things are unresolved and neither is this unit's to
-settle: whether ASID's root-bearing form is worth assessing (Unit 7 left it open and did not size it),
-and what the task does now that the named-candidate list is empty. Both are Codex's assessment, and
-anything that turns out to need new authority is the operator's decision. **Restating what literal 1a
-guarantees is not among the options** — `## Objective and scope` records that the operator preserved
-that guarantee on 2026-08-08.
+**What comes next is not asserted here.** Whether to spend a unit on persona's obtainability, on
+ASID's root-bearing form, or on neither, is Codex's assessment; anything that turns out to need new
+authority is the operator's decision. **Restating what literal 1a guarantees is not among the
+options** — `## Objective and scope` records that the operator preserved that guarantee on 2026-08-08.
 
 **Attended probe authority and unattended production authority remain distinct.** Operator-attended
 `sudo -u` does not give the dispatcher production authority; D4 stays unauthorized and outside this
-unit. Neither authority supplies a code-signing entitlement, which is why persona is rejected rather
-than deferred to an authority decision.
+unit. Neither authority supplies a code-signing entitlement, which is why persona's remaining question
+is about signing paths rather than about privilege.
 
 **The account stays untouched.** Re-measured at the Unit 8 close, 2026-08-09 15:33 EEST, and unchanged
 from the two Unit 7 readings: `id -u wlactor-airesources` → 502, `dseditgroup -o checkmember … admin`
@@ -1308,28 +1425,46 @@ written stays unrunnable, and C1 and every later Stage C step stay stopped.
 
 ## Next action
 
-Codex: assess Unit 8. The verdict is **candidate rejected**, and the conflict named is that both
-persona creation (`kpersona_alloc`) and spawning into an existing persona (`spawn_validate_persona`)
-are gated on the entitlement `com.apple.private.persona-mgmt` with **no superuser alternative**, while
-the read operations in the same file are gated `root || entitlement`. That asymmetry is the whole
-verdict and is the first thing worth checking independently.
+Codex: run the closure check on the two frozen findings only — are findings 1 and 2 resolved, and did
+the correction break something?
 
-Three things the assessment should weigh:
+What the correction did:
 
-1. **Whether "rejected" is the right width.** The claim made is: rejected for every authority in the
-   operator's gift. The theoretical escape — disabling signature enforcement and re-signing binaries —
-   is named, placed outside this task and every authorized stage, and is neither requested nor
-   recommended. If that width is wrong, it is wrong in the direction of the Unit 7 finding 2 error and
-   should be corrected the same way.
-2. **What the task does with an empty named-candidate list.** Deferral 8 is discharged, so nothing in
-   this file points at a next mechanism. This unit deliberately does not assert that the next move is
-   an operator decision, and does not reopen ASID's root-bearing form, which Unit 7 left unassessed.
-3. **Deferral 11, newly recorded.** The persona column is readable only because `/bin/ps` is setuid
-   root and performs a root-gated syscall for an unprivileged caller. No current boundary depends on
-   that, but it is the same class of shipped-helper dependency that killed the real-GID route, and it
-   is now written down.
+1. **Finding 1** — the obtainability claim is withdrawn, and the verdict is narrowed from "candidate
+   rejected" to "unusable under current authority, obtainability unresolved". The finding's second
+   branch was taken deliberately: the first branch would have required establishing effective denial
+   from primary evidence, and that could not be done read-only. What the round did establish is
+   recorded and cuts both ways — `tests/persona.entitlements` and `tests/persona_adoption.entitlements`
+   exist in Apple's XNU tree and are applied by `tests/Makefile` line 2053 through ordinary
+   `CODE_SIGN_ENTITLEMENTS`, which is disposition rather than silence; and only Apple platform binaries
+   carry the key among 1,788 scanned. The one documentation fetch attempted returned no page content,
+   and a summariser's recollection was **not** used as evidence.
+2. **Finding 2** — the inventory the brief originally required was run: 1,788 executables across
+   `/bin`, `/sbin`, `/usr/bin`, `/usr/sbin`, `/usr/libexec`, of which five carry the entitlement, with
+   each one's persona API imports measured. Every unsheddability and no-helper claim is narrowed to
+   "no *in-place* interface exists", the exec-an-entitled-helper route is marked unresolved, the bound
+   is stated so no whole-host absence is asserted, and the verdict is shown to survive without the
+   claim — it rests on the dispatcher being unable to establish the boundary at all, not on
+   sheddability.
+
+**Where an independent look is most worth spending.** The `/bin/ps` result is the one that should have
+been caught earlier: the first binary checked carried the entitlement, which is what made finding 2
+land. If the bounded inventory is still too narrow, that is the direction it will be wrong in.
+
+**Newly recorded as deferrals, not worked:** item 12 (the obtainability question itself, so it is not
+lost), item 13 (`usermanagerd` and `launchd` not analysed for an induced-spawn path). Deferral 8 is
+downgraded from discharged to partly discharged, and deferral 3's persona sentence is corrected.
 
 Preserved and verifiable: the file reduction, the runbook, C5-T, the rollback, the evidence template,
 and the C5 fixture bytes — 210 lines, sha256
 `65b50d193054e6060fda6de866119d98898d8df04889e96b83802430b077a8f9`, markers intact. Host state
-re-measured at the close and unchanged. Only this state file was changed and committed.
+unchanged. Only this state file was changed and committed.
+
+**One preservation point stated precisely rather than glossed.** The frozen scope says to preserve the
+accepted Unit 7 result. Its *text* is no longer in this file — the Unit 8 commit `d4d48ca` replaced
+`## Latest result`, which is what the Unit 8 brief instructed and what core § 4 requires of a field
+that holds current truth rather than a history; the text remains in git at `c49e1f4`. What this
+correction preserved is Unit 7's accepted *conclusions*, which are untouched and still govern: ASID is
+unusable under current authority, its root-bearing form is unassessed, and the mechanism space is not
+exhausted. Literal Phase 1a is likewise untouched. If "preserve" was meant as "restore the text", say
+so at the closure check and it is a one-line fix.
