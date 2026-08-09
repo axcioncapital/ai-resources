@@ -22,8 +22,9 @@ outside this task; Phase 2 stays forbidden.
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 9 — one correction round, frozen to the single finding in
-`## Next action`, before the unresolved entitlement verdict can be accepted.
+Standard. Discovery mode. Unit 9 — one final tightly-bounded fix after the frozen correction closure
+check. The fix is limited to the stale carried-forward sentence that contradicts the corrected Unit 9
+verdict; it does not reopen the evidence or authorize new research.
 
 Named reason for the loop: literal Phase 1a still needs a Darwin supervision mechanism. Unit 8 is
 accepted after its correction and final tightly-bounded fix: persona is unusable under current
@@ -462,7 +463,8 @@ Full Unit 8 record is committed at `ce6a820`; condensed here as current truth (c
   `com.apple.private.persona-mgmt` with **no superuser alternative**. Root does not satisfy an
   entitlement check.
 - Nothing the dispatcher runs carries that entitlement, so persona is unusable **under current
-  authority**. Entitlement obtainability was unresolved at Unit 8 and remains unresolved after Unit 9.
+  authority**. Entitlement obtainability was unresolved at Unit 8; the corrected Unit 9 result settled
+  this exact key as a hard restricted entitlement with no supported operator-accessible path.
 - Bounded scan of 1,788 executables across `/bin`, `/sbin`, `/usr/bin`, `/usr/sbin`, `/usr/libexec`:
   five carry the entitlement, all Apple platform binaries. `/bin/ps` and `/usr/bin/umtool` only read;
   `/sbin/launchd` and `/usr/libexec/usermanagerd` can spawn into or create personas but are reached
@@ -514,31 +516,39 @@ stays unrunnable, and C1 and every later Stage C step stay stopped.
 
 ## Next action
 
-Codex: run the correction closure check on frozen finding 1, and on nothing else. The two questions are
-whether the finding is resolved and whether the correction broke something.
+Codex: run the closure check on the final tightly-bounded fix, and on nothing else. The stale sentence
+is replaced and no current-truth statement contradicts the corrected Unit 9 verdict.
 
-**Resolved.** The finding reproduced by inspection, and it was corrected the first way the finding
-permits: all three named surfaces were inspected read-only, with controls, and the commands are recorded.
-The overreaching claims are gone — the live-probe claim is withdrawn in full, and the "no enumeration
-exists" claims are bounded to the surfaces actually searched and no longer support anything.
+**Before:** "Entitlement obtainability was unresolved at Unit 8 and remains unresolved after Unit 9."
+**After:** "Entitlement obtainability was unresolved at Unit 8; the corrected Unit 9 result settled this
+exact key as a hard restricted entitlement with no supported operator-accessible path."
 
-**One thing the closure check must decide deliberately, because it changes the deliverable.** The
-authorized inspection **resolved the exact-key classification**, so the verdict moved from *unresolved*
-to **supported path unavailable** and persona is rejected. The brief asked to preserve "the exact key's
-unresolved classification"; that instruction assumed the search would come back empty, and it did not.
-Reporting the classification is the finding's own first branch, so this is a resolution rather than
-drift — but it is a verdict change and it is flagged rather than absorbed. Everything else the brief
-asked to preserve is intact: the claim-versus-authorization mechanism, the supported-capability
-inventory, the XNU AppleInternal build-context finding, Deferral 14, literal Phase 1a and the untouched
-live account.
+Verification, run after the edit rather than before: searched this file for `unresolved`. Outside this
+`## Next action` record, nine occurrences survive, and each is accounted for rather than counted:
 
-**Candidate deferrals, recorded and not done.** Deferral 14 is still open and uncorrected. AMFI's further
-gates — platform-binary status, trust caches and profile evaluation — were not analysed; they can only
-add gates, not remove the proved one. Unit 8's induced-helper escape question is now moot for viability
-and is recorded rather than carried as live work.
+- **Line 466, the edited sentence** — now states the Unit 8 fact historically and the corrected Unit 9
+  truth. This is the fix.
+- **Lines 93, 97, 101** — inside the Unit 9 brief reproduced verbatim in `## Lane and unit`. Historical
+  record of what Codex wrote, not a current-truth claim.
+- **Lines 136, 140** — the correction round describing the classification it *superseded*. Each names the
+  supersession; neither asserts the classification is open.
+- **Line 423** — Unit 7's ASID root-bearing form. Genuinely open, and unrelated to this key.
+- **Line 512** — actor reach into the operator home before Stage D. Also unrelated and still open.
 
-Nothing else changed. This state file is the only file touched; the kernel collection was decompressed
-read-only to a session scratch file outside the repository and removed afterwards. No process was
-signalled, nothing was compiled, signed, installed or executed, no persona was created or changed, and
-`wlactor-airesources` (uid 502) was not touched, logged into or authenticated. Stages D/E, Phase 1f and
-every Phase 2 action remain unentered.
+**The search could have failed, and its first run did.** The phrase `remains unresolved after Unit 9`
+still matches twice — both inside this record, at the "Before" quotation and in this sentence. An earlier
+draft of this paragraph claimed the phrase "returns nothing", which its own wording made false. The
+accurate statement is that the phrase no longer appears anywhere outside this verification record.
+
+**One candidate deferral, recorded and not done.** Line 31, in `## Lane and unit`, still reads
+"entitlement obtainability is unresolved" as part of the named reason for the loop. That sentence sits
+outside the single sentence this fix was frozen to, so it was not touched. It reads as a description of
+the position at Unit 8 rather than a claim about now, but Codex may want it aligned; that is its call at
+this closure check.
+
+Nothing else changed. The kernel-table evidence, the verdict, the blocker, Deferral 14 and every other
+carried conclusion are untouched, and this state file is the only file in the commit — the working tree
+also holds unrelated edits to the Work Loop command and skill that are not mine and were not staged. No
+new claim, no research, no host action. No process was signalled, nothing compiled, signed, installed or
+executed, no persona created or changed, and `wlactor-airesources` (uid 502) was not touched, logged into
+or authenticated. Stages D/E, Phase 1f and every Phase 2 action remain unentered.
