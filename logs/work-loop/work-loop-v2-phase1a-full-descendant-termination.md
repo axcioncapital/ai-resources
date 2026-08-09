@@ -589,9 +589,10 @@ Every row is a way this runbook can return "no". None of them continues setup.
 
 **C3a or C3b fails.** Stop at once. Run rollback R1–R7. Nothing outside the actor's own account was
 ever touched — no ACL, no `sudoers`, no change to the operator's home, and C6 wrote no Git config —
-so a complete R1–R7 leaves the host as it was. If R6 was not run, the actor's home directory remains
-at `/Users/wlactor-airesources` and that is stated as residue, not glossed. Report the exact C3
-output, redacted per the template.
+so a **complete** R1–R7 leaves the host as it was. A rollback that stops before R6 does not: the
+account record is gone after R4, but `/Users/wlactor-airesources` survives with the actor's login
+keychain and `~/.codex/auth.json` still in it. Report that residue explicitly rather than calling the
+host clean. Report the exact C3 output, redacted per the template.
 
 **C3 passes but C4, C5 or C6 fails.** Stop. Do **not** proceed to D. Preserve the exact non-secret
 output of the failing check plus the checks that passed before it. Rollback R1–R7 is available and is
@@ -623,17 +624,62 @@ Run in order. Every step names `wlactor-airesources` literally; none touches any
 
 | # | Command | Kind | Checked by |
 |---|---|---|---|
-| R1 | `ps -o pid,uid,ppid,pgid,command -p "$(pgrep -U $(id -u wlactor-airesources) \| tr '\n' ',' \| sed 's/,$//')" 2>/dev/null; pgrep -U $(id -u wlactor-airesources) >/dev/null; echo $?` | `[READ-ONLY]` | exit `1` expected. **Exit `0` → STOP and take the printed list to the operator.** This rollback never invents a sweep, and the C5 fixture is not a cleanup tool |
-| R2 | `sudo -u wlactor-airesources -H /Users/wlactor-airesources/.local/bin/claude auth logout` | `[ROLLBACK]` | may fail because the keychain is locked; that is expected — record the exact message and continue. R4 removes the account and its keychain with it |
-| R3 | `sudo -u wlactor-airesources -H /Applications/ChatGPT.app/Contents/Resources/codex logout` | `[ROLLBACK]` | file-based, so it should succeed; R4 removes `~/.codex` regardless |
-| R4 | `sudo sysadminctl -deleteUser wlactor-airesources -keepHome` | `[ROLLBACK]` | `-keepHome` is passed explicitly because the **default** home behaviour is not documented locally (`man -w sysadminctl` → no manual entry). Home removal is R6's job, under guards |
+| R1 | **the census block printed below this table** — do not retype it | `[READ-ONLY]` | it prints its own verdict. `R1 OK` → continue to R2. Any `R1 STOP` → stop and take the output to the operator. This rollback never invents a sweep, and the C5 fixture is not a cleanup tool |
+| R2 | `sudo -u wlactor-airesources -H /Users/wlactor-airesources/.local/bin/claude auth logout` | `[ROLLBACK]` | may fail because the keychain is locked; that is expected — record the exact message and continue. **R4 does not clear it:** the login keychain lives in `~/Library/Keychains/` inside the actor's home, and `-keepHome` retains the home. Those files are removed by **R6**, not R4 |
+| R3 | `sudo -u wlactor-airesources -H /Applications/ChatGPT.app/Contents/Resources/codex logout` | `[ROLLBACK]` | file-based, so it should succeed. **R4 does not remove `~/.codex`** — it is inside the retained home, so `~/.codex/auth.json` survives until **R6** |
+| R4 | `sudo sysadminctl -deleteUser wlactor-airesources -keepHome` | `[ROLLBACK]` | `-keepHome` is passed explicitly because the **default** home behaviour is not documented locally (`man -w sysadminctl` → no manual entry). It removes the **directory-services record only**. Everything in `/Users/wlactor-airesources` survives it, credentials included; R6 is the step that removes them |
 | R5 | `id -u wlactor-airesources` → "no such user"; `dscl . -read /Users/wlactor-airesources RecordName` → `eDSRecordNotFound` | `[READ-ONLY]` | both must hold. If either does not, **stop** and report; do not retry blind and do not run R6 |
-| R6 | `H=/Users/wlactor-airesources; [ "$H" = /Users/wlactor-airesources ] && [ -d "$H" ] && [ ! -L "$H" ] && [ "$(dirname "$H")" = /Users ] && sudo /bin/rm -rf "$H"` | `[ADMIN]` | five guards, all literal: the path is exactly the actor home, it is a directory, it is not a symlink, its parent is `/Users`, and R5 already proved the account is gone. Run **only** after R5 passes |
+| R6 | `H=/Users/wlactor-airesources; [ "$H" = /Users/wlactor-airesources ] && [ -d "$H" ] && [ ! -L "$H" ] && [ "$(dirname "$H")" = /Users ] && sudo /bin/rm -rf "$H"` | `[ADMIN]` | five guards, all literal: the path is exactly the actor home, it is a directory, it is not a symlink, its parent is `/Users`, and R5 already proved the account is gone. **This is the only step that removes the actor's login keychain and `~/.codex/auth.json`.** Run **only** after R5 passes |
 | R7 | `ls -ld /Users/wlactor-airesources` → "No such file or directory"; `id -u wlactor-airesources` → "no such user" | `[READ-ONLY]` | if either still resolves, report exactly what remains. **Never claim a clean host on an unverified rollback** |
 
-**No rollback step deletes or repurposes a pre-existing account**, and no step guesses. R5 proves the
-account removed is the one it meant to remove before R6 touches any file, and R7 is the only source of
-the "host is clean" claim.
+**If the rollback stops before R6, credentials remain on disk.** The account record is gone after R4,
+but `/Users/wlactor-airesources` still holds the actor's login keychain and `~/.codex/auth.json`. That
+is the residue to report — an unfinished rollback is not a clean host, and R7 is the only source of
+the "host is clean" claim. **No rollback step deletes or repurposes a pre-existing account**, and no
+step guesses: R5 proves the account removed is the one it meant to remove before R6 touches any file.
+
+#### R1 — the census block
+
+Copy this whole block. It is a block rather than a table cell because the pipelines it needs cannot
+survive inside one: a `|` written in a table row has to be escaped, and a copied `\|` is read by Bash
+as an ordinary argument, not a pipeline. It signals nothing, cleans nothing, and runs no command as
+the actor.
+
+```bash
+# R1 — census the actor boundary before removing anything.
+# READ-ONLY: it signals nothing, cleans nothing, and never runs a command as the actor.
+R1_UID="$(id -u wlactor-airesources 2>/dev/null)"
+case "${R1_UID:-}" in
+  ''|*[!0-9]*)
+    echo "R1: account wlactor-airesources does not exist — nothing to census. Go to R7."
+    ;;
+  *)
+    R1_PIDS="$(pgrep -U "$R1_UID" 2>/dev/null)"
+    R1_RC=$?
+    case "$R1_RC" in
+      1)
+        echo "R1 OK: actor boundary is empty (pgrep exit 1) — continue to R2"
+        ;;
+      0)
+        R1_LIST="$(printf '%s\n' "$R1_PIDS" | tr '\n' ',' | sed 's/,*$//')"
+        echo "R1 STOP: uid $R1_UID still owns processes. This rollback never signals them."
+        if [ -n "$R1_LIST" ]; then
+          ps -o pid,uid,ppid,pgid,command -p "$R1_LIST"
+        else
+          echo "R1 STOP: pgrep exited 0 but returned no pids — treat the census as unreadable"
+        fi
+        echo "R1 STOP: take the list above to the operator. Do not run R2-R7 yet."
+        ;;
+      *)
+        echo "R1 STOP: pgrep exit $R1_RC — the boundary cannot be read. Do not continue."
+        ;;
+    esac
+    ;;
+esac
+```
+
+`ps` is only ever reached with a non-empty comma-joined pid list, so the malformed `ps -p ""` call the
+previous R1 could make cannot happen.
 
 ### Operator evidence template
 
@@ -655,60 +701,100 @@ C5  full stdout of the fixture (it contains no secrets)
 C6a git status WITHOUT safe.directory : exit=<code>  first line: <text>
 C6b git status WITH safe.directory    : exit=<code>  first line: <text or "clean">
 Anything that stopped early     : which step, and its exact non-secret output
-Rollback, if run                : R1–R7 outcomes, and R7's residue result verbatim
+Rollback, if run                : R1's printed verdict; whether R6 ran; R7's residue result verbatim
+                                  (if R6 did not run, say so — the keychain and ~/.codex are still there)
 ```
+
+### The final fix — finding 2 only
+
+Findings 1, 3 and 4 were accepted at the closure check and are unchanged. Codex took the executable
+core § 3 menu and permitted one final tightly-bounded fix on finding 2. It has two edits, and nothing
+else in the runbook was touched.
+
+**Both defects reproduced before either was corrected.**
+
+- **R1 was not copy-safe.** Its pipes were written `\|` so the markdown table would not break. Bash
+  reads a copied `\|` as an ordinary argument, not a pipeline. Reproduced read-only with harmless
+  synthetic input: `bash -c 'printf "1\n2\n" \| tr "\n" "," \| sed "s/,$//"'` printed `1` and `2` on
+  separate lines and exited 0 — one `printf`, no pipeline, no comma-joined list. The correct form
+  `printf "1\n2\n" | tr "\n" "," | sed "s/,$//"` prints `1,2`. So the old R1 fed `ps -p ""`, and
+  `ps -o pid,uid,command -p ""` on this host answers `ps: Invalid process id`. R1 could therefore
+  reach its STOP branch while printing no census at all — the exact list the operator is told to
+  carry to the operator decision.
+- **R2's keychain claim was false.** It said R4 removes the account "and its keychain with it", but
+  R4 passes `-keepHome`. The login keychain is in `~/Library/Keychains/` inside the retained home, so
+  R4 cannot remove it. R3 carried the identical error about `~/.codex`.
+
+**Edit 1 — R1 is now a copy-safe block.** The table cell points at a fenced block below the table,
+where real pipes need no escaping, and says why. The block resolves the uid first, then branches on
+`pgrep`'s exit status: account absent, boundary empty (`R1 OK`, continue), boundary populated (print
+the full census, then `R1 STOP`), census unreadable (`R1 STOP`), and the pathological exit-0-with-no-
+pids case (`R1 STOP`, treated as unreadable). `ps` is only ever called with a non-empty comma-joined
+list, so the malformed call cannot recur. It signals nothing and runs no command as the actor.
+
+**Edit 2 — the residue statements now agree with `-keepHome`.** R2 says the keychain survives R4 and
+is removed by R6. R3 says the same for `~/.codex/auth.json`; that cell carried the identical false
+claim, so leaving it would have contradicted the very sequence this edit exists to make coherent.
+R4 now states that it removes the directory-services record only. R6 is marked as the only step that
+removes the actor's credentials. A new paragraph under the table, the C3-failure outcome paragraph
+and the evidence template all now say the same thing: **a rollback that stops before R6 leaves the
+actor's login keychain and `~/.codex/auth.json` on disk, and that is not a clean host.**
 
 ### Result and evidence
 
-Result: all four frozen findings are corrected in this file, and none was only partly resolved.
-Finding 1 — the C5 fixture now asserts the measured escape shape (`D_PPID == 1`, `D_PGID` numeric and
-distinct from both the operator's and the launcher's group) instead of the false `D_PGID == D`; the
-descriptor check is now two `lsof` calls and a hard `refuse`; `INT`/`TERM` clean up and exit 2 instead
-of returning into the signal sequence; and the fixture creates three actor-owned processes plus the
-uid-501 bystander, which is Unit 2's accepted later check rather than a weakening of it. Finding 2 —
-`-password -` replaces the unestablished "it will prompt" premise, preflight collision now stops
-instead of asking the operator to pick a name, R1 stops and reports instead of routing processes
-through the fixture, R6 is a five-guard literal-path command instead of "by hand", and the
-C3-failure text now names the home as residue when R6 has not run. Finding 3 — C3b and C4b are added
-as effective non-GUI round-trips, C3a/C4a are demoted to metadata in the text and in the matrix, and
-`--bare` is explicitly excluded because it bypasses the credential path under test. Finding 4 —
-step H is deleted, C6 writes nothing at all, and the all-pass path ends in the operator's exact
-retain-or-rollback question with no recommendation attached.
+Result: both edits are applied and neither is partly resolved. R1 is executable when copied from the
+raw state file and prints a census in the one case the operator needs it. Every rollback statement
+about what survives R4 now matches `-keepHome`. No other part of the runbook changed: the C5 fixture,
+the stage table, the command-support table, the fail-capability matrix and the all-pass question are
+byte-identical to the accepted version.
 
-Evidence: `bash -n` returned exit 0 on a temporary copy of the exact corrected C5 content above, and
-the copy was then removed (`[ -f ] → GONE`). The static signal audit was re-run by `grep -nE
-'\bkill\b|\bpkill\b'` over that same content: nine matching lines, four of them invocations, matching
-the four-row table above — a fifth invocation would have appeared there. Finding 1's corrected
-assertion is taken from the repository's measured record, not re-derived: `runs/
-probe-escaped-descendants-2026-08-07.md` line 35 records the daemon as pid 60086 / ppid 1 / pgid
-60085, which is what makes `D_PGID == D` false and separation the right test. Finding 2's password
-form is the local `sysadminctl` usage line "Pass '-' instead of password in commands above to request
-prompt", and the deletion-default gap is `man -w sysadminctl` → "No manual entry for sysadminctl".
-Finding 3's split rests on `claude auth status --help` (only `--json`/`--text`, no verify mode),
-`claude --help`'s `--bare` text ("OAuth and keychain are never read"), and `codex exec --help`
-(`--sandbox read-only`, `--skip-git-repo-check`, `-C`). Finding 4's no-write C6 rests on `git -c
-safe.directory=… --no-optional-locks -C … status --porcelain` run read-only this round, exit 0.
+Evidence, all read-only and all on synthetic input or stubs — no actor-account command, no signal, no
+`sudo`, no host change:
 
-The evidence can fail: the `bash -n` result would have been non-zero on a syntax error, the `grep`
-would have shown a fifth signalling site, and the measured pgid values either say 60086/60085 or they
-do not. Nothing was executed: no `sudo`, no account action, no login, no signal.
+- `bash -n` on the exact R1 block returned **exit 0**.
+- `grep -cnE '\bkill\b|\bpkill\b|sudo|sysadminctl|rm '` over the R1 block returned **0** — it cannot
+  signal, elevate or delete.
+- The block was exercised through **all five branches** with stubbed `id`, `pgrep` and `ps`, so no
+  real account was queried and no real process table was read:
+
+  | stub case | `pgrep` exit | printed |
+  |---|---|---|
+  | account absent | — | `R1: account … does not exist — nothing to census. Go to R7.` |
+  | boundary empty | 1 | `R1 OK: actor boundary is empty (pgrep exit 1) — continue to R2` |
+  | boundary populated (811, 812, 813) | 0 | `R1 STOP: uid 901 still owns processes …` then `ps … -p 811,812,813` then `R1 STOP: take the list above to the operator.` |
+  | census unreadable | 2 | `R1 STOP: pgrep exit 2 — the boundary cannot be read.` |
+  | exit 0 but no pids | 0 | `R1 STOP: … pgrep exited 0 but returned no pids — treat the census as unreadable` |
+
+  The populated case is the one the old R1 got wrong; the stub shows `ps` receiving `811,812,813`,
+  never an empty argument. The temporary block and harness were removed afterwards (`ls` → no
+  matches).
+
+The evidence can fail. The old form and the new form were run side by side on the same synthetic
+input and printed different results — `1`/`2` against `1,2`; had they printed the same thing, finding
+2's first edit would have had no defect to fix and this would say so. The five stub branches would
+have shown a wrong verdict or a malformed `ps` call if the branching were wrong. And the keychain
+claim is settled by the flag itself: `-keepHome` retains the home, and the keychain is a file in it.
 
 The runbook being well formed still proves nothing about the route. Only the operator's later run
 supplies the missing host evidence, and **Phase 1a stays open even if every Stage C check passes.**
 
-### Newly noticed — candidate deferrals, not corrected here
+### Deferrals — recorded, not done
 
-Three things surfaced during this round. None is inside the frozen scope, so none was implemented.
+Four, including the one Codex named at the closure check. None is inside the final fix's scope.
 
-1. **Codex has no actor-owned bootstrap.** The Claude bootstrap installs into the actor's own home
+1. **The C5 fixture has no invocation or transport route.** It lives inline in this state file, but
+   this unit may not create a file under `runs/`, so nothing says how the operator gets it onto disk
+   to run it, under what name, or with what cleanup. Codex noticed this at the closure check and
+   recorded it as a deferral rather than part of the final fix. It must be settled before Stage C can
+   actually be executed.
+2. **Codex has no actor-owned bootstrap.** The Claude bootstrap installs into the actor's own home
    (C1a/C1b), but every Codex command still runs `/Applications/ChatGPT.app/Contents/Resources/codex`
-   — a permanent dependency on the operator's application bundle. That is acceptable for a temporary
-   Stage C probe and is not acceptable as steady state. Not corrected: finding 3 asks only for an
-   effective Codex check, and changing the Codex install layout is D/E territory.
-2. **Every actor command in the runbook goes through the operator's `sudo`.** A real dispatcher
+   — a permanent dependency on the operator's application bundle. Acceptable for a temporary Stage C
+   probe, not acceptable as steady state. Changing the Codex install layout is D/E territory.
+3. **Every actor command in the runbook goes through the operator's `sudo`.** A real dispatcher
    cannot use the operator's sudo credential, so the run-as route for production is still unsolved.
-   Not corrected: it is the D4 narrow-privilege question, which is unauthorized.
-3. **C3b and C4b spend a little of the actor's own quota.** They are the only checks in the runbook
+   It is the D4 narrow-privilege question, which is unauthorized.
+4. **C3b and C4b spend a little of the actor's own quota.** They are the only checks in the runbook
    with an external cost. Worth the operator knowing before they run it; not a defect, and not a
    reason to weaken the check back to metadata.
 
@@ -719,7 +805,14 @@ C5 and C6, which this unit must not and did not manufacture.
 
 ## Next action
 
-Codex: closure check on the four frozen findings only — are findings 1, 2, 3 and 4 resolved, and did
-the correction break anything that previously worked? Anything newly noticed is a deferral, not a
-second correction round. Three candidate deferrals are already recorded at the end of
-`## Latest result`.
+Codex: the final closure check, covering these two edits and nothing else — is R1 now copy-safe and
+fail-capable, and do the R2/R3/R4/R6 and outcome statements agree with `-keepHome`? Did either edit
+break something that previously worked? The C5 fixture was verified byte-identical to the accepted
+version (`diff` against `HEAD`, 210 lines, no differences), so findings 1, 3 and 4 are untouched.
+
+One scope note for the check: R3 was edited alongside R2. It carried the identical false claim that
+R4 removes `~/.codex`, and leaving it would have contradicted the sequence edit 2 exists to make
+coherent. If Codex reads that as outside the frozen fix, say so and it comes back out.
+
+Anything else newly noticed is a deferral, not a further round. Four are recorded at the end of
+`## Latest result`, including the C5 invocation and transport gap Codex named.
