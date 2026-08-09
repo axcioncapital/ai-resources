@@ -162,11 +162,17 @@ path:
   `suser()` **directly**, not through `priv_check_cred()`, so it has **no `mac_priv_grant` path at all**:
   no entitlement can grant it; it is strictly superuser. (Unit 7, re-confirmed.)
 - `audit_session_port()` — a port to **another** session — is gated by
-  `priv_check_cred(cred, PRIV_AUDIT_SESSION_PORT, 0)`, whose only non-root path is `mac_priv_grant()`.
-  `mac_priv_grant()` dispatches to registered MAC policies' `mpo_priv_grant` hooks, which on macOS are
-  implemented in the **closed** kexts AMFI and Sandbox, not in published XNU. I therefore **cannot read
-  the grant table from primary source**, and I bound that as an inspection failure rather than asserting
-  no grant exists.
+  `priv_check_cred(cred, PRIV_AUDIT_SESSION_PORT, 0)`. `PRIV_AUDIT_SESSION_PORT` is `1017`
+  (`bsd/sys/priv.h`, verbatim): *"Obtain send-right for arbitrary audit session's port."* Its only
+  non-root path is `mac_priv_grant()`, which dispatches to registered MAC policies' `mpo_priv_grant`
+  hooks — implemented in the **closed** kexts AMFI and Sandbox, not in published XNU. That grant table
+  is therefore not readable from primary source, and I bound that as an inspection limit rather than
+  asserting no grant exists. **But the grant is settled as moot two ways:** the privilege it gates,
+  by its own definition, only obtains a port to *another* session — and (i) the shed does not need it
+  (it uses the unprivileged `audit_session_self` + `audit_session_join`, below), and (ii) even a
+  process that held the grant would gain only a foreign-session port, which the unprivileged cooperator
+  path already provides — no extra shed capability. So whatever AMFI's table contains cannot change the
+  verdict.
 - **But the grant question does not decide anything**, because the shed route does not need
   `audit_session_port()`. `audit_session_join_internal()` carries **no privilege check** and accepts a
   send-right the caller already holds; `audit_session_self()` mints an own-session send-right with **no
@@ -195,17 +201,34 @@ path:
   copies in the send-right (`ipc_typed_port_copyin_send(… IKOT_AU_SESSIONPORT …)`) and calls this.
   **This is the supported in-chain shed route the final fix asked me to find, and it exists.**
 
-**Item 1 (audit-token acquisition for the escaped hardened shape).** The atomic terminate needs only two
-token fields — `proc_find_audit_token()` (`bsd/kern/kern_proc.c`, verbatim) uses `get_audit_token_pid()`
-and compares the live `proc_pidversion(proc)` against `token.val[7]`, returning `PROC_NULL` (→ `ESRCH`)
-on mismatch; it does **not** compare the whole token. So identity binding needs pid + pidversion. What I
-**could not establish read-only** is a supported root-usable path to obtain those for an arbitrary
-**non-spawned, hardened** descendant: `task_info(TASK_AUDIT_TOKEN)` needs a task port, and the source
-defining `task_for_pid` / `task_name_for_pid` and their platform-binary gates **did not surface across
-three fetch attempts** (stated as an inspection failure, not read as either answer); no `libproc`/
-`proc_info` flavor exposing `p_idversion` was confirmed present in this SDK's `sys/proc_info.h`. So even
-setting the shed aside, the terminate's efficacy against the escaped shape is **unestablished**, which
-item 1 says must revise the verdict rather than call the mechanism probe-ready.
+**Item 1 (audit-token acquisition for the escaped hardened shape) — SETTLED, and it reverses my prior
+punt.** The earlier "the source did not surface across three fetches" was a tooling failure, not a
+read-only impossibility: `task_for_pid` / `task_name_for_pid` / `task_inspect_for_pid` moved out of
+`bsd/vm/vm_unix.c` into `bsd/kern/kern_proc.c` in this XNU, and reading them there settles the question.
+A **supported root-usable acquisition path exists**, established from verbatim source:
+
+- The atomic terminate needs only two token fields — `proc_find_audit_token()` (`kern_proc.c`) uses
+  `get_audit_token_pid()` and compares live `proc_pidversion(proc)` against `token.val[7]`, returning
+  `PROC_NULL` (→ `ESRCH`) on mismatch; it does **not** compare the whole token.
+- `task_name_for_pid()` and `task_inspect_for_pid()` (`kern_proc.c`) **permit a root caller for any
+  process** — the gate is `… || kauth_cred_issuser(kauth_cred_get()) || …`, which short-circuits the
+  same-uid checks. Verbatim: `task_for_pid_posix_check()` returns `TRUE` immediately
+  `if (kauth_cred_issuser(mycred))`.
+- The control-port SIP/hardened restriction does **not** apply to these ports. The flavor gate
+  (`task_ident.c`, `task_identity_token_get_task_port`) runs `task_conversion_eval` **only** for
+  `flavor <= TASK_FLAVOR_READ`; `TASK_FLAVOR_INSPECT` and `TASK_FLAVOR_NAME` bypass it, leaving only the
+  AMFI hook `mac_proc_check_get_task(cred, &pident, TASK_FLAVOR_INSPECT/NAME)`.
+- `task_info()` needs only an inspect-flavor port (`task.c`: `flavor = TASK_FLAVOR_INSPECT`), and
+  `TASK_AUDIT_TOKEN` is an ordinary `task_info` flavor returning the `audit_token_t` — which carries pid,
+  ASID and pidversion (`bsm/libbsm.h` accessors).
+
+So `task_inspect_for_pid(pid)` → `task_info(TASK_AUDIT_TOKEN)` → `proc_terminate_with_audittoken` is a
+supported root path, and the hardened-runtime/platform status of the escaped `/bin/sleep` does **not**
+block it, because inspect/name ports are the introspection flavors deliberately exempted from the
+control-port hardening. **The one residual** is AMFI's inspect/name-flavor `mac_proc_check_get_task`
+decision (closed kext), which by design is far more permissive than for the control port. Consequence:
+item 1 is **no longer a reason for rejection** — the termination step can reach the escaped shape. The
+rejection now rests **solely** on the item-2 shed.
 
 ### Inspection record — the brief's load-bearing premises
 
@@ -257,7 +280,7 @@ These were established read-only and remain true; they are simply not sufficient
 | Case | Outcome |
 |---|---|
 | (a) account launchd agent at baseline / (b) launched during run | correct exclusion — in the account session, not the run ASID (ASID's one real advantage over UID) |
-| (c) escaped daemon (setsid+double-fork+closerange+exec), no shed | reached in principle; but terminate efficacy on the hardened shape is **unestablished** (item 1) |
+| (c) escaped daemon (setsid+double-fork+closerange+exec), no shed | **reached** — token acquisition via `task_inspect_for_pid` + `task_info(TASK_AUDIT_TOKEN)` is a supported root path that the hardened runtime does not block (item 1, settled) |
 | (d) run member exits, pid reused | no false positive — pidversion-exact terminate spares it (correction, stands) |
 | (e) **descendant joins a foreign session (`audit_session_join`)** | **FALSE NEGATIVE + FALSE SUCCESS** — escapes the ASID scope and drops the run session's `se_procnt`; unprivileged; the defeat |
 | (f) two concurrent runs | distinct ASIDs — but each still exposed to (e) |
@@ -272,8 +295,10 @@ is an unprivileged, unauthenticated in-chain shed that removes a descendant (and
 from the run ASID and simultaneously falsifies the run session's completion signal, and the ASID
 mechanism has no means to prevent it. Read-only primary evidence cannot exclude that an actor descendant
 reaches a foreign session port, so the boundary cannot be certified against literal 1a's absolutes.
-Independently, no supported root-usable path to the escaped hardened process's identity token was
-established read-only, so even the termination step is unproven for the escaped shape.
+This is the **sole** ground for the rejection. The other loose end is settled the other way: a supported
+root-usable path to the escaped hardened process's identity token **does** exist (`task_inspect_for_pid`
+→ `task_info(TASK_AUDIT_TOKEN)`, unblocked by the control-port hardening — item 1), so the termination
+step is not the problem; the shed is.
 
 **What is *not* claimed.** Not exhaustion: I do not claim no mechanism can ever work. The shed could in
 principle be contained by *pairing* ASID with a separate, proven restriction that denies the actor any
@@ -287,24 +312,31 @@ moves audit-session membership, not uid, so the dispatcher's current UID-based r
 - Had `audit_session_join_internal` carried a `suser()`/`priv_check_cred` gate like `setaudit_addr` and
   `audit_session_port` do, the shed would need root and ASID would remain a candidate. It carries **none**
   (verbatim).
-- Had a supported root path to a hardened process's token/pidversion been readable, item 1 would resolve
-  and the terminate would be probe-ready for the escaped shape. The defining source did not surface.
+- Had no supported root path to a hardened process's token existed, item 1 would independently sink the
+  mechanism. One **does** exist (`task_inspect_for_pid` + `task_info(TASK_AUDIT_TOKEN)`; inspect/name
+  ports bypass `task_conversion_eval`), so item 1 is settled *in the mechanism's favour* — which is why
+  the rejection has to stand on the shed alone, not on an acquisition gap.
 - Had `mac_priv_grant` been the only non-root path to change sessions, the closed-kext gap would be the
   whole story; instead the unprivileged join route bypasses it, which is why the grant gap does not save
   the verdict either way.
 
 ### Inspection failures and version gaps
 
-- **The `task_for_pid` / `task_name_for_pid` source did not surface** across three fetches of
-  `bsd/vm/vm_unix.c`; the platform-binary task-port gate is therefore unread, and item 1's acquisition
-  question is left explicitly open (fails closed), not answered.
+- **RESOLVED (was a punt): the `task_*_for_pid` source.** These functions moved from `bsd/vm/vm_unix.c`
+  to `bsd/kern/kern_proc.c` in this XNU; read there (via `gh` raw fetch + grep), they settle item 1 —
+  `task_name_for_pid`/`task_inspect_for_pid` allow a root caller, and the inspect/name flavors bypass the
+  control-port `task_conversion_eval` hardening. The earlier "did not surface across three fetches" was a
+  tooling failure, now corrected.
 - **`mac_priv_grant` policy tables are in closed kexts** (AMFI/Sandbox); the `PRIV_AUDIT_SESSION_PORT`
-  grant set is not readable from published XNU. Bounded to that; and moot, per item 2.
+  (`1017`) grant set is not readable from published XNU. Bounded to that; and moot, per item 2.
+- **The AMFI inspect/name-flavor `mac_proc_check_get_task` decision** for a hardened target is closed
+  (AMFI kext); the XNU framework routes to it after allowing root. By design inspect/name ports remain
+  broadly available, so this is a residual, not a blocker; it is the one point a live probe would confirm.
 - **Source, not runtime:** `xnu-12377.121.6` (cross-checked `xnu-11417.101.15`), not the running `.10`.
   No audit-session or signal call was executed.
 - **The shed's realizability was not tested** (read-only; no IPC probe). Its *possibility* is proven from
-  source; its *exploitability* in a given run environment is a live question that read-only cannot close
-  — which is itself the reason to reject rather than certify.
+  source; its *exploitability* in a given run environment is a live question read-only cannot close —
+  which is itself the reason to reject rather than certify.
 
 ### Carried forward — current truth (core § 4)
 
@@ -324,9 +356,13 @@ moves audit-session membership, not uid, so the dispatcher's current UID-based r
 truthfully closes literal Phase 1a on its own.** Root-bearing ASID solved the granularity and
 false-positive problems that sank the UID and GID boundaries, but `audit_session_join` is an
 unprivileged, unauthenticated in-chain shed the mechanism cannot prevent, and read-only evidence cannot
-exclude an actor descendant reaching a foreign session port. Separately, a supported root path to the
-escaped hardened process's identity token was not established read-only. Both are named above with
-verbatim primary source.
+exclude an actor descendant reaching a foreign session port. Both loose ends the final fix named are now
+settled from verbatim primary source: the `mac_priv_grant` grant path is moot (the shed bypasses it via
+unprivileged `audit_session_self` + `audit_session_join`), and — reversing the earlier punt — a
+supported root path to the escaped hardened process's identity token **does** exist
+(`task_inspect_for_pid` → `task_info(TASK_AUDIT_TOKEN)`; inspect/name ports bypass the control-port
+hardening). So the rejection rests **solely and cleanly on the unprivileged join-shed**, not on any
+acquisition gap.
 
 **This is not a claim of exhaustion.** The candidate space is not proved empty. What is established is
 that every *named* mechanism examined — process group, ancestry, environment tag, working directory,
@@ -347,15 +383,24 @@ port — which is unassessed and unauthorized, not a live candidate.
 ## Next action
 
 Codex: closure check on this final tightly-bounded fix, covering the two frozen items and nothing else.
-Item 2 (mac_priv_grant / in-chain shed) — resolved by completing the grant path (`setaudit_addr` is
-`suser`-only with no grant path; `audit_session_port`'s grant table is closed-kext and moot) and by
-finding the decisive route it was pointing at: unprivileged `audit_session_join` of a held foreign
-session port, quoted verbatim, which sheds an in-chain descendant and falsifies the completion signal.
-Item 1 (token acquisition) — the acquisition path for the escaped hardened shape could not be
-established read-only (defining source did not surface; stated as an inspection failure), so efficacy is
-unproven. Consistent with the final-fix instruction, the verdict is revised to **candidate rejected as a
-self-sufficient literal Phase 1a boundary**, with the exact conflict named. Confirm the two items are
-resolved and that the revision broke nothing preserved, then close or take a menu option (accept as a
-written limitation, revert to the prior candidate-ready framing, reframe the unit, or stop for the
-operator on how to proceed now that the last named candidate is rejected). Persona stays closed;
-Deferrals 14 and 15 remain open; literal Phase 1a and the live account's untouched status are preserved.
+Both are now **settled from verbatim primary source**, and the earlier punts are removed:
+
+- **Item 2 (mac_priv_grant / in-chain shed)** — `PRIV_AUDIT_SESSION_PORT` is `1017` and gates only the
+  *foreign*-session port; `setaudit_addr` is `suser`-only with no grant path; `audit_session_port`'s
+  grant table is closed-kext and **moot**, because the decisive route it pointed at — unprivileged
+  `audit_session_join` of a held foreign session port (`audit_session_join_internal` has no privilege
+  check; `audit_session_self` mints the port unprivileged), quoted verbatim — bypasses it. That shed
+  removes an in-chain descendant from the run ASID and falsifies the completion signal.
+- **Item 1 (token acquisition) — SETTLED, reversing the prior "unproven"**: `task_*_for_pid` live in
+  `bsd/kern/kern_proc.c` (not `vm_unix.c`); `task_name_for_pid`/`task_inspect_for_pid` allow a root
+  caller; inspect/name flavors bypass `task_conversion_eval`, so the control-port hardening does not
+  block them; `task_info(TASK_AUDIT_TOKEN)` yields pid+asid+pidversion for `proc_terminate_with_audittoken`.
+  A supported root path exists; the sole residual is AMFI's inspect-flavor hook. So item 1 is **no
+  longer a rejection reason**.
+
+The verdict therefore stands as **candidate rejected as a self-sufficient literal Phase 1a boundary**,
+now resting solely and cleanly on the unprivileged join-shed. Confirm the two items are resolved and
+that this revision broke nothing preserved, then close or take a menu option (accept as a written
+limitation, revert to the prior candidate-ready framing, reframe the unit, or stop for the operator on
+how to proceed now that the last named candidate is rejected). Persona stays closed; Deferrals 14 and 15
+remain open; literal Phase 1a and the live account's untouched status are preserved.
