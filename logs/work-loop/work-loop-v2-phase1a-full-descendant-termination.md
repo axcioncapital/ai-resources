@@ -129,265 +129,302 @@ account's untouched status; do not create another artifact or push.
 
 ## Latest result
 
-**Unit 10 (Discovery) — VERDICT: root-bearing ASID is a candidate ready for a separately authorized
-live probe.** Read-only throughout. No `sudo`; no audit session created, joined, changed or ended; no
-live audit-session stream opened; no process signalled or launched; nothing compiled, signed, installed
-or executed as a probe; no account action, login or authentication; no Keychain, credential or
-provisioning-profile contents read; the dispatcher, tests and every product file unchanged; no
-repository file other than this one. The live account was not touched or re-measured. Session scratch
-held Apple's published XNU source fetched over the network; nothing was vendored into the repository.
+**Unit 10 (Discovery, CORRECTED at the correction round) — VERDICT: root-bearing ASID paired with
+audit-token termination is a candidate ready for a separately authorized live probe.** The correction
+did not overturn the verdict; it fixed the mechanism the verdict rests on and the two claims that were
+wrong. Read-only throughout, this round too: no `sudo`; no audit session created, joined, changed or
+ended; no live audit-session stream opened; no process signalled, launched or terminated; nothing
+compiled, signed, installed or executed as a probe; no account action, login or authentication; no
+Keychain, credential or provisioning-profile contents read; the dispatcher, tests and every product
+file unchanged; no repository file other than this one. The live account was not touched or re-measured.
+Session scratch held Apple's published XNU source fetched over the network; nothing was vendored.
 
-**What Unit 10 resolves that Unit 7 left open.** Unit 7 established that both ends of an ASID mechanism
-are superuser-gated and stopped there, recording the root-bearing form as *unassessed*. This unit
-assesses it: **given** the two root capabilities Unit 7 named — place-a-session-at-launch and
-query-a-pid's-session — the mechanism satisfies literal 1a's three requirements (terminate the full
-descendant tree including the escaped daemon; signal no unrelated process; never claim success when
-incomplete) more cleanly than any candidate examined so far, because a fresh per-run ASID is (a)
-inherited across the entire escape by the process credential, (b) unforgeable and unsheddable by an
-unprivileged descendant, and (c) backed by a kernel-maintained live-process count whose
-`AUE_SESSION_END` event is a truthful "all members exited" signal. The open items are
-runtime-confirmation questions, not logical defects, and they define the probe.
+**What the correction changed, plainly.** The first result claimed the bystander race was closed by
+"re-checking the ASID immediately before `kill()`." That was wrong, and Codex's finding 1 is correct: a
+re-check and a `kill(pid)` are two separate syscalls, so a matched pid can exit and be reused in the
+gap and the signal can land on an unrelated process. The fix is not a tighter re-check — it is a
+different primitive. Darwin ships `proc_terminate_with_audittoken()` / `proc_signal_with_audittoken()`,
+which signal a process identified by its `audit_token_t`. That token carries the pid **and the
+pidversion** (and the ASID), and the kernel validates it exactly, so a reused pid whose pidversion
+differs is **not** signalled. The window is removed by a kernel identity check, not treated as small.
+The verdict survives because the mechanism it needed existed; the earlier write named the wrong signal
+step. Finding 2's incomplete shed analysis is completed below.
+
+### The correction round — findings 1 and 2
+
+Both frozen findings were reproduced by inspection of the first result before either was corrected.
+
+- **Finding 1: REPRODUCES.** The first result's FP/FN table row (d) read "no false positive — re-check
+  ASID before kill; the reused pid carries a different ASID", and the narrative said the race "is
+  closable here … a re-check-before-kill spares it." A re-check followed by `kill(pid)` is not atomic;
+  the claim that it spares the bystander is false, exactly as the finding states. **Corrected below**
+  by replacing `kill(pid)` with `proc_terminate_with_audittoken()`, whose identity binding is inside
+  the signalling call.
+- **Finding 2: REPRODUCES.** The first result proved only that an *unprivileged* process cannot call
+  the membership-change interfaces, leaned on Unit 7's `login`/`su` setuid inventory for the rest, and
+  labelled induced service work "out of scope" (table row i) without separating a service-owned
+  non-descendant from an in-chain descendant that changes session. **Corrected below** by establishing
+  the gate is superuser (not an entitlement), assessing the spawn-attribute and induced-spawn surfaces,
+  and drawing the descendant/non-descendant line the finding required.
 
 ### Inspection record — the brief's load-bearing premises
 
 ```
 Inspected (2026-08-09):
-- Premise (Unit 9 accepted verdict — persona rejected): HOLDS — read this file's prior `## Latest
-  result`/`## Blocker` and the accepted record at git `444bdf2`. Persona is a hard restricted
-  entitlement in none of AMFI's three exception tables; not reopened, not relied on here.
-- Premise (Unit 7 accepted conclusion at its stated bound — ASID has useful granularity, is unusable
-  under current authority, root-bearing form unassessed): HOLDS — re-established from durable history
-  at git `c49e1f4`, not from recall. That record confirms `setaudit_addr(2)` gated by `suser()`,
-  `auditon(A_GETPINFO_ADDR)` falling to `default: suser()`, `audit_session_port()` gated by
-  `PRIV_AUDIT_SESSION_PORT`, and no unprivileged enumerate-by-session selector.
-- Premise (running kernel and the audit-session subsystem are present on this host): HOLDS — measured:
-  `uname -v` = `xnu-12377.121.10~1/RELEASE_ARM64_T8142`; `bsm/audit_session.h`, `bsm/audit.h`,
-  `bsm/audit_kevents.h`, `security/audit/audit_ioctl.h` all present in the active SDK; `SYS_setaudit_addr
-  358`, `SYS_auditon 351`, `SYS_audit_session_join 429`, `SYS_audit_session_port 432` in
-  `sys/syscall.h`; `/dev/auditsessions` present (`crw-r--r-- root wheel`).
-- Premise (the audit *trail* is not configured on this host — bounds the SESSION_END verification
-  claim): HOLDS — `/etc/security` has `audit_control.example` but no `audit_control`; `pgrep -lf
-  auditd` exits 1. Session tracking is a distinct subsystem, but event *delivery* on this unconfigured
-  host is not proven read-only and is probe falsification condition 6 below.
+- Premise (Unit 9 accepted verdict — persona rejected): HOLDS — read this file's prior sections and
+  the accepted record at git `444bdf2`. Persona is a hard restricted entitlement in none of AMFI's
+  three exception tables; not reopened, not relied on.
+- Premise (Unit 7 accepted conclusion at its stated bound): HOLDS — re-established from durable history
+  at git `c49e1f4`: `setaudit_addr(2)` gated by `suser()`, `auditon(A_GETPINFO_ADDR)` falling to
+  `default: suser()`, `audit_session_port()` gated by `PRIV_AUDIT_SESSION_PORT`, no unprivileged
+  enumerate-by-session selector.
+- Premise (running kernel and the audit-session subsystem are present): HOLDS — `uname -v` =
+  `xnu-12377.121.10~1/RELEASE_ARM64_T8142`; `bsm/audit_session.h`, `bsm/audit.h`, `mach/message.h`,
+  `sys/proc_info.h`, `libproc.h`, `bsm/libbsm.h`, `security/audit/audit_ioctl.h` all present; audit
+  syscalls present; `/dev/auditsessions` present (`crw-r--r-- root wheel`).
+- Premise (the audit trail is not configured — bounds SESSION_END verification): HOLDS — no
+  `audit_control`; `pgrep -lf auditd` exits 1. Falsification condition 6 below.
 ```
 
-### The mechanism, from Apple's published XNU source
+### The mechanism, from Apple's published XNU source and the shipped SDK
 
-Fetched 2026-08-09 from `apple-oss-distributions/xnu` tag `xnu-12377.121.6` — the nearest published tag
-in the running kernel's `12377.121` series (`.10` is not published; that gap is stated, not papered
-over). The three functions below were also read at tag `xnu-11417.101.15` and are unchanged there, so
-they are not a single-release artifact.
+XNU quotes are from `apple-oss-distributions/xnu` tag `xnu-12377.121.6` — the nearest published tag in
+the running `12377.121` series (`.10` is unpublished; stated, not papered over). The audit-session
+allocator, procount and `AUE_SESSION_END` code were cross-checked at `xnu-11417.101.15` and are
+unchanged. Header facts are from the active SDK on this host.
 
-**1. A per-run ASID is kernel-assigned, unique among live sessions, and collision-safe by
-construction.** `audit_session_new()` handles the `AU_ASSIGN_ASID` request with a retry loop:
+**1. A per-run ASID is kernel-assigned, unique among live sessions, collision-safe.** `audit_session_new()`
+handles `AU_ASSIGN_ASID` with a retry loop — `audit_session_nextid()` walks
+`[ASSIGNED_ASID_MIN, ASSIGNED_ASID_MAX]` under the session rwlock and wraps; `audit_session_find()`
+skips any value a live session already holds. `ASSIGNED_ASID_MIN = PID_MAX + 1`,
+`ASSIGNED_ASID_MAX = 0xFFFFFFFF - 1` (`audit_private.h`), so assigned ASIDs begin at 100000 and never
+overlap the pid space — matching the live `asid = 100016`/`100046` Unit 7 observed. Two runs each asking
+`AU_ASSIGN_ASID` receive distinct ASIDs whether or not they share a checkout or account — the property
+UID (Unit 5) and real GID (Unit 6) lacked.
 
-```c
-if (new_asid == AU_ASSIGN_ASID) {
-    do {
-        new_asid = (au_asid_t)audit_session_nextid();
-        found_se = audit_session_find(new_asid);
-        if (found_se != NULL) { audit_unref_session(found_se); }
-        else { break; }
-    } while (1);
-}
-```
+**2. The ASID rides the process credential, so it survives the whole escape and cannot be shed by an
+unprivileged descendant.** `forkproc()` runs `AUDIT_SESSION_PROCNEW(child_proc)` unconditionally;
+`audit_session_procnew()` increments `se_procnt` from `cred->cr_audit.as_aia_p`. `fork` copies the
+credential, `execve` preserves it, `setsid` moves only the BSD session/pgrp. The only calls that change
+a process's audit session are `setaudit_addr(2)` and `audit_session_join(2)`, and both are superuser-
+gated (finding 2). So the escaped daemon still carries the run ASID after setsid + double fork +
+`closerange` + exec.
 
-`audit_session_nextid()` walks `[ASSIGNED_ASID_MIN, ASSIGNED_ASID_MAX]` under the session rwlock and
-wraps; `audit_session_find()` is a hash-table lookup, and any value already held by a live session is
-skipped. `ASSIGNED_ASID_MIN = PID_MAX + 1` and `ASSIGNED_ASID_MAX = 0xFFFFFFFF - 1` (`audit_private.h`),
-so assigned ASIDs start at 100000 and never overlap the pid space — which matches the live values Unit 7
-observed (`asid = 100016`, `100046`). **Consequence for concurrency:** two runs each asking for
-`AU_ASSIGN_ASID` receive two distinct ASIDs whether or not they share a checkout or an actor account.
-This is the property the UID boundary (Unit 5) and the real-GID boundary (Unit 6) both lacked — the same
-account meant the same identity.
+**3. Verification is kernel-authoritative.** `audit_dec_procount()` fires `AUE_SESSION_END` when the
+last member exits (`if (old_val == 1) audit_session_event(AUE_SESSION_END, …)`); `audit_session_procexit()`
+decrements on every exit. `se_procnt` is the kernel's own live-process count across fork, exec and
+orphaning, and the SDK header (`bsm/audit_session.h`, `au_sdev_read_aia`) documents `AUE_SESSION_END`
+as "all the processes in the session have exited," delivered from `/dev/auditsessions` under the
+privileged `AU_SDEVF_ALLSESSIONS` flag.
 
-**2. The ASID rides the process credential, so it survives the entire escape and cannot be shed by an
-unprivileged descendant.** Every new process created through `forkproc()` runs
-`AUDIT_SESSION_PROCNEW(child_proc)` unconditionally, and `audit_session_procnew()` increments the
-session's process count from `cred->cr_audit.as_aia_p`. `fork` copies the credential, `execve`
-preserves it, `setsid` touches only the BSD session/pgrp. The only calls that change a process's audit
-session are `setaudit_addr(2)` and `audit_session_join(2)`, both superuser-gated (Unit 7;
-`audit_session_join_internal()` runs `priv_check_cred(cred, PRIV_AUDIT_SESSION_PORT, 0)` for any session
-but the caller's own). So an actor descendant that setsids, double-forks, closes every descriptor and
-execs `/bin/sleep` still carries the run ASID, and can neither leave it nor forge another. The
-setuid-root exec case does not help it: `exec` preserves the audit session, and the only two setuid-root
-binaries that touch it (`login`, `su`, from Unit 7's complete inventory) authenticate first.
-
-**3. Verification is kernel-authoritative, not a census the supervisor must trust.**
-`audit_dec_procount()` fires an event when the last member exits:
-
-```c
-old_val = OSAddAtomicLong(-1, &se->se_procnt);
-if (old_val == 1) { audit_session_event(AUE_SESSION_END, &se->se_auinfo); }
-```
-
-`audit_session_procexit()` (on every process exit) decrements; `audit_session_procnew()` (from
-`forkproc()` on every fork) increments. So `se_procnt` is the kernel's own count of live processes in
-the session, maintained across fork, exec and orphaning, and `AUE_SESSION_END` means exactly what the
-SDK header says: "all the processes in the session have exited." `bsm/audit_session.h`'s
-`au_sdev_read_aia()` documents that event set (`AUE_SESSION_START/UPDATE/END/CLOSE`) delivered from
-`/dev/auditsessions`, and `AU_SDEVF_ALLSESSIONS` "(Requires privilege.)" is the flag a root supervisor
-would open it with.
+**4. The signal is atomic on process identity — this is the correction's core.** `proc_terminate_with_audittoken()`
+and `proc_signal_with_audittoken()` (`libproc.h`) act on an `audit_token_t`, which is
+`struct { unsigned int val[8]; }` (`mach/message.h`) carrying pid, ASID and pidversion — read with
+`audit_token_to_pid()`, `audit_token_to_asid()`, `audit_token_to_pidversion()` (`bsm/libbsm.h`). In
+XNU, `proc_signal_with_audittoken` → `proc_ident_for_audit_token` → `proc_find_audit_token(token)`
+(returns `ESRCH` if no live process matches) → `proc_ident_with_policy(p, IDENT_VALIDATION_PROC_EXACT)`
+→ `proc_find_ident`, and the delivery permission is ordinary `cansignal_nomac(current_proc(), …)` — so
+**root may call it, no entitlement is required**, and the exact-identity policy means a **reused pid
+with a different pidversion is not signalled**. This binds identity *through* the signalling call, which
+`kill(pid)` cannot. It is a BSD signal, so SIP does not shield the escaped platform binary from being
+terminated by root (SIP restricts task *control* ports and code injection, not signalling).
 
 ### Inheritance and mutability
 
 | Transition | Effect on the run ASID | Source |
 |---|---|---|
 | `fork` / `posix_spawn` | inherited; child increments `se_procnt` | `forkproc()` → `AUDIT_SESSION_PROCNEW`; cred copy |
-| `execve` (incl. of a setuid-root binary) | preserved — exec does not change the audit session | Unit 7; cred preserved across exec |
-| `setsid`, double fork, orphaning to PPID 1 | unchanged — only BSD session/pgrp move; `se_procnt` still counts the orphan | `setsid(2)`; procount is per-cred, not per-parent |
+| `execve` (incl. a setuid-root binary) | preserved — exec does not change the audit session | Unit 7; cred preserved across exec |
+| `setsid`, double fork, orphaning to PPID 1 | unchanged — only BSD session/pgrp move; `se_procnt` still counts the orphan | `setsid(2)`; procount is per-cred |
 | `closerange` / descriptor close | unchanged — the ASID is in the credential, not a descriptor | credential model |
-| unprivileged descendant tries `setaudit_addr` / `audit_session_join(other)` | **blocked** — `suser()` / `PRIV_AUDIT_SESSION_PORT` | Unit 7; `audit_session_join_internal()` |
-| descendant execs a setuid-root helper to shed it | **blocked** — only `login`/`su` touch the session, both authenticate | Unit 7 inventory |
+| unprivileged descendant → `setaudit_addr` / `audit_session_join(other)` | **blocked** — `suser()` / `priv_check_cred(PRIV_AUDIT_SESSION_PORT)` | Unit 7; `kern_priv.c` |
+| descendant execs a setuid-root or entitled helper to shed it | **blocked** — the gate is superuser, and only root-running `login`/`su` touch the session, both authenticating | finding 2 below |
+| `posix_spawnattr_setauditsessionport_np` (spawn child into a session) | **no shed** — needs a session *port*; a port to any session but the caller's own is superuser-gated | `spawn.h`; `audit_session_port()` gate |
 
-### Enumeration, signal and verification, under root
+### Finding 2 — the shed analysis, completed and bounded
+
+The membership-change gate is **superuser, not an entitlement.** `setaudit_addr(2)` runs `suser()`
+(Unit 7). `audit_session_join(other)` and `audit_session_port(other)` run
+`priv_check_cred(cred, PRIV_AUDIT_SESSION_PORT, 0)`, and `priv_check_cred()` (`bsd/kern/kern_priv.c`,
+quoted this round) grants **only** to `kauth_cred_getuid(cred) == 0` or, under `CONFIG_MACF`, a
+`mac_priv_grant(cred, priv)` policy — there is no `IOTaskHasEntitlement` path in the check. Searched
+surfaces for a non-root grant: `priv_check_cred` itself and the audit-session privilege usage; **no MAC
+policy granting an audit-session privilege to an unprivileged or merely-entitled process was found**,
+and that absence is bounded to those surfaces (I did not, read-only, enumerate every registered MAC
+policy). Consequence: an **entitled-but-unprivileged** helper cannot change a session — the barrier is
+privilege, not a capability an actor descendant could carry.
+
+The two induced routes Codex asked me to separate, separated:
+
+- **(a) A service-owned non-descendant.** An actor that induces a root service (`launchd`,
+  `usermanagerd`) to run work gets a process that is a **child of the service, in the service's audit
+  session** — not in the actor's process-descendant chain, and carrying neither the run ASID nor the
+  actor as an ancestor. Terminating "the actor's full descendant tree" does not reach it, and **no
+  per-run boundary does**; it is the general persistence shape every mechanism shares, out of scope for
+  literal 1a. Recorded as an accepted limitation, not a defect.
+- **(b) An in-chain descendant that changes session.** For a process that stays in the actor's
+  descendant chain to end up in a different ASID, it must itself invoke `setaudit_addr`/`audit_session_join`
+  **as root**. Exec preserves the session, so a setuid-root exec alone does not move it; the binary must
+  call the interface. In Unit 7's complete setuid-root inventory of the standard directories, the only
+  binaries that call these interfaces are `login` and `su`, both of which authenticate first. **No
+  supported in-chain shed route was found**, bounded to that inventory plus the gate above.
+
+So no actor-accessible route — unprivileged, entitled-but-unprivileged, setuid-root exec, spawn
+attribute, or induced spawn producing an in-chain descendant — sheds or bypasses the run ASID for a
+process that remains in the descendant tree. The one out-of-scope caveat is (a).
+
+### Enumeration, signal and verification, under root — corrected
 
 | Step | Primitive | Note |
 |---|---|---|
-| place the run in a fresh ASID | `setaudit_addr(ai_asid = AU_ASSIGN_ASID)` at launch, root | needs a small root wrapper that sets the session then execs the actor |
-| read any pid's ASID | `auditon(A_GETPINFO_ADDR)` per pid, root; or `launchctl procinfo <pid>`, root | per-pid, not a set selector; both root-gated (Unit 7) |
-| enumerate candidates | `sysctl KERN_PROC_ALL` / `libproc` list, then filter by queried ASID | no kernel ASID→pidset selector exists |
-| signal | `kill()` per matched pid, re-checking that pid's ASID immediately before | no ASID-scoped signal primitive |
-| verify all gone | `AUE_SESSION_END` for the run ASID from `/dev/auditsessions` (root, `AU_SDEVF_ALLSESSIONS`); or fail-closed polling census | kernel count is authoritative; polling is the fallback if the event does not deliver on this host |
+| place the run in a fresh ASID | `setaudit_addr(ai_asid = AU_ASSIGN_ASID)` at launch, root | small root wrapper sets the session, then execs the actor |
+| enumerate candidates + read ASID | `sysctl KERN_PROC_ALL` / `libproc` list, then per pid obtain the `audit_token` (carries ASID + pidversion) and filter `asid == run` | no kernel ASID→pidset selector; the token doubles as the ASID read |
+| **signal (atomic on identity)** | `proc_terminate_with_audittoken(&token)`, root | pidversion-exact: a reused pid is **not** hit; replaces the false `kill(pid)` + re-check |
+| verify all gone | `AUE_SESSION_END` for the run ASID from `/dev/auditsessions` (root, `AU_SDEVF_ALLSESSIONS`); else fail-closed polling | kernel count is authoritative; polling is the fallback |
 
-There is still no ASID-scoped signal, so termination is list-then-signal — but the race that shape
-carries is closable here in a way it is not for `pkill -U`: the run ASID is unique and unforgeable, so a
-pid that exits and is reused by an unrelated process carries a *different* ASID, and a re-check-before-
-kill spares it. Fail-closed holds throughout: root does not get `EPERM` querying a live pid (only `ESRCH`
-for a dead one), so an unreadable census means retry, never "clean."
+**The one open efficacy dependency, stated exactly (partial resolution of finding 1's "works for the
+escaped shape" clause).** The atomic terminate needs the target's `audit_token`. For a descendant the
+supervisor did not spawn — the escaped daemon — the token must be obtained by enumeration. The token
+carries pidversion, and obtaining it for an Apple-signed platform binary (post-`exec /bin/sleep`) most
+plausibly goes through an **inspect/name** task port (`task_inspect_for_pid`/`task_name_for_pid` +
+`task_info(TASK_AUDIT_TOKEN)`), which SIP does not restrict the way it restricts the **control** port —
+but I could **not settle read-only** whether that acquisition succeeds against a hardened exec on this
+host, and Darwin has no `pidfd` alternative. This is the decisive probe question. Crucially, it is an
+**efficacy** question, not a safety one: if a token cannot be obtained, the descendant is **not
+signalled and the stop reports incomplete** (fail-closed), never a bystander hit and never a false
+success. So the objective's two absolutes hold regardless of how this resolves.
 
-### False positive, false negative and race, by case (root-bearing ASID)
+### False positive, false negative and race, by case — corrected
 
 | Case | Outcome |
 |---|---|
-| (a) account launchd agent present at baseline | correct exclusion — it is in the account login-context session, not the run ASID |
-| (b) account launchd agent launched *during* the run | **correct exclusion** — launchd starts it in the account session; this is the exact false positive that killed the UID boundary (Unit 5, observed 7→9) |
-| (c) escaped daemon: setsid + double fork + closerange + exec | **reached** — the ASID rode the credential through all of it; root query finds it |
-| (d) a run member exits, its pid reused by an unrelated process | no false positive — re-check ASID before kill; the reused pid carries a different ASID |
-| (e) descendant execs a setuid-root helper | correctly excluded from shedding — only `login`/`su` touch the session, both authenticate |
-| (f) two concurrent runs, same or different checkout/account | each gets a distinct kernel-assigned ASID; each supervisor signals only its own |
-| (g) member forks a new child between census and signal | caught on the next iteration — the new child carries the ASID and increments `se_procnt`; loop until `AUE_SESSION_END` / empty census |
-| (h) a query fails | fail-closed — retry; never claim success. Root removes the always-`CENSUS_UNKNOWN` problem the unprivileged case had (Unit 7 row f) |
-| (i) an actor induces a *system service* to run work in the service's session | **out of scope, and a stated limitation** — that work is a child of the service, in the service's ASID, not an actor descendant; no per-run boundary catches it, and literal 1a is about the descendant tree |
+| (a) account launchd agent present at baseline | correct exclusion — in the account login-context session, not the run ASID |
+| (b) account launchd agent launched *during* the run | **correct exclusion** — launchd starts it in the account session; the exact false positive that killed the UID boundary (Unit 5, 7→9) |
+| (c) escaped daemon: setsid + double fork + closerange + exec | **reached** — ASID rode the credential; token-terminate can signal a platform binary, subject to token acquisition |
+| (d) a run member exits, its pid reused by an unrelated process | **no false positive — CORRECTED** — the terminate carries the member's pidversion; the reused pid's pidversion differs, so `proc_find_audit_token` returns `ESRCH` and the bystander is not signalled |
+| (e) descendant execs a setuid-root/entitled helper | correctly excluded from shedding — gate is superuser; only `login`/`su` touch the session, both authenticate |
+| (f) two concurrent runs, same or different checkout/account | each gets a distinct kernel-assigned ASID; each supervisor signals only its own tokens |
+| (g) member forks a new child between census and signal | caught next iteration — the child carries the ASID and increments `se_procnt`; loop until `AUE_SESSION_END` / empty census |
+| (h) a query or token acquisition fails | **fail-closed** — do not signal, report incomplete; never claim success |
+| (i) actor induces a *system service* to run work in the service's session | **out of scope, stated limitation** — a service-owned non-descendant, reached by no per-run boundary (finding 2 case a) |
 
 ### Authority — attended probe vs unattended production (claim 6)
 
 - **Minimum temporary authority for a separately authorized, attended probe:** root, via operator-
-  attended `sudo`, to do three things and nothing else — (i) launch a throwaway actor process through a
-  small wrapper that calls `setaudit_addr(AU_ASSIGN_ASID)` then execs the escape fixture; (ii) read
-  pids' ASIDs with `launchctl procinfo` or a tiny `auditon(A_GETPINFO_ADDR)` reader; (iii) optionally
-  open `/dev/auditsessions` with `AU_SDEVF_ALLSESSIONS` to observe `AUE_SESSION_END`. No account
-  mutation, no persistent config, no dispatcher edit, nothing retained. This is attended probe
-  authority, the class Units 6–7 distinguished — not production authority.
-- **Minimum production authority for an unattended dispatcher:** the dispatcher would have to hold, or
-  call a narrowly-scoped setuid-root helper for, the same two root capabilities (set-session-at-launch
-  and query-by-pid) at **every** launch and **every** stop — a standing root capability in the stop
-  path. That is the D4 narrow-privilege question, and D/E are unauthorized. This unit neither requests
-  nor designs it.
+  attended `sudo`, to — (i) launch a throwaway actor through a wrapper calling
+  `setaudit_addr(AU_ASSIGN_ASID)` then execing the escape fixture; (ii) enumerate and obtain each
+  member's `audit_token` and read its ASID; (iii) terminate with `proc_terminate_with_audittoken`;
+  (iv) optionally open `/dev/auditsessions` (`AU_SDEVF_ALLSESSIONS`) for `AUE_SESSION_END`. No account
+  mutation, no persistent config, no dispatcher edit, nothing retained. Attended probe authority — not
+  production authority.
+- **Minimum production authority for an unattended dispatcher:** the same two root capabilities
+  (set-session-at-launch and per-pid token/terminate), held or reached through a narrowly-scoped
+  setuid-root helper, at **every** launch and stop — a standing root capability in the stop path, i.e.
+  the D4 question. D/E are unauthorized; this unit neither requests nor designs it.
 
 ### Verdict and its falsification conditions
 
-**Candidate ready for a separately authorized live probe.** Not rejected: no conflict with literal 1a
-was found; the mechanism satisfies the escaped-daemon and no-bystander requirements that excluded every
-prior candidate. Not "operator authority required" as a terminal: read-only evidence did reach a
-conclusion — that a probe is the next step and exactly what it needs. The probe confirms or refutes, and
-**any** of these failing rejects the candidate:
+**Candidate ready for a separately authorized live probe.** The safety half of literal 1a is
+established read-only: no bystander is signalled (pidversion-atomic terminate), no false success is
+possible (fail-closed on any query or acquisition failure), and no actor-accessible route sheds the
+run ASID for an in-chain descendant. Not rejected: the race Codex flagged is removed by a kernel
+mechanism, not by a probability argument. The probe must confirm the **efficacy** half, and **any** of
+these failing rejects the candidate:
 
-1. The launch wrapper places the actor in a fresh unique ASID, and the fully escaped daemon (setsid +
-   double fork + closerange + exec) reports that same ASID under root `auditon(A_GETPINFO_ADDR)` /
-   `launchctl procinfo`.
-2. An unprivileged actor descendant cannot change or shed its ASID (both calls return the superuser
+1. The launch wrapper places the actor in a fresh unique ASID, and the fully escaped daemon reports it
+   under a root token read.
+2. The escaped platform-binary descendant's `audit_token` (with pidversion) is obtainable by root
+   without the SIP-restricted control port, and `proc_terminate_with_audittoken` then terminates it.
+3. An unprivileged actor descendant cannot change or shed its ASID (both calls return the superuser
    error).
-3. The account's own PPID-1 launchd agents carry the account session's ASID, not the run ASID.
-4. Root enumeration + re-check-before-kill terminates every run member and no uid-501/uid-502
-   bystander; a reused pid carrying a different ASID is spared.
-5. Two concurrent runs receive distinct ASIDs and each supervisor signals only its own — tested
-   same-checkout and different-checkout.
-6. `AUE_SESSION_END` for the run ASID is delivered on this host with auditd unconfigured — or, if not,
-   fail-closed polling census (loop until no pid carries the ASID; never succeed on a query error) is
-   confirmed as the verification fallback.
+4. Root enumeration + audit-token terminate reaches every run member and no uid-501/uid-502 bystander,
+   with a reused pid provably spared by pidversion mismatch.
+5. Two concurrent runs receive distinct ASIDs and each supervisor terminates only its own.
+6. `AUE_SESSION_END` for the run ASID is delivered on this auditd-unconfigured host — or fail-closed
+   polling census is confirmed as the verification fallback.
 
 ### How the verdict could have gone the other way
 
-- Had `exec` or a setuid transition reset the session, the escaped daemon would drop the ASID and the
-  boundary would leak — it is not reset (cred preserved across exec; only `login`/`su` change the
-  session, both authenticated). → **rejected**.
-- Had `se_procnt` counted only session creators/joiners rather than every forked process,
-  `AUE_SESSION_END` would fire while orphaned descendants still ran — a false "all gone."
-  `forkproc()`'s unconditional `AUDIT_SESSION_PROCNEW` is what makes the count cover the orphan. →
-  **rejected on the verification half**.
-- Had `AU_ASSIGN_ASID` let a caller pick a fixed number, two runs could collide and cross-signal. The
-  kernel assigns and skips live values instead. → collision would have forced **rejected**.
-- Had root query of an arbitrary pid's ASID not existed (only own-session reads), there would be no
-  enumeration primitive even with root, and the verdict would be **rejected**, not probe-ready.
-  `auditon(A_GETPINFO_ADDR)` and `launchctl procinfo` are the root-capable per-pid queries Unit 7 found.
+- Had the audit token not carried a pidversion, or `proc_*_with_audittoken` not validated it exactly,
+  there would be no atomic identity-bound signal and finding 1 would force **rejected**. The token
+  carries it (`audit_token_to_pidversion`) and `IDENT_VALIDATION_PROC_EXACT` enforces it.
+- Had `priv_check_cred` carried an entitlement grant for the audit-session privilege, an entitled actor
+  helper could shed the ASID and it would be **rejected**. It grants only to uid 0 or a MAC policy, and
+  no such policy was found.
+- Had `exec` or `se_procnt` behaved differently (session reset on exec; count not covering orphans),
+  selection or verification would break → **rejected**. Neither does.
+- Had token acquisition for the escaped shape been *provably impossible* read-only, the terminate could
+  never reach the escaped daemon and it would be **rejected**; instead it is unresolved read-only and
+  fails closed, which is a probe question, not a safety defect.
 
 ### Inspection failures and version gaps, stated rather than read as absence
 
-- **Source, not runtime.** The kernel behaviour is read from published XNU `xnu-12377.121.6` (and
-  cross-checked at `xnu-11417.101.15`), not from the exact running `xnu-12377.121.10`, which Apple has
-  not published. No audit-session call was executed on this host; the whole verdict is a read-only
-  mechanism assessment, which is why it ends at "ready for a probe," not "proven."
-- **SESSION_END delivery on this host is unconfirmed.** The audit *trail* is not configured (no
-  `audit_control`, auditd not running). Session tracking is a separate subsystem and ASIDs demonstrably
-  work, but whether `/dev/auditsessions` actually delivers `AUE_SESSION_END` here was not tested
-  read-only. It is falsification condition 6, with a fail-closed polling fallback named.
-- **No manual pages exist for any audit interface on this host** (Unit 7). Every privilege and
-  lifecycle statement rests on shipped headers and Apple's published source, not a documented contract.
-- **`ASSIGNED_ASID_MIN`'s dependency `PID_MAX` was not separately quoted** from `sys/proc_internal.h`;
-  its effect (assigned ASIDs begin at 100000) is corroborated by the live `asid = 100016`/`100046`
-  values Unit 7 observed.
-- **The induced-system-service shape (case i) was bounded, not exhausted.** Helpers that can change
-  *audit-session* membership are the two authenticated ones; whether a system service can be induced to
-  run actor work *in its own session* is a general persistence question no per-run boundary addresses,
-  recorded as an accepted limitation rather than a defect.
+- **Source, not runtime.** Kernel behaviour is read from published XNU `xnu-12377.121.6` (cross-checked
+  `xnu-11417.101.15`), not the exact running `xnu-12377.121.10`, which Apple has not published. No
+  audit-session or signal call was executed here.
+- **Token acquisition for a hardened exec is unsettled read-only.** Whether `task_inspect_for_pid` /
+  `task_name_for_pid` + `task_info(TASK_AUDIT_TOKEN)` yields an arbitrary platform binary's token to
+  root was not confirmed from source in this round; the `task_for_pid` control-port restriction file
+  did not return its body on fetch. This is falsification condition 2, and it fails closed.
+- **SESSION_END delivery on this host is unconfirmed** (auditd not configured). Falsification
+  condition 6, with the polling fallback named.
+- **The MAC-policy grant surface was not exhaustively enumerated.** The superuser-only conclusion for
+  the audit-session privilege is bounded to `priv_check_cred` plus the absence of a known grant.
+- **No manual pages exist for any audit interface on this host** (Unit 7); privilege and lifecycle
+  statements rest on shipped headers and Apple's published source.
 
 ### Carried forward — current truth (core § 4)
 
 - **Unit 9 accepted, persona rejected** (git `444bdf2`): `com.apple.private.persona-mgmt` is a hard
-  restricted entitlement, in none of AMFI's three exception tables, authorized only by an Apple-signed
-  provisioning profile no third party can obtain. Not reopened.
-- **Deferral 14 stands, uncorrected:** two sentences in the retained Unit 8 material called the
-  withdrawn outcome "the rejection." Preserved so it is not lost; Codex's call.
+  restricted entitlement, in none of AMFI's three exception tables. Not reopened.
+- **Deferral 14 stands, uncorrected:** two sentences in retained Unit 8 material called the withdrawn
+  outcome "the rejection." Preserved; Codex's call.
 - **The dispatcher's current reach is unchanged and remains the honest fallback:** `dispatch.test.sh`
-  case 27h still pins the surviving hole — a descendant that closes every inherited descriptor survives
-  the current census. Root-bearing ASID is the first candidate that would close it, subject to the probe.
-- **The live account is untouched** and was not re-measured this unit: the last measurement stands from
-  the Unit 8 close (uid 502, non-admin). No account action occurred.
+  case 27h still pins the surviving hole. Root-bearing ASID with audit-token terminate is the first
+  candidate that would close it, subject to the probe.
+- **The live account is untouched** and was not re-measured: the Unit 8 close measurement stands
+  (uid 502, non-admin).
 
 ## Blocker
 
-**A viable supervision candidate now exists on paper for the first time, but only under root-bearing
-authority the task has not been granted.** Root-bearing ASID passes every read-only test literal 1a
-imposes — it reaches the escaped daemon, excludes the account's own launchd agents, gives concurrent
-runs distinct boundaries, and carries a kernel-authoritative "all members exited" signal. It is **not
-proven**: the verdict is "ready for a separately authorized live probe," and the probe needs temporary
-attended root (set-session-at-launch, query-by-pid, optional session-event stream) plus confirmation of
-the six falsification conditions in `## Latest result`. Nothing is requested here; sizing that authority
-and deciding the probe is Codex's assessment and the operator's decision.
+**A candidate now passes literal 1a's safety half read-only, for the first time, but only under
+root-bearing authority the task has not been granted, and its efficacy on the escaped shape is
+unproven.** Root-bearing ASID paired with `proc_terminate_with_audittoken` reaches the escaped daemon
+in principle, excludes the account's own launchd agents, gives concurrent runs distinct boundaries,
+signals no bystander (pidversion-atomic), and fails closed. It is **not proven**: the decisive open
+question is whether the escaped platform binary's `audit_token` is obtainable by root without the
+SIP-restricted control port so the atomic terminate can actually reach it, plus whether
+`AUE_SESSION_END` delivers on this auditd-unconfigured host. Both are probe questions; both fail closed.
+Nothing is requested here — sizing the probe authority and deciding the next move is Codex's assessment
+and the operator's decision.
 
-**The candidate space is now effectively down to this one mechanism.** Process group, ancestry-at-stop,
+**The candidate space is effectively down to this one mechanism.** Process group, ancestry-at-stop,
 environment tag, working directory, `kqueue NOTE_TRACK`, launchd job removal, Darwin `ptrace`,
 containers and coalitions were excluded by the closed supervision discovery; UID (Unit 5) and real GID
-(Unit 6) shed or over-broad; persona rejected (Units 8–9). Root-bearing ASID is the surviving named
-candidate and the first to pass the read-only bar.
+(Unit 6) shed or over-broad; persona rejected (Units 8–9). Root-bearing ASID with audit-token terminate
+is the surviving named candidate and the first to pass the read-only safety bar.
 
-**Authority boundaries are unchanged.** Attended probe authority (`sudo -u`, and now attended root for
-the probe) is distinct from unattended production authority; D4 and Stages D/E stay unauthorized.
-Persona stays closed and must not be reopened.
+**Authority boundaries are unchanged.** Attended probe authority (`sudo -u`, and attended root for the
+probe) is distinct from unattended production authority; D4 and Stages D/E stay unauthorized. Persona
+stays closed and must not be reopened.
 
-**The dispatcher's current reach remains the honest fallback**, unchanged, with `dispatch.test.sh` case
-27h pinning the surviving hole.
+**The dispatcher's current reach remains the honest fallback**, unchanged, with `dispatch.test.sh`
+case 27h pinning the surviving hole.
 
 **The live account stays untouched** and was not touched or re-measured this unit. The Unit 8 close
 measurement stands (uid 502, non-admin). Nothing may signal, delete, log into or authenticate uid 502.
 
 ## Next action
 
-Codex: assess Unit 10. The verdict is **root-bearing ASID is a candidate ready for a separately
-authorized live probe**, with the six falsification conditions and the exact temporary probe authority
-named in `## Latest result`. Decide close, continue, correct once, or stop — in particular whether the
-next move is to size and bring to the operator the attended-root probe authority (an operator decision,
-since it crosses into privilege the task has not been granted), to continue with a different unit, or to
-accept the dispatcher's current reach as the honest fallback. Persona stays closed; Deferral 14 remains
-open; literal Phase 1a and the live account's untouched status are preserved.
+Codex: closure check on the two frozen findings only. Finding 1 (the bystander race) — resolved by
+replacing `kill(pid)` + re-check with `proc_terminate_with_audittoken`, whose pidversion-exact
+validation is quoted from XNU and the SDK; the false "re-check spares it" claim is withdrawn and FP/FN
+row (d) corrected. This is a branch-(a) resolution (an atomic identity-binding signal is cited and
+assessed), **partial** on the "works for the escaped shape" clause: the terminate is bystander-safe and
+can signal a platform binary, but the token-acquisition step for a non-spawned hardened exec is
+unresolved read-only and is carried as falsification condition 2, failing closed. Finding 2 (privileged
+shed routes) — resolved: the change gate is superuser not entitlement (`priv_check_cred` quoted), the
+spawn-attribute and induced-spawn surfaces are assessed, and the service-owned non-descendant is
+separated from an in-chain session change, with no supported shed route found. Confirm both findings are
+resolved and that the correction broke nothing, then close or use the menu. Persona stays closed;
+Deferral 14 remains open; literal Phase 1a and the live account's untouched status are preserved.
