@@ -2896,3 +2896,85 @@ None blocking. Three deferrals carried in the closed task's evidence, each with 
 trigger, none urgent: ownership for retiring a non-AI repository feature; the v1 capability method's
 and its one live record's disposition (pending a future per-section gap-analysis unit); a possible
 read-scope weakness in how I established other Matt-skill claims (see Findings below).
+## 2026-08-07 — Work Loop v2: unattended operation 1d, contained profile wired and measured live
+
+### Summary
+Picked up from a handoff pointing at Phase 1 item 1d (the contained-profile blocker). Built
+`dispatch.sh --unattended` outside the Work Loop protocol first, then the operator surfaced the
+governing state file (`work-loop-v2-contained-unattended-profile`) and the work continued properly
+inside it. Checked the brief's four verify-first claims by inspection — three held, one (the spike
+`README.md` already describing the built mode) was a deviation this session had caused, reported
+rather than smoothed over. Built the contained-profile integration: fails closed (exit 31) below
+claude 2.1.219 or off Darwin, delivers the profile by CLI `--settings` (not a repo settings file,
+since `strictAllowlist` has no effect from one), refuses to pair with `--actor-cmd`, and leaves
+attended/courier launches unchanged. Wrote a live probe that launches a real child **through**
+`dispatch.sh --unattended` rather than around it. First two probe runs found real defects in the
+probe itself — an evidence surface that searched its own prompt and reported seven confident failures
+on checks that never ran, and a fixture brief the contained child correctly refused as misclassified.
+The third, corrected run found a real defect in the settled profile: `denyRead: ["~/"]` also blocked
+`~/.gitconfig`, so Git exited 128 before touching the repository — the zero-read workaround was
+rejected on evidence, since this repo's Git identity lives only in the global config and an unattended
+child would then be unable to commit. Stopped for the operator rather than picking a fix. Operator
+decided: allow the minimum Git configuration paths, broaden home no further (option A). Implemented as
+one named file in `allowRead` — `~/.gitconfig` and nothing else, `~/.config/git/config` proved
+unnecessary. Added guards asserting the exception stayed one file (live: `~/.gitconfig` readable AND
+`~/.config` still refused; simulated: no widening pattern, exactly three `allowRead` entries) — then
+found those guards were never proven capable of failing, because they sit inside a branch the
+pre-change dispatcher never enters, so the ordinary red/green pair doesn't exercise them. Added case
+32m, which mutates a real generated profile four ways and asserts the guards catch each. Final state:
+simulated suite 273/0 (matched red pair 212/22), live probe through the dispatcher 18/0. Reconciled
+plan, spike README and `SKILL.md` only after everything passed. 1d is complete; Phase 2 blockers drop
+from three to two (1a escaped descendants, 1f branch isolation); Phase 2 remains forbidden and
+untouched. Three commits landed this session plus two more from the prior 1g work already in the
+branch; all pushed at the operator's confirmation, sweeping up two other sessions' commits in the same
+two repos (7 in `ai-resources`, 1 in the workspace root) — reported honestly as more than the three
+originally estimated, since fetch showed the true ahead-count before pushing.
+
+### Decisions Made
+- **Operator: contained-profile Git access, option A** — allow the minimum Git configuration paths
+  (`~/.gitconfig`), broaden home no further. Rejected implicitly: option B (neutralise Git's config
+  discovery and supply identity via `GIT_AUTHOR_*`/`GIT_COMMITTER_*` env vars, granting no new read
+  but losing global Git settings and adding a new thing to keep correct) and option C (decide the
+  loop itself is wrong to have an unattended child commit at all, reopening core § 4). Ground: A was
+  the smallest change, kept commit authorship truthful, and reopened one named file rather than a
+  directory tree; B's workaround does not survive contact with this repo, since the Git identity here
+  lives only in the global config and B would leave every hop's commit failing.
+- **Operator: push all 8 accumulated commits across both repos**, after being shown the corrected
+  count (not the originally-reported 3) and the repo/commit breakdown.
+- Claude, within authority: recommended option A explicitly in the state file before the operator
+  decided, on the stated grounds above — not acted on until the operator chose.
+
+### Outcome
+Skipped (not requested — `+audit` not passed).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested — `+audit` not passed).
+
+### Risky actions
+The unattended contained-profile mechanism itself is the risk surface this session worked on
+directly — an authority-narrowing change to how an unattended Claude child runs. Handled as the loop
+intends: implementation was bounded to a Standard-lane state file with a named loop reason, the one
+load-bearing policy question (Git access inside the sandbox) was not resolved unilaterally but
+written back to the operator as a real decision with costs on both named options, and nothing was
+approved, adopted or run unattended at scale — every live run was attended, single-hop and
+fixture-scoped. No gate that should have fired failed to fire. No prompt injection encountered.
+
+### Findings Declined
+None — this session's findings (three probe defects, one profile defect) were each resolved in place
+as part of the unit rather than queued or declined; none were left as an open finding at wrap.
+
+### Next Steps
+- The Work Loop task `work-loop-v2-contained-unattended-profile` is closed (`turn: codex`, assessed
+  and pushed). Natural next unit per the plan: **1a** (escaped descendants surviving the stop — named
+  as the blocker that would hurt most unattended, since it leaves a process running after the
+  operator believes everything stopped), then **1f** (branch/worktree isolation, unproven). Phase 3
+  docs 3c/3d are now unblocked and writable against the real sandbox whenever wanted.
+- Standing condition to carry forward, not a task: if a real secret is ever placed in `~/.gitconfig`,
+  the one-file exception approved this session stops being safe. Recorded next to the exception in
+  `dispatch.sh`, in the plan, and in the probe record — not only here.
+- Run `/wrap-session +telemetry` (or `full`) another day if a fuller audit/coaching/telemetry pass is
+  wanted; none were requested this session.
+
+### Open Questions
+None blocking. Phase 2 (the walk-away pilot) stays forbidden until 1a and 1f close — not a question,
+a known remaining gate.
