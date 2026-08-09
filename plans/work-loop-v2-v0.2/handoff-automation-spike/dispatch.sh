@@ -10,7 +10,9 @@
 # only semantic interface. All controller memory is the exact task id supplied at
 # launch, held in this process only.
 #
-# Scope: single task, single checkout, serial. NOT multi-loop. See
+# Scope: single task, single checkout, serial PER INSTANCE. Multi-loop operation
+# is one instance per task, each in its own linked worktree — proven once at
+# fan-out 2 (logs/work-loop/work-loop-v2-parallel-worktree-proof.md). See
 # docs/parallel-sessions-playbook.md § 4 — same-checkout concurrency is unsafe.
 #
 # Usage:
@@ -149,6 +151,17 @@
 #                              uncontained is worse than one that stops.
 #                              (27 is a deliberate gap in this table, left as
 #                              found rather than filled by this addition.)
+#   32  IDENTITY_INIT_FAILED   the headless session-identity init (marker
+#                              allocation via logs/scripts/prime-session-entry.sh
+#                              plus the `- Files in scope:` footprint bullet)
+#                              started and could not complete in a checkout that
+#                              CARRIES the allocator. NOTHING launches: a run
+#                              whose children would make the staging tripwire
+#                              read a STRANGER'S footprint via the shared-marker
+#                              fallback is the false-positive/false-pass shape
+#                              this init exists to remove. A checkout WITHOUT
+#                              the allocator skips init with a visible line
+#                              instead — no /prime infrastructure, nothing to arm.
 #
 # The five meanings of 0 — do NOT read one as another:
 #   --help          printed the header. Nothing was validated, nothing launched.
@@ -291,6 +304,14 @@ fi
 if [ "${#ALLOW_PATHS[@]}" -eq 0 ]; then
   ALLOW_PATHS=('^logs/work-loop/' '^plans/work-loop-v2-v0\.2/handoff-automation-spike/')
 fi
+
+# The session-identity init below appends this run's header and footprint bullet
+# to logs/session-notes.md — a TRACKED shared log. Without this entry the
+# dispatcher's own init would trip its own foreign-worktree stop (exit 18) on
+# hop 1. The marker dotfiles (.session-marker, .prime-mtime) are gitignored and
+# invisible to `git status`, so they need no entry. Appended for every run mode,
+# so a resumed run whose init wrote on a PREVIOUS invocation stays allowed too.
+ALLOW_PATHS+=('^logs/session-notes\.md$')
 
 # A carry is one hop by definition. Pinning MAX_HOPS makes that true of the loop
 # guard as well as of the terminal condition below, so the two cannot disagree if
@@ -1644,6 +1665,85 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
   esac
 }
 
+# ------------------------------------------- headless session identity (U1)
+# A dispatcher-launched Claude runs no /prime, so this checkout has no per-id
+# marker and no `- Files in scope:` bullet. .claude/hooks/check-foreign-staging.sh
+# then falls back to the checkout-level shared marker (logs/.session-marker) and
+# reads WHATEVER SESSION LAST ALLOCATED IT as this session's footprint — a stale
+# stranger's footprint that can false-block legitimate work or false-pass a
+# foreign file. (Mechanism verified 2026-08-06 against the hook's own code;
+# recorded in logs/work-loop/work-loop-v2-production-readiness-policy.md.)
+#
+# The smallest sufficient fix is TWO WRITES, not a session lifecycle:
+#   1. allocate a fresh marker via logs/scripts/prime-session-entry.sh — the
+#      standalone allocator /prime itself delegates to, invoked by absolute path
+#      with cwd = this checkout so it writes into THIS worktree's logs/;
+#   2. append one concrete `- Files in scope:` bullet under the allocated
+#      header, derived from this run's own --allow-path set — the same authority
+#      boundary the dispatcher already enforces.
+# After those, the shared marker names THIS run's header and the guard is armed
+# with THIS run's footprint. In --unattended mode the child's hooks are disabled
+# so the tripwire never fires there; the init still runs, because the marker
+# sequence and the header keep this run visible to every OTHER session's guards
+# and to the operator's logs.
+init_session_identity() {
+  local entry="$CHECKOUT/logs/scripts/prime-session-entry.sh"
+  local notes="$CHECKOUT/logs/session-notes.md"
+  local marker_file="$CHECKOUT/logs/.session-marker"
+  local line today marker scope re p
+
+  # A checkout that does not carry the allocator does not carry the /prime
+  # session-guard infrastructure this init exists to arm — fixture repos and
+  # sandbox clones are the normal case. Skip with a visible line rather than
+  # failing: exit 32 is reserved for a checkout that HAS the allocator and
+  # could not complete the init, which is the dangerous half-state.
+  if [ ! -x "$entry" ]; then
+    say "identity: $entry absent — skipping session-identity init (no /prime infrastructure in this checkout)."
+    return 0
+  fi
+
+  # The footprint is the run's own allowlist, rendered from regex to prose paths
+  # (strip the ^/$ anchors, unescape dots). The guard's concreteness test needs a
+  # path-shaped entry, and directory entries (`logs/work-loop/`) are the form
+  # live sessions already use.
+  scope=""
+  for re in "${ALLOW_PATHS[@]}"; do
+    p="${re#^}"; p="${p%\$}"; p="${p//\\./.}"
+    [ -n "$p" ] || continue
+    scope="${scope:+$scope, }$p"
+  done
+  [ -n "$scope" ] && scope="$scope, " ; scope="${scope}logs/work-loop/$TASK.md"
+
+  # Idempotence: a resumed run re-enters here. If the shared marker already names
+  # a header carrying a concrete footprint bullet from a previous invocation of
+  # THIS init, reuse it rather than allocating a second marker per restart.
+  if [ -f "$marker_file" ]; then
+    line="$(cat "$marker_file" 2>/dev/null || true)"
+    today="${line%% *}"; marker="${line#* }"
+    if [ "$today" = "$(date '+%Y-%m-%d')" ] && [ -n "$marker" ] && [ "$marker" != "$line" ] &&
+       awk -v hdr="## ${today} — Session ${marker}" '
+         $0 == hdr {inb=1; next}
+         /^## /    {inb=0}
+         inb && /^[[:space:]]*- Files in scope:/ {found=1}
+         END {exit !found}' "$notes" 2>/dev/null; then
+      say "identity: reusing marker '$line' — its header already carries a concrete footprint."
+      return 0
+    fi
+  fi
+
+  line="$(cd "$CHECKOUT" && "$entry" "Work Loop v2 dispatcher run — task $TASK (headless)")" ||
+    die 32 "session-identity init failed: prime-session-entry.sh could not allocate a marker in $CHECKOUT (see its stderr above). Nothing was launched."
+  today="${line%% *}"; marker="${line#* }"
+
+  # The allocator appended this run's header (plus its **Work:** line) at the end
+  # of session-notes.md, so an append lands inside that header's block — exactly
+  # where the guard's block-scoped scan reads the bullet from.
+  printf -- '- Files in scope: %s\n' "$scope" >>"$notes" ||
+    die 32 "session-identity init failed: marker '$line' was allocated but the footprint bullet could not be written to $notes. Stopping rather than launching with a header the guard would read as footprint-less."
+
+  say "identity: allocated marker '$line'; footprint: $scope"
+}
+
 # ------------------------------------------------------------------ the loop
 
 validate_state
@@ -1677,9 +1777,16 @@ if [ "$DRY_RUN" -eq 1 ]; then
   # the platform check and the profile write have all already run above, so
   # reaching this line means the contained profile is deliverable on this host.
   [ "$UNATTENDED" -eq 1 ] && say "dry-run: the contained profile passed its gate and was written; a live run would launch under it."
+  say "dry-run: a live run would first initialize headless session identity (marker + footprint bullet) in this checkout; writing nothing."
   release_lock
   exit 0
 fi
+
+# Identity before actors. Runs once per invocation, before hop 1, so every child
+# this run launches inherits an armed-and-correct guard rather than the
+# shared-marker fallback. --dry-run exited above: a validate-and-route call
+# writes nothing, so it must not allocate markers either.
+init_session_identity
 
 hop=0
 while :; do
