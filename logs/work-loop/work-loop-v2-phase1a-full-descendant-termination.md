@@ -22,95 +22,95 @@ outside this task; Phase 2 stays forbidden.
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 7 — determine whether a Darwin audit session (ASID) can provide the
-creation-time boundary that the exhausted process-attribute surface cannot.
+Standard. Discovery mode. Unit 8 — determine whether Darwin process persona (`prsna`) can provide a
+per-run boundary that survives the accepted escape without selecting an unrelated process.
 
-Named reason for the loop: literal Phase 1a still needs a Darwin supervision mechanism, and a false
-positive would signal unrelated OS processes while a false negative would leave an escaped daemon
-alive. The last named candidate requires bounded discovery and independent assessment before any
-operator authority, live probe or implementation is justified.
+Named reason for the loop: literal Phase 1a still needs a Darwin supervision mechanism. Unit 7's
+correction is accepted: ASID has useful granularity but is unusable under current authority, and its
+root-bearing form remains unassessed. Persona is the one explicitly recorded process attribute that
+has not been dispositioned. Examining it is therefore the smallest justified next unit; no operator
+authority decision is ripe until this remaining candidate is understood.
 
 Plan justification: the governing unattended-operation plan still blocks Phase 2 on literal 1a and
-1f. Unit 6's corrected result exhausts the non-root process-attribute surface. The closed supervision
-discovery explicitly deferred audit sessions for a second look if the cheaper dedicated-UID route
-failed; that route has now failed. Assessing this one named boundary is the smallest justified unit
-that can advance 1a without changing host authority.
+1f. A false positive would signal an unrelated OS process; a false negative would leave the escaped
+daemon alive. This unit is read-only discovery. It may inspect the host, repository, local primary
+interfaces and official Apple primary source, and may change only this state file. It may not signal,
+elevate, create or change a persona, compile or run a probe, mutate the live account, implement a
+mechanism or enter Stages D/E, Phase 1f or Phase 2.
 
-Codex framing decision: this remains discovery because ASID viability and its minimum authority are
-unknown. This unit may inspect the host and repository read-only and change only this state file; it
-may not signal, elevate, delete, authenticate, install, launch an actor fixture or implement
-anything. Safe account removal is held outside this unit because no process emergency exists and
-mechanism discovery is the nearest unmet Phase 1a condition.
-
-### Unit 7 brief — executed
+### Unit 8 brief — executed
 
 Codex's brief for this unit, moved here verbatim from `## Next action` when the unit completed, so
-that field states the single next thing. The Unit 6 brief that previously stood here is committed at
-`b00ee5f`/`69f47c7` and was removed from this file as prior-unit history (core § 4, current truth not
+that field states the single next thing. The Unit 7 brief that previously stood here is committed at
+`ac9ed42`/`c49e1f4` and was removed from this file as prior-unit history (core § 4, current truth not
 a diary). The brief itself is not altered; the result is in `## Latest result` below.
 
-Unit 6 excludes every non-root process attribute inspected so far. Determine whether a distinct
-Darwin audit session can identify the actor's full descendant tree after `setsid`, double fork,
-descriptor closure and `exec`, without selecting the account's PPID-1 macOS services or any other
-bystander. Return evidence and a verdict only; do not create an audit session, elevate, signal or
-implement anything.
+Claude: execute Unit 8 as one bounded read-only discovery unit. Determine whether Darwin process
+persona (`prsna`) can be a truthful per-run termination and verification boundary for literal Phase
+1a. Return evidence and a verdict only. Do not create or change a persona, launch a fixture, signal a
+process, request authority or prescribe an implementation.
 
-**Governing sources and dispositions:** literal 1a and the no-unrelated-process rule in
-`## Objective and scope` govern. Unit 6's corrected result governs the exhausted process-attribute
-surface. The closed `logs/work-loop/work-loop-v2-descendant-supervision-discovery.md` is accepted
-evidence that ASID was deferred because it appeared to require root for both creation and
-enumeration; treat inheritance, immutability and exact authority as verify-first claims, not settled
-facts. The current dispatcher and escaped-descendant evidence are verify-first repository claims and
-may be inspected but not changed.
+**Governing sources and dispositions:** `## Objective and scope` and the current unattended-operation
+plan govern. Unit 7's corrected result and Codex closure above are accepted: ASID is unusable under
+current authority, its root-bearing form is unresolved, and the mechanism space is not exhausted.
+Unit 6 governs the already-rejected real-GID route. The accepted escaped-descendant probe and current
+`dispatch.sh`/`dispatch.test.sh` are verify-first repository claims. Deferral 8's observations about
+`ps -axo prsna=` and `SYS_persona` are leads, not facts to inherit without checking.
 
-**Named unknown:** can a per-run audit session form a truthful, race-safe supervision boundary on
-this Darwin host, and if so what is the smallest exact authority needed to create, enumerate, signal
-and verify it across every controlled stop path?
+**Named unknown:** does Darwin persona supply a unique, inherited, non-sheddable, externally readable
+and race-safe run boundary that reaches a descendant after `setsid`, double fork, descriptor closure
+and `exec`, while excluding uid-502 macOS services, uid-501 bystanders and concurrent runs?
 
 **Claims to check:**
 
-1. Inspect the complete relevant local manuals, SDK headers and available binaries for Darwin audit
-   identity and session APIs. Establish which attributes are inherited across `fork`, `exec`,
-   `setsid` and double fork; which calls create or change them; and which privileges those calls
-   require. An API symbol or header alone is not effective availability.
-2. Establish how an external supervisor can enumerate or query **arbitrary** processes by audit
-   session on this host, not merely read its own audit identity. Identify the exact selector/API,
-   visibility failures, exit/error semantics and SIP or entitlement constraints. Bound every absence
-   claim to the manuals, headers, binaries and process interfaces searched.
-3. Test the boundary logically against the accepted escape and bystanders: the actor daemon after
-   orphaning and `exec`; the account's pre-existing and later-launched macOS services; uid-501
-   processes; PID reuse; an enumeration failure; and a descendant executing a setuid-root helper.
-   Include the Unit 6 deferral by auditing only host helpers capable of changing audit credentials,
-   not every setuid binary for unrelated behavior.
-4. Establish whether selection and signalling can be made race-safe. A list of PIDs followed by a
-   later signal is insufficient unless the design proves how PID reuse and a process changing audit
-   identity cannot turn it into a bystander signal or false success. Verification must fail closed
-   when any process cannot be inspected.
-5. Map any surviving candidate across all actor launch and controlled stop paths in `dispatch.sh`,
-   preserving the global deadline, interruption semantics, retry prohibition, lock pinning/cleanup,
-   exit-code honesty and attended behavior. Distinguish operator-attended probe authority from
-   unattended production authority.
-6. Return one verdict: **candidate ready for a separately authorized live probe**, naming every
-   falsification condition and the exact temporary authority; **candidate rejected**, naming the
-   conflict; or **operator authority required**, only if repository and local primary evidence can
-   establish viability no further without a privilege-bearing check. Do not prescribe an
-   implementation or ask for authority merely to resolve a read-only question.
+1. Inspect the complete relevant local manuals, SDK headers, exported symbols and available binaries
+   for `prsna`, persona syscalls and persona-aware process creation. Establish what the displayed
+   value means, whether it is a process attribute or a reporting proxy, its valid range and lifecycle,
+   and which supported or private interfaces create, assign, query or change it. A symbol, syscall
+   number or `ps` keyword alone is not effective availability.
+2. Establish inheritance and mutability across `fork`, `posix_spawn`, `exec`, `setsid`, double fork,
+   orphaning and a setuid-root exec. Identify the exact privilege, entitlement or membership rules
+   for assigning or changing a persona. Determine whether an unprivileged descendant can shed the
+   run's value, adopt another value or cause a child to do so. Bound helper inspection to paths that
+   can affect persona; do not inventory unrelated privileged behavior.
+3. Establish how an external unprivileged supervisor can enumerate or query arbitrary processes by
+   persona and then signal and verify only matches. Look for a persona-scoped kernel selector or
+   signal primitive before considering list-then-signal. If only PID enumeration exists, account for
+   PID reuse, exit/change races, unreadable processes and fail-closed verification. Do not treat a
+   readable `ps` column as proof that safe termination exists.
+4. Test the boundary logically against the accepted escape and bystanders: the fully detached actor
+   daemon after `exec`; uid-502 PPID-1 macOS services present before or launched during the run;
+   uid-501 processes; two concurrent dispatcher runs in different checkouts; two runs in one
+   checkout; value collision or reuse; supervisor/query failure; and a descendant attempting to
+   shed or forge the value.
+5. Distinguish a value that is empty on this host today from one reserved uniquely by design. State
+   what authority would allocate it, whether allocation is atomic and collision-safe, and whether
+   the actor or unrelated software can select the same value. Distinguish attended probe authority
+   from unattended dispatcher authority; D4 remains unsolved and unauthorized.
+6. Map any surviving candidate across every actor launch and controlled stop path in `dispatch.sh`,
+   preserving the global deadline, interruption semantics, retry prohibition, lock pinning and
+   cleanup, exit-code honesty, attended behavior and the no-bystander rule. This is a logical mapping,
+   not an implementation design.
+7. Return one verdict: **candidate ready for a separately authorized live probe**, naming every
+   falsification condition and exact temporary authority; **candidate rejected**, naming the exact
+   conflict with literal 1a; or **operator authority required**, only if the read-only evidence proves
+   no further conclusion is possible without a privilege-bearing check. Do not turn an unresolved
+   read-only question into an operator decision.
 
-**Required evidence:** list the exact manuals, headers, binaries, repository files and read-only
-commands inspected; separate observation from inference; give a false-positive/false-negative and
-race table covering claim 3; show how the verdict could have gone the other way; and state every
-inspection failure. Evidence must be capable of rejecting ASID, not just explaining it.
+**Evidence:** list every manual, header, exported symbol, binary, repository file, official Apple
+source file and read-only command used. Inspect local primary surfaces first. If exact semantics are
+absent locally, Apple-published source may be used, but name the source version and its gap from the
+running kernel. Separate observation from inference. Include a false-positive, false-negative and
+race table covering claim 4; state every inspection failure; and show how each possible verdict could
+have gone the other way. The evidence must be capable of rejecting persona, not just explaining it.
 
-**Scope and stops:** this state file only. No `sudo`, root helper, signal, process launch, audit
-session creation/change, `launchctl` mutation, account action, login, authentication, installation,
-C5, rollback, product edit, test run or new repository artifact. Do not inspect credential contents.
-Safe account removal stays outside this unit. Stages D/E, Phase 1f and every Phase 2 action remain
-forbidden. Stop and hand back if a premise is false, the question requires host mutation, or the
-required evidence cannot be produced read-only.
-
-Unit completion: replace `## Latest result` with the ASID discovery verdict and evidence, update the
-blocker truthfully, commit only this state file, set `turn: codex`, and stop. Preserve the live
-account and literal Phase 1a.
+**Scope and stops:** this state file only. No Git inspection by Codex is needed; Claude may make the
+single state-file commit required by the Work Loop. No `sudo`, signal, `launchctl` mutation, account
+action, login, authentication, installation, C5, rollback, process/fixture launch, persona
+creation/change, compilation, product edit, test run or new repository artifact. Do not inspect
+credential contents. Preserve the live account and the accepted runbook/C5 fixture byte-for-byte.
+Stages D/E, Phase 1f and every Phase 2 action remain forbidden. Stop and hand back if a premise fails,
+the named unknown requires host mutation, or the required evidence cannot be produced read-only.
 
 ### Accepted Unit 5 brief — reconstructed, NOT verbatim
 
@@ -319,383 +319,264 @@ runbook, create another artifact or push.
 
 ## Latest result
 
-**Unit 7 (Discovery, CORRECTED at the correction round) — the Darwin audit session is unusable under
-current authority.** Read-only throughout. No `sudo`, no root helper, no signal, no process launched
-under test, no audit session created or changed, no `launchctl` mutation, no account action, no login,
-no authentication, no installation, no C5, no rollback, no fixture execution, no product edit, no test
-run, and no repository file other than this one. No credential contents were read. Nothing was
-compiled or executed. The live account was preserved untouched. The correction added one read-only
-source: Apple's published XNU source, fetched over the network and quoted below.
+**Unit 8 (Discovery) — Darwin persona is REJECTED, and the conflict is an Apple-private code-signing
+entitlement rather than a privilege the operator could grant.** Read-only throughout. No `sudo`, no
+signal, no `launchctl` mutation, no account action, no login, no authentication, no installation, no
+C5, no rollback, no process or fixture launch, no persona created or changed, nothing compiled,
+nothing executed under test, no product edit, no test run, and no repository file other than this one.
+No credential contents were read. The live account was preserved untouched. Local primary surfaces
+were inspected first; Apple's published XNU source was used where the semantics are absent locally,
+with its version gap stated.
 
-**The verdict "candidate rejected" is WITHDRAWN and replaced.** The corrected verdict is the boundary
-the evidence actually supports:
+**Verdict: candidate rejected.** Persona has, on the evidence, the **best intrinsic properties of any
+candidate examined in this task** — it is inherited across `fork`, survives `exec`, `setsid` and the
+double fork, has **no runtime interface by which a process can shed or switch it**, and its value is
+externally readable for arbitrary pids through a shipped tool. It fails on one thing only, and that
+one thing is decisive: **nothing can be placed into a persona without the entitlement
+`com.apple.private.persona-mgmt`.** Both doors are shut by the same check —
+`kpersona_alloc` (creating a persona) and `posix_spawn` into an existing one — and **neither door has
+a superuser alternative**. Root does not satisfy an entitlement check.
 
-- **ASID is unusable under *current* authority.** Both ends the dispatcher would have to hold are
-  superuser-gated in the kernel: creating a session (`setaudit_addr(2)`) and querying another
-  process's session (`auditon(A_GETPINFO_ADDR)`). The dispatcher is uid 501 and unprivileged, so it
-  can neither place a hop in a session nor read which session a process is in.
-- **Making it usable needs new root-level creation and query authority** — which this unit does not
-  request, does not size, and does not weigh against the alternatives. That is Codex's assessment and
-  the operator's decision, not this unit's.
-- **Even granted that authority, two questions stay unresolved:** selection-to-signal race safety
-  (there is no ASID-scoped signal primitive, so any design is list-then-signal), and the
-  implementation shape (this unit did not establish what a root-bearing design would have to be).
+**What that means for authority, stated at the width the evidence carries.** This is not "unusable
+under current authority" in the sense Unit 7 corrected ASID to. Entitlements are granted by Apple in
+a binary's code signature and enforced by AMFI; the operator cannot grant
+`com.apple.private.persona-mgmt` to `dispatch.sh`, to `claude`, or to `codex`, and no `sudo`, account
+change or Stage D/E authority within this task's reach would change that. The one theoretical route —
+disabling the platform's signature enforcement and re-signing binaries — is a host-security change of
+a completely different order, is outside this task and every stage the operator has authorized, and is
+**not requested and not recommended here**. So: rejected for every authority in the operator's gift,
+which is the honest scope. It is not a claim that persona is impossible in every conceivable machine
+configuration.
 
-**What is withdrawn with it.** The claim that "the only path that would make ASID work is a
-root-privileged bespoke C supervisor" is withdrawn: this unit found two shipped root-capable query
-paths — `launchctl procinfo` and `auditon(A_GETPINFO_ADDR)` — and never established that a bespoke
-supervisor is the only root-bearing design. The unqualified form of claim 2, that *no* external
-supervisor can query arbitrary processes by session, is withdrawn and replaced by its true scope: no
-**unprivileged** supervisor can.
+**Deferral 8's lead was half wrong, and the correction matters.** It recorded persona as "readable for
+arbitrary processes without privilege — the property ASID lacks". The syscall is **not** unprivileged:
+`kpersona_pidinfo` returns `EPERM` to a non-root caller for any pid but its own. The column is readable
+only because **`/bin/ps` is setuid root** (`-rwsr-xr-x root wheel`, measured) and does the query with
+root privilege on the caller's behalf. The practical conclusion survives — an unprivileged supervisor
+*can* obtain the value by shelling out to `ps` — but the reason is a shipped setuid helper, not an open
+syscall, and the brief was right to call the lead a lead.
 
-Evidence: Apple's published XNU source for `setaudit_addr()`, `auditon()` and `audit_session_port()`;
-`bsm/audit.h` and `bsm/audit_session.h` in the active SDK; `sys/syscall.h`, `sys/sysctl.h`,
-`sys/proc_info.h`, `libproc.h`, `xpc/connection.h`; the setuid-root binary inventory and its symbol
-imports; `launchctl print user/501` and `print gui/501`; `launchctl procinfo`; the full `ps -L`
-keyword list; the full `pgrep`/`pkill` usage; and `/etc/security`. Each is quoted below. Three places
-where the verdict could have gone the other way are listed at the end.
-
-### The correction round — findings 1, 2 and 3
-
-All three reproduced by inspection before any was corrected.
-
-- **Finding 1: REPRODUCES.** The result said the two blocking facts "were measured directly rather
-  than inferred", and the thing standing behind the creation half was: "A call that ships behind
-  setuid root in both of its only callers is not an unprivileged call." That is an inference, and an
-  invalid one — `login` and `su` need root for work that has nothing to do with audit sessions
-  (`utmpx`, session setup, changing uid), so their mode says nothing about `setaudit_addr(2)`'s own
-  permission rule. The same inference stood in table row (g) and in "how the verdict could have gone
-  the other way" item 3.
-- **Correction 1 — the inference is replaced by the kernel's own text.** Codex's three cited rules
-  were reproduced against Apple's published XNU source and **all three are confirmed verbatim**:
-
-  1. **`setaudit_addr(2)` requires superuser.** `bsd/security/audit/audit_syscalls.c`: after the
-     MACF hook `mac_proc_check_setaudit(p, &aia)`, the call runs
-     `error = suser(current_cached_proc_cred(p), &p->p_acflag); if (error) { return error; }` and only
-     then reaches `error = audit_session_setaia(p, &aia);` — exactly the order Codex named.
-  2. **`auditon(A_GETPINFO_ADDR)` requires superuser.** In the same file's "Check appropriate
-     privilege" switch, the only commands with a lighter rule are `A_GETSINFO_ADDR` (comment: "A_GETSINFO
-     doesn't require priviledge but only superuser gets to see the audit masks"), `A_GETSFLAGS`/`A_SETSFLAGS`,
-     and `A_SETCTLMODE`/`A_SETEXPAFTER` (entitlement-gated). `A_GETPINFO_ADDR` carries **no** case there,
-     so it falls to `default: error = suser(kauth_cred_get(), &p->p_acflag);`.
-     **This is worth stating plainly because the first reading of the source got it wrong:** the
-     `A_GETPINFO_ADDR` handler itself contains no privilege check, only `kauth_cred_proc_ref_for_pid()`
-     and `ESRCH`, so reading the handler alone suggests it is unprivileged. The gate is 360 lines
-     earlier, in the shared switch. Codex's rule is right and the handler-only reading was wrong.
-  3. **`audit_session_port()` requires `PRIV_AUDIT_SESSION_PORT` for any session but the caller's
-     own.** `bsd/security/audit/audit_session.c`, header comment: "EPERM Only the superuser can
-     reference sessions other than the process's own." In the body, the own-session branch says "No
-     privilege is required to obtain a port for our own session", and the else branch says "Only
-     privileged processes may obtain a port for any existing session" and runs
-     `err = priv_check_cred(cred, PRIV_AUDIT_SESSION_PORT, 0);`.
-
-  **Applicability, stated rather than assumed.** This host runs `xnu-12377.121.10~1` (`uname -v`).
-  The newest published tag is `xnu-12377.121.6` — the same 12377.121 series, differing at the patch
-  level. Both files were fetched twice, once from `main` and once from that tag, and the two copies
-  are **byte-identical** (`diff -q`, no output), so the quoted text is the released source of the
-  nearest published build and not a development snapshot. It is not the source of the exact running
-  kernel, because Apple has not published `.121.10`; that gap is stated, not papered over.
-- **Finding 2: REPRODUCES.** The result's claim 2 heading read "no external supervisor on this host
-  can enumerate or query arbitrary processes by audit session" without qualification, while the body of
-  the same claim recorded `launchctl procinfo` refusing *because the caller is not root* and
-  `auditon(A_GETPINFO_ADDR)` existing as a per-pid query. Those are root-capable query paths, so the
-  unqualified heading contradicted its own evidence. Separately, "the only path that would make ASID
-  work is a root-privileged bespoke C supervisor" asserted an exclusivity the unit never tested.
-- **Correction 2 — the verdict is narrowed to what the evidence carries**, in the replaced opening
-  above: unusable under current authority; usable only with new root-level creation and query
-  authority; race safety and implementation shape still unresolved. No authority is requested, no
-  mechanism is prescribed, and the value-and-risk tradeoff is left to the operator. Claim 2's heading
-  and claim 6 are corrected below.
-- **Finding 3: REPRODUCES.** `## Blocker` opened "Every named supervision mechanism is now excluded
-  under current authority, and no candidate remains", and its very next paragraph said `prsna`
-  (persona) "has never been dispositioned" and is "the only thing standing between the current record
-  and a literal exhaustion claim". Both cannot govern. The same section then said "What is now open is
-  a decision, not a discovery" and offered "a restatement of what 1a guarantees" as one of two
-  remaining paths — which contradicts `## Objective and scope`: "The operator preserved this guarantee
-  on 2026-08-08."
-- **Correction 3 — the exhaustion claim and the decision framing are both withdrawn.** `## Blocker` is
-  rewritten below: no mechanism found *so far* is usable under current authority, persona remains an
-  unexamined candidate for a later bounded discovery unit, and the next move is not asserted to be an
-  operator decision. Restating literal 1a is removed as an option, because the operator already
-  decided it. **Persona was not investigated during this correction**, as the finding requires.
+Evidence: `sys/persona.h` and `bsd/kern/sys_persona.c`, `bsd/kern/kern_persona.c`, `bsd/kern/kern_exec.c`,
+`bsd/kern/kern_fork.c` and `bsd/kern/syscalls.master` from Apple's published XNU; the active SDK's
+`sys/syscall.h`, `sys/proc.h`, `sys/sysctl.h`, `spawn.h` and `libSystem.tbd`; `nm -u /bin/ps`;
+`ls -l /bin/ps`; `ps -axo pid=,uid=,prsna=,comm=`; `man 1 ps`; the full `pgrep`/`pkill` usage; and
+`dispatch.sh`. Each is quoted below. Each of the three possible verdicts is shown against what would
+have had to be true for it, at the end.
 
 ### Inspection record — the brief's verify-first premises
 
 ```
 Inspected (2026-08-09):
-- Premise (1) "the closed supervision discovery records ASID as needing root for both creation and
-  enumeration": HOLDS as a citation, and the underlying facts now hold as measured rather than as
-  recalled — read `logs/work-loop/work-loop-v2-descendant-supervision-discovery.md` lines 33-37 and
-  52-53; re-measured this round, and both halves are confirmed below in claims 1 and 2.
-- Premise (2) "Unit 6's corrected result governs the exhausted process-attribute surface": HOLDS
-  WITH ONE QUALIFICATION. Searched the full `ps -L` keyword list on this host: `prsna` (persona) is
-  present and Unit 6's claim 3 dispositioned `uid`/`ruid`, `pgid`, `sess`, `tty`/`tdev`/`tpgid`,
-  `ppid`, `login` and `rgid` but not `prsna`. "No attribute on that surface survives" is therefore
-  one item short. Recorded as a deferral, not pursued — persona is not an audit identity and sits
-  outside this brief's claims 1 and 3.
-- Premise (3) "the current dispatcher and escaped-descendant evidence are verify-first repository
-  claims": HOLDS. `dispatch.sh` exists (100,490 bytes); `actor_tree_census()` at line 684 returns
-  through the globals `CENSUS_PIDS`/`CENSUS_UNKNOWN` with the documented reason at lines 670-682;
-  `TERM_GRACE_SECS=5` at line 795 and `KILL_SETTLE_SECS=2` at line 796; the measured handle table is
-  at lines 519-532 and states "recursive PPID census … MISSES" for the double-fork orphan;
-  `report_teardown()` at line 852 prints its scoped `teardown verified` sentence at line 858;
-  `dispatch.test.sh` case 27h is at line 1043. Both probe artifacts exist:
-  `runs/probes/escaped-descendants-2026-08-07.sh` and `runs/probe-escaped-descendants-2026-08-07.md`.
-  Nothing was edited.
+- Premise (1) "deferral 8's `ps -axo prsna=` observation": HOLDS AS A MEASUREMENT, FAILS AS AN
+  INFERENCE. Re-measured: 612 processes report `-`, seven report `1004`, one reports `99`. All eight
+  are uid 501 and all eight are `.appex` app extensions (iCloudDriveFileProvider, csimporter,
+  WeatherIntents, MobileTimerIntents, PAH_Extension, Notes SpotlightIndexExtension,
+  QLPreviewGenerationExtension, WhatsApp ServiceExtension). The "without privilege" half is corrected
+  in the result above.
+- Premise (2) "`SYS_persona` in `sys/syscall.h`": HOLDS — searched the shipped header; line 534,
+  `#define SYS_persona 494`. Corroborated in `bsd/kern/syscalls.master` line 774, which also shows it
+  is compiled only `#if CONFIG_PERSONAS` and is declared `NO_SYSCALL_STUB`.
+- Premise (3) "Unit 7's corrected result governs; the mechanism space is not exhausted": HOLDS as the
+  accepted disposition, and this unit does not reopen ASID.
+- Premise (4) "the escaped-descendant probe and current dispatcher are verify-first": HOLDS.
+  `dispatch.sh` is 100,490 bytes with `actor_tree_census()` at line 684, `TERM_GRACE_SECS=5` at 795 and
+  `KILL_SETTLE_SECS=2` at 796; `dispatch.test.sh` is 128,701 bytes; the probe
+  `runs/probes/escaped-descendants-2026-08-07.sh` is 16,789 bytes. Searched both dispatcher files for
+  `persona|prsna`: **zero matches**, so nothing in the product presupposes this unit's answer. Nothing
+  was edited.
 ```
 
-### The record — claims 1 to 6
+### The record — claims 1 to 7
 
-- **Claim (1): audit sessions are real and inherited on this host, but every call that creates or
-  changes one is privileged or private.** Observation, not inference: `launchctl print user/501`
-  prints `gui asid = 100016` and a `security context = { uid = 501, asid = 100046 }`, and
-  `launchctl print gui/501` prints `handle = 100016` with `security context = { uid = 501, asid =
-  100016 }`. So ASIDs are live and distinct per login context, which is exactly the granularity the
-  UID boundary lacked. The syscalls exist — `sys/syscall.h` lines 390-399 and 468-472:
-  `SYS_audit 350`, `SYS_auditon 351`, `SYS_getaudit_addr 357`, `SYS_setaudit_addr 358`,
-  `SYS_audit_session_self 428`, `SYS_audit_session_join 429`, `SYS_audit_session_port 432`.
-  Inheritance follows the same rules Unit 6 established for credentials: `fork(2)`'s child is an
-  exact copy outside an enumerated list that carries no credential, `execve(2)` preserves the process
-  credential, and `setsid(2)` changes session and process group only — none of the three is an audit
-  identity change, and the only calls that are one are `setaudit_addr(2)` and `audit_session_join(2)`.
-  **Privilege — CORRECTED, and now from the kernel source rather than from binary modes.**
-  `setaudit_addr(2)` runs `suser(current_cached_proc_cred(p), &p->p_acflag)` and returns that error
-  before it reaches `audit_session_setaia()`, so **creating or changing a session requires superuser**
-  (XNU, quoted in full in the correction round above). `AU_ASSIGN_ASID -1` in `bsm/audit.h` line 77 is
-  the assign-me-a-new-session argument to that same gated call. The header facts still stand and are
-  unchanged: `bsm/audit.h` declares `setaudit_addr()` at line 383 and `audit_session_self/join/port()`
-  at lines 424-426 **inside `#ifdef __APPLE_API_PRIVATE`** — private API, not a supported public
-  interface. The setuid-root callers are still a true observation and are still recorded — `nm -u
-  /usr/bin/login` imports `_setaudit_addr`, `_getaudit_addr` and `_auditon`, `nm -u /usr/bin/su`
-  imports `_setaudit_addr`, and `ls -l` shows `-r-sr-xr-x root wheel /usr/bin/login` and `-rwsr-xr-x
-  root wheel /usr/bin/su` — but they are now **corroboration, not the evidence**. The inference "a call
-  that ships behind setuid root in both of its only callers is not an unprivileged call" is
-  **withdrawn**: either binary can need root for work unrelated to auditing, so its mode never
-  established the syscall's permission rule. **An API symbol is not
-  effective availability, and this is where that bites:** the symbols resolve in
-  `MacOSX.sdk/usr/lib/libSystem.tbd` (`_audit_session_join`, `_audit_session_port`,
-  `_audit_session_self`, `_auditon`, `_getaudit_addr`, `_setaudit_addr` all present), so the route
-  *links* while remaining unusable to an unprivileged dispatcher.
-- **Claim (2): CORRECTED — no *unprivileged* supervisor on this host can enumerate or query arbitrary
-  processes by audit session.** The unqualified form of this heading is withdrawn: root-capable query
-  paths do exist and are recorded in this same claim. What the evidence establishes is the scope of the
-  gap, not its totality. The absence claim is bounded to five surfaces, each searched in full:
-  1. `ps` — the complete `ps -L` keyword list contains no `asid`, no `auid` and no audit keyword at
-     all (searched for `asid|auid|audit`, zero matches; the full list is reproduced in the inspection
-     failures section's note below).
-  2. `pgrep`/`pkill` — the complete usage is `[-F pidfile] [-G gid] [-P ppid] [-U uid] [-g pgrp]
-     [-t tty] [-u euid]`. No session selector, and `man 1 pkill`'s option list confirms the same seven.
-  3. `sysctl` — `sys/sysctl.h` lines 432-439 give the complete `KERN_PROC_*` selector set:
-     `ALL`, `PID`, `PGRP`, `SESSION` (BSD session, not audit), `TTY`, `UID`, `RUID`, `LCID`. The one
-     that sounds promising is not available: `sysctl kern.proc.lcid` returns "couldn't find format of
-     oid … No such file or directory".
-  4. `libproc` — searched `sys/proc_info.h` and `libproc.h` for `asid|audit`: `proc_bsdinfo` carries
-     `pbi_uid`, `pbi_gid`, `pbi_ruid`, `pbi_rgid`, `pbi_svuid`, `pbi_svgid`, `pbi_pgid`, `pbi_ppid`
-     and no audit field; `libproc.h`'s only audit references are `audit_token_t` helpers
-     (`proc_pidpath_audittoken`, `proc_signal_with_audittoken`), which take a token you must already
-     hold, not a session you can query.
-  5. `launchctl` — `launchctl procinfo` is the one shipped tool that reports a process's ASID, and it
-     answered `This subcommand requires root privileges: procinfo`. Measured, not inferred.
-
-  **Root-capable query paths do exist, and the corrected claim says so.** Two of them: shipped
-  `launchctl procinfo`, whose refusal above is a privilege refusal and not an absence of capability;
-  and `auditon(A_GETPINFO_ADDR)` (`A_GETPINFO_ADDR 28`, `struct auditpinfo_addr { pid_t ap_pid; …;
-  au_asid_t ap_asid; }`), which queries **one pid at a time** and is **itself superuser-gated** —
-  XNU's "Check appropriate privilege" switch gives it no case of its own, so it falls to
-  `default: error = suser(kauth_cred_get(), &p->p_acflag);` (quoted in the correction round above).
-  `auditon` is also declared `__AUDIT_API_DEPRECATED`, which `bsm/audit.h` expands to
-  `__API_DEPRECATED("audit is deprecated", macos(10.4, 11.0))` — deprecated five major versions ago in
-  the header Apple ships today. **One audit query genuinely is unprivileged and still does not help:**
-  `A_GETSINFO_ADDR` carries the comment "A_GETSINFO doesn't require priviledge but only superuser gets
-  to see the audit masks", but it looks a *session* up by ASID and returns that session's own info — it
-  does not enumerate the processes in it. Two further paths close nothing.
-  `xpc_connection_get_asid()` (`xpc/connection.h` line 688) "Returns the
-  audit session identifier of the remote peer … at the time the connection was made" — it reads a peer
-  that voluntarily connected to you, so it is blind to a daemon that closed every descriptor and
-  `exec`ed `/bin/sleep`. The `/dev/auditsessions` device is present (`crw-r--r-- root wheel`) and
-  `bsm/audit_session.h` documents `au_sdev_open()`, but its all-sessions flag is
-  `AU_SDEVF_ALLSESSIONS … /* Allow process to monitor all session. (Requires privilege.) */` — the
-  header states the privilege requirement itself — and what it yields is session **lifecycle events**
-  (`AUE_SESSION_START/UPDATE/END/CLOSE`), not a process list.
-- **Claim (3): the boundary logic is sound and the helper audit comes out in ASID's favour — which is
-  why the current-authority exclusion is about privilege, not shed-ability.** The Unit 6 deferral is discharged for
-  audit credentials specifically, as the brief bounded it: the complete setuid-root inventory of
-  `/usr/bin`, `/usr/sbin`, `/bin`, `/sbin` and `/usr/libexec` is sixteen binaries — `ps`, `at`, `atq`,
-  `atrm`, `batch`, `crontab`, `login`, `newgrp`, `quota`, `su`, `sudo`, `top`, `authopen`,
-  `security_authtrampoline`, `traceroute`, `traceroute6` — plus three setgid (`write`, `postdrop`,
-  `postqueue`). Each was checked with `nm -u` for `_setaudit_addr|_setaudit|_setauid|
-  _audit_session_self|_audit_session_join|_audit_session_port|_auditon|_getaudit_addr`. **Exactly two
-  match: `login` and `su`.** Both authenticate before they act — `login` needs a password unless given
-  `-f`, which itself requires root, and `su` needs the target account's password unless the caller is
-  already root — and an actor descendant holds no password. So unlike `newgrp`, which handed Unit 6 a
-  free shed of the real GID, there is **no free shed of the audit session** on this host. The
-  remaining shed is `audit_session_join(port)`, which needs a send right to another session's port,
-  obtained from `audit_session_port(asid, &port)` — private API whose privilege could not be settled
-  read-only (recorded as an inspection failure below). **The verdict does not rest on it.**
-- **Claim (4): race safety is not the discriminator, and saying it was would be wrong.** The design
-  that ASID would need is: enumerate all pids, query each pid's ASID, signal the matches. That is a
-  list-then-signal shape with a TOCTOU window in which a pid can exit and be reused. But `pkill -U` is
-  **the same shape** — it is a userspace program that reads the process list and then calls `kill()`
-  per pid — so this race does not distinguish ASID from the boundary the design already contemplates,
-  and Unit 5 rejected `pkill -U` for over-breadth, not for a race. The honest statement is narrower and
-  worse for ASID: the query step of that shape **does not exist** for an unprivileged supervisor
-  (claim 2), so on this host the sequence cannot be attempted at all, race-safe or otherwise. What
-  fails closed correctly is the consequence: with no way to read a process's ASID, every stop would
-  set `CENSUS_UNKNOWN`, and `report_teardown()` would correctly refuse to print `teardown verified`
-  forever. That is honest, and it is not a mechanism.
-- **Claim (5): the `dispatch.sh` mapping stands as a description and supports no probe.** Read-only;
-  nothing was edited. A fourth handle would fit `actor_tree_census()`'s existing three-valued contract
-  (found / none / `CENSUS_UNKNOWN`, returned through globals for the reason given at lines 670-682),
-  would need a fourth global published and cleared for the signal path to reach it, and would widen
-  `report_teardown()`'s scoped sentence, which `dispatch.test.sh` case 27h (line 1043) fails on so that
-  any such change is deliberate. None of that is reached. The larger structural fact is that every
-  existing handle is a shell one-liner over `ps`, `pgrep` or `lsof`, and an ASID handle would be the
-  first to require a **compiled C helper linking a private, deprecated API** — with `TERM_GRACE_SECS=5`
-  and `KILL_SETTLE_SECS=2` unchanged but a new build dependency in the stop path. **Probe authority and
-  production authority stay distinct**, exactly as Unit 6 corrected: operator-attended `sudo -u` exists
-  today and is what the runbook's C1 and C6 rows use; an unattended dispatcher running as the actor is
-  the unsolved D4 question, and D is not authorized. ASID needs root for creation, which is a *third*
-  and larger authority than either.
-- **Claim (6): CORRECTED — the verdict is that ASID is unusable under current authority, and that a
-  root-bearing design is unassessed rather than excluded.** Not "ready for a probe": no probe runnable
-  under current authority could change the two blocking facts, because both are kernel privilege rules
-  read from Apple's published source — `setaudit_addr(2)` and `auditon(A_GETPINFO_ADDR)` each gated by
-  `suser()`. Not "candidate rejected" as an unqualified verdict, which is withdrawn: what is excluded
-  is the *current-authority* route, not the mechanism in every possible authority. Not "operator
-  authority required" either — this unit does not request root, does not size what a root-bearing
-  design would be, and does not weigh its value and risk against the alternatives; those are Codex's
-  assessment and the operator's decision. **What is not rejected** is the dedicated account itself,
-  exactly as in Units 5 and 6 — the identity was never exercised. The task's named unknown returns
-  **open**.
+- **Claim (1): `prsna` is a real process attribute, not a reporting proxy, and its entire interface is
+  private.** `man 1 ps` line 305 lists the keyword as `prsna → persona`. `ps` obtains the value by
+  calling the persona syscall: `nm -u /bin/ps` imports `_kpersona_pidinfo` (alongside `_proc_pidinfo`
+  and `_sysctl`), and the binary's only persona-related strings are `prsna` and `PRSNA`. The kernel
+  side is `SYS_persona 494`, nine operations defined in `bsd/sys/persona.h` lines 81-89:
+  `PERSONA_OP_ALLOC`, `PALLOC`, `DEALLOC`, `GET`, `INFO`, `PIDINFO`, `FIND`, `GETPATH`,
+  `FIND_BY_TYPE`. **Effective availability, checked rather than assumed from the symbol:** the SDK
+  ships **no** `sys/persona.h` (`ls` → No such file or directory), and `spawn.h` contains no persona
+  attribute; the nine `_kpersona_*` entry points and the four `_posix_spawnattr_set_persona_*_np`
+  entry points are nonetheless exported by `libSystem.tbd`, so the route **links without a public
+  header** — the same shape Unit 7 found for ASID. Lifecycle and type: `persona_type_t` is
+  `PERSONA_INVALID 0, GUEST 1, MANAGED 2, PRIV 3, SYSTEM 4, SYSTEM_PROXY 6`, and
+  `persona_is_adoption_allowed()` returns true only for `PERSONA_SYSTEM` and `PERSONA_SYSTEM_PROXY`.
+  The observed population — every persona-carrying process on this host is an app extension — matches
+  what the facility is for: it is the identity mechanism behind app extensions and containerised
+  system services, not a general-purpose process grouping.
+- **Claim (2): inheritance is exactly what a supervision boundary wants, and mutability is exactly
+  what it wants too — this is persona's strong half.**
+  - **Inherited across `fork`.** `bsd/kern/kern_fork.c` lines 1189-1197: `child_proc->p_persona =
+    NULL; if (parent_proc->p_persona) { struct persona *persona = proc_persona_get(parent_proc); …
+    error = persona_proc_adopt(child_proc, persona, NULL); }`. The child joins the parent's persona.
+  - **Unaffected by `exec`, `setsid`, the double fork and orphaning.** The persona is held on the proc
+    as `p->p_persona`, and none of those paths touches it. In XNU the only kernel-side removal is
+    `persona_proc_drop()`, reached from the **exit** path (`kern_fork.c` line 811) — that is, when the
+    process dies, which is precisely the event a stop wants to observe.
+  - **Not sheddable at runtime, and this is structural rather than a privilege rule.** The nine
+    syscall operations contain **no operation that adopts, drops or changes the calling process's
+    persona**. Adoption happens only at `posix_spawn` time, via `_posix_spawn_persona_info` →
+    `spawn_validate_persona()` → `spawn_persona_adopt()` (`kern_exec.c` 3967-4046, 4534, 4977). A
+    process that is already running has no interface to leave. **This is the property real GID lacked**
+    — Unit 6 killed that route because setuid-root `newgrp` shed the attribute with no password — and
+    the bounded helper check the brief asked for finds no analogue here: the shed would need an
+    operation that does not exist, not merely a privilege the descendant lacks.
+  - **The privilege rules, quoted.** `kpersona_alloc_syscall`: `if
+    (!IOCurrentTaskHasEntitlement(PERSONA_MGMT_ENTITLEMENT)) { return EPERM; }`. Same first line in
+    `kpersona_dealloc_syscall`. `spawn_validate_persona()`, `kern_exec.c` line 3973: `if
+    (!IOCurrentTaskHasEntitlement( PERSONA_MGMT_ENTITLEMENT)) {` — so **spawning into an existing
+    persona is gated identically to creating one**. `PERSONA_MGMT_ENTITLEMENT` is defined at
+    `bsd/sys/persona.h` line 91 as `"com.apple.private.persona-mgmt"`. **Note the asymmetry, because
+    it is the whole verdict:** the *read* operations `GET`, `INFO` and `FIND` are gated
+    `if (!kauth_cred_issuser(kauth_cred_get()) && !IOCurrentTaskHasEntitlement(...)) return EPERM;` —
+    root **or** entitlement. `ALLOC`, `DEALLOC` and the spawn attribute are gated on the entitlement
+    **alone, with no superuser alternative**.
+- **Claim (3): an unprivileged supervisor can query, cannot select, and cannot signal by persona.**
+  - **Query — possible, through a setuid-root helper.** `kpersona_pidinfo_syscall` is gated
+    `if (!kauth_cred_issuser(kauth_cred_get()) && (pid != proc_getpid(current_proc()))) { return
+    EPERM; }` — root for any pid but your own. That the column nevertheless works for an unprivileged
+    caller is explained, not assumed: `/bin/ps` is `-rwsr-xr-x root wheel`, it imports `_getuid` but
+    **no** `_setuid`/`_seteuid`/`_setgid`/`_setegid`, and it returned personas for eight pids none of
+    which was the `ps` process itself. So `ps` performs the privileged read on the caller's behalf.
+  - **Selection — no kernel-side primitive exists.** Searched in full: the `pgrep`/`pkill` usage
+    carries exactly `-F -G -P -U -g -t -u`, no persona selector; `sys/sysctl.h` lines 432-439 give the
+    complete `KERN_PROC_*` set (`ALL, PID, PGRP, SESSION, TTY, UID, RUID, LCID`) with no persona
+    selector.
+  - **Signal — none by persona.** Any design would therefore be `ps -axo pid=,prsna=`, filter, then
+    `kill` per pid. Following Unit 7's correction, that is **not** by itself a disqualifier: `pkill -U`
+    is the same list-then-signal shape, and it is the shape already contemplated. What it does mean is
+    that PID reuse, exits between listing and signalling, and unreadable processes have to be handled
+    by the design, and a failed or partial `ps` must produce `CENSUS_UNKNOWN` rather than "empty".
+    **None of this is reached**, because claim 2's entitlement gate means no process can be put into a
+    run-specific persona in the first place.
+- **Claim (4): the boundary logic is set out in the table below.** Its short form: had a run-specific
+  persona existed, it would have excluded every bystander class correctly and reached the fully
+  detached daemon — the first candidate in this task for which that is true on the evidence. Every
+  cell that says "correct" is conditional on a premise that claim 2 shows cannot be satisfied.
+- **Claim (5): the run-specific value cannot be reserved, and reusing an existing one is over-broad.**
+  Allocation authority is `kpersona_alloc`, entitlement-only, so the answer to "what authority would
+  allocate it" is: none that the operator can obtain. Uniqueness and atomicity are therefore moot and
+  are not claimed either way — the kernel does assign ids from its own table when
+  `persona_id == PERSONA_ID_NONE`, but this unit did not establish collision behaviour and does not
+  need to. **Reuse is separately fatal:** the two live values on this host are `1004`, shared by seven
+  unrelated app extensions, and `99`, held by one — signalling either would kill unrelated Apple
+  software, which is exactly the harm `## Objective and scope` forbids. And reuse is gated anyway,
+  since `spawn_validate_persona()` requires the same entitlement. **Probe versus production authority
+  is unchanged and is not the issue here:** operator-attended `sudo -u` exists and D4 remains unsolved
+  and unauthorized, but no amount of either supplies an entitlement.
+- **Claim (6): the logical mapping onto `dispatch.sh`, recorded and not reached.** A persona handle
+  would have been the *cheapest* of any candidate to wire: `ps -axo pid=,prsna=` is a shell one-liner,
+  where ASID would have needed a compiled helper against a private API. It would fit
+  `actor_tree_census()`'s existing three-valued contract (found / none / `CENSUS_UNKNOWN`, returned
+  through globals), add one `ps` call per pass without disturbing `TERM_GRACE_SECS=5` or
+  `KILL_SETTLE_SECS=2`, need a fourth global published and cleared so the signal path can reach it,
+  and widen `report_teardown()`'s scoped sentence, which `dispatch.test.sh` case 27h fails on so that
+  the change would have to be deliberate. Retained as a description of where a future boundary must
+  fit. Neither dispatcher file mentions persona today (searched; zero matches), so nothing regresses.
+- **Claim (7): candidate rejected**, per the verdict above. Not "ready for a probe": there is no probe
+  runnable under any authority in the operator's gift, because the blocking check is an entitlement
+  and not a privilege. Not "operator authority required": the read-only evidence does reach a
+  conclusion, so turning it into an operator decision would be the exact move the brief forbids.
 
 ### False positive, false negative and race, by case
 
-Columns are the two shapes Unit 6 rejected, kept for comparison, plus this unit's candidate.
+Every "correct" below is conditional on a run-specific persona existing, which claim 2 shows it cannot.
+The table is what the boundary *would* have done, and it is the reason the rejection is narrow and
+specific rather than dismissive.
 
-| Case | Baseline-aware UID census | Per-process recorded set | Per-run audit session (ASID) |
+| Case | Real GID (Unit 6, rejected) | ASID (Unit 7, unusable) | Persona (this unit) |
 |---|---|---|---|
-| (a) service present at baseline | correct exclusion | correct exclusion | correct exclusion — the agent is in the account's own session, not the run's |
-| (b) service launched after baseline | **FALSE POSITIVE** — signals an OS service; observed 7 → 9 in ~4 min | correct exclusion | **correct exclusion, and this is ASID's one real advantage** — launchd starts it in the account session, not the run session |
-| (c) a baseline pid exits and is reused by an actor descendant | **FALSE NEGATIVE** — the pid is in the baseline, so it is spared | not applicable | not applicable — selection is by attribute, not by pid |
-| (c′) a recorded pid exits and is reused by an unrelated process | not applicable | **FALSE POSITIVE** unless owner *and* start time are re-checked | **FALSE POSITIVE possible** — the query-then-signal window is the same one `pkill -U` has, so this is not a discriminator |
-| (d) descendant changes session, parent, group, descriptors and executable | reached | **FALSE NEGATIVE** — its pid was never observable | reached in principle — `execve(2)` preserves the credential and `setsid(2)` changes only the BSD session |
-| (e) descendant execs a setuid-root helper | not applicable — `newgrp` does not change uid | not applicable — selection is by pid | **correctly excluded** — the only two helpers that touch audit credentials (`login`, `su`) both authenticate first |
-| (f) the supervisor tries to read a process's ASID | not applicable | not applicable | **NOT POSSIBLE without root** — `launchctl procinfo` refuses as unprivileged, and `auditon(A_GETPINFO_ADDR)` falls to XNU's `default: suser(...)` gate; no `ps`/`pgrep`/`sysctl`/`libproc` selector exists at all. **Root-capable, unprivileged-impossible.** |
-| (g) the supervisor tries to place the actor in a fresh session | not applicable | not applicable | **NOT POSSIBLE without root** — `setaudit_addr(2)` runs `suser(...)` and returns its error before reaching `audit_session_setaia()` |
-| enumeration failure | must be `CENSUS_UNKNOWN`, never "empty" | must be `CENSUS_UNKNOWN` | would be `CENSUS_UNKNOWN` on **every** stop, since (f) always fails |
-
-Rows (f) and (g) are the ones that decide it. Rows (b) and (e) are the ones that would have made ASID
-the best candidate found so far, had (f) and (g) gone differently.
+| (a) uid-502 service present at baseline | correct exclusion | correct exclusion | **correct exclusion** — launchd starts it with no persona (`-`) |
+| (b) uid-502 service launched during the run | correct exclusion | correct exclusion | **correct exclusion** — same reason; nothing inherits a persona it was not spawned into |
+| (c) uid-501 bystander | correct exclusion | correct exclusion | **correct exclusion** — unless it is an app extension, which carries `1004`/`99`, not a run value |
+| (d) fully detached daemon: `setsid`, double fork, descriptors closed, `exec` | reached, then **shed via `newgrp`** | reached | **reached, and it cannot shed** — no syscall operation leaves a persona |
+| (e) descendant execs a setuid-root helper | **FALSE NEGATIVE — decisive** (`newgrp`) | correctly excluded (`login`/`su` authenticate) | **correctly excluded** — no persona-changing helper exists to exec; the operation itself is absent |
+| (f) two concurrent runs, different checkouts | not applicable | not applicable | **correct separation** — if each run could allocate its own value |
+| (g) two concurrent runs, one checkout | not applicable | not applicable | **correct separation** — same condition |
+| (h) value collision or reuse of a live system value | not applicable | not applicable | **FALSE POSITIVE** — reusing `1004` would signal seven unrelated app extensions |
+| (i) supervisor cannot read a process | must be `CENSUS_UNKNOWN` | always fails (no unprivileged read) | must be `CENSUS_UNKNOWN`; `ps` failing partially must not read as "empty" |
+| (j) PID reuse between listing and signalling | present, as for `pkill -U` | present | present — same list-then-signal window, not a discriminator |
+| (k) the supervisor tries to create the run boundary | permitted | **needs root** | **NOT POSSIBLE — needs `com.apple.private.persona-mgmt`; root does not satisfy it.** This is the rejection. |
 
 ### Inspection failures, stated rather than read as absence
 
-- **No manual page exists on this host for any audit interface.** `man -w` returned "No manual entry"
-  for `auditon`, `getaudit_addr`, `setaudit_addr`, `audit_session_self`, `audit_session_join`,
-  `au_open`, `audit_control` and `auditd`. Every privilege statement above therefore rests on shipped
-  headers, binary symbol imports and file modes, not on documented contracts. That is weaker evidence
-  than a manual and is marked as such.
-- **RESOLVED at the correction round: the exact privilege of `auditon(A_GETPINFO_ADDR)` and of
-  `audit_session_port()`.** The first result recorded these as unmeasurable read-only. They were not
-  measured on this host — that would still need a compiled probe the brief forbids — but they were
-  **read from Apple's published XNU source** for the nearest published release, quoted in the
-  correction round above. `A_GETPINFO_ADDR` falls to `default: suser(...)`; `audit_session_port()`
-  needs `PRIV_AUDIT_SESSION_PORT` for any session but the caller's own. The residual limitation is
-  narrower and is stated rather than closed: this is *source* evidence for `xnu-12377.121.6`, not
-  *runtime* evidence from `xnu-12377.121.10`, and no behaviour was observed on this machine.
-- **The audit subsystem is not configured on this host, and its state was not changed to find out
-  more.** `/etc/security` holds `audit_control.example` but **no** `audit_control`; `pgrep -lf auditd`
-  exits 1 (not running); `launchctl print system/com.apple.auditd` returns "Could not find service".
-  ASIDs plainly still work (claim 1's `launchctl` output proves it), so this is a durability signal
-  rather than a blocker — but it means an ASID mechanism would depend on a subsystem this Mac does not
-  otherwise run.
-- **The `ps -L` keyword list is recorded here in full**, because claim 2's absence rests on it:
-  `%cpu %mem acflag acflg args blocked comm command cpu cputime etime f flags gid group inblk inblock
-  jobc ktrace ktracep lim login logname lstart majflt minflt msgrcv msgsnd ni nice nivcsw nsignals
-  nsigs nswap nvcsw nwchan oublk oublock p_ru paddr pagein pcpu pending pgid pid pmem ppid pri prsna
-  pstime putime re rgid rgroup rss ruid ruser sess sig sigmask sl start stat state stime svgid svuid
-  tdev time tpgid tsess tsiz tt tty ucomm uid upr user usrpri utime vsize vsz wchan wq wqb wql wqr
-  xstat`.
-- **`launchctl print user/502` was not retried.** Unit 5's `Operation not permitted` stands, so the
-  actor's launchd domain remains un-enumerated and its job sources unresolved.
+- **`ps` reporting `-` cannot be distinguished from `ps` failing to read.** Every non-empty value
+  observed belongs to a uid-501 process. Whether a root-owned process shows `-` because it has no
+  persona or because the read failed was not established, and could not be without running a probe.
+  For a fail-closed design this is the first thing that would need settling; it is moot under the
+  verdict.
+- **Nothing was executed to observe persona behaviour.** No persona was created, no process was
+  spawned into one, and no shed was attempted. Inheritance, non-sheddability and the entitlement gates
+  are read from Apple's source, not measured on this machine.
+- **Source version gap, stated as the brief requires.** All XNU quotations are from tag
+  `xnu-12377.121.6`, the newest published release. This host runs `xnu-12377.121.10~1` (`uname -v`) —
+  the same 12377.121 series, differing at the patch level; Apple has not published `.121.10`. As in
+  Unit 7, `main` and the tag were both fetched for the audit files and were byte-identical, but the
+  persona files were taken from the tag directly and no second copy was diffed against them.
+- **`CONFIG_PERSONAS` is a build option** (`syscalls.master` line 773). It is plainly enabled here,
+  since live processes carry personas, but the syscall's availability was inferred from that
+  observation rather than from a build manifest.
+- **No local manual page documents any persona interface.** `man 1 ps` names the keyword and nothing
+  else; there is no `man 2 persona` and no `kpersona` manual on this host.
 
-### How the verdict could have gone the other way
+### How each verdict could have gone the other way
 
-Three places, all checked, all of which went against ASID:
-
-1. **Had `ps` carried an `asid` keyword, or `pgrep`/`pkill` an ASID selector**, the query and the
-   signal would both have been shell one-liners the dispatcher already knows how to run, and combined
-   with row (b) and row (e) above ASID would have been the strongest candidate in the whole task. The
-   full keyword list and the full usage string were read; neither carries one.
-2. **Had `launchctl procinfo` worked unprivileged**, an unprivileged per-pid ASID query would have
-   existed with no compiled helper at all, and the verdict would have been "candidate ready for an
-   authorized live probe" with creation as the only open authority question. It answered "This
-   subcommand requires root privileges".
-3. **Had `setaudit_addr(2)` carried no `suser()` gate in the kernel source** — and the correction
-   round is where this stopped being an inference from `login` and `su` being setuid root — the
-   dispatcher could have placed each hop in its own session at launch under current authority, and the
-   route would have survived to a probe on the enumeration question alone. The gate is there, in both
-   the tagged and the `main` copy.
+- **"Candidate ready for a probe" would have required the entitlement gate to have a superuser
+  alternative.** It very nearly does elsewhere in the same file: `GET`, `INFO` and `FIND` are written
+  `!issuser && !entitlement`, and had `ALLOC` and `spawn_validate_persona` been written the same way,
+  persona would have been the strongest candidate in this task — inherited, unsheddable, externally
+  readable, cheap to wire — and the unit would have ended by naming what a root-bearing probe must
+  falsify. Both are entitlement-only. That single missing `||` is the whole difference.
+- **"Operator authority required" would have required the read-only evidence to run out.** It does
+  not: the gate is stated in the kernel source and there is no authority question left open that a
+  privilege-bearing check could answer, because no privilege satisfies an entitlement.
+- **"Candidate rejected" would have collapsed had `ps -axo prsna=` proved unprivileged at the syscall
+  level**, since that was deferral 8's premise and the query side is the half ASID failed. It went the
+  other way: `kpersona_pidinfo` is root-gated and `/bin/ps` is setuid root. The verdict does not rest
+  on this — creation alone settles it — but the lead that motivated the unit did not survive.
 
 ### Deferrals — carried forward and newly recorded
 
-None is implemented. Items 1-4 are Unit 6's, carried unchanged. Items 5-7 are Unit 4's, carried from
-the section removed with the prior result narrative (see the note at the end of this result). Items
-8-9 were noticed during the unit and item 10 during the correction round; all three are recorded
-rather than pursued, because they sit outside the brief's claims and outside the frozen findings.
+None is implemented. Items 1-7 are carried from Units 4 and 6. Item 8 is **discharged by this unit**.
+Items 9-10 are carried from Unit 7. Item 11 is new.
 
 1. **The plist count is inconsistent.** Unit 5's result said `/System/Library/LaunchAgents` held 465
    plists; a later bounded count returned 456. It affects no mechanism verdict. Correct it only if a
    later unit needs that inventory.
 2. **This state file is long and grows every unit**, against core § 4's "current truth, not a diary".
-   This unit replaced the previous result rather than appending and removed two prior-unit narrative
-   blocks; the accepted artifacts are untouched. Further reduction is an assessment decision.
+   This unit replaced the previous result rather than appending and removed the Unit 7 brief as
+   prior-unit history; the accepted artifacts are untouched. Further reduction is an assessment
+   decision.
 3. **No audit exists of the host's setuid-root helpers that can change a process's own credentials.**
-   **Partly discharged this unit** for audit credentials specifically: all sixteen setuid-root and
-   three setgid binaries in the standard directories were enumerated and symbol-checked, and only
-   `login` and `su` touch audit credentials. The general question — every credential class, not just
-   audit — remains open.
-4. **The uid-502 census fell 9 → 5 → 3 with no signal.** Re-measured this unit and **stable at 3**,
-   same three services and the same 10:11:27 start times. Recorded because it was measured; not
-   pursued.
-5. **Codex has no actor-owned bootstrap.** The Claude bootstrap installs into the actor's own home
-   (C1a/C1b), but every Codex command still runs
-   `/Applications/ChatGPT.app/Contents/Resources/codex` — a permanent dependency on the operator's
-   application bundle. Acceptable for a temporary Stage C probe, not as steady state. D/E territory.
+   Partly discharged in Unit 7 for audit credentials, and further narrowed here for persona: no helper
+   can change a persona because no interface to change one exists at all. The general question — every
+   credential class — remains open.
+4. **The uid-502 census fell 9 → 5 → 3 with no signal.** Re-measured this unit at 15:33 EEST and
+   **still 3**, same services, same 10:11:27 start times. Recorded because it was measured; not pursued.
+5. **Codex has no actor-owned bootstrap.** Every Codex command still runs
+   `/Applications/ChatGPT.app/Contents/Resources/codex` — a dependency on the operator's application
+   bundle. Acceptable for a temporary Stage C probe, not as steady state. D/E territory.
 6. **Every actor command in the runbook goes through the operator's `sudo`.** A real dispatcher cannot
    use the operator's sudo credential, so the run-as route for production is still unsolved. It is the
    D4 narrow-privilege question, which is unauthorized.
 7. **C3b and C4b spend a little of the actor's own quota.** The only checks in the runbook with an
-   external cost. Worth the operator knowing before they run it; not a defect, and not a reason to
-   weaken the check back to metadata.
-8. **`prsna` (persona) remains a candidate unknown for a later bounded discovery unit.** It is in the
-   `ps -L` keyword list and has never been dispositioned, which is why no exhaustion claim is made
-   anywhere in this result or in `## Blocker`. What was already observed before this correction:
-   `ps -axo prsna=` returns `-` for 547 processes, `99` for one and `1004` for seven, so it is readable
-   for arbitrary processes without privilege — the property ASID lacks — while almost nothing carries
-   one, `pgrep`/`pkill` have no persona selector, and `SYS_persona` appears in `sys/syscall.h`.
-   **Not investigated during this correction round**, as finding 3 requires; nothing above was
-   re-measured for it. Whether it becomes a unit is Codex's call.
+   external cost. Worth the operator knowing before they run it; not a defect.
+8. **DISCHARGED — persona is no longer an unexamined attribute.** This unit is its disposition.
 9. **The `/dev/auditsessions` lifecycle stream was not evaluated as a *verification* aid.**
-   `AUE_SESSION_END` means "all the processes in the session have exited", which is exactly the
-   assertion a truthful teardown wants — but it needs `AU_SDEVF_ALLSESSIONS`, which the header itself
-   marks "(Requires privilege.)", and it verifies rather than terminates. Recorded in case a future
-   root-bearing design ever revisits it; it changes nothing under current authority.
-10. **Newly noticed in the correction round, and not pursued: nothing in this task pins where a
-    primary-source claim about kernel behaviour may come from.** This round read Apple's published XNU
-    source over the network because the frozen finding directed it, and the fetched copies live outside
-    the repository in session scratch, so the file quotes them rather than vendoring them. Whether
-    external primary sources should be cited, cached or excluded is a workflow question for the loop,
-    not a Phase 1a mechanism question, so it is recorded and left alone.
-
-### Note on what this unit removed from the file
-
-Following core § 4 and the brief's instruction to replace `## Latest result`, this unit removed the
-Unit 6 result narrative and the Unit 4 correction-and-result narrative that stood inside this field.
-Their deferrals are carried above, items 1-7, so none has disappeared. **The accepted artifacts below
-are untouched** — the command-support table, the runbook, the C5 fixture, C5-T, the static signal
-audit, the fail-capability matrix, the three outcomes, the rollback and the operator evidence
-template. The removed narrative remains in git at the Unit 4 and Unit 6 commits, so Codex can restore
-it at no cost if this reduction was the wrong call.
+   `AUE_SESSION_END` means "all the processes in the session have exited", which is what a truthful
+   teardown wants — but it needs `AU_SDEVF_ALLSESSIONS`, marked "(Requires privilege.)" in the header,
+   and it verifies rather than terminates. Recorded in case a future root-bearing design revisits it.
+10. **Nothing in this task pins where a primary-source claim about kernel behaviour may come from.**
+    Recorded in Unit 7; this unit read Apple's published source over the network a second time, again
+    because the brief directed it, and again the copies live outside the repository in session scratch.
+    The recurrence is worth noting: it is now the normal way this task establishes kernel semantics,
+    with no stated rule. Still a workflow question, not a Phase 1a mechanism question.
+11. **`/bin/ps` is being relied on as a privileged read path, and nothing records that.** The persona
+    column works only because a setuid-root system binary performs a root-gated syscall for an
+    unprivileged caller. Any future boundary that reads a privileged attribute by shelling out to `ps`
+    inherits a dependency on that binary keeping its setuid bit and its behaviour — the same class of
+    shipped-helper dependency that killed the real-GID route in Unit 6, pointing the other way. Not
+    pursued: no such boundary currently exists.
 
 ### Command-support table
 
@@ -1384,81 +1265,71 @@ Rollback, if run                : R1's printed verdict; whether R6 ran; R7's res
 
 ## Blocker
 
-**No supervision mechanism examined so far is usable under current authority.** That is a statement
-about what has been examined, not a claim that the space is empty — the prior claim that "no candidate
-remains" is **withdrawn**. The closed supervision discovery excluded process group, ancestry-at-stop,
-environment tag, working directory, `kqueue NOTE_TRACK`, launchd job removal, Darwin `ptrace`,
-containers and coalitions. Unit 5 excluded the pattern-free UID signal as over-broad. Unit 6 excluded
-the real GID as sheddable through setuid-root `newgrp`. Unit 7 finds the audit session unusable under
-current authority: right granularity and no unprivileged shed, but `setaudit_addr(2)` and
-`auditon(A_GETPINFO_ADDR)` are each `suser()`-gated in the kernel. The inherited-descriptor handle
-already in `dispatch.sh` reaches further than any of these, and `dispatch.test.sh` case 27h pins the
-surviving hole — a descendant that closes every inherited descriptor still survives it.
+**Every candidate named so far has now been examined, and none is usable.** That is a statement about
+the search to date, not a proof that the space is empty — the same distinction Unit 7's correction
+established, and it holds here. The closed supervision discovery excluded process group,
+ancestry-at-stop, environment tag, working directory, `kqueue NOTE_TRACK`, launchd job removal, Darwin
+`ptrace`, containers and coalitions. Unit 5 excluded the pattern-free UID signal as over-broad. Unit 6
+excluded the real GID as sheddable through setuid-root `newgrp`. Unit 7 found the audit session
+unusable under current authority, with its root-bearing form unassessed. Unit 8 rejects persona: the
+best intrinsic properties of any candidate — inherited, unsheddable, externally readable — behind an
+Apple-private entitlement that no authority in the operator's gift can supply.
 
-**At least one candidate is unexamined.** `prsna` (persona) sits in the `ps -L` keyword list, has
-never been dispositioned, and is readable unprivileged — which no other surviving candidate is. It is
-deferral 8 and a candidate unknown for a later bounded discovery unit. **No exhaustion claim is made
-here**, and none should be read into the list above.
+**No further candidate is currently named.** Deferral 8, the one recorded unexamined attribute, is
+discharged by this unit. Nothing in this file now points at a next mechanism to test, and no claim is
+made that none exists.
 
-**What comes next is not asserted to be an operator decision.** ASID is unusable under current
-authority; making it usable would need new root-level creation and query authority, whose size, shape
-and worth this unit did not establish and does not request. Persona is unexamined. Which of those the
-task pursues, and whether anything goes to the operator at all, is Codex's assessment. **Restating
-what literal 1a guarantees is not among the options** — `## Objective and scope` records that the
-operator preserved that guarantee on 2026-08-08, so it is settled, not open.
+**The dispatcher's current reach is unchanged and is the honest fallback position.** The
+inherited-descriptor handle in `dispatch.sh` reaches further than any candidate examined, and
+`dispatch.test.sh` case 27h pins the surviving hole: a descendant that closes every inherited
+descriptor still survives it. That hole is exactly literal 1a's escaped shape.
+
+**What comes next is not asserted here.** Two things are unresolved and neither is this unit's to
+settle: whether ASID's root-bearing form is worth assessing (Unit 7 left it open and did not size it),
+and what the task does now that the named-candidate list is empty. Both are Codex's assessment, and
+anything that turns out to need new authority is the operator's decision. **Restating what literal 1a
+guarantees is not among the options** — `## Objective and scope` records that the operator preserved
+that guarantee on 2026-08-08.
 
 **Attended probe authority and unattended production authority remain distinct.** Operator-attended
 `sudo -u` does not give the dispatcher production authority; D4 stays unauthorized and outside this
-unit. A root-bearing ASID design would need a third and larger authority than either, and it is not
-requested here.
+unit. Neither authority supplies a code-signing entitlement, which is why persona is rejected rather
+than deferred to an authority decision.
 
-**The account stays untouched.** Re-measured again at the correction close, 2026-08-09 15:21 EEST, and
-identical to the 12:17 reading: `id -u wlactor-airesources` → 502,
-`id -un 502` → the account, `dseditgroup -o checkmember … admin` → "is NOT a member of admin". The
-uid-502 census is stable at three PPID-1 services — 82525 `distnoted`, 82526 `mdbulkimport`, 82530
-`lsd` — all `rgid 20`, all still carrying their original 10:11:27 start time, and `pgrep -U 502` still
-exits 0, so the boundary is still non-empty. It remains a password-bearing login account with
-`/bin/zsh`, the operator's home is `drwxr-xr-x+`, and actor reach into the operator home is unresolved
-before D. No process emergency requires a signal. Rollback R1 has not been reachable at any
-observation, so removal needs a separately verified procedure. Nothing may signal, delete, log into or
-authenticate uid 502 in the meantime. C5 as written stays unrunnable, and C1 and every later Stage C
-step stay stopped.
+**The account stays untouched.** Re-measured at the Unit 8 close, 2026-08-09 15:33 EEST, and unchanged
+from the two Unit 7 readings: `id -u wlactor-airesources` → 502, `dseditgroup -o checkmember … admin`
+→ "is NOT a member of admin", and the uid-502 census is still the same three PPID-1 services — 82525
+`distnoted`, 82526 `mdbulkimport`, 82530 `lsd` — all `rgid 20`, all carrying their original 10:11:27
+start time. It remains a password-bearing login account with `/bin/zsh`, the operator's home is
+`drwxr-xr-x+`, and actor reach into the operator home is unresolved before D. No process emergency
+requires a signal. Rollback R1 has not been reachable at any observation, so removal needs a separately
+verified procedure. Nothing may signal, delete, log into or authenticate uid 502 in the meantime. C5 as
+written stays unrunnable, and C1 and every later Stage C step stay stopped.
 
 ## Next action
 
-Codex: run the closure check on the three frozen findings only — are findings 1, 2 and 3 resolved, and
-did the correction break something?
+Codex: assess Unit 8. The verdict is **candidate rejected**, and the conflict named is that both
+persona creation (`kpersona_alloc`) and spawning into an existing persona (`spawn_validate_persona`)
+are gated on the entitlement `com.apple.private.persona-mgmt` with **no superuser alternative**, while
+the read operations in the same file are gated `root || entitlement`. That asymmetry is the whole
+verdict and is the first thing worth checking independently.
 
-What the correction did, so the check has something falsifiable to test:
+Three things the assessment should weigh:
 
-1. **Finding 1** — the setuid-root inference is withdrawn and demoted to corroboration. All three
-   rules Codex cited were reproduced verbatim from Apple's published XNU source and are quoted in
-   `### The correction round`: `setaudit_addr(2)`'s `suser()` before `audit_session_setaia()`,
-   `A_GETPINFO_ADDR` falling to the privilege switch's `default: suser(...)`, and
-   `audit_session_port()`'s `PRIV_AUDIT_SESSION_PORT` for any session but the caller's own.
-   Applicability is stated, not assumed: `main` and tag `xnu-12377.121.6` are byte-identical, and this
-   host runs `xnu-12377.121.10`, which Apple has not published. Every "measured directly" statement
-   that rested on binary modes or imports is corrected.
-2. **Finding 2** — "candidate rejected" and the bespoke-C-supervisor exclusivity are withdrawn. The
-   verdict now reads: unusable under current authority; usable only with new root-level creation and
-   query authority; race safety and implementation shape unresolved. Claim 2's heading is narrowed to
-   *unprivileged* supervisors and now names the root-capable paths it previously contradicted. No
-   authority is requested, no mechanism prescribed, no value-and-risk call made.
-3. **Finding 3** — the exhaustion claim is gone from `## Blocker` and from the verdict, persona is
-   recorded as an unexamined candidate for a later bounded discovery unit, the next move is no longer
-   asserted to be an operator decision, and restating literal 1a is removed as an option because the
-   operator settled it on 2026-08-08. Persona was not investigated in this round.
-
-**Newly noticed, recorded as a deferral rather than worked:** deferral 10 — nothing in this task pins
-where a primary-source claim about kernel behaviour may come from, and this round read Apple's
-published source over the network because the frozen finding directed it. Recorded, not acted on.
-
-**One thing the check should look at specifically.** The first reading of the XNU source got
-`A_GETPINFO_ADDR` backwards — its handler contains no privilege check, and the gate sits 360 lines
-earlier in a shared switch. The correction quotes the switch, but this is the place where an
-independent look is most worth spending.
+1. **Whether "rejected" is the right width.** The claim made is: rejected for every authority in the
+   operator's gift. The theoretical escape — disabling signature enforcement and re-signing binaries —
+   is named, placed outside this task and every authorized stage, and is neither requested nor
+   recommended. If that width is wrong, it is wrong in the direction of the Unit 7 finding 2 error and
+   should be corrected the same way.
+2. **What the task does with an empty named-candidate list.** Deferral 8 is discharged, so nothing in
+   this file points at a next mechanism. This unit deliberately does not assert that the next move is
+   an operator decision, and does not reopen ASID's root-bearing form, which Unit 7 left unassessed.
+3. **Deferral 11, newly recorded.** The persona column is readable only because `/bin/ps` is setuid
+   root and performs a root-gated syscall for an unprivileged caller. No current boundary depends on
+   that, but it is the same class of shipped-helper dependency that killed the real-GID route, and it
+   is now written down.
 
 Preserved and verifiable: the file reduction, the runbook, C5-T, the rollback, the evidence template,
-and the C5 fixture bytes — 210 lines, sha256 `65b50d193054e6060fda6de866119d98898d8df04889e96b83802430b077a8f9`,
-markers intact. Host state unchanged, re-measured at the correction close and identical to the earlier
-reading. Only this state file was changed and committed.
+and the C5 fixture bytes — 210 lines, sha256
+`65b50d193054e6060fda6de866119d98898d8df04889e96b83802430b077a8f9`, markers intact. Host state
+re-measured at the close and unchanged. Only this state file was changed and committed.
