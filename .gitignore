@@ -42,6 +42,10 @@ logs/.session-marker-*
 # the script's own EXIT trap; ignored here so a crashed run's residue can never be committed.
 logs/.promote.lock/
 
+# Derived semantic-search index built by logs/scripts/memory-search.py (/memory-search command) —
+# regenerable at any time via `/memory-search reindex`, never committed
+logs/.memory-index/
+
 # Archived inbox briefs (Layer C settings.json also denies Read on this path)
 inbox/archive/
 
