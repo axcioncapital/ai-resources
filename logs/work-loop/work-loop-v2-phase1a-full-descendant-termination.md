@@ -314,131 +314,136 @@ runbook, create another artifact or push.
 
 ## Latest result
 
-**Unit 6 — a run-specific real GID is the only surviving boundary, and it is narrower than the UID.**
-Discovery, read-only throughout. No `sudo`, no `kill`/`pkill`, no `launchctl` mutation, no account
-action, no login, no authentication, no installation, no actor process launch, no C5, no rollback, no
-fixture execution, no product edit, no test run, and no repository file other than this one. No
-credential contents were read. The live account was preserved untouched.
+**Unit 6 (CORRECTED at the correction round) — the run-GID boundary is sheddable without a password,
+and the route cannot be repaired by choosing a different group.** Discovery, read-only throughout. No
+`sudo`, no `kill`/`pkill`, no `launchctl` mutation, no account action, no login, no authentication, no
+installation, no actor process launch, no C5, no rollback, no fixture execution, no product edit, no
+test run, and no repository file other than this one. No credential contents were read. The live
+account was preserved untouched.
 
-**Verdict: candidate ready for an authorized live probe.** The candidate is the **real group ID
-(`rgid`)** of the run, set at launch and queried at stop. It is the one process attribute found on
-this host that is inherited through the whole accepted escape — `setsid`, double fork, descriptor
-closure and `exec` — is immutable to an unprivileged process by accident, is selectable pattern-free
-(`pgrep -G` / `pkill -G`), and is **not** carried by the account's PPID-1 per-user services, which run
-with the account's directory-record primary group. Both hypotheses named in the brief are rejected as
-written. Phase 1a remains literal and open; nothing was implemented, and the probe below is described
-by what it must be able to falsify, not as an implementation.
+**The verdict of "candidate ready for an authorized live probe" is WITHDRAWN.** The corrected verdict
+is that the real-GID boundary **does not satisfy literal Phase 1a** and no probe is proposed. The two
+frozen findings are resolved below, and the correction did not alter the accepted runbook, the C5
+fixture (210 lines, sha256 `65b50d19…a8f9`, marker pair intact) or any other accepted artifact.
 
-### The record — claims 1 to 5
+Result: the real-GID candidate is rejected, the authority claim behind it is withdrawn, and the
+group-variant choice that was escalated to Codex and the operator is withdrawn rather than re-put.
 
-- **Claim (1): HOLDS — Unit 5's conclusion and the live account shape are unchanged.** Re-measured
-  read-only at 2026-08-09 11:35 EEST, 84 minutes after account creation: `id -u
-  wlactor-airesources` → **502**; `id -un 502` → **wlactor-airesources**; `dseditgroup -o checkmember
-  -m wlactor-airesources admin` → **"is NOT a member of admin"**; `who` and `stat -f '%Su'
-  /dev/console` → only `patrik.lindeberg`. `ps -o pid=,ppid=,pgid=,sess=,uid=,lstart= -U 502` returns
-  the **same five pids** (82525, 82526, 82529, 82530, 82531) with the **same 10:11:27 start time** as
-  the correction round measured at ~11:19. So between 11:19 and 11:35 the set neither shrank nor
-  respawned: **nothing has restarted, and the decay has stopped at five for at least 16 minutes.**
-  The boundary is still non-empty, `pgrep -U 502` still exits 0, and eventual emptiness is still
-  unproven in both directions.
-- **Claim (2): both narrower shapes are rejected, and they fail in opposite directions.** Neither was
-  executed; each was tested against the four cases the brief names, using the measured facts already
-  in this file and in `dispatch.sh`.
-  - **A baseline-aware UID census is over-broad, and the over-breadth is caused by the run itself.**
-    It discriminates by *when a process appeared*, not by *who started it*. Every uid-502 process
-    observed is a `MachServices` on-demand launchd agent (Unit 5's plist inspection), and the
-    operator's own live evidence recorded the set **growing 7 → 9 within about four minutes** of
-    account creation. A process that appears after the baseline is therefore a normal event on this
-    account, not a signal of actor work — so the census would signal an OS service that the
-    `## Objective and scope` guarantee forbids signalling. That any *future* agent is launched by
-    launchd with the account's primary group rather than by the actor is **inference** from the
-    observed pattern and the `MachServices` keys, not a measurement.
-  - **A per-process stop against a recorded set is incomplete against exactly the shape 1a names.**
-    The set can only hold pids the dispatcher observed. The escaped daemon's pid is never observable:
-    the double fork destroys the ancestry link before any stop, which is why `dispatch.sh` records
-    "recursive PPID census … MISSES" for the double-fork orphan (lines 519-532). A recorded set is the
-    ancestry walk under another name, and it inherits its measured miss.
-  - So the pair is a dichotomy, not a menu: the first is complete and over-broad, the second is
-    bounded and incomplete. That is the named unknown answered for those two shapes.
-- **Claim (3): one attribute survives the escape — the real group ID.** Established from local
-  manuals, not recall:
-  - `execve(2)`: "the real user ID, real group ID and other group IDs of the new process image remain
-    the same as the calling process image." A set-group-ID binary changes only the **effective** gid.
-  - `fork(2)`: the child "is an exact copy of the calling process" except for an enumerated list that
-    contains no credential.
-  - `setsid(2)`: creates a new session and process group and drops the controlling terminal. It
-    touches no credential.
-  - `setgid(2)`: `[EPERM]` — "the process does not have appropriate privileges" — so an unprivileged
-    descendant cannot set its real gid to a group outside its real/saved set.
-  - `pkill(1)`/`pgrep(1)` OPTIONS: `-G gid` — "Restrict matches to processes with a real group ID in
-    the comma-separated list gid." Pattern-free, same three-valued exit contract as `-U`.
-  - `ps -L` lists `rgid` and `rgroup` as reportable keywords, so the attribute is queryable at stop
-    time as well as selectable.
-  Measured on this host: **all five uid-502 agents carry `gid=20 rgid=20 svgid=20` (`staff`)**, the
-  account's directory-record primary group (`id wlactor-airesources` → `gid=20(staff)`). A run
-  launched with a different primary group is therefore distinguishable from every one of them by an
-  attribute that no unprivileged descendant can shed by accident.
-  **The boundary would also start empty, which the UID never did.** A host-wide `ps -axo rgid=` tally
-  returns 451 processes at rgid 20, 112 at rgid 0, and small counts across system gids; **no process
-  on this host has a real gid of 100, 61, 12, 701 or 702**, and `dscl . -read /Groups/wlrun` returns
-  `eDSRecordNotFound`, so a dedicated name is free.
-  **Absence conclusion and its bounded search surface.** No other attribute survives. The surface
-  searched was: the complete `ps -L` keyword list on this host (89 keywords, quoted in full above for
-  `rgid`); the complete `pgrep`/`pkill` selector list (`-F -G -P -U -g -t -u` plus pattern); and the
-  mechanisms already enumerated by the closed
-  `logs/work-loop/work-loop-v2-descendant-supervision-discovery.md`. Within that surface: `uid`/`ruid`
-  is the rejected over-broad boundary; `pgid`, `sess`, `tty`/`tdev`/`tpgid` are destroyed by `setsid`;
-  `ppid` is destroyed by the double fork; `login` (the audit login name) reads
-  **`wlactor-airesources` for all five agents** — identical granularity to the UID, so it is over-broad
-  for the same reason, and narrowing it needs `setauid(2)`, whose manual states "this system call
-  requires an appropriate privilege". Two prior-discovery premises were re-checked and are unchanged:
-  `sys/event.h` line 356 still reads "NOTE_TRACK, NOTE_TRACKERR, and NOTE_CHILD are no longer
-  supported as of 10.5", and `man 2 ptrace` lists twelve requests (`PT_ATTACH … PT_TRACE_ME`) with no
-  fork-following request. Coalitions have no public header under the SDK's `sys/` and remain
-  unavailable, as recorded.
-- **Claim (4): the candidate maps onto every current launch and stop path in `dispatch.sh` as a
-  fourth handle, not a replacement.** Read-only; nothing was edited.
-  - **Launch — `run_bounded()` lines 1465-1470.** The run gid is established by how `"$@"` is invoked.
-    `set -m` still makes the actor a process-group leader, `ACTOR_PGID` is still its own pid, and the
-    marker descriptor on fd 9 is still opened and closed the same way. None of the three existing
-    handles is disturbed.
-  - **Census — `actor_tree_census()` lines 684-786.** A fourth handle fits the function's existing
-    contract exactly: one `pgrep -G <gid>` whose exit 0 / 1 / ≥2 maps to found / none /
-    `CENSUS_UNKNOWN`, returned through the globals rather than command substitution for the reason
-    documented at lines 670-682. `census_pid()`'s `SELF_PIDS` filter still applies, and it carries a
-    new requirement: **the dispatcher must never run under the run gid**, or it would sweep itself.
-    Today it runs at uid 501 / rgid 20, so it is excluded by construction — that must stay true.
-  - **Stop — `terminate_actor_tree()` lines 804-847.** Unchanged in shape: re-census, TERM to the
-    group and to each pid, `TERM_GRACE_SECS=5`, KILL, `KILL_SETTLE_SECS=2`, then the verifying
-    re-census that sets `TEARDOWN_SURVIVORS` and `TEARDOWN_UNKNOWN`. A fourth handle is one more pid
-    source into the same union. The **global deadline arithmetic is preserved**: `effective_timeout()`
-    bounds the overrun at ~9s from the poll interval, the two constants, census cost and reaping; a
-    fourth handle adds one `pgrep` per pass to the "census cost" term and changes no constant.
-  - **Interruption — `on_signal()` lines 904-936.** It reaches the tree through `ACTOR_PGID` and
-    `ACTOR_MARKER`, both published by `run_bounded` and cleared on the way out. A gid handle needs a
-    fourth global published and cleared identically, or the handler cannot see it. The retry
-    prohibition (exit 28, "Nothing is retried") and `release_lock` ordering are untouched.
-  - **Exit-code honesty and lock pinning.** `report_teardown()`'s scoped sentence — "no descendant
-    reachable by group, ancestry or inherited descriptor is still running" — would have to name the
-    fourth handle, and `dispatch.test.sh` case 27h **fails if that sentence is widened**. That test is
-    the guard which forces any such change to be deliberate rather than quiet. `pin_lock` takes
-    survivors and unknown and needs no change.
-- **Claim (5): one verdict — candidate ready for an authorized live probe.** A current-authority
-  variant survives, so this is not "operator authority required"; but the fail-closed variant costs
-  one small authority, and the difference is a value-and-risk choice for Codex and the operator rather
-  than a technical one.
-  - **Current authority, no new grant:** `/usr/bin/newgrp` exists on this host and is **setuid root**
-    (`-r-sr-xr-x 1 root wheel`). It changes the real gid to a group the caller already belongs to, so
-    a run could adopt one of the actor's existing groups — `_lpoperator` (100), `localaccounts` (61)
-    or a sharepoint group — each of which currently has **zero processes host-wide**. This needs no
-    group creation, no membership change and no sudoers change.
-  - **Why that variant is empty by measurement and not by construction:** those are shared system
-    groups with their own meaning. Nothing prevents an unrelated process from acquiring rgid 100
-    later, and a stop would then signal it — the exact class of harm literal 1a forbids.
-  - **The smallest new authority that makes it fail-closed:** one dedicated POSIX group (e.g. `wlrun`,
-    name confirmed free) plus actor membership — two one-time admin commands. It is new authority
-    beyond Stages B and C and is therefore Codex's and the operator's call, not this unit's.
-  - **Not proposed here:** any implementation, command sequence, dispatcher edit or probe script.
+Evidence: `newgrp(1)`'s own DESCRIPTION, `/usr/bin/newgrp`'s setuid-root mode, `id
+wlactor-airesources`'s membership list, and the generated `--unattended` profile in `dispatch.sh`
+lines 1202-1227 with its deny list at lines 211-217 — each read this round and each quoted below. The
+evidence could have gone the other way in three named places, listed at the end.
+
+### The correction round — findings 1 and 2
+
+Both reproduced by inspection before either was corrected.
+
+- **Finding 1: REPRODUCES, and it is decisive.** `man 1 newgrp` on this host, DESCRIPTION verbatim:
+  "The newgrp utility creates a new shell execution environment with **modified real and effective
+  group IDs**", and "The user **will be prompted for a password if they are not a member** of the
+  specified group." `ls -l /usr/bin/newgrp` → `-r-sr-xr-x  1 root  wheel` — setuid root. `id
+  wlactor-airesources` → `gid=20(staff) groups=20(staff),12(everyone),61(localaccounts),701(…),702(…),
+  100(_lpoperator)`. The actor is therefore a member of every group named as a candidate, so
+  `newgrp staff` from any descendant running as uid 502 changes the **real** GID with **no password
+  and no operator action**. The stop would then miss it, and the run would report a clean halt while a
+  descendant kept running — which is the exact defect literal 1a names.
+- **Finding 1 is stronger than the group-choice framing survives.** The same DESCRIPTION continues:
+  with no group operand, "the real, effective and supplementary group IDs are **restored to those from
+  the current user's password database entry**." So bare `newgrp` returns to the account's directory
+  primary group without naming a group at all. The only way to make a run GID unsheddable this way is
+  to make it *be* the password-database primary group — and then the account's PPID-1 launchd agents
+  inherit it too, which is the over-broad boundary Unit 5 already rejected. **The route is
+  self-defeating, not merely unproven**, and picking a different group cannot repair it.
+- **Nothing in scope prevents the escape**, which is the condition finding 1 attached to proposing any
+  probe. Read this round: `write_unattended_profile` (`dispatch.sh` lines 1202-1227) emits network
+  denial, `denyRead ["~/"]` with three named `allowRead` paths, and the flag block; the deny list
+  `UNATTENDED_BASE_DENY` (lines 211-217) is exactly `Bash(git push:*)`, `Bash(git push *)`,
+  `WebFetch`, `WebSearch`, `mcp__*`. **There is no execution restriction of any kind**, so nothing
+  there stops `newgrp`. Two further limits are in the same code, not inferred: line 1281 states "codex
+  hops are NOT covered by this profile", and the profile applies only when `--unattended` is passed at
+  all, which matches accepted limitation 4 of the closed supervision discovery ("containment covers
+  only hops that actually run contained"). Attended behaviour is therefore uncontained by
+  construction.
+- **Root cause of the error, stated plainly.** The result checked `setgid(2)` — "[EPERM] the process
+  does not have appropriate privileges" — and read immutability off it. That covers a process changing
+  its own real GID directly. It does **not** cover a **setuid-root helper on the host** doing it on the
+  process's behalf, and `newgrp` is precisely that helper. Inheritance was established correctly;
+  immutability was not established at all, and calling the escape a "determined escape" narrowed the
+  preserved guarantee without authority. Withdrawn.
+- **Finding 2: REPRODUCES.** `newgrp(1)` describes group IDs only; no uid change appears anywhere in
+  its manual, so it cannot switch the dispatcher from uid 501 to uid 502. The result's phrases
+  "**Current authority, no new grant**" and the brief's "using authority already available to the
+  dispatcher" were answered as though operator-attended `sudo -u` counted as dispatcher authority. It
+  does not. **Both phrases are withdrawn.** The two authorities are distinct and were conflated:
+  - **Probe authority** — operator-attended `sudo -u wlactor-airesources`, which exists today and is
+    what the runbook's C1 and C6 rows already use. It is attended by definition.
+  - **Production authority** — an unattended dispatcher running as the actor. **Unsolved.** It is the
+    accepted deferral recorded below ("every actor command in the runbook goes through the operator's
+    `sudo`"), which assigns it to the D4 narrow-privilege question, and D is not authorized.
+  So no part of the real-GID route was ever available to the unattended dispatcher under current
+  authority, whichever group it used.
+- **Correction 2 — the group-variant choice is withdrawn, not re-put.** Because finding 1 rejects the
+  candidate, the choice between reusing an existing group and creating a dedicated one no longer
+  advances 1a. It is not escalated to Codex or the operator, and the previous `## Blocker` framing of
+  "a decision, not a discovery" is withdrawn with it.
+
+### The record — claims 1 to 5, corrected
+
+- **Claim (1): HOLDS — re-measured, and the account is unchanged apart from further natural decay.**
+  At 2026-08-09 11:51 EEST: `id -u wlactor-airesources` → 502, `id -un 502` → the account,
+  `dseditgroup -o checkmember … admin` → "is NOT a member of admin". `ps -o pid=,uid=,rgid=,lstart= -U
+  502` now returns **three** processes — 82525 `distnoted`, 82526 `mdbulkimport`, 82530 `lsd` — all
+  with `rgid 20` and all still carrying the original **10:11:27** start time, so nothing has restarted;
+  `pkd` and `trustd --agent` exited on their own with no signal. This reproduces Codex's closure-check
+  census exactly. `pgrep -U 502` still exits 0, so the boundary is still non-empty. Per the frozen
+  scope, the decay is recorded and **not pursued**.
+- **Claim (2): unchanged — both narrower shapes are rejected, and they fail in opposite directions.**
+  A baseline-aware UID census discriminates by *when a process appeared*, not by *who started it*; the
+  operator's live evidence recorded the uid-502 set **growing 7 → 9 within about four minutes**, so an
+  OS service appearing after baseline would be signalled — the harm `## Objective and scope` forbids. A
+  per-process recorded set can only hold pids the dispatcher observed, and the double fork destroys the
+  ancestry link before any stop, which is why `dispatch.sh` lines 519-532 record "recursive PPID census
+  … MISSES" for the double-fork orphan. Complete-and-over-broad versus bounded-and-incomplete.
+- **Claim (3): CORRECTED — the real GID is inherited through the escape, but it is not immutable, so
+  it is not a boundary.** The inheritance evidence stands and is unchanged: `execve(2)` — "the real
+  user ID, real group ID and other group IDs of the new process image remain the same as the calling
+  process image", with set-group-ID affecting only the effective GID; `fork(2)` — the child "is an
+  exact copy" except for an enumerated list carrying no credential; `setsid(2)` — a new session and
+  process group, no credential change; `pkill(1)`/`pgrep(1)` — "`-G gid` Restrict matches to processes
+  with a real group ID in the comma-separated list gid"; `ps -L` lists `rgid` and `rgroup`. The measured
+  facts also stand: all uid-502 agents carry `rgid 20`, and a host-wide `ps -axo rgid=` tally shows no
+  process at gids 100, 61, 12, 701 or 702, with `dscl . -read /Groups/wlrun` → `eDSRecordNotFound`.
+  **What is withdrawn is the conclusion drawn from them.** Inheritance makes the attribute *reach* the
+  escaped daemon; it does not make the daemon *unable to drop it*. `newgrp(1)` drops it without a
+  password, so the attribute fails the one property a termination boundary must have.
+  **The absence conclusion is unchanged and now settles the whole surface.** Searched: the complete
+  `ps -L` keyword list on this host, the complete `pgrep`/`pkill` selector list (`-F -G -P -U -g -t
+  -u`), and the mechanisms enumerated by the closed
+  `logs/work-loop/work-loop-v2-descendant-supervision-discovery.md`. `uid`/`ruid` is over-broad;
+  `pgid`, `sess`, `tty`/`tdev`/`tpgid` are destroyed by `setsid`; `ppid` by the double fork; `login`
+  (the audit login name) reads `wlactor-airesources` for every agent, so it has UID granularity, and
+  narrowing it needs `setauid(2)`, whose manual states "this system call requires an appropriate
+  privilege". Re-checked and unchanged: `sys/event.h` line 356 — "NOTE_TRACK, NOTE_TRACKERR, and
+  NOTE_CHILD are no longer supported as of 10.5"; `man 2 ptrace` lists twelve requests with no
+  fork-following request; coalitions have no public SDK header under `sys/`. With `rgid` now rejected,
+  **no attribute on that surface survives.**
+- **Claim (4): the `dispatch.sh` mapping stands as a description and no longer supports a probe.**
+  Read-only; nothing was edited. A fourth handle would fit `actor_tree_census()`'s existing
+  three-valued contract (exit 0 / 1 / ≥2 → found / none / `CENSUS_UNKNOWN`, returned through globals
+  for the reason at lines 670-682), would add one `pgrep` per pass to the census-cost term without
+  changing `TERM_GRACE_SECS=5`, `KILL_SETTLE_SECS=2` or the ~9s bound documented at
+  `effective_timeout()`, would need a fourth global published and cleared by `run_bounded()` for
+  `on_signal()` to reach it, and would force `report_teardown()`'s scoped sentence to be widened —
+  which `dispatch.test.sh` case 27h fails on, making any such change deliberate. **None of that is
+  reached**: a handle that the target can shed would make `teardown verified` false, which is the
+  claim 1a exists to protect. Retained as a description of where any future boundary must fit, not as
+  a plan.
+- **Claim (5): CORRECTED — the verdict is rejection of the real-GID mechanism.** Not "ready for a
+  probe", and not "operator authority required": no new authority was found that would close the shed,
+  and the self-defeating argument above shows a different group cannot. **What is not rejected is the
+  dedicated account**, exactly as in Unit 5 — the identity was never exercised, and rejecting it would
+  be a broader claim than the evidence supports. The named unknown returns **open**, now with one more
+  mechanism excluded and its whole attribute surface exhausted.
 
 ### False positive and false negative, by case
 
@@ -446,84 +451,58 @@ by what it must be able to falsify, not as an implementation.
 |---|---|---|---|
 | (a) service present at baseline | correct exclusion | correct exclusion | correct exclusion — rgid 20 ≠ run gid |
 | (b) service launched after baseline | **FALSE POSITIVE** — signals an OS service; observed 7 → 9 in ~4 min | correct exclusion | correct exclusion (inference: launchd sets the account's primary group) |
-| (c) a baseline pid exits and is reused by an actor descendant | **FALSE NEGATIVE** — the pid is in the baseline, so it is spared | not applicable — selection is not by baseline | not applicable — selection is by attribute, not by pid |
-| (c′) a recorded pid exits and is reused by an unrelated process | not applicable | **FALSE POSITIVE** unless owner *and* start time are re-checked before signalling | not applicable |
-| (d) descendant changes session, parent, group, descriptors and executable | reached | **FALSE NEGATIVE** — its pid was never observable (double fork) | reached — `execve(2)` preserves the real gid |
+| (c) a baseline pid exits and is reused by an actor descendant | **FALSE NEGATIVE** — the pid is in the baseline, so it is spared | not applicable | not applicable — selection is by attribute, not by pid |
+| (c′) a recorded pid exits and is reused by an unrelated process | not applicable | **FALSE POSITIVE** unless owner *and* start time are re-checked | not applicable |
+| (d) descendant changes session, parent, group, descriptors and executable | reached | **FALSE NEGATIVE** — its pid was never observable | reached — `execve(2)` preserves the real GID |
+| **(e) descendant execs setuid-root `newgrp`** | not applicable — selection is by uid, which `newgrp` does not change | not applicable — selection is by pid | **FALSE NEGATIVE, and it is decisive** — no password, no operator action, and the stop then claims success |
 | enumeration failure (`pgrep` exit ≥ 2) | must be `CENSUS_UNKNOWN`, never "empty" | must be `CENSUS_UNKNOWN` | must be `CENSUS_UNKNOWN` |
 
-Pid reuse is bounded but not excluded: `kern.maxproc` is 6000 and `kern.maxprocperuid` is 4000, and
-Darwin pids wrap. That is why (c) and (c′) matter for the two pid-based shapes and do not arise for
-the attribute-based one.
-
-### What an authorized probe must be able to falsify
-
-Named so the next unit can be framed, not written as a procedure. Each item is a way the verdict
-turns out wrong:
-
-1. **The launch does not set the *real* gid.** `sudo(1)`'s `-g` is documented as running the command
-   "with the primary group set to group"; the manual does **not** state that it sets the real gid
-   rather than only the effective gid, and the same is unverified for a `newgrp`-mediated launch.
-   Falsified by `ps -o rgid=` on the launched process showing 20.
-2. **The run gid does not survive the accepted escape.** Falsified by `ps -o rgid=` on the fully
-   detached daemon returning anything but the run gid.
-3. **`pgrep -G` / `pkill -G` does not select on real gid pattern-free on this host.** This is the same
-   SYNOPSIS-versus-DESCRIPTION ambiguity already recorded for `-U` in the command-support table.
-   Falsified by `pgrep -G <gid>` exiting 1 while a known member is alive.
-4. **The boundary is not clean of OS services.** Falsified by any uid-502 launchd agent appearing in
-   `pgrep -G <gid>`.
-5. **The boundary is not empty before and after.** Falsified by a non-empty pre-launch census, or by
-   any survivor or any uid-501 bystander death after the stop.
-6. **Something unrelated acquires the run gid during the run.** Falsified by a census hit that is not
-   a run descendant.
-
-### Two residuals, stated rather than papered over
-
-- **The boundary is immutable by accident, not against intent.** `newgrp` is setuid root and the actor
-  remains a member of `staff`, so a descendant that deliberately execs `newgrp staff` leaves the
-  boundary. That is a determined-escape mode, not the daemonising-shell-job mode 1a describes, and the
-  shipped `--unattended` Seatbelt containment is the obvious place to close it — noted, not proposed.
-- **A process created *for* the actor by launchd is not a fork/exec descendant** and would carry the
-  account's primary group, so it sits outside this boundary. Whether literal 1a's "full descendant
-  tree" covers such a process is a scope question for Codex and the operator, not a mechanism gap.
-  It is the same class as the already-measured `launchctl remove` result in the closed discovery.
+Row (e) is the row the previous six-item falsification list omitted. Pid reuse remains bounded but not
+excluded — `kern.maxproc` 6000, `kern.maxprocperuid` 4000, and Darwin pids wrap — which is why (c) and
+(c′) matter for the two pid-based shapes.
 
 ### Inspection failures, stated rather than read as absence
 
 - `/etc/sudoers` is mode `-r--r-----  root:wheel` and returned **Permission denied**; `/etc/sudoers.d/`
-  is empty. Whether the current policy permits `sudo -g` at all is therefore **unknown**, and no
-  conclusion rests on it — the `newgrp` route exists precisely because that question is open.
-- No fixture was executed, so every statement about the run gid surviving the escape rests on
-  `execve(2)`, `fork(2)`, `setsid(2)` and `setgid(2)` as written, not on measurement. That is why
-  falsification items 1 and 2 exist.
+  is empty. Whether the policy permits `sudo -g` is **unknown**, and after this correction nothing
+  rests on it.
+- No fixture was executed and no process was launched under any group, so the shed itself was not
+  measured. It rests on `newgrp(1)`'s DESCRIPTION and the file's setuid-root mode as written. Measuring
+  it would require launching an actor process, which the brief forbids.
 - `launchctl print user/502` was not retried; Unit 5's `Operation not permitted` stands, so the live
-  launchd domain remains un-enumerated and the six unresolved job sources remain unresolved.
+  launchd domain remains un-enumerated and six job sources remain unresolved.
 
-### How the verdict could have gone the other way
+### How the corrected verdict could have gone the other way
 
-Had `ps -L` lacked `rgid`, or `pgrep` lacked `-G`, the attribute would exist in the kernel and be
-unusable from the dispatcher, and the answer would have been rejection. Had the five uid-502 agents
-carried a real gid other than the account's primary group — a per-job gid, say — the discrimination
-would collapse and the run gid would be as over-broad as the UID. Had `setgid(2)` permitted an
-unprivileged change of the real gid, the boundary would be sheddable and worthless. And had the
-host-wide tally shown processes already sitting at the candidate gids, the current-authority variant
-would have been unavailable and the verdict would have read "operator authority required" outright.
-Each of those was checked, and each could have returned the other way.
+Had `newgrp(1)` been absent from this host, or not setuid-root, or had it prompted for a password even
+for a member, the shed would need privilege and the boundary would hold — all three were checked and
+all three went the other way. Had the manual's no-operand form restored something other than the
+password-database entry, a dedicated primary group could have been unsheddable without also being
+inherited by the launchd agents, and the route would survive. And had the generated `--unattended`
+profile carried any execution restriction, finding 1's own condition for proposing a probe could have
+been met for contained hops; it carries none, and it does not cover Codex hops or uncontained runs at
+all.
 
 ### Deferrals — carried forward and newly recorded
 
-Carried forward from the Unit 5 closure check, plus one noticed in this unit. None is implemented.
+None is implemented. The first two are carried; the third was noticed during this correction and is
+recorded rather than pursued, because the scope is frozen to the two findings.
 
-1. **The plist count is inconsistent.** Unit 5's result says `/System/Library/LaunchAgents` held 465
-   plists; a bounded filesystem count at the closure check returned 456. It does not affect any
-   mechanism verdict. Do not rely on it; correct it only if a later unit needs that inventory.
-2. **This state file is 1,406 lines and grows every unit.** Core § 4 says the file is current truth,
-   not a diary. This unit replaced the previous result rather than appending to it, and kept the
-   accepted artifacts — the command-support table, the runbook, the C5 fixture, C5-T, the signal
-   audit, the fail-capability matrix, the outcomes, the rollback and the evidence template — because
-   they are current truth with no other home in the working tree. The Unit 4 narrative sections that
-   remain below (`### The correction round — findings 1 and 2` and `### Result and evidence`) are
-   history and are candidates for removal. Not removed here: deciding what accepted evidence may be
-   dropped is Codex's assessment, not this unit's scope.
+1. **The plist count is inconsistent.** Unit 5's result said `/System/Library/LaunchAgents` held 465
+   plists; a bounded count at the closure check returned 456. It affects no mechanism verdict. Correct
+   it only if a later unit needs that inventory.
+2. **This state file is 1,426 lines and grows every unit**, against core § 4's "current truth, not a
+   diary". This correction replaced the previous result rather than appending, and kept the accepted
+   artifacts, but the Unit 4 narrative sections below (`### The correction round — findings 1 and 2`
+   at the runbook's end and `### Result and evidence`) are history. Dropping accepted evidence is an
+   assessment decision, not this round's scope.
+3. **No audit exists of the host's setuid-root helpers that can change a process's own credentials.**
+   `newgrp` is one instance; the general question — which such helpers exist and what each can undo —
+   is the general form of the error this correction fixed, and any future boundary proposal rests on
+   it. Not started, because it is outside the frozen findings.
+4. **The uid-502 census fell again, 5 → 3, with no signal**, all survivors keeping their original
+   start time. Recorded because it was measured; explicitly not pursued, per the closure-check
+   deferral in the frozen findings.
 
 ### Command-support table
 
@@ -1375,51 +1354,51 @@ three below are unchanged and all sit outside Stages B and C.
 
 ## Blocker
 
-**The stop mechanism is still rejected, and its replacement is now a named candidate rather than an
-unknown.** Pattern-free `pkill -U` signals PPID-1 macOS per-user services outside the actor's
-descendant tree, and `## Objective and scope` forbids signalling an unrelated process. C5 as written
-therefore stays unrunnable, and C1 and every later Stage C step stay stopped. The runbook below is the
-object under examination, not permission to proceed.
+**The stop mechanism is rejected and its attribute surface is now exhausted.** Pattern-free `pkill -U`
+signals PPID-1 macOS per-user services outside the actor's descendant tree (Unit 5). The real-GID
+boundary that Unit 6 proposed is sheddable by any descendant via setuid-root `newgrp`, with no
+password and no operator action, and bare `newgrp` restores the account's password-database group — so
+no choice of group repairs it. Across the searched surface — the `ps -L` keyword list, the
+`pgrep`/`pkill` selector list, and the mechanisms in the closed supervision discovery — **no process
+attribute survives the accepted escape and resists being dropped.** C5 as written stays unrunnable,
+and C1 and every later Stage C step stay stopped.
 
-**What is now blocked is a decision, not a discovery.** Unit 6 found one surviving boundary — a
-run-specific real GID — and two variants of it. The current-authority variant reuses an existing group
-the actor already belongs to and is empty **by measurement only**. The fail-closed variant needs one
-dedicated group plus actor membership: two one-time admin commands, which is new authority beyond
-Stages B and C. Choosing between them is a value-and-risk call. Nothing may be created, granted or
-probed until it is made.
+**The previous "decision, not a discovery" framing is withdrawn.** The group-variant choice does not
+advance 1a and is not put to Codex or the operator. Nothing is to be created, granted or probed.
+
+**Two authorities remain distinct, and conflating them was the second finding.** Operator-attended
+`sudo -u` is probe authority and exists today; an unattended dispatcher running as the actor is
+production authority, is unsolved, and sits in the D4 narrow-privilege deferral, which is
+unauthorized. Neither was available to the unattended dispatcher for the rejected route.
 
 **The account stays untouched.** It is non-admin, has no observed tool credential and no GUI session,
 but it is a password-bearing login account with `/bin/zsh`, and the operator's home is `drwxr-xr-x+`,
 so actor reach into the operator home remains unresolved before D. No process emergency requires a
 signal. Rollback R1 has not been reachable at any observation, so removal needs a separately verified
-procedure. Nothing may signal, delete, log into or authenticate uid 502 in the meantime.
-
-**The uid-502 decay has stopped, so far.** The set fell 9 → 5 without any signal, and the same five
-pids with the same 10:11:27 start time were still present 84 minutes after account creation — 16
-minutes after the correction round measured them. Whether the boundary ever drains to zero remains
-unproven in both directions, and it no longer decides anything: the run-GID candidate does not depend
-on an empty UID.
+procedure. Nothing may signal, delete, log into or authenticate uid 502 in the meantime. The uid-502
+census has fallen 9 -> 5 -> 3 with no signal and no restart; recorded, not pursued.
 
 ## Next action
 
-Codex assesses Unit 6 and decides close, continue, correct once, or stop. The unit was Discovery: it
-changed nothing beyond this state file, and it returned evidence and a verdict rather than a
-mechanism.
+Codex runs the closure check on the two frozen findings only:
 
-The assessment has three specific things to weigh:
+1. **Are findings 1 and 2 resolved?** Finding 1: the `newgrp(1)` manual text, the setuid-root mode and
+   the actor's membership are reproduced by inspection; the verdict is withdrawn and replaced by
+   rejection; the `--unattended` profile was read and carries no execution restriction, so finding 1's
+   condition for proposing a probe is not met and no probe is proposed; and row (e) is added to the
+   false-positive/false-negative table. Finding 2: "current-authority variant" and "using authority
+   already available to the dispatcher" are withdrawn, probe authority and production authority are
+   separated, and the group-variant choice is withdrawn rather than escalated.
+2. **Did the correction break anything?** The correction touched only `## Latest result`, `## Blocker`
+   and this field. The accepted C5 fixture is unchanged — 210 lines, sha256
+   `65b50d193054e6060fda6de866119d98898d8df04889e96b83802430b077a8f9`, one marker pair — and the
+   command-support table, runbook, C5-T, signal audit, fail-capability matrix, outcomes, rollback and
+   evidence template are untouched. The file still carries exactly the five state fields.
 
-1. **The verdict — candidate ready for an authorized live probe.** Whether the real-GID boundary is
-   supported by the evidence given, and whether the six falsification items are the right ones for the
-   probe to be able to fail.
-2. **The variant choice, which is a value-and-risk call and may belong to the operator.** Reusing an
-   existing group needs no new authority and is empty by measurement; a dedicated group plus actor
-   membership is empty by construction and needs two one-time admin commands beyond Stages B and C.
-   Unit 6 did not choose, and did not create, grant or probe anything.
-3. **The two candidate deferrals recorded at the end of `## Latest result`** — the 465-versus-456
-   plist count carried forward from Unit 5, and this file's growth. On the second: Unit 6 replaced the
-   previous result rather than appending, and kept the accepted artifacts, but left the Unit 4
-   narrative sections (`### The correction round — findings 1 and 2` and `### Result and evidence`) in
-   place. Dropping accepted evidence is an assessment decision, not this unit's scope.
+Anything newly noticed at this check is a deferral, not a second correction round. Four deferrals are
+already recorded at the end of `## Latest result`; the third — that no audit exists of the host's
+setuid-root credential-changing helpers — is the general form of the error finding 1 caught, and is
+the one most likely to matter to whatever boundary is considered next.
 
 Literal Phase 1a remains open. Stages D and E, Phase 1f and every Phase 2 action remain forbidden, and
 the live account remains preserved.
