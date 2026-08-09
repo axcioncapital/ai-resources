@@ -3017,3 +3017,35 @@ the old default.
 **Target file:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`. Direct Work scale —
 one deletion plus a comment reword, no state file, no loop unit. Reopen immediately if anyone adds a
 second reader of `SPIKE_DIR`, which would turn this from cleanup into a live regression.
+
+## 2026-08-09 — Script-based state-file edit truncated an accepted Work Loop artifact via a substring-matched anchor
+
+- **Severity:** medium-high — while writing the Unit 5 result into
+  `logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md`, a Python heredoc located the
+  `## Next action` section by searching for that literal string and matched the **first**
+  occurrence — a mention of the same phrase inside an unrelated heading (`### Accepted Unit 3 brief
+  (superseded by Unit 4 in `## Next action`)`) near the top of the 1000+ line file. The script
+  truncated everything after that match: the accepted runbook, the C5 fixture, C5-T, the rollback and
+  the evidence template all vanished from the working tree in one edit.
+- **Category:** tool-misuse — script-based file rewrite anchored on a non-unique string, on a long
+  structured file where the anchor text also appears as a substring inside unrelated content.
+- **Source:** ai-resources, 2026-08-09 work-loop-v2 phase1a Unit 5 (task file above); caught by the
+  author before commit via a line-count/heading sanity check, not by any external review.
+
+**Why it matters.** Nothing was lost — the file was restored from the last real commit and the
+uncommitted work re-applied by hand from session context, with fixture integrity (line count, sha256,
+`bash -n`) re-verified before the first commit landed. But the near-miss was structural, not luck in
+the good sense: a script-based `awk`/`python`/heredoc rewrite has no equivalent of the Edit tool's
+"must match exactly once" guarantee unless the author builds that check themselves, and this session
+did not build it until after the damage. On a file that carries a load-bearing accepted artifact
+(fixture bytes an operator will paste and run), an unnoticed truncation would have silently discarded
+the operator's evidence trail with no error at write time.
+
+**What would catch it.** Prefer the Edit tool over script-based rewrites for state-file section
+replacement — its exact-match-once requirement is exactly the missing guarantee. Where a script-based
+rewrite is genuinely needed (e.g. bulk multi-line reconstruction), assert the anchor's occurrence
+count equals 1 before using its position, and fail loudly rather than silently taking the first match.
+
+**Target:** no repository file — this is a process pattern for any Claude-side session doing
+script-based edits against `logs/work-loop/*.md` or other long structured state files, not a bug in a
+specific script. Reopen if this same anchor-ambiguity pattern recurs on a different file or task.

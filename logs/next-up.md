@@ -70,3 +70,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] Closing-invocation instruction conflicts with a real Codex close verdict — `logs/improvement-log.md` <!-- promote:c260c3a50377 -->
 
 - [ ] Partial-file reads produced a false operability claim about an installed skill — `logs/improvement-log.md` <!-- promote:d59275d731a8 -->
+
+- [ ] Script-based state-file edit truncated an accepted Work Loop artifact via a substring-matched anchor — `logs/improvement-log.md` <!-- promote:b259b53bc3fe -->
