@@ -2853,3 +2853,46 @@ None.
   closed-set assertion reddens on normal repository growth"), with the structural fix already
   named (fixture-prefix convention rather than an enumerated allow-list). No new information from
   this session's reproduction.
+## 2026-08-07 — Work Loop v2: resource/capability development plan, drafted and closed
+
+### Summary
+Ran Work Loop v2 end-to-end on task `work-loop-v2-resource-capability-plan`. Claude wrote a draft
+implementation plan (Unit 1, Implementation mode) for how AI resources, operating capabilities and
+repository features are developed, improved, replaced and retired under Work Loop v2 — inspecting the
+live repository rather than trusting the brief, and finding the v1 `/work-loop` capability seam is not
+merely v1-specific but **dangling** (the command was deleted, its dependants were not repointed). Ran
+one bounded correction round on four findings Codex froze after review — all four reproduced by
+inspection before correction — then wrote the closing record on Codex's accept verdict. The task is
+now closed; the plan remains a draft that authorizes no implementation.
+
+### Decisions Made
+No operator-directed analytical or scoping decisions this session — the operator's only inputs were
+the initial invocation and two turn-passes (`ur turn`). The substantive decisions were Codex's
+(framing the brief, freezing the four correction findings, issuing the accept-and-close verdict) and
+Claude's (the plan's own recommended design — reconciliation before construction), both recorded in
+the closed task's `## Decisions that matter` and the three commit messages (`8985562`, `6af280e`,
+`3f13e4b`).
+
+### Risky actions
+None. All three commits were state-file-and-plan only, verified via an explicit plan-boundary check
+(`git status --porcelain`) before each commit; no implementation surface (command, skill, core,
+template, hook, setting, test) was touched at any point.
+
+### Findings Declined
+None — the one finding this session produced was queued, not declined (see `improvement-log.md`).
+
+### Next Steps
+- `logs/work-loop/work-loop-v2-intake-router.md` is still open, `turn: claude` per the record above,
+  mid a final tightly-bounded structural fix — run `/work-loop-v2` to pick it up (verify current
+  `turn:` first; Codex's closure check on it may have already run).
+- The closed plan at `plans/work-loop-v2-v0.2/resource-capability-development-plan-v0.1.md`
+  authorizes nothing on its own; opening Units 1–4 needs explicit operator approval (plan § 13).
+- Push the accumulated local commits (see push gate below).
+- Run `/wrap-session` optional passes another day if a fuller audit/coaching/telemetry pass is wanted;
+  none were requested this session.
+
+### Open Questions
+None blocking. Three deferrals carried in the closed task's evidence, each with its own reopening
+trigger, none urgent: ownership for retiring a non-AI repository feature; the v1 capability method's
+and its one live record's disposition (pending a future per-section gap-analysis unit); a possible
+read-scope weakness in how I established other Matt-skill claims (see Findings below).

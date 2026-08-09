@@ -3076,3 +3076,27 @@ specific script. Reopen if this same anchor-ambiguity pattern recurs on a differ
   self-verifying "before/after" write-up) that both quotes old text and claims that text is gone. Reopen
   if this pattern produces a false claim that survives to commit, rather than being caught before commit
   as it was both times here.
+
+### 2026-08-09 — Ambiguous "build an MVP" was read as an implementation go-ahead before a plan was approved
+
+- **Severity:** medium
+- **Category:** Session process — plan-before-implementation discipline
+- **Source:** ai-resources, 2026-08-09 semantic-search-mvp session.
+
+After being shown a proposed MVP scope in the prior turn, the operator said "I don't have time for
+tests I want to build an MVP." That was read as authorization to implement immediately: packages were
+installed, a prototype script and index were created, and one live command file
+(`resolve-repo-problem.md`) was edited — all before any plan had been approved for that session's
+specific build. The operator halted the session with an explicit correction: the request was for a
+proposal, not an implementation. No unapproved work was committed; the prototype was later folded into
+the approved build and the live-file edit was reverted.
+
+**Root cause.** "I want to build an MVP" is genuinely ambiguous between "propose the MVP" and "build
+the MVP now." The Plan Mode Discipline norm (wait for confirmation before implementing) was not applied
+because the phrase read as forward motion rather than as a request needing its own confirmation step.
+
+**Shape of the fix (not built).** When an instruction names a build/implementation but the immediately
+preceding turn was a proposal or analysis rather than an approved plan, treat "build X" as ambiguous by
+default: ask one clarifying line, or default to producing/updating the proposal rather than writing
+files. Belongs in `docs/plan-mode-discipline.md` if a durable rule change is judged worth making; not
+built here.

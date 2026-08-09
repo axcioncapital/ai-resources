@@ -253,3 +253,25 @@ signature), green after (4/4), and a manual smoke check from a repo subdirectory
 root confirmed the untouched layouts are unaffected. Separately confirmed, read-only, that the
 resolver's pre-existing `WORKSPACE/projects/<one-child>` path already resolves correctly from
 `axcion-systems-builder` and `axcion-systems-builder-email-os` — untouched by this change.
+
+## 2026-08-09 — Ship /memory-search as a standalone command, not a /resolve-repo-problem integration
+
+**Context.** The semantic-search MVP proposal (`plans/semantic-search-mvp/proposal.md`) considered two
+integration shapes for the institutional-memory search MVP: wire it into `/resolve-repo-problem`'s
+investigation step (the shape recommended earlier in the session), or ship it as an independently
+invoked command.
+
+**Decision.** Operator chose the standalone command.
+
+**Rationale.** Zero coupling lets the operator evaluate result quality by hand before any existing
+command depends on it. The local embedding backend (model2vec, no API key) is unproven at production
+quality, and wiring an unproven retrieval layer into a live triage command risked degrading that
+command silently. A standalone command isolates the risk to opt-in use only.
+
+**Alternatives considered.** Integrate into `/resolve-repo-problem` immediately (rejected — couples
+unproven retrieval quality to an existing command); defer both the proposal and the build (rejected —
+the underlying institutional-memory retrieval gap was well-evidenced across the four-sweep
+investigation and worth testing directly).
+
+**Follow-up.** Revisit the integration after 2–3 weeks of standalone usage evidence (see session-notes.md
+2026-08-09, Next Steps).
