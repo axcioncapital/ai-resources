@@ -2,69 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-06 — Work Loop v2 courier mode: core clause, Codex rules, `dispatch.sh --carry-one`
-
-### Summary
-Investigated and built an optional Computer Use "courier mode" for Work Loop v2, from an operator-
-pasted Codex review through `/clarify` to an approved plan to a live-verified implementation.
-Clarification surfaced that the operator's own picked answer (a fresh Claude window, not the live
-one) combined with "sits beside the dispatcher, doesn't replace it" meant the courier's real job is
-to drive a terminal, not Claude — `dispatch.sh` already does the latter, better. Built `--carry-one`
-on the existing spike dispatcher, a transport-neutral courier clause in the executable core, and the
-Codex-side operating rules, then proved the carry live against the real repository in an isolated
-worktree.
-
-### Decisions Made
-- **Operator, via `/clarify`:** courier mode sits *beside* the existing `dispatch.sh` spike, not in
-  place of it (Q1).
-- **Operator, via `/clarify`:** amend core § 4 despite its "draft for operator approval" header
-  status; the amendment does not itself approve the rest of the document (Q4).
-- **Operator, via `/clarify`:** this build does not run through Work Loop v2 itself — the proposal's
-  standing no-self-hosting rule applies (Q5).
-- **Claude, recommended and adopted without objection:** core § 4's courier clause names no product
-  — "Computer Use" appears only in the Codex skill — per core § 24's *behaviour, not transport* rule
-  (Q3, operator deferred to Claude's judgment).
-- **Claude, design pivot after operator picked "a fresh window" (Q2):** a courier typing into a
-  fresh Claude window duplicates `dispatch.sh`'s own job with worse instrumentation. Redesigned the
-  courier to drive the dispatcher via one terminal command instead, reading its exit code rather
-  than any screen. Flagged explicitly to the operator as a deviation from the literal "b" answer,
-  not silently substituted.
-- **Claude: corrected the pasted review's guardrail 6** in the built artifact. "Unchanged
-  `turn: claude` = failed handoff" is wrong — Claude leaves the file completely untouched on a
-  correct read-only refusal (core § 6 rule 2). The skill now instructs reading the dispatcher's exit
-  code (`14`/`22`/`21`), never inferring from the turn.
-- **Routine:** fixed two stale records found while implementing rather than deferring them — the
-  dispatcher header's "0 is the ONLY success" line (now states all four meanings of exit 0), and the
-  spike README's `pass=69` test count, which was already stale at 82 before this session's 17 new
-  assertions brought it to 99.
-
-### Risky actions
-None irreversible against tracked state. One near-miss handled correctly rather than worked around:
-removing the throwaway proof worktree tripped `check-destructive-liveness.sh`, which refused to
-guess whether the checkout might be occupied (it saw `logs/friction-log.md` modified inside its
-120-minute window — the ambient PostToolUse hook firing during the dispatcher run, not real work).
-Surfaced the question to the operator rather than overriding or deleting the guard's evidence;
-unanswered as of this wrap.
-
-### Findings Declined
-None — the two stale records found this session (see Decisions Made) were fixed directly as part of
-the implementation rather than queued or declined; nothing else surfaced that named a real problem
-and was left unaddressed.
-
-### Next Steps
-- Resolve the worktree-cleanup question (see Risky actions) — operator confirms idle, or leaves it.
-- **The courier's own proof is still owed.** This session proved `dispatch.sh --carry-one` carries a
-  turn live. Nobody has proved Codex can drive it through Computer Use — needs the operator and
-  Codex together.
-- One Codex review before calling this adopted, per the plan's sizing
-  (`docs/qc-independence.md`: consequential, not risk-aware).
-- Only the Claude direction (`turn: claude → codex`) was exercised live under `--carry-one`. The
-  Codex direction is covered by the simulated suite only.
-
-### Open Questions
-- Is the proof worktree at `.../scratchpad/carry-proof-wt` idle? Blocks its own cleanup only —
-  nothing else depends on the answer.
-
 ## 2026-08-07 — Work Loop v2: intake router Units 1 correction, 2, 3, 3 correction
 
 ### Summary
@@ -631,3 +568,68 @@ live actor account `wlactor-airesources` (uid 502) until Codex/operator authoriz
 None — the two open questions from this session (route viability, account disposition) were resolved
 within the session: the mechanism is rejected under the already-preserved 1a guarantee, and the
 account is to remain untouched pending a verified removal procedure.
+
+## 2026-08-09 — work-loop-v2 phase1a Units 8–9: persona rejected on kernel evidence
+
+### Summary
+Continued Claude's half of Work Loop v2 on `work-loop-v2-phase1a-full-descendant-termination`, running
+four consecutive units: Unit 8's final tightly-bounded fix, Unit 9 (discovery on whether the Darwin
+persona entitlement has a supported operator-accessible path), Unit 9's correction round, and Unit 9's
+final bounded fix. The correction round decompressed the boot kernel collection read-only and resolved
+AMFI's entitlement-exception tables directly, flipping the verdict from unresolved to **persona
+rejected** — no supported path exists for `com.apple.private.persona-mgmt`, proved from the kernel
+rather than inferred from its name prefix. No live probe was needed or requested.
+
+### Decisions Made
+- **Unit 8 final fix (Claude, applying Codex's frozen menu choice):** narrowed four locations that
+  overclaimed persona impossibility without the current-authority boundary; merged one duplicated
+  paragraph. Routine mechanical fix under a frozen menu choice.
+- **Unit 9 verdict, initial (Claude, discovery unit):** returned "unresolved" rather than stretching
+  documentation-only evidence into a denial — the `com.apple.private.*` prefix alone was explicitly not
+  treated as proof, per Unit 8's earlier withdrawn overclaim.
+- **Unit 9 correction — verdict change flagged rather than absorbed (Claude):** the authorized
+  correction search resolved the exact-key classification, which the brief had expected to stay open.
+  Reported this as a deliberate verdict change for Codex to confirm, rather than silently substituting
+  a different answer than what was asked for.
+- **Self-correction of an evidence-verification claim (Claude):** caught, before committing, that a
+  draft verification sentence in Unit 9's final fix claimed a search "returns nothing" while the
+  record's own quotation of the searched phrase made that literally false. Rewrote it to state the
+  accurate scope of the search rather than leave an unverifiable claim in the record.
+- **Unit 9 final fix (Claude, applying Codex's frozen menu choice):** corrected one stale carried-forward
+  sentence contradicting the new verdict; flagged one adjacent sentence (Lane and unit's named-reason
+  paragraph) as a candidate deferral rather than touching it, since it sat outside the frozen scope.
+
+### Risky actions
+The correction round decompressed the host's boot kernel collection (an Apple-signed system file) using
+an already-installed macOS tool (`compression_tool`), entirely read-only, to a session scratch file
+outside the repository. The scratch file was deleted after use and nothing was written, signed,
+installed or executed. Flagging this because it is the most invasive inspection performed by this task
+to date, even though it stayed strictly within the unit's read-only, no-host-mutation scope. No signal,
+`sudo`, account action, login, authentication, persona creation, or repository file besides the state
+file occurred at any point across the four units.
+
+### Next Steps
+The state file was modified externally after this session's last commit (visible in the working tree at
+wrap time): Codex has already framed **Unit 10** — read-only discovery on whether Unit 7's unresolved
+ASID root-bearing form can provide literal Phase 1a's termination/verification boundary. This session
+did not execute Unit 10, to avoid starting new Work Loop work under an explicit `/wrap-session`
+instruction. **Next session: run `/work-loop-v2` and execute Unit 10** per the state file's
+`## Next action`. Read-only throughout — no `sudo`, signal, `launchctl` mutation, or actor process
+launch. Do not touch `wlactor-airesources` (uid 502) until Codex/operator authorize a disposition.
+
+Two commits touching the Work Loop v2 core resolver (`62cfc44`, `0935447`) landed in this repository's
+history during this session but were not made by this conversation — they concern checkout-identity
+handling in the core-resolution script and are unrelated to the phase1a task. Worth a look next session
+if the resolver's behavior is in question.
+
+### Findings Declined
+- **`run-manifest.sh close` hard-errors on this session's markerless start** — reproduced live (this
+  session began via a direct `/work-loop-v2` invocation, no `/prime`, so no per-id or today-dated shared
+  marker existed; `close` exited 2 instead of the documented stub-and-continue). Declined as a new
+  finding because it is already logged, open and unfixed at `## 2026-08-07 — run-manifest.sh close
+  hard-errors on a genuinely markerless session instead of the documented stub-and-continue`; this is a
+  reproduction, not new information.
+
+### Open Questions
+None. Persona is closed (rejected, with kernel-level evidence). Deferral 14 (stale "the rejection"
+wording in retained Unit 8 material) remains open and low-priority — Codex's call, not blocking.

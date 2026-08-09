@@ -3049,3 +3049,30 @@ count equals 1 before using its position, and fail loudly rather than silently t
 **Target:** no repository file — this is a process pattern for any Claude-side session doing
 script-based edits against `logs/work-loop/*.md` or other long structured state files, not a bug in a
 specific script. Reopen if this same anchor-ambiguity pattern recurs on a different file or task.
+
+## 2026-08-09 — A self-checking evidence block can falsify itself by quoting its own search target
+- **Severity:** medium — Work Loop v2's rule 5 requires evidence that "must be able to fail," and the
+  standard way to prove a stale phrase is gone is to grep the file for it and report the count. But when
+  the same evidence block also quotes the phrase verbatim (a "Before: … After: …" pair, or a description
+  of what was searched for), a plain whole-file grep matches the block's own quotation and produces a
+  false "N remaining" or a false "returns nothing" claim — the check no longer distinguishes the fix from
+  its own documentation of the fix.
+- **Observed live, twice in one session:** ai-resources, 2026-08-09 work-loop-v2 phase1a Unit 9's final
+  bounded fix. A verification paragraph claimed the old phrase `remains unresolved after Unit 9` "returns
+  nothing" — false on its face, because the same paragraph quoted that exact phrase two lines above it in
+  a "Before:" line. Caught and rewritten before committing, this time by re-reading the paragraph against
+  its own wording rather than by any structural check. A related instance surfaced one unit earlier
+  (Unit 9's correction round), where an initial evidence draft claimed a duplicate-paragraph search
+  "returns nothing" while the same record quoted the duplicated phrase four times as backtick references;
+  that one was also caught by the same manual re-read, not by tooling.
+- **What would catch it structurally.** Two options, not mutually exclusive: (a) when writing a
+  self-verifying grep claim inside a section that also quotes the search term, state the claim as "N
+  matches outside this record" and actually exclude the record's own line range from the count (e.g.
+  `awk 'NR<start_line'` before the grep), rather than describing the exclusion in prose without doing it;
+  or (b) run the verification grep before drafting the surrounding prose, paste its literal output, and
+  write the prose to match the output rather than writing the prose first and asserting a plausible-
+  sounding result.
+- **Target:** no repository file — this is a process pattern for any Work Loop v2 evidence block (or any
+  self-verifying "before/after" write-up) that both quotes old text and claims that text is gone. Reopen
+  if this pattern produces a false claim that survives to commit, rather than being caught before commit
+  as it was both times here.

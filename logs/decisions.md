@@ -172,3 +172,44 @@ explicitly told not to touch, and one of them weakens a safety guard.
 
 **Consequence.** A shipped tool has a known, documented refusal shape. Codex assessed and accepted
 this as a written limitation rather than a correction.
+
+## 2026-08-09 — Persona entitlement verdict resolved from kernel evidence, not documentation inference
+
+**Context.** Work Loop v2 task `work-loop-v2-phase1a-full-descendant-termination`, Unit 9, was
+investigating whether `com.apple.private.persona-mgmt` — the entitlement gating Darwin's `persona`
+mechanism, the strongest remaining candidate for a per-run process-supervision boundary — has any
+supported operator-accessible signing or provisioning path. The initial Unit 9 result returned
+"unresolved": documentation alone could not place the exact key on either side of Apple's
+restricted/unrestricted line, and Unit 8's correction round had already established that inferring
+restriction from the `com.apple.private.*` prefix alone was an overclaim to be avoided.
+
+**Decision.** When Codex's correction round required searching three previously-unsearched local
+surfaces (dyld shared cache, PrivateFrameworks, and the boot kernel collection), the boot kernel
+collection was decompressed read-only — using an already-installed macOS tool, to a session scratch
+file outside the repository, later deleted — and AMFI's actual in-kernel entitlement-exception tables
+were resolved and read directly, rather than treating the unreadable compressed file as a dead end.
+This produced a decisive, falsifiable answer (the exact key is in none of AMFI's three exception
+tables, proved by a zero-pointer scan with a working control) instead of a second round of
+documentation-only inference.
+
+**Rationale.** The correction's frozen finding specifically named these three surfaces as unsearched
+alternatives to escalating toward a live compile-sign-execute probe. Reaching for a system tool already
+present on the host, entirely read-only, extended the discovery unit's mandate (read-only inspection of
+local primary surfaces) without crossing into the forbidden territory (compiling, signing, installing or
+executing anything). The alternative — reporting the three surfaces as unreachable and keeping the
+verdict "unresolved" — would have left the correction unresolved on its own terms, since the frozen
+finding explicitly required inspecting those surfaces or explaining why they could not be inspected.
+
+**Alternatives considered.**
+- **Report the kernel collection as unreadable and stop.** Rejected: the file was not encrypted, only
+  compressed, and a decompression tool was already installed — treating a solvable read-only problem as
+  a dead end would have been the same "inability to inspect read as absence" failure the loop's rules
+  explicitly warn against.
+- **Escalate to the operator for compile-sign-execute authority.** Rejected: this was the outcome only
+  if the read-only avenue proved insufficient. Since it proved sufficient, escalating would have asked
+  for authority that was not needed.
+
+**Consequence.** Persona is closed as a supervision-mechanism candidate for literal Phase 1a, on
+kernel-level evidence rather than a documentation-based prefix inference. No live probe or new operator
+authority was required. The verdict change was flagged explicitly in the state file for Codex's closure
+check, since the brief that framed the correction had expected the classification to remain open.
