@@ -1,6 +1,6 @@
 ---
 task: work-loop-v2-phase1a-full-descendant-termination
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
@@ -320,6 +320,83 @@ runbook, create another artifact or push.
 
 ## Latest result
 
+### Final tightly-bounded fix (2026-08-09) — both items applied, state file only
+
+Result: the two items the menu froze are done. No new factual claim, no research, no host action, no
+implementation, and no file other than this one was touched. The corrected verdict is unchanged.
+
+```
+Inspected (2026-08-09):
+- Premise (1) "three later statements still assert without the current-authority boundary": HOLDS —
+  searched this state file's `## Latest result` for the three propositions; found them carried at four
+  locations, not three. (A) "no process can be put into a run-specific persona in the first place"
+  under claim (3); (A again) "which claim 2 shows it cannot" opening § False positive, false negative
+  and race; (B) "cannot be satisfied" under claim (4); (C) "none that the operator can obtain" under
+  claim (5). All four were narrowed, because item 1 says "everywhere in the Unit 8 result".
+- Premise (2) "the `Deferral 8's lead was half wrong` paragraph appears twice in succession": HOLDS —
+  searched this state file for `Deferral 8's lead was half wrong`; found two consecutive paragraphs at
+  the then-lines 355-361 and 363-369, separated only by a blank line.
+```
+
+Evidence — before and after, quoted:
+
+- (A) claim (3), before: "**None of this is reached**, because claim 2's entitlement gate means no
+  process can be put into a run-specific persona in the first place." After: "**None of this is
+  reached under current authority**, because claim 2's entitlement gate means nothing the dispatcher
+  currently runs can put a process into a run-specific persona: the gate is an entitlement check, and
+  neither root nor attended `sudo -u` substitutes for it. Whether a supported operator-accessible
+  signing or provisioning path could confer that entitlement is unresolved."
+- (A) § False positive…, before: "Every 'correct' below is conditional on a run-specific persona
+  existing, which claim 2 shows it cannot." After: "…which claim 2 shows cannot happen under current
+  authority: nothing the dispatcher currently runs carries the entitlement, and neither root nor
+  attended `sudo -u` substitutes for it, while whether the entitlement is obtainable at all is
+  unresolved."
+- (B) claim (4), before: "Every cell that says 'correct' is conditional on a premise that claim 2 shows
+  cannot be satisfied." After: "…cannot be satisfied under current authority: nothing the dispatcher
+  currently runs carries the entitlement, and neither root nor attended `sudo -u` substitutes for it.
+  Whether the entitlement is obtainable through any supported operator-accessible signing or
+  provisioning path is unresolved."
+- (C) claim (5), before: "**Claim (5): the run-specific value cannot be reserved…** Allocation
+  authority is `kpersona_alloc`, entitlement-only, so the answer to 'what authority would allocate it'
+  is: none that the operator can obtain." After: "**Claim (5): under current authority the run-specific
+  value cannot be reserved…** … is: none available under current authority — nothing the dispatcher
+  currently runs carries the entitlement, and neither root nor attended `sudo -u` substitutes for it.
+  Whether the operator could obtain that entitlement through a supported signing or provisioning path
+  is unresolved." The claim label was narrowed with the body so the label does not assert what the body
+  now denies; leaving it would have been a fresh inconsistency introduced by this fix.
+- Verification that the unbounded forms are gone: searched this file for `cannot be satisfied`,
+  `none that the operator can obtain`, `which claim 2 shows it cannot` and `run-specific persona in the
+  first place`. **Outside this final-fix record**, exactly one match survives — the bounded
+  `cannot be satisfied under current authority` under claim (4). The other three patterns return no
+  match outside this record. Every remaining hit is a before-quotation inside the four bullets above,
+  which the brief's own evidence requirement asked for; a search that ignores that distinction will
+  count this record's quotations as if they were the statements themselves.
+- Item 2, the duplicate: searched this file for the paragraph-opening form
+  `**Deferral 8's lead was half wrong,`. **Exactly one match.** The duplicate paragraph is gone. The
+  phrase also appears four times as a backtick-quoted reference inside this final-fix record; none of
+  those opens a paragraph. The surviving paragraph preserves all four
+  supported facts: `kpersona_pidinfo` returns `EPERM` to a non-root caller for any pid but its own;
+  `/bin/ps` is `-rwsr-xr-x root wheel`, a shipped setuid-root helper that does the query with root
+  privilege on the caller's behalf; the correction round's bounded entitlement scan also found that
+  `/bin/ps` carries `com.apple.private.persona-mgmt`; and the practical `ps` query path therefore
+  exists for an unprivileged supervisor.
+- Nothing else changed: `git diff` on this file covers exactly those four narrowings, the merged
+  paragraph, and one line rewrap inside claim (5) forced by the narrowing. No other file appears in the
+  diff.
+
+**This fix could have failed and would have shown it.** Each of the four searched patterns returns a
+match outside this record if a narrowing was missed — and the first run of the check did exactly that,
+which is how the claim (4) line was confirmed bounded rather than assumed. The paragraph-opening search
+returns two matches if the merge had not removed the duplicate. Both checks were run after the edits,
+not before.
+
+**Candidate deferral, recorded and not done.** Two places still call the outcome "the rejection" — the
+sentence introducing the case table, and the table's own row (k), which ends "This is the rejection."
+The verdict "candidate rejected" was withdrawn at the correction round, so that wording is a leftover.
+It is not among the two frozen items, so it was not touched. Whether to correct it is Codex's call.
+
+### Unit 8 result (corrected, and now narrowed by the final fix)
+
 **Unit 8 (Discovery, CORRECTED at the correction round) — Darwin persona is unusable under current
 authority, and whether the entitlement it needs is obtainable is UNRESOLVED.** Read-only throughout.
 No `sudo`, no signal, no `launchctl` mutation, no account action, no login, no authentication, no
@@ -355,18 +432,11 @@ answer, and it is named as open rather than closed by assertion.
 **Deferral 8's lead was half wrong, and the correction matters.** It recorded persona as "readable for
 arbitrary processes without privilege — the property ASID lacks". The syscall is **not** unprivileged:
 `kpersona_pidinfo` returns `EPERM` to a non-root caller for any pid but its own. The column is readable
-only because **`/bin/ps` is setuid root** (`-rwsr-xr-x root wheel`, measured) — and, as the correction
-round found, `/bin/ps` **also carries the persona-mgmt entitlement itself**. The practical conclusion
-survives — an unprivileged supervisor *can* obtain the value by shelling out to `ps` — but the reason
-is a shipped privileged helper, not an open syscall.
-
-**Deferral 8's lead was half wrong, and the correction matters.** It recorded persona as "readable for
-arbitrary processes without privilege — the property ASID lacks". The syscall is **not** unprivileged:
-`kpersona_pidinfo` returns `EPERM` to a non-root caller for any pid but its own. The column is readable
 only because **`/bin/ps` is setuid root** (`-rwsr-xr-x root wheel`, measured) and does the query with
-root privilege on the caller's behalf. The practical conclusion survives — an unprivileged supervisor
-*can* obtain the value by shelling out to `ps` — but the reason is a shipped setuid helper, not an open
-syscall, and the brief was right to call the lead a lead.
+root privilege on the caller's behalf — and, as the correction round's bounded entitlement scan found,
+`/bin/ps` **also carries the persona-mgmt entitlement itself**. The practical conclusion survives — an
+unprivileged supervisor *can* obtain the value by shelling out to `ps` — but the reason is a shipped
+privileged helper, not an open syscall, and the brief was right to call the lead a lead.
 
 Evidence: `sys/persona.h` and `bsd/kern/sys_persona.c`, `bsd/kern/kern_persona.c`, `bsd/kern/kern_exec.c`,
 `bsd/kern/kern_fork.c` and `bsd/kern/syscalls.master` from Apple's published XNU; the active SDK's
@@ -529,16 +599,25 @@ Inspected (2026-08-09):
     is the same list-then-signal shape, and it is the shape already contemplated. What it does mean is
     that PID reuse, exits between listing and signalling, and unreadable processes have to be handled
     by the design, and a failed or partial `ps` must produce `CENSUS_UNKNOWN` rather than "empty".
-    **None of this is reached**, because claim 2's entitlement gate means no process can be put into a
-    run-specific persona in the first place.
+    **None of this is reached under current authority**, because claim 2's entitlement gate means
+    nothing the dispatcher currently runs can put a process into a run-specific persona: the gate is an
+    entitlement check, and neither root nor attended `sudo -u` substitutes for it. Whether a supported
+    operator-accessible signing or provisioning path could confer that entitlement is unresolved.
 - **Claim (4): the boundary logic is set out in the table below.** Its short form: had a run-specific
   persona existed, it would have excluded every bystander class correctly and reached the fully
   detached daemon — the first candidate in this task for which that is true on the evidence. Every
-  cell that says "correct" is conditional on a premise that claim 2 shows cannot be satisfied.
-- **Claim (5): the run-specific value cannot be reserved, and reusing an existing one is over-broad.**
+  cell that says "correct" is conditional on a premise that claim 2 shows cannot be satisfied under
+  current authority: nothing the dispatcher currently runs carries the entitlement, and neither root
+  nor attended `sudo -u` substitutes for it. Whether the entitlement is obtainable through any
+  supported operator-accessible signing or provisioning path is unresolved.
+- **Claim (5): under current authority the run-specific value cannot be reserved, and reusing an
+  existing one is over-broad.**
   Allocation authority is `kpersona_alloc`, entitlement-only, so the answer to "what authority would
-  allocate it" is: none that the operator can obtain. Uniqueness and atomicity are therefore moot and
-  are not claimed either way — the kernel does assign ids from its own table when
+  allocate it" is: none available under current authority — nothing the dispatcher currently runs
+  carries the entitlement, and neither root nor attended `sudo -u` substitutes for it. Whether the
+  operator could obtain that entitlement through a supported signing or provisioning path is
+  unresolved. Uniqueness and atomicity are therefore moot and are not claimed either way — the kernel
+  does assign ids from its own table when
   `persona_id == PERSONA_ID_NONE`, but this unit did not establish collision behaviour and does not
   need to. **Reuse is separately fatal:** the two live values on this host are `1004`, shared by seven
   unrelated app extensions, and `99`, held by one — signalling either would kill unrelated Apple
@@ -567,9 +646,11 @@ Inspected (2026-08-09):
 
 ### False positive, false negative and race, by case
 
-Every "correct" below is conditional on a run-specific persona existing, which claim 2 shows it cannot.
-The table is what the boundary *would* have done, and it is the reason the rejection is narrow and
-specific rather than dismissive.
+Every "correct" below is conditional on a run-specific persona existing, which claim 2 shows cannot
+happen under current authority: nothing the dispatcher currently runs carries the entitlement, and
+neither root nor attended `sudo -u` substitutes for it, while whether the entitlement is obtainable at
+all is unresolved. The table is what the boundary *would* have done, and it is the reason the rejection
+is narrow and specific rather than dismissive.
 
 | Case | Real GID (Unit 6, rejected) | ASID (Unit 7, unusable) | Persona (this unit) |
 |---|---|---|---|
@@ -1426,33 +1507,25 @@ written stays unrunnable, and C1 and every later Stage C step stay stopped.
 
 ## Next action
 
-Claude: apply the executable core's **one final tightly-bounded fix**. The correction closure check
-accepted Finding 2, but found Finding 1 only partly resolved and found one narrow correction regression.
-Do not run a new broad review or any new research. Fix only these two items:
+Codex: run the closure check on the final tightly-bounded fix, and on nothing else. The two questions
+are the only ones in scope — are the two frozen items resolved, and did the fix break anything?
 
-1. **Finish Finding 1's narrowing everywhere in the Unit 8 result.** Three later statements still
-   contradict the corrected verdict by asserting without the required current-authority boundary that
-   no process can be placed into a run-specific persona, that the premise cannot be satisfied, and that
-   no authority the operator can obtain can allocate one. Narrow those statements so they say only
-   what the evidence proves: nothing the dispatcher currently runs carries the entitlement; root or
-   attended `sudo -u` does not substitute for it; and whether a supported operator-accessible signing
-   or provisioning path can confer it remains unresolved. Preserve the corrected verdict and do not
-   attempt to answer entitlement obtainability.
-2. **Repair the correction regression.** The paragraph beginning `Deferral 8's lead was half wrong`
-   appears twice in succession. Reduce it to one paragraph that preserves the supported facts: the
-   syscall is root-gated for arbitrary pids, `/bin/ps` is a setuid-root shipped helper, the bounded
-   entitlement scan also found that `/bin/ps` carries `com.apple.private.persona-mgmt`, and the
-   practical `ps` query path therefore exists. Do not expand the evidence or change the verdict.
+1. **Item 1 — the narrowing.** Every location in the Unit 8 result that asserted the three propositions
+   is now bounded to current authority. There were four locations carrying the three propositions, not
+   three; all four were narrowed, on the reading that "everywhere in the Unit 8 result" governs. The
+   before/after text and the search patterns are quoted in `## Latest result`.
+2. **Item 2 — the duplicate paragraph.** One paragraph remains, carrying all four supported facts. The
+   phrase's other occurrences in the file are backtick-quoted references inside the final-fix record,
+   not duplicate result paragraphs.
 
-Menu choice and ground: permit one final tightly-bounded fix. The value is removing wording that
-would otherwise reintroduce the frozen overclaim; the risk is low because this is a state-file-only
-consistency fix with no new factual claim, research, implementation or host action.
+One item is recorded as a candidate deferral and was **not** done: two places still call the outcome
+"the rejection" — the sentence introducing the case table, and row (k) of that table — although the
+"candidate rejected" verdict was withdrawn. It falls outside the two frozen items. Whether to correct
+it is Codex's call at this closure check.
 
-Evidence required: quote the affected before/after sentences; show that the three unbounded statements
-are gone or explicitly bounded to current authority; show that exactly one `Deferral 8's lead was half
-wrong` paragraph remains; and confirm no other text changed. Then update `## Latest result` with this
-final-fix outcome, set `turn: codex`, commit only this state file, and stop. The next Codex closure check
-covers this final fix and nothing else.
+Nothing else changed. No new factual claim, no research, no implementation, no host action, and no file
+other than this state file. The corrected verdict is unchanged, and entitlement obtainability was not
+answered.
 
 All safety and scope constraints remain unchanged. Do not signal any process; do not delete, log into,
 authenticate, or otherwise mutate `wlactor-airesources` (uid 502); do not launch Claude, the dispatcher,
