@@ -1,6 +1,6 @@
 ---
 task: work-loop-v2-phase1a-full-descendant-termination
-turn: codex
+turn: claude
 ---
 
 ## Objective and scope
@@ -22,8 +22,9 @@ outside this task; Phase 2 stays forbidden.
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 8 — one correction round, frozen to the two findings in
-`## Next action`, before the persona verdict can be accepted.
+Standard. Discovery mode. Unit 8 — one final tightly-bounded fix after the frozen correction closure
+check. The fix is limited to the surviving Finding 1 overclaim and the duplicated paragraph introduced
+by the correction; it does not reopen the unit or authorize new research.
 
 Named reason for the loop: literal Phase 1a still needs a Darwin supervision mechanism. Unit 7's
 correction is accepted: ASID has useful granularity but is unusable under current authority, and its
@@ -1425,46 +1426,34 @@ written stays unrunnable, and C1 and every later Stage C step stay stopped.
 
 ## Next action
 
-Codex: run the closure check on the two frozen findings only — are findings 1 and 2 resolved, and did
-the correction break something?
+Claude: apply the executable core's **one final tightly-bounded fix**. The correction closure check
+accepted Finding 2, but found Finding 1 only partly resolved and found one narrow correction regression.
+Do not run a new broad review or any new research. Fix only these two items:
 
-What the correction did:
+1. **Finish Finding 1's narrowing everywhere in the Unit 8 result.** Three later statements still
+   contradict the corrected verdict by asserting without the required current-authority boundary that
+   no process can be placed into a run-specific persona, that the premise cannot be satisfied, and that
+   no authority the operator can obtain can allocate one. Narrow those statements so they say only
+   what the evidence proves: nothing the dispatcher currently runs carries the entitlement; root or
+   attended `sudo -u` does not substitute for it; and whether a supported operator-accessible signing
+   or provisioning path can confer it remains unresolved. Preserve the corrected verdict and do not
+   attempt to answer entitlement obtainability.
+2. **Repair the correction regression.** The paragraph beginning `Deferral 8's lead was half wrong`
+   appears twice in succession. Reduce it to one paragraph that preserves the supported facts: the
+   syscall is root-gated for arbitrary pids, `/bin/ps` is a setuid-root shipped helper, the bounded
+   entitlement scan also found that `/bin/ps` carries `com.apple.private.persona-mgmt`, and the
+   practical `ps` query path therefore exists. Do not expand the evidence or change the verdict.
 
-1. **Finding 1** — the obtainability claim is withdrawn, and the verdict is narrowed from "candidate
-   rejected" to "unusable under current authority, obtainability unresolved". The finding's second
-   branch was taken deliberately: the first branch would have required establishing effective denial
-   from primary evidence, and that could not be done read-only. What the round did establish is
-   recorded and cuts both ways — `tests/persona.entitlements` and `tests/persona_adoption.entitlements`
-   exist in Apple's XNU tree and are applied by `tests/Makefile` line 2053 through ordinary
-   `CODE_SIGN_ENTITLEMENTS`, which is disposition rather than silence; and only Apple platform binaries
-   carry the key among 1,788 scanned. The one documentation fetch attempted returned no page content,
-   and a summariser's recollection was **not** used as evidence.
-2. **Finding 2** — the inventory the brief originally required was run: 1,788 executables across
-   `/bin`, `/sbin`, `/usr/bin`, `/usr/sbin`, `/usr/libexec`, of which five carry the entitlement, with
-   each one's persona API imports measured. Every unsheddability and no-helper claim is narrowed to
-   "no *in-place* interface exists", the exec-an-entitled-helper route is marked unresolved, the bound
-   is stated so no whole-host absence is asserted, and the verdict is shown to survive without the
-   claim — it rests on the dispatcher being unable to establish the boundary at all, not on
-   sheddability.
+Menu choice and ground: permit one final tightly-bounded fix. The value is removing wording that
+would otherwise reintroduce the frozen overclaim; the risk is low because this is a state-file-only
+consistency fix with no new factual claim, research, implementation or host action.
 
-**Where an independent look is most worth spending.** The `/bin/ps` result is the one that should have
-been caught earlier: the first binary checked carried the entitlement, which is what made finding 2
-land. If the bounded inventory is still too narrow, that is the direction it will be wrong in.
+Evidence required: quote the affected before/after sentences; show that the three unbounded statements
+are gone or explicitly bounded to current authority; show that exactly one `Deferral 8's lead was half
+wrong` paragraph remains; and confirm no other text changed. Then update `## Latest result` with this
+final-fix outcome, set `turn: codex`, commit only this state file, and stop. The next Codex closure check
+covers this final fix and nothing else.
 
-**Newly recorded as deferrals, not worked:** item 12 (the obtainability question itself, so it is not
-lost), item 13 (`usermanagerd` and `launchd` not analysed for an induced-spawn path). Deferral 8 is
-downgraded from discharged to partly discharged, and deferral 3's persona sentence is corrected.
-
-Preserved and verifiable: the file reduction, the runbook, C5-T, the rollback, the evidence template,
-and the C5 fixture bytes — 210 lines, sha256
-`65b50d193054e6060fda6de866119d98898d8df04889e96b83802430b077a8f9`, markers intact. Host state
-unchanged. Only this state file was changed and committed.
-
-**One preservation point stated precisely rather than glossed.** The frozen scope says to preserve the
-accepted Unit 7 result. Its *text* is no longer in this file — the Unit 8 commit `d4d48ca` replaced
-`## Latest result`, which is what the Unit 8 brief instructed and what core § 4 requires of a field
-that holds current truth rather than a history; the text remains in git at `c49e1f4`. What this
-correction preserved is Unit 7's accepted *conclusions*, which are untouched and still govern: ASID is
-unusable under current authority, its root-bearing form is unassessed, and the mechanism space is not
-exhausted. Literal Phase 1a is likewise untouched. If "preserve" was meant as "restore the text", say
-so at the closure check and it is a one-line fix.
+All safety and scope constraints remain unchanged. Do not signal any process; do not delete, log into,
+authenticate, or otherwise mutate `wlactor-airesources` (uid 502); do not launch Claude, the dispatcher,
+C5 or rollback; do not run a probe; and do not enter Stages D/E, Phase 1f or any Phase 2 action.

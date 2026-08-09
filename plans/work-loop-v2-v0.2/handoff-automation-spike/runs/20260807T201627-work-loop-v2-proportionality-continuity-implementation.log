@@ -1,0 +1,14 @@
+run=20260807T201627-work-loop-v2-proportionality-continuity-implementation mode=live task=work-loop-v2-proportionality-continuity-implementation
+checkout=/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources
+state=/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/work-loop/work-loop-v2-proportionality-continuity-implementation.md
+max_hops=1 timeout=900s carry_one=1
+deadline=none — upper bound is max_hops * timeout = 900s
+allow_paths=^\.agents/skills/work-loop-v2/SKILL\.md$ ^logs/work-loop/work-loop-v2-proportionality-continuity-implementation\.md$ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/ ^logs/friction-log\.md$ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/runs/
+claude_deny=none — the Claude child holds this checkout's normal authority
+unattended=off — Claude hops run with this checkout's normal authority, including network
+initial: turn=claude sha256=5994c33e5f68d42a5d8355336f494b1712397f901161700a7ffe5a5ac38e5c45 head=520ab51172b5a0513a7ba9f103fbd6cc505d5cc8
+note: the state file is uncommitted with turn: claude — the expected Codex handoff (Codex never runs git).
+STOP [18] out-of-allowlist working-tree changes are already present before launching claude — task 'work-loop-v2-proportionality-continuity-implementation':
+ M logs/work-loop/project-progression-candidate-review-correction.md
+ M logs/work-loop/work-loop-v2-escaped-descendant-termination.md
+Recoverable next action: commit, stash or revert the paths above, then re-run this dispatcher.

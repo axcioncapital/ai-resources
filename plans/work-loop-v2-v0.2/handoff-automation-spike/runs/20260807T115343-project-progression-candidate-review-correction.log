@@ -1,0 +1,12 @@
+run=20260807T115343-project-progression-candidate-review-correction mode=live task=project-progression-candidate-review-correction
+checkout=/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources
+state=/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/work-loop/project-progression-candidate-review-correction.md
+max_hops=1 timeout=900s carry_one=1
+deadline=none — upper bound is max_hops * timeout = 900s
+allow_paths=^logs/work-loop/ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/ ^logs/friction-log\.md$ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/runs/
+claude_deny=none — the Claude child holds this checkout's normal authority
+initial: turn=claude sha256=ebbedcc7101b0578f1b0030f28976b52d5175cd19250fe199d78784c07e1ca67 head=3035ef75c2be6590280d7b80e779cd4fe14e9a80
+note: the state file is uncommitted with turn: claude — the expected Codex handoff (Codex never runs git).
+STOP [18] out-of-allowlist working-tree changes are already present before launching claude — task 'project-progression-candidate-review-correction':
+ M plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+Recoverable next action: commit, stash or revert the paths above, then re-run this dispatcher.
