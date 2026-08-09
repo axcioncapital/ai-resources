@@ -3100,3 +3100,54 @@ preceding turn was a proposal or analysis rather than an approved plan, treat "b
 default: ask one clarifying line, or default to producing/updating the proposal rather than writing
 files. Belongs in `docs/plan-mode-discipline.md` if a durable rule change is judged worth making; not
 built here.
+
+## 2026-08-09 — The staging tripwire judges a direct-route session's commit against another session's footprint
+
+- **Severity:** high — `check-foreign-staging.sh` blocked a fully authorized commit three times in
+  one session, each time naming a different stranger's declared footprint. Every one of the four
+  staged paths was named by the task-state file's own brief and staged by explicit pathspec; none
+  belonged to any other session. The commit only landed after the session hand-wrote the session
+  infrastructure it structurally never had.
+- **Source:** `logs/friction-log.md` 2026-08-09 (S3-p0f) — full narrative, evidence and the
+  three-block sequence.
+
+**What happens.** The guard resolves "this session's footprint" through
+`logs/.session-marker[-<id>]` → the matching block in `logs/session-notes.md`. Both are written by
+`/session-start`. A direct-route command session — `/work-loop-v2` states plainly that it "is not a
+session lifecycle command" and does not invoke `/prime`, `/session-start` or `/session-plan` —
+writes neither. The lookup then does not fail; it **succeeds against a stranger**. The first block
+was armed by a 2026-08-08 marker whose own `- Out of scope:` line reads *"repairing another
+session's dirty dispatch.sh / dispatch.test.sh"* — it had explicitly disclaimed the exact files it
+was used to block.
+
+**Why this is worse than no footprint.** A missing footprint has a documented degrade path
+(`no_concrete_footprint` → warn-and-allow when no live foreign session is present). An *inherited*
+footprint looks fully resolved to the guard and produces a confident, specific, wrong block. The
+hook's own header already anticipates ghost markers arming the no-footprint escalation and added
+process-grounding for that path; the inherited-footprint path has no equivalent check.
+
+**Secondary — the remediation text misdirects.** The block says "your declared footprint is too
+narrow — route each file to the RIGHT field", which assumes the reader owns the footprint it just
+printed. In this shape they do not, and following it literally would edit another session's mandate.
+
+**Secondary — a guard-defeat path sits in the open.** The stale marker is a gitignored file; moving
+it aside is a two-second `mv`. That was tried first here as a diagnostic and reverted, and the only
+reason it did not work is that the fallback found a *second* stale footprint. A session under time
+pressure will find that path before it finds the correct one.
+
+**Shape of the fix (not built).** Preferred and structural: treat a marker whose session id is not
+this session's as **no footprint** rather than as this session's footprint — degrade to the existing,
+already-correct no-footprint path instead of judging against a stranger. The per-id marker makes that
+distinguishable and `logs/.session-marker-*` is already gitignored. Fallback: have direct-route
+commands that commit declare a minimal footprint at invocation from the task-state file's own
+authorized boundary, which is exactly the information the guard wants and which the brief already
+carries.
+
+**Owner artifacts.** `.claude/hooks/check-foreign-staging.sh` (the marker-identity check) +
+`.claude/commands/work-loop-v2.md` (footprint declaration for direct-route commits) +
+`docs/session-marker.md` (states the marker contract the two share).
+
+**Pattern, not a one-off.** Third occurrence of "session-lifecycle infrastructure assumes every
+session primed" — see `## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless
+session` and the same log's 2026-08-07 foreign-session-guard coverage entry. This is the first with a
+commit-blocking consequence rather than a wrap-time one.

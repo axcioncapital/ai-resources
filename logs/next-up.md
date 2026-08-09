@@ -72,3 +72,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] Partial-file reads produced a false operability claim about an installed skill — `logs/improvement-log.md` <!-- promote:d59275d731a8 -->
 
 - [ ] Script-based state-file edit truncated an accepted Work Loop artifact via a substring-matched anchor — `logs/improvement-log.md` <!-- promote:b259b53bc3fe -->
+
+- [ ] The staging tripwire judges a direct-route session's commit against another session's footprint — `logs/improvement-log.md` <!-- promote:e2f906ee2dd0 -->

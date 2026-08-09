@@ -1,0 +1,50 @@
+{
+  "run_id": "2026-08-09-S3-p0f",
+  "project": "ai-resources",
+  "date": "2026-08-09",
+  "marker": "S3-p0f",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh",
+    "plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh",
+    "plans/work-loop-v2-v0.2/handoff-automation-spike/README.md",
+    "logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md",
+    "logs/friction-log.md",
+    "logs/improvement-log.md",
+    "logs/next-up.md",
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-08.md",
+    "logs/decisions.md",
+    "logs/scratchpads/2026-08-09-21-50-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-09-declare-the-session-s-real-footprint-rather-than"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

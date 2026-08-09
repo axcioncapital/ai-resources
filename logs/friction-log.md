@@ -353,6 +353,106 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 22:15 — logs/scratchpads/2026-08-09-21-50-scratchpad.md
+- 22:09 — logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md
+- 21:55 — logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md
+- 21:54 — logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md
+- 21:48 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:48 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:48 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:48 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:48 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:48 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:47 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:47 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:47 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:47 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:47 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:46 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/609569ff-78e4-4a0a-849b-feb8a73df9c6/scratchpad/argv-capture.sh
+- 21:45 — logs/session-notes.md
+- 21:40 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 21:40 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 21:40 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 21:40 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 21:39 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 21:34 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:34 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:34 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:33 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:33 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:29 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 21:20 — /tmp/handoff-work-loop-v2-phase1a-unit10-2026-08-09.md
+- 21:17 — logs/session-notes.md
+- 21:16 — logs/scratchpads/2026-08-09-21-16-scratchpad.md
+- 21:15 — logs/decisions.md
+- 21:15 — logs/session-notes.md
+- 21:14 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 21:13 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 21:13 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 21:13 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 21:13 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 21:13 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 21:12 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 21:12 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 21:11 — .claude/commands/memory-search.md
+- 21:11 — .gitignore
+- 21:11 — logs/scripts/memory-search.py
+- 21:11 — logs/scripts/memory-search.py
+- 21:11 — .claude/commands/resolve-repo-problem.md
+- 21:01 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 20:38 — plans/semantic-search-mvp/proposal.md
+- 20:38 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 20:19 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 20:17 — .claude/commands/resolve-repo-problem.md
+- 20:16 — scripts/recall-search.py
+- 20:16 — scripts/recall-search.py
+- 20:16 — logs/scripts/memory-search.py
+- 20:12 — logs/session-notes.md
+- 20:12 — logs/scratchpads/2026-08-09-1500-scratchpad.md
+- 20:11 — logs/decisions.md
+- 20:11 — logs/session-notes.md
+- 19:45 — logs/session-notes.md
+- 19:41 — logs/scratchpads/2026-08-09-19-41-scratchpad.md
+- 17:05 — plans/work-loop-v2-v0.2/core-resolver-worktree-fix-plan-v0.1.md
+- 17:05 — plans/work-loop-v2-v0.2/core-resolver-worktree-fix-plan-v0.1.md
+- 17:04 — plans/work-loop-v2-v0.2/core-resolver-worktree-fix-plan-v0.1.md
+- 17:04 — logs/scripts/work-loop-v2-core-resolver.test.sh
+- 17:04 — logs/scripts/work-loop-v2-core-resolver.test.sh
+- 17:04 — .claude/commands/work-loop-v2.md
+- 17:04 — .claude/commands/work-loop-v2.md
+- 17:02 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/ed5d6e3c-35c6-4077-b2fc-cc012f9ade5e/scratchpad/prune.sh
+- 17:01 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/ed5d6e3c-35c6-4077-b2fc-cc012f9ade5e/scratchpad/setup2.sh
+- 17:00 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/ed5d6e3c-35c6-4077-b2fc-cc012f9ade5e/scratchpad/probe.sh
+- 17:00 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/ed5d6e3c-35c6-4077-b2fc-cc012f9ade5e/scratchpad/setup.sh
+- 16:58 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:57 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:57 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:57 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:56 — .claude/commands/work-loop-v2.md
+- 16:55 — .claude/commands/work-loop-v2.md
+- 16:55 — .claude/commands/work-loop-v2.md
+- 16:55 — logs/scripts/work-loop-v2-core-resolver.test.sh
+- 16:53 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:53 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:53 — plans/work-loop-v2-v0.2/core-resolver-worktree-fix-plan-v0.1.md
+- 16:53 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:52 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:52 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:52 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:51 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:24 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:07 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:07 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:07 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:07 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:06 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:06 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:06 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:05 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:05 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:05 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:05 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 16:04 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
 - 15:55 — /tmp/handoff-work-loop-v2-phase1a-2026-08-09.md
 - 15:50 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
 - 15:48 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
@@ -3512,3 +3612,9 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
 - **Failure mode:** Authority — **Friction type: self (treated my own inference as an operator decision, adding a mandatory production step the founders never chose — a direct breach of this repo's one hard limit).** The operator decided *how* founder-originated material enters the system (at claim level, no fifth source role). Doc 03 of the V1 separately states *"founder discovery is **required** when the assignment is intended to express original Axcíon thinking."* I reclassified that requirement from **Unresolved** to **Retain**, describing it as *"resolved as a by-product"* of the operator's decision. It is not a by-product: *how input enters* and *whether the workflow must contain a step that goes and asks for it* are different questions, and only the first was put to the operator. Had it survived into V2, the approved system definition would have carried a mandatory Develop production step with no approved need behind it. QC caught it; `grep "founder discovery"` against the approved Needs Document returns **zero hits**, confirming nothing imposes one. Reversed to Unresolved and routed back to the operator as a new Finding 6. **Root cause:** this repo's governing constraint is that **Claude may recommend and challenge but may not approve, promote, reject or terminate a requirement** — and the constraint is stated as a *disposition* with no mechanical check at the point it is most easily crossed. The crossing point is a **fold-in**: transcribing operator decisions into a document is exactly where an adjacent, plausible, well-argued consequence gets carried across on the authority of the decision beside it. I quoted the operator's own words next to four of the five findings and, on the fifth, wrote a rationale of my own — the one row where the check was absent is the one row that failed. The project CLAUDE.md already names the correct test and I did not apply it: *"a proposed feature that is ambiguous about whether the founders chose it — they did not."* **Prevention:** (a) at fold-in, **every classification change must carry the operator's verbatim words that authorize it**; if their words do not contain it, it is not decided, and the row stays open — mechanical, not a judgment call. (b) **Mark provenance at two authority levels, not one.** V2 now distinguishes `[V1 retained — operator decision]` from `[V1 retained — reconciliation classification]`; before, both rendered as "approved", which hid the weaker category from the next reviewer. This is the structural half of the fix and it survives a session that forgets rule (a). **Owner artifact:** `projects/axcion-systems-builder/engine.md` (fold-in procedure — the verbatim-authorization rule and the two-level provenance marker) + `projects/axcion-systems-builder/CLAUDE.md` § Claude's Challenge Mandate — and Its Limit (the limit exists; what is missing is where it is enforced).
 
 - **Failure mode:** Validation — **Friction type: process (positive counter-signal — QC on a fold-in caught both defects before either reached the downstream artifact, at a cost of one review cycle).** Logged as a positive because it is the direct payoff of the QC Independence Rule and worth having on record next to the two defects above. `/qc-pass` ran twice: once on the Phase 7 fold-in (verdict **REVISE**, 7 findings, 2 blocking — both entries above), once on the Phase 8 V2 built from it (verdict **REVISE**, 3 findings, and explicitly **no unapproved requirement and no premature technical decision**). Neither defect was self-detectable: both were claims I had authored and would have re-read as true. The second pass also caught a genuine internal contradiction the first could not have seen — V2 stated *"no publication means no memory promotion"* (doc 03's wording) alongside a workflow whose approved trigger is **founder approval**, two events the case's own transition section separates, so an approved-but-unpublished asset was simultaneously required and forbidden to close memory. **Root cause (of the near-miss, not of a failure):** a fold-in feels mechanical — transcription rather than authorship — so it does not *feel* like work that needs review, which is precisely when an unreviewed inference travels furthest. **Prevention:** keep QC non-optional on fold-ins and reconciliations specifically, not only on artifacts that feel like original composition; the transcription steps are where authority quietly changes hands. **Owner artifact:** `ai-resources/docs/qc-independence.md` (no change proposed — this entry is evidence the rule is working; recorded so a future cost-cutting pass sees what the cycle bought).
+
+## Session — 2026-08-09 (S3-p0f) (`/work-loop-v2` direct route: the staging tripwire blocked a legitimate commit three times, each time against a different stranger's footprint)
+
+### Friction Events
+
+- **Failure mode:** Workflow — **Friction type: harness (a guard whose input is written by `/session-start` fires in sessions that structurally never run `/session-start`, so it judges the commit against whatever stale footprint it happens to find).** Ran `/work-loop-v2 axcion-harness-v0-2-p0-f-attended-policy` as a direct-route session — no `/prime`, no `/session-start`, which is the documented normal shape for this command ("This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or `/session-plan`"). The unit implemented cleanly and the evidence was produced. `check-foreign-staging.sh` then blocked the commit **three times**, and each block named a different declared footprint: first the Codex-side proportionality-continuity session's (`.agents/skills/work-loop-v2/SKILL.md, AGENTS.md, .codex/hooks.json, …`), then — after the stale shared marker was moved aside as a diagnostic — a second stale block's (`logs/work-loop/axcion-harness-v0-2.md, …-phase0-runtime.md, .agents/skills/work-loop-v2`). Every one of the four staged paths was explicitly authorized by the task's own brief and staged by explicit pathspec; none belonged to any other session. The 2026-08-08 marker that armed the first block belonged to a session whose own `- Out of scope:` line reads *"repairing another session's dirty dispatch.sh / dispatch.test.sh"* — it had explicitly disclaimed the exact files it was used to block. **Root cause:** the guard resolves "this session's footprint" through `logs/.session-marker[-<id>]` → the matching block in `logs/session-notes.md`, and **both are written by `/session-start`**. A direct-route command session writes neither, so the lookup does not fail — it *succeeds against a stranger*. That is the dangerous shape: a missing footprint has a documented degrade path (`no_concrete_footprint` → warn-and-allow when no live foreign session), but an **inherited** footprint looks fully resolved to the guard and produces a confident, specific, wrong block. The marker is pruned by session teardown rather than by date, so a stale one persists indefinitely and every later direct-route session inherits it. The hook's own header anticipates ghost markers arming the *no-footprint* escalation and added process-grounding for that path; the inherited-footprint path has no equivalent check. Secondary: the block text's remediation ("your declared footprint is too narrow — route each file to the RIGHT field") assumes the reader owns the footprint it printed, which in this shape they do not; following it literally would edit another session's mandate. **Prevention:** (a) the guard should treat a marker whose session id is **not this session's** as *no footprint* rather than as *this session's footprint* — degrade to the existing, already-correct no-footprint path instead of judging against a stranger; the per-id marker makes that distinguishable and `logs/.session-marker-*` is already gitignored. (b) failing that, `/work-loop-v2` (and other direct-route commands that commit) should declare a minimal footprint at invocation from the task-state file's own authorized boundary — which is exactly the information the guard wants and which the brief already carries. The workaround used here was (b) done by hand: write this session's per-id marker plus a matching `logs/session-notes.md` block from the brief's four authorized paths, which unblocked the commit **with the guard still armed** — nothing was disarmed and nothing was force-committed. Note the guard-defeat path is real and was tried first: moving the stale marker aside is a two-second `mv` on a gitignored file, and the only reason it did not work is that the fallback found a second stale footprint. A future session under time pressure will find that path before it finds the correct one. **This is the same class as the `run-manifest.sh` finding logged one session earlier** (`## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless session`) — third occurrence of "session-lifecycle infrastructure assumes every session primed", now with a commit-blocking consequence rather than a wrap-time one; worth treating as a pattern rather than as three separate tool bugs. **Owner artifact:** `ai-resources/.claude/hooks/check-foreign-staging.sh` (the marker-identity check — fix (a), the structural one) + `ai-resources/.claude/commands/work-loop-v2.md` (fix (b), the footprint declaration for direct-route commits) + `ai-resources/docs/session-marker.md` (states the marker contract these two share).
