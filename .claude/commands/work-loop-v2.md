@@ -8,7 +8,75 @@ Run Claude's half of one Work Loop v2 unit: read the task-state file, check the 
 
 Input: `$ARGUMENTS` — a task id, or empty to use the only state file whose `turn:` is `claude`.
 
-**Read `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` before anything else, every invocation.** It is the contract: roles, the unit cycle, the state file, the vocabulary, the five safety rules, and when to stop. This command does the work; it does not restate the contract. Where the two disagree, the core wins and the disagreement is a defect to report.
+This command requires the executable core on every invocation. Apply the resolver contract below,
+then read the one absolute path it prints **before any other Work Loop action**.
+
+<!-- work-loop-v2-core-resolution:start -->
+### Resolve the executable core
+
+Resolve the complete semantic-file path, never an `ai-resources/` directory. Two layouts are valid in
+order: the canonical repository inside the verified workspace, then direct use from `ai-resources`.
+The boundary is the current Git repository plus, only at `WORKSPACE/projects/<one-child>`, that
+verified workspace Git repository. Never walk higher. Run this exact Bash resolver in one call:
+
+```bash
+wl2_semantic_rel='plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md'
+wl2_git_top() {
+  local wl2_top
+  wl2_top="$(git -C "$1" rev-parse --show-toplevel 2>/dev/null)" || return 1
+  (cd "$wl2_top" && pwd -P)
+}
+wl2_is_workspace() {
+  local wl2_w="$1"
+  [ -d "$wl2_w/projects" ] && [ -d "$wl2_w/ai-resources" ] || return 1
+  [ "$(wl2_git_top "$wl2_w")" = "$wl2_w" ] || return 1
+  [ "$(wl2_git_top "$wl2_w/ai-resources")" = "$wl2_w/ai-resources" ]
+}
+wl2_repo_root="$(wl2_git_top "$(pwd -P)")" ||
+  { echo 'ERROR: Work Loop v2 cannot resolve its repository boundary.' >&2; exit 1; }
+wl2_workspace_root=''
+if wl2_is_workspace "$wl2_repo_root"; then
+  wl2_workspace_root="$wl2_repo_root"
+else
+  wl2_projects_dir="$(dirname "$wl2_repo_root")"
+  wl2_workspace_candidate="$(dirname "$wl2_projects_dir")"
+  if [ "$(basename "$wl2_projects_dir")" = 'projects' ] &&
+     wl2_is_workspace "$wl2_workspace_candidate"; then
+    wl2_workspace_root="$wl2_workspace_candidate"
+  fi
+fi
+wl2_semantic_path=''
+wl2_attempted=''
+wl2_try_semantic() {
+  local wl2_candidate="$1" wl2_source_root="$2" wl2_dir
+  wl2_attempted="${wl2_attempted}${wl2_attempted:+; }$wl2_candidate"
+  [ -f "$wl2_candidate" ] && [ -r "$wl2_candidate" ] && [ ! -L "$wl2_candidate" ] || return 1
+  wl2_dir="$(cd "$(dirname "$wl2_candidate")" && pwd -P)" || return 1
+  case "$wl2_dir/" in "$wl2_source_root/"*) ;; *) return 1 ;; esac
+  wl2_semantic_path="$wl2_dir/$(basename "$wl2_candidate")"
+}
+wl2_workspace_path=''
+if [ -n "$wl2_workspace_root" ]; then
+  wl2_workspace_path="$wl2_workspace_root/ai-resources/$wl2_semantic_rel"
+  wl2_try_semantic "$wl2_workspace_path" "$wl2_workspace_root/ai-resources" || true
+fi
+wl2_direct_path="$wl2_repo_root/$wl2_semantic_rel"
+if [ -z "$wl2_semantic_path" ] && [ "$(basename "$wl2_repo_root")" = 'ai-resources' ] &&
+   [ "$wl2_direct_path" != "$wl2_workspace_path" ]; then
+  wl2_try_semantic "$wl2_direct_path" "$wl2_repo_root" || true
+fi
+if [ -z "$wl2_semantic_path" ]; then
+  printf 'ERROR: Work Loop v2 semantic source not found within permitted boundary. repo=%s workspace=%s attempted=%s\n' \
+    "$wl2_repo_root" "${wl2_workspace_root:-none}" "${wl2_attempted:-none}" >&2
+  exit 1
+fi
+printf '%s\n' "$wl2_semantic_path"
+```
+
+Read exactly the printed file. A nonzero exit is terminal: report it and stop without a relative-path
+fallback. The file is the contract for roles, unit cycle, state, vocabulary, safety, and stopping.
+Where this resource and the core disagree, the core wins; report the disagreement as a defect.
+<!-- work-loop-v2-core-resolution:end -->
 
 This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or `/session-plan`.
 
@@ -47,7 +115,7 @@ If `## Next action` opens with core § 3's close token, Codex has decided closur
 
 Core § 6 rule 1 governs this step. The claims are the brief's load-bearing repository assertions. Core § 3 owns their placement: a brief may mark each claim in place where it states it, or gather them under one collecting heading — both are valid, and each claim names the surface and the pattern or evidence that settles it. So read the whole brief for them, and do not conclude there are none because any particular heading is absent. Check each **by inspection** — open the file, run the grep, read the line. Not by recall.
 
-Write an inspection record into `## Latest result`, in this shape. The shape is the command's output contract; the acceptance harness (`logs/scripts/work-loop-v2-slice-1.test.sh`) binds to it:
+Write an inspection record into `## Latest result`, in this shape. The shape is the command's output contract; the acceptance harness binds to it. If that harness must be read, rerun § Resolve the executable core with `wl2_semantic_rel='logs/scripts/work-loop-v2-slice-1.test.sh'` and use only the complete path it returns.
 
 ```
 Inspected (YYYY-MM-DD):

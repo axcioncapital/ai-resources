@@ -13,8 +13,75 @@ description: "Use only when the request (1) names the Work Loop, (2) points at a
 
 You frame the work and judge the result. **Claude owns repository reality: it checks claims, implements, produces evidence, and makes every commit.** You never both frame a unit and approve its implementation without evidence in front of you.
 
-This file says what *you* do. It does not restate `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, and where the two disagree the core wins — report the disagreement as a defect rather than picking a side. The core's read point is fixed at § Routing step 3, because most routing outcomes are not the Work Loop and do not need the contract at all.
+This file does not restate the executable core resolved below; where they disagree, the core wins and
+the difference is a defect. Its read point is Routing step 3 because most routes do not need it.
 
+<!-- work-loop-v2-core-resolution:start -->
+### Resolve the executable core
+
+Resolve the complete semantic-file path, never an `ai-resources/` directory. Two layouts are valid in
+order: the canonical repository inside the verified workspace, then direct use from `ai-resources`.
+The boundary is the current Git repository plus, only at `WORKSPACE/projects/<one-child>`, that
+verified workspace Git repository. Never walk higher. Run this exact Bash resolver in one call:
+
+```bash
+wl2_semantic_rel='plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md'
+wl2_git_top() {
+  local wl2_top
+  wl2_top="$(git -C "$1" rev-parse --show-toplevel 2>/dev/null)" || return 1
+  (cd "$wl2_top" && pwd -P)
+}
+wl2_is_workspace() {
+  local wl2_w="$1"
+  [ -d "$wl2_w/projects" ] && [ -d "$wl2_w/ai-resources" ] || return 1
+  [ "$(wl2_git_top "$wl2_w")" = "$wl2_w" ] || return 1
+  [ "$(wl2_git_top "$wl2_w/ai-resources")" = "$wl2_w/ai-resources" ]
+}
+wl2_repo_root="$(wl2_git_top "$(pwd -P)")" ||
+  { echo 'ERROR: Work Loop v2 cannot resolve its repository boundary.' >&2; exit 1; }
+wl2_workspace_root=''
+if wl2_is_workspace "$wl2_repo_root"; then
+  wl2_workspace_root="$wl2_repo_root"
+else
+  wl2_projects_dir="$(dirname "$wl2_repo_root")"
+  wl2_workspace_candidate="$(dirname "$wl2_projects_dir")"
+  if [ "$(basename "$wl2_projects_dir")" = 'projects' ] &&
+     wl2_is_workspace "$wl2_workspace_candidate"; then
+    wl2_workspace_root="$wl2_workspace_candidate"
+  fi
+fi
+wl2_semantic_path=''
+wl2_attempted=''
+wl2_try_semantic() {
+  local wl2_candidate="$1" wl2_source_root="$2" wl2_dir
+  wl2_attempted="${wl2_attempted}${wl2_attempted:+; }$wl2_candidate"
+  [ -f "$wl2_candidate" ] && [ -r "$wl2_candidate" ] && [ ! -L "$wl2_candidate" ] || return 1
+  wl2_dir="$(cd "$(dirname "$wl2_candidate")" && pwd -P)" || return 1
+  case "$wl2_dir/" in "$wl2_source_root/"*) ;; *) return 1 ;; esac
+  wl2_semantic_path="$wl2_dir/$(basename "$wl2_candidate")"
+}
+wl2_workspace_path=''
+if [ -n "$wl2_workspace_root" ]; then
+  wl2_workspace_path="$wl2_workspace_root/ai-resources/$wl2_semantic_rel"
+  wl2_try_semantic "$wl2_workspace_path" "$wl2_workspace_root/ai-resources" || true
+fi
+wl2_direct_path="$wl2_repo_root/$wl2_semantic_rel"
+if [ -z "$wl2_semantic_path" ] && [ "$(basename "$wl2_repo_root")" = 'ai-resources' ] &&
+   [ "$wl2_direct_path" != "$wl2_workspace_path" ]; then
+  wl2_try_semantic "$wl2_direct_path" "$wl2_repo_root" || true
+fi
+if [ -z "$wl2_semantic_path" ]; then
+  printf 'ERROR: Work Loop v2 semantic source not found within permitted boundary. repo=%s workspace=%s attempted=%s\n' \
+    "$wl2_repo_root" "${wl2_workspace_root:-none}" "${wl2_attempted:-none}" >&2
+  exit 1
+fi
+printf '%s\n' "$wl2_semantic_path"
+```
+
+Read exactly the printed file. A nonzero exit is terminal: report it and stop without a relative-path
+fallback. The file is the contract for roles, unit cycle, state, vocabulary, safety, and stopping.
+Where this resource and the core disagree, the core wins; report the disagreement as a defect.
+<!-- work-loop-v2-core-resolution:end -->
 ---
 
 ## The seam
@@ -159,7 +226,10 @@ The operator describes what they want in ordinary language and rarely names a ca
 
 1. **Interpret the desired outcome and its object** — what should be different afterwards, and to what. Not the remedy they proposed; the outcome behind it.
 2. **Choose one owner** from the index below — the single capability whose purpose covers that outcome.
-3. **If the Work Loop is the owner** — and only then — **read `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` now, before your first Work-Loop-owned move.** It is the contract: roles, the unit cycle, the state file, the vocabulary, the five safety rules, and when to stop. Then apply the Direct-versus-Standard admission test (Admission below). Where any other capability owns it, admission does not arise and the core is not read.
+3. **If the Work Loop is the owner** — and only then — **run § Resolve the executable core and read
+   exactly the absolute file it returns now, before your first Work-Loop-owned move.** Then apply the
+   Direct-versus-Standard admission test (Admission below). Where any other capability owns it,
+   admission does not arise and the core is not resolved or read.
 4. **Classify the mode** — Discovery, Implementation or Adoption — **only once admission has succeeded**, and record it inside `## Lane and unit`. Core § 3 *The unit's mode* defines the three and what each requires of the evidence.
 5. **Choose the bounded unit** and write the brief.
 
