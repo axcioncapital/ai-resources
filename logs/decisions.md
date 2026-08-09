@@ -213,3 +213,43 @@ finding explicitly required inspecting those surfaces or explaining why they cou
 kernel-level evidence rather than a documentation-based prefix inference. No live probe or new operator
 authority was required. The verdict change was flagged explicitly in the state file for Codex's closure
 check, since the brief that framed the correction had expected the classification to remain open.
+
+## 2026-08-09 — Work Loop v2 core resolver: identity test replaces basename test, executed same session as planned
+
+**Context.** `core-resolver-worktree-defect-report-2026-08-09.md` verified that the resolver's
+direct-use branch tested `basename($repo_root) = ai-resources`, which rejects any linked worktree of
+`ai-resources` not coincidentally sharing that name — deterministic, pre-file-check failure with a
+misleading `attempted=none`.
+
+**Decision.** Replace the basename test with `wl2_is_trusted_repo`: current checkout's Git common
+directory must resolve to `<canonical>/.git`, where `<canonical>` is itself a Git top-level named
+`ai-resources`. On rejection, name the reason (`direct_identity=untrusted`) instead of implying a file
+lookup occurred. Mirror the edited block byte-for-byte into both deployed copies (Claude command,
+Codex skill). Scope level B: fix plus a 4-check regression test (worktree case, canonical control,
+unrelated-repo negative control, mirror parity) — report's checks 3/4/6/7 (workspace layouts, location
+independence, file guards, full diagnostic matrix) explicitly declined at this scope.
+
+**Rationale.** The report's own root-cause analysis rejected the alternatives (drop the basename check
+entirely; trust any sibling directory; walk upward) as each either widening trust past the intended
+boundary or fixing one checkout name rather than the class of linked worktrees. The identity test is
+the only option of the four that both fixes the defect and keeps the trust boundary the same width.
+
+**Alternatives considered and rejected:** level C's full 8-check harness (deferred as the report's own
+stated gap, not silently dropped); recreating the `ai-resources-eval` worktree as part of this fix
+(unnecessary — the test creates its own throwaway worktree); routing the fix through Work Loop v2
+itself (rejected — the resolver being repaired is the thing that would gate its own repair).
+
+**Independent review.** One review, Claude subagent — operator-directed substitution for the standing
+Codex-reviewer rule, recorded as a session-scoped deviation, not a new default. Verdict: SOUND WITH
+FINDINGS. Two findings fixed before commit: (1) the test's `git worktree prune` calls were unscoped and
+could have deregistered the operator's own worktrees on volatile paths — replaced with a fixture-scoped
+`worktree remove --force`; (2) the resolver's updated prose overclaimed "repository identity" when the
+test is actually shared-object-store-plus-name — reworded, with an inline comment marking the basename
+line as load-bearing so a future maintainer does not delete it as redundant (the report's own rejected
+shortcut 1).
+
+**Verification.** Test run red before the edit (reproduced the report's exact `attempted=none`
+signature), green after (4/4), and a manual smoke check from a repo subdirectory and the workspace
+root confirmed the untouched layouts are unaffected. Separately confirmed, read-only, that the
+resolver's pre-existing `WORKSPACE/projects/<one-child>` path already resolves correctly from
+`axcion-systems-builder` and `axcion-systems-builder-email-os` — untouched by this change.

@@ -2,85 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-07 — Work Loop v2: intake router Units 1 correction, 2, 3, 3 correction
-
-### Summary
-Four consecutive `/work-loop-v2` hops on `work-loop-v2-intake-router`, each Claude's half of one
-Codex ⇄ Claude cycle: closed out Unit 1's correction, implemented Unit 2 (the ordinary-language
-intake router index) and Unit 3 (the Discovery/Implementation/Adoption mode contract), then
-corrected two frozen findings on Unit 3. Every hop followed the same shape — reproduce or check
-premises by inspection, write evidence red-before/green-after, implement inside the allowed
-scope, hand back with `turn: codex`. Nothing closed; the task is still open, `turn: codex`,
-awaiting Codex's closure check on the correction just handed back.
-
-### Decisions Made
-- Unit 1 correction: fixed the Class-1 Matt-route count/arithmetic, replaced three false
-  "operator choices" with resolutions already implied by the brief's own governing decisions,
-  widened the index recommendation to name all 25 Matt skills instead of 13, split the
-  implementation boundary into a router-index unit and a separate mode-contract unit.
-- Unit 2: implemented the 50-entry ordinary-language router index inside the existing Routing
-  section (no second router). Corrected a real Unit-1 factual error found along the way — Axcíon
-  `/grill-me` delegates to an Axcíon-owned skill, not the Matt primitive, so the three name
-  collisions are fully independent rather than wrapper/primitive.
-- Unit 3: implemented mode as a classification bound to existing unit kinds (no new field, lane
-  or unit type). Resolved the brief's one real tension — Adoption's "real operation" evidence
-  requirement vs. the discovery-unit no-target-implementation boundary — by having the
-  Adoption-mode unit read evidence that separate work produced, rather than performing the
-  operating itself.
-- Unit 3 correction: replaced a stale/self-contradicting harness assertion with two positional
-  ones, and rewrote a fixture's Standard-lane admission reason that had (accidentally) cited the
-  exact reason core § 2 excludes ("the change is small").
-- Routine: harness line-guard on the Codex skill re-based 320→340 lines (reported, not hidden);
-  three fixtures (`fixture-mode-{discovery,implementation,adoption}.md`) added and registered in
-  the harness's closed-set fixture list.
-
-### Outcome
-Skipped (not requested).
-
-### Session Value Audit — 80/20 Review
-Skipped (not requested).
-
-### Risky actions
-None — every unit stayed inside its brief's allowed-path scope; two false premises were caught
-and corrected rather than built around; nothing was committed to `main` without a green harness
-run (271/2 → 275/2, both remaining failures pre-existing and unrelated).
-
-### Session Assessment
-Skipped (not requested).
-
-### Next Steps
-- **Update mid-wrap:** while this wrap was in progress, Codex's closure check on the Unit 3
-  correction (`a963360`) found that my own correction had accidentally merged the
-  `## Latest result` heading into the Brief's Completion sentence. Codex wrote the exact
-  structural repair into the working tree (core § 3's "final tightly-bounded fix" menu option)
-  and handed back with `turn: claude`. Verified the repair (one each of the five headings intact,
-  Completion sentence complete) and committed it separately from this wrap, `f6acf26`. Whose move
-  now: `turn: codex` — Codex runs the final-fix closure check. Next Claude action is
-  `/work-loop-v2` once `turn:` flips back.
-- The task's exit condition still needs a fresh natural-language routing proof: one live Codex
-  session routing a request to a Claude-side-only Matt skill, one live Codex session correctly
-  classifying an Adoption-mode request. No static check can produce this.
-- A recorded-not-actioned deferral: sweep the harness for other assertions sharing the "passes
-  for an unrelated reason" defect class caught in the Unit 3 correction.
-- The two pre-existing `unexpected_worklog_files` harness failures (14 untracked live state files
-  outside `KNOWN_WORKLOOP_FILES`) remain unrepaired — out of scope for every unit this session.
-
-### Open Questions
-None.
-
-### Findings Declined
-- The Unit 3 correction's recorded candidate deferral — a sweep for other harness assertions that
-  can pass for an unrelated reason, same defect class as the two Codex caught — is not queued to
-  `improvement-log.md`. It is already owned inside `work-loop-v2-intake-router.md`'s own record,
-  which Codex reviews at closure; a duplicate entry would fragment the same finding across two
-  trackers.
-- The two pre-existing `unexpected_worklog_files` harness failures, reproduced again in all four
-  baseline runs this session (183/2 → 222/2 → 271/2 → 275/2, same two lines every time), are not
-  re-queued. Already logged 2026-08-06, `medium-high`, `logs/improvement-log.md` ("The `3.1a`
-  closed-set assertion reddens on normal repository growth"), with the structural fix already
-  named (fixture-prefix convention rather than an enumerated allow-list). No new information from
-  this session's reproduction.
-
 ## 2026-08-07 — Work Loop v2: resource/capability development plan, drafted and closed
 
 ### Summary
@@ -633,3 +554,51 @@ if the resolver's behavior is in question.
 ### Open Questions
 None. Persona is closed (rejected, with kernel-level evidence). Deferral 14 (stale "the rejection"
 wording in retained Unit 8 material) remains open and low-priority — Codex's call, not blocking.
+
+## 2026-08-09 — Work Loop v2 core resolver: linked-worktree fix, planned and shipped same session
+
+### Summary
+Investigated `core-resolver-worktree-defect-report-2026-08-09.md` (the resolver rejected a linked
+worktree of `ai-resources` because it trusted the checkout by directory basename, not repository
+identity). Ran `/clarify` and `/scope` to lock a level-B plan (fix plus a four-check test script,
+report checks 3/4/6/7 explicitly out of scope), then the operator directed execution in the same
+session instead of deferring to the next one. Wrote the test first, reproduced the red case, applied
+the fix to both mirrored resolver copies, went green, ran one independent review, fixed both findings
+the review raised, and committed. Also verified — read-only, no code change — that the resolver's
+existing `WORKSPACE/projects/<one-child>` path already covers `axcion-systems-builder` and
+`axcion-systems-builder-email-os` unaffected by this change.
+
+### Decisions Made
+- Level B fix scope confirmed by operator (fix + 4-check test: worktree case, canonical control,
+  unrelated-repo negative control, mirror parity) — declined level C's full 8-check harness.
+- Operator overrode the standing reviewer rule (Codex) for this change and directed a Claude subagent
+  review instead. Recorded as a session-scoped deviation in the plan file, not a new standing rule.
+- Both review findings (unscoped `git worktree prune` risking the operator's other worktrees; resolver
+  prose overclaiming "repository identity" when the test is shared-object-store-plus-name) were fixed
+  before commit rather than logged for later.
+- Execution ran as Direct Work, not a Work Loop v2 task — using the resolver being repaired to route
+  its own repair was judged unnecessary risk.
+
+### Outcome
+Skipped (not requested).
+
+### Risky actions
+None. The one materially risky element — the test's original `git worktree prune` calls, which could
+have deregistered the operator's live worktrees on volatile paths — was caught by the independent
+review before the test script was ever run for real against the operator's tree, and fixed before commit.
+
+### Findings Declined
+- `run-manifest.sh close` hard-errored (exit 2) instead of the documented stub-and-continue: no per-id
+  marker existed and the shared `logs/.session-marker` held yesterday's `2026-08-08 S2-309`, not a
+  today-dated one. Declined as a new finding — reproduction, not new information, of the already-logged
+  open finding at `## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless session
+  instead of the documented stub-and-continue`. Per the wrap's own ADVISORY RULE, surfaced and the wrap
+  continued without a manifest for this session.
+
+### Next Steps
+None queued from this session. The resolver fix unblocks (but does not itself resume) planning
+`eval-mvp-proposal-v0.2.md` as a Work Loop task inside a recreated `ai-resources-eval` worktree — that
+recreation was explicitly left undone.
+
+### Open Questions
+None.

@@ -2775,3 +2775,81 @@ and was left unaddressed.
 ### Open Questions
 - Is the proof worktree at `.../scratchpad/carry-proof-wt` idle? Blocks its own cleanup only —
   nothing else depends on the answer.
+## 2026-08-07 — Work Loop v2: intake router Units 1 correction, 2, 3, 3 correction
+
+### Summary
+Four consecutive `/work-loop-v2` hops on `work-loop-v2-intake-router`, each Claude's half of one
+Codex ⇄ Claude cycle: closed out Unit 1's correction, implemented Unit 2 (the ordinary-language
+intake router index) and Unit 3 (the Discovery/Implementation/Adoption mode contract), then
+corrected two frozen findings on Unit 3. Every hop followed the same shape — reproduce or check
+premises by inspection, write evidence red-before/green-after, implement inside the allowed
+scope, hand back with `turn: codex`. Nothing closed; the task is still open, `turn: codex`,
+awaiting Codex's closure check on the correction just handed back.
+
+### Decisions Made
+- Unit 1 correction: fixed the Class-1 Matt-route count/arithmetic, replaced three false
+  "operator choices" with resolutions already implied by the brief's own governing decisions,
+  widened the index recommendation to name all 25 Matt skills instead of 13, split the
+  implementation boundary into a router-index unit and a separate mode-contract unit.
+- Unit 2: implemented the 50-entry ordinary-language router index inside the existing Routing
+  section (no second router). Corrected a real Unit-1 factual error found along the way — Axcíon
+  `/grill-me` delegates to an Axcíon-owned skill, not the Matt primitive, so the three name
+  collisions are fully independent rather than wrapper/primitive.
+- Unit 3: implemented mode as a classification bound to existing unit kinds (no new field, lane
+  or unit type). Resolved the brief's one real tension — Adoption's "real operation" evidence
+  requirement vs. the discovery-unit no-target-implementation boundary — by having the
+  Adoption-mode unit read evidence that separate work produced, rather than performing the
+  operating itself.
+- Unit 3 correction: replaced a stale/self-contradicting harness assertion with two positional
+  ones, and rewrote a fixture's Standard-lane admission reason that had (accidentally) cited the
+  exact reason core § 2 excludes ("the change is small").
+- Routine: harness line-guard on the Codex skill re-based 320→340 lines (reported, not hidden);
+  three fixtures (`fixture-mode-{discovery,implementation,adoption}.md`) added and registered in
+  the harness's closed-set fixture list.
+
+### Outcome
+Skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None — every unit stayed inside its brief's allowed-path scope; two false premises were caught
+and corrected rather than built around; nothing was committed to `main` without a green harness
+run (271/2 → 275/2, both remaining failures pre-existing and unrelated).
+
+### Session Assessment
+Skipped (not requested).
+
+### Next Steps
+- **Update mid-wrap:** while this wrap was in progress, Codex's closure check on the Unit 3
+  correction (`a963360`) found that my own correction had accidentally merged the
+  `## Latest result` heading into the Brief's Completion sentence. Codex wrote the exact
+  structural repair into the working tree (core § 3's "final tightly-bounded fix" menu option)
+  and handed back with `turn: claude`. Verified the repair (one each of the five headings intact,
+  Completion sentence complete) and committed it separately from this wrap, `f6acf26`. Whose move
+  now: `turn: codex` — Codex runs the final-fix closure check. Next Claude action is
+  `/work-loop-v2` once `turn:` flips back.
+- The task's exit condition still needs a fresh natural-language routing proof: one live Codex
+  session routing a request to a Claude-side-only Matt skill, one live Codex session correctly
+  classifying an Adoption-mode request. No static check can produce this.
+- A recorded-not-actioned deferral: sweep the harness for other assertions sharing the "passes
+  for an unrelated reason" defect class caught in the Unit 3 correction.
+- The two pre-existing `unexpected_worklog_files` harness failures (14 untracked live state files
+  outside `KNOWN_WORKLOOP_FILES`) remain unrepaired — out of scope for every unit this session.
+
+### Open Questions
+None.
+
+### Findings Declined
+- The Unit 3 correction's recorded candidate deferral — a sweep for other harness assertions that
+  can pass for an unrelated reason, same defect class as the two Codex caught — is not queued to
+  `improvement-log.md`. It is already owned inside `work-loop-v2-intake-router.md`'s own record,
+  which Codex reviews at closure; a duplicate entry would fragment the same finding across two
+  trackers.
+- The two pre-existing `unexpected_worklog_files` harness failures, reproduced again in all four
+  baseline runs this session (183/2 → 222/2 → 271/2 → 275/2, same two lines every time), are not
+  re-queued. Already logged 2026-08-06, `medium-high`, `logs/improvement-log.md` ("The `3.1a`
+  closed-set assertion reddens on normal repository growth"), with the structural fix already
+  named (fixture-prefix convention rather than an enumerated allow-list). No new information from
+  this session's reproduction.
