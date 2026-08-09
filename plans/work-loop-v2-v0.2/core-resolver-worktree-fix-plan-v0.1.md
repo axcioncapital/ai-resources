@@ -1,7 +1,7 @@
 # Work Loop v2 core resolver — linked-worktree fix plan
 
 **Date:** 2026-08-09
-**Status:** Plan only. Nothing in this plan has been implemented.
+**Status:** IMPLEMENTED 2026-08-09, same session the plan was written. Evidence in § 8.
 **Fixes:** `core-resolver-worktree-defect-report-2026-08-09.md` (same directory).
 **Scope level:** B — the resolver fix plus a four-check test script. Report checks 3, 4, 6 and 7 are deliberately not covered; see § 7.
 **Execution posture:** Direct Work, next session. Not a Work Loop v2 task — the resolver is the thing being repaired, so routing the repair through the loop adds risk for no gain.
@@ -107,7 +107,11 @@ Repositories using `--separate-git-dir`, and bare repositories, are rejected bec
 
 ### 3.5 Prose to update inside the marked block
 
-The block's opening paragraph says "then direct use from `ai-resources`". Change to "then direct use from any checkout of the `ai-resources` repository, including a linked worktree". One sentence; keeps the prose honest about what the code now does.
+The block's opening paragraph says "then direct use from `ai-resources`". It must describe what the code actually tests, without overclaiming.
+
+**As shipped, after review finding 3:** "then direct use from any checkout — including a linked worktree — that shares a Git object store with a main checkout named `ai-resources`. That is a shared-store plus name test, not a cryptographic repository identity: both halves are load-bearing and neither may be dropped as redundant."
+
+The last clause exists because dropping the basename test is the defect report's own rejected shortcut 1 — the widest available hole. An inline comment above that line in the bash repeats the warning where a maintainer would actually be standing.
 
 ### 3.6 Mirroring
 
@@ -161,19 +165,62 @@ Level B does not test: the workspace root layout, `WORKSPACE/projects/<one-child
 
 The workspace branches are untouched by this change, and the file guards are untouched by this change, so the risk is regression-by-accident rather than new behaviour going unverified. This is a stated gap, accepted by the operator on 2026-08-09, not an oversight. Raising to level C means adding those fixtures to the same script.
 
-## 8. Evidence record — to be filled during execution
+## 8. Evidence record
 
-### Red run (before the edit)
+### Red run — before any edit to the resolver
 
-> _paste output here_
+```text
+FAIL  check 1 — linked worktree resolves its own core
+      rc=1 out=<none> err=ERROR: Work Loop v2 semantic source not found within permitted boundary.
+      repo=/private/var/folders/.../tmp.1ZFWGGIBGZ/wl2-fixture-eval workspace=none attempted=none
+PASS  check 2 — canonical checkout resolves its own core
+FAIL  check 3 — unrelated repo rejected, identity named
+      rc=1 out=<none> err=ERROR: ... repo=.../ai-resources-eval workspace=none attempted=none
+PASS  check 4 — deployed resolver blocks are byte-identical
 
-### Green run (after the edit)
+2 passed, 2 failed  (exit 1)
+```
 
-> _paste output here_
+Check 1 reproduced the defect report's exact signature, `attempted=none`. The harness can fail.
 
-### Codex review verdict
+### Green run — after the edit and the review fixes
 
-> _paste verdict here_
+```text
+PASS  check 1 — linked worktree resolves its own core
+PASS  check 2 — canonical checkout resolves its own core
+PASS  check 3 — unrelated repo rejected, identity named
+PASS  check 4 — deployed resolver blocks are byte-identical
+
+4 passed, 0 failed  (exit 0)
+```
+
+Worktree registrations before and after the run: 9 and 9 — the harness leaves the operator's other
+worktrees untouched.
+
+### Manual smoke checks, not automated at level B
+
+Run from a repository subdirectory (`plans/`) and from the workspace root. Both printed the canonical
+core path and exited 0, unchanged from pre-fix behaviour.
+
+### Independent review
+
+One review, by a Claude subagent rather than Codex. **The operator directed this substitution on
+2026-08-09**; workspace `CLAUDE.md` names Codex as the reviewer, so this is a recorded deviation, not
+the standing rule. Verdict: **SOUND WITH FINDINGS**. The reviewer built synthetic repositories under a
+path containing spaces, ran both the pre-fix and post-fix resolvers, and confirmed the fix admits
+linked worktrees at arbitrary names, arbitrary parents, and through symlinked parents, while the
+workspace and `WORKSPACE/projects/<one-child>` layouts stayed byte-identical to pre-fix.
+
+Findings and disposition:
+
+| # | Finding | Disposition |
+|---|---|---|
+| 1 | The harness called `git worktree prune` on the live repository. Prune deregisters any worktree whose directory is momentarily unavailable — this repo has worktrees on volatile `/private/tmp` scratchpad paths that would be silently deregistered | **Fixed.** Both prune calls replaced with path-scoped `worktree remove --force` on the fixture only, plus a comment saying why prune must never be used here |
+| 2 | Trust boundary: widened along the intended axis, narrowed on two others (`--separate-git-dir` and submodule checkouts named `ai-resources` were trusted before and are not now). No unintended widening | **Accepted.** Matches § 3.4. The narrowing is deliberate |
+| 3 | The predicate proves "shares an object store with a main checkout named `ai-resources`", not cryptographic repository identity. The prose overstated it, and a maintainer trusting the wording could delete the basename test — the widest hole available | **Fixed.** Block prose now states the shared-store-plus-name test plainly and says both halves are load-bearing; an inline comment guards the basename line |
+| 4 | Availability trade: a linked worktree whose main checkout is deleted or on an unmounted volume becomes untrusted, and Work Loop v2 stops, even though that worktree's own core is readable | **Accepted, recorded.** Inherent to the identity model. Known failure mode, not a surprise |
+
+The reviewer also confirmed the deliberately-uncovered areas were not broken by this change.
 
 ## 9. What this unblocks
 
