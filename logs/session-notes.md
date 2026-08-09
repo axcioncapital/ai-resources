@@ -2,50 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-07 — Work Loop v2: resource/capability development plan, drafted and closed
-
-### Summary
-Ran Work Loop v2 end-to-end on task `work-loop-v2-resource-capability-plan`. Claude wrote a draft
-implementation plan (Unit 1, Implementation mode) for how AI resources, operating capabilities and
-repository features are developed, improved, replaced and retired under Work Loop v2 — inspecting the
-live repository rather than trusting the brief, and finding the v1 `/work-loop` capability seam is not
-merely v1-specific but **dangling** (the command was deleted, its dependants were not repointed). Ran
-one bounded correction round on four findings Codex froze after review — all four reproduced by
-inspection before correction — then wrote the closing record on Codex's accept verdict. The task is
-now closed; the plan remains a draft that authorizes no implementation.
-
-### Decisions Made
-No operator-directed analytical or scoping decisions this session — the operator's only inputs were
-the initial invocation and two turn-passes (`ur turn`). The substantive decisions were Codex's
-(framing the brief, freezing the four correction findings, issuing the accept-and-close verdict) and
-Claude's (the plan's own recommended design — reconciliation before construction), both recorded in
-the closed task's `## Decisions that matter` and the three commit messages (`8985562`, `6af280e`,
-`3f13e4b`).
-
-### Risky actions
-None. All three commits were state-file-and-plan only, verified via an explicit plan-boundary check
-(`git status --porcelain`) before each commit; no implementation surface (command, skill, core,
-template, hook, setting, test) was touched at any point.
-
-### Findings Declined
-None — the one finding this session produced was queued, not declined (see `improvement-log.md`).
-
-### Next Steps
-- `logs/work-loop/work-loop-v2-intake-router.md` is still open, `turn: claude` per the record above,
-  mid a final tightly-bounded structural fix — run `/work-loop-v2` to pick it up (verify current
-  `turn:` first; Codex's closure check on it may have already run).
-- The closed plan at `plans/work-loop-v2-v0.2/resource-capability-development-plan-v0.1.md`
-  authorizes nothing on its own; opening Units 1–4 needs explicit operator approval (plan § 13).
-- Push the accumulated local commits (see push gate below).
-- Run `/wrap-session` optional passes another day if a fuller audit/coaching/telemetry pass is wanted;
-  none were requested this session.
-
-### Open Questions
-None blocking. Three deferrals carried in the closed task's evidence, each with its own reopening
-trigger, none urgent: ownership for retiring a non-AI repository feature; the v1 capability method's
-and its one live record's disposition (pending a future per-section gap-analysis unit); a possible
-read-scope weakness in how I established other Matt-skill claims (see Findings below).
-
 ## 2026-08-07 — Work Loop v2: unattended operation 1d, contained profile wired and measured live
 
 ### Summary
@@ -599,6 +555,76 @@ review before the test script was ever run for real against the operator's tree,
 None queued from this session. The resolver fix unblocks (but does not itself resume) planning
 `eval-mvp-proposal-v0.2.md` as a Work Loop task inside a recreated `ai-resources-eval` worktree — that
 recreation was explicitly left undone.
+
+### Open Questions
+None.
+
+## 2026-08-09 — Closed work-loop-v2-production-readiness-policy; operator bypassed Codex assessment
+
+### Summary
+The work-loop-v2-production-readiness-policy task (a discovery unit at `turn: codex`) was closed
+without Codex. The operator directed that Codex not be used for this assessment; a `/research`
+subagent independently re-verified all eight of the discovery's findings against the live repository
+and found one had been overtaken by a commit made one day after the discovery was written. Acting on
+that research verdict, four of the five planned implementation units were built and committed
+(session-identity init in the dispatcher, the playbook's dispatched-entry documentation, a stale
+header line, and a one-line correction to the closed parallel-worktree proof record); the fifth
+(a hook edit) was dropped as superseded. A second pass then found and fixed two live documents whose
+worktree-availability language had gone stale as a direct result of closing the first state file.
+
+### Decisions Made
+- **Operator decision: do not route this task's assessment through Codex.** A `/research` subagent
+  replaced the Codex assessment step the state file was waiting on. Recorded in the closed state
+  file's Accepted limitations as an operator-directed departure from the normal close path, not as a
+  protocol change.
+- **D1 (shared writer) amended, not adopted as recommended.** The discovery recommended editing
+  `.claude/hooks/log-write-activity.sh` to suppress telemetry for dispatched actors — the plan's only
+  structural-change class and only risk-aware-review requirement. The research found commit `9c66f26`
+  (2026-08-07, one day after the discovery) had already added `dispatch.sh --unattended`, which
+  disables the child's hooks entirely. The ambient writer cannot fire in a contained hop, so the hook
+  edit would have bought nothing. Replaced with a launch precondition: dispatched runs use
+  `--unattended`. Unit U2 dropped as a result — the only structural-class step in the plan is gone.
+- **D2–D5 approved as the discovery recommended:** fan-out capped at 2 (the only number ever
+  measured); the dispatcher stays under `plans/`, invoked by explicit path, not installed as a
+  command; the operator creates every worktree, never the dispatcher; the closed proof record's
+  claim-3 mechanism is corrected rather than left wrong.
+- **U1's first implementation was corrected mid-build.** The initial `init_session_identity()` hard-
+  failed (exit 32) whenever the checkout lacked `logs/scripts/prime-session-entry.sh`, which is every
+  fixture in the dispatcher's own test suite — the edit dropped the harness from `pass=368 fail=0` to
+  `pass=177 fail=138`, self-caused, not environmental. Changed to a visible skip for a checkout
+  without the allocator; exit 32 is now reserved for a checkout that has the allocator and still
+  cannot complete the init.
+- **Stale-reference cleanup (second pass, this session).** Closing the readiness-policy state file to
+  its four-heading record broke two live documents' line-number citations into it
+  (`unattended-operation-plan-v0.2.md`, `handoff-automation-spike/README.md`), and both still
+  described the worktree path as gated behind a hook fix that was just dropped. Both corrected to cite
+  the closing record by section and to state the real clearance condition: worktrees are available for
+  **contained** (`--unattended`) runs only, because an attended session's hooks stay live and the
+  ambient writer still fires there. `unattended-operation-plan-v0.1.md` was left untouched — it carries
+  a SUPERSEDED banner and is retained as history, not corrected to match the present.
+
+### Risky actions
+None. No live model was launched through the dispatcher; every check used `--actor-cmd true` against
+throwaway clones under the scratchpad, never the operator's real checkouts or worktrees.
+
+### Findings Declined
+- `run-manifest.sh close` hard-errored (exit 2) again: this session ran no `/prime`, so it wrote no
+  per-id marker and the shared `logs/.session-marker` held no today-dated entry either. Declined as a
+  new finding — reproduction, not new information, of the already-logged open finding at
+  `## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless session instead of the
+  documented stub-and-continue`. Per the wrap's own ADVISORY RULE, surfaced and the wrap continued
+  without a manifest for this session.
+- **My own U1 mistake — the exit-32 regression across every fixture in `dispatch.test.sh`.** Declined
+  as a queueable finding: self-corrected within this session, the fix is committed, and the harness
+  delta against a fresh control run is zero (`pass=368 fail=0` both before and after). No residual
+  defect to track.
+
+### Next Steps
+The capability this task authorized is still unproven in real use — no dispatched run has ever
+launched a live Claude or Codex child, and no two Work Loops have run in parallel in a real checkout.
+The first live `--unattended` run against a real worktree is separately authorized work, not implied
+by this close. Two other Work Loop v2 threads remain open at `turn: codex`, untouched by this session:
+`work-loop-v2-intake-router` and `work-loop-v2-phase1a-full-descendant-termination`.
 
 ### Open Questions
 None.
