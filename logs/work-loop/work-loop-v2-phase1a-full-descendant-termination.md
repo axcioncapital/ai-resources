@@ -22,88 +22,93 @@ outside this task; Phase 2 stays forbidden.
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 6 — determine whether the dedicated account can support a
-run-specific process boundary that reaches fully detached actor descendants without signalling
-macOS per-user services.
+Standard. Discovery mode. Unit 7 — determine whether a Darwin audit session (ASID) can provide the
+creation-time boundary that the exhausted process-attribute surface cannot.
 
 Named reason for the loop: literal Phase 1a still needs a Darwin supervision mechanism, and a false
 positive would signal unrelated OS processes while a false negative would leave an escaped daemon
-alive. The boundary therefore needs bounded discovery and independent assessment before any live
-probe or implementation.
+alive. The last named candidate requires bounded discovery and independent assessment before any
+operator authority, live probe or implementation is justified.
 
 Plan justification: the governing unattended-operation plan still blocks Phase 2 on literal 1a and
-1f. Unit 5 rejects pattern-free UID-wide signalling under the preserved bystander guarantee but does
-not reject the dedicated account. Establishing whether that identity can support a narrower,
-truthful boundary is the smallest unit that can advance 1a without signalling anything.
+1f. Unit 6's corrected result exhausts the non-root process-attribute surface. The closed supervision
+discovery explicitly deferred audit sessions for a second look if the cheaper dedicated-UID route
+failed; that route has now failed. Assessing this one named boundary is the smallest justified unit
+that can advance 1a without changing host authority.
 
-Codex framing decision: this remains discovery because the replacement boundary is unknown. This
-unit may inspect the host and repository read-only and change only this state file; it may not signal,
-delete, authenticate, install, launch an actor fixture or implement anything. Safe account removal
-is held outside this unit because no process emergency exists and mechanism discovery is the nearest
-unmet Phase 1a condition.
+Codex framing decision: this remains discovery because ASID viability and its minimum authority are
+unknown. This unit may inspect the host and repository read-only and change only this state file; it
+may not signal, elevate, delete, authenticate, install, launch an actor fixture or implement
+anything. Safe account removal is held outside this unit because no process emergency exists and
+mechanism discovery is the nearest unmet Phase 1a condition.
 
-### Unit 6 brief — executed, awaiting assessment
+### Unit 7 brief — executed
 
 Codex's brief for this unit, moved here verbatim from `## Next action` when the unit completed, so
-that field states the single next thing. Not altered, and not marked accepted — assessment is Codex's.
+that field states the single next thing. The Unit 6 brief that previously stood here is committed at
+`b00ee5f`/`69f47c7` and was removed from this file as prior-unit history (core § 4, current truth not
+a diary). The brief itself is not altered; the result is in `## Latest result` below.
 
-Unit 5 rejected the pattern-free UID-wide signal without rejecting the dedicated account. Determine
-whether macOS exposes a narrower, run-specific boundary that can still reach the accepted escaped
-shape — `setsid`, double fork, descriptor closure and `exec` — while excluding the account's
-PPID-1 per-user services. This unit returns evidence and a verdict; it does not implement or run the
-eventual mechanism.
+Unit 6 excludes every non-root process attribute inspected so far. Determine whether a distinct
+Darwin audit session can identify the actor's full descendant tree after `setsid`, double fork,
+descriptor closure and `exec`, without selecting the account's PPID-1 macOS services or any other
+bystander. Return evidence and a verdict only; do not create an audit session, elevate, signal or
+implement anything.
 
-**Governing sources and dispositions:** literal 1a and its no-unrelated-process rule in
-`## Objective and scope` govern. Unit 5's corrected result governs the live account facts and rejects
-pattern-free `pkill -U`. The closed
-`logs/work-loop/work-loop-v2-descendant-supervision-discovery.md` governs the mechanisms already
-rejected or authority-bound: process group, ancestry-at-stop, environment tag, public descriptor,
-working directory, `kqueue NOTE_TRACK`, launchd job removal, Darwin `ptrace`, containers, audit
-sessions and coalitions. Re-check a cited premise before relying on it, but do not repeat that broad
-discovery without evidence that a premise changed. The current dispatcher, escaped-descendant probe
-and interruption evidence are verify-first repository claims, not permission to modify them.
+**Governing sources and dispositions:** literal 1a and the no-unrelated-process rule in
+`## Objective and scope` govern. Unit 6's corrected result governs the exhausted process-attribute
+surface. The closed `logs/work-loop/work-loop-v2-descendant-supervision-discovery.md` is accepted
+evidence that ASID was deferred because it appeared to require root for both creation and
+enumeration; treat inheritance, immutability and exact authority as verify-first claims, not settled
+facts. The current dispatcher and escaped-descendant evidence are verify-first repository claims and
+may be inspected but not changed.
 
-**Named unknown:** can the dedicated identity supply a fail-closed process boundary narrower than
-its whole UID, using authority already available to the dispatcher, or is every such boundary either
-incomplete against the fully detached descendant or over-broad against macOS services?
+**Named unknown:** can a per-run audit session form a truthful, race-safe supervision boundary on
+this Darwin host, and if so what is the smallest exact authority needed to create, enumerate, signal
+and verify it across every controlled stop path?
 
 **Claims to check:**
 
-1. Verify the current Unit 5 conclusion and live account shape read-only: pattern-free `pkill -U`
-   reaches non-descendant services; the current membership may change naturally; nothing in the live
-   record proves respawn or eventual emptiness.
-2. Test the two narrower shapes already surfaced as hypotheses, not requirements: a baseline-aware
-   UID census and a per-process stop against a recorded set. Establish whether each can distinguish
-   the escaped daemon from (a) a service present at baseline, (b) a service launched after baseline,
-   (c) a baseline PID that exits and is reused, and (d) an actor descendant that changes session,
-   parent, group, descriptors and executable.
-3. Inspect local Darwin process interfaces, manuals and headers for a non-root, creation-time or
-   immutable process attribute that survives the accepted escape and can be queried at stop time.
-   Expand only where it resolves that question. Do not call an interface available merely because a
-   symbol exists; establish access, inheritance, race behaviour and host availability. Preserve the
-   prior discovery's authority findings unless current primary evidence falsifies them.
-4. Map the candidate boundary across every current actor launch and controlled stop path in
-   `dispatch.sh`, without editing it. It must preserve the global deadline, interruption semantics,
-   retry prohibition, lock pinning/cleanup, exit-code honesty and attended behaviour.
-5. Return one verdict: **candidate ready for an authorized live probe**, naming what the probe must
-   be able to falsify; **dedicated-account route rejected**, naming the exhaustive conflict with
-   literal 1a; or **operator authority required**, naming the smallest new authority only if no
-   current-authority candidate survives. Do not turn a speculative mechanism into an implementation
-   brief.
+1. Inspect the complete relevant local manuals, SDK headers and available binaries for Darwin audit
+   identity and session APIs. Establish which attributes are inherited across `fork`, `exec`,
+   `setsid` and double fork; which calls create or change them; and which privileges those calls
+   require. An API symbol or header alone is not effective availability.
+2. Establish how an external supervisor can enumerate or query **arbitrary** processes by audit
+   session on this host, not merely read its own audit identity. Identify the exact selector/API,
+   visibility failures, exit/error semantics and SIP or entitlement constraints. Bound every absence
+   claim to the manuals, headers, binaries and process interfaces searched.
+3. Test the boundary logically against the accepted escape and bystanders: the actor daemon after
+   orphaning and `exec`; the account's pre-existing and later-launched macOS services; uid-501
+   processes; PID reuse; an enumeration failure; and a descendant executing a setuid-root helper.
+   Include the Unit 6 deferral by auditing only host helpers capable of changing audit credentials,
+   not every setuid binary for unrelated behavior.
+4. Establish whether selection and signalling can be made race-safe. A list of PIDs followed by a
+   later signal is insufficient unless the design proves how PID reuse and a process changing audit
+   identity cannot turn it into a bystander signal or false success. Verification must fail closed
+   when any process cannot be inspected.
+5. Map any surviving candidate across all actor launch and controlled stop paths in `dispatch.sh`,
+   preserving the global deadline, interruption semantics, retry prohibition, lock pinning/cleanup,
+   exit-code honesty and attended behavior. Distinguish operator-attended probe authority from
+   unattended production authority.
+6. Return one verdict: **candidate ready for a separately authorized live probe**, naming every
+   falsification condition and the exact temporary authority; **candidate rejected**, naming the
+   conflict; or **operator authority required**, only if repository and local primary evidence can
+   establish viability no further without a privilege-bearing check. Do not prescribe an
+   implementation or ask for authority merely to resolve a read-only question.
 
-**Required evidence:** list the exact files, manuals, headers and read-only commands inspected;
-separate observation from inference; provide a false-positive/false-negative table covering the four
-cases in claim 2 plus enumeration failure and PID reuse; and show how the verdict could have gone the
-other way. An absence conclusion must name its bounded search surface. Evidence from a harmless
-fixture may be proposed for a later authorized probe but must not be executed here.
+**Required evidence:** list the exact manuals, headers, binaries, repository files and read-only
+commands inspected; separate observation from inference; give a false-positive/false-negative and
+race table covering claim 3; show how the verdict could have gone the other way; and state every
+inspection failure. Evidence must be capable of rejecting ASID, not just explaining it.
 
-**Scope and stops:** this state file only. No `sudo`, signal, `launchctl` mutation, account action,
-login, authentication, installation, actor process launch, C5, rollback, product edit, test run or
-new repository artifact. Do not inspect credential contents. Safe account removal remains held
-outside this unit. Stages D/E, Phase 1f and every Phase 2 action remain forbidden. Stop and hand back
-if the answer requires host mutation, new authority, or evidence that cannot be obtained read-only.
+**Scope and stops:** this state file only. No `sudo`, root helper, signal, process launch, audit
+session creation/change, `launchctl` mutation, account action, login, authentication, installation,
+C5, rollback, product edit, test run or new repository artifact. Do not inspect credential contents.
+Safe account removal stays outside this unit. Stages D/E, Phase 1f and every Phase 2 action remain
+forbidden. Stop and hand back if a premise is false, the question requires host mutation, or the
+required evidence cannot be produced read-only.
 
-Unit completion: replace `## Latest result` with the discovery verdict and evidence, update the
+Unit completion: replace `## Latest result` with the ASID discovery verdict and evidence, update the
 blocker truthfully, commit only this state file, set `turn: codex`, and stop. Preserve the live
 account and literal Phase 1a.
 
@@ -314,195 +319,284 @@ runbook, create another artifact or push.
 
 ## Latest result
 
-**Unit 6 (CORRECTED at the correction round) — the run-GID boundary is sheddable without a password,
-and the route cannot be repaired by choosing a different group.** Discovery, read-only throughout. No
-`sudo`, no `kill`/`pkill`, no `launchctl` mutation, no account action, no login, no authentication, no
-installation, no actor process launch, no C5, no rollback, no fixture execution, no product edit, no
-test run, and no repository file other than this one. No credential contents were read. The live
-account was preserved untouched.
+**Unit 7 (Discovery) — the Darwin audit session is REJECTED as a supervision boundary under current
+authority.** Read-only throughout. No `sudo`, no root helper, no signal, no process launched under
+test, no audit session created or changed, no `launchctl` mutation, no account action, no login, no
+authentication, no installation, no C5, no rollback, no fixture execution, no product edit, no test
+run, and no repository file other than this one. No credential contents were read. Nothing was
+compiled or executed to measure a privilege. The live account was preserved untouched.
 
-**The verdict of "candidate ready for an authorized live probe" is WITHDRAWN.** The corrected verdict
-is that the real-GID boundary **does not satisfy literal Phase 1a** and no probe is proposed. The two
-frozen findings are resolved below, and the correction did not alter the accepted runbook, the C5
-fixture (210 lines, sha256 `65b50d19…a8f9`, marker pair intact) or any other accepted artifact.
+Result: **candidate rejected.** ASID has the one property every previous candidate lacked — the right
+*granularity*, since the account's PPID-1 launchd agents sit in their own session and would be
+correctly excluded — but it fails on both ends the dispatcher would have to hold. **Creation is
+privileged** (`setaudit_addr(2)` is the only session-assignment call, and the two setuid-root helpers
+on this host that call it are `login` and `su`), and **query is privileged or absent** (`launchctl
+procinfo` refuses without root, measured; no `asid` selector exists in `ps`, `pgrep`, `pkill` or
+`sysctl KERN_PROC`, each searched in full). There is also **no ASID-scoped signal primitive at all**,
+so a boundary the dispatcher cannot create, cannot read and cannot signal is not a boundary.
 
-Result: the real-GID candidate is rejected, the authority claim behind it is withdrawn, and the
-group-variant choice that was escalated to Codex and the operator is withdrawn rather than re-put.
+**No new authority is requested.** The only path that would make ASID work is a root-privileged
+bespoke C supervisor built on a deprecated, partly private API — strictly larger authority and
+strictly worse durability than the dedicated-account route the operator already authorized. Asking
+for it would be asking for authority to resolve a question the read-only evidence already answers,
+which claim 6 forbids.
 
-Evidence: `newgrp(1)`'s own DESCRIPTION, `/usr/bin/newgrp`'s setuid-root mode, `id
-wlactor-airesources`'s membership list, and the generated `--unattended` profile in `dispatch.sh`
-lines 1202-1227 with its deny list at lines 211-217 — each read this round and each quoted below. The
-evidence could have gone the other way in three named places, listed at the end.
+Evidence: `bsm/audit.h` and `bsm/audit_session.h` in the active SDK, `sys/syscall.h`, `sys/sysctl.h`,
+`sys/proc_info.h`, `libproc.h`, `xpc/connection.h`, the setuid-root binary inventory and its symbol
+imports, `launchctl print user/501` and `print gui/501`, `launchctl procinfo`, the full `ps -L`
+keyword list, the full `pgrep`/`pkill` usage, and `/etc/security`. Each was read this round and each
+is quoted below. Three places where the verdict could have gone the other way are listed at the end.
 
-### The correction round — findings 1 and 2
+### Inspection record — the brief's verify-first premises
 
-Both reproduced by inspection before either was corrected.
+```
+Inspected (2026-08-09):
+- Premise (1) "the closed supervision discovery records ASID as needing root for both creation and
+  enumeration": HOLDS as a citation, and the underlying facts now hold as measured rather than as
+  recalled — read `logs/work-loop/work-loop-v2-descendant-supervision-discovery.md` lines 33-37 and
+  52-53; re-measured this round, and both halves are confirmed below in claims 1 and 2.
+- Premise (2) "Unit 6's corrected result governs the exhausted process-attribute surface": HOLDS
+  WITH ONE QUALIFICATION. Searched the full `ps -L` keyword list on this host: `prsna` (persona) is
+  present and Unit 6's claim 3 dispositioned `uid`/`ruid`, `pgid`, `sess`, `tty`/`tdev`/`tpgid`,
+  `ppid`, `login` and `rgid` but not `prsna`. "No attribute on that surface survives" is therefore
+  one item short. Recorded as a deferral, not pursued — persona is not an audit identity and sits
+  outside this brief's claims 1 and 3.
+- Premise (3) "the current dispatcher and escaped-descendant evidence are verify-first repository
+  claims": HOLDS. `dispatch.sh` exists (100,490 bytes); `actor_tree_census()` at line 684 returns
+  through the globals `CENSUS_PIDS`/`CENSUS_UNKNOWN` with the documented reason at lines 670-682;
+  `TERM_GRACE_SECS=5` at line 795 and `KILL_SETTLE_SECS=2` at line 796; the measured handle table is
+  at lines 519-532 and states "recursive PPID census … MISSES" for the double-fork orphan;
+  `report_teardown()` at line 852 prints its scoped `teardown verified` sentence at line 858;
+  `dispatch.test.sh` case 27h is at line 1043. Both probe artifacts exist:
+  `runs/probes/escaped-descendants-2026-08-07.sh` and `runs/probe-escaped-descendants-2026-08-07.md`.
+  Nothing was edited.
+```
 
-- **Finding 1: REPRODUCES, and it is decisive.** `man 1 newgrp` on this host, DESCRIPTION verbatim:
-  "The newgrp utility creates a new shell execution environment with **modified real and effective
-  group IDs**", and "The user **will be prompted for a password if they are not a member** of the
-  specified group." `ls -l /usr/bin/newgrp` → `-r-sr-xr-x  1 root  wheel` — setuid root. `id
-  wlactor-airesources` → `gid=20(staff) groups=20(staff),12(everyone),61(localaccounts),701(…),702(…),
-  100(_lpoperator)`. The actor is therefore a member of every group named as a candidate, so
-  `newgrp staff` from any descendant running as uid 502 changes the **real** GID with **no password
-  and no operator action**. The stop would then miss it, and the run would report a clean halt while a
-  descendant kept running — which is the exact defect literal 1a names.
-- **Finding 1 is stronger than the group-choice framing survives.** The same DESCRIPTION continues:
-  with no group operand, "the real, effective and supplementary group IDs are **restored to those from
-  the current user's password database entry**." So bare `newgrp` returns to the account's directory
-  primary group without naming a group at all. The only way to make a run GID unsheddable this way is
-  to make it *be* the password-database primary group — and then the account's PPID-1 launchd agents
-  inherit it too, which is the over-broad boundary Unit 5 already rejected. **The route is
-  self-defeating, not merely unproven**, and picking a different group cannot repair it.
-- **Nothing in scope prevents the escape**, which is the condition finding 1 attached to proposing any
-  probe. Read this round: `write_unattended_profile` (`dispatch.sh` lines 1202-1227) emits network
-  denial, `denyRead ["~/"]` with three named `allowRead` paths, and the flag block; the deny list
-  `UNATTENDED_BASE_DENY` (lines 211-217) is exactly `Bash(git push:*)`, `Bash(git push *)`,
-  `WebFetch`, `WebSearch`, `mcp__*`. **There is no execution restriction of any kind**, so nothing
-  there stops `newgrp`. Two further limits are in the same code, not inferred: line 1281 states "codex
-  hops are NOT covered by this profile", and the profile applies only when `--unattended` is passed at
-  all, which matches accepted limitation 4 of the closed supervision discovery ("containment covers
-  only hops that actually run contained"). Attended behaviour is therefore uncontained by
-  construction.
-- **Root cause of the error, stated plainly.** The result checked `setgid(2)` — "[EPERM] the process
-  does not have appropriate privileges" — and read immutability off it. That covers a process changing
-  its own real GID directly. It does **not** cover a **setuid-root helper on the host** doing it on the
-  process's behalf, and `newgrp` is precisely that helper. Inheritance was established correctly;
-  immutability was not established at all, and calling the escape a "determined escape" narrowed the
-  preserved guarantee without authority. Withdrawn.
-- **Finding 2: REPRODUCES.** `newgrp(1)` describes group IDs only; no uid change appears anywhere in
-  its manual, so it cannot switch the dispatcher from uid 501 to uid 502. The result's phrases
-  "**Current authority, no new grant**" and the brief's "using authority already available to the
-  dispatcher" were answered as though operator-attended `sudo -u` counted as dispatcher authority. It
-  does not. **Both phrases are withdrawn.** The two authorities are distinct and were conflated:
-  - **Probe authority** — operator-attended `sudo -u wlactor-airesources`, which exists today and is
-    what the runbook's C1 and C6 rows already use. It is attended by definition.
-  - **Production authority** — an unattended dispatcher running as the actor. **Unsolved.** It is the
-    accepted deferral recorded below ("every actor command in the runbook goes through the operator's
-    `sudo`"), which assigns it to the D4 narrow-privilege question, and D is not authorized.
-  So no part of the real-GID route was ever available to the unattended dispatcher under current
-  authority, whichever group it used.
-- **Correction 2 — the group-variant choice is withdrawn, not re-put.** Because finding 1 rejects the
-  candidate, the choice between reusing an existing group and creating a dedicated one no longer
-  advances 1a. It is not escalated to Codex or the operator, and the previous `## Blocker` framing of
-  "a decision, not a discovery" is withdrawn with it.
+### The record — claims 1 to 6
 
-### The record — claims 1 to 5, corrected
+- **Claim (1): audit sessions are real and inherited on this host, but every call that creates or
+  changes one is privileged or private.** Observation, not inference: `launchctl print user/501`
+  prints `gui asid = 100016` and a `security context = { uid = 501, asid = 100046 }`, and
+  `launchctl print gui/501` prints `handle = 100016` with `security context = { uid = 501, asid =
+  100016 }`. So ASIDs are live and distinct per login context, which is exactly the granularity the
+  UID boundary lacked. The syscalls exist — `sys/syscall.h` lines 390-399 and 468-472:
+  `SYS_audit 350`, `SYS_auditon 351`, `SYS_getaudit_addr 357`, `SYS_setaudit_addr 358`,
+  `SYS_audit_session_self 428`, `SYS_audit_session_join 429`, `SYS_audit_session_port 432`.
+  Inheritance follows the same rules Unit 6 established for credentials: `fork(2)`'s child is an
+  exact copy outside an enumerated list that carries no credential, `execve(2)` preserves the process
+  credential, and `setsid(2)` changes session and process group only — none of the three is an audit
+  identity change, and the only calls that are one are `setaudit_addr(2)` and `audit_session_join(2)`.
+  **Privilege, as evidenced rather than assumed:** `bsm/audit.h` declares `setaudit_addr()` at line
+  383 and `audit_session_self/join/port()` at lines 424-426 **inside `#ifdef __APPLE_API_PRIVATE`** —
+  private API, not a supported public interface. `AU_ASSIGN_ASID -1` at line 77 is the
+  assign-me-a-new-session argument to `setaudit_addr`. The binaries that actually call it on this host
+  are exactly two, both setuid root: `nm -u /usr/bin/login` imports `_setaudit_addr`, `_getaudit_addr`
+  and `_auditon`, and `nm -u /usr/bin/su` imports `_setaudit_addr`; `ls -l` shows
+  `-r-sr-xr-x root wheel /usr/bin/login` and `-rwsr-xr-x root wheel /usr/bin/su`. A call that ships
+  behind setuid root in both of its only callers is not an unprivileged call. **An API symbol is not
+  effective availability, and this is where that bites:** the symbols resolve in
+  `MacOSX.sdk/usr/lib/libSystem.tbd` (`_audit_session_join`, `_audit_session_port`,
+  `_audit_session_self`, `_auditon`, `_getaudit_addr`, `_setaudit_addr` all present), so the route
+  *links* while remaining unusable to an unprivileged dispatcher.
+- **Claim (2): no external supervisor on this host can enumerate or query arbitrary processes by
+  audit session.** This is the decisive finding and it is measured, not reasoned. The absence claim is
+  bounded to five surfaces, each searched in full:
+  1. `ps` — the complete `ps -L` keyword list contains no `asid`, no `auid` and no audit keyword at
+     all (searched for `asid|auid|audit`, zero matches; the full list is reproduced in the inspection
+     failures section's note below).
+  2. `pgrep`/`pkill` — the complete usage is `[-F pidfile] [-G gid] [-P ppid] [-U uid] [-g pgrp]
+     [-t tty] [-u euid]`. No session selector, and `man 1 pkill`'s option list confirms the same seven.
+  3. `sysctl` — `sys/sysctl.h` lines 432-439 give the complete `KERN_PROC_*` selector set:
+     `ALL`, `PID`, `PGRP`, `SESSION` (BSD session, not audit), `TTY`, `UID`, `RUID`, `LCID`. The one
+     that sounds promising is not available: `sysctl kern.proc.lcid` returns "couldn't find format of
+     oid … No such file or directory".
+  4. `libproc` — searched `sys/proc_info.h` and `libproc.h` for `asid|audit`: `proc_bsdinfo` carries
+     `pbi_uid`, `pbi_gid`, `pbi_ruid`, `pbi_rgid`, `pbi_svuid`, `pbi_svgid`, `pbi_pgid`, `pbi_ppid`
+     and no audit field; `libproc.h`'s only audit references are `audit_token_t` helpers
+     (`proc_pidpath_audittoken`, `proc_signal_with_audittoken`), which take a token you must already
+     hold, not a session you can query.
+  5. `launchctl` — `launchctl procinfo` is the one shipped tool that reports a process's ASID, and it
+     answered `This subcommand requires root privileges: procinfo`. Measured, not inferred.
 
-- **Claim (1): HOLDS — re-measured, and the account is unchanged apart from further natural decay.**
-  At 2026-08-09 11:51 EEST: `id -u wlactor-airesources` → 502, `id -un 502` → the account,
-  `dseditgroup -o checkmember … admin` → "is NOT a member of admin". `ps -o pid=,uid=,rgid=,lstart= -U
-  502` now returns **three** processes — 82525 `distnoted`, 82526 `mdbulkimport`, 82530 `lsd` — all
-  with `rgid 20` and all still carrying the original **10:11:27** start time, so nothing has restarted;
-  `pkd` and `trustd --agent` exited on their own with no signal. This reproduces Codex's closure-check
-  census exactly. `pgrep -U 502` still exits 0, so the boundary is still non-empty. Per the frozen
-  scope, the decay is recorded and **not pursued**.
-- **Claim (2): unchanged — both narrower shapes are rejected, and they fail in opposite directions.**
-  A baseline-aware UID census discriminates by *when a process appeared*, not by *who started it*; the
-  operator's live evidence recorded the uid-502 set **growing 7 → 9 within about four minutes**, so an
-  OS service appearing after baseline would be signalled — the harm `## Objective and scope` forbids. A
-  per-process recorded set can only hold pids the dispatcher observed, and the double fork destroys the
-  ancestry link before any stop, which is why `dispatch.sh` lines 519-532 record "recursive PPID census
-  … MISSES" for the double-fork orphan. Complete-and-over-broad versus bounded-and-incomplete.
-- **Claim (3): CORRECTED — the real GID is inherited through the escape, but it is not immutable, so
-  it is not a boundary.** The inheritance evidence stands and is unchanged: `execve(2)` — "the real
-  user ID, real group ID and other group IDs of the new process image remain the same as the calling
-  process image", with set-group-ID affecting only the effective GID; `fork(2)` — the child "is an
-  exact copy" except for an enumerated list carrying no credential; `setsid(2)` — a new session and
-  process group, no credential change; `pkill(1)`/`pgrep(1)` — "`-G gid` Restrict matches to processes
-  with a real group ID in the comma-separated list gid"; `ps -L` lists `rgid` and `rgroup`. The measured
-  facts also stand: all uid-502 agents carry `rgid 20`, and a host-wide `ps -axo rgid=` tally shows no
-  process at gids 100, 61, 12, 701 or 702, with `dscl . -read /Groups/wlrun` → `eDSRecordNotFound`.
-  **What is withdrawn is the conclusion drawn from them.** Inheritance makes the attribute *reach* the
-  escaped daemon; it does not make the daemon *unable to drop it*. `newgrp(1)` drops it without a
-  password, so the attribute fails the one property a termination boundary must have.
-  **The absence conclusion is unchanged and now settles the whole surface.** Searched: the complete
-  `ps -L` keyword list on this host, the complete `pgrep`/`pkill` selector list (`-F -G -P -U -g -t
-  -u`), and the mechanisms enumerated by the closed
-  `logs/work-loop/work-loop-v2-descendant-supervision-discovery.md`. `uid`/`ruid` is over-broad;
-  `pgid`, `sess`, `tty`/`tdev`/`tpgid` are destroyed by `setsid`; `ppid` by the double fork; `login`
-  (the audit login name) reads `wlactor-airesources` for every agent, so it has UID granularity, and
-  narrowing it needs `setauid(2)`, whose manual states "this system call requires an appropriate
-  privilege". Re-checked and unchanged: `sys/event.h` line 356 — "NOTE_TRACK, NOTE_TRACKERR, and
-  NOTE_CHILD are no longer supported as of 10.5"; `man 2 ptrace` lists twelve requests with no
-  fork-following request; coalitions have no public SDK header under `sys/`. With `rgid` now rejected,
-  **no attribute on that surface survives.**
-- **Claim (4): the `dispatch.sh` mapping stands as a description and no longer supports a probe.**
-  Read-only; nothing was edited. A fourth handle would fit `actor_tree_census()`'s existing
-  three-valued contract (exit 0 / 1 / ≥2 → found / none / `CENSUS_UNKNOWN`, returned through globals
-  for the reason at lines 670-682), would add one `pgrep` per pass to the census-cost term without
-  changing `TERM_GRACE_SECS=5`, `KILL_SETTLE_SECS=2` or the ~9s bound documented at
-  `effective_timeout()`, would need a fourth global published and cleared by `run_bounded()` for
-  `on_signal()` to reach it, and would force `report_teardown()`'s scoped sentence to be widened —
-  which `dispatch.test.sh` case 27h fails on, making any such change deliberate. **None of that is
-  reached**: a handle that the target can shed would make `teardown verified` false, which is the
-  claim 1a exists to protect. Retained as a description of where any future boundary must fit, not as
-  a plan.
-- **Claim (5): CORRECTED — the verdict is rejection of the real-GID mechanism.** Not "ready for a
-  probe", and not "operator authority required": no new authority was found that would close the shed,
-  and the self-defeating argument above shows a different group cannot. **What is not rejected is the
-  dedicated account**, exactly as in Unit 5 — the identity was never exercised, and rejecting it would
-  be a broader claim than the evidence supports. The named unknown returns **open**, now with one more
-  mechanism excluded and its whole attribute surface exhausted.
+  Two programmatic paths remain and neither closes the gap. `auditon(A_GETPINFO_ADDR)` (`A_GETPINFO_ADDR
+  28`, `struct auditpinfo_addr { pid_t ap_pid; …; au_asid_t ap_asid; }`) queries **one pid at a time**,
+  and `auditon` is declared `__AUDIT_API_DEPRECATED`, which `bsm/audit.h` expands to
+  `__API_DEPRECATED("audit is deprecated", macos(10.4, 11.0))` — deprecated five major versions ago in
+  the header Apple ships today. `xpc_connection_get_asid()` (`xpc/connection.h` line 688) "Returns the
+  audit session identifier of the remote peer … at the time the connection was made" — it reads a peer
+  that voluntarily connected to you, so it is blind to a daemon that closed every descriptor and
+  `exec`ed `/bin/sleep`. The `/dev/auditsessions` device is present (`crw-r--r-- root wheel`) and
+  `bsm/audit_session.h` documents `au_sdev_open()`, but its all-sessions flag is
+  `AU_SDEVF_ALLSESSIONS … /* Allow process to monitor all session. (Requires privilege.) */` — the
+  header states the privilege requirement itself — and what it yields is session **lifecycle events**
+  (`AUE_SESSION_START/UPDATE/END/CLOSE`), not a process list.
+- **Claim (3): the boundary logic is sound and the helper audit comes out in ASID's favour — which is
+  why the rejection is about buildability, not shed-ability.** The Unit 6 deferral is discharged for
+  audit credentials specifically, as the brief bounded it: the complete setuid-root inventory of
+  `/usr/bin`, `/usr/sbin`, `/bin`, `/sbin` and `/usr/libexec` is sixteen binaries — `ps`, `at`, `atq`,
+  `atrm`, `batch`, `crontab`, `login`, `newgrp`, `quota`, `su`, `sudo`, `top`, `authopen`,
+  `security_authtrampoline`, `traceroute`, `traceroute6` — plus three setgid (`write`, `postdrop`,
+  `postqueue`). Each was checked with `nm -u` for `_setaudit_addr|_setaudit|_setauid|
+  _audit_session_self|_audit_session_join|_audit_session_port|_auditon|_getaudit_addr`. **Exactly two
+  match: `login` and `su`.** Both authenticate before they act — `login` needs a password unless given
+  `-f`, which itself requires root, and `su` needs the target account's password unless the caller is
+  already root — and an actor descendant holds no password. So unlike `newgrp`, which handed Unit 6 a
+  free shed of the real GID, there is **no free shed of the audit session** on this host. The
+  remaining shed is `audit_session_join(port)`, which needs a send right to another session's port,
+  obtained from `audit_session_port(asid, &port)` — private API whose privilege could not be settled
+  read-only (recorded as an inspection failure below). **The verdict does not rest on it.**
+- **Claim (4): race safety is not the discriminator, and saying it was would be wrong.** The design
+  that ASID would need is: enumerate all pids, query each pid's ASID, signal the matches. That is a
+  list-then-signal shape with a TOCTOU window in which a pid can exit and be reused. But `pkill -U` is
+  **the same shape** — it is a userspace program that reads the process list and then calls `kill()`
+  per pid — so this race does not distinguish ASID from the boundary the design already contemplates,
+  and Unit 5 rejected `pkill -U` for over-breadth, not for a race. The honest statement is narrower and
+  worse for ASID: the query step of that shape **does not exist** for an unprivileged supervisor
+  (claim 2), so on this host the sequence cannot be attempted at all, race-safe or otherwise. What
+  fails closed correctly is the consequence: with no way to read a process's ASID, every stop would
+  set `CENSUS_UNKNOWN`, and `report_teardown()` would correctly refuse to print `teardown verified`
+  forever. That is honest, and it is not a mechanism.
+- **Claim (5): the `dispatch.sh` mapping stands as a description and supports no probe.** Read-only;
+  nothing was edited. A fourth handle would fit `actor_tree_census()`'s existing three-valued contract
+  (found / none / `CENSUS_UNKNOWN`, returned through globals for the reason given at lines 670-682),
+  would need a fourth global published and cleared for the signal path to reach it, and would widen
+  `report_teardown()`'s scoped sentence, which `dispatch.test.sh` case 27h (line 1043) fails on so that
+  any such change is deliberate. None of that is reached. The larger structural fact is that every
+  existing handle is a shell one-liner over `ps`, `pgrep` or `lsof`, and an ASID handle would be the
+  first to require a **compiled C helper linking a private, deprecated API** — with `TERM_GRACE_SECS=5`
+  and `KILL_SETTLE_SECS=2` unchanged but a new build dependency in the stop path. **Probe authority and
+  production authority stay distinct**, exactly as Unit 6 corrected: operator-attended `sudo -u` exists
+  today and is what the runbook's C1 and C6 rows use; an unattended dispatcher running as the actor is
+  the unsolved D4 question, and D is not authorized. ASID needs root for creation, which is a *third*
+  and larger authority than either.
+- **Claim (6): the verdict is candidate rejected.** Not "ready for a probe": there is nothing an
+  authorized probe could falsify that would change the outcome, because the two blocking facts —
+  root-only creation and no unprivileged query — were measured directly rather than inferred. Not
+  "operator authority required": the authority that would unblock it is root plus a bespoke supervisor
+  on a deprecated private API, which is larger and less durable than the dedicated-account route
+  already authorized, so putting it to the operator would be asking for authority to resolve a question
+  the evidence has already answered. **What is not rejected** is the dedicated account itself, exactly
+  as in Units 5 and 6 — the identity was never exercised. The task's named unknown returns **open**,
+  with the last named candidate now excluded.
 
-### False positive and false negative, by case
+### False positive, false negative and race, by case
 
-| Case | Baseline-aware UID census | Per-process recorded set | Run-specific real GID |
+Columns are the two shapes Unit 6 rejected, kept for comparison, plus this unit's candidate.
+
+| Case | Baseline-aware UID census | Per-process recorded set | Per-run audit session (ASID) |
 |---|---|---|---|
-| (a) service present at baseline | correct exclusion | correct exclusion | correct exclusion — rgid 20 ≠ run gid |
-| (b) service launched after baseline | **FALSE POSITIVE** — signals an OS service; observed 7 → 9 in ~4 min | correct exclusion | correct exclusion (inference: launchd sets the account's primary group) |
+| (a) service present at baseline | correct exclusion | correct exclusion | correct exclusion — the agent is in the account's own session, not the run's |
+| (b) service launched after baseline | **FALSE POSITIVE** — signals an OS service; observed 7 → 9 in ~4 min | correct exclusion | **correct exclusion, and this is ASID's one real advantage** — launchd starts it in the account session, not the run session |
 | (c) a baseline pid exits and is reused by an actor descendant | **FALSE NEGATIVE** — the pid is in the baseline, so it is spared | not applicable | not applicable — selection is by attribute, not by pid |
-| (c′) a recorded pid exits and is reused by an unrelated process | not applicable | **FALSE POSITIVE** unless owner *and* start time are re-checked | not applicable |
-| (d) descendant changes session, parent, group, descriptors and executable | reached | **FALSE NEGATIVE** — its pid was never observable | reached — `execve(2)` preserves the real GID |
-| **(e) descendant execs setuid-root `newgrp`** | not applicable — selection is by uid, which `newgrp` does not change | not applicable — selection is by pid | **FALSE NEGATIVE, and it is decisive** — no password, no operator action, and the stop then claims success |
-| enumeration failure (`pgrep` exit ≥ 2) | must be `CENSUS_UNKNOWN`, never "empty" | must be `CENSUS_UNKNOWN` | must be `CENSUS_UNKNOWN` |
+| (c′) a recorded pid exits and is reused by an unrelated process | not applicable | **FALSE POSITIVE** unless owner *and* start time are re-checked | **FALSE POSITIVE possible** — the query-then-signal window is the same one `pkill -U` has, so this is not a discriminator |
+| (d) descendant changes session, parent, group, descriptors and executable | reached | **FALSE NEGATIVE** — its pid was never observable | reached in principle — `execve(2)` preserves the credential and `setsid(2)` changes only the BSD session |
+| (e) descendant execs a setuid-root helper | not applicable — `newgrp` does not change uid | not applicable — selection is by pid | **correctly excluded** — the only two helpers that touch audit credentials (`login`, `su`) both authenticate first |
+| (f) the supervisor tries to read a process's ASID | not applicable | not applicable | **NOT POSSIBLE without root** — `launchctl procinfo` refuses; no `ps`/`pgrep`/`sysctl`/`libproc` selector exists. **This is the rejection.** |
+| (g) the supervisor tries to place the actor in a fresh session | not applicable | not applicable | **NOT POSSIBLE without root** — `setaudit_addr` ships behind setuid root in both of its only callers |
+| enumeration failure | must be `CENSUS_UNKNOWN`, never "empty" | must be `CENSUS_UNKNOWN` | would be `CENSUS_UNKNOWN` on **every** stop, since (f) always fails |
 
-Row (e) is the row the previous six-item falsification list omitted. Pid reuse remains bounded but not
-excluded — `kern.maxproc` 6000, `kern.maxprocperuid` 4000, and Darwin pids wrap — which is why (c) and
-(c′) matter for the two pid-based shapes.
+Rows (f) and (g) are the ones that decide it. Rows (b) and (e) are the ones that would have made ASID
+the best candidate found so far, had (f) and (g) gone differently.
 
 ### Inspection failures, stated rather than read as absence
 
-- `/etc/sudoers` is mode `-r--r-----  root:wheel` and returned **Permission denied**; `/etc/sudoers.d/`
-  is empty. Whether the policy permits `sudo -g` is **unknown**, and after this correction nothing
-  rests on it.
-- No fixture was executed and no process was launched under any group, so the shed itself was not
-  measured. It rests on `newgrp(1)`'s DESCRIPTION and the file's setuid-root mode as written. Measuring
-  it would require launching an actor process, which the brief forbids.
-- `launchctl print user/502` was not retried; Unit 5's `Operation not permitted` stands, so the live
-  launchd domain remains un-enumerated and six job sources remain unresolved.
+- **No manual page exists on this host for any audit interface.** `man -w` returned "No manual entry"
+  for `auditon`, `getaudit_addr`, `setaudit_addr`, `audit_session_self`, `audit_session_join`,
+  `au_open`, `audit_control` and `auditd`. Every privilege statement above therefore rests on shipped
+  headers, binary symbol imports and file modes, not on documented contracts. That is weaker evidence
+  than a manual and is marked as such.
+- **The exact privilege of `auditon(A_GETPINFO_ADDR)` and of `audit_session_port()` was not measured.**
+  Settling either requires compiling and running a probe, which this brief forbids ("no process
+  launch", "no audit session creation/change"). Nothing in the verdict rests on them: even the most
+  favourable answer leaves creation root-only (claim 1) and leaves the shipped tooling with no ASID
+  selector (claim 2).
+- **The audit subsystem is not configured on this host, and its state was not changed to find out
+  more.** `/etc/security` holds `audit_control.example` but **no** `audit_control`; `pgrep -lf auditd`
+  exits 1 (not running); `launchctl print system/com.apple.auditd` returns "Could not find service".
+  ASIDs plainly still work (claim 1's `launchctl` output proves it), so this is a durability signal
+  rather than a blocker — but it means an ASID mechanism would depend on a subsystem this Mac does not
+  otherwise run.
+- **The `ps -L` keyword list is recorded here in full**, because claim 2's absence rests on it:
+  `%cpu %mem acflag acflg args blocked comm command cpu cputime etime f flags gid group inblk inblock
+  jobc ktrace ktracep lim login logname lstart majflt minflt msgrcv msgsnd ni nice nivcsw nsignals
+  nsigs nswap nvcsw nwchan oublk oublock p_ru paddr pagein pcpu pending pgid pid pmem ppid pri prsna
+  pstime putime re rgid rgroup rss ruid ruser sess sig sigmask sl start stat state stime svgid svuid
+  tdev time tpgid tsess tsiz tt tty ucomm uid upr user usrpri utime vsize vsz wchan wq wqb wql wqr
+  xstat`.
+- **`launchctl print user/502` was not retried.** Unit 5's `Operation not permitted` stands, so the
+  actor's launchd domain remains un-enumerated and its job sources unresolved.
 
-### How the corrected verdict could have gone the other way
+### How the verdict could have gone the other way
 
-Had `newgrp(1)` been absent from this host, or not setuid-root, or had it prompted for a password even
-for a member, the shed would need privilege and the boundary would hold — all three were checked and
-all three went the other way. Had the manual's no-operand form restored something other than the
-password-database entry, a dedicated primary group could have been unsheddable without also being
-inherited by the launchd agents, and the route would survive. And had the generated `--unattended`
-profile carried any execution restriction, finding 1's own condition for proposing a probe could have
-been met for contained hops; it carries none, and it does not cover Codex hops or uncontained runs at
-all.
+Three places, all checked, all of which went against ASID:
+
+1. **Had `ps` carried an `asid` keyword, or `pgrep`/`pkill` an ASID selector**, the query and the
+   signal would both have been shell one-liners the dispatcher already knows how to run, and combined
+   with row (b) and row (e) above ASID would have been the strongest candidate in the whole task. The
+   full keyword list and the full usage string were read; neither carries one.
+2. **Had `launchctl procinfo` worked unprivileged**, an unprivileged per-pid ASID query would have
+   existed with no compiled helper at all, and the verdict would have been "candidate ready for an
+   authorized live probe" with creation as the only open authority question. It answered "This
+   subcommand requires root privileges".
+3. **Had `setaudit_addr` been callable unprivileged** — that is, had `login` and `su` not both been
+   setuid root while being the only two binaries on the host that import it — the dispatcher could
+   have placed each hop in its own session at launch under current authority, and the route would have
+   survived to a probe on the enumeration question alone.
 
 ### Deferrals — carried forward and newly recorded
 
-None is implemented. The first two are carried; the third was noticed during this correction and is
-recorded rather than pursued, because the scope is frozen to the two findings.
+None is implemented. Items 1-4 are Unit 6's, carried unchanged. Items 5-7 are Unit 4's, carried from
+the section removed with the prior result narrative (see the note at the end of this result). Items
+8-9 were noticed during this unit and are recorded rather than pursued, because they sit outside the
+brief's claims.
 
 1. **The plist count is inconsistent.** Unit 5's result said `/System/Library/LaunchAgents` held 465
-   plists; a bounded count at the closure check returned 456. It affects no mechanism verdict. Correct
-   it only if a later unit needs that inventory.
-2. **This state file is 1,426 lines and grows every unit**, against core § 4's "current truth, not a
-   diary". This correction replaced the previous result rather than appending, and kept the accepted
-   artifacts, but the Unit 4 narrative sections below (`### The correction round — findings 1 and 2`
-   at the runbook's end and `### Result and evidence`) are history. Dropping accepted evidence is an
-   assessment decision, not this round's scope.
+   plists; a later bounded count returned 456. It affects no mechanism verdict. Correct it only if a
+   later unit needs that inventory.
+2. **This state file is long and grows every unit**, against core § 4's "current truth, not a diary".
+   This unit replaced the previous result rather than appending and removed two prior-unit narrative
+   blocks; the accepted artifacts are untouched. Further reduction is an assessment decision.
 3. **No audit exists of the host's setuid-root helpers that can change a process's own credentials.**
-   `newgrp` is one instance; the general question — which such helpers exist and what each can undo —
-   is the general form of the error this correction fixed, and any future boundary proposal rests on
-   it. Not started, because it is outside the frozen findings.
-4. **The uid-502 census fell again, 5 → 3, with no signal**, all survivors keeping their original
-   start time. Recorded because it was measured; explicitly not pursued, per the closure-check
-   deferral in the frozen findings.
+   **Partly discharged this unit** for audit credentials specifically: all sixteen setuid-root and
+   three setgid binaries in the standard directories were enumerated and symbol-checked, and only
+   `login` and `su` touch audit credentials. The general question — every credential class, not just
+   audit — remains open.
+4. **The uid-502 census fell 9 → 5 → 3 with no signal.** Re-measured this unit and **stable at 3**,
+   same three services and the same 10:11:27 start times. Recorded because it was measured; not
+   pursued.
+5. **Codex has no actor-owned bootstrap.** The Claude bootstrap installs into the actor's own home
+   (C1a/C1b), but every Codex command still runs
+   `/Applications/ChatGPT.app/Contents/Resources/codex` — a permanent dependency on the operator's
+   application bundle. Acceptable for a temporary Stage C probe, not as steady state. D/E territory.
+6. **Every actor command in the runbook goes through the operator's `sudo`.** A real dispatcher cannot
+   use the operator's sudo credential, so the run-as route for production is still unsolved. It is the
+   D4 narrow-privilege question, which is unauthorized.
+7. **C3b and C4b spend a little of the actor's own quota.** The only checks in the runbook with an
+   external cost. Worth the operator knowing before they run it; not a defect, and not a reason to
+   weaken the check back to metadata.
+8. **`prsna` (persona) was never dispositioned.** It is in the `ps -L` keyword list, so Unit 6's "no
+   attribute on that surface survives" is one item short. A bounded look this round: `ps -axo prsna=`
+   returns `-` for 547 processes, `99` for one and `1004` for seven, so it is readable for arbitrary
+   processes without privilege — the property ASID lacks — but almost nothing carries one, there is no
+   persona selector in `pgrep`/`pkill`, and `SYS_persona` in `sys/syscall.h` is an Apple-internal
+   interface that creating one would go through. Not pursued: persona is not an audit identity and is
+   outside claims 1 and 3. If Codex wants the exhaustion claim to be literally true, this is the one
+   remaining item.
+9. **The `/dev/auditsessions` lifecycle stream was not evaluated as a *verification* aid.**
+   `AUE_SESSION_END` means "all the processes in the session have exited", which is exactly the
+   assertion a truthful teardown wants — but it needs `AU_SDEVF_ALLSESSIONS`, which the header itself
+   marks "(Requires privilege.)", and it verifies rather than terminates. Recorded in case a future
+   root-bearing design ever revisits it; it changes nothing under current authority.
+
+### Note on what this unit removed from the file
+
+Following core § 4 and the brief's instruction to replace `## Latest result`, this unit removed the
+Unit 6 result narrative and the Unit 4 correction-and-result narrative that stood inside this field.
+Their deferrals are carried above, items 1-7, so none has disappeared. **The accepted artifacts below
+are untouched** — the command-support table, the runbook, the C5 fixture, C5-T, the static signal
+audit, the fail-capability matrix, the three outcomes, the rollback and the operator evidence
+template. The removed narrative remains in git at the Unit 4 and Unit 6 commits, so Codex can restore
+it at no cost if this reduction was the wrong call.
 
 ### Command-support table
 
@@ -1189,216 +1283,54 @@ Rollback, if run                : R1's printed verdict; whether R6 ran; R7's res
                                   (if R6 did not run, say so — the keychain and ~/.codex are still there)
 ```
 
-### The correction round — findings 1 and 2
-
-Both reproduced by inspection before either was corrected.
-
-- **Finding 1: REPRODUCES, and the danger is real.** The recovery instruction read
-  `rm -rf "${TMPDIR:-/tmp}"/wl-c5.*`. Demonstrated without deleting anything: two plausible generated
-  directories were created (`wl-c5.HXsVqNkO`, `wl-c5.EMPfDhEq`) and the glob was expanded into the
-  positional parameters — **it selected 2 paths**, not one. A second, unrelated C5-T run's directory
-  would have been destroyed by a recovery aimed at the first. Both scratch directories were then
-  removed with `rmdir`; no `rm -rf` was used to show this.
-- **Finding 2: REPRODUCES.** The audit table claimed "Six sites, no seventh" and listed six rows.
-  `{ …; } 2>&1 | tee "$OUT"` writes the captured fixture output and was not one of them.
-
-**Correction 1 — recovery is by exact path, never by wildcard.** C5-T now prints
-`C5-T: temporary directory: <path>` immediately after creating it and **before the fixture launches**,
-so the operator holds the exact recovery target in advance. A new **C5-T-RECOVER** block takes that
-one path and removes it behind four conditions: non-empty, the exact `wl-c5.` + eight-character
-generated name, a real directory that is not a symlink, and a parent that resolves — via `pwd -P`, so
-symlinked temp roots cannot smuggle a path in — to the temp root itself. It expands no glob, and it
-has a `DRY=1` mode. The same four conditions were factored into `t_rmdir` and are now used by C5-T's
-own automatic cleanup, so the automatic and manual paths cannot disagree. The automatic cleanup is not
-weakened: its name test went from `wl-c5.??????*` (six or more characters) to exactly the eight
-`mktemp` generates, and it gained the containment check. Nothing here claims `SIGKILL` can be
-trapped — it cannot, and the limitation is still recorded as a limitation.
-
-**Correction 2 — the audit is now mechanical and complete.** The write/delete/privilege enumeration is
-run by a stated `grep` over the exact C5-T block rather than by reading it. It returns 7 non-comment
-lines carrying 8 write invocations, presented as 7 rows with the `$TMPD/rc` pair grouped explicitly.
-`tee "$OUT"` is now named, with what constrains its destination and why its retained contents hold no
-secret. The C5-T-RECOVER block is audited the same way and returns exactly one site.
-
-### Result and evidence
-
-Result: the runbook now says how the operator runs C5. **C5-T** is added directly after the fixture,
-and the C5 row of the stage table points at it. It extracts the accepted fixture from this file
-between two markdown-comment markers placed outside the fence, proves the extraction by line count
-and sha256 against the accepted value, syntax-checks it, runs it once with the literal actor name and
-checkout path, carries the fixture's real exit status back out, saves the non-secret stdout for the
-evidence template, and removes the script on success, failure and handled interrupt. The operator
-copies one block and fills in nothing. The accepted C5 fixture is unchanged — the markers sit outside
-its fence — and the stage ordering, stop rules, rollback and D/E boundary are untouched. Seven rows
-were added to the fail-capability matrix and the evidence template gained the C5-T verification line.
-
-**Two defects were found by testing and fixed before this was written down**, which is the reason the
-evidence below is worth reading rather than a formality:
-
-1. The first draft used `mktemp "$TMPDIR/wl-c5-output.XXXXXXXX.txt"`. BSD `mktemp` only substitutes
-   **trailing** X's, so it created a literally-named file — the fixed temporary path the brief
-   forbids. Measured side by side: with the `.txt` suffix the name came back `wl-c5-output.XXXXXXXX.txt`;
-   without it, `wl-demo.HM0ElCoH`. The suffix was dropped.
-2. The first draft trusted the fixture's exit status alone. A stub interrupted mid-run exited 0
-   without printing any verdict, and the transport reported **`C5 exit status: 0`** — a pass, after an
-   interruption. The status file is now pre-seeded with `unfinished`, and an exit of 0 is accepted
-   only when the fixture's own `C5 PASS` line is present in the captured output. Re-tested: the same
-   interrupted stub now stops with exit 2.
-
-Evidence — every item below was produced this unit, read-only, with the fixture never executed:
-
-- **Extraction is exact.** Run against the live state file, C5-T extracted **210 lines** with sha256
-  `65b50d19…a8f9` — equal to the accepted fixture's checksum taken from commit `3356c8c`. A wrong
-  boundary or an off-by-one would change both numbers.
-- **`bash -n` returns 0** on the transport itself and on the extracted fixture.
-- **The marker design is load-bearing and was measured.** In the live file the markers appear
-  **twice** each as substrings — once as the real marker, once inside C5-T's own variable assignment —
-  but **exactly once** each as a whole line. C5-T matches whole-line and fixed-string (`grep -x -F`),
-  which is why it finds one and not two. A naive substring match would fail here.
-- **Every failure branch was exercised**, each with harmless stubs or a mutated scratch copy of this
-  file; none ran the fixture, `sudo`, `pkill`, `kill`, an account command, authentication or Git:
-
-  | branch | how it was provoked | transport exit | outcome |
-  |---|---|---|---|
-  | caller is root | stubbed `id -u` → 0 | 2 | `STOP: running as root` |
-  | caller is not the operator | stubbed `id -un` | 2 | `STOP: caller is 'somebodyelse'` |
-  | begin marker missing | marker line deleted from a scratch copy | 2 | `STOP: found 0 begin markers` |
-  | begin marker duplicated | marker line doubled | 2 | `STOP: found 2 begin markers` |
-  | one byte changed in C5 | `GRACE=3` → `GRACE=4` | 2 | `STOP: checksum mismatch`, both hashes printed |
-  | extracted fixture will not parse | injected `fi`, checksum re-baselined so it reaches this guard | 2 | `STOP: bash -n failed` |
-  | fixture returns 0 with a verdict | stub prints `C5 PASS` | **0** | reported as a pass |
-  | fixture returns 1 | stub prints `C5 FAIL` | **1** | status survives |
-  | fixture returns 2 | stub prints `REFUSE:` | **2** | status survives |
-  | fixture cut short, exits 0, no verdict | stub interrupted mid-run | 2 | `STOP: never printed its 'C5 PASS' verdict` |
-  | unexpected temp path | `TMPD=/etc` | 2 | refusal printed; `/etc` untouched |
-
-- **Every recovery guard was exercised too**, with two real generated directories present at once so
-  the one-target claim could fail. `DRY=1` was used for the selection demonstration, so nothing was
-  deleted to prove it:
-
-  | recovery input | result |
-  |---|---|
-  | directory A (dry run) | `would remove exactly one directory: …/wl-c5.ApTskvsi` |
-  | directory B (dry run) | `would remove exactly one directory: …/wl-c5.uHlA1ihJ` — a **different** single path |
-  | empty path | `refusing — no path given` |
-  | malformed name (`…/not-a-c5-dir`) | `refusing — is not a C5-T directory name` |
-  | correct name shape but **outside** the temp root | `refusing — resolves outside the temp root [/private/var/…/T]` |
-  | symlink pointing at A | `refusing — is not a directory` |
-  | path that does not exist | `refusing — is not a directory` |
-  | the temp root itself | `refusing — is not a C5-T directory name` |
-  | **A, for real** (`DRY=0`) | `RECOVER: removed` — and **B was still present afterwards**, which is the whole point |
-
-- **Static audit of everything C5-T writes, deletes or elevates.** Enumerated mechanically, not by
-  reading, so the completeness claim can fail. The enumeration run over the exact C5-T block was:
-
-  ```
-  grep -nE 'mktemp|chmod|(^|[^-[:alnum:]])rm[[:space:]]|tee[[:space:]]|[^0-9<>]>[[:space:]]*"|sudo|[^_[:alnum:]]kill[[:space:]]|pkill' <block> | grep -v '^[0-9]*: *#'
-  ```
-
-  It returns **7 non-comment lines**, and one of those lines carries **two** write invocations, so
-  **8 invocations in 7 table rows** — the `$TMPD/rc` pair is grouped explicitly:
-
-  | line | site | what it writes or removes | what constrains it |
-  |---|---|---|---|
-  | 67 | `mktemp -d …/wl-c5.XXXXXXXX` | creates the private directory | random trailing name, never a fixed path; failure stops the run |
-  | 68 | `chmod 700 "$TMPD"` | tightens that directory | operates only on the just-created path |
-  | 82 | `awk … > "$SCRIPT"` | writes the extracted fixture | destination is inside `$TMPD`; guards 3–5 bound the content before it can run |
-  | 100 | `mktemp …/wl-c5-output.XXXXXXXX` | creates the output file | random trailing name; **deliberately kept** — see below |
-  | 101, 102 | `echo … > "$TMPD/rc"` (**two invocations**: the `unfinished` pre-seed and the real status) | records the fixture's exit status | destination is inside `$TMPD` |
-  | 102 | `… \| tee "$OUT"` | writes the fixture's captured stdout | destination is the `mktemp` file from line 100 and nothing else; this is the write the previous version of this audit missed |
-  | 35 | `rm -rf "$t_par/$(basename "$t_d")"` | the only deletion | reached only through `t_rmdir`: non-empty path, exact `wl-c5.` + 8-character name, a real directory and not a symlink, and a parent that resolves to the temp root. No glob is expanded, so exactly one path is ever considered |
-
-  **Why the retained output is non-secret.** `$OUT` holds only the fixture's own stdout. The fixture
-  prints pids, uids, process-group ids, `pgrep`/`pkill` exit codes and its verdict lines. It reads no
-  credential, runs no authentication command, and prints no password, token, keychain item or file
-  content. The account name and checkout path it echoes are both already written in this file.
-
-  There is **no** `sudo`, `kill`, `pkill` or other privilege-bearing call anywhere in C5-T — the same
-  enumeration returns **0** matches for those three. The only privileged commands in the whole C5 step
-  are the ones already inside the accepted fixture, which is unchanged.
-
-- **The recovery block audits to one site.** The same enumeration over C5-T-RECOVER returns exactly
-  **1** line: `rm -rf "$r_target"`, where `$r_target` is rebuilt from the resolved parent and base
-  name only after the same four conditions pass. It creates and modifies nothing.
-- **Cleanup was checked, not assumed.** After every passing and failing run above, `ls -d
-  "${TMPDIR:-/tmp}"/wl-c5.*` returned no matches, and the output file was still present.
-
-The evidence can fail. Each guard was provoked and each returned a stop; had the checksum guard been
-wrong, the `GRACE=3 → 4` mutation would have run anyway; had the verdict corroboration been absent,
-the interrupted stub would still report a pass, as it demonstrably did before the fix.
-
-**One accepted limitation.** A `SIGKILL` against the C5-T shell leaves the temporary directory behind,
-because `SIGKILL` cannot be trapped by any program. Measured: the leftover holds only the extracted
-`c5.sh` — the same public bytes as this file — and a short status file. The runbook records this, and
-its recovery is now the exact-path C5-T-RECOVER block, whose target C5-T prints before the fixture
-launches. The wildcard that previously stood there is gone.
-
-Nothing about the route itself is settled by this. C5-T only makes the authorized probe runnable.
-**Phase 1a stays open, and stays open even if every Stage C check later passes.**
-
-### Deferrals — recorded, not done
-
-Three. The fourth — the C5 transport gap — **was this unit's work and is now closed** by C5-T. The
-three below are unchanged and all sit outside Stages B and C.
-
-1. **Codex has no actor-owned bootstrap.** The Claude bootstrap installs into the actor's own home
-   (C1a/C1b), but every Codex command still runs `/Applications/ChatGPT.app/Contents/Resources/codex`
-   — a permanent dependency on the operator's application bundle. Acceptable for a temporary Stage C
-   probe, not acceptable as steady state. Changing the Codex install layout is D/E territory.
-2. **Every actor command in the runbook goes through the operator's `sudo`.** A real dispatcher
-   cannot use the operator's sudo credential, so the run-as route for production is still unsolved.
-   It is the D4 narrow-privilege question, which is unauthorized.
-3. **C3b and C4b spend a little of the actor's own quota.** They are the only checks in the runbook
-   with an external cost. Worth the operator knowing before they run it; not a defect, and not a
-   reason to weaken the check back to metadata.
-
 ## Blocker
 
-**The stop mechanism is rejected and its attribute surface is now exhausted.** Pattern-free `pkill -U`
-signals PPID-1 macOS per-user services outside the actor's descendant tree (Unit 5). The real-GID
-boundary that Unit 6 proposed is sheddable by any descendant via setuid-root `newgrp`, with no
-password and no operator action, and bare `newgrp` restores the account's password-database group — so
-no choice of group repairs it. Across the searched surface — the `ps -L` keyword list, the
-`pgrep`/`pkill` selector list, and the mechanisms in the closed supervision discovery — **no process
-attribute survives the accepted escape and resists being dropped.** C5 as written stays unrunnable,
-and C1 and every later Stage C step stay stopped.
+**Every named supervision mechanism is now excluded under current authority, and no candidate
+remains.** The closed supervision discovery excluded process group, ancestry-at-stop, environment
+tag, working directory, `kqueue NOTE_TRACK`, launchd job removal, Darwin `ptrace`, containers and
+coalitions. Unit 5 excluded the pattern-free UID signal as over-broad. Unit 6 excluded the real GID
+as sheddable through setuid-root `newgrp` and reported the remaining `ps`/`pgrep` attribute surface
+exhausted. Unit 7 excludes the audit session: right granularity, but root-only creation and no
+unprivileged query. The inherited-descriptor handle already in `dispatch.sh` reaches further than any
+of these, and `dispatch.test.sh` case 27h pins the surviving hole — a descendant that closes every
+inherited descriptor still survives it.
 
-**The previous "decision, not a discovery" framing is withdrawn.** The group-variant choice does not
-advance 1a and is not put to Codex or the operator. Nothing is to be created, granted or probed.
+**One item qualifies "exhausted" and is deliberately not pursued:** `prsna` (persona) sits in the
+`ps -L` keyword list and has never been dispositioned. It is readable unprivileged, which no other
+surviving candidate is, but it is not an audit identity and was outside this unit's claims. It is
+deferral 8, and it is the only thing standing between the current record and a literal exhaustion
+claim.
 
-**Two authorities remain distinct, and conflating them was the second finding.** Operator-attended
-`sudo -u` is probe authority and exists today; an unattended dispatcher running as the actor is
-production authority, is unsolved, and sits in the D4 narrow-privilege deferral, which is
-unauthorized. Neither was available to the unattended dispatcher for the rejected route.
+**What is now open is a decision, not a discovery.** Literal Phase 1a asks for a guarantee that no
+mechanism available under current authority can deliver on this host. The paths that remain are the
+two the closed discovery already put to the operator — a new authority, or a restatement of what 1a
+guarantees — and both are the operator's call, not Claude's and not a bounded fix (core § 6 rule 4).
+This unit takes neither and requests neither.
 
-**The account stays untouched.** It is non-admin, has no observed tool credential and no GUI session,
-but it is a password-bearing login account with `/bin/zsh`, and the operator's home is `drwxr-xr-x+`,
-so actor reach into the operator home remains unresolved before D. No process emergency requires a
-signal. Rollback R1 has not been reachable at any observation, so removal needs a separately verified
-procedure. Nothing may signal, delete, log into or authenticate uid 502 in the meantime. The uid-502
-census has fallen 9 -> 5 -> 3 with no signal and no restart; recorded, not pursued.
+**Attended probe authority and unattended production authority remain distinct.** Operator-attended
+`sudo -u` does not give the dispatcher production authority; D4 stays unauthorized and outside this
+unit. ASID would need a third and larger authority than either — root — and it is not requested.
+
+**The account stays untouched.** Re-measured 2026-08-09 12:17 EEST: `id -u wlactor-airesources` → 502,
+`id -un 502` → the account, `dseditgroup -o checkmember … admin` → "is NOT a member of admin". The
+uid-502 census is stable at three PPID-1 services — 82525 `distnoted`, 82526 `mdbulkimport`, 82530
+`lsd` — all `rgid 20`, all still carrying their original 10:11:27 start time, and `pgrep -U 502` still
+exits 0, so the boundary is still non-empty. It remains a password-bearing login account with
+`/bin/zsh`, the operator's home is `drwxr-xr-x+`, and actor reach into the operator home is unresolved
+before D. No process emergency requires a signal. Rollback R1 has not been reachable at any
+observation, so removal needs a separately verified procedure. Nothing may signal, delete, log into or
+authenticate uid 502 in the meantime. C5 as written stays unrunnable, and C1 and every later Stage C
+step stay stopped.
 
 ## Next action
 
-Codex runs the closure check on the two frozen findings only:
-
-1. **Are findings 1 and 2 resolved?** Finding 1: the `newgrp(1)` manual text, the setuid-root mode and
-   the actor's membership are reproduced by inspection; the verdict is withdrawn and replaced by
-   rejection; the `--unattended` profile was read and carries no execution restriction, so finding 1's
-   condition for proposing a probe is not met and no probe is proposed; and row (e) is added to the
-   false-positive/false-negative table. Finding 2: "current-authority variant" and "using authority
-   already available to the dispatcher" are withdrawn, probe authority and production authority are
-   separated, and the group-variant choice is withdrawn rather than escalated.
-2. **Did the correction break anything?** The correction touched only `## Latest result`, `## Blocker`
-   and this field. The accepted C5 fixture is unchanged — 210 lines, sha256
-   `65b50d193054e6060fda6de866119d98898d8df04889e96b83802430b077a8f9`, one marker pair — and the
-   command-support table, runbook, C5-T, signal audit, fail-capability matrix, outcomes, rollback and
-   evidence template are untouched. The file still carries exactly the five state fields.
-
-Anything newly noticed at this check is a deferral, not a second correction round. Four deferrals are
-already recorded at the end of `## Latest result`; the third — that no audit exists of the host's
-setuid-root credential-changing helpers — is the general form of the error finding 1 caught, and is
-the one most likely to matter to whatever boundary is considered next.
-
-Literal Phase 1a remains open. Stages D and E, Phase 1f and every Phase 2 action remain forbidden, and
-the live account remains preserved.
+Codex: assess Unit 7. The verdict is **candidate rejected** — the audit session is excluded, no new
+authority is requested, and the named unknown returns open with the last named candidate gone. The
+assessment has to decide what a task whose mechanism space is empty does next, since continuing to
+open discovery units has no remaining candidate to point them at. Deferral 8 (`prsna`) is the only
+unexamined item on the attribute surface and is the one thing a further discovery unit could still be
+briefed against. Everything beyond that is the operator's decision between a new authority and a
+restatement of literal 1a, which core § 6 rule 4 sends to the operator rather than to a bounded fix.
+Also assess the file reduction recorded at the end of `## Latest result`: this unit removed the Unit 6
+and Unit 4 result narratives while carrying all seven of their deferrals forward and leaving every
+accepted artifact intact.
