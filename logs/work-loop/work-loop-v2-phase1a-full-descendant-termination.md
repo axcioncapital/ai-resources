@@ -22,24 +22,23 @@ outside this task; Phase 2 stays forbidden.
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 3 — produce one complete, guarded, operator-executable Stage B/C
-runbook and C5 fixture without running either.
+Standard. Discovery mode. Unit 4 — make the accepted C5 fixture directly executable by the operator
+without adding a repository artifact or running any Stage B/C action.
 
 Named reason for the loop: the next action creates an OS account, authenticates two paid tools and
 tests a UID-wide signal boundary. Its procedure must be independently checked before the operator
 executes it, and the result must survive the session because it gates the later dispatcher design.
 
 Plan justification: the governing unattended-operation plan still blocks Phase 2 on 1a and 1f.
-Accepted Unit 2 evidence found a coherent dedicated-identity route but left three live questions for
-Stages B/C. The operator has authorized those stages, so the smallest justified unit is to make their
-operator procedure exact and safe; running the procedure and interpreting its live result come next.
+Unit 3's runbook and final rollback fix are accepted, but its recorded C5 transport deferral prevents
+the authorized Stage C probe from being executed without operator invention. Settling only that
+missing invocation is therefore the smallest unit that advances 1a.
 
-Codex framing decision: this remains discovery because it prepares and checks a host probe rather
-than operating the host or implementing the dispatcher. This unit may change only this state file.
-No probe file under `runs/` is authorized in this unit; if code is needed, return it inline in the
-runbook after syntax-checking a self-cleaning temporary copy.
+Codex framing decision: this remains discovery because it completes and checks the operator procedure
+rather than operating the host or implementing the dispatcher. This unit may change only this state
+file. No probe file under `runs/` or other persistent artifact is authorized.
 
-## Brief
+### Accepted Unit 3 brief (superseded by Unit 4 in `## Next action`)
 
 The dedicated-identity route now turns on three facts that only a real account can settle. Before the
 operator creates that account, convert the draft chat instructions into one complete runbook whose
@@ -181,59 +180,38 @@ runbook, create another artifact or push.
 
 ## Latest result
 
-**One bounded correction round, frozen to findings 1–4.** Read-only throughout. No `sudo`, no account
-action, no installation, no authentication, no signal against any real UID, and no repository file
-other than this one. The only temporary material was one scratch copy of the corrected C5 script,
-syntax-checked with `bash -n` and removed.
+**Codex acceptance of Unit 3:** accepted. The four frozen findings are resolved. The final tight fix
+made R1 copy-safe and fail-capable and made R2/R3/R4/R6 plus the outcome text agree with `-keepHome`;
+neither edit broke the accepted runbook. The final-fix menu was justified by rollback safety, not by
+an accepted limitation. The recorded C5 transport gap is the only item advanced into Unit 4; the
+three D/E observations remain deferred and unauthorized.
 
-### Reproduction of the frozen findings
+**Unit 4 — the C5 transport.** Discovery. Read-only toward the host throughout: no `sudo`, no account
+action, no installation, no authentication, no signal against any real UID, no Git write, and no
+repository file other than this one. Every test below ran on a scratch copy of this file or on stubs,
+and all scratch material was removed. The fixture itself was never executed.
 
-Each finding was reproduced by inspection before anything was corrected.
+Inspected (2026-08-09):
 
-- **Finding 1: REPRODUCES.** Read `runs/probe-escaped-descendants-2026-08-07.md` line 35: the
-  detached daemon is recorded as **pid 60086, ppid 1, pgid 60085**. The previous fixture asserted
-  `[ "$D_PGID" = "$DAEMON" ]`, which is `60085 = 60086` — false on the repository's own measured
-  shape, so the guard would have aborted a correct probe. The descriptor check printed `FDS` and
-  proceeded: `say "inherited descriptors held by the daemon: ${FDS:-<could not inspect>}"` with no
-  test after it. `trap cleanup EXIT INT TERM` ran cleanup on `INT`/`TERM` and then returned into the
-  signal sequence. And the fixture created exactly one actor-owned process, while Unit 2's accepted
-  later check (read at `git show cd88efa`, "The exact later check") requires "a fixture of at least
-  three actor-owned processes that includes one fully detached daemon … with a uid-501 process
-  sharing the same checkout as the bystander control".
-- **Finding 2: REPRODUCES.** The previous runbook's password paragraph said `sysadminctl -addUser` is
-  run "without `-password`, so it prompts interactively; if it does not prompt, abort" — an
-  unestablished premise. P1's fail column said "pick another name" while B1, B2, B3, B4, C1a–C6d and
-  R1–R6 all hard-coded `wlactor-airesources`. R1 routed unexpected actor processes "through the
-  fixture's guarded path", but the fixture refuses any census other than its own exact expected set.
-  R6 said "remove it **by hand**". The C3-failure paragraph said "the host returns to its prior
-  state" while R4 used `-keepHome`, which leaves the home behind.
-- **Finding 3: REPRODUCES.** The previous C3 pass criterion was `claude auth status` returning
-  `"loggedIn": true`, and its support basis was output observed under the **already logged-in
-  operator**. That is metadata about a stored credential, not proof that the credential can be
-  unlocked and used after a full actor GUI logout. The same gap applies to C4: `codex login status`
-  reads `~/.codex/auth.json`, so it reports a file, not a working session.
-- **Finding 4: REPRODUCES.** Step H (`sudo dscl . -create /Users/… IsHidden 1`) was in the stage
-  table, and the all-pass paragraph read "Recommendation: the account **remains**, hidden by step H"
-  immediately before "That the account persists is itself a new operator decision". C6a and C6b wrote
-  `git config --global user.name` / `user.email` — commit identity, which belongs to D5 — and C6b
-  carried the placeholder `<the address in ~/.gitconfig>` for the operator to fill in.
-
-### What the corrections rest on — inspected this round
-
-- `/usr/sbin/sysadminctl` usage output, read this round, ends with: **"Pass '-' instead of password in
-  commands above to request prompt."** So `-password -` is the locally documented way to make the
-  password interactive. `man -w sysadminctl` returns "No manual entry for sysadminctl", so the
-  **default** `-deleteUser` home behaviour remains unestablished — the corrected rollback never relies
-  on it, passing `-keepHome` explicitly and then removing the home under guards.
-- `claude auth status --help` offers only `--json` (default) and `--text`; there is no
-  "verify the credential works" mode. `claude --help` documents `--bare` as skipping "keychain reads"
-  with "OAuth and keychain are never read" — direct local evidence that normal mode depends on a
-  keychain read, which is exactly what a GUI logout can break while cached metadata still reads
-  logged-in. `claude -p` is the supported non-interactive round-trip.
-- `codex exec --help` documents `-s, --sandbox read-only`, `--skip-git-repo-check` and `-C, --cd`, so
-  an effective Codex check can be run with no repository and no write capability.
-- `git -c safe.directory="<checkout>" --no-optional-locks -C "<checkout>" status --porcelain` was run
-  read-only this round and exited 0, so C6 needs **no** persistent `git config` write at all.
+- Claim (1): HOLDS — the accepted Unit 3 runbook is authoritative and its C5 fixture must survive
+  byte-for-byte. Extracted the fenced fixture from `git show 3356c8c:<this file>` and from the working
+  tree and compared: **identical, 210 lines**. Its sha256 is
+  `65b50d193054e6060fda6de866119d98898d8df04889e96b83802430b077a8f9`, and that value is now the
+  transport's integrity constant.
+- Claim (2): HOLDS — C5 exists only as inline text. Searched all of `plans/` for the fixture's own
+  header string `actor-UID termination boundary probe`: **no match**. Listed
+  `handoff-automation-spike/runs/probes/` — nine files, none of them a C5 script. So there is nothing
+  on disk to invoke, which is the gap this unit closes.
+- Claim (3): HOLDS — the operator authorization is unchanged. `## Objective and scope` still reads
+  Stages B and C only, D and E not authorized, Phase 2 forbidden.
+- Claim (4): HOLDS — no Stage B/C host action has happened. `id -u wlactor-airesources` → "no such
+  user".
+- Claim (5): HOLDS — the three other recorded deferrals concern D/E authority or disclosed quota
+  cost, so none of them is in this unit. Read them in `### Deferrals` below.
+- Claim (6): HOLDS, and it decided the mechanism. Searched this file for existing HTML comments:
+  **none**, so a comment-pair boundary is unambiguous here. The file holds **two** fenced `bash`
+  blocks and exactly **one** `#!/bin/bash` line, so "the first bash block" would have been a fragile
+  selector and a marker pair is not.
 
 ### Command-support table
 
@@ -292,7 +270,7 @@ invalidate every check below and has not been preflighted. Report the collision 
 | **C3b** | `cd /tmp && sudo -u wlactor-airesources -H /Users/wlactor-airesources/.local/bin/claude -p 'Reply with exactly one word: alive'` | `[READ-ONLY]` | the reply text `alive`, exit 0 | any auth/keychain error, empty output or non-zero exit → **STOP AND ROLL BACK.** This, not C3a, is the decisive check |
 | C4a | `sudo -u wlactor-airesources -H /Applications/ChatGPT.app/Contents/Resources/codex login status` | `[READ-ONLY]` | `Logged in using ChatGPT` | anything else → stop, preserve output, offer rollback |
 | **C4b** | `sudo -u wlactor-airesources -H /Applications/ChatGPT.app/Contents/Resources/codex exec --sandbox read-only --skip-git-repo-check -C /tmp 'Reply with exactly one word: alive'` | `[READ-ONLY]` | a completed run whose reply is `alive`, exit 0 | auth error or non-zero exit → stop, preserve output, offer rollback |
-| **C5** | the fixture below, run as the operator | `[SIGNAL]` | `C5 PASS` | any other verdict → stop, preserve output, offer rollback |
+| **C5** | **the C5-T block below** — it materializes, verifies and runs the fixture; do not copy the fixture by hand | `[SIGNAL]` | `C5 exit status: 0`, with the fixture's own `C5 PASS` line above it | any `C5-T STOP` → nothing ran; any other exit status → stop, preserve output, offer rollback |
 | C6a | `sudo -u wlactor-airesources -H git --no-optional-locks -C "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources" status --porcelain; echo $?` | `[READ-ONLY]` | a **non-zero** exit naming "dubious ownership" — this is the expected refusal | exit 0 → the ownership boundary is not what the design assumes; record it and continue to C6b |
 | C6b | `sudo -u wlactor-airesources -H git -c safe.directory="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources" --no-optional-locks -C "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources" status --porcelain; echo $?` | `[READ-ONLY]` | exits 0 and prints a status | "dubious ownership" persists → `safe.directory` is not the fix; permission denied → traversal is blocked; either way stop |
 
@@ -321,6 +299,10 @@ Run as the operator (uid 501), attended. It creates **three** actor-owned proces
 `bash -n` returned exit 0 on a temporary copy of exactly this content; the copy was removed and no
 part of it was executed in this unit.
 
+The two marker lines around the fence are the transport's boundary (see **C5-T** below). They are
+markdown comments outside the fence, so the fixture's bytes are unchanged by them.
+
+<!-- C5-FIXTURE-BEGIN -->
 ```bash
 #!/bin/bash
 # C5 — actor-UID termination boundary probe.
@@ -533,11 +515,146 @@ else
 fi
 exit "$RC"
 ```
+<!-- C5-FIXTURE-END -->
 
 **One property stated rather than hidden.** The launcher exits after spawning, so A and B are
 re-parented to pid 1 alongside D. That makes the fixture *harder*, not weaker: no live parent links
 any of the three to the caller, so a UID sweep is the only handle left. Their shapes are still
 distinguished and asserted separately — A ordinary, B its own session/group leader, D fully detached.
+
+### C5-T — how the operator actually runs C5
+
+The fixture above is the accepted text, not a file. **C5-T is the only way it should be run.** Copy
+this one block and paste it into a terminal at step C5. It reads the accepted bytes out of this state
+file, proves they are the accepted bytes, runs the fixture once, and removes the script afterwards.
+Nothing is written into the repository, and the operator never copies, edits or fills in the fixture.
+
+Three design points, each forced by something measured rather than assumed:
+
+- **The bytes come from this file, between the two marker lines around the fence.** The markers are
+  markdown comments outside the fence, so the accepted fixture is unchanged by them. The block below
+  mentions the markers in variable assignments; matching is **whole-line and fixed-string**, so those
+  mentions can never be mistaken for the markers themselves.
+- **The exit status is carried in a file, not through the pipeline.** `tee` keeps the run visible, but
+  a pipeline's status is `tee`'s, and `$PIPESTATUS` is a bash array that zsh does not provide under
+  that name — the operator's login shell is zsh. The status file works in both.
+- **An exit code alone is not trusted.** Measured during this unit: a fixture stub interrupted
+  mid-run exited 0 without ever printing a verdict, and an earlier draft of this block reported that
+  as a pass. A `0` is now accepted only when the fixture's own `C5 PASS` line is present in the
+  captured output.
+
+```bash
+# C5-T — materialize, verify and run the accepted C5 fixture. Run as the operator, attended.
+# It reads the accepted bytes out of this state file, proves they are the accepted bytes,
+# then runs the fixture once. No repository file is written and no fixture script survives.
+set -u
+
+STATE="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md"
+ACTOR="wlactor-airesources"
+CHECKOUT="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"
+OPERATOR="patrik.lindeberg"
+WANT_LINES=210
+WANT_SHA="65b50d193054e6060fda6de866119d98898d8df04889e96b83802430b077a8f9"
+BEGIN_MARK='<!-- C5-FIXTURE-BEGIN -->'
+END_MARK='<!-- C5-FIXTURE-END -->'
+
+TMPD=""
+t_say()  { printf '%s\n' "$*"; }
+t_stop() { printf 'C5-T STOP: %s\n' "$*"; exit 2; }
+
+t_clean() {
+  [ -n "$TMPD" ] || return 0
+  case "$TMPD" in
+    */wl-c5.??????*) rm -rf "$TMPD" ;;
+    *) printf 'C5-T: refusing to remove unexpected path [%s] — remove it by hand\n' "$TMPD" ;;
+  esac
+  return 0
+}
+trap t_clean EXIT
+trap 't_say "C5-T INTERRUPTED — cleaning up; this is NOT a pass"; exit 2' INT TERM
+
+# --- guard 1: the caller must be the operator, not root and not the actor
+[ "$(id -u)" -ne 0 ] || t_stop "running as root; run this as the operator"
+CALLER="$(id -un)"
+[ "$CALLER" = "$OPERATOR" ] || t_stop "caller is '$CALLER', not the operator '$OPERATOR'"
+
+# --- guard 2: the source of the bytes must be readable
+[ -f "$STATE" ] && [ -r "$STATE" ] || t_stop "cannot read the state file at $STATE"
+
+# --- guard 3: exactly one marker pair, in order.
+# Whole-line fixed-string matching, so the lines of THIS block that mention the
+# markers are never mistaken for the markers themselves.
+NB="$(grep -c -x -F -- "$BEGIN_MARK" "$STATE")"
+NE="$(grep -c -x -F -- "$END_MARK" "$STATE")"
+[ "$NB" -eq 1 ] || t_stop "found $NB begin markers, expected exactly 1"
+[ "$NE" -eq 1 ] || t_stop "found $NE end markers, expected exactly 1"
+LB="$(grep -n -x -F -- "$BEGIN_MARK" "$STATE" | cut -d: -f1)"
+LE="$(grep -n -x -F -- "$END_MARK" "$STATE" | cut -d: -f1)"
+[ "$LB" -lt "$LE" ] || t_stop "end marker (line $LE) is not after the begin marker (line $LB)"
+
+# --- guard 4: a private temporary location, never a fixed path
+TMPD="$(mktemp -d "${TMPDIR:-/tmp}/wl-c5.XXXXXXXX")" || t_stop "could not create a temporary directory"
+chmod 700 "$TMPD"
+SCRIPT="$TMPD/c5.sh"
+
+# --- extract the fixture. buf[1] is the opening fence and buf[n] the closing one,
+# so printing 2..n-1 yields the fixture and nothing else. No backtick matching is
+# needed, and guard 5 catches any off-by-one before the fixture can run.
+awk -v b="$BEGIN_MARK" -v e="$END_MARK" '
+  $0 == e { inb = 0 }
+  inb     { n++; buf[n] = $0 }
+  $0 == b { inb = 1 }
+  END     { for (i = 2; i < n; i++) print buf[i] }
+' "$STATE" > "$SCRIPT" || t_stop "extraction failed"
+
+# --- guard 5: integrity — the accepted bytes, nothing else
+GOT_LINES="$(wc -l < "$SCRIPT" | tr -d ' ')"
+[ "$GOT_LINES" = "$WANT_LINES" ] || t_stop "extracted $GOT_LINES lines, expected $WANT_LINES"
+GOT_SHA="$(shasum -a 256 "$SCRIPT" | awk '{print $1}')"
+[ "$GOT_SHA" = "$WANT_SHA" ] || t_stop "checksum mismatch; expected $WANT_SHA, got $GOT_SHA — the fixture in the state file is not the accepted one, so nothing is run"
+
+# --- guard 6: syntax, before anything can signal
+bash -n "$SCRIPT" || t_stop "bash -n failed on the extracted fixture"
+t_say "C5-T OK: $GOT_LINES lines, sha256 $GOT_SHA, syntax clean"
+t_say "C5-T: running the fixture as $CALLER against actor '$ACTOR'"
+
+# --- run it once. The exit status is carried in a file, not through the pipeline,
+# because a pipeline's status is the last command's and $PIPESTATUS is not portable
+# between bash and zsh. tee keeps the run visible while it happens.
+# The file is pre-seeded with "unfinished", so a run that never reaches the second
+# command in the group cannot leave a stale or absent status behind.
+OUT="$(mktemp "${TMPDIR:-/tmp}/wl-c5-output.XXXXXXXX")" || t_stop "could not create the output file"
+echo unfinished > "$TMPD/rc"
+{ bash "$SCRIPT" "$ACTOR" "$CHECKOUT"; echo $? > "$TMPD/rc"; } 2>&1 | tee "$OUT"
+C5_RC="$(cat "$TMPD/rc" 2>/dev/null)"
+case "${C5_RC:-}" in
+  ''|*[!0-9]*) t_stop "the fixture did not record an exit status ('${C5_RC:-<none>}') — the run did not finish, so this is NOT a pass" ;;
+esac
+
+# An exit status alone is not enough. An interrupted run can end 0 without the
+# fixture ever reaching its verdict, so a pass must also be corroborated by the
+# fixture's own PASS line. Measured: a stub killed mid-run exited 0 and printed
+# no verdict; without this check the transport reported that as a pass.
+if [ "$C5_RC" -eq 0 ] && ! grep -q -F 'C5 PASS' "$OUT"; then
+  t_stop "the fixture exited 0 but never printed its 'C5 PASS' verdict — the run was cut short, so this is NOT a pass"
+fi
+t_say "---"
+t_say "C5 exit status: $C5_RC   (0 PASS | 1 FAIL | >=2 REFUSED or ERROR)"
+t_say "stdout for the evidence template: $OUT"
+t_say "the fixture script is removed on exit; the output file above is kept"
+exit "$C5_RC"
+```
+
+**What C5-T writes, and what it removes.** It creates one private `mktemp -d` directory (mode 700,
+never a fixed path) holding the extracted fixture and its status file, and one output file outside
+that directory. The directory and the fixture script are removed on success, on failure and on a
+handled interrupt. The **output file is deliberately kept** — it is the evidence the template asks
+for, and it contains no secrets.
+
+**One accepted limitation.** If the C5-T shell itself is `SIGKILL`ed, no trap can run and the
+temporary directory survives. Measured: the leftover holds only `c5.sh` — the same public bytes as
+this file, checksum `65b50d19…` — and a two-byte status file. Remove it by hand with
+`rm -rf "${TMPDIR:-/tmp}"/wl-c5.*` if that ever happens.
 
 ### Static signal audit
 
@@ -584,6 +701,13 @@ Every row is a way this runbook can return "no". None of them continues setup.
 | 20 | the ownership boundary is not real | C6a exits 0 instead of refusing | recorded; the design assumption is wrong and Codex must know |
 | 21 | read-only Git fails even with `safe.directory` | C6b | stop; traversal or the setting is wrong |
 | 22 | rollback itself fails | R5, R7 | R7 reports exactly what remains; no clean-host claim |
+| 23 | C5-T run as root, or by anyone but the operator | C5-T guard 1 | `C5-T STOP`, exit 2, before any file is created |
+| 24 | the state file is missing or unreadable | C5-T guard 2 | `C5-T STOP`, exit 2 |
+| 25 | fixture boundary marker missing or duplicated | C5-T guard 3 | `C5-T STOP`, exit 2 — nothing is extracted |
+| 26 | the fixture in the state file has been altered by even one byte | C5-T guard 5 checksum | `C5-T STOP`, exit 2 — the altered fixture never runs |
+| 27 | the extraction picks up the wrong lines | C5-T guard 5 line count **and** checksum | `C5-T STOP`, exit 2 |
+| 28 | the extracted fixture will not parse | C5-T guard 6 `bash -n` | `C5-T STOP`, exit 2 — stops before the fixture can signal |
+| 29 | the fixture is cut short and exits 0 without a verdict | C5-T `C5 PASS` corroboration | `C5-T STOP`, exit 2 — an exit code alone is never read as a pass |
 
 ### The three outcomes, unambiguously
 
@@ -697,7 +821,9 @@ C3a claude auth status          : loggedIn=<true|false>  authMethod=<value>  [RE
 C3b claude -p round-trip        : <the one-word reply, or the exact error>   exit=<code>
 C4a codex login status          : <the one-line output>
 C4b codex exec round-trip       : <the one-word reply, or the exact error>   exit=<code>
-C5  full stdout of the fixture (it contains no secrets)
+C5  C5-T verification line        : lines=<n> sha256=<value> (must be 210 / 65b50d19…)
+C5  C5 exit status                : <0|1|>=2>   and the path C5-T printed for the output file
+C5  full stdout of the fixture (it contains no secrets) — copy it from that output file
 C6a git status WITHOUT safe.directory : exit=<code>  first line: <text>
 C6b git status WITH safe.directory    : exit=<code>  first line: <text or "clean">
 Anything that stopped early     : which step, and its exact non-secret output
@@ -705,96 +831,100 @@ Rollback, if run                : R1's printed verdict; whether R6 ran; R7's res
                                   (if R6 did not run, say so — the keychain and ~/.codex are still there)
 ```
 
-### The final fix — finding 2 only
-
-Findings 1, 3 and 4 were accepted at the closure check and are unchanged. Codex took the executable
-core § 3 menu and permitted one final tightly-bounded fix on finding 2. It has two edits, and nothing
-else in the runbook was touched.
-
-**Both defects reproduced before either was corrected.**
-
-- **R1 was not copy-safe.** Its pipes were written `\|` so the markdown table would not break. Bash
-  reads a copied `\|` as an ordinary argument, not a pipeline. Reproduced read-only with harmless
-  synthetic input: `bash -c 'printf "1\n2\n" \| tr "\n" "," \| sed "s/,$//"'` printed `1` and `2` on
-  separate lines and exited 0 — one `printf`, no pipeline, no comma-joined list. The correct form
-  `printf "1\n2\n" | tr "\n" "," | sed "s/,$//"` prints `1,2`. So the old R1 fed `ps -p ""`, and
-  `ps -o pid,uid,command -p ""` on this host answers `ps: Invalid process id`. R1 could therefore
-  reach its STOP branch while printing no census at all — the exact list the operator is told to
-  carry to the operator decision.
-- **R2's keychain claim was false.** It said R4 removes the account "and its keychain with it", but
-  R4 passes `-keepHome`. The login keychain is in `~/Library/Keychains/` inside the retained home, so
-  R4 cannot remove it. R3 carried the identical error about `~/.codex`.
-
-**Edit 1 — R1 is now a copy-safe block.** The table cell points at a fenced block below the table,
-where real pipes need no escaping, and says why. The block resolves the uid first, then branches on
-`pgrep`'s exit status: account absent, boundary empty (`R1 OK`, continue), boundary populated (print
-the full census, then `R1 STOP`), census unreadable (`R1 STOP`), and the pathological exit-0-with-no-
-pids case (`R1 STOP`, treated as unreadable). `ps` is only ever called with a non-empty comma-joined
-list, so the malformed call cannot recur. It signals nothing and runs no command as the actor.
-
-**Edit 2 — the residue statements now agree with `-keepHome`.** R2 says the keychain survives R4 and
-is removed by R6. R3 says the same for `~/.codex/auth.json`; that cell carried the identical false
-claim, so leaving it would have contradicted the very sequence this edit exists to make coherent.
-R4 now states that it removes the directory-services record only. R6 is marked as the only step that
-removes the actor's credentials. A new paragraph under the table, the C3-failure outcome paragraph
-and the evidence template all now say the same thing: **a rollback that stops before R6 leaves the
-actor's login keychain and `~/.codex/auth.json` on disk, and that is not a clean host.**
-
 ### Result and evidence
 
-Result: both edits are applied and neither is partly resolved. R1 is executable when copied from the
-raw state file and prints a census in the one case the operator needs it. Every rollback statement
-about what survives R4 now matches `-keepHome`. No other part of the runbook changed: the C5 fixture,
-the stage table, the command-support table, the fail-capability matrix and the all-pass question are
-byte-identical to the accepted version.
+Result: the runbook now says how the operator runs C5. **C5-T** is added directly after the fixture,
+and the C5 row of the stage table points at it. It extracts the accepted fixture from this file
+between two markdown-comment markers placed outside the fence, proves the extraction by line count
+and sha256 against the accepted value, syntax-checks it, runs it once with the literal actor name and
+checkout path, carries the fixture's real exit status back out, saves the non-secret stdout for the
+evidence template, and removes the script on success, failure and handled interrupt. The operator
+copies one block and fills in nothing. The accepted C5 fixture is unchanged — the markers sit outside
+its fence — and the stage ordering, stop rules, rollback and D/E boundary are untouched. Seven rows
+were added to the fail-capability matrix and the evidence template gained the C5-T verification line.
 
-Evidence, all read-only and all on synthetic input or stubs — no actor-account command, no signal, no
-`sudo`, no host change:
+**Two defects were found by testing and fixed before this was written down**, which is the reason the
+evidence below is worth reading rather than a formality:
 
-- `bash -n` on the exact R1 block returned **exit 0**.
-- `grep -cnE '\bkill\b|\bpkill\b|sudo|sysadminctl|rm '` over the R1 block returned **0** — it cannot
-  signal, elevate or delete.
-- The block was exercised through **all five branches** with stubbed `id`, `pgrep` and `ps`, so no
-  real account was queried and no real process table was read:
+1. The first draft used `mktemp "$TMPDIR/wl-c5-output.XXXXXXXX.txt"`. BSD `mktemp` only substitutes
+   **trailing** X's, so it created a literally-named file — the fixed temporary path the brief
+   forbids. Measured side by side: with the `.txt` suffix the name came back `wl-c5-output.XXXXXXXX.txt`;
+   without it, `wl-demo.HM0ElCoH`. The suffix was dropped.
+2. The first draft trusted the fixture's exit status alone. A stub interrupted mid-run exited 0
+   without printing any verdict, and the transport reported **`C5 exit status: 0`** — a pass, after an
+   interruption. The status file is now pre-seeded with `unfinished`, and an exit of 0 is accepted
+   only when the fixture's own `C5 PASS` line is present in the captured output. Re-tested: the same
+   interrupted stub now stops with exit 2.
 
-  | stub case | `pgrep` exit | printed |
+Evidence — every item below was produced this unit, read-only, with the fixture never executed:
+
+- **Extraction is exact.** Run against the live state file, C5-T extracted **210 lines** with sha256
+  `65b50d19…a8f9` — equal to the accepted fixture's checksum taken from commit `3356c8c`. A wrong
+  boundary or an off-by-one would change both numbers.
+- **`bash -n` returns 0** on the transport itself and on the extracted fixture.
+- **The marker design is load-bearing and was measured.** In the live file the markers appear
+  **twice** each as substrings — once as the real marker, once inside C5-T's own variable assignment —
+  but **exactly once** each as a whole line. C5-T matches whole-line and fixed-string (`grep -x -F`),
+  which is why it finds one and not two. A naive substring match would fail here.
+- **Every failure branch was exercised**, each with harmless stubs or a mutated scratch copy of this
+  file; none ran the fixture, `sudo`, `pkill`, `kill`, an account command, authentication or Git:
+
+  | branch | how it was provoked | transport exit | outcome |
+  |---|---|---|---|
+  | caller is root | stubbed `id -u` → 0 | 2 | `STOP: running as root` |
+  | caller is not the operator | stubbed `id -un` | 2 | `STOP: caller is 'somebodyelse'` |
+  | begin marker missing | marker line deleted from a scratch copy | 2 | `STOP: found 0 begin markers` |
+  | begin marker duplicated | marker line doubled | 2 | `STOP: found 2 begin markers` |
+  | one byte changed in C5 | `GRACE=3` → `GRACE=4` | 2 | `STOP: checksum mismatch`, both hashes printed |
+  | extracted fixture will not parse | injected `fi`, checksum re-baselined so it reaches this guard | 2 | `STOP: bash -n failed` |
+  | fixture returns 0 with a verdict | stub prints `C5 PASS` | **0** | reported as a pass |
+  | fixture returns 1 | stub prints `C5 FAIL` | **1** | status survives |
+  | fixture returns 2 | stub prints `REFUSE:` | **2** | status survives |
+  | fixture cut short, exits 0, no verdict | stub interrupted mid-run | 2 | `STOP: never printed its 'C5 PASS' verdict` |
+  | unexpected temp path | `TMPD=/etc` | 2 | `refusing to remove unexpected path [/etc]`; `/etc` untouched |
+
+- **Static audit of everything C5-T writes, deletes or elevates.** Six sites, no seventh:
+
+  | site | what | guard |
   |---|---|---|
-  | account absent | — | `R1: account … does not exist — nothing to census. Go to R7.` |
-  | boundary empty | 1 | `R1 OK: actor boundary is empty (pgrep exit 1) — continue to R2` |
-  | boundary populated (811, 812, 813) | 0 | `R1 STOP: uid 901 still owns processes …` then `ps … -p 811,812,813` then `R1 STOP: take the list above to the operator.` |
-  | census unreadable | 2 | `R1 STOP: pgrep exit 2 — the boundary cannot be read.` |
-  | exit 0 but no pids | 0 | `R1 STOP: … pgrep exited 0 but returned no pids — treat the census as unreadable` |
+  | `mktemp -d …/wl-c5.XXXXXXXX` | creates the private dir | `mktemp` failure stops; `chmod 700` follows |
+  | `chmod 700 "$TMPD"` | tightens it | operates only on the just-created dir |
+  | `awk … > "$SCRIPT"` | writes the fixture | path is inside `$TMPD`; guards 3–5 bound the content |
+  | `mktemp …/wl-c5-output.XXXXXXXX` | creates the output file | kept deliberately; contains no secrets |
+  | `echo … > "$TMPD/rc"` | records the status | inside `$TMPD` |
+  | `rm -rf "$TMPD"` | cleanup | runs only when `$TMPD` matches `*/wl-c5.??????*`; anything else prints a refusal and deletes nothing — measured with `TMPD=/etc` |
 
-  The populated case is the one the old R1 got wrong; the stub shows `ps` receiving `811,812,813`,
-  never an empty argument. The temporary block and harness were removed afterwards (`ls` → no
-  matches).
+  There is **no** `sudo`, `kill`, `pkill` or privilege-bearing call anywhere in C5-T. The only
+  privileged commands in the whole C5 step are the ones already inside the accepted fixture, which is
+  unchanged.
+- **Cleanup was checked, not assumed.** After every passing and failing run above, `ls -d
+  "${TMPDIR:-/tmp}"/wl-c5.*` returned no matches, and the output file was still present.
 
-The evidence can fail. The old form and the new form were run side by side on the same synthetic
-input and printed different results — `1`/`2` against `1,2`; had they printed the same thing, finding
-2's first edit would have had no defect to fix and this would say so. The five stub branches would
-have shown a wrong verdict or a malformed `ps` call if the branching were wrong. And the keychain
-claim is settled by the flag itself: `-keepHome` retains the home, and the keychain is a file in it.
+The evidence can fail. Each guard was provoked and each returned a stop; had the checksum guard been
+wrong, the `GRACE=3 → 4` mutation would have run anyway; had the verdict corroboration been absent,
+the interrupted stub would still report a pass, as it demonstrably did before the fix.
 
-The runbook being well formed still proves nothing about the route. Only the operator's later run
-supplies the missing host evidence, and **Phase 1a stays open even if every Stage C check passes.**
+**One accepted limitation.** A `SIGKILL` against the C5-T shell leaves the temporary directory behind,
+because no trap can run. Measured: the leftover holds only the extracted `c5.sh` — the same public
+bytes as this file — and a two-byte status file. It is recorded in the runbook with the one-line
+manual cleanup.
+
+Nothing about the route itself is settled by this. C5-T only makes the authorized probe runnable.
+**Phase 1a stays open, and stays open even if every Stage C check later passes.**
 
 ### Deferrals — recorded, not done
 
-Four, including the one Codex named at the closure check. None is inside the final fix's scope.
+Three. The fourth — the C5 transport gap — **was this unit's work and is now closed** by C5-T. The
+three below are unchanged and all sit outside Stages B and C.
 
-1. **The C5 fixture has no invocation or transport route.** It lives inline in this state file, but
-   this unit may not create a file under `runs/`, so nothing says how the operator gets it onto disk
-   to run it, under what name, or with what cleanup. Codex noticed this at the closure check and
-   recorded it as a deferral rather than part of the final fix. It must be settled before Stage C can
-   actually be executed.
-2. **Codex has no actor-owned bootstrap.** The Claude bootstrap installs into the actor's own home
+1. **Codex has no actor-owned bootstrap.** The Claude bootstrap installs into the actor's own home
    (C1a/C1b), but every Codex command still runs `/Applications/ChatGPT.app/Contents/Resources/codex`
    — a permanent dependency on the operator's application bundle. Acceptable for a temporary Stage C
    probe, not acceptable as steady state. Changing the Codex install layout is D/E territory.
-3. **Every actor command in the runbook goes through the operator's `sudo`.** A real dispatcher
+2. **Every actor command in the runbook goes through the operator's `sudo`.** A real dispatcher
    cannot use the operator's sudo credential, so the run-as route for production is still unsolved.
    It is the D4 narrow-privilege question, which is unauthorized.
-4. **C3b and C4b spend a little of the actor's own quota.** They are the only checks in the runbook
+3. **C3b and C4b spend a little of the actor's own quota.** They are the only checks in the runbook
    with an external cost. Worth the operator knowing before they run it; not a defect, and not a
    reason to weaken the check back to metadata.
 
@@ -805,14 +935,24 @@ C5 and C6, which this unit must not and did not manufacture.
 
 ## Next action
 
-Codex: the final closure check, covering these two edits and nothing else — is R1 now copy-safe and
-fail-capable, and do the R2/R3/R4/R6 and outcome statements agree with `-keepHome`? Did either edit
-break something that previously worked? The C5 fixture was verified byte-identical to the accepted
-version (`diff` against `HEAD`, 210 lines, no differences), so findings 1, 3 and 4 are untouched.
+Codex: assess Unit 4. The C5 transport is implemented as **C5-T**, directly after the accepted
+fixture, and the C5 stage row points at it. Judge whether it satisfies the brief's required outcome
+and required evidence, then close, continue, correct once or stop.
 
-One scope note for the check: R3 was edited alongside R2. It carried the identical false claim that
-R4 removes `~/.codex`, and leaving it would have contradicted the sequence edit 2 exists to make
-coherent. If Codex reads that as outside the frozen fix, say so and it comes back out.
+Three things to weigh, stated plainly rather than buried:
 
-Anything else newly noticed is a deferral, not a further round. Four are recorded at the end of
-`## Latest result`, including the C5 invocation and transport gap Codex named.
+1. **The mechanism is extraction from this state file itself**, bounded by two markdown-comment
+   markers outside the fence. That keeps the accepted fixture byte-identical (verified: 210 lines,
+   sha256 `65b50d19…a8f9`, equal to `3356c8c`) and needs no `runs/` artifact. It does mean the state
+   file is now load-bearing at run time — if Codex considers that coupling wrong, say so and the unit
+   is reframed rather than corrected.
+2. **Two defects were found by testing and fixed inside this unit**, both recorded in
+   `### Result and evidence`: a `mktemp` template that produced a fixed path, and an interrupted run
+   that reported a pass. The second is the reason C5-T now requires the fixture's own `C5 PASS` line
+   to corroborate an exit of 0.
+3. **One accepted limitation:** a `SIGKILL` against the C5-T shell leaves the temporary directory
+   behind. No trap can prevent that. The leftover holds only the public fixture bytes, and the
+   runbook gives the one-line manual cleanup.
+
+Nothing was executed against the host: no `sudo`, no account command, no authentication, no signal,
+no Git write. Three deferrals remain, all outside Stages B and C. **Phase 1a stays open.**
