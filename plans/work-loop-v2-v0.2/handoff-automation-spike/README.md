@@ -707,10 +707,15 @@ Three scripts exist for the two-worktree proof and are not used by the single-ch
   droppable, but a branch **shares the working directory and index** with anything else open in that
   checkout, and switching it switches what the operator sees. The containment is therefore *"nobody
   opens the checkout while the run is live"*, which walking away satisfies by definition.
-  > **Temporary limitation, with a named reason.** A dedicated worktree is the right answer and is
-  > blocked: the ambient `friction-log.md` writer appends to a tracked file, which
-  > `logs/work-loop/work-loop-v2-production-readiness-policy.md:252` marks as a guaranteed landing
-  > conflict under worktrees. Worktrees become available once that is fixed — not before.
+  > **Temporary limitation, with a named reason — and the reason expired on 2026-08-09.** A dedicated
+  > worktree is the right answer. It was blocked because the ambient `friction-log.md` writer appends
+  > to a tracked file, which two parallel worktrees then land in conflict. `--unattended` disables the
+  > child's hooks, so a **contained** run never triggers that writer and the block does not apply to
+  > it; the hook fix this note was waiting for was dropped as unnecessary rather than built. An
+  > **attended** worktree session is still exposed, because its hooks are live. See the closing record
+  > of `logs/work-loop/work-loop-v2-production-readiness-policy.md`. The pilot stays on a branch
+  > regardless — that choice never depended on this block — and no dispatched run has launched live
+  > yet, so a first worktree run is separately authorized work.
 
 ### The honest risk envelope for an unattended run
 

@@ -148,10 +148,24 @@ how much it is allowed to do — see 1d.
 `git status --porcelain` (`dispatch.sh:265-276`). Claude commits each hop, so its work leaves a clean
 tree and passes the guard. Only stray *uncommitted* files trip it.
 
-**6. The parallel-operation prerequisites do not gate this plan's serial path — but they do gate
-worktrees.** **OBSERVED** — `logs/work-loop/work-loop-v2-production-readiness-policy.md:374`:
-*"U1 and U2 are both prerequisites to any real parallel run"*; its step 6 (ambient `friction-log.md`
-writer under worktrees) is marked **blocked** at line 252. See 1f.
+**6. The parallel-operation prerequisites do not gate this plan's serial path. They gated worktrees,
+and that gate is now cleared for contained runs only.** **OBSERVED** — the production-readiness
+policy task closed on 2026-08-09 (`logs/work-loop/work-loop-v2-production-readiness-policy.md`, now
+its closing record — cite it by section, not by line, since the active brief it once carried is gone).
+Two of its findings changed this plan's inputs:
+
+- **The headless session-identity prerequisite is built.** `dispatch.sh` now allocates a marker and
+  writes a concrete `- Files in scope:` bullet before hop 1, so `check-foreign-staging.sh` reads the
+  run's own footprint instead of a stranger's via the shared-marker fallback.
+- **The ambient `friction-log.md` writer is no longer a blocker for *contained* runs, and the hook
+  fix that would have cleared it was dropped.** `--unattended` launches the Claude child with
+  `"disableAllHooks": true`, so the writer cannot fire inside a contained hop and there is no
+  co-edit to conflict over. The planned hook edit (that task's U2) was therefore dropped rather than
+  built — do not wait for it, it is not coming.
+
+**What is still blocked:** an *attended* parallel session in a worktree. Its hooks are live, so it
+appends to the tracked `friction-log.md` exactly as before and two such sessions still land in
+conflict. The clearance is a property of containment, not of the worktree. See 1f.
 
 ---
 
@@ -444,17 +458,27 @@ launching from a Codex task). One line, and without it the 40-minute premise fai
 **withdrawn**.* A branch shares the working directory and index with the operator's session, carries
 uncommitted changes across, and switches the checkout they have open.
 
-**But a worktree is not currently free** (fact 6): the ambient `friction-log.md` hook writes a tracked
-file, which the production-readiness policy marks **blocked** at line 252 as a guaranteed landing
-conflict.
+**A worktree was not free when this plan was written** (fact 6): the ambient `friction-log.md` hook
+writes a tracked file, which the production-readiness policy marked as a guaranteed landing conflict.
+
+**That condition changed on 2026-08-09, and not the way this plan expected.** The block is cleared
+for a **contained** run — `--unattended` disables the child's hooks, so the ambient writer never
+fires and there is no co-edit. It is *not* cleared by the hook fix this section was waiting for:
+that fix was dropped as unnecessary once containment made it moot. An **attended** worktree session
+is still exposed, because its hooks are live.
 
 **Resolution — and it follows the review's own acceptance condition.** Codex allows a branch-only
 pilot in *"a clean checkout that no other process or person will touch."* Walking away satisfies that
 by definition. So:
 
 - **Pilot:** a branch, `work-loop/<task-id>`, from a clean tree, documented as a **temporary
-  limitation** with the reason. Nobody opens the checkout while the run is live.
-- **Standing use:** a dedicated worktree, gated behind the `friction-log.md` fix. Not this session.
+  limitation** with the reason. Nobody opens the checkout while the run is live. Unchanged — the
+  pilot never depended on the worktree question.
+- **Standing use:** a dedicated worktree, **for contained (`--unattended`) runs only**. The gate this
+  line used to name — "after the `friction-log.md` fix" — is retired, not satisfied. Still not this
+  session: the clearance is documented but no dispatched run has ever launched live, so the first
+  worktree use is a separately authorized step, and the operator creates the worktree
+  (`docs/parallel-sessions-playbook.md` § 4 step 3, dispatched entry path).
 
 ### 1g. A read-only way to look without touching
 
@@ -662,7 +686,8 @@ Phase 1  safety            →  1a stoppable (confirm→fix) · 1b true deadline
                               1d authority [OPERATOR] · 1e no sleep · 1f branch · 1g status
 Phase 2  walk-away pilot   →  one task · hard clock · isolated · notified · recorded
 Phase 3  document          →  3a-3h skill + README
-Deferred                   →  supervisor (decided by 0c) · worktree (after friction-log) · the rest
+Deferred                   →  supervisor (decided by 0c) · worktree (contained runs only,
+                              cleared 2026-08-09 by --unattended, not by a hook fix) · the rest
 ```
 
 **Phase 0 gates Phase 1; Phase 1 gates Phase 2; 1d gates Phase 2 absolutely.**
@@ -694,6 +719,8 @@ sleep prevention (#9, missed entirely by v0.1); the two corrections above (#6, #
 - **#5 branch versus worktree** — the technical criticism is accepted and *"90% of a worktree"* is
   withdrawn; but the worktree path is blocked on the `friction-log.md` writer, and the review's own
   acceptance condition for a branch-only pilot is met by walking away. Branch now, worktree later.
+  *(This records the 2026-08-06 review as it stood. The worktree block was cleared on 2026-08-09 for
+  contained runs — see fact 6 and 1f. The branch-first decision for the pilot is unaffected.)*
 
 **Disagreed:** the review's order puts six safety items before any proof. Phase 0 keeps the *attended*
 proof first — it is free, it is safe at the keyboard, and if nested launching fails it changes the
