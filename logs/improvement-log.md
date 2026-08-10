@@ -3209,3 +3209,88 @@ verbatim-block rule belongs).
 plan address a different failure in the same block one day earlier. Two independent defects in one
 embedded resolver in two days is itself the signal: the block is long, security-bearing, duplicated
 across two files, and has no test that executes it.
+
+---
+
+### 2026-08-10 — `check-destructive-liveness.sh` resolves the wrong target for `git -C <path> clean -f`, and fires on dry runs
+
+- **Status:** logged (pending)
+- **Category:** hook / destructive-op guard
+- **Severity:** high
+
+**Two defects in one hook, found by execution during a `/close-worktree-session` teardown** (session `00ac6c96`, `axcion-systems-builder`). Both are in `ai-resources/.claude/hooks/check-destructive-liveness.sh`.
+
+**Defect 1 — the `-C` blind spot. This is the one with a safety consequence.**
+
+The hook's own header states the target-resolution rule at
+`ai-resources/.claude/hooks/check-destructive-liveness.sh:33`:
+
+> `git clean -f/-fd/-fdx` — target = the CURRENT checkout
+
+That is true for a bare `git clean`. It is false for `git -C <other-checkout> clean -f`, which the
+hook does not parse. Observed: a `git -C "<...>/axcion-systems-builder-email-os" clean -xfdn` was
+probed against `<...>/axcion-systems-builder` — a **different checkout** — and blocked on markers
+belonging to that other checkout.
+
+**Why this is worse than a false positive.** The block was the harmless direction. The same gap runs
+the other way: `git -C <live-checkout> clean -f` issued from an idle checkout is probed against the
+**idle** one, all three probes come back clear, and the hook degrades **open** on a command that
+destroys untracked files in a live session. That is precisely the failure class the hook exists to
+prevent, reintroduced through an argument form it does not read.
+
+Note the hook already resolves a path argument correctly for `git worktree remove <path>`
+(`:30`) — the machinery exists; `git -C` simply is not wired into it. `git reset --hard` shares the
+same exposure (`:32`, target = current checkout) and should be checked in the same pass.
+
+**Defect 2 — dry runs are blocked.** The pattern match keys on `-f` appearing in the flag string, so
+`git clean -xfdn` is treated as destructive. `-n` means list-and-change-nothing. Blocking the
+non-destructive rehearsal is backwards: the dry run is the step that lets an operator *see* what a
+guard is protecting before deciding. Cosmetic next to defect 1, but it pushes sessions toward running
+the real command to find out what it would do.
+
+**Shape of the fix (not built).** Parse `-C <path>` (and `--git-dir`/`--work-tree`) before classifying
+`clean`/`reset`, and resolve the target from it — reusing the `_resolve_dir_arg` path already used for
+`worktree remove`. Mind the header's own space-in-path warning at `:146` and `:274`: this workspace's
+paths contain spaces, and the same bug has been fixed twice already in the target argument. Separately,
+exclude `-n`/`--dry-run` from the destructive match.
+
+**Not verified:** whether the Skill-route copy of this hook, if one exists, has the same gap.
+
+**Target files:** `ai-resources/.claude/hooks/check-destructive-liveness.sh` (target resolution ~`:367-372`, and the header contract at `:30-33`).
+
+---
+
+### 2026-08-10 — Stale session markers survive a crashed session and block every later destructive op in that checkout
+
+- **Status:** logged (pending)
+- **Category:** session-marker lifecycle
+- **Severity:** medium
+
+**Found in the same teardown.** `projects/axcion-systems-builder/logs/` held two markers dated
+**2026-08-05** (`.session-marker` and `.session-marker-f992a158-...`, both `2026-08-05 S1-f99`,
+mtime Aug 5 10:44), five days stale, from a session that never wrapped.
+
+`cleanup-session-marker.sh` fires on `SessionEnd`, which does not run on a hard crash or a
+force-quit. The known gap is documented in
+`ai-resources/.claude/commands/close-worktree-session.md` — but only as prose telling the *operator*
+to confirm idleness. Nothing prunes the marker, so the checkout is left permanently "occupied" from
+the guard's point of view.
+
+**The consequence is a guard-erosion pattern, not just an annoyance.** Every destructive op in that
+checkout now blocks on evidence that is five days dead. Each block asks the operator to assert
+idleness and re-run with `AXCION_LIVENESS_OVERRIDE=1`. A guard that must be overridden routinely is a
+guard that stops being read — and the override then rides on a habit rather than on a judgment. The
+same doc forbids deleting markers to get past the guard (correctly), which leaves **no sanctioned way
+to clear a genuinely dead one**.
+
+**Shape of the fix (not built).** Give the marker an age: have the liveness probe report a marker
+older than some threshold as `STALE (age Nd)` and require an explicit operator disposition, rather
+than treating a 5-day-old marker and a 5-minute-old one as the same signal. A `SessionStart` sweep
+that prunes markers whose owning process is gone would close it structurally; the process-liveness
+check needed for that was **not** investigated here. **Do not** fix this by adding a bare
+delete-the-marker step — that is the workaround the doctrine already closed.
+
+**Immediate state:** the two 2026-08-05 markers are **still present**. They were deliberately not
+deleted. Clearing them is an operator decision.
+
+**Target files:** `ai-resources/.claude/hooks/check-destructive-liveness.sh` (probe b), `~/.claude/hooks/cleanup-session-marker.sh`, `ai-resources/docs/session-marker.md` § Per-id marker teardown.
