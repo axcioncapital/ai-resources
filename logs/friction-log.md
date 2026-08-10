@@ -454,6 +454,37 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
 - 16:05 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
 - 16:05 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
 - 16:04 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
+- 22:07 — logs/scratchpads/2026-08-09-21-30-scratchpad.md
+- 22:07 — logs/session-notes.md
+- 22:06 — logs/session-notes.md
+- 22:06 — logs/decisions.md
+- 22:06 — logs/session-notes.md
+- 22:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/scripts/work-loop-v2-slice-1.test.sh
+- 22:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/scripts/work-loop-v2-slice-1.test.sh
+- 22:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/scripts/work-loop-v2-slice-1.test.sh
+- 22:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/scripts/work-loop-v2-slice-1.test.sh
+- 22:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/scripts/work-loop-v2-slice-1.test.sh
+- 22:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/scripts/work-loop-v2-slice-1.test.sh
+- 22:04 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.agents/skills/work-loop-v2/SKILL.md
+- 22:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.agents/skills/work-loop-v2/SKILL.md
+- 22:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.agents/skills/work-loop-v2/SKILL.md
+- 22:03 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.agents/skills/work-loop-v2/SKILL.md
+- 21:52 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:51 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+- 21:51 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+- 21:51 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+- 21:51 — plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md
+- 21:23 — logs/work-loop/work-loop-v2-production-readiness-policy.md
+- 21:14 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 21:14 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 21:09 — docs/parallel-sessions-playbook.md
+- 20:58 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:58 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:57 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:57 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:55 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:55 — logs/work-loop/work-loop-v2-parallel-worktree-proof.md
+- 20:52 — audits/working/research-work-loop-v2-readiness-verdict-2026-08-09.md
 - 15:55 — /tmp/handoff-work-loop-v2-phase1a-2026-08-09.md
 - 15:50 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md
 - 15:48 — logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md

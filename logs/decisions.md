@@ -306,3 +306,37 @@ downstream need anyway (the run manifest resolves its marker the same way).
 **Follow-up.** The underlying defect is queued as a `high` finding in `logs/improvement-log.md`
 (2026-08-09, staging tripwire / direct-route footprint), with the structural fix named: treat a
 foreign marker as *no footprint*, not as *this session's*.
+## 2026-08-09 — Close work-loop-v2-production-readiness-policy without a Codex assessment
+
+**Context.** The task's discovery unit was complete and committed at `turn: codex`, awaiting Codex's
+assessment of the recommended production policy (§ 3), five operator decisions (§ 4) and five
+implementation units (§ 5). The operator directed that Codex not be used for this assessment.
+
+**Decision.** Replace the Codex assessment with an independent `/research` subagent pass that
+re-verified all eight of the discovery's findings against the live repository by opening the actual
+files, rather than trusting the discovery's own prose. Act on that verdict directly rather than
+waiting for Codex.
+
+**Rationale.** The research surfaced a material change the discovery could not have known about:
+commit `9c66f26` (2026-08-07) added `dispatch.sh --unattended`, which disables the dispatched child's
+hooks entirely. That made the discovery's central recommendation for the shared-writer problem
+(D1 — edit `log-write-activity.sh` to suppress telemetry for dispatched actors) unnecessary: the
+ambient writer cannot fire in a contained hop, so there is nothing left to suppress. D1 was replaced
+with a launch precondition (`--unattended`) rather than a hook edit, and the plan's only planned
+structural-change unit (U2) was dropped as a result.
+
+**Alternatives considered.**
+- *Wait for Codex, as the protocol's normal path.* Rejected by explicit operator direction — the
+  operator judged the research route sufficient for this task's stakes.
+- *Execute the discovery's recommendation unchanged (D1 as originally written).* Rejected once the
+  research showed it was superseded: it would have spent a structural-class hook edit and its
+  risk-aware review on a problem that had already stopped existing three days earlier.
+- *Treat the state file as final without re-verification.* Rejected — the discovery was three days
+  old, several commits had landed since, and the state file's own protocol (core § 6 rule 1) requires
+  checking claims against the live repository before acting on them, regardless of which party does
+  the checking.
+
+**Recorded departure from protocol.** The Work Loop v2 executable core assigns the close verdict to
+Codex (§ 3 step 5); this closure did not go through that step. It is recorded in the closed state
+file's Accepted limitations as an operator-directed exception for this task, not as a change to the
+protocol itself.

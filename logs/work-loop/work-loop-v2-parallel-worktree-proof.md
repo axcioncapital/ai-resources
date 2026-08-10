@@ -27,8 +27,11 @@ further residuals — all corrected and regression-covered. The final focused ha
   section *contents* remain deliberately unvalidated.
 - **The operator-authorized staging-tripwire override is recorded, not buried.** The final-fix commit
   was blocked by `.claude/hooks/check-foreign-staging.sh` on a confirmed false positive: this session
-  ran no `/session-start`, so it declared no footprint and the guard fell back to the newest entry in
-  `logs/session-notes.md` — a 2026-08-03 session about an unrelated task. The operator authorized an
+  ran no `/prime`, so it wrote no per-id marker and the guard fell back to the checkout-level shared
+  marker `logs/.session-marker`, still holding the id of a 2026-08-03 session about an unrelated
+  task, and read that session's footprint as this one's. (Corrected 2026-08-09: the record previously
+  described a newest-entry scan of `logs/session-notes.md`; no such scan exists in the hook — the
+  fallback is the shared marker.) The operator authorized an
   override scoped to exactly four named files; the staged set was asserted equal to that set before
   each commit, and the repository's `pre-commit` hook stayed active throughout. The value was
   preserving verified work without falsifying file ownership; the risk was stepping around a guard

@@ -3151,3 +3151,61 @@ carries.
 session primed" — see `## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless
 session` and the same log's 2026-08-07 foreign-session-guard coverage entry. This is the first with a
 commit-blocking consequence rather than a wrap-time one.
+
+## 2026-08-10 — `/work-loop-v2`'s embedded resolver is rewritten by its own argument, because it uses `$1`/`$2` as bash positionals
+
+- **Severity:** high — the resolver is the command's boundary validation, and the command instructs
+  the reader to "Run this exact Bash resolver in one call" before any other Work Loop action. When it
+  is rewritten, the reader either runs corrupted shell or must notice and route around a block the
+  command declares mandatory.
+- **Source:** observed live in the `contacting-operations-phase-5-needs` session, 2026-08-10, on a
+  `/work-loop-v2` invocation whose argument was a multi-line operator decision packet.
+
+**What happens.** `ai-resources/.claude/commands/work-loop-v2.md` uses `$1` and `$2` as **bash
+positional parameters** inside the resolver's shell functions — lines 29, 33, 40, 47 and 72. Claude
+Code also treats `$1`/`$2` in a slash-command body as **argument placeholders**. The two collide, and
+the expander wins: the shell code reaches the reader with its parameters already substituted.
+
+**Observed.** With an argument beginning *"Yes—the missing piece is a self-contained answer…"*, every
+`$1` in the block arrived as `missing` and every `$2` as `piece` — `git -C "missing"`,
+`local wl2_w="missing"`, `wl2_c="missing/$wl2_c"`, and
+`local wl2_candidate="missing" wl2_source_root="piece"`. The index mapping is **not** simply
+word-1/word-2 of the argument, and this entry deliberately does not guess the tokenizer's rule; the
+collision is certain, the exact mapping is not.
+
+**Why this is worse than a plain bug: it is argument-shape dependent, so it passes casual testing.**
+Earlier in the *same session*, `/work-loop-v2 phase5` — a single-token argument — delivered the block
+**intact**, with `git -C "$1"` unsubstituted, and it ran correctly. A maintainer testing with a short
+task id sees a working command. The corruption appears only with the longer arguments that real
+operator hand-offs actually carry.
+
+**It fails closed in the observed shape, and that is verified rather than assumed.** Simulating
+`$1=missing` makes `git -C "missing" rev-parse` fail, `wl2_git_top` return 1, and the resolver exit 1
+with its `cannot resolve its repository boundary` error. **The structural concern is narrower and is
+not a demonstrated exploit:** the containment check that keeps the resolved file inside the permitted
+root — `case "$wl2_dir/" in "$wl2_source_root/"*)` — is itself built from `$2`. A security boundary
+parameterised by a token the expander may rewrite is the wrong shape, independent of whether any
+argument reaches it.
+
+**Blast radius: both canonical copies.** `ai-resources/.claude/commands/work-loop-v2.md` and
+`ai-resources/.agents/skills/work-loop-v2/SKILL.md` each carry six `$1`/`$2` occurrences in the same
+block. The command route is the one observed failing; whether the Skill route substitutes the same
+way was **not** tested and should be, rather than assumed safe.
+
+**Shape of the fix (not built).** Preferred and structural: **remove `$1`/`$2` from the embedded bash
+entirely** — have the functions read named variables set before their definitions, so no token the
+slash-command expander rewrites appears in a block intended to run verbatim. The general rule this
+instance teaches is worth stating once in the release-pass guide: *a fenced block meant to be executed
+character-for-character may not contain expander-owned tokens.* A fallback of escaping `$1` depends on
+the expander honouring an escape and was not verified.
+
+**Owner artifacts.** `ai-resources/.claude/commands/work-loop-v2.md` and
+`ai-resources/.agents/skills/work-loop-v2/SKILL.md` (the resolver block, both copies) +
+`ai-resources/plans/work-loop-v2-v0.2/command-instruction-release-pass-guide.md` (where the
+verbatim-block rule belongs).
+
+**Not the first defect in this resolver.**
+`ai-resources/plans/work-loop-v2-v0.2/core-resolver-worktree-defect-report-2026-08-09.md` and its fix
+plan address a different failure in the same block one day earlier. Two independent defects in one
+embedded resolver in two days is itself the signal: the block is long, security-bearing, duplicated
+across two files, and has no test that executes it.

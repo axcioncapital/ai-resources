@@ -119,7 +119,10 @@ A recognized parallel-coordination device: mark in-progress backlog items in `ne
    cd ../<repo>-<unit>
    ```
 
-   Then enter the worktree in a **new VS Code window**: `/new-worktree-session` opens it for you (via `code -n` / `open -a`), or open it by hand — VS Code → **File ▸ New Window ▸ Open Folder…** → the worktree. Open the Claude Code panel there and run `/prime` before doing any work — a command cannot move *this* session into the worktree for you. (Terminal users: `cd` into it and run `claude`.) Tear down per the § 5 teardown checklist when the unit lands.
+   Then enter the worktree by one of **two entry paths**:
+
+   - **Interactive (the default).** A **new VS Code window**: `/new-worktree-session` opens it for you (via `code -n` / `open -a`), or open it by hand — VS Code → **File ▸ New Window ▸ Open Folder…** → the worktree. Open the Claude Code panel there and run `/prime` before doing any work — a command cannot move *this* session into the worktree for you. (Terminal users: `cd` into it and run `claude`.) Tear down per the § 5 teardown checklist when the unit lands.
+   - **Dispatched (headless, Work Loop v2 only).** The operator starts one task-scoped dispatcher (`plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, invoked by explicit path — it is deliberately not installed as a command) in the worktree, for exactly one task with an existing state file. This path does **not** route through an interactive `/prime`: before hop 1 the dispatcher initializes session identity itself — it runs `logs/scripts/prime-session-entry.sh` to allocate the marker, then writes one concrete `- Files in scope:` bullet derived from its own `--allow-path` set — so the staging tripwire is armed with this run's footprint rather than a stale one from the shared-marker fallback. The worktree is still created by the operator (path 3 above), never by the dispatcher: the file-ownership map is the go/no-go gate and stays a human judgment. Landing and teardown are unchanged (§ 5).
 4. **Stay in lane.** A session that finds it needs another unit's file **stops and flags** — it never crosses into a file it does not own. Crossing lanes is how a clean partition becomes a dirty merge.
 5. **Deliberate landing pass** (§ 5) — never an afterthought.
 
