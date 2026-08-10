@@ -29,68 +29,83 @@ Never walk higher. Run this exact Bash resolver in one call:
 
 ```bash
 wl2_semantic_rel='plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md'
+# No Bash positional parameters in this block — the slash-command expander owns those tokens
+# and rewrites them at invocation. Each function reads its input from the wl2_*_in variable
+# its caller sets on the line before the call.
 wl2_git_top() {
   local wl2_top
-  wl2_top="$(git -C "$1" rev-parse --show-toplevel 2>/dev/null)" || return 1
+  wl2_top="$(git -C "$wl2_top_in" rev-parse --show-toplevel 2>/dev/null)" || return 1
   (cd "$wl2_top" && pwd -P)
 }
 wl2_is_workspace() {
-  local wl2_w="$1"
-  [ -d "$wl2_w/projects" ] && [ -d "$wl2_w/ai-resources" ] || return 1
-  [ "$(wl2_git_top "$wl2_w")" = "$wl2_w" ] || return 1
-  [ "$(wl2_git_top "$wl2_w/ai-resources")" = "$wl2_w/ai-resources" ]
+  [ -d "$wl2_ws_in/projects" ] && [ -d "$wl2_ws_in/ai-resources" ] || return 1
+  wl2_top_in="$wl2_ws_in"
+  [ "$(wl2_git_top)" = "$wl2_ws_in" ] || return 1
+  wl2_top_in="$wl2_ws_in/ai-resources"
+  [ "$(wl2_git_top)" = "$wl2_ws_in/ai-resources" ]
 }
 wl2_git_common() {
   local wl2_c
-  wl2_c="$(git -C "$1" rev-parse --git-common-dir 2>/dev/null)" || return 1
-  case "$wl2_c" in /*) ;; *) wl2_c="$1/$wl2_c" ;; esac
+  wl2_c="$(git -C "$wl2_common_in" rev-parse --git-common-dir 2>/dev/null)" || return 1
+  case "$wl2_c" in /*) ;; *) wl2_c="$wl2_common_in/$wl2_c" ;; esac
   [ -d "$wl2_c" ] || return 1
   (cd "$wl2_c" && pwd -P)
 }
 wl2_is_trusted_repo() {
   local wl2_common wl2_canon wl2_canon_top
-  wl2_common="$(wl2_git_common "$1")" || return 1
+  wl2_common_in="$wl2_trust_in"
+  wl2_common="$(wl2_git_common)" || return 1
   case "$wl2_common" in */.git) ;; *) return 1 ;; esac
   wl2_canon="${wl2_common%/.git}"
   # Load-bearing: the shared store proves same-repo, the name proves which repo. Do not drop.
   [ "$(basename "$wl2_canon")" = 'ai-resources' ] || return 1
-  wl2_canon_top="$(wl2_git_top "$wl2_canon")" || return 1
+  wl2_top_in="$wl2_canon"
+  wl2_canon_top="$(wl2_git_top)" || return 1
   [ "$wl2_canon_top" = "$wl2_canon" ] || return 1
-  [ "$(wl2_git_common "$wl2_canon")" = "$wl2_common" ]
+  wl2_common_in="$wl2_canon"
+  [ "$(wl2_git_common)" = "$wl2_common" ]
 }
-wl2_repo_root="$(wl2_git_top "$(pwd -P)")" ||
+wl2_top_in="$(pwd -P)"
+wl2_repo_root="$(wl2_git_top)" ||
   { echo 'ERROR: Work Loop v2 cannot resolve its repository boundary.' >&2; exit 1; }
 wl2_workspace_root=''
-if wl2_is_workspace "$wl2_repo_root"; then
+wl2_ws_in="$wl2_repo_root"
+if wl2_is_workspace; then
   wl2_workspace_root="$wl2_repo_root"
 else
   wl2_projects_dir="$(dirname "$wl2_repo_root")"
   wl2_workspace_candidate="$(dirname "$wl2_projects_dir")"
+  wl2_ws_in="$wl2_workspace_candidate"
   if [ "$(basename "$wl2_projects_dir")" = 'projects' ] &&
-     wl2_is_workspace "$wl2_workspace_candidate"; then
+     wl2_is_workspace; then
     wl2_workspace_root="$wl2_workspace_candidate"
   fi
 fi
 wl2_semantic_path=''
 wl2_attempted=''
 wl2_try_semantic() {
-  local wl2_candidate="$1" wl2_source_root="$2" wl2_dir
-  wl2_attempted="${wl2_attempted}${wl2_attempted:+; }$wl2_candidate"
-  [ -f "$wl2_candidate" ] && [ -r "$wl2_candidate" ] && [ ! -L "$wl2_candidate" ] || return 1
-  wl2_dir="$(cd "$(dirname "$wl2_candidate")" && pwd -P)" || return 1
-  case "$wl2_dir/" in "$wl2_source_root/"*) ;; *) return 1 ;; esac
-  wl2_semantic_path="$wl2_dir/$(basename "$wl2_candidate")"
+  local wl2_dir
+  wl2_attempted="${wl2_attempted}${wl2_attempted:+; }$wl2_cand_in"
+  [ -f "$wl2_cand_in" ] && [ -r "$wl2_cand_in" ] && [ ! -L "$wl2_cand_in" ] || return 1
+  wl2_dir="$(cd "$(dirname "$wl2_cand_in")" && pwd -P)" || return 1
+  case "$wl2_dir/" in "$wl2_root_in/"*) ;; *) return 1 ;; esac
+  wl2_semantic_path="$wl2_dir/$(basename "$wl2_cand_in")"
 }
 wl2_workspace_path=''
 if [ -n "$wl2_workspace_root" ]; then
   wl2_workspace_path="$wl2_workspace_root/ai-resources/$wl2_semantic_rel"
-  wl2_try_semantic "$wl2_workspace_path" "$wl2_workspace_root/ai-resources" || true
+  wl2_cand_in="$wl2_workspace_path"
+  wl2_root_in="$wl2_workspace_root/ai-resources"
+  wl2_try_semantic || true
 fi
 wl2_direct_path="$wl2_repo_root/$wl2_semantic_rel"
 wl2_direct_reason=''
 if [ -z "$wl2_semantic_path" ] && [ "$wl2_direct_path" != "$wl2_workspace_path" ]; then
-  if wl2_is_trusted_repo "$wl2_repo_root"; then
-    wl2_try_semantic "$wl2_direct_path" "$wl2_repo_root" || true
+  wl2_trust_in="$wl2_repo_root"
+  if wl2_is_trusted_repo; then
+    wl2_cand_in="$wl2_direct_path"
+    wl2_root_in="$wl2_repo_root"
+    wl2_try_semantic || true
   else
     wl2_direct_reason='direct_identity=untrusted'
   fi

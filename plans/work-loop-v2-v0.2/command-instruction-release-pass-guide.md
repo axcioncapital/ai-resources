@@ -29,6 +29,14 @@ The command is ready when all of the following are true:
 
 A command does not pass merely because it sounds polished or professional.
 
+## Embedded executable blocks
+
+A fenced block meant to be executed character-for-character may not contain tokens owned by the slash-command expander. Claude Code rewrites `$1`-style positional placeholders (and `$ARGUMENTS`) in a command body at invocation, so an embedded script that uses Bash positional parameters arrives corrupted whenever the command is invoked with a multi-word argument — while a short single-token argument passes untouched, which hides the defect from routine testing. Pass values into embedded shell functions through named variables assigned before each call instead.
+
+Check during this pass: `grep -nE '\$[0-9]' <command file>` must match nothing, in code or comments, outside an intended placeholder. Apply the same check to any mirrored copy of the block (the Codex-side skill).
+
+Defect record: `plans/work-loop-v2-v0.2/core-resolver-argument-substitution-defect-report-2026-08-10.md`.
+
 ## When to run this pass
 
 Run the pass after the command's intended behaviour is stable and before the command is released or installed more widely.
