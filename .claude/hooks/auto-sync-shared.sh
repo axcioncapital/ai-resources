@@ -3,6 +3,23 @@
 #
 # Walks ai-resources/.claude/{commands,agents}/ and symlinks every file into
 # the project, EXCEPT:
+#
+# Agent skills (ai-resources/.agents/skills/) work the OPPOSITE way: opt-in, not
+# sync-everything. A project gets a shared skill only by naming it in its
+# .claude/shared-manifest.json under skills.shared. Rationale: .agents/skills/ is
+# a curated per-project set, not a common toolbox — axcion-website holds 7
+# site-specific skills of its own, axcion-systems-builder wants exactly one
+# shared skill, and ai-resources holds migration leftovers (source-command-*)
+# plus probes (wl2-probe) that belong in no downstream project. An unconditional
+# sync would push all of those into all 28 projects.
+#
+# Why this exists at all: a git worktree inherits the tracked manifest but NOT
+# the untracked symlinks, so before this a worktree got the Claude-side
+# /work-loop-v2 command and silently lost the Codex-side skill (2026-08-10).
+# Making membership declarative in a tracked file is what makes a worktree
+# reproduce it.
+#
+# The command/agent rules below are unchanged:
 #   1. Files listed in the project's .claude/shared-manifest.json under
 #      commands.local / agents.local (project-owned, never overwritten).
 #   2. Files in the baked-in EXCLUDE lists below (ai-resources-meta — never
@@ -71,6 +88,12 @@ EXCLUDE_AGENT_GLOBS="pipeline-stage-* session-guide-generator pipeline-review-* 
 LOCAL_COMMANDS=$(jq -r '.commands.local[]?' "$MANIFEST" 2>/dev/null)
 LOCAL_AGENTS=$(jq -r '.agents.local[]?' "$MANIFEST" 2>/dev/null)
 
+# Agent skills are OPT-IN — see the "Agent skills" note in the header. skills.shared
+# is the only *used* `shared` array in the manifest; commands/agents.shared are
+# documentation and the hook ignores them.
+LOCAL_SKILLS=$(jq -r '.skills.local[]?' "$MANIFEST" 2>/dev/null)
+SHARED_SKILLS=$(jq -r '.skills.shared[]?' "$MANIFEST" 2>/dev/null)
+
 in_list() {
   local needle="$1"; shift
   for item in $@; do
@@ -89,6 +112,7 @@ matches_glob() {
 
 synced=""
 failed=""
+unknown=""
 
 # Emit symlinks with RELATIVE targets — repo-architecture.md § Symlink topology
 # rule 5 declares "Symlinks are relative", and /fix-symlinks (fix-symlinks.md
@@ -133,6 +157,28 @@ for src in "$AI_RESOURCES"/.claude/agents/*.md; do
   synced="$synced ${name}.md"
 done
 
+# Sync agent skills — OPT-IN via skills.shared, and each source is a DIRECTORY
+# (holding SKILL.md), so the symlink target is a dir, not a file. A name listed in
+# skills.shared but absent from ai-resources is a manifest error, reported through
+# its own "$unknown" list rather than "$failed" (whose message is python3-specific).
+for name in $SHARED_SKILLS; do
+  in_list "$name" "$LOCAL_SKILLS" && continue
+  src="$AI_RESOURCES/.agents/skills/$name"
+  if [ ! -d "$src" ]; then
+    unknown="$unknown $name"
+    continue
+  fi
+  target="$PROJECT_DIR/.agents/skills/$name"
+  [ -e "$target" ] || [ -L "$target" ] && continue
+  mkdir -p "$PROJECT_DIR/.agents/skills"
+  if ! rel_src=$(python3 -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$src" "$(dirname "$target")" 2>/dev/null) || [ -z "$rel_src" ]; then
+    failed="$failed skills/$name"
+    continue
+  fi
+  ln -s "$rel_src" "$target"  # relative target — see header comment above
+  synced="$synced skills/$name"
+done
+
 # Drift detection: targets that exist as regular files (not symlinks) but differ
 # from the canonical source. Uses "AI-RESOURCES DRIFT:" prefix to distinguish from
 # check-template-drift.sh ("Template drift detected:") — both may fire independently.
@@ -158,7 +204,11 @@ for src in "$AI_RESOURCES"/.claude/agents/*.md; do
   diff -q "$src" "$target" >/dev/null 2>&1 || drifted="$drifted ${name}.md"
 done
 
-if [ -n "$synced" ] || [ -n "$drifted" ] || [ -n "$failed" ]; then
+# No drift pass for skills: the canonical source is a directory tree, so the
+# `diff -q` file comparison above does not apply, and a real (non-symlink)
+# .agents/skills/<name>/ is a legitimate project-local skill rather than drift.
+
+if [ -n "$synced" ] || [ -n "$drifted" ] || [ -n "$failed" ] || [ -n "$unknown" ]; then
   msg=""
   if [ -n "$synced" ]; then
     count=$(echo $synced | wc -w | tr -d ' ')
@@ -173,6 +223,11 @@ if [ -n "$synced" ] || [ -n "$drifted" ] || [ -n "$failed" ]; then
     fail_count=$(echo $failed | wc -w | tr -d ' ')
     fail_msg="AUTO-SYNC FAILED: $fail_count file(s) skipped because python3 was unavailable or os.path.relpath failed; ensure python3 is on the SessionStart PATH so relative-path symlinks can be emitted:$failed"
     [ -n "$msg" ] && msg="$msg | $fail_msg" || msg="$fail_msg"
+  fi
+  if [ -n "$unknown" ]; then
+    unknown_count=$(echo $unknown | wc -w | tr -d ' ')
+    unknown_msg="MANIFEST ERROR: $unknown_count skill(s) named in skills.shared do not exist under ai-resources/.agents/skills/:$unknown. Fix the name in .claude/shared-manifest.json or remove the entry."
+    [ -n "$msg" ] && msg="$msg | $unknown_msg" || msg="$unknown_msg"
   fi
   echo "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"$msg\"}}"
 fi
