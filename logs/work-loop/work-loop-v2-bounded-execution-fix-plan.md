@@ -72,7 +72,46 @@ Claude may challenge any false or stale premise rather than improvise around it.
 
 ## Latest result
 
-Inspected (2026-08-11). Paths relative to the `ai-resources` checkout; `dispatch.sh` =
+**Correction round (2026-08-11).** All five frozen findings reproduced by reading the plan, the core
+and the SOP; all five corrected in `plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md`. No
+fix implemented, no dispatcher or harness run, no live model, no nested Claude/Codex process. Files
+touched: the candidate plan and this state file — nothing else.
+
+Reproduction, before correcting:
+
+- Finding 1 REPRODUCES — the prior plan had nine sections and no structural-resolution section; searched it for the SOP path, "Lane B", "gate", "structural": no match. The SOP exists at `.agents/skills/work-loop-v2/references/repository-problem-resolution-sop.md` (1024 lines, tracked, clean).
+- Finding 2 REPRODUCES — the prior plan proposed `--allow-nested-actors N` (default 0) inside U1's observable outcome and asserted a `--allow-nested-actors 1` control in U1's evidence, with no ladder comparison anywhere. Searched the postmortem, the run evidence, the plan spine and the skill for a verified authorised nesting use case: the only nesting in evidence is the failure itself.
+- Finding 3 REPRODUCES — prior § 9 line 464: "U1 makes the runaway *impossible to reach* even if someone is tempted anyway", against prior U1 line 168: "a permission-layer deny is not containment — a determined child can evade a tool-name deny from a shell." Direct contradiction, same document.
+- Finding 4 REPRODUCES — the prior plan bounded verification per unit but stated no case-level closure boundary; searched it for "representative", "operational", "closure boundary", "pilot": the only live-run text was one conditional hop attached to the `acceptEdits` decision, not a closure condition for the parent case.
+- Finding 5 REPRODUCES — the prior plan carried no recovery chain; searched it for the state-file path, the checkout path and "gate position": no match. The method existed only in chat.
+
+How each finding is resolved, with the corrected text against the prior text:
+
+1. **Structural gate sequence** — new § 0 (*Method, gate position and recovery chain*). § 0.1 subordinates the SOP: "applied here as **non-governing methodology context, subordinate to the core** … does not become a state-file field, does not create a second state system, and does not override the core's close / continue / correct once / stop", and Work Loop vocabulary is declared unchanged. § 0.2 qualifies the parent case as structural against four SOP Lane B triggers with evidence per trigger — boundary-crossing, shared courier mechanism, false-report behaviour (the `STOP [25]` misreport), and survival of a prior control (`SKILL.md:195`) — and explicitly declines to claim the other two triggers. It marks the qualification provisional and rerouteable, and states that individual fixes stay bounded. § 0.3 gives the gate table: Gate 1 qualification provisional with priority settled by the operator as Proceed now and "does **not** approve a technical design, a mechanism, or a scope"; Gates 2–5 each **NOT** complete, with the basis for each, plus "What exists today is a candidate inventory, not a diagnosis." § 0.4 tailors the eight-step route — preserved-evidence failure proof rather than live reproduction, blind review in a genuinely fresh Codex context that never receives this plan, Claude's causal model and options, operator scope approval, isolated clean checkout, independent verification, one budgeted attended pilot, closure on observed behaviour. Prior text carried none of this: § 1 opened directly on the claim table.
+
+2. **Option ladder before the package** — new § 3 (*Intervention options — the ladder before the package*), stating "Complexity budget: zero" and opening with the outcome stated without a construction. § 3.2 works all eight rungs with a verdict each: rungs 1 and 2 (eliminate the trigger, simplify/restore the courier path) adopted as free and marked **insufficient alone** because written guidance is what already failed; rung 3 (remove the attended tool set) credible but probably too broad since Claude needs Bash for git; **rung 4 (narrow/reuse the existing `--disallowedTools` path) named the leading candidate with "no new flag, no new subsystem and no new file"**; rung 5 (isolate via the existing `--unattended` sandbox) credible but disproportionate; rung 6 not warranted; rung 7 covering the two reporting repairs; **rung 8 rejected for the nested-actor outcome**. § 3.3 drops `--allow-nested-actors N` outright — "the supplied evidence contains exactly one instance of nested AI invocation, and it is the failure" — and states the consequence plainly: no supported way to run nested AI, escalation to the operator instead. U1 was rewritten from a construction to an outcome: prior U1 read "`--allow-nested-actors N` (default 0) is the only way to lift them"; corrected U1 reads "**Construction:** **not settled here**", names rung 4 as leading and rung 3 as the alternative for the design gate, and adds a stop condition — "If the construction turns out to need a new flag after all, stop". § 4 was recast from four *units* to four *outcomes* (O1–O4) with a leading-candidate construction and ladder rung per row. U6 item 2 was reframed from "budget nested AI" to "**a brief may not propose nested Claude or Codex invocation**", because a budget for a rejected capability would be machinery for its own sake; its dependency on U1 is gone. U4 is now labelled "a supporting operating restriction, not a causal fix", in the unit and in § 3.4.
+
+3. **Overclaim removed** — "impossible to reach" is gone from the document; the corrected § 11 says instead "What does **not** survive is the claim that it makes the runaway impossible to reach. It closes the default path by permission policy; it is not containment, a determined child can attempt to evade it from a shell". New § 3.4 separates the two claims explicitly — requested policy (provable by argv capture) versus effective containment ("**A permission-layer deny is not containment, and this plan claims no containment anywhere**", with the `--unattended` network refusal named as the only measured containment) — and states both disproving observations: for the intervention, an attended child that starts a `claude`/`codex` process while the deny rules are in its argv; for the diagnosis, preserved-log evidence that the cost came from one long session rather than nested invocations. U1 now carries a "What this evidence proves / What it does not prove" pair, and § 5's budget adds "Harness evidence is controller evidence."
+
+4. **Closure boundary** — new § 6. § 6.1 tabulates what each evidence level closes and marks one genuine representative attended use as the only thing that closes the parent case. § 6.2 bounds the pilot in advance: one task, at most one Claude actor invocation, ten minutes wall-clock, no nested AI, no matrix, observed signals named before it runs, and — "If one genuine use cannot exercise a consequential claim, that claim is recorded as a limitation … Manufacturing sessions to close a claim is precisely the incident this plan exists to prevent". § 6.3 permits the intermediate and *not confirmed* states. § 6.4 states that this planning task closes on an accepted plan and that implementation opens as a **new** Work Loop task in an isolated branch/worktree at an agreed clean base, "**Never by copying this task's state file**", with the reason — a copied file carries a stale `task:` and is rejected by core § 6 rule 2. The prior plan's only live-run text was the conditional `acceptEdits` hop; that now points at the § 6.2 pilot rather than carrying a separate budget.
+
+5. **Compaction-safe method** — § 0.5 is the durable recovery chain as a table: bound checkout, active state file, candidate plan, governing core, both operating interfaces, the SOP path, the incident evidence location with its two commits, the workflow phase ("Route step 1 of 8 not yet started; Gates 2–5 open"), and the current move. It opens by saying it lives in the plan, not only in chat, and states that **no** context manifest file, case database, second task-state artifact or other new file was created to hold it. § 7 repeats the point where it bites: "The SOP's own context manifest is deliberately **not** created as a file — its content lives in § 0.5." No file was created: the only write besides this state file was to the existing candidate plan.
+
+Evidence: the corrected plan quoted above against the prior text, which Git holds at `95d10c1`. The
+correction is checkable by `git diff 95d10c1 -- plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md`,
+and it could have failed: findings 2 and 3 required removing a mechanism and a claim the prior version
+had recommended, not adding to them. Net effect on proposed permanent machinery: one new mechanism
+(`--allow-nested-actors N`) removed, none added — the plan now proposes zero new mechanisms.
+
+Two things surfaced rather than resolved silently. First, a conflict: workspace CLAUDE.md says to
+create a new version file when iterating rather than overwriting, while the brief permits writing only
+`bounded-execution-fix-plan-v0.1.md` and the frozen correction boundary says to edit only the candidate
+plan and this state file. The frozen boundary and the brief's named path were followed; the prior text
+is preserved at `95d10c1`. Second, a resolved tension rather than a conflict: SOP Step B1 calls for a
+context manifest, and frozen finding 5 forbids creating one — resolved by putting the manifest's
+content in plan § 0.5, which finding 5 explicitly directs.
+
+Inspected (2026-08-11), Unit 1. Paths relative to the `ai-resources` checkout; `dispatch.sh` =
 `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`.
 
 - Claim (1): HOLDS — read the parser `dispatch.sh:282-303` (15 options, no permission-mode flag, unknown args exit 10 at `:302`) and both attended launch shapes `:1687-1694`, which pass the literal `--permission-mode default`; searched `dispatch.sh` for `permission-mode|permission_mode|acceptEdits|bypassPermissions|dangerously-skip` — every hit is that hardcoded pair, its comment block, or a run-log line. Help text is the leading comment block (`:301`) and names no such option. Tests pin the pair at `dispatch.test.sh:1945,1974,2324`; `README.md:316` states it "is not an option, and cannot be turned off".
@@ -89,39 +128,23 @@ Two supplied source facts were also found stale and are corrected in the plan: t
 command files hold uncommitted correction edits, but `../ai-resources-diagnostics-workflow` carries
 the correction as `9a8399c` on top of `ea77d66`, with no dirty `.claude/commands/` path.
 
-Result: `plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md` written — the only file this
-unit created or changed besides this state file. It classifies all 15 supplied candidates (2 operator
-dispatcher recommendations, 6 postmortem P0, 4 P1, 3 P2) into the six required categories; sets a
-four-unit P0 boundary (U1 nested-actor default deny, U2 honest post-hop classification, U3
-permission-denial stop, U4 no interactive fallback) with U1+U4 named as the irreducible subset; splits
-accepted work into ten independently assessable units, each with observable outcome, allowed surfaces,
-exclusions, dependencies, stop conditions and fail-capable minimum evidence; puts one verification
-budget over all of them (static inspection plus the existing simulated harness, zero nested
-Claude/Codex invocations, no scenario matrix, no live model-backed run without a separately approved
-invocation cap and wall-clock deadline); tests every candidate against core § 4's courier limits and
-rejects the two that would make the dispatcher decide; names six settled decisions a fix would reopen;
-frames attended `acceptEdits` as an operator decision with value, risk and narrowest reversible
-boundary rather than adopting it; and ends recommending U1 as the first implementation unit without
-authorizing it.
-
-Evidence: three classifications resolved *against* their supplied framing, which is what makes the
-inspection fail-capable rather than confirmatory — claim 2b was not confirmed and its candidate was
-narrowed instead of adopted; claim 7 came out false for this checkout and its candidate was re-scoped;
-and the postmortem's own current-state section was found stale against `git log` in the incident
-worktree. Two supplied P1/P2 candidates were rejected or parked as duplicates of text that already
-exists (the proportionality preflight duplicates core § 3 *good enough, proceed* and is forbidden in
-shape by core § 3 step 3's "no new field, artifact or stage"; "keep the task state compact" is already
-core § 4, including its worked *Not this* example). Two more were found already partly implemented
-(`SKILL.md:195` already prohibits screen-driving Claude; `--status` already exists and `--stop`'s
-teardown already exists behind SIGTERM). A plan that had adopted every input would have been evidence
-of nothing. The plan's § 8 coverage table carries a path-and-line reference for every load-bearing
-classification.
+Current shape of the plan, after correction: § 0 method, gate position and recovery chain; § 1 the
+inspection above; § 2 all 15 supplied candidates classified into the six required categories, with
+"a classification is not an authorization" stated; § 3 the option ladder at a zero complexity budget,
+with the requested-policy / effective-containment split and both disproving observations; § 4 the P0
+boundary as four **outcomes** (O1–O4) rather than four constructions, with O1+O4 as the irreducible
+pair; § 5 ten independently assessable units under one verification budget (static inspection plus the
+existing simulated harness, zero nested Claude/Codex invocations, no scenario matrix); § 6 the parent
+case's closure boundary and the budgeted pilot; § 7 the courier limits, rejecting the two candidates
+that would make the dispatcher decide; § 8 six settled decisions a fix would reopen, with attended
+`acceptEdits` framed as an operator decision; § 9 why execution cannot test the plan; § 10 the
+source-to-plan coverage table; § 11 the recommended first move.
 
 For this prose planning unit, no automated or AI-backed behavioural execution would distinguish a
-sound plan from an unsound one: the failure modes are misclassification — calling a built thing a
-defect, a policy decision a fix, or missing a settled decision a unit would reopen — and each is
-settled by reading the repository, which § 1 and § 2 do and cite. Running the dispatcher would
-exercise the current code without saying anything about the ordering, the decision boundary, or the
+sound plan from an unsound one: the failure modes are misclassification and starting too low on the
+option ladder — the second of which this correction caught — and both are settled by reading the
+repository and the governing documents, which §§ 1–3 do and cite. Running the dispatcher would
+exercise the current code without saying anything about the ladder, the decision boundary or the
 duplicate finding; an AI-backed check would consume the exact resource this plan exists to bound while
 grepping for words the plan itself supplied.
 
@@ -131,20 +154,83 @@ None.
 
 ## Next action
 
-Codex: assess the plan at `plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md`.
+Codex: run the closure check on the five frozen findings only — are findings 1–5 resolved, and did the
+correction break anything? The corrected plan is
+`plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md`; the prior text is at `95d10c1` for
+comparison.
 
-Four things need your judgment specifically. (1) Claim (7) resolved FALSE for this checkout and claim
-(2b) was not confirmed; both were re-scoped inside the plan rather than handed back, on the reading
-that the brief's own task is to classify candidates and it explicitly withholds the `runs/` decision
-from this unit — overrule that reading if you disagree, and the hand-back is the correct move instead.
-(2) The P0 boundary is four units where the postmortem proposed six; attended permission mode was
-moved out of P0 into an operator decision, and interactive-fallback was found already written at
-`SKILL.md:195` and re-scoped to placement. (3) Two P1 candidates were rejected as duplicates of the
-executable core — confirm that reading of core § 3 and § 4 before it becomes settled. (4) The
-recommended first unit is U1; it is not authorized and was not performed.
+Candidate deferrals, recorded and not implemented — none of these is a second correction round:
 
-Deferrals recorded, not implemented: the stale `unattended-operation-plan-v0.2.md` status table (dated
-2026-08-07, says the suite is 368/0; the P0-F record of 2026-08-09 says 375/0) — noticed while reading
-the plan spine, out of this unit's scope, and worth one line in a later unit. The three untracked run
-files in `../ai-resources-diagnostics-workflow` were left untouched: that checkout is outside this
-unit's scope and its disposition is U7's question.
+1. The SOP names three sibling documents as related — an Independent Review SOP, a Codex–Claude
+   Session Operating SOP and an AI Development Lifecycle SOP (`repository-problem-resolution-sop.md:37`).
+   Searched this checkout for each by filename pattern: none exists. The SOP also carries its own open
+   flag at `:59` saying its consolidated gate/verdict vocabulary "is a decision, not a finding —
+   confirm it before adopting". Out of this correction's boundary; worth an operator decision before
+   the SOP is leaned on further.
+2. `unattended-operation-plan-v0.2.md`'s implementation-status table is dated 2026-08-07 and states
+   the suite at 368/0, while the P0-F closed record of 2026-08-09 states 375/0. Carried over from the
+   previous round, still unimplemented.
+
+--- superseded, retained for the closure check only ---
+
+Correct once — frozen findings:
+
+1. **The plan skips the structural-resolution gate sequence that this incident warrants.** Apply
+   `.agents/skills/work-loop-v2/references/repository-problem-resolution-sop.md` as non-governing
+   methodology context, subordinate to the Work Loop executable core. Add a concise section that:
+   - provisionally qualifies the parent case as structural because it crosses workflow/component
+     boundaries, changes a shared courier mechanism and operating procedure, produced false-success
+     reporting, and bypassed a relevant prior control;
+   - records that the operator's current request settles priority as Proceed now, but does not approve
+     a technical design;
+   - states the actual gate position honestly: the candidate inventory exists, but failure proof,
+     an independent raw-evidence challenge, a supported causal model, and design approval have not
+     thereby been completed;
+   - tailors the remaining route to this case without adding a second state system: establish the
+     failure from preserved run evidence rather than a costly live reproduction; give raw evidence
+     only to a genuinely fresh Codex context before it sees Claude's diagnosis; have Claude reconcile
+     that review into a causal model and options; obtain operator scope approval; implement from an
+     agreed clean isolated checkout; independently verify; then run one representative, explicitly
+     budgeted attended pilot before calling the structural case resolved.
+   Preserve Work Loop vocabulary and roles. SOP outcome/gate language may annotate the plan, but must
+   not become new state-file fields or override core close/continue/correct/stop.
+
+2. **The proposed first intervention starts too far down the SOP's option ladder and adds speculative
+   machinery.** Before recommending U1 or the four-unit P0 package, compare elimination,
+   simplification, removal, restoring the intended courier path, and narrowing an existing mechanism
+   against new guards. Apply the SOP's default complexity budget of zero. In particular,
+   `--allow-nested-actors N` has no verified authorised use case in the supplied evidence; do not add
+   an override mechanism merely for symmetry. Keep the required outcome (dispatcher-launched actors
+   cannot start nested Claude/Codex work by default), but leave the construction to the later causal
+   and design gate unless current evidence uniquely settles it. Treat U4's additional instruction as
+   a supporting operating restriction, not as proof that the causal mechanism changed.
+
+3. **The recommendation overclaims its effect.** Section 9 says U1 makes the runaway “impossible to
+   reach”, while U1 itself correctly admits that a permission-layer tool-name deny is not containment
+   and a determined child can evade it through shell. Remove the contradiction everywhere. State
+   exactly what the proposed control can and cannot prove, what observation would disprove the
+   diagnosis or intervention, and keep requested policy separate from effective containment.
+
+4. **Technical verification and closure are under-specified for a structural, high-risk courier
+   change.** Add the case-specific closure boundary: simulated harness evidence may establish
+   controller behavior, but the parent case is not `Resolved` until an independently verified,
+   operator-authorized implementation survives one genuine representative attended use. Bound that
+   pilot in advance to one task, at most one Claude actor invocation, and ten minutes, with no nested
+   AI and no exhaustive matrix. If one genuine use cannot exercise a consequential claim, record the
+   claim as a limitation rather than manufacturing additional sessions. The current main-checkout
+   planning task closes after an accepted plan; implementation starts as a new Work Loop task in a
+   deliberate isolated branch/worktree at an agreed clean base—never by copying this task file.
+
+5. **Make the method compaction-safe.** Put the tailored method and current gate position in the plan
+   itself, not only in chat. The durable recovery chain must be explicit: active state file
+   `logs/work-loop/work-loop-v2-bounded-execution-fix-plan.md`; bound checkout
+   `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`; candidate plan
+   `plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md`; applicable Work Loop v2 skill and
+   executable core; SOP reference path above; current move = this one bounded plan correction. Do not
+   create a context manifest file, case database, second task-state artifact, or any other new file.
+
+Correction boundary and evidence budget: edit only the candidate plan and this state file. Do not
+implement any dispatcher or instruction fix; do not run the dispatcher, its harness, a live model,
+or any nested Claude/Codex process. Reproduce each finding by reading the plan, core and SOP; evidence
+is the corrected text quoted against the prior text plus a concise explanation of how each frozen
+finding is resolved. Anything else noticed is a candidate deferral, not work.
