@@ -1,0 +1,31 @@
+**Repo-problem triage — 2026-08-10**
+
+**Failure: CONFIRMED by execution.** `bash logs/scripts/entry-count.sh` printed `incident entries: 2`.
+
+**Both numbers in the report were wrong.** The script's 2 is wrong, and so is the operator's "4":
+
+| Count | Value | What it actually is |
+|---|---|---|
+| `grep -c '^## '` (the script) | 2 | The `## Schema` and `## Entries` section headings |
+| `grep -c '^### '` (the operator's 4) | 4 | 3 real entries **+** the `### YYYY-MM-DD — {short title}` placeholder inside the fenced schema block |
+| True entry count | **3** | Dated entries below the append marker |
+
+**Root cause:** Line 5 greps `'^## '` while entries are marked `'^### '`. Because `'^## '` requires a space after the second `#`, it can never match an entry at all — the script counts section headings and labels them "incident entries". The script's own line-3 comment states the correct contract, so the code contradicts the intent documented one line above it.
+
+**Correction ladder — rung: restore the intended path.** Removal insufficient (the ≥30 archival threshold needs a count); simplification insufficient (3 lines, nothing redundant — wrong matcher, not excess).
+
+**Options:**
+1. **Quick patch — RECOMMENDED** — line 5 → `grep -cE '^### [0-9]{4}-[0-9]{2}-[0-9]{2} '`. Verified to return 3.
+2. Structural fix — slice from the append marker, align the threshold and `notify-check.sh`. One script + sibling, no protected zone, no risk-aware review needed — but more scope than the failure warrants.
+3. Defer — the count stays stuck near 2, and the next fixer validates against the wrong 4.
+
+**Verification named:** re-run the real invocation (must print 3), plus scratch-copy controls — adding a `## ` heading must not change it, adding a dated entry must increment it.
+
+Two things worth carrying forward: the date anchor in the patch isn't cosmetic — a bare `'^### '` returns 4 and ships a fresh off-by-one, which is exactly what the **superseded prior triage** at `audits/working/2026-08-10-resolve-entry-count-miscounts.md` recommended (its numbers don't reproduce against the current file; its stray token string was ignored, not propagated). And adjacent but out of scope: `logs/scripts/notify-check.sh` carries a self-declared `--level` vs `--severity` bug on the same archival path — flagged, not diagnosed.
+
+Notes: `audits/working/2026-08-10-resolve-logs-scripts-entry-count-sh-reports-the-wrong.md`
+Logged `logged (pending)` to `logs/improvement-log.md` (severity: medium). No fix applied.
+
+```
+Fix path: /resolve-incident "entry-count.sh line 5 greps '^## ' (section headings) instead of the '### ' entry marker, so it prints 2 against 3 real entries — patch to grep -cE '^### [0-9]{4}-[0-9]{2}-[0-9]{2} ' (the date anchor is required; a bare '^### ' returns 4 by also matching the schema-block placeholder) — triage notes: audits/working/2026-08-10-resolve-logs-scripts-entry-count-sh-reports-the-wrong.md"
+```

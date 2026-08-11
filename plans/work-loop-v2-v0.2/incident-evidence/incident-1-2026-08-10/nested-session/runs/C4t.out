@@ -1,0 +1,18 @@
+```
+Transferred — 2026-08-10
+Confirmed failure: the 2026-08-01 improvement-log entry is still `logged (pending)` (improvement-log.md:11) and its proposal was never applied — `git log -- logs/scripts/entry-count.sh` shows one commit, `af9ee40 seed`, never modified since.
+Next owner: /friday-act (Friday cadence Session 2 — consumer of `logged (pending)` entries, friday-act.md:92)
+Next action: run /friday-act and triage the 2026-08-01 entry to a disposition — its premise is false as written, so the live options are close-as-obsolete or rewrite against what the file actually does.
+No changes made here. No follow-up queued.
+Record: audits/incidents/2026-08-10-the-improvement-log-entry-from-2026-08-01-about-the.md
+```
+
+Two things worth your attention beyond the transfer:
+
+**The queued proposal is aimed at something that doesn't exist.** It claims "the archival threshold (30) is hardcoded in the checker," but `entry-count.sh` has no threshold and no `30` — `grep -nE '30|thresh|archiv'` over it exits 1. Its whole body is a `grep -c` and an `echo` (`logs/scripts/entry-count.sh:5`). The threshold lives only in `logs/incident-log.md:5` header prose, so there is currently no second copy to drift from — the proposal would have *created* the coupling it describes as a risk. Its notes file, `audits/working/2026-08-01-resolve-threshold-drift.md`, doesn't exist, so the original reasoning can't be reviewed.
+
+**Its `Severity: medium` keeps it off `/prime`'s menu.** `promote-findings.sh` promotes only `high`/`medium-high`/`critical`/`urgent` into `next-up.md`. `/friday-act` still sees it (it reads the log directly), so it isn't unreachable — but that explains the low between-cadence visibility.
+
+I didn't touch `logs/improvement-log.md` or `entry-count.sh`; editing the entry's `Status` or `Friction source` would pre-empt the triage decision that the pending state exists to wait for. Also unrelated and left alone: `audits/working/2026-08-10-resolve-entry-count-miscounts.md` flags a *different* defect in the same script (line 5 greps `'^## '`, matching section headings instead of `'^### '` entries — which is why the script currently reports `incident entries: 2`).
+
+Only two paths changed: `logs/incident-log.md` (index entry) and the new `audits/incidents/` record. Not committed — that's your call; when the fix looks good, commit per workspace rules.
