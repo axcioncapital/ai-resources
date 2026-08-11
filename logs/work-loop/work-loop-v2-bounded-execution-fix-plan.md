@@ -72,6 +72,14 @@ Claude may challenge any false or stale premise rather than improvise around it.
 
 ## Latest result
 
+**Final bounded fix (2026-08-11), core § 3 menu.** The superseded correction brief that the previous
+round had retained below a separator is deleted from this file. Premise checked first: the separator
+stood alone at line 178 and the superseded brief ran lines 180–240, while line 159's inline mention of
+the separator belongs to the surviving instruction and was preserved. The file went from 240 lines to
+176. `grep -c '^--- superseded'` and `grep -c '^Correct once — frozen findings:'` both return 0 now;
+both returned 1 before. Nothing else in this file changed, and no other file was touched. The five
+frozen findings were not revisited, no check was run, and no dispatcher, harness or model was launched.
+
 **Correction round (2026-08-11).** All five frozen findings reproduced by reading the plan, the core
 and the SOP; all five corrected in `plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md`. No
 fix implemented, no dispatcher or harness run, no live model, no nested Claude/Codex process. Files
@@ -154,10 +162,14 @@ None.
 
 ## Next action
 
-Codex: run the closure check on the five frozen findings only — are findings 1–5 resolved, and did the
-correction break anything? The corrected plan is
-`plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md`; the prior text is at `95d10c1` for
-comparison.
+Claude: perform the one final tightly bounded fix permitted by executable core § 3 after the
+correction introduced a state-management defect. In this state file only, delete the separator
+`--- superseded, retained for the closure check only ---` and the entire superseded correction brief
+below it. Preserve the current result, blocker, this instruction, and both candidate deferrals above
+that separator. Change no other file and do not revisit the five frozen findings, run checks, launch
+the dispatcher, or start another review/correction round. Then set `turn: codex` and hand back for a
+closure check limited to whether the superseded block is gone and whether this cleanup broke
+anything.
 
 Candidate deferrals, recorded and not implemented — none of these is a second correction round:
 
@@ -171,66 +183,5 @@ Candidate deferrals, recorded and not implemented — none of these is a second 
    the suite at 368/0, while the P0-F closed record of 2026-08-09 states 375/0. Carried over from the
    previous round, still unimplemented.
 
---- superseded, retained for the closure check only ---
-
-Correct once — frozen findings:
-
-1. **The plan skips the structural-resolution gate sequence that this incident warrants.** Apply
-   `.agents/skills/work-loop-v2/references/repository-problem-resolution-sop.md` as non-governing
-   methodology context, subordinate to the Work Loop executable core. Add a concise section that:
-   - provisionally qualifies the parent case as structural because it crosses workflow/component
-     boundaries, changes a shared courier mechanism and operating procedure, produced false-success
-     reporting, and bypassed a relevant prior control;
-   - records that the operator's current request settles priority as Proceed now, but does not approve
-     a technical design;
-   - states the actual gate position honestly: the candidate inventory exists, but failure proof,
-     an independent raw-evidence challenge, a supported causal model, and design approval have not
-     thereby been completed;
-   - tailors the remaining route to this case without adding a second state system: establish the
-     failure from preserved run evidence rather than a costly live reproduction; give raw evidence
-     only to a genuinely fresh Codex context before it sees Claude's diagnosis; have Claude reconcile
-     that review into a causal model and options; obtain operator scope approval; implement from an
-     agreed clean isolated checkout; independently verify; then run one representative, explicitly
-     budgeted attended pilot before calling the structural case resolved.
-   Preserve Work Loop vocabulary and roles. SOP outcome/gate language may annotate the plan, but must
-   not become new state-file fields or override core close/continue/correct/stop.
-
-2. **The proposed first intervention starts too far down the SOP's option ladder and adds speculative
-   machinery.** Before recommending U1 or the four-unit P0 package, compare elimination,
-   simplification, removal, restoring the intended courier path, and narrowing an existing mechanism
-   against new guards. Apply the SOP's default complexity budget of zero. In particular,
-   `--allow-nested-actors N` has no verified authorised use case in the supplied evidence; do not add
-   an override mechanism merely for symmetry. Keep the required outcome (dispatcher-launched actors
-   cannot start nested Claude/Codex work by default), but leave the construction to the later causal
-   and design gate unless current evidence uniquely settles it. Treat U4's additional instruction as
-   a supporting operating restriction, not as proof that the causal mechanism changed.
-
-3. **The recommendation overclaims its effect.** Section 9 says U1 makes the runaway “impossible to
-   reach”, while U1 itself correctly admits that a permission-layer tool-name deny is not containment
-   and a determined child can evade it through shell. Remove the contradiction everywhere. State
-   exactly what the proposed control can and cannot prove, what observation would disprove the
-   diagnosis or intervention, and keep requested policy separate from effective containment.
-
-4. **Technical verification and closure are under-specified for a structural, high-risk courier
-   change.** Add the case-specific closure boundary: simulated harness evidence may establish
-   controller behavior, but the parent case is not `Resolved` until an independently verified,
-   operator-authorized implementation survives one genuine representative attended use. Bound that
-   pilot in advance to one task, at most one Claude actor invocation, and ten minutes, with no nested
-   AI and no exhaustive matrix. If one genuine use cannot exercise a consequential claim, record the
-   claim as a limitation rather than manufacturing additional sessions. The current main-checkout
-   planning task closes after an accepted plan; implementation starts as a new Work Loop task in a
-   deliberate isolated branch/worktree at an agreed clean base—never by copying this task file.
-
-5. **Make the method compaction-safe.** Put the tailored method and current gate position in the plan
-   itself, not only in chat. The durable recovery chain must be explicit: active state file
-   `logs/work-loop/work-loop-v2-bounded-execution-fix-plan.md`; bound checkout
-   `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`; candidate plan
-   `plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md`; applicable Work Loop v2 skill and
-   executable core; SOP reference path above; current move = this one bounded plan correction. Do not
-   create a context manifest file, case database, second task-state artifact, or any other new file.
-
-Correction boundary and evidence budget: edit only the candidate plan and this state file. Do not
-implement any dispatcher or instruction fix; do not run the dispatcher, its harness, a live model,
-or any nested Claude/Codex process. Reproduce each finding by reading the plan, core and SOP; evidence
-is the corrected text quoted against the prior text plus a concise explanation of how each frozen
-finding is resolved. Anything else noticed is a candidate deferral, not work.
+Done. Codex: run the closure check on this fix only — is the superseded block gone, and did the
+cleanup break anything?
