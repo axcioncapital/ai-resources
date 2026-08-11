@@ -350,15 +350,19 @@ taken on its own evidence.
 
 ### The default nested-actor deny set
 
-**Every Claude launch this dispatcher makes — attended and unattended — passes `--disallowedTools`
-carrying `Bash(claude:*)`, `Bash(claude *)`, `Bash(codex:*)` and `Bash(codex *)`.** There is no flag
-to switch it off. `--claude-deny` appends to the set and cannot remove an entry.
+**Every ATTENDED Claude launch this dispatcher makes passes `--disallowedTools` carrying
+`Bash(claude:*)`, `Bash(claude *)`, `Bash(codex:*)` and `Bash(codex *)`.** There is no flag to switch
+it off. `--claude-deny` appends to the set and cannot remove an entry.
 
 This exists because on 2026-08-10 a single Work Loop unit spawned at least eight further `claude -p`
-processes, and nothing in the launch path denied it. The unattended profile did not cover it either:
-its `--tools Bash,Skill` roster still exposes Bash, so nesting was blocked there only *incidentally*,
-by the sandbox's network refusal. Incidental protection cannot be reasoned about, so it is now named
-explicitly on both paths.
+processes, and nothing in the launch path denied it.
+
+**The `--unattended` contained profile does NOT carry these rules, and that is a scope boundary rather
+than an oversight.** The profile is a separately settled artifact, and the unit that added the deny set
+excluded it by name and required its argv to stay byte-unchanged — case 32z freezes exactly that. So
+on the unattended path nesting is still blocked only *incidentally*, by the sandbox's network refusal.
+Incidental protection cannot be reasoned about, and naming it there is a live open question — but it is
+one to reopen as its own unit with its own evidence, not to settle as a side effect of an attended fix.
 
 **Read this before quoting it as a safety property. It is not containment.**
 

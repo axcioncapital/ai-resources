@@ -272,9 +272,13 @@ UNATTENDED_BASE_DENY=(
   'mcp__*'
 )
 
-# The default nested-actor deny set (O1). Applied to EVERY Claude launch this
-# dispatcher makes — attended and unattended alike — and it is the dispatcher's,
-# not the operator's: --claude-deny appends to it and cannot remove an entry.
+# The default nested-actor deny set (O1). Applied to every ATTENDED Claude launch
+# this dispatcher makes, and it is the dispatcher's, not the operator's:
+# --claude-deny appends to it and cannot remove an entry.
+#
+# NOT applied to the --unattended contained profile, which is a separately
+# settled artifact that O1 excludes by name; the reasoning is at the u_deny
+# construction in launch_actor().
 # There is no flag to switch it off, and that absence is deliberate (plan § 3.3:
 # the only demonstrated use of nested AI invocation in the whole evidence set is
 # the 2026-08-10 failure this exists to prevent).
@@ -1244,11 +1248,21 @@ else
   say "claude_deny=none — no tool denied beyond the child's own policy (attended hops run --permission-mode default)"
 fi
 # Recorded separately from claude_deny, and always. claude_deny is the
-# OPERATOR's set and may legitimately be empty; this one is the dispatcher's own
-# and never is. Folding them into one line would let "claude_deny=none" read as
-# "nothing is denied", which stopped being true here (O1).
-say "nested_actor_deny=${NESTED_ACTOR_DENY[*]}"
-say "  nested_actor_deny is REQUESTED POLICY, not containment — it denies the default direct route at the child's permission layer and does not remove the capability"
+# OPERATOR's set and may legitimately be empty; this one is the dispatcher's own.
+# Folding them into one line would let "claude_deny=none" read as "nothing is
+# denied", which stopped being true on the attended path (O1).
+#
+# Branched on the run shape because O1 reaches attended launches only. Printing
+# the attended set on an unattended run would state a policy that this run's
+# argv does not carry — the same class of false run evidence the honest-stop
+# work exists to remove, one log line over.
+if [ "$UNATTENDED" -eq 1 ]; then
+  say "nested_actor_deny=n/a — this run is --unattended, and the contained profile carries no nested-actor rule; it is a separately settled artifact (see u_deny in launch_actor)"
+  say "  nesting is blocked on this path only INCIDENTALLY, by the sandbox's network refusal — that is a side effect of another control, not a stated policy"
+else
+  say "nested_actor_deny=${NESTED_ACTOR_DENY[*]}"
+  say "  nested_actor_deny is REQUESTED POLICY, not containment — it denies the default direct route at the child's permission layer and does not remove the capability"
+fi
 
 # ------------------------------------------------- unattended contained profile
 #
@@ -1896,12 +1910,23 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
         # The contained profile (1d). Built as an array so the operator's own
         # --claude-deny rules append to the base set rather than replacing it:
         # this flag may narrow the profile further, never widen it.
-        # NESTED_ACTOR_DENY first (O1): the contained profile's --tools roster
-        # still exposes Bash, so nesting was blocked here only INCIDENTALLY, by
-        # the sandbox's network refusal. Incidental is not stated, and a profile
-        # that relies on a side effect of another control cannot be reasoned
-        # about. Named explicitly now, on both paths.
-        local -a u_deny=("${NESTED_ACTOR_DENY[@]}" "${UNATTENDED_BASE_DENY[@]}")
+        # NESTED_ACTOR_DENY IS DELIBERATELY ABSENT HERE. Do not add it back
+        # without reopening the profile as its own unit.
+        #
+        # O1's surface is the ATTENDED launch path only. The contained profile is
+        # a separately settled artifact (item 1d), and the O1 plan excludes it by
+        # name and requires this argv to stay byte-unchanged as O1's own control.
+        # A commit on 2026-08-11 prepended the nested set here anyway, which made
+        # that control impossible to pass; case 32z now freezes this argv so the
+        # same widening cannot land silently again.
+        #
+        # The argument for adding it is real and is NOT settled by this comment:
+        # the profile's --tools roster still exposes Bash, so nesting is blocked
+        # here only INCIDENTALLY, by the sandbox's network refusal, and incidental
+        # protection cannot be reasoned about. That is a case for reopening the
+        # profile deliberately, with its own evidence — not for widening it as a
+        # side effect of an attended-path fix.
+        local -a u_deny=("${UNATTENDED_BASE_DENY[@]}")
         [ "${#CLAUDE_DENY[@]}" -gt 0 ] && u_deny+=("${CLAUDE_DENY[@]}")
         # stream-json rather than json, and ONLY on this path.
         #

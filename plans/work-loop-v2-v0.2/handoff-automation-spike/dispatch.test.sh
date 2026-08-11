@@ -2226,6 +2226,99 @@ printf '%s' "$OUT" | grep -q "codex hops are NOT covered" \
   || bad "the log scopes the profile to Claude hops" "$OUT"
 
 echo
+echo "Case 32z — CONTROL: the --unattended argv is byte-unchanged"
+# O1's own stated control, and the assertion that was missing when a commit on
+# 2026-08-11 prepended the nested-actor denies to this path anyway. O1's surface
+# is the attended launch only; the contained profile is a separately settled
+# artifact that O1 excludes by name.
+#
+# A FROZEN WHOLE-ARGV COMPARISON, not another set of per-token greps. Every
+# assertion in case 32 is "this token is present", and no number of those can
+# catch an ADDED argument — which is precisely the regression that landed and
+# sat green. This form fails on an addition, a removal, or a reorder.
+#
+# The expected list is written out literally rather than derived from the
+# dispatcher's own deny arrays. Deriving it would make the test agree with
+# whatever the source happens to say, which is not evidence.
+dz="$(new_sandbox)"; state_file "$dz" "argvfreeze-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-freeze.txt"; rm -f "$WL_ARGV_FILE"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-freeze.txt"
+export WL_SF="$dz/logs/work-loop/argvfreeze-task.md"
+export WL_CO="$dz"
+export WL_FAKE_VERSION="2.1.220 (Claude Code)"
+OUTZ="$(bash "$DISPATCH_BIN" --checkout "$dz" --task argvfreeze-task --log-dir "$dz/runs" \
+       --carry-one --claude-bin "$FAKE2" --unattended 2>&1)"; RCZ=$?
+expect_rc 0 "$RCZ" "the contained hop completes" "$OUTZ"
+if [ -f "$WL_ARGV_FILE" ]; then
+  # The generated per-run profile path is the only volatile token.
+  sed 's|^.*/runs/.*\.unattended-settings\.json$|<PROFILE>|' "$WL_ARGV_FILE" \
+    >"$SANDBOX_ROOT/argv-freeze.norm"
+  cat >"$SANDBOX_ROOT/argv-freeze.want" <<'WANTEOF'
+-p
+/work-loop-v2 argvfreeze-task
+--output-format
+stream-json
+--verbose
+--settings
+<PROFILE>
+--tools
+Bash,Skill
+--strict-mcp-config
+--no-session-persistence
+--disallowedTools
+Bash(git push:*)
+Bash(git push *)
+WebFetch
+WebSearch
+mcp__*
+WANTEOF
+  if diff -u "$SANDBOX_ROOT/argv-freeze.want" "$SANDBOX_ROOT/argv-freeze.norm" \
+       >"$SANDBOX_ROOT/argv-freeze.diff" 2>&1; then
+    ok "the --unattended argv is byte-for-byte the settled contained profile"
+  else
+    bad "the --unattended argv is byte-for-byte the settled contained profile" \
+        "$(cat "$SANDBOX_ROOT/argv-freeze.diff")"
+  fi
+  # Called out separately from the frozen list because this is the specific
+  # widening that landed, and it should read as its own line in the output.
+  grep -Fq 'Bash(claude' "$WL_ARGV_FILE" \
+    && bad "no nested-actor deny reaches the contained profile" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+    || ok "no nested-actor deny reaches the contained profile"
+  # The run log must not describe a policy this argv does not carry.
+  printf '%s' "$OUTZ" | grep -q "nested_actor_deny=n/a" \
+    && ok "the run log scopes the nested-actor set to attended runs" \
+    || bad "the run log scopes the nested-actor set to attended runs" "$OUTZ"
+else
+  bad "the fake claude binary was invoked" "no argv file at $WL_ARGV_FILE"
+fi
+
+echo
+echo "Case 32z2 — the --claude-deny append path adds no nested rule either"
+# Case 32i already proves the append is additive. This one covers the other place
+# a widening could hide: the composed array, when the operator set is non-empty.
+dz="$(new_sandbox)"; state_file "$dz" "argvfreeze2-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-freeze2.txt"; rm -f "$WL_ARGV_FILE"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-freeze2.txt"
+export WL_SF="$dz/logs/work-loop/argvfreeze2-task.md"
+export WL_CO="$dz"
+export WL_FAKE_VERSION="2.1.220 (Claude Code)"
+OUTZ="$(bash "$DISPATCH_BIN" --checkout "$dz" --task argvfreeze2-task --log-dir "$dz/runs" \
+       --carry-one --claude-bin "$FAKE2" --unattended --claude-deny 'Bash(rm:*)' 2>&1)"; RCZ=$?
+expect_rc 0 "$RCZ" "the contained hop completes with an operator deny" "$OUTZ"
+if [ -f "$WL_ARGV_FILE" ]; then
+  # The control for the negative below: without it, the negative would pass on a
+  # run that never exercised the append path at all.
+  argv_has "$WL_ARGV_FILE" 'Bash(rm:*)' \
+    && ok "control: the operator rule really did reach the composed array" \
+    || bad "control: the operator rule reached the composed array" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  grep -Eq 'Bash\((claude|codex)' "$WL_ARGV_FILE" \
+    && bad "the composed array carries no nested-actor rule" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+    || ok "the composed array carries no nested-actor rule"
+else
+  bad "the fake claude binary was invoked" "no argv file at $WL_ARGV_FILE"
+fi
+
+echo
 echo "Case 32f — the version gate FAILS CLOSED below 2.1.219"
 d="$(new_sandbox)"; state_file "$d" "oldver-task" "claude"
 export WL_ARGV_FILE="$SANDBOX_ROOT/argv-oldver.txt"; rm -f "$WL_ARGV_FILE"
