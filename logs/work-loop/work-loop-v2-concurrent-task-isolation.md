@@ -1,6 +1,6 @@
 ---
 task: work-loop-v2-concurrent-task-isolation
-turn: codex
+turn: operator
 ---
 
 ## Objective and scope
@@ -177,15 +177,27 @@ Representative operator validation after integration, not a precondition for acc
 
 No implementation was performed. No production file was modified. Both this fix and the correction before it changed only this state file. One probe file was created and removed during the evidence check above; `ls logs/work-loop/.owner` confirms it is gone.
 
+**Codex final closure check — passes.** Seam 1 is resolved: Codex can write `logs/work-loop/.owner` immediately before the state file as an ordinary write inside its existing surface, with no Git, new command, authority grant, or extra round trip. Seam 2 is resolved by an explicit and technically coherent narrowing: Codex protects its current checkout; Claude and the dispatcher perform the repository-wide task check before execution or commit. No frozen finding remains unresolved and the correction introduced no demonstrated break. R2 is ready for the operator's SOP Gate 3 trade-off decision.
+
 ## Blocker
 
 None.
 
 ## Next action
 
-Codex: run the closure check on these two fixes only, then go to the operator or stop.
+Operator Gate 3 — approve or reject this scope before implementation.
 
-1. **Seam 1 — pre-brief ownership for an ordinary Local task.** The marker moves to `logs/work-loop/.owner`, inside the surface Codex already writes and inside the dispatcher's default allowlist, and is written by whoever creates the state file, immediately before it. No new command, no authority grant, no extra round trip — so the comparison against the two-lock floor is unchanged and no charge was hidden. `/new-worktree-session` leaves the change set. Check that Codex still runs no git and writes nothing outside `logs/work-loop/`.
-2. **Seam 2 — Codex's cross-checkout discovery.** The guarantee is narrowed rather than assumed: Codex's local read settles the checkout half only; the task half is settled by Claude at Step 1 and by the dispatcher at admission, and every unit crosses a Claude entry before any commit exists. The `--status` surface is presented as an operator choice, with its real obstacle named — `SKILL.md:243` grants the invocation, `:246` certifies it read-only, but it sits inside the Courier-mode section that `:184` makes off by default. Check that this reconciles the prohibition rather than stepping around it.
+**Codex recommendation:** approve R2 and leave the optional `--status` widening out of this implementation. This gives the useful minimum without expanding courier permissions.
 
-Nothing accepted earlier was reopened, no new architecture was added, no production file was modified. Three candidate deferrals stand at the end of `## Latest result`; the `/new-worktree-session` deferral is withdrawn because the command left the change set. If the check passes, the next move is the operator's Gate 3 scope decision — not implementation.
+Approval means accepting together:
+
+1. Two repository-scoped live locks, one for the task and one for the checkout.
+2. One gitignored `logs/work-loop/.owner` declaration per checkout, written immediately before task-file creation and cleared at closure.
+3. Automatic worktree creation/window opening through the existing Claude command when isolation is required; the operator still opens Codex in that prepared checkout.
+4. Interactive limits: Codex checks only its current checkout; Claude/dispatcher perform the cross-worktree check before execution or commit; duplicate interactive sessions for the same task and deliberately ignored refusals are not technically prevented.
+5. An open task holds its checkout until closure.
+6. No automatic merge, landing, conflict resolution, push, or destructive cleanup; no task registry, task-branch convention, new creation authority, or change to `/new-worktree-session`.
+
+Alternative: approve the two locks only, which fixes concurrent dispatch admission but defers continuity, interactive coverage, and visible ownership.
+
+If R2 is approved, the next move is a controlled Claude implementation unit under the locked scope and the behavioural cases T1–T13. If it is rejected, state whether to take the two-lock alternative or stop.
