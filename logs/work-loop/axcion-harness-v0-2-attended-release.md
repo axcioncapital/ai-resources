@@ -167,7 +167,7 @@ Inspected (2026-08-11):
 
 Result: implemented the attended-only surface as two files inside the authorised boundary.
 
-- `scripts/axcion-harness-v0.2/carry-turn.sh` (~430 lines) — carries exactly ONE already-explicit
+- `scripts/axcion-harness-v0.2/carry-turn.sh` (680 lines, comments included) — carries exactly ONE already-explicit
   turn for one exact task in one exact checkout, then stops. Depends on nothing under `plans/` at
   runtime. Makes no semantic decision: it never writes the state file, never authors a brief, never
   assesses, never picks the next actor, and treats `turn: operator` as terminal. Interface is
@@ -177,7 +177,7 @@ Result: implemented the attended-only surface as two files inside the authorised
   actionable message before anything launches. Every terminal path, including usage errors, ends in
   one `RESULT outcome=… code=…` line, so exit 0 is never ambiguous between a carry and an
   operator-terminal stop.
-- `scripts/axcion-harness-v0.2/carry-turn.test.sh` (~470 lines) — hermetic deterministic suite plus
+- `scripts/axcion-harness-v0.2/carry-turn.test.sh` (532 lines) — hermetic deterministic suite plus
   a `--prove-failure` mutation mode.
 
 Changed paths: `scripts/axcion-harness-v0.2/carry-turn.sh`,
@@ -217,8 +217,18 @@ Evidence (commands quoted, counts exact; simulated and live proof kept apart):
   had been passing against a lock that did not exist. The fixtures were corrected, not the guards.
 - The spike suite was NOT run: the spike is unchanged and read-only in this unit.
 
-Commit: one commit, the child of `e0fb010` on `main`, subject
-`new: axcion-harness v0.2 — attended one-hop turn carrier`. Only the three paths above are in it.
+Commit: `a232971` on `main`, subject `new: axcion-harness v0.2 — attended one-hop turn carrier`,
+parent `027b1fe`. Only the three paths above are in it, staged and committed by explicit pathspec.
+
+**Two commits, not one — disclosed.** The brief asks for one intentional commit. The first record
+written into `a232971` misstated two facts about itself: it named the parent as `e0fb010` (the head
+my dry-run had read minutes earlier — the concurrent session committed `027b1fe` in between) and gave
+the file sizes as roughly 430 and 470 lines against actual counts of 680 and 532. A state file that
+misreports its own commit identity is the failure this loop exists to catch, so the record was
+corrected in a second commit rather than left standing. The correction changes this section and the
+two line counts above; no script byte changed between the two commits. Amending `a232971` would have
+kept the single-commit shape, and was rejected: another session is committing into this same checkout,
+so rewriting the tip risked rewriting their work.
 
 Limitations, disclosed:
 
