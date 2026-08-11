@@ -68,7 +68,7 @@ run artifacts** — it is a verify-first input, exactly as v0.1's own postmortem
 | Incident 2 added to Gate 2's preserved evidence set, as a **verify-first** second incident | § 0.3, § 0.4 step 1, § 0.5 |
 | **Brief sizing promoted P1 → P0**: a timed hop carries one dominant deliverable and one proportionate evidence set. An allowlist bounds *files*, not *reasoning workload* | **new O5**, **new U11**, § 2 (P1-3), § 3.2 rung 1 |
 | U2's evidence extended to **exit `21`**: partial allowed-path edits are reported even when the state file and the branch do not advance | § 4 (O2), U2 |
-| U4 expanded from "never bypass the dispatcher" into a **truthful recovery contract** — four clauses | § 4 (O4), U4 |
+| U4 expanded from "never bypass the dispatcher" into a **truthful recovery contract** — five clauses | § 4 (O4), U4 |
 | A longer timeout is **not** a remedy for an oversized unit; the timeout is a safety boundary | § 3.3, U11 |
 | A **simulated timeout-with-partial-effects** case added to the verification requirements. No live model run needed | § 5 budget, U2 evidence |
 | Eval worktree, task, run id, branch head, state file and three run artifacts added to the evidence chain | § 0.5 |
@@ -216,7 +216,8 @@ or a Work Loop unit.
    new failure modes and maintenance the correction creates, whether the scope is proportioned, and
    which proposed changes should be cut entirely.
    **This review does not need a fresh context** (`:608`) — the anchoring risk it guards against has
-   already passed at step 2, so the Codex context that ran steps 2–3 may run it.
+   already passed at step 2, so the Codex context that performed step 2 may later perform step 4,
+   once its blind review is complete. **Step 3 is Claude's**, and is not part of that context's work.
    **Complexity budget zero (`:612`).** Any new permanent mechanism must answer seven questions: what
    verified failure requires it; why removal or a process restriction cannot solve the issue; which
    existing mechanisms were considered; what maintenance it creates; who owns that maintenance; how
@@ -246,7 +247,10 @@ governance documents to satisfy this step.
 **Complete as of 2026-08-11, ahead of the discovery unit.** *(v0.1 carried the anchor rows only; the
 scope, exclusions, tests, authority-gap and outcome rows are added in v0.2.)*
 
-#### Repositories and base commits
+#### Checkouts and base commits
+
+*One repository, `ai-resources`. The three entries below are separate checkouts of it — the bound
+checkout and two linked worktrees — not separate repositories (§ 6.5).*
 
 | Field | Value |
 |---|---|
@@ -860,7 +864,7 @@ obeyed it exactly and concluded the repository task was impossible. A rule that 
 forbidden leaves the honest path unnamed.*
 
 - **Observable outcome:** the Codex skill states, at the point where a stop is read, what a nonzero
-  exit does and does not mean. Four clauses, and the first two are the prohibition v0.1 already had:
+  exit does and does not mean. Five clauses, and the first two are the prohibition v0.1 already had:
 
   1. **A stop is never a licence to leave the dispatcher.** It authorizes fixing the cause and
      re-running, or stopping for the operator — never an interactive Claude session, a hand-carried
@@ -891,7 +895,15 @@ forbidden leaves the honest path unnamed.*
 - **Exclusions:** the executable core (§ 7 already reserves consequential situations for the
   operator); `.claude/commands/work-loop-v2.md` (Claude never chooses the transport, so the rule has
   no addressee there); the dispatcher.
-- **Dependencies:** none.
+- **Dependencies:** **sequencing, and it must hold before the § 6.2 pilot.** Clauses 1–3 stand alone.
+  Clause 4 depends on **U2 item 4** — it instructs the reader to inspect partial effects, and U2 item
+  4 is what makes those effects visible on a timeout; landing clause 4 first would direct a reader to
+  read something the stop does not yet report. Clause 5 depends on **O5 / U11** — a "newly narrowed
+  recovery unit" has no standard to be narrowed against until the sizing rule exists, and without it
+  the clause authorizes reopening work with no bound on the replacement. **Order: U2 item 4 and U11
+  before U4's clauses 4–5.** Clauses 1–3 may land at any point.
+  This does not split the unit — U4 still ships whole, per *The two halves are one rule* above — it
+  constrains **when** it ships relative to two other P0 units.
 - **Stop conditions:** if stating clauses 1–2 requires contradicting core § 7 or the existing `:195`
   text, stop — they are meant to place an existing prohibition, not add a competing one. **If clause
   5 cannot be stated without creating a new state-file field, a new artifact or a new stage, stop and
@@ -1105,13 +1117,18 @@ and, per § 6.5, **tested** rather than only recorded.
 
 ### 6.5 Implementation is a high-risk change
 
-*New in v0.2 (finding 5).* The SOP's high-risk list (`:947-951`) names repository permissions,
-concurrent sessions, background processes and cross-repository automation. The P0 units touch all
-four: U1 changes the permission policy carried into a child process; U2 and U3 change how the
-dispatcher classifies and reports the state of a lock-protected, concurrently-reachable state file;
-every unit changes a program whose job is to launch and tear down background process trees; and the
-dispatcher drives linked worktrees, which is cross-repository automation in the sense that matters
-here. **This is not a marginal call — it is four of the twelve named categories.**
+*New in v0.2 (finding 5).* The SOP's high-risk list (`:947-951`) names, among others, repository
+permissions, concurrent sessions and background processes. The P0 units touch all three: U1 changes
+the permission policy carried into a child process; U2 and U3 change how the dispatcher classifies
+and reports the state of a lock-protected, concurrently-reachable state file; and every unit changes
+a program whose job is to launch and tear down background process trees. **This is not a marginal
+call — it is three of the twelve named categories, and the conclusion does not depend on a fourth.**
+
+*Correction: v0.2's first pass also claimed **cross-repository automation**, on the grounds that the
+dispatcher drives linked worktrees. That was wrong. A linked worktree is a separate checkout of the
+**same** repository, not a second repository, so the category does not apply. Removed. The high-risk
+classification stands on the three accurate categories above, each of which is sufficient on its own
+under `:949`.*
 
 `:951` attaches three obligations to a high-risk change, and they apply to the implementation task,
 not to this plan:
