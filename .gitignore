@@ -38,6 +38,13 @@ logs/.session-marker
 # Per-session-id identity oracle (Option 2′, keyed by CLAUDE_CODE_SESSION_ID — un-clobberable by a concurrent /prime; see docs/session-marker.md)
 logs/.session-marker-*
 
+# Work Loop v2 per-checkout ownership declaration (R2, "the checkout declares its writer"): one task
+# id + claim date, written by whoever creates the task's state file, cleared at closure. It MUST stay
+# checkout-local — a committed copy would replicate across worktrees on merge and then declare every
+# checkout the owner, which is the exact failure the declaration exists to refuse. Read/written by
+# logs/scripts/work-loop-owner.sh; see docs/parallel-sessions-playbook.md § 4.
+logs/work-loop/.owner
+
 # Promotion mutex held by logs/scripts/promote-findings.sh for the length of one sweep. Removed by
 # the script's own EXIT trap; ignored here so a crashed run's residue can never be committed.
 logs/.promote.lock/

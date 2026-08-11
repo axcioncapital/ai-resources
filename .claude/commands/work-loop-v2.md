@@ -152,6 +152,24 @@ If `## Next action` opens with core § 3's hand-off token, this invocation is th
 
 If `## Next action` opens with core § 3's close token, Codex has decided closure and this invocation writes the closing record — go to **Closing the task** below and skip Steps 2–5.
 
+### Step 1.5 — Check ownership before executing or committing
+
+Resolving the file under the checkout you are running in establishes *where the file is*. It does not establish *whether this task belongs here* — a state file replicates across worktrees on merge, so its presence is not evidence of ownership. Run the shared check before any execution and before any commit:
+
+```bash
+bash logs/scripts/work-loop-owner.sh check --checkout "$(git rev-parse --show-toplevel)" --task {task-id} --depth repo
+```
+
+`--depth repo` is Claude's depth, and it is the whole reason this step sits on Claude's side: it enumerates the registered worktrees, which needs git, which Codex may not run. Interactive Codex checks only whether *its own* checkout is claimed by another task. The two halves together are the mechanism; neither is it alone.
+
+Act on the verdict, and do not work around it:
+
+- **PROCEED** — continue to Step 2. Where the task has no declaration yet and this checkout holds its only state file, claim it (`claim` in place of `check`, same arguments) so later handoffs return here.
+- **REFUSE** — the output names the conflicting task or checkout. Stop, report it in plain words, and change nothing. This is not a premise failure and not a hand-back: it is a routing error, and the fix is to continue the task in the checkout named, not to edit anything here.
+- **AMBIGUOUS** — ownership cannot be established, normally because the state file is replicated across checkouts with none of them declaring it. **Never resolve this by claiming.** Report it and stop for the operator (core § 7) — deciding which copy is authoritative is theirs.
+
+If the helper is not present in this checkout, say so in one line and continue. An absent helper is not a refusal.
+
 ## Step 2 — Check the premises before acting
 
 Core § 6 rule 1 governs this step. The claims are the brief's load-bearing repository assertions. Core § 3 owns their placement: a brief may mark each claim in place where it states it, or gather them under one collecting heading — both are valid, and each claim names the surface and the pattern or evidence that settles it. So read the whole brief for them, and do not conclude there are none because any particular heading is absent. Check each **by inspection** — open the file, run the grep, read the line. Not by recall.
@@ -216,7 +234,7 @@ Core § 3 *The unit's mode* owns the three modes and what each requires. `## Lan
 Core § 2 *De-escalating* decides when this applies — inspection or implementation is where Claude notices it. When it does apply:
 
 1. Say so, in plain words.
-2. Reduce the state file to the closing record (core § 4), recording under `## Decisions that matter` that the task de-escalated and what was learned. Set `turn: operator`.
+2. Reduce the state file to the closing record (core § 4), recording under `## Decisions that matter` that the task de-escalated and what was learned. Set `turn: operator`. Clear the checkout's declaration in the same write, exactly as **Closing the task** step 2 below — a de-escalated task ends its lease like any other.
 3. Finish the work directly, as Direct Work.
 4. `git add` the state file and the changed files by explicit pathspec, commit once, stop.
 
@@ -249,7 +267,14 @@ Core § 3 *Correcting once* governs this round, including what may and may not e
 Core § 3's close token in `## Next action` is Codex's close verdict; core § 4 owns what a closed file holds. Claude writes and commits the record — the verdict is not re-judged here. The general turn guard and the identity check in Step 1 apply to this invocation like any other.
 
 1. Reduce the state file to core § 4's closing record — its exact four headings, nothing else surviving — carrying what the verdict names: the outcome, the decisions that matter (including any deferral the verdict records, with its reason), the final commit or evidence pointer, and the accepted limitations (or `None.`). Set `turn: operator`.
-2. `git add` the state file by explicit pathspec, commit, stop. A closing invocation changes no other file.
+2. **Clear the checkout's declaration in the same write.** An open task leases its checkout until closure, so the closing record is exactly the moment the lease ends:
+
+   ```bash
+   bash logs/scripts/work-loop-owner.sh clear --checkout "$(git rev-parse --show-toplevel)" --task {task-id}
+   ```
+
+   Leaving it in place is the failure this step exists to prevent: the next task in that checkout would be refused by a task that has already finished. `clear` refuses to remove another task's declaration, and a checkout that has none is a no-op, so running it is always safe. `logs/work-loop/.owner` is gitignored, so this changes nothing that gets committed.
+3. `git add` the state file by explicit pathspec, commit, stop. A closing invocation changes no other file.
 
 ## Step 6 — Report in one line
 

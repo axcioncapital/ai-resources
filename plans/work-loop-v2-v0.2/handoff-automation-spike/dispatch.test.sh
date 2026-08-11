@@ -105,6 +105,28 @@ FLIP_TO_OPERATOR='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
 
 NOOP='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls"; exit 0'
 
+# The lock locations, mirrored from dispatch.sh. They moved out of ${TMPDIR} and
+# into the repository's Git common directory, and the one composite checkout|task
+# key became two independent locks — see the "locks" block in dispatch.sh for
+# why. Defined ONCE here, above every user: six copies of the old expression had
+# drifted into the suite, and each was a place this change could have been missed.
+lock_root_for() { # checkout -> lock root dir
+  local c g
+  c="$(cd "$1" && pwd -P)"
+  g="$(git -C "$c" rev-parse --git-common-dir 2>/dev/null)"
+  case "$g" in /*) ;; *) g="$c/$g" ;; esac
+  printf '%s/work-loop-dispatch-locks' "$(cd "$g" && pwd -P)"
+}
+task_lock_for() { # checkout task -> task lock dir
+  printf '%s/task-%s.lock' "$(lock_root_for "$1")" \
+    "$(printf '%s' "$2" | shasum -a 256 | cut -c1-16)"
+}
+checkout_lock_for() { # checkout -> checkout lock dir
+  local c; c="$(cd "$1" && pwd -P)"
+  printf '%s/checkout-%s.lock' "$(lock_root_for "$1")" \
+    "$(printf '%s' "$c" | shasum -a 256 | cut -c1-16)"
+}
+
 run_dispatch() { # sandbox task [extra args...] -> writes $OUT, sets $RC
   local d="$1" t="$2"; shift 2
   OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task "$t" \
@@ -300,7 +322,49 @@ outer=$!
 sleep 2
 run_dispatch "$d" lock-task --actor-cmd "$FLIP"
 expect_rc 17 "$RC" "exits 17 while another dispatcher holds the task" "$OUT"
+
+# Case 12b/12c — the two halves the composite ${TMPDIR} key could not enforce.
+# Both are exercised against the SAME live holder above, so they measure real
+# contention rather than a hand-placed lock directory.
+#
+# 12b: the caller's TMPDIR is not part of the answer any more. Two dispatchers
+# launched with different TMPDIR roots used to compute one key under two parents
+# and never contend at all.
+OUT="$(TMPDIR="$SANDBOX_ROOT/elsewhere-$$" bash "$DISPATCH_BIN" --checkout "$d" \
+        --task lock-task --log-dir "$d/runs" --dry-run 2>&1)"; RC=$?
+expect_rc 17 "$RC" "exits 17 even when the second caller's TMPDIR differs" "$OUT"
+
+# 12c: a DIFFERENT task in the SAME checkout. Two tasks sharing one working tree
+# and index is how either sweeps the other's paths into a commit, and the old
+# key — which included the task — let both in.
+state_file "$d" "lock-other" "codex"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task lock-other \
+        --log-dir "$d/runs" --dry-run 2>&1)"; RC=$?
+expect_rc 17 "$RC" "exits 17 for a DIFFERENT task in the same checkout" "$OUT"
+case "$OUT" in
+  *lock-task*) ok "the checkout refusal names the task already running there" ;;
+  *)           bad "the checkout refusal names the task already running there" "$OUT" ;;
+esac
+
 wait "$outer" 2>/dev/null
+
+# Both locks are released once the holder exits — otherwise the exclusion above
+# would be indistinguishable from a leak.
+[ -d "$(task_lock_for "$d" lock-task)" ] \
+  && bad "the task lock is released after the run" "still held" \
+  || ok "the task lock is released after the run"
+[ -d "$(checkout_lock_for "$d")" ] \
+  && bad "the checkout lock is released after the run" "still held" \
+  || ok "the checkout lock is released after the run"
+
+# The lock root is inside the repository, not under a caller-controlled TMPDIR.
+# That is what makes the exclusion above hold across sessions with different
+# environments — the property, not the path, is the claim.
+LR="$(lock_root_for "$d")"
+case "$LR" in
+  "$(cd "$d" && pwd -P)"/.git/*) ok "the lock root lives in the Git common directory" ;;
+  *) bad "the lock root lives in the Git common directory" "got $LR" ;;
+esac
 
 # ================================================================= case 13
 # Regression for the gap the 2026-08-05 live run exposed: a Claude hop killed
@@ -759,7 +823,7 @@ DPID=$!
 for _ in $(seq 1 40); do [ -f "$SIGROOT/gc.pid" ] && break; sleep 0.5; done
 sleep 1
 APID="$(cat "$SIGROOT/actor.pid" 2>/dev/null)"; GPID="$(cat "$SIGROOT/gc.pid" 2>/dev/null)"
-LK="${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$d" && pwd -P)" "sig-task" | shasum -a 256 | cut -c1-16).lock"
+LK="$(task_lock_for "$d" sig-task)"
 
 if [ -z "$APID" ]; then
   bad "the simulated actor started" "no actor pid file; case 27 is inconclusive"
@@ -830,15 +894,14 @@ must_be_dead() { # pid label
 reap() { local p; for p in "$@"; do [ -n "$p" ] && kill -KILL "$p" 2>/dev/null; done; }
 
 drop_lock() { # sandbox task
-  rm -rf "${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$1" && pwd -P)" "$2" | shasum -a 256 | cut -c1-16).lock" 2>/dev/null
+  rm -rf "$(task_lock_for "$1" "$2")" "$(checkout_lock_for "$1")" 2>/dev/null
 }
 
 # Defined out here, not beside its first user: the degraded-sweep cases that use
 # it sit inside the python3 guard below, but case 30d does not, and a host
 # without python3 would otherwise reach 30d with this function undefined.
-lock_path_for() { # checkout task -> lock dir
-  printf '%s/work-loop-dispatch-%s.lock' "${TMPDIR:-/tmp}" \
-    "$(printf '%s|%s' "$(cd "$1" && pwd -P)" "$2" | shasum -a 256 | cut -c1-16)"
+lock_path_for() { # checkout task -> task lock dir (alias kept for its callers)
+  task_lock_for "$1" "$2"
 }
 
 if ! command -v python3 >/dev/null 2>&1; then
@@ -1216,7 +1279,7 @@ if escapee_is_real "$APID" "$EPID" "27j"; then
   fi
   grep -q "lsof is not installed" "$SR/out" \
     && ok "the reason names the missing handle" || bad "the reason names the missing handle" "$(grep -i unverified -A2 "$SR/out" | head -4)"
-  LK="${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$d" && pwd -P)" "degraded-task" | shasum -a 256 | cut -c1-16).lock"
+  LK="$(task_lock_for "$d" degraded-task)"
   if [ -f "$LK/survivors" ]; then
     ok "the lock is PINNED after an unverified teardown"
   else
@@ -1691,7 +1754,7 @@ printf '%s' "$OUT" | grep -q "none in flight" && ok "reports no run in flight" |
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched" || bad "no actor was launched" "calls=$(calls "$d")"
 # The contract that makes it usable mid-run: it must create nothing.
 [ ! -d "$d/runs" ] && ok "created no run-log directory" || bad "created no run-log directory" "$d/runs exists"
-LK="${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$d" && pwd -P)" "status-task" | shasum -a 256 | cut -c1-16).lock"
+LK="$(task_lock_for "$d" status-task)"
 [ ! -d "$LK" ] && ok "acquired no lock" || { bad "acquired no lock" "$LK exists"; rm -rf "$LK"; }
 
 echo
@@ -1712,7 +1775,7 @@ kill -0 "$DPID" 2>/dev/null && ok "the in-flight run is undisturbed by --status"
                             || bad "the in-flight run is undisturbed by --status" "dispatcher died"
 kill -TERM "$DPID" 2>/dev/null; sleep 4
 kill -KILL "$DPID" "$(cat "$SIGROOT/actor.pid" 2>/dev/null)" 2>/dev/null
-rm -rf "${TMPDIR:-/tmp}/work-loop-dispatch-$(printf '%s|%s' "$(cd "$d" && pwd -P)" "inflight" | shasum -a 256 | cut -c1-16).lock" 2>/dev/null
+rm -rf "$(task_lock_for "$d" inflight)" "$(checkout_lock_for "$d")" 2>/dev/null
 
 echo
 echo "Case 30c — --status and --dry-run are not interchangeable"

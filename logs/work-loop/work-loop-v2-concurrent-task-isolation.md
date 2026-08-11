@@ -1,6 +1,6 @@
 ---
 task: work-loop-v2-concurrent-task-isolation
-turn: operator
+turn: codex
 ---
 
 ## Objective and scope
@@ -15,169 +15,252 @@ Governing task method: apply the structural route in `/Users/patrik.lindeberg/Cl
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 5 — resolve the SOP Step B5 required corrections and produce one scope-lock candidate plus the concise Gate 3 decision pack for the operator; do not implement.
+Standard. Implementation mode. Unit 6 — implement the operator-approved R2 correction in this bound worktree and return a committed, unmerged candidate with red/green behavioural evidence.
 
 Named reason for the loop: the work spans investigation, planning, implementation, and independent assessment; its scope crosses existing concurrency and transport controls and must remain bounded before changes begin.
 
 ## Brief
 
-Claude's Unit 4 diagnosis is accepted, but its Option D implementation boundary is not ready for scope lock. The proposal correctly removes the composite lock failure, yet it starts automation inside an optional dispatcher after the state file has already bound the task to a checkout, and it explicitly leaves interactive Claude/Codex operation outside the guarantee. Unit 5 must resolve that entry-and-binding seam and return a corrected, minimum-complexity plan for operator trade-off approval.
+R2 has passed the SOP's diagnosis and complexity challenge and the operator has now authorised its locked implementation scope. This unit changes the proven concurrency mechanism while preserving human control over landing, conflicts, and cleanup; it does not claim resolution, because independent verification and representative operation still follow. Implement only the approved candidate identified below and hand it back as an unmerged verification candidate.
 
-Required outcome: revise the proposed structural correction against the frozen Step B5 findings below. Return one recommended scope-lock candidate, the simplest credible alternative, and a short SOP Gate 3 decision pack. Do not implement, change production resources, create/move a worktree, migrate this live task, or ask the operator to approve technical correctness.
+### Governing authority and approved content identity
 
-Accepted evidence and decisions:
+- Current operator decision: the 2026-08-11 instruction to prepare the next Claude task approves Codex's recommended R2 package, not the two-lock-only alternative, and leaves the optional Codex `--status` widening outside this implementation.
+- Approved content identity: **R2, “the checkout declares its writer,” in this state file as handed back by Claude in commit `d67c3d0` and accepted by Codex's final closure check.** Verify that commit and this task-file provenance before changing production files. If the content identity does not resolve to the R2 candidate described here, stop and hand back the mismatch.
+- The Work Loop v2 proposal remains governing intent; its post-MVP single-writer/isolation trigger is now supplied by the proved conflicts. The executable core and the active Claude/Codex Work Loop v2 resources govern actor roles and the single state-file interface.
+- The repository-problem-resolution SOP governs this structural implementation: Step B6 scope lock and Step B7 controlled implementation now; Step B8 independent clean-environment verification remains a later unit and must not be collapsed into Claude's self-report.
 
-- Gate 2 failure proof is preserved at `7a13a45`; the controlled concurrency matrix is preserved at `395edd1`. The immediately preceding Claude commit touching this state file contains the full Unit 4 causal model and options.
-- Codex accepts the core diagnosis with high confidence: a composite `checkout|task` lock under caller-controlled `${TMPDIR}` enforces neither repository-wide task exclusivity nor checkout-wide writer exclusivity; once two tasks share a checkout, the shared working tree/index permits cross-task commit contamination. Fragmented diagnostics and status surfaces then miss or misattribute the admitted writers.
-- The case remains structural rather than a bounded lock-path repair because the approved outcome includes task-to-checkout continuity, entry/handoff behaviour, and operator-visible ownership in addition to dispatcher exclusion.
-- Option C (two repository-scoped live locks) is the safety floor but cannot provide later-handoff continuity. Option D (task branch plus create/reuse worktree plus repository-scoped task lock) remains a plausible candidate, not an approved solution.
-- The default complexity budget remains zero. Counting files or commands is not enough: branch/worktree creation authority, lifecycle accumulation, migration and changes to entry behaviour are permanent complexity and must be charged honestly.
+### Required outcome — the locked R2 correction
 
-Step B5 verdict: **Proceed with required corrections.** Resolve all six before implementation:
+Implement these behaviours together:
 
-1. **Resolve the bootstrap and physical-binding seam.** The task file's physical checkout is currently the binding (`.agents/skills/work-loop-v2/SKILL.md`), while `dispatch.sh` requires `--checkout`, derives `STATE_FILE` under that checkout, and validates it before launching. Explain exactly how isolation is decided and, when needed, created **before Codex writes the first brief**, and separately how a later handoff discovers and reuses the already-bound checkout. A dispatcher must not silently relocate, copy, or create a second task file after the binding exists. If full automation cannot cross that product boundary safely, surface the residual operator action rather than hiding it.
-2. **Cover the operating model actually requested, or expose a scope reduction.** Courier/dispatcher mode is optional and off by default; interactive `/work-loop-v2` in Claude and the Codex skill both resolve a task file only inside their current checkout. The revised plan must show how interactive Claude, interactive Codex, and dispatched hops see the same ownership/binding rule and avoid the same writable checkout. If the minimum safe experiment can cover only dispatched runs, label that as a material scope reduction for the operator instead of claiming the task exit condition is met.
-3. **Keep isolation conditional and preserve human judgment.** The target is create/reuse when concurrent writing requires isolation, not a task branch/worktree for every serial dispatch. Define the observable condition that selects local versus isolated operation, what becomes sticky once a task is isolated, and how ambiguity refuses safely. Preserve the operator's decisions about whether work belongs together and about landing/cleanup; do not encode those judgments as an automatic branch convention.
-4. **Clarify whether a branch is a locator or a second binding.** The state-file location must remain the one semantic binding unless the operator explicitly approves changing that contract. If `work-loop/<task-id>` is retained, specify drift handling for an existing task on another branch, branch rename/deletion, an existing but unregistered/prunable worktree, and a path collision. Explain why the convention is less machinery than deriving/reusing the registered worktree that already contains the authoritative task file. Never auto-move this live task.
-5. **Correct the scope and complexity accounting.** Account for the dispatcher's new create authority, accumulated branches/worktrees, migration, status enumeration, changed landing practice, and rollback residue. Reassess which existing surfaces require behaviour changes: at minimum inspect the Codex skill's binding/entry rules, Claude's local task resolution, `dispatch.sh`, `/new-worktree-session`, and the playbook. Do not treat four sibling worktree copies of `dispatch.sh` as four implementation targets; change only this bound checkout and carry rollout risk to operator-controlled integration. Make exit 24 observational rather than naming an actor it did not observe; exit 25 may be removed or deferred if its demonstrated trigger becomes unreachable.
-6. **Make verification match the full boundary.** Retain behaviour cases for `TMPDIR`-independent exclusion, same-task/two-worktree refusal, two-task/one-checkout refusal, safe fan-out 2, and later-handoff reuse. Add cases for the pre-brief entry/bootstrap path, preservation of the single physical task-file binding, the ordinary serial/no-isolation path, and ownership/status visibility across Claude/Codex plus interactive/dispatched entry surfaces. A red-before/green-after case and a relevant control are sufficient; remove the proposed ceremony of one deliberately wrong negative control per test.
+1. Replace the caller-`TMPDIR` composite dispatcher lock with two live locks located through the repository's Git common directory: one keyed by logical task and one keyed by physical checkout. A second live dispatcher must be refused if either resource is already held, including when the callers use different `TMPDIR` roots.
+2. Introduce one gitignored per-checkout declaration at `logs/work-loop/.owner`, containing one task id and claim date. Whoever creates a new task state file writes the declaration immediately before that state file; Claude clears it when closure reduces the task to the closing record.
+3. Use one shared ownership check with verdicts equivalent to proceed, refuse with the conflicting task/checkout named, and ambiguous. Interactive Codex checks only whether its current checkout is claimed by another task, using a local read and no Git. Interactive Claude and the dispatcher additionally inspect registered worktrees before execution or commit to detect the same task elsewhere and replicated/ambiguous state files.
+4. Preserve conditional isolation. Ordinary serial Local work remains in its checkout. When the existing isolation policy requires a worktree, the existing Claude `/new-worktree-session` path creates and opens it; the operator still opens Codex in that prepared checkout. Once isolated, later handoffs reuse the bound checkout.
+5. Preserve the safe state table approved in R2: a unique state-file copy may re-declare a missing marker only in that checkout; replicated copies with no marker are ambiguous everywhere and never first-contact claimed; marker-without-local-state, unreadable/multi-id marker, and conflicting claims refuse visibly; a closed local task's stale marker may be cleared by the next task start in that same checkout.
+6. Keep the accepted limitations explicit in the resources: an open task leases its checkout until closure; Codex guarantees only the current-checkout half; same-task duplicate interactive sessions and deliberate bypass of an instruction-borne refusal are not technically prevented.
 
-Required repository checks before revising the plan:
+Do not silently replace these settled behaviours with another architecture. Ordinary reversible implementation choices inside this boundary are Claude's to make and report.
 
-- Recheck `.agents/skills/work-loop-v2/SKILL.md` around the physical binding, explicit Local/Worktree choice, existing-worktree fallback, and courier being optional/off by default.
-- Recheck `.claude/commands/work-loop-v2.md` Step 1's current-checkout-only task resolution.
-- Recheck `dispatch.sh` from `--checkout` canonicalisation through `STATE_FILE` construction and initial `validate_state`; settle whether create/reuse can legally occur before those steps without contradicting the single-file interface.
-- Recheck `docs/parallel-sessions-playbook.md` § 4 and `.claude/commands/new-worktree-session.md`, including the current requirement that an existing state file/worktree precede dispatch, the command's inability to move a live session, and its `-2`/`-3` uniquifying behaviour.
-- If any claim is false, hand back the exact mismatch rather than adapting silently.
+### Authorised files and components
 
-Gate 3 decision pack required at the end of `## Latest result`:
+- `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`
+- `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`
+- `plans/work-loop-v2-v0.2/handoff-automation-spike/README.md`
+- `.claude/commands/work-loop-v2.md`
+- `.agents/skills/work-loop-v2/SKILL.md`
+- `docs/parallel-sessions-playbook.md`, limited to the concurrent-session/worktree guidance in §4
+- `.gitignore`, limited to the `logs/work-loop/.owner` rule
+- one new shared ownership helper under `logs/scripts/` and its directly corresponding test
+- this state file for the handback
 
-- established problem and supported diagnosis;
-- recommended minimum correction and what changes in operator practice;
-- the simplest credible alternative and why it is insufficient or preferable;
-- explicit choices the operator must make, especially any new create authority, branch convention, residual manual step, or material dispatcher-only scope reduction;
-- capabilities/files affected; machinery added and removed; maintenance owner; visible failure mode; rollback and cleanup residue;
-- required behavioural tests and representative post-integration fan-out-2 validation;
-- known uncertainty and explicit non-goals.
+Codex's file list is a locked boundary, not a requirement to edit every listed file. Change only files whose behaviour or contract actually needs to change, and explain any authorised file left untouched.
 
-Keep it short enough for a scope decision. The detailed reasoning may precede it, but do not create a separate plan, case document, registry, or decision artifact.
+### Exclusions and preservation constraints
 
-Completion condition: return a corrected scope-lock candidate that resolves all six findings, state whether it is ready for operator Gate 3, write it into `## Latest result`, set `turn: codex`, commit only this state-file handback, and stop. Do not implement or set `turn: operator`; Codex must assess the corrected candidate first.
+- Do not change `.claude/commands/new-worktree-session.md`; R2 deliberately reuses it unchanged.
+- Do not change the executable core, proposal, hooks, model settings, permission settings, sibling worktrees, other task state files, or unrelated logs including `logs/friction-log.md`.
+- Do not create a task registry, task-branch convention, new command, agent, hook, service, database, recurring process, second binding, or new worktree-creation authority.
+- Do not auto-move, copy, migrate, or claim this live task's state file or create `logs/work-loop/.owner` for this already-open task as an implementation side effect.
+- Do not merge, push, land, delete a branch/worktree, resolve unrelated conflicts, or perform cleanup outside the authorised change.
+- Preserve the five-field state-file ceiling and the physical task-file location as the single semantic binding.
+
+### Verify before implementation
+
+Report current Git status first. This checkout is expected to be the already-created isolated checkout bound to this task; verify its branch, clean/dirty state, current base commit, the state-file identity, and the `d67c3d0` R2 provenance. Do not create another implementation worktree or move this task. If the correct base depends on uncommitted work, or unrelated changes overlap an authorised file, stop and ask rather than staging or committing them.
+
+Re-derive these load-bearing repository claims before acting:
+
+- In `dispatch.sh`, locate the current composite lock, its `${TMPDIR}` dependency, checkout canonicalisation, state-file construction, initial validation, status path, allow-path behaviour, and exit-code meanings.
+- In `.agents/skills/work-loop-v2/SKILL.md`, verify the current physical-binding rule, Local/Worktree isolation policy, pre-brief writer, existing-worktree fallback, Codex Git prohibition, and courier-off-by-default boundary.
+- In `.claude/commands/work-loop-v2.md`, verify Step 1 currently resolves only the task in the active checkout and identify the closure write that must clear a declaration.
+- In the playbook and spike README, verify the current interactive/dispatched entry guidance that R2 supersedes.
+- Across `.gitignore` and the current per-checkout session-marker examples, verify that `logs/work-loop/.owner` will remain checkout-local and cannot enter a commit.
+
+For every absence claim, name the searched surface and pattern. If a load-bearing claim is false or implementing it requires scope outside the authorised list, hand back the exact mismatch without adapting the plan silently.
+
+### Required behavioural evidence
+
+Implement durable regression coverage for the approved T1–T13 matrix from R2:
+
+- T1 different-`TMPDIR` same-task/same-checkout dispatch exclusion, with the existing shared-root case as control.
+- T2 same task in two worktrees refused with the claiming checkout visible.
+- T3 two tasks in one checkout refused with the holding task visible.
+- T4 fan-out 2 in separate worktrees succeeds without cross-task paths in either candidate range.
+- T5 a later handoff reuses the claimed checkout and creates no replacement binding.
+- T6 Local and isolated pre-brief paths require `.owner` before the state file, with no Git run by the writer.
+- T7 a replicated task file cannot authorise a second checkout and is never copied, moved, or recreated by the check.
+- T8 ordinary serial Local work remains non-isolated and the checkout is reusable after closure.
+- T9 missing marker plus replicated state file is ambiguous everywhere and claims nowhere.
+- T10 migration/first-contact cannot silently claim a replicated open task.
+- T11 a second interactive task is refused by Codex's local marker read alone; same-task duplicate interactive sessions remain an explicit non-goal.
+- T12 `.owner` is absent from status and commits with the ignore rule, while a meaningful control proves it would be visible without that rule.
+- T13 Codex's deliberately narrowed check may admit a same-task claim elsewhere, but the next Claude entry refuses it before any implementation commit.
+
+Build the regression coverage before production changes and capture the baseline output. Red-before evidence is required for every changed failure class; preservation cases that already pass on the baseline, such as the ordinary serial control, must be reported honestly rather than forced to fail. After implementation, all T1–T13 and the relevant existing dispatcher/work-loop tests must pass. Exercise real scripts, locks, Git worktrees, and entry paths where safe; actor stubs are acceptable for the model boundary, and real networked Claude/Codex fan-out remains the operator's post-integration validation rather than this unit's authority.
+
+Evidence must include:
+
+- the baseline command(s), exit codes, and actual output showing the original failures;
+- the post-change command(s), exit codes, and actual output for T1–T13, relevant existing tests, and at least one refusal/failure path;
+- generated output from one representative scripted fan-out-2 or handoff case using the real dispatcher/ownership path;
+- a check that `.owner` cannot be committed, with its meaningful no-ignore control;
+- the current base commit and final implementation commit;
+- every changed and deleted file, with the behavioural change in each affected component;
+- permanent machinery added, replaced, and removed;
+- deviations from R2, authorised files intentionally left unchanged, remaining limitations, and rollback instructions usable after integration.
+
+Do not claim the task or defect is resolved. State only that the committed implementation candidate is ready for independent verification.
+
+### Stop conditions
+
+Stop and return for renewed operator approval if implementation reveals a need for materially different architecture; a new permanent service, agent, command, hook, registry, or shared-state mechanism; cross-repository changes; additional capability removals; a changed causal diagnosis; a substantially larger scope; or widening Codex `--status` outside courier mode. Stop and hand back to Codex for a false premise, a required file outside scope, or evidence that cannot be produced. Do not stop for ordinary reversible implementation details inside the locked scope.
+
+Completion condition: implement only R2, commit the implementation and this handback in the task's existing isolated branch/worktree without merging or pushing, write the full evidence report into `## Latest result`, set `turn: codex`, and stop.
 
 ## Latest result
 
-**Final bounded fix (2026-08-11) — two seams, closed.** Seam 1 is resolved by moving the marker inside the surface Codex already writes, so the ordinary Local task needs no new command, no authority grant and no extra round trip. Seam 2 is resolved by narrowing Codex's own guarantee to the checkout half and naming where the repository-wide half is actually enforced; the existing `--status` surface is offered as an operator-decided upgrade, with its scope limit stated rather than assumed. Nothing accepted earlier is reopened.
+Inspected (2026-08-11):
 
-Result: **Seam 1** — the marker moves from `logs/.work-loop-owner` to **`logs/work-loop/.owner`**, gitignored, written by whoever creates the task's state file, immediately before it. In the ordinary case that is Codex, as a plain file write inside the one directory it already owns. **Seam 2** — interactive Codex enforces the checkout half only (is *this* checkout claimed by a different task?), which its local read can establish; the task half (is *my* task claimed elsewhere, is the state file replicated?) is enforced by the actors that may run git — interactive Claude at Step 1 and the dispatcher at admission. Because Claude makes every commit (core § 4), every unit crosses a Claude entry before anything is committed, so the exposure window is exactly one Codex brief write into a checkout the local read has already cleared. This narrowing is stated as a limit, not presented as coverage.
+- Claim (1) `dispatch.sh` composite lock, `${TMPDIR}` dependency, canonicalisation, state-file construction, initial validation, status path, allow-paths, exit codes: **HOLDS** — read `dispatch.sh`; composite key at `:484` (`sha256("$CHECKOUT|$TASK")`), `${TMPDIR:-/tmp}` parent at `:485`, checkout canonicalisation `cd && pwd -P` at `:367`, `STATE_DIR`/`STATE_FILE` at `:387-388`, first `validate_state` at `:1785`, `--status` skips the lock at `:977` (`[ "$STATUS_MODE" -eq 1 ] || acquire_lock`), default allow-paths at `:316-326`, exit-code table at `:119-177` with 27 a deliberate gap.
+- Claim (2) `SKILL.md` physical binding, isolation policy, pre-brief writer, existing-worktree fallback, Git prohibition, courier default: **HOLDS** — `:155` "The task file's location is the binding"; isolation table `:163-169`; Codex creates `logs/work-loop/` at `:151`; existing-worktree fallback `:180`; "You **never run git**" `:134`, repeated `:521`; courier "optional and off by default" `:184`.
+- Claim (3) `.claude/commands/work-loop-v2.md` Step 1 resolves only the active checkout; the closure write: **HOLDS** — `:143` resolves `logs/work-loop/{task-id}.md` under the running checkout with no cross-worktree enumeration; the closure write is `## Closing the task` `:251`, with the de-escalation reduction at `:219`.
+- Claim (4) playbook and spike README entry guidance: **HOLDS** — playbook § 4 `:106-130` carries the ad-hoc same-checkout anti-pattern and the two entry paths (interactive `/new-worktree-session`, dispatched `dispatch.sh`), with the worktree "created by the operator, never by the dispatcher"; README `## Running the dispatcher` `:24-48` documents the option surface R2 extends.
+- Claim (5) `logs/work-loop/.owner` stays checkout-local: **HOLDS** — searched `.gitignore` for `owner`: no match before this unit, so no pre-existing rule. The per-checkout gitignored declaration precedent is real: `.gitignore:34-39` lists `logs/.prime-mtime`, `logs/.session-marker`, `logs/.session-marker-*`, and `logs/scripts/prime-session-entry.sh:36-41` writes exactly that family. `:148` of that script also already keys cross-worktree claims off `$GIT_COMMON`, which is the precedent the relocated locks follow.
 
-Evidence: **Seam 1** — `logs/work-loop/.owner` is inside Codex's existing write surface and inside `dispatch.sh`'s default allowlist: `printf 'logs/work-loop/.owner' | grep -cE '^logs/work-loop/'` returns `1`. It stays uncommitted: with the file present, `git status --porcelain -- logs/work-loop/` matched `.owner` **1** time (control — the rule absent, the file must appear), and `git -c core.excludesFile=<rule> status --porcelain -- logs/work-loop/` matched it **0** times. The probe file was removed; `ls logs/work-loop/.owner` now reports no such file. `foreign_worktree()` reads `git status --porcelain` and filters against `ALLOW_PATHS`, so an ignored file is invisible to it and an un-ignored one would still be allowed — the dispatcher needs no change for the marker itself. **Seam 2** — `.agents/skills/work-loop-v2/SKILL.md:243` already gives Codex the literal invocation `dispatch.sh --checkout <path> --task <task-id> --status`, `:246` states it is "read-only — no lock, no log, no write", and `dispatch.sh:975–977` confirms it in code (`[ "$STATUS_MODE" -eq 1 ] || acquire_lock`). `:224` supplies the reconciliation with the prohibition — "Launching the dispatcher is not running git … and writes nothing through git." **But `:243` sits inside the Courier-mode section, which `:184` declares "optional and off by default"**, so a Codex session without courier approval has no standing permission to run it. That limit is why the upgrade is an operator choice below and not the recommended default. What would have falsified this fix: if the ignore rule had not suppressed the marker, or if `--status` had turned out to take a lock or write, the narrowed guarantee would have been the only available answer and the upgrade would have been withdrawn.
+Provenance: `d67c3d0` exists, is an ancestor of `HEAD` (`381559f`), touches only this state file, and its `## Latest result` carries R2 "the checkout declares its writer" — the marker at `logs/work-loop/.owner`, the two repository-scoped locks, the narrowed Codex guarantee and the dormant-task lease. Content identity resolves to the brief's approved candidate.
 
-**Frozen findings 1–5, reproduced earlier this round and now resolved.** Each was checked by opening the file, before any correction was written.
+Result: **the locked R2 correction is implemented and committed in this worktree, unmerged and unpushed. This is an implementation candidate for independent verification (SOP Step B8). It is not a claim that the task or the defect is resolved.**
 
-- Finding 1 — **reproduces.** Core `:404` records that Codex "was refused write access to `.git`, the folder Git keeps its own records in." `.agents/skills/work-loop-v2/SKILL.md:134` reads "You **never run git.** Not `add`, not `commit`, not `checkout`", and `:521` repeats "**Commit, or run any git command.** Claude does that". So Codex can neither write inside the Git common directory nor run `git rev-parse --git-common-dir` to locate it. The previous candidate put that write at task-start, which SKILL.md `:151` assigns to Codex. The finding is correct and the design was wrong.
-- Finding 2 — **reproduces.** The previous record was keyed by task id, created per task, enumerated by `--status`, migrated for 18 existing tasks, consulted to identify the authoritative copy, and removed at closure. That is a persistent task registry by function, and the task's own exclusions name one.
-- Finding 3 — **reproduces.** The previous check asked only "is task T in T's recorded checkout", so tasks A and B could each record checkout X and each receive `OWNED-HERE`. Nothing in it keyed on the checkout. Inspection also settles the liveness half: `.claude/hooks/detect-concurrent-session.sh:89` sets `CC_PROCESS_PATTERN="${CC_PROCESS_PATTERN:-native-binary/claude}"` and `:96` filters `ps` output by that string alone — there is **no Codex process pattern anywhere in the hook**, so interactive Codex has no observable liveness signal in this repository.
-- Finding 4 — **reproduces.** The previous pack described manual worktree creation as a residual action while still claiming the exit condition was met. The objective at `## Objective and scope` asks for automatic creation or reuse without the operator reasoning through Git mechanics, so that was a scope reduction presented as a design choice.
+### Starting state
 
-The ownership-record design was withdrawn and replaced, not patched: findings 1, 2 and 3 by inverting what is recorded — from a task→checkout map to a per-checkout declaration of its writer — and finding 4 by supplying an authorised pre-brief creation path rather than asking the operator to weaken the objective. Grounding inspections: `logs/scripts/prime-session-entry.sh:36–40` shows the repository already operates per-checkout gitignored declaration files (`logs/.session-marker`, `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`), and `.gitignore` lists `logs/.prime-mtime`, `logs/.session-marker` and `logs/.session-marker-*`, so a gitignored declaration is not replicated by any merge and is writable without touching `.git`. `.claude/commands/new-worktree-session.md:56` creates the worktree with `git worktree add`, and `:63–69` opens it in a new VS Code window via `code -n` with two fallbacks.
+Branch `session/2026-08-11-work-loop-ceremony`, **base commit `381559f`**, in the worktree already bound to this task. **The final implementation commit is the single commit on top of that base — the tip of this branch, which is also the commit carrying this state file.** Resolve it with `git rev-parse HEAD`, or `git log --oneline 381559f..HEAD` to see that there is exactly one. It is deliberately not written here as a literal hash: this file is inside that commit, so any hash written into it is invalidated by the act of committing it. Two files were dirty at entry and neither was staged by this unit: this state file (carrying the Unit 6 brief itself) and `logs/friction-log.md` (a write-activity hook append). No second implementation worktree was created and this task was not moved.
 
----
+### Baseline — red before
 
-### The corrected candidate — R2, "the checkout declares its writer"
+`bash logs/scripts/work-loop-owner.test.sh` → exit 1, **24 passed, 37 failed**. The failures are the changed behaviour classes:
 
-**What is recorded.** One gitignored file per checkout, **`logs/work-loop/.owner`**, holding one task id and the date it was claimed. Its path is deliberate: it sits *inside* `logs/work-loop/`, which is the one directory both actors already write and which `dispatch.sh`'s default allowlist already covers as `^logs/work-loop/`. It behaves like the existing `logs/.session-marker` family — a gitignored per-checkout declaration — and joins that family rather than starting a new mechanism class. There is **no file anywhere that maps tasks to checkouts.**
+- T1 different-`TMPDIR` exclusion FAILED; **its shared-`TMPDIR` control PASSED on the baseline** — reported as passing, not forced red, because it is the preservation case.
+- T3 dispatcher half FAILED — two different tasks in one checkout both admitted.
+- T2, T5–T11, T13 FAILED for want of the helper (`work-loop-owner.sh: No such file or directory`).
+- T12 FAILED — the ignore rule genuinely did not exist; the harness copies the **real** repository `.gitignore` into its sandboxes rather than authoring one, so T12 measures this repository's rule and not the harness's.
+- **T4 PASSED on the baseline** — fan-out 2 on separate worktrees already worked. Reported honestly as a preservation/regression guard rather than presented as a fixed defect.
 
-**Who writes it, in both lanes — seam 1 and finding 1.** **Whoever creates the task's state file writes the marker, immediately before it, as a plain file write.** In the ordinary case that is Codex, and it needs no git, no new command, no authority grant and no extra round trip: `logs/work-loop/.owner` is inside the surface Codex already owns, and Codex creates `logs/work-loop/` itself today (SKILL.md `:151`). Codex therefore stays entirely inside `:134` and `:521`. Claude writes the marker only when Claude itself opens a task, and clears it at closure in the same write that reduces the file to the closing record.
+Case 0 is the harness's own falsifiability proof: pointed at an absent helper, the suite fails.
 
-**The pre-brief sequence — one sequence, both lanes.** The write happens *before* the state file exists, not after:
+### Green after
 
-1. The operator brings the request to Codex, exactly as core § 4 requires.
-2. Codex applies SKILL.md's existing isolation table (`:161–171`). Where the table says **Local**, go straight to step 4 in the current checkout. Where it says **isolate**, Codex ends its reply with the Next line it already writes today, naming one Claude command.
-3. That Claude command creates the worktree (`git worktree add`, `new-worktree-session.md:56`) and opens it in a new VS Code window (`:63–69`). The operator opens Codex on that checkout.
-4. Codex reads `logs/work-loop/.owner`. If it names a different open task, Codex refuses and writes nothing. Otherwise Codex writes the marker, then writes the first brief into `logs/work-loop/{task-id}.md`.
-
-The ordinary Local task is therefore protected before binding by the same step that protects an isolated one, and `/new-worktree-session` needs no work-loop awareness at all — **it drops out of the change set entirely**, which is strictly less machinery than the previous version of R2. Creation and window-opening stay automatic and the operator reasons through no Git mechanics. **The one residual operator action is opening Codex on the prepared checkout**, and only on the isolated path; the Local path has none.
-
-**Why it is not a registry — finding 2.** Nothing is keyed by task id, nothing is stored centrally, and nothing is migrated. The decisive property is what the marker is *not* used for: **it never chooses among replicated copies of a task file.** It is only ever used to refuse — a second task entering a claimed checkout, or a task whose id is claimed by a different checkout. Refusal needs no authoritative-copy selection, which is exactly what made the withdrawn design a second binding. Where a repository-wide question is asked at all, the answer is computed on demand by reading each worktree's own declaration; there is no stored index to fall out of sync.
-Charged honestly against that: it is still a persistent artifact with a lifecycle, and it is accounted for as one below. It is not offered as free.
-
-**Lost, stale and missing behaviour — finding 2, in full.**
-
-| State found | Verdict |
+| Suite | Result |
 |---|---|
-| No marker; the state file exists nowhere | Free to claim. Ordinary new task. |
-| No marker; the state file exists in **exactly one** checkout | That checkout may re-declare; any other is refused. A single copy is decisive evidence — it is this task's own situation today. |
-| No marker; the state file is **replicated** across checkouts | `AMBIGUOUS`. Every checkout is refused and the operator names the owner. **The checkout contacted first never claims silently** — this is the migration case finding 2 names, and it covers the 18 open tasks that are replicated today. |
-| Marker present; no state file in that checkout | Contradiction. Refuse and report. |
-| Marker names a task whose local copy is closed (`turn: operator`) | Stale. Reported, and cleared by the next task-start **in that same checkout** — never by another checkout. |
-| Marker unreadable or holding more than one id | `AMBIGUOUS`. Refuse and report. |
+| `logs/scripts/work-loop-owner.test.sh` (T1–T13) | exit 0 — **61 passed, 0 failed** |
+| `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` | exit 0 — **pass=381 fail=0** (375 before; +6 from the new case 12b/12c) |
+| `logs/scripts/work-loop-v2-core-resolver.test.sh` | exit 0 — 4 passed, 0 failed |
+| `logs/scripts/work-loop-v2-slice-1.test.sh` | exit 1 — 292 passed, **3 failed, all pre-existing and unchanged** |
 
-**Checkout exclusion, and the honest limit — finding 3.** The marker holds **at most one open task**, so two tasks declaring one checkout is precisely what it refuses; task B entering a checkout claimed by task A is stopped with A named. That closes the hole in the withdrawn design.
-Writer lifetime, stated plainly and not smoothed over:
+The three slice-1 failures are not caused by this unit and are unchanged in count and identity from the baseline run. Two (`3.1a`) test `logs/work-loop/` against a hard-coded 25-file allowlist while the directory holds 56 files — including this task's own state file, which predates this unit; this unit added no file to `logs/work-loop/`. The third asserts SKILL.md is under a 340-line ceiling; it was **543 lines at `HEAD`** before any edit here. This unit took it to 564, so it worsens a pre-existing breach — recorded as a deferral below, not fixed, because restructuring that file is outside the authorised scope.
 
-- **Dispatched writers** get a process-backed lifetime — the dispatcher's live checkout and task locks, acquired at admission and released at exit.
-- **Interactive writers have no process-backed lifetime available.** The inspection above shows the only liveness machinery in the repository detects `native-binary/claude` and nothing else, so interactive Codex is invisible to it. The interactive lease is therefore held by the **task's open state**, not by a session.
-- **That is a lease held by a dormant open task, which the finding warns about.** It is accepted deliberately, because continuity between handoffs is what the objective asks for and a session-scoped lease cannot survive a session ending. Its cost is bounded and visible: starting a *different* task in that checkout is refused until the task closes, and the refusal names the holding task and both remedies (close it, or use another checkout). Ordinary serial reuse is unaffected — closure clears the marker, and one task at a time in one checkout is the ordinary case.
-- **What interactive Codex can and cannot establish — seam 2.** A local read of `logs/work-loop/.owner` answers one question: *is this checkout claimed by a different task?* That is the whole of Codex's enforcement, and it is the half that matches Codex's own failure mode, because the only thing Codex writes is a brief into the checkout it is standing in. It **cannot** establish that its task is claimed in another checkout, or that the state file is replicated — both need `git worktree list`, and Codex runs no git. Those two facts are established by the actors that may: interactive Claude at Step 1, and `dispatch.sh` at admission. **The guarantee is narrowed here, explicitly.** What keeps the narrowing sound rather than a gap is that Claude makes every commit (core § 4), so every unit crosses a Claude entry before anything is committed; the exposure is one uncommitted brief in a checkout the local read already cleared.
-- **Partly resolved, and labelled as such.** Two interactive sessions opened on one checkout for the **same** task are not prevented by anything in this scope, and neither is an operator who proceeds past a refusal. Interactive enforcement is instruction-borne; only dispatch is exit-code-borne. **This is the material scope reduction the finding asks to see stated, and it is stated rather than covered by claim.**
+### Generated output — representative fan-out 2, real dispatcher and real helper
 
-**Locks retained.** The two repository-scoped locks in the Git common directory — one keyed on the task, one on the checkout — replace the composite `${TMPDIR}` key and remain necessary: the marker governs open-task exclusivity, the locks govern live-process exclusivity. They are written by `dispatch.sh`, which may run git, so finding 1 does not touch them.
+Two linked worktrees, two tasks, concurrent dispatchers, **different `TMPDIR` roots**, actors stubbed:
 
----
+```
+alpha exit=0   beta exit=0
+ownership: PROCEED — this checkout already declares task 'fanout-alpha'; task 'fanout-alpha' is declared by this checkout; the later handoff reuses it
+ownership: PROCEED — this checkout already declares task 'fanout-beta'; task 'fanout-beta' is declared by this checkout; the later handoff reuses it
+alpha candidate range: [logs/work-loop/fanout-alpha.md ]
+beta  candidate range: [logs/work-loop/fanout-beta.md ]
+```
 
-### Gate 3 decision pack (corrected)
+Each candidate range contains only its own task's path.
 
-**Established problem and diagnosis.** A composite `checkout|task` lock under caller-controlled `${TMPDIR}` enforces neither task nor checkout exclusivity; once two tasks share a checkout the shared working tree and index permit cross-task commit contamination, and the diagnostics misattribute it. Demonstrated at `7a13a45` and `395edd1`. Carried forward as accepted: committed state files replicate across worktrees (D1), so file presence cannot identify ownership; the task-branch convention is withdrawn; exit 25 is retained; both interactive actor surfaces change.
+### Refusal and ambiguity paths, end to end
 
-**Recommended minimum correction.** (a) Two repository-scoped locks replacing the composite `${TMPDIR}` key. (b) One gitignored `logs/work-loop/.owner` per checkout, written by whoever creates the task's state file immediately before it — Codex in the ordinary case, with no git and no new authority — and cleared at closure. (c) One shared check, at the depth each actor can reach: interactive Codex reads its own checkout's marker; interactive Claude and the dispatcher additionally enumerate registered worktrees. Verdicts are proceed / refuse-with-name / ambiguous. **What changes in operator practice:** for an ordinary Local task, nothing you do changes. When Codex judges that isolation is needed, its Next line sends you to one Claude command that creates the worktree and opens the window for you; you then open Codex on that checkout. Entering a task from a checkout claimed by another task now stops with the other task named. Branching, landing and cleanup are unchanged.
+```
+=== the same task entered from a second checkout ===
+exit=33
+STOP [33] ownership refused for task fanout-alpha in .../wt-beta
+verdict: REFUSE
+reason: task 'fanout-alpha' is already claimed by checkout .../wt-alpha — continue the task there, or close it first
+Recoverable next action: continue the task in the checkout named above, or close it there first. Nothing was launched.
 
-**Simplest credible alternative — the two locks alone.** Correct while a run is in flight, and it is the safety floor. It gives no continuity between handoffs, no interactive coverage and no ownership visibility, so it does not meet the exit condition. It is the right choice only if the decision is to land safety now and defer continuity.
+=== a second task entering a checkout held by an OPEN task ===
+exit=33
+verdict: REFUSE
+reason: this checkout is claimed by open task 'holder' — close it, or use another checkout. An open task leases its checkout until closure.
 
-**Explicit operator choices.**
-1. Take R2, or land the two locks only and defer continuity.
-2. Accept **one gitignored marker file per checkout at `logs/work-loop/.owner`** as the persistent artifact. It is the only new durable object, and it is the one thing to reject if the no-registry boundary is read more strictly than R2 reads it.
-3. Accept the **residual operator action**: opening Codex on the prepared checkout, on the isolated path only. Creation and window-opening are automatic; this step is not. The Local path has no residual action.
-4. Accept the **interactive scope reduction**, now in two parts: two interactive sessions on one checkout for the same task, and an ignored refusal, are not prevented; and interactive Codex enforces only the checkout half, with the cross-checkout half enforced at the next Claude entry, which every unit crosses before anything is committed.
-5. **Decide on the `--status` upgrade.** Codex could get repository-wide ownership visibility of its own by running the read-only `dispatch.sh … --status`, an invocation SKILL.md `:243` already spells out and `:246` already certifies as read-only. The obstacle is scope, not authority: `:243` lives in the Courier-mode section, which `:184` makes optional and off by default. Permitting that one read-only invocation outside courier mode is a **narrow, explicit widening** for you to grant or refuse. Refusing costs nothing structural — it leaves the recommended narrowing in place.
-6. Accept the **dormant-task lease**: an open task holds its checkout until it closes. This is the price of handoff continuity.
-7. Confirm that **no new create authority is granted to Codex or to the dispatcher**. All creation stays in Claude's existing `/new-worktree-session` machinery, which this fix leaves unmodified.
+=== a replicated state file with no declaration ===
+exit=34
+verdict: AMBIGUOUS
+reason: task 'replicated' has a state file in more than one checkout and no checkout declares it: .../repo .../wt2 — replicated copies authorise nobody; the operator names the owner
+```
 
-**Capabilities and files affected.** `dispatch.sh` and `dispatch.test.sh`; `.claude/commands/work-loop-v2.md` Step 1; `.agents/skills/work-loop-v2/SKILL.md` (isolation table gains the marker step and the Next-line hand-off); `docs/parallel-sessions-playbook.md` § 4; one new helper under `logs/scripts/` with its test; one `.gitignore` line (`logs/work-loop/.owner`); `plans/…/handoff-automation-spike/README.md`. **`.claude/commands/new-worktree-session.md` is no longer in the change set** — the marker is written by the state file's creator, so that command needs no work-loop awareness. Not the executable core, not the five-field ceiling, not the four hooks.
-**Persistent artifacts and lifecycle owners:** `logs/work-loop/.owner` — created by whoever creates the task's state file (Codex in the ordinary case), cleared at closure by Claude in the same write that reduces the file to the closing record, owner is the work-loop surface set; the two lock directories — process-lifetime, owner is `dispatch.sh`; the helper script and its test — owner is `dispatch.sh`'s owner. No branches and no worktrees accumulate beyond those the operator already creates.
-**Visible failure mode:** an entry that should proceed is refused with the claiming task named. Noisy, never silent.
-**Rollback and residue:** revert the call sites, the lock change and the helper; delete the marker files and the `.gitignore` line. Nothing survives a revert — no branch, no worktree, no committed record.
+A first attempt at the second case returned `PROCEED` instead, because the fan-out run had already closed the holding task and the stale-declaration row correctly applied. The scenario was rebuilt with an **open** holder, which is the output above. Recorded because the first reading would have been the wrong evidence for the claim.
 
-**Required behavioural evidence.** Thirteen cases, each red-before / green-after with one relevant control, no artificial per-test negative control:
+`--status` ownership surface, read-only, no lock taken and nothing written:
 
-| # | Asserts | Red today because |
-|---|---|---|
-| T1 | same task, same checkout, second dispatcher refused under two different `TMPDIR` roots (control: one shared root) | composite key sits under `${TMPDIR}` (`dispatch.sh:485`) |
-| T2 | same task, two worktrees, second entry refused and names the claiming checkout | nothing persists between runs |
-| T3 | two tasks, one checkout, second refused and names the holding task | nothing keys on the checkout alone |
-| T4 | fan-out 2 on separate worktrees completes with no cross-task path in either commit range | allowlist admits shared-prefix cross-task writes (M3d) |
-| T5 | later handoff into the claimed checkout proceeds and creates nothing | no claim exists |
-| T6 | **pre-brief authority, both lanes** — for an ordinary **Local** task and for an isolated one, the marker exists before `logs/work-loop/{task-id}.md` does; a sequence that creates the state file without a marker fails; and no git command is run by the writer | no marker exists, and an ordinary Local task had no pre-brief writer at all |
-| T7 | **single physical binding preserved** — a replicated task file does not let a second checkout enter; no file is copied, moved or created | D1: replicas exist and nothing distinguishes them |
-| T8 | **ordinary serial path** — a Local task with no worktree runs unchanged, creates no isolation, and reuses its checkout after closure | regression guard for the fix itself |
-| T9 | **lost-record refusal** — marker absent with the state file replicated yields `AMBIGUOUS` in every checkout, and no checkout claims | nothing refuses today |
-| T10 | **safe migration** — an existing open task with replicated copies is never silently claimed by the checkout contacted first | nothing refuses today |
-| T11 | **simultaneous interactive tasks in one checkout** — a second task's interactive entry is refused, by Codex's local marker read alone and with no git invoked. The **same** task entered twice interactively is **not** covered and is recorded as the accepted scope reduction, not as a passing case | no interactive check exists |
-| T12 | **the marker is local, not shared** — with the ignore rule in place `git status --porcelain` does not list `logs/work-loop/.owner` and no commit contains it; control: with the rule removed it does appear | the file and the rule do not exist |
-| T13 | **Codex's narrowed guarantee is real** — a task claimed in another checkout is admitted by Codex's local read and refused at the next Claude entry, before any commit exists | neither check exists |
+```
+owner: this checkout declares fanout-alpha 2026-08-11
+checkout-lock: free (.../repo/.git/work-loop-dispatch-locks/checkout-2eaadbc27e9eda93.lock)
+run: none in flight (no lock at .../repo/.git/work-loop-dispatch-locks/task-96a3c8f2a8deddb7.lock)
+```
 
-Representative operator validation after integration, not a precondition for accepting the implementation: two genuinely useful concurrent tasks, separate worktrees, real Claude and Codex actors, at least one handoff each, ending in a real landing. Fan-out above two stays untested.
+### The declaration cannot be committed
 
-**Known uncertainty.** Interactive compliance is instruction-borne. Frequency of a differing `${TMPDIR}` in real use is unmeasured. Whether the refusal message is understandable to a person is only testable in the post-integration run.
+On the real repository, with **no probe file created** in this live checkout:
 
-**Non-goals, unchanged.** Automatic push, merge, landing, conflict resolution, branch deletion or worktree deletion; universal one-worktree-per-session behaviour; a scheduler; a persistent task registry; a second semantic state system; fan-out above two.
+```
+$ git check-ignore -v logs/work-loop/.owner
+.gitignore:46:logs/work-loop/.owner	logs/work-loop/.owner    -> IGNORED
+```
 
-**What would justify reverting after implementation.** A correct single task is refused; a handoff loses or duplicates the claim; an ordinary serial task is forced into isolation; a replicated task file is silently claimed; ownership status omits an active supported entry path; or the marker's lifecycle costs exceed the demonstrated safety benefit in representative fan-out-2 use.
+Meaningful control — the rule must be specific, not swallow the directory: `git check-ignore -q logs/work-loop/some-task.md` returns non-zero, so task state files in the same directory are **not** ignored. T12 adds the file-level pair inside a sandbox carrying the real `.gitignore`: `git status --porcelain -uall` matched `.owner` **0** times and `git ls-files` tracked it **0** times after `git add -A && git commit`, while the control with the rule removed matched it **1** time. `-uall` is required — git otherwise collapses an untracked directory to `logs/` and would hide the file behind its parent rather than behind the rule.
 
-**Candidate deferrals, recorded and not implemented.** (a) `.claude/hooks/detect-concurrent-session.sh` detects only Claude processes; adding a Codex pattern would give interactive Codex an observable lifetime and would upgrade the accepted reduction, but it is a hook change outside this task's scope. (b) The 18 replicated open task files and stale fixtures under `logs/work-loop/` want a cleanup. (c) The three sibling checkouts hold older `dispatch.sh` copies; propagation is an integration concern. The earlier deferral about `/new-worktree-session` becoming work-loop-aware **is withdrawn** — this fix removes that command from the change set, so there is nothing left to defer.
+### Changed and added files
 
-No implementation was performed. No production file was modified. Both this fix and the correction before it changed only this state file. One probe file was created and removed during the evidence check above; `ls logs/work-loop/.owner` confirms it is gone.
+| File | Behavioural change |
+|---|---|
+| `logs/scripts/work-loop-owner.sh` | **NEW.** The one shared ownership check. `check` / `claim` / `clear`, at `--depth local` (no git at all — Codex's whole enforcement) or `--depth repo` (adds registered-worktree enumeration — Claude and the dispatcher). Verdicts PROCEED / REFUSE / AMBIGUOUS on exits 0 / 3 / 4. Implements the R2 safe state table, including the contradiction, stale-closed-task and unreadable/multi-id rows. |
+| `logs/scripts/work-loop-owner.test.sh` | **NEW.** T1–T13 with a falsifiability case 0. Real repositories, real linked worktrees, real lock directories, the real dispatcher. |
+| `plans/…/dispatch.sh` | The composite `${TMPDIR}` lock is replaced by **two** locks under the Git common directory — one keyed by task, one by checkout — either of which refuses a second dispatcher, naming the conflict. Pinning now covers both. New admission-time ownership check at repo depth, with exits **33** (refused) and **34** (ambiguous); a checkout without the helper skips it with a visible line. `--status` additionally reports the declaration and the checkout lock. |
+| `plans/…/dispatch.test.sh` | Lock paths were reconstructed in six places; all six now route through single `lock_root_for` / `task_lock_for` / `checkout_lock_for` helpers. New case 12b/12c: exclusion across differing `TMPDIR` roots, exclusion of a different task in one checkout with the holder named, release of both locks, and the lock root being inside the repository. |
+| `plans/…/README.md` | New section on the two locks and the declaration they do not replace; exit rows 31–34 added (31/32 were implemented but undocumented); `--status` and exit-17 rows corrected; the T1–T13 harness documented; the suite count corrected 375 → 381. |
+| `.claude/commands/work-loop-v2.md` | New **Step 1.5** — ownership check at repo depth before executing or committing, with PROCEED / REFUSE / AMBIGUOUS each given an action and AMBIGUOUS explicitly never resolved by claiming. Closing the task and the de-escalation path now clear the declaration in the same write. |
+| `.agents/skills/work-loop-v2/SKILL.md` | The isolation policy gains the pre-brief sequence: whoever creates the state file writes `logs/work-loop/.owner` immediately before it, with no git. The narrowed Codex guarantee, the un-prevented cases, and the dormant-task lease are stated as limits. |
+| `docs/parallel-sessions-playbook.md` | § 4 records the declaration, that it exists to refuse rather than route, that it is not a registry, and its two limits. |
+| `.gitignore` | One rule, `logs/work-loop/.owner`, with the reason it must stay checkout-local. |
 
-**Codex final closure check — passes.** Seam 1 is resolved: Codex can write `logs/work-loop/.owner` immediately before the state file as an ordinary write inside its existing surface, with no Git, new command, authority grant, or extra round trip. Seam 2 is resolved by an explicit and technically coherent narrowing: Codex protects its current checkout; Claude and the dispatcher perform the repository-wide task check before execution or commit. No frozen finding remains unresolved and the correction introduced no demonstrated break. R2 is ready for the operator's SOP Gate 3 trade-off decision.
+Deleted: none. No file in the authorised list was removed.
+
+**Authorised files intentionally left unchanged:** none — every file on the list needed a behaviour or contract change. `.claude/commands/new-worktree-session.md` was excluded by the brief and is untouched, as R2 requires.
+
+**Permanent machinery added:** one helper script and its test; one `.gitignore` rule; one gitignored marker file per checkout with a lifecycle (written at task start, cleared at closure); two lock directories per live run under `<git-common-dir>/work-loop-dispatch-locks/`. **Replaced:** the single composite `${TMPDIR}` lock. **Removed:** nothing — no capability was withdrawn. No registry, branch convention, command, agent, hook, service or second binding was created, and no new worktree-creation authority exists; `/new-worktree-session` remains the only creator and is unmodified.
+
+### Deviations from R2
+
+None material. Reversible implementation choices made and reported: two new exit codes (33, 34) rather than overloading 17, because the remedy differs — 17 means wait, 33 means you are in the wrong checkout; the marker format is one line, `{task-id} {YYYY-MM-DD}`; a checkout lacking the helper skips the dispatcher's check with a visible line, matching the existing session-identity-init precedent; `--status` gained two read-only ownership lines, which is inside the approved surface and is **not** the Codex `--status` widening the operator declined — that remains untouched and Codex-side courier scope is unchanged.
+
+### Remaining limitations
+
+- **Interactive enforcement is instruction-borne.** Only the dispatcher's is exit-code-borne. Two interactive sessions on one checkout for the **same** task are not prevented, and neither is an operator who proceeds past a refusal.
+- **Codex enforces the checkout half only.** The cross-checkout half is enforced at the next Claude entry and at dispatcher admission — both before any commit, since Claude makes every commit.
+- **An open task leases its checkout until closure.** Starting a different task there is refused until it closes.
+- **Measured migration exposure, corrected against R2's estimate.** R2's decision pack anticipated "18 open tasks that are replicated today". Measured from this checkout across 14 live registered worktrees: of the open, non-fixture tasks here, **1 is unique** (`work-loop-v2-concurrent-task-isolation` — this task, which the helper reports PROCEED for) and **1 is replicated across 9 checkouts** (`work-loop-v2-intake-router`, `turn: codex`), which will read AMBIGUOUS everywhere until the operator names its owner. That is the designed refusal, not a regression, but it is a real operational consequence at integration.
+- **No `.owner` was created for this live task**, per the brief's exclusion. This task is therefore unclaimed; the helper reports PROCEED for it because its state file is unique to this checkout.
+- Actors are stubbed throughout. Real networked Claude/Codex fan-out remains the operator's post-integration validation.
+
+### Rollback, usable after integration
+
+Revert the implementation commit. Nothing survives it: no branch, no worktree, no committed record. Then delete any `logs/work-loop/.owner` files that were created in working checkouts (they are gitignored, so a revert does not remove them) and any residual `<git-common-dir>/work-loop-dispatch-locks/` directory. The dispatcher returns to the composite `${TMPDIR}` lock and its prior exit-code set; the command and skill return to their prior entry text. Partial rollback of the locks alone is possible by reverting `dispatch.sh` only, at the cost of reinstating the proven `${TMPDIR}` defect.
+
+### Deferrals — recorded, not implemented
+
+1. **SKILL.md is 564 lines against a 340-line ceiling** that slice-1 asserts. It was already 543 at `HEAD`; this unit added 21. Fixing it means restructuring the skill, which is outside the authorised scope.
+2. **slice-1's `3.1a` allowlist is stale** — 25 names against 56 files. It fails for every task opened since the list was written, independently of this unit.
+3. `.claude/hooks/detect-concurrent-session.sh` detects only `native-binary/claude`, so interactive Codex has no observable liveness signal. Adding a Codex pattern would upgrade the accepted reduction; it is a hook change outside scope.
+4. **Replicated open task files under `logs/work-loop/` want a cleanup** — specifically `work-loop-v2-intake-router` across 9 checkouts, which will read AMBIGUOUS at integration.
+5. The sibling checkouts hold older `dispatch.sh` copies; propagation is an integration concern, and only this bound checkout was changed.
+6. `logs/innovation-registry.md` was appended to by a repository hook when `work-loop-v2.md` was edited. It is not in the authorised file list, so it was **not staged**; it remains dirty in the working tree for the operator to decide on.
 
 ## Blocker
 
@@ -185,19 +268,6 @@ None.
 
 ## Next action
 
-Operator Gate 3 — approve or reject this scope before implementation.
+Codex: assess this implementation candidate against the locked R2 scope. It is the single commit on top of base `381559f`, at the tip of `session/2026-08-11-work-loop-ceremony`, unmerged and unpushed.
 
-**Codex recommendation:** approve R2 and leave the optional `--status` widening out of this implementation. This gives the useful minimum without expanding courier permissions.
-
-Approval means accepting together:
-
-1. Two repository-scoped live locks, one for the task and one for the checkout.
-2. One gitignored `logs/work-loop/.owner` declaration per checkout, written immediately before task-file creation and cleared at closure.
-3. Automatic worktree creation/window opening through the existing Claude command when isolation is required; the operator still opens Codex in that prepared checkout.
-4. Interactive limits: Codex checks only its current checkout; Claude/dispatcher perform the cross-worktree check before execution or commit; duplicate interactive sessions for the same task and deliberately ignored refusals are not technically prevented.
-5. An open task holds its checkout until closure.
-6. No automatic merge, landing, conflict resolution, push, or destructive cleanup; no task registry, task-branch convention, new creation authority, or change to `/new-worktree-session`.
-
-Alternative: approve the two locks only, which fixes concurrent dispatch admission but defers continuity, interactive coverage, and visible ownership.
-
-If R2 is approved, the next move is a controlled Claude implementation unit under the locked scope and the behavioural cases T1–T13. If it is rejected, state whether to take the two-lock alternative or stop.
+The assessment questions are whether the implemented behaviour matches the six required outcomes, whether the red-before/green-after evidence supports them, and whether the reported deviations and limitations are acceptable. Independent clean-environment verification (SOP Step B8) has **not** been performed and must not be collapsed into this self-report. Do not read this as resolution of the task or the defect.

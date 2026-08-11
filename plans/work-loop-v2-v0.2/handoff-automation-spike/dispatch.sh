@@ -126,7 +126,12 @@
 #   14  IDENTITY_MISMATCH      filename stem != frontmatter task:
 #   15  BAD_TURN               turn: not in {codex, claude, operator}
 #   16  FOREIGN_STAGED         something already staged; refuse to sweep it in
-#   17  LOCK_HELD              another dispatcher owns this checkout/task
+#   17  LOCK_HELD              another dispatcher holds this task, or is already
+#                              running in this checkout. TWO locks are checked,
+#                              both under the repository's Git common directory:
+#                              one keyed by task, one keyed by checkout. Either
+#                              one being held refuses the run, and the message
+#                              names the conflicting task or checkout.
 #   18  FOREIGN_UNSTAGED       out-of-allowlist working-tree changes already present
 #   19  GIT_HAZARD             index.lock held, or a merge/rebase/cherry-pick in progress
 #   20  ACTOR_FAILED           non-zero exit (retried once when nothing changed)
@@ -174,6 +179,21 @@
 #                              this init exists to remove. A checkout WITHOUT
 #                              the allocator skips init with a visible line
 #                              instead — no /prime infrastructure, nothing to arm.
+#   33  OWNERSHIP_REFUSED      logs/scripts/work-loop-owner.sh refused this task
+#                              in this checkout: either the checkout is claimed
+#                              by a different open task, or this task is claimed
+#                              by a different checkout. Distinct from 17 because
+#                              the remedy differs — 17 means "wait", 33 means
+#                              "you are in the wrong checkout". NOTHING launches,
+#                              so nothing is committed. A checkout without the
+#                              helper skips the check with a visible line.
+#   34  OWNERSHIP_AMBIGUOUS    ownership cannot be established: the task's state
+#                              file is replicated across checkouts with no
+#                              declaration, or a declaration is unreadable or
+#                              holds more than one id. Deliberately NOT resolved
+#                              by guessing — the checkout contacted first must
+#                              never claim a replicated open task. The operator
+#                              names the owner. NOTHING launches.
 #
 # The five meanings of 0 — do NOT read one as another:
 #   --help          printed the header. Nothing was validated, nothing launched.
@@ -480,22 +500,93 @@ pid_state() { # pid -> "LIVE|reason" / "ABSENT|reason" / "UNKNOWN|reason"
   return 0
 }
 
-# ------------------------------------------------------------------- lock
-LOCK_KEY="$(printf '%s|%s' "$CHECKOUT" "$TASK" | shasum -a 256 | cut -c1-16)"
-LOCK_DIR="${TMPDIR:-/tmp}/work-loop-dispatch-$LOCK_KEY.lock"
-LOCK_OWNED=0
+# ------------------------------------------------------------------- locks
+# TWO locks, not one composite key, and located through the repository rather
+# than through the caller's environment.
+#
+# WHAT WAS WRONG. The key used to be sha256("$CHECKOUT|$TASK") under
+# "${TMPDIR:-/tmp}". Both halves of that failed:
+#
+#   1. ${TMPDIR} is caller-controlled. Two dispatchers launched with different
+#      TMPDIR roots computed the same key under different parents, so they never
+#      contended at all — the lock enforced nothing between them. On macOS this
+#      is not exotic: per-session TMPDIR values are the norm.
+#   2. A composite checkout|task key enforces neither resource on its own. Two
+#      DIFFERENT tasks in ONE checkout hash to two different keys and both
+#      proceed, and once they share a working tree and index, either can sweep
+#      the other's paths into a commit.
+#
+# So the lock root moves to the Git COMMON directory — one location every linked
+# worktree of the repository already shares, discovered from the repository
+# itself and not from the environment — and the one composite lock becomes two
+# independent ones. A second dispatcher is refused if EITHER is held.
+#
+#   task lock      one logical task may have one live dispatcher, anywhere in
+#                  the repository, including in another worktree.
+#   checkout lock  one physical checkout may have one live dispatcher, whatever
+#                  task it is running.
+#
+# These govern LIVE PROCESS exclusivity only. Open-task exclusivity is the
+# declaration's job (logs/work-loop/.owner, logs/scripts/work-loop-owner.sh):
+# a lock cannot outlive its process, and continuity between handoffs must.
+LOCK_ROOT="$(git -C "$CHECKOUT" rev-parse --git-common-dir 2>/dev/null)" \
+  || { printf 'STOP [11] cannot resolve the Git common directory for %s\n' "$CHECKOUT" >&2; exit 11; }
+case "$LOCK_ROOT" in /*) ;; *) LOCK_ROOT="$CHECKOUT/$LOCK_ROOT" ;; esac
+LOCK_ROOT="$(cd "$LOCK_ROOT" 2>/dev/null && pwd -P)" \
+  || { printf 'STOP [11] the Git common directory for %s is not readable\n' "$CHECKOUT" >&2; exit 11; }
+LOCK_ROOT="$LOCK_ROOT/work-loop-dispatch-locks"
 
+# LOCK_DIR is the TASK lock. The name is kept because the pin/survivors
+# machinery, the EXIT trap and --status all key on it, and the thing being
+# pinned — an actor tree that belongs to a task — is the task's.
+LOCK_DIR="$LOCK_ROOT/task-$(printf '%s' "$TASK" | shasum -a 256 | cut -c1-16).lock"
+CHECKOUT_LOCK_DIR="$LOCK_ROOT/checkout-$(printf '%s' "$CHECKOUT" | shasum -a 256 | cut -c1-16).lock"
+LOCK_OWNED=0
+CHECKOUT_LOCK_OWNED=0
+
+# Each lock directory records who holds it in plain text, so a refusal can NAME
+# the conflict instead of printing a hash. A refusal nobody can act on is the
+# failure mode this whole change exists to remove.
 acquire_lock() {
+  mkdir -p "$LOCK_ROOT" 2>/dev/null \
+    || { printf 'STOP [11] cannot create the lock root %s\n' "$LOCK_ROOT" >&2; exit 11; }
+
   if mkdir "$LOCK_DIR" 2>/dev/null; then
     LOCK_OWNED=1
     printf '%s\n' "$$" >"$LOCK_DIR/pid"
+    printf '%s\n' "$TASK" >"$LOCK_DIR/task"
+    printf '%s\n' "$CHECKOUT" >"$LOCK_DIR/checkout"
   else
     if [ -f "$LOCK_DIR/survivors" ]; then
       printf 'STOP [17] the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)\n' "$TASK" "$LOCK_DIR" >&2
       sed 's/^/  /' "$LOCK_DIR/survivors" >&2
       exit 17
     fi
-    printf 'STOP [17] another dispatcher holds %s (%s)\n' "$TASK" "$LOCK_DIR" >&2
+    printf 'STOP [17] another dispatcher holds task %s (%s)\n' "$TASK" "$LOCK_DIR" >&2
+    printf '  it is running in checkout: %s\n' "$(cat "$LOCK_DIR/checkout" 2>/dev/null || printf 'unrecorded')" >&2
+    exit 17
+  fi
+
+  # Second resource. Taken AFTER the task lock, and the task lock is released if
+  # this one is refused — holding a lock we are not going to use would refuse the
+  # next run for a reason that no longer exists.
+  if mkdir "$CHECKOUT_LOCK_DIR" 2>/dev/null; then
+    CHECKOUT_LOCK_OWNED=1
+    printf '%s\n' "$$" >"$CHECKOUT_LOCK_DIR/pid"
+    printf '%s\n' "$TASK" >"$CHECKOUT_LOCK_DIR/task"
+    printf '%s\n' "$CHECKOUT" >"$CHECKOUT_LOCK_DIR/checkout"
+  else
+    local holder; holder="$(cat "$CHECKOUT_LOCK_DIR/task" 2>/dev/null || printf 'an unrecorded task')"
+    rm -rf "$LOCK_DIR" 2>/dev/null; LOCK_OWNED=0
+    if [ -f "$CHECKOUT_LOCK_DIR/survivors" ]; then
+      printf 'STOP [17] a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)\n' "$CHECKOUT_LOCK_DIR" >&2
+      sed 's/^/  /' "$CHECKOUT_LOCK_DIR/survivors" >&2
+      exit 17
+    fi
+    printf 'STOP [17] another dispatcher is already running in this checkout (%s)\n' "$CHECKOUT" >&2
+    printf '  it is running task: %s\n' "$holder" >&2
+    printf '  two dispatchers in one checkout share a working tree and index, so either could\n' >&2
+    printf '  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.\n' >&2
     exit 17
   fi
 }
@@ -521,7 +612,14 @@ pin_lock() { # survivor-pids, unknown-reason
     printf 'To clear it: confirm the pids above are gone (`ps -o pid,ppid,pgid,command -p <pid>`),\n'
     printf 'kill any that remain, then `rm -rf %s`.\n' "$LOCK_DIR"
   } >"$LOCK_DIR/survivors" 2>/dev/null
-  local msg="  the task lock is PINNED at $LOCK_DIR — a second dispatcher is refused (exit 17) until you clear it by hand."
+  # BOTH locks are pinned, because a survivor holds both resources. It belongs to
+  # this task, so a second dispatcher on the same task must be refused; and it is
+  # still running inside this checkout's working tree, so a second dispatcher on
+  # a DIFFERENT task in that checkout must be refused too. Pinning only the task
+  # lock would leave the checkout open to exactly the contamination the survivor
+  # makes possible.
+  [ "$CHECKOUT_LOCK_OWNED" -eq 1 ] && cp "$LOCK_DIR/survivors" "$CHECKOUT_LOCK_DIR/survivors" 2>/dev/null
+  local msg="  the task lock is PINNED at $LOCK_DIR (and this checkout's lock at $CHECKOUT_LOCK_DIR) — a second dispatcher is refused (exit 17) until you clear them by hand."
   printf '%s\n' "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
 }
@@ -532,7 +630,9 @@ release_lock() {
   # where one missed caller would silently undo the invariant.
   [ "$LOCK_PINNED" -eq 1 ] && return 0
   [ "$LOCK_OWNED" -eq 1 ] && rm -rf "$LOCK_DIR" 2>/dev/null
+  [ "$CHECKOUT_LOCK_OWNED" -eq 1 ] && rm -rf "$CHECKOUT_LOCK_DIR" 2>/dev/null
   LOCK_OWNED=0
+  CHECKOUT_LOCK_OWNED=0
 }
 
 # ------------------------------------------------- descendant identification
@@ -987,6 +1087,24 @@ trap 'on_signal TERM' TERM
 if [ "$STATUS_MODE" -eq 1 ]; then
   printf 'status: task=%s\n' "$TASK"
   printf 'checkout=%s\n' "$CHECKOUT"
+
+  # Ownership, reported alongside liveness because the two answer different
+  # questions and an operator holding only one of them cannot act. Liveness says
+  # "is a run going?"; ownership says "does this task belong here?". Read-only,
+  # like everything else in this branch: the declaration is CAT'd, never written,
+  # and no lock is taken.
+  if [ -f "$CHECKOUT/logs/work-loop/.owner" ]; then
+    printf 'owner: this checkout declares %s\n' \
+      "$(awk 'NF {print; exit}' "$CHECKOUT/logs/work-loop/.owner" 2>/dev/null || printf 'an unreadable declaration')"
+  else
+    printf 'owner: this checkout declares no writer (no logs/work-loop/.owner)\n'
+  fi
+  if [ -d "$CHECKOUT_LOCK_DIR" ]; then
+    printf 'checkout-lock: HELD by task %s (%s)\n' \
+      "$(cat "$CHECKOUT_LOCK_DIR/task" 2>/dev/null || printf 'unrecorded')" "$CHECKOUT_LOCK_DIR"
+  else
+    printf 'checkout-lock: free (%s)\n' "$CHECKOUT_LOCK_DIR"
+  fi
 
   if [ -d "$LOCK_DIR" ] && [ -f "$LOCK_DIR/survivors" ]; then
     # A PINNED lock, checked before the three pid states below. Its dispatcher is
@@ -1784,6 +1902,37 @@ init_session_identity() {
 
 validate_state
 say "initial: turn=$ST_TURN sha256=$(file_hash "$STATE_FILE") head=$(git_head)"
+
+# ------------------------------------------------------- ownership admission
+# The locks above answer "is another dispatcher running?". They cannot answer
+# "does this task belong to this checkout?", because a lock dies with its
+# process and a task outlives one. That second question is the declaration's,
+# and the dispatcher asks it at REPO depth — it may run git, so unlike
+# interactive Codex it can see the other worktrees.
+#
+# Two things it catches that nothing else does: the same task already claimed in
+# a DIFFERENT checkout, and a state file REPLICATED across checkouts with no
+# declaration deciding which copy is authoritative. Both are refused here,
+# before an actor is launched and therefore before anything is committed.
+#
+# A checkout WITHOUT the helper skips the check with a visible line rather than
+# failing — the same shape as the session-identity init above. This spike is
+# driven against sandbox checkouts and older siblings that do not carry it, and
+# a hard failure there would refuse runs for the absence of a file rather than
+# for a real ownership conflict.
+OWNER_HELPER="$CHECKOUT/logs/scripts/work-loop-owner.sh"
+if [ -f "$OWNER_HELPER" ] && [ -r "$OWNER_HELPER" ]; then
+  OWNER_OUT="$(bash "$OWNER_HELPER" check --checkout "$CHECKOUT" --task "$TASK" --depth repo 2>&1)"
+  OWNER_RC=$?
+  case "$OWNER_RC" in
+    0) say "ownership: PROCEED — $(printf '%s' "$OWNER_OUT" | sed -n 's/^reason: //p')" ;;
+    3) die 33 "ownership refused for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: continue the task in the checkout named above, or close it there first. Nothing was launched." ;;
+    4) die 34 "ownership is AMBIGUOUS for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: this is not a failure to work around — decide which checkout owns the task, remove the copies that are not authoritative, and record the owner with \`work-loop-owner.sh claim\`. Nothing was launched." ;;
+    *) die 33 "the ownership check could not run (exit $OWNER_RC)"$'\n'"$OWNER_OUT" ;;
+  esac
+else
+  say "ownership: SKIPPED — $OWNER_HELPER is not present in this checkout; no declaration was read or written."
+fi
 
 # Restart safety. Truth comes from the file and Git, never from an old in-memory
 # turn — this process has no memory beyond the task id it was given.
