@@ -1264,6 +1264,25 @@ else
   say "  nested_actor_deny is REQUESTED POLICY, not containment — it denies the default direct route at the child's permission layer and does not remove the capability"
 fi
 
+# Recorded at preflight, not at the stop. Whether exit 35 can name the denied
+# tool and its exact target depends on this host having a JSON parser, and the
+# operator of a long unattended run should learn that before walking away rather
+# than when the stop arrives unable to say what was refused.
+#
+# EACH PARSER IS PROBED BY RUNNING IT, not by `command -v`. A jq that is on PATH
+# but broken passes an existence check and then fails at the stop, which would
+# make this line disagree with what permission_denials_in() actually does — the
+# log would name a parser the run never used. The parse itself re-tries in the
+# same order at call time, so a parser that breaks mid-run still degrades to the
+# next tier rather than to a wrong answer.
+if printf '{}' | jq -r . >/dev/null 2>&1; then
+  say "denial_parser=jq — a permission stop (35) carries the denied tool and its EXACT target, untruncated"
+elif python3 -c 'import json' >/dev/null 2>&1; then
+  say "denial_parser=python3 — jq is unusable here; a permission stop (35) still carries the denied tool and its EXACT target, untruncated"
+else
+  say "denial_parser=none — neither jq nor python3 is usable here, so a permission stop (35) CANNOT name the denied tool and target; it will say so rather than guess"
+fi
+
 # ------------------------------------------------- unattended contained profile
 #
 # Item 1d. The operator settled the policy and a probe proved the mechanism; this
@@ -1596,35 +1615,116 @@ die_hop() { # code, message
 # Fails SAFE, in the reporting direction: a truncated or unparseable capture
 # yields no denials and the run classifies exactly as it does today. This
 # function can only ever ADD a named cause; it can never invent a stop.
+# NO TRUNCATION, on any path. An earlier version cut every target to 200
+# characters, which silently broke the one promise this stop makes — the exit
+# table and the README both say it carries the EXACT target — and a long
+# `git commit -m …`, a deep path or a long URL is precisely the shape that got
+# cut. A target the operator cannot act on is the unnamed dead end O3 removes,
+# arriving one layer later.
+denials_via_jq() { # capture -> lines on stdout; NONZERO if jq itself is unusable
+  command -v jq >/dev/null 2>&1 || return 1
+  jq -r -s '
+    [ .[] | select(type == "object") | .permission_denials // empty | .[]? ]
+    | map(
+        (.tool_name // "?") + " :: " + (
+          ( .tool_input.command
+          // .tool_input.file_path
+          // .tool_input.url
+          // .tool_input.pattern
+          // (.tool_input | tostring)
+          ) | tostring
+        )
+      )
+    | unique
+    | .[]
+  ' "$1" 2>/dev/null
+}
+
+# The same extraction without jq, so a host that lacks it still gets the exact
+# tool and target instead of a placeholder. Deliberately a real JSON parse rather
+# than a regex over the capture: the fields carry commit messages and shell
+# commands, which contain quotes, braces and escapes, and a pattern-matched
+# "exact" value would be a worse lie than the placeholder it replaced.
+#
+# Kept behaviourally identical to the jq filter, including its `unique` (which
+# sorts) and its treatment of a null tool_name as "?", so the two tiers cannot
+# report the same capture differently.
+denials_via_python() { # capture -> lines on stdout; NONZERO if python3 is unusable
+  command -v python3 >/dev/null 2>&1 || return 1
+  python3 - "$1" <<'PYEOF' 2>/dev/null
+import json, sys
+
+def compact(v):
+    return json.dumps(v, separators=(",", ":"), ensure_ascii=False)
+
+def target(ti):
+    if not isinstance(ti, dict):
+        return compact(ti)
+    for k in ("command", "file_path", "url", "pattern"):
+        v = ti.get(k)
+        if v is not None and v is not False:      # jq's // skips null and false
+            return v if isinstance(v, str) else compact(v)
+    return compact(ti)
+
+raw = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+
+docs = []
+try:
+    docs.append(json.loads(raw))                  # --output-format json
+except ValueError:
+    for line in raw.splitlines():                 # --output-format stream-json
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            docs.append(json.loads(line))
+        except ValueError:
+            pass                                  # fails safe, as the jq filter does
+
+seen = set()
+for d in docs:
+    if not isinstance(d, dict):
+        continue
+    for den in d.get("permission_denials") or []:
+        if not isinstance(den, dict):
+            continue
+        tn = den.get("tool_name")
+        if tn is None or tn is False:
+            tn = "?"
+        seen.add("%s :: %s" % (tn, target(den.get("tool_input"))))
+
+for line in sorted(seen):
+    print(line)
+PYEOF
+}
+
 permission_denials_in() { # capture-path -> one "tool :: target" line per denial
-  local cap="$1"
+  local cap="$1" out
   [ -s "$cap" ] || return 0
 
-  if command -v jq >/dev/null 2>&1; then
-    jq -r -s '
-      [ .[] | select(type == "object") | .permission_denials // empty | .[]? ]
-      | map(
-          (.tool_name // "?") + " :: " + (
-            ( .tool_input.command
-            // .tool_input.file_path
-            // .tool_input.url
-            // .tool_input.pattern
-            // (.tool_input | tostring)
-            ) | tostring | .[0:200]
-          )
-        )
-      | unique
-      | .[]
-    ' "$cap" 2>/dev/null
+  # Tried in order, and a parser that FAILS falls through to the next rather than
+  # being trusted for its empty output. That distinction is the whole point: jq
+  # exits 0 with no output when a capture genuinely holds no denials, and
+  # non-zero when it is missing or broken. Reading the second as the first is how
+  # a real denial would go back to surfacing as a bare 25 or 22 — the exact
+  # defect this function exists to remove. A `command -v` check alone cannot see
+  # it, because a broken jq is on PATH.
+  if out="$(denials_via_jq "$cap")"; then
+    [ -n "$out" ] && printf '%s\n' "$out"
+    return 0
+  fi
+  if out="$(denials_via_python "$cap")"; then
+    [ -n "$out" ] && printf '%s\n' "$out"
     return 0
   fi
 
-  # No jq. Detect presence textually and say plainly that the detail is missing,
-  # rather than either guessing at the JSON or staying silent. A stop that says
-  # "a denial happened and I cannot tell you which" is worth much more than the
-  # 25 it would otherwise have been reported as.
+  # Neither parser is usable. Say so plainly rather than guessing at the JSON or
+  # staying silent: "a denial happened and I cannot name it" is still worth far
+  # more than the 25 this would otherwise have been reported as. This is the one
+  # case in which the exit table's "exact target" promise is not met, and the
+  # line says so instead of pretending otherwise.
   if grep -q '"permission_denials"[[:space:]]*:[[:space:]]*\[[[:space:]]*{' "$cap" 2>/dev/null; then
-    printf '%s\n' "? :: (detail unavailable — jq is not installed; read the capture directly)"
+    printf '%s\n' "? :: (detail unavailable — neither jq nor python3 is usable here; read the capture directly)"
   fi
 }
 

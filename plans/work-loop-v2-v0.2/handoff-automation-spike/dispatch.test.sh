@@ -2836,6 +2836,77 @@ printf '%s' "$OUT" | grep -q "capability question" \
   || bad "the stop frames it as an operator capability decision" "$OUT"
 
 echo
+echo "Case 43c — O3: a target LONGER THAN 200 CHARACTERS is carried whole"
+# The exit table and the README both promise the EXACT denied target. The parser
+# used to cut every target at 200 characters, so the promise held only for short
+# ones — and a long `git commit -m …`, a deep path or a long URL is exactly the
+# shape that got cut. A truncated command is not something the operator can act
+# on, which puts them back at the unnamed dead end exit 35 exists to remove.
+#
+# 256 characters, built rather than typed so the boundary is unambiguous, and
+# ENDING IN A SENTINEL rather than in more padding. A padded tail cannot detect
+# truncation: the first 200 characters end in the same repeated character, so an
+# assertion on the last N characters matches inside the truncated string and
+# passes against the very dispatcher it is meant to catch. Measured, not
+# theorised — the first cut of this case did exactly that.
+LONGARG="$(printf 'a%.0s' $(seq 1 226))"
+LONGTGT="git commit -m ${LONGARG}TAIL-SENTINEL-Z9"
+d="$(new_sandbox)"; state_file "$d" "longdenial-task" "claude"
+printf '{"type":"result","subtype":"success","is_error":false,"permission_denials":[{"tool_name":"Bash","tool_use_id":"toolu_long01","tool_input":{"command":"%s"}}],"result":"denied"}' \
+  "$LONGTGT" > "$SANDBOX_ROOT/denial-long.json"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task longdenial-task --log-dir "$d/runs" \
+      --carry-one \
+      --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial-long.json"' 2>&1)"; RC=$?
+expect_rc 35 "$RC" "the long denial still reaches a permission stop" "$OUT"
+printf '%s' "$OUT" | grep -Fq "Bash :: $LONGTGT" \
+  && ok "the >200-character target is carried WHOLE into the stop" \
+  || bad "the >200-character target is carried whole" "$(printf '%s' "$OUT" | grep -o 'Bash :: .*' | head -1)"
+# Named separately so a truncation regression reads as truncation rather than as
+# a general parse failure. The sentinel sits at character 241, past the old
+# .[0:200] cut, so it can only appear if nothing was cut.
+printf '%s' "$OUT" | grep -Fq "TAIL-SENTINEL-Z9" \
+  && ok "the tail past character 200 survives (nothing was cut)" \
+  || bad "the tail past character 200 survives" "$OUT"
+
+echo
+echo "Case 43d — O3: the exact target survives when jq is UNUSABLE"
+# The other half of the same promise. Without jq the parser used to emit
+# "? :: (detail unavailable …)", carrying neither the tool nor the target, while
+# the stop still described itself as satisfying O3.
+#
+# jq is shimmed rather than removed from PATH, because on this platform it lives
+# in /usr/bin beside git, awk and sed — a PATH that excludes it excludes the
+# dispatcher's own toolchain. The shim exits 127, the shell's own
+# command-not-found status, so this covers BOTH an absent jq and a broken one.
+# The broken case is the stronger of the two and the one a `command -v` guard
+# cannot see on its own.
+if command -v python3 >/dev/null 2>&1; then
+  NOJQ="$SANDBOX_ROOT/nojq"; mkdir -p "$NOJQ"
+  printf '#!/bin/bash\nexit 127\n' > "$NOJQ/jq"; chmod +x "$NOJQ/jq"
+  d="$(new_sandbox)"; state_file "$d" "nojq-task" "claude"
+  OUT="$(PATH="$NOJQ:$PATH" bash "$DISPATCH_BIN" --checkout "$d" --task nojq-task --log-dir "$d/runs" \
+        --carry-one \
+        --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial-long.json"' 2>&1)"; RC=$?
+  expect_rc 35 "$RC" "an unusable jq still reaches a permission stop" "$OUT"
+  printf '%s' "$OUT" | grep -Fq "Bash :: $LONGTGT" \
+    && ok "the exact >200-character target survives without jq" \
+    || bad "the exact target survives without jq" "$(printf '%s' "$OUT" | grep -o '[?A-Za-z]* :: .*' | head -1)"
+  # A "no placeholder appears" assertion was tried here and REMOVED. Against the
+  # pre-fix dispatcher the shimmed jq produced no denials at all, so no stop
+  # fired, so no placeholder appeared and the assertion passed — vacuously, on
+  # the run it existed to catch. The exact-target assertion above already
+  # excludes the placeholder, since the two are mutually exclusive outputs.
+  #
+  # The control: proves the shim actually took effect. Without it this case would
+  # pass identically on a run that quietly used the real jq all along.
+  printf '%s' "$OUT" | grep -q "denial_parser=python3" \
+    && ok "control: the run really did fall through to the python3 parser" \
+    || bad "control: the run fell through to the python3 parser" "$OUT"
+else
+  ok "SKIPPED — no python3 on this host, so the no-jq tier cannot be exercised"
+fi
+
+echo
 echo "Case 43b — a clean capture produces NO permission stop"
 # The control. Without it, case 43 would pass equally well against a dispatcher
 # that exits 35 on every Claude hop.
