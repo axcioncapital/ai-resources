@@ -2029,4 +2029,6 @@ Proposal: author `AGENTS.md` **for Codex** rather than deriving it. It needs onl
 
 **Worth checking while there:** whether any *other* `delegate-qc` step in the workflow names a skill whose declared `allowed-tools` exceed `qc-gate`'s. This is unlikely to be the only instance.
 
-**Target files:** `ai-resources/workflows/research-workflow/commands/run-execution.md` (Step 2.4), and an audit of the other `delegate-qc` steps in the same workflow.
+**Target files:** `ai-resources/workflows/research-workflow/.claude/commands/run-execution.md` (Step 2.4 — line 122 on origin/main as of 2026-08-11), and an audit of the other `delegate-qc` steps in the same workflow (lines 15, 56, 123 and 171 also name `qc-gate`).
+
+**Verified against current canonical, 2026-08-11** — not merely against the local checkout, which is 512 commits behind origin. On `origin/main`: `workflows/research-workflow/.claude/commands/run-execution.md` still delegates Step 2.4 to `qc-gate`; `workflows/research-workflow/.claude/agents/qc-gate.md` is still `tools: Read` / `model: sonnet`; `skills/research-extract-verifier/SKILL.md` still declares `model: opus` / `allowed-tools: Read, Write`. The defect is live on canonical, not an artifact of a stale local copy. The same check confirms the ladder-depth finding above: `origin/main:skills/research-extract-creator/SKILL.md` still has zero occurrences of "ladder" or "depth".
