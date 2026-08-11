@@ -253,9 +253,21 @@ dispatch.sh --checkout <path> --task <task-id> --status
 |---|---|
 | **Finished** | `0` — and `turn: operator` with a core § 4 closing record |
 | **A decision is theirs** | `0` — and `turn: operator` with `## Blocker` / `## Next action` still present |
-| **Stopped** | any other code — a guard (`18`,`19`,`24`,`25`,`30`), a failure (`20`,`21`,`22`), the hop limit (`23`), an interruption (`28`), or the budget (`29`) |
+| **Stopped** | any other code — a guard (`18`,`19`,`24`,`25`,`30`,`36`), a failure (`20`,`21`,`22`), a permission dead end (`35`), the hop limit (`23`), an interruption (`28`), or the budget (`29`) |
 
 **`29` is not completion.** A run that ran out of clock is unfinished and resumable. Never report it as done.
+
+**What a stop authorizes — five clauses, and they are one rule.** A nonzero exit is a statement about one bounded hop. Read all five before deciding anything; the first two without the last three produce a dead end, and the last three without the first two reopen the bypass.
+
+1. **A stop is never a licence to leave the dispatcher.** It authorizes fixing the cause and re-running, or stopping for the operator. It never authorizes an interactive Claude session, a hand-carried hop, or a hand-edit of the state file. A dispatcher capability gap is a capability gap — report it as one and ask. It is not permission to do the work another way.
+2. **Never repeat a completed hop blindly.** Where the run log proves the actor launched and ran, that hop is not re-run as if it had not happened.
+3. **A timeout means the transport stopped. It does not mean the repository task is impossible.** Exit `21` bounds one hop; it says nothing about whether the underlying work can be done. Reading `21` as "this task cannot be completed" is a specific recorded error, not a hypothetical one — it happened on 2026-08-11 and cost a day. The same holds for `29`.
+4. **Partial effects are preserved and inspected before anything else is decided.** A stopped hop may have changed allowed files without committing them. The stop now lists those paths under `PARTIAL FILE EFFECTS`. Read them. Do not discard them, and do not assume they are absent because the state file did not move and the branch ref did not advance — those two facts are compatible with real work sitting uncommitted on disk.
+5. **A newly narrowed recovery unit is available, with operator approval.** Not a re-run of the same brief and not abandonment: a *fresh, smaller* unit that inherits the preserved partial work and carries one dominant deliverable (§ Size the unit against the clock). **Operator approval is the gate.** Ask for it; do not resolve it yourself.
+
+**`35` is a capability question, not a transport failure.** A permission dead end means the child was refused something it needed. Raising the timeout, re-running, or rewording the brief will not change it. Report what was denied and ask the operator whether to grant the capability or narrow the unit so it is not needed.
+
+**`36` means the hop did nothing, and the uncommitted state file is not Claude's doing.** It is most often a Codex handoff that was never committed. Do not read it as a partial edit by Claude — that is exactly the misreport `36` was split out of `25` to stop.
 
 **Separate repository facts from model claims.** Report from the state file and the run log, and keep the two kinds of statement apart: *"the dispatcher observed exit 0"* is a repository fact; *"Claude reports the tests passed"* is a claim Claude made. Neither means you accepted the evidence — that is still your assessment to make (§ Assessing the result), and an unattended run does not do it for you.
 
@@ -443,6 +455,24 @@ The file's shape, its five-field ceiling and what sits outside that ceiling are 
 
 **Required evidence must be able to fail** (core § 6 rule 5). Ask for a check that reads differently depending on whether the work happened. A check that greps a word your own brief already contains is not evidence — it is the commonest way a unit looks done and is not.
 
+### Size the unit against the clock
+
+**A unit that will run under a timer carries one dominant deliverable and one proportionate evidence set.** Judge that on the **reasoning and validation load**, not on the file list.
+
+**An allowlist bounds files, not reasoning workload.** This is the load-bearing sentence. The dispatcher can prove a hop stayed inside its paths; nothing proves it stayed inside its thinking. A brief that reads as bounded because its `--allow-path` list is short is exactly the misreading this rule exists to prevent — a single-file unit can carry an unbounded amount of work.
+
+Split the unit before you dispatch it when the brief has any of these shapes:
+
+- It combines building something with remediating something else — a scenario redesign *and* a standards cleanup.
+- It asks for a historical or negative control to be constructed alongside the primary edit.
+- It demands a full behavioural matrix for instruction files, rather than one targeted check.
+- It says "all", "every" or "exhaustive" without a stated consequence that requires exhaustiveness.
+- Its evidence set needs more than one fixture built from scratch before the primary work can start.
+
+Split by deliverable, not by file count. Two oversized halves are not a fix.
+
+**A longer timeout is not the remedy for an oversized unit.** The actor timeout is a safety boundary, and on 2026-08-11 it was the one control that worked. Raising it buys a larger oversized unit whose failure arrives later, costs more, and — if it now finishes inside the new limit — produces no stop and no evidence at all. Do not propose it as a fix for sizing, and do not treat a hop that timed out as a reason to relax the clock.
+
 ### Prepare once; write one brief for two audiences
 
 Prepare the unit in **one pass**. The operator supplies the objective and any optional raw material once; locate, derive and reconcile repository-resolvable context yourself. Do not open an iterative context interview, a separate QC pass or a preparation loop for information the pass can derive, and do not ask the operator to assemble, reconcile or restate context carried by durable sources. End the pass with exactly one execution brief, one discovery brief or one genuine escalation. Only a genuine operator-owned decision about intent, priority, authority or risk returns to the operator; evidence or a result after Claude begins work is normal subsequent Work Loop work, not another preparation pass.
@@ -533,6 +563,8 @@ Core § 1 sets the limits on your role and core § 7 reserves hard-to-reverse de
 - **Reopen the strategy after every result** (core § 1).
 - **Add a second review or a second state system** over a unit running under a specialist Axcíon workflow (core § 1).
 - **Decide anything hard to reverse** — that is the operator's, via core § 7.
+- **Answer a nonzero dispatcher exit by leaving the dispatcher.** No interactive Claude session, no hand-carried hop, no hand-edit of the state file. See § Three outcomes for the five clauses of what a stop *does* authorize.
+- **Write a brief that proposes invoking Claude or Codex inside a hop.** There is no supported way to run nested AI, and no flag enables it — the dispatcher denies the default direct route on every launch. A case that appears to need it goes to the operator as a capability question. Do not authorize it inside a brief, and do not design an evidence set that can only be satisfied by invoking a model.
 
 ---
 
@@ -549,5 +581,7 @@ The intake router (2026-08-06) generalises that section from a "continue" router
 `/memory-search` (2026-08-09) joins the index as a narrow specialist, taking the Axcíon side to 26. It adds no routing rule: a request naming past precedent has an owner it did not have before.
 
 The mode contract (2026-08-06) makes Discovery, Implementation and Adoption operational. Core § 3 *The unit's mode* owns the definitions; you classify at routing step 4 and record the mode inside `## Lane and unit`. No state field, lane, unit kind or project phase was added.
+
+The bounded-execution outcomes (2026-08-11) answer two failures on the same transport one day apart — a unit that left the bounded path, and a unit that could not fit inside it. They add § *Size the unit against the clock*, the five recovery clauses in § *Three outcomes*, and two entries in § *What you never do*. **No state field, artifact or stage was added**, and the dispatcher's side is a repair plus one deny set rather than a new mechanism. Both additions here are written guidance and carry that limit honestly: guidance depends on being remembered, and the only structural backstop remains the actor timeout — which is why raising it is refused above.
 
 Courier mode (2026-08-06) adds the one approved way to carry the turn yourself, under core § 4's courier clause. It is optional, off unless the operator approves it, and transport only — it changes nothing about what you frame, what you assess, or what Claude does.

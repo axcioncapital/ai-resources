@@ -340,6 +340,44 @@ there to answer. That is the intended failure: the actor is killed on the clock 
 it stopped *on* the prompt, rather than the dispatcher quietly widening authority to get past it
 (exit-code table, `14`).
 
+**`acceptEdits` is not offered, and that is a deferral rather than a rejection.** A
+`--claude-permission-mode` option carrying `acceptEdits` was proposed and is **deliberately excluded**
+here. It would widen what a launched child may do without asking, and it reopens the settled
+attended-policy decision recorded in `logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md`.
+Without it a permission dead end now stops *honestly* as exit `35` instead of dead-ending silently,
+which is a safe outcome rather than a blocked one. If it is wanted later it is an operator decision,
+taken on its own evidence.
+
+### The default nested-actor deny set
+
+**Every Claude launch this dispatcher makes — attended and unattended — passes `--disallowedTools`
+carrying `Bash(claude:*)`, `Bash(claude *)`, `Bash(codex:*)` and `Bash(codex *)`.** There is no flag
+to switch it off. `--claude-deny` appends to the set and cannot remove an entry.
+
+This exists because on 2026-08-10 a single Work Loop unit spawned at least eight further `claude -p`
+processes, and nothing in the launch path denied it. The unattended profile did not cover it either:
+its `--tools Bash,Skill` roster still exposes Bash, so nesting was blocked there only *incidentally*,
+by the sandbox's network refusal. Incidental protection cannot be reasoned about, so it is now named
+explicitly on both paths.
+
+**Read this before quoting it as a safety property. It is not containment.**
+
+- **What it does.** The *default direct route* — a child running `claude …` or `codex …` through Bash
+  — is refused by the child's own permission layer, and the refusal is visible in the launch argv and
+  in the run log.
+- **What it does not do.** Remove the capability. A child with shell access can construct paths these
+  rules do not name: a wrapper script, an absolute path, an env-var indirection, a shell function. A
+  tool-name deny cannot enumerate its way out of that.
+- **What the suite proves.** That the requested policy reaches the child (literal argv capture). It
+  does **not** prove a child cannot evade it, and therefore does not prove nested work is impossible.
+
+Materially reduced, not contained. The only measured containment in this repository remains the
+`--unattended` sandbox's network refusal.
+
+There is deliberately **no** `--allow-nested-actors` override. The whole evidence set contains exactly
+one instance of nested AI invocation and it is the failure this denies. A case that genuinely needs it
+goes to the operator as a capability question, at which point a verified use case would exist.
+
 ### Example
 
 ```bash
@@ -481,16 +519,40 @@ where the code's meaning actually differs.
 | `22` | `NO_TRANSITION` | loop only | The actor exited cleanly but left the state file byte-identical, left `turn:` unchanged, or moved it in a direction that is not allowed. |
 | `23` | `HOP_LIMIT` | loop only | `--max-hops` was reached with `turn:` still on an actor. |
 | `24` | `UNEXPECTED_EFFECT` | loop only | An actor changed paths outside the allowlist, or the Codex actor moved `HEAD`. |
-| `25` | `UNCOMMITTED_HANDBACK` | dry-run, loop | The state file is uncommitted where Claude should have committed it — either found that way at startup with `turn: codex`/`operator`, or left that way after a Claude hop. |
+| `25` | `UNCOMMITTED_HANDBACK` | dry-run, loop | The state file is uncommitted where Claude should have committed it — either found that way at startup with `turn: codex`/`operator`, or left that way after a Claude hop **that actually changed its bytes**. The byte-identical case is now `36`, not this. |
 | `26` | `MALFORMED_TERMINAL` | loop only | `turn: operator`, but the file is neither a core § 7 question (it has no `## Blocker` and no `## Next action`) nor a core § 4 closing record (its four headings, and nothing else, are not what survived). No actor is launched; the stop names a recoverable next action. |
 | `28` | `INTERRUPTED` | loop only | `SIGINT`/`SIGTERM`. Every descendant reachable by the three handles is terminated and **verified gone** before the lock is released and the run stops — the success line names those handles rather than claiming the tree is empty (see Safety boundaries for the shape that still escapes, which is a live Phase 2 blocker). A descendant that could not be confirmed dead is named in a `WARNING:` line; a sweep that could not run at all prints `teardown UNVERIFIED` with the reason. In both cases the lock is **pinned**, not released. Read that before treating the halt as clean. **Never retried** — the signal may have landed after an effect nobody observed, so the state file and `git status` are where the operator has to look. |
 | `29` | `BUDGET_EXHAUSTED` | loop only | `--deadline` expired: either the loop refused to launch the next hop, or a running actor was terminated at the clock. **Not completion.** Resumable — the state file and Git are untouched by the stop — but never retried automatically. Worst-case overrun is `1s poll + 5s TERM→KILL grace + 2s KILL settle + verification census + reaping`, roughly 9s — not exact-to-the-second. It was ~6s before 2026-08-07; whole-tree teardown added the settle window and the census that confirms the tree is actually gone. |
 | `30` | `UNEXPECTED_COMMIT` | loop only | An actor **committed** paths outside the allowlist. Detection, not prevention: the commit already exists, and the value is stopping rather than compounding it over the rest of an unattended run. Distinct from `24`, which is the working-tree case, because the recovery differs — `24` is reverted from the working tree, `30` from history. |
+| `35` | `PERMISSION_DENIED` | loop only | The Claude hop's own result JSON reported one or more `permission_denials`. The stop carries the denied tool, its target, and the decision required. **Not a transport failure** — re-running, rewording or raising the timeout will not change it. Before this code existed the denial was invisible: the child exits `0`, so it surfaced as `25` or `22` with no cause named. |
+| `36` | `STATE_UNCHANGED_HANDBACK` | loop only | The state file was **already** uncommitted before the hop launched **and** is byte-identical after — so Claude never touched it. Split out of `25`, which used to fire on bare dirtiness and therefore told the operator "Claude edited it" about a file Claude had not written to. |
 
 > **Why `28`–`30` exist.** `27` is deliberately unused: it was reserved in plan v0.1 for
 > `--expect-turn`, which v0.2 dropped (unattended loop mode makes the repeating-courier shape it
 > guarded unnecessary, and the lock already refuses a second dispatcher). Leaving the gap is cheaper
 > than renumbering if it is ever built.
+
+> **Why `35`–`36` skip `33`–`34`.** Those two numbers are claimed by a concurrent branch
+> (`session/2026-08-11-work-loop-ceremony`, `OWNERSHIP_REFUSED` and `OWNERSHIP_AMBIGUOUS`). This work
+> was implemented alongside that branch and stepped over the pair rather than colliding with it —
+> a silent collision, where each branch's suite passes alone and the merged dispatcher gives one
+> number two meanings, is the more expensive failure. If that branch is abandoned the numbers free
+> up, but renumbering downward would invalidate recorded run evidence for no gain.
+
+### Every post-launch stop reports partial file effects
+
+Any stop **after an actor has launched** now appends a `PARTIAL FILE EFFECTS` section listing the
+in-allowlist paths the hop left modified and uncommitted. That covers `20`, `21`, `22`, `24`, `25`,
+`29`, `30`, `35`, `36` and the `28` interruption path.
+
+The gap this closes: every existing check was scoped to *violations*, so a hop that edited three
+permitted files and was then killed reported nothing at all. On 2026-08-11 a timeout reported three
+individually-true facts — the state file did not change, the branch did not move, no foreign path was
+touched — while real work sat uncommitted on disk, unmentioned.
+
+**The listed paths are not a violation.** They are inside `--allow-path`; they are what the actor was
+sent to do. The section is reporting only, and nothing exits nonzero *because* it is non-empty. A
+clean tree prints no section at all.
 
 **Exit `0` means five different things depending on how you invoked the dispatcher:**
 
@@ -535,7 +597,7 @@ The suite builds throwaway sandbox checkouts under `TMPDIR` and removes them on 
 real repository. It ends with a summary line and exits `1` if any case failed:
 
 ```
-pass=375 fail=0  (all cases SIMULATED — no live product transport)
+pass=415 fail=0  (all cases SIMULATED — no live product transport)
 ```
 
 > **This count drifts, twice over now.** It read `pass=69` until 2026-08-06, when the suite actually
@@ -545,7 +607,8 @@ pass=375 fail=0  (all cases SIMULATED — no live product transport)
 > three-state fix on 2026-08-07 added 22 to reach **171**, the pid-validation correction that
 > followed it added 27 more to reach **198**, the 1d contained-profile integration the same day added
 > 75 to reach **273**, the 1d correction later that day added 11 to reach **284**, the 1a teardown
-> work took it to **368**, and P0-F's attended permission-mode assertions added 7 to reach **375**. A
+> work took it to **368**, P0-F's attended permission-mode assertions added 7 to reach **375**, and
+> the bounded-execution cases 40–46 added 40 to reach **415**. A
 > hand-maintained count drifts silently every time; treat the number as documentation and the run as
 > the evidence. **The correction was itself an instance of the drift:** the red-pair figure recorded
 > alongside this one read `212/22` when the current test file actually returns `216/24` against the
@@ -634,6 +697,53 @@ red half**: no `--dangerously-skip-permissions` on any path, and no `--permissio
 leaking into the contained profile — which a red-to-green pair on its own cannot detect. The argv
 check requires **exactly one** `--permission-mode` token with `default` on the next line, so a flag
 passed twice with different values fails rather than matching by coincidence.
+
+### Cases 40–46 — the bounded-execution outcomes (2026-08-11)
+
+Added for the O1–O5 outcomes of `../bounded-execution-fix-plan-v0.2.md`, after two bounded-execution
+failures one day apart. Both incidents cost real model time — 25 minutes and 900 seconds — and both
+shapes are reproduced here in seconds by a scripted actor. **No live model, no nested AI, no pilot.**
+
+| Case | What it pins |
+|---|---|
+| `40` | The four nested-actor deny rules reach the child verbatim on the plain attended path, `--permission-mode default` survives alongside them, and the run log states plainly that this is **not containment** |
+| `40b` | `--claude-deny` **appends** to the nested set rather than replacing it |
+| `41` | A **timeout with partial edits** — the incident-2 shape. The actor edits an allowed file, never touches the state file, never commits, and is killed on the clock. Exit `21`, and the modified path is named. Controls that the state file really is untouched |
+| `42` | The **false exit 25** — a state file already dirty before launch and byte-identical after now exits `36`, and the stop no longer claims Claude edited it. Controls the sha256 across the hop |
+| `42b` | The pairing control: a **real** uncommitted Claude edit still exits `25`, so `36` did not swallow the shape it was split from |
+| `43` | A **permission denial** parsed out of the hop capture into exit `35`, carrying the exact denied command and a second denial of a different tool |
+| `43b` | The control: an **empty** `permission_denials` array produces no permission stop |
+| `44` | An **out-of-scope edit** still exits `24`, and now also names the in-scope work the hop did |
+| `45` | An **out-of-scope commit** still exits `30`, and now also names the uncommitted in-scope work |
+| `46` | The other O2 control: a clean hop prints **no** partial-effects section |
+
+Case `31b` was **inverted, not relaxed**. It asserted "no `--disallowedTools` is passed when none was
+asked for", which was correct until the nested-actor set became a default. It now asserts the
+opposite, which is the claim the dispatcher actually makes.
+
+Measured on 2026-08-11, three passes against frozen copies of both files:
+
+```
+baseline  pristine dispatch + pristine tests   pass=375 fail=0
+red       pristine dispatch + NEW tests        pass=392 fail=23
+green     NEW dispatch      + NEW tests        pass=415 fail=0
+```
+
+The baseline was **re-derived by execution**, not inherited from the record — it happens to confirm
+the recorded `375/0`, but the plan required running it rather than quoting it.
+
+All 23 reds are distributed across the five outcomes; none of them is a control. The controls —
+case `42b` (a real uncommitted Claude edit still exits `25`), `43b` (an empty `permission_denials`
+array raises no stop), `46` (a clean hop prints no partial-effects section), and case `41`'s
+state-file check — stay **green in both halves** on purpose. They are there to catch a fix that
+overshoots, which a red-to-green pair alone cannot detect.
+
+> **One of these assertions was wrong first, and the red half is what caught it.** Cases 41, 44 and
+> 45 originally grepped the *whole* run output for the modified path, and passed against the
+> pre-change dispatcher — the run log echoes `--actor-cmd` verbatim, and that command string contains
+> the path. Three assertions were therefore matching text the dispatcher had always printed. They now
+> search only inside the `PARTIAL FILE EFFECTS` block, via the `partial_section` helper, and fail in
+> the red half as they should. Red count went 20 → 23 on that correction.
 
 **Live product evidence lives in `runs/`, never in this suite.** `runs/live-permission-denial-2026-08-05.md`
 records what the real binary does when it is refused permission — the half of safety cluster 1 no
@@ -829,12 +939,13 @@ verdict — plus one stdout capture per hop. That is the whole evidence base. No
 - **Unattended handling of operator decisions.** Reaching `turn: operator` is where the automation
   *stops*. The dispatcher now prints the question and states that nobody answered it (case 20), but
   what happens to the decision after that is outside the dispatcher entirely.
-- **Which exit code a refused actor produces.** A denied actor exits `0`, so a real permission denial
-  never reaches the dispatcher as `20 ACTOR_FAILED`. It arrives as `22 NO_TRANSITION` if the actor
-  changed nothing, or as `25 UNCOMMITTED_HANDBACK` if it edited the state file and was then refused
-  the commit — the second measured end-to-end through `dispatch.sh` on 2026-08-05. Both stops are
-  correct and bounded, and neither code *names* denial as the cause; the hop capture's
-  `permission_denials` does. Full measurement: `runs/live-permission-denial-2026-08-05.md`.
+- **Which exit code a refused actor produces — CORRECTED.** A denied actor still exits `0`, so a real
+  permission denial never reaches the dispatcher as `20 ACTOR_FAILED`. It used to arrive as
+  `22 NO_TRANSITION` or `25 UNCOMMITTED_HANDBACK`, neither of which *named* denial as the cause. That
+  is what exit `35` now fixes: the dispatcher reads the `permission_denials` field it had been writing
+  to the hop capture and never opening. **Verified in simulation only** — the parse is driven by a
+  fixture modelled on the recorded live shape, not by a fresh live denial. The original live
+  measurement stands: `runs/live-permission-denial-2026-08-05.md`.
 - **Anything about the quality of the work the models did.** The dispatcher checks that the file
   moved in an allowed direction and that no unexpected repository effect occurred. It does not read
   the content.

@@ -1965,9 +1965,15 @@ OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nodeny-task --log-dir "$d/run
       --carry-one --claude-bin "$FAKE" 2>&1)"; RC=$?
 expect_rc 0 "$RC" "the hop completes with no --claude-deny" "$OUT"
 if [ -f "$WL_ARGV_FILE" ]; then
+  # CHANGED BY O1, deliberately. This assertion used to read "no
+  # --disallowedTools is passed when none was asked for" and it was correct
+  # until the nested-actor deny set became a default. It is now inverted: the
+  # attended path ALWAYS passes --disallowedTools, because NESTED_ACTOR_DENY is
+  # never empty. The old assertion is not being relaxed — it is being replaced
+  # by the opposite claim, which is the one the dispatcher now makes.
   grep -qx -- "--disallowedTools" "$WL_ARGV_FILE" \
-    && bad "no --disallowedTools is passed when none was asked for" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
-    || ok "no --disallowedTools is passed when none was asked for"
+    && ok "--disallowedTools IS passed even with no --claude-deny (the nested-actor default)" \
+    || bad "--disallowedTools IS passed even with no --claude-deny" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
   # P0-F, the plain attended shape. Separate from case 31's assertion because
   # these are two distinct branches of launch_actor: a fix applied to one of
   # them leaves the other silently inheriting bypassPermissions.
@@ -2486,6 +2492,256 @@ else
 fi
 
 unset WL_ARGV_FILE WL_ENV_FILE WL_SF WL_CO WL_FAKE_VERSION
+
+# ============================================ cases 40-45: bounded execution
+#
+# The O1-O5 outcomes of plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.2.md.
+# Every case here is SIMULATED like the rest of this suite: no live model, no
+# nested AI, no pilot. The two incidents these cover cost 25 minutes and 900
+# seconds of real model time respectively; both shapes are reproduced below in
+# seconds by a scripted actor, which is the entire argument for doing it this way.
+#
+# RED/GREEN. Each case below fails against the pre-change dispatcher. Run the
+# suite with DISPATCH_BIN pointed at a checkout of the previous dispatch.sh to
+# see the red half — that is what makes these assertions evidence rather than
+# decoration.
+
+# An allowed implementation file, tracked, so a later modification shows up as
+# ' M ' rather than '??'. Both are partial effects; the tracked shape is the one
+# incident 2 actually produced.
+seed_impl() { # sandbox -> path (repo-relative) on stdout
+  local d="$1" p="plans/work-loop-v2-v0.2/handoff-automation-spike/impl.txt"
+  printf 'baseline\n' >"$d/$p"
+  git -C "$d" add "$p" >/dev/null 2>&1
+  git -C "$d" commit -qm "seed impl" >/dev/null 2>&1
+  printf '%s' "$p"
+}
+
+# Only the PARTIAL FILE EFFECTS block, not the whole run output.
+#
+# THIS EXISTS BECAUSE THE OBVIOUS ASSERTION IS NOT EVIDENCE. Grepping the full
+# output for the modified path passes against the PRE-CHANGE dispatcher too: the
+# run log echoes the --actor-cmd verbatim (`launch: mode=simulated … cmd=…`), and
+# that command string contains the very path the test is looking for. Measured,
+# not theorised — the first cut of cases 41/44/45 stayed green in the red half
+# for exactly this reason, which is the "a red half that passes is not evidence"
+# trap the plan's verification budget names.
+partial_section() { # full-output -> the block from the header to the end
+  printf '%s' "$1" | sed -n '/PARTIAL FILE EFFECTS/,$p'
+}
+
+echo
+echo "Case 40 — O1: the nested-actor denies reach the child, on both attended shapes"
+d="$(new_sandbox)"; state_file "$d" "nest-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-nested.txt"
+export WL_SF="$d/logs/work-loop/nest-task.md"
+export WL_CO="$d"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nest-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "the hop completes with the nested-actor denies in place" "$OUT"
+if [ -f "$WL_ARGV_FILE" ]; then
+  # -F throughout: these rules carry ( and *, which grep would read as a pattern.
+  for rule in 'Bash(claude:*)' 'Bash(claude *)' 'Bash(codex:*)' 'Bash(codex *)'; do
+    grep -Fqx -- "$rule" "$WL_ARGV_FILE" \
+      && ok "the child is denied $rule" \
+      || bad "the child is denied $rule" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  done
+  argv_pair "$WL_ARGV_FILE" "--permission-mode" "default" \
+    && ok "P0-F still holds — the nested denies did not displace --permission-mode default" \
+    || bad "P0-F still holds alongside the nested denies" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+else
+  bad "the fake claude binary was invoked" "no argv file"
+fi
+printf '%s' "$OUT" | grep -Fq "nested_actor_deny=Bash(claude:*)" \
+  && ok "the run log records the nested-actor deny set" \
+  || bad "the run log records the nested-actor deny set" "$OUT"
+# The honesty clause. A deny at the child's permission layer is NOT containment,
+# and the plan's § 3.4 makes overclaiming it a defect in its own right. Asserted
+# here so a future edit cannot quietly upgrade the wording.
+printf '%s' "$OUT" | grep -q "not containment" \
+  && ok "the run log states plainly that this is NOT containment" \
+  || bad "the run log states plainly that this is NOT containment" "$OUT"
+
+echo
+echo "Case 40b — --claude-deny APPENDS to the nested set, it does not replace it"
+d="$(new_sandbox)"; state_file "$d" "nest-append" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-nested-append.txt"
+export WL_SF="$d/logs/work-loop/nest-append.md"
+export WL_CO="$d"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nest-append --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE" --claude-deny 'WebFetch' 2>&1)"; RC=$?
+expect_rc 0 "$RC" "the hop completes with an operator deny added" "$OUT"
+if [ -f "$WL_ARGV_FILE" ]; then
+  grep -Fqx -- 'Bash(claude:*)' "$WL_ARGV_FILE" \
+    && ok "an operator --claude-deny does not displace the nested-actor rules" \
+    || bad "an operator --claude-deny does not displace the nested-actor rules" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  grep -Fqx -- 'WebFetch' "$WL_ARGV_FILE" \
+    && ok "the operator's own rule is passed alongside them" \
+    || bad "the operator's own rule is passed alongside them" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+else
+  bad "the fake claude binary was invoked" "no argv file"
+fi
+unset WL_ARGV_FILE WL_SF WL_CO
+
+echo
+echo "Case 41 — O2: a TIMEOUT names the partial edits it left behind (incident 2)"
+# The exact shape of 2026-08-11: the actor edits an allowed implementation file,
+# never touches the state file, never commits, and is killed on the deadline.
+# Before this change the stop said "exceeded 3s and was killed" and stopped
+# there — the state file had not moved and the branch ref had not advanced, so
+# every check that could have reported the edit was scoped to violations and
+# found none. Three true facts, one misleading picture.
+d="$(new_sandbox)"; state_file "$d" "timeout-task" "claude"
+IMPL="$(seed_impl "$d")"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task timeout-task --log-dir "$d/runs" \
+      --carry-one --timeout 3 \
+      --actor-cmd 'printf "half-written work\n" >> "$WL_CHECKOUT/'"$IMPL"'"; sleep 30' 2>&1)"; RC=$?
+expect_rc 21 "$RC" "the oversized hop is stopped by the actor timeout" "$OUT"
+printf '%s' "$OUT" | grep -q "PARTIAL FILE EFFECTS" \
+  && ok "the timeout stop carries a partial-effects section" \
+  || bad "the timeout stop carries a partial-effects section" "$OUT"
+partial_section "$OUT" | grep -Fq "$IMPL" \
+  && ok "the modified allowed file is named INSIDE the partial-effects section" \
+  || bad "the modified allowed file is named INSIDE the partial-effects section" "$OUT"
+printf '%s' "$OUT" | grep -q "NOT a violation" \
+  && ok "the stop says the listed paths are work, not a violation" \
+  || bad "the stop says the listed paths are work, not a violation" "$OUT"
+# The state file genuinely did not move. That must still be true, or this case
+# is proving something other than the blind spot it was written for.
+[ -z "$(git -C "$d" status --porcelain -- "logs/work-loop/timeout-task.md")" ] \
+  && ok "control: the state file itself is untouched, as in the real incident" \
+  || bad "control: the state file itself is untouched" "$(git -C "$d" status --porcelain)"
+
+echo
+echo "Case 42 — the FALSE exit 25: an already-dirty state file Claude never touched"
+# Incident 1's claim 2a. turn: claude with an uncommitted state file is the
+# EXPECTED Codex handoff and is accepted at startup. If the hop then changes
+# nothing, the old code read bare dirtiness as proof and reported "Claude edited
+# logs/work-loop/<task>.md" about a file byte-identical before and after.
+d="$(new_sandbox)"; state_file "$d" "falsedirty-task" "claude"
+printf '\nuncommitted Codex handoff text\n' >> "$d/logs/work-loop/falsedirty-task.md"
+BEFORE_SUM="$(shasum -a 256 "$d/logs/work-loop/falsedirty-task.md" | cut -d' ' -f1)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task falsedirty-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd 'exit 0' 2>&1)"; RC=$?
+expect_rc 36 "$RC" "the no-op hop over a pre-dirty state file exits 36, not 25" "$OUT"
+printf '%s' "$OUT" | grep -q "CLAUDE DID NOT TOUCH IT" \
+  && ok "the stop says plainly that Claude did not touch the file" \
+  || bad "the stop says plainly that Claude did not touch the file" "$OUT"
+printf '%s' "$OUT" | grep -q "Claude edited logs/work-loop/falsedirty-task.md" \
+  && bad "the stop no longer claims Claude edited the file" "$OUT" \
+  || ok "the stop no longer claims Claude edited the file"
+printf '%s' "$OUT" | grep -q "Addressed to the OPERATOR" \
+  && ok "the stop names its addressee, so Codex cannot read it as its own instruction" \
+  || bad "the stop names its addressee" "$OUT"
+AFTER_SUM="$(shasum -a 256 "$d/logs/work-loop/falsedirty-task.md" | cut -d' ' -f1)"
+[ "$BEFORE_SUM" = "$AFTER_SUM" ] \
+  && ok "control: the state file really is byte-identical across the hop" \
+  || bad "control: the state file really is byte-identical across the hop" "$BEFORE_SUM -> $AFTER_SUM"
+
+echo
+echo "Case 42b — a REAL uncommitted Claude edit still exits 25"
+# The control that keeps case 42 honest. If 36 swallowed this shape too, the
+# split would have replaced one wrong classification with another.
+d="$(new_sandbox)"; state_file "$d" "realedit-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task realedit-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+expect_rc 25 "$RC" "an actual uncommitted Claude edit is still 25" "$OUT"
+printf '%s' "$OUT" | grep -q "CLAUDE DID NOT TOUCH IT" \
+  && bad "25 does not borrow 36's wording" "$OUT" \
+  || ok "25 does not borrow 36's wording"
+
+echo
+echo "Case 43 — O3: a permission denial becomes its own stop, naming tool and target"
+# The capture body is modelled on the recorded live shape in
+# runs/live-permission-denial-2026-08-05.md (run C): the child is refused
+# `git add`/`git commit` through Bash, edits the state file, cannot commit it,
+# and STILL EXITS 0. That last part is why this used to arrive as a bare 25 with
+# no cause named — and why the operator on 2026-08-10 went looking outside the
+# dispatcher for an answer it had in a file it never read.
+d="$(new_sandbox)"; state_file "$d" "denial-task" "claude"
+DENIAL_JSON='{"type":"result","subtype":"success","is_error":false,"permission_denials":[{"tool_name":"Bash","tool_use_id":"toolu_fixture01","tool_input":{"command":"git add logs/work-loop/denial-task.md && git commit -m wip"}},{"tool_name":"Edit","tool_use_id":"toolu_fixture02","tool_input":{"file_path":"/sandbox/logs/work-loop/denial-task.md"}}],"result":"I was denied permission to commit."}'
+printf '%s' "$DENIAL_JSON" > "$SANDBOX_ROOT/denial.json"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task denial-task --log-dir "$d/runs" \
+      --carry-one \
+      --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial.json"' 2>&1)"; RC=$?
+expect_rc 35 "$RC" "a hop whose capture reports denials exits 35, not 25" "$OUT"
+printf '%s' "$OUT" | grep -q "DENIED PERMISSION" \
+  && ok "the stop names permission denial as the cause" \
+  || bad "the stop names permission denial as the cause" "$OUT"
+printf '%s' "$OUT" | grep -Fq "git add logs/work-loop/denial-task.md" \
+  && ok "the exact denied command is carried into the stop" \
+  || bad "the exact denied command is carried into the stop" "$OUT"
+printf '%s' "$OUT" | grep -q "Edit :: " \
+  && ok "a second denial of a different tool is reported too" \
+  || bad "a second denial of a different tool is reported too" "$OUT"
+printf '%s' "$OUT" | grep -q "capability question" \
+  && ok "the stop frames it as an operator capability decision, not a transport failure" \
+  || bad "the stop frames it as an operator capability decision" "$OUT"
+
+echo
+echo "Case 43b — a clean capture produces NO permission stop"
+# The control. Without it, case 43 would pass equally well against a dispatcher
+# that exits 35 on every Claude hop.
+d="$(new_sandbox)"; state_file "$d" "nodenial-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nodenial-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd 'printf "{\"type\":\"result\",\"permission_denials\":[],\"result\":\"fine\"}"; '"$FLIP" 2>&1)"; RC=$?
+printf '%s' "$OUT" | grep -q "DENIED PERMISSION" \
+  && bad "an empty permission_denials array does not trigger a permission stop" "$OUT" \
+  || ok "an empty permission_denials array does not trigger a permission stop"
+[ "$RC" -ne 35 ] \
+  && ok "the run does not exit 35 when nothing was denied (got $RC)" \
+  || bad "the run does not exit 35 when nothing was denied" "$OUT"
+
+echo
+echo "Case 44 — O2: an OUT-OF-SCOPE edit reports the in-scope work alongside it"
+# 24 already named the violation. It did not name what the hop had legitimately
+# done, so the operator deciding whether to keep or discard was reading half the
+# picture.
+d="$(new_sandbox)"; state_file "$d" "scope-edit-task" "claude"
+IMPL="$(seed_impl "$d")"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task scope-edit-task --log-dir "$d/runs" \
+      --carry-one \
+      --actor-cmd 'printf "in-scope work\n" >> "$WL_CHECKOUT/'"$IMPL"'"; printf "out-of-scope\n" >> "$WL_CHECKOUT/other.txt"' 2>&1)"; RC=$?
+expect_rc 24 "$RC" "an out-of-allowlist working-tree edit still stops the run" "$OUT"
+printf '%s' "$OUT" | grep -Fq "other.txt" \
+  && ok "the out-of-scope path is reported (unchanged behaviour)" \
+  || bad "the out-of-scope path is reported" "$OUT"
+printf '%s' "$OUT" | grep -q "PARTIAL FILE EFFECTS" \
+  && ok "the out-of-scope stop ALSO carries a partial-effects section" \
+  || bad "the out-of-scope stop ALSO carries a partial-effects section" "$OUT"
+partial_section "$OUT" | grep -Fq "$IMPL" \
+  && ok "the in-scope work the hop did is named INSIDE that section" \
+  || bad "the in-scope work the hop did is named INSIDE that section" "$OUT"
+
+echo
+echo "Case 45 — O2: an OUT-OF-SCOPE COMMIT reports uncommitted in-scope work too"
+d="$(new_sandbox)"; state_file "$d" "scope-commit-task" "claude"
+IMPL="$(seed_impl "$d")"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task scope-commit-task --log-dir "$d/runs" \
+      --carry-one \
+      --actor-cmd 'printf "in-scope, left uncommitted\n" >> "$WL_CHECKOUT/'"$IMPL"'"; printf "out-of-scope\n" >> "$WL_CHECKOUT/other.txt"; git -C "$WL_CHECKOUT" add other.txt; git -C "$WL_CHECKOUT" commit -qm "actor commits out of scope"' 2>&1)"; RC=$?
+expect_rc 30 "$RC" "an out-of-allowlist COMMIT still stops the run" "$OUT"
+printf '%s' "$OUT" | grep -Fq "other.txt" \
+  && ok "the committed out-of-scope path is reported (unchanged behaviour)" \
+  || bad "the committed out-of-scope path is reported" "$OUT"
+printf '%s' "$OUT" | grep -q "PARTIAL FILE EFFECTS" \
+  && ok "the out-of-scope-commit stop ALSO carries a partial-effects section" \
+  || bad "the out-of-scope-commit stop ALSO carries a partial-effects section" "$OUT"
+partial_section "$OUT" | grep -Fq "$IMPL" \
+  && ok "the uncommitted in-scope work is named INSIDE that section" \
+  || bad "the uncommitted in-scope work is named INSIDE that section" "$OUT"
+
+echo
+echo "Case 46 — a clean hop is NOT decorated with a partial-effects section"
+# The other half of the O2 control. partial_effect_block() must be silent when
+# the tree is clean, or every stop in this suite grows a confusing empty header.
+d="$(new_sandbox)"; state_file "$d" "clean-hop-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task clean-hop-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "the well-behaved hop still completes" "$OUT"
+printf '%s' "$OUT" | grep -q "PARTIAL FILE EFFECTS" \
+  && bad "a clean hop prints no partial-effects section" "$OUT" \
+  || ok "a clean hop prints no partial-effects section"
 
 # ==================================================================== done
 echo
