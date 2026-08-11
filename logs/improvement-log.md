@@ -3294,3 +3294,21 @@ delete-the-marker step — that is the workaround the doctrine already closed.
 deleted. Clearing them is an operator decision.
 
 **Target files:** `ai-resources/.claude/hooks/check-destructive-liveness.sh` (probe b), `~/.claude/hooks/cleanup-session-marker.sh`, `ai-resources/docs/session-marker.md` § Per-id marker teardown.
+
+### 2026-08-11 — `unattended-operation-plan-v0.2.md`'s implementation-status table reports a stale suite count
+
+- **Status:** logged (pending)
+- **Severity:** low — documentation staleness only; no behavioural consequence, but it misstates a
+  fact a reader would reasonably rely on when checking dispatcher test coverage.
+- **Category:** Plan-spine currency.
+- **Source:** ai-resources, 2026-08-11, `work-loop-v2-bounded-execution-fix-plan` Work Loop v2 task.
+
+`plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md`'s implementation-status table is dated
+2026-08-07 and states the simulated dispatcher suite at 368 pass / 0 fail. The newer closed record
+`logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md` (2026-08-09) reports 375 pass / 0 fail
+after the P0-F attended-permission-mode work landed. The plan spine was not updated when that later
+work closed.
+
+**Shape of the fix (not built).** Update the status-table line to the current count with a pointer to
+the P0-F record, the same way the table already cites its other sources. Out of scope for the task
+that surfaced it (a planning-only unit that was not permitted to edit existing plan text).

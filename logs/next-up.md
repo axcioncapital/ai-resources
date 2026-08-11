@@ -74,3 +74,6 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] Script-based state-file edit truncated an accepted Work Loop artifact via a substring-matched anchor — `logs/improvement-log.md` <!-- promote:b259b53bc3fe -->
 
 - [ ] The staging tripwire judges a direct-route session's commit against another session's footprint — `logs/improvement-log.md` <!-- promote:e2f906ee2dd0 -->
+
+- [ ] `/work-loop-v2`'s embedded resolver is rewritten by its own argument, because it uses `$1`/`$2` as bash positionals — `logs/improvement-log.md` <!-- promote:521245a3d4ce -->
+- [ ] `check-destructive-liveness.sh` resolves the wrong target for `git -C <path> clean -f`, and fires on dry runs — `logs/improvement-log.md` <!-- promote:01478653b504 -->

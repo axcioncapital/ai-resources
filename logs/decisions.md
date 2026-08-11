@@ -340,3 +340,39 @@ structural-change unit (U2) was dropped as a result.
 Codex (§ 3 step 5); this closure did not go through that step. It is recorded in the closed state
 file's Accepted limitations as an operator-directed exception for this task, not as a change to the
 protocol itself.
+
+## 2026-08-11 — Tailored structural-resolution route for the Work Loop v2 bounded-execution incident
+
+**Context.** A 2026-08-10 Work Loop v2 session escaped its bounded courier path into an interactive
+Claude session that spawned ≥13 Claude processes to test instruction files. Claude's first-pass fix
+plan recommended adding a control (`--allow-nested-actors N`) without first comparing removal or
+simplification, and it self-contradicted about what the proposed control could prove.
+
+**Decision.** The operator directed a tailored eight-step route rather than a full run of the
+Repository Problem Resolution SOP's Lane B: establish the failure from preserved run evidence (no
+live reproduction); a blind raw-evidence review by a genuinely fresh Codex context; Claude reconciles
+that into a causal model and options at a zero complexity budget; operator scope approval; isolated
+clean-checkout implementation; independent verification; one genuine attended pilot capped at one
+Claude invocation and ten minutes; close only on observed behaviour, not harness success alone. The
+SOP is applied as non-governing methodology, subordinate to the Work Loop v2 executable core — it adds
+no state-file field and does not override core close/continue/correct/stop.
+
+**Rationale.** The incident's root mechanism was unbounded verification cost from nested AI
+invocation. A route that itself required a costly live reproduction or new AI-backed verification
+before design approval would repeat the failure it exists to prevent. Establishing failure from
+already-preserved evidence, and deferring construction decisions to a design gate, keeps the
+correction bounded while still passing through independent challenge before any implementation.
+
+**Alternatives considered.**
+- *Run the full unmodified SOP Lane B sequence.* Not rejected in substance — the tailoring keeps all
+  five Lane B gates — but the route was made explicit and case-specific rather than assumed generic,
+  because a generic run would have invited exactly the same disproportionate-verification failure at
+  a different step.
+- *Accept Claude's first-pass plan as final.* Rejected — it proposed new permanent machinery
+  (`--allow-nested-actors N`) with no verified authorised use case anywhere in the evidence, and
+  self-contradicted about whether its own proposed control was containment.
+
+**Recorded departure from protocol.** None — this decision operates alongside the Work Loop v2 core
+rather than against it; the SOP's subordination to the core, and the prohibition on it creating a
+second state system, are stated explicitly in the accepted plan
+(`plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md` § 0.1).
