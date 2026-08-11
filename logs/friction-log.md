@@ -353,6 +353,27 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 21:38 — logs/session-notes.md
+- 21:36 — logs/decisions.md
+- 21:36 — logs/session-notes.md
+- 21:35 — logs/scratchpads/2026-08-11-20-30-scratchpad.md
+- 21:23 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 21:11 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:11 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:11 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:04 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:04 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 21:04 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 21:03 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 21:03 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:02 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 20:01 — plans/work-loop-v2-v0.2/handoff-automation-spike/README.md
+- 20:00 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:00 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 20:00 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+- 19:22 — plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh
+- 19:19 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-bounded-execution/eb5c7dc2-7b31-4af3-af6d-9e9c805352b0/scratchpad/probe2.sh
+- 19:17 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-bounded-execution/eb5c7dc2-7b31-4af3-af6d-9e9c805352b0/scratchpad/probe.sh
 - 22:17 — logs/session-notes.md
 - 22:15 — logs/scratchpads/2026-08-09-21-50-scratchpad.md
 - 22:09 — logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md
