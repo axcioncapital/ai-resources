@@ -1,0 +1,17 @@
+run=20260811T101503-405170d5-84471-eval-mvp-v0.2-adoption-readiness-fix mode=live task=eval-mvp-v0.2-adoption-readiness-fix
+checkout=/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-eval
+state=/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-eval/logs/work-loop/eval-mvp-v0.2-adoption-readiness-fix.md
+max_hops=1 timeout=900s carry_one=1
+deadline=none — upper bound is max_hops * timeout = 900s
+allow_paths=^logs/work-loop/ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/ ^logs/friction-log\.md$ ^plans/work-loop-v2-v0\.2/eval-mvp-proposal-v0\.2\.md$ ^plans/work-loop-v2-v0\.2/eval-runner\.md$ ^logs/work-loop-v2-eval-results\.md$ ^docs/session-marker\.md$ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/runs/
+claude_deny=none — the Claude child holds this checkout's normal authority
+unattended=off — Claude hops run with this checkout's normal authority, including network
+initial: turn=claude sha256=075da8e9b2e8f5a06b3b633807ea852a57f056b2d82833c14be1293235193ca8 head=198ceec66f210079ef3a3b75ca55b889f64e9476
+note: the state file is uncommitted with turn: claude — the expected Codex handoff (Codex never runs git).
+
+hop=1 actor=claude
+  before: sha256=075da8e9b2e8f5a06b3b633807ea852a57f056b2d82833c14be1293235193ca8 turn=claude head=198ceec66f210079ef3a3b75ca55b889f64e9476
+  launch: mode=live actor=claude timeout=900s bin=/Users/patrik.lindeberg/.local/bin/claude version=2.1.220 (Claude Code)
+  cmd: claude -p '/work-loop-v2 eval-mvp-v0.2-adoption-readiness-fix' --output-format json (cwd=<checkout>)
+  teardown verified: no descendant reachable by group, ancestry or inherited descriptor is still running
+STOP [21] actor 'claude' exceeded 900s and was killed (hop 1)
