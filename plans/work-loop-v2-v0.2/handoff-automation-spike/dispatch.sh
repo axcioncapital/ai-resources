@@ -208,6 +208,40 @@
 #                              the remedy here is to install or repair the
 #                              helper, not to move checkout.
 #
+#   (33, 34 and 35 are RESERVED and unused here. The concurrent branch
+#    session/2026-08-11-work-loop-ceremony claims them for OWNERSHIP_REFUSED,
+#    OWNERSHIP_AMBIGUOUS and OWNERSHIP_UNAVAILABLE. This bounded-execution work
+#    was implemented alongside that branch and stepped over the block rather than
+#    colliding with it. It originally skipped only 33/34 and took 35 for
+#    PERMISSION_DENIED; that branch then also claimed 35, and the collision was
+#    caught at merge on 2026-08-11 — PERMISSION_DENIED moved 35 -> 37 here,
+#    because the ownership codes landed on main first. Run evidence recorded
+#    before that date names 35 for a permission stop; read it as 37.)
+#
+#   36  STATE_UNCHANGED_HANDBACK
+#                              the state file was ALREADY uncommitted before this
+#                              hop launched AND is byte-identical afterwards — so
+#                              Claude did not touch it. Split out of 25, which
+#                              used to fire on bare dirtiness and therefore told
+#                              the operator "Claude edited it" about a file
+#                              Claude had never written to. Distinct recovery: 25
+#                              means inspect a partial edit, 36 means the hop
+#                              accomplished nothing and the pre-existing dirty
+#                              file is someone else's uncommitted work.
+#   37  PERMISSION_DENIED      the Claude hop's own JSON capture reports one or
+#                              more `permission_denials` — the child asked to do
+#                              something it was not authorised to do, and the
+#                              denial happened at the CHILD's permission layer,
+#                              not here. Before this code the denial was
+#                              invisible: the child exits 0, so the run surfaced
+#                              as 25 (edited but could not commit) or 22 (nothing
+#                              moved), neither of which NAMES the cause. Measured
+#                              live on 2026-08-05 — see
+#                              runs/live-permission-denial-2026-08-05.md, run C.
+#                              The stop carries the denied tool, its target, and
+#                              the operator decision required. NOT retried: the
+#                              same denial would recur.
+#
 # The five meanings of 0 — do NOT read one as another:
 #   --help          printed the header. Nothing was validated, nothing launched.
 #   --status        reported what it could read. Nothing was validated beyond
@@ -273,6 +307,42 @@ UNATTENDED_BASE_DENY=(
   'WebSearch'
   'mcp__*'
 )
+
+# The default nested-actor deny set (O1). Applied to every ATTENDED Claude launch
+# this dispatcher makes, and it is the dispatcher's, not the operator's:
+# --claude-deny appends to it and cannot remove an entry.
+#
+# NOT applied to the --unattended contained profile, which is a separately
+# settled artifact that O1 excludes by name; the reasoning is at the u_deny
+# construction in launch_actor().
+# There is no flag to switch it off, and that absence is deliberate (plan § 3.3:
+# the only demonstrated use of nested AI invocation in the whole evidence set is
+# the 2026-08-10 failure this exists to prevent).
+#
+# READ THIS BEFORE QUOTING IT AS A SAFETY PROPERTY.
+#
+# This is NOT containment, and nothing here should be described as containment.
+# What it does: the DEFAULT DIRECT ROUTE — a child running `claude …` or
+# `codex …` through Bash — is refused by the child's own permission layer, and
+# the refusal is visible in the launch argv and in the run log. What it does NOT
+# do: remove the capability. A child with shell access can construct paths these
+# rules do not name — a wrapper script, an absolute path, an env-var
+# indirection, a shell function. A tool-name deny cannot enumerate its way out
+# of that, and pretending otherwise is the overclaim the plan's § 3.4 exists to
+# block.
+#
+# Materially reduced, not contained. The ONLY measured containment in this
+# repository is the --unattended sandbox's network refusal.
+#
+# Both the colon and the space form are listed, for the same reason
+# UNATTENDED_BASE_DENY lists both push forms: which one the installed build
+# honours is not worth guessing at when listing both costs one array entry.
+NESTED_ACTOR_DENY=(
+  'Bash(claude:*)'
+  'Bash(claude *)'
+  'Bash(codex:*)'
+  'Bash(codex *)'
+)
 # The minimum claude version that honours sandbox.network.strictAllowlist.
 UNATTENDED_MIN_VERSION="2.1.219"
 UNATTENDED_SETTINGS=""   # path to the generated per-run profile; set at preflight
@@ -296,11 +366,30 @@ ACTOR_PGID=""
 ACTOR_MARKER=""
 CUR_HOP=0
 CUR_ACTOR=""
+# The capture file the most recent launch_actor() actually wrote (O3).
+LAST_CAPTURE=""
+
+# The allowlisted working-tree snapshot taken immediately before the most recent
+# actor launch. Once set, it remains the comparison point until the next launch,
+# so a post-hop guard (including a malformed state file or hop limit) can still
+# report only effects attributable to that launched hop.
+HOP_BASELINE_READY=0
+HOP_ALLOWED_SNAPSHOT=""
+
+# The log directory's path relative to the checkout, when it sits inside one.
+# Set where the allowlist is extended to cover it, and read by allowlisted_dirty()
+# so the dispatcher's own evidence is not reported back as the actor's work (O2).
+LOG_REL=""
 
 die() { # code, message
   local code="$1"; shift
-  printf 'STOP [%s] %s\n' "$code" "$*" >&2
-  [ -n "${RUN_LOG:-}" ] && printf 'STOP [%s] %s\n' "$code" "$*" >>"$RUN_LOG"
+  local msg="$*"
+  # Structural O2 guarantee: after any actor launch, every nonzero exit carries
+  # the partial-effect delta. Early validation failures remain short because no
+  # launch baseline exists yet.
+  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] && msg="$msg$(partial_effect_block)"
+  printf 'STOP [%s] %s\n' "$code" "$msg" >&2
+  [ -n "${RUN_LOG:-}" ] && printf 'STOP [%s] %s\n' "$code" "$msg" >>"$RUN_LOG"
   release_lock
   exit "$code"
 }
@@ -1074,6 +1163,14 @@ on_signal() { # signal name
   local msg="  the actor was killed mid-hop; it may have left a partial effect. Nothing is retried.
   Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\`, decide what the
   hop actually completed, then re-run this dispatcher. Run evidence: ${RUN_LOG:-<none>}"
+
+  # O2 reaches the signal path too. This handler already SAID "it may have left
+  # a partial effect" and then made the operator go and find out for themselves
+  # — which is the same reporting gap the timeout had, one control over. Guarded
+  # on CHECKOUT because a signal can in principle land before argument parsing
+  # has resolved one, and a teardown path must not itself fail under `set -u`.
+  [ -n "${CHECKOUT:-}" ] && msg="$msg$(partial_effect_block)"
+
   printf '%s\n' "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
 
@@ -1231,6 +1328,8 @@ mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10
 # and the pre-hop gate below would stop on it.
 LOG_DIR_ABS="$(cd "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canonicalize log dir\n' >&2; exit 10; }
 if [ "$LOG_DIR_ABS" != "$CHECKOUT" ] && [ "${LOG_DIR_ABS#"$CHECKOUT"/}" != "$LOG_DIR_ABS" ]; then
+  # Assigns the global declared near LAST_CAPTURE — allowlisted_dirty() reads it
+  # to keep this directory out of the partial-effect report (O2).
   LOG_REL="${LOG_DIR_ABS#"$CHECKOUT"/}"
   ALLOW_PATHS+=("^$(printf '%s' "$LOG_REL" | sed 's|[][\.*^$]|\\&|g')/")
 fi
@@ -1281,6 +1380,41 @@ else
   # child ASK, and network is not coverable this way in any case:
   # runs/probe-unattended-authority-2026-08-07.md.
   say "claude_deny=none — no tool denied beyond the child's own policy (attended hops run --permission-mode default)"
+fi
+# Recorded separately from claude_deny, and always. claude_deny is the
+# OPERATOR's set and may legitimately be empty; this one is the dispatcher's own.
+# Folding them into one line would let "claude_deny=none" read as "nothing is
+# denied", which stopped being true on the attended path (O1).
+#
+# Branched on the run shape because O1 reaches attended launches only. Printing
+# the attended set on an unattended run would state a policy that this run's
+# argv does not carry — the same class of false run evidence the honest-stop
+# work exists to remove, one log line over.
+if [ "$UNATTENDED" -eq 1 ]; then
+  say "nested_actor_deny=n/a — this run is --unattended, and the contained profile carries no nested-actor rule; it is a separately settled artifact (see u_deny in launch_actor)"
+  say "  nesting is blocked on this path only INCIDENTALLY, by the sandbox's network refusal — that is a side effect of another control, not a stated policy"
+else
+  say "nested_actor_deny=${NESTED_ACTOR_DENY[*]}"
+  say "  nested_actor_deny is REQUESTED POLICY, not containment — it denies the default direct route at the child's permission layer and does not remove the capability"
+fi
+
+# Recorded at preflight, not at the stop. Whether exit 37 can name the denied
+# tool and its exact target depends on this host having a JSON parser, and the
+# operator of a long unattended run should learn that before walking away rather
+# than when the stop arrives unable to say what was refused.
+#
+# EACH PARSER IS PROBED BY RUNNING IT, not by `command -v`. A jq that is on PATH
+# but broken passes an existence check and then fails at the stop, which would
+# make this line disagree with what permission_denials_in() actually does — the
+# log would name a parser the run never used. The parse itself re-tries in the
+# same order at call time, so a parser that breaks mid-run still degrades to the
+# next tier rather than to a wrong answer.
+if printf '{}' | jq -r . >/dev/null 2>&1; then
+  say "denial_parser=jq — a permission stop (37) carries the denied tool and its EXACT target, untruncated"
+elif python3 -c 'import json' >/dev/null 2>&1; then
+  say "denial_parser=python3 — jq is unusable here; a permission stop (37) still carries the denied tool and its EXACT target, untruncated"
+else
+  say "denial_parser=none — neither jq nor python3 is usable here, so a permission stop (37) CANNOT name the denied tool and target; it will say so rather than guess"
 fi
 
 # ------------------------------------------------- unattended contained profile
@@ -1507,6 +1641,227 @@ foreign_worktree() {
 
 staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort; }
 
+# Working-tree lines that ARE covered by the allowlist — the exact complement of
+# foreign_worktree(), and the blind spot that made incident 2 unreadable (O2).
+#
+# foreign_worktree() answers "did the actor touch something it was not allowed
+# to?". Nothing answered "did the actor touch something it WAS allowed to, and
+# leave it uncommitted?" — so a hop that edited three permitted files and was
+# then killed reported nothing at all, because every check that could have seen
+# those edits was scoped to violations. The three facts a timeout reports today
+# are individually true and collectively misleading: the state file did not
+# change, the branch did not move, no foreign path was touched. All true. Work
+# was still left on the floor, and the operator was not told.
+#
+# THIS IS EXPECTED OUTPUT, NOT A VIOLATION. In-allowlist edits are what the
+# actor was sent to make. Listing them is reporting, never a stop condition —
+# nothing in this dispatcher exits nonzero BECAUSE this function returned
+# something. It only ever adds detail to a stop that had already been decided.
+#
+# TWO PATHS ARE EXCLUDED, and both are the dispatcher's own bookkeeping rather
+# than the actor's work. Both were ADDED to the allowlist by this script — the
+# run directory at the LOG_REL block, session-notes.md by the identity init — so
+# without these exclusions every stop would report the dispatcher's own evidence
+# files back to the operator as "work the hop did and did not commit". That is
+# not merely noisy: it is the same class of false statement O2 exists to remove.
+allowlisted_dirty() {
+  local line p
+  git -C "$CHECKOUT" status --porcelain --untracked-files=all 2>/dev/null | while IFS= read -r line; do
+    p="${line:3}"
+    p="${p%\"}"; p="${p#\"}"
+    [ "$p" = "logs/session-notes.md" ] && continue
+    if [ -n "$LOG_REL" ]; then
+      case "$p" in "$LOG_REL"/*|"$LOG_REL") continue ;; esac
+    fi
+    local allowed=0 re
+    for re in "${ALLOW_PATHS[@]}"; do
+      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
+    done
+    [ "$allowed" -eq 1 ] && printf '%s\n' "$line"
+  done | sort
+}
+
+# Fingerprint every currently dirty allowed path. The porcelain status alone is
+# not enough: if a file was already dirty before launch and the actor edits it
+# again, its status line can remain byte-for-byte identical. Pairing that line
+# with the worktree blob hash makes the actor's additional edit observable while
+# leaving untouched pre-existing handoffs out of the report.
+allowlisted_dirty_snapshot() {
+  local line p oid
+  allowlisted_dirty | while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    p="${line:3}"
+    p="${p%\"}"; p="${p#\"}"
+    if [ -e "$CHECKOUT/$p" ] || [ -L "$CHECKOUT/$p" ]; then
+      oid="$(git -C "$CHECKOUT" hash-object -- "$p" 2>/dev/null || true)"
+      [ -n "$oid" ] || oid="UNHASHABLE"
+    else
+      oid="ABSENT"
+    fi
+    printf '%s\t%s\n' "$oid" "$line"
+  done | sort
+}
+
+# The partial-effect block appended to every post-launch stop (O2).
+#
+# Prints nothing when the working tree is clean, so a stop with no partial
+# effects stays as short as it is now. When it does print, it says explicitly
+# that the paths are NOT a violation — otherwise a reader meeting a file list
+# inside a STOP message reasonably assumes the files are the problem.
+partial_effect_block() {
+  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
+
+  local after dirty
+  after="$(allowlisted_dirty_snapshot)"
+  if [ -n "$HOP_ALLOWED_SNAPSHOT" ]; then
+    dirty="$(comm -13 \
+      <(printf '%s\n' "$HOP_ALLOWED_SNAPSHOT") \
+      <(printf '%s\n' "$after") | cut -f2-)"
+  else
+    dirty="$(printf '%s\n' "$after" | cut -f2-)"
+  fi
+  [ -n "$dirty" ] || return 0
+  printf '%s' $'\n'"PARTIAL FILE EFFECTS — since launch, the hop changed these ALLOWED paths and left them modified and uncommitted:"$'\n'"$dirty"$'\n'"These are inside --allow-path and are NOT a violation: they are work the hop changed and did not commit. They are still on disk. READ THEM BEFORE DECIDING ANYTHING — do not discard them and do not assume they are absent. \`git -C $CHECKOUT diff\` shows tracked content."
+}
+
+# Compatibility name for call sites that explicitly mean a post-launch stop.
+#
+# die() itself owns the structural guarantee now, so plain-die paths reached
+# after launch (notably validate_state and the hop-limit guard) cannot bypass it.
+die_hop() { # code, message
+  die "$@"
+}
+
+# ------------------------------------------------ permission denials (O3)
+#
+# The hop capture has been written since the first version of this dispatcher
+# and never once read. That is the whole defect: Claude reports every refused
+# tool call in its own result JSON, under `permission_denials`, and the child
+# still exits 0 — so a denial reached the operator as 25 (edited, could not
+# commit) or 22 (nothing moved), and neither code NAMES the cause. On 2026-08-10
+# that unnamed dead end is what the interactive bypass was reaching around.
+#
+# Reads BOTH capture shapes without the caller knowing which one it is on:
+#   --output-format json         one object                  (attended, courier)
+#   --output-format stream-json  one event per line          (--unattended)
+# `jq -s` slurps either into an array, so one filter covers both.
+#
+# Fails SAFE, in the reporting direction: a truncated or unparseable capture
+# yields no denials and the run classifies exactly as it does today. This
+# function can only ever ADD a named cause; it can never invent a stop.
+# NO TRUNCATION, on any path. An earlier version cut every target to 200
+# characters, which silently broke the one promise this stop makes — the exit
+# table and the README both say it carries the EXACT target — and a long
+# `git commit -m …`, a deep path or a long URL is precisely the shape that got
+# cut. A target the operator cannot act on is the unnamed dead end O3 removes,
+# arriving one layer later.
+denials_via_jq() { # capture -> lines on stdout; NONZERO if jq itself is unusable
+  command -v jq >/dev/null 2>&1 || return 1
+  jq -r -s '
+    [ .[] | select(type == "object") | .permission_denials // empty | .[]? ]
+    | map(
+        (.tool_name // "?") + " :: " + (
+          ( .tool_input.command
+          // .tool_input.file_path
+          // .tool_input.url
+          // .tool_input.pattern
+          // (.tool_input | tostring)
+          ) | tostring
+        )
+      )
+    | unique
+    | .[]
+  ' "$1" 2>/dev/null
+}
+
+# The same extraction without jq, so a host that lacks it still gets the exact
+# tool and target instead of a placeholder. Deliberately a real JSON parse rather
+# than a regex over the capture: the fields carry commit messages and shell
+# commands, which contain quotes, braces and escapes, and a pattern-matched
+# "exact" value would be a worse lie than the placeholder it replaced.
+#
+# Kept behaviourally identical to the jq filter, including its `unique` (which
+# sorts) and its treatment of a null tool_name as "?", so the two tiers cannot
+# report the same capture differently.
+denials_via_python() { # capture -> lines on stdout; NONZERO if python3 is unusable
+  command -v python3 >/dev/null 2>&1 || return 1
+  python3 - "$1" <<'PYEOF' 2>/dev/null
+import json, sys
+
+def compact(v):
+    return json.dumps(v, separators=(",", ":"), ensure_ascii=False)
+
+def target(ti):
+    if not isinstance(ti, dict):
+        return compact(ti)
+    for k in ("command", "file_path", "url", "pattern"):
+        v = ti.get(k)
+        if v is not None and v is not False:      # jq's // skips null and false
+            return v if isinstance(v, str) else compact(v)
+    return compact(ti)
+
+raw = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+
+docs = []
+try:
+    docs.append(json.loads(raw))                  # --output-format json
+except ValueError:
+    for line in raw.splitlines():                 # --output-format stream-json
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            docs.append(json.loads(line))
+        except ValueError:
+            pass                                  # fails safe, as the jq filter does
+
+seen = set()
+for d in docs:
+    if not isinstance(d, dict):
+        continue
+    for den in d.get("permission_denials") or []:
+        if not isinstance(den, dict):
+            continue
+        tn = den.get("tool_name")
+        if tn is None or tn is False:
+            tn = "?"
+        seen.add("%s :: %s" % (tn, target(den.get("tool_input"))))
+
+for line in sorted(seen):
+    print(line)
+PYEOF
+}
+
+permission_denials_in() { # capture-path -> one "tool :: target" line per denial
+  local cap="$1" out
+  [ -s "$cap" ] || return 0
+
+  # Tried in order, and a parser that FAILS falls through to the next rather than
+  # being trusted for its empty output. That distinction is the whole point: jq
+  # exits 0 with no output when a capture genuinely holds no denials, and
+  # non-zero when it is missing or broken. Reading the second as the first is how
+  # a real denial would go back to surfacing as a bare 25 or 22 — the exact
+  # defect this function exists to remove. A `command -v` check alone cannot see
+  # it, because a broken jq is on PATH.
+  if out="$(denials_via_jq "$cap")"; then
+    [ -n "$out" ] && printf '%s\n' "$out"
+    return 0
+  fi
+  if out="$(denials_via_python "$cap")"; then
+    [ -n "$out" ] && printf '%s\n' "$out"
+    return 0
+  fi
+
+  # Neither parser is usable. Say so plainly rather than guessing at the JSON or
+  # staying silent: "a denial happened and I cannot name it" is still worth far
+  # more than the 25 this would otherwise have been reported as. This is the one
+  # case in which the exit table's "exact target" promise is not met, and the
+  # line says so instead of pretending otherwise.
+  if grep -q '"permission_denials"[[:space:]]*:[[:space:]]*\[[[:space:]]*{' "$cap" 2>/dev/null; then
+    printf '%s\n' "? :: (detail unavailable — neither jq nor python3 is usable here; read the capture directly)"
+  fi
+}
+
 # Paths an actor COMMITTED between two HEADs that the allowlist does not cover.
 #
 # This closes the gap the investigation found and then accepted: foreign_worktree()
@@ -1726,6 +2081,11 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
   local actor="$1" hop="$2" limit="$3"
   local out="$LOG_DIR/$RUN_ID.hop$hop.$actor.out"
   : >"$out"
+  # Published so the post-hop checks read the capture that was ACTUALLY written.
+  # Recomputing the path at the call site was the available alternative and it is
+  # wrong on the retry branch, where the hop suffix is "${hop}r" — the denial
+  # check would have silently read the first attempt's capture.
+  LAST_CAPTURE="$out"
 
   if [ -n "$ACTOR_CMD" ]; then
     say "  launch: mode=simulated timeout=${limit}s cmd=$ACTOR_CMD"
@@ -1784,6 +2144,22 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
         # The contained profile (1d). Built as an array so the operator's own
         # --claude-deny rules append to the base set rather than replacing it:
         # this flag may narrow the profile further, never widen it.
+        # NESTED_ACTOR_DENY IS DELIBERATELY ABSENT HERE. Do not add it back
+        # without reopening the profile as its own unit.
+        #
+        # O1's surface is the ATTENDED launch path only. The contained profile is
+        # a separately settled artifact (item 1d), and the O1 plan excludes it by
+        # name and requires this argv to stay byte-unchanged as O1's own control.
+        # A commit on 2026-08-11 prepended the nested set here anyway, which made
+        # that control impossible to pass; case 32z now freezes this argv so the
+        # same widening cannot land silently again.
+        #
+        # The argument for adding it is real and is NOT settled by this comment:
+        # the profile's --tools roster still exposes Bash, so nesting is blocked
+        # here only INCIDENTALLY, by the sandbox's network refusal, and incidental
+        # protection cannot be reasoned about. That is a case for reopening the
+        # profile deliberately, with its own evidence — not for widening it as a
+        # side effect of an attended-path fix.
         local -a u_deny=("${UNATTENDED_BASE_DENY[@]}")
         [ "${#CLAUDE_DENY[@]}" -gt 0 ] && u_deny+=("${CLAUDE_DENY[@]}")
         # stream-json rather than json, and ONLY on this path.
@@ -1814,15 +2190,23 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
           --strict-mcp-config \
           --no-session-persistence \
           --disallowedTools "${u_deny[@]}"
-      elif [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
-        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default --disallowedTools ${CLAUDE_DENY[*]} (cwd=<checkout>)"
+      else
+        # The attended path now ALWAYS passes --disallowedTools, because
+        # NESTED_ACTOR_DENY (O1) is never empty. The two attended branches that
+        # used to exist — "with denies" and "plain" — collapsed into this one,
+        # which also removes the failure mode where a fix applied to one branch
+        # left the other silently unprotected.
+        #
+        # --claude-deny APPENDS. It cannot remove a nested-actor rule; the
+        # operator flag may narrow the profile further, never widen it. Same
+        # composition rule the unattended path already used.
+        local -a a_deny=("${NESTED_ACTOR_DENY[@]}")
+        [ "${#CLAUDE_DENY[@]}" -gt 0 ] && a_deny+=("${CLAUDE_DENY[@]}")
+        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default --disallowedTools ${a_deny[*]} (cwd=<checkout>)"
+        say "  note: the nested-actor denies are requested policy, NOT containment — a child with shell access can construct paths these rules do not name (see NESTED_ACTOR_DENY)"
         run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
           --permission-mode default \
-          --disallowedTools "${CLAUDE_DENY[@]}"
-      else
-        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default (cwd=<checkout>)"
-        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
-          --permission-mode default
+          --disallowedTools "${a_deny[@]}"
       fi
       rc_claude=$?
       cd "$prev_pwd" || true
@@ -2069,7 +2453,7 @@ while :; do
   # misleading thing this dispatcher could do to someone who has just walked back
   # in expecting either finished work or a question.
   if [ -n "$DEADLINE_AT" ] && [ "$(remaining_seconds)" -le 0 ]; then
-    die 29 "budget exhausted — the ${DEADLINE}s deadline expired with turn still '$before_turn' after $hop hop(s). THIS IS NOT COMPLETION."$'\n'"The state file and Git are untouched by this stop, so the work is resumable: re-run this dispatcher to continue from $STATE_FILE."
+    die_hop 29 "budget exhausted — the ${DEADLINE}s deadline expired with turn still '$before_turn' after $hop hop(s). THIS IS NOT COMPLETION."$'\n'"The state file and Git are untouched by this stop, so the work is resumable: re-run this dispatcher to continue from $STATE_FILE."
   fi
   eff_timeout="$(effective_timeout)"
 
@@ -2084,6 +2468,12 @@ while :; do
 
   before_dirty=0; state_dirty && before_dirty=1
 
+  # Take the attribution baseline as late as possible before launch. It remains
+  # live after the actor returns so every later stop compares against the same
+  # repository reality the actor received.
+  HOP_ALLOWED_SNAPSHOT="$(allowlisted_dirty_snapshot)"
+  HOP_BASELINE_READY=1
+
   started="$(date '+%s')"
   launch_actor "$before_turn" "$hop" "$eff_timeout"
   rc=$?
@@ -2095,9 +2485,9 @@ while :; do
   # operator to inspect one hop when the real news is that the budget is gone.
   if [ "$rc" -eq 124 ]; then
     if [ -n "$DEADLINE_AT" ] && [ "$(remaining_seconds)" -le 0 ]; then
-      die 29 "budget exhausted — the ${DEADLINE}s deadline expired during hop $hop and actor '$before_turn' was terminated. THIS IS NOT COMPLETION."$'\n'"A killed actor carries the same partial-effect risk as an interruption: it is NOT retried."$'\n'"Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\` to see what the hop completed, then re-run this dispatcher."
+      die_hop 29 "budget exhausted — the ${DEADLINE}s deadline expired during hop $hop and actor '$before_turn' was terminated. THIS IS NOT COMPLETION."$'\n'"A killed actor carries the same partial-effect risk as an interruption: it is NOT retried."$'\n'"Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\` to see what the hop completed, then re-run this dispatcher."
     fi
-    die 21 "actor '$before_turn' exceeded ${eff_timeout}s and was killed (hop $hop)"
+    die_hop 21 "actor '$before_turn' exceeded ${eff_timeout}s and was killed (hop $hop)"
   fi
 
   # A crash BEFORE the actor changed anything is retried exactly once, from what
@@ -2116,7 +2506,7 @@ while :; do
       # re-clamping, a hop that failed at minute 39 would get a fresh full-length
       # timeout and walk straight through the deadline.
       if [ -n "$DEADLINE_AT" ] && [ "$(remaining_seconds)" -le 0 ]; then
-        die 29 "budget exhausted — the ${DEADLINE}s deadline expired before hop $hop could be retried. THIS IS NOT COMPLETION."$'\n'"The repository was unchanged by the failed attempt, so re-running this dispatcher resumes cleanly from $STATE_FILE."
+        die_hop 29 "budget exhausted — the ${DEADLINE}s deadline expired before hop $hop could be retried. THIS IS NOT COMPLETION."$'\n'"The repository was unchanged by the failed attempt, so re-running this dispatcher resumes cleanly from $STATE_FILE."
       fi
       eff_timeout="$(effective_timeout)"
       say "  exit=$rc after ${duration}s, and the repository is unchanged (state sha256, HEAD, working tree, committed-ness all identical) — retrying this hop once."
@@ -2126,18 +2516,18 @@ while :; do
       duration=$(( $(date '+%s') - started ))
       if [ "$rc" -eq 124 ]; then
         if [ -n "$DEADLINE_AT" ] && [ "$(remaining_seconds)" -le 0 ]; then
-          die 29 "budget exhausted — the ${DEADLINE}s deadline expired during the retry of hop $hop and actor '$before_turn' was terminated. THIS IS NOT COMPLETION."$'\n'"Not retried again. Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\`, then re-run this dispatcher."
+          die_hop 29 "budget exhausted — the ${DEADLINE}s deadline expired during the retry of hop $hop and actor '$before_turn' was terminated. THIS IS NOT COMPLETION."$'\n'"Not retried again. Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\`, then re-run this dispatcher."
         fi
-        die 21 "actor '$before_turn' exceeded ${eff_timeout}s and was killed on the retry (hop $hop)"
+        die_hop 21 "actor '$before_turn' exceeded ${eff_timeout}s and was killed on the retry (hop $hop)"
       fi
       [ "$rc" -eq 0 ] && say "  retry succeeded"
     else
-      die 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop) AFTER changing the repository — not retried, because a retry would run over a partial effect; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
+      die_hop 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop) AFTER changing the repository — not retried, because a retry would run over a partial effect; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
     fi
   fi
 
   if [ "$rc" -ne 0 ]; then
-    die 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop), and the retry failed too; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
+    die_hop 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop), and the retry failed too; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
   fi
   say "  exit=0 duration=${duration}s"
 
@@ -2152,11 +2542,11 @@ while :; do
   if [ "$before_foreign" != "$after_foreign" ]; then
     say "  foreign worktree delta:"
     diff <(printf '%s\n' "$before_foreign") <(printf '%s\n' "$after_foreign") | sed 's/^/    /' | tee -a "$RUN_LOG"
-    die 24 "actor '$before_turn' changed paths outside the allowlist (hop $hop)"
+    die_hop 24 "actor '$before_turn' changed paths outside the allowlist (hop $hop)"
   fi
 
   if [ "$before_turn" = "codex" ] && [ "$before_head" != "$after_head" ]; then
-    die 24 "Codex moved HEAD ($before_head -> $after_head) — Codex never runs git (core § 4)"
+    die_hop 24 "Codex moved HEAD ($before_head -> $after_head) — Codex never runs git (core § 4)"
   fi
 
   # What the actor COMMITTED, checked against the same allowlist as the working
@@ -2167,30 +2557,72 @@ while :; do
     if [ -n "$committed_bad" ]; then
       say "  committed paths outside the allowlist:"
       printf '%s\n' "$committed_bad" | sed 's/^/    /' | tee -a "$RUN_LOG"
-      die 30 "actor '$before_turn' COMMITTED paths outside the allowlist (hop $hop, $before_head -> $after_head)."$'\n'"The commit already exists — this stops the run rather than letting it compound over later hops."$'\n'"Recoverable next action: inspect with \`git -C $CHECKOUT diff $before_head $after_head\`. If the work is wanted, widen --allow-path and re-run; if it is not, revert or reset those commits first."
+      die_hop 30 "actor '$before_turn' COMMITTED paths outside the allowlist (hop $hop, $before_head -> $after_head)."$'\n'"The commit already exists — this stops the run rather than letting it compound over later hops."$'\n'"Recoverable next action: inspect with \`git -C $CHECKOUT diff $before_head $after_head\`. If the work is wanted, widen --allow-path and re-run; if it is not, revert or reset those commits first."
     fi
     say "  committed: $(git -C "$CHECKOUT" rev-list --count "$before_head".."$after_head" 2>/dev/null) commit(s), all within the allowlist"
   fi
 
+  # O3 — a permission dead end becomes a named stop.
+  #
+  # ORDER MATTERS, and this is why it sits here. It comes AFTER the
+  # out-of-allowlist guards (24, 30): those are repository-integrity violations
+  # and they win, because a run that both escaped its allowlist and hit a denial
+  # has the escape as the more serious fact. It comes BEFORE 25/36/22: those are
+  # the codes a denial was being MISREPORTED as, so reaching them first would
+  # reproduce the defect this outcome exists to remove.
+  #
+  # Claude only: `permission_denials` is a Claude Code result field. Codex's
+  # --json stream has no equivalent, and probing it for one would be inventing a
+  # contract rather than reading one.
+  if [ "$before_turn" = "claude" ] && [ -n "$LAST_CAPTURE" ]; then
+    denials="$(permission_denials_in "$LAST_CAPTURE")"
+    if [ -n "$denials" ]; then
+      say "  permission denials reported by the child:"
+      printf '%s\n' "$denials" | sed 's/^/    /' | tee -a "$RUN_LOG"
+      die_hop 37 "Claude was DENIED PERMISSION during hop $hop and could not complete the turn."$'\n'"Denied (tool :: target):"$'\n'"$denials"$'\n'"The denial happened at the CHILD's permission layer, not here — this dispatcher requested nothing that would have refused these. The child exits 0 when this happens, which is why it used to surface as exit 25 or 22 with no cause named."$'\n'"NOT retried: the same denial would recur."$'\n'"Operator decision required — this is a capability question, not a transport failure. Either grant the capability deliberately and re-run, or narrow the unit so it does not need it. Full capture: $LAST_CAPTURE"
+    fi
+  fi
+
   if [ "$before_turn" = "claude" ] && state_dirty; then
+    # THE SPLIT (U2 item 2). "The state file is dirty" was the whole test, and
+    # it does not distinguish the two situations underneath it:
+    #
+    #   Claude edited it and could not commit    -> 25, a partial edit to inspect
+    #   it was ALREADY dirty and never changed   -> 36, no state transition
+    #
+    # On 2026-08-10 the dispatcher reported the second as the first: it said
+    # "Claude edited the state file" about a file that was byte-identical before
+    # and after, and had been dirty before the hop even launched. before_dirty
+    # was already being computed here — it was just never consulted outside the
+    # crash-retry guard, so the evidence that would have settled it was in a
+    # variable the classification did not read.
+    #
+    # 36 requires BOTH halves: dirty before launch AND byte-identical after. If
+    # the bytes moved at all, Claude wrote to it and 25 is the honest answer even
+    # if it was also dirty beforehand.
+    if [ "$before_dirty" -eq 1 ] && [ "$after_hash" = "$before_hash" ]; then
+      die_hop 36 "the state file logs/work-loop/$TASK.md is uncommitted, and CLAUDE DID NOT TOUCH IT this hop (hop $hop)."$'\n'"Evidence: it was already uncommitted before the actor launched, and its sha256 is byte-identical after ($before_hash). This is NOT a partial edit by Claude — earlier versions of this dispatcher reported exactly this case as 'Claude edited it', which was false."$'\n'"The hop made no state transition. That does not prove it made no other allowed-file edits; any such work is listed below under PARTIAL FILE EFFECTS."$'\n'"Addressed to the OPERATOR, not to Codex: Codex never runs git (core § 4), so 'commit it' is not an instruction Codex can act on."$'\n'"Recoverable next action: read \`git -C $CHECKOUT diff -- logs/work-loop/$TASK.md\` and decide whose work it is. If it is a finished handoff, commit it and re-run this dispatcher. If it is debris, discard it and re-run. Also read the hop capture at ${LAST_CAPTURE:-<none>} to find out why the state transition did not happen."
+    fi
     # One live cause, measured 2026-08-05: the child was refused permission to run
     # git, so it edited the file and could not commit it. The stop is correct; the
     # message has to be actionable, because "inspect" alone is not a next action.
-    die 25 "Claude edited logs/work-loop/$TASK.md but left it uncommitted (hop $hop) — stopping rather than relaunching over a partial edit. A refused git permission looks exactly like this."$'\n'"Recoverable next action: read \`git diff -- logs/work-loop/$TASK.md\` and check the hop capture at $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out for a permission denial. If the edit is complete, commit it and re-run this dispatcher; if it is partial, discard it and re-run."
+    # (If that denial is in the capture, exit 37 above named it before reaching
+    # here. 25 is now the case where the commit failed for some OTHER reason.)
+    die_hop 25 "Claude edited logs/work-loop/$TASK.md but left it uncommitted (hop $hop) — stopping rather than relaunching over a partial edit. A refused git permission looks exactly like this."$'\n'"Addressed to the OPERATOR, not to Codex: Codex never runs git (core § 4), so committing is not something Codex can do on reading this."$'\n'"Recoverable next action: read \`git diff -- logs/work-loop/$TASK.md\` and check the hop capture at ${LAST_CAPTURE:-<none>} for a permission denial. If the edit is complete, commit it and re-run this dispatcher; if it is partial, discard it and re-run."
   fi
 
   if [ "$after_hash" = "$before_hash" ]; then
-    die 22 "actor '$before_turn' exited cleanly but left the state file byte-identical (hop $hop) — no observable transition"
+    die_hop 22 "actor '$before_turn' exited cleanly but left the state file byte-identical (hop $hop) — no observable transition"
   fi
   if [ "$after_turn" = "$before_turn" ]; then
-    die 22 "actor '$before_turn' edited the file but left turn: '$after_turn' unchanged (hop $hop) — not an allowed transition"
+    die_hop 22 "actor '$before_turn' edited the file but left turn: '$after_turn' unchanged (hop $hop) — not an allowed transition"
   fi
 
   case "$before_turn:$after_turn" in
     codex:claude|codex:operator|claude:codex|claude:operator)
       say "  transition: $before_turn -> $after_turn (allowed)" ;;
     *)
-      die 22 "transition $before_turn -> $after_turn is not allowed" ;;
+      die_hop 22 "transition $before_turn -> $after_turn is not allowed" ;;
   esac
 
   # The hop is over and no actor is in flight. A signal arriving from here until

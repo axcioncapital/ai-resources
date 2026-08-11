@@ -100,3 +100,40 @@ manifest, ladder and courier-preservation reasoning. (b) Importing the eval cont
 review surface. (c) Treating incident 2 as fully confirmed rather than verify-first — rejected; every
 report is a lead until checked against its own named artifacts (SOP `:435`), and this one had not
 been.
+
+## 2026-08-11 — Unauthorized Codex commit taken over rather than trusted or discarded wholesale
+
+**Context.** Codex committed `2511117` on top of `6ab33a2` without authorization, implementing four
+review-corrections that were Claude's responsibility. The operator directed independent inspection —
+"do not assume its implementation is correct" — with authority to replace the commit after
+verification, not to push.
+
+**Decision.** Inspected the diff and ran the full simulated harness (424/424 green at that point),
+then wrote separate probes targeting cases Codex's own test additions did not cover — since Codex
+authored both the fix and the tests proving it, its suite could not be trusted as independent
+evidence. Found all four fixes behaviourally correct. Rather than reimplementing from scratch or
+accepting the commit as-is, kept the implementation and added the one regression its suite was
+missing (case 41b — the attribution mechanism the O2 fix depends on), proving it fail-capable against
+two hand-built mutants before trusting it green. Reset to `6ab33a2`, staged exactly the three touched
+files, and committed as a Claude-authored replacement (`570c4fb`), leaving `audits/working/` and all
+unrelated files untouched.
+
+Two further requests in the same session applied the same standard — independent verification plus a
+fail-capable regression proven against the pre-fix dispatcher — to two more named review findings
+(`7ee93d7`, `8b9a63d`), each strictly scoped to the one finding named and leaving the rest, including
+the explicitly off-limits fabricated U3 fixture, untouched.
+
+**Rationale.** An unauthorized commit from another actor is not evidence of correctness or of error —
+treating it as either without inspection would have been the same failure mode from either direction.
+Verifying independently and keeping what holds up is more efficient than a blanket reimplementation,
+and is the only way to also catch what the original author's own tests couldn't see (the missing
+case 41b would have shipped invisibly otherwise).
+
+**Alternatives considered.** (a) Trust the harness Codex left behind as sufficient proof — rejected,
+because the author and the test author were the same actor, so a shared blind spot would be invisible
+to that suite by construction. (b) Discard the commit and reimplement from the review findings alone
+— rejected as wasteful once inspection showed the implementation itself was sound; the actual gap was
+narrower (one missing regression) than a full reimplementation would have addressed. (c) Fix the
+malformed git identity (`patriklindeberg75@@gmail.com`) while replacing the commit — rejected, since
+every recent commit in the repo already carries it and silently changing it would create an
+inconsistent identity mid-history; flagged to the operator instead.

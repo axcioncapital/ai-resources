@@ -3312,3 +3312,25 @@ work closed.
 **Shape of the fix (not built).** Update the status-table line to the current count with a pointer to
 the P0-F record, the same way the table already cites its other sources. Out of scope for the task
 that surfaced it (a planning-only unit that was not permitted to edit existing plan text).
+
+### 2026-08-11 — Repo git identity carries a malformed email, silently, on every commit
+
+- **Status:** logged (pending)
+- **Severity:** medium — no behavioural break inside the repo, but a malformed author email can
+  break GitHub commit-to-account attribution once pushed, and it has been silently propagating across
+  every commit for a while, not just today's.
+- **Category:** Git configuration correctness.
+- **Source:** ai-resources-bounded-execution, 2026-08-11, bounded-execution review-fix session.
+
+The repo's configured `user.email` is `patriklindeberg75@@gmail.com` — a double `@`. Confirmed present
+on `git config user.email` and on every one of the last six commits inspected (`2511117`, `6ab33a2`,
+`a0bb2a3`, `bdfe91f`, `a232971`, `027b1fe`), so this is not a one-off typo in a single commit; it is
+the checkout's standing identity. Flagged to the operator during this session and deliberately left
+unfixed twice — the three Claude-authored commits this session (`570c4fb`, `7ee93d7`, `8b9a63d`)
+preserved it rather than silently correcting it mid-unrelated-change, so the identity stays consistent
+with its neighbours until the operator decides.
+
+**Shape of the fix (not built).** `git config user.email "<correct address>"` in this checkout (and
+check whether the same value is set at the user/global level, which would mean every checkout on this
+machine carries it). A one-line fix; the only reason it is not already applied is that no session has
+had explicit operator authorization to change repo identity as a side effect of unrelated work.
