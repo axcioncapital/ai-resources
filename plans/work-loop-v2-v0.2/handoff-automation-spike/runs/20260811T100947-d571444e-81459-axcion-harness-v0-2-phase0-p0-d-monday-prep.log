@@ -1,0 +1,16 @@
+run=20260811T100947-d571444e-81459-axcion-harness-v0-2-phase0-p0-d-monday-prep mode=live task=axcion-harness-v0-2-phase0-p0-d-monday-prep
+checkout=/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources
+state=/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/work-loop/axcion-harness-v0-2-phase0-p0-d-monday-prep.md
+max_hops=1 timeout=900s carry_one=1
+deadline=none — upper bound is max_hops * timeout = 900s
+allow_paths=^logs/work-loop/ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/ ^logs/friction-log\.md$ ^logs/session-notes\.md$ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/runs/
+claude_deny=none — no tool denied beyond the child's own policy (attended hops run --permission-mode default)
+unattended=off — Claude hops are NOT contained: open network, open filesystem, full tool set
+  permission mode: default — asked for explicitly, so the child does NOT inherit this checkout's bypassPermissions
+  that is a permission policy, not containment
+initial: turn=claude sha256=8af293033cca7b2c78d72aa821b5a001c6ce206c9acb7a1d6ad76e012e374649 head=6781ffea358598ee3f4137fa2c6a1bec08c519db
+note: the state file is uncommitted with turn: claude — the expected Codex handoff (Codex never runs git).
+identity: allocated marker '2026-08-11 S1'; footprint: logs/work-loop/, plans/work-loop-v2-v0.2/handoff-automation-spike/, logs/friction-log.md, logs/session-notes.md, plans/work-loop-v2-v0.2/handoff-automation-spike/runs/, logs/work-loop/axcion-harness-v0-2-phase0-p0-d-monday-prep.md
+STOP [18] out-of-allowlist working-tree changes are already present before launching claude — task 'axcion-harness-v0-2-phase0-p0-d-monday-prep':
+?? scripts/recall-search.py
+Recoverable next action: commit, stash or revert the paths above, then re-run this dispatcher.

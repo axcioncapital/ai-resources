@@ -1,4 +1,8 @@
 {
+  "env": {
+    "MAX_THINKING_TOKENS": "10000",
+    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
+  },
   "permissions": {
     "allow": [
       "Bash(*)",
@@ -27,11 +31,10 @@
       "Read(**/deprecated/**)",
       "Read(**/old/**)"
     ],
-    "defaultMode": "bypassPermissions"
-  },
-  "env": {
-    "MAX_THINKING_TOKENS": "10000",
-    "CLAUDE_AUTOCOMPACT_PCT_OVERRIDE": "80"
+    "defaultMode": "bypassPermissions",
+    "additionalDirectories": [
+      "/Users/patrik.lindeberg/.claude"
+    ]
   },
   "hooks": {
     "PreToolUse": [

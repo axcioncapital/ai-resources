@@ -1,6 +1,6 @@
 ---
 task: axcion-harness-v0-2-phase0-p0-d-monday-prep
-turn: codex
+turn: claude
 ---
 
 ## Objective and scope
@@ -383,17 +383,53 @@ cadence document, no workspace-root file, no other task state, and no unrelated 
 modified — the only file this unit changed is this state file, and the staged path list for this
 handback is exactly `logs/work-loop/axcion-harness-v0-2-phase0-p0-d-monday-prep.md`.
 
+Codex assessment (2026-08-11): **STOP before accepting or continuing the discovery.** The technical
+inspection is detailed and its reported evidence is internally coherent, but direct reading of the
+sibling state file named in Finding B exposes a material authority conflict that cannot be resolved
+by repository inspection. `logs/work-loop/axcion-harness-v0-2-p0-d-monday-prep.md` records an
+operator decision dated 2026-08-09 that `/monday-prep` is no longer in use, cancels its implementation
+as non-gating, and already carries a `Close the task:` verdict. The current root P0-D state instead
+records G3 as approved and makes this `/monday-prep` flow a prerequisite for root Unit 2. The two
+directions cannot both govern, their same-day records do not establish precedence, and the current
+operator request to check Claude's work does not itself settle which product direction is intended.
+
+The sibling file is left untouched: its task identity differs, it may contain the controlling
+operator decision, and deleting, closing, or rewriting it before this conflict is resolved would be
+an unsafe repair. If the operator reauthorizes `/monday-prep`, the discovery still needs a later
+assessment disposition on whether future weekly mandates may become tracked Git history; G1
+explicitly approved committing the five historical mandates, not every future operational mandate.
+The first-write behavior for the currently absent destination directory must also be made
+fail-capable before an Implementation-mode unit opens.
+
+Operator decision (2026-08-11): `/monday-prep` is an old resource. This upholds the earlier
+cancellation, resolves the authority conflict, and supersedes the root task's treatment of this
+resource as a gating P0-D dependency. No redirect, documentation update, destination policy, or
+first-write behavior is needed for Harness v0.2.
+
 ## Blocker
 
-None. No operator gate is required: the destination is tracked under the policy already approved as
-root G1 choice (a), and G3 already authorises this flow.
+None.
 
 ## Next action
 
-Codex: assess this discovery. Two decisions belong to you before an Implementation-mode unit opens —
-(a) confirm the mandate repository, `ai-resources/logs/week-mandates/` as recommended or root
-`logs/week-mandates/` as the accepted root design named; (b) disposition the duplicate state file
-`logs/work-loop/axcion-harness-v0-2-p0-d-monday-prep.md` in Finding B, which would implement a
-destination this unit was opened to establish. Also carry Finding A to the root task: V-D1 and V-D6
-must be restated before root Unit 2 can use them, and deferral 1 makes the docs' harness
-session-report pointers dangle once root Unit 2 deletes `harness/session/`.
+Close the task:
+
+Record the outcome as **stopped without implementation** because the operator confirmed that
+`/monday-prep` is an old resource and therefore is not a live or gating Harness v0.2 dependency.
+Record that the discovery usefully mapped the obsolete reader/writer and documentation surface but
+does not authorize any edit to it.
+
+Under decisions that matter, record: (1) the 2026-08-11 operator decision upholds the earlier
+cancellation and supersedes the root P0-D assumption that this resource must be repaired first;
+(2) root P0-D may be reframed without a `/monday-prep` dependency; (3) the sibling task
+`axcion-harness-v0-2-p0-d-monday-prep` is a separate stale task already carrying its own close
+verdict and must not be executed as implementation; and (4) no future week-mandate repository or
+tracking policy was chosen because the resource is retired.
+
+Evidence is the operator decision recorded above, Claude's discovery showing that no implementation
+occurred and only this state file changed, and the sibling state file's matching cancellation
+record. Accepted limitation: the obsolete command and cadence documents retain their stale Harness
+references; this is explicitly non-gating and no cleanup is authorized by this task. Reduce this
+file to the four-section closing record, set `turn: operator`, commit only this state file in
+`ai-resources`, and stop. Do not edit `/monday-prep`, its documentation, the sibling task, or any
+workspace-root path.
