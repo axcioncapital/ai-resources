@@ -15,9 +15,24 @@ updated: { YYYY-MM-DD }
 
 <!--
   CAPABILITY RECORD — one operating capability, from need to lifecycle decision.
-  Written by `/work-loop` at `projects/{owner-project}/development/{slug}.md`.
-  Method lives in `skills/capability-development/SKILL.md`; process and artifact
-  mechanics live in `docs/work-loop.md`. This file holds neither — it holds state.
+
+  ** RETIRED LEGACY (2026-08-11) — THIS TEMPLATE HAS NO LIVE WRITER. **
+  Its only writer was `/work-loop` (v1), deleted 2026-08-06; the v1 Codex controller
+  skill was retired 2026-08-11 under Axcíon Harness v0.2 Phase 0. WORK LOOP V2 DOES
+  NOT WRITE CAPABILITY RECORDS and has no equivalent artifact — do not scaffold one
+  from a v2 unit, and do not treat this shape as a v2 contract.
+
+  It is kept because `/develop-ai-resource` Step 1.0 still READS a capability record
+  when a brief claims upstream qualification (`**Capability:**` + `**Settled
+  upstream:**`), and needs this shape to verify that claim. No component emits such a
+  brief today, so that check exists to reject unproven claims rather than to service a
+  live producer.
+
+  Method and process lived in `skills/capability-development/SKILL.md` and
+  `docs/work-loop.md`. Both survive as inert v1 method documents with no live
+  executor and unresolved ownership; neither is a live instruction.
+
+  Everything below this banner is preserved v1 material, unchanged.
 
   Opened by Frame as soon as the route is reviewed or challenged, NOT as a wrap-up
   artifact. Solo units write no record at all.

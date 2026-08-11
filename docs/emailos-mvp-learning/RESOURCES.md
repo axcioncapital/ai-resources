@@ -1,5 +1,24 @@
 # EmailOS-to-MVP Resources
 
+> ## ⚠️ Historical record — Work Loop v1 is retired. Do not follow the `/work-loop` routing below.
+>
+> **`/work-loop` no longer exists.** The command was deleted on 2026-08-06 (`0516bf6`) and its Codex
+> controller skill was retired on 2026-08-11 under Axcíon Harness v0.2 Phase 0, which required Work
+> Loop v2 to be the only plausible semantic router.
+>
+> **The live Work Loop is v2:** `/work-loop-v2` (Claude side), `.agents/skills/work-loop-v2/SKILL.md`
+> (Codex side), and `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` (the executable
+> core). **v2 is not a renamed v1** — it has a different admission rule (Direct Work is the default),
+> a different unit cycle and a different artifact set, and it does **not** carry the
+> Frame–Shape–Build–Prove–Land lifecycle or write capability records. Do not map the entries below
+> onto it.
+>
+> `skills/capability-development/SKILL.md` is likewise an inert v1 method document — it has no live
+> executor and cannot be invoked by a model.
+>
+> This collection is **preserved as historical evidence** of how routing worked when it was written.
+> Read it as a record, not as an instruction.
+
 ## Knowledge
 
 - [Systems Builder workflow](../../../projects/axcion-systems-builder/workflow.md)

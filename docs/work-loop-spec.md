@@ -1,7 +1,22 @@
-# `/work-loop` — Operational Specification
+# `/work-loop` — Operational Specification (Work Loop v1 — RETIRED)
 
-**Status:** Active
-**Applies to:** `.claude/commands/work-loop.md` (Claude-side controller), `.agents/skills/work-loop/SKILL.md` (Codex-side controller), `docs/work-loop.md` (shared contract)
+> ## ⚠️ Retired legacy material — do not execute
+>
+> **Work Loop v1 is retired and none of the components this specification governs still exist as a
+> live route.** `.claude/commands/work-loop.md` was deleted on 2026-08-06 (`0516bf6`);
+> `.agents/skills/work-loop/SKILL.md` was retired on 2026-08-11 under Axcíon Harness v0.2 Phase 0,
+> which required that Work Loop v2 be the only plausible semantic router.
+>
+> **The live Work Loop is v2:** `/work-loop-v2` (Claude side), `.agents/skills/work-loop-v2/SKILL.md`
+> (Codex side), and `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` (the executable
+> core). This file is **not** a specification of v2 and must not be read as one — v2 has a different
+> admission rule, a different unit cycle and a different artifact set.
+>
+> This document is kept as **historical evidence** of what v1 was intended to do. Its body is
+> preserved unchanged below. Nothing in it is an instruction.
+
+**Status:** Retired 2026-08-11 — historical record only, no live implementation
+**Applied to (all retired):** `.claude/commands/work-loop.md` (Claude-side controller, deleted 2026-08-06), `.agents/skills/work-loop/SKILL.md` (Codex-side controller, retired 2026-08-11), `docs/work-loop.md` (shared contract — left in place as an inert v1 method document, ownership unresolved)
 **Last material revision:** 2026-07-31 — first issue
 
 This specification defines the intended operational behaviour of `/work-loop`. It is written for operator and internal use, not as a technical implementation specification. It describes what the resource is for, where its boundaries sit, what a correct run looks like, and what must be observable afterwards.

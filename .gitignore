@@ -89,16 +89,19 @@ AGENTS.md
 # mirror. The four `source-command-*` skills and the `wl2-probe` throwaway remain ignored and
 # unmaintained; the Codex mirror does too, apart from the three S6 files named in the block above.
 #
-# Why a ladder and not one `!.agents/skills/work-loop/`: git does not descend into an excluded
+# The 2026-07-28 S3 entry `!.agents/skills/work-loop/` was removed on 2026-08-11 when the Work Loop
+# v1 Codex controller skill was retired (Axcíon Harness v0.2 Phase 0). Nothing re-includes that path
+# now, which is intended: v1 must not return to a fresh clone.
+#
+# Why a ladder and not one `!.agents/skills/work-loop-v2/`: git does not descend into an excluded
 # directory, so a negation for a path inside `.agents/` never gets evaluated. Each level must be
 # re-included before the next can be excluded. Verified with `git check-ignore -v` after the edit.
 #
-# Each adopted skill needs its OWN re-include line — `!.agents/skills/work-loop/` does not cover
-# `work-loop-v2/`. Without one, a new resource works on this machine and does not exist in a fresh
-# clone, silently (Work Loop v2 slice plan, "Two obligations that are not behaviours", item 1).
+# Each adopted skill needs its OWN re-include line — a negation for one skill does not cover a
+# sibling. Without one, a new resource works on this machine and does not exist in a fresh clone,
+# silently (Work Loop v2 slice plan, "Two obligations that are not behaviours", item 1).
 .agents/*
 !.agents/skills/
 .agents/skills/*
-!.agents/skills/work-loop/
 !.agents/skills/work-loop-v2/
 !.agents/skills/handoff-thread/

@@ -1,5 +1,19 @@
 # Axcíon AI Resource Development Resources
 
+> ## ⚠️ Historical record — Work Loop v1 is retired. Do not follow the `/work-loop` routing below.
+>
+> **`/work-loop` no longer exists.** The command was deleted on 2026-08-06 (`0516bf6`) and its Codex
+> controller skill was retired on 2026-08-11 under Axcíon Harness v0.2 Phase 0, which required Work
+> Loop v2 to be the only plausible semantic router.
+>
+> **The live Work Loop is v2:** `/work-loop-v2` (Claude side), `.agents/skills/work-loop-v2/SKILL.md`
+> (Codex side), and `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` (the executable
+> core). **v2 is not a renamed v1** — it has a different admission rule (Direct Work is the default),
+> a different unit cycle and a different artifact set. Do not map the entries below onto it.
+>
+> This collection is **preserved as historical evidence** of how routing worked when it was written.
+> Read it as a record, not as an instruction.
+
 ## Knowledge
 
 - [AI Resource Creation Rules](../ai-resource-creation.md)
@@ -8,10 +22,10 @@
   Current rough-notes router. Use for: turning an idea dump into evidence-backed options, an implementation plan, and a self-contained handoff.
 - [`/develop-ai-resource`](../../.claude/commands/develop-ai-resource.md)
   Qualification and artifact lifecycle. Use for: deciding whether a durable AI artifact should exist, selecting the smallest mechanism, building, verifying and obtaining a disposition.
-- [`/work-loop` contract](../work-loop.md)
-  Governing cross-model lifecycle for operating capabilities and settled corrections. Use for: Frame → Shape → Build → Prove → Land, route depth, evidence and operator gates.
-- [`/work-loop` command](../../.claude/commands/work-loop.md)
-  Claude-side orchestrator for the contract. Use for: executing and resuming units. Where it conflicts with the contract, the contract wins.
+- **RETIRED** — `/work-loop` contract ([`../work-loop.md`](../work-loop.md), now an inert v1 method document with no live executor)
+  Was the governing cross-model lifecycle for operating capabilities and settled corrections: Frame → Shape → Build → Prove → Land, route depth, evidence and operator gates. **Not a live authority.** Its v2 replacement is the executable core at `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, which does not use these phases.
+- **RETIRED** — `/work-loop` command (`.claude/commands/work-loop.md`, **deleted 2026-08-06**; link removed because the file no longer exists)
+  Was the Claude-side orchestrator for the contract. Its v2 replacement is `/work-loop-v2`.
 - [Independent Review Rule](../qc-independence.md)
   Current policy for proportional independent review. Use for: deciding whether a change needs no review, one result review, or a risk-aware pre-implementation review.
 - [`/create-skill`](../../.claude/commands/create-skill.md)
