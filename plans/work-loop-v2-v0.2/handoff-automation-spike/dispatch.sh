@@ -186,7 +186,9 @@
 #                              the remedy differs — 17 means "wait", 33 means
 #                              "you are in the wrong checkout". NOTHING launches,
 #                              so nothing is committed. A checkout without the
-#                              helper skips the check with a visible line.
+#                              helper is 35, not this — the two are separated
+#                              because "a conflict was found" and "no check ran"
+#                              are different facts with different remedies.
 #   34  OWNERSHIP_AMBIGUOUS    ownership cannot be established: the task's state
 #                              file is replicated across checkouts with no
 #                              declaration, or a declaration is unreadable or
@@ -194,6 +196,17 @@
 #                              by guessing — the checkout contacted first must
 #                              never claim a replicated open task. The operator
 #                              names the owner. NOTHING launches.
+#   35  OWNERSHIP_UNAVAILABLE  the ownership check could not be run at all:
+#                              logs/scripts/work-loop-owner.sh is missing,
+#                              unreadable, or exited with something other than
+#                              0/3/4. NOTHING launches. This FAILS CLOSED on
+#                              purpose — an absent check is not a passed check,
+#                              and the checkouts most likely to lack the helper
+#                              (older siblings, partial copies) are the ones
+#                              most likely to hold a conflicting writer.
+#                              Distinct from 33/34, which mean a check DID run:
+#                              the remedy here is to install or repair the
+#                              helper, not to move checkout.
 #
 # The five meanings of 0 — do NOT read one as another:
 #   --help          printed the header. Nothing was validated, nothing launched.
@@ -1915,11 +1928,17 @@ say "initial: turn=$ST_TURN sha256=$(file_hash "$STATE_FILE") head=$(git_head)"
 # declaration deciding which copy is authoritative. Both are refused here,
 # before an actor is launched and therefore before anything is committed.
 #
-# A checkout WITHOUT the helper skips the check with a visible line rather than
-# failing — the same shape as the session-identity init above. This spike is
-# driven against sandbox checkouts and older siblings that do not carry it, and
-# a hard failure there would refuse runs for the absence of a file rather than
-# for a real ownership conflict.
+# THIS CHECK FAILS CLOSED. A checkout without the helper, or with one that
+# cannot be read or cannot run, gets exit 35 and launches NOTHING — it does not
+# skip with a visible line. The distinction that matters is between a check that
+# ran and found nothing wrong and a check that never ran: only the first is
+# evidence. Skipping put exactly the checkouts most likely to be wrong — older
+# siblings and incomplete copies — back on the unguarded path this admission
+# exists to close, and it did so silently enough to look like a pass.
+#
+# This is deliberately UNLIKE the session-identity init above, which skips when
+# its allocator is absent. That one arms a tripwire; this one is the only thing
+# standing between two writers and one checkout, so absence cannot mean proceed.
 OWNER_HELPER="$CHECKOUT/logs/scripts/work-loop-owner.sh"
 if [ -f "$OWNER_HELPER" ] && [ -r "$OWNER_HELPER" ]; then
   OWNER_OUT="$(bash "$OWNER_HELPER" check --checkout "$CHECKOUT" --task "$TASK" --depth repo 2>&1)"
@@ -1928,10 +1947,10 @@ if [ -f "$OWNER_HELPER" ] && [ -r "$OWNER_HELPER" ]; then
     0) say "ownership: PROCEED — $(printf '%s' "$OWNER_OUT" | sed -n 's/^reason: //p')" ;;
     3) die 33 "ownership refused for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: continue the task in the checkout named above, or close it there first. Nothing was launched." ;;
     4) die 34 "ownership is AMBIGUOUS for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: this is not a failure to work around — decide which checkout owns the task, remove the copies that are not authoritative, and record the owner with \`work-loop-owner.sh claim\`. Nothing was launched." ;;
-    *) die 33 "the ownership check could not run (exit $OWNER_RC)"$'\n'"$OWNER_OUT" ;;
+    *) die 35 "the ownership check ran and failed (exit $OWNER_RC) in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: ownership is unestablished, so nothing was launched. Fix or replace $OWNER_HELPER, then re-run." ;;
   esac
 else
-  say "ownership: SKIPPED — $OWNER_HELPER is not present in this checkout; no declaration was read or written."
+  die 35 "the ownership check is unavailable: $OWNER_HELPER is missing or unreadable in $CHECKOUT"$'\n'"Recoverable next action: ownership cannot be established without it, so nothing was launched and nothing was committed. Copy the helper into this checkout — or run the task in a checkout that carries it — then re-run."
 fi
 
 # Restart safety. Truth comes from the file and Git, never from an old in-memory

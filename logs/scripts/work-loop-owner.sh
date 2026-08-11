@@ -2,7 +2,10 @@
 # work-loop-owner.sh — the one shared ownership check for Work Loop v2.
 #
 # R2, "the checkout declares its writer". One gitignored file per checkout at
-# logs/work-loop/.owner holds ONE task id and the date it was claimed. There is
+# logs/work-loop/.owner holds ONE task id and the date it was claimed, in
+# exactly one shape — `{task-id} {YYYY-MM-DD}` on a single line. A declaration
+# in any other shape is unreadable: it refuses, it is never guessed at, and it
+# is never deleted by this tool. There is
 # no file anywhere that maps tasks to checkouts: nothing is keyed by task id,
 # nothing is stored centrally, nothing is migrated. The declaration is only ever
 # used to REFUSE — a second task entering a claimed checkout, or a task whose id
@@ -45,10 +48,13 @@
 #   3   REFUSE      — the conflicting task and/or checkout is named in the output
 #   4   AMBIGUOUS   — refuses everywhere; the operator names the owner
 #   10  BAD_USAGE
-#   11  BAD_CHECKOUT
+#   11  BAD_CHECKOUT      — also: the mutation lock could not be taken
 #   12  BAD_TASK_ID
 #
-# Regression coverage: logs/scripts/work-loop-owner.test.sh (T1..T13).
+# `claim` and `clear` mutate, so they run inside a mkdir-based lock in the
+# checkout (no git). `check` is a pure read and takes no lock.
+#
+# Regression coverage: logs/scripts/work-loop-owner.test.sh (T1..T13, F1..F3).
 
 set -uo pipefail
 
@@ -108,19 +114,39 @@ MARKER="$CHECKOUT/$OWNER_REL"
 # Every function below is a pure reader. Nothing here writes, and nothing here
 # runs git — that is what makes the whole of --depth local git-free.
 
-marker_holder() { # -> task id on stdout; "" absent; "?" unreadable/ambiguous
-  [ -e "$MARKER" ] || { printf ''; return 0; }
-  [ -f "$MARKER" ] && [ -r "$MARKER" ] || { printf '?'; return 0; }
-  local lines holder
-  lines="$(grep -c '[^[:space:]]' "$MARKER" 2>/dev/null || printf '0')"
-  # One id, or it is not a declaration this tool will act on. More than one
-  # non-empty line is exactly the "holding more than one id" row of the table.
+# THE DECLARATION HAS EXACTLY ONE LEGAL SHAPE: one non-empty line holding
+# `{task-id} {YYYY-MM-DD}` and nothing else. Anything else reads as "?" —
+# unreadable — and "?" is a verdict, not a repair instruction. It never resolves
+# to a task id, is never guessed at, and is never deleted. That is R2's
+# unreadable/multi-id row: a damaged declaration must refuse visibly and survive
+# for the operator to look at, because the tool that found it cannot know whether
+# it was half-written by a live claim or corrupted long ago.
+#
+# Two fields exactly, not "at least two". A third token is either a second task
+# id or trailing junk, and both are the shape this check exists to reject —
+# reading only $1 would have silently accepted `alpha beta gamma` as "alpha".
+marker_holder() { # marker-path -> task id | "" absent | "?" unreadable/ambiguous
+  local m="$1" lines fields holder stamp y mo dy
+  [ -e "$m" ] || { printf ''; return 0; }
+  [ -f "$m" ] && [ -r "$m" ] || { printf '?'; return 0; }
+  lines="$(grep -c '[^[:space:]]' "$m" 2>/dev/null || printf '0')"
+  # More than one non-empty line is exactly the "holding more than one id" row.
   [ "$lines" = "1" ] || { printf '?'; return 0; }
-  holder="$(awk 'NF {print $1; exit}' "$MARKER" 2>/dev/null)"
+  fields="$(awk 'NF {print NF; exit}' "$m" 2>/dev/null)"
+  [ "$fields" = "2" ] || { printf '?'; return 0; }
+  holder="$(awk 'NF {print $1; exit}' "$m" 2>/dev/null)"
+  stamp="$(awk 'NF {print $2; exit}' "$m" 2>/dev/null)"
   case "$holder" in
     ''|*/*|*'\'*) printf '?'; return 0 ;;
   esac
   printf '%s' "$holder" | grep -qE '^[A-Za-z0-9][A-Za-z0-9._-]*$' || { printf '?'; return 0; }
+  # Shape first, then range. Shape alone would admit 2026-99-99, which is not a
+  # date and so is not a claim date.
+  printf '%s' "$stamp" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || { printf '?'; return 0; }
+  y="${stamp%%-*}"; mo="${stamp#*-}"; mo="${mo%%-*}"; dy="${stamp##*-}"
+  case "$y$mo$dy" in *[!0-9]*) printf '?'; return 0 ;; esac
+  [ "$((10#$mo))" -ge 1 ] && [ "$((10#$mo))" -le 12 ] || { printf '?'; return 0; }
+  [ "$((10#$dy))" -ge 1 ] && [ "$((10#$dy))" -le 31 ] || { printf '?'; return 0; }
   printf '%s' "$holder"
 }
 
@@ -147,7 +173,7 @@ state_here() { [ -f "$1/logs/work-loop/$2.md" ]; }
 # run it first and then continue.
 LOCAL_VERDICT=""; LOCAL_REASON=""; LOCAL_STALE=0
 check_local() {
-  local holder; holder="$(marker_holder)"
+  local holder; holder="$(marker_holder "$MARKER")"
 
   if [ -z "$holder" ]; then
     LOCAL_VERDICT="PROCEED"; LOCAL_REASON="this checkout declares no writer"; return 0
@@ -206,14 +232,17 @@ check_repo() {
     [ -d "$wt" ] || continue
     real="$(cd "$wt" 2>/dev/null && pwd -P)" || continue
 
-    holder="$(MARKER="$real/$OWNER_REL"; \
-      if [ -e "$MARKER" ]; then
-        if [ -f "$MARKER" ] && [ -r "$MARKER" ] \
-           && [ "$(grep -c '[^[:space:]]' "$MARKER" 2>/dev/null || printf 0)" = "1" ]; then
-          awk 'NF {print $1; exit}' "$MARKER" 2>/dev/null
-        else printf '?'; fi
-      fi)"
+    # The SAME reader as the local half. This was a second, looser inline copy;
+    # a format rule enforced in one of two readers is not enforced at all,
+    # because the copy decides every cross-checkout verdict on its own.
+    holder="$(marker_holder "$real/$OWNER_REL")"
 
+    # A "?" here is a malformed declaration in ANOTHER checkout. It is not
+    # counted as a claimant, because it names nobody. Deliberate and narrow: it
+    # is the local half's job to refuse a malformed declaration in the checkout
+    # standing on it, and treating one corrupt sibling marker as ambiguity for
+    # every task would refuse work across the whole repository for a file the
+    # operator can see and fix in one place.
     if [ "$holder" = "$TASK" ]; then
       claimants="$claimants$real"$'\n'; n_claim=$((n_claim+1))
     fi
@@ -287,17 +316,68 @@ run_check() {
 
 VERDICT=""; REASON=""
 
+# ------------------------------------------------------- the mutation lock
+# WHY THIS EXISTS. `check` decides from a read; `claim` and `clear` then write.
+# Between the read and the write another process can claim the same free
+# checkout, and check-then-write let TWO different tasks both observe an
+# unclaimed checkout, both return PROCEED, and the later rename silently win.
+# Measured before the fix: 10 contested pairs, 10 double claims, 0 refusals.
+#
+# `mkdir` is the primitive, because it is the one create-or-fail operation
+# available with NO git — and --depth local must never run git. The kernel makes
+# the test-and-create indivisible, so exactly one caller can be inside the
+# section at a time, and the loser reads the winner's declaration and refuses.
+#
+# THE LOCK DIRECTORY IS ALWAYS EMPTY, and that is load-bearing rather than
+# incidental: git does not track directories, so an empty one can never appear
+# in `git status` or in a commit. It therefore needs no .gitignore rule — which
+# matters, because the approved scope for .gitignore is the .owner rule alone.
+# Putting a pid or a timestamp file inside it would make it committable and
+# would need the rule this design avoids.
+LOCK="$CHECKOUT/logs/work-loop/.owner.lock"
+LOCK_HELD=0
+
+lock_release() { [ "$LOCK_HELD" -eq 1 ] && rmdir "$LOCK" 2>/dev/null; LOCK_HELD=0; }
+
+lock_acquire() {
+  local i=0
+  while [ "$i" -lt 100 ]; do
+    if mkdir "$LOCK" 2>/dev/null; then
+      LOCK_HELD=1
+      # Released on every exit path, including verdict's, die's and a signal.
+      trap 'lock_release' EXIT HUP INT TERM
+      return 0
+    fi
+    # The section is a few milliseconds of file I/O, so a lock still held after
+    # a minute is abandoned, not busy. rmdir only succeeds on an empty
+    # directory, so this can never delete a lock someone put contents in.
+    if [ "$i" -eq 0 ] && [ -n "$(find "$LOCK" -maxdepth 0 -mmin +1 2>/dev/null)" ]; then
+      rmdir "$LOCK" 2>/dev/null
+    fi
+    i=$((i+1))
+    sleep 0.05
+  done
+  die 11 "another process is claiming or clearing this checkout and did not finish: $LOCK
+Recoverable next action: if no ownership command is running, remove that empty directory and retry."
+}
+
 case "$CMD" in
   check)
+    # A pure read. It takes no lock: writers install the declaration whole with
+    # a rename, so a reader sees either the old file or the new one, never half.
     run_check
     verdict "$VERDICT" "$REASON"
     ;;
 
   claim)
-    run_check
-    [ "$VERDICT" = "PROCEED" ] || verdict "$VERDICT" "$REASON — nothing was written"
     mkdir -p "$CHECKOUT/logs/work-loop" 2>/dev/null \
       || die 11 "cannot create $CHECKOUT/logs/work-loop"
+    lock_acquire
+    # Decide and write INSIDE the section, so the verdict cannot go stale
+    # between the two. This is the whole correction: run_check used to happen
+    # outside any section, and its answer could stop being true before the write.
+    run_check
+    [ "$VERDICT" = "PROCEED" ] || verdict "$VERDICT" "$REASON — nothing was written"
     # Written whole, then moved into place, so a reader never sees half a
     # declaration. Same directory, so the move is a rename on one filesystem.
     tmp="$MARKER.tmp.$$"
@@ -311,11 +391,20 @@ case "$CMD" in
     ;;
 
   clear)
-    holder="$(marker_holder)"
+    lock_acquire
+    holder="$(marker_holder "$MARKER")"
     if [ -z "$holder" ]; then
       verdict PROCEED "this checkout declares no writer — nothing to clear"
     fi
-    if [ "$holder" = "?" ] || [ "$holder" = "$TASK" ]; then
+    # An unreadable or multi-id declaration is AMBIGUOUS and SURVIVES. It used
+    # to be deleted here, which is the one outcome R2 forbids: the evidence the
+    # operator needs to name the owner was destroyed by the command that found
+    # it, and a closure could silently tidy away a declaration belonging to
+    # another task.
+    if [ "$holder" = "?" ]; then
+      verdict AMBIGUOUS "the declaration at $MARKER is unreadable or holds more than one task id — it is left exactly as it is, and nothing was removed; the operator names the owner"
+    fi
+    if [ "$holder" = "$TASK" ]; then
       rm -f "$MARKER" || die 11 "cannot remove $MARKER"
       verdict PROCEED "cleared the declaration at $MARKER"
     fi

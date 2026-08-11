@@ -168,7 +168,7 @@ Act on the verdict, and do not work around it:
 - **REFUSE** — the output names the conflicting task or checkout. Stop, report it in plain words, and change nothing. This is not a premise failure and not a hand-back: it is a routing error, and the fix is to continue the task in the checkout named, not to edit anything here.
 - **AMBIGUOUS** — ownership cannot be established, normally because the state file is replicated across checkouts with none of them declaring it. **Never resolve this by claiming.** Report it and stop for the operator (core § 7) — deciding which copy is authoritative is theirs.
 
-If the helper is not present in this checkout, say so in one line and continue. An absent helper is not a refusal.
+**If the check cannot run, stop.** A missing, unreadable or failing helper is not permission to continue — it means ownership is unestablished, which is exactly the state this step exists to refuse. Report in plain words that the check could not run and what would fix it (the helper's path in this checkout), change nothing, make no commit, and stop for the operator. Continuing on an absent check would leave older or incomplete checkouts on the very path this step closes.
 
 ## Step 2 — Check the premises before acting
 

@@ -16,6 +16,9 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DISPATCH_BIN="${DISPATCH_BIN:-$HERE/dispatch.sh}"
+# handoff-automation-spike -> work-loop-v2-v0.2 -> plans -> checkout root
+REPO_ROOT="${REPO_ROOT:-$(cd "$HERE/../../.." && pwd)}"
+OWNER_BIN="${OWNER_BIN:-$REPO_ROOT/logs/scripts/work-loop-owner.sh}"
 
 PASS=0; FAIL=0
 SANDBOX_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/wl2-dispatch-test.XXXXXX")"
@@ -59,13 +62,20 @@ EOF
 
 new_sandbox() { # -> path on stdout
   local d; d="$(mktemp -d "$SANDBOX_ROOT/co.XXXXXX")"
-  mkdir -p "$d/logs/work-loop" "$d/plans/work-loop-v2-v0.2/handoff-automation-spike"
+  mkdir -p "$d/logs/work-loop" "$d/logs/scripts" \
+           "$d/plans/work-loop-v2-v0.2/handoff-automation-spike"
   git -C "$d" init -q
   git -C "$d" config user.email harness@example.invalid
   git -C "$d" config user.name  harness
   printf 'sandbox\n' >"$d/README.md"
   printf 'unrelated tracked file\n' >"$d/other.txt"
-  git -C "$d" add README.md other.txt
+  # The ownership helper ships inside a real checkout, and admission now FAILS
+  # CLOSED without it, so every sandbox must carry it or it is not modelling a
+  # real checkout. Tracked, not dropped in loose, or the dispatcher would
+  # correctly read it as an out-of-allowlist foreign file. Case 12d removes it
+  # deliberately — that is the fail-closed case, and it must be the only one.
+  cp "$OWNER_BIN" "$d/logs/scripts/work-loop-owner.sh" 2>/dev/null || true
+  git -C "$d" add README.md other.txt logs/scripts 2>/dev/null
   git -C "$d" commit -qm "sandbox base"
 
   # The decoys. These mirror the live folder: files that advertise a turn and
@@ -365,6 +375,66 @@ case "$LR" in
   "$(cd "$d" && pwd -P)"/.git/*) ok "the lock root lives in the Git common directory" ;;
   *) bad "the lock root lives in the Git common directory" "got $LR" ;;
 esac
+
+# ---------------------------------------------------------------- case 12d
+# Ownership admission FAILS CLOSED. This used to print "ownership: SKIPPED" and
+# launch anyway, which is the same outcome as a passing check for anyone reading
+# the exit code — and it applied to exactly the checkouts most likely to hold a
+# conflicting writer. The two sub-cases are the two ways the check can fail to
+# run: the helper is absent, and the helper is present but broken.
+echo
+echo "case 12d — admission fails closed when the ownership check cannot run"
+d="$(new_sandbox)"
+state_file "$d" "fc-task" "codex"
+
+# The measurement that makes this more than an exit-code assertion: no actor may
+# be invoked. run_dispatch's actors append to "$d.calls".
+rm -f "$d.calls"
+git -C "$d" rm -q --cached logs/scripts/work-loop-owner.sh >/dev/null 2>&1
+rm -f "$d/logs/scripts/work-loop-owner.sh"
+git -C "$d" commit -qm "remove the ownership helper" >/dev/null 2>&1
+BEFORE="$(git -C "$d" rev-parse HEAD)"
+run_dispatch "$d" fc-task --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 35 "$RC" "an ABSENT ownership helper refuses with exit 35" "$OUT"
+case "$OUT" in
+  *"ownership check is unavailable"*) ok "the refusal says the check could not run" ;;
+  *) bad "the refusal says the check could not run" "$OUT" ;;
+esac
+[ -s "$d.calls" ] && bad "no actor was launched with the check unavailable" \
+                         "actors ran: $(tr '\n' ';' <"$d.calls")" \
+                      || ok "no actor was launched with the check unavailable"
+[ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "no commit was made with the check unavailable" \
+  || bad "no commit was made with the check unavailable"
+
+# The control. Same fixture recipe, same command, helper PRESENT — it must
+# proceed and must launch. Without it, case 12d would pass just as well for a
+# dispatcher that refuses everything, which is not the behaviour claimed.
+#
+# It gets its own sandbox on purpose. Reusing the one above would make the
+# control depend on the refused run having left the task untouched — which is
+# the very thing under test, so a broken dispatcher would fail the control for
+# the wrong reason and the evidence would no longer separate the two facts.
+dc="$(new_sandbox)"
+state_file "$dc" "fc-task" "codex"
+rm -f "$dc.calls"
+run_dispatch "$dc" fc-task --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 0 "$RC" "control — with the helper present the same run proceeds" "$OUT"
+[ -s "$dc.calls" ] && ok "control — the actor did run once the check was available" \
+                   || bad "control — the actor did run once the check was available" "no calls"
+
+# Present but unusable is the same fact as absent: the check did not run.
+d="$(new_sandbox)"
+state_file "$d" "fc-broken" "codex"
+printf '#!/bin/bash\nexit 99\n' >"$d/logs/scripts/work-loop-owner.sh"
+git -C "$d" add logs/scripts/work-loop-owner.sh >/dev/null 2>&1
+git -C "$d" commit -qm "break the ownership helper" >/dev/null 2>&1
+rm -f "$d.calls"
+run_dispatch "$d" fc-broken --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 35 "$RC" "a BROKEN ownership helper refuses with exit 35 too" "$OUT"
+[ -s "$d.calls" ] && bad "no actor was launched with a broken check" \
+                         "actors ran: $(tr '\n' ';' <"$d.calls")" \
+                      || ok "no actor was launched with a broken check"
 
 # ================================================================= case 13
 # Regression for the gap the 2026-08-05 live run exposed: a Claude hop killed

@@ -1,5 +1,9 @@
 #!/bin/bash
 # T1-T13 — the R2 acceptance matrix for concurrent task isolation.
+# F1-F3   — the correction round's findings, kept as durable regression cover:
+#           F1 an ownership check that cannot run must refuse, not pass;
+#           F2 a malformed declaration is ambiguous, and survives;
+#           F3 a contested claim on one free checkout is indivisible.
 #
 # R2 is "the checkout declares its writer": one gitignored per-checkout
 # declaration at logs/work-loop/.owner, plus two repository-scoped dispatcher
@@ -508,9 +512,185 @@ expect_names "$OUT" "$w1" "the refusal names the checkout that holds the task"
   && ok "no commit was made in the refused checkout" \
   || bad "no commit was made in the refused checkout"
 
+# ================================================================== F1
+# Correction finding 1 — an ownership check that cannot run must refuse, not
+# pass. The dispatcher half is dispatch.test.sh case 12d; this is the helper's
+# own half: a caller must be able to tell "ran and found nothing" from "did not
+# run", and the exit code is the only thing a caller reads.
+echo
+echo "F1 — an unavailable ownership check is distinguishable from a clean one"
+d="$(new_repo)"
+state_file "$d" f1-task claude
+owner check --checkout "$d" --task f1-task --depth local
+expect_rc 0 "$RC" "control — a check that RAN on a free checkout exits 0" "$OUT"
+
+OUT="$(bash "$ABSENT" check --checkout "$d" --task f1-task 2>&1)"; RC=$?
+[ "$RC" -ne 0 ] && ok "an absent helper cannot exit 0 (exit $RC)" \
+                || bad "an absent helper cannot exit 0" "it exited 0"
+
+# The dispatcher must not treat that as a pass. Proved end to end here because
+# the helper and the dispatcher are the two supported entry surfaces and this
+# suite owns the pairing.
+d2="$(new_repo)"
+state_file "$d2" f1-disp codex; commit_state "$d2" f1-disp
+git -C "$d2" rm -q --cached logs/scripts/work-loop-owner.sh >/dev/null 2>&1
+rm -f "$d2/logs/scripts/work-loop-owner.sh"
+git -C "$d2" commit -qm "no helper" >/dev/null 2>&1
+HEAD_BEFORE="$(git -C "$d2" rev-parse HEAD)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task f1-disp \
+        --log-dir "$d2/runs" --timeout 20 --actor-cmd 'exit 0' 2>&1)"; RC=$?
+expect_rc 35 "$RC" "the dispatcher REFUSES a checkout with no helper" "$OUT"
+[ "$(git -C "$d2" rev-parse HEAD)" = "$HEAD_BEFORE" ] \
+  && ok "nothing was committed by the refused run" \
+  || bad "nothing was committed by the refused run"
+
+# ================================================================== F2
+# Correction finding 2 — the declaration has exactly one legal shape, and a
+# declaration outside it is AMBIGUOUS, refuses, and SURVIVES. The survival half
+# is the one that used to fail: `clear` deleted the evidence the operator needed.
+echo
+echo "F2 — malformed declarations are ambiguous, and are never guessed at or deleted"
+d="$(new_repo)"
+state_file "$d" f2-holder claude
+state_file "$d" f2-other claude
+
+# Every one of these used to resolve to 'f2-holder' by reading field 1 alone.
+malformed_is_ambiguous() { # content label
+  printf '%s' "$1" >"$d/$OWNER_REL"
+  owner check --checkout "$d" --task f2-other --depth local
+  expect_rc 4 "$RC" "$2" "$OUT"
+  # And it survives the check that found it.
+  [ -f "$d/$OWNER_REL" ] && ok "$2 — the declaration survives the check" \
+                         || bad "$2 — the declaration survives the check" "it was removed"
+}
+malformed_is_ambiguous 'f2-holder f2-second 2026-08-11
+'                                        "extra token / second id on the line"
+malformed_is_ambiguous 'f2-holder
+'                                        "a bare id with no date at all"
+malformed_is_ambiguous 'f2-holder not-a-date
+'                                        "a date that is not a date"
+malformed_is_ambiguous 'f2-holder 2026-99-99
+'                                        "a date-shaped value out of range"
+malformed_is_ambiguous 'f2-holder 2026-08-11
+f2-other 2026-08-11
+'                                        "two declaration lines"
+
+# clear must leave it exactly as it is. This is the R2 row that was inverted.
+printf 'f2-holder 2026-08-11\nf2-other 2026-08-11\n' >"$d/$OWNER_REL"
+BEFORE="$(cat "$d/$OWNER_REL")"
+owner clear --checkout "$d" --task f2-other
+expect_rc 4 "$RC" "clear REFUSES a malformed declaration as AMBIGUOUS" "$OUT"
+[ -f "$d/$OWNER_REL" ] && ok "clear did not delete the malformed declaration" \
+                       || bad "clear did not delete the malformed declaration" "it is gone"
+[ "$(cat "$d/$OWNER_REL" 2>/dev/null)" = "$BEFORE" ] \
+  && ok "clear left the malformed declaration byte-for-byte unchanged" \
+  || bad "clear left the malformed declaration byte-for-byte unchanged"
+
+# claim must not overwrite it either — that would be the same erasure by another
+# route, and it is how a live claim's half-written file would be destroyed.
+owner claim --checkout "$d" --task f2-other --depth local
+expect_rc 4 "$RC" "claim REFUSES on a malformed declaration" "$OUT"
+[ "$(cat "$d/$OWNER_REL" 2>/dev/null)" = "$BEFORE" ] \
+  && ok "claim left the malformed declaration unchanged" \
+  || bad "claim left the malformed declaration unchanged"
+
+# The control: the exact legal shape must still be read as a claim. Without it
+# this whole case would pass for a reader that called everything malformed.
+printf 'f2-holder 2026-08-11\n' >"$d/$OWNER_REL"
+owner check --checkout "$d" --task f2-other --depth local
+expect_rc 3 "$RC" "control — the exact legal shape IS read, and refuses by name" "$OUT"
+expect_names "$OUT" "f2-holder" "control — the legal declaration names its holder"
+
+# The strict rule must hold in the cross-checkout reader too, which was a
+# second, looser inline copy. A malformed marker elsewhere names nobody, so it
+# cannot claim this task away from a checkout that legitimately holds it.
+d="$(new_repo)"
+w1="$(add_worktree "$d" f2-one)"
+w2="$(add_worktree "$d" f2-two)"
+state_file "$w1" f2-cross claude
+printf 'f2-cross f2-decoy 2026-08-11\n' >"$w2/$OWNER_REL"
+owner check --checkout "$w1" --task f2-cross --depth repo
+expect_rc 0 "$RC" "a malformed marker in ANOTHER checkout does not claim this task" "$OUT"
+
+# ================================================================== F3
+# Correction finding 3 — a contested claim on one free checkout is indivisible.
+# RED before the fix: `claim` ran its check, then installed with `mv -f`, so two
+# different tasks both saw a free checkout and both returned PROCEED, the later
+# rename silently winning. Measured on the pre-fix helper: 10 rounds, 10 double
+# claims, 0 refusals.
+echo
+echo "F3 — two simultaneous different-task claims produce exactly one winner"
+d="$(new_repo)"
+state_file "$d" f3-alpha claude
+state_file "$d" f3-beta  claude
+
+DOUBLE=0; NONE=0; ROUNDS=6
+for i in $(seq 1 "$ROUNDS"); do
+  rm -f "$d/$OWNER_REL"
+  rmdir "$d/logs/work-loop/.owner.lock" 2>/dev/null
+  ra_f="$SANDBOX_ROOT/f3.a.$i"; rb_f="$SANDBOX_ROOT/f3.b.$i"
+  ( bash "$OWNER_BIN" claim --checkout "$d" --task f3-alpha --depth local \
+      >"$ra_f.out" 2>&1; echo $? >"$ra_f" ) &
+  ( bash "$OWNER_BIN" claim --checkout "$d" --task f3-beta --depth local \
+      >"$rb_f.out" 2>&1; echo $? >"$rb_f" ) &
+  wait
+  ra="$(cat "$ra_f")"; rb="$(cat "$rb_f")"
+  winners=0
+  [ "$ra" = 0 ] && winners=$((winners+1))
+  [ "$rb" = 0 ] && winners=$((winners+1))
+  [ "$winners" -gt 1 ] && DOUBLE=$((DOUBLE+1))
+  [ "$winners" -lt 1 ] && NONE=$((NONE+1))
+
+  # The declaration left behind must name the winner — not the loser, and not a
+  # task that was refused. A last-writer-wins rename produced exactly this
+  # mismatch, and it is invisible to an exit-code-only assertion.
+  final="$(awk 'NF {print $1; exit}' "$d/$OWNER_REL" 2>/dev/null)"
+  won=""
+  [ "$ra" = 0 ] && won="f3-alpha"
+  [ "$rb" = 0 ] && won="f3-beta"
+  [ "$final" = "$won" ] || bad "round $i — the declaration names the winner" \
+                               "declaration says '$final', the PROCEED went to '$won'"
+done
+[ "$DOUBLE" -eq 0 ] && ok "no round admitted two writers ($ROUNDS contested rounds)" \
+                    || bad "no round admitted two writers" "$DOUBLE of $ROUNDS rounds double-claimed"
+[ "$NONE" -eq 0 ] && ok "every round produced a winner — the lock does not deadlock" \
+                  || bad "every round produced a winner" "$NONE of $ROUNDS rounds had none"
+
+# The loser's refusal must be readable, not just non-zero.
+rm -f "$d/$OWNER_REL"
+owner claim --checkout "$d" --task f3-alpha --depth local
+expect_rc 0 "$RC" "alpha takes the free checkout" "$OUT"
+owner claim --checkout "$d" --task f3-beta --depth local
+expect_rc 3 "$RC" "beta's later claim is REFUSED" "$OUT"
+expect_names "$OUT" "f3-alpha" "the refusal names the task that won"
+
+# The lock takes no git. --depth local's whole guarantee is that Codex can run
+# it, and Codex may not run git.
+GT="$(git_trap_dir)"
+rm -f "$d/$OWNER_REL"
+OUT="$(PATH="$GT:$PATH" bash "$OWNER_BIN" claim --checkout "$d" --task f3-alpha --depth local 2>&1)"; RC=$?
+expect_rc 0 "$RC" "a locked claim still runs with no git available" "$OUT"
+[ -s "$GT/calls" ] && bad "the locked claim ran no git" "git calls: $(tr '\n' ';' <"$GT/calls")" \
+                   || ok "the locked claim ran no git"
+
+# The lock is released, so the next claim is not blocked by the last one.
+[ -d "$d/logs/work-loop/.owner.lock" ] \
+  && bad "the mutation lock is released after a claim" "still held" \
+  || ok "the mutation lock is released after a claim"
+
+# The lock needs no ignore rule because git does not track directories. That is
+# why it is safe to put it beside the state files, and it is asserted rather
+# than assumed — an empty directory that ever became visible would put an
+# unignored path into the one folder the task state files live in.
+mkdir -p "$d/logs/work-loop/.owner.lock"
+LSEEN="$(git -C "$d" status --porcelain -uall -- logs/work-loop/ | grep -c 'owner.lock')"
+[ "$LSEEN" = "0" ] && ok "the empty lock directory is invisible to git status" \
+                   || bad "the empty lock directory is invisible to git status" "matched $LSEEN times"
+rmdir "$d/logs/work-loop/.owner.lock" 2>/dev/null
+
 # ================================================================== summary
 echo
 echo "=============================================================="
-printf ' T1..T13: %d passed, %d failed\n' "$PASS" "$FAIL"
+printf ' T1..T13 + F1..F3: %d passed, %d failed\n' "$PASS" "$FAIL"
 echo "=============================================================="
 [ "$FAIL" -eq 0 ] || exit 1
