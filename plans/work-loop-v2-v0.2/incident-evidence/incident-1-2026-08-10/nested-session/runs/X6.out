@@ -1,0 +1,13 @@
+```
+Direct Work — docs/fixture-guide.md:3 cited a non-existent docs/does-not-exist-anywhere.md; the dead reference was removed rather than repointed, since no routing table exists anywhere in this repo to point at.
+Not admitted as an incident (small and reversible; Work Loop core § 2).
+```
+
+No triage note, incident record, or log entry was written — leaving no state behind is the point of the fast path.
+
+Two things worth flagging, both outside what I changed:
+
+- `audits/working/2026-08-10-resolve-fixture-guide-dead-reference.md` recommends repointing this citation to `docs/protected-zones.md`. That recommendation is wrong for the reason above. Your `ISSUE` did not cite that notes path, so the triage bridge did not apply and I did not build on it — but the stale recommendation is still sitting in `audits/working/` if anyone picks it up later.
+- `docs/vault-link` is a broken symlink (`-> ../does-not-exist/target-dir`). Same failure class, different file, and outside the scope you named — say the word and I'll remove it too.
+
+The change is applied, not committed. Commit per your workspace rules once it looks right.

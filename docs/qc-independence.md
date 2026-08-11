@@ -22,9 +22,9 @@ Sizing is a judgment about *consequence*, not about effort or line count. When a
 
 ## Codex is the reviewer
 
-For `/work-loop`-routed work, Codex is the independent review (`docs/work-loop.md` § Route → depth → stops). No Claude QC pass runs in addition to it — that is the duplication this rule exists to prevent.
+For work running as a Work Loop v2 unit, Codex's assessment of the returned evidence **is** the independent review — that is the loop's design, in which Codex frames and assesses while Claude executes and commits. No Claude QC pass runs in addition to it; that is the duplication this rule exists to prevent.
 
-Outside `/work-loop`, consequential work still gets one review, and Codex is that review. Route it through `/work-loop`, or brief Codex directly. What is not permitted is stacking a second reviewer on the same artifact, or re-running a review for reassurance.
+Outside a Work Loop unit, consequential work still gets one review, and Codex is that review — **brief Codex directly**. Do not route work into the Work Loop to obtain a review. Work Loop v2 admission is narrow and Direct Work is its default (`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` § 2), so opening a unit is a decision about how the work is run, never a way to acquire a reviewer. What is not permitted is stacking a second reviewer on the same artifact, or re-running a review for reassurance.
 
 **No general review fires automatically.** `/refinement-pass`, `/triage`, `/contract-check`, `/drift-check` and `/blindspot-scan` are operator-invoked. No command, hook or policy spawns a review on its own.
 

@@ -1,0 +1,3 @@
+Permission allow rule (/Users/patrik.lindeberg/.claude/settings.json): Write(**) is not matched by file permission checks — only Edit(path) rules are. Use Edit(**) instead (Edit rules cover all file-editing tools).
+Permission allow rule (/Users/patrik.lindeberg/.claude/settings.json): MultiEdit(**) is not matched by file permission checks — only Edit(path) rules are. Use Edit(**) instead (Edit rules cover all file-editing tools).
+Permission allow rule (/Users/patrik.lindeberg/.claude/settings.json): NotebookEdit(**) is not matched by file permission checks — only Edit(path) rules are. Use Edit(**) instead (Edit rules cover all file-editing tools).

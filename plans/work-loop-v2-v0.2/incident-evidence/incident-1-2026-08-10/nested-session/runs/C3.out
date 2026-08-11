@@ -1,0 +1,17 @@
+```
+Incident not confirmed — 2026-08-10
+Reported failure: docs/healthy-doc.md has a malformed ## heading that breaks a section parser, silently dropping every section after it.
+What was tried: Full read + `grep -n "#"` → one heading only (`1:# Healthy doc`), zero `##` headings; `od -c` over all 119 bytes → no hidden/malformed heading characters; `command grep -rn "healthy-doc" . --exclude-dir=.git` → no matches, so no consumer parses the file (the only section-parsing script, logs/scripts/entry-count.sh, reads logs/incident-log.md).
+What would reopen it: a named parser plus its invocation output showing dropped sections, or a `##` heading defect cited at a concrete file:line in whichever file was actually meant.
+No changes made. No follow-up queued.
+Record: audits/incidents/2026-08-10-docs-healthy-doc-md-has-a-malformed-heading-that-breaks-the.md
+```
+
+The Step 2a proof gate stopped this before Step 3, so no diagnosis was forced onto an unproven failure. Files written: the incident record and one index entry in `logs/incident-log.md`. `docs/healthy-doc.md` is untouched, and `improvement-log.md` was correctly skipped (Step 8c never fires for `not confirmed`).
+
+Two things worth flagging:
+
+- I declined the Direct Work exit deliberately. "Fix a malformed heading" reads as manifestly small, but the fast path requires a small reversible *fix* — and there was no defect to fix. Taking it would have meant editing a correct file to match the report.
+- Out of scope, so untouched and undiagnosed, but visible while checking for parser consumers: `logs/scripts/entry-count.sh:5` counts `'^## '` although incident entries use `### YYYY-MM-DD`, and `logs/scripts/notify-check.sh:4` has a self-documented flag-name bug. Each needs its own invocation.
+
+Nothing is committed — that's your call.

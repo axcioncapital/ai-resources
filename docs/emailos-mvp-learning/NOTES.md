@@ -1,5 +1,13 @@
 # Teaching Notes
 
+> ## ⚠️ Historical record — Work Loop v1 is retired. The `/work-loop` notes below are stale.
+>
+> **`/work-loop` no longer exists** (command deleted 2026-08-06, `0516bf6`; Codex controller skill
+> retired 2026-08-11 under Axcíon Harness v0.2 Phase 0). The live Work Loop is **v2**, and **v2 is
+> not a renamed v1** — it does not carry the Frame–Shape–Build–Prove–Land lifecycle, does not consume
+> `capability-development`, and does not write capability records. These notes are preserved
+> unchanged as a record of the teaching intent at the time of writing.
+
 - Patrik wants a teaching guide, not a Codex-style compliance checklist.
 - Always connect a command to the uncertainty it removes.
 - Keep the main lesson to one printable page.
