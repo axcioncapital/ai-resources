@@ -344,7 +344,7 @@ it stopped *on* the prompt, rather than the dispatcher quietly widening authorit
 `--claude-permission-mode` option carrying `acceptEdits` was proposed and is **deliberately excluded**
 here. It would widen what a launched child may do without asking, and it reopens the settled
 attended-policy decision recorded in `logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md`.
-Without it a permission dead end now stops *honestly* as exit `35` instead of dead-ending silently,
+Without it a permission dead end now stops *honestly* as exit `37` instead of dead-ending silently,
 which is a safe outcome rather than a blocked one. If it is wanted later it is an operator decision,
 taken on its own evidence.
 
@@ -528,26 +528,33 @@ where the code's meaning actually differs.
 | `28` | `INTERRUPTED` | loop only | `SIGINT`/`SIGTERM`. Every descendant reachable by the three handles is terminated and **verified gone** before the lock is released and the run stops — the success line names those handles rather than claiming the tree is empty (see Safety boundaries for the shape that still escapes, which is a live Phase 2 blocker). A descendant that could not be confirmed dead is named in a `WARNING:` line; a sweep that could not run at all prints `teardown UNVERIFIED` with the reason. In both cases the lock is **pinned**, not released. Read that before treating the halt as clean. **Never retried** — the signal may have landed after an effect nobody observed, so the state file and `git status` are where the operator has to look. |
 | `29` | `BUDGET_EXHAUSTED` | loop only | `--deadline` expired: either the loop refused to launch the next hop, or a running actor was terminated at the clock. **Not completion.** Resumable — the state file and Git are untouched by the stop — but never retried automatically. Worst-case overrun is `1s poll + 5s TERM→KILL grace + 2s KILL settle + verification census + reaping`, roughly 9s — not exact-to-the-second. It was ~6s before 2026-08-07; whole-tree teardown added the settle window and the census that confirms the tree is actually gone. |
 | `30` | `UNEXPECTED_COMMIT` | loop only | An actor **committed** paths outside the allowlist. Detection, not prevention: the commit already exists, and the value is stopping rather than compounding it over the rest of an unattended run. Distinct from `24`, which is the working-tree case, because the recovery differs — `24` is reverted from the working tree, `30` from history. |
-| `35` | `PERMISSION_DENIED` | loop only | The Claude hop's own result JSON reported one or more `permission_denials`. The stop carries the denied tool, its **exact, untruncated** target, and the decision required. Parsed by `jq`, or by `python3` where jq is unusable; on a host with neither, the stop still fires but says plainly that it cannot name the tool and target, and the preflight `denial_parser=` line warns of this before the run starts. **Not a transport failure** — re-running, rewording or raising the timeout will not change it. Before this code existed the denial was invisible: the child exits `0`, so it surfaced as `25` or `22` with no cause named. |
 | `36` | `STATE_UNCHANGED_HANDBACK` | loop only | The state file was **already** uncommitted before the hop launched **and** is byte-identical after — so Claude never touched it. Split out of `25`, which used to fire on bare dirtiness and therefore told the operator "Claude edited it" about a file Claude had not written to. |
+| `37` | `PERMISSION_DENIED` | loop only | The Claude hop's own result JSON reported one or more `permission_denials`. The stop carries the denied tool, its **exact, untruncated** target, and the decision required. Parsed by `jq`, or by `python3` where jq is unusable; on a host with neither, the stop still fires but says plainly that it cannot name the tool and target, and the preflight `denial_parser=` line warns of this before the run starts. **Not a transport failure** — re-running, rewording or raising the timeout will not change it. Before this code existed the denial was invisible: the child exits `0`, so it surfaced as `25` or `22` with no cause named. |
 
 > **Why `28`–`30` exist.** `27` is deliberately unused: it was reserved in plan v0.1 for
 > `--expect-turn`, which v0.2 dropped (unattended loop mode makes the repeating-courier shape it
 > guarded unnecessary, and the lock already refuses a second dispatcher). Leaving the gap is cheaper
 > than renumbering if it is ever built.
 
-> **Why `35`–`36` skip `33`–`34`.** Those two numbers are claimed by a concurrent branch
-> (`session/2026-08-11-work-loop-ceremony`, `OWNERSHIP_REFUSED` and `OWNERSHIP_AMBIGUOUS`). This work
-> was implemented alongside that branch and stepped over the pair rather than colliding with it —
-> a silent collision, where each branch's suite passes alone and the merged dispatcher gives one
-> number two meanings, is the more expensive failure. If that branch is abandoned the numbers free
-> up, but renumbering downward would invalidate recorded run evidence for no gain.
+> **Why `36`–`37` skip `33`–`35`.** Those three numbers are claimed by the concurrent branch
+> `session/2026-08-11-work-loop-ceremony` (`OWNERSHIP_REFUSED`, `OWNERSHIP_AMBIGUOUS`,
+> `OWNERSHIP_UNAVAILABLE`). This work was implemented alongside that branch and stepped over the
+> block rather than colliding with it — a silent collision, where each branch's suite passes alone
+> and the merged dispatcher gives one number two meanings, is the more expensive failure.
+>
+> **It happened anyway, and was caught at the merge (2026-08-11).** This branch originally skipped
+> only `33`–`34` and took `35` for `PERMISSION_DENIED`; the ceremony branch then also took `35`, for
+> `OWNERSHIP_UNAVAILABLE`. Both suites passed alone. `PERMISSION_DENIED` moved `35` → `37` here,
+> because the ownership codes landed on `main` first and more already references them. **Run evidence
+> recorded before 2026-08-11 names `35` for a permission stop — read those as `37`.** The lesson is
+> that reserving numbers against a branch you cannot see the end of only narrows the window; the
+> merge is what proves the set, so re-check the whole block there.
 
 ### Every post-launch stop reports partial file effects
 
 Any stop **after an actor has launched** now appends a `PARTIAL FILE EFFECTS` section listing the
 in-allowlist paths the hop left modified and uncommitted. That covers `20`, `21`, `22`, `24`, `25`,
-`29`, `30`, `35`, `36` and the `28` interruption path.
+`29`, `30`, `36`, `37` and the `28` interruption path.
 
 The gap this closes: every existing check was scoped to *violations*, so a hop that edited three
 permitted files and was then killed reported nothing at all. On 2026-08-11 a timeout reported three
@@ -715,7 +722,7 @@ shapes are reproduced here in seconds by a scripted actor. **No live model, no n
 | `41` | A **timeout with partial edits** — the incident-2 shape. The actor edits an allowed file, never touches the state file, never commits, and is killed on the clock. Exit `21`, and the modified path is named. Controls that the state file really is untouched |
 | `42` | The **false exit 25** — a state file already dirty before launch and byte-identical after now exits `36`, and the stop no longer claims Claude edited it. Controls the sha256 across the hop |
 | `42b` | The pairing control: a **real** uncommitted Claude edit still exits `25`, so `36` did not swallow the shape it was split from |
-| `43` | A **permission denial** parsed out of the hop capture into exit `35`, carrying the exact denied command and a second denial of a different tool |
+| `43` | A **permission denial** parsed out of the hop capture into exit `37`, carrying the exact denied command and a second denial of a different tool |
 | `43c` | The exact-target control: a denied target **longer than 200 characters** is carried whole, not cut |
 | `43d` | The same target survives when **jq is unusable**, via the python3 tier, with the run log confirming the fallthrough actually happened |
 | `43b` | The control: an **empty** `permission_denials` array produces no permission stop |
@@ -948,7 +955,7 @@ verdict — plus one stdout capture per hop. That is the whole evidence base. No
 - **Which exit code a refused actor produces — CORRECTED.** A denied actor still exits `0`, so a real
   permission denial never reaches the dispatcher as `20 ACTOR_FAILED`. It used to arrive as
   `22 NO_TRANSITION` or `25 UNCOMMITTED_HANDBACK`, neither of which *named* denial as the cause. That
-  is what exit `35` now fixes: the dispatcher reads the `permission_denials` field it had been writing
+  is what exit `37` now fixes: the dispatcher reads the `permission_denials` field it had been writing
   to the hop capture and never opening. **Verified in simulation only** — the parse is driven by a
   fixture modelled on the recorded live shape, not by a fresh live denial. The original live
   measurement stands: `runs/live-permission-denial-2026-08-05.md`.

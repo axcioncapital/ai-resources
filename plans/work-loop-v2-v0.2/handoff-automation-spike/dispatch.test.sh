@@ -2821,7 +2821,7 @@ printf '%s' "$DENIAL_JSON" > "$SANDBOX_ROOT/denial.json"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task denial-task --log-dir "$d/runs" \
       --carry-one \
       --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial.json"' 2>&1)"; RC=$?
-expect_rc 35 "$RC" "a hop whose capture reports denials exits 35, not 25" "$OUT"
+expect_rc 37 "$RC" "a hop whose capture reports denials exits 37, not 25" "$OUT"
 printf '%s' "$OUT" | grep -q "DENIED PERMISSION" \
   && ok "the stop names permission denial as the cause" \
   || bad "the stop names permission denial as the cause" "$OUT"
@@ -2841,7 +2841,7 @@ echo "Case 43c — O3: a target LONGER THAN 200 CHARACTERS is carried whole"
 # used to cut every target at 200 characters, so the promise held only for short
 # ones — and a long `git commit -m …`, a deep path or a long URL is exactly the
 # shape that got cut. A truncated command is not something the operator can act
-# on, which puts them back at the unnamed dead end exit 35 exists to remove.
+# on, which puts them back at the unnamed dead end exit 37 exists to remove.
 #
 # 256 characters, built rather than typed so the boundary is unambiguous, and
 # ENDING IN A SENTINEL rather than in more padding. A padded tail cannot detect
@@ -2857,7 +2857,7 @@ printf '{"type":"result","subtype":"success","is_error":false,"permission_denial
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task longdenial-task --log-dir "$d/runs" \
       --carry-one \
       --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial-long.json"' 2>&1)"; RC=$?
-expect_rc 35 "$RC" "the long denial still reaches a permission stop" "$OUT"
+expect_rc 37 "$RC" "the long denial still reaches a permission stop" "$OUT"
 printf '%s' "$OUT" | grep -Fq "Bash :: $LONGTGT" \
   && ok "the >200-character target is carried WHOLE into the stop" \
   || bad "the >200-character target is carried whole" "$(printf '%s' "$OUT" | grep -o 'Bash :: .*' | head -1)"
@@ -2887,7 +2887,7 @@ if command -v python3 >/dev/null 2>&1; then
   OUT="$(PATH="$NOJQ:$PATH" bash "$DISPATCH_BIN" --checkout "$d" --task nojq-task --log-dir "$d/runs" \
         --carry-one \
         --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial-long.json"' 2>&1)"; RC=$?
-  expect_rc 35 "$RC" "an unusable jq still reaches a permission stop" "$OUT"
+  expect_rc 37 "$RC" "an unusable jq still reaches a permission stop" "$OUT"
   printf '%s' "$OUT" | grep -Fq "Bash :: $LONGTGT" \
     && ok "the exact >200-character target survives without jq" \
     || bad "the exact target survives without jq" "$(printf '%s' "$OUT" | grep -o '[?A-Za-z]* :: .*' | head -1)"
@@ -2909,16 +2909,16 @@ fi
 echo
 echo "Case 43b — a clean capture produces NO permission stop"
 # The control. Without it, case 43 would pass equally well against a dispatcher
-# that exits 35 on every Claude hop.
+# that exits 37 on every Claude hop.
 d="$(new_sandbox)"; state_file "$d" "nodenial-task" "claude"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task nodenial-task --log-dir "$d/runs" \
       --carry-one --actor-cmd 'printf "{\"type\":\"result\",\"permission_denials\":[],\"result\":\"fine\"}"; '"$FLIP" 2>&1)"; RC=$?
 printf '%s' "$OUT" | grep -q "DENIED PERMISSION" \
   && bad "an empty permission_denials array does not trigger a permission stop" "$OUT" \
   || ok "an empty permission_denials array does not trigger a permission stop"
-[ "$RC" -ne 35 ] \
-  && ok "the run does not exit 35 when nothing was denied (got $RC)" \
-  || bad "the run does not exit 35 when nothing was denied" "$OUT"
+[ "$RC" -ne 37 ] \
+  && ok "the run does not exit 37 when nothing was denied (got $RC)" \
+  || bad "the run does not exit 37 when nothing was denied" "$OUT"
 
 echo
 echo "Case 44 — O2: an OUT-OF-SCOPE edit reports the in-scope work alongside it"

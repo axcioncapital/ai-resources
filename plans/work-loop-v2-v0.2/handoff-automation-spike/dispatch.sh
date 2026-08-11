@@ -175,14 +175,27 @@
 #                              the allocator skips init with a visible line
 #                              instead — no /prime infrastructure, nothing to arm.
 #
-#   (33 and 34 are deliberately RESERVED and unused here. The concurrent branch
-#    session/2026-08-11-work-loop-ceremony claims them for OWNERSHIP_REFUSED and
-#    OWNERSHIP_AMBIGUOUS. This bounded-execution work was implemented alongside
-#    that branch and skipped the pair rather than colliding with it. If that
-#    branch is abandoned, 33/34 become free again — but renumbering 35/36 down
-#    into them buys nothing and would invalidate recorded run evidence.)
+#   (33, 34 and 35 are RESERVED and unused here. The concurrent branch
+#    session/2026-08-11-work-loop-ceremony claims them for OWNERSHIP_REFUSED,
+#    OWNERSHIP_AMBIGUOUS and OWNERSHIP_UNAVAILABLE. This bounded-execution work
+#    was implemented alongside that branch and stepped over the block rather than
+#    colliding with it. It originally skipped only 33/34 and took 35 for
+#    PERMISSION_DENIED; that branch then also claimed 35, and the collision was
+#    caught at merge on 2026-08-11 — PERMISSION_DENIED moved 35 -> 37 here,
+#    because the ownership codes landed on main first. Run evidence recorded
+#    before that date names 35 for a permission stop; read it as 37.)
 #
-#   35  PERMISSION_DENIED      the Claude hop's own JSON capture reports one or
+#   36  STATE_UNCHANGED_HANDBACK
+#                              the state file was ALREADY uncommitted before this
+#                              hop launched AND is byte-identical afterwards — so
+#                              Claude did not touch it. Split out of 25, which
+#                              used to fire on bare dirtiness and therefore told
+#                              the operator "Claude edited it" about a file
+#                              Claude had never written to. Distinct recovery: 25
+#                              means inspect a partial edit, 36 means the hop
+#                              accomplished nothing and the pre-existing dirty
+#                              file is someone else's uncommitted work.
+#   37  PERMISSION_DENIED      the Claude hop's own JSON capture reports one or
 #                              more `permission_denials` — the child asked to do
 #                              something it was not authorised to do, and the
 #                              denial happened at the CHILD's permission layer,
@@ -195,16 +208,6 @@
 #                              The stop carries the denied tool, its target, and
 #                              the operator decision required. NOT retried: the
 #                              same denial would recur.
-#   36  STATE_UNCHANGED_HANDBACK
-#                              the state file was ALREADY uncommitted before this
-#                              hop launched AND is byte-identical afterwards — so
-#                              Claude did not touch it. Split out of 25, which
-#                              used to fire on bare dirtiness and therefore told
-#                              the operator "Claude edited it" about a file
-#                              Claude had never written to. Distinct recovery: 25
-#                              means inspect a partial edit, 36 means the hop
-#                              accomplished nothing and the pre-existing dirty
-#                              file is someone else's uncommitted work.
 #
 # The five meanings of 0 — do NOT read one as another:
 #   --help          printed the header. Nothing was validated, nothing launched.
@@ -1264,7 +1267,7 @@ else
   say "  nested_actor_deny is REQUESTED POLICY, not containment — it denies the default direct route at the child's permission layer and does not remove the capability"
 fi
 
-# Recorded at preflight, not at the stop. Whether exit 35 can name the denied
+# Recorded at preflight, not at the stop. Whether exit 37 can name the denied
 # tool and its exact target depends on this host having a JSON parser, and the
 # operator of a long unattended run should learn that before walking away rather
 # than when the stop arrives unable to say what was refused.
@@ -1276,11 +1279,11 @@ fi
 # same order at call time, so a parser that breaks mid-run still degrades to the
 # next tier rather than to a wrong answer.
 if printf '{}' | jq -r . >/dev/null 2>&1; then
-  say "denial_parser=jq — a permission stop (35) carries the denied tool and its EXACT target, untruncated"
+  say "denial_parser=jq — a permission stop (37) carries the denied tool and its EXACT target, untruncated"
 elif python3 -c 'import json' >/dev/null 2>&1; then
-  say "denial_parser=python3 — jq is unusable here; a permission stop (35) still carries the denied tool and its EXACT target, untruncated"
+  say "denial_parser=python3 — jq is unusable here; a permission stop (37) still carries the denied tool and its EXACT target, untruncated"
 else
-  say "denial_parser=none — neither jq nor python3 is usable here, so a permission stop (35) CANNOT name the denied tool and target; it will say so rather than guess"
+  say "denial_parser=none — neither jq nor python3 is usable here, so a permission stop (37) CANNOT name the denied tool and target; it will say so rather than guess"
 fi
 
 # ------------------------------------------------- unattended contained profile
@@ -2408,7 +2411,7 @@ while :; do
     if [ -n "$denials" ]; then
       say "  permission denials reported by the child:"
       printf '%s\n' "$denials" | sed 's/^/    /' | tee -a "$RUN_LOG"
-      die_hop 35 "Claude was DENIED PERMISSION during hop $hop and could not complete the turn."$'\n'"Denied (tool :: target):"$'\n'"$denials"$'\n'"The denial happened at the CHILD's permission layer, not here — this dispatcher requested nothing that would have refused these. The child exits 0 when this happens, which is why it used to surface as exit 25 or 22 with no cause named."$'\n'"NOT retried: the same denial would recur."$'\n'"Operator decision required — this is a capability question, not a transport failure. Either grant the capability deliberately and re-run, or narrow the unit so it does not need it. Full capture: $LAST_CAPTURE"
+      die_hop 37 "Claude was DENIED PERMISSION during hop $hop and could not complete the turn."$'\n'"Denied (tool :: target):"$'\n'"$denials"$'\n'"The denial happened at the CHILD's permission layer, not here — this dispatcher requested nothing that would have refused these. The child exits 0 when this happens, which is why it used to surface as exit 25 or 22 with no cause named."$'\n'"NOT retried: the same denial would recur."$'\n'"Operator decision required — this is a capability question, not a transport failure. Either grant the capability deliberately and re-run, or narrow the unit so it does not need it. Full capture: $LAST_CAPTURE"
     fi
   fi
 
@@ -2435,7 +2438,7 @@ while :; do
     # One live cause, measured 2026-08-05: the child was refused permission to run
     # git, so it edited the file and could not commit it. The stop is correct; the
     # message has to be actionable, because "inspect" alone is not a next action.
-    # (If that denial is in the capture, exit 35 above named it before reaching
+    # (If that denial is in the capture, exit 37 above named it before reaching
     # here. 25 is now the case where the commit failed for some OTHER reason.)
     die_hop 25 "Claude edited logs/work-loop/$TASK.md but left it uncommitted (hop $hop) — stopping rather than relaunching over a partial edit. A refused git permission looks exactly like this."$'\n'"Addressed to the OPERATOR, not to Codex: Codex never runs git (core § 4), so committing is not something Codex can do on reading this."$'\n'"Recoverable next action: read \`git diff -- logs/work-loop/$TASK.md\` and check the hop capture at ${LAST_CAPTURE:-<none>} for a permission denial. If the edit is complete, commit it and re-run this dispatcher; if it is partial, discard it and re-run."
   fi
