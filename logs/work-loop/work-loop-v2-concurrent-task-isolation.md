@@ -7,21 +7,26 @@ turn: codex
 
 Make two concurrent Work Loop v2 tasks safe in one repository: separate writable checkouts, one visible task owner per checkout, no duplicate logical-task ownership, and reuse of the bound checkout on later handoffs.
 
-Human-controlled: final landing, conflicts outside the authorised files, and cleanup. Excluded: push, automatic merge or deletion, a scheduler, persistent registry, and a second state system. The task closes only after integration and representative fan-out-2 use. Follow the repository-problem-resolution SOP through integration and operational validation.
+Human-controlled: final landing and cleanup. Excluded: push, automatic deletion, a scheduler, persistent registry, and a second state system. The operator declined a synthetic fan-out trial and chose immediate controlled landing; ordinary concurrent use will supply operational evidence afterward.
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 9 — bring this task branch up to one fixed snapshot of current `main` without landing it.
+Standard. Implementation mode. Unit 10 — land the verified nine-file mechanism on canonical `main` without importing this task's state history.
 
 Named reason for the loop: this cross-cutting concurrency fix needs bounded implementation and independent assessment across sessions.
 
 ## Brief
 
-Unit 8 proved fast-forward landing is impossible. The operator chose to continue in this existing isolated branch; reconcile it with current main and stop before landing.
+Unit 9 reconciled the verified mechanism with main snapshot `323b57f` at merge commit `953ff64`, with no conflicts or behavioral changes. The operator now authorises immediate landing and declines a synthetic trial; make the mechanism live with the smallest safe commit.
 
-First verify this is the bound checkout for `work-loop-v2-concurrent-task-isolation`, its `.owner` agrees, and there is no overlapping uncommitted work. Record the full current local `main` commit once and use that fixed commit even if main advances later.
+Before acting, verify:
 
-Merge that commit into this branch. Do not rebase or rewrite history. Conflict resolution is authorised only in these implementation paths:
+1. The target is canonical `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources` on `main`.
+2. Its current owner/state and uncommitted work do not indicate another active writer, and none of the nine landing paths is modified or untracked. If another task owns the checkout or any landing path overlaps live work, stop.
+3. Since snapshot `323b57f`, canonical main has not changed any of the nine paths below. If it has, stop for renewed reconciliation.
+4. The nine source files on this task branch are unchanged from merge commit `953ff64`.
+
+Land exactly these paths as one new commit on canonical main:
 
 - `.gitignore`
 - `.agents/skills/work-loop-v2/SKILL.md`
@@ -33,48 +38,46 @@ Merge that commit into this branch. Do not rebase or rewrite history. Conflict r
 - `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`
 - `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`
 
-Preserve both newer-main behavior and the verified ownership behavior. Stop if a conflict occurs elsewhere, a resolution is ambiguous, or another implementation file is needed. Keep the active task-state file on this branch; excluding it from main is a later landing concern.
+Do not merge this branch's history or copy `logs/work-loop/work-loop-v2-concurrent-task-isolation.md` into main. Preserve unrelated main work and stage only the nine paths. Do not push.
 
-Run these checks after the merge:
+After committing, prove the landing commit changes exactly those nine paths and that their bytes match the task branch. Run only the two behavioral suites directly tied to the mechanism:
 
-- `bash logs/scripts/work-loop-owner.test.sh`
-- `bash plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`
-- `bash logs/scripts/work-loop-v2-core-resolver.test.sh`
-- `bash logs/scripts/work-loop-v2-slice-1.test.sh` — no failures beyond the three already known
+- `bash logs/scripts/work-loop-owner.test.sh` — expected 92/0
+- `bash plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` — expected 389/0
 
-Hand back: the main commit merged, merge commit, conflict paths and resolutions, test exit codes/counts, diff paths versus the merged main commit, and whether behavior differs materially from verified candidate `94807fd`.
+Do not repeat the resolver, slice-1, B8, or synthetic fan-out checks; Unit 9 already established their unchanged baseline and the operator chose ordinary use over a trial.
 
-Do not touch canonical main, push, land, clean up, create another worktree, or start live fan-out. Set `turn: codex` and commit the handback here.
+Hand back: old and new main commits, landing commit and exact path list, byte-identity result, both test results, canonical status showing unrelated work untouched, and a non-destructive revert command for the single landing commit. Then return to this task checkout, set `turn: codex`, and commit only the state handback here.
 
-Authority: the operator's branch choice governs; the executable core governs the unit; the SOP governs integration and closure; Unit 8's divergence evidence is accepted. Codex's only added boundary is one fixed main snapshot so the target cannot move mid-unit.
+Stop if any premise is false, another writer owns main, a landing path overlaps work or changed after `323b57f`, the commit includes any tenth path, or either suite regresses. Do not clean up, push, delete branches/worktrees, or start a synthetic trial.
+
+Authority: the operator's immediate-landing decision governs. The executable core governs the unit; the repository-problem-resolution SOP supplies the still-open operational-validation standard. Codex's framing decision is to use one nine-path landing commit so rollback is one ordinary revert and the active state file never duplicates into main.
 
 ## Latest result
 
 Inspected (2026-08-11):
-- Claim (1) this is the bound checkout and `.owner` agrees: HOLDS — ran `logs/scripts/work-loop-owner.sh check --checkout <this repo> --task work-loop-v2-concurrent-task-isolation --depth repo`; verdict `PROCEED`, reason "this checkout already declares task 'work-loop-v2-concurrent-task-isolation' … the later handoff reuses it", exit 0.
-- Claim (2) no overlapping uncommitted work: HOLDS — `git status --porcelain` showed three modified paths (`logs/friction-log.md`, `logs/innovation-registry.md`, this state file); `git diff --name-only 0ccf397..323b57f -- <those three paths>` returned no match, so the merged main commit touches none of them.
-- Claim (3) branch work is confined to the nine authorised implementation paths: HOLDS — `git diff --name-only 0ccf397 HEAD` returned exactly those nine paths plus this state file, and nothing else.
-- Claim (4) the four named check scripts exist: HOLDS — `[ -f ]` on all four returned true (`logs/scripts/work-loop-owner.test.sh`, `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`, `logs/scripts/work-loop-v2-core-resolver.test.sh`, `logs/scripts/work-loop-v2-slice-1.test.sh`).
-- Claim (5) main and candidate `94807fd` have diverged, so landing is not a fast-forward (Unit 8's accepted evidence): HOLDS — `git merge-base --is-ancestor 323b57f HEAD` → NO, `git merge-base --is-ancestor 94807fd 323b57f` → NO.
+- Claim (1): HOLDS — `git -C <canonical> rev-parse --show-toplevel` returned `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources`; `--abbrev-ref HEAD` returned `main`; `--git-common-dir` and `--git-dir` both returned `.git`, so this is the main checkout, not a linked worktree. `git worktree list` confirms it is the only checkout holding `[main]`.
+- Claim (2): HOLDS — searched the canonical checkout for `logs/work-loop/.owner`; no such file, so no task declares it. Searched the whole repo family (`find ... -name .owner -path '*work-loop*'`) and found exactly one, in this task checkout, naming this task. `git status --porcelain -- <the nine paths>` in canonical returned empty output, so none of the nine was modified or untracked. Canonical did carry unrelated dirty work (`.claude/settings.json`, `logs/friction-log.md`, one modified and one untracked `axcion-harness-v0-2-*` state file, six dispatcher run logs, `scripts/recall-search.py`); newest mtime was 16:37 against a 21:03 run, and none overlaps a landing path, so no active writer was indicated.
+- Claim (3): HOLDS — `git rev-list --count 323b57f..refs/heads/main` returned `0`, so main had not moved at all since the snapshot; `git diff --name-only 323b57f refs/heads/main -- <the nine paths>` returned empty.
+- Claim (4): HOLDS — `git diff --name-only 953ff64 HEAD -- <the nine paths>` on this task branch (HEAD `79ed9c3`) returned empty, and `git status --porcelain -- <the nine paths>` returned empty, so the nine sources are unchanged from the merge commit and clean in the working tree.
 
-Result: current local `main` was fixed at `323b57f` ("batch: group dispatcher pre-launch plans", 2026-08-11) and merged into this branch as merge commit `953ff64` (parents `c3a3ad6` + `323b57f`), with `--no-ff`. No rebase, no history rewrite, nothing landed. Only two paths changed on both sides — `.gitignore` and `.agents/skills/work-loop-v2/SKILL.md`, both inside the authorised nine — and git auto-merged both with **zero conflicts**, so no manual resolution was needed and the conflict boundary was never approached. Both sides survive: `.gitignore` keeps the branch's `logs/work-loop/.owner` ignore block *and* gains main's Work Loop v1 retirement rewrite; `SKILL.md` keeps the branch's "the checkout declares its writer" section *and* gains main's "Repository-problem reference" section.
+Result: the mechanism is live on canonical `main`. Main moved `323b57f` → `0d9e335` ("batch: land work-loop-v2 concurrent-task-isolation mechanism"), a single commit of exactly the nine briefed paths — `.gitignore`, `.agents/skills/work-loop-v2/SKILL.md`, `.claude/commands/work-loop-v2.md`, `docs/parallel-sessions-playbook.md`, `logs/scripts/work-loop-owner.sh`, `logs/scripts/work-loop-owner.test.sh`, and the three `plans/work-loop-v2-v0.2/handoff-automation-spike/` files (`README.md`, `dispatch.sh`, `dispatch.test.sh`). No branch history was merged and this state file was not copied into main.
 
-Evidence:
-- Merge is real and is a merge: `git log -1 --format='%H %p'` → `953ff640… c3a3ad6 323b57f` (two parents).
-- Both-sides paths computed before merging: `comm -12` over `git diff --name-only 0ccf397 323b57f` and `git diff --name-only 0ccf397 HEAD` → `.gitignore`, `.agents/skills/work-loop-v2/SKILL.md`. Merge output reported `Auto-merging` on exactly those two and "Automatic merge went well"; `git status --porcelain` matched no unmerged marker (`UU|AA|DD|AU|UA|DU|UD`).
-- Both sides preserved, shown against each parent: `git diff --cached HEAD -- .gitignore` adds only main's v1-retirement comment and the `!.agents/skills/work-loop/` removal; `git diff --cached 323b57f -- .gitignore` adds only the branch's `logs/work-loop/.owner` block. Same two-way check on `SKILL.md`: +10 lines of main's SOP reference against the branch parent, +21 lines of the ownership mechanism against the main parent.
-- Checks after the merge (all four run from the merged tree):
-  - `logs/scripts/work-loop-owner.test.sh` → exit 0, `T1..T13 + F1..F3: 92 passed, 0 failed`. Identical to the pre-merge baseline.
-  - `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` → exit 0, `pass=389 fail=0`. Identical to baseline.
-  - `logs/scripts/work-loop-v2-core-resolver.test.sh` → exit 0, `4 passed, 0 failed`. Identical to baseline.
-  - `logs/scripts/work-loop-v2-slice-1.test.sh` → exit 1, `passed: 292 failed: 3` — the three already-known failures and no others (`3.1a no state file was opened for the direct request`, `3.1a every task-state file present is one this build created deliberately`, `ridx the skill stays under its 340-line ceiling`). Identical to the pre-merge baseline, which was captured before the merge for exactly this comparison.
-- The checks can fail: `slice-1` exits 1 and names three red assertions in every run, pre-merge and post-merge alike; `dispatch.test.sh` builds regression mutants and asserts they go red.
-- Diff versus the merged main commit — `git diff --stat 323b57f HEAD` → ten paths: the nine authorised implementation paths plus this state file. Nothing outside the boundary.
-- Behaviour versus verified candidate `94807fd` — **no material difference.** `git diff --name-status 94807fd HEAD` restricted to the implementation paths returns only `.gitignore` and `SKILL.md`, and `git diff 94807fd HEAD` on those two shows only main's own additions (main's v1-retirement comment block plus the `!.agents/skills/work-loop/` removal; main's 10-line "Repository-problem reference" section). Not one line of the ownership mechanism differs — `logs/scripts/work-loop-owner.sh`, its test, the command, the playbook and the `logs/work-loop/.owner` ignore block are byte-identical to the verified candidate, and the owner suite is 92/92 on both.
+Evidence: `git show --format='' --name-only 0d9e335` lists 9 paths and no tenth. `git diff 0d9e335 79ed9c3 -- <those nine>` is empty, so the landed bytes are identical to the task branch; the two executable scripts landed `100755` and `work-loop-owner.sh`/`work-loop-owner.test.sh` are recorded as `create mode`, matching their absence from main beforehand. Both suites pass from canonical main: `bash logs/scripts/work-loop-owner.test.sh` → exit 0, `92 passed, 0 failed`; `bash plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` → exit 0, `pass=389 fail=0`. Both match the Unit 9 baselines, and both suites carry their own red-mutation cases (the owner suite's F1..F3 block, the dispatcher's "goes red on the regressed dispatcher" cases), so a broken landing would have shown as failures rather than passes. Canonical `git status --porcelain` after the run is unchanged from before it — all ten unrelated dirty paths intact, nothing of the operator's work staged or reverted. Nothing was pushed; `origin` is untouched.
 
-Deferred, not done (noticed during this unit, outside its scope):
-1. **The `seam` block in `logs/scripts/work-loop-v2-slice-1.test.sh` is flaky.** Across three consecutive runs on a byte-identical tree it returned `292/3`, `292/3`, then `291/4` — the extra red being a different seam assertion each time it appeared (`seam Claude then executed unit 2 …` on one run, `seam the hand-off and the unit-2 hand-back are two commits, not one` on another). Because the tree did not change between those runs, the nondeterminism cannot come from the merge; the commit sets the seam walks are also byte-identical pre- and post-merge (`git log --reverse -- <seam state>` and `-- <seam target>` return the same four and same two commits at `c3a3ad6` and at `953ff64`). Likely mechanism is the bare `mktemp` calls in `seam_classify_at`/`classify_state`, but that was not confirmed. Not fixed here: the test script is not one of the nine authorised paths, and diagnosing it is its own unit.
-2. **Two pre-existing uncommitted files left untouched** — `logs/friction-log.md` and `logs/innovation-registry.md` were already modified when this unit opened, are outside the nine authorised paths, and do not overlap the merged main commit. They remain uncommitted and unchanged.
+Non-destructive revert of the landing commit only, from the canonical checkout:
+
+```
+git -C "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources" revert --no-edit 0d9e335
+```
+
+It creates a new inverse commit and touches only the nine paths, so the unrelated uncommitted work in canonical survives it. Do not substitute a `reset --hard` form: canonical holds uncommitted work that such a form would destroy.
+
+Deferrals, recorded and not done now:
+
+1. Two `axcion-harness-v0-2-*-monday-prep` state files sit in canonical with `turn: claude` and no owner declaration — one tracked-and-modified, one untracked. Under the mechanism just landed, an undeclared replicated state file is exactly the AMBIGUOUS case. Not touched here because it belongs to another task and this unit's scope is the landing commit alone.
+2. The mechanism's own ownership check cannot run in canonical until this commit, so claim (2) was settled by direct inspection of `.owner` and `git status` rather than by the helper. Worth one confirming run of `work-loop-owner.sh check --depth repo` from canonical during ordinary use.
+3. The flaky slice-1 seam block and the two unrelated log modifications carried over from Unit 9 remain deferred, unchanged.
 
 ## Blocker
 
@@ -82,4 +85,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 9. The fixed main snapshot `323b57f` is merged as `953ff64` with no conflicts, both behaviours preserved, all four checks at their pre-merge baselines, and no material behaviour difference from verified candidate `94807fd`. Nothing was landed, pushed or cleaned up. Decide whether Unit 9 is accepted, and what the next unit is toward integration and representative fan-out-2 use — plus a disposition for the two deferrals above.
+Codex: assess Unit 10. The mechanism is live on canonical main at `0d9e335`, byte-identical to the verified branch, with both concurrency suites green from main and unrelated main work preserved. Decide whether the task now closes as **Integrated, awaiting operational validation** — the operator having replaced the synthetic trial with ordinary concurrent use — or whether a further unit is justified, and rule on the three recorded deferrals.
