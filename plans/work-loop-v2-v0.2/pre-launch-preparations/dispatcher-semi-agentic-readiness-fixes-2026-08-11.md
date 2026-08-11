@@ -4,6 +4,8 @@
 **Status:** Assessment and prioritised fix recommendation. No implementation is authorised by this report.  
 **Scope:** The Work Loop V2 dispatcher and the minimum surrounding contract needed for supervised, semi-agentic repository work across Axcíon projects.
 
+**Companion roadmap:** `dispatcher-implementation-roadmap-2026-08-11.md`
+
 ## Executive conclusion
 
 The dispatcher should not yet be treated as a general autonomous project coordinator. It is much closer to a useful **supervised execution controller**: the operator and Codex set direction, Claude performs bounded repository work, and the dispatcher carries the turn, enforces mechanical limits, and stops on ambiguity.
