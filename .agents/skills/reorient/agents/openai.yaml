@@ -1,0 +1,4 @@
+interface:
+  display_name: "Reorient"
+  short_description: "Recover verified Work Loop state after compaction"
+  default_prompt: "Use $reorient to reconstruct the active Work Loop state from durable repository evidence."

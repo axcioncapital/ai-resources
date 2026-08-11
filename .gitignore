@@ -112,3 +112,4 @@ AGENTS.md
 .agents/skills/*
 !.agents/skills/work-loop-v2/
 !.agents/skills/handoff-thread/
+!.agents/skills/reorient/
