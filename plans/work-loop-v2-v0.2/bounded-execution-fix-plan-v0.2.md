@@ -2,21 +2,38 @@
 
 **Written 2026-08-11 by Claude, under Work Loop v2 task `work-loop-v2-bounded-execution-fix-plan`,
 Unit 1. Corrected once on 2026-08-11 against five frozen findings from Codex. Revised on 2026-08-11
-into this v0.2 against six findings from an independent SOP-conformance review.** Planning artifact
-only. Nothing here is authorized or implemented; every unit below is a proposal for Codex to assess
-and the operator to approve.
+into this v0.2 against two inputs: six findings from an independent SOP-conformance review, and the
+system-level lessons of a second bounded-execution incident on 2026-08-11 (the eval-repair
+timeout).** Planning artifact only. Nothing here is authorized or implemented; every unit below is a
+proposal for Codex to assess and the operator to approve.
 
 **Supersedes `bounded-execution-fix-plan-v0.1.md`, which is retained unchanged.** v0.1 is the version
 the closed planning task accepted; it stays on disk and stays referenced from that task's closing
 record. This file is the version any further work reads.
 
-**What this addresses.** On 2026-08-10 a Work Loop v2 task escaped its bounded courier path. The
+**What this addresses.** Two bounded-execution failures on the same transport, one day apart.
+
+**Incident 1 — 2026-08-10, the escape.** On 2026-08-10 a Work Loop v2 task escaped its bounded courier path. The
 dispatcher hit a permission dead end, misreported the resulting state, and Codex responded by driving
 an interactive Claude session by hand — which removed the timeout, the one-hop bound, the run log,
 the allowlist check and the process-tree teardown all at once. Inside that session Claude spawned at
 least eight further `claude -p` processes to test Markdown instruction files. The task consumed ≥13
 Claude processes; the four *recorded* dispatcher launches alone were 25m13s, 92 turns, 108,908 output
 tokens and $11.34.
+
+**Incident 2 — 2026-08-11, the timeout.** A Work Loop v2 task in the eval worktree
+(`eval-mvp-v0.2-adoption-readiness-fix`) was stopped by the dispatcher's 900-second actor timeout,
+exit `21`. The reported cause is the opposite shape of incident 1: not an escape from the bounded
+path, but a unit too large to finish inside it. The hop left partial edits in allowed files, wrote no
+result, moved no branch ref, and left the state file at `turn: claude` — and none of the partial
+effects were named in the stop. Codex then read the no-rerun rule as meaning the *repository task*
+was impossible, when only the *transport action* was terminal.
+
+**Why one plan holds both.** They are the two failure modes of the same boundary. Incident 1 is a
+unit that left the bounded path; incident 2 is a unit that could not fit inside it. Both end with the
+operator unable to see what actually happened from what the dispatcher reported, and both were
+answered by reaching outside the protocol. **Only incident 2's system-level lessons are in scope
+here** — its content repairs belong to the eval-repair task and are excluded by name in § 0.5.
 
 **What this plan is not.** It is not a larger control system, and it is not an approved design. It is
 a candidate inventory plus a route to a design decision. Its net proposed permanent machinery is
@@ -39,6 +56,28 @@ outcome. Each is resolved below.
 | 4 | The SOP's **B1 context manifest** was incomplete — no base commit, scope, exclusions, tests, authority gaps or current outcome | § 0.5 rewritten as the complete manifest. Still no new file, per § 7 | § 0.5 |
 | 5 | Implementation was not treated as **high-risk** under the SOP | Classified high-risk, with the three obligations it carries. The workspace review-rule tension is surfaced, not silently resolved | **new § 6.5** |
 | 6 | U7 proposed a new artifact for the `runs/` decision framing | **U7 retired as a unit.** The framing is written into § 8, beside the operator decision already framed there | § 5, § 7, § 8 |
+
+### Second input — incident 2's system-level lessons
+
+Added on the operator's direction, bounded to system-level lessons only. **Every causal claim in the
+incident-2 report is unverified and stays unverified until route step 1 checks it against the named
+run artifacts** — it is a verify-first input, exactly as v0.1's own postmortem was.
+
+| Addition | Where |
+|---|---|
+| Incident 2 added to Gate 2's preserved evidence set, as a **verify-first** second incident | § 0.3, § 0.4 step 1, § 0.5 |
+| **Brief sizing promoted P1 → P0**: a timed hop carries one dominant deliverable and one proportionate evidence set. An allowlist bounds *files*, not *reasoning workload* | **new O5**, **new U11**, § 2 (P1-3), § 3.2 rung 1 |
+| U2's evidence extended to **exit `21`**: partial allowed-path edits are reported even when the state file and the branch do not advance | § 4 (O2), U2 |
+| U4 expanded from "never bypass the dispatcher" into a **truthful recovery contract** — four clauses | § 4 (O4), U4 |
+| A longer timeout is **not** a remedy for an oversized unit; the timeout is a safety boundary | § 3.3, U11 |
+| A **simulated timeout-with-partial-effects** case added to the verification requirements. No live model run needed | § 5 budget, U2 evidence |
+| Eval worktree, task, run id, branch head, state file and three run artifacts added to the evidence chain | § 0.5 |
+
+**Held out of this plan, by operator direction.** These are evidence *of* excessive unit composition,
+not part of the dispatcher fix, and they belong to the eval-repair task: the EV-1 to EV-6 content
+repairs; the staging-hook registry correction; the eval branch's merge readiness; and its stale suite
+baselines. They are listed again in § 0.5's exclusions so a later unit cannot pull them in by
+drifting.
 
 **The review's own caveat, carried forward:** the SOP remains advisory. Its gate vocabulary is a
 consolidation the SOP itself says must be confirmed before adoption (`:59`), and the Independent
@@ -93,6 +132,21 @@ compensating controls — are **not** claimed. Ambiguity of authority was not ob
 clear about who commits and who decides. And this is the first compensating-control round, not the
 third.
 
+**Incident 2 does not change that, and is not used to inflate the qualification.** A second
+bounded-execution failure on the same transport within 24 hours strengthens the first two triggers on
+their existing terms — the same components, the same shared courier. It does **not** meet the
+"repeatedly generated compensating controls" trigger, which counts *rounds of compensating control*,
+and no control has yet been built. It is a different failure mode, not a recurrence: incident 1 left
+the bounded path, incident 2 could not fit inside it. Claiming recurrence here would be the
+overclaim § 3.4 exists to prevent.
+
+**One trigger does gain a second instance, and it is verified.** *Produced false-success or
+false-report behaviour*: incident 2's stop reported a timeout and named none of the partial edits the
+hop had left in allowed files. That is the same reporting blindness as claim 4/P0-4, on a different
+exit code. The partial-edit claim itself is unverified pending route step 1 (H8, § 0.6); what is
+verified is that the code cannot report them — `foreign_worktree()` reports only paths *outside* the
+allowlist (claim 2a region, `dispatch.sh:1364-1375`).
+
 **This qualification is provisional and rerouteable.** If the causal work at the next gate shows the
 condition is bounded and locally correctable after all, the case drops to a normal repair rather than
 completing a structural process for its own sake.
@@ -106,7 +160,7 @@ the proven mechanism requires.
 | Gate | State | Basis |
 |---|---|---|
 | 1 — Admission (qualifies as structural, worth doing now) | **Qualification provisional (§ 0.2); priority settled by the operator: Proceed now** | The operator's 2026-08-11 request settles priority. It does **not** approve a technical design, a mechanism, or a scope |
-| 2 — Failure proof | **NOT complete** | § 1 establishes the *current state of the code* by inspection. It does not establish the *failure* from the preserved run evidence of 2026-08-10, and no independent party has read that raw evidence |
+| 2 — Failure proof | **NOT complete, and its evidence set now holds two incidents** | § 1 establishes the *current state of the code* by inspection. It does not establish either *failure* from preserved run evidence — 2026-08-10 (incident 1) or 2026-08-11 (incident 2) — and no independent party has read that raw evidence. Incident 2 arrives as a **verify-first** report whose causal claims are unverified (§ 0.6, H7–H9) |
 | 3 — Design approval (causal model supported, intervention approved) | **NOT reached.** Now carries two named preconditions: the blind evidence review (route step 3) and the **B5 design challenge** (route step 4) | No causal chain has been stated with a disproving observation, no blind independent review has run, no design challenge has run, and the operator has approved no design |
 | 4 — Technical verification | **NOT reached** | Nothing is implemented. Implementation is classified **high-risk** and carries the § 6.5 obligations |
 | 5 — Operational closure | **NOT reached** | Nothing is integrated, and no representative use has happened |
@@ -126,13 +180,26 @@ or a Work Loop unit.
    commit, the scope, the exclusions, the tests, the authority gaps and the current case outcome, so
    the discovery unit inherits a bounded surface rather than a general link to the repository — which
    is how `:368` says an investigation turns into a redesign. *Done in this revision.*
-1. **Establish the failure from preserved evidence, not a live reproduction.** The SOP permits this
+1. **Establish both failures from preserved evidence, not a live reproduction.** The SOP permits this
    explicitly (`:382`) where reproduction is costly or unsafe, and here it is both — reproducing a
-   runaway nested-AI session is the exact expense this case exists to prevent. The evidence already
-   exists: the four dispatcher run logs and hop captures, the `STOP [25]` output, the state file of
-   the incident task, and the incident worktree's Git history (`ea77d66`, `9a8399c`). This is a
-   **discovery unit**, not an implementation unit. Every material statement carries OBSERVED /
-   INFERRED / PROPOSED / UNKNOWN (`:384`).
+   runaway nested-AI session is the exact expense this case exists to prevent, and reproducing a
+   900-second timeout costs 900 seconds of model time to learn nothing new. The evidence already
+   exists for both:
+   - **Incident 1** — the four dispatcher run logs and hop captures, the `STOP [25]` output, the
+     state file of the incident task, and the incident worktree's Git history (`ea77d66`, `9a8399c`).
+   - **Incident 2** — the three eval run artifacts, the state file left at `turn: claude`, the branch
+     ref that did not move, and the partial edits still on disk in the eval worktree (§ 0.5).
+     **Verify-first:** the incident-2 report's causal claims (H7–H9, § 0.6) are checked against those
+     artifacts before any of them is used. The report is a lead, not proof — `:435`.
+
+   This is a **discovery unit**, not an implementation unit. Every material statement carries
+   OBSERVED / INFERRED / PROPOSED / UNKNOWN (`:384`).
+
+   **Sizing note, and it is not decorative.** This step now covers two incidents, which is exactly
+   the composition that produced incident 2. It is framed as **one dominant deliverable** — establish
+   what happened — over a **read-only** evidence set, with no fix, no design and no construction of
+   verification machinery. If it cannot be finished in one bounded hop, it is split by incident, not
+   extended by raising a timeout (§ 3.3).
 2. **Blind raw-evidence review by a genuinely fresh Codex context.** That reviewer receives the
    problem statement and the raw evidence only — never this plan, never Claude's diagnosis, and
    never a document that links to either. The Codex context that framed this task cannot perform it,
@@ -185,8 +252,14 @@ scope, exclusions, tests, authority-gap and outcome rows are added in v0.2.)*
 |---|---|
 | Bound checkout | `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources` |
 | Base commit — bound checkout | **`a61708e`** ("session: wrap — Work Loop v2 bounded-execution fix plan closed", 2026-08-11) |
-| Incident checkout (evidence source, **read-only**) | `../ai-resources-diagnostics-workflow` |
-| Base commit — incident checkout | **`9a8399c`** ("update: diagnostics-workflow correction round — findings 1 and 3 resolved, finding 2 partial", 2026-08-10), on top of `ea77d66` |
+| Incident 1 checkout (evidence source, **read-only**) | `../ai-resources-diagnostics-workflow` |
+| Base commit — incident 1 checkout | **`9a8399c`** ("update: diagnostics-workflow correction round — findings 1 and 3 resolved, finding 2 partial", 2026-08-10), on top of `ea77d66` |
+| Incident 2 checkout (evidence source, **read-only**) | `../ai-resources-eval` — **verified present** |
+| Branch — incident 2 | `session/2026-08-09-eval` — **verified** |
+| Branch HEAD after the failed run | **`198ceec66f210079ef3a3b75ca55b889f64e9476`** — **verified unmoved**, which is what confirms the partial work was never committed |
+| Work Loop task — incident 2 | `eval-mvp-v0.2-adoption-readiness-fix` |
+| Dispatcher run id — incident 2 | `20260811T101503-405170d5-84471-eval-mvp-v0.2-adoption-readiness-fix` |
+| Stop code — incident 2 | **`21` = `ACTOR_TIMEOUT`** (`dispatch.sh:133`), 900-second actor timeout |
 | Implementation base | **Not yet agreed.** Route step 6 opens a new task on a deliberate branch or worktree at a base the operator agrees then. It is not `a61708e` by default |
 
 #### Anchors
@@ -206,22 +279,47 @@ scope, exclusions, tests, authority-gap and outcome rows are added in v0.2.)*
 
 Preserved, already paid for, and sufficient for the `:382` forensic route. **Read-only in every case.**
 
+**Incident 1 — 2026-08-10, `../ai-resources-diagnostics-workflow`:**
+
 - The four recorded dispatcher run logs and their hop captures, under
   `plans/work-loop-v2-v0.2/handoff-automation-spike/runs/`.
-- In the incident checkout, three run files that remain **untracked** there and are therefore
-  loss-exposed until the § 8 `runs/` decision is made: `20260810T151601-8db95197-34454-diagnostics-workflow.log`,
+- Three run files that remain **untracked** there and are therefore loss-exposed until the § 8
+  `runs/` decision is made: `20260810T151601-8db95197-34454-diagnostics-workflow.log`,
   `.hop1.claude.out`, `.hop1.claude.tree`.
 - The `STOP [25]` output and its message text.
-- The incident task state file `logs/work-loop/diagnostics-workflow.md` in the incident checkout —
-  **uncommitted there**, and therefore also loss-exposed.
-- The incident checkout's Git history: `ea77d66`, `9a8399c`.
+- The task state file `logs/work-loop/diagnostics-workflow.md` — **uncommitted there**, and therefore
+  also loss-exposed.
+- That checkout's Git history: `ea77d66`, `9a8399c`.
 - The postmortem, `~/.codex/attachments/c97f82c6-…/pasted-text.txt` (290 lines).
 
+**Incident 2 — 2026-08-11, `../ai-resources-eval`:**
+
+- Three run artifacts under `plans/work-loop-v2-v0.2/handoff-automation-spike/runs/`, all prefixed
+  `20260811T101503-405170d5-84471-eval-mvp-v0.2-adoption-readiness-fix`: `.log`, `.hop1.claude.out`,
+  `.hop1.claude.tree`. **All three verified present, and all three verified untracked** — the same
+  loss exposure as incident 1, in a second linked worktree (§ 8, decision 2).
+- The task state file `logs/work-loop/eval-mvp-v0.2-adoption-readiness-fix.md` — verified present.
+- The branch ref `session/2026-08-09-eval` at `198ceec6`, verified unmoved.
+- The partial edits still on disk in that worktree. **These are read as evidence of unit size only.**
+  Their content is the eval-repair task's business and is excluded below.
+- The incident-2 report, `~/.codex/attachments/9f859b60-…/pasted-text.txt` (242 lines). **A lead, not
+  proof** (`:435`) — its causal claims are H7–H9 in § 0.6.
+
+**What is already verified about incident 2, and what is not.** Verified by execution on 2026-08-11,
+and therefore OBSERVED: the worktree, branch, unmoved HEAD, state file and three untracked run
+artifacts all exist as the report names them, and exit `21` is `ACTOR_TIMEOUT` in the live taxonomy
+(`dispatch.sh:133`). **Not verified, and not to be used until it is:** that the unit's size caused the
+timeout, that partial edits were left in allowed files, what the hop actually spent its 900 seconds
+on, and every token, turn and cost figure the report quotes. The existence of an artifact is not the
+truth of a claim about it.
+
 **Preservation obligation, before the discovery unit reads anything:** the loss-exposed items above
-live only in one working tree. `:366` requires the repository state to be recoverable and unrelated
-work to stay untouched. The discovery unit therefore copies what it needs into its own evidence
-surface, or the operator commits them in that checkout — it does **not** stage or commit unrelated
-work there to make them safe.
+live only in a working tree — now in **two** working trees, which doubles the exposure rather than
+repeating it. `:366` requires the repository state to be recoverable and unrelated work to stay
+untouched. The discovery unit therefore copies what it needs into its own evidence surface, or the
+operator commits them in those checkouts — it does **not** stage or commit unrelated work there to
+make them safe. In the eval worktree this matters more than usual: uncommitted partial edits sit
+beside the run artifacts, so a careless `git add` there would commit the eval repair by accident.
 
 #### Previous related cases
 
@@ -254,7 +352,25 @@ statement. It writes no fix, proposes no design, and modifies no file outside it
 
 #### Explicit exclusions
 
-- **No live reproduction of the incident**, and no dispatcher run of any kind.
+**Incident 2's content repairs are out of scope, by operator direction.** They are evidence *of*
+excessive unit composition, not part of the dispatcher fix, and they belong to the eval-repair task.
+Named individually so no unit can pull them in by drifting:
+
+- **The EV-1 to EV-6 content repairs** — scenario setups, fixture handling, actor models, prompt text.
+- **The staging-hook registry correction** — adding `check-foreign-staging.sh` to the
+  `docs/session-marker.md` Two-end contract registry, and the missed pre-implementation review timing.
+- **The eval branch's merge readiness** — whether `session/2026-08-09-eval` may merge, and when.
+- **Its stale suite baselines** — including the dispatcher and slice-1 counts the incident-2 report
+  quotes. This plan's own baseline rule is unchanged and stands on its own: re-derive by execution
+  (*Tests that must be run*, above). The report's figures are **not** imported as corroboration.
+
+**General:**
+
+- **No live reproduction of either incident**, and no dispatcher run of any kind. Reproducing
+  incident 2 would cost 900 seconds of model time to observe a timeout already recorded.
+- **No write into the eval worktree at all** — not the partial edits, not the state file, not the
+  branch. It is an evidence source here and an active task surface elsewhere; two writers is the
+  condition this plan exists to prevent.
 - **Zero nested Claude or Codex invocations**, in every unit including closure checks.
 - **No write into the incident checkout** beyond what the preservation obligation above permits, and
   no staging or committing of unrelated work in either checkout (`:366`).
@@ -302,23 +418,55 @@ knowing why the incident happened.
 
 | # | Claim | Class | Stated at |
 |---|---|---|---|
-| **H1** | The incident's cost had two mechanisms — unbounded nesting, and the interactive bypass | INFERRED | § 4 *Why these four* |
-| **H2** | The bypass had one cause: the dispatcher reported the wrong thing, and the right thing was unavailable | INFERRED | § 4 *Why these four* |
+| **H1** | The incident's cost had two mechanisms — unbounded nesting, and the interactive bypass | INFERRED | § 4 *Why these five* |
+| **H2** | The bypass had one cause: the dispatcher reported the wrong thing, and the right thing was unavailable | INFERRED | § 4 *Why these five* |
 | **H3** | The triggering condition was a brief that demanded behavioural verification of Markdown instruction files, satisfiable only by invoking Claude | INFERRED | § 3.2 rung 1 |
 | **H4** | Nesting is the mechanism that turned one unit into ≥13 Claude processes | INFERRED | § 11 |
 | **H5** | A precise stop removes the *reason* to reach for an interactive session | PROPOSED | § 2, P0 candidate 2 |
-| **H6** | Fixing the mechanisms without the cause leaves the same temptation in place under a new prohibition | PROPOSED | § 4 *Why these four* |
+| **H6** | Fixing the mechanisms without the cause leaves the same temptation in place under a new prohibition | PROPOSED | § 4 *Why these five* |
 
-**What would disprove the set.** Evidence from the preserved run logs that the runaway cost came from
-a single long session rather than from nested invocations. That would falsify H1 and H4 directly, and
-would leave O1 aimed at a symptom (§ 3.4).
+**Incident 2's claims enter the same register, and none of them is verified.** The operator's
+direction was explicit: the report's key claims remain unverified until checked against its named run
+artifacts. They are therefore hypotheses on arrival, not findings, and the units that rest on them
+say so.
+
+| # | Claim | Class | Stated at | Report |
+|---|---|---|---|---|
+| **H7** | The hop timed out because the unit was oversized — too much reasoning and validation burden framed as one implementation hop | INFERRED | § 4 (O5), U11 | `:133` |
+| **H8** | The hop left partial edits in allowed files, and the stop named none of them | INFERRED | § 4 (O2), U2 | `:108-119` |
+| **H9** | Recovery semantics were too rigid: exit `21` was read as "the repository task is impossible" when only the transport action was terminal | INFERRED | § 4 (O4), U4 | `:156` |
+| **H10** | A bounded path list does not bound cognitive workload — the allowlist constrained *files* while the reasoning burden stayed unbounded | PROPOSED | § 3.2 rung 1, U11 | `:228` |
+
+**What would disprove the incident-2 set.** For H7: evidence in the run artifacts that the 900
+seconds went somewhere other than the unit's breadth — a single blocking operation, a retry loop, a
+stall on the permission denial the report mentions in passing. That would make the unit's size
+incidental and would move O5 out of P0. For H8: a stop message in the `.log` that *does* enumerate the
+partial edits, which would make U2's exit-21 extension unnecessary. For H9: evidence that the no-rerun
+rule was read correctly and the stop was declined for some other reason.
+
+**H10 is the load-bearing one, and it is the least verified.** It is the principle the whole of O5 and
+U11 rest on, and it is classified PROPOSED rather than INFERRED because the report states it as a
+lesson rather than deriving it from the artifacts. If route step 1 cannot support it from evidence,
+U11 does not become a smaller unit — it is **withdrawn**, and brief sizing returns to whatever P1
+treatment core § 3 already provides.
+
+**What would disprove the incident-1 set.** Evidence from the preserved run logs that the runaway cost
+came from a single long session rather than from nested invocations. That would falsify H1 and H4
+directly, and would leave O1 aimed at a symptom (§ 3.4).
+
+**One caution on reading the two incidents together.** They are one day apart on one transport, which
+makes a shared narrative tempting — *briefs are badly composed* would explain both at once. That
+narrative is not evidence, and adopting it before route step 1 would be the pattern-matching the SOP's
+authority hierarchy exists to block (`:362`). H3 (incident 1's trigger) and H7/H10 (incident 2's) are
+tested **separately**, against separate artifacts, and are permitted to resolve differently.
 
 **Supersession rule.** Route step 1 rebuilds these from the failure evidence, and route step 4
 challenges the rebuild. Where the evidence contradicts a hypothesis, **the hypothesis is superseded
 and the units that depend on it are reopened, not patched.** H1 and H4 carry O1 and U1; H2 carries O2
 and O3; H3 carries § 3.2 rungs 1–2 and U6 item 2; H5 and H6 carry § 4's *why* and the § 4 minimum
-pair. A plan that survived contradicting evidence by adjusting its wording would be the failure this
-case exists to correct, one level up.
+set; H7 and H10 carry O5 and U11; H8 carries U2's exit-21 extension; H9 carries O4 and U4's recovery
+contract. A plan that survived contradicting evidence by adjusting its wording would be the failure
+this case exists to correct, one level up.
 
 ---
 
@@ -390,7 +538,7 @@ that is § 3's question and the design gate's decision.
 |---|---|---|
 | **1. Stricter correction profile** | **Verified gap** — **P1** | Core § 3 *Correcting once* freezes **what** may change; nothing anywhere bounds **how much verification** a correction may spend. The incident's closure check became a second test suite inside a frozen scope, which is legal under the current text |
 | **2. Explicit verification budget for nested AI work** | **Verified gap** — **P1**, and now **reframed** | Originally paired with an `--allow-nested-actors` flag. With that flag rejected (§ 3.3), the budget rule stands on its own as a **prohibition with a named escalation**: a brief may not propose nested Claude/Codex invocation, and a case that appears to require it goes to the operator as a capability question rather than being authorized by a flag |
-| **3. Brief proportionality preflight** | **Duplicate in substance; rejected as a stage** | Core § 3 *The "good enough, proceed" judgment* already owns all four constraints (85–90% target, minimum necessary work, evidence scaled to consequence, no perfection pass), and `SKILL.md:450` already requires fail-capable evidence. Core § 3 step 3 also forbids the remedy's shape outright: "no new field, artifact or stage is created." **Rejected as a preflight stage.** At most, the trigger list (many scenarios plus negative controls; full behavioural matrices for Markdown files; multiple AI-backed fixtures; "all"/exhaustive without a consequence justification) is folded into P1 Unit 6 as examples inside the *existing* brief-writing step |
+| **3. Brief proportionality preflight** | **Still rejected as a stage. The underlying *rule* is promoted P1 → P0 on incident-2 evidence** | Core § 3 *The "good enough, proceed" judgment* already owns all four constraints (85–90% target, minimum necessary work, evidence scaled to consequence, no perfection pass), and `SKILL.md:450` already requires fail-capable evidence. Core § 3 step 3 also forbids the remedy's shape outright: "no new field, artifact or stage is created." **The preflight stage stays rejected** — nothing in incident 2 argues for a new stage, and a stage is precisely the machinery the complexity budget refuses. **What changed is priority, not shape.** v0.1 and v0.2's first pass treated sizing as a P1 refinement because no failure had been attributed to it; incident 2 is that failure, and the operator has promoted the rule to P0 (H7, H10 — unverified). It lands as **O5 / U11**: a sizing rule *inside* the existing brief-writing step, no stage, no field, no artifact. The trigger list (many scenarios plus negative controls; full behavioural matrices for Markdown files; multiple AI-backed fixtures; "all"/exhaustive without a consequence justification) moves with it from U6 to U11, where it is now the concrete form of the rule rather than an example |
 | **4. Keep the task state compact** | **Already specified** — compliance failure, not a specification gap | Core § 4 already says the state file is "current truth, not a diary", caps it at five fields, and gives a worked *Not this* example of exactly the accumulation the incident produced. A new rule would restate an existing one. **Parked**, with one exception folded into P1 Unit 6: briefs should name where bulk evidence lives (the run log, a working-notes path) so "point, don't absorb" has a concrete destination |
 
 ### Postmortem P2 candidates
@@ -440,7 +588,7 @@ the ones that survive.
 
 | Rung | Option | Verdict on this case |
 |---|---|---|
-| 1 | **Eliminate the triggering condition** | **Adopt, and it is free.** The trigger was a brief that demanded behavioural verification of Markdown instruction files, which can only be satisfied by invoking Claude — **H3, INFERRED (§ 0.6)**. A brief rule that forbids proposing nested AI invocation eliminates the demand at source. Zero machinery. **Insufficient alone** — it is written guidance, and the SOP's own definition of a durable fix (`:920`) excludes fixes that depend on a model remembering guidance. `SKILL.md:195` is the proof: it was in force and was violated |
+| 1 | **Eliminate the triggering condition** | **Adopt, and it is free — and it now has two candidate instances.** Incident 1's trigger was a brief that demanded behavioural verification of Markdown instruction files, satisfiable only by invoking Claude — **H3, INFERRED**. Incident 2's was a brief whose *reasoning* load exceeded one timed hop while its file list stayed bounded — **H7/H10 (§ 0.6)**. Both are brief-composition triggers, and both are eliminated at source by a rule rather than a mechanism. Zero machinery. **Insufficient alone** — it is written guidance, and the SOP's own definition of a durable fix (`:920`) excludes fixes that depend on a model remembering guidance. `SKILL.md:195` is the proof: it was in force and was violated. **Do not let the two instances collapse into one story before route step 1 tests them separately** (§ 0.6, final caution) |
 | 2 | **Simplify the operating model** | **Adopt, and it is free.** The model already says one courier, one dispatcher, no screen-driving. The incident was a departure from the model, not a property of it. The simplification available is to remove the ambiguity a stop currently leaves about what may follow it — restoring the intended courier path rather than adding to it. Zero machinery. Same insufficiency as rung 1 |
 | 3 | **Remove the problematic component** | **Credible, probably too broad.** The component is the attended child's unrestricted tool set (`dispatch.sh:1325`). Restricting the attended `--tools` roster removes capability rather than adding a guard, and the mechanism already exists on the unattended path. But Claude must run `git` to commit every hop (core § 4), and `git` arrives through Bash — so removing Bash removes the loop. A narrower roster is a design-gate question |
 | 4 | **Narrow or reuse an existing mechanism** | **Leading candidate.** `--disallowedTools` already exists, already reaches attended hops when `--claude-deny` is set (`dispatch.sh:1687-1690`), and already composes additively rather than replacing. Adding `claude`/`codex` invocation rules to a default attended deny set reuses that mechanism and introduces **no new flag, no new subsystem and no new file**. Net new permanent machinery: zero. It reaches the *narrowed* O1 of § 3.1, not containment |
@@ -463,6 +611,26 @@ failure to justify (`:610`), and none justifies this one.
 future case that genuinely needs it goes to the operator as a capability question, at which point a
 verified use case would exist and a mechanism could be justified on evidence. That is a deliberate
 absence, not an oversight.
+
+**A longer timeout is also dropped, and for a related reason.** Incident 2 stopped at the 900-second
+actor timeout, which makes "raise the timeout" the obvious-looking remedy. It is not a remedy:
+
+- **The timeout is a safety boundary, not a budget.** It is the mechanism that bounded incident 2 —
+  the one control that worked. Relaxing the control that contained the failure, in response to the
+  failure, inverts the fix.
+- **It treats the symptom by definition.** If H7 holds and the unit was oversized, a longer timeout
+  buys a larger oversized unit. The failure returns at the new boundary, later and more expensively,
+  and each recurrence argues for raising it again. That is the compensating-control ratchet the SOP's
+  Lane B trigger names.
+- **It cannot fail visibly.** An oversized unit that finishes in 1,800 seconds produces no stop, no
+  exit code and no evidence — the sizing defect becomes silent rather than fixed, which `:920`
+  excludes from the definition of a durable fix.
+
+**What is not being claimed.** That 900 seconds is the right number. The incident-2 report itself
+allows that a moderately longer timeout is reasonable *for a recovery hop after the brief is
+narrowed* — a per-run judgment about a specific bounded unit, not a change to the default. Tuning the
+default is a separate question, on separate evidence, and this plan neither proposes nor forbids it.
+**What is rejected is the timeout as a substitute for O5.**
 
 ### 3.4 What the surviving options can and cannot prove
 
@@ -492,39 +660,56 @@ now fixes.
 ## 4. The P0 boundary
 
 **P0 = the smallest coherent set of *outcomes* required before another attended live dispatcher run.**
-Four outcomes. Constructions are candidates, settled at the design gate.
+**Five outcomes** — four from incident 1, one added from incident 2. Constructions are candidates,
+settled at the design gate.
 
-| # | Outcome that must become true | Leading candidate construction | Ladder rung |
-|---|---|---|---|
-| **O1** | By default, the direct route through which a dispatcher-launched actor starts nested Claude/Codex work is denied at the child's permission layer, the denial is visible in the argv and run log, and no supported path re-enables it. **Not containment** (§ 3.1) | Deny rules added to the existing attended `--disallowedTools` path; brief rule forbidding the demand | 4 + 1 |
-| **O2** | A stop names what actually happened — which files changed, and whether Claude touched the state file at all | Repair the classification logic and the reporting | 7 |
-| **O3** | A permission dead end becomes a named stop carrying the denied tool, the target, and the decision required | Parse the capture already being written; one taxonomy entry | 7 |
-| **O4** | A nonzero dispatcher exit is never answered by leaving the dispatcher | Place the existing prohibition at the point of failure | 2 |
+| # | Outcome that must become true | Leading candidate construction | Ladder rung | From |
+|---|---|---|---|---|
+| **O1** | By default, the direct route through which a dispatcher-launched actor starts nested Claude/Codex work is denied at the child's permission layer, the denial is visible in the argv and run log, and no supported path re-enables it. **Not containment** (§ 3.1) | Deny rules added to the existing attended `--disallowedTools` path; brief rule forbidding the demand | 4 + 1 | I1 |
+| **O2** | A stop names what actually happened — which files changed, and whether Claude touched the state file at all — **on every nonzero exit, including a timeout where neither the state file nor the branch advanced** | Repair the classification logic and the reporting | 7 | I1 + I2 |
+| **O3** | A permission dead end becomes a named stop carrying the denied tool, the target, and the decision required | Parse the capture already being written; one taxonomy entry | 7 | I1 |
+| **O4** | A nonzero dispatcher exit is never answered by leaving the dispatcher — **and is never read as proof that the repository task is impossible.** The stop carries a truthful recovery contract | Place the existing prohibition at the point of failure, and state what a stop *does* authorize | 2 | I1 + I2 |
+| **O5** | A brief that will be run under a timer carries **one dominant deliverable and one proportionate evidence set.** An allowlist bounds files; it does not bound reasoning workload, and sizing is judged on the latter | A sizing rule inside the existing brief-writing step. No stage, no field, no artifact | 1 | I2 |
 
-**Why these four — HYPOTHESIS, not finding.** The reasoning below rests on H1, H2 and H6 (§ 0.6),
-none of which has passed Gate 2. It is the plan's best current reading of the incident and it is the
-first thing route step 1 will test.
+**Why these five — HYPOTHESIS, not finding.** The reasoning below rests on H1, H2, H6, H7 and H10
+(§ 0.6), none of which has passed Gate 2. It is the plan's best current reading of the two incidents
+and it is the first thing route step 1 will test.
 
-> The incident's cost had two mechanisms: unbounded nesting (O1) and the interactive bypass (O4) —
-> **H1**. The bypass had one *cause*: the dispatcher reported the wrong thing and the right thing was
-> unavailable (O2, O3) — **H2**. Fixing the mechanisms without the cause leaves the same temptation in
-> place under a new prohibition — **H6** — which is how `SKILL.md:195` already failed once.
+> **Incident 1.** Its cost had two mechanisms: unbounded nesting (O1) and the interactive bypass (O4)
+> — **H1**. The bypass had one *cause*: the dispatcher reported the wrong thing and the right thing
+> was unavailable (O2, O3) — **H2**. Fixing the mechanisms without the cause leaves the same
+> temptation in place under a new prohibition — **H6** — which is how `SKILL.md:195` already failed
+> once.
+>
+> **Incident 2.** The unit did not fit the boundary (O5) — **H7**, because the allowlist bounded files
+> while the reasoning load stayed unbounded — **H10**. The stop then named none of the partial effects
+> (O2), and was read as terminal for the *task* rather than the *transport* (O4) — **H9**.
 
-**If the discovery unit contradicts H1**, this whole boundary is rebuilt rather than adjusted
+**Why O5 is P0 rather than P1.** Not because sizing is newly important — because it is the only one of
+the five that governs whether the *next* hop is runnable at all. O1–O4 make a run honest and bounded;
+an oversized unit fails inside all of them, produces a timeout, and yields the same unreadable
+aftermath the other four exist to prevent. **It is also the cheapest outcome on the table** — one
+paragraph in an existing section, ladder rung 1, zero machinery — so there is no version of "fewer
+than five" that saves anything by dropping it.
+
+**If the discovery unit contradicts H1**, this whole boundary is rebuilt rather than adjusted. **If it
+contradicts H7 or H10**, O5 is withdrawn outright rather than shrunk — a sizing rule with no
+demonstrated failure behind it is exactly the "guidance a model must remember" that `:920` excludes
 (§ 0.6, supersession rule).
 
 **Why the permission-mode option is not in P0.** Without it, a permission dead end now *stops
 honestly* instead of dead-ending silently. That is a safe outcome, not a blocked one. Adding attended
 `acceptEdits` widens what a child may do without asking; it belongs in § 8 as an operator decision.
 
-**If the operator wants less than four:** the irreducible pair is **O1 + O4**. That closes the default
-nesting route and removes the fallback. It leaves the misdiagnosis that caused the bypass in place,
-and this plan does not recommend stopping there. *(This ranking depends on H1 and H2.)*
+**If the operator wants less than five:** the irreducible set is **O1 + O4 + O5**. O1 closes the
+default nesting route, O4 removes the fallback and the false-impossibility reading, and O5 stops the
+next unit being unrunnable. It leaves the misdiagnosis that caused the bypass in place, and this plan
+does not recommend stopping there. *(This ranking depends on H1, H2, H7 and H9.)*
 
 **Not in P0, and why:** state snapshots (U5 — forensics, not safety) · correction profile and nested-AI
 prohibition (U6 — they govern the *next brief*, not the next run) · `runs/` disposition (an operator
 decision, framed in § 8) · richer `--status`, `--stop`, session counts (P2 — observability, not a
-boundary).
+boundary) · **raising the actor timeout** (§ 3.3 — not a remedy, and the control that worked).
 
 ---
 
@@ -553,6 +738,14 @@ Construction details are the leading candidate at the time of writing, not a loc
   handed back, not extended.
 - **Harness evidence is controller evidence.** It establishes what the dispatcher requests and how it
   reports. It never establishes effective containment or real-world behaviour (§ 3.1, § 3.4, § 6).
+- **A simulated timeout-with-partial-effects case is required** (U2 case (d)): a scripted actor that
+  edits one allowed file, leaves the state file untouched, does not commit, and is killed on the
+  deadline. **No live model run is needed for it** — `--actor-cmd` plus the existing deadline
+  reproduces the shape, and a real actor would cost 900 seconds to exercise the same branch.
+- **Each unit below carries one dominant deliverable** (O5, U11). This budget applies to the plan's
+  own units first: if a unit here cannot be described as one deliverable plus its proportionate
+  evidence, it is split before it is dispatched. **A plan that proposes a sizing rule and then
+  dispatches an oversized unit has refuted itself.**
 
 ### P0 units
 
@@ -597,7 +790,15 @@ Construction details are the leading candidate at the time of writing, not a loc
      **different** outcome that says exactly that, and never says "Claude edited it".
   3. Any hop that leaves **in-allowlist** files modified lists them by path in the run log and in the
      stop message, whatever the exit code.
-- **Ladder position:** 7 — repair of wrong logic. Adds no mechanism.
+  4. *Added from incident 2.* That reporting holds on **exit `21` (`ACTOR_TIMEOUT`,
+     `dispatch.sh:133`)** specifically — the case where the actor was killed, the state file did not
+     change and the branch ref did not move. Today those three facts are individually true and
+     collectively misleading: nothing advanced, so nothing is reported, while partial edits sit in
+     allowed files. **A timeout is the case where partial-effect reporting matters most**, because it
+     is the one exit where the actor never chose to stop and never summarised what it had done.
+- **Ladder position:** 7 — repair of wrong logic, extended to one more exit path. Adds no mechanism.
+  Item 4 is the *same* reporting gap as item 3 reached through a different code, not a second
+  feature — which is why it lands here rather than in a unit of its own.
 - **Allowed surfaces:** `dispatch.sh` (`:1917`, `:2007-2019`, `foreign_worktree` region `:1364-1375`,
   the exit taxonomy comment `:121-166`), `dispatch.test.sh`, spike `README.md`.
 - **Exclusions:** the retry/partial-effect logic at `:1935-1973` (correct as written, different
@@ -610,10 +811,19 @@ Construction details are the leading candidate at the time of writing, not a loc
   (a) pre-dirty state file + actor that changes nothing → must **not** report exit 25 with "Claude
   edited"; (b) clean state file + actor that edits and does not commit → must still report 25;
   (c) actor that modifies an allowed implementation file and leaves the state file alone → the file
-  is named in the output. Red half run against the pre-change dispatcher: (a) must fail there.
+  is named in the output; **(d) *added from incident 2* — a simulated timeout with partial effects:
+  an actor that edits one allowed implementation file, does not touch the state file, does not
+  commit, and is killed on the deadline → exit `21`, and the modified file is named.** Red half run
+  against the pre-change dispatcher: (a) and (d) must fail there.
+- **No live model run is required for case (d).** The harness already drives actor behaviour through
+  `--actor-cmd` and already holds a deadline, so a scripted actor that writes a file and then sleeps
+  past the timeout reproduces the shape exactly. Reproducing it with a real Claude actor would cost
+  900 seconds of model time to observe a code path a fake actor exercises in seconds — and would be a
+  small instance of the composition error incident 2 is about.
 - **Depends on hypotheses:** H2 (§ 0.6) for its *priority*, not for its correctness — claim 2a is
   OBSERVED, so the logic is wrong whatever the discovery unit finds. If H2 is superseded, U2 stays a
-  valid repair and leaves P0.
+  valid repair and leaves P0. Item 4 rests on **H8**; if the run artifacts show the stop *did*
+  enumerate the partial edits, item 4 and case (d) are dropped and the rest of U2 is unaffected.
 - **Verification budget:** static + harness. Zero AI invocations.
 - **Carried in, narrowed:** claim 2b. Add one clause to both exit-25 messages naming the addressee —
   the operator does this, not Codex — so a Codex reader cannot take it as an instruction to itself.
@@ -642,12 +852,36 @@ Construction details are the leading candidate at the time of writing, not a loc
 - **Verification budget:** static + harness + one recorded fixture. Zero AI invocations. The fixture
   is a *replay* of evidence already paid for; regenerating it live is out of budget.
 
-#### U4 — A dispatcher stop is never authorization to continue by hand (outcome O4)
+#### U4 — A truthful recovery contract for a dispatcher stop (outcome O4)
 
-- **Observable outcome:** the Codex skill states, at the point where a stop is read, that a nonzero
-  exit authorizes exactly two things — fix the cause and re-run the dispatcher, or stop for the
-  operator — and never an interactive Claude session, a hand-carried hop, or a hand-edit of the state
-  file. A dispatcher capability gap is a capability gap, not a licence.
+*Expanded from incident 2. v0.1 and v0.2's first pass framed this as a pure prohibition — "never
+bypass the dispatcher". Incident 2 shows a prohibition alone produces the opposite failure: Codex
+obeyed it exactly and concluded the repository task was impossible. A rule that says only what is
+forbidden leaves the honest path unnamed.*
+
+- **Observable outcome:** the Codex skill states, at the point where a stop is read, what a nonzero
+  exit does and does not mean. Four clauses, and the first two are the prohibition v0.1 already had:
+
+  1. **A stop is never a licence to leave the dispatcher.** It authorizes fixing the cause and
+     re-running, or stopping for the operator — never an interactive Claude session, a hand-carried
+     hop, or a hand-edit of the state file. A dispatcher capability gap is a capability gap, not a
+     licence.
+  2. **Never repeat a completed hop blindly.** Where the run log proves the actor launched and ran,
+     the hop is not re-run as if it had not happened. This is the existing no-rerun rule, kept intact.
+  3. **A timeout means the transport stopped, not that the repository task is impossible.** Exit `21`
+     is a statement about one bounded hop, not about the underlying work. Conflating the two is the
+     specific error incident 2 recorded (H9), and the skill names it as such.
+  4. **Partial effects are preserved and inspected before anything else is decided.** A stopped hop
+     may have changed allowed files without committing. Those changes are read, not discarded and not
+     assumed absent — U2 item 4 is what makes them visible in the first place.
+  5. **A newly narrowed recovery unit is available, with operator approval.** Not a re-run of the
+     same brief, and not abandonment: a *fresh, smaller* unit that inherits the preserved partial work
+     and carries one dominant deliverable (O5). Operator approval is the gate, and it is a decision
+     the skill must ask for rather than resolve.
+
+  **The two halves are one rule.** Clause 5 without clauses 1–2 reopens the bypass incident 1 was
+  about; clauses 1–2 without clause 5 reproduce incident 2's dead end. Neither half ships alone, and
+  a design gate that approves one and defers the other should approve neither.
 - **Ladder position:** 2 — restoring the intended courier path. **This is a supporting operating
   restriction, not a causal fix.** Its presence is not evidence that any mechanism changed (§ 3.4),
   and the SOP's durable-fix definition (`:920`) explicitly discounts fixes that depend on a model
@@ -658,15 +892,71 @@ Construction details are the leading candidate at the time of writing, not a loc
   operator); `.claude/commands/work-loop-v2.md` (Claude never chooses the transport, so the rule has
   no addressee there); the dispatcher.
 - **Dependencies:** none.
-- **Stop conditions:** if stating the rule requires contradicting core § 7 or the existing `:195`
-  text, stop — the rule is meant to place an existing prohibition, not add a competing one.
+- **Stop conditions:** if stating clauses 1–2 requires contradicting core § 7 or the existing `:195`
+  text, stop — they are meant to place an existing prohibition, not add a competing one. **If clause
+  5 cannot be stated without creating a new state-file field, a new artifact or a new stage, stop and
+  escalate** — a recovery unit is an ordinary Work Loop unit, and if it appears to need machinery,
+  the design is wrong (core § 3 step 3). If clause 5 turns out to contradict the no-rerun rule rather
+  than sit beside it, stop: that is a core change, not a skill change.
 - **Minimum evidence that can fail:** the changed text quoted against what it replaced, plus the
-  demonstration that the current text does *not* say it — the **Stopped** row today lists codes only.
-  One line on why no automated check distinguishes success from failure here: the artifact is an
-  instruction to a model, and any grep would search for words this very brief supplied.
-- **Depends on hypotheses:** H1, H6 (§ 0.6).
+  demonstration that the current text does *not* say it — the **Stopped** row today lists codes only,
+  and nothing anywhere states clauses 3–5. One line on why no automated check distinguishes success
+  from failure here: the artifact is an instruction to a model, and any grep would search for words
+  this very brief supplied.
+- **Depends on hypotheses:** H1, H6 for clauses 1–2; **H9** for clauses 3–5 (§ 0.6). If the run
+  artifacts show the no-rerun rule was read correctly and the stop was declined for another reason,
+  clauses 3–5 are withdrawn and U4 reverts to the prohibition it was.
 - **Verification budget:** inspection only. Zero AI invocations, zero harness runs. Per the Claude
   command (`.claude/commands/work-loop-v2.md:209`), a prose change's evidence is the changed text.
+
+#### U11 — Brief sizing: one dominant deliverable, one proportionate evidence set (outcome O5)
+
+*New in v0.2, from incident 2, promoted P1 → P0 by the operator. It carries the rule that § 2's P1-3
+rejected **as a stage** — the rejection of the stage stands; only the priority of the rule changed.*
+
+- **Observable outcome:** the brief-writing step states that a unit run under a timer carries **one
+  dominant deliverable** and **one proportionate evidence set**, and that sizing is judged on the
+  reasoning and validation load rather than on the file list. Concretely, the brief-writing step
+  names the shapes that fail the test — a unit that combines scenario redesign with standards
+  remediation; one that builds a historical negative control alongside its primary edit; one
+  demanding full behavioural matrices for instruction files; one asking for "all" or "exhaustive"
+  without a stated consequence — and requires such a unit to be split before it is dispatched.
+- **The load-bearing sentence:** **an allowlist bounds files, not reasoning workload.** The dispatcher
+  can prove a hop stayed inside its paths; nothing proves it stayed inside its thinking. A brief that
+  reads as bounded because its `--allow-path` list is short is the specific misreading O5 exists to
+  prevent.
+- **Ladder position:** 1 — eliminate the triggering condition. Zero machinery, zero new mechanism,
+  and no stage.
+- **Allowed surfaces:** `.agents/skills/work-loop-v2/SKILL.md` — § *Opening a unit and writing the
+  brief*, the existing step, as prose inside it.
+- **Exclusions:** **no new field, artifact or stage** (core § 3 step 3; the P1-3 rejection). No
+  preflight. No numeric limit on deliverables, edits, files or minutes — a count would be gamed by
+  splitting one oversized unit into two oversized halves, and would give a false pass to a
+  single-file unit carrying an unbounded reasoning load. No change to the dispatcher: judging
+  proportionality is Codex's assessment, not transport (§ 7). **No change to the actor timeout**
+  (§ 3.3).
+- **Dependencies:** none mechanically. Shares a surface with U6 — both edit the brief-writing section
+  of the same skill — so whichever lands second rebases on the first. They are **not** merged: U11 is
+  P0 and U6 is P1, and merging would drag a P1 unit into the P0 boundary.
+- **Stop conditions:** if the rule cannot be stated without a new field or stage, stop and escalate —
+  that is the shape core § 3 forbids and § 2 already rejected once. If stating it requires a numeric
+  ceiling to be meaningful, stop and hand back: that is evidence the rule is not expressible as
+  guidance, which is a design finding worth more than a weak rule.
+- **Minimum evidence that can fail:** the changed text quoted against what it replaced, plus a
+  demonstration that the current text does not bound reasoning load — core § 3's *"good enough,
+  proceed"* judgment and `SKILL.md:450` bound *evidence sufficiency* and *scope*, and neither speaks
+  to how much work one timed hop may carry. Plus one applied check that could come out either way:
+  the incident-2 brief, as described in its report, is read against the new rule and must fail it. **A
+  rule that the known-oversized unit passes is not a rule.**
+- **What this evidence proves, and does not.** It proves the instruction now exists and would have
+  flagged the known case. It does **not** prove a future brief will be sized correctly — U11 is
+  written guidance, and `:920` excludes fixes that depend on a model remembering guidance from the
+  definition of durable. **This is the same limit U4 carries and it is stated, not hidden:** O5's
+  durability rests on Codex applying it at brief-writing time, and the only structural backstop is
+  the timeout itself, which is why § 3.3 refuses to relax it.
+- **Depends on hypotheses:** H7, H10 (§ 0.6), both unverified. **If route step 1 cannot support H10
+  from the run artifacts, U11 is withdrawn, not shrunk.**
+- **Verification budget:** inspection only. Zero AI invocations, zero harness runs.
 
 ### P1 units
 
@@ -692,6 +982,12 @@ Construction details are the leading candidate at the time of writing, not a loc
 #### U6 — Correction profile, nested-AI prohibition, and evidence pointers in the brief
 
 Three small instruction changes that share one surface and one review, and are wrong to split.
+
+**Scope note, v0.2.** Brief *sizing* is **not** in this unit — it was promoted to P0 as U11. U6 keeps
+the *correction*-round profile (item 1), which bounds what a correction may spend after a finding is
+frozen; U11 owns how large the original unit may be. The two are adjacent and are easy to conflate:
+one governs the second pass, the other the first. U6 and U11 edit the same section of the same skill,
+so they sequence rather than merge (see U11 *Dependencies*).
 
 - **Observable outcome:**
   1. A correction round carries an execution profile: only checks tied to the frozen findings, zero
@@ -761,7 +1057,7 @@ as intended, and this case exists because the gap between those two was crossed 
 | Evidence | Closes |
 |---|---|
 | Static inspection | That the text or logic says what it is supposed to say |
-| Simulated harness (red/green, argv capture, `--actor-cmd` hop shapes) | That the dispatcher **requests** the policy and **reports** the outcome correctly |
+| Simulated harness (red/green, argv capture, `--actor-cmd` hop shapes, **simulated timeout with partial effects**) | That the dispatcher **requests** the policy and **reports** the outcome correctly, including on a timeout where nothing advanced |
 | Independent verification from a clean environment | That the above holds when someone else runs it, not when Claude reports it |
 | The additional high-risk independent review (§ 6.5) | That a second party challenged the change itself, not only its test results |
 | One genuine representative attended use | That the change survives a real actor. **Only this closes the parent case** |
@@ -877,6 +1173,16 @@ stand in as evidence. Every candidate was checked against that.
 - **A correction "profile" enforced by the dispatcher** must be limited to the existing `--deadline`.
   The dispatcher may hold a clock; it may not decide what counts as a correction or which checks
   belong to a frozen finding.
+- **Brief sizing is not the dispatcher's judgment either (U11).** Whether a unit carries one dominant
+  deliverable is Codex's assessment, made before dispatch. The dispatcher may enforce a *clock*; it
+  may not weigh a brief. This is the same boundary that rejected the proportionality preflight as a
+  location, and U11 lands in the skill for the same reason.
+- **U4's recovery contract is addressed to Codex, not to the dispatcher.** Clauses 3–5 describe how a
+  stop is *read* and what may be proposed next. The dispatcher's behaviour is unchanged: it still
+  stops, still reports, still decides nothing. A dispatcher that offered a recovery unit would be
+  choosing which actor moves next, which core § 4 forbids.
+- **U2 item 4 reports; it does not recover.** Naming partial edits on a timeout is transport
+  reporting what a hop did. The dispatcher never repairs, reverts or commits them.
 - **`--allow-nested-actors N` is rejected outright** (§ 3.3). Beyond having no verified use case, an
   authorization count the dispatcher enforces would put it one short step from deciding *whether* a
   unit may spend model time — which is Codex's assessment and the operator's budget, not transport.
@@ -944,12 +1250,22 @@ choose.
 
 **The verified state, and the commands that produced it.** In the bound checkout, run evidence is
 fully tracked — 48 files on disk, 48 tracked, 0 untracked, 0 ignored; `git check-ignore` returns
-non-zero on the directory and `.gitignore` carries no matching pattern. In the incident checkout
+non-zero on the directory and `.gitignore` carries no matching pattern. In the incident-1 checkout
 `../ai-resources-diagnostics-workflow`, `git status --short` shows three run files from the
 2026-08-10 run still **untracked**, alongside an uncommitted state file. The concern is therefore not
 a repo-wide untracked state; it is a **per-checkout evidence-lifecycle gap that surfaces in linked
 worktrees** (claim 7). A framing whose facts could not have come out differently is not a framing —
 these did: the supplied candidate asserted the problem was in this checkout, and it is not.
+
+**Incident 2 supplies a second instance, verified the same way, and it strengthens this decision more
+than anything else in v0.2.** `git status --short` in `../ai-resources-eval` on 2026-08-11 shows all
+three run artifacts of run `20260811T101503-405170d5-84471` **untracked**, beside an uncommitted state
+file and uncommitted partial edits. Two linked worktrees, two incidents, the same exposure both
+times — and in both cases the untracked files are the **only** record of what the failing hop did.
+This is no longer an inference about what *might* happen in a short-lived worktree; it is the observed
+default in every linked worktree the dispatcher has been run in. It also raises the stakes on option
+2 below: had `runs/` been ignored, neither incident would be investigable, and this plan would have no
+evidence set at all.
 
 **Why it is a decision and not a defect.** The dispatcher's default log directory sits inside the
 checkout being driven (`dispatch.sh:385`) and inside its own `--allow-path` default (`:317`). Run
@@ -964,17 +1280,21 @@ default nobody has chosen deliberately.
 | **Ignore it; treat the checkout as ephemeral** | No growth, no noise. Honest about run files being disposable | The 2026-08-10 evidence would not exist. This case would be unresolvable | One `.gitignore` line. Reversed by removing it — but evidence lost while it was in force does not come back |
 | **Track in the canonical checkout, ignore in linked worktrees** | Matches the observed asymmetry: the canonical checkout keeps evidence, throwaway worktrees do not accumulate it | Two behaviours to understand, and the worktree case is precisely the one where evidence was lost | A worktree-local `.git/info/exclude` rather than a tracked `.gitignore`, so the rule does not propagate. Reversed per worktree |
 
-**What this plan recommends, and does not decide.** Option 1, on the strength of the case at hand: the
-only reason this incident could be investigated at all is that some evidence was preserved, and the
-option that reliably preserves it costs repository growth — the cheapest of the three costs on the
-table. **Option 3 is the trap:** it is the most sophisticated-looking answer and it optimises exactly
-the wrong side, keeping evidence where loss was never observed and discarding it where loss actually
-happened. The operator decides.
+**What this plan recommends, and does not decide.** Option 1, and incident 2 strengthens rather than
+merely repeats the argument: the only reason **either** incident can be investigated is that evidence
+happened to survive in a working tree nobody has cleaned up yet. The option that reliably preserves it
+costs repository growth — the cheapest of the three costs on the table, and now measured against two
+near-misses rather than one. **Option 3 is the trap:** it is the most sophisticated-looking answer and
+it optimises exactly the wrong side, keeping evidence where loss was never observed and discarding it
+in linked worktrees — which is now, on two observations out of two, the only place loss has ever been
+at risk. The operator decides.
 
 **Boundary, in every case.** No `.gitignore` change and no `git add` of run evidence happens before
-this decision is taken. No change to `dispatch.sh:385`. No cleanup of existing run evidence in any
-checkout — the incident files are inputs to the discovery unit (§ 0.5), and deleting them would
-foreclose route step 1.
+this decision is taken. No change to `dispatch.sh:385`. No cleanup of existing run evidence in
+**either** incident checkout — those files are inputs to the discovery unit (§ 0.5), and deleting them
+would foreclose route step 1. In `../ai-resources-eval` the caution is sharper: uncommitted partial
+edits from the eval repair sit beside the run artifacts, so a broad `git add` there would commit
+work that belongs to a different task and is explicitly out of scope (§ 0.5, exclusions).
 
 ---
 
@@ -999,9 +1319,30 @@ re-scoped. The postmortem's "current repository state" was found **stale**. In t
 the plan's own leading proposal lost its override mechanism (§ 3.3) and its overclaim (§ 3.4), and the
 package became a set of outcomes with construction deferred. In this revision, the plan's central
 outcome statement was **narrowed against its own § 3.4** (finding 3), its causal spine was demoted to
-hypothesis (finding 2), and one of its ten units was **deleted rather than rewritten** (finding 6). A
-plan that had agreed with every input, including its own two prior versions, would be evidence of
-nothing.
+hypothesis (finding 2), and one of its ten units was **deleted rather than rewritten** (finding 6).
+
+**Incident 2 was also not accepted wholesale, and the places it was resisted are the test.** Its
+report is a lead, not proof (`:435`), so its causal claims entered as **H7–H10, unverified**, and the
+units resting on them carry withdrawal conditions rather than confidence. Its most quotable lesson —
+*a bounded path list does not bound cognitive workload* — is classified **PROPOSED**, the weakest
+class in the register, because the report asserts it rather than deriving it from the artifacts, and
+U11 is withdrawn outright if it does not survive. Its Lane B qualification was **declined**: a second
+incident in 24 hours does not meet the "third compensating-control round" trigger, and § 0.2 says so
+rather than banking the trigger. Its suite baselines were **excluded**, not imported as corroboration
+for this plan's own recorded figure, even though they would have been convenient. And the obvious
+remedy it invites — a longer timeout — is **rejected** in § 3.3 as an inversion of the only control
+that worked.
+
+**The strongest available criticism of this plan is its own composition.** It now holds two incidents,
+five P0 outcomes and eight live units, while proposing a rule (O5) that units should be small. That is
+a real tension and it is not resolved by asserting the plan is a plan rather than a unit. What answers
+it is that the *dispatched work* stays sized: route step 1 is one deliverable over a read-only evidence
+set (§ 0.4), the verification budget applies U11 to this plan's own units before anything is
+dispatched (§ 5), and U7 was deleted rather than kept. If a future reader finds an oversized unit
+dispatched from this plan, that is the plan refuting itself, and § 5 says so in those words.
+
+A plan that had agreed with every input — its own two prior versions, an independent review and a
+second incident report — would be evidence of nothing.
 
 ---
 
@@ -1032,6 +1373,9 @@ nothing.
 | `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md` (status table; 1a; 1g; § Deferred) | § 8 items 5–6; U8, U9 |
 | `logs/improvement-log.md`, 2026-08-02 entry (slice-1 harness red baseline) | § 0.5 tests — recorded to prevent conflation with `dispatch.test.sh` |
 | `../ai-resources-diagnostics-workflow` (git state, `9a8399c`, `ea77d66`, untracked run files) | Claim 7; stale-source correction; § 0.5; § 8 decision 2 |
+| Incident-2 report, `~/.codex/attachments/9f859b60-…/pasted-text.txt` (242 lines, read in full) — oversized-unit diagnosis `:133`, rigid recovery semantics `:156`, bounded-path-list principle `:228`, partial work `:108-119`, run artifacts `:121-129` | § 0.0 second input; § 0.5 evidence; **§ 0.6 H7–H10**; § 3.2 rung 1; § 3.3; § 4 (O2, O4, O5); U2 item 4; U4 clauses 3–5; U11 |
+| `../ai-resources-eval` — worktree, branch `session/2026-08-09-eval`, HEAD `198ceec6` unmoved, state file, three **untracked** run artifacts. **Verified by execution 2026-08-11**, not taken from the report | § 0.5 anchors and evidence; § 8 decision 2 second instance |
+| `dispatch.sh:133` (`21 ACTOR_TIMEOUT` in the exit taxonomy) — **verified by inspection** | § 0.5; § 4 (O2); U2 item 4 |
 | Workspace `CLAUDE.md` § Independent Review Rule | § 6.5 conflict and its resolution |
 | Independent SOP-conformance review of v0.1, 2026-08-11 (six findings) | § 0.0; § 0.3; § 0.4 step 4; § 0.5; § 0.6; § 3.1; § 4; U1; U7 retirement; § 6.5; § 8 decision 2 |
 
@@ -1048,17 +1392,28 @@ That recommendation started at the design stage without having passed Gate 2 or 
 a mechanism (`--allow-nested-actors`) that no evidence justified. Recommending construction before the
 failure is established is the same error in miniature that this case exists to correct.
 
-**Why failure proof first.** It is cheap — the evidence already exists in the four dispatcher run
-logs, the hop captures, the incident state file and the incident worktree's Git history. It requires
-no live reproduction, no dispatcher run and no model invocation. And it is the only step that can
-disprove the current diagnosis: if the preserved logs show the cost came from a single long session
-rather than from nested invocations, then O1 is aimed at a symptom and the whole package needs
-reframing (§ 0.6, § 3.4). Building first would foreclose that.
+**Why failure proof first.** It is cheap — the evidence already exists for both incidents, in the run
+logs, the hop captures, the two state files and the two worktrees' Git history. It requires no live
+reproduction, no dispatcher run and no model invocation. And it is the only step that can disprove the
+current diagnosis, which now has two independent ways to fail: if incident 1's preserved logs show the
+cost came from a single long session rather than nested invocations, O1 is aimed at a symptom; if
+incident 2's artifacts do not support H10, O5 and U11 are withdrawn (§ 0.6, § 3.4). Building first
+would foreclose both.
 
-**One thing to do before that unit opens.** The evidence it depends on is loss-exposed — three run
-files and a state file exist only in the incident checkout's working tree, uncommitted (§ 0.5). They
-are preserved first, without staging unrelated work in that checkout. Losing the evidence would move
-this case to *Not confirmed* permanently.
+**One thing to do before that unit opens, and it is now more urgent than in v0.1.** The evidence is
+loss-exposed in **two** working trees: three run files plus an uncommitted state file in
+`../ai-resources-diagnostics-workflow`, and three run files plus an uncommitted state file and
+uncommitted partial edits in `../ai-resources-eval` (§ 0.5, verified 2026-08-11). They are preserved
+first, without staging unrelated work in either checkout — and in the eval worktree, without touching
+the partial edits, which belong to a different task. Losing either set would move this case to *Not
+confirmed* permanently, and the eval worktree is the more fragile of the two because it is an active
+task surface that someone may reasonably clean up.
+
+**Sizing this unit is the first application of its own rule.** Two incidents in one discovery unit is
+the composition shape incident 2 is about. It stays one unit only because its deliverable is single —
+establish what happened — and its evidence set is read-only with no construction of verification
+machinery (§ 0.4 step 1). If it does not fit one bounded hop, it splits by incident. It does not
+borrow a longer timeout (§ 3.3).
 
 **When construction does come, O1 is the first outcome to pursue**, for the reason the first version
 gave and which survives: it is the smallest change on the list, it reuses a mechanism that already
