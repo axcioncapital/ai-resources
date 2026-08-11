@@ -1988,3 +1988,45 @@ Proposal: author `AGENTS.md` **for Codex** rather than deriving it. It needs onl
 **Interim mitigation applied, not a substitute for the fix:** the Codex session prompt (`session-S1.md`) now carries explicit "write one file only" and "do not commit" guards in-prompt, so the prompt does not rely on `AGENTS.md` being correct.
 
 **Target files:** `projects/axcion-sector-intelligence/AGENTS.md` and each worktree copy; check any other Codex-enabled project for the same derived-by-find-replace pattern.
+
+---
+
+## `research-extract-creator` does not implement the ladder-depth field its consumer contract declares
+
+- **Status:** logged (pending)
+- **Severity:** medium — a two-end contract is broken at the producer end; the declared downstream consumer (`cluster-memo-refiner` Check 9 auto-downgrade) receives nothing.
+- **Category:** shared skill (`ai-resources/skills/research-extract-creator/`) + workflow reference template (`source-class-hierarchy.template.md`)
+- **Source:** `axcion-sector-intelligence` / `architecture-engineering-services` worktree, 2026-08-10, found at Stage-2 Step 2.4 across all eleven extracts of unit F6.
+
+**The finding.** `reference/source-class-hierarchy.md` line 7 names `research-extract-creator` as a consumer with a "ladder-depth logging requirement (the depth field)", and the file's Inert-Fields Ledger marks it **active**. The canonical `ai-resources/skills/research-extract-creator/SKILL.md` contains **zero** occurrences of "ladder" or "depth". The field is declared at the consumer end and never implemented at the producer end.
+
+**How it surfaced.** Not by one extract failing — by **all eleven** F6 extracts lacking the field, which is the signature of a template gap rather than an extraction error. Two independent Step-2.4 verifiers (Q4 and Q6) reached the same conclusion separately and both recommended checking batch-wide rather than re-extracting a single question.
+
+**Why it has been invisible.** Practical exposure in F6 is near zero — nearly every source sits at ladder step 1, so a missing depth field costs nothing this unit. It is the same failure class as a rule that quietly closes a path: nothing downstream reports a gap, because the auto-downgrade simply never fires. A unit whose evidence genuinely sits deep on the ladder would take a silent grading error.
+
+**Also observed alongside it.** Q4's verifier noted the extracts carry **no linkage field** either, though the Q4-A03 evidence rule asks for one and the raw report supplies it. Same shape — worth checking whether the two gaps share a cause.
+
+**Proposal.** Either implement the depth field in `research-extract-creator` (per-claim: which ladder step the supporting source sits at) and add it to `references/extract-template.md`, or drop the claim from `source-class-hierarchy.template.md` line 7 and the Inert-Fields Ledger. Do not leave the contract asserted at one end only. Route via `/improve-skill`, not a project-local edit.
+
+**Target files:** `ai-resources/skills/research-extract-creator/SKILL.md`, `ai-resources/skills/research-extract-creator/references/extract-template.md`, and the `source-class-hierarchy.template.md` consumer list + Inert-Fields Ledger.
+
+---
+
+## `/run-execution` Step 2.4 delegates to `qc-gate`, which cannot run the skill that step invokes
+
+- **Status:** logged (pending)
+- **Severity:** medium — the step as written is unexecutable as specified; every session running it must either deviate or silently under-run the QC.
+- **Category:** workflow template (`ai-resources/workflows/research-workflow/`) — command body, not the skill
+- **Source:** `axcion-sector-intelligence` / `architecture-engineering-services` worktree, 2026-08-10, hit while running Stage-2 Step 2.4 for unit F6.
+
+**The finding.** `/run-execution` Step 2.4 instructs: "delegate to qc-gate agent". The `qc-gate` agent definition is `tools: Read` / `model: sonnet`. The skill that step tells it to apply, `research-extract-verifier`, declares `model: opus`, `effort: high`, `allowed-tools: Read, Write` — and its Output Protocol requires writing one verification report file per session. **A Read-only agent cannot produce the step's required artifact**, and the tier is a mismatch for adversarial verification work that the skill itself rates `high`.
+
+**What the F6 session did.** Used fresh-context `general-purpose` agents at Opus instead, one per question. Context isolation — the actual substance of the QC Independence Rule — was preserved: no verifier saw the extraction session's context, and none reviewed an artifact it produced. The deviation is recorded in the F6 Step-2.4 checkpoint.
+
+**The recommended fix, and the branch NOT recommended.** Correct the **Step 2.4 wording** in the command to delegate to a Write-capable Opus agent (or to name the skill's own declared tier and let the caller resolve the agent). Do **not** re-tier `qc-gate` itself: that agent is the generic evaluator invoked by every `delegate-qc` step across the whole pipeline, so raising it to Opus + Write changes far more than the one step that is actually broken, and would grant write capability to steps that are deliberately read-only.
+
+**Scope caution.** Both `qc-gate.md` and `run-execution.md` exist as per-worktree copies mirrored across roughly ten sibling unit worktrees. Fixing either locally creates template drift. The fix belongs upstream in `ai-resources/workflows/research-workflow/` and should then propagate.
+
+**Worth checking while there:** whether any *other* `delegate-qc` step in the workflow names a skill whose declared `allowed-tools` exceed `qc-gate`'s. This is unlikely to be the only instance.
+
+**Target files:** `ai-resources/workflows/research-workflow/commands/run-execution.md` (Step 2.4), and an audit of the other `delegate-qc` steps in the same workflow.
