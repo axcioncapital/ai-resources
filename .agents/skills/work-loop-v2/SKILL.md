@@ -170,6 +170,27 @@ Sending the operator to Claude when the turn is theirs stalls the loop as surely
 
 A worktree is a cost, not a default. The table is the policy — do not build a decision procedure on top of it.
 
+**The checkout declares its writer, and you write the declaration.** One gitignored file per checkout, `logs/work-loop/.owner`, holds one task id and the date it was claimed. **Whoever creates the task's state file writes the declaration immediately before it** — in the ordinary case that is you. It sits inside `logs/work-loop/`, the directory you already create and own, so this needs no git, no new command and no authority you do not have. You still never run git.
+
+**One sequence, both lanes:**
+
+1. The operator brings the request to you (core § 4).
+2. Apply the isolation table above. Where it says **Local**, go straight to step 4 in the current checkout. Where it says isolate, end your reply with the Next line you already write, naming `/new-worktree-session` in Claude — that command creates the worktree and opens the window. The operator then opens you on that checkout. **This is the one residual manual step, and only on the isolated path.**
+3. Verify the working directory you are actually in, as always.
+4. Read `logs/work-loop/.owner`:
+   - **absent, or it already names this task** — write it (`{task-id} {YYYY-MM-DD}`, one line), then write the first brief into `logs/work-loop/{task-id}.md`.
+   - **it names a different open task** — **refuse and write nothing.** Say which task holds the checkout, and give the operator both remedies: close that task, or use another checkout.
+   - **it names a task whose state file in this checkout is closed (`turn: operator`)** — stale. Say so and replace it.
+   - **unreadable, or holding more than one id** — refuse and report. Do not guess.
+
+Where a checkout carries `logs/scripts/work-loop-owner.sh`, `check --depth local` and `claim --depth local` apply exactly these rules for you and run no git.
+
+**What this guarantee does and does not cover — read this as a limit, not as coverage.** Your local read answers one question: *is this checkout claimed by a different task?* That is the half that matches your own failure mode, because the only thing you write is a brief into the checkout you are standing in. You **cannot** establish that your task is claimed in another checkout, or that its state file is replicated — both need `git worktree list`, and you run no git. Those are established by the actors that may: Claude at Step 1, and the dispatcher at admission. Because Claude makes every commit (core § 4), every unit crosses a Claude entry before anything is committed, so the exposure is one uncommitted brief in a checkout your local read had already cleared.
+
+**Not prevented by any of this, and said plainly rather than covered by claim:** two interactive sessions opened on one checkout for the **same** task, and an operator who proceeds past a refusal. Your enforcement is instruction-borne; only the dispatcher's is exit-code-borne.
+
+**An open task leases its checkout until it closes.** That is the price of continuity between handoffs, and it is deliberate: a session-scoped lease cannot survive a session ending, and surviving one is the whole point. The cost is bounded and visible — starting a *different* task in that checkout is refused until this one closes. Ordinary serial reuse is unaffected, because closure clears the declaration.
+
 **When a new Codex task starts at all.** Only where the thread has ended or must end: a fresh session, a compaction that lost the thread, or a deliberate hand-off. **Ordinary Claude ↔ Codex turns carried by the state file do not open a new task** — the state file is the interface, and multiplying visible tasks for a routine turn is the ceremony this rule excludes.
 
 - **Prefer a genuinely fresh task over a transcript-preserving fork.** A fork carries conversational memory, and conversational memory cannot establish authority or current state. A fresh task is forced to read the durable sources, which is the property wanted.

@@ -47,6 +47,43 @@ built from it.
 | `--status` | off — read-only report; takes no lock, writes nothing; answers IN FLIGHT / STALE LOCK / UNKNOWN — CANNOT INSPECT |
 | `--actor-cmd CMD` | none |
 
+### The two locks, and the declaration they do not replace
+
+The dispatcher takes **two** locks, both under the repository's **Git common directory**
+(`<common>/work-loop-dispatch-locks/`) — one keyed by task, one keyed by checkout. A second
+dispatcher is refused (exit 17) if **either** is held, and the message names the conflicting task or
+checkout rather than printing a hash.
+
+This replaced a single composite `sha256("$CHECKOUT|$TASK")` key under `${TMPDIR:-/tmp}`, which
+failed in two independent ways:
+
+- **`${TMPDIR}` is caller-controlled.** Two dispatchers launched with different `TMPDIR` roots
+  computed the same key beneath different parents and never contended at all. On macOS, per-session
+  `TMPDIR` values are ordinary, not exotic.
+- **A composite key enforces neither resource alone.** Two *different* tasks in *one* checkout hash
+  to two different keys, so both were admitted — and once they share a working tree and index,
+  either can sweep the other's paths into a commit.
+
+The locks govern **live process** exclusivity only. Open-task exclusivity is a different question
+with a different lifetime, and it belongs to `logs/work-loop/.owner` (see
+`logs/scripts/work-loop-owner.sh`): a lock cannot outlive its process, and continuity between
+handoffs must. The dispatcher reads that declaration at admission via the shared helper, at `repo`
+depth, and refuses with **exit 33** (this task belongs to another checkout, or this checkout is held
+by another task) or **exit 34** (ownership is ambiguous — typically a state file replicated across
+checkouts with none declaring it). Nothing is launched in either case, so nothing is committed.
+
+**The check fails closed.** A checkout that does not carry the helper — or carries one that cannot be
+read or exits with anything other than `0`/`3`/`4` — gets **exit 35** and launches nothing. It does
+*not* skip with a visible line, which is what it did until 2026-08-11. The distinction the exit code
+has to preserve is between *a check ran and found nothing wrong* and *no check ran*: only the first
+is evidence, and the checkouts least likely to carry the helper — older siblings, partial copies —
+are exactly the ones most likely to hold a conflicting writer. This is deliberately unlike the
+session-identity init, which does skip when its allocator is absent: that one arms a tripwire, while
+this one is the only thing standing between two writers and one checkout.
+
+`--status` reports both: the checkout's declaration and whether the checkout lock is held, alongside
+the existing three-valued task-lock verdict. It still takes no lock and writes nothing.
+
 ### The four modes
 
 - **`--help`** — prints the header block and exits. Validates nothing, launches nothing.
@@ -473,7 +510,7 @@ where the code's meaning actually differs.
 | `14` | `IDENTITY_MISMATCH` | dry-run, loop | No readable `task:` frontmatter, or the filename stem differs from `task:`. |
 | `15` | `BAD_TURN` | dry-run, loop | `turn:` is absent or is not one of `codex`, `claude`, `operator`. (The same code guards an unlaunchable actor inside the loop — a defensive branch `validate_state` should already have excluded.) |
 | `16` | `FOREIGN_STAGED` | loop only | Something was already staged before a hop. The spike stops rather than sweeping it into a commit. |
-| `17` | `LOCK_HELD` | dry-run, loop | Another dispatcher already holds this checkout + task. |
+| `17` | `LOCK_HELD` | dry-run, loop | Another dispatcher already holds this **task**, or is already running in this **checkout**. Two locks are checked, both under the repository's Git common directory; either one being held refuses the run, and the message names the conflicting task or checkout. |
 | `18` | `FOREIGN_UNSTAGED` | loop only | Out-of-allowlist working-tree changes were **already present** before a hop. The before/after delta cannot see these — both snapshots contain them — so they used to pass straight through. `--dry-run` reports them instead of failing. |
 | `19` | `GIT_HAZARD` | loop only | The checkout holds a Git `index.lock`, or a merge, rebase, cherry-pick or revert is in progress. A second writer would compound it. `--dry-run` reports instead of failing. |
 | `20` | `ACTOR_FAILED` | loop only | The actor exited non-zero, or the Codex/Claude binary was not executable or not resolvable. A failure that left the repository **provably unchanged** (state `sha256`, `HEAD`, foreign working tree and the state file's committed-ness all identical) is retried **once** first; a failure after any change is never retried. |
@@ -486,6 +523,11 @@ where the code's meaning actually differs.
 | `28` | `INTERRUPTED` | loop only | `SIGINT`/`SIGTERM`. Every descendant reachable by the three handles is terminated and **verified gone** before the lock is released and the run stops — the success line names those handles rather than claiming the tree is empty (see Safety boundaries for the shape that still escapes, which is a live Phase 2 blocker). A descendant that could not be confirmed dead is named in a `WARNING:` line; a sweep that could not run at all prints `teardown UNVERIFIED` with the reason. In both cases the lock is **pinned**, not released. Read that before treating the halt as clean. **Never retried** — the signal may have landed after an effect nobody observed, so the state file and `git status` are where the operator has to look. |
 | `29` | `BUDGET_EXHAUSTED` | loop only | `--deadline` expired: either the loop refused to launch the next hop, or a running actor was terminated at the clock. **Not completion.** Resumable — the state file and Git are untouched by the stop — but never retried automatically. Worst-case overrun is `1s poll + 5s TERM→KILL grace + 2s KILL settle + verification census + reaping`, roughly 9s — not exact-to-the-second. It was ~6s before 2026-08-07; whole-tree teardown added the settle window and the census that confirms the tree is actually gone. |
 | `30` | `UNEXPECTED_COMMIT` | loop only | An actor **committed** paths outside the allowlist. Detection, not prevention: the commit already exists, and the value is stopping rather than compounding it over the rest of an unattended run. Distinct from `24`, which is the working-tree case, because the recovery differs — `24` is reverted from the working tree, `30` from history. |
+| `31` | `UNATTENDED_UNAVAILABLE` | loop only | `--unattended` was requested and the contained profile cannot be delivered. Nothing launches. |
+| `32` | `IDENTITY_INIT_FAILED` | loop only | The headless session-identity init started in a checkout that carries the allocator and could not complete. Nothing launches. |
+| `33` | `OWNERSHIP_REFUSED` | dry-run, loop | `logs/scripts/work-loop-owner.sh` refused this task in this checkout: the checkout is claimed by a different open task, or this task is claimed by a different checkout. Distinct from `17` because the remedy differs — `17` means *wait*, `33` means *you are in the wrong checkout*. Nothing launches, so nothing is committed. A checkout without the helper is `35`, not this. |
+| `34` | `OWNERSHIP_AMBIGUOUS` | dry-run, loop | Ownership cannot be established — typically the task's state file is replicated across checkouts with no declaration, or a declaration is unreadable or holds more than one id. Deliberately **not** resolved by guessing: the checkout contacted first must never claim a replicated open task. The operator names the owner. Nothing launches. |
+| `35` | `OWNERSHIP_UNAVAILABLE` | dry-run, loop | The ownership check could not be run at all: `logs/scripts/work-loop-owner.sh` is missing, unreadable, or exited with something other than `0`/`3`/`4`. **Fails closed** — nothing launches. Distinct from `33`/`34`, which mean a check *did* run: the remedy here is to install or repair the helper, not to move checkout. |
 
 > **Why `28`–`30` exist.** `27` is deliberately unused: it was reserved in plan v0.1 for
 > `--expect-turn`, which v0.2 dropped (unattended loop mode makes the repeating-courier shape it
@@ -531,11 +573,21 @@ bash dispatch.test.sh
 DISPATCH_BIN=/path/to/dispatch.sh bash dispatch.test.sh
 ```
 
+The concurrency and ownership behaviour has a second, separate harness — the R2 acceptance matrix
+`T1..T13`, plus `F1..F3` for the 2026-08-11 correction round (an ownership check that cannot run must
+refuse rather than pass; a malformed declaration is ambiguous and survives; a contested claim on one
+free checkout is indivisible). It exercises the real helper, real linked worktrees, real lock
+directories and this dispatcher:
+
+```bash
+bash logs/scripts/work-loop-owner.test.sh
+```
+
 The suite builds throwaway sandbox checkouts under `TMPDIR` and removes them on exit. It touches no
 real repository. It ends with a summary line and exits `1` if any case failed:
 
 ```
-pass=375 fail=0  (all cases SIMULATED — no live product transport)
+pass=389 fail=0  (all cases SIMULATED — no live product transport)
 ```
 
 > **This count drifts, twice over now.** It read `pass=69` until 2026-08-06, when the suite actually
@@ -545,7 +597,9 @@ pass=375 fail=0  (all cases SIMULATED — no live product transport)
 > three-state fix on 2026-08-07 added 22 to reach **171**, the pid-validation correction that
 > followed it added 27 more to reach **198**, the 1d contained-profile integration the same day added
 > 75 to reach **273**, the 1d correction later that day added 11 to reach **284**, the 1a teardown
-> work took it to **368**, and P0-F's attended permission-mode assertions added 7 to reach **375**. A
+> work took it to **368**, P0-F's attended permission-mode assertions added 7 to reach **375**, the
+> R2 lock relocation added 6 to reach **381**, and case 12d's fail-closed ownership admission added 8
+> to reach **389**. A
 > hand-maintained count drifts silently every time; treat the number as documentation and the run as
 > the evidence. **The correction was itself an instance of the drift:** the red-pair figure recorded
 > alongside this one read `212/22` when the current test file actually returns `216/24` against the
