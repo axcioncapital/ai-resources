@@ -247,6 +247,18 @@ run_dispatch "$d" ping-task --max-hops 2 --actor-cmd "$FLIP"
 expect_rc 23 "$RC" "exits 23 at the hop limit" "$OUT"
 [ "$(calls "$d")" = "2" ] && ok "stopped after exactly 2 launches" || bad "stopped after exactly 2 launches" "calls=$(calls "$d")"
 
+echo
+echo "Case 8b — a post-launch hop-limit stop reports the last hop's partial effect"
+d="$(new_sandbox)"; state_file "$d" "limit-effects-task" "codex"
+run_dispatch "$d" limit-effects-task --max-hops 1 --actor-cmd "$FLIP"
+expect_rc 23 "$RC" "exits 23 after the single allowed launch" "$OUT"
+printf '%s' "$OUT" | grep -q "PARTIAL FILE EFFECTS — since launch" \
+  && ok "the post-launch hop-limit stop carries partial effects" \
+  || bad "the post-launch hop-limit stop carries partial effects" "$OUT"
+printf '%s' "$OUT" | sed -n '/PARTIAL FILE EFFECTS/,$p' | grep -Fq "logs/work-loop/limit-effects-task.md" \
+  && ok "the Codex handoff left by the launched hop is named" \
+  || bad "the Codex handoff left by the launched hop is named" "$OUT"
+
 # ================================================================== case 9
 echo
 echo "Case 9 — foreign staged state stops the spike"
@@ -2613,6 +2625,40 @@ printf '%s' "$OUT" | grep -q "NOT a violation" \
   || bad "control: the state file itself is untouched" "$(git -C "$d" status --porcelain)"
 
 echo
+echo "Case 41b — O2 attribution: only what the hop changed SINCE LAUNCH is reported"
+# The mechanism under test is the pre-launch snapshot, not the post-stop scan.
+#
+# Two allowed files are dirty BEFORE the actor launches — an ordinary uncommitted
+# Codex handoff sitting on disk. The hop appends to one and never opens the other.
+# A post-stop scan alone cannot tell them apart, because both are dirty when the
+# stop is written; reporting the untouched one as "work the hop did" is the same
+# false attribution O2 exists to remove, one file over.
+#
+# BOTH assertions are load-bearing and they fail against DIFFERENT wrong answers.
+# The negative one fails a plain post-stop scan. The positive one fails a
+# subtract-by-path-name implementation: this file was already dirty, so its
+# porcelain status line is byte-identical before and after, and only pairing that
+# line with the worktree blob hash makes the hop's additional edit observable.
+d="$(new_sandbox)"; state_file "$d" "attrib-task" "claude"
+IMPL="$(seed_impl "$d")"
+UNTOUCHED="plans/work-loop-v2-v0.2/handoff-automation-spike/untouched.txt"
+printf 'baseline\n' >"$d/$UNTOUCHED"
+git -C "$d" add "$UNTOUCHED" >/dev/null 2>&1
+git -C "$d" commit -qm "seed untouched" >/dev/null 2>&1
+printf 'pre-existing Codex work\n' >>"$d/$IMPL"
+printf 'pre-existing Codex work\n' >>"$d/$UNTOUCHED"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task attrib-task --log-dir "$d/runs" \
+      --carry-one --timeout 3 \
+      --actor-cmd 'printf "the hop added this\n" >> "$WL_CHECKOUT/'"$IMPL"'"; sleep 30' 2>&1)"; RC=$?
+expect_rc 21 "$RC" "the hop is stopped by the actor timeout" "$OUT"
+partial_section "$OUT" | grep -Fq "$IMPL" \
+  && ok "a FURTHER edit to an already-dirty file IS attributed to the hop" \
+  || bad "a FURTHER edit to an already-dirty file IS attributed to the hop" "$(partial_section "$OUT")"
+partial_section "$OUT" | grep -Fq "$UNTOUCHED" \
+  && bad "pre-existing dirt the hop never opened is NOT attributed to it" "$(partial_section "$OUT")" \
+  || ok "pre-existing dirt the hop never opened is NOT attributed to it"
+
+echo
 echo "Case 42 — the FALSE exit 25: an already-dirty state file Claude never touched"
 # Incident 1's claim 2a. turn: claude with an uncommitted state file is the
 # EXPECTED Codex handoff and is accepted at startup. If the hop then changes
@@ -2633,6 +2679,9 @@ printf '%s' "$OUT" | grep -q "Claude edited logs/work-loop/falsedirty-task.md" \
 printf '%s' "$OUT" | grep -q "Addressed to the OPERATOR" \
   && ok "the stop names its addressee, so Codex cannot read it as its own instruction" \
   || bad "the stop names its addressee" "$OUT"
+printf '%s' "$OUT" | grep -q "PARTIAL FILE EFFECTS — since launch" \
+  && bad "an untouched pre-existing Codex handoff is not attributed to Claude" "$OUT" \
+  || ok "an untouched pre-existing Codex handoff is not attributed to Claude"
 AFTER_SUM="$(shasum -a 256 "$d/logs/work-loop/falsedirty-task.md" | cut -d' ' -f1)"
 [ "$BEFORE_SUM" = "$AFTER_SUM" ] \
   && ok "control: the state file really is byte-identical across the hop" \
@@ -2649,6 +2698,21 @@ expect_rc 25 "$RC" "an actual uncommitted Claude edit is still 25" "$OUT"
 printf '%s' "$OUT" | grep -q "CLAUDE DID NOT TOUCH IT" \
   && bad "25 does not borrow 36's wording" "$OUT" \
   || ok "25 does not borrow 36's wording"
+
+echo
+echo "Case 42c — exit 36 reports other allowed work without claiming the hop did nothing"
+d="$(new_sandbox)"; state_file "$d" "state-noop-work-task" "claude"
+printf '\nuncommitted Codex handoff text\n' >> "$d/logs/work-loop/state-noop-work-task.md"
+IMPL="$(seed_impl "$d")"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task state-noop-work-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd 'printf "other allowed work\n" >> "$WL_CHECKOUT/'"$IMPL"'"' 2>&1)"; RC=$?
+expect_rc 36 "$RC" "an untouched pre-dirty state file still exits 36" "$OUT"
+partial_section "$OUT" | grep -Fq "$IMPL" \
+  && ok "exit 36 names other allowed work changed by the hop" \
+  || bad "exit 36 names other allowed work changed by the hop" "$OUT"
+printf '%s' "$OUT" | grep -q "hop therefore accomplished no observable transition" \
+  && bad "exit 36 no longer claims the whole hop did nothing" "$OUT" \
+  || ok "exit 36 no longer claims the whole hop did nothing"
 
 echo
 echo "Case 43 — O3: a permission denial becomes its own stop, naming tool and target"
@@ -2742,6 +2806,18 @@ expect_rc 0 "$RC" "the well-behaved hop still completes" "$OUT"
 printf '%s' "$OUT" | grep -q "PARTIAL FILE EFFECTS" \
   && bad "a clean hop prints no partial-effects section" "$OUT" \
   || ok "a clean hop prints no partial-effects section"
+
+echo
+echo "Case 47 — malformed post-hop state still reports partial effects"
+d="$(new_sandbox)"; state_file "$d" "malformed-after-task" "claude"
+IMPL="$(seed_impl "$d")"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task malformed-after-task --log-dir "$d/runs" \
+      --carry-one \
+      --actor-cmd 'printf "partial implementation\n" >> "$WL_CHECKOUT/'"$IMPL"'"; awk "NR==3{print \"turn: broken\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+expect_rc 15 "$RC" "malformed post-hop state exits 15" "$OUT"
+partial_section "$OUT" | grep -Fq "$IMPL" \
+  && ok "post-hop validate_state failure reports the allowed implementation edit" \
+  || bad "post-hop validate_state failure reports the allowed implementation edit" "$OUT"
 
 # ==================================================================== done
 echo

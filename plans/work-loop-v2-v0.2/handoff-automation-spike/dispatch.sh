@@ -329,6 +329,13 @@ CUR_ACTOR=""
 # The capture file the most recent launch_actor() actually wrote (O3).
 LAST_CAPTURE=""
 
+# The allowlisted working-tree snapshot taken immediately before the most recent
+# actor launch. Once set, it remains the comparison point until the next launch,
+# so a post-hop guard (including a malformed state file or hop limit) can still
+# report only effects attributable to that launched hop.
+HOP_BASELINE_READY=0
+HOP_ALLOWED_SNAPSHOT=""
+
 # The log directory's path relative to the checkout, when it sits inside one.
 # Set where the allowlist is extended to cover it, and read by allowlisted_dirty()
 # so the dispatcher's own evidence is not reported back as the actor's work (O2).
@@ -336,8 +343,13 @@ LOG_REL=""
 
 die() { # code, message
   local code="$1"; shift
-  printf 'STOP [%s] %s\n' "$code" "$*" >&2
-  [ -n "${RUN_LOG:-}" ] && printf 'STOP [%s] %s\n' "$code" "$*" >>"$RUN_LOG"
+  local msg="$*"
+  # Structural O2 guarantee: after any actor launch, every nonzero exit carries
+  # the partial-effect delta. Early validation failures remain short because no
+  # launch baseline exists yet.
+  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] && msg="$msg$(partial_effect_block)"
+  printf 'STOP [%s] %s\n' "$code" "$msg" >&2
+  [ -n "${RUN_LOG:-}" ] && printf 'STOP [%s] %s\n' "$code" "$msg" >>"$RUN_LOG"
   release_lock
   exit "$code"
 }
@@ -1487,7 +1499,7 @@ staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort
 # not merely noisy: it is the same class of false statement O2 exists to remove.
 allowlisted_dirty() {
   local line p
-  git -C "$CHECKOUT" status --porcelain 2>/dev/null | while IFS= read -r line; do
+  git -C "$CHECKOUT" status --porcelain --untracked-files=all 2>/dev/null | while IFS= read -r line; do
     p="${line:3}"
     p="${p%\"}"; p="${p#\"}"
     [ "$p" = "logs/session-notes.md" ] && continue
@@ -1502,6 +1514,27 @@ allowlisted_dirty() {
   done | sort
 }
 
+# Fingerprint every currently dirty allowed path. The porcelain status alone is
+# not enough: if a file was already dirty before launch and the actor edits it
+# again, its status line can remain byte-for-byte identical. Pairing that line
+# with the worktree blob hash makes the actor's additional edit observable while
+# leaving untouched pre-existing handoffs out of the report.
+allowlisted_dirty_snapshot() {
+  local line p oid
+  allowlisted_dirty | while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    p="${line:3}"
+    p="${p%\"}"; p="${p#\"}"
+    if [ -e "$CHECKOUT/$p" ] || [ -L "$CHECKOUT/$p" ]; then
+      oid="$(git -C "$CHECKOUT" hash-object -- "$p" 2>/dev/null || true)"
+      [ -n "$oid" ] || oid="UNHASHABLE"
+    else
+      oid="ABSENT"
+    fi
+    printf '%s\t%s\n' "$oid" "$line"
+  done | sort
+}
+
 # The partial-effect block appended to every post-launch stop (O2).
 #
 # Prints nothing when the working tree is clean, so a stop with no partial
@@ -1509,21 +1542,27 @@ allowlisted_dirty() {
 # that the paths are NOT a violation — otherwise a reader meeting a file list
 # inside a STOP message reasonably assumes the files are the problem.
 partial_effect_block() {
-  local dirty; dirty="$(allowlisted_dirty)"
+  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
+
+  local after dirty
+  after="$(allowlisted_dirty_snapshot)"
+  if [ -n "$HOP_ALLOWED_SNAPSHOT" ]; then
+    dirty="$(comm -13 \
+      <(printf '%s\n' "$HOP_ALLOWED_SNAPSHOT") \
+      <(printf '%s\n' "$after") | cut -f2-)"
+  else
+    dirty="$(printf '%s\n' "$after" | cut -f2-)"
+  fi
   [ -n "$dirty" ] || return 0
-  printf '%s' $'\n'"PARTIAL FILE EFFECTS — the hop left these ALLOWED paths modified and uncommitted:"$'\n'"$dirty"$'\n'"These are inside --allow-path and are NOT a violation: they are work the hop did and did not commit. They are still on disk. READ THEM BEFORE DECIDING ANYTHING — do not discard them and do not assume they are absent. \`git -C $CHECKOUT diff\` shows the content."
+  printf '%s' $'\n'"PARTIAL FILE EFFECTS — since launch, the hop changed these ALLOWED paths and left them modified and uncommitted:"$'\n'"$dirty"$'\n'"These are inside --allow-path and are NOT a violation: they are work the hop changed and did not commit. They are still on disk. READ THEM BEFORE DECIDING ANYTHING — do not discard them and do not assume they are absent. \`git -C $CHECKOUT diff\` shows tracked content."
 }
 
-# die() for any failure AFTER an actor has been launched.
+# Compatibility name for call sites that explicitly mean a post-launch stop.
 #
-# Structural rather than per-message on purpose: the defect O2 corrects was that
-# each stop decided for itself whether to mention file effects, and every one of
-# them decided not to. A wrapper means a stop added later cannot reintroduce the
-# gap by forgetting — the only way to omit the block is to call plain die(),
-# which now means "nothing has launched yet".
+# die() itself owns the structural guarantee now, so plain-die paths reached
+# after launch (notably validate_state and the hop-limit guard) cannot bypass it.
 die_hop() { # code, message
-  local code="$1"; shift
-  die "$code" "$*$(partial_effect_block)"
+  die "$@"
 }
 
 # ------------------------------------------------ permission denials (O3)
@@ -2133,6 +2172,12 @@ while :; do
 
   before_dirty=0; state_dirty && before_dirty=1
 
+  # Take the attribution baseline as late as possible before launch. It remains
+  # live after the actor returns so every later stop compares against the same
+  # repository reality the actor received.
+  HOP_ALLOWED_SNAPSHOT="$(allowlisted_dirty_snapshot)"
+  HOP_BASELINE_READY=1
+
   started="$(date '+%s')"
   launch_actor "$before_turn" "$hop" "$eff_timeout"
   rc=$?
@@ -2247,7 +2292,7 @@ while :; do
     # it does not distinguish the two situations underneath it:
     #
     #   Claude edited it and could not commit    -> 25, a partial edit to inspect
-    #   it was ALREADY dirty and never changed   -> 36, the hop did nothing
+    #   it was ALREADY dirty and never changed   -> 36, no state transition
     #
     # On 2026-08-10 the dispatcher reported the second as the first: it said
     # "Claude edited the state file" about a file that was byte-identical before
@@ -2260,7 +2305,7 @@ while :; do
     # the bytes moved at all, Claude wrote to it and 25 is the honest answer even
     # if it was also dirty beforehand.
     if [ "$before_dirty" -eq 1 ] && [ "$after_hash" = "$before_hash" ]; then
-      die_hop 36 "the state file logs/work-loop/$TASK.md is uncommitted, and CLAUDE DID NOT TOUCH IT this hop (hop $hop)."$'\n'"Evidence: it was already uncommitted before the actor launched, and its sha256 is byte-identical after ($before_hash). This is NOT a partial edit by Claude — earlier versions of this dispatcher reported exactly this case as 'Claude edited it', which was false."$'\n'"The hop therefore accomplished no observable transition, and the uncommitted content is someone else's — most likely a Codex handoff that was never committed, or an earlier interrupted run."$'\n'"Addressed to the OPERATOR, not to Codex: Codex never runs git (core § 4), so 'commit it' is not an instruction Codex can act on."$'\n'"Recoverable next action: read \`git -C $CHECKOUT diff -- logs/work-loop/$TASK.md\` and decide whose work it is. If it is a finished handoff, commit it and re-run this dispatcher. If it is debris, discard it and re-run. Also read the hop capture at ${LAST_CAPTURE:-<none>} to find out why the hop did nothing."
+      die_hop 36 "the state file logs/work-loop/$TASK.md is uncommitted, and CLAUDE DID NOT TOUCH IT this hop (hop $hop)."$'\n'"Evidence: it was already uncommitted before the actor launched, and its sha256 is byte-identical after ($before_hash). This is NOT a partial edit by Claude — earlier versions of this dispatcher reported exactly this case as 'Claude edited it', which was false."$'\n'"The hop made no state transition. That does not prove it made no other allowed-file edits; any such work is listed below under PARTIAL FILE EFFECTS."$'\n'"Addressed to the OPERATOR, not to Codex: Codex never runs git (core § 4), so 'commit it' is not an instruction Codex can act on."$'\n'"Recoverable next action: read \`git -C $CHECKOUT diff -- logs/work-loop/$TASK.md\` and decide whose work it is. If it is a finished handoff, commit it and re-run this dispatcher. If it is debris, discard it and re-run. Also read the hop capture at ${LAST_CAPTURE:-<none>} to find out why the state transition did not happen."
     fi
     # One live cause, measured 2026-08-05: the child was refused permission to run
     # git, so it edited the file and could not commit it. The stop is correct; the
