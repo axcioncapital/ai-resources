@@ -121,146 +121,157 @@ Completion condition: implement only R2, commit the implementation and this hand
 
 ## Latest result
 
-Inspected (2026-08-11):
+**Correction round — findings 1–4 addressed.** Scope was frozen to those four. Nothing else was implemented; what was newly noticed is recorded as a candidate deferral below.
 
-- Claim (1) `dispatch.sh` composite lock, `${TMPDIR}` dependency, canonicalisation, state-file construction, initial validation, status path, allow-paths, exit codes: **HOLDS** — read `dispatch.sh`; composite key at `:484` (`sha256("$CHECKOUT|$TASK")`), `${TMPDIR:-/tmp}` parent at `:485`, checkout canonicalisation `cd && pwd -P` at `:367`, `STATE_DIR`/`STATE_FILE` at `:387-388`, first `validate_state` at `:1785`, `--status` skips the lock at `:977` (`[ "$STATUS_MODE" -eq 1 ] || acquire_lock`), default allow-paths at `:316-326`, exit-code table at `:119-177` with 27 a deliberate gap.
-- Claim (2) `SKILL.md` physical binding, isolation policy, pre-brief writer, existing-worktree fallback, Git prohibition, courier default: **HOLDS** — `:155` "The task file's location is the binding"; isolation table `:163-169`; Codex creates `logs/work-loop/` at `:151`; existing-worktree fallback `:180`; "You **never run git**" `:134`, repeated `:521`; courier "optional and off by default" `:184`.
-- Claim (3) `.claude/commands/work-loop-v2.md` Step 1 resolves only the active checkout; the closure write: **HOLDS** — `:143` resolves `logs/work-loop/{task-id}.md` under the running checkout with no cross-worktree enumeration; the closure write is `## Closing the task` `:251`, with the de-escalation reduction at `:219`.
-- Claim (4) playbook and spike README entry guidance: **HOLDS** — playbook § 4 `:106-130` carries the ad-hoc same-checkout anti-pattern and the two entry paths (interactive `/new-worktree-session`, dispatched `dispatch.sh`), with the worktree "created by the operator, never by the dispatcher"; README `## Running the dispatcher` `:24-48` documents the option surface R2 extends.
-- Claim (5) `logs/work-loop/.owner` stays checkout-local: **HOLDS** — searched `.gitignore` for `owner`: no match before this unit, so no pre-existing rule. The per-checkout gitignored declaration precedent is real: `.gitignore:34-39` lists `logs/.prime-mtime`, `logs/.session-marker`, `logs/.session-marker-*`, and `logs/scripts/prime-session-entry.sh:36-41` writes exactly that family. `:148` of that script also already keys cross-worktree claims off `$GIT_COMMON`, which is the precedent the relocated locks follow.
+### The frozen findings, reproduced before correcting
 
-Provenance: `d67c3d0` exists, is an ancestor of `HEAD` (`381559f`), touches only this state file, and its `## Latest result` carries R2 "the checkout declares its writer" — the marker at `logs/work-loop/.owner`, the two repository-scoped locks, the narrowed Codex guarantee and the dormant-task lease. Content identity resolves to the brief's approved candidate.
+Each was reproduced by inspection on the pre-correction tree (`8a24480`) before anything was changed. A finding that did not reproduce would have been handed back as exactly that; all four reproduced.
 
-Result: **the locked R2 correction is implemented and committed in this worktree, unmerged and unpushed. This is an implementation candidate for independent verification (SOP Step B8). It is not a claim that the task or the defect is resolved.**
+- **Finding (1) fail-open admission: REPRODUCED** — read `.claude/commands/work-loop-v2.md:171`, which read "If the helper is not present in this checkout, say so in one line and continue. An absent helper is not a refusal." Read `dispatch.sh:1933-1935`, whose `else` branch was `say "ownership: SKIPPED …"` with no `die`. Measured end to end: the old dispatcher against a checkout with the helper removed printed `ownership: SKIPPED — …/logs/scripts/work-loop-owner.sh is not present in this checkout; no declaration was read or written.` and **exited 0 with the actor launched**.
+- **Finding (2) malformed declarations: REPRODUCED** — against the old helper, `alpha beta gamma 2026-99-99 junk`, `alpha not-a-date` and a bare `alpha` each returned `REFUSE … claimed by open task 'alpha'`, i.e. field 1 was accepted as a valid holder. `clear --task beta` on a two-line declaration returned `PROCEED — cleared the declaration` and **the file was destroyed**, where R2 requires AMBIGUOUS and preservation.
+- **Finding (3) non-atomic claim: REPRODUCED** — 10 contested rounds, two simultaneous `claim` calls for different tasks on one free checkout: **10/10 rounds returned PROCEED to both**, with the final declaration naming whichever rename landed last (`beta` 7 times, `alpha` 3).
+- **Finding (4) mutable candidate identity: REPRODUCED** — the previous `### Starting state` block named only base `381559f` and "the tip of this branch", and stated the implementation hash was "deliberately not written here as a literal hash". No immutable identity was recorded.
 
-### Starting state
+Result: **findings 1, 2 and 3 are corrected in code with red-before/green-after regression coverage; finding 4 is resolved by this handback's commit structure. The result is an implementation candidate for independent verification (SOP Step B8). It is not a claim that the task or the defect is resolved.**
 
-Branch `session/2026-08-11-work-loop-ceremony`, **base commit `381559f`**, in the worktree already bound to this task. **The final implementation commit is the single commit on top of that base — the tip of this branch, which is also the commit carrying this state file.** Resolve it with `git rev-parse HEAD`, or `git log --oneline 381559f..HEAD` to see that there is exactly one. It is deliberately not written here as a literal hash: this file is inside that commit, so any hash written into it is invalidated by the act of committing it. Two files were dirty at entry and neither was staged by this unit: this state file (carrying the Unit 6 brief itself) and `logs/friction-log.md` (a write-activity hook append). No second implementation worktree was created and this task was not moved.
+### Candidate identity — immutable (finding 4)
 
-### Baseline — red before
-
-`bash logs/scripts/work-loop-owner.test.sh` → exit 1, **24 passed, 37 failed**. The failures are the changed behaviour classes:
-
-- T1 different-`TMPDIR` exclusion FAILED; **its shared-`TMPDIR` control PASSED on the baseline** — reported as passing, not forced red, because it is the preservation case.
-- T3 dispatcher half FAILED — two different tasks in one checkout both admitted.
-- T2, T5–T11, T13 FAILED for want of the helper (`work-loop-owner.sh: No such file or directory`).
-- T12 FAILED — the ignore rule genuinely did not exist; the harness copies the **real** repository `.gitignore` into its sandboxes rather than authoring one, so T12 measures this repository's rule and not the harness's.
-- **T4 PASSED on the baseline** — fan-out 2 on separate worktrees already worked. Reported honestly as a preservation/regression guard rather than presented as a fixed defect.
-
-Case 0 is the harness's own falsifiability proof: pointed at an absent helper, the suite fails.
-
-### Green after
-
-| Suite | Result |
+| | |
 |---|---|
-| `logs/scripts/work-loop-owner.test.sh` (T1–T13) | exit 0 — **61 passed, 0 failed** |
-| `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` | exit 0 — **pass=381 fail=0** (375 before; +6 from the new case 12b/12c) |
-| `logs/scripts/work-loop-v2-core-resolver.test.sh` | exit 0 — 4 passed, 0 failed |
-| `logs/scripts/work-loop-v2-slice-1.test.sh` | exit 1 — 292 passed, **3 failed, all pre-existing and unchanged** |
+| Base | `381559f` |
+| **Corrected implementation-candidate tip** | **`94807fde27ed05abd7b239328ee89fd8320dfc25`** (`94807fd`) |
+| **Candidate range** | **`381559f..94807fd`** — two commits: `8a24480` (original candidate) and `94807fd` (this correction) |
+| State-file handback commit | a **separate**, state-file-only commit whose parent is `94807fd`. It carries no code and is **outside** the candidate range above. |
 
-The three slice-1 failures are not caused by this unit and are unchanged in count and identity from the baseline run. Two (`3.1a`) test `logs/work-loop/` against a hard-coded 25-file allowlist while the directory holds 56 files — including this task's own state file, which predates this unit; this unit added no file to `logs/work-loop/`. The third asserts SKILL.md is under a 340-line ceiling; it was **543 lines at `HEAD`** before any edit here. This unit took it to 564, so it worsens a pre-existing breach — recorded as a deferral below, not fixed, because restructuring that file is outside the authorised scope.
+Review attaches to `381559f..94807fd`. No branch name and no `HEAD` is candidate identity. This file's own commit hash is necessarily absent from this file — a commit cannot contain its own hash — which is exactly why the code correction was committed first and named here by hash; resolve the handback commit as the child of `94807fd` on this branch.
 
-### Generated output — representative fan-out 2, real dispatcher and real helper
+Unmerged and unpushed. Verify with `git log --oneline 381559f..94807fd`, which returns exactly those two commits.
 
-Two linked worktrees, two tasks, concurrent dispatchers, **different `TMPDIR` roots**, actors stubbed:
+### Evidence — red before, green after
+
+The correction's own cases are run against the **pre-correction scripts extracted from `8a24480`** (`git show HEAD:…`), which is what makes them capable of failing.
+
+| Suite | Against the pre-correction scripts | After the correction |
+|---|---|---|
+| `logs/scripts/work-loop-owner.test.sh` | exit 1 — **80 passed, 13 failed** | exit 0 — **92 passed, 0 failed** |
+| `plans/…/dispatch.test.sh` | exit 1 — **pass=385 fail=4** | exit 0 — **pass=389 fail=0** |
+| `logs/scripts/work-loop-v2-core-resolver.test.sh` | — | exit 0 — 4 passed, 0 failed |
+| `logs/scripts/work-loop-v2-slice-1.test.sh` | — | exit 1 — 292 passed, **3 failed, pre-existing** |
+
+**Every one of the 13 red cases is in F1–F3, and every T1–T13 case passed on the pre-correction scripts.** That separation is the point: the new cases measure the correction, and the existing matrix was not re-tuned to fit it. The 13th red is a per-round assertion inside F3's loop that fires only on failure, which is why green is 92 rather than 93.
+
+The named red cases:
 
 ```
+F1  FAIL  the dispatcher REFUSES a checkout with no helper
+F2  FAIL  extra token / second id on the line
+F2  FAIL  a bare id with no date at all
+F2  FAIL  a date that is not a date
+F2  FAIL  a date-shaped value out of range
+F2  FAIL  clear REFUSES a malformed declaration as AMBIGUOUS
+F2  FAIL  clear did not delete the malformed declaration
+F2  FAIL  clear left the malformed declaration byte-for-byte unchanged
+F2  FAIL  claim REFUSES on a malformed declaration
+F2  FAIL  claim left the malformed declaration unchanged
+F2  FAIL  a malformed marker in ANOTHER checkout does not claim this task
+F3  FAIL  round 2 — the declaration names the winner
+F3  FAIL  no round admitted two writers
+```
+
+Dispatcher case 12d, against the pre-correction dispatcher — **both controls passed in the same run**, so the four reds are the behaviour and not the harness:
+
+```
+pass=385 fail=4
+  FAIL  an ABSENT ownership helper refuses with exit 35     (got 0, actor launched)
+  FAIL  the refusal says the check could not run
+  FAIL  no actor was launched with the check unavailable
+  FAIL  a BROKEN ownership helper refuses with exit 35 too  (got 33)
+  PASS  control — with the helper present the same run proceeds
+  PASS  control — the actor did run once the check was available
+```
+
+### Generated output — the corrected path, end to end
+
+Real repository, two linked worktrees, two tasks, concurrent dispatchers, **different `TMPDIR` roots**, real helper, actors stubbed:
+
+```
+alpha-claim: verdict: PROCEED  reason: claimed …/wt-alpha for task 'fanout-alpha'
+beta-claim:  verdict: PROCEED  reason: claimed …/wt-beta  for task 'fanout-beta'
 alpha exit=0   beta exit=0
-ownership: PROCEED — this checkout already declares task 'fanout-alpha'; task 'fanout-alpha' is declared by this checkout; the later handoff reuses it
 ownership: PROCEED — this checkout already declares task 'fanout-beta'; task 'fanout-beta' is declared by this checkout; the later handoff reuses it
-alpha candidate range: [logs/work-loop/fanout-alpha.md ]
-beta  candidate range: [logs/work-loop/fanout-beta.md ]
+ownership: PROCEED — this checkout already declares task 'fanout-alpha'; task 'fanout-alpha' is declared by this checkout; the later handoff reuses it
 ```
 
-Each candidate range contains only its own task's path.
-
-### Refusal and ambiguity paths, end to end
+Refusal, ambiguity and the new fail-closed path on that same fixture:
 
 ```
 === the same task entered from a second checkout ===
-exit=33
-STOP [33] ownership refused for task fanout-alpha in .../wt-beta
-verdict: REFUSE
-reason: task 'fanout-alpha' is already claimed by checkout .../wt-alpha — continue the task there, or close it first
-Recoverable next action: continue the task in the checkout named above, or close it there first. Nothing was launched.
+exit=3  REFUSE — task 'fanout-alpha' is already claimed by checkout …/wt-alpha — continue the task there, or close it first
 
-=== a second task entering a checkout held by an OPEN task ===
-exit=33
-verdict: REFUSE
-reason: this checkout is claimed by open task 'holder' — close it, or use another checkout. An open task leases its checkout until closure.
+=== a malformed declaration (`fanout-beta fanout-ghost 2026-08-11`) ===
+check exit=4  AMBIGUOUS — …/.owner is unreadable or holds more than one task id — no checkout may claim on this evidence
+clear exit=4  AMBIGUOUS — it is left exactly as it is, and nothing was removed; the operator names the owner
+marker after clear: [fanout-beta fanout-ghost 2026-08-11]        <- preserved, byte for byte
+dispatcher    exit=34  STOP [34] ownership is AMBIGUOUS for task fanout-beta in …/wt-beta
 
-=== a replicated state file with no declaration ===
-exit=34
-verdict: AMBIGUOUS
-reason: task 'replicated' has a state file in more than one checkout and no checkout declares it: .../repo .../wt2 — replicated copies authorise nobody; the operator names the owner
+=== the ownership check unavailable in this checkout ===
+exit=35
+STOP [35] the ownership check is unavailable: …/wt-beta/logs/scripts/work-loop-owner.sh is missing or unreadable in …/wt-beta
+Recoverable next action: ownership cannot be established without it, so nothing was launched and nothing was committed. Copy the helper into this checkout — or run the task in a checkout that carries it — then re-run.
+actor output present? 0 occurrences
 ```
 
-A first attempt at the second case returned `PROCEED` instead, because the fan-out run had already closed the holding task and the stale-declaration row correctly applied. The scenario was rebuilt with an **open** holder, which is the output above. Recorded because the first reading would have been the wrong evidence for the claim.
+The last line is the measurement that matters: the actor's own marker string appears **zero** times, so nothing launched.
 
-`--status` ownership surface, read-only, no lock taken and nothing written:
+### The declaration and the new lock cannot be committed
 
-```
-owner: this checkout declares fanout-alpha 2026-08-11
-checkout-lock: free (.../repo/.git/work-loop-dispatch-locks/checkout-2eaadbc27e9eda93.lock)
-run: none in flight (no lock at .../repo/.git/work-loop-dispatch-locks/task-96a3c8f2a8deddb7.lock)
-```
+`.owner` is unchanged from the previous unit — `git check-ignore -v logs/work-loop/.owner` → `.gitignore:46`, with `logs/work-loop/some-task.md` **not** ignored as the specificity control.
 
-### The declaration cannot be committed
+The mutation lock needed **no** `.gitignore` rule, which is why it was chosen: it is an always-empty directory, and git does not track directories. Asserted rather than assumed — F3 creates `logs/work-loop/.owner.lock` and runs `git status --porcelain -uall -- logs/work-loop/`, which matches it **0** times. `.gitignore` is therefore untouched by this correction and remains the single `.owner` rule the brief authorised.
 
-On the real repository, with **no probe file created** in this live checkout:
-
-```
-$ git check-ignore -v logs/work-loop/.owner
-.gitignore:46:logs/work-loop/.owner	logs/work-loop/.owner    -> IGNORED
-```
-
-Meaningful control — the rule must be specific, not swallow the directory: `git check-ignore -q logs/work-loop/some-task.md` returns non-zero, so task state files in the same directory are **not** ignored. T12 adds the file-level pair inside a sandbox carrying the real `.gitignore`: `git status --porcelain -uall` matched `.owner` **0** times and `git ls-files` tracked it **0** times after `git add -A && git commit`, while the control with the rule removed matched it **1** time. `-uall` is required — git otherwise collapses an untracked directory to `logs/` and would hide the file behind its parent rather than behind the rule.
-
-### Changed and added files
+### Changed files
 
 | File | Behavioural change |
 |---|---|
-| `logs/scripts/work-loop-owner.sh` | **NEW.** The one shared ownership check. `check` / `claim` / `clear`, at `--depth local` (no git at all — Codex's whole enforcement) or `--depth repo` (adds registered-worktree enumeration — Claude and the dispatcher). Verdicts PROCEED / REFUSE / AMBIGUOUS on exits 0 / 3 / 4. Implements the R2 safe state table, including the contradiction, stale-closed-task and unreadable/multi-id rows. |
-| `logs/scripts/work-loop-owner.test.sh` | **NEW.** T1–T13 with a falsifiability case 0. Real repositories, real linked worktrees, real lock directories, the real dispatcher. |
-| `plans/…/dispatch.sh` | The composite `${TMPDIR}` lock is replaced by **two** locks under the Git common directory — one keyed by task, one by checkout — either of which refuses a second dispatcher, naming the conflict. Pinning now covers both. New admission-time ownership check at repo depth, with exits **33** (refused) and **34** (ambiguous); a checkout without the helper skips it with a visible line. `--status` additionally reports the declaration and the checkout lock. |
-| `plans/…/dispatch.test.sh` | Lock paths were reconstructed in six places; all six now route through single `lock_root_for` / `task_lock_for` / `checkout_lock_for` helpers. New case 12b/12c: exclusion across differing `TMPDIR` roots, exclusion of a different task in one checkout with the holder named, release of both locks, and the lock root being inside the repository. |
-| `plans/…/README.md` | New section on the two locks and the declaration they do not replace; exit rows 31–34 added (31/32 were implemented but undocumented); `--status` and exit-17 rows corrected; the T1–T13 harness documented; the suite count corrected 375 → 381. |
-| `.claude/commands/work-loop-v2.md` | New **Step 1.5** — ownership check at repo depth before executing or committing, with PROCEED / REFUSE / AMBIGUOUS each given an action and AMBIGUOUS explicitly never resolved by claiming. Closing the task and the de-escalation path now clear the declaration in the same write. |
-| `.agents/skills/work-loop-v2/SKILL.md` | The isolation policy gains the pre-brief sequence: whoever creates the state file writes `logs/work-loop/.owner` immediately before it, with no git. The narrowed Codex guarantee, the un-prevented cases, and the dormant-task lease are stated as limits. |
-| `docs/parallel-sessions-playbook.md` | § 4 records the declaration, that it exists to refuse rather than route, that it is not a registry, and its two limits. |
-| `.gitignore` | One rule, `logs/work-loop/.owner`, with the reason it must stay checkout-local. |
+| `logs/scripts/work-loop-owner.sh` | `marker_holder()` takes a path and enforces the one legal shape — exactly one non-empty line, exactly two fields, a valid task id, and a `YYYY-MM-DD` date whose month and day are in range. Anything else is `?`. `clear` on `?` now returns AMBIGUOUS and **removes nothing**; it used to delete. `claim` and `clear` run inside a `mkdir`-based lock at `logs/work-loop/.owner.lock`, and `claim` now decides *and* writes inside that section. The duplicate inline marker reader in `check_repo()` was deleted in favour of the shared one. |
+| `logs/scripts/work-loop-owner.test.sh` | F1–F3 added: an unavailable check is distinguishable from a clean one (helper *and* dispatcher halves, with a positive control); five malformed shapes are AMBIGUOUS and survive `check`, `claim` and `clear`, with the legal shape as control and a cross-checkout case for the deleted second reader; six contested concurrent rounds asserting one winner, no deadlock, the declaration naming the winner, no git, lock release, and the lock's invisibility to git. |
+| `plans/…/dispatch.sh` | Ownership admission **fails closed**: a missing or unreadable helper, or one exiting outside `0/3/4`, is now **exit 35** with nothing launched. It used to print `ownership: SKIPPED` and run. New exit code 35 documented in the table; the 33 row now points at it. |
+| `plans/…/dispatch.test.sh` | `new_sandbox()` installs the ownership helper, because a sandbox without it no longer models a real checkout. New case 12d: absent helper and broken helper both refuse with 35 and launch no actor and make no commit, with an independent-sandbox positive control. |
+| `plans/…/README.md` | The "skips the check with a visible line" claim is replaced by the fail-closed rule and why it differs from the session-identity init; exit row 35 added; the 33 row corrected; F1–F3 documented; suite count 381 → 389. |
+| `.claude/commands/work-loop-v2.md` | Step 1.5's closing line inverted: a check that cannot run is now a stop for the operator, not a one-line note and continue. |
+| `docs/parallel-sessions-playbook.md` | § 4 records the declaration's exact legal shape, that a malformed one is left in place rather than tidied away, and that the check fails closed. |
 
-Deleted: none. No file in the authorised list was removed.
+**Authorised files intentionally left unchanged this round:**
 
-**Authorised files intentionally left unchanged:** none — every file on the list needed a behaviour or contract change. `.claude/commands/new-worktree-session.md` was excluded by the brief and is untouched, as R2 requires.
+- `.agents/skills/work-loop-v2/SKILL.md` — it **already** specified `{task-id} {YYYY-MM-DD}`, one line (`:181`) and "unreadable, or holding more than one id — refuse and report. Do not guess" (`:184`). Finding 2 was the code failing to enforce what this file already said, so the fix belonged entirely in the helper. Leaving it also avoids adding lines to a file already over its slice-1 ceiling.
+- `.gitignore` — the lock needs no rule (see above), and `.owner`'s rule is already correct.
+- `.claude/commands/new-worktree-session.md` — excluded by the brief; untouched.
 
-**Permanent machinery added:** one helper script and its test; one `.gitignore` rule; one gitignored marker file per checkout with a lifecycle (written at task start, cleared at closure); two lock directories per live run under `<git-common-dir>/work-loop-dispatch-locks/`. **Replaced:** the single composite `${TMPDIR}` lock. **Removed:** nothing — no capability was withdrawn. No registry, branch convention, command, agent, hook, service or second binding was created, and no new worktree-creation authority exists; `/new-worktree-session` remains the only creator and is unmodified.
+Deleted: none.
 
-### Deviations from R2
+**Permanent machinery added:** one `mkdir`-based mutation lock directory per checkout, created and removed inside a single `claim`/`clear` call. **Replaced:** the fail-open ownership skip on both entry surfaces; the permissive marker reader; the check-then-write claim. **Removed:** the duplicate inline marker reader in `check_repo()`. No registry, command, agent, hook, service, second binding or new worktree-creation authority was created.
 
-None material. Reversible implementation choices made and reported: two new exit codes (33, 34) rather than overloading 17, because the remedy differs — 17 means wait, 33 means you are in the wrong checkout; the marker format is one line, `{task-id} {YYYY-MM-DD}`; a checkout lacking the helper skips the dispatcher's check with a visible line, matching the existing session-identity-init precedent; `--status` gained two read-only ownership lines, which is inside the approved surface and is **not** the Codex `--status` widening the operator declined — that remains untouched and Codex-side courier scope is unchanged.
+### Did the correction break previously passing behaviour?
 
-### Remaining limitations
+**No.** All T1–T13 still pass, and the dispatcher suite went 381 → 389 with no case lost. The slice-1 suite is unchanged at 292 passed / 3 failed, and the three failures are identical in count and identity to the pre-correction baseline (`3.1a` twice, `ridx` once). SKILL.md is **564 lines, unchanged by this round** — the ceiling breach was not worsened.
 
-- **Interactive enforcement is instruction-borne.** Only the dispatcher's is exit-code-borne. Two interactive sessions on one checkout for the **same** task are not prevented, and neither is an operator who proceeds past a refusal.
-- **Codex enforces the checkout half only.** The cross-checkout half is enforced at the next Claude entry and at dispatcher admission — both before any commit, since Claude makes every commit.
-- **An open task leases its checkout until closure.** Starting a different task there is refused until it closes.
-- **Measured migration exposure, corrected against R2's estimate.** R2's decision pack anticipated "18 open tasks that are replicated today". Measured from this checkout across 14 live registered worktrees: of the open, non-fixture tasks here, **1 is unique** (`work-loop-v2-concurrent-task-isolation` — this task, which the helper reports PROCEED for) and **1 is replicated across 9 checkouts** (`work-loop-v2-intake-router`, `turn: codex`), which will read AMBIGUOUS everywhere until the operator names its owner. That is the designed refusal, not a regression, but it is a real operational consequence at integration.
-- **No `.owner` was created for this live task**, per the brief's exclusion. This task is therefore unclaimed; the helper reports PROCEED for it because its state file is unique to this checkout.
-- Actors are stubbed throughout. Real networked Claude/Codex fan-out remains the operator's post-integration validation.
-
-### Rollback, usable after integration
-
-Revert the implementation commit. Nothing survives it: no branch, no worktree, no committed record. Then delete any `logs/work-loop/.owner` files that were created in working checkouts (they are gitignored, so a revert does not remove them) and any residual `<git-common-dir>/work-loop-dispatch-locks/` directory. The dispatcher returns to the composite `${TMPDIR}` lock and its prior exit-code set; the command and skill return to their prior entry text. Partial rollback of the locks alone is possible by reverting `dispatch.sh` only, at the cost of reinstating the proven `${TMPDIR}` defect.
+One honest limitation on the concurrency evidence: F3 is a **probabilistic** regression. Six contested rounds fail the pre-correction implementation reliably (10/10 in the standalone reproduction, and it went red here on the first run), but a scheduler that serialised every round would let it pass green against broken code. It is a real failing case, not a guaranteed one.
 
 ### Deferrals — recorded, not implemented
 
-1. **SKILL.md is 564 lines against a 340-line ceiling** that slice-1 asserts. It was already 543 at `HEAD`; this unit added 21. Fixing it means restructuring the skill, which is outside the authorised scope.
-2. **slice-1's `3.1a` allowlist is stale** — 25 names against 56 files. It fails for every task opened since the list was written, independently of this unit.
-3. `.claude/hooks/detect-concurrent-session.sh` detects only `native-binary/claude`, so interactive Codex has no observable liveness signal. Adding a Codex pattern would upgrade the accepted reduction; it is a hook change outside scope.
-4. **Replicated open task files under `logs/work-loop/` want a cleanup** — specifically `work-loop-v2-intake-router` across 9 checkouts, which will read AMBIGUOUS at integration.
-5. The sibling checkouts hold older `dispatch.sh` copies; propagation is an integration concern, and only this bound checkout was changed.
-6. `logs/innovation-registry.md` was appended to by a repository hook when `work-loop-v2.md` was edited. It is not in the authorised file list, so it was **not staged**; it remains dirty in the working tree for the operator to decide on.
+Carried forward from the previous unit, all still open and all outside the frozen scope:
+
+1. **SKILL.md is 564 lines against slice-1's 340-line ceiling.** Pre-existing; unchanged by this round.
+2. **slice-1's `3.1a` allowlist is stale** — 25 names against 56 files.
+3. `.claude/hooks/detect-concurrent-session.sh` detects only `native-binary/claude`, so interactive Codex has no observable liveness signal.
+4. **Replicated open task files** — `work-loop-v2-intake-router` across 9 checkouts will read AMBIGUOUS at integration.
+5. Sibling checkouts hold older `dispatch.sh` copies; propagation is an integration concern. **This correction raises its consequence:** with admission now failing closed, a sibling that lacks `logs/scripts/work-loop-owner.sh` will be refused with exit 35 rather than skipped. That is the intended behaviour, and it makes propagating the helper part of integration rather than optional.
+6. `logs/innovation-registry.md` and `logs/friction-log.md` are hook-written and dirty in the working tree; not authorised, so **not staged**.
+
+Newly noticed during this correction, recorded and not implemented:
+
+7. **A malformed declaration in *another* checkout names nobody and is skipped by the cross-checkout half.** The local half refuses on it, so the checkout standing on the damaged file is stopped; but a corrupt sibling marker does not make other tasks ambiguous. Treating it as repository-wide ambiguity would refuse work everywhere for one file the operator can fix in one place. Deliberate and commented at the call site — recorded so the trade-off is visible rather than assumed.
+8. **The mutation lock has a one-minute staleness takeover.** An abandoned lock (a process killed mid-claim) is reclaimed after 60s by `rmdir`, which can only succeed while the directory is empty. Bounded and safe, but it is a timeout, and timeouts are worth a look under independent verification.
 
 ## Blocker
 
@@ -268,6 +279,9 @@ None.
 
 ## Next action
 
-Codex: assess this implementation candidate against the locked R2 scope. It is the single commit on top of base `381559f`, at the tip of `session/2026-08-11-work-loop-ceremony`, unmerged and unpushed.
+Closure check on the frozen findings only. Two questions:
 
-The assessment questions are whether the implemented behaviour matches the six required outcomes, whether the red-before/green-after evidence supports them, and whether the reported deviations and limitations are acceptable. Independent clean-environment verification (SOP Step B8) has **not** been performed and must not be collapsed into this self-report. Do not read this as resolution of the task or the defect.
+1. Are findings 1–4 resolved? Finding 1 — an ownership check that cannot run refuses on both supported entry surfaces (`dispatch.sh` exit 35 with nothing launched; Step 1.5 stops for the operator), with tests proving no actor launches and no commit occurs. Finding 2 — the declaration's exact format is enforced, and `check`, `claim` and `clear` all leave a malformed declaration untouched with an ambiguous verdict. Finding 3 — a contested local claim is indivisible via a `mkdir` lock needing no git, with a concurrent regression that fails the previous implementation. Finding 4 — the candidate is frozen at `94807fd`, range `381559f..94807fd`, with this state-file handback as a separate commit outside that range.
+2. Did the correction break something? Reported above: no. T1–T13 unchanged, dispatcher 381 → 389 with no case lost, slice-1's three failures identical to baseline, SKILL.md line count unchanged.
+
+Anything newly noticed at the closure check is a deferral, not a second correction round. If findings 1–4 are resolved, the next unit is SOP Step B8 — independent clean-environment verification of `381559f..94807fd`, which must not be collapsed into this self-report.
