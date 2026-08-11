@@ -376,3 +376,31 @@ correction bounded while still passing through independent challenge before any 
 rather than against it; the SOP's subordination to the core, and the prohibition on it creating a
 second state system, are stated explicitly in the accepted plan
 (`plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md` § 0.1).
+
+## 2026-08-11 — Second bounded-execution incident joins the plan, scoped to system-level lessons only
+
+**Context.** A second Work Loop v2 dispatcher stop occurred 2026-08-11, in a different worktree
+(`../ai-resources-eval`, task `eval-mvp-v0.2-adoption-readiness-fix`): a 900-second actor timeout
+(exit `21`), reportedly caused by an oversized implementation unit. The operator supplied a detailed
+incident report and asked whether it belonged inside `bounded-execution-fix-plan-v0.2.md`.
+
+**Decision.** Yes, in the same plan — but only its system-level lessons. In scope: the eval timeout as
+a second verify-first entry in Gate 2's evidence set; brief sizing promoted P1→P0; U2's evidence
+extended to exit 21; U4 expanded into a truthful recovery contract; a rejection of "raise the
+timeout" as a substitute fix; the eval evidence chain added to the compaction-safe manifest. Out of
+scope, named explicitly and excluded from the plan: the EV-1 through EV-6 content repairs, the
+staging-hook registry correction, the eval branch's merge readiness, and its stale suite baselines.
+
+**Rationale.** The two incidents are the two failure modes of the same courier boundary — one escaped
+it, one couldn't fit inside it — so the system-level fix belongs in one place. But the eval content
+issues are evidence *of* the sizing defect this plan addresses, not instances *of* the dispatcher
+defect itself; folding them in would let an already-oversized-unit incident produce an oversized
+planning artifact, which is the exact failure mode under discussion.
+
+**Alternatives considered.** (a) A separate plan for incident 2 — rejected, because the two incidents
+share a root mechanism (courier boundary) and splitting the plan would duplicate §§ 0.5–0.7's
+manifest, ladder and courier-preservation reasoning. (b) Importing the eval content findings wholesale
+— rejected for the reason above; also would have pulled unrelated-task commits into this plan's
+review surface. (c) Treating incident 2 as fully confirmed rather than verify-first — rejected; every
+report is a lead until checked against its own named artifacts (SOP `:435`), and this one had not
+been.

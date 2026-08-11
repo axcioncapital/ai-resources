@@ -460,3 +460,43 @@ That is Codex's move to frame.
 
 ### Open Questions
 None.
+
+## 2026-08-11 — Bounded-execution fix plan v0.2, three revision rounds
+
+### Summary
+Took the accepted `bounded-execution-fix-plan-v0.1.md` through three operator-directed revision
+rounds into a new `bounded-execution-fix-plan-v0.2.md`: (1) applied six findings from an independent
+SOP-conformance review; (2) incorporated a second incident — a 2026-08-11 eval-repair dispatcher
+timeout — as a verify-first input, adding a new P0 outcome (brief sizing) while explicitly excluding
+the eval task's own content repairs; (3) applied four tightly bounded corrections the operator caught
+in the round-2 result. v0.1 was left unchanged throughout, since its approval is tied to committed
+content. Planning only — nothing implemented, nothing authorized.
+
+### Decisions Made
+- **Two bounded-execution failures, one plan, scope split by system-level vs. content-level.** The
+  operator directed that incident 2 (eval-repair timeout) belongs in the same plan as incident 1 only
+  for its system-level lessons — brief sizing, recovery semantics, evidence-loss pattern. The EV-1
+  through EV-6 content repairs, the staging-hook registry correction, the eval branch's merge
+  readiness, and its stale suite baselines stay out, as evidence of the sizing defect rather than
+  part of the dispatcher fix, and belong to the eval-repair task. Logged separately in
+  `decisions.md`.
+- Every causal claim from both incident reports (postmortem and eval-repair report) is treated as an
+  unverified hypothesis until checked against named run artifacts — carried through all three rounds,
+  not just asserted once.
+- Brief sizing promoted from P1 to P0 (new outcome O5, new unit U11) on the operator's judgment that
+  an oversized unit is the failure mode that makes the other four P0 outcomes unreachable, not a mere
+  refinement.
+- Four SOP-review findings and four round-3 corrections were operator-supplied, not self-identified;
+  applied as scoped, no broader rewrite.
+
+### Risky actions
+None — every change stayed inside the planning artifact; no dispatcher run, no live reproduction, no
+nested AI invocation, no write into either incident checkout (both are read-only evidence sources).
+
+### Next Steps
+The plan's own § 0.4 route step 1 is next: a discovery unit establishing both incidents from
+preserved evidence (read-only, no live reproduction), which is Codex's move to open as a new Work
+Loop v2 unit under the still-open planning task. This session did not open it.
+
+### Open Questions
+None.
