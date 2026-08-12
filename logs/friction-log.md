@@ -353,6 +353,20 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 12:20 — logs/scratchpads/2026-08-12-12-20-scratchpad.md
+- 12:16 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:56 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:56 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:56 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:33 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:32 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:31 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:30 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-axcion-harness-v0-2-live-trial/78b41fd3-c24c-453e-a8b4-47c7091ff79a/scratchpad/foreign-filter-repro.sh
+- 11:11 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:11 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:11 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:11 — logs/work-loop/axcion-harness-v0-2-live-trial.md
+- 11:10 — logs/work-loop/axcion-harness-v0-2-live-trial.md
 - 22:17 — logs/session-notes.md
 - 22:15 — logs/scratchpads/2026-08-09-21-50-scratchpad.md
 - 22:09 — logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md

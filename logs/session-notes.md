@@ -2,82 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-08 — Session S2-309
-**Mandate:** Run Claude's half of Work Loop v2 on the open `work-loop-v2-proportionality-continuity-implementation` task — units S5 (artifact-free project orientation) and S6 (post-compaction reorientation) — done when: each unit's premises are checked against the live repository, each unit's evidence is produced and recorded in the state file, and each unit is committed by explicit pathspec with `turn:` handed back to Codex
-- Out of scope: S7 and the dispatcher; changes to S1–S4; the live P-7 compaction trial, which this runtime cannot stage; repairing another session's dirty dispatch.sh / dispatch.test.sh; any `.codex/` path except the two S6 targets
-- Files in scope: .agents/skills/work-loop-v2/SKILL.md, AGENTS.md, .codex/hooks.json, .gitignore, logs/work-loop/work-loop-v2-proportionality-continuity-implementation.md
-- Stop if: a brief's premise proves false, or a change would need a settled operator decision reopened
-- Allowed inputs: plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md, .claude/commands/project-next-steps.md, projects/axcion-design-studio/
-- Required outputs: .codex/hooks/work-loop-reorient.sh
-- Mission: work-loop-v2-mvp
-
-**Work:** Claude-side execution of Work Loop v2 units S5 and S6 on the proportionality-continuity task.
-
-### Summary
-In progress. S5 committed as `309a1c0`. S6 implemented and proved deterministically; its three
-targets were gitignored by the 2026-07-13 Codex-mirror decision, the operator delegated the
-tracking choice, and option (a) was taken via a narrow `.gitignore` negation ladder.
-
-## 2026-08-08 — Work Loop v2 S7 implemented, assessed, and the task closed
-
-### Summary
-Ran Claude's half of one Work Loop v2 unit: S7 of the accepted proportionality-and-continuity
-plan, making the handoff dispatcher's runtime evidence collision-proof under the two concurrency
-shapes plan § 4.8 names. All four of the brief's premises held on inspection, so the unit ran.
-The change is four functional lines in `dispatch.sh` plus three corrected README statements.
-Codex then assessed, accepted S7 without re-running its evidence, and wrote a close token; the
-state file was reduced to core § 4's four-heading closing record at `turn: operator`. The task's
-S1–S7 exit condition is met.
-
-### Decisions Made
-- **Default log directory resolved once, not twice.** `DEFAULT_LOG_DIR` is computed immediately
-  after the checkout is canonicalized, and both the `--status` branch and the run branch read it.
-  The plan warned the two sites must stay in step; a single source is the only durable way to do
-  that, rather than two literals maintained by hand.
-- **Its value is the spike's own relative path under the driven checkout**, so driving this
-  repository resolves to exactly the directory the existing logs are already in. Nothing was
-  moved or migrated, and `--status` still finds the pre-change logs — verified read-only against
-  this checkout.
-- **Run-id field order chosen for two consumers.** Timestamp first so the directory still sorts
-  chronologically; the task id moved to the end so `--status`'s `*-$TASK.log` glob stays an exact
-  match and keeps matching logs written before the change. The discriminator reuses `LOCK_KEY`,
-  which already varies exactly when the checkout does — no new concept.
-- **Exit-`18` boundary recorded, not fixed.** Where an ancestor such as `plans/` is untracked,
-  git collapses the dispatcher's own evidence to `?? plans/` and the pre-hop gate stops the run.
-  Both candidate fixes fall outside § 4.8 — widening the allowlist to an ancestor would let
-  genuinely foreign changes pass unseen, and switching the gate to `--untracked-files=all`
-  changes a guard this plan does not own. Codex accepted it as a written limitation.
-- **`SPIKE_DIR` removal deferred.** It is now referenced only in a comment, but removing it would
-  be a third change § 4.8 does not authorise.
-- **Third README edit made and flagged.** It corrects an allowlist claim this change made newly
-  reachable, going slightly beyond "states the old default"; Codex ruled it in scope.
-- **Closure came from Codex, not from the operator's instruction.** The operator asked to close;
-  Codex had independently assessed and written a proper close token in the meantime, so the
-  independent check did run and the "closed unassessed" limitation I had drafted was dropped.
-
-### Risky actions
-None. The dispatcher edits are reversible and committed; all P-5/P-6 fixtures were disposable
-git checkouts under a temp root, never the repository. One near-miss worth naming: an earlier
-draft of the closing record was about to state that S7 "was never independently assessed" — a
-`git status` check before overwriting caught that Codex had already written its assessment and
-set `turn: claude`, so a false statement did not reach the record.
-
-### Findings Declined
-- **The exit-`18` untracked-ancestor boundary in `dispatch.sh`** — not queued. It was formally
-  assessed this session and accepted by Codex as a written limitation rather than a correction, is
-  documented in the spike README beside the paragraph it qualifies, is carried in the closed task
-  record's `## Accepted limitations`, and has its own `logs/decisions.md` entry naming the two
-  rejected fixes and the trigger to revisit. Queueing it would re-litigate a decision made today,
-  not surface a lost one.
-
-### Next Steps
-The task is closed; nothing to resume on it. Smallest remaining deferrals, if picked up: remove
-the now-unused `SPIKE_DIR` from `dispatch.sh`, and correct plan § 4.9's `PostCompact` rationale
-(conclusion unchanged). Both are prose-or-cleanup scale and would be Direct Work, not loop units.
-
-### Open Questions
-None.
-
 ## 2026-08-09 — work-loop-v2 phase1a Unit 5: actor-UID boundary falsified, one correction round
 
 ### Summary
@@ -497,6 +421,56 @@ nested AI invocation, no write into either incident checkout (both are read-only
 The plan's own § 0.4 route step 1 is next: a discovery unit establishing both incidents from
 preserved evidence (read-only, no live reproduction), which is Codex's move to open as a new Work
 Loop v2 unit under the still-open planning task. This session did not open it.
+
+### Open Questions
+None.
+
+## 2026-08-12 — axcion-harness v0.2 live trial: Work Loop v2 Units 3–5, task closed
+
+### Summary
+Ran Claude's half of Work Loop v2 for task `axcion-harness-v0-2-live-trial` across three units in
+this isolated worktree checkout. Unit 3 forensically established that the prior session's interrupted
+live actor left no repository effect and no surviving process. Unit 4 diagnosed the real blocker as
+one over-narrow `--allow-path` argument rather than a carrier or hook defect, and designed the
+smallest safe correction. The operator then ran the canonical `carry-turn.sh` launcher directly,
+three separate live hops (`claude → codex`, `codex → claude`, `claude → operator`), all `exit=0`.
+Codex accepted Unit 5's evidence and closed the task, judging the project plan's Phase 2 attended
+vertical-slice exit condition met.
+
+### Decisions Made
+- **Unit 4 correction: widen the carrier's `--allow-path` at the invocation, not in code.** Verified
+  read-only by reproducing the carrier's own `foreign_worktree()` filter against live `git status`
+  before recommending it; the carrier already supported repeatable `--allow-path` values and its own
+  failure message named this fix. No launcher, hook, or test file was touched.
+- **The second ambient writer (`detect-innovation.sh` → `logs/innovation-registry.md`) was found and
+  left unfixed, deliberately.** It is silent for state-file-only units and would only reproduce the
+  same false-stop shape once a future unit edits a `.claude/commands|agents|hooks/` file. Recorded as
+  a deferral in the Unit 4 handback; not carried into the closing record as an open item — flagged
+  here so it isn't lost.
+- **Operator ran both live carrier invocations directly**, on Claude's recommendation, rather than
+  Claude launching them — no-retry risk (one shot, no second attempt authorized) and evidence purity
+  (the brief named the operator as launcher; Codex needed to be able to trust the carrier's own
+  screen, not a nested Claude session's).
+- Task closed by Codex's verdict, not Claude's — Claude wrote and committed the closing record per
+  Work Loop v2's role split (Codex assesses and closes, Claude never decides closure).
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None — the only actions taken by Claude were read-only repository inspection and committing exactly
+the task's own state file, by exact pathspec, each unit. The two live actor launches (Unit 5 and the
+close) were run by the operator directly, outside Claude's process, per the brief's own boundary.
+
+### Next Steps
+Task `axcion-harness-v0-2-live-trial` is closed — no further Work Loop action is pending on it.
+Three items remain operator-owned and were deliberately left undecided by the closing record: (1)
+whether to fix the second ambient-writer deferral (`detect-innovation.sh`) now or wait for a unit
+that trips it; (2) integration into `main`, push, and worktree removal/retention for this trial
+checkout; (3) whether a further phase of Harness v0.2 work opens as a new Work Loop task.
 
 ### Open Questions
 None.

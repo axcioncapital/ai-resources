@@ -3422,3 +3422,78 @@ relevant task id when ready to proceed on either.
 ### Open Questions
 None blocking. The supervisor decision above was handed to the operator explicitly in the closing
 record — the loop stopped there correctly, not as an unresolved thread.
+## 2026-08-08 — Session S2-309
+**Mandate:** Run Claude's half of Work Loop v2 on the open `work-loop-v2-proportionality-continuity-implementation` task — units S5 (artifact-free project orientation) and S6 (post-compaction reorientation) — done when: each unit's premises are checked against the live repository, each unit's evidence is produced and recorded in the state file, and each unit is committed by explicit pathspec with `turn:` handed back to Codex
+- Out of scope: S7 and the dispatcher; changes to S1–S4; the live P-7 compaction trial, which this runtime cannot stage; repairing another session's dirty dispatch.sh / dispatch.test.sh; any `.codex/` path except the two S6 targets
+- Files in scope: .agents/skills/work-loop-v2/SKILL.md, AGENTS.md, .codex/hooks.json, .gitignore, logs/work-loop/work-loop-v2-proportionality-continuity-implementation.md
+- Stop if: a brief's premise proves false, or a change would need a settled operator decision reopened
+- Allowed inputs: plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md, plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md, .claude/commands/project-next-steps.md, projects/axcion-design-studio/
+- Required outputs: .codex/hooks/work-loop-reorient.sh
+- Mission: work-loop-v2-mvp
+
+**Work:** Claude-side execution of Work Loop v2 units S5 and S6 on the proportionality-continuity task.
+
+### Summary
+In progress. S5 committed as `309a1c0`. S6 implemented and proved deterministically; its three
+targets were gitignored by the 2026-07-13 Codex-mirror decision, the operator delegated the
+tracking choice, and option (a) was taken via a narrow `.gitignore` negation ladder.
+
+## 2026-08-08 — Work Loop v2 S7 implemented, assessed, and the task closed
+
+### Summary
+Ran Claude's half of one Work Loop v2 unit: S7 of the accepted proportionality-and-continuity
+plan, making the handoff dispatcher's runtime evidence collision-proof under the two concurrency
+shapes plan § 4.8 names. All four of the brief's premises held on inspection, so the unit ran.
+The change is four functional lines in `dispatch.sh` plus three corrected README statements.
+Codex then assessed, accepted S7 without re-running its evidence, and wrote a close token; the
+state file was reduced to core § 4's four-heading closing record at `turn: operator`. The task's
+S1–S7 exit condition is met.
+
+### Decisions Made
+- **Default log directory resolved once, not twice.** `DEFAULT_LOG_DIR` is computed immediately
+  after the checkout is canonicalized, and both the `--status` branch and the run branch read it.
+  The plan warned the two sites must stay in step; a single source is the only durable way to do
+  that, rather than two literals maintained by hand.
+- **Its value is the spike's own relative path under the driven checkout**, so driving this
+  repository resolves to exactly the directory the existing logs are already in. Nothing was
+  moved or migrated, and `--status` still finds the pre-change logs — verified read-only against
+  this checkout.
+- **Run-id field order chosen for two consumers.** Timestamp first so the directory still sorts
+  chronologically; the task id moved to the end so `--status`'s `*-$TASK.log` glob stays an exact
+  match and keeps matching logs written before the change. The discriminator reuses `LOCK_KEY`,
+  which already varies exactly when the checkout does — no new concept.
+- **Exit-`18` boundary recorded, not fixed.** Where an ancestor such as `plans/` is untracked,
+  git collapses the dispatcher's own evidence to `?? plans/` and the pre-hop gate stops the run.
+  Both candidate fixes fall outside § 4.8 — widening the allowlist to an ancestor would let
+  genuinely foreign changes pass unseen, and switching the gate to `--untracked-files=all`
+  changes a guard this plan does not own. Codex accepted it as a written limitation.
+- **`SPIKE_DIR` removal deferred.** It is now referenced only in a comment, but removing it would
+  be a third change § 4.8 does not authorise.
+- **Third README edit made and flagged.** It corrects an allowlist claim this change made newly
+  reachable, going slightly beyond "states the old default"; Codex ruled it in scope.
+- **Closure came from Codex, not from the operator's instruction.** The operator asked to close;
+  Codex had independently assessed and written a proper close token in the meantime, so the
+  independent check did run and the "closed unassessed" limitation I had drafted was dropped.
+
+### Risky actions
+None. The dispatcher edits are reversible and committed; all P-5/P-6 fixtures were disposable
+git checkouts under a temp root, never the repository. One near-miss worth naming: an earlier
+draft of the closing record was about to state that S7 "was never independently assessed" — a
+`git status` check before overwriting caught that Codex had already written its assessment and
+set `turn: claude`, so a false statement did not reach the record.
+
+### Findings Declined
+- **The exit-`18` untracked-ancestor boundary in `dispatch.sh`** — not queued. It was formally
+  assessed this session and accepted by Codex as a written limitation rather than a correction, is
+  documented in the spike README beside the paragraph it qualifies, is carried in the closed task
+  record's `## Accepted limitations`, and has its own `logs/decisions.md` entry naming the two
+  rejected fixes and the trigger to revisit. Queueing it would re-litigate a decision made today,
+  not surface a lost one.
+
+### Next Steps
+The task is closed; nothing to resume on it. Smallest remaining deferrals, if picked up: remove
+the now-unused `SPIKE_DIR` from `dispatch.sh`, and correct plan § 4.9's `PostCompact` rationale
+(conclusion unchanged). Both are prose-or-cleanup scale and would be Direct Work, not loop units.
+
+### Open Questions
+None.
