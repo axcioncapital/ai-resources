@@ -3334,3 +3334,30 @@ with its neighbours until the operator decides.
 check whether the same value is set at the user/global level, which would mean every checkout on this
 machine carries it). A one-line fix; the only reason it is not already applied is that no session has
 had explicit operator authorization to change repo identity as a side effect of unrelated work.
+
+### 2026-08-12 — Harness case 31b greps only the `claude_deny=none` prefix, so the honest wording is unpinned
+
+- **Status:** logged (pending)
+- **Severity:** medium — no live break; the wording is correct right now. The gap is that nothing
+  would catch a regression to the false sentence, and that sentence is the one an operator reads to
+  decide whether an unattended child is contained.
+- **Category:** Test coverage — assertion is weaker than the property it appears to protect.
+- **Source:** ai-resources, 2026-08-12, Work Loop v2 task
+  `work-loop-v2-bounded-execution-verification`, correction round (commit `07bcf96`).
+
+Harness case 31b asserts the attended run log records the deny policy, but its check is
+`grep -q "claude_deny=none"` (`dispatch.test.sh:2136`) — a prefix match. The retired wording
+(`claude_deny=none — no tool denied beyond the child's own policy`) and the corrected wording
+(`claude_deny=none — no EXTRA deny rule was supplied by the operator; this does NOT mean nothing is
+denied…`) both satisfy it. The prefix survived the correction unchanged, so the assertion looks like
+it protects the sentence and does not.
+
+Why it matters: the retired sentence was false on the attended path from the moment the four
+`NESTED_ACTOR_DENY` rules became an always-on default. A future edit reverting to it would restore a
+run-log line that tells an operator no tool is denied when four are, and the suite would stay green.
+
+**Shape of the fix (not built).** Add one assertion to case 31b pinning the honest half of the line —
+that the plain-attended log does not claim nothing is denied, and does point at the nested-actor set.
+Deferred at closure rather than built: the correction boundary named case 31b as out of scope and
+limited the method to static inspection plus one integrated harness run. Recorded in the task's
+closing record under decisions that matter; queued here so it is reachable after that file closed.

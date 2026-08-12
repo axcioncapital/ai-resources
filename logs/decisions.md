@@ -137,3 +137,45 @@ narrower (one missing regression) than a full reimplementation would have addres
 malformed git identity (`patriklindeberg75@@gmail.com`) while replacing the commit — rejected, since
 every recent commit in the repo already carries it and silently changing it would create an
 inconsistent identity mid-history; flagged to the operator instead.
+
+## 2026-08-12 — 15 failing harness cases diagnosed as environmental, not repaired
+
+**Context.** The Codex assessment of the merged bounded-execution repair froze three findings. The
+second required diagnosing 15 failing 27-series harness cases: "If they are real merge regressions,
+repair only the ceremony/bounded-execution interaction they expose. If they are caused by the
+restricted verification environment, demonstrate that with fail-capable evidence from the normal
+supported test environment." The reviewers' own run had ended `exit 1, pass=408 fail=15`, and the
+blocker said the dispatcher must not enter its attended pilot while the integrated harness is red.
+
+**Decision.** Diagnosed the failures as environmental and made **no repair** to the dispatcher or
+the harness. Evidence: one full integrated run on the corrected tree in the normal supported
+environment, `exit 0, pass=454 fail=0`, with every reported-failing case passing (`27`, `27b`–`27n`,
+`27L`) and bounded-execution cases `40`–`47` passing.
+
+**Rationale.** The reviewers' failures were concentrated in the 27-series *control* assertions —
+"escapee alive and OUTSIDE the actor's group", "the orphan is re-parented to pid 1", "a live
+root-owned PID is available". Those controls probe whether the host permits process-group and
+ancestry inspection at all; they are not assertions about dispatcher behaviour. A failed control
+short-circuits the behavioural assertion behind it, which is also why the two runs are not
+comparable on totals (423 assertions there, 454 here) — the failing run never reached the
+assertions the controls guard. The suite is demonstrably fail-capable in both directions: it exited
+`1` for the reviewers, and its controls are written to fail loudly exactly when the environment
+cannot establish the process facts.
+
+**Load-bearing supporting fact.** The green result is attributable to the merged code rather than to
+this correction: the dispatcher diff against `f994900` changes exactly one executable line (the
+`claude_deny=none` log string), and everything else in `dispatch.sh` is comment text. Without that
+check, a correction round that edits prose and then reports a green suite invites the reading that
+the edits produced the green.
+
+**Alternatives considered.** (a) Repair the 27-series interaction as a merge regression — rejected,
+since inspection showed nothing to repair: the cases pass unmodified. Changing working code to
+satisfy a failure that only occurs where process inspection is forbidden would have introduced a
+real defect to chase an artefact. (b) Treat the red suite as blocking and hand back rather than
+diagnose — rejected, because the frozen finding explicitly provided the environmental branch and
+asked for it to be demonstrated, so handing back would have been a refusal to do the named work.
+(c) Report the earlier mixed harness runs, where `dispatch.sh` was edited mid-run — rejected and
+both runs discarded; a green count from a run whose subject changed underneath it is not evidence.
+
+**Accepted limitation, stated in the closing record.** The diagnosis establishes that the merged
+suite is green where process inspection is permitted. It does not certify any other host.

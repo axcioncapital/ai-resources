@@ -2,113 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-09 — work-loop-v2 phase1a Unit 5: actor-UID boundary falsified, one correction round
-
-### Summary
-Continued the work-loop-v2 phase1a task (full-descendant-tree termination). The operator's live run
-of the accepted runbook stopped at B4: a fresh non-admin actor account immediately acquired
-persistent macOS per-user launchd agents, falsifying the runbook's empty-UID premise. Codex framed a
-Unit 5 discovery brief; I investigated read-only and returned a verdict, which Codex corrected in one
-bounded round (four findings, all accepted and applied). Two commits landed; turn is now `codex`
-awaiting the closure check.
-
-### Decisions Made
-None. This was Work Loop v2 protocol execution against an already-accepted runbook and Codex-framed
-briefs — no operator-directed analytical or scoping decision was made this session.
-
-### Risky actions
-Near-miss, caught before commit: writing the Unit 5 result, a Python script located the file's
-`## Next action` section by searching for that literal string and matched the **first** occurrence —
-a mention of the same phrase inside an unrelated heading near the top of the file — truncating
-everything below it (the accepted runbook, C5 fixture, C5-T, rollback, evidence template). Caught via
-a line-count/heading sanity check before anything was committed; restored from commit `4182f42` and
-the uncommitted work re-applied by hand from session context. Fixture integrity (210 lines, sha256
-`65b50d19…a8f9`, `bash -n` clean) was re-verified before the first commit landed. No host state and
-no other repository file was affected. Lesson recorded in this session's continuity scratchpad:
-never anchor a script-based file edit on a heading string that can also appear as a substring
-elsewhere in the file; prefer the Edit tool's exact-match behavior, or assert occurrence count first.
-
-### Next Steps
-**Live update, caught mid-wrap:** Codex's closure check arrived before this wrap finished — Unit 5 is
-**accepted** (all four findings resolved, nothing broken), and Codex has already framed **Unit 6**
-directly in the task file: discovery on whether the dedicated account can support a narrower,
-run-specific process boundary (baseline-aware census, or per-process stop against a recorded set)
-that reaches the escaped daemon without touching macOS per-user services. `turn: claude`, unactioned
-— this wrap did not execute it, to avoid starting new Work Loop work under an explicit `/wrap-session`
-instruction. **Next session: read `## Next action` in the task file and execute Unit 6**, read-only
-throughout (no `sudo`, no signal, no `launchctl` mutation, no actor process launch). Do not touch the
-live actor account `wlactor-airesources` (uid 502) until Codex/operator authorize a disposition.
-
-### Open Questions
-None — the two open questions from this session (route viability, account disposition) were resolved
-within the session: the mechanism is rejected under the already-preserved 1a guarantee, and the
-account is to remain untouched pending a verified removal procedure.
-
-## 2026-08-09 — work-loop-v2 phase1a Units 8–9: persona rejected on kernel evidence
-
-### Summary
-Continued Claude's half of Work Loop v2 on `work-loop-v2-phase1a-full-descendant-termination`, running
-four consecutive units: Unit 8's final tightly-bounded fix, Unit 9 (discovery on whether the Darwin
-persona entitlement has a supported operator-accessible path), Unit 9's correction round, and Unit 9's
-final bounded fix. The correction round decompressed the boot kernel collection read-only and resolved
-AMFI's entitlement-exception tables directly, flipping the verdict from unresolved to **persona
-rejected** — no supported path exists for `com.apple.private.persona-mgmt`, proved from the kernel
-rather than inferred from its name prefix. No live probe was needed or requested.
-
-### Decisions Made
-- **Unit 8 final fix (Claude, applying Codex's frozen menu choice):** narrowed four locations that
-  overclaimed persona impossibility without the current-authority boundary; merged one duplicated
-  paragraph. Routine mechanical fix under a frozen menu choice.
-- **Unit 9 verdict, initial (Claude, discovery unit):** returned "unresolved" rather than stretching
-  documentation-only evidence into a denial — the `com.apple.private.*` prefix alone was explicitly not
-  treated as proof, per Unit 8's earlier withdrawn overclaim.
-- **Unit 9 correction — verdict change flagged rather than absorbed (Claude):** the authorized
-  correction search resolved the exact-key classification, which the brief had expected to stay open.
-  Reported this as a deliberate verdict change for Codex to confirm, rather than silently substituting
-  a different answer than what was asked for.
-- **Self-correction of an evidence-verification claim (Claude):** caught, before committing, that a
-  draft verification sentence in Unit 9's final fix claimed a search "returns nothing" while the
-  record's own quotation of the searched phrase made that literally false. Rewrote it to state the
-  accurate scope of the search rather than leave an unverifiable claim in the record.
-- **Unit 9 final fix (Claude, applying Codex's frozen menu choice):** corrected one stale carried-forward
-  sentence contradicting the new verdict; flagged one adjacent sentence (Lane and unit's named-reason
-  paragraph) as a candidate deferral rather than touching it, since it sat outside the frozen scope.
-
-### Risky actions
-The correction round decompressed the host's boot kernel collection (an Apple-signed system file) using
-an already-installed macOS tool (`compression_tool`), entirely read-only, to a session scratch file
-outside the repository. The scratch file was deleted after use and nothing was written, signed,
-installed or executed. Flagging this because it is the most invasive inspection performed by this task
-to date, even though it stayed strictly within the unit's read-only, no-host-mutation scope. No signal,
-`sudo`, account action, login, authentication, persona creation, or repository file besides the state
-file occurred at any point across the four units.
-
-### Next Steps
-The state file was modified externally after this session's last commit (visible in the working tree at
-wrap time): Codex has already framed **Unit 10** — read-only discovery on whether Unit 7's unresolved
-ASID root-bearing form can provide literal Phase 1a's termination/verification boundary. This session
-did not execute Unit 10, to avoid starting new Work Loop work under an explicit `/wrap-session`
-instruction. **Next session: run `/work-loop-v2` and execute Unit 10** per the state file's
-`## Next action`. Read-only throughout — no `sudo`, signal, `launchctl` mutation, or actor process
-launch. Do not touch `wlactor-airesources` (uid 502) until Codex/operator authorize a disposition.
-
-Two commits touching the Work Loop v2 core resolver (`62cfc44`, `0935447`) landed in this repository's
-history during this session but were not made by this conversation — they concern checkout-identity
-handling in the core-resolution script and are unrelated to the phase1a task. Worth a look next session
-if the resolver's behavior is in question.
-
-### Findings Declined
-- **`run-manifest.sh close` hard-errors on this session's markerless start** — reproduced live (this
-  session began via a direct `/work-loop-v2` invocation, no `/prime`, so no per-id or today-dated shared
-  marker existed; `close` exited 2 instead of the documented stub-and-continue). Declined as a new
-  finding because it is already logged, open and unfixed at `## 2026-08-07 — run-manifest.sh close
-  hard-errors on a genuinely markerless session instead of the documented stub-and-continue`; this is a
-  reproduction, not new information.
-
-### Open Questions
-None. Persona is closed (rejected, with kernel-level evidence). Deferral 14 (stale "the rejection"
-wording in retained Unit 8 material) remains open and low-priority — Codex's call, not blocking.
-
 ## 2026-08-09 — Work Loop v2 core resolver: linked-worktree fix, planned and shipped same session
 
 ### Summary
@@ -517,6 +410,75 @@ standards MEDIUM (contradictory `claude_deny=none` wording; untracked-file recov
 spec MEDIUM (fabricated U3 fixture — explicitly off-limits per operator instruction), and four
 low findings (stale README deny-rule sentence, early P1 prohibition, duplicated allowlist logic,
 mislabeled case 31b).
+
+### Open Questions
+None.
+
+## 2026-08-12 — Work Loop v2 bounded-execution: correction round and task closure
+
+### Summary
+Ran Claude's half of Work Loop v2 twice against task `work-loop-v2-bounded-execution-verification`
+— first the one bounded correction round on Codex's three frozen findings, then the closing record
+after Codex returned its close verdict. Two of the three findings were real and are fixed (the exit
+taxonomy in the canonical Work Loop skill, and four statements that wrongly claimed nothing is
+denied without `--claude-deny`). The third did not reproduce: the 15 failing 27-series harness cases
+were control assertions probing whether the host permits process-group inspection, not a merged
+regression, and the full integrated harness is green at `pass=454 fail=0` in the normal supported
+environment. The task closed as technically verified and cleared for its separately authorised
+single attended pilot — which is explicitly not part of this task.
+
+### Decisions Made
+**Correction round (commit `07bcf96`)**
+- Corrected `SKILL.md:277` and `:289` to name exit `37` as the permission dead end, and added `35`
+  as the ownership stop with its own remedy plus a pre-2026-08-11 reading note. SKILL.md was the
+  only live instruction surface still carrying the wrong mapping — the other three
+  bounded-execution surfaces and `docs/parallel-sessions-playbook.md` were already correct.
+- Made no repair for finding 2. The reviewers' failures were control assertions, not dispatcher
+  behaviour, and every one passes here. Repairing a non-defect was rejected.
+- Corrected four deny-policy statements (`dispatch.sh:36`, `dispatch.sh:1382`, `README.md:183`,
+  `README.md:973`) to say that `none` means the operator supplied no extra rule. The default deny
+  set was neither widened nor removed and no containment claim was added.
+- Included the ownership codes `33`,`34`,`35` in SKILL.md's stop-code list rather than only removing
+  the wrong `35`. Naming `35` correctly prevents a future reader re-deriving the retired mapping;
+  the alternative (leave `35` unmentioned) would have been silent rather than wrong.
+
+**Closure (commit `86aace2`)**
+- Wrote Codex's close verdict into the core § 4 closing record without re-judging it, per the
+  command's closing rules. Cleared the checkout declaration in the same move, so the checkout is
+  free for the next task.
+
+**Process decisions**
+- Discarded two harness runs because `dispatch.sh` was edited while they were in flight; run 3 is
+  the only clean one. Reporting a green suite from a mixed run would not have been honest evidence.
+- Declined to add a harness assertion pinning the corrected `claude_deny=none` wording. The
+  correction boundary excluded case 31b and limited the method to static inspection plus one
+  integrated harness run; recorded as a deferral in the closing record instead.
+
+### Risky actions
+None. No destructive git operation, no push, no external write. The two commits are local. The
+`work-loop-owner.sh clear` at closure removes a gitignored declaration and is a no-op on a checkout
+that holds none.
+
+### Findings Declined
+- **Edited `dispatch.sh` while a ~1h harness run was in flight, twice** — cost two discarded runs.
+  Declined rather than queued: it is a session-craft lesson with no repo artifact to fix, and the
+  practice (freeze the files under test before starting a long suite) is recorded in the session
+  scratchpad where the next session will read it.
+- **Backgrounded `sleep N; check` returned its task id instantly**, so progress polling ran
+  immediately instead of waiting — I believed I was polling every 30 minutes while polling every few
+  seconds. Declined for the same reason: no artifact to fix, and the working idiom (a backgrounded
+  `until ! pgrep -f "<proc>"; do sleep 20; done`, which fires one notification on exit) is in the
+  scratchpad.
+
+Findings: 3 — queued 1 (severity: medium), declined 2. 1 + 2 = 3.
+
+### Next Steps
+The next operational step is the **single bounded attended pilot** defined by the governing plan.
+It is separately authorised and was explicitly excluded from this task — the task closed at
+*technically verified*, not *operationally resolved*. Do not read the closed state file as pilot
+authorization.
+
+Before the pilot: nothing outstanding from this session. Two commits await the wrap push gate.
 
 ### Open Questions
 None.
