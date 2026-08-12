@@ -77,3 +77,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 
 - [ ] `/work-loop-v2`'s embedded resolver is rewritten by its own argument, because it uses `$1`/`$2` as bash positionals — `logs/improvement-log.md` <!-- promote:521245a3d4ce -->
 - [ ] `check-destructive-liveness.sh` resolves the wrong target for `git -C <path> clean -f`, and fires on dry runs — `logs/improvement-log.md` <!-- promote:01478653b504 -->
+
+- [ ] a second ambient writer (`detect-innovation.sh`) will reproduce the false-stop the harness carrier just fixed — `logs/improvement-log.md` <!-- promote:af4659c2455b -->

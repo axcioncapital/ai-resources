@@ -3497,6 +3497,7 @@ the now-unused `SPIKE_DIR` from `dispatch.sh`, and correct plan § 4.9's `PostCo
 
 ### Open Questions
 None.
+
 ## 2026-08-09 — work-loop-v2 phase1a Unit 5: actor-UID boundary falsified, one correction round
 
 ### Summary

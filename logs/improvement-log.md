@@ -3361,3 +3361,57 @@ that the plain-attended log does not claim nothing is denied, and does point at 
 Deferred at closure rather than built: the correction boundary named case 31b as out of scope and
 limited the method to static inspection plus one integrated harness run. Recorded in the task's
 closing record under decisions that matter; queued here so it is reachable after that file closed.
+### 2026-08-12 — a second ambient writer (`detect-innovation.sh`) will reproduce the false-stop the harness carrier just fixed
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — silent today, but a known concrete trigger on the exact production
+  surface this session validated, and the failure it would reproduce already cost two discovery units
+  to diagnose once.
+- **Category:** Harness v0.2 / Work Loop v2 attended-carrier operations.
+- **Source:** ai-resources (worktree `axcion-harness-v0.2-live-trial`), 2026-08-12,
+  `axcion-harness-v0-2-live-trial` Work Loop v2 task, Unit 4.
+
+Unit 4 diagnosed why `scripts/axcion-harness-v0.2/carry-turn.sh` false-stopped: the project-level
+`PostToolUse` hook `log-write-activity.sh` appends telemetry to `logs/friction-log.md` on every
+`Write`/`Edit`, outside the carrier's narrow `--allow-path`. The fix (widen `--allow-path` at the
+invocation) shipped and was proven live in Unit 5. While tracing hooks, a **second** ambient writer
+was found: the user-level `PostToolUse` hook `detect-innovation.sh` (registered in
+`~/.claude/settings.json`, fires on `Write`/`Edit`) appends to `logs/innovation-registry.md`, but only
+when the edited path matches `.claude/commands|agents|hooks/<file>`. No unit this session edited such
+a path, so it stayed silent — but the first future Harness v0.2 unit that *does* edit a command,
+agent, or hook file will dirty a second out-of-allowlist path and reproduce the same `exit 18` false
+stop, under a path the current one-regex widening does not cover.
+
+**Shape of the fix (not built).** Either add `^logs/innovation-registry\.md$` as a third `--allow-path`
+alongside the existing two (same invocation-layer pattern Unit 4 established, no code change), or
+decide the fix should be conditional — only add it when a unit's scope is known in advance to touch
+`.claude/`. Recorded as a deferral in the Unit 4 handback (`logs/work-loop/axcion-harness-v0-2-live-trial.md`,
+committed history); Codex's closing verdict did not carry it forward as an open item, so it is easy to
+lose without this entry.
+
+**Target files:** the carrier invocation (no launcher/hook code change on the recommended path); see
+`~/.claude/settings.json` and `ai-resources/.claude/hooks/detect-innovation.sh` for the writer traced.
+
+### 2026-08-12 — `carry-turn.sh`'s SIGINT path exits before logging a post-stop hash or status
+
+- **Status:** logged (pending)
+- **Severity:** low — fully recoverable by other evidence (filesystem timestamps, branch reflog,
+  the interrupted actor's own transcript), as Unit 3 demonstrated, but it costs a full forensic
+  discovery unit each time instead of a log read.
+- **Category:** Harness v0.2 attended carrier — observability on interruption.
+- **Source:** ai-resources (worktree `axcion-harness-v0.2-live-trial`), 2026-08-12,
+  `axcion-harness-v0-2-live-trial` Work Loop v2 task, Unit 3.
+
+`carry-turn.sh`'s `on_signal()` (SIGINT/SIGTERM handler) calls `die 28` immediately after terminating
+the actor's process group, before reaching the `after:` line that would log the post-stop state-file
+hash and status (`:620` in the normal completion path). An interrupted run's log therefore records
+only the pre-launch baseline, not what the repository looked like right after the stop. Unit 3 had to
+reconstruct the post-stop baseline from a whole-checkout timestamp sweep, the branch reflog, and the
+interrupted actor's own transcript instead of reading it off the run log directly.
+
+**Shape of the fix (not built).** Have `on_signal()` capture and print the post-stop hash/turn/head
+(the same three values `after:` logs on a normal exit) before calling `die 28`, so an interrupted run's
+log is self-sufficient for the next session's baseline check. Out of scope for the task that surfaced
+it — Unit 3 was inspection-only and explicitly excluded launcher edits.
+
+**Target files:** `scripts/axcion-harness-v0.2/carry-turn.sh` (`on_signal()`, around `:403-410`).

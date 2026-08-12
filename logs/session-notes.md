@@ -482,3 +482,53 @@ Before the pilot: nothing outstanding from this session. Two commits await the w
 
 ### Open Questions
 None.
+
+## 2026-08-12 — axcion-harness v0.2 live trial: Work Loop v2 Units 3–5, task closed
+
+### Summary
+Ran Claude's half of Work Loop v2 for task `axcion-harness-v0-2-live-trial` across three units in
+this isolated worktree checkout. Unit 3 forensically established that the prior session's interrupted
+live actor left no repository effect and no surviving process. Unit 4 diagnosed the real blocker as
+one over-narrow `--allow-path` argument rather than a carrier or hook defect, and designed the
+smallest safe correction. The operator then ran the canonical `carry-turn.sh` launcher directly,
+three separate live hops (`claude → codex`, `codex → claude`, `claude → operator`), all `exit=0`.
+Codex accepted Unit 5's evidence and closed the task, judging the project plan's Phase 2 attended
+vertical-slice exit condition met.
+
+### Decisions Made
+- **Unit 4 correction: widen the carrier's `--allow-path` at the invocation, not in code.** Verified
+  read-only by reproducing the carrier's own `foreign_worktree()` filter against live `git status`
+  before recommending it; the carrier already supported repeatable `--allow-path` values and its own
+  failure message named this fix. No launcher, hook, or test file was touched.
+- **The second ambient writer (`detect-innovation.sh` → `logs/innovation-registry.md`) was found and
+  left unfixed, deliberately.** It is silent for state-file-only units and would only reproduce the
+  same false-stop shape once a future unit edits a `.claude/commands|agents|hooks/` file. Recorded as
+  a deferral in the Unit 4 handback; not carried into the closing record as an open item — flagged
+  here so it isn't lost.
+- **Operator ran both live carrier invocations directly**, on Claude's recommendation, rather than
+  Claude launching them — no-retry risk (one shot, no second attempt authorized) and evidence purity
+  (the brief named the operator as launcher; Codex needed to be able to trust the carrier's own
+  screen, not a nested Claude session's).
+- Task closed by Codex's verdict, not Claude's — Claude wrote and committed the closing record per
+  Work Loop v2's role split (Codex assesses and closes, Claude never decides closure).
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None — the only actions taken by Claude were read-only repository inspection and committing exactly
+the task's own state file, by exact pathspec, each unit. The two live actor launches (Unit 5 and the
+close) were run by the operator directly, outside Claude's process, per the brief's own boundary.
+
+### Next Steps
+Task `axcion-harness-v0-2-live-trial` is closed — no further Work Loop action is pending on it.
+Three items remain operator-owned and were deliberately left undecided by the closing record: (1)
+whether to fix the second ambient-writer deferral (`detect-innovation.sh`) now or wait for a unit
+that trips it; (2) integration into `main`, push, and worktree removal/retention for this trial
+checkout; (3) whether a further phase of Harness v0.2 work opens as a new Work Loop task.
+
+### Open Questions
+None.
