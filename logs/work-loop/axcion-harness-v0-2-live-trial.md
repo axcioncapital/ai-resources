@@ -244,7 +244,9 @@ the narrow policy that blocks the carry was supplied at the invocation, not fixe
   this one anchored path.
 - **Claim (8) — own-change discipline: HOLDS.** Committed only this state file, by exact pathspec.
   The hook fired on my edits as predicted: `logs/friction-log.md` went from **5** appended
-  write-activity lines at unit start to **9** at handback, all of the form
+  write-activity lines at unit start to **8** at the first handback commit, and rises by one more per
+  further edit of this file — so a later reader will see a higher count, which is the unbounded
+  per-write behaviour of point (b) above showing itself. All added lines are of the form
   `- 11:1x — logs/work-loop/axcion-harness-v0-2-live-trial.md`, all inserted under
   `#### Write Activity`, content otherwise unchanged. It is left dirty and uncommitted exactly as the
   brief requires. No third path appeared at any point.
