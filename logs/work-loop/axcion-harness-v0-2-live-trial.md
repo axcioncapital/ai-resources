@@ -179,9 +179,23 @@ Inspected (2026-08-12):
   sharing the store, whose own commits land at 16:42 that day. Foreign, but attributed, not ambiguous,
   and not in this checkout. No file under the shared store's `refs/`, `logs/` or `packed-refs` was
   written in the window.
-- **Claim (7) — own-change discipline: HOLDS.** This unit changed only
-  `logs/work-loop/axcion-harness-v0-2-live-trial.md` and staged it by exact pathspec. Every effect
-  found above is preserved exactly as found.
+- **Claim (7) — own-change discipline: HOLDS for the commit, with one disclosed side effect.** The
+  commit contains only `logs/work-loop/axcion-harness-v0-2-live-trial.md`, staged by exact pathspec
+  (`git log -1 --stat` shows `1 file changed`). Every effect found above is preserved exactly as
+  found — nothing was cleaned, restored or repaired. **Disclosed:** a `git status` re-run immediately
+  after the commit showed a second path, ` M logs/friction-log.md`, which was **not** present in the
+  pre-commit status. It is this session's own doing, not a Unit 2 effect: mtime `2026-08-12 11:11:06`,
+  and `git diff` shows exactly two appended lines under `#### Write Activity` —
+  `11:11 — logs/work-loop/axcion-harness-v0-2-live-trial.md` and `11:10 — …same file` — i.e. a
+  session write-activity hook logging *my own* two writes to the state file. It is left uncommitted
+  and unmodified, so the working tree hands back with that one path dirty.
+
+  **This is load-bearing for Phase 2, not housekeeping.** The carrier's allow-path is
+  `^logs/work-loop/axcion-harness-v0-2-live-trial\.md$`; a hook active in the actor's environment
+  writes to `logs/friction-log.md`, **outside** that allow-path, on every actor write. A future live
+  carry that reaches the post-hop check would therefore see an out-of-allow-path modification caused
+  by session infrastructure rather than by the actor's work. Unit 2 never reached that check, so this
+  had not surfaced before. Codex should settle it before framing another carry.
 
 Result: **BASELINE ESTABLISHED.** The interrupted Unit 2 actor left **no repository effect and no
 surviving process**. Beyond the negative repository evidence, the actor's own transcript settles the
@@ -198,9 +212,10 @@ the gap **between deciding to write and emitting the write call**, which is exac
 boundary is therefore known, not assumed.
 
 The exact current baseline for Codex: checkout `/Users/patrik.lindeberg/Claude Code/axcion-harness-v0.2-live-trial`,
-branch `harness-v0.2-live-trial`, HEAD `a0bb2a3` before this handback, working tree otherwise clean,
-index empty, no stash entry belonging to this branch, no live process, and this state file the only
-path that has ever been dirty here.
+branch `harness-v0.2-live-trial`, HEAD `a0bb2a3` before this handback, index empty, no stash entry
+belonging to this branch, and no live process. The working tree hands back with exactly one dirty
+path — ` M logs/friction-log.md`, this session's write-activity hook, per claim (7) — and no path is
+attributable to the interrupted Unit 2 actor.
 
 Evidence: the commands above are re-runnable and each could have read differently — `git status`
 could have listed a foreign path, the `find` window sweep could have returned a file, the branch
@@ -225,5 +240,6 @@ requiring repair.
 ## Next action
 
 Codex: assess this discovery result and decide whether a fresh attended-carry unit can now be framed
-against the Phase 2 exit condition, or whether the trial stops here. Nothing has been repaired,
-retried, integrated or pushed.
+against the Phase 2 exit condition, or whether the trial stops here — settling first the
+out-of-allow-path hook write disclosed under claim (7), which a live carry would encounter at its
+post-hop check. Nothing has been repaired, retried, integrated or pushed.
