@@ -10,236 +10,276 @@ the operator-prepared isolated checkout, producing enough repository evidence fo
 whether the project plan's Phase 2 vertical-slice exit is met.
 
 This task is bound only to the linked worktree at
-`/Users/patrik.lindeberg/Claude Code/axcion-harness-v0.2-live-trial`. The current unit is limited to
-read-only inspection of the interrupted Unit 2 run's repository and process effects, plus this exact
-state-file handback. Excluded: another live carry, launcher or semantic changes, deterministic-suite
-reruns, unattended or multi-hop operation, cleanup or repair of any discovered effect, the original
-attended-release task file in either checkout, unrelated repository work, integration into `main`,
-push, and worktree removal.
+`/Users/patrik.lindeberg/Claude Code/axcion-harness-v0.2-live-trial`. The current unit is a read-only
+discovery of the interaction between the canonical carrier's path-containment check and the active
+write-activity hook. Excluded: implementing a correction, another live carry, launcher or hook edits,
+deterministic-suite changes, unattended or multi-hop operation, cleaning existing paths, integration
+into `main`, push, and worktree removal.
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 3 — establish whether the interrupted Unit 2 actor left any
-repository or process effect and whether this checkout has a sufficiently certain baseline for
-Codex to decide the next unit.
+Standard. Discovery mode. Unit 4 — establish which layer owns the carrier-versus-hook path conflict
+and define the smallest safe, fail-capable correction before another live carry is considered.
 
 Named reason for the loop: the Phase 2 exit depends on cross-process evidence that must survive a
 fresh session and be assessed by Codex rather than by the actor that produced it.
 
 ## Brief
 
-Why this unit, why now: Unit 2 was interrupted at the operator's request while the authenticated real
-Claude process was still working. Its state-file hash was unchanged when the carrier stopped, but
-that does not establish whether the child produced another repository effect before SIGINT landed.
-The operator lifted the hold on 2026-08-12 and approved this inspection; Phase 2 cannot safely
-continue until the interrupted checkout has a repository-grounded disposition.
+Unit 3 established a trustworthy post-interruption baseline: Unit 2 left no repository effect, no
+commit, and no surviving process. It also proved that a normal Claude state-file write triggers
+session infrastructure to append to `logs/friction-log.md`, while the canonical carrier currently
+allows only this task's state-file path. This unit resolves the ownership and correction boundary
+before another carry; it does not implement the correction.
 
-**Named unknown.** Did the interrupted Unit 2 actor create, modify, stage, commit, or leave running
-anything in or against this checkout, and what exact current baseline must Codex use when deciding
-whether a later fresh attended-carry unit is justified?
+**Named unknown.** What exact active hook and carrier behaviors produce the out-of-allow-path write,
+which layer owns the conflict, and what is the smallest safe correction that preserves useful
+write-activity telemetry without weakening the carrier's ability to reject unrelated writes?
 
 **Governing sources and dispositions.**
 
-- Current operator decision, 2026-08-12: the hold is lifted and this repository-effects discovery
-  may start. This authorizes inspection and the state-file handback only; it does not authorize a
-  carrier retry, cleanup, implementation, integration, or unattended operation.
-- Current operator decision, 2026-08-11: deploy the attended Harness v0.2 while keeping unattended
-  disabled, and use this isolated worktree rather than disturb dirty paths owned by other sessions.
-  This continues to govern the trial boundary.
-- `plans/axcion-harness-v0.2/mvp-plan.md`, Phase 2 and its exit condition, is the canonical project
-  direction. Its proposed/no-implementation header is superseded for this attended trial only by
-  the current operator decision.
+- Current operator decision, 2026-08-12: the hold is lifted and the attended Harness v0.2 work may
+  progress through bounded Work Loop units. This does not authorize unattended operation.
+- `plans/axcion-harness-v0.2/mvp-plan.md`, Phase 2 and its exit condition, governs the project
+  direction. The current operator decision supersedes its proposed/no-implementation header only
+  for this attended trial.
 - `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` owns Work Loop semantics.
-- Unit 2's `## Latest result` and its named carrier log are the authoritative starting evidence for
-  the interrupted run. The old SHA-256 describes the state file before this Codex-authored Unit 3
-  brief; do not compare that hash to the newly briefed file as though the difference were an actor
-  effect.
-- `scripts/axcion-harness-v0.2/carry-turn.sh` is the accepted production surface under trial and is
-  read-only in this unit. Do not invoke it or substitute the spike dispatcher.
-- The original `logs/work-loop/axcion-harness-v0-2-attended-release.md` exists in both checkouts
-  because the worktree was branched from its commit. It is non-governing background for this task
-  and must remain untouched; reusing it here would create two checkout-bound copies claiming one
-  task's truth. This distinct task id is Codex's framing correction for the deliberate handoff.
+- Unit 3's accepted result is authoritative current evidence: the interrupted actor left no effect;
+  the current dirty `logs/friction-log.md` delta was caused by the active write-activity hook during
+  the Unit 3 handback; and a future carry would encounter that path at its post-hop check.
+- `scripts/axcion-harness-v0.2/carry-turn.sh` is the canonical production surface under trial.
+  Inspect it read-only.
+- Active hook registrations and the exact reached hook implementation are verify-first repository
+  facts. A registration, filename, or presumed owner is not governing until traced end to end.
+- The older dispatcher spike and its treatment of `logs/friction-log.md` may be inspected as
+  non-governing prior art. Do not copy its policy without reconciling it with the canonical launcher's
+  narrower attended-release boundary.
 
-**Claims to check against the live repository.**
+**Claims to check against the repository.**
 
-1. Verify the current checkout's physical path, branch, shared-store trust, task identity, and
-   state-file structure from repository facts before any other inspection. Stop if the path is not
-   the one above, the branch is not `harness-v0.2-live-trial`, or the task binding is false.
-2. Verify the invoked task id and resolved state file are exactly
-   `axcion-harness-v0-2-live-trial` and
-   `logs/work-loop/axcion-harness-v0-2-live-trial.md`; stop on any mismatch.
-3. Inspect the Unit 2 carrier log named in `## Latest result`. Establish the recorded launch,
-   interruption, child/process-group termination, terminal result, pre/post state hashes, and any
-   actor output available before interruption. If the log is absent or incomplete, report the exact
-   gap rather than reconstructing it from memory.
-4. Establish whether the interrupted actor or any identifiable descendant remains alive or capable
-   of writing to this checkout. Separate direct process evidence from inference; do not terminate a
-   process or work around a permission boundary in this unit.
-5. Inspect the working tree and index and classify every modified, staged, deleted, or untracked
-   path. Compare the current facts with every pre-launch baseline the carrier log actually records.
-   Identify which paths predated Unit 2, which are the expected Codex-authored Unit 3 state-file
-   change, which can be attributed to the interrupted actor, and which remain ambiguous. Do not
-   clean, restore, stash, stage, or edit any classified path.
-6. Inspect repository history sufficient to determine whether Unit 2 created a commit or moved the
-   branch after launch. Report commit identity, time, parent, and changed paths for any candidate;
-   do not infer "no commit" from the unchanged state-file hash alone.
-7. Before handback, verify that Claude's own unit changed only this state file and commit only it by
-   exact pathspec. Preserve every pre-existing or discovered effect exactly as found.
+1. Verify the exact checkout, branch, task identity, `turn: claude`, shared-store trust, current
+   HEAD, index, and complete working-tree status. Treat the existing `logs/friction-log.md` delta and
+   this Codex-authored state-file update as expected starting facts; stop on any additional path or
+   identity mismatch.
+2. Trace the active write-activity hook from registration through matcher and implementation to the
+   exact append in `logs/friction-log.md`. Establish which tool events trigger it, whether it runs in
+   the fresh Claude child used by the carrier, what path data it records, and whether it can write
+   more than the two-line Unit 3 shape. Bound every absence claim to the searched registrations and
+   scripts.
+3. Trace the canonical carrier's allowed-path construction and post-hop repository check. Establish
+   whether the state-file-only policy is fixed or configurable, which changes it detects, how it
+   distinguishes pre-existing from hop-created dirt, and the exact terminal outcome the Unit 3 hook
+   delta would cause. Do not invoke the live carrier.
+4. Use existing tests or a safe no-model reproducer, if one exists and runs without modifying tracked
+   project files, to demonstrate the red case: an allowed state-file write plus the actual or
+   faithfully represented hook append must be rejected under the current canonical policy. Report
+   why any substitute is faithful. If no fail-capable reproduction exists, say so and specify the
+   missing test seam rather than inventing evidence.
+5. Inspect directly relevant prior art, including the spike dispatcher's friction-log allowance and
+   the governing telemetry/session instructions it cites. Classify it as settled authority,
+   compatible precedent, stale behavior, or inapplicable background; do not promote age, location,
+   or passing tests into authority.
+6. Compare only the viable correction classes supported by evidence, such as: making the canonical
+   carrier explicitly allow the hook-owned path while still rejecting any other path; suppressing or
+   redirecting the hook inside carried children; or changing the post-hop check to recognize a
+   narrowly attributable telemetry delta. Assess containment value, false-accept risk, telemetry
+   loss, implementation surface, and testability. Reject unsafe or unnecessary alternatives.
+7. Return the recommended owning layer and the smallest future implementation boundary, including
+   exact target and test paths, behavior to preserve, exclusions, rollback, stop conditions, and a
+   red/green evidence matrix capable of detecting both the current false stop and an unrelated-path
+   escape. Leave the implementation mechanism open wherever repository authority has not settled it.
+8. Before handback, prove Claude directly changed and committed only this state file. The active hook
+   may append further write-activity lines to the already dirty `logs/friction-log.md`; if it does,
+   report the exact before/after delta and leave it uncommitted. Any other path is a stop.
 
-**What Claude returns.** Change no implementation and repair nothing. Replace `## Latest result`
-with a concise evidence-backed disposition of all seven claims, including a complete path
-classification, any surviving process, any candidate commit, gaps or ambiguity, direct versus
-inferred evidence, and the state-file handback commit identity. End the result with one explicit
-conclusion: **BASELINE ESTABLISHED** or **PARTIAL EFFECT OR AMBIGUITY FOUND**. Set `turn: codex` and
-commit this exact state file.
+**Required evidence.** Exact identity and status facts; hook registration-to-write trace; carrier
+allowlist and post-hop trace; a fail-capable red reproduction or a precise missing-seam finding;
+authority disposition for prior art; a bounded alternative comparison; exact future path boundary;
+red/green matrix that rejects unrelated writes; and exact staged/committed paths for the handback.
+Evidence that merely finds words supplied by this brief does not count.
 
-**Required evidence.** Evidence must be capable of showing failure: exact checkout/task/state
-values; decisive carrier-log lines; direct process evidence; complete working-tree and index
-status; path-level diffs or metadata needed for classification; branch/commit evidence spanning the
-Unit 2 launch window; the exact staged and committed path list for this handback; and every missing
-or ambiguous fact. A clean state-file hash or a claim copied from this brief is insufficient by
-itself.
+**Completion condition.** Replace `## Latest result` with one repository-grounded correction design
+and end with **PROCEED**, **REFRAME**, **DE-ESCALATE**, or **STOP**. Implement nothing; invoke no live
+actor or carrier; preserve all existing dirt; set `turn: codex`; commit only this state file by exact
+pathspec; and stop for assessment.
 
-**Completion condition.** Return one committed, state-only discovery handback with `turn: codex`
-and enough evidence for Codex to decide whether a new carry can be framed, or return the exact
-partial effect or unresolved ambiguity without modifying it. A future carry, Phase 2 acceptance,
-integration into `main`, closing the original attended-release task, pushing, and removing the
-worktree are deliberately held for later decisions.
-
-**Stop conditions.** Stop on a false identity or checkout premise, a surviving actor or descendant,
-an authentication or permission prompt, an effect that would require repair, an ambiguous foreign
-write, missing load-bearing evidence, out-of-bound change, or inability to commit the state-only
-handback. Do not launch another model, invoke or retry the carrier, run the deterministic suite,
-clean or repair the checkout, widen scope, or modify the launcher.
+**Stop conditions.** Stop on false checkout/task identity, an unexpected third dirty path, a live
+actor, an authority conflict requiring an operator decision, inability to reproduce or specify
+fail-capable evidence, a correction that would weaken unrelated-path detection, any needed edit, or
+any permission prompt. Do not clean, restore, stash, stage, or commit `logs/friction-log.md`; do not
+modify the launcher, hook, tests, semantic sources, or another task.
 
 ## Latest result
 
-Inspected (2026-08-12):
+Inspected (2026-08-12). Headline: **the carrier already owns the mechanism for this correction, and
+the narrow policy that blocks the carry was supplied at the invocation, not fixed in the code.**
 
-- **Claim (1) — checkout identity: HOLDS.** `pwd -P` and `git rev-parse --show-toplevel` both return
-  `/Users/patrik.lindeberg/Claude Code/axcion-harness-v0.2-live-trial`; `--abbrev-ref HEAD` =
-  `harness-v0.2-live-trial`; `--git-common-dir` =
-  `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.git` (shared store, canonical name
-  `ai-resources` — trusted); `--git-dir` = `…/.git/worktrees/axcion-harness-v0.2-live-trial`;
-  `HEAD` = `a0bb2a34f787f22faa1e03d22d1a89b1ad654de1`. The store is shared with 12 worktrees, which
-  matters for claim (6).
-- **Claim (2) — task binding: HOLDS.** Frontmatter `task:` read as `axcion-harness-v0-2-live-trial`,
-  identical to the invoked id; the resolved file is
-  `logs/work-loop/axcion-harness-v0-2-live-trial.md`; `turn:` was `claude` on entry.
-- **Claim (3) — carrier log: HOLDS, with three recorded gaps.** The named log exists (1456 bytes,
-  mtime 2026-08-11 15:44) and records: `allow-path: ^logs/work-loop/axcion-harness-v0-2-live-trial\.md$`;
-  `initial: turn=claude sha256=faadb181…e923a2 head=a0bb2a3`; the note that the state file is
-  uncommitted with `turn: claude`; `hop: actor=claude`; `before:` with the same sha/turn/head;
-  `launch: timeout=900s bin=/Users/patrik.lindeberg/.local/bin/claude version=2.1.220`; the cmd line;
-  `SIGINT received — terminating the actor and stopping.`; `STOP [28]`; and
-  `RESULT outcome=STOPPED code=28 … turn_before=claude turn_after=none`. Gaps, stated rather than
-  reconstructed: **(a)** the log records **no post-stop hash** — the carrier writes its `after:` line
-  at `carry-turn.sh:620`, and `on_signal()` at `:403-410` calls `die 28` before reaching it, so the
-  sentence in the superseded `## Latest result` claiming the post-stop SHA-256 matched was **not
-  supported by this log**; it is now separately established below. **(b)** No pre-launch `git status`
-  baseline is logged, only the state file's hash. **(c)** No actor child PID is logged. A sidecar the
-  brief did not name was found and used: `…-24116-…claude.out` carries the actor's terminal JSON —
-  `"permission_denials":[]`, `num_turns:10`, `stop_reason:"tool_use"`,
-  `terminal_reason:"aborted_streaming"`, `session_id:6962bbcd-9702-4419-9925-4d34adb4f41e`.
-- **Claim (4) — no surviving actor or descendant: HOLDS (direct evidence).** Carrier PID 24116 does
-  not exist (`ps -p 24116` returns a header only) and `ps -eo pid,pgid` shows no process in pgid
-  24116. A machine-wide `ps -eo lstart` scan for anything started 2026-08-11 15:3x–15:5x returns only
-  five unrelated system/ChatGPT processes, none under the checkout. `lsof +D <checkout>` lists five
-  live processes with cwd here — PIDs 32145, 32243, 32415, 32448, 32460 — and `ps -o lstart` dates
-  every one to **2026-08-12 10:48:20–10:48:29**, i.e. the current attended session (VS Code helper,
-  zsh, Claude Code 2.1.227, two ChatGPT `node_repl` helpers), not Unit 2 survivors. Corroborating and
-  independent: `terminate_actor_group()` (`carry-turn.sh:386-401`) emits
-  `WARNING: process group … could not be confirmed gone after SIGKILL` when a group survives, and the
-  Unit 2 log contains no such WARNING. No process was terminated and no permission boundary was
-  worked around in this unit.
-- **Claim (5) — working tree and index: HOLDS. Exactly one non-clean path, fully attributed.**
-  `git status --porcelain=v1 -uall` returns a single line: `?? logs/work-loop/axcion-harness-v0-2-live-trial.md`.
-  `git diff --stat` and `git diff --cached --stat` are both empty — nothing modified, nothing staged,
-  nothing deleted, no other untracked path anywhere in the checkout. Classification: that one path is
-  **the expected Codex-authored Unit 3 state file**, untracked since Unit 1 because Codex never runs
-  git — `stat` gives birth `2026-08-11 14:00:19`, mtime `2026-08-12 11:03:38` (today's brief write),
-  size 9323, sha256 `0f3886b39770a316f77e05095dc5f4b5a906539825f6ab3276a50798da6c57a4`. Its birth and
-  mtime bracket the Unit 2 window (15:41:56–15:44) without touching it. **Nothing is attributable to
-  the interrupted actor and nothing is ambiguous.** The decisive check: a whole-checkout
-  `find . -newermt '2026-08-11 15:30:00' ! -newermt '2026-08-11 16:00:00'` returns **zero paths**, and
-  this worktree's `index` has mtime `2026-08-11 13:11`, predating the launch by 2.5 hours. Every
-  pre-launch baseline the log actually records — `sha256=faadb181…`, `turn=claude`, `head=a0bb2a3` —
-  is consistent with that: the hash differs today only because Codex rewrote the file for this brief,
-  exactly as the brief instructed me not to misread. No path was cleaned, restored, stashed, staged
-  or edited.
-- **Claim (6) — no commit, branch did not move: HOLDS.** Not inferred from the state-file hash.
-  `git reflog show harness-v0.2-live-trial` has exactly **one** entry —
-  `a0bb2a3 … {2026-08-11 13:10:41}: branch: Created from HEAD` — and `git reflog show HEAD` has two,
-  both stamped 13:10:41. `HEAD` is still `a0bb2a3`, the creation point, so no commit was created here
-  and the branch never advanced. `git fsck --dangling` lists no dangling commit written in the window;
-  the 11 loose objects in the **shared** store dated 15:30–16:00 are 6 trees and 4 blobs, and reading
-  them identifies three revisions of `friction-log` plus a state file whose frontmatter is
-  `task: work-loop-v2-concurrent-task-isolation` — a **different task in a different worktree**
-  sharing the store, whose own commits land at 16:42 that day. Foreign, but attributed, not ambiguous,
-  and not in this checkout. No file under the shared store's `refs/`, `logs/` or `packed-refs` was
-  written in the window.
-- **Claim (7) — own-change discipline: HOLDS for the commit, with one disclosed side effect.** The
-  commit contains only `logs/work-loop/axcion-harness-v0-2-live-trial.md`, staged by exact pathspec
-  (`git log -1 --stat` shows `1 file changed`). Every effect found above is preserved exactly as
-  found — nothing was cleaned, restored or repaired. **Disclosed:** a `git status` re-run immediately
-  after the commit showed a second path, ` M logs/friction-log.md`, which was **not** present in the
-  pre-commit status. It is this session's own doing, not a Unit 2 effect: mtime `2026-08-12 11:11:06`,
-  and `git diff` shows exactly two appended lines under `#### Write Activity` —
-  `11:11 — logs/work-loop/axcion-harness-v0-2-live-trial.md` and `11:10 — …same file` — i.e. a
-  session write-activity hook logging *my own* two writes to the state file. It is left uncommitted
-  and unmodified, so the working tree hands back with that one path dirty.
+- **Claim (1) — identity and starting facts: HOLDS.** `pwd -P` = `git rev-parse --show-toplevel` =
+  `/Users/patrik.lindeberg/Claude Code/axcion-harness-v0.2-live-trial`; branch
+  `harness-v0.2-live-trial`; `--git-common-dir` = `…/Axcion AI Repo/ai-resources/.git` (trusted shared
+  store); frontmatter `task:` matched the invoked id with `turn: claude`; HEAD `3270232` (the Unit 3
+  disclosure commit). `git diff --cached` is empty — nothing staged. `git status --porcelain=v1 -uall`
+  returns **exactly the two expected paths and no third**: ` M logs/friction-log.md` (5 appended
+  write-activity lines, mtime 11:11:58 — my Unit 3 writes) and
+  ` M logs/work-loop/axcion-harness-v0-2-live-trial.md` (Codex's Unit 4 brief, mtime 11:15:32,
+  106 insertions / 211 deletions). The friction-log's mtime **precedes** Codex's write, which is itself
+  evidence for claim (2): Codex writing the state file did **not** trigger the hook, because Codex
+  does not run inside Claude Code's hook system.
+- **Claim (2) — hook traced end to end: HOLDS, and it fires in carried children.** Registration:
+  `.claude/settings.json` (this checkout, project layer) → `PostToolUse` matcher **`Write|Edit`** →
+  `bash "$CLAUDE_PROJECT_DIR/.claude/hooks/log-write-activity.sh"`, timeout 5. Implementation
+  (`log-write-activity.sh`, 34 lines) exits early if `logs/friction-log.md` is absent (`:10`) or if
+  `.tool_input.file_path` is empty (`:13-14`); a recursion guard skips basenames `friction-log.md`
+  and `improvement-log.md` (`:18-20`); it then strips `$CLAUDE_PROJECT_DIR/` to a relative path
+  (`:23`), finds the **last** `^#### Write Activity` line (`:26`), and `sed -i ''` inserts
+  `- HH:MM — <rel-path>` after it (`:30-32`). Three consequences, all load-bearing:
+  **(a)** it fires on **every** `Write`/`Edit` regardless of target — nothing scopes it to the state
+  file; **(b)** its output is **one line per tool call, unbounded** — the "two-line Unit 3 shape" was
+  just the count at that moment, and the same delta is 5 lines now; **(c)** the set of paths it can
+  dirty is exactly one — `logs/friction-log.md` and nothing else.
+  **Does it run in the carrier's fresh child?** The carrier passes no `--setting-sources`
+  (`carry-turn.sh:491-498`), and neither carried run settles it by observation — Unit 1 died at
+  "Not logged in" and Unit 2 was interrupted before any `Write`/`Edit`, so **no carried run has ever
+  exercised this hook**. I did not infer it from the absence of `[HEAVY]` markers in the Unit 2
+  transcript either: reading `check-heavy-tool.sh:101-110` shows its Bash heuristics are recursive
+  `ls`, unscoped `find` and unbounded `git log`, and **none of Unit 2's eight calls match**, so that
+  silence is uninformative. It is settled instead by an executed probe already in the repository —
+  `plans/work-loop-v2-v0.2/handoff-automation-spike/runs/probe-contained-authority-2026-08-07.md:119-121`:
+  *"An earlier probe without `disableAllHooks` visibly ran three `SessionStart` hooks. The same
+  verbose startup probe with `disableAllHooks: true` emitted no hook events."* A headless child
+  therefore loads and runs project hooks by default. **The conflict is structural, not an artifact of
+  this attended session.**
+- **Claim (3) — carrier traced: HOLDS. The state-file-only policy is configurable, and it was
+  configured at the call site.** `--allow-path RE` is a repeatable option (`:26`, `:182`), and when
+  none is passed the built-in default is **`('^logs/work-loop/' '^logs/harness-runs/')`**
+  (`:198-199`). Both run logs record `allow-path: ^logs/work-loop/axcion-harness-v0-2-live-trial\.md$`
+  — a single anchored regex that is **not** the default, so the invoker supplied it explicitly. The
+  filter is `foreign_worktree()` (`:277-287`): it reads `git status --porcelain`, takes the path at
+  offset 3, and keeps any line no allow regex matches under `grep -qE`. It is consulted twice —
+  **pre-launch** (`:584-587`, `die 18`, before the actor starts) and **post-hop** (`:618-626`,
+  `die 24`, when the before/after foreign sets differ). Two exact outcomes for the current dirt:
+  **the operative failure today is `exit 18`, not 24** — `logs/friction-log.md` is already dirty, so a
+  carry stops *before launching*, and the actor never runs. `exit 24` is what a clean-start carry
+  would hit instead, once the hook appends during the hop. How it separates pre-existing from
+  hop-created dirt: it compares the sorted sets of **porcelain lines**, so a path that is already
+  ` M` and merely gains more content keeps an identical line and is invisible to the delta — a real
+  fail-capability limit of the post-hop check, though unreachable in practice because `die 18`
+  pre-empts it. Note the carrier's own `die 18` text already names the fix: *"or widen --allow-path if
+  the unit legitimately touches them"*. Not invoked, in any mode.
+- **Claim (4) — red/green reproduced without invoking the carrier: HOLDS.** The brief's `Next action`
+  forbids invoking the carrier or the tests, so I ran neither — including `--dry-run`, which would
+  otherwise have served. Substitute: a faithful re-implementation of `foreign_worktree()`'s body,
+  byte-for-byte the same loop and the same `grep -qE` semantics, fed the **live** `git status
+  --porcelain` output, at
+  `…/scratchpad/foreign-filter-repro.sh` (scratchpad only; no tracked file touched, no model, no
+  carrier). It is faithful because the decision under test is exactly that regex-versus-path loop and
+  nothing else in the carrier participates in it. Results — **A**: under the allow-path the runs
+  actually used, ` M logs/friction-log.md` is returned as FOREIGN → pre-launch `exit 18`. **B**: under
+  the carrier's *default* allow-paths, still FOREIGN → `exit 18` even without the narrow regex.
+  **C**: adding `^logs/friction-log\.md$` → clean, the carry proceeds. **D**: with that same widened
+  allowlist, an unrelated `skills/some-skill/SKILL.md` is **still** FOREIGN → the widening does not
+  leak. The check could have failed at every step: had any regex matched in A or B, or failed to match
+  in C, or matched in D, the printed verdict would have contradicted the claim.
+  The **real** seam is not missing: `carry-turn.test.sh` drives the carrier with a **fake actor
+  binary** via `--claude-bin` in a temp repo (`:5-11`, `:81-144`) and already asserts
+  `"pre-existing foreign change stops (18)"` (`:333`, `:498`) and
+  `"actor writing outside the allowlist stops (24)"` (`:351`). A future unit extends that seam; it
+  does not have to build one.
+- **Claim (5) — prior art classified: HOLDS. One source is settled authority and it closes an entire
+  correction class.** `logs/work-loop/work-loop-v2-production-readiness-policy.md` is a **closed
+  record** (`turn: operator`, 110 lines, four closing headings). Its **D1** is settled authority: the
+  discovery's recommendation to suppress the hook for dispatched actors was *"AMENDED, not as
+  recommended"* — replaced by the launch precondition that dispatched runs use `--unattended`, whose
+  contained profile disables the child's hooks, *"No hook file is edited… interactive sessions keep
+  the breadcrumb unchanged."* And decisively: *"**U2 dropped**"* — U2 *was* the `log-write-activity.sh`
+  edit. `plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md:160-168` states the same and adds
+  the exact residual gap we are standing in: *"What is still blocked: an **attended** parallel session
+  in a worktree. Its hooks are live, so it appends to the tracked `friction-log.md` exactly as
+  before… The clearance is a property of containment, not of the worktree"*, and warns of the dropped
+  hook fix: *"do not wait for it, it is not coming."*
+  **Stale:** `plans/axcion-harness-v0.2/task-scoped-concurrency-investigation-2026-08-08.md:122`
+  still recommends *"suppress the `friction-log.md` breadcrumb under an explicit dispatcher
+  environment marker"*. It predates D1 by a day and was superseded by it; its supporting citation
+  (*"lines 231–236 and 264–275"* of the production-readiness file) now points into a file that has
+  been reduced to 110 lines, so those lines no longer exist. Treat it as stale on mechanism while
+  its **sizing** judgment stands and is worth keeping: `friction-log.md` has *"20+ consumers"*, so
+  repo-wide log renaming is rejected. **Compatible precedent:**
+  `plans/work-loop-v2-mvp/step-6-candidate-review.md:334` records two unrelated dirty files with
+  *"widening disclosed rather than overridden"* — i.e. widening is an accepted move when it is stated.
+  **Inapplicable:** the spike `dispatch.sh:1252` `"disableAllHooks": true` — it belongs to the
+  contained `--unattended` profile, and `carry-turn.sh:155` **refuses `--unattended` by design**
+  (*"this is the attended surface and it has no unattended mode"*). Age and passing tests were not
+  promoted into authority anywhere above.
+- **Claim (6) — alternatives compared: HOLDS.**
+  **(i) Widen the allowlist at the invocation** — add `--allow-path '^logs/friction-log\.md$'`
+  beside the existing state-file regex. Containment: preserved for every other path (case D). False
+  accept: an actor could write arbitrary content into that one tracked telemetry file and pass —
+  bounded, visible in `git diff`, and not code. Telemetry loss: none. Surface: **zero code change**.
+  Testability: high, on the existing fake-actor seam. **Recommended.**
+  **(ii) Suppress or redirect the hook inside carried children** — **rejected on settled authority**,
+  not on preference: D1 replaced exactly this and dropped U2. It would also import containment onto a
+  surface whose whole point is that it is attended (`--permission-mode default`, prompts live), and
+  `carry-turn.sh` refuses the flag that carries it.
+  **(iii) Teach the post-hop check to recognise a narrowly attributable telemetry delta** — rejected
+  as unnecessary and mis-targeted: it is new code plus new tests, and it addresses `exit 24` while the
+  blocker actually in force is `exit 18`, which fires before launch. (i) clears both.
+- **Claim (7) — owning layer and future boundary: HOLDS.** **Owning layer: the invocation/policy
+  layer — which `--allow-path` values Codex and the operator pass — not the carrier code and not the
+  hook.** The carrier already has the mechanism, documents it in its own failure message, and the hook
+  layer is closed by D1. Smallest future implementation boundary, left open where authority has not
+  settled it: **target** — the carrier *invocation* only, adding one `--allow-path` regex; **no file
+  under `scripts/` changes** on the recommended path. If Codex instead wants it durable for every
+  task, the *only* code target is the default array at `carry-turn.sh:198-199`, which is the wider
+  blast radius and must be an explicit operator decision rather than a default. **Test target** —
+  `scripts/axcion-harness-v0.2/carry-turn.test.sh`, a case beside `:333`/`:351` where the fake actor
+  appends one `- HH:MM — <path>` line to `logs/friction-log.md`. **Red/green matrix:** narrow
+  allowlist + hook-shaped append → stops **24**; pre-dirtied friction log + narrow allowlist → stops
+  **18**; widened allowlist + hook-shaped append → **clean carry**; widened allowlist + a write to an
+  unrelated tracked path → still stops **24**; widened allowlist + an out-of-allowlist **commit** →
+  still stops **30**. The last two are what make it fail-capable rather than a green-only demo.
+  **Preserve:** exits 16/18/19/24/25/30, attended `--permission-mode default`, no `disableAllHooks`
+  here. **Exclude:** any hook edit, `--unattended`, repo-wide log renaming (20+ consumers).
+  **Rollback:** drop the argument — nothing to revert in Git while it stays at the invocation layer.
+  **Stop conditions:** a second ambient writer appearing (see below), or any pressure to widen beyond
+  this one anchored path.
+- **Claim (8) — own-change discipline: HOLDS.** Committed only this state file, by exact pathspec.
+  The hook fired on my edits as predicted: `logs/friction-log.md` went from **5** appended
+  write-activity lines at unit start to **9** at handback, all of the form
+  `- 11:1x — logs/work-loop/axcion-harness-v0-2-live-trial.md`, all inserted under
+  `#### Write Activity`, content otherwise unchanged. It is left dirty and uncommitted exactly as the
+  brief requires. No third path appeared at any point.
 
-  **This is load-bearing for Phase 2, not housekeeping.** The carrier's allow-path is
-  `^logs/work-loop/axcion-harness-v0-2-live-trial\.md$`; a hook active in the actor's environment
-  writes to `logs/friction-log.md`, **outside** that allow-path, on every actor write. A future live
-  carry that reaches the post-hop check would therefore see an out-of-allow-path modification caused
-  by session infrastructure rather than by the actor's work. Unit 2 never reached that check, so this
-  had not surfaced before. Codex should settle it before framing another carry.
+**Second ambient writer found — not blocking today, but it breaks the next Implementation unit.**
+Beyond the project hook, the **user-level** `~/.claude/settings.json` registers `PostToolUse` on
+`Write` and on `Edit` → `ai-resources/.claude/hooks/detect-innovation.sh`, which appends to
+`logs/innovation-registry.md` and will `mkdir -p logs/` and create that file if absent. It exits at
+`:27` unless the edited path matches `.claude/commands|agents|hooks/<file>`, which is why no
+state-file-only unit has ever seen it. But any future unit that edits a command, agent or hook file
+would dirty a **second** out-of-allowlist path and stop the carry again — with a different path, so
+the recommended one-regex widening would not cover it. Recorded, not fixed here.
 
-Result: **BASELINE ESTABLISHED.** The interrupted Unit 2 actor left **no repository effect and no
-surviving process**. Beyond the negative repository evidence, the actor's own transcript settles the
-named unknown positively:
-`~/.claude/projects/-Users-patrik-lindeberg-Claude-Code-axcion-harness-v0-2-live-trial/6962bbcd-9702-4419-9925-4d34adb4f41e.jsonl`
-records **exactly 8 tool calls — 6 Bash, 2 Read — all read-only** (`git rev-parse` / `status` /
-`worktree list`, `ps`, `cat`, `ls`, `shasum`, `grep`). It contains **no Write, no Edit, and no
-mutating git call**; a token scan for `git add|commit|checkout|reset|stash|clean|rm`, redirections
-and `sed -i` over all eight inputs returns four hits, all of them `2>/dev/null`, `2>&1` or pipes into
-`head`/`tail`. Its final assistant text is *"All five claims are now inspectable. Writing the result
-into the state file."*, immediately followed by `[Request interrupted by user]` — so SIGINT landed in
-the gap **between deciding to write and emitting the write call**, which is exactly what the JSON's
-`stop_reason:"tool_use"` with `terminal_reason:"aborted_streaming"` describes. The interruption
-boundary is therefore known, not assumed.
+Result: **PROCEED.** The correction is real, small, owned by the invocation layer, and needs no code
+change on the recommended path.
 
-The exact current baseline for Codex: checkout `/Users/patrik.lindeberg/Claude Code/axcion-harness-v0.2-live-trial`,
-branch `harness-v0.2-live-trial`, HEAD `a0bb2a3` before this handback, index empty, no stash entry
-belonging to this branch, and no live process. The working tree hands back with exactly one dirty
-path — ` M logs/friction-log.md`, this session's write-activity hook, per claim (7) — and no path is
-attributable to the interrupted Unit 2 actor.
-
-Evidence: the commands above are re-runnable and each could have read differently — `git status`
-could have listed a foreign path, the `find` window sweep could have returned a file, the branch
-reflog could have shown a second entry, `ps`/`lsof` could have shown a 2026-08-11 15:4x survivor, and
-the transcript scan could have returned a `Write`. None did. Handback commit: this file staged as
-`git add -- logs/work-loop/axcion-harness-v0-2-live-trial.md` and committed alone on
-`harness-v0.2-live-trial`; its identity and single-path diff are readable with
-`git -C '/Users/patrik.lindeberg/Claude Code/axcion-harness-v0.2-live-trial' log -1 --stat`, and it is
-the first commit to move this branch off `a0bb2a3`.
-
-Deferral, recorded and not done (launcher changes are excluded from this unit's scope): the carrier's
-SIGINT path exits at `die 28` before its `after:` line, so an interrupted run logs no post-stop hash
-and no post-stop status. That gap is what forced this unit to rebuild the post-stop baseline from
-filesystem timestamps and the actor transcript. Worth a later unit on `carry-turn.sh`; not touched
-here.
+Evidence: every finding above is a file-and-line citation that could have read otherwise — the
+allow-path default at `:198-199` could have been the narrow regex (it is not); the probe could have
+reported hooks running *with* `disableAllHooks` (it reports the opposite); D1 could have adopted the
+hook fix (it dropped it); and the four-case reproduction prints its own verdict per case, so a wrong
+claim would have printed as a contradiction rather than as prose. The one thing I could not test by
+execution — the carrier's real behaviour end to end — I deliberately did not fake: the brief forbade
+invoking it, so I named the existing fake-actor seam and the exact assertions instead.
 
 ## Blocker
 
-None. The operator lifted the hold on 2026-08-12; the inspection ran to completion and found nothing
-requiring repair.
+None for discovery. A live carry stays blocked until the recommended widening is accepted and
+implemented; on today's working tree it would stop at **exit 18 before launching**, not at the
+post-hop check.
 
 ## Next action
 
-Codex: assess this discovery result and decide whether a fresh attended-carry unit can now be framed
-against the Phase 2 exit condition, or whether the trial stops here — settling first the
-out-of-allow-path hook write disclosed under claim (7), which a live carry would encounter at its
-post-hop check. Nothing has been repaired, retried, integrated or pushed.
+Codex: assess this correction design and decide the owning layer. If PROCEED is accepted, the next
+unit is a small Implementation unit — add `--allow-path '^logs/friction-log\.md$'` to the carrier
+invocation and add the red/green case to `carry-turn.test.sh` on its existing fake-actor seam — and
+Codex should also decide whether `detect-innovation.sh`'s `logs/innovation-registry.md` is handled now
+or deferred until a unit actually edits a `.claude/` file. Nothing was implemented, invoked, cleaned
+or pushed.
