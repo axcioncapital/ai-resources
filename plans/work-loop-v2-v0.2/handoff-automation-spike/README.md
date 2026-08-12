@@ -180,10 +180,18 @@ partial-effect risk as an interruption, so it is **never** retried automatically
 
 ### `--claude-deny` — narrowing the unattended child's authority
 
-Plumbing, not a policy. With no `--claude-deny` no tool is denied beyond what the child's own policy
-already denies. That policy is **not** this checkout's `bypassPermissions` on an attended hop — the
-dispatcher states `--permission-mode default` at launch (see *The attended child's permission mode*)
-— and `--claude-deny` composes on top of it rather than replacing it.
+Plumbing, not a policy. It carries the **operator's** deny rules, and `claude_deny=none` in the run
+log means only that no operator rule was supplied.
+
+**It does not mean nothing is denied.** Every attended launch already denies the four nested-actor
+rules (see *The default nested-actor deny set*), and `--unattended` already carries the contained
+profile's own base denies. `--claude-deny` appends to whichever of those applies; it cannot remove an
+entry from either.
+
+Beyond those sets the child's own policy applies. That policy is **not** this checkout's
+`bypassPermissions` on an attended hop — the dispatcher states `--permission-mode default` at launch
+(see *The attended child's permission mode*) — and `--claude-deny` composes on top of it rather than
+replacing it.
 
 What it is for: a run nobody is watching may warrant less authority than an attended one. A rule
 passed here reaches the child as `--disallowedTools`, applies to **that child only**, and does not
@@ -970,11 +978,12 @@ this table's left column and must not be read into it.
 | The version gate: below `2.1.219` there is no strict allowlist, so the run **refuses to start** (exit `31`) rather than running uncontained | **One named exception inside the denied home tree:** `~/.gitconfig`, because Git exits 128 before touching the repository without it. It names credential helpers; the child obtained no token, but **if a real secret is ever put in that file the exception stops being safe** |
 
 `git push` is held at the permission layer under `--unattended`, by an explicit deny rule, and
-`--claude-deny` composes on top to narrow further. Without `--unattended` there is **no deny rule**:
-the attended child is launched under `--permission-mode default`, so a gated action reaches an
-approval prompt rather than running on inherited bypass authority — but *which* actions that mode
-gates has not been measured here, and a CLAUDE.md rule is still doing part of the work. Treat the
-attended posture as "asks", not as "cannot".
+`--claude-deny` composes on top to narrow further. Without `--unattended` there is **no `git push`
+deny rule** — the only deny rules an attended launch carries are the four nested-actor ones, which do
+not name push. The attended child is launched under `--permission-mode default`, so a gated action
+reaches an approval prompt rather than running on inherited bypass authority — but *which* actions
+that mode gates has not been measured here, and a CLAUDE.md rule is still doing part of the work.
+Treat the attended posture as "asks", not as "cannot".
 
 **What the left column rests on.** The simulated suite proves the dispatcher *requests* the profile
 (**284/0** as the suite stood at 1d's close, **368/0** after the 1a teardown work, **375/0** since

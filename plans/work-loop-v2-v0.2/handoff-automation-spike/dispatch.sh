@@ -33,8 +33,13 @@
 #   --allow-path RE     repeatable regex of repo-relative paths actors may change
 #   --claude-deny RULE  repeatable. Passed to the Claude child as
 #                       --disallowedTools RULE, e.g. 'Bash(git push:*)'.
-#                       DEFAULT: none — no tool is denied beyond what the child's
-#                       own policy already denies. This is plumbing, not a
+#                       DEFAULT: none. That is the OPERATOR's set being empty —
+#                       it does NOT mean nothing is denied. Every attended launch
+#                       already denies the four NESTED_ACTOR_DENY rules, and
+#                       --unattended already carries UNATTENDED_BASE_DENY; this
+#                       flag appends to whichever applies and can remove neither.
+#                       Beyond those, the child's own policy applies.
+#                       This is plumbing, not a
 #                       policy: it exists so an unattended run CAN be given a
 #                       narrower authority than the operator's interactive
 #                       sessions without editing any settings.json. A deny passed
@@ -1373,13 +1378,18 @@ say "allow_paths=${ALLOW_PATHS[*]}"
 if [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
   say "claude_deny=${CLAUDE_DENY[*]}"
 else
-  # Said out loud because it is the risk the operator walks away on. No tool is
-  # denied beyond what the child's own policy denies. That policy is no longer
-  # this checkout's bypassPermissions on an attended hop — P0-F states
+  # Said out loud because it is the risk the operator walks away on. "none" is a
+  # statement about the OPERATOR's set only: it means no extra rule was supplied,
+  # NOT that nothing is denied. Since O1 the attended path always denies the four
+  # nested-actor rules, and --unattended always carries the contained profile's
+  # own base denies — so the old wording ("no tool denied beyond the child's own
+  # policy") became false on both paths and is deliberately not restored.
+  # Beyond those sets the child's own policy applies, which is no longer this
+  # checkout's bypassPermissions on an attended hop — P0-F states
   # --permission-mode default at launch — but a permission mode only makes the
   # child ASK, and network is not coverable this way in any case:
   # runs/probe-unattended-authority-2026-08-07.md.
-  say "claude_deny=none — no tool denied beyond the child's own policy (attended hops run --permission-mode default)"
+  say "claude_deny=none — no EXTRA deny rule was supplied by the operator; this does NOT mean nothing is denied (see the nested_actor_deny line below, and the contained profile's own denies under --unattended). Beyond those, the child's own policy applies (attended hops run --permission-mode default)"
 fi
 # Recorded separately from claude_deny, and always. claude_deny is the
 # OPERATOR's set and may legitimately be empty; this one is the dispatcher's own.

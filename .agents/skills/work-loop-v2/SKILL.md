@@ -274,7 +274,7 @@ dispatch.sh --checkout <path> --task <task-id> --status
 |---|---|
 | **Finished** | `0` — and `turn: operator` with a core § 4 closing record |
 | **A decision is theirs** | `0` — and `turn: operator` with `## Blocker` / `## Next action` still present |
-| **Stopped** | any other code — a guard (`18`,`19`,`24`,`25`,`30`,`36`), a failure (`20`,`21`,`22`), a permission dead end (`35`), the hop limit (`23`), an interruption (`28`), or the budget (`29`) |
+| **Stopped** | any other code — a guard (`18`,`19`,`24`,`25`,`30`,`36`), a failure (`20`,`21`,`22`), a permission dead end (`37`), an ownership stop (`33`,`34`,`35`), the hop limit (`23`), an interruption (`28`), or the budget (`29`) |
 
 **`29` is not completion.** A run that ran out of clock is unfinished and resumable. Never report it as done.
 
@@ -286,7 +286,7 @@ dispatch.sh --checkout <path> --task <task-id> --status
 4. **Partial effects are preserved and inspected before anything else is decided.** A stopped hop may have changed allowed files without committing them. The stop now lists those paths under `PARTIAL FILE EFFECTS`. Read them. Do not discard them, and do not assume they are absent because the state file did not move and the branch ref did not advance — those two facts are compatible with real work sitting uncommitted on disk.
 5. **A newly narrowed recovery unit is available, with operator approval.** Not a re-run of the same brief and not abandonment: a *fresh, smaller* unit that inherits the preserved partial work and carries one dominant deliverable (§ Size the unit against the clock). **Operator approval is the gate.** Ask for it; do not resolve it yourself.
 
-**`35` is a capability question, not a transport failure.** A permission dead end means the child was refused something it needed. Raising the timeout, re-running, or rewording the brief will not change it. Report what was denied and ask the operator whether to grant the capability or narrow the unit so it is not needed.
+**`37` is a capability question, not a transport failure.** A permission dead end means the child was refused something it needed. Raising the timeout, re-running, or rewording the brief will not change it. Report what was denied and ask the operator whether to grant the capability or narrow the unit so it is not needed. **`35` is a different stop and takes a different remedy** — the ownership check could not be run at all (`logs/scripts/work-loop-owner.sh` missing, unreadable or failing), so nothing launched; install or repair the helper rather than treating it as a denial. Any record written before 2026-08-11 that names `35` for a permission stop predates the renumbering — read it as `37`.
 
 **`36` means Claude did not touch the already-uncommitted state file; it does not prove the hop changed nothing else.** It is most often a Codex handoff that was never committed. Do not read it as a partial edit by Claude — that is exactly the misreport `36` was split out of `25` to stop — and read any `PARTIAL FILE EFFECTS` block for other allowed work the hop left behind.
 
