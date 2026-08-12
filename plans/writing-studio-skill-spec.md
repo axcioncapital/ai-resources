@@ -1,6 +1,6 @@
 # Writing Studio Claude Skill Specification
 
-**Version:** v0.2  
+**Version:** v0.3  
 **Status:** Draft for incremental refinement  
 **Target:** User-scoped Claude skill  
 **Proposed skill name:** `writing-studio`
@@ -121,9 +121,9 @@ The canonical source is the versioned authority. The installed copy or symlink i
 deployment surface, not a second editable source. The implementation phase must use the
 repository's established resource-distribution mechanism rather than invent a new one.
 
-### 4.3 Invocation for v0.2
+### 4.3 Invocation for v0.3
 
-Make v0.2 user-invoked:
+Make v0.3 user-invoked:
 
 ```yaml
 disable-model-invocation: true
@@ -442,8 +442,24 @@ Every unit must have one primary job, rely only on grounded concepts, introduce 
 concept before it is used, and trace every material claim to permitted support. Preserve
 all evidence limits, qualifications, terminology conditions, and publication conditions.
 
-For Consequential work, write one block or beat at a time. For Routine work, the operator
-may approve section-sized batches after the entry path is settled. Never batch the whole
+For each material block, internally resolve:
+
+- what the block claims;
+- what permitted support it relies on;
+- what that support means;
+- what qualifies the interpretation; and
+- what the reader should understand or conclude next.
+
+Use these questions as a reasoning discipline, not a visible form or a rigid paragraph
+sequence. A paragraph need not perform every move, but a material section must do more than
+deposit information.
+
+For Shape, once the production contract, reader journey, and entry path are agreed, draft
+one coherent section at a time. Work within the section without requesting approval after
+every paragraph. Pause before a load-bearing editorial choice, sensitive or uncertain claim,
+evidence gap, or operator-requested checkpoint. If one of those issues remains unresolved,
+keep the next unit to a single block. For Beats, continue to offer, select, and write one beat
+at a time because the choice of next move is intrinsic to that branch. Never batch the whole
 asset before its route is agreed.
 
 Treat the material pile as a quarry, not a script: split, combine, paraphrase, or omit
@@ -460,15 +476,31 @@ note appears in reader-facing copy.
 
 ### Step 9 — Run production QA
 
-Bind QA to the exact candidate. Check authority, evidence and claim strength, argument,
-distinct contribution, reader grounding, block function, opening promise, journey
-completion, institutional register, repetition, contradiction, prohibited terminology,
-and destination constraints.
+Bind QA to the exact candidate. Check authority, evidence and claim strength, reader
+grounding, opening promise, journey completion, prohibited terminology, and destination
+constraints. Then apply six writing-quality lenses:
+
+1. **Thesis progression:** each material section advances a proposition rather than merely
+   covering a topic.
+2. **Analytical value:** important evidence is interpreted rather than deposited.
+3. **Judgment discipline:** observation, interpretation, implication, and qualification are
+   distinguishable where the argument depends on them.
+4. **Calibrated certainty:** wording expresses no more confidence than the permitted support.
+5. **Reader sophistication:** the candidate explains what this audience needs without
+   rehearsing concepts it is expected to know.
+6. **Restrained prose:** the writing is precise, economical, and non-promotional; it applies
+   commercial or domain-specific implications only when the production contract calls for
+   them.
+
+Treat generic scene-setting, evidence without interpretation, inflated claims, redundant
+section summaries, unnecessary explanation, and recap-only conclusions as defect signals.
+Do not convert these signals into mechanical word or punctuation bans.
 
 Production QA is authoring hygiene, not independent review. Label it `independent: false`.
 
-**Complete when:** every QA dimension has a recorded result and every material defect is
-fixed or returned to its owner.
+**Complete when:** the candidate passes the required authority and quality lenses, and every
+material defect is fixed or returned to its owner. Record a compact verdict and the material
+defect list; do not create a paragraph-by-paragraph compliance form.
 
 ### Step 10 — Prepare the handoff
 
@@ -477,7 +509,7 @@ Return either:
 - `READY_FOR_REVIEW` with the exact candidate identity and bounded reviewer packet; or
 - `SOURCE_OR_DECISION_REQUIRED` with the durable stop record.
 
-Writing Studio prepares the packet in v0.2. The destination workflow or operator invokes
+Writing Studio prepares the packet in v0.3. The destination workflow or operator invokes
 the separate reviewer.
 
 **Complete when:** the next authority can act without reconstructing the production
@@ -535,7 +567,7 @@ destination-native path after the notes file proves insufficient.
 
 The Content Programme handoff into Writing Studio is sufficient when its records state in
 writing that the article or section is ready for production and identify the approved
-package. v0.2 does not require a new universal readiness field.
+package. v0.3 does not require a new universal readiness field.
 
 `article-production` remains responsible for selection, research sizing and routing,
 evidence readiness, and the permitted claim chain. `article-review-gate` remains responsible
@@ -566,7 +598,7 @@ issue or revise the independent verdict.
 Destination acceptance and founder approval remain separate authority events. Founder
 approval binds to exact final wording. A material later change repeats every affected gate.
 
-## 14. Skill package specified for v0.2
+## 14. Skill package specified for v0.3
 
 ```text
 writing-studio/
@@ -599,7 +631,12 @@ Carry what every invocation needs:
 Read only in Develop mode. Specify inbound-package validation, governed fragment
 exploration, material-pile versioning, Shape-or-Beats selection, reader grounding, opening
 alternatives, interaction cadence, quarry treatment, clean candidate production, and
-Develop-specific failure cases.
+Develop-specific failure cases. Carry the block-level judgment questions and six writing-
+quality lenses from Steps 8 and 9 as the compact analytical writing standard. Include the
+six defect signals, but no additional gate, ledger, scoring rubric, or mandatory per-paragraph
+fields. Destination communication authority supplies any house-specific voice rules and
+approved examples that exist; the universal skill must not hard-code imitation of an
+investment bank, advisory firm, or other institution.
 
 ### `references/improve.md`
 
@@ -610,14 +647,16 @@ candidate lineage, and escalation when the requested fix would alter authority o
 ### `references/production-qa.md`
 
 Read after a candidate exists. Define the semantic QA dimensions, candidate binding, defect
-disposition, and the boundary between self-check and independent review.
+disposition, the six writing-quality lenses and defect signals from Step 9, and the boundary
+between self-check and independent review. Require only a compact verdict and material defect
+list.
 
 ### `references/review-handoff.md`
 
 Read only when the candidate is ready for separate review. Define packet contents,
 contamination exclusions, version binding, and downstream authority events.
 
-### Deliberately absent in v0.2
+### Deliberately absent in v0.3
 
 - No scripts: the difficult work is judgment, not deterministic transformation.
 - No assets or assignment template: repeated use has not shown that destination-native
@@ -647,7 +686,7 @@ disable-model-invocation: true
 ---
 ```
 
-Because v0.2 is user-invoked, the description is a human-facing one-line summary rather than
+Because v0.3 is user-invoked, the description is a human-facing one-line summary rather than
 an always-loaded trigger catalogue.
 
 ## 16. Failure behaviour
@@ -679,7 +718,7 @@ an always-loaded trigger catalogue.
 
 ## 17. Validation plan
 
-Validation belongs to the later build phase. v0.2 specifies these required cases.
+Validation belongs to the later build phase. v0.3 specifies these required cases.
 
 ### 17.1 Structural validation
 
@@ -727,8 +766,12 @@ Pass conditions:
 - Shape is selected and justified for the argument-led fixture;
 - reader prerequisites and material concept dependencies are explicit;
 - two or three authorised entry paths are offered and the operator chooses one;
-- composition proceeds in agreed blocks and re-reads intervening operator edits;
+- composition proceeds in agreed sections, pauses at the defined load-bearing conditions,
+  and re-reads intervening operator edits;
 - claim limits survive into argument and prose;
+- material sections demonstrate identifiable analytical judgment rather than polished
+  explanation alone, and the prose strengthens rather than reduces credibility with the
+  named audience;
 - the journey completes without forcing unused fragments into the article;
 - clean copy remains separate from production notes;
 - the candidate and production QA are version-bound;
@@ -787,7 +830,7 @@ disposition the old repository plan. Do not rewrite that history from this speci
 
 ## 19. Provisional choices to revisit after evidence
 
-These are v0.2 defaults, not permanent architecture:
+These are v0.3 defaults, not permanent architecture:
 
 1. **Invocation:** remain user-invoked unless real handoffs show automatic invocation is both
    useful and unambiguous.
@@ -801,14 +844,16 @@ These are v0.2 defaults, not permanent architecture:
    the exact handoff that should replace its current drafting responsibility.
 6. **Reference split:** add or merge references based on observed loading failures, not anticipated
    completeness.
-7. **Interaction cadence:** keep Consequential work block-by-block; allow section-sized Routine
-   batches only when pilots show no loss of authorship or semantic control.
+7. **Interaction cadence:** use section-sized Shape drafting after the route is agreed, with
+   pauses at load-bearing choices, sensitive claims, evidence gaps, or operator checkpoints;
+   tighten to block-level drafting only when pilots show a real loss of authorship or semantic
+   control. Keep Beats one beat at a time.
 8. **Material storage:** keep the pilot pile in destination notes; add a separate destination-native
    file only after observed size or editing friction.
 9. **Branch exposure:** keep Shape and Beats internal; expose them as named operator choices only if
    users repeatedly need direct control over branch selection.
 
-## 20. v0.2 completion condition
+## 20. v0.3 completion condition
 
 This specification is ready for its first refinement round when the operator can answer these
 questions from the document without additional explanation:
@@ -824,4 +869,4 @@ questions from the document without additional explanation:
 9. What evidence is required before the skill can be adopted?
 
 Unresolved wording, overbuilt structure, or a boundary the operator cannot explain back is a
-v0.2 defect to revise here before implementation.
+v0.3 defect to revise here before implementation.
