@@ -73,6 +73,18 @@ Any escalation trigger wins. Treat ambiguity as Consequential. Destination polic
 
 ## Universal workflow
 
+Maintain this compact checklist in the destination's existing production record; do not create a second tracker:
+
+- [ ] Open the assignment
+- [ ] Read governing context
+- [ ] Apply the pre-drafting gate
+- [ ] Define the production contract
+- [ ] Develop or improve the candidate
+- [ ] Run production QA
+- [ ] Prepare independent review
+
+Mark completed stages `[x]`, identify the current stage as `active`, and leave later stages unchecked. If blocked, label the current stage `blocked` and link it to the existing `SOURCE_OR_DECISION_REQUIRED` record.
+
 ### 1. Open the assignment
 
 Identify the destination, asset, audience, mode, tier, owners, constraints, inbound package, current candidate when applicable, and authorised read and write paths.
@@ -246,6 +258,7 @@ Structural validity is not adoption. Do not retire the historical Writing Studio
 - **Model:** Opus, because the hard part is editorial and semantic judgment under authority constraints.
 - **Effort:** high.
 - **Invocation:** user-only while `article-production` and `article-review-gate` have adjacent responsibilities.
+- **Paths:** no frontmatter restriction. This user-invoked skill must work across destination repositories; validate authorised read and write paths per assignment.
 - **Context:** remain in the active destination conversation so operator choices and edits are visible; use a fresh context only for independent review.
 - **Tools:** use the destination's normal read and edit tools within authorised paths. Do not restrict tools globally because destination implementations differ.
 
