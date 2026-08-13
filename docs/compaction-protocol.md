@@ -11,15 +11,14 @@ Two rules govern Claude Code session compaction in this workspace.
 
 The trust-the-summary rule above is scoped to ordinary sessions and **does not apply while a Work Loop v2 task is active.** There, the compacted summary is orientation material, not authoritative task state.
 
-Two different kinds of authority are at work, and collapsing them is the error this section has to avoid. **Governing-rule authority** says what the rules are and which sources are allowed to settle anything; **current-state authority** says what is true right now. A task-state file carries the second and never the first, so it cannot outrank the instructions that validate it. Authority runs in this order:
+Different kinds of authority are at work, and collapsing them into a single ranking is the error this section has to avoid. **Governing-rule authority** says what the rules are and how everything else is read; **current-state authority** says what is true right now. These are not rungs on one ladder: a source that governs interpretation is not competing with a source that reports state, so asking which of the two "wins" is already the wrong question. Each source has one role, and stays inside it:
 
-1. Permanent repository and agent instructions, plus the Work Loop v2 skill and its executable core — these govern how everything below is read and validated.
-2. The task-state file, `logs/work-loop/{task-id}.md` — authoritative for current task state.
-3. The governing plan and the applicable approved workflow.
-4. Repository and Git evidence.
-5. The conversation or the compacted summary.
+- **Govern interpretation** — permanent repository and agent instructions, the Work Loop v2 skill and its executable core, and the governing plan with the applicable approved workflow. These settle what the task's contents are allowed to mean and which sources may settle anything at all. Nothing below overrides them.
+- **Establish current task state** — the validated task-state file, `logs/work-loop/{task-id}.md`, within the constraints above. It is authoritative for what the task's state *is*. It is never authoritative for what the rules are, and it does not outrank the plan or workflow that give its contents meaning.
+- **Verify factual claims** — repository and Git evidence. It settles what the repository actually contains, including where a task file's claim about the repository is wrong.
+- **Orient only** — the conversation or the compacted summary. Never authoritative for any of the three roles above.
 
-Where the summary conflicts with any of the first four, **follow the durable evidence and report the discrepancy** rather than resolving it silently. Re-deriving state from durable sources is the expected cost here, not a violation of the cost test — the cost test governs the ordinary rule only. The `reorient` skill owns the recovery procedure; this section only settles which source wins.
+Where the summary conflicts with any durable source, **follow the durable evidence and report the discrepancy** rather than resolving it silently. Where the task file conflicts with a governing source, the governing source settles it and the conflict is reported as a defect in the task file — not resolved quietly in either direction. Re-deriving state from durable sources is the expected cost here, not a violation of the cost test — the cost test governs the ordinary rule only. The `reorient` skill owns the recovery procedure; this section only settles which source carries which kind of authority.
 
 ## Named checkpoints
 
