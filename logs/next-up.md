@@ -81,3 +81,8 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] a second ambient writer (`detect-innovation.sh`) will reproduce the false-stop the harness carrier just fixed — `logs/improvement-log.md` <!-- promote:af4659c2455b -->
 
 - [ ] Work Loop v2 compaction recovery is absent outside `ai-resources` — `logs/improvement-log.md` <!-- promote:0ad57adeb0bc -->
+
+- [ ] A session-scoped report-level field plus a per-question file write guarantees orphan halves — and per-question verification structurally cannot see them — `logs/improvement-log.md` <!-- promote:f410440ae68e -->
+- [ ] Harness case 31b greps only the `claude_deny=none` prefix, so the honest wording is unpinned — `logs/improvement-log.md` <!-- promote:bc5b4c8e7b42 -->
+- [ ] Project checkouts install the Work Loop v2 Claude command with no owner helper, so it cannot complete Step 1.5 — `logs/improvement-log.md` <!-- promote:86cc1872e327 -->
+- [ ] `axcion-systems-builder`'s `.codex/hooks.json` points both SessionStart hooks at a directory that does not exist, so auto-sync and permission-sanity have not run — `logs/improvement-log.md` <!-- promote:9c4bbfbda9d6 -->

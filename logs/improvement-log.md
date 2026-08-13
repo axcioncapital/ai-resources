@@ -3745,3 +3745,76 @@ middle state is not. Out of scope for the closing write that surfaced it — tha
 state file only.
 
 **Target files:** `logs/harness-runs/` (directory-level convention), `.gitignore`.
+### 2026-08-13 — Seven improvement-log entries use an undated `##` heading, so age-based consumers cannot place them
+
+- **Status:** logged (pending)
+- **Severity:** medium — the entries are found, but silently lose age, which is what the staleness sweeps run on.
+- **Category:** log format contract (`logs/improvement-log.md`) + its parsing consumers
+- **Source:** ai-resources, 2026-08-13, found while merging 59 commits and resolving the improvement-log conflict.
+
+**The finding.** Seven entries appended from `axcion-sector-intelligence` worktree sessions between
+2026-07-29 and 2026-08-13 use `## <undated title>`. The canonical form — and the form every remote-side
+entry uses — is `### YYYY-MM-DD — <title>`. One local entry from 2026-07-30 already uses the canonical
+form, so the divergence is inconsistent even within the same source.
+
+**What actually breaks, measured rather than assumed.** The entries are **not** invisible.
+`fix-repo-issues-scanner` Step 1 selects improvement-log items by `**Status:**`, and all seven carry
+`**Status:** logged (pending)`, so `/fix-repo-issues` picks them up. The damage is at Step 4: age is
+computed from the `### YYYY-MM-DD —` header or a `**Review-cycle:**` date, and these entries have
+neither, so line 89 assigns `age_days = (unknown)`. Three consequences, in descending order:
+
+1. `dd-log-sweep-agent` sweeps "logged or pending entries older than 14 days" — a test an unknown age
+   cannot satisfy, so these seven are likely skipped from the stale-findings sweep entirely. This is
+   the one that bites: findings going stale with nothing noticing.
+2. `/fix-repo-issues` surfaces them with no age, so they lose age-based prioritisation.
+3. `session-feedback-collector`'s concurrent-rewrite guard counts `grep -c '^### '`; `##` entries do
+   not raise that count. It desensitises the guard; it does not make it misfire.
+
+**Why it is worth an entry rather than a silent fix.** This is the same structural-invisibility family
+as the retirement findings logged earlier today — a record that is correct, well-written, filed in the
+right place, and partially unreachable to the machinery built to act on it.
+
+**Proposal.** Promote the seven headings to `### YYYY-MM-DD — <title>`; each entry's `**Source:**` line
+carries the date needed. Then decide whether `fix-repo-issues-scanner` Step 4 should fall back to the
+`**Source:**` date before giving up, so a future format slip degrades less sharply.
+
+**Sequencing constraint.** This is an in-place edit to `improvement-log.md` — precisely the write shape
+`.gitattributes` excludes this file from `merge=union` for. Run it only when `ai-resources` has no other
+live writer.
+
+**Target files:** `logs/improvement-log.md` (seven headings); optionally
+`.claude/agents/fix-repo-issues-scanner.md` (Step 4 date fallback, ~L84).
+
+### 2026-08-13 — `/wrap-session` Step 6.6 hardcodes an absolute path for a different user account, so the findings-promotion sweep cannot run
+
+- **Status:** logged (pending)
+- **Severity:** medium — a core-path step that fails on every wrap outside one machine, and its failure mode is exactly the one the step was built to end.
+- **Category:** shared command (`.claude/commands/wrap-session.md`)
+- **Source:** ai-resources, 2026-08-13, hit while running the wrap this entry belongs to.
+
+**The finding.** `.claude/commands/wrap-session.md` line 190 sets
+`AI_RESOURCES="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"` and then calls
+`bash "$AI_RESOURCES/logs/scripts/promote-findings.sh"`. That directory does not exist on this machine
+— the account differs and so does the workspace folder name (`Axcion Claude Code`, not `Claude Code`).
+The call exits 127 and the wrap continues, because nothing checks it.
+
+**Why it matters more than a broken path usually would.** Step 6.6 is the core-path sweep that moves
+open `high` / `medium-high` findings into `logs/next-up.md`, which `/prime` Step 2 reads to build the
+next session's task menu. It is the mechanism that replaced `/prime` Step 3 when that was retired on
+2026-07-30. With the path broken, findings are logged correctly and never promoted — a correctly
+diagnosed defect that is structurally unreachable, which is the precise failure the step's own preamble
+describes as this repo's most expensive recurring one. The step is documented as core-path and
+un-skippable, which makes the silence worse: a reader of the command has every reason to believe the
+sweep ran.
+
+**Proposal.** Replace the hardcoded literal with the ancestor-walk already used twice in this same file
+(Step 3.5's foreign-session guard and Step 12d's run-manifest resolution both walk up for
+`ai-resources/`). The idiom is present, proven, and eleven lines above. Failing that, resolve from
+`CLAUDE_PROJECT_DIR`. Additionally, have the step surface a one-line notice when the script is not
+found, so the next occurrence is loud rather than inferred.
+
+**Check the mirror.** The workspace-root `/.claude/commands/wrap-session.md` is an independent
+non-symlink copy — verify whether it carries the same literal.
+
+**Target files:** `.claude/commands/wrap-session.md` (~L190); workspace-root
+`/.claude/commands/wrap-session.md` if it mirrors the defect.

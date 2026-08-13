@@ -322,3 +322,43 @@ explicitly ruled it is not something a correction round could fix.
 the pilot's transport claim with evidence that never touched the carrier) versus reopening the unit to
 retroactively route it through the carrier (rejected — the carrier has to be the entry point from the
 start for freshness and transport to be observable; it cannot be substituted after the fact).
+
+## 2026-08-13 — Merge the 59-commit backlog now rather than defer it, and split the deferral in two
+
+**Context.** `ai-resources` stood 8 ahead / 59 behind. All 8 local commits were operator-authored
+findings; 6 of the 8 touched `logs/improvement-log.md` only. A concurrent `axcion-si-worktrees` session
+had inspected them, declined to push blind, and recommended leaving the repo untouched until Friday. Its
+argument: `logs/improvement-log.md` is deliberately excluded from the `merge=union` list in
+`.gitattributes` (because that file takes prepend writes and in-place status flips, which union would
+corrupt), the 59 incoming commits touch that file, and therefore the merge needs hand resolution — work
+not to be rushed at the end of a long session, at the risk of dropping or duplicating findings.
+
+**Decision.** Merge and push now; defer only the analytical follow-up.
+
+**Rationale.** The concurrent session reasoned about the risk class instead of measuring the instance.
+Measured, the range was benign: remote +207/−0 and local +177/−0 — pure additions on both sides, no
+in-place status flips, no overlapping entries (the remote's 7 new entries are harness findings, the
+local 8 are sector-intelligence findings). The `.gitattributes` exclusion describes what the file can do
+in general, not what these two sides did. With no deletions on either side, "keep both sides" is
+mechanical, and its correctness is checkable by arithmetic: merged-vs-each-parent must equal the other
+side's insertions exactly. It did (207/0 and 177/0), at a predicted 3747 lines.
+
+The timing argument then runs the other way. Both sides being pure-append is the cheapest this merge
+will ever be; the next session that flips a `**Status:**` in place converts it into the hard case the
+deferral was meant to avoid. Waiting invited the risk it was citing as the reason to wait.
+
+**The split.** The concurrent session bundled two independent things under one deferral: the mechanical
+merge, and reading the 59 incoming commits for retirements bearing on the findings logged today. Only
+the second is real analytical work, and it is *easier* after merging (working tree rather than
+`git show`). So the mechanical half was pulled forward and the analytical half stays on Friday.
+
+**Alternatives considered.** Defer everything to Friday as recommended (rejected — defers the easy half
+with the hard half, grows the divergence, and forfeits the benign window). Push without merging
+(impossible — non-fast-forward). Cherry-pick the 8 local commits onto `origin/main` (rejected — same
+conflict, more steps, and it discards the existing merge commit `43f7b60` that had already resolved an
+earlier round of this same conflict). Fold the heading normalisation into the merge commit while the
+file was already open (rejected — it would have broken the arithmetic check that made the resolution
+verifiable, and it is an in-place edit to a file with a live concurrent writer).
+
+**Confirmed by.** The concurrent session re-verified the measurement independently and withdrew its
+recommendation, noting it had "reasoned about the risk instead of measuring it."
