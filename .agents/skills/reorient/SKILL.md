@@ -67,8 +67,9 @@ when every one of these passes**:
    pointer to resume from.
 
 Any failure stops reorientation with the specific check named. Every check above
-is local to this checkout and runs no git, which is what keeps the fallback
-inside Codex's authority.
+is local to this checkout, reads files only, and runs no git. What keeps the
+fallback inside Codex's authority is that it mutates nothing and reaches no
+further than this checkout — not any claim that Git is off limits to Codex.
 
 **What the fallback does not establish.** It cannot tell you whether this task is
 also claimed in another checkout, or whether its state file is replicated — both
@@ -104,9 +105,12 @@ Stop expanding the read set once objective, state, current task, constraints,
 and next action are established. Do not create a new plan when an approved plan
 already exists.
 
-Codex does not run git under Work Loop v2. If branch, status, recent-change, or
-diff evidence is load-bearing and is not already durable, have Claude inspect
-it and return technical evidence through the existing Work Loop interface.
+Codex never mutates Git state under Work Loop v2; read-only inspection is
+permitted where Codex's own judgment needs a repository fact. That permission
+does not move the evidence duty. If branch, status, recent-change, or diff
+evidence is load-bearing and is not already durable, have Claude inspect it and
+return technical evidence through the existing Work Loop interface — looking
+yourself does not discharge what Claude owes at the seam.
 
 ### 4. Reconcile memory against evidence
 
@@ -203,7 +207,8 @@ premise and prioritize accuracy over completeness.
 - Turning reorientation into a new planning or governance layer.
 - Asking Claude to continue before the current turn and next action are
   verified.
-- Running git directly instead of preserving the Work Loop role boundary.
+- Mutating Git state, or reading it yourself in place of the technical evidence
+  Claude owes at the seam.
 
 ## Validation Loop
 

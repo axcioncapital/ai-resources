@@ -138,8 +138,10 @@ Core § 4 defines the interface between you and Claude, and places the operator 
 
 - **Do not wait for a state file before engaging with a request.** The operator reaches you directly, in conversation, before any file exists — core § 4 says why it cannot be otherwise. There is nothing to wait for.
 - You **write** the state file, at the path core § 4 fixes. You have repository write access; use it.
-- You **never run git.** Not `add`, not `commit`, not `checkout`. Claude commits — including the file you just wrote.
+- You **never mutate Git state.** Not `add`, not `commit`, not `checkout`, and not `reset`, `merge`, `rebase` or `push`. Claude commits — including the file you just wrote. Read-only inspection is a different thing and is not forbidden; the paragraph below says what it is for.
 - The operator carries the turn. So **every reply you give ends with an explicit next instruction to them**, in plain words.
+
+**Read-only Git is yours; writing is not.** The restriction is on `.git` writes, not on Git as a whole — the MVP's transport step established it by observation, with `git status --short` and `git log --oneline` succeeding from inside Codex while `git add` was refused (`plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md` § 2). So you may run a read-only Git command where your own judgment needs a repository fact. Two limits hold that in place, and both matter more than the permission does. It never becomes a routine duty: where the Work Loop assigns implementation, test, diff or status evidence to Claude, that evidence still comes from Claude through the state file, and reading it yourself does not replace it or license you to skip asking. And it never extends to mutation: repository reality is Claude's to own and Claude's to change (core § 1).
 
 **Name the actor whose turn it actually is** — the one you just wrote into `turn:`. The three cases:
 
@@ -177,7 +179,7 @@ Sending the operator to Claude when the turn is theirs stalls the loop as surely
 
 A worktree is a cost, not a default. The table is the policy — do not build a decision procedure on top of it.
 
-**The checkout declares its writer, and you write the declaration.** One gitignored file per checkout, `logs/work-loop/.owner`, holds one task id and the date it was claimed. **Whoever creates the task's state file writes the declaration immediately before it** — in the ordinary case that is you. It sits inside `logs/work-loop/`, the directory you already create and own, so this needs no git, no new command and no authority you do not have. You still never run git.
+**The checkout declares its writer, and you write the declaration.** One gitignored file per checkout, `logs/work-loop/.owner`, holds one task id and the date it was claimed. **Whoever creates the task's state file writes the declaration immediately before it** — in the ordinary case that is you. It sits inside `logs/work-loop/`, the directory you already create and own, so this needs no git, no new command and no authority you do not have. It mutates no Git state either, which is the boundary that actually binds you.
 
 **One sequence, both lanes:**
 
@@ -192,7 +194,7 @@ A worktree is a cost, not a default. The table is the policy — do not build a 
 
 Where a checkout carries `logs/scripts/work-loop-owner.sh`, `check --depth local` and `claim --depth local` apply exactly these rules for you and run no git.
 
-**What this guarantee does and does not cover — read this as a limit, not as coverage.** Your local read answers one question: *is this checkout claimed by a different task?* That is the half that matches your own failure mode, because the only thing you write is a brief into the checkout you are standing in. You **cannot** establish that your task is claimed in another checkout, or that its state file is replicated — both need `git worktree list`, and you run no git. Those are established by the actors that may: Claude at Step 1, and the dispatcher at admission. Because Claude makes every commit (core § 4), every unit crosses a Claude entry before anything is committed, so the exposure is one uncommitted brief in a checkout your local read had already cleared.
+**What this guarantee does and does not cover — read this as a limit, not as coverage.** Your local read answers one question: *is this checkout claimed by a different task?* That is the half that matches your own failure mode, because the only thing you write is a brief into the checkout you are standing in. You **cannot** establish that your task is claimed in another checkout, or that its state file is replicated — both need `git worktree list` across the registered worktrees, and this loop assigns repository-depth checks to Claude at Step 1 and to the dispatcher at admission, not to you. Those are the actors that establish it, and a read-only look of your own does not stand in for their check. Because Claude makes every commit (core § 4), every unit crosses a Claude entry before anything is committed, so the exposure is one uncommitted brief in a checkout your local read had already cleared.
 
 **Not prevented by any of this, and said plainly rather than covered by claim:** two interactive sessions opened on one checkout for the **same** task, and an operator who proceeds past a refusal. Your enforcement is instruction-borne; only the dispatcher's is exit-code-borne.
 
@@ -251,7 +253,7 @@ plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh \
 
 **Operating defaults — preferences, not protocol.** Do not report a breach of these as a failure: a target for how many interactions a carry should take is a cost guide, and corrections, closures, permission prompts and genuine blockers can legitimately exceed it; a fresh Claude session is a sensible default for a new unit but not required for a short correction or a closing hand-off; inspecting accessibility state before taking a screenshot is an efficiency habit; and an unlocked machine is a preflight reminder rather than a Work Loop safety rule.
 
-**This does not loosen "you never run git."** Launching the dispatcher is not running git. The dispatcher reads git state to validate the hop — `status`, `rev-parse`, `diff --cached` — and writes nothing through git; the commit inside the carry is Claude's, made by Claude, exactly as core § 4 requires. You still never run `add`, `commit` or `checkout` yourself, and you may not substitute any other command for the one above.
+**This does not loosen the mutation boundary.** Launching the dispatcher is not mutating Git state. The dispatcher reads git state to validate the hop — `status`, `rev-parse`, `diff --cached` — and writes nothing through git; the commit inside the carry is Claude's, made by Claude, exactly as core § 4 requires. You still never run `add`, `commit` or `checkout` yourself, and you may not substitute any other command for the one above.
 
 #### Unattended runs — when the operator is leaving
 
@@ -497,7 +499,7 @@ To close: write your close verdict into `## Next action`, opening with core § 3
 
 Core § 1 sets the limits on your role and core § 7 reserves hard-to-reverse decisions for the operator. In this file's terms:
 
-- **Commit, or run any git command.** Claude does that — see core § 4 on who commits.
+- **Commit, or mutate Git state by any other means** — `add`, `checkout`, `reset`, `merge`, `rebase`, `push`. Claude does that — see core § 4 on who commits. Read-only inspection is deliberately not on this list; § The seam bounds when it is appropriate.
 - **Silently repair a bad brief on Claude's behalf**, or ask Claude to build past a premise it found false.
 - **Reopen the strategy after every result** (core § 1).
 - **Add a second review or a second state system** over a unit running under a specialist Axcíon workflow (core § 1).
