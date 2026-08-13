@@ -24,9 +24,19 @@ or core. Those remain operator decisions and are outside this sheet entirely.
 
 - This repository checkout, on any branch, with a clean `fixtures/ce-9/` directory.
 - The ability to open **two separate fresh Codex threads**. "Fresh" is load-bearing — see § 3.
+- **An empty directory outside this repository**, for Run A to work in. Create it now:
+
+  ```
+  mkdir -p ~/ce-9-control && ls -A ~/ce-9-control
+  ```
+
+  Expect **no output** — an empty directory. Run A is launched from there and never from the checkout,
+  for the reason in § 3a.
 - About the length of two ordinary briefing exchanges.
 
-Everything runs from the repository root.
+**Where each thing runs.** Every command in § 2 runs from the repository root. **Run B** also runs from
+the repository root, because it must be able to open the three paths it is given. **Run A runs from the
+empty directory above** and must never be launched from the checkout.
 
 ---
 
@@ -97,7 +107,8 @@ your real fixtures are still clean with step 2, and delete `$S`.
 Run the **control first**. Once you have seen the source-opened answer it becomes hard to read the
 control fairly, and this order removes that bias.
 
-Four rules, from the instrument's § 4. They are what make the blindness real rather than asserted:
+Five rules. The first four are the instrument's § 4; the fifth is what makes the control's blindness a
+property of where it runs rather than a promise about what you typed:
 
 1. **Each run is a fresh Codex thread with no prior-session note loaded.** A thread already oriented by a
    summary is not a control, and its run is discarded rather than scored.
@@ -106,26 +117,45 @@ Four rules, from the instrument's § 4. They are what make the blindness real ra
    answer.
 4. **Neither run receives any summary, session note or transcript context** — including your own account
    of what Harbourview is.
+5. **Run A is launched from the empty directory in § 1, never from this checkout**, so the durable
+   Harbourview sources are not reachable from where it is working. Withholding the paths is not enough
+   on its own: a thread started inside the checkout can search for "Harbourview" and find the fixtures
+   without being told where they are, and a control that reads the sources is not a memory-only control.
 
 ### 3a. Run A — the memory-only control
 
-Paste **exactly this and nothing else**. No paths, no directory, no file.
+**Launch it from the empty directory, not the checkout.**
+
+```
+cd ~/ce-9-control
+```
+
+Then paste **exactly this and nothing else**. No paths, no directory, no file.
 
 ```
 Can we pick Harbourview back up? I've got an hour this afternoon.
 What's the next unit — go ahead and brief it.
 ```
+
+**Before you score it, confirm the isolation held.** Read back what Run A actually did and check three
+things: it worked in `~/ce-9-control`; it opened, listed or searched no file under this repository; and
+it reached no Harbourview source by any other route. Record that confirmation — § 4 requires it.
+
+> **If Run A reached any Harbourview source, or any part of this checkout, the trial is FAIL** — a
+> blindness breach, with the route it took written down. Its output is not scored on its merits, and the
+> pair is not re-run to obtain a cleaner answer.
 
 ### 3b. Run B — the source-opened run
 
+**Launch it from the repository root**, so the three paths resolve.
+
 Paste **exactly this and nothing else** — the same request, plus the three source paths and nothing more.
-No summary of them, and no hint about the blocker.
+No introducing sentence, no summary of them, and no hint about the blocker.
 
 ```
 Can we pick Harbourview back up? I've got an hour this afternoon.
 What's the next unit — go ahead and brief it.
 
-The Harbourview material is in:
 plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/project-plan.md
 plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/task-state.md
 plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9/operator-source-note.md
@@ -148,7 +178,11 @@ For **each** run, keep:
 - the produced brief — verbatim if short, otherwise the passages that decide § 5 quoted verbatim, plus an
   exact pointer to the rest;
 - anything the thread asked you (§ 3c);
-- whether the thread was fresh and what, if anything, was already in its context.
+- whether the thread was fresh and what, if anything, was already in its context;
+- **the directory it ran in.** For Run A, also the isolation confirmation from § 3a — that it worked in
+  `~/ce-9-control` and reached no file in this checkout and no Harbourview source by any route. This is a
+  recorded observation, not an assumption: a trial whose control isolation was never checked has not
+  established that the control was blind.
 
 **Do not create a transcript file, a results log or a runner record in this repository.** The result
 destination is § 6.
@@ -197,12 +231,23 @@ recovery being measured.
 
 ### The verdict
 
+**There are three verdicts and no fourth.** Every trial ends PASS, PARTIAL or FAIL.
+
 | Verdict | When |
 |---|---|
 | **PASS** | Layer A holds for both runs **and** Layer B holds for Run B. |
 | **PARTIAL** | Layer A holds, Layer B does not — the fact travelled, the brief is wrong or thin. |
-| **FAIL** | The discriminator does not reach Run B; **or** Run A reaches the corrective unit; **or** the two outputs are indistinguishable. |
-| **VOID — not a trial** | Preflight step 4 exited `0`; or either thread was not fresh; or either thread received more than § 3 allows. |
+| **FAIL** | Any of: the discriminator does not reach Run B; Run A reaches the corrective unit; the two outputs are indistinguishable; **preflight step 4 exited `0`** — an invalid instrument; **either thread was not fresh, or received more than § 3 allows, or Run A reached this checkout or any Harbourview source** — a blindness breach. |
+
+**A contaminated run is discarded; the trial is still recorded FAIL.** These two are separate acts and
+both are required. The affected run's *output* is not scored on its merits — a brief produced by a thread
+that had the answer tells you nothing, and reading it anyway would launder a broken run into a
+measurement. But the *paired trial* is not thereby unrecorded: it goes down as FAIL, naming the precise
+reason — which check failed, or which blindness rule broke and how. Silence is not a verdict, and neither
+is "not a trial".
+
+**Never re-run a FAIL to obtain a better number.** Fix the cause first — the leak, the freshness, the
+isolation — and only then start a new trial, recorded as its own.
 
 **Indistinguishable outputs are a real result, and they are reported, not repaired.** Two briefs that
 cannot be told apart prove nothing about recovery — only that conversational memory happened to be
@@ -229,13 +274,16 @@ Record exactly these nine things, and nothing more:
 
 1. Date, and the HEAD from preflight step 1.
 2. Preflight outcomes — step 3 exit status and hit location, step 4 exit status.
-3. Run A: thread identifier, freshness confirmed, what it received.
+3. Run A: thread identifier, freshness confirmed, what it received, and the § 3a isolation confirmation —
+   the directory it ran in, and that it reached no file in this checkout and no Harbourview source.
 4. Run B: thread identifier, freshness confirmed, what it received.
 5. The captured outputs, or exact pointers to them (§ 4).
 6. Layer A outcome for both runs.
 7. Layer B outcome for Run B, item by item against § 5's five rows.
-8. The verdict — PASS / PARTIAL / FAIL / VOID.
-9. For any non-pass, the reason, in one or two plain sentences.
+8. The verdict — PASS, PARTIAL or FAIL.
+9. For any non-pass, the reason, in one or two plain sentences. Where the cause was an invalid instrument
+   or a blindness breach, name which check failed or which rule broke, and say that the affected run's
+   output was discarded rather than scored.
 
 ---
 
@@ -243,11 +291,13 @@ Record exactly these nine things, and nothing more:
 
 Stop, record what happened, and hand back rather than pressing on if:
 
-- preflight step 4 exits `0` — the instrument is broken (§ 2 step 5);
-- either thread turns out not to have been fresh, or received more than § 3 permits — that run is
-  discarded, not scored;
+- preflight step 4 exits `0` — the instrument is broken (§ 2 step 5). Record the trial **FAIL**, invalid
+  instrument;
+- either thread turns out not to have been fresh, or received more than § 3 permits, or Run A reached
+  this checkout or any Harbourview source — that run's output is discarded rather than scored, and the
+  trial is recorded **FAIL**, blindness breach, naming the rule that broke;
 - you cannot run a thread without giving it something § 3 forbids;
-- the pair comes out indistinguishable — that is FAIL, and re-running for a better result would be
+- the pair comes out indistinguishable — that is **FAIL**, and re-running for a better result would be
   choosing the answer;
 - finishing would require creating a second durable artifact, or a decision about adoption or the wider
   eval pack. Both are the operator's, and neither is inside this sheet.
