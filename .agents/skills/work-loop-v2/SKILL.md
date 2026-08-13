@@ -16,6 +16,13 @@ You frame the work and judge the result. **Claude owns repository reality: it ch
 This file does not restate the executable core resolved below; where they disagree, the core wins and
 the difference is a defect. Its read point is Routing step 3 because most routes do not need it.
 
+**Compaction gate — reorient before you act.** If this task has been through a context compaction, or
+the conversation may otherwise be incomplete, invoke `$reorient` before routing, preparing, assessing,
+continuing, correcting or closing any unit. Continue only once it has established the authoritative
+task, its bound checkout and the next action; if it cannot, **stop without changing state** and say so.
+The `reorient` skill owns that procedure and it is deliberately not restated here — a second copy would
+be free to drift from the one that governs.
+
 <!-- work-loop-v2-core-resolution:start -->
 ### Resolve the executable core
 
@@ -131,8 +138,10 @@ Core § 4 defines the interface between you and Claude, and places the operator 
 
 - **Do not wait for a state file before engaging with a request.** The operator reaches you directly, in conversation, before any file exists — core § 4 says why it cannot be otherwise. There is nothing to wait for.
 - You **write** the state file, at the path core § 4 fixes. You have repository write access; use it.
-- You **never run git.** Not `add`, not `commit`, not `checkout`. Claude commits — including the file you just wrote.
+- You **never mutate Git state.** Not `add`, not `commit`, not `checkout`, and not `reset`, `merge`, `rebase` or `push`. Claude commits — including the file you just wrote. Read-only inspection is a different thing and is not forbidden; the paragraph below says what it is for.
 - The operator carries the turn. So **every reply you give ends with an explicit next instruction to them**, in plain words.
+
+**Read-only Git is yours; writing is not.** The restriction is on `.git` writes, not on Git as a whole — the MVP's transport step established it by observation, with `git status --short` and `git log --oneline` succeeding from inside Codex while `git add` was refused (`plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md` § 2). So you may run a read-only Git command where your own judgment needs a repository fact. Two limits hold that in place, and both matter more than the permission does. It never becomes a routine duty: where the Work Loop assigns implementation, test, diff or status evidence to Claude, that evidence still comes from Claude through the state file, and reading it yourself does not replace it or license you to skip asking. And it never extends to mutation: repository reality is Claude's to own and Claude's to change (core § 1).
 
 **Name the actor whose turn it actually is** — the one you just wrote into `turn:`. The three cases:
 
@@ -170,7 +179,7 @@ Sending the operator to Claude when the turn is theirs stalls the loop as surely
 
 A worktree is a cost, not a default. The table is the policy — do not build a decision procedure on top of it.
 
-**The checkout declares its writer, and you write the declaration.** One gitignored file per checkout, `logs/work-loop/.owner`, holds one task id and the date it was claimed. **Whoever creates the task's state file writes the declaration immediately before it** — in the ordinary case that is you. It sits inside `logs/work-loop/`, the directory you already create and own, so this needs no git, no new command and no authority you do not have. You still never run git.
+**The checkout declares its writer, and you write the declaration.** One gitignored file per checkout, `logs/work-loop/.owner`, holds one task id and the date it was claimed. **Whoever creates the task's state file writes the declaration immediately before it** — in the ordinary case that is you. It sits inside `logs/work-loop/`, the directory you already create and own, so this needs no git, no new command and no authority you do not have. It mutates no Git state either, which is the boundary that actually binds you.
 
 **One sequence, both lanes:**
 
@@ -185,13 +194,15 @@ A worktree is a cost, not a default. The table is the policy — do not build a 
 
 Where a checkout carries `logs/scripts/work-loop-owner.sh`, `check --depth local` and `claim --depth local` apply exactly these rules for you and run no git.
 
-**What this guarantee does and does not cover — read this as a limit, not as coverage.** Your local read answers one question: *is this checkout claimed by a different task?* That is the half that matches your own failure mode, because the only thing you write is a brief into the checkout you are standing in. You **cannot** establish that your task is claimed in another checkout, or that its state file is replicated — both need `git worktree list`, and you run no git. Those are established by the actors that may: Claude at Step 1, and the dispatcher at admission. Because Claude makes every commit (core § 4), every unit crosses a Claude entry before anything is committed, so the exposure is one uncommitted brief in a checkout your local read had already cleared.
+**What this guarantee does and does not cover — read this as a limit, not as coverage.** Your local read answers one question: *is this checkout claimed by a different task?* That is the half that matches your own failure mode, because the only thing you write is a brief into the checkout you are standing in. You **cannot** establish that your task is claimed in another checkout, or that its state file is replicated — both need `git worktree list` across the registered worktrees, and this loop assigns repository-depth checks to Claude at Step 1 and to the dispatcher at admission, not to you. Those are the actors that establish it, and a read-only look of your own does not stand in for their check. Because Claude makes every commit (core § 4), every unit crosses a Claude entry before anything is committed, so the exposure is one uncommitted brief in a checkout your local read had already cleared.
 
 **Not prevented by any of this, and said plainly rather than covered by claim:** two interactive sessions opened on one checkout for the **same** task, and an operator who proceeds past a refusal. Your enforcement is instruction-borne; only the dispatcher's is exit-code-borne.
 
 **An open task leases its checkout until it closes.** That is the price of continuity between handoffs, and it is deliberate: a session-scoped lease cannot survive a session ending, and surviving one is the whole point. The cost is bounded and visible — starting a *different* task in that checkout is refused until this one closes. Ordinary serial reuse is unaffected, because closure clears the declaration.
 
-**When a new Codex task starts at all.** Only where the thread has ended or must end: a fresh session, a compaction that lost the thread, or a deliberate hand-off. **Ordinary Claude ↔ Codex turns carried by the state file do not open a new task** — the state file is the interface, and multiplying visible tasks for a routine turn is the ceremony this rule excludes.
+**When a new Codex task starts at all.** Only where the thread has ended or must end: a fresh session, or a deliberate hand-off. **Ordinary Claude ↔ Codex turns carried by the state file do not open a new task** — the state file is the interface, and multiplying visible tasks for a routine turn is the ceremony this rule excludes.
+
+**A compaction is not one of those cases.** Routine compaction is recovered *in the current task*, in this order: invoke `$reorient`; continue in that same task once it re-establishes authoritative state; stop without changing state where it cannot. A new task — or `handoff-thread` — is for a deliberate move between threads, never the routine recovery path. Turning every compaction into a hand-off is how completed work gets done twice.
 
 - **Prefer a genuinely fresh task over a transcript-preserving fork.** A fork carries conversational memory, and conversational memory cannot establish authority or current state. A fresh task is forced to read the durable sources, which is the property wanted.
 - **Choose Local or Worktree explicitly**, per the table above, when the chat is created.
@@ -206,47 +217,49 @@ Core § 4 *An approved courier may carry the turn* permits this and sets its lim
 
 **There are two approved shapes, and the operator's presence picks which.**
 
-| Shape | Flag | Use it when |
+| Shape | Program | Use it when |
 |---|---|---|
-| **Attended carry** | `--carry-one` | The operator is at the machine. You carry **one** hop, then read the file and assess. The loop does not run on without you. |
-| **Unattended run** | loop mode (no `--carry-one`) | The operator is leaving. You frame the unit, launch, and get out of the way. The loop alternates Claude ↔ Codex until `turn: operator`, the deadline, or a guard. |
+| **Attended carry** | `scripts/axcion-harness-v0.2/carry-turn.sh` — Axcíon Harness v0.2 | The operator is at the machine. You carry **one** hop, then read the file and assess. The loop does not run on without you. |
+| **Unattended run** | `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, loop mode | The operator is leaving. You frame the unit, launch, and get out of the way. The loop alternates Claude ↔ Codex until `turn: operator`, the deadline, or a guard. |
+
+**These are two different programs, and neither does the other's job.** The attended carrier carries exactly one hop per invocation and has no loop mode, no unattended mode, no worktree automation and no flag to ask for one: `--carry-one`, `--unattended`, `--max-hops` and `--status` are all refused with exit `10` before anything launches. It reports no out-of-band status either — the state file is its status, and a carry already in flight exits `17` naming the holding pid. So do not carry an attended hop with the spike dispatcher, and never reach for the carrier when the operator is leaving.
 
 Everything below applies to both unless it names one. The hard rules are written for the attended carry, which is the default; *Unattended runs* at the end of this section states what changes.
 
-**What you drive is a terminal command, not Claude.** You never type into a Claude window, never read Claude's interface for progress, and never click through its prompts. You run one command and read its exit code. The dispatcher launches Claude, validates the state file before and after, and stops on anything unexpected — that instrumentation is the reason this is the approved courier and screen-driving Claude directly is not.
+**What you drive is a terminal command, not Claude.** You never type into a Claude window, never read Claude's interface for progress, and never click through its prompts. You run one command and read its exit code. The courier program launches the actor, validates the state file before and after, and stops on anything unexpected — that instrumentation is the reason this is the approved courier and screen-driving Claude directly is not.
 
 **Neither shape is context-bounded, and it is worth being clear why.** Every hop is a **fresh process** (`claude -p`, `codex exec`). Nothing accumulates across hops; `logs/work-loop/{task-id}.md` is the entire shared memory. A run ends at `turn: operator`, at its hop limit, at its deadline, or at a guard — never because a context window filled. Do not plan around a context budget that does not exist.
 
-The command, in full — all three `--allow-path` values are required, because supplying any one **replaces both defaults**, and a `PostToolUse` hook keeps `logs/friction-log.md` modified in this repository:
+**The attended command, in full.** There is no hop flag — one hop is the surface, so adding `--carry-one` is an unknown argument and stops at exit `10`. All four `--allow-path` values are required, because supplying any one **replaces both built-in defaults** (`^logs/work-loop/` and `^logs/harness-runs/`): the carrier writes its own run log under `logs/harness-runs/`, which is not gitignored, and a `PostToolUse` hook keeps `logs/friction-log.md` modified in this repository — omit either and the carry stops at `18` on the courier's own output. The fourth line is **per-task**: derive it from what this unit may legitimately change when you write the brief. Too narrow gives a false stop; too wide makes the check mean nothing.
 
 ```
-plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh \
+scripts/axcion-harness-v0.2/carry-turn.sh \
   --checkout <absolute checkout path> \
   --task <task-id> \
-  --carry-one \
   --allow-path '^logs/work-loop/' \
-  --allow-path '^plans/work-loop-v2-v0\.2/handoff-automation-spike/' \
-  --allow-path '^logs/friction-log\.md$'
+  --allow-path '^logs/harness-runs/' \
+  --allow-path '^logs/friction-log\.md$' \
+  --allow-path '<regex for what this unit may change>'
 ```
 
 **The hard rules.** Each is a stop, not a preference:
 
 1. **Read the state file first.** Confirm the exact task id and that `turn:` is `claude`, by opening the file. Not from what you remember writing.
-2. **Run the command once for this carried turn.** In the **attended carry**, `--carry-one` carries exactly one hop, so Claude moves and you assess — the loop does not run on without you. *This is a property of the attended shape, not of the dispatcher:* an unattended run is defined by the loop running on without you, and is governed by the deadline and hop limit instead. Either way you run this carried turn **once** and never repeat the same hop to try again (rule 5).
+2. **Run the command once for this carried turn.** In the **attended carry**, the carrier carries exactly one hop per invocation, so Claude moves and you assess — the loop does not run on without you. To carry the next turn you read the state file, confirm the turn moved, and invoke the carrier again. *This is a property of the attended shape, not of one program:* an unattended run is defined by the loop running on without you, and is governed by the deadline and hop limit instead. Either way you run this carried turn **once** and never repeat the same hop to try again (rule 5).
 3. **The exit code is the result.** `0` means the carry completed. Anything else stops this carry: report the code and its meaning to the operator, and do not repeat the same hop. A later operator-approved narrowed recovery unit is governed by § *Three outcomes*; it is a new unit, not a retry of this one.
 4. **Read the file before assessing.** Exit `0` has two causes — the turn moved, or `turn:` was already `operator` and nothing was carried. Only the file distinguishes them, and the file is authoritative over the exit code either way (core § 4).
-5. **Never re-run the same hop to "try again".** A second launch of that hop is only ever justified when the dispatcher's own run log shows the first launch never started. A completed hop that did not produce what you expected is something to inspect, not to repeat. After its partial effects are inspected, the operator may instead approve the fresh, smaller recovery unit defined in § *Three outcomes*; that is explicitly not the same brief or hop.
+5. **Never re-run the same hop to "try again".** A second launch of that hop is only ever justified when the courier's own run log shows the first launch never started. A completed hop that did not produce what you expected is something to inspect, not to repeat. After its partial effects are inspected, the operator may instead approve the fresh, smaller recovery unit defined in § *Three outcomes*; that is explicitly not the same brief or hop.
 6. **`turn: operator`, a malformed state file, and a permission prompt are terminal.** Stop and tell the operator. You do not approve prompts and you do not work around them.
 
-**An unchanged `turn: claude` does not mean the command failed to land.** Claude leaves the file *completely untouched* when it rejects one — an identity mismatch or unreadable frontmatter is a correct read-only refusal (core § 6 rule 2), not a lost message. There are three causes and the dispatcher already separates them: `14` identity mismatch (Claude was never launched), `22` no transition (Claude ran and changed nothing), `21` timeout (Claude was still working). Read the code. Do not infer the cause from the turn, and never treat an unchanged turn as permission to send again.
+**An unchanged `turn: claude` does not mean the command failed to land.** Claude leaves the file *completely untouched* when it rejects one — an identity mismatch or unreadable frontmatter is a correct read-only refusal (core § 6 rule 2), not a lost message. There are three causes and both programs already separate them, under the same three codes: `14` identity mismatch (Claude was never launched), `22` no transition (Claude ran and changed nothing), `21` timeout (Claude was still working). Read the code. Do not infer the cause from the turn, and never treat an unchanged turn as permission to send again.
 
 **Operating defaults — preferences, not protocol.** Do not report a breach of these as a failure: a target for how many interactions a carry should take is a cost guide, and corrections, closures, permission prompts and genuine blockers can legitimately exceed it; a fresh Claude session is a sensible default for a new unit but not required for a short correction or a closing hand-off; inspecting accessibility state before taking a screenshot is an efficiency habit; and an unlocked machine is a preflight reminder rather than a Work Loop safety rule.
 
-**This does not loosen "you never run git."** Launching the dispatcher is not running git. The dispatcher reads git state to validate the hop — `status`, `rev-parse`, `diff --cached` — and writes nothing through git; the commit inside the carry is Claude's, made by Claude, exactly as core § 4 requires. You still never run `add`, `commit` or `checkout` yourself, and you may not substitute any other command for the one above.
+**This does not loosen the mutation boundary.** Launching the dispatcher is not mutating Git state. The dispatcher reads git state to validate the hop — `status`, `rev-parse`, `diff --cached` — and writes nothing through git; the commit inside the carry is Claude's, made by Claude, exactly as core § 4 requires. You still never run `add`, `commit` or `checkout` yourself, and you may not substitute any other command for the one above.
 
 #### Unattended runs — when the operator is leaving
 
-Same dispatcher, same guards, `--carry-one` dropped. What changes:
+**A different program: the spike dispatcher in loop mode**, not the attended carrier — the carrier refuses `--unattended` and every multi-hop flag before it launches anything. Same guards, `--carry-one` dropped. What changes:
 
 **Add a clock, and isolate the run.** `--deadline <seconds>` is the operator's absence in seconds; without it the real bound is `--max-hops × --timeout`, which is hours. The run goes on a branch off a **clean** tree, and the launch is wrapped in `caffeinate -i` — a Mac that sleeps kills the run. The worked invocation is in the spike `README.md`; use it rather than assembling one.
 
@@ -299,7 +312,9 @@ dispatch.sh --checkout <path> --task <task-id> --status
 The operator describes what they want in ordinary language and rarely names a capability. Route it before anything else, in this order:
 
 1. **Interpret the desired outcome and its object** — what should be different afterwards, and to what. Not the remedy they proposed; the outcome behind it.
-2. **Choose one owner** from the index below — the single capability whose purpose covers that outcome.
+2. **Choose one owner** — the single capability whose purpose covers that outcome. Read
+   [Routing index](references/routing-index.md) complete before you name it; the inventories are
+   there and this file carries no copy of them (§ The routing index below).
 3. **If the Work Loop is the owner** — and only then — **run § Resolve the executable core and read
    exactly the absolute file it returns now, before your first Work-Loop-owned move.** Then apply the
    Direct-versus-Standard admission test (Admission below). Where any other capability owns it,
@@ -354,105 +369,12 @@ Name an excluded tempting route only where saying so prevents a likely mistake. 
 
 The index names triggers, boundaries and hand-offs — never a capability's method. **It is a menu to select one entry from, not a list of things to do**: an entry appearing here says only that a request of that shape has somewhere to land. Read the owner's own definition when you need its method.
 
-### The index — Axcíon commands that may own a request (16)
+### The routing index
 
-- `/work-loop-v2` — bounded repository work no specialist owner covers.
-- `/develop-ai-resource` — a durable skill, command or agent may need to exist.
-- `/scope-project` — a complex build needs its control documents before it starts.
-- `/new-project` — the need is already qualified and the project scaffold is what is missing.
-- `/project-next-steps` — where a project stands and what to do next.
-- `/consult` — a workspace-structure or architecture judgment call.
-- `/pm` — a question about an active project's own content.
-- `/tech-consult` — a business need with no technical plan yet.
-- `/open-items` — what is still unresolved in a project.
-- `/resolve-repo-problem` — something is wrong and the cause is not yet established.
-- `/resolve-incident` — a fault to classify, fix, verify and log end to end.
-- `/repo-dd` — due diligence on a repository's actual state.
-- `/analyze-workflow` — a deployed workflow's infrastructure end to end.
-- `/lean-repo` — accumulated operational complexity to diagnose.
-- `/implementation-triage` — is this proposed implementation worth doing.
-- `/reconcile` — did the output actually fulfil its mandate.
-
-### The index — Axcíon narrow specialist destinations (10)
-
-Selected only where the request names their purpose. Never a generic fallback.
-
-- `/audit-repo` — a workspace health audit.
-- `/architecture-review` — a prioritised architecture-health report from existing audits.
-- `/systems-review` — the workspace through a systems-thinking lens.
-- `/token-audit` — token-usage efficiency.
-- `/permission-sweep` — permission-prompt drift across settings layers.
-- `/pipeline-review` — a deep design review of one named pipeline.
-- `/blindspot-scan` — an adversarial blind-spot scan; operator-invoked only.
-- `/contract-check` — has the artifact drifted from its original mandate.
-- `/expert-check` — a draft against reference principles.
-- `/memory-search` — has this been seen before; the recorded history in `logs/` and `audits/`. Returns historical evidence, never current state, so it never owns a live fault — `/resolve-repo-problem` and `/resolve-incident` keep that.
-
-### The index — Matt skills that may own a request (13)
-
-`[Claude-side only]` marks a skill installed for Claude but not for Codex.
-
-- `grill-with-docs` `[Claude-side only]` — an idea to sharpen, with a repo to leave the paper trail in.
-- `grill-me` (Matt — stateless interview, saves nothing) — an idea to sharpen with no repo under it.
-- `wayfinder` — an effort too foggy for one session; it produces decisions, not deliverables.
-- `diagnosing-bugs` `[Claude-side only]` — something is broken and resists a first glance.
-- `triage` (Matt — incoming issues and PRs) `[Claude-side only]` — requests you did not create, piling up.
-- `implement` — build from a spec or a ticket.
-- `prototype` — a design question needing a runnable answer.
-- `research` — reading legwork against primary sources.
-- `resolving-merge-conflicts` `[Claude-side only]` — already mid-merge or mid-rebase.
-- `wizard` `[Claude-side only]` — steps only a human can take.
-- `to-questionnaire` `[Claude-side only]` — the blocking knowledge is in someone else's head.
-- `teach` — learn a concept across sessions.
-- `improve-codebase-architecture` `[Claude-side only]` — the codebase is getting hard for agents to work in.
-
-### The index — Matt phases and supporting skills (6)
-
-Reached by an owner at its own phase boundary. Direct entry only in the case named.
-
-- `to-spec` — no direct entry: it collapses an existing thread or decision map.
-- `to-tickets` — no direct entry: it splits an existing spec.
-- `tdd` — direct entry only for one concrete behaviour with no spec behind it.
-- `code-review` — direct entry only for an explicit branch or PR against a fixed point.
-- `grilling` — direct entry only where the interview is wanted with no wrapper and no artifact.
-- `handoff` (Matt — a portable file for another agent or directory) `[Claude-side only]` — direct entry only for a new harness, a new directory, a colleague, or forking a side task mid-phase.
-
-### The index — Matt helpers and references (6)
-
-Discoverable, never a first route.
-
-- `setup-matt-pocock-skills` — the run-once precondition before a first engineering flow.
-- `domain-modeling` — direct entry where the domain *words* are the problem, not the process.
-- `codebase-design` `[Claude-side only]` — direct entry where one module's shape is being designed.
-- `writing-for-agents` `[Claude-side only]` — reference for documents agents consume.
-- `wait-what` `[Claude-side only]` — a mid-conversation corrective, inside any other skill.
-- `ask-matt` `[Claude-side only]` — the Matt router. Never a destination from here: routing into a router nests them.
-
-### The index — names that are not routes
-
-Named by class, not enumerated. The Axcíon surface is 95 commands and this index carries 26 of them on purpose; the rest are reachable, just not as first owners.
-
-- **Lifecycle phases** — `/create-skill`, `/improve-skill`, `/request-skill`, `/migrate-skill`, `/graduate-resource`: build phases under durable-resource work, reached by its owner.
-- **Conversational controls** — operator controls and duplicate entry points, not capability owners.
-- **Session machinery** — state, transport and session control.
-- **Fixed cadence** — the Friday and Monday operations and the monthly review: scheduled, not intake destinations.
-- **Deployment, migration, cleanup, logging and backlog-fix commands** — explicit operations chosen after an owner established the need.
-- **`/leverage-idea`** — itself a router. Indexing it, or copying its route map here, would nest one router inside another.
-- **Installed but excluded** — the six design/motion skills the operator excluded; the six workspace-root-only commands no approved set names; Work Loop v1 and the `wl2-probe` throwaway.
-
-### Naming a colliding capability
-
-Three names resolve to two different capabilities. Name them by product plus purpose — **never a bare name**, which would route to whichever the harness happened to resolve first.
-
-| Say | Because |
-|---|---|
-| Matt `triage` — incoming issues and PRs | Axcíon /triage reviews the suggestions Claude just proposed |
-| Matt `handoff` — a portable file for another agent | Axcíon /handoff saves session state or forks a child session |
-| Matt `grill-me` — a stateless interview | Axcíon /grill-me produces a structured mandate brief |
-
-### When the owner is Claude-side only
-
-You cannot invoke a `[Claude-side only]` skill. Name it, label it `Claude-side only`, and tell the operator to **invoke that exact skill in Claude**. Do not substitute a Codex-side near-equivalent, and open **no state file** around the specialist flow — wrapping it is the second state system core § 1 forbids.
+The route inventories are one file: [Routing index](references/routing-index.md). **Read that file
+complete at step 2 above, before you name an owner** — the five route classes, the names that are not
+routes, the collision table and the Claude-side-only rule live there and nowhere else. Do not route
+from memory of it, and do not copy an entry back into this file: one route entry, one owner.
 
 ## Admission — Direct Work or the loop
 
@@ -579,7 +501,7 @@ To close: write your close verdict into `## Next action`, opening with core § 3
 
 Core § 1 sets the limits on your role and core § 7 reserves hard-to-reverse decisions for the operator. In this file's terms:
 
-- **Commit, or run any git command.** Claude does that — see core § 4 on who commits.
+- **Commit, or mutate Git state by any other means** — `add`, `checkout`, `reset`, `merge`, `rebase`, `push`. Claude does that — see core § 4 on who commits. Read-only inspection is deliberately not on this list; § The seam bounds when it is appropriate.
 - **Silently repair a bad brief on Claude's behalf**, or ask Claude to build past a premise it found false.
 - **Reopen the strategy after every result** (core § 1).
 - **Add a second review or a second state system** over a unit running under a specialist Axcíon workflow (core § 1).

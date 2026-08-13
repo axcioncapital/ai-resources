@@ -2870,8 +2870,22 @@ retires with v1 is a design decision for the v2 build stream, not a mechanical s
 
 ## 2026-08-06 — The `3.1a` closed-set assertion reddens on normal repository growth
 
+- **Status:** applied 2026-08-13 — repaired in Work Loop v2 task
+  `axcion-harness-v0-2-normal-trial-1-replacement`. `KNOWN_WORKLOOP_FILES` and the whole-directory
+  `unexpected_worklog_files()` are gone; the inventory is scoped to the one commit that performed the
+  direct fix, so no later task record can redden it. Suite went 292 passed / 3 failed → 299 passed /
+  1 failed, the remaining failure being the unrelated `ridx` line-count ceiling.
 - **Severity:** medium-high
 - **Source:** `logs/scripts/work-loop-v2-slice-1.test.sh` (`3.1a` block, `KNOWN_WORKLOOP_FILES`)
+
+**The proposed `fixture-` prefix mechanism below was rejected, not adopted.** Ignoring every
+non-fixture file would also ignore `logs/work-loop/arbitrary-state.md` — the arbitrary state file
+Finding B strengthened the block to catch — so the prefix rule would have erased the detector's
+purpose. Two other facts checked at repair time argue the same way: 4 of the 29 entries in the closed
+set carried no `fixture-` prefix, and 36 genuine task records were being reported as unexpected.
+Commit-scoping keeps the failure signal: a state file the direct request opens is *added* in the
+direct-fix commit, whatever it is named. Both directions are now covered by durable paired controls in
+the same script.
 
 **What happens.** Two assertions — `3.1a no state file was opened for the direct request` and
 `3.1a every task-state file present is one this build created deliberately` — compare the contents of
@@ -3538,3 +3552,196 @@ Proposal: author `AGENTS.md` **for Codex** rather than deriving it. It needs onl
 **Proposal.** Three separable pieces, smallest first. (1) Make the missing footprint **visible** rather than silent — have `/prime` surface "tripwire disarmed: no `Files in scope` declared" once at session start, so the operator learns it before three days of work accumulate. (2) Extend `commit-discipline.md` with a **cross-checkout** clause: before writing to sibling worktrees of the same repo, enumerate live sessions (`ListAgents` or the per-id marker set) and either confirm the target paths are unmodified in every target, or stop. (3) Consider whether `git checkout <tree-ish> -- <path>` deserves the same gating as the destructive verbs already covered — it is a silent working-tree overwrite wearing a read-shaped name.
 
 **Target files:** `ai-resources/docs/commit-discipline.md` (new cross-checkout clause), `ai-resources/.claude/commands/prime.md` (disarmed-tripwire surfacing), and `.claude/hooks/check-foreign-staging.sh` if the gating in (3) is adopted.
+### 2026-08-12 — a second ambient writer (`detect-innovation.sh`) will reproduce the false-stop the harness carrier just fixed
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — silent today, but a known concrete trigger on the exact production
+  surface this session validated, and the failure it would reproduce already cost two discovery units
+  to diagnose once.
+- **Category:** Harness v0.2 / Work Loop v2 attended-carrier operations.
+- **Source:** ai-resources (worktree `axcion-harness-v0.2-live-trial`), 2026-08-12,
+  `axcion-harness-v0-2-live-trial` Work Loop v2 task, Unit 4.
+
+Unit 4 diagnosed why `scripts/axcion-harness-v0.2/carry-turn.sh` false-stopped: the project-level
+`PostToolUse` hook `log-write-activity.sh` appends telemetry to `logs/friction-log.md` on every
+`Write`/`Edit`, outside the carrier's narrow `--allow-path`. The fix (widen `--allow-path` at the
+invocation) shipped and was proven live in Unit 5. While tracing hooks, a **second** ambient writer
+was found: the user-level `PostToolUse` hook `detect-innovation.sh` (registered in
+`~/.claude/settings.json`, fires on `Write`/`Edit`) appends to `logs/innovation-registry.md`, but only
+when the edited path matches `.claude/commands|agents|hooks/<file>`. No unit this session edited such
+a path, so it stayed silent — but the first future Harness v0.2 unit that *does* edit a command,
+agent, or hook file will dirty a second out-of-allowlist path and reproduce the same `exit 18` false
+stop, under a path the current one-regex widening does not cover.
+
+**Shape of the fix (not built).** Either add `^logs/innovation-registry\.md$` as a third `--allow-path`
+alongside the existing two (same invocation-layer pattern Unit 4 established, no code change), or
+decide the fix should be conditional — only add it when a unit's scope is known in advance to touch
+`.claude/`. Recorded as a deferral in the Unit 4 handback (`logs/work-loop/axcion-harness-v0-2-live-trial.md`,
+committed history); Codex's closing verdict did not carry it forward as an open item, so it is easy to
+lose without this entry.
+
+**Target files:** the carrier invocation (no launcher/hook code change on the recommended path); see
+`~/.claude/settings.json` and `ai-resources/.claude/hooks/detect-innovation.sh` for the writer traced.
+
+### 2026-08-12 — `carry-turn.sh`'s SIGINT path exits before logging a post-stop hash or status
+
+- **Status:** logged (pending)
+- **Severity:** low — fully recoverable by other evidence (filesystem timestamps, branch reflog,
+  the interrupted actor's own transcript), as Unit 3 demonstrated, but it costs a full forensic
+  discovery unit each time instead of a log read.
+- **Category:** Harness v0.2 attended carrier — observability on interruption.
+- **Source:** ai-resources (worktree `axcion-harness-v0.2-live-trial`), 2026-08-12,
+  `axcion-harness-v0-2-live-trial` Work Loop v2 task, Unit 3.
+
+`carry-turn.sh`'s `on_signal()` (SIGINT/SIGTERM handler) calls `die 28` immediately after terminating
+the actor's process group, before reaching the `after:` line that would log the post-stop state-file
+hash and status (`:620` in the normal completion path). An interrupted run's log therefore records
+only the pre-launch baseline, not what the repository looked like right after the stop. Unit 3 had to
+reconstruct the post-stop baseline from a whole-checkout timestamp sweep, the branch reflog, and the
+interrupted actor's own transcript instead of reading it off the run log directly.
+
+**Shape of the fix (not built).** Have `on_signal()` capture and print the post-stop hash/turn/head
+(the same three values `after:` logs on a normal exit) before calling `die 28`, so an interrupted run's
+log is self-sufficient for the next session's baseline check. Out of scope for the task that surfaced
+it — Unit 3 was inspection-only and explicitly excluded launcher edits.
+
+**Target files:** `scripts/axcion-harness-v0.2/carry-turn.sh` (`on_signal()`, around `:403-410`).
+
+### 2026-08-13 — Work Loop v2 compaction recovery is absent outside `ai-resources`
+
+- **Status:** logged (pending) — **commit 1 (instruction layer) landed 2026-08-13**; the deployment
+  layer is what remains pending, and it is still blocked on the operator's hook-carrier decision.
+- **Severity:** medium-high — silent failure that lands exactly when context is already lost;
+  exposure is prospective (all recent Work Loop tasks ran inside `ai-resources` or its worktrees,
+  and no `.owner` file exists on disk yet), but the first Work Loop unit run from a project
+  repository has no compaction recovery at all.
+- **Category:** session-issue
+- **Source:** /resolve-repo-problem 2026-08-13
+- **Friction source:** A Codex-authored report ("Work Loop v2 — Required Fixes Report", 12 Aug 2026)
+  claimed eight compaction-survivability defects. Triage verified each against live state: 4 confirmed
+  (Reorient gate missing from Work Loop v2; no `.owner` fallback in Reorient; project-scope AGENTS.md
+  lacks the preservation contract; `compaction-protocol.md` contradicts Work Loop's evidence-precedence
+  order), 2 partial (hook message does not name `reorient`; hook has no carrier reaching project repos),
+  and 2 rejected as non-defects (core-header authority already resolved in-file; the five-compaction
+  acceptance test contradicts a recorded closing-record decision). Three root causes, not one:
+  (A) deployment scope — `reorient`, the compact hook and the preservation contract exist only in
+  `ai-resources`; (B) integration lag — work-loop-v2, the hook and reorient were built on different days
+  and nothing names `reorient`; (C) authority-text staleness. One ownership-boundary violation found in
+  the report's own proposal: its `.owner` validation step 7 ("repository-depth ownership checks still
+  pass") would require `git worktree list` inside a Codex-side skill that runs no git — the fallback must
+  stay local-depth only.
+- **Proposal:** Structural fix, sequenced as two commits. Commit 1 (instruction layer, `ai-resources`
+  only, ordinary Codex review): add a short Reorient gate to `work-loop-v2/SKILL.md` and correct its
+  "compaction that lost the thread" wording to route to Reorient before `handoff-thread`; name `$reorient`
+  in the compact hook's emitted message; add a Work-Loop-scoped exception to `docs/compaction-protocol.md`;
+  add a **local-depth-only** `.owner` fallback to `reorient/SKILL.md` (exact preserved path →
+  `work-loop-owner.sh check --depth local` → stop without mutation), retaining every existing prohibition.
+  Commit 2 (deployment layer, **risk-aware Codex review required** — fires four structural change classes:
+  hook, user-level settings file, skill deployment, scaffolding template): add `reorient` and
+  `handoff-thread` to three project `shared-manifest.json` files, add the preservation pointers to those
+  projects' `AGENTS.md`, register a compact hook at a scope that reaches project sessions, and add a
+  `skills` block to the `/new-project` manifest template. Proof case is **one** compaction from a project
+  repository, not five. **Operator decision still open:** hook carrier — user-level `~/.codex/hooks.json`
+  (recommended; covers every checkout including future ones, but creates a new unversioned settings layer)
+  vs. repo-local `.codex/hooks.json` per project (travels with the repo, but drifts and needs three new
+  files plus a script copy).
+- **Target files:** `.agents/skills/work-loop-v2/SKILL.md`, `.agents/skills/reorient/SKILL.md`,
+  `.codex/hooks/work-loop-reorient.sh`, `docs/compaction-protocol.md`,
+  `projects/{axcion-systems-builder,axcion-dashboard,axcion-methodology-r-d}/.claude/shared-manifest.json`,
+  the same three projects' `AGENTS.md`, `.claude/commands/new-project.md`, and the chosen hook-carrier file.
+- **Notes:** audits/working/2026-08-13-resolve-verify-and-qualify-the-work-loop-v2-compaction.md
+
+### 2026-08-13 — Project checkouts install the Work Loop v2 Claude command with no owner helper, so it cannot complete Step 1.5
+
+- **Status:** logged (pending)
+- **Severity:** high — the Work Loop is not merely degraded but non-functional in every checkout that
+  has it. Step 1.5 is unconditional: "If the check cannot run, stop." Three project checkouts already
+  carry the Claude command and, between them, 28 live task-state files.
+- **Category:** Work Loop v2 deployment — missing precondition.
+- **Source:** ai-resources-compaction-survivability, 2026-08-13, `work-loop-v2-compaction-survivability-repair`
+  Work Loop v2 task, Unit 6 (discovery).
+
+`logs/scripts/work-loop-owner.sh` is absent from `projects/axcion-systems-builder`,
+`projects/axcion-systems-builder-dashboard` and `projects/axcion-systems-builder-methodology-r-d` (one
+repository, three worktrees). `.claude/commands/work-loop-v2.md` resolves in all three via symlink, so
+the Work Loop looks installed while its Step 1.5 precondition — "PROCEED / REFUSE / AMBIGUOUS" ownership
+check — cannot run. Every `/work-loop-v2` invocation in these checkouts stops before Step 2.
+
+**Shape of the fix (not built).** Ship `logs/scripts/work-loop-owner.sh` to the three checkouts as part
+of the deployment unit already scoped for this in the operator-approved next Work Loop task (main-bound,
+opened after `work-loop-v2-compaction-survivability-repair`'s closure). No separate fix needed if that
+task runs promptly; queued here so it is not lost if it does not.
+
+**Target files:** `projects/axcion-systems-builder/logs/scripts/work-loop-owner.sh` (+ the two sibling
+worktrees, by branch merge once on `main`).
+
+### 2026-08-13 — `axcion-systems-builder`'s `.codex/hooks.json` points both SessionStart hooks at a directory that does not exist, so auto-sync and permission-sanity have not run
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — silent infrastructure failure. Shared-command sync and permission-sanity
+  checking are both dark in this project with no error surfaced, which can mask further drift the
+  operator has no signal for.
+- **Category:** Project hook configuration — silent guard failure.
+- **Source:** ai-resources-compaction-survivability, 2026-08-13, `work-loop-v2-compaction-survivability-repair`
+  Work Loop v2 task, Unit 6 (discovery, noted as a deferral outside the unit's scope).
+
+`projects/axcion-systems-builder/.codex/hooks.json` registers two `SessionStart` hooks (auto-sync,
+permission-sanity), each guarded by `[ -x '…/.codex/hooks/<script>.sh' ] && { …; exit; }` inside a
+walk-up loop. `projects/axcion-systems-builder/.codex/hooks/` does not exist, so both guards fail
+silently and neither hook has run since the file was written — not investigated further, no fix built.
+
+**Shape of the fix (not built).** Establish why `.codex/hooks/` is absent (never populated, or removed)
+and either restore the referenced scripts or repoint the hooks at the correct location.
+
+**Target files:** `projects/axcion-systems-builder/.codex/hooks.json`,
+`projects/axcion-systems-builder/.codex/hooks/` (absent).
+
+### 2026-08-13 — Transport tooling still asserts "Codex never runs git" in diagnostic text and a pinned test, after the instruction layer was corrected to the narrower mutation-only boundary
+
+- **Status:** logged (pending)
+- **Severity:** medium — the underlying guards are correct (they detect a moved HEAD, which is a real
+  mutation); only the wording overstates. Low functional risk, but it now contradicts the corrected
+  instruction layer and could mislead whoever reads the diagnostic.
+- **Category:** Work Loop v2 instruction accuracy — transport layer, not yet corrected.
+- **Source:** ai-resources-compaction-survivability, 2026-08-13, `work-loop-v2-compaction-survivability-repair`
+  Work Loop v2 task, Unit 5 (deferral, outside the unit's bounded instruction-layer scope).
+
+`scripts/axcion-harness-v0.2/carry-turn.sh` L629 and
+`plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` L2559 both emit `Codex never runs git
+(core § 4)` as an exit-24 diagnostic. `carry-turn.test.sh` L414 asserts that exact string, so fixing the
+wording is a real edit with test coupling, not a comment tweak. Unit 5 corrected the instruction layer
+(`work-loop-v2/SKILL.md`, `reorient/SKILL.md`) to state the narrower boundary — Codex never *mutates*
+Git, read-only inspection is permitted — but left this transport tooling untouched as outside its
+bounded surfaces.
+
+**Shape of the fix (not built).** Update both diagnostic strings to name mutation rather than all Git
+use, and update `carry-turn.test.sh` L414's assertion to match. Small, mechanical, but touches a test
+assertion so it is its own unit rather than a drive-by edit.
+
+**Target files:** `scripts/axcion-harness-v0.2/carry-turn.sh` (`:629`),
+`plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` (`:2559`),
+`scripts/axcion-harness-v0.2/carry-turn.test.sh` (`:414`).
+
+### 2026-08-13 — Closed-task live-trial evidence lives only in an untracked working-tree directory
+
+- **Status:** logged (pending)
+- **Severity:** medium — nothing lost yet, but the evidence a closed task's record points to can
+  disappear from a routine checkout clean with no warning.
+- **Category:** Harness v0.2 attended carrier — evidence durability.
+- **Source:** ai-resources-readiness-fixes, 2026-08-13, `axcion-harness-v0-2-readiness-fixes` closing
+  write.
+
+The closed task's record for Unit 7 points at
+`logs/harness-runs/20260813T183945-13694-axcion-harness-v0-2-readiness-fixes.claude.out` (plus a
+companion `.log`) as the evidence for the one authorised live smoke test. `logs/harness-runs/` has
+never been committed in this repository and carries no `.gitignore` entry either — it is simply
+untracked by omission, not by deliberate design. A working-tree clean, a fresh checkout, or a worktree
+teardown would silently remove the only copy of the evidence a closed, committed task record cites.
+
+**Shape of the fix (not built).** Decide deliberately whether `logs/harness-runs/` should be tracked
+(commit the run captures a closed task cites) or explicitly gitignored (documented as ephemeral,
+evidence quoted inline in the state file instead of by path). Either is fine; the current unowned
+middle state is not. Out of scope for the closing write that surfaced it — that write changes the
+state file only.
+
+**Target files:** `logs/harness-runs/` (directory-level convention), `.gitignore`.

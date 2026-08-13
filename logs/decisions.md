@@ -179,3 +179,146 @@ both runs discarded; a green count from a run whose subject changed underneath i
 
 **Accepted limitation, stated in the closing record.** The diagnosis establishes that the merged
 suite is green where process inspection is permitted. It does not certify any other host.
+
+## 2026-08-13 — Axcíon Harness v0.2 adopted for normal attended pilot use
+
+**Context.** `plans/axcion-harness-v0.2/mvp-plan.md` Phase 2's exit condition — a real bounded task
+crossing a fresh-process handoff via the canonical carrier — was met by the closed
+`axcion-harness-v0-2-live-trial` task. The carrier existed, was deterministically tested (98/0, five
+fail-capability mutants), and had proven itself in one live handback, but no live Work Loop
+instruction actually selected it: the skill still routed attended courier use to the spike dispatcher.
+
+**Decision.** Task `axcion-harness-v0-2-go-live`, run across two Work Loop v2 units. Unit 1 changed
+`.agents/skills/work-loop-v2/SKILL.md` so the attended courier command now invokes
+`scripts/axcion-harness-v0.2/carry-turn.sh` with exact checkout/task inputs and a task-derived
+allow-path policy, leaving unattended routing to the spike dispatcher untouched. Unit 2, an
+Adoption-mode discovery unit, then recommended — and the operator accepted — **adopting the carrier
+for normal attended pilot use**: single checkout, single writer, one hop per invocation. Not
+unattended, not concurrent, not cross-worktree, no automatic landing or push, and explicitly not
+final Phase 3 adopted status (that bar is still the governing plan's three-to-five representative
+tasks and its later adopt/shrink/stop verdict).
+
+**Rationale.** The one real fresh-process carry cost the operator exactly one action — the foreground
+launch — with zero prompts and a clean `code=0` exit. The only untested element of the pilot
+configuration (the allow-path policy in the canonical checkout, as opposed to the isolated trial
+checkout the one live carry actually ran in) fails safe: a wrong allow-path produces a pre-launch
+refusal, not a corrupting run. Withholding the release to eliminate that one uncertainty would trade
+the operator's stated ASAP priority for a failure mode that already announces itself.
+
+**Ruling on the newly found deferral.** Unit 2 surfaced one item not previously deferred: a second
+ambient writer (`detect-innovation.sh`, a user-level `PostToolUse` hook) will dirty
+`logs/innovation-registry.md` — a path outside the documented allow-path set — the first time a pilot
+unit edits a `.claude/commands`, `.claude/agents` or `.claude/hooks` file. The operator ruled this a
+**safe-stop limitation, not a release blocker**: the affected carry stops before launching anything,
+so nothing runs and nothing changes. Routed as small Direct Work for later rather than fixed inline,
+since fixing it fell outside Unit 2's Adoption-mode discovery scope.
+
+**Alternatives considered and rejected.** *Revise before pilot use* — would hold the release for a
+one-line allow-path addition whose absence already produces a self-diagnosing stop. *Continue the
+pre-pilot trial* — would gather more evidence without the harness being usable, when the missing
+evidence is exactly what normal use produces. *Stop* — contradicted by the deterministic suite, the
+one clean live carry, and the fail-closed stop-code contract.
+
+**Accepted limitations, carried into the closing record.** No carrier-level cross-worktree ownership
+check (`work-loop-owner` is called from the spike dispatcher, not from `carry-turn.sh`) — nonblocking
+only for single-checkout, single-writer use, and must close before any wider ownership or concurrency
+claim. Untracked `logs/harness-runs/` accumulation and the absence of a permanent route-selection
+regression check — both nonblocking, both to revisit before final Phase 3 adoption.
+## 2026-08-13 — Close the branch-bound compaction-survivability task; deployment continues in a new main-bound task
+
+**Context.** Unit 6 discovery established that the three approved deployment-consumer checkouts are
+one repository in three worktrees, not three projects, and surfaced a hard blocker: the Work Loop
+cannot complete in any of them today because `logs/scripts/work-loop-owner.sh` is absent from all
+three. This branch's own corrections (Units 4–5) are committed but not on `ai-resources/main`, so no
+project checkout currently reads them.
+
+**Decision.** Close `work-loop-v2-compaction-survivability-repair` now, as a review-clean instruction
+repair plus a verified deployment map — explicitly not as completed deployment or completed
+operational proof. Promote its committed work to `ai-resources/main` (merge only, no push). Open a
+new, main-bound Work Loop v2 task for installation, the missing-helper fix, and the representative
+compaction proof, rather than extending this branch-bound task to cover them.
+
+**Rationale.** Installing from a branch the projects do not read would prove nothing — the projects'
+skill links and the stable hook-carrier path resolve into `main`, not into this worktree. Keeping the
+task branch-bound and closing it once its actual deliverable (instruction layer + map) was done avoids
+stretching one task across a branch boundary that changes what "done" can mean partway through.
+
+**Alternatives considered.** (a) Extend this task with further units for installation and proof —
+rejected, because the units would be no-ops until the merge happens, and mixing a branch-bound
+discovery/repair task with cross-repository, machine-level writes risked concealing a scope mistake,
+which Unit 6's own framing decision had already flagged as a reason to keep them separate. (b) Merge
+first, then continue the same task on `main` — rejected by the operator in favor of a clean new task,
+to avoid copying or concurrently reopening this state file in two places at once.
+
+## 2026-08-13 — User-level and repository-level Codex hooks aggregate; the later user-level registration must suppress the repo-level one
+
+**Context.** Unit 6 discovery could not settle, from repository or documentation evidence, whether a
+user-level `~/.codex/hooks.json` entry and the existing repository-level `ai-resources/.codex/hooks.json`
+entry for the same `SessionStart`/`compact` event would both fire or whether one would shadow the
+other. This mattered because the approved deployment plan is to add a user-level compact-hook carrier
+for machine-wide reach.
+
+**Decision.** Treat the two hook layers as additive (both fire). Any later user-level compact
+registration must be written to replace or otherwise suppress the existing repository-level
+registration, so exactly one trigger remains effective per compaction event.
+
+**Rationale.** An isolated, non-model query against the installed Codex `hooks/list` interface (a
+temporary-home, isolated check — not sourced from official documentation, which does not specify
+this) returned both the synthetic user `SessionStart`/`compact` entry and the repository
+`SessionStart`/`compact` entry as enabled simultaneously. Treating them as additive and designing the
+user-level write to suppress the repo-level one is the only reading consistent with that observation
+that avoids double-firing (the exact double-reorientation defect an earlier draft of the carrier was
+already corrected to avoid).
+
+**Alternatives considered.** Assuming the more specific (repository) hook would automatically override
+the more general (user) one — rejected as unverified; the query showed both enabled, not one
+suppressing the other. Deferring the question to the deployment unit itself — rejected, because it
+would have meant writing the user-level hook without knowing whether it introduces a double-fire
+regression, in a task whose own risk review named "single ownership" of the recovery trigger as a
+structural constraint.
+
+## 2026-08-13 — 3.1a regression scoped to the direct-fix commit, not the fixture-prefix convention
+
+**Context.** The `3.1a` block in `logs/scripts/work-loop-v2-slice-1.test.sh` had been red across five
+sessions: it compared the whole `logs/work-loop/` directory against a hand-maintained closed set of
+known filenames, and every genuine task record opened since Slice 3 counted as unexpected (36 by the
+time this was repaired). The source improvement-log entry proposed classifying fixtures by a
+`fixture-` name prefix as the fix.
+
+**Decision.** Rejected the prefix mechanism. Scoped the two `3.1a` inventory assertions to the single
+commit (`317c5dd`) that performed the direct fix instead — a file the direct request opens is caught
+by path regardless of name, and files opened by any later task are irrelevant by construction.
+
+**Rationale.** Checked by inspection before deciding: 4 of the 29 entries in the old closed set
+carried no `fixture-` prefix (they were genuine task records added to silence the red, not fixtures).
+Adopting the prefix rule would have made the check ignore every non-fixture file — which includes
+`logs/work-loop/arbitrary-state.md`, the exact arbitrary state file Finding B strengthened this block
+to catch. A rule that resolves the false-red at the cost of reopening the false-pass class it exists
+to close is not a fix.
+
+**Alternatives considered.** (1) Widen the closed set again — rejected outright, since it is the same
+maintenance burden that produced five red sessions and defeats the assertion's purpose by
+construction. (2) The prefix rule — rejected per above. (3) Commit-scoping (chosen) — the direct
+request is one identifiable commit in history; asking what *that commit* touched answers the actual
+question ("did the direct request open a state file?") without depending on any naming convention.
+
+## 2026-08-13 — Replacement Normal Trial 1 run does not count as the trial
+
+**Context.** This session's Work Loop v2 execution repaired the `3.1a` regression cleanly and Codex
+accepted the implementation with no correction round. The state file's completion condition asked
+Codex to separately judge whether the run's *operating evidence* was sufficient to count it as Axcíon
+Harness v0.2 Normal Trial 1.
+
+**Decision.** Codex ruled it does not count. The code work stands; the trial claim does not.
+
+**Rationale.** The operator invoked `/work-loop-v2` directly rather than through the canonical
+attended carrier (`scripts/axcion-harness-v0.2/carry-turn.sh`), so the run demonstrates neither the
+pilot's transport claim nor reduced manual transport through the released carrier. Whether the Claude
+process was freshly launched could not be confirmed from inside the session either. Codex recorded
+this as a limitation in its own framing of the trial rather than a Claude implementation finding, and
+explicitly ruled it is not something a correction round could fix.
+
+**Alternatives considered.** Accepting the run as Normal Trial 1 anyway (rejected — it would credit
+the pilot's transport claim with evidence that never touched the carrier) versus reopening the unit to
+retroactively route it through the carrier (rejected — the carrier has to be the entry point from the
+start for freshness and transport to be observable; it cannot be substituted after the fact).

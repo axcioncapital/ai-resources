@@ -435,38 +435,105 @@ check "3.1a  the seeded stale Status: in fixture-target-2.md was fixed directly"
 # which only checks that no FILENAME contains the word 'direct'. An arbitrary state
 # file passes it. Proven by creating logs/work-loop/arbitrary-state.md and watching
 # all 142 assertions stay green. The real question is whether ANY state file exists
-# that this build did not deliberately create, so the test is now a closed set.
-# Adding a fixture means adding it here — that friction is the point.
-KNOWN_WORKLOOP_FILES="fixture-slice1-codex.md fixture-slice1-false.md fixture-slice1-true.md \
-fixture-slice2-correction.md fixture-slice2-foreign.md fixture-slice2-fresh.md \
-fixture-slice2-menu.md fixture-slice3-close.md fixture-slice3-deescalate.md \
-fixture-slice3-deferral.md fixture-slice3-limits.md fixture-step6-admission.md \
-fixture-target-2.md fixture-target.md fixture-target-3.md fixture-continue.md \
-fixture-continue-opening.md fixture-continue-close.md \
-fixture-continue-correction.md fixture-continue-malformed.md \
-fixture-continue-unaccepted.md \
-fixture-mode-discovery.md fixture-mode-implementation.md fixture-mode-adoption.md \
-fixture-noprem-prose.md \
-context-engineering-implementation.md context-engineering-implementation-plan.md \
-context-engineering-s7-regression.md \
-foreign-staging-target-repo.md"
+# that this build did not deliberately create — first answered by a hand-maintained
+# closed set over the whole of logs/work-loop/ (KNOWN_WORKLOOP_FILES).
+#
+# 2026-08-13: that closed set measured the live directory, so every genuine task
+# record opened after Slice 3 counted as unexpected — 36 of them by the time this was
+# repaired, and both assertions had been red across five sessions for that reason
+# alone. The inventory is now scoped to the ONE commit that performed the direct fix.
+# The behaviour under test is whether that change opened a state file, and no task
+# record written by any later task can affect it.
+#
+# Rejected: classifying by the 'fixture-' name prefix (the improvement-log entry's
+# proposal). It would ignore every non-fixture file, which is exactly the arbitrary
+# state file — logs/work-loop/arbitrary-state.md — that Finding B strengthened this
+# block to catch. Scoping by commit keeps that signal: a file the direct request
+# opened is ADDED in the direct-fix commit, whatever it is named.
+DIRECT_FIX_COMMIT=$(git log --format=%H -S'Status: in acceptance use' -- "$TARGET2" 2>/dev/null | tail -1)
 
-unexpected_worklog_files() {
-  local f
-  for f in $(ls logs/work-loop/ 2>/dev/null); do
-    case " $KNOWN_WORKLOOP_FILES " in
-      *" $f "*) ;;
-      *) echo "$f" ;;
-    esac
-  done
+# Paths under logs/work-loop/ that a commit ADDED. Takes the repository as an
+# argument so the fail-capability control below drives this same function against a
+# simulated direct fix rather than a look-alike written for the control.
+worklog_added_in() {   # $1 = repo dir, $2 = commit
+  git -C "$1" show --diff-filter=A --name-only --format= "$2" -- logs/work-loop/ 2>/dev/null |
+    sed '/^$/d'
+}
+worklog_touched_in() { # $1 = repo dir, $2 = commit — every work-loop path the commit changed
+  git -C "$1" show --name-only --format= "$2" -- logs/work-loop/ 2>/dev/null | sed '/^$/d' | sort
 }
 
+DIRECT_FIX_ADDED=$(worklog_added_in "$ROOT" "$DIRECT_FIX_COMMIT")
+DIRECT_FIX_TOUCHED=$(worklog_touched_in "$ROOT" "$DIRECT_FIX_COMMIT")
+DIRECT_FIX_EXPECTED=$(printf '%s\n%s\n' "$TARGET" "$TARGET2" | sort)
+
+check "3.1a  the direct fix is one identifiable commit in history" \
+  "[ -n \"\$DIRECT_FIX_COMMIT\" ]"
 check "3.1a  no state file was opened for the direct request" \
-  "grep -q '^Status: in acceptance use' '$TARGET2' && [ -z \"\$(unexpected_worklog_files)\" ]"
-check "3.1a  every task-state file present is one this build created deliberately" \
-  "[ -z \"\$(unexpected_worklog_files)\" ]"
+  "grep -q '^Status: in acceptance use' '$TARGET2' && [ -n \"\$DIRECT_FIX_COMMIT\" ] && [ -z \"\$DIRECT_FIX_ADDED\" ]"
+check "3.1a  the direct fix touched the two targets and nothing else in logs/work-loop/" \
+  "[ -n \"\$DIRECT_FIX_COMMIT\" ] && [ \"\$DIRECT_FIX_TOUCHED\" = \"\$DIRECT_FIX_EXPECTED\" ]"
 check "3.1a  the committed targets carry both direct fixes" \
   "git show HEAD:'$TARGET' 2>/dev/null | grep -q 'Slices 1 to 3' && git show HEAD:'$TARGET2' 2>/dev/null | grep -q '^Status: in acceptance use'"
+
+# --- 3.1(a) controls: the repaired detector still fails, and only for the bad case -
+# Live control. Genuine task records HAVE accumulated in logs/work-loop/ since the
+# direct fix; the assertions above pass anyway. If this count is ever 0 the control is
+# vacuous and the assertions above prove nothing about accumulated growth.
+LIVE_RECORDS_SINCE_FIX=$(git log --diff-filter=A --format= --name-only \
+  "$DIRECT_FIX_COMMIT..HEAD" -- logs/work-loop/ 2>/dev/null |
+  sed '/^$/d' | grep -v '^logs/work-loop/fixture-' | sort -u | wc -l | tr -d ' ')
+check "3.1a  control: genuine task records opened since the direct fix, and it still passes" \
+  "[ \"\${LIVE_RECORDS_SINCE_FIX:-0}\" -gt 0 ] && [ -z \"\$DIRECT_FIX_ADDED\" ]"
+
+# Simulated controls. A throwaway repository, so the pair is durable in this script
+# instead of an ad hoc shell demonstration, and so neither control writes into the
+# real logs/work-loop/. Both variants seed a pre-existing genuine task record; only
+# 'opens-state-file' has the direct-fix commit open a state file of its own.
+SIM_REPO=""; SIM_HEAD=""
+simulate_direct_fix() {   # $1 = clean | opens-state-file — sets SIM_REPO, SIM_HEAD
+  local d
+  SIM_REPO=""; SIM_HEAD=""
+  d=$(mktemp -d) || return 1
+  git -C "$d" init -q >/dev/null 2>&1 || return 1
+  git -C "$d" config user.email 'harness@example.invalid'
+  git -C "$d" config user.name  'slice-3 harness'
+  git -C "$d" config commit.gpgsign false
+  mkdir -p "$d/logs/work-loop" || return 1
+  printf 'Status: stale\n' > "$d/logs/work-loop/fixture-target.md"
+  printf 'Status: stale\n' > "$d/logs/work-loop/fixture-target-2.md"
+  printf -- '---\ntask: genuine-record\nturn: operator\n---\n' \
+    > "$d/logs/work-loop/genuine-record.md"
+  git -C "$d" add -A >/dev/null 2>&1
+  git -C "$d" commit -qm 'seed: targets plus one genuine task record' >/dev/null 2>&1 || return 1
+  printf 'Status: in acceptance use\n' > "$d/logs/work-loop/fixture-target.md"
+  printf 'Status: in acceptance use\n' > "$d/logs/work-loop/fixture-target-2.md"
+  [ "$1" = opens-state-file ] &&
+    printf -- '---\ntask: arbitrary-state\nturn: claude\n---\n' \
+      > "$d/logs/work-loop/arbitrary-state.md"
+  git -C "$d" add -A >/dev/null 2>&1
+  git -C "$d" commit -qm 'direct fix: both stale Status: lines' >/dev/null 2>&1 || return 1
+  SIM_REPO="$d"; SIM_HEAD=$(git -C "$d" rev-parse HEAD 2>/dev/null) || return 1
+}
+
+SIM_CLEAN_REPO=""; SIM_CLEAN_OUT="__control-did-not-run__"
+SIM_DIRTY_REPO=""; SIM_DIRTY_OUT="__control-did-not-run__"
+if simulate_direct_fix clean; then
+  SIM_CLEAN_REPO="$SIM_REPO"; SIM_CLEAN_OUT=$(worklog_added_in "$SIM_REPO" "$SIM_HEAD")
+fi
+if simulate_direct_fix opens-state-file; then
+  SIM_DIRTY_REPO="$SIM_REPO"; SIM_DIRTY_OUT=$(worklog_added_in "$SIM_REPO" "$SIM_HEAD")
+fi
+
+check "3.1a  control: the simulated repository carries a genuine task record" \
+  "[ -n \"\$SIM_CLEAN_REPO\" ] && [ -f \"\$SIM_CLEAN_REPO/logs/work-loop/genuine-record.md\" ]"
+check "3.1a  control: a state file opened by the direct fix is reported, by path" \
+  "[ \"\$SIM_DIRTY_OUT\" = 'logs/work-loop/arbitrary-state.md' ]"
+check "3.1a  control: a pre-existing genuine task record is not reported" \
+  "[ -n \"\$SIM_CLEAN_REPO\" ] && [ -z \"\$SIM_CLEAN_OUT\" ]"
+
+[ -n "$SIM_CLEAN_REPO" ] && rm -rf "$SIM_CLEAN_REPO"
+[ -n "$SIM_DIRTY_REPO" ] && rm -rf "$SIM_DIRTY_REPO"
 
 # --- 3.1(b) 'this feels significant' opens nothing ---------------------------
 # Was: file absence ('! ls logs/work-loop/ | grep -qi significant'). That test died
@@ -977,7 +1044,15 @@ check "seam  the hand-off and the unit-2 hand-back are two commits, not one" \
 #
 # WL2_ROUTER_FILE lets a mutated copy be substituted, which is how the five
 # required failing cases are demonstrated. Existing checks keep reading $SKILL_F.
-RIDX_F="${WL2_ROUTER_FILE:-$SKILL_F}"
+#
+# The index moved out of the skill (Unit 4 of work-loop-v2-compaction-survivability-repair,
+# Boundary A). $RIDX_F now names the file that actually holds the inventories, so every
+# assertion below reads the artifact whose behavior it verifies: inventory, marker,
+# collision and catalogue-growth checks follow the index here, while the frontmatter,
+# routing-behavior, admission and intake-contract checks stayed on $SKILL_F where their
+# content stayed. Before the extraction both families read one variable, which is why
+# the 340-line guard measured a 617-line skill instead of the index it names.
+RIDX_F="${WL2_ROUTER_FILE:-.agents/skills/work-loop-v2/references/routing-index.md}"
 
 AX_PRIMARY="/work-loop-v2 /develop-ai-resource /scope-project /new-project /project-next-steps \
 /consult /pm /tech-consult /open-items /resolve-repo-problem /resolve-incident /repo-dd \
@@ -1085,7 +1160,9 @@ check "ridx  /leverage-idea is named as excluded, with its router-within-router 
   "grep -q 'leverage-idea' '$RIDX_F' && grep -qi 'router' '$RIDX_F'"
 
 # --- the intake result contract: one owner, four parts, no default stack ------
-result_block() { awk '/^### What an intake result contains/{f=1;next} /^### /{f=0} f' "$RIDX_F"; }
+# Reads $SKILL_F, not $RIDX_F: the intake-result contract is routing behavior and
+# Boundary A deliberately left it in the skill.
+result_block() { awk '/^### What an intake result contains/{f=1;next} /^### /{f=0} f' "$SKILL_F"; }
 check "ridx  the intake result contract exists" "[ -n \"\$(result_block)\" ]"
 for part in 'interpreted outcome' 'one owner' 'one short reason' 'next instruction'; do
   check "ridx  the intake result names its required part: $part" \
@@ -1113,23 +1190,26 @@ check "ridx  the owner is chosen before admission is applied" \
 # the routing steps: mode is classified after admission, never at intake. Order is
 # the claim, so reordering the steps turns it red — which loose word-matching could
 # never do.
+# Reads $SKILL_F: the routing steps are behavior and stayed in the skill.
 route_step() {
-  awk '/^## Routing/{f=1;next} /^## /{f=0} f' "$RIDX_F" | grep -n -- "$1" | head -1 | cut -d: -f1
+  awk '/^## Routing/{f=1;next} /^## /{f=0} f' "$SKILL_F" | grep -n -- "$1" | head -1 | cut -d: -f1
 }
 check "ridx  mode is classified after admission, never at intake" \
   "[ -n \"\$(route_step 'Classify the mode')\" ] && [ -n \"\$(route_step 'admission test')\" ] && \
    [ \"\$(route_step 'Classify the mode')\" -gt \"\$(route_step 'admission test')\" ]"
 check "ridx  only an admitted Work Loop unit acquires a mode" \
-  "awk '/^## Routing/{f=1;next} /^## /{f=0} f' '$RIDX_F' | grep -qi 'never acquires one'"
+  "awk '/^## Routing/{f=1;next} /^## /{f=0} f' '$SKILL_F' | grep -qi 'never acquires one'"
 check "ridx  Direct Work is preserved as the default for small reversible work" \
-  "grep -qi 'Direct Work' '$RIDX_F'"
+  "grep -qi 'Direct Work' '$SKILL_F'"
 check "ridx  a specialist owner is not wrapped in a Work Loop unit" \
   "routing_res | grep -qi 'do not wrap'"
 check "ridx  a continue request is one intake case, not a parallel router" \
-  "routing_res | grep -qi 'continue' && ! grep -c '^## Routing' '$RIDX_F' | grep -qv '^1\$'"
+  "routing_res | grep -qi 'continue' && ! grep -c '^## Routing' '$SKILL_F' | grep -qv '^1\$'"
 
 # --- the description makes the router reachable without naming the skill -----
-desc_line() { awk 'NR<=6 && /^description:/' "$RIDX_F"; }
+# Reads $SKILL_F and can never follow the index: the YAML frontmatter description is
+# Codex's activation trigger, and a references/ file carries no frontmatter.
+desc_line() { awk 'NR<=6 && /^description:/' "$SKILL_F"; }
 check "ridx  the skill description offers routing, not only framing" \
   "desc_line | grep -qi 'rout'"
 check "ridx  the description still preserves Direct Work" \
@@ -1140,14 +1220,16 @@ check "ridx  the description still preserves Direct Work" \
 # stay within a stated ceiling. Both are cheap proxies for "names, not methods".
 check "ridx  ask-matt's prose was not copied into the skill" \
   "! grep -qi 'the route most work travels' '$RIDX_F' && ! grep -qi 'smart zone' '$RIDX_F'"
-# Ceiling raised 320 -> 340 by the mode-contract unit. It is an implementation
-# guard against the index turning into a catalogue, not operator authority: the
-# mode contract added the classification step, the three worked examples and the
-# scope note, taking the file 314 -> 331. The guard is kept and re-based, not
-# deleted — 340 leaves 9 lines of headroom, so the next addition still has to
-# justify itself rather than sliding under an open-ended limit.
-check "ridx  the skill stays under its 340-line ceiling" \
-  "[ \"\$(wc -l < '$RIDX_F')\" -le 340 ]"
+# Ceiling history: 320 -> 340 by the mode-contract unit, then 340 -> 116 when the
+# index left the skill. It is an implementation guard against the index turning into
+# a catalogue, not operator authority. The number is re-based, never widened by
+# default: 340 over an extracted 107-line index would have left 237 lines of
+# headroom and stopped constraining anything, which is the opposite of what the
+# guard says it does. 116 keeps the same 9-line headroom the 340 re-base used, so
+# the next addition still has to justify itself rather than sliding under an
+# open-ended limit.
+check "ridx  the routing index stays under its 116-line ceiling" \
+  "[ \"\$(wc -l < '$RIDX_F')\" -le 116 ]"
 
 # =============================================================================
 # MODE CONTRACT — Unit 3 of work-loop-v2-intake-router
