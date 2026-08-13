@@ -24,19 +24,45 @@ or core. Those remain operator decisions and are outside this sheet entirely.
 
 - This repository checkout, on any branch, with a clean `fixtures/ce-9/` directory.
 - The ability to open **two separate fresh Codex threads**. "Fresh" is load-bearing — see § 3.
-- **An empty directory outside this repository**, for Run A to work in. Create it now:
+- **A read boundary for Run A**, so the control cannot reach the Harbourview sources even if it goes
+  looking for them. It is three things together — an empty working directory, a Codex home with no
+  session history, and a sandbox profile that denies reads. Build all three now.
 
   ```
-  mkdir -p ~/ce-9-control && ls -A ~/ce-9-control
+  mkdir -p ~/ce-9-control/.codex-home
+  cp ~/.codex/auth.json ~/.codex/config.toml ~/ce-9-control/.codex-home/
+  ls -A ~/ce-9-control
   ```
 
-  Expect **no output** — an empty directory. Run A is launched from there and never from the checkout,
-  for the reason in § 3a.
+  The listing must show **`.codex-home` and nothing else**. Anything else is a leftover from an earlier
+  trial: remove it before continuing.
+
+  ```
+  CE9_PROFILE=$(cat <<PROFILE
+  (version 1)
+  (allow default)
+  (deny file-read* (subpath "$HOME"))
+  (allow file-read-metadata (subpath "$HOME"))
+  (allow file-read* (subpath "$HOME/ce-9-control"))
+  (allow file-read* (subpath "$HOME/.local"))
+  (allow file-read* (subpath "$HOME/.codex/packages"))
+  PROFILE
+  )
+  ```
+
+  The profile denies every file read under your home directory, then allows back only three things: the
+  control directory, the launcher on your `PATH`, and the Codex program files. The metadata line lets
+  paths resolve; it exposes no file content and no directory listing. Denying `$HOME` rather than the
+  checkout is deliberate — the fixtures exist in more than one checkout, and the boundary has to cover
+  copies you have forgotten about as well as the one you are standing in.
+
+  The separate Codex home matters for the same reason. `~/.codex` holds past session transcripts, and
+  earlier Harbourview work is in them; a control that reads those has read the answer.
 - About the length of two ordinary briefing exchanges.
 
 **Where each thing runs.** Every command in § 2 runs from the repository root. **Run B** also runs from
-the repository root, because it must be able to open the three paths it is given. **Run A runs from the
-empty directory above** and must never be launched from the checkout.
+the repository root, because it must be able to open the three paths it is given. **Run A runs from
+`~/ce-9-control` and under the boundary above** — never from the checkout, and never without it.
 
 ---
 
@@ -108,7 +134,7 @@ Run the **control first**. Once you have seen the source-opened answer it become
 control fairly, and this order removes that bias.
 
 Five rules. The first four are the instrument's § 4; the fifth is what makes the control's blindness a
-property of where it runs rather than a promise about what you typed:
+property of what it can open rather than a promise about what you typed:
 
 1. **Each run is a fresh Codex thread with no prior-session note loaded.** A thread already oriented by a
    summary is not a control, and its run is discarded rather than scored.
@@ -117,18 +143,85 @@ property of where it runs rather than a promise about what you typed:
    answer.
 4. **Neither run receives any summary, session note or transcript context** — including your own account
    of what Harbourview is.
-5. **Run A is launched from the empty directory in § 1, never from this checkout**, so the durable
-   Harbourview sources are not reachable from where it is working. Withholding the paths is not enough
-   on its own: a thread started inside the checkout can search for "Harbourview" and find the fixtures
-   without being told where they are, and a control that reads the sources is not a memory-only control.
+5. **Run A is launched under the § 1 read boundary**, which denies it the Harbourview sources rather
+   than merely not mentioning them. Withholding the paths is not enough on its own: a thread can search
+   for "Harbourview" and find the fixtures without being told where they are, and copies of them exist
+   in more than one checkout. A working directory outside the repository is not enough either — it
+   changes where a thread starts, not what it is able to open. A control that reads the sources is not
+   a memory-only control, so the boundary is **proved before the thread is launched** (§ 3a) rather
+   than assumed.
 
 ### 3a. Run A — the memory-only control
 
-**Launch it from the empty directory, not the checkout.**
+**Prove the boundary before you launch it.** Four checks. Set the checkout path once first — run
+`git rev-parse --show-toplevel` from the repository root and use what it prints:
+
+```
+CO="/absolute/path/to/this/checkout"
+F="$CO/plans/work-loop-v2-v0.2/context-engineering/trials/fixtures/ce-9"
+```
+
+**Check 0 — the profile actually loaded.** Do this one first. A file the boundary is supposed to
+*allow* must still be readable. Expect `exit=0`.
+
+```
+echo probe > ~/ce-9-control/.probe
+sandbox-exec -p "$CE9_PROFILE" /bin/cat ~/ce-9-control/.probe >/dev/null 2>&1; echo "exit=$?"
+rm -f ~/ce-9-control/.probe
+```
+
+Anything else means `CE9_PROFILE` is empty or malformed and `sandbox-exec` refused to start. That
+matters more than it looks: a boundary that never loads denies *everything*, so checks 1 and 2 would
+report a clean result for the wrong reason. Fix the profile before reading any check below.
+
+**Check 1 — no Harbourview file on this machine is readable inside the boundary.** This is the check
+that covers the copies you do not know about, in other checkouts and in past Codex sessions.
+
+```
+CHECKED=0; DENIED=0; OTHER=0
+while IFS= read -r p; do
+  [ -f "$p" ] || continue
+  CHECKED=$((CHECKED+1))
+  sandbox-exec -p "$CE9_PROFILE" /bin/cat "$p" >/dev/null 2>&1
+  case $? in 0) ;; 1) DENIED=$((DENIED+1)) ;; *) OTHER=$((OTHER+1)) ;; esac
+done < <( { mdfind "Harbourview"; grep -rlI "Harbourview" ~/.codex 2>/dev/null; } | sort -u )
+echo "checked=$CHECKED denied=$DENIED other=$OTHER"
+```
+
+Expect `checked` well above zero, `denied` equal to it, and `other=0`. **If any file was readable, the
+boundary is not closed — stop, and do not launch Run A.** `other` above zero means some reads failed
+for a reason that is not a denial; treat those as unproved, not as denied.
+
+**Check 2 — the three sources Run B is given are denied by exact path.** Expect `exit=1` three times.
+
+```
+for f in project-plan.md task-state.md operator-source-note.md; do
+  sandbox-exec -p "$CE9_PROFILE" /bin/cat "$F/$f" >/dev/null 2>&1; echo "$f exit=$?"
+done
+```
+
+**Check 3 — the same read with the boundary removed.** Expect `exit=0`.
+
+```
+sandbox-exec -p '(version 1)(allow default)' /bin/cat "$F/task-state.md" >/dev/null 2>&1; echo "exit=$?"
+```
+
+This is what makes checks 1 and 2 mean something. If this also fails, they were failing for some other
+reason — a wrong path, a missing file — and they have proved nothing about the boundary. Stop.
+
+**Launch it under the boundary, from the control directory.**
 
 ```
 cd ~/ce-9-control
+CODEX_HOME=~/ce-9-control/.codex-home sandbox-exec -p "$CE9_PROFILE" codex
 ```
+
+If Codex will not start inside the boundary, **stop and record that** (§ 7). Do not drop the boundary to
+get the trial finished: a control that could read the sources is not a control, whatever it then says.
+
+Codex may report that a shell command of its own was refused while it runs. **That is the boundary
+working, not a fault.** Run A needs to read nothing to answer from memory, and a refusal is the outcome
+the control exists to produce — record what was refused (§ 4) and let the run continue.
 
 Then paste **exactly this and nothing else**. No paths, no directory, no file.
 
@@ -137,9 +230,10 @@ Can we pick Harbourview back up? I've got an hour this afternoon.
 What's the next unit — go ahead and brief it.
 ```
 
-**Before you score it, confirm the isolation held.** Read back what Run A actually did and check three
-things: it worked in `~/ce-9-control`; it opened, listed or searched no file under this repository; and
-it reached no Harbourview source by any other route. Record that confirmation — § 4 requires it.
+**Before you score it, confirm the isolation held.** The boundary is the enforcement; this is the check
+that it was in force for this run. Read back what Run A actually did and check three things: it worked
+in `~/ce-9-control`; it opened, listed or searched no file under this repository; and it reached no
+Harbourview source by any other route. Record that confirmation — § 4 requires it.
 
 > **If Run A reached any Harbourview source, or any part of this checkout, the trial is FAIL** — a
 > blindness breach, with the route it took written down. Its output is not scored on its merits, and the
@@ -179,10 +273,12 @@ For **each** run, keep:
   exact pointer to the rest;
 - anything the thread asked you (§ 3c);
 - whether the thread was fresh and what, if anything, was already in its context;
-- **the directory it ran in.** For Run A, also the isolation confirmation from § 3a — that it worked in
-  `~/ce-9-control` and reached no file in this checkout and no Harbourview source by any route. This is a
-  recorded observation, not an assumption: a trial whose control isolation was never checked has not
-  established that the control was blind.
+- **the directory it ran in.** For Run A, also the § 3a boundary evidence — check 0's exit status, the
+  `checked=`/`denied=`/`other=` counts from check 1, the three exit statuses from check 2, and check 3's
+  exit status — and the after-the-run isolation confirmation: that it worked in `~/ce-9-control` and
+  reached no file in this checkout and no Harbourview source by any route. These are recorded
+  observations, not assumptions: a trial whose control boundary was never proved has not established
+  that the control was blind.
 
 **Do not create a transcript file, a results log or a runner record in this repository.** The result
 destination is § 6.
@@ -274,8 +370,9 @@ Record exactly these nine things, and nothing more:
 
 1. Date, and the HEAD from preflight step 1.
 2. Preflight outcomes — step 3 exit status and hit location, step 4 exit status.
-3. Run A: thread identifier, freshness confirmed, what it received, and the § 3a isolation confirmation —
-   the directory it ran in, and that it reached no file in this checkout and no Harbourview source.
+3. Run A: thread identifier, freshness confirmed, what it received, and the § 3a boundary evidence —
+   the check 0, 2 and 3 exit statuses, the check 1 counts, the directory it ran in, and that it reached
+   no file in this checkout and no Harbourview source.
 4. Run B: thread identifier, freshness confirmed, what it received.
 5. The captured outputs, or exact pointers to them (§ 4).
 6. Layer A outcome for both runs.
@@ -296,6 +393,11 @@ Stop, record what happened, and hand back rather than pressing on if:
 - either thread turns out not to have been fresh, or received more than § 3 permits, or Run A reached
   this checkout or any Harbourview source — that run's output is discarded rather than scored, and the
   trial is recorded **FAIL**, blindness breach, naming the rule that broke;
+- the § 3a boundary checks do not come out as stated — check 0 does not exit `0`, a Harbourview file is
+  readable inside the boundary, `other` is above zero, a named source does not exit `1`, check 3 does
+  not exit `0`, or Codex will not start inside it. Run A is **not launched** and **no trial is
+  recorded**: this is a hand-back about the boundary, not a verdict about recovery. Weakening the
+  boundary to proceed is the one repair not available here;
 - you cannot run a thread without giving it something § 3 forbids;
 - the pair comes out indistinguishable — that is **FAIL**, and re-running for a better result would be
   choosing the answer;
