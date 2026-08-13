@@ -488,3 +488,58 @@ closing record rather than in `improvement-log.md`, per the task's own dispositi
 
 ### Open Questions
 None.
+
+## 2026-08-13 — Replacement Normal Trial 1: 3.1a regression repaired, run not accepted as the trial
+
+### Summary
+Ran the replacement candidate for Axcíon Harness v0.2 Normal Trial 1 end to end through
+`/work-loop-v2` against `logs/work-loop/axcion-harness-v0-2-normal-trial-1-replacement.md`: Claude
+implemented Unit 1, Codex assessed and closed with no correction round. The `3.1a` block in
+`logs/scripts/work-loop-v2-slice-1.test.sh` no longer reddens on ordinary repository growth — it is
+now scoped to the single commit that performed the direct fix rather than the whole live
+`logs/work-loop/` directory — while the unexpected-state-file failure signal it exists to protect
+stays durable and provably fail-capable by path. Suite moved 292 passed / 3 failed → 299 passed / 1
+failed (the remaining failure is the pre-existing, unrelated `ridx` line-count ceiling). Codex's close
+verdict explicitly rules this execution does not count as Normal Trial 1: the canonical attended
+carrier was not used and process freshness could not be verified.
+
+### Decisions Made
+- **Rejected the improvement-log entry's proposed `fixture-`-prefix mechanism** as the repair
+  mechanism. Checked by inspection: 4 of the 29 entries in the old closed set carried no `fixture-`
+  prefix, and adopting the prefix rule would ignore every non-fixture file — including
+  `logs/work-loop/arbitrary-state.md`, the exact unexpected-state-file case the `3.1a` block was
+  strengthened to catch. Scoped the check to the direct-fix commit instead.
+- **Codex's close decision:** accept the implementation without a correction round, but rule the
+  execution does not count as Normal Trial 1 — a framing limitation on this run, not an implementation
+  finding, and explicitly not repairable by a correction round.
+- Routine: both closing writes (Claude's Unit 1 hand-back, the final closing-record reduction) ran the
+  Step 1.5 ownership check first; both returned PROCEED.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None. Both commits were preceded by a passing ownership check; no gate was skipped; no destructive or
+external action was taken.
+
+### Session Assessment
+Feedback collection skipped (not requested).
+
+### Findings Declined
+- Broader per-scenario stray-state-file coverage (the removed whole-directory `3.1a` inventory
+  incidentally noticed a stray state file opened by any Slice-3 scenario, not only Direct Work) — not
+  queued. Already recorded as a deferral with its reason in the closed task's Decisions that matter;
+  it is optional future scope, not a defect, and has no named consequence today.
+
+### Next Steps
+Continue the pilot toward Phase 3 adoption evidence: the next Normal Trial 1 attempt should run
+through the canonical attended carrier (`scripts/axcion-harness-v0.2/carry-turn.sh`) rather than a
+direct `/work-loop-v2` invocation, so process freshness and reduced manual transport can actually be
+demonstrated. `plans/axcion-harness-v0.2/mvp-plan.md` still needs three to five representative tasks
+before the adopt/shrink/stop decision.
+
+### Open Questions
+None.

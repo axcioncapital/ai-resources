@@ -224,3 +224,49 @@ check (`work-loop-owner` is called from the spike dispatcher, not from `carry-tu
 only for single-checkout, single-writer use, and must close before any wider ownership or concurrency
 claim. Untracked `logs/harness-runs/` accumulation and the absence of a permanent route-selection
 regression check — both nonblocking, both to revisit before final Phase 3 adoption.
+
+## 2026-08-13 — 3.1a regression scoped to the direct-fix commit, not the fixture-prefix convention
+
+**Context.** The `3.1a` block in `logs/scripts/work-loop-v2-slice-1.test.sh` had been red across five
+sessions: it compared the whole `logs/work-loop/` directory against a hand-maintained closed set of
+known filenames, and every genuine task record opened since Slice 3 counted as unexpected (36 by the
+time this was repaired). The source improvement-log entry proposed classifying fixtures by a
+`fixture-` name prefix as the fix.
+
+**Decision.** Rejected the prefix mechanism. Scoped the two `3.1a` inventory assertions to the single
+commit (`317c5dd`) that performed the direct fix instead — a file the direct request opens is caught
+by path regardless of name, and files opened by any later task are irrelevant by construction.
+
+**Rationale.** Checked by inspection before deciding: 4 of the 29 entries in the old closed set
+carried no `fixture-` prefix (they were genuine task records added to silence the red, not fixtures).
+Adopting the prefix rule would have made the check ignore every non-fixture file — which includes
+`logs/work-loop/arbitrary-state.md`, the exact arbitrary state file Finding B strengthened this block
+to catch. A rule that resolves the false-red at the cost of reopening the false-pass class it exists
+to close is not a fix.
+
+**Alternatives considered.** (1) Widen the closed set again — rejected outright, since it is the same
+maintenance burden that produced five red sessions and defeats the assertion's purpose by
+construction. (2) The prefix rule — rejected per above. (3) Commit-scoping (chosen) — the direct
+request is one identifiable commit in history; asking what *that commit* touched answers the actual
+question ("did the direct request open a state file?") without depending on any naming convention.
+
+## 2026-08-13 — Replacement Normal Trial 1 run does not count as the trial
+
+**Context.** This session's Work Loop v2 execution repaired the `3.1a` regression cleanly and Codex
+accepted the implementation with no correction round. The state file's completion condition asked
+Codex to separately judge whether the run's *operating evidence* was sufficient to count it as Axcíon
+Harness v0.2 Normal Trial 1.
+
+**Decision.** Codex ruled it does not count. The code work stands; the trial claim does not.
+
+**Rationale.** The operator invoked `/work-loop-v2` directly rather than through the canonical
+attended carrier (`scripts/axcion-harness-v0.2/carry-turn.sh`), so the run demonstrates neither the
+pilot's transport claim nor reduced manual transport through the released carrier. Whether the Claude
+process was freshly launched could not be confirmed from inside the session either. Codex recorded
+this as a limitation in its own framing of the trial rather than a Claude implementation finding, and
+explicitly ruled it is not something a correction round could fix.
+
+**Alternatives considered.** Accepting the run as Normal Trial 1 anyway (rejected — it would credit
+the pilot's transport claim with evidence that never touched the carrier) versus reopening the unit to
+retroactively route it through the carrier (rejected — the carrier has to be the entry point from the
+start for freshness and transport to be observable; it cannot be substituted after the fact).
