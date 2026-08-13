@@ -2849,8 +2849,22 @@ retires with v1 is a design decision for the v2 build stream, not a mechanical s
 
 ## 2026-08-06 — The `3.1a` closed-set assertion reddens on normal repository growth
 
+- **Status:** applied 2026-08-13 — repaired in Work Loop v2 task
+  `axcion-harness-v0-2-normal-trial-1-replacement`. `KNOWN_WORKLOOP_FILES` and the whole-directory
+  `unexpected_worklog_files()` are gone; the inventory is scoped to the one commit that performed the
+  direct fix, so no later task record can redden it. Suite went 292 passed / 3 failed → 299 passed /
+  1 failed, the remaining failure being the unrelated `ridx` line-count ceiling.
 - **Severity:** medium-high
 - **Source:** `logs/scripts/work-loop-v2-slice-1.test.sh` (`3.1a` block, `KNOWN_WORKLOOP_FILES`)
+
+**The proposed `fixture-` prefix mechanism below was rejected, not adopted.** Ignoring every
+non-fixture file would also ignore `logs/work-loop/arbitrary-state.md` — the arbitrary state file
+Finding B strengthened the block to catch — so the prefix rule would have erased the detector's
+purpose. Two other facts checked at repair time argue the same way: 4 of the 29 entries in the closed
+set carried no `fixture-` prefix, and 36 genuine task records were being reported as unexpected.
+Commit-scoping keeps the failure signal: a state file the direct request opens is *added* in the
+direct-fix commit, whatever it is named. Both directions are now covered by durable paired controls in
+the same script.
 
 **What happens.** Two assertions — `3.1a no state file was opened for the direct request` and
 `3.1a every task-state file present is one this build created deliberately` — compare the contents of

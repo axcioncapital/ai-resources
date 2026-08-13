@@ -36,6 +36,7 @@ List all files in these subdirectories for both locations:
 {TEMPLATE_DIR}/.claude/commands/*.md
 {TEMPLATE_DIR}/.claude/agents/*.md
 {TEMPLATE_DIR}/.claude/hooks/*
+{TEMPLATE_DIR}/logs/scripts/*
 ```
 
 **Deployed project:**
@@ -43,11 +44,14 @@ List all files in these subdirectories for both locations:
 {PROJECT_DIR}/.claude/commands/*.md
 {PROJECT_DIR}/.claude/agents/*.md
 {PROJECT_DIR}/.claude/hooks/*
+{PROJECT_DIR}/logs/scripts/*
 ```
 
 Exclude `settings.json` and `settings.local.json` from comparison — these are always project-specific.
 
-Build two maps: `canonical_files` and `project_files`, keyed by relative path (e.g., `commands/run-analysis.md`).
+`logs/scripts/` is in scope because a command can depend on a helper the `.claude/` inventory cannot see. `/work-loop-v2` Step 1.5 is the case that put it here: the command is symlinked into every project by `auto-sync-shared.sh`, but its ownership helper is a template-deployed file, so a project could hold the command and fail closed on every invocation while a `.claude/`-only inventory reported the project fully in sync.
+
+Build two maps: `canonical_files` and `project_files`, keyed by relative path (e.g., `commands/run-analysis.md`, `logs/scripts/work-loop-owner.sh`).
 
 ## Step 3: Classify every file
 
@@ -97,6 +101,26 @@ If `{PROJECT_DIR}/reference/skills/` exists:
 
 If `{PROJECT_DIR}/reference/skills/` does not exist, skip this step silently.
 
+## Step 4b: Validate the Work Loop ownership prerequisite
+
+Two things must both hold before `/work-loop-v2` can run in a deployed project. Step 3's A–E classification covers the first but cannot cover the second: a project `.gitignore` legitimately carries project-specific rules, so a whole-file diff against the template's would be a permanent Category C conflict and the one rule that matters would be lost inside it. Check the **rule**, not the file.
+
+```bash
+# 1. The helper is present and executable.
+test -x "{PROJECT_DIR}/logs/scripts/work-loop-owner.sh"
+
+# 2. The ignore rule is live — check-ignore names the matching rule, and exits 1 when none matches.
+git -C "{PROJECT_DIR}" check-ignore -v logs/work-loop/.owner
+```
+
+Report each as PRESENT or MISSING in the Step 5 report. Both are remediable in Step 7: copy the helper from `{TEMPLATE_DIR}/logs/scripts/work-loop-owner.sh` (verbatim — it is not parameterized), and append `logs/work-loop/.owner` with the template `.gitignore`'s explanatory comment.
+
+**Why a missing rule is not cosmetic.** The declaration is checkout-local by construction. A committed copy replicates across worktrees on merge and then declares *every* checkout the owner — the exact failure the declaration exists to refuse. A project with the helper but no rule is worse than one with neither, because the check runs and its answer is wrong.
+
+**Why a missing helper is not cosmetic either.** `/work-loop-v2` Step 1.5 stops when the check cannot run: an unestablished ownership check is refused, not waived. A project missing the helper fails closed on every Work Loop invocation.
+
+If `{PROJECT_DIR}/.claude/commands/work-loop-v2.md` is absent (the project does not carry the command), report both as N/A and take no action.
+
 ## Step 5: Generate sync report
 
 Present a structured report:
@@ -129,6 +153,12 @@ Present a structured report:
 | File | Type | Description |
 |------|------|-------------|
 | commands/usage-analysis.md | command | Added to template after deployment |
+
+### Work Loop ownership prerequisite
+| Item | Status |
+|------|--------|
+| logs/scripts/work-loop-owner.sh | PRESENT / MISSING / N-A |
+| .gitignore rule `logs/work-loop/.owner` | PRESENT / MISSING / N-A |
 ```
 
 ## Step 6: Operator decides [Operator]

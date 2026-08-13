@@ -206,47 +206,49 @@ Core § 4 *An approved courier may carry the turn* permits this and sets its lim
 
 **There are two approved shapes, and the operator's presence picks which.**
 
-| Shape | Flag | Use it when |
+| Shape | Program | Use it when |
 |---|---|---|
-| **Attended carry** | `--carry-one` | The operator is at the machine. You carry **one** hop, then read the file and assess. The loop does not run on without you. |
-| **Unattended run** | loop mode (no `--carry-one`) | The operator is leaving. You frame the unit, launch, and get out of the way. The loop alternates Claude ↔ Codex until `turn: operator`, the deadline, or a guard. |
+| **Attended carry** | `scripts/axcion-harness-v0.2/carry-turn.sh` — Axcíon Harness v0.2 | The operator is at the machine. You carry **one** hop, then read the file and assess. The loop does not run on without you. |
+| **Unattended run** | `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, loop mode | The operator is leaving. You frame the unit, launch, and get out of the way. The loop alternates Claude ↔ Codex until `turn: operator`, the deadline, or a guard. |
+
+**These are two different programs, and neither does the other's job.** The attended carrier carries exactly one hop per invocation and has no loop mode, no unattended mode, no worktree automation and no flag to ask for one: `--carry-one`, `--unattended`, `--max-hops` and `--status` are all refused with exit `10` before anything launches. It reports no out-of-band status either — the state file is its status, and a carry already in flight exits `17` naming the holding pid. So do not carry an attended hop with the spike dispatcher, and never reach for the carrier when the operator is leaving.
 
 Everything below applies to both unless it names one. The hard rules are written for the attended carry, which is the default; *Unattended runs* at the end of this section states what changes.
 
-**What you drive is a terminal command, not Claude.** You never type into a Claude window, never read Claude's interface for progress, and never click through its prompts. You run one command and read its exit code. The dispatcher launches Claude, validates the state file before and after, and stops on anything unexpected — that instrumentation is the reason this is the approved courier and screen-driving Claude directly is not.
+**What you drive is a terminal command, not Claude.** You never type into a Claude window, never read Claude's interface for progress, and never click through its prompts. You run one command and read its exit code. The courier program launches the actor, validates the state file before and after, and stops on anything unexpected — that instrumentation is the reason this is the approved courier and screen-driving Claude directly is not.
 
 **Neither shape is context-bounded, and it is worth being clear why.** Every hop is a **fresh process** (`claude -p`, `codex exec`). Nothing accumulates across hops; `logs/work-loop/{task-id}.md` is the entire shared memory. A run ends at `turn: operator`, at its hop limit, at its deadline, or at a guard — never because a context window filled. Do not plan around a context budget that does not exist.
 
-The command, in full — all three `--allow-path` values are required, because supplying any one **replaces both defaults**, and a `PostToolUse` hook keeps `logs/friction-log.md` modified in this repository:
+**The attended command, in full.** There is no hop flag — one hop is the surface, so adding `--carry-one` is an unknown argument and stops at exit `10`. All four `--allow-path` values are required, because supplying any one **replaces both built-in defaults** (`^logs/work-loop/` and `^logs/harness-runs/`): the carrier writes its own run log under `logs/harness-runs/`, which is not gitignored, and a `PostToolUse` hook keeps `logs/friction-log.md` modified in this repository — omit either and the carry stops at `18` on the courier's own output. The fourth line is **per-task**: derive it from what this unit may legitimately change when you write the brief. Too narrow gives a false stop; too wide makes the check mean nothing.
 
 ```
-plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh \
+scripts/axcion-harness-v0.2/carry-turn.sh \
   --checkout <absolute checkout path> \
   --task <task-id> \
-  --carry-one \
   --allow-path '^logs/work-loop/' \
-  --allow-path '^plans/work-loop-v2-v0\.2/handoff-automation-spike/' \
-  --allow-path '^logs/friction-log\.md$'
+  --allow-path '^logs/harness-runs/' \
+  --allow-path '^logs/friction-log\.md$' \
+  --allow-path '<regex for what this unit may change>'
 ```
 
 **The hard rules.** Each is a stop, not a preference:
 
 1. **Read the state file first.** Confirm the exact task id and that `turn:` is `claude`, by opening the file. Not from what you remember writing.
-2. **Run the command once for this carried turn.** In the **attended carry**, `--carry-one` carries exactly one hop, so Claude moves and you assess — the loop does not run on without you. *This is a property of the attended shape, not of the dispatcher:* an unattended run is defined by the loop running on without you, and is governed by the deadline and hop limit instead. Either way you run this carried turn **once** and never repeat the same hop to try again (rule 5).
+2. **Run the command once for this carried turn.** In the **attended carry**, the carrier carries exactly one hop per invocation, so Claude moves and you assess — the loop does not run on without you. To carry the next turn you read the state file, confirm the turn moved, and invoke the carrier again. *This is a property of the attended shape, not of one program:* an unattended run is defined by the loop running on without you, and is governed by the deadline and hop limit instead. Either way you run this carried turn **once** and never repeat the same hop to try again (rule 5).
 3. **The exit code is the result.** `0` means the carry completed. Anything else stops this carry: report the code and its meaning to the operator, and do not repeat the same hop. A later operator-approved narrowed recovery unit is governed by § *Three outcomes*; it is a new unit, not a retry of this one.
 4. **Read the file before assessing.** Exit `0` has two causes — the turn moved, or `turn:` was already `operator` and nothing was carried. Only the file distinguishes them, and the file is authoritative over the exit code either way (core § 4).
-5. **Never re-run the same hop to "try again".** A second launch of that hop is only ever justified when the dispatcher's own run log shows the first launch never started. A completed hop that did not produce what you expected is something to inspect, not to repeat. After its partial effects are inspected, the operator may instead approve the fresh, smaller recovery unit defined in § *Three outcomes*; that is explicitly not the same brief or hop.
+5. **Never re-run the same hop to "try again".** A second launch of that hop is only ever justified when the courier's own run log shows the first launch never started. A completed hop that did not produce what you expected is something to inspect, not to repeat. After its partial effects are inspected, the operator may instead approve the fresh, smaller recovery unit defined in § *Three outcomes*; that is explicitly not the same brief or hop.
 6. **`turn: operator`, a malformed state file, and a permission prompt are terminal.** Stop and tell the operator. You do not approve prompts and you do not work around them.
 
-**An unchanged `turn: claude` does not mean the command failed to land.** Claude leaves the file *completely untouched* when it rejects one — an identity mismatch or unreadable frontmatter is a correct read-only refusal (core § 6 rule 2), not a lost message. There are three causes and the dispatcher already separates them: `14` identity mismatch (Claude was never launched), `22` no transition (Claude ran and changed nothing), `21` timeout (Claude was still working). Read the code. Do not infer the cause from the turn, and never treat an unchanged turn as permission to send again.
+**An unchanged `turn: claude` does not mean the command failed to land.** Claude leaves the file *completely untouched* when it rejects one — an identity mismatch or unreadable frontmatter is a correct read-only refusal (core § 6 rule 2), not a lost message. There are three causes and both programs already separate them, under the same three codes: `14` identity mismatch (Claude was never launched), `22` no transition (Claude ran and changed nothing), `21` timeout (Claude was still working). Read the code. Do not infer the cause from the turn, and never treat an unchanged turn as permission to send again.
 
 **Operating defaults — preferences, not protocol.** Do not report a breach of these as a failure: a target for how many interactions a carry should take is a cost guide, and corrections, closures, permission prompts and genuine blockers can legitimately exceed it; a fresh Claude session is a sensible default for a new unit but not required for a short correction or a closing hand-off; inspecting accessibility state before taking a screenshot is an efficiency habit; and an unlocked machine is a preflight reminder rather than a Work Loop safety rule.
 
-**This does not loosen "you never run git."** Launching the dispatcher is not running git. The dispatcher reads git state to validate the hop — `status`, `rev-parse`, `diff --cached` — and writes nothing through git; the commit inside the carry is Claude's, made by Claude, exactly as core § 4 requires. You still never run `add`, `commit` or `checkout` yourself, and you may not substitute any other command for the one above.
+**This does not loosen "you never run git."** Launching the courier is not running git. It reads git state to validate the hop — `status`, `rev-parse`, `diff --cached` — and writes nothing through git; the commit inside the carry is Claude's, made by Claude, exactly as core § 4 requires. You still never run `add`, `commit` or `checkout` yourself, and you may not substitute any other command for the one that matches your shape.
 
 #### Unattended runs — when the operator is leaving
 
-Same dispatcher, same guards, `--carry-one` dropped. What changes:
+**A different program: the spike dispatcher in loop mode**, not the attended carrier — the carrier refuses `--unattended` and every multi-hop flag before it launches anything. Same guards, `--carry-one` dropped. What changes:
 
 **Add a clock, and isolate the run.** `--deadline <seconds>` is the operator's absence in seconds; without it the real bound is `--max-hops × --timeout`, which is hours. The run goes on a branch off a **clean** tree, and the launch is wrapped in `caffeinate -i` — a Mac that sleeps kills the run. The worked invocation is in the spike `README.md`; use it rather than assembling one.
 

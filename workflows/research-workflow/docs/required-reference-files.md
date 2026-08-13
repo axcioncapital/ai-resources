@@ -90,6 +90,28 @@ The workflow template's `reference/` directory contains additional files that ar
 
 These files have their own roles and consumer maps; they are not enumerated here because they do not participate in the four-file deployment contract. For their roles see the corresponding command bodies or `reference/stage-instructions.md`.
 
+## Deployed helper scripts (not reference files)
+
+Separate from the reference contract above, and listed here because this doc is the deployment contract every consuming project is checked against. These are **scripts**, not path-passed reference docs — no command reads them as content; a command *executes* them.
+
+### `logs/scripts/work-loop-owner.sh` — Work Loop v2 ownership check
+
+- **Role:** The one shared ownership check for Work Loop v2 (R2, "the checkout declares its writer"). Decides whether the task being entered belongs to the checkout it is being entered in, and refuses when it does not.
+- **Invoked by:** `/work-loop-v2` Step 1.5, before any execution and before any commit. Claude runs it at `--depth repo`; interactive Codex runs the same helper at `--depth local`.
+- **Deployment form:** copied **verbatim** from `ai-resources/logs/scripts/work-loop-owner.sh`. It is not parameterized and holds no project-specific content — a deployed copy that differs from canonical is drift, not customization.
+- **Companion `.gitignore` rule (required, not optional):** `logs/work-loop/.owner`. The declaration is checkout-local by construction; a committed copy replicates across worktrees on merge and then declares every checkout the owner, which is the exact failure the declaration exists to refuse. Ship the rule with the template `.gitignore`'s explanatory comment.
+- **Gate behaviour if missing:** **hard stop, fail-closed.** `/work-loop-v2` Step 1.5 refuses when the check cannot run — a missing, unreadable or failing helper means ownership is unestablished, which is the state the step exists to refuse. Every Work Loop invocation in that project stops. The helper-present / rule-missing combination is worse still: the check runs and its answer is wrong.
+- **`logs/work-loop/` itself is not deployed.** The directory is created when the first state file is written. An empty directory carries nothing and git does not track one.
+- **Verification:** the regression suite is `ai-resources/logs/scripts/work-loop-owner.test.sh` (T1–T13, F1–F3, plus a Case 0 falsifiability control). It is **not** deployed — four of its cases drive the dispatcher at `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, which exists only in the canonical checkout. Verify a deployed copy by running the canonical suite against it:
+  ```bash
+  cd {ai-resources}
+  OWNER_BIN={PROJECT_DIR}/logs/scripts/work-loop-owner.sh bash logs/scripts/work-loop-owner.test.sh
+  ```
+  That run does **not** cover the project's own ignore rule — its sandboxes copy `ai-resources/.gitignore`, so T12 tests that repo's rule, not the deployed project's. Check the project rule separately with `git -C {PROJECT_DIR} check-ignore -v logs/work-loop/.owner`.
+- **Checked by:** `/sync-workflow` Step 4b (helper presence + ignore rule), which reports both as PRESENT / MISSING.
+
+**Known coverage limit.** `/work-loop-v2` is symlinked into *every* project by `auto-sync-shared.sh`, but this helper is deployed only through the research-workflow template. A non-research project therefore still gets the command without the helper and fails closed at Step 1.5. Closing that gap means teaching `auto-sync-shared.sh` to distribute the helper alongside the command — a hook edit, and out of scope for the deployment contract this doc governs.
+
 ## Maintenance
 
 When a canonical Stage 2–4 command is edited to read a new reference file, that file becomes part of this contract — update the table above. Conversely, when a reference file is no longer consumed by any canonical command, remove it from the table. This doc tracks the live consumer-fan-out, not a frozen historical snapshot.

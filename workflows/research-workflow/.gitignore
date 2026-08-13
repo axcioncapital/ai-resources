@@ -1,1 +1,8 @@
 .DS_Store
+
+# Work Loop v2 per-checkout ownership declaration (R2, "the checkout declares its writer"): one task
+# id + claim date, written by whoever creates the task's state file, cleared at closure. It MUST stay
+# checkout-local — a committed copy would replicate across worktrees on merge and then declare every
+# checkout the owner, which is the exact failure the declaration exists to refuse. Read/written by
+# logs/scripts/work-loop-owner.sh; see ai-resources/docs/parallel-sessions-playbook.md § 4.
+logs/work-loop/.owner
