@@ -133,140 +133,66 @@ automatic repair of partial work, or a change to the attended-only release bound
 
 ## Latest result
 
-Inspected (2026-08-13):
+Correction round on Unit 2. One frozen finding, reproduced by inspection before anything was changed:
 
-- Claim (1): HOLDS — `before_dirty` is assigned at `carry-turn.sh:619` (`before_dirty=0; state_dirty
-  && before_dirty=1`) and read nowhere: `grep -n 'before_dirty'` over both in-scope files returned
-  that one line and nothing else. The post-hop branch `if [ "$before_turn" = "claude" ] &&
-  state_dirty` therefore attributed any dirty state file to Claude, and it sat *before* the
-  byte-identical check, so it won the race. Demonstrated through the existing fixture seam: a state
-  file made dirty before launch, with an actor that changes nothing, produced `exit=25` and the words
-  "Claude edited logs/work-loop/task-m7.md but left it uncommitted" — a claim the evidence did not
-  support. Held as mutant M7, which restores exactly that branch and produces 25 where the corrected
-  launcher produces 22.
-- Claim (2): HOLDS as an absence, and the absence is bounded to the two named files. `grep -n
-  'permission_denials\|permission_denial\|denials'` over `scripts/axcion-harness-v0.2/carry-turn.sh`
-  and `scripts/axcion-harness-v0.2/carry-turn.test.sh` returned no match (grep exit 1). No parsing,
-  no classification, no coverage existed in those two files. No claim is made about any other file.
-- Claim (3): HOLDS — the carrier snapshotted only the out-of-allowlist half of the working tree.
-  `grep -n 'foreign_worktree\|allowed_worktree\|status --porcelain'` found `foreign_worktree` and its
-  three call sites and no allowed-side capture at all. Allowed changes were therefore never recorded,
-  never attributed, and never reported; and `die 21` (timeout) and `die 20` (actor failure) both
-  exited before any post-hop snapshot was taken, so a hop that failed reported nothing about what it
-  had already written. Pre-existing dirt could not be distinguished from hop-attributable change
-  because only one snapshot existed.
-- Claim (4): HOLDS — one branch reassigns Claude's commit. The pre-launch `die 25` at
-  `carry-turn.sh:558` ended "If the edit is complete, commit it and re-run; if it is partial, discard
-  it and re-run." It addresses whoever ran the script, and it fires while a Codex hop is the one about
-  to be launched, so it reads as an instruction to commit Claude's handback. Every other post-stop
-  recovery was checked: `die 25` post-hop (read the diff, check for a denial), `die 30` (inspect,
-  widen `--allow-path`, or revert), `die 26` ("restore or complete it"), `die 16` (commit or unstage
-  *pre-existing staged paths*, not a handback), `die 19`, `die 18`. Only line 558 instructs a commit
-  of Claude's handback.
-- Claim (5): HOLDS — `e2ac00d96cbc0a65c9883517a505a4250debf8c4` exists and `git merge-base
-  --is-ancestor e2ac00d HEAD` succeeds, so Unit 1 is in this branch's history. The checkout-wide key
-  is live at `carry-turn.sh:382` (`key="$(printf '%s' "$CHECKOUT" | ...)"`), and its regression cases
-  are present: suite section 12b and mutant M6. Nothing was rebuilt.
+Reproduced (2026-08-13):
 
-Additional premise established rather than assumed, because the brief makes it a stop condition
-("if Claude's installed output cannot expose permission denials through the existing capture"):
-Claude Code 2.1.220 does emit `permission_denials` in `--output-format json`. Probed directly — a
-`PreToolUse` deny hook produced
-`[{"tool_name":"Bash","tool_use_id":"toolu_015UgUSJZN68kMLFmSyNqaYP","tool_input":{"command":"echo
-probe-denial-test","description":"Echo a test string"}}]`. Two negative probes matter as much: a
-`permissions.deny` rule and `--disallowedTools` both remove the tool from the toolset instead of
-recording a denial, so an empty list does not mean "nothing was blocked". The field lands in the
-capture file the launcher already writes, so nothing new is stored.
+- Finding (1): REPRODUCES — `.agents/skills/work-loop-v2/SKILL.md:277` lists the stop codes and names
+  "a permission dead end (`37`)"; line 289 defines it: "**`37` is a capability question, not a
+  transport failure.** A permission dead end means the child was refused something it needed."
+  `logs/work-loop/work-loop-v2-bounded-execution-verification.md:13` records, in a closed task
+  (`turn: operator`, core § 4 closing record), "The live exit taxonomy is consistent across every
+  instruction surface — `37` for a permission denial, `35` for an unavailable ownership check."
+  Searched both in-scope files for `\b37\b`: no match (grep exit 1), so `37` was unused in the
+  canonical launcher and nothing collided. `27` was present at six sites — `carry-turn.sh:71` (header
+  table) and `carry-turn.sh:834` (the verdict call), plus `carry-turn.test.sh` lines 570, 581, 622
+  and 817.
 
-Result: post-hop decision-making on the canonical attended carrier is now one evidence set gathered
-once (`gather_evidence`), one ordered verdict over it (`classify_hop`), and one report shape printed
-whatever the verdict (`report_hop`). The independent branches are gone. Concretely:
+  Unit 2 chose `27` by taking the next free number in this script's own exit table. That was the
+  wrong authority: the number is the Work Loop taxonomy's to assign, not the launcher's to pick.
 
-- **Attribution is computed, not assumed.** `worktree_lines` splits the working tree into allowed and
-  foreign halves; `new_lines` returns only what appeared *during* the hop. The uncommitted-handback
-  stop now requires `after_hash != before_hash`, so a file already uncommitted at launch and
-  byte-identical afterwards is no longer blamed on the actor — and where Claude did edit on top of
-  pre-existing dirt, the message says part of the diff is not attributable to it.
-- **Permission evidence has three states, not two.** `present` / `empty` / `unavailable`, kept
-  distinct end to end, including on the RESULT line. `denials=unavailable` means no evidence could be
-  read; `denials=0` means Claude reported none. Collapsing them would turn missing evidence into a
-  clean bill of health.
-- **Precedence is decided in one place.** Ordered: disallowed working-tree effect (24) → Codex moved
-  HEAD (24) → disallowed commit (30) → timeout (21) → actor failure (20) → state-file identity and
-  turn validity (13/14/15) → Claude's own uncommitted handback (25) → transition validity computed as
-  a fact → permission denials that explain a missing handback (27) → no transition (22) → carried (0).
-  Unexpected effects now outrank a failed or timed-out actor, which they did not before.
-- **A denial that did not block the handback is advisory.** The turn genuinely moved, so the hop
-  reports CARRIED with a visible warning naming the denials, rather than being downgraded to a
-  failure. Getting this wrong was a real defect in my first version of the classifier: denials were
-  judged before transition validity, which turned a completed carry into exit 27. Caught by case
-  15.6 and fixed by computing the transition fault before judging it.
-- **New exit code 27 PERMISSION_DENIED**, documented in the header table. Codes 23 and 29 remain free.
-- **No recovery path reassigns Claude's commit.** Line 558 now states that the script will not commit
-  it and Codex must not, then hands the decision to the reader.
-- **Failed and timed-out hops now report their effects.** Evidence is gathered for every outcome, so
-  20 and 21 list the allowed partial work the actor left behind.
+Result: all six sites now read `37`. The header entry moved into ascending order after `30` and
+carries a note saying the number is the taxonomy's to choose and why a permission dead end must not
+share a code with a transport failure — re-running or raising the timeout cannot clear it. Searched
+both files for `\b27\b` afterwards: no match (grep exit 1). No classifier behaviour, precedence,
+message text, evidence field or scope was touched, and neither the governing skill nor the accepted
+verification record was edited.
 
-Evidence (canonical launcher suite only; no spike evidence, and no outcome-label greps):
+Evidence:
 
-1. **Dirty before, byte-identical after — matched pre/post.** Case 15.1: `exit=22`, output carries
-   "NOT attributable to this actor", "uncommitted:     before=yes after=yes", "attributable to THIS
-   hop: none", `partial=0`, and asserts the absence of "Claude changed logs/work-loop". Pre-change
-   behaviour is held live as mutant **M7**, which restores the unattributed condition and yields
-   `wanted '22', got '25'`.
-2. **Denial with no repository effect.** Case 15.2: `exit=27`, names `- Bash — git commit -m
-   handback`, states "the repository is unchanged", RESULT carries `denials=1 partial=0`.
-3. **Denial after allowed partial edits.** Case 15.3: `exit=27`, lists `partial-note.md`, names
-   `- Write — logs/work-loop/partial-note.md`, states "repository is NOT unchanged", `denials=1
-   partial=1`.
-4. **Allowed partial effects without permission evidence are classified separately.** Case 15.4: an
-   actor that writes an allowed file then exits 3 gives `exit=20`, still lists `partial-note.md`,
-   carries `denials=0 partial=1`, and asserts the absence of `PERMISSION_DENIED`.
-5. **Disallowed effect keeps precedence.** Case 15.5: a denial accompanied by an out-of-allowlist
-   write gives `exit=24`, classified `UNEXPECTED_EFFECT`, with the denial still shown in the evidence
-   block rather than dropped.
-6. **Existing success semantics intact.** Section 6 (committed Claude handback → 0, CARRIED) and
-   section 13 (uncommitted Codex handoff → 0) unchanged and passing. Case 15.6 adds the denial-on-a-
-   successful-hop shape: `exit=0`, `RESULT outcome=CARRIED code=0`, plus the warning line.
-7. **Same evidence, same outcome.** Case 15.7 runs the identical denial against a fixture that also
-   carries pre-existing *allowed* dirt — a shape the old code would have met in a different branch.
-   Result is the same `exit=27`, the pre-existing dirt is reported separately ("already present
-   before launch") and is *not* counted: `denials=1 partial=0`.
-8. **No recovery branch reassigns Claude's commit.** Case 15.9: `exit=25` carrying "Claude commits
-   its own handback" and "do not ask Codex to", plus a static assertion that the string "If the edit
-   is complete, commit it and re-run" no longer appears anywhere in the launcher.
-9. **Unit 1 and the full suite.** `./scripts/axcion-harness-v0.2/carry-turn.test.sh` → exit 0,
-   `passed: 157   failed: 0` (was 116 after Unit 1). Sections 12 and 12b — the lock cases — pass
-   unchanged.
+1. **Targeted denial case.** A Claude hop with one recorded denial and no repository effect, run
+   directly against the canonical launcher: `EXIT=37`; screen carries
+   `permission:      1 DENIAL(S) recorded by Claude:`, `- Bash — git commit -m handback`,
+   `classified: PERMISSION_DENIED (exit 37)`, and
+   `RESULT outcome=STOPPED code=37 task=t1 mode=live actor=claude turn_before=claude
+   turn_after=claude denials=1 partial=0`. The denial naming and the attribution fields are
+   unchanged; only the code moved.
+2. **Full canonical launcher suite.** `./scripts/axcion-harness-v0.2/carry-turn.test.sh` → exit 0,
+   `passed: 157   failed: 0` — the same 157 as before the correction, so nothing broke.
+3. **Fail-capability still holds.** `./scripts/axcion-harness-v0.2/carry-turn.test.sh
+   --prove-failure` → exit 0, `passed: 11   failed: 0`. M9 now reads `wanted '37', got '22'`, so the
+   renumbered assertion is still load-bearing rather than merely relabelled.
 
-Fail-capability: `./scripts/axcion-harness-v0.2/carry-turn.test.sh --prove-failure` → exit 0,
-`passed: 11   failed: 0`. Three new mutants cover the three new invariants — **M7** restores the
-unattributed dirty-file branch (`wanted '22', got '25'`), **M8** collapses `unavailable` into `empty`
-(`missing 'denials=unavailable'`), **M9** never classifies a recorded denial as one (`wanted '27',
-got '22'`; `missing '- Bash — '`). M2 and M5 were re-pointed at the restructured lines and still fail
-correctly, so no pre-existing invariant went idle behind the refactor.
+Correction commit: `bb0af1b298668a917fe9e39b61a0278fba363d3b` (`bb0af1b`) —
+`fix: carry-turn.sh — permission dead end is exit 37, not 27`. Changed files:
+`scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`. This
+state-file handback is a separate commit, as the frozen finding directed.
 
-Parser checked against **real** Claude output, not only the fake actor: the launcher's own
-`read_denials` was run against the three captures taken from Claude Code 2.1.220 — a real denial
-(`DENIAL_STATE=present`, `count=1`, `- Bash — echo probe-denial-test`), a real clean run
-(`DENIAL_STATE=empty`, `count=0`), and a non-JSON file (`DENIAL_STATE=unavailable`).
+Noticed during the correction, recorded and NOT implemented — candidate deferrals, not a second
+correction round:
 
-Changed files: `scripts/axcion-harness-v0.2/carry-turn.sh`,
-`scripts/axcion-harness-v0.2/carry-turn.test.sh`, and this state file. Nothing else was edited. The
-commit carrying this record has the subject
-`fix: carry-turn.sh — one deterministic post-hop classification`; `git log -1` resolves its id.
-
-Deferrals noticed during the unit, recorded and not done:
-
-- The classifier reads permission evidence with `jq`. Where `jq` is absent the state is
-  `unavailable`, which is honest but blind. A `jq`-free fallback is a separate decision and is not
-  needed for the attended surface, where `jq` is present.
-- `--allow-path` is still an operator input with a two-entry default, so the "allowed partial work"
-  the classifier now reports is only as meaningful as the allowlist it was given. Reviewing that
-  default is Unit-3-or-later work, not classifier work.
-- Carried forward from Unit 1, still not done: the hook-owned dirty `logs/friction-log.md` operating
-  interaction (it did not prevent classifier evidence, so it stayed out per the brief), and the
-  cosmetic double slash in displayed temporary lock paths.
+- The same misalignment likely affects more than the one code that was frozen. `SKILL.md:277` also
+  assigns `36` (Claude did not touch an already-uncommitted state file — "exactly the misreport `36`
+  was split out of `25` to stop"), `23` (hop limit), `29` (budget), `33`/`34`/`35` (ownership). The
+  canonical launcher uses none of them, and Unit 2's own record asserted that "codes 23 and 29 remain
+  free" — which the taxonomy says they are not. Notably, `36` describes precisely the condition Unit 2
+  corrected, so the launcher may now be reporting `22` where the taxonomy expects `36`. Not touched:
+  the correction scope was frozen to the `27` → `37` change, and a wider taxonomy reconciliation is
+  its own unit with its own evidence.
+- Unit 2's carried-forward deferrals are unchanged: the `jq` dependency for reading permission
+  evidence, the two-entry `--allow-path` default that bounds what "allowed partial work" means, the
+  hook-owned dirty `logs/friction-log.md` interaction, and the cosmetic double slash in displayed
+  temporary lock paths.
 
 ## Blocker
 
@@ -274,5 +200,5 @@ None.
 
 ## Next action
 
-Codex: assess Unit 2 — one deterministic post-hop classification on the canonical attended launcher,
-with the evidence above. Decide close, continue to the next readiness unit, correct once, or stop.
+Codex: closure check on the frozen finding only — is finding 1 resolved, and did the correction break
+anything? Correction commit `bb0af1b`; state-file handback is the commit carrying this record.
