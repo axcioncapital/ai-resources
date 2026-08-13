@@ -11,161 +11,265 @@ In scope across the task: the instruction-layer correction following commit `df3
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 5 — correct the instruction layer's overbroad prohibition on Codex using Git without weakening the Claude-owned commit boundary.
+Standard. Discovery mode. Unit 6 — verify the exact deployment surfaces, shared-resource provenance, and safe installation boundary before any cross-project or user-level change.
 
 Named reason for the loop: the repair crosses sessions and repositories, needs bounding before deployment, and requires independent assessment of Claude's evidence before changes propagate to project environments.
 
-Why this unit, why now: Unit 4 is accepted, but Unit 2 left one material instruction-accuracy defect unresolved. The durable transport evidence distinguishes allowed read-only Git inspection from prohibited `.git` mutation, while the current instruction layer repeatedly turns that narrower fact into `Codex never runs git`; correcting that mismatch is the smallest remaining step toward a review-clean instruction layer before deployment.
+Why this unit, why now: Unit 5 is accepted, so the instruction layer is review-clean enough to proceed. Deployment is the next unmet exit condition, but the exact enabled-project surfaces, the provenance of two project skill links, the user-level hook carrier, and the future-scaffold consumer must be verified before a machine-wide or cross-repository installation is framed.
 
-Governing authority: the operator-approved clause assigning every commit to Claude; `plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md` § 2, which establishes that Codex read-only Git commands succeeded while `.git` writes were refused; and the operator's decision that only individually approved executable-core clauses govern. The draft core must not be rewritten or promoted by this unit.
+Governing authority: the operator has approved a user-level hook carrier, deployment to the intended Work-Loop-enabled projects and future eligible `/new-project` scaffolds, and only individually approved executable-core clauses. The approved proposal preserves one repository interface and the operator–Codex–Claude role split. The 12 August required-fixes report is operator-supplied source material, but its five-compaction test and whole-core approval recommendation are superseded for this task by the current objective: one representative recovery-or-safe-stop proof and approved clauses only.
 
-Codex framing decision: this unit contains one semantic correction across only the instruction surfaces that currently overstate the Git boundary, plus proportionate regression evidence. Deployment, user settings, project files, scaffolding, operational proof, unexplained project skill-link provenance, and the deferred hook-pointer concern stay outside because they are separate deliverables.
+Codex framing decision: this is one read-only discovery deliverable: a verified deployment map sufficient to frame the next implementation unit. It changes no deployment surface. The later installation and the representative compaction proof remain separate because combining discovery, machine-wide writes, cross-project writes, and operational proof would be oversized and would conceal consequential scope mistakes.
 
-Pre-implementation risk review, completed by Codex before opening the unit:
+Pre-deployment structural risk review, completed by Codex before opening the unit:
 
-1. **Authority:** Claude must remain the only actor that stages, commits, checks out, or otherwise mutates Git state; correcting the overstatement must not transfer repository-reality ownership to Codex.
-2. **Behavior:** Codex may use read-only Git only where its own permitted judgment needs a repository fact; Claude still supplies implementation, test, diff, status and commit evidence at the seam where the Work Loop assigns those duties to Claude.
-3. **Recovery:** Reorient's local `.owner` fallback must remain local and non-mutating. Its existing owner-check validation must not be weakened merely because the surrounding rationale is corrected.
-4. **Authority scope:** the resolver block, executable core, routing index, protocol tokens and deployment surfaces are outside this unit.
-5. **Validation:** evidence must distinguish the false broad wording from the narrower approved mutation boundary, prove the old overstatement is gone from the bounded instruction surfaces, and prove the commit/actor seam remains explicit.
+1. **Machine scope:** `~/.codex/hooks.json` affects current and future checkouts on this machine. The operator approved that carrier, but discovery must establish its current shape, merge behavior, and exact hook target before any write.
+2. **Single ownership:** the compact hook remains only a trigger; Reorient remains the sole recovery owner. No project copy may introduce task selection, mutation, or a second recovery record.
+3. **Shared-resource provenance:** projects should consume canonical shared skills through the existing synchronization/link mechanism. Unknown or branch-bound links must be explained before deployment; manual skill copies are not an acceptable default.
+4. **Project boundary:** deployment is limited to verified Work-Loop-enabled projects and future eligible scaffolds, not every repository. Candidate names are claims until Claude verifies their manifests and instructions.
+5. **Authority:** no deployment edit may approve or rewrite the draft executable core. Only the operator-approved clauses and decisions govern.
+6. **Proof sequencing:** installation must precede the representative compaction proof, and discovery must identify one suitable project without running the proof now.
 
 ## Brief
 
-Required outcome: make the Work Loop and Reorient instruction layer state the actual Git boundary precisely: Claude owns all Git mutations and commits; Codex may perform read-only Git inspection when needed within its role. Remove claims that the evidence or authority prohibits every Git invocation, without broadening Codex into Claude's live implementation and evidence role.
+Required outcome: return a bounded, evidence-backed map of the exact files and mechanisms that a later deployment unit should change, including permissions or unresolved risks. Do not install, copy, relink, or edit any deployment surface in this unit.
 
 Check against the repository:
 
-1. Search the active Work Loop v2 and Reorient instruction surfaces for absolute claims such as `never run git`, `runs no git`, and equivalent prohibitions. Report the bounded searched paths and each controlling occurrence before editing; do not infer beyond that surface.
-2. Check each occurrence against the approved Claude-commit clause and `step-2-transport-seam-conclusions.md` § 2. Preserve a prohibition where it accurately describes a specific operation or local procedure; correct it where it falsely asserts that Codex cannot use read-only Git at all.
-3. Keep the actor seam explicit: Codex does not stage, commit, checkout, reset, merge, rebase, push, or otherwise mutate Git state; Claude remains responsible for repository implementation, tests, technical evidence and every commit. Do not turn permission into a routine duty for Codex where Claude already owes the evidence.
-4. Preserve Reorient's validated `.owner` fallback order, stop conditions, local-only scope, and warning that cross-checkout claims require repository-depth inspection by Claude or the dispatcher.
-5. Do not change the draft executable core, resolver block, routing index, acceptance ceilings, project installations, templates, manifests, user settings or hook deployment.
+1. Verify whether these three candidates are the complete intended enabled set, using each candidate's live `.claude/shared-manifest.json`, project `AGENTS.md`, and any explicit Work Loop enablement marker rather than names alone: `axcion-systems-builder`, `axcion-systems-builder-dashboard`, and `axcion-systems-builder-methodology-r-d`. Report each absolute checkout path and the evidence that includes or excludes it; do not scan unrelated repositories after the set is settled.
+2. For each included project, establish the current shared-skill declarations for `work-loop-v2`, `reorient`, and `handoff-thread`; inspect the existing shared-resource synchronization mechanism; and resolve the actual destination and provenance of any existing project skill link. Specifically explain the two previously unexplained links and whether they remain valid when this branch is not the active canonical checkout.
+3. Inspect each included project `AGENTS.md` for the minimal compaction-preservation contract: exact task-state path, bound checkout, governing plan path, workflow and phase, and current `## Next action`. Identify the canonical template fragment that should supply it to future eligible projects; distinguish the template from its consuming command.
+4. Inspect the current user-level Codex hook configuration and the existing compact-hook carrier read-only. Establish whether `~/.codex/hooks.json` exists, the schema or merge behavior a safe edit must preserve, the exact carrier script path that can remain stable outside this branch, and whether the carrier merely emits the executable Reorient instruction without selecting or mutating task state. Do not write outside the checkout.
+5. Inspect `/new-project`'s canonical templates and consumer contract only far enough to identify how future projects become Work-Loop-eligible and which fragments must change. Do not broaden the default to projects that are not eligible.
+6. Return the minimum later implementation boundary: exact files inside each repository, the user-level file, any stable carrier location, required synchronization action, and any permission or ordering constraint. Name one representative project suitable for the later compaction proof and why it exercises project-repository discovery.
 
 Required evidence capable of failure:
 
-- Before editing, quote the contradictory evidence pair: at least one overbroad instruction-layer claim and the Step 2 record showing successful read-only Git plus refused `.git` mutation.
-- After editing, search the same bounded surfaces for remaining absolute no-Git claims and classify any retained match by why it is accurate. A zero-match check alone is insufficient; also show that the Claude-only mutation and commit boundary remains present.
-- Run the relevant existing instruction acceptance checks only if they cover the changed behavior; otherwise provide a focused failing-before/passing-after text check that can fail on both an overbroad prohibition and a missing mutation boundary. Do not invent a broad new test matrix.
-- Run the resolver parity test if `work-loop-v2/SKILL.md` changes, because that file contains the protected block, and report the result without modifying the block.
-- Confirm changed paths are limited to the minimum instruction files and this state file. Report automatic `logs/friction-log.md` telemetry separately and exclude it from the commit.
-- Set `turn: codex` and commit the handback. Do not push.
+- A compact table for the three candidate projects showing enablement evidence, manifest state, AGENTS preservation state, skill-link destination or provenance, and required later change.
+- Exact paths and short quoted excerpts for the user hook config, carrier, synchronization mechanism, canonical template fragments, and `/new-project` consumer that settle the map. For an absent file or declaration, name the bounded path or surface checked.
+- A risk list limited to facts that would change the deployment boundary or ordering; distinguish verified facts from unresolved unknowns.
+- A proposed minimum changed-path set for the later deployment unit and one recommended representative proof project. This is a non-governing technical recommendation for Codex assessment, not implementation permission.
+- Confirm that this discovery changed nothing except this state file and automatic `logs/friction-log.md` telemetry, set `turn: codex`, commit the handback, and do not push.
 
-Completion condition: the bounded instruction surfaces no longer misstate a Git-write restriction as a ban on all Git use, the Claude-only mutation/commit boundary and repository-reality ownership remain unambiguous, Reorient recovery behavior is unchanged, and the correction is committed for Codex assessment.
+Completion condition: Codex can frame one bounded deployment implementation unit without guessing which projects are enabled, where shared skills resolve, how the user hook is safely carried, which template is canonical, or what exact files and permissions are involved. No deployment change has been made.
 
-Stop and hand back if the controlling occurrences extend beyond the bounded instruction surfaces, the evidence does not support a precise replacement boundary, or the correction would require changing an approved core clause. Stop for the operator if preserving the role split requires a new policy choice. A false premise is a valid result; report it instead of widening scope.
+Stop and hand back if a candidate's enablement or a skill link cannot be established from bounded repository evidence, if the user-level hook schema or stable carrier cannot be determined safely, or if the later deployment would require a surface outside the approved scope. Stop for the operator if the evidence reveals a new machine-wide policy choice. A false premise is a valid result; report it instead of implementing or widening scope.
 
 ## Latest result
 
-Implementation unit. Every premise held; the correction was implemented as briefed.
+Discovery unit. The map below is the inspection record. Nothing was installed, copied, relinked or
+edited. Two findings change the deployment framing and one is a hard blocker.
 
-```
-Inspected (2026-08-13):
-- Claim (1) overbroad claims exist on the bounded surfaces: HOLDS. Searched all five active
-  instruction files — `.agents/skills/work-loop-v2/SKILL.md`,
-  `.agents/skills/work-loop-v2/references/routing-index.md`, `.agents/skills/reorient/SKILL.md`,
-  `.agents/skills/reorient/agents/openai.yaml`, `.claude/commands/work-loop-v2.md` — for every
-  occurrence of `git`, then classified each. Seven controlling occurrences, all asserting the
-  prohibition of the actor rather than of an operation:
-    SKILL.md L141 `You **never run git.**`; L182 `You still never run git.`;
-    L197 `both need \`git worktree list\`, and you run no git`;
-    L254 `This does not loosen "you never run git."`; L500 `Commit, or run any git command.`
-    reorient L107 `Codex does not run git under Work Loop v2.`;
-    L206 `Running git directly instead of preserving the Work Loop role boundary.`
-  Plus one false rationale: reorient L70 `runs no git, which is what keeps the fallback inside
-  Codex's authority` — the fact is true, the stated reason is not.
-  Searched `.claude/commands/work-loop-v2.md` and `references/routing-index.md` for the same
-  patterns: no match in either. `reorient/agents/openai.yaml` contains no `git` at all.
-- Claim (2) the evidence supports a precise narrower boundary: HOLDS. `step-2-transport-seam-
-  conclusions.md` § 2 states it outright — "**The fence is on `.git` writes specifically — not on
-  Git as a whole.** Three data points from inside Codex: `git status --short` succeeded, `git log
-  --oneline` succeeded, `git add` failed. Read commands pass; the write is refused." The approved
-  Claude-commit clause (core § 4) agrees and is already narrow: Codex "was refused write access to
-  `.git`". Searched the core for `never run git` / `run any git`: no match — the core never carried
-  the overstatement, so no approved clause needed changing.
-- Claim (3) the accurate no-git statements must survive: HOLDS. `work-loop-owner.sh` L115 and L327
-  state that `--depth local` is git-free, and its only `git` invocation is L221 inside the
-  repository-depth path. So reorient L59 ("plain file reads and need no git") and SKILL.md L195
-  ("`--depth local` … run no git") describe real procedures accurately and were preserved.
-- Claim (4) no existing acceptance check covers this behavior: HOLDS. Searched
-  `work-loop-v2-slice-1.test.sh` for `never run git|runs no git|run any git|does not run git`: no
-  match. A focused check was therefore built rather than an existing one reused.
-```
+### Finding 0 — the three "projects" are one repository with three worktrees
 
-Result: the bounded instruction surfaces now state the real boundary. Codex never *mutates* Git
-state — `add`, `commit`, `checkout`, `reset`, `merge`, `rebase`, `push` — and Claude makes every
-commit and owns repository reality; read-only inspection is permitted where Codex's own judgment
-needs a repository fact, and is explicitly bounded so it never displaces the evidence Claude owes at
-the seam. Eight sites changed across two files: SKILL.md L141 (mutation bullet plus a new paragraph
-carrying the permission and its two limits), L182, L197, L254, L500; reorient L70, L107, L206.
-Reorient's `.owner` fallback is untouched in order, stop conditions, local-only scope and its warning
-that cross-checkout claims need repository-depth inspection by Claude or the dispatcher. `SKILL.md`
-526 → 528 lines, `reorient/SKILL.md` 228 → 233.
+This reframes items 1, 2 and 6 of the brief, so it comes first. `git rev-parse --git-common-dir` in
+each candidate returns the same store, and `git worktree list` from the first confirms it:
 
-Evidence:
+| Checkout (absolute) | Branch | HEAD |
+|---|---|---|
+| `…/Axcion AI Repo/projects/axcion-systems-builder` | `main` | `57e583f` |
+| `…/Axcion AI Repo/projects/axcion-systems-builder-dashboard` | `session/2026-08-10-dashboard` | `d94c44e` |
+| `…/Axcion AI Repo/projects/axcion-systems-builder-methodology-r-d` | `session/2026-08-10-methodology-r-d` | `ab20907` |
 
-- **Contradictory pair, quoted before editing.** Overbroad: SKILL.md L141 `You **never run git.**`
-  and reorient L107 `Codex does not run git under Work Loop v2.` Against Step 2 § 2: `git status
-  --short` succeeded and `git log --oneline` succeeded from inside Codex, while `git add` failed with
-  `Unable to create '.../.git/index.lock': Operation not permitted`. Read passes, write is refused.
-- **Focused check, failing before and passing after.** Twelve assertions over the bounded surfaces in
-  four groups: A no absolute actor-level no-Git prohibition, B the mutation and commit boundary is
-  stated by naming the verbs, C read-only is permitted *and* bounded against Claude's evidence duty,
-  D Reorient's fallback survives. Against `HEAD`: `passed: 6 failed: 6`. Against the working tree:
-  `passed: 12 failed: 0`.
-- **It fails in both directions, which is the point.** Group A fails on the pre-change files. Group B
-  fails on a mutated copy that removed the overbroad wording *and* deleted the mutation boundary —
-  `FAIL B1`, `FAIL B2`, `passed: 10 failed: 2` — so "corrected" text that quietly dropped the
-  Claude-only boundary cannot pass this check.
-- **Post-change residual scan, with retained matches classified.** Searched the same bounded surfaces
-  for `never run git|never runs git|run any git command|does not run git|you run no git`: zero
-  matches. Three `no git` phrasings were deliberately retained and are accurate, not overbroad, each
-  describing a named procedure rather than the actor: reorient L59 (the manual fallback reads),
-  reorient L70 (the six fallback checks), SKILL.md L195 (`--depth local`). The Claude-only boundary is
-  independently confirmed present by assertions B1–B3, so the zero-match result does not stand alone.
-- **Regression, unchanged:** acceptance harness `passed: 293 failed: 2` — identical to the Unit 4
-  post-change run, same two pre-existing `3.1a` failures, nothing new. Resolver parity ran because
-  `SKILL.md` changed: `4 passed, 0 failed`, including `check 4 — deployed resolver blocks are
-  byte-identical`. The protected block was not touched; all eight edits sit outside L26–132.
-- **Changed paths:** `.agents/skills/work-loop-v2/SKILL.md`, `.agents/skills/reorient/SKILL.md`, and
-  this state file. No core, resolver block, routing index, ceiling, harness, project, template,
-  manifest, user-setting or hook change. `logs/friction-log.md` moved by automatic hook telemetry only
-  and is excluded from the commit. The focused check and all mutated copies live in the session
-  scratchpad; no test file was added to the repository.
+So "deploy to three projects" is really "deploy to **one** project repository". Tracked files reach
+all three checkouts by branch merge; untracked per-checkout artifacts (symlinks, `.codex/`) do not, and
+that split explains every anomaly below.
 
-One correction to my own process, stated rather than hidden: the first pass classified five
-occurrences, because the initial survey output was truncated at 190 characters per line and cut the
-trailing sentences of SKILL.md L182 and L197. The focused check caught both after the first edit
-round, and its A-pattern was then widened to `you run no git` to cover actor-level claims while
-leaving procedural ones alone. Both are corrected and covered.
+### Finding 1 — HARD BLOCKER: the Work Loop cannot complete in any project checkout today
 
-Deferrals noticed and not done:
+`logs/scripts/work-loop-owner.sh` is **absent from all three checkouts** (checked
+`projects/<name>/logs/scripts/work-loop-owner.sh` in each). The Claude command's Step 1.5 requires that
+helper and says so in terms that admit no workaround: *"If the check cannot run, stop. A missing,
+unreadable or failing helper is not permission to continue."* Every `/work-loop-v2` invocation in these
+checkouts would therefore stop before Step 2.
 
-1. **The same overbroad wording exists outside the bounded surfaces, and one instance is pinned by a
-   test.** `scripts/axcion-harness-v0.2/carry-turn.sh` L629 and
-   `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` L2559 both emit
-   `Codex never runs git (core § 4)` as an exit-24 diagnostic, and `carry-turn.test.sh` L414 asserts
-   that exact string. The *guards* are correct — they detect a moved HEAD, which is mutation — only
-   the message wording overstates. These are transport tooling, not instruction surfaces, and the
-   brief bounds this unit to the instruction layer, so nothing was changed. Codex should decide
-   whether a follow-up unit covers them, since the test coupling makes it a real edit rather than a
-   wording tweak.
-2. Historical records in `plans/` carry the old phrasing (`step-6-review-brief.md` L40,
-   `handoff-automation-investigation-2026-08-05.md` L76, `handoff-automation-spike/README.md` L892).
-   They are records of what was believed at the time and were left alone.
-3. No durable regression check now guards this wording — the focused check was not committed, because
-   the brief bounds changed paths to the instruction files and this state file. Whether it should
-   become a permanent assertion in the acceptance harness is Codex's call.
-4. Unit 4's accepted deferrals remain open: no whole-skill line ceiling, the skill-growth trend, the
-   unexplained project skill-link provenance, and the hook-pointer duplication concern.
+This is not hypothetical exposure: each checkout already holds live task-state files —
+18 under `main`, 10 under each session branch — and `.claude/commands/work-loop-v2.md` resolves in all
+three (symlink to `../../../../ai-resources/.claude/commands/work-loop-v2.md`). The Claude half is
+installed and its precondition is not. Reorient degrades gracefully here and Claude does not: Reorient's
+fallback check 2 carries an explicit by-hand alternative ("where the checkout does not carry that
+script, make the same reads by hand — they are plain file reads and need no git"); Step 1.5 has no such
+clause. **A deployment unit that does not ship this helper installs a Work Loop that cannot run.**
+
+### Finding 2 — enablement, per candidate
+
+Evidence is each checkout's live `.claude/shared-manifest.json`, its `AGENTS.md`, and the actual link.
+
+| Checkout | Manifest `skills.shared` | AGENTS preservation | Skill link | Provenance | Later change |
+|---|---|---|---|---|---|
+| `axcion-systems-builder` (main) | `["work-loop-v2"]` — commit `e67c1ab`, 2026-08-10 20:56:36 | **absent** (Work Loop fields not in § Compaction) | `.agents/skills/work-loop-v2 → ../../../../ai-resources/.agents/skills/work-loop-v2`, resolves, untracked | declared; sync-reproducible | add `reorient` to manifest; add preservation fields; install owner helper |
+| `axcion-systems-builder-dashboard` | **no `skills` block at all** | absent (same file) | same link, resolves, untracked | **undeclared — hand-made** | same, plus the manifest declaration itself |
+| `axcion-systems-builder-methodology-r-d` | **no `skills` block at all** | absent (same file) | same link, resolves, untracked | **undeclared — hand-made** | same |
+
+`AGENTS.md` is byte-identical across all three (SHA-256 `d846f4d828e16927…`), as expected from one repo.
+
+**Is this the complete intended enabled set?** Yes, on the declarative evidence. Searched all 27
+project `shared-manifest.json` files for `work-loop-v2|reorient|handoff-thread`: exactly one hit,
+`axcion-systems-builder`. No other project declares any of the three, so no scan beyond the settled set
+was needed.
+
+**But `reorient` and `handoff-thread` are deployed nowhere.** No project declares either, and no project
+carries a link for either. `reorient` is the sole recovery owner the compact hook points at, so the
+carrier currently names a skill that does not exist in any project checkout.
+
+### Finding 3 — the two unexplained links, resolved
+
+Both undeclared links are hand-made, and the mechanism explains why they survive.
+
+- **Origin.** The dashboard and methodology-r-d manifests have exactly one commit each — `e37b5c4`, the
+  original scaffold — and `git log -S'skills' -- .claude/shared-manifest.json` returns nothing for
+  either. They never carried a `skills` block. The links were created 2026-08-10 20:55 and 20:56, the
+  same minutes as the opt-in commit on `main` (20:56:36), and `auto-sync-shared.sh`'s own header records
+  the incident they answered: *"Added 2026-08-10 after the axcion-systems-builder-methodology-r-d
+  worktree had /work-loop-v2 (Claude) but no work-loop-v2 SKILL.md (Codex), and Codex correctly reported
+  the Work Loop unavailable."* So the hand links were the immediate fix and the manifest opt-in was the
+  durable one — but the opt-in landed on `main` only, and the two session branches were already cut.
+- **Why they persist.** `auto-sync-shared.sh` never overwrites — L172, `[ -e "$target" ] || [ -L
+  "$target" ] && continue` — and has no prune pass, stated at L207–209: *"No drift pass for skills… a
+  real (non-symlink) `.agents/skills/<name>/` is a legitimate project-local skill rather than drift."*
+  An undeclared link therefore survives indefinitely **and masks the missing declaration**: the skill
+  works today, and would silently vanish if the worktree were recreated.
+- **Validity when this branch is not canonical.** The links resolve by relative path into
+  `…/ai-resources/…`, the `main` checkout — never into this worktree. They resolve today. They do **not**
+  carry this task's work: `ai-resources/.agents/skills/work-loop-v2/references/` holds only
+  `repository-problem-resolution-sop.md`, so Unit 4's `routing-index.md` and Unit 5's wording are absent
+  from what every project actually reads. Confirmed by `git merge-base --is-ancestor`: this branch's
+  commits are not on `main`.
+
+### Finding 4 — AGENTS.md preservation contract and its template
+
+The five-field contract exists, in exactly one place, and it is **not** in the projects.
+
+`ai-resources/AGENTS.md` § Compaction — present on `main`, verified by `git show main:AGENTS.md` — lists
+the exact active `logs/work-loop/{task-id}.md` path, the bound checkout, the governing plan path with
+its workflow and phase, and the current `## Next action`. The project `AGENTS.md` § Compaction (L113–120,
+all three checkouts) preserves only the current case/phase/review point, unread output paths, and any
+pending operator gate. None of the five fields appears.
+
+**There is no canonical template fragment to supply it.** `templates/` holds six files — `README.md`,
+`capability-record.md`, `incident-log-template.md`, `mission-contract.md`, `project-claude-md.md`,
+`project-settings.json.template` — and none is an `AGENTS.md` or a compaction fragment.
+`templates/README.md` names four live consumers plus one retired; none writes `AGENTS.md`. The
+template-versus-consumer distinction the brief asks for is therefore: **the template does not exist
+yet**, and `templates/README.md` L40 states the contract for creating one — *"When adding a sixth
+consumer, update this contract list and the `## What's here` description for the affected template
+file."*
+
+### Finding 5 — the hook surfaces
+
+- **User level is empty.** `~/.codex/hooks.json` is **absent**; `~/.codex/hooks/` is **absent**;
+  `~/.codex/config.toml` registers no hooks (its only relevant key is `notify`, for computer-use). So a
+  safe first write **creates** the file and merges with nothing. That removes the merge risk the brief
+  anticipated, and replaces it with a precedence question (see risks).
+- **Schema**, taken from the repo's own working file rather than from documentation:
+  `{"hooks": {"<Event>": [ {"matcher": "<regex>", "hooks": [ {"type": "command", "command": "bash
+  '<absolute path>'", "timeout": <n>, "statusMessage": "<text>"} ]} ]}}`. For `SessionStart` the matcher
+  filters the *source*, and the value needed is `compact`.
+- **The registration already exists at repo level.** `ai-resources/.codex/hooks.json` carries
+  `SessionStart` with `"matcher": "compact"` → `work-loop-reorient.sh`, and this branch's copy is
+  byte-identical (both 3100 bytes). Nothing needs adding there.
+- **Stable carrier path:**
+  `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.codex/hooks/work-loop-reorient.sh`.
+  It is tracked on `main`, and every command in `hooks.json` already uses that absolute `ai-resources/…`
+  form, so it is not branch-bound and survives this worktree's deletion.
+- **The carrier only emits.** Read in full (53 lines): it takes `cwd` from stdin JSON, adds the git
+  common dir, and emits one `additionalContext` string. It never reads `logs/work-loop`, never searches
+  `turn:`, never writes, never sets `turn:`. It fails open at six points (no stdin, empty input, no
+  `jq`, no `cwd`, missing dir, `jq` failure). Its header states the same prohibitions explicitly.
+- **Divergence that matters.** `main`'s carrier and this branch's differ on one line. `main` tells the
+  model to re-read the pointers itself; this branch's (commit `c7eb221`, **not** an ancestor of `main`)
+  delegates to `$reorient` and names it the recovery owner. Because `hooks.json` hardcodes the
+  `ai-resources` path, **the version that fires today is `main`'s older one**, and this branch's
+  correction is inert until merged.
+- **Project level does not register it.** `projects/axcion-systems-builder/.codex/hooks.json` registers
+  only two `SessionStart` hooks (auto-sync, permission-sanity) — no `compact` matcher, no reorient. The
+  two session worktrees have **no `.codex/` at all**, because `.codex` is untracked in the project repo
+  (`git ls-files .codex` is empty). That is precisely why the user-level carrier is the right
+  instrument: it reaches current and future checkouts without a per-checkout file.
+
+### Finding 6 — `/new-project` eligibility
+
+Read only far enough to locate the fragments. Two routes, neither Work-Loop-eligible today:
+
+- **Direct route** — L345: *"Do NOT install `shared-manifest.json` or wire the auto-sync SessionStart
+  hook"*; L389 installs a *"fixed core symlink set (no auto-sync)"*. A direct project gets no manifest,
+  so no `skills.shared`, so no Codex-side skill.
+- **Full route** — L473 writes `projects/{name}/.claude/shared-manifest.json` declaring project-owned
+  files. This is the fragment that would need `skills.shared: ["work-loop-v2", "reorient"]`.
+- **No step scaffolds `AGENTS.md` or `.codex/`** — searched `new-project.md` for both. So the
+  preservation contract has no producer for new projects, which is the gap Finding 4 names.
+
+### Risks that would change the deployment boundary or ordering
+
+**Verified facts.** The owner helper is absent from every project checkout (Finding 1). `reorient` is
+deployed nowhere. `~/.codex/hooks.json` does not exist. The repo-level compact registration already
+exists and needs no edit. The carrier path is stable and its content is read-only and non-selecting.
+Two links are undeclared and the sync never prunes. The projects' `AGENTS.md` lacks all five fields and
+no template supplies them. This branch's skill and carrier corrections are not on `main`, so nothing the
+projects read reflects Units 4 and 5.
+
+**Unresolved unknowns, stated as unknown.**
+
+1. **Precedence between user-level and repo-level hooks is not established.** The plan document says
+   hooks are discovered from `<repo>/.codex/hooks.json` *"and the `~/.codex/` equivalents"*, but I found
+   no statement in the repository of whether both fire or one shadows the other. If both fire, adding a
+   user-level `compact` entry would run the carrier **twice** inside `ai-resources` checkouts — the exact
+   double-reorientation the v0.1 draft was corrected to avoid. Bounded surfaces searched:
+   `~/.codex/config.toml`, `ai-resources/.codex/hooks.json`, and the two plan documents that reference
+   `hooks.json`. This needs settling before the user-level write, and it is a behaviour question the
+   repository cannot answer.
+2. **Ordering constraint implied by Finding 5.** Merging this branch to `main` changes which carrier
+   fires. Installing the user-level hook before that merge would pin the machine to the older wording.
+3. **Whether the two session branches are live work.** Their manifests can be fixed by merge from
+   `main`, or the branches may be finished and due for deletion. That is an operator call, not a
+   repository fact.
+
+### Proposed minimum changed-path set for the later deployment unit
+
+Non-governing technical recommendation for Codex assessment, not implementation permission.
+
+1. **Merge this branch to `ai-resources` `main` first** — it is what the projects read, and it is the
+   ordering constraint in risk 2. No project change is meaningful before it.
+2. **In the project repository, on `main`, then merged to the two session branches:**
+   `.claude/shared-manifest.json` — add `reorient` (and add the whole `skills` block on the two session
+   branches); `AGENTS.md` § Compaction — add the five Work Loop fields; `logs/scripts/work-loop-owner.sh`
+   — install, which Finding 1 makes a precondition rather than an option.
+3. **User level:** create `~/.codex/hooks.json` with one `SessionStart`/`compact` entry pointing at the
+   stable `ai-resources/.codex/hooks/work-loop-reorient.sh` path — **only after risk 1 is settled**.
+4. **In `ai-resources`, for future eligibility:** a new canonical compaction fragment under `templates/`,
+   its registration as a fifth consumer in `templates/README.md`, and the `/new-project` step that
+   consumes it.
+
+**Representative proof project: `axcion-systems-builder` (main worktree).** It is the only checkout with
+a manifest declaration, its own `.codex/`, a resolving skill link and 18 live task-state files, and it is
+a project repository distinct from `ai-resources`. A compaction there exercises project-repository
+discovery in the way the objective means: the hook hands a `cwd` under `projects/`, the state file is in
+the project's own `logs/work-loop/`, and the core resolver must reach `ai-resources` through the
+`WORKSPACE/projects/<one-child>` branch of its boundary test rather than the canonical-repository branch
+every unit of this task has used so far.
+
+Evidence that this discovery could have read otherwise: three of the brief's premises did not survive
+inspection as stated — the three candidates are not three projects, the "two unexplained links" are
+explained by an absent prune pass rather than by anything exotic, and the deployment set is blocked by a
+missing helper the brief never named. `git status --porcelain` shows only this state file and automatic
+`logs/friction-log.md` telemetry; no deployment surface was touched.
+
+Deferrals noticed and not done: the project `.codex/hooks.json` points its two hook commands at
+`projects/axcion-systems-builder/.codex/hooks/`, a directory that does not exist — both are guarded by
+`[ -x … ]` so they fail silently, meaning auto-sync and permission-sanity have not run in that project
+since the file was written. Outside this unit and not investigated further. Unit 5's deferrals remain
+open.
 
 ## Blocker
 
-None.
+None for the discovery, which completed. But Finding 1 is a blocker on the *deployment* unit that
+follows: `logs/scripts/work-loop-owner.sh` must ship to the project checkouts or the Work Loop stops at
+Step 1.5 in all of them.
 
 ## Next action
 
-Codex: assess the Git-boundary correction. Judge whether the replacement boundary is precise, whether
-read-only permission stays bounded so it does not become a routine duty that displaces Claude's
-evidence at the seam, whether Claude's exclusive ownership of Git mutation and commits remains
-unambiguous, and whether the transport-tooling wording in deferral 1 needs its own unit before
-deployment. Then decide close, continue, correct once, or stop.
+Codex: assess the deployment map. Decide whether the reframing in Finding 0 changes the approved
+deployment scope (one project repository, three branches — not three projects), whether Finding 1's
+helper install belongs inside the deployment unit or ahead of it, and whether the user-level hook write
+must wait until the user-versus-repo precedence question in risk 1 is settled. Then frame the deployment
+unit, or stop for the operator if the precedence question turns out to be a machine-wide policy choice.
