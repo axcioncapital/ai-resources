@@ -55,7 +55,9 @@
 #   14  IDENTITY_MISMATCH      filename stem != frontmatter task:
 #   15  BAD_TURN               turn: not in {codex, claude, operator}
 #   16  FOREIGN_STAGED         something already staged; refuse to sweep it in
-#   17  LOCK_HELD              another carry owns this checkout+task
+#   17  LOCK_HELD              another carry owns this CHECKOUT — any task, not
+#                              just this one. Run a concurrent task in its own
+#                              linked worktree and pass that with --checkout.
 #   18  FOREIGN_UNSTAGED       out-of-allowlist working-tree changes already there
 #   19  GIT_HAZARD             index.lock, or merge/rebase/cherry-pick in progress
 #   20  ACTOR_FAILED           actor exited non-zero (never retried — see below)
@@ -164,7 +166,7 @@ refuse_flag() { # flag
     --actor-cmd|--simulate|--fake-actor)
       usage_die "'$1' is refused: there is no simulated-actor seam on this surface, so no run of it can report simulated transport as live. Point --claude-bin or --codex-bin at the binary you want launched." ;;
     --status)
-      usage_die "'$1' is refused: this surface reports no out-of-band status. The state file is the status — read logs/work-loop/<task>.md. If a carry is already in flight this script exits 17 and names the holding pid." ;;
+      usage_die "'$1' is refused: this surface reports no out-of-band status. The state file is the status — read logs/work-loop/<task>.md. If a carry is already in flight in this checkout this script exits 17 and names the holding pid and task." ;;
   esac
   return 1
 }
@@ -347,32 +349,57 @@ operator_question() {
 }
 
 # ------------------------------------------------------------------- lock
-# One actor at a time, per checkout+task. mkdir is the atomic primitive.
+# One actor at a time, PER CHECKOUT. mkdir is the atomic primitive.
+#
+# The key is the canonical checkout path and nothing else. A checkout is a single
+# working tree with a single index and a single HEAD, so two actors in it are two
+# writers to one surface no matter which tasks they carry — keying the lock by
+# checkout+task made the id the isolation boundary, and two different task ids
+# were therefore admitted side by side in one checkout.
+#
+# The task is still recorded, in the lock directory rather than in the key, so a
+# refusal names WHICH task holds the checkout. That keeps task identity in
+# validation and in the evidence while taking it out of the ownership decision.
+# Exact task/state identity remains a separate invariant (validate_state); this
+# is about write authority over a working tree, not about which file is correct.
+#
+# A separate linked worktree canonicalizes to a different path, so it takes a
+# different lock and stays independently admissible. That is the intended unit of
+# isolation: give a concurrent task its own checkout.
+#
+# NOT the durable checkout declaration in logs/scripts/work-loop-owner.sh. That
+# one is a committed-repository record of which task owns a checkout across
+# sessions; this one is an ephemeral live-process lock under $TMPDIR that exists
+# only while an actor runs. The two are deliberately separate and neither is a
+# registry of the other.
 #
 # Three pid states, not two. A lock whose holder cannot be inspected is treated
 # as held: the failure mode of guessing "stale" is two live actors in one
 # checkout, which is the thing this exists to prevent.
 
 acquire_lock() {
-  local key holder
-  key="$(printf '%s|%s' "$CHECKOUT" "$TASK" | shasum -a 256 | cut -c1-16)"
+  local key holder holder_task lock_path
+  key="$(printf '%s' "$CHECKOUT" | shasum -a 256 | cut -c1-16)"
   LOCK_DIR="${TMPDIR:-/tmp}/axcion-harness-v0.2.$key.lock"
+  lock_path="$LOCK_DIR"
 
   if ! mkdir "$LOCK_DIR" 2>/dev/null; then
     holder="$(cat "$LOCK_DIR/pid" 2>/dev/null)"
+    holder_task="$(cat "$LOCK_DIR/task" 2>/dev/null)"
     if [ -n "$holder" ] && kill -0 "$holder" 2>/dev/null; then
       LOCK_DIR=""   # not ours; must not be released on the way out
-      die 17 "another carry is in flight for this checkout+task (pid $holder holds $LOCK_DIR). Wait for it, or stop it, then re-run."
+      die 17 "another carry is in flight for this CHECKOUT (pid $holder, task '${holder_task:-unrecorded}', holds $lock_path). One checkout is one working tree, so it carries one task at a time — this is refused whether or not it is the same task. Wait for it, or stop it, then re-run. To run '$TASK' concurrently, give it its own linked worktree and pass that with --checkout."
     fi
     if [ -z "$holder" ]; then
       LOCK_DIR=""
-      die 17 "a lock directory exists for this checkout+task but carries no readable pid, so it cannot be shown stale. Inspect it and remove it by hand if no carry is running."
+      die 17 "a lock directory exists for this checkout but carries no readable pid, so it cannot be shown stale ($lock_path, task '${holder_task:-unrecorded}'). Nothing was deleted. Inspect it and remove it by hand if no carry is running."
     fi
-    say "note: removing a stale lock — pid $holder is not running."
+    say "note: removing a stale lock — pid $holder (task '${holder_task:-unrecorded}') is not running."
     rm -rf "$LOCK_DIR"
     mkdir "$LOCK_DIR" 2>/dev/null || { LOCK_DIR=""; die 17 "could not take the lock after clearing a stale one"; }
   fi
   printf '%s\n' "$$" >"$LOCK_DIR/pid"
+  printf '%s\n' "$TASK" >"$LOCK_DIR/task"
 }
 
 release_lock() {

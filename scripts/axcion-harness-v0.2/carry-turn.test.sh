@@ -120,6 +120,35 @@ FAKE
   chmod +x "$1"
 }
 
+# Write one well-formed state file into an existing checkout. Split out of mkfix
+# so a fixture can carry a SECOND task in the SAME checkout — which is what the
+# checkout-wide lock has to be tested against.
+mkstate_in() { # checkout, task-id, turn
+  mkdir -p "$1/logs/work-loop"
+  {
+    printf -- '---\ntask: %s\nturn: %s\n---\n\n' "$2" "$3"
+    printf '## Objective and scope\nA fixture.\n\n## Lane and unit\nStandard. Implementation mode. Unit 1 — fixture.\n\n## Latest result\nNothing yet.\n\n## Blocker\nNone.\n\n## Next action\nDo the thing.\n'
+  } >"$1/logs/work-loop/$2.md"
+}
+
+# The launcher's lock path for a checkout. Mirrors acquire_lock: the CANONICAL
+# checkout path and nothing else. If this and the launcher ever disagree, every
+# lock assertion silently passes against a directory the launcher never looks at
+# — which is exactly what happened once before, when this hashed the raw fixture
+# path while the launcher hashed the /private/var canonicalization of it.
+lock_path_for() { # checkout -> lock dir path
+  local rp key
+  rp="$(cd "$1" && pwd -P)"
+  key="$(printf '%s' "$rp" | shasum -a 256 | cut -c1-16)"
+  printf '%s\n' "${TMPDIR:-/tmp}/axcion-harness-v0.2.$key.lock"
+}
+
+plant_lock() { # lock-dir, pid, task-id
+  rm -rf "$1"; mkdir -p "$1"
+  printf '%s\n' "$2" >"$1/pid"
+  printf '%s\n' "$3" >"$1/task"
+}
+
 # Build a fixture. Sets: REPO STATE ACTION ARGVLOG COUNTF FAKEBIN LOGD
 mkfix() { # name, task-id, turn
   local name="$1" task="$2" turn="$3"
@@ -130,10 +159,7 @@ mkfix() { # name, task-id, turn
   git -C "$REPO" config user.name Test
   git -C "$REPO" config commit.gpgsign false
   STATE="$REPO/logs/work-loop/$task.md"
-  {
-    printf -- '---\ntask: %s\nturn: %s\n---\n\n' "$task" "$turn"
-    printf '## Objective and scope\nA fixture.\n\n## Lane and unit\nStandard. Implementation mode. Unit 1 — fixture.\n\n## Latest result\nNothing yet.\n\n## Blocker\nNone.\n\n## Next action\nDo the thing.\n'
-  } >"$STATE"
+  mkstate_in "$REPO" "$task" "$turn"
   printf 'seed\n' >"$REPO/seed.txt"
   git -C "$REPO" add -A >/dev/null 2>&1
   git -C "$REPO" commit -q -m init >/dev/null 2>&1
@@ -368,26 +394,90 @@ section "12. Lock — one actor at a time"
   # the launcher canonicalizes to before hashing. On macOS $TMPDIR resolves
   # /var -> /private/var, so hashing the raw fixture path produced a different
   # lock and every case in this section silently passed against nothing.
-  rp="$(cd "$REPO" && pwd -P)"
-  key="$(printf '%s|%s' "$rp" task-y | shasum -a 256 | cut -c1-16)"
-  ld="${TMPDIR:-/tmp}/axcion-harness-v0.2.$key.lock"
-  rm -rf "$ld"; mkdir -p "$ld"; printf '%s\n' "$$" >"$ld/pid"   # this shell is alive
+  ld="$(lock_path_for "$REPO")"
+  plant_lock "$ld" "$$" task-y                          # this shell is alive
   run_sut --checkout "$REPO" --task task-y --claude-bin "$FAKEBIN" --log-dir "$LOGD"
   assert_eq "a live lock holder blocks the carry (17)" "17" "$RC"
   assert_eq "  and nothing launched" "0" "$(invocations)"
   assert_eq "  and the lock survives" "1" "$([ -d "$ld" ] && echo 1 || echo 0)"
+  assert_contains "  and names the holding task" "task 'task-y'" "$o"
 
   ( exit 0 ) & deadpid=$!; wait "$deadpid" 2>/dev/null   # a pid that is now gone
-  rm -rf "$ld"; mkdir -p "$ld"; printf '%s\n' "$deadpid" >"$ld/pid"
+  plant_lock "$ld" "$deadpid" task-y
   printf 'transition:codex' >"$ACTION"
   run_sut --checkout "$REPO" --task task-y --claude-bin "$FAKEBIN" --log-dir "$LOGD"
   assert_eq "a provably stale lock is cleared and the carry runs" "0" "$RC"
   assert_contains "  and says so" "removing a stale lock" "$o"
 
-  rm -rf "$ld"; mkdir -p "$ld"; : >"$ld/pid"            # unreadable holder
+  # No pid at all: not inspectable, so not provably stale. It must be kept, and
+  # the launcher must not advise deleting anything it cannot show is dead.
+  rm -rf "$ld"; mkdir -p "$ld"; : >"$ld/pid"; printf 'task-y\n' >"$ld/task"
+  # The count is cumulative and the stale-lock case above legitimately launched
+  # once, so the claim here is "no FURTHER launch", not "never launched".
+  n_before="$(invocations)"
   run_sut --checkout "$REPO" --task task-y --claude-bin "$FAKEBIN" --log-dir "$LOGD"
   assert_eq "an uninspectable lock is treated as held (17)" "17" "$RC"
+  assert_eq "  and is NOT deleted" "1" "$([ -d "$ld" ] && echo 1 || echo 0)"
+  assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+  assert_eq "  and launched nothing further" "$n_before" "$(invocations)"
   rm -rf "$ld"
+
+section "12b. The live lock is checkout-wide, not per task"
+  # One checkout is one working tree with one index and one HEAD. Two carries in
+  # it are two writers to one surface whatever tasks they name, so the ownership
+  # key is the checkout alone. Keying it by checkout+task made the task id the
+  # isolation boundary and admitted two different tasks side by side.
+  mkfix xwide task-ba claude
+  XREPO="$REPO"; XFAKE="$FAKEBIN"; XLOGD="$LOGD"
+  # A SECOND task in the SAME checkout, committed so the fixture starts clean.
+  mkstate_in "$XREPO" task-bb claude
+  git -C "$XREPO" add -A >/dev/null 2>&1
+  git -C "$XREPO" commit -q -m "second task" >/dev/null 2>&1
+  BB_ARGV="$TMPROOT/xwide-bb.argv"; : >"$BB_ARGV"
+  BB_COUNT="$TMPROOT/xwide-bb.count"; : >"$BB_COUNT"
+  BB_ACTION="$TMPROOT/xwide-bb.action"; printf 'transition:codex' >"$BB_ACTION"
+  BB_FAKE="$TMPROOT/xwide-bb.actor"
+  make_fake_actor "$BB_FAKE" "$BB_ARGV" "$BB_COUNT" "$BB_ACTION" \
+                  "$XREPO/logs/work-loop/task-bb.md"
+
+  xld="$(lock_path_for "$XREPO")"
+  plant_lock "$xld" "$$" task-ba                        # task-ba is live here
+  run_sut --checkout "$XREPO" --task task-bb --claude-bin "$BB_FAKE" --log-dir "$XLOGD"
+  assert_eq "a DIFFERENT task in the same checkout is refused (17)" "17" "$RC"
+  assert_contains "  and names the task that holds the checkout" "task 'task-ba'" "$o"
+  assert_contains "  and says the refusal is checkout-wide" "whether or not it is the same task" "$o"
+  assert_eq "  and stopped BEFORE actor launch" "0" "$(wc -c <"$BB_COUNT" | tr -d ' ')"
+  assert_eq "  and the holder's lock survives" "1" "$([ -d "$xld" ] && echo 1 || echo 0)"
+
+  # A separate linked worktree canonicalizes to a different path, so it is a
+  # different checkout and stays independently admissible while X is locked.
+  WT="$TMPROOT/xwide-wt"
+  git -C "$XREPO" worktree add -q -b wt-lane "$WT" >/dev/null 2>&1
+  assert_eq "linked worktree was created" "1" "$([ -d "$WT/logs/work-loop" ] && echo 1 || echo 0)"
+  assert_absent "  worktree takes a different lock path" "$xld" "$(lock_path_for "$WT")"
+  WT_ARGV="$TMPROOT/xwide-wt.argv"; : >"$WT_ARGV"
+  WT_COUNT="$TMPROOT/xwide-wt.count"; : >"$WT_COUNT"
+  WT_ACTION="$TMPROOT/xwide-wt.action"; printf 'transition:codex' >"$WT_ACTION"
+  WT_FAKE="$TMPROOT/xwide-wt.actor"
+  make_fake_actor "$WT_FAKE" "$WT_ARGV" "$WT_COUNT" "$WT_ACTION" \
+                  "$WT/logs/work-loop/task-bb.md"
+  run_sut --checkout "$WT" --task task-bb --claude-bin "$WT_FAKE" --log-dir "$TMPROOT/xwide-wt.runs"
+  assert_eq "the same task in a separate linked worktree IS admitted" "0" "$RC"
+  assert_contains "  and carried" "RESULT outcome=CARRIED code=0" "$o"
+  assert_eq "  and its actor ran" "1" "$(wc -c <"$WT_COUNT" | tr -d ' ')"
+  assert_eq "  while checkout X's lock is still held" "1" "$([ -d "$xld" ] && echo 1 || echo 0)"
+
+  # X is still locked after the worktree carry — the two locks are independent.
+  run_sut --checkout "$XREPO" --task task-bb --claude-bin "$BB_FAKE" --log-dir "$XLOGD"
+  assert_eq "checkout X is still refused after the worktree carry (17)" "17" "$RC"
+  rm -rf "$xld"
+
+  # With the holder gone, the same checkout admits the second task normally —
+  # the refusal is about concurrency, not a permanent binding to one task.
+  run_sut --checkout "$XREPO" --task task-bb --claude-bin "$BB_FAKE" --log-dir "$XLOGD"
+  assert_eq "with no live holder the second task carries normally" "0" "$RC"
+  assert_eq "  and its lock was released" "0" "$([ -d "$xld" ] && echo 1 || echo 0)"
+  git -C "$XREPO" worktree remove --force "$WT" >/dev/null 2>&1
 
 section "13. Dry run and the Codex direction"
   mkfix dry task-z claude
@@ -510,6 +600,37 @@ prove_failure() {
     EXPECT_FAIL=1
     assert_eq "Claude handing back uncommitted stops (25)" "25" "$RC"
     EXPECT_FAIL=0
+  fi
+
+  section "M6. Put the task back into the lock key"
+  # This mutant restores the pre-fix key — checkout+task — and is therefore the
+  # exact defect this unit corrected: the checkout's lock becomes invisible to a
+  # carry naming a different task, and two writers enter one working tree.
+  mut="$TMPROOT/mutant-lockkey.sh"
+  sed -e 's@^\( *\)key=.*shasum -a 256 | cut -c1-16)"$@\1key="$(printf "%s|%s" "$CHECKOUT" "$TASK" | shasum -a 256 | cut -c1-16)"@' \
+      "$SUT" >"$mut"
+  chmod +x "$mut"
+  if ! grep -q 'printf "%s|%s" "\$CHECKOUT" "\$TASK"' "$mut"; then
+    bad "M6 mutant did not apply" "the lock-key line did not match"
+  elif ! mutant_ok "$mut"; then bad "M6 mutant does not parse" "bad mutation"; else
+    mkfix m6 task-m6a claude
+    mkstate_in "$REPO" task-m6b claude
+    git -C "$REPO" add -A >/dev/null 2>&1
+    git -C "$REPO" commit -q -m "second task" >/dev/null 2>&1
+    m6argv="$TMPROOT/m6b.argv"; : >"$m6argv"
+    m6count="$TMPROOT/m6b.count"; : >"$m6count"
+    m6action="$TMPROOT/m6b.action"; printf 'transition:codex' >"$m6action"
+    m6fake="$TMPROOT/m6b.actor"
+    make_fake_actor "$m6fake" "$m6argv" "$m6count" "$m6action" \
+                    "$REPO/logs/work-loop/task-m6b.md"
+    m6ld="$(lock_path_for "$REPO")"
+    plant_lock "$m6ld" "$$" task-m6a
+    run_bin "$mut" --checkout "$REPO" --task task-m6b --claude-bin "$m6fake" --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_eq "a DIFFERENT task in the same checkout is refused (17)" "17" "$RC"
+    assert_eq "  and stopped BEFORE actor launch" "0" "$(wc -c <"$m6count" | tr -d ' ')"
+    EXPECT_FAIL=0
+    rm -rf "$m6ld"
   fi
 }
 
