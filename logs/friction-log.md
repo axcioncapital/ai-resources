@@ -353,6 +353,11 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 19:25 — logs/work-loop/eval-v0-3-restart.md
+- 19:25 — logs/work-loop/eval-v0-3-restart.md
+- 19:23 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 19:13 — logs/work-loop/eval-v0-3-restart.md
+- 19:13 — logs/work-loop/eval-v0-3-restart.md
 - 18:47 — logs/session-notes.md
 - 18:46 — logs/innovation-registry.md
 - 18:45 — logs/scratchpads/2026-08-13-19-15-scratchpad.md
