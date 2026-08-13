@@ -33,19 +33,53 @@
 #                      --disallowedTools list, e.g. 'Bash(git push:*)'. Default:
 #                      none extra. It can only narrow the child's authority
 #                      further — it cannot displace or replace a mandatory rule.
+#   --claude-permission-mode MODE
+#                      The Claude hop's permission mode for THIS invocation only.
+#                      Exactly two values, case-sensitive: `default` (what you
+#                      get when the option is absent) and `acceptEdits`. Every
+#                      other value, including `bypassPermissions` and an absent
+#                      one, is BAD_USAGE before anything launches. Claude only —
+#                      the Codex path never reads it. No settings file changes.
 #   --log-dir DIR      run evidence directory.
 #                      Default <checkout>/logs/harness-runs
 #   --dry-run          validate and route; launch nothing
 #   -h, --help         print this block
 #
-# ATTENDED PERMISSION POLICY. Every Claude hop is launched with
-# `--permission-mode default`, with or without --claude-deny. It is not an option
-# and there is no flag to turn it off. Without it the child INHERITS the
-# checkout's own defaultMode — which in this repository is `bypassPermissions` —
-# so an actor would receive bypass authority nobody asked for. Stating the mode
-# at launch fixes that without editing any settings.json. It is a permission
-# policy, not containment: it makes the child ask, it does not sandbox it.
+# ATTENDED PERMISSION POLICY. Every Claude hop is launched with an EXPLICIT
+# --permission-mode, on every path, with or without --claude-deny. There is no
+# flag that omits it. Without it the child INHERITS the checkout's own
+# defaultMode — which in this repository is `bypassPermissions` — so an actor
+# would receive bypass authority nobody asked for. Stating the mode at launch
+# fixes that without editing any settings.json. It is a permission policy and
+# not containment: it makes the child ask, it does not sandbox it.
 # `--dangerously-skip-permissions` is never passed, on any path.
+#
+# The mode is `default` unless the operator asks for the ONE authorised widening
+# on that one invocation.
+#
+# ONE OPERATOR-APPROVED WIDENING, PER INVOCATION.
+# `--claude-permission-mode acceptEdits` is the only widening this surface
+# offers. It is opt-in and it lasts exactly this invocation.
+# It is stored nowhere and remembered nowhere, so the next invocation starts at
+# `default` again with nothing to inherit. It reaches the Claude hop only, and it
+# lets the child apply file edits without being asked each time.
+# It is NOT bypass: the child still asks about everything else, and
+# --dangerously-skip-permissions is still never passed.
+#
+# THE ALLOW-PATH SET IS DETECTION, NOT PREVENTION. The launch line prints the
+# effective --allow-path set beside the widening. Read what that set is: this
+# script compares the working tree AFTER the hop against it. It does not stop a
+# write, the child never reads it, and an accepted edit outside it happens first
+# and is reported afterwards (exit 24, or exit 30 once committed). Under
+# `acceptEdits` nobody is asked first, so after-the-fact detection is the only
+# boundary left — which is why the widening is attended, per-invocation, and
+# printed rather than assumed.
+#
+# EVERYTHING ELSE FAILS CLOSED, before the lock, the run log and any actor:
+# `bypassPermissions`, `auto`, `manual`, `dontAsk`, `plan`, differently-cased
+# spellings of the two allowed values, and an absent value are all BAD_USAGE
+# (exit 10). The check is an allowlist of exactly two strings, so a mode this
+# surface has not authorised cannot arrive merely by being new.
 #
 # NESTED ACTORS. Every Claude hop is ALSO launched with a mandatory
 # --disallowedTools set that asks the child to refuse the ordinary direct Bash
@@ -59,6 +93,9 @@
 #
 # It is passed with or without --claude-deny, there is no flag to turn it off,
 # and operator --claude-deny rules are APPENDED to it rather than replacing it.
+# `--claude-permission-mode acceptEdits` does not touch it either: the widening
+# changes the permission mode and nothing else, so a widened hop carries exactly
+# the same mandatory rules as a default one.
 # One attended hop should stay one attended hop; without this, a hop can expand
 # into nested Claude or Codex processes that nobody launched and nobody watches.
 #
@@ -146,6 +183,12 @@ LOG_DIR=""
 DRY_RUN=0
 ALLOW_PATHS=()
 CLAUDE_DENY=()
+
+# The Claude hop's permission mode. `default` unless this invocation explicitly
+# asks for the one authorised widening. Held in this process only — nothing here
+# is written to a settings file, a ledger or any other durable surface, so the
+# next invocation starts at `default` again with no way to inherit a widening.
+CLAUDE_PERMISSION_MODE="default"
 
 # Requested of EVERY Claude hop, whatever else is passed. Not an option, not
 # overridable, and deliberately not derived from anything the caller supplies:
@@ -241,7 +284,7 @@ refuse_flag() { # flag
     --hook|--daemon|--watch|--install|--service)
       usage_die "'$1' is refused: this surface installs nothing and watches nothing. It runs once, in the foreground, and exits." ;;
     --dangerously-skip-permissions|--bypass-permissions|--permission-mode)
-      usage_die "'$1' is refused: attended Claude hops are always launched with --permission-mode default and that is not adjustable. Narrow the child further with --claude-deny if you need to." ;;
+      usage_die "'$1' is refused: this surface does not forward a raw permission mode to the child, and it never passes a bypass. The Claude hop runs --permission-mode default unless you ask for the one authorised widening, --claude-permission-mode acceptEdits, which applies to this invocation only. Narrow the child further with --claude-deny if you need to." ;;
     --actor-cmd|--simulate|--fake-actor)
       usage_die "'$1' is refused: there is no simulated-actor seam on this surface, so no run of it can report simulated transport as live. Point --claude-bin or --codex-bin at the binary you want launched." ;;
     --status)
@@ -262,6 +305,13 @@ while [ $# -gt 0 ]; do
     --claude-bin)  CLAUDE_BIN="${2:-}"; shift 2 ;;
     --allow-path)  ALLOW_PATHS+=("${2:-}"); shift 2 ;;
     --claude-deny) CLAUDE_DENY+=("${2:-}"); shift 2 ;;
+    # The value is required explicitly rather than defaulted from "${2:-}". A
+    # permission widening must never be reachable by writing the flag and
+    # nothing else, and `shift 2` with one argument left shifts nothing — so
+    # without this guard the missing-value case would spin instead of refusing.
+    --claude-permission-mode)
+      [ $# -ge 2 ] || usage_die "--claude-permission-mode requires a value: default or acceptEdits"
+      CLAUDE_PERMISSION_MODE="$2"; shift 2 ;;
     --log-dir)     LOG_DIR="${2:-}"; shift 2 ;;
     --dry-run)     DRY_RUN=1; shift ;;
     # Print the whole leading comment block, whatever length it grows to, so the
@@ -275,6 +325,20 @@ done
 [ -n "$TASK" ]     || usage_die "--task is required"
 case "$ACTOR_TIMEOUT" in ''|*[!0-9]*) usage_die "--timeout must be a positive integer" ;; esac
 [ "$ACTOR_TIMEOUT" -ge 1 ] || usage_die "--timeout must be >= 1"
+
+# An ALLOWLIST of exactly two strings, checked here — before the lock, before the
+# run log, before any actor. A mode this surface has not authorised must not
+# arrive by being new, so the last branch refuses rather than passing the value
+# through to the CLI's own choices list. Case-sensitive on purpose: the installed
+# CLI is too, and quietly repairing `AcceptEdits` would mean this script decided
+# a widening the operator did not type.
+case "$CLAUDE_PERMISSION_MODE" in
+  default|acceptEdits) : ;;
+  *[Bb]ypass*|*BYPASS*|*dangerously*)
+    usage_die "--claude-permission-mode '$CLAUDE_PERMISSION_MODE' is refused: this surface never launches an actor with bypass authority, on any path and for any reason. The two authorised values are default and acceptEdits. If a hop genuinely needs more than acceptEdits, that is an operator decision outside this script." ;;
+  *)
+    usage_die "--claude-permission-mode '$CLAUDE_PERMISSION_MODE' is not authorised on this surface. Exactly two values are, and they are case-sensitive: default (the default) and acceptEdits (an explicit one-invocation widening). Nothing was launched." ;;
+esac
 
 if [ "${#ALLOW_PATHS[@]}" -eq 0 ]; then
   ALLOW_PATHS=('^logs/work-loop/' '^logs/harness-runs/')
@@ -693,9 +757,19 @@ launch_actor() { # actor, timeout -> exit status of the launch
       cd "$CHECKOUT" || die 11 "cannot enter checkout: $CHECKOUT"
       say "  nested-actor policy: requesting ${CLAUDE_DENY_MANDATORY[*]} on every Claude hop — mandatory, no override; --claude-deny appends after it."
       say "  This is requested permission policy the child evaluates. It blocks the default direct route; it is not containment and not proof that nesting is impossible."
-      say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default --disallowedTools ${deny_all[*]} (cwd=<checkout>)"
+      # The widening is stated at the launch it applies to, not in a summary
+      # afterwards, so an operator reads it while it still matters.
+      if [ "$CLAUDE_PERMISSION_MODE" = "acceptEdits" ]; then
+        say "  permission mode: acceptEdits — an OPERATOR-APPROVED WIDENING requested for THIS invocation only. It is stored nowhere, so the next run starts at default again."
+        say "  It lets the child apply file edits without asking each time. It is not bypass: --dangerously-skip-permissions is still never passed, and the child still asks about everything else."
+        say "  effective allow-path set: ${ALLOW_PATHS[*]}"
+        say "  That set is DETECTION, not prevention: it is compared against the working tree AFTER the hop. It stops no write, the child never reads it, and an edit accepted outside it happens first and is reported afterwards (exit 24, or 30 once committed)."
+      else
+        say "  permission mode: default — the child asks. No widening was requested on this invocation."
+      fi
+      say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode $CLAUDE_PERMISSION_MODE --disallowedTools ${deny_all[*]} (cwd=<checkout>)"
       run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
-        --permission-mode default \
+        --permission-mode "$CLAUDE_PERMISSION_MODE" \
         --disallowedTools "${deny_all[@]}"
       rc_claude=$?
       cd "$prev_pwd" || true

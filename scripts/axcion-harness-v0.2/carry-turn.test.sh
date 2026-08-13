@@ -398,6 +398,149 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
   assert_absent "codex argv carries no claude colon rule" "Bash(claude:*)" "$(cat "$ARGVLOG")"
   assert_absent "codex argv carries no claude space rule" "Bash(claude *)" "$(cat "$ARGVLOG")"
 
+section "5c. Per-run attended permission mode (real argv, fake binary)"
+  # The ONE authorised widening, and the boundary around it. What is proved here
+  # is the argv the launcher assembles and the words an operator reads — not that
+  # the child honours acceptEdits, which no fake binary can show and which this
+  # unit deliberately does not claim.
+
+  # (a) Omitted input. The accepted Unit 1 behaviour, unchanged: the mode is
+  # stated explicitly and it is `default`.
+  mkfix pmdefault task-ar claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ar --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "omitted permission mode still carries the turn" "0" "$RC"
+  args="$(cat "$ARGVLOG.args")"
+  assert_eq "  omitted input launches with exactly one --permission-mode" "1" \
+    "$(grep -cFx -- '[--permission-mode]' "$ARGVLOG.args" | tr -d ' ')"
+  assert_eq "  and its value is default" "[--permission-mode] [default]" \
+    "$(grep -A1 -Fx -- '[--permission-mode]' "$ARGVLOG.args" | tr '\n' ' ' | sed 's/ *$//')"
+  assert_absent "  and no bypass reached argv" "--dangerously-skip-permissions" "$args"
+
+  # (b) Explicit default. Same argv as omitting it — the option is a request, not
+  # a second code path.
+  mkfix pmexplicit task-as claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-as --claude-bin "$FAKEBIN" \
+          --claude-permission-mode default --log-dir "$LOGD"
+  assert_eq "explicit default carries the turn" "0" "$RC"
+  assert_eq "  and launches with exactly --permission-mode default" "[--permission-mode] [default]" \
+    "$(grep -A1 -Fx -- '[--permission-mode]' "$ARGVLOG.args" | tr '\n' ' ' | sed 's/ *$//')"
+
+  # (c) The widening itself, and what it must NOT disturb. A widened hop carries
+  # the same mandatory nested-actor rules and the same operator rules as any
+  # other; the mode is the only thing that changed.
+  mkfix pmaccept task-at claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-at --claude-bin "$FAKEBIN" \
+          --claude-permission-mode acceptEdits --claude-deny 'Bash(git push:*)' --log-dir "$LOGD"
+  assert_eq "acceptEdits carries the turn" "0" "$RC"
+  args="$(cat "$ARGVLOG.args")"
+  assert_eq "  launches with exactly --permission-mode acceptEdits" "[--permission-mode] [acceptEdits]" \
+    "$(grep -A1 -Fx -- '[--permission-mode]' "$ARGVLOG.args" | tr '\n' ' ' | sed 's/ *$//')"
+  assert_eq "  and only one --permission-mode reaches argv" "1" \
+    "$(grep -cFx -- '[--permission-mode]' "$ARGVLOG.args" | tr -d ' ')"
+  assert_absent "  and default is not also passed" "[default]" "$args"
+  assert_absent "  and no bypass reached argv" "--dangerously-skip-permissions" "$args"
+  assert_contains "  mandatory claude colon rule survives the widening" "[Bash(claude:*)]" "$args"
+  assert_contains "  mandatory claude space rule survives the widening" "[Bash(claude *)]" "$args"
+  assert_contains "  mandatory codex colon rule survives the widening" "[Bash(codex:*)]" "$args"
+  assert_contains "  mandatory codex space rule survives the widening" "[Bash(codex *)]" "$args"
+  assert_contains "  operator deny rule survives the widening" "[Bash(git push:*)]" "$args"
+
+  # (d) Everything else fails closed, BEFORE the lock, the run log and the actor.
+  # An unauthorised mode that merely failed later would already have taken the
+  # checkout's lock and written a run log for a hop that must not exist.
+  mkfix pmbad task-au claude
+  printf 'transition:codex' >"$ACTION"
+  for v in bypassPermissions BypassPermissions bypass auto manual dontAsk plan \
+           Default DEFAULT AcceptEdits ACCEPTEDITS accept-edits '' ; do
+    run_sut --checkout "$REPO" --task task-au --claude-bin "$FAKEBIN" --log-dir "$LOGD" \
+            --claude-permission-mode "$v"
+    if [ "$RC" -eq 10 ] && printf '%s' "$o" | grep -q 'RESULT outcome=STOPPED code=10'; then
+      ok "unauthorised mode '${v:-<empty>}' is BAD_USAGE (10)"
+    else
+      bad "unauthorised mode '${v:-<empty>}'" "exit=$RC out=$(printf '%s' "$o" | head -c 160)"
+    fi
+  done
+  assert_eq "  no unauthorised mode launched anything" "0" "$(invocations)"
+  # The bypass family gets its own message, because it is the value an operator
+  # is likeliest to reach for and a generic "not authorised" would not say why.
+  run_sut --checkout "$REPO" --task task-au --claude-bin "$FAKEBIN" --log-dir "$LOGD" \
+          --claude-permission-mode bypassPermissions
+  assert_contains "bypass is refused in its own words" "never launches an actor with bypass authority" "$o"
+  # A flag with no value at all must refuse, not spin. `shift 2` with one
+  # argument left shifts nothing, so an unguarded option loops forever here.
+  run_sut --checkout "$REPO" --task task-au --claude-bin "$FAKEBIN" --log-dir "$LOGD" \
+          --claude-permission-mode
+  assert_eq "a value-less flag is BAD_USAGE, not a spin" "10" "$RC"
+  assert_contains "  and says what it needs" "requires a value" "$o"
+  # The raw CLI flag stays refused. It is ambiguous about who it aims at, and the
+  # authorised route is the named one.
+  run_sut --checkout "$REPO" --task task-au --claude-bin "$FAKEBIN" --log-dir "$LOGD" \
+          --permission-mode acceptEdits
+  assert_eq "the raw --permission-mode flag is still refused" "10" "$RC"
+  assert_contains "  and points at the authorised option" "--claude-permission-mode acceptEdits" "$o"
+
+  # (e) Operator-visible help. It must describe a per-invocation widening and
+  # must not sell the allow-path set as something that prevents a write.
+  run_sut --help
+  assert_eq "--help still exits 0" "0" "$RC"
+  assert_contains "help names the option" "--claude-permission-mode" "$o"
+  assert_contains "help names both authorised values" "default" "$o"
+  assert_contains "help names the widening value" "acceptEdits" "$o"
+  assert_contains "help says the widening is opt-in for one invocation" \
+    "it lasts exactly this invocation" "$o"
+  assert_contains "help says it is not remembered" "stored nowhere and remembered nowhere" "$o"
+  assert_contains "help refuses the bypass reading" "It is NOT bypass" "$o"
+  assert_contains "help says the allow-path set detects rather than prevents" \
+    "DETECTION, NOT PREVENTION" "$o"
+  assert_contains "help says the child never reads the allow-path set" \
+    "the child never reads it" "$o"
+  assert_contains "help still refuses the containment claim" "not containment" "$o"
+  assert_contains "help says every other mode fails closed" "EVERYTHING ELSE FAILS CLOSED" "$o"
+  assert_contains "help says the widening leaves the deny set alone" \
+    "does not touch it either" "$o"
+
+  # (f) The run output an operator actually reads, on the widened hop.
+  mkfix pmsay task-av claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-av --claude-bin "$FAKEBIN" \
+          --claude-permission-mode acceptEdits --allow-path '^logs/work-loop/' --log-dir "$LOGD"
+  assert_eq "the widened hop carries" "0" "$RC"
+  assert_contains "run output names the widening as operator-approved" \
+    "OPERATOR-APPROVED WIDENING requested for THIS invocation only" "$o"
+  assert_contains "  says it is not stored" "stored nowhere" "$o"
+  assert_contains "  refuses the bypass reading" "It is not bypass" "$o"
+  assert_contains "  names the effective allow-path set" \
+    "effective allow-path set: ^logs/work-loop/" "$o"
+  assert_contains "  says that set detects rather than prevents" "DETECTION, not prevention" "$o"
+  assert_contains "  says an outside edit happens first and is reported after" \
+    "happens first and is reported afterwards" "$o"
+  assert_contains "  and keeps the nested-actor honesty" "not containment and not proof" "$o"
+  assert_contains "  and the launch line shows the mode it used" \
+    "--permission-mode acceptEdits" "$o"
+
+  # (g) The default hop says so too, so silence is never how an operator learns
+  # which mode ran.
+  mkfix pmsaydef task-aw claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-aw --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_contains "the default hop states its mode" "permission mode: default — the child asks" "$o"
+  assert_contains "  and says no widening was requested" "No widening was requested" "$o"
+  assert_absent "  and claims no widening it did not get" "OPERATOR-APPROVED WIDENING" "$o"
+
+  # (h) Claude only. A permission mode on the Codex argv would be a claim this
+  # launcher cannot support — `codex exec` takes no such option here.
+  mkfix pmcdx task-ax codex
+  printf 'nocommit:claude' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ax --codex-bin "$FAKEBIN" \
+          --claude-permission-mode acceptEdits --log-dir "$LOGD"
+  assert_eq "a Codex hop is unaffected by the widening" "0" "$RC"
+  assert_absent "  codex argv carries no permission mode" "--permission-mode" "$(cat "$ARGVLOG")"
+  assert_absent "  codex argv carries no acceptEdits" "acceptEdits" "$(cat "$ARGVLOG")"
+  assert_absent "  and no widening was announced for it" "OPERATOR-APPROVED WIDENING" "$o"
+
 section "6. One hop per invocation"
   mkfix onehop task-h claude
   printf 'transition:codex' >"$ACTION"
@@ -771,12 +914,13 @@ mutant_ok() { # path — parses and still runs
 prove_failure() {
   local mut
 
-  section "M1. Strip --permission-mode default from the attended argv"
+  section "M1. Strip the explicit --permission-mode from the attended argv"
   mut="$TMPROOT/mutant-permmode.sh"
-  sed -e 's/^\( *\)--permission-mode default \\$/\1\\/' \
-      -e 's/^\( *\)--permission-mode default$/\1/' "$SUT" >"$mut"
+  sed -e 's/^\( *\)--permission-mode "\$CLAUDE_PERMISSION_MODE" \\$/\1\\/' "$SUT" >"$mut"
   chmod +x "$mut"
-  if ! mutant_ok "$mut"; then bad "M1 mutant does not parse" "bad mutation"; else
+  if grep -qF -- '--permission-mode "$CLAUDE_PERMISSION_MODE" \' "$mut"; then
+    bad "M1 mutant did not apply" "the launch line did not match"
+  elif ! mutant_ok "$mut"; then bad "M1 mutant does not parse" "bad mutation"; else
     mkfix m1 task-m1 claude
     printf 'transition:codex' >"$ACTION"
     run_bin "$mut" --checkout "$REPO" --task task-m1 --claude-bin "$FAKEBIN" --log-dir "$LOGD"
@@ -935,7 +1079,7 @@ prove_failure() {
   # the control assertion below is what keeps this one honest.
   mut="$TMPROOT/mutant-nested.sh"
   sed -e 's|^        --disallowedTools "${deny_all\[@\]}"$||' \
-      -e 's|^        --permission-mode default \\$|        --permission-mode default|' \
+      -e 's|^        --permission-mode "\$CLAUDE_PERMISSION_MODE" \\$|        --permission-mode "$CLAUDE_PERMISSION_MODE"|' \
       "$SUT" >"$mut"
   chmod +x "$mut"
   if grep -qF -- '--disallowedTools "${deny_all[@]}"' "$mut"; then
@@ -1004,6 +1148,80 @@ prove_failure() {
     # closed: a colon-only launcher passes every colon-form assertion.
     assert_contains "M12 control: the claude colon rule still arrived" "[Bash(claude:*)]" "$(cat "$ARGVLOG.args")"
     assert_contains "M12 control: the codex colon rule still arrived" "[Bash(codex:*)]" "$(cat "$ARGVLOG.args")"
+  fi
+
+  # M13-M15 are the smallest set that separates the three ways this unit's
+  # mechanism could look implemented and not be: the request never reaching argv,
+  # an unauthorised value reaching it, and the widening reaching it unannounced.
+  # A broader matrix would re-prove the parser rather than these distinctions.
+
+  section "M13. Hardcode default back into the launch line"
+  # The pre-change shape restored: the option parses, the operator sees no error,
+  # and the request is silently dropped on the way to argv. This is the failure a
+  # test that only checked the exit code would miss entirely.
+  mut="$TMPROOT/mutant-pm-hardcoded.sh"
+  sed 's|^        --permission-mode "\$CLAUDE_PERMISSION_MODE" \\$|        --permission-mode default \\|' \
+      "$SUT" >"$mut"
+  chmod +x "$mut"
+  if ! grep -qF -- '--permission-mode default \' "$mut"; then
+    bad "M13 mutant did not apply" "the launch line did not match"
+  elif ! mutant_ok "$mut"; then bad "M13 mutant does not parse" "bad mutation"; else
+    mkfix m13 task-m13 claude
+    printf 'transition:codex' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m13 --claude-bin "$FAKEBIN" \
+            --claude-permission-mode acceptEdits --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_eq "  launches with exactly --permission-mode acceptEdits" "[--permission-mode] [acceptEdits]" \
+      "$(grep -A1 -Fx -- '[--permission-mode]' "$ARGVLOG.args" | tr '\n' ' ' | sed 's/ *$//')"
+    EXPECT_FAIL=0
+    # The hop still launched, so the assertion above failed for the right reason.
+    assert_contains "M13 control: the hop still launched" "[--permission-mode]" "$(cat "$ARGVLOG.args")"
+  fi
+
+  section "M14. Admit an unauthorised permission mode"
+  # The allowlist widened by one entry. bypassPermissions then reaches the child,
+  # which is the single outcome the operator's 2026-08-13 decision excluded.
+  mut="$TMPROOT/mutant-pm-allowlist.sh"
+  sed 's@^  default|acceptEdits) : ;;$@  default|acceptEdits|bypassPermissions) : ;;@' "$SUT" >"$mut"
+  chmod +x "$mut"
+  if ! grep -qF -- '  default|acceptEdits|bypassPermissions) : ;;' "$mut"; then
+    bad "M14 mutant did not apply" "the allowlist line did not match"
+  elif ! mutant_ok "$mut"; then bad "M14 mutant does not parse" "bad mutation"; else
+    mkfix m14 task-m14 claude
+    printf 'transition:codex' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m14 --claude-bin "$FAKEBIN" \
+            --claude-permission-mode bypassPermissions --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_eq "unauthorised mode 'bypassPermissions' is BAD_USAGE (10)" "10" "$RC"
+    EXPECT_FAIL=0
+    # A value outside the widened allowlist is still refused, so the mutant moved
+    # exactly one entry rather than removing the check.
+    run_bin "$mut" --checkout "$REPO" --task task-m14 --claude-bin "$FAKEBIN" \
+            --claude-permission-mode plan --log-dir "$LOGD"
+    assert_eq "M14 control: an unrelated mode is still refused" "10" "$RC"
+  fi
+
+  section "M15. Widen without announcing the effective allow-path set"
+  # The widening happens and the operator is not told which boundary it sits
+  # inside. The argv is identical, so only the run-output assertion can catch it.
+  mut="$TMPROOT/mutant-pm-silent.sh"
+  sed 's@^        say "  effective allow-path set: .*@        :@' "$SUT" >"$mut"
+  chmod +x "$mut"
+  if grep -qF 'say "  effective allow-path set:' "$mut"; then
+    bad "M15 mutant did not apply" "the allow-path evidence line did not match"
+  elif ! mutant_ok "$mut"; then bad "M15 mutant does not parse" "bad mutation"; else
+    mkfix m15 task-m15 claude
+    printf 'transition:codex' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m15 --claude-bin "$FAKEBIN" \
+            --claude-permission-mode acceptEdits --allow-path '^logs/work-loop/' --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_contains "  names the effective allow-path set" \
+      "effective allow-path set: ^logs/work-loop/" "$o"
+    EXPECT_FAIL=0
+    # The widening itself still ran and was still announced — the mutant removed
+    # the path evidence specifically, not the whole block.
+    assert_contains "M15 control: the widening was still announced" \
+      "OPERATOR-APPROVED WIDENING" "$o"
   fi
 }
 
