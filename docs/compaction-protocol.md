@@ -9,14 +9,17 @@ Two rules govern Claude Code session compaction in this workspace.
 
 ### Exception — an active Work Loop v2 task
 
-The trust-the-summary rule above is scoped to ordinary sessions and **does not apply while a Work Loop v2 task is active.** There, the compacted summary is orientation material, not authoritative task state. Authority runs in this order:
+The trust-the-summary rule above is scoped to ordinary sessions and **does not apply while a Work Loop v2 task is active.** There, the compacted summary is orientation material, not authoritative task state.
 
-1. The task-state file, `logs/work-loop/{task-id}.md`.
-2. The governing plan and the applicable approved workflow.
-3. Repository and Git evidence.
-4. The conversation or the compacted summary.
+Two different kinds of authority are at work, and collapsing them is the error this section has to avoid. **Governing-rule authority** says what the rules are and which sources are allowed to settle anything; **current-state authority** says what is true right now. A task-state file carries the second and never the first, so it cannot outrank the instructions that validate it. Authority runs in this order:
 
-Where the summary conflicts with any of the first three, **follow the durable evidence and report the discrepancy** rather than resolving it silently. Re-deriving state from durable sources is the expected cost here, not a violation of the cost test — the cost test governs the ordinary rule only. The `reorient` skill owns the recovery procedure; this section only settles which source wins.
+1. Permanent repository and agent instructions, plus the Work Loop v2 skill and its executable core — these govern how everything below is read and validated.
+2. The task-state file, `logs/work-loop/{task-id}.md` — authoritative for current task state.
+3. The governing plan and the applicable approved workflow.
+4. Repository and Git evidence.
+5. The conversation or the compacted summary.
+
+Where the summary conflicts with any of the first four, **follow the durable evidence and report the discrepancy** rather than resolving it silently. Re-deriving state from durable sources is the expected cost here, not a violation of the cost test — the cost test governs the ordinary rule only. The `reorient` skill owns the recovery procedure; this section only settles which source wins.
 
 ## Named checkpoints
 

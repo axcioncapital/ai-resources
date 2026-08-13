@@ -34,7 +34,10 @@ compacted.
 
 ### 2. Resolve the authoritative task without guessing
 
-Resolve the task in this order, and stop at the first step that fails.
+Resolve the task by the routes below, in order. **An unavailable route is not a
+failure** — it advances to the next route. A route that is available but fails
+any of its validations stops reorientation immediately, and no later route may
+be tried after a validation failure.
 
 **First — the preserved path.** Use the exact active `logs/work-loop/{task-id}.md`
 path and bound checkout preserved through compaction. Verify that the path is
