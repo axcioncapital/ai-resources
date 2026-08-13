@@ -66,6 +66,27 @@ TMPROOT="$(mktemp -d "${TMPDIR:-/tmp}/axh-test.XXXXXX")"
 cleanup() { rm -rf "$TMPROOT"; }
 trap cleanup EXIT
 
+# Processes literally NAMED `claude` and `codex`, so a fixture can produce a
+# genuinely observable nested actor without launching a model. They are symlinks
+# to /bin/sleep, and macOS reports `ps -o comm=` as the path the process was
+# INVOKED by rather than the symlink's target — checked on this host on
+# 2026-08-13 against a symlink named `claude` pointing at /bin/sleep, which
+# reported the symlink path. That is the same shape the real CLIs take: the
+# PATH install resolves to a version-numbered file through a `claude` symlink,
+# and the VS Code build is `.../native-binary/claude`.
+NESTDIR="$TMPROOT/nested-bin"
+mkdir -p "$NESTDIR"
+ln -sf /bin/sleep "$NESTDIR/claude"
+ln -sf /bin/sleep "$NESTDIR/codex"
+
+# A `ps` that always fails, first on PATH. Not a seam in the launcher — the
+# launcher has none and must not grow one — but a real host condition: a census
+# that cannot run must read as UNOBSERVED and never as an observed zero.
+NOPSDIR="$TMPROOT/no-ps"
+mkdir -p "$NOPSDIR"
+printf '#!/bin/bash\nexit 1\n' >"$NOPSDIR/ps"
+chmod +x "$NOPSDIR/ps"
+
 # A fake actor binary. It answers --version, records its argv and its invocation
 # count, and then performs one scripted action on the state file.
 #
@@ -89,10 +110,18 @@ trap cleanup EXIT
 #   denied-foreign     one denial, plus an out-of-allowlist file
 #   allowed-partial    an allowed file, no denial evidence, then exit 3
 #   dirty-noop         emit clean JSON with no denials, change nothing
+#   nested-actor       start ONE process named `claude` and ONE named `codex`
+#                      inside this actor's own process group, live long enough
+#                      to be sampled, then transition and commit
+#   nested-nocommit    the same, but transition WITHOUT committing — the shape a
+#                      Codex hop has to take, since Codex never runs git
+#   become-claude      transition, commit, then exec into a process named
+#                      `claude` — the actor ITSELF matches the census rule
 make_fake_actor() { # path, argv-log, count-file, action-file, state-file
   cat >"$1" <<'FAKE'
 #!/bin/bash
 ARGV_LOG="__ARGV__"; COUNT="__COUNT__"; ACTION_FILE="__ACTION__"; STATE="__STATE__"
+NESTDIR="__NESTDIR__"
 for a in "$@"; do [ "$a" = "--version" ] && { echo "fake-actor 0.0.1"; exit 0; }; done
 printf '%s\n' "$*" >>"$ARGV_LOG"
 # The same argv again, ONE ARGUMENT PER LINE and bracketed, because "$*" joins
@@ -153,10 +182,45 @@ case "$act" in
     exit 3 ;;
   dirty-noop)
     emit_json '[]' ;;
+  nested-actor)
+    # Non-interactive bash has job control off, so these inherit THIS actor's
+    # process group — which is the launcher's observation boundary. They outlive
+    # the actor deliberately: the census samples during the hop, not after it.
+    "$NESTDIR/claude" 6 &
+    "$NESTDIR/codex" 6 &
+    sleep 3
+    sed -i '' "s/^turn: .*/turn: codex/" "$STATE"
+    printf '\nactor ran beside nested processes %s\n' "$stamp" >>"$STATE"
+    git -C "$REPO" add -- "$STATE_REL" >/dev/null 2>&1
+    git -C "$REPO" commit -q -m "actor: handed on" >/dev/null 2>&1
+    emit_json '[]' ;;
+  become-claude)
+    # Transition first, then REPLACE this process with one whose executable is
+    # named `claude`. exec keeps the pid and the process group, so the top-level
+    # actor itself now matches the census's recognition rule — which is the only
+    # way to exercise the self-exclusion. Naming the fake actor script `claude`
+    # does NOT do it: a `#!/bin/bash` script reports its interpreter as comm, so
+    # such a fixture passes whether the exclusion exists or not.
+    sed -i '' "s/^turn: .*/turn: codex/" "$STATE"
+    printf '\nactor became claude %s\n' "$stamp" >>"$STATE"
+    git -C "$REPO" add -- "$STATE_REL" >/dev/null 2>&1
+    git -C "$REPO" commit -q -m "actor: handed on" >/dev/null 2>&1
+    emit_json '[]'
+    exec "$NESTDIR/claude" 3 ;;
+  nested-nocommit)
+    # The same observation, on a hop that must not run git. Codex never commits
+    # (core § 4), so the committing variant above would be classified as the
+    # protocol violation it is and never reach the observation assertions.
+    "$NESTDIR/claude" 6 &
+    "$NESTDIR/codex" 6 &
+    sleep 3
+    sed -i '' "s/^turn: .*/turn: claude/" "$STATE"
+    printf '\ncodex ran beside nested processes %s\n' "$stamp" >>"$STATE" ;;
 esac
 exit 0
 FAKE
-  sed -i '' -e "s|__ARGV__|$2|" -e "s|__COUNT__|$3|" -e "s|__ACTION__|$4|" -e "s|__STATE__|$5|" "$1"
+  sed -i '' -e "s|__ARGV__|$2|" -e "s|__COUNT__|$3|" -e "s|__ACTION__|$4|" -e "s|__STATE__|$5|" \
+            -e "s|__NESTDIR__|$NESTDIR|" "$1"
   chmod +x "$1"
 }
 
@@ -898,6 +962,87 @@ section "15. Post-hop classification — one evidence set, one ordered verdict"
   assert_absent "no branch tells the reader to commit the handback" \
     "If the edit is complete, commit it and re-run" "$(cat "$SUT")"
 
+section "16. Actor and nested-actor observation"
+
+  # 16.1 The ordinary attended hop: exactly one top-level actor, and nothing
+  # named claude or codex observed beside it. The zero is an OBSERVED zero, and
+  # the run output has to say that rather than implying absence.
+  mkfix nest0 task-an claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-an --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a plain hop carries" "0" "$RC"
+  assert_contains "  RESULT counts one top-level actor and no observed nested one" \
+    "actors=1 nested=0" "$o"
+  assert_contains "  the evidence block names the observation, not an absence" \
+    "no process named claude or codex was observed" "$o"
+  assert_contains "  and says what the observation boundary was" \
+    "actor's process group" "$o"
+  assert_contains "  and refuses to read the zero as containment" \
+    "not proof that none existed" "$o"
+  # The run log is the trial's record, so the counts must survive there too.
+  assert_contains "  the run log carries the same RESULT line" "actors=1 nested=0" \
+    "$(cat "$LOGD"/*.log)"
+
+  # 16.2 The case the field exists for. Two processes named claude and codex run
+  # inside the actor's own process group; both must be counted and both named.
+  mkfix nest2 task-ao claude
+  printf 'nested-actor' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ao --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a hop with nested processes still carries" "0" "$RC"
+  assert_contains "  RESULT reports the observed nested count" "actors=1 nested=2" "$o"
+  assert_contains "  the evidence block names the observed claude process" \
+    "nested-bin/claude" "$o"
+  assert_contains "  and the observed codex process" "nested-bin/codex" "$o"
+  assert_contains "  and the run log carries it" "actors=1 nested=2" "$(cat "$LOGD"/*.log)"
+
+  # 16.3 A Codex hop is observed the same way. The boundary is the actor's
+  # process group, not which actor happens to be in it.
+  mkfix nestcodex task-ap codex
+  printf 'nested-nocommit' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ap --codex-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a Codex hop with nested processes carries" "0" "$RC"
+  assert_contains "  and is observed the same way" "actors=1 nested=2" "$o"
+
+  # 16.4 The top-level actor is never its own nested actor. Without the
+  # exclusion every Claude hop would report nesting that is only itself, and a
+  # field that fires on the normal case tells an operator nothing. The actor
+  # here execs into a process genuinely named `claude`, which is what makes the
+  # exclusion the thing under test rather than the fixture's naming.
+  mkfix nestself task-aq claude
+  printf 'become-claude' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-aq --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "an actor whose own process is named claude still carries" "0" "$RC"
+  assert_contains "  and does not count itself as nested" "actors=1 nested=0" "$o"
+
+  # 16.5 Three states, not two — the same rule the permission evidence follows.
+  # A census that cannot run is UNOBSERVED, and reporting it as 0 would turn
+  # missing evidence into a clean bill of health.
+  mkfix nestnops task-ar claude
+  printf 'transition:codex' >"$ACTION"
+  o="$(PATH="$NOPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-ar \
+        --claude-bin "$FAKEBIN" --log-dir "$LOGD" 2>&1)"; RC=$?
+  assert_eq "a hop whose census cannot run still carries" "0" "$RC"
+  assert_contains "  reports the nested count as unobserved, not as zero" \
+    "nested=unobserved" "$o"
+  assert_contains "  and says so in words" "NO OBSERVATION" "$o"
+  assert_contains "  and warns it is not the same as none" \
+    "not the same as 'none observed'" "$o"
+
+  # 16.6 Nothing was launched, so there is nothing to have observed. `n/a` is
+  # the honest value; a 0 here would claim an observation that never happened.
+  mkfix nestdry task-as claude
+  run_sut --checkout "$REPO" --task task-as --claude-bin "$FAKEBIN" --dry-run --log-dir "$LOGD"
+  assert_eq "dry run validates" "0" "$RC"
+  assert_contains "  and reports no actor and no observation" "actors=0 nested=n/a" "$o"
+  assert_eq "  and launched nothing" "0" "$(invocations)"
+
+  # 16.7 A refusal before any launch reports the same way.
+  mkfix nestrefuse task-at claude
+  run_sut --checkout "$REPO" --task task-at --claude-permission-mode bypassPermissions \
+          --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "an unauthorised mode is still BAD_USAGE" "10" "$RC"
+  assert_contains "  and reports no actor and no observation" "actors=0 nested=n/a" "$o"
+
 }
 
 # ------------------------------------------------------- fail-capability proof
@@ -1222,6 +1367,70 @@ prove_failure() {
     # the path evidence specifically, not the whole block.
     assert_contains "M15 control: the widening was still announced" \
       "OPERATOR-APPROVED WIDENING" "$o"
+  fi
+
+  # M16-M18 separate the three ways the observation could look implemented and
+  # not be: never sampling at all, counting the actor as its own nested actor,
+  # and reporting a census that never ran as an observed zero.
+
+  section "M16. Never sample the actor's process group"
+  # The state before this unit: the launcher tracks a process-group identity and
+  # censuses nothing inside it, so a nested actor passes unremarked.
+  mut="$TMPROOT/mutant-nocensus.sh"
+  sed '/observe_nested "$pid" "$pid" || true/d' "$SUT" >"$mut"
+  chmod +x "$mut"
+  if grep -qF 'observe_nested "$pid" "$pid" || true' "$mut"; then
+    bad "M16 mutant did not apply" "the census call lines did not match"
+  elif ! mutant_ok "$mut"; then bad "M16 mutant does not parse" "bad mutation"; else
+    mkfix m16 task-m16 claude
+    printf 'nested-actor' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m16 --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_contains "  RESULT reports the observed nested count" "actors=1 nested=2" "$o"
+    assert_contains "  the evidence block names the observed claude process" "nested-bin/claude" "$o"
+    EXPECT_FAIL=0
+    # The hop still ran and still counted its top-level actor, so the assertions
+    # above failed because nothing was sampled rather than because nothing ran.
+    assert_contains "M16 control: the hop still launched one actor" "actors=1" "$o"
+  fi
+
+  section "M17. Count the top-level actor as its own nested actor"
+  # Drop the exclusion and every Claude hop reports nesting that is only itself
+  # — a field that fires on the normal case tells an operator nothing.
+  mut="$TMPROOT/mutant-selfcount.sh"
+  sed 's|^    \[ "\$pid" = "\$top" \] && { saw_top=1; continue; }$|    [ "$pid" = "$top" ] \&\& saw_top=1|' \
+      "$SUT" >"$mut"
+  chmod +x "$mut"
+  if grep -qF 'saw_top=1; continue;' "$mut"; then
+    bad "M17 mutant did not apply" "the exclusion line did not match"
+  elif ! mutant_ok "$mut"; then bad "M17 mutant does not parse" "bad mutation"; else
+    mkfix m17 task-m17 claude
+    printf 'become-claude' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m17 --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_contains "  and does not count itself as nested" "actors=1 nested=0" "$o"
+    EXPECT_FAIL=0
+    assert_contains "M17 control: the hop still launched" "actors=1" "$o"
+  fi
+
+  section "M18. Report a census that never ran as an observed zero"
+  # Collapses three states into two, the same defect the permission evidence
+  # already guards against: unknown becomes a clean bill of health.
+  mut="$TMPROOT/mutant-nestedzero.sh"
+  sed 's|^  R_NESTED="unobserved"$|  R_NESTED="0"|' "$SUT" >"$mut"
+  chmod +x "$mut"
+  if grep -qF '  R_NESTED="unobserved"' "$mut"; then
+    bad "M18 mutant did not apply" "the unobserved seed line did not match"
+  elif ! mutant_ok "$mut"; then bad "M18 mutant does not parse" "bad mutation"; else
+    mkfix m18 task-m18 claude
+    printf 'transition:codex' >"$ACTION"
+    o="$(PATH="$NOPSDIR:$PATH" "$mut" --checkout "$REPO" --task task-m18 \
+          --claude-bin "$FAKEBIN" --log-dir "$LOGD" 2>&1)"; RC=$?
+    EXPECT_FAIL=1
+    assert_contains "  reports the nested count as unobserved, not as zero" "nested=unobserved" "$o"
+    assert_contains "  and says so in words" "NO OBSERVATION" "$o"
+    EXPECT_FAIL=0
+    assert_contains "M18 control: the hop still launched" "actors=1" "$o"
   fi
 }
 

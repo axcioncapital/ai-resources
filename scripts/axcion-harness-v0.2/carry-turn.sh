@@ -157,9 +157,25 @@
 # repository was provably unchanged; that belongs to unattended running, where
 # nobody is watching.)
 #
+# NESTED-ACTOR OBSERVATION. Separately from the requested deny rules above, and
+# never as a substitute for them, every LIVE hop is watched: the actor's own
+# process group is sampled while the actor runs, and processes in it named
+# `claude` or `codex` — excluding the top-level actor itself — are counted. The
+# largest count any one sample saw is reported, on the RESULT line and in the
+# run log.
+#
+# READ THE ZERO HONESTLY. `nested=0` means no such process was OBSERVED, in that
+# group, during that window, by that rule. It is not proof that none existed and
+# it is not containment. A requested deny rule, a successful hop, or the absence
+# of a denial is never evidence of an observed zero — only a sample that ran is,
+# which is why `nested=unobserved` exists and is not the same value. The full
+# mechanism, the recognition rule and the blind spots it does not cover are
+# documented at the observe_nested function below.
+#
 # EVERY terminal path prints one RESULT line as its last line:
 #   RESULT outcome=<CARRIED|OPERATOR_TERMINAL|STOPPED|VALIDATED> code=<n> ...
-#          ... denials=<n|unavailable|n/a> partial=<n>
+#          ... denials=<n|unavailable|n/a> partial=<n> ...
+#          ... actors=<n> nested=<n|unobserved|n/a>
 # Neither that line nor this exit code is authoritative over the state file
 # (core § 4). A courier reads the file.
 #
@@ -225,6 +241,18 @@ R_MODE="live"
 # number when nothing could be read: `unavailable` and `0` mean different things.
 R_DENIALS="n/a"
 R_PARTIAL="0"
+# Actor observation. `actors` counts the top-level actors THIS invocation
+# launched — observed at the launch itself, not asserted from the one-hop rule.
+# `nested` carries the same three-state honesty as `denials`: `n/a` when nothing
+# launched, `unobserved` when the census could not run, and a number only when it
+# did. See NESTED-ACTOR OBSERVATION above.
+R_ACTORS="0"
+R_NESTED="n/a"
+
+ACTORS_LAUNCHED=0
+NESTED_MAX=0
+NESTED_SAMPLES=0
+NESTED_SEEN=""
 
 ACTOR_CAPTURE=""
 
@@ -242,9 +270,9 @@ say() {
 }
 
 result_line() { # outcome, code
-  printf 'RESULT outcome=%s code=%s task=%s mode=%s actor=%s turn_before=%s turn_after=%s denials=%s partial=%s\n' \
+  printf 'RESULT outcome=%s code=%s task=%s mode=%s actor=%s turn_before=%s turn_after=%s denials=%s partial=%s actors=%s nested=%s\n' \
     "$1" "$2" "${TASK:-none}" "$R_MODE" "$R_ACTOR" "${R_BEFORE:-none}" "${R_AFTER:-none}" \
-    "$R_DENIALS" "$R_PARTIAL"
+    "$R_DENIALS" "$R_PARTIAL" "$R_ACTORS" "$R_NESTED"
 }
 
 die() { # code, message
@@ -666,6 +694,89 @@ on_signal() { # signal name
 trap 'on_signal SIGINT' INT
 trap 'on_signal SIGTERM' TERM
 
+# -------------------------------------------------- nested-actor observation
+#
+# WHAT THIS IS. A census of the actor's own process group, repeated while the
+# actor runs, counting processes whose executable name is `claude` or `codex`
+# and which are not the top-level actor itself. The largest count any single
+# sample saw is what gets reported.
+#
+# WHAT IT IS NOT. It is not prevention, not containment, and not a process
+# limit. Nothing here stops a nested actor; the mandatory --disallowedTools set
+# asks the child not to start one, and this says what was actually seen. The two
+# are separate claims and neither substitutes for the other. In particular, a
+# requested deny rule, a successful hop and the absence of a denial are NOT
+# evidence of an observed zero — only a sample that ran is.
+#
+# THE BOUNDARY IS THE ACTOR'S PROCESS GROUP. `set -m` in run_bounded makes the
+# actor a process-group leader, and a non-interactive child inherits that group,
+# so a nested actor started the ordinary way lands inside it. The census is
+# scoped to that group and never to the machine: a developer's unrelated editor
+# sessions are not this hop's nested actors, and counting them would make the
+# field meaningless.
+#
+# A SAMPLE ONLY COUNTS IF IT SAW THE TOP-LEVEL ACTOR. That is the census
+# proving to itself that the group was actually readable. Without it, a `ps`
+# that returned nothing would be indistinguishable from a group with nothing in
+# it, and an empty answer would quietly become an observed zero.
+#
+# HOW A PROCESS IS RECOGNISED. By the basename of `ps -o comm=`, which on this
+# platform reports the path the process was INVOKED by rather than the resolved
+# symlink target — checked on 2026-08-13 against a symlink named `claude`
+# pointing elsewhere, which reported the symlink path. Both real installs are
+# caught by that rule: the PATH install runs through a `claude` symlink, and the
+# VS Code build is `.../native-binary/claude`. The default --codex-bin
+# (/Applications/ChatGPT.app/Contents/Resources/codex) likewise ends in `codex`.
+#
+# BLIND SPOTS, STATED RATHER THAN GLOSSED. A zero means no such process was
+# observed here, during this window, by this rule. It does not mean none
+# existed. Not covered:
+#   - a nested actor started through a wrapper or interpreter, where the
+#     executable is `bash` or `node` and the actor's name is only an argument;
+#   - a renamed or copied binary;
+#   - a process that both started and exited between two samples (~1s apart);
+#   - a process that left the group, e.g. via setsid or a daemonising launcher;
+#   - anything at all once the hop has ended — the window is the hop.
+# Checked on this host on 2026-08-13: no running `claude` or `codex` process had
+# a `claude` or `codex` parent, so a same-named worker fork is not a known
+# source of false positives here. That is an observation of one host on one day,
+# not a property of every build.
+
+# One sample. Returns 0 when the sample was valid, 1 when it was not.
+observe_nested() { # pgid, top-level-pid
+  local pgid="$1" top="$2" out saw_top=0 n=0 pid gid comm base
+  out="$(ps -o pid=,pgid=,comm= -g "$pgid" 2>/dev/null)" || return 1
+  [ -n "$out" ] || return 1
+
+  # A here-doc, not a pipe: a pipe would run the loop in a subshell and every
+  # count would be discarded at the end of it.
+  while read -r pid gid comm; do
+    [ -n "$pid" ] && [ -n "$comm" ] || continue
+    [ "$gid" = "$pgid" ] || continue
+    [ "$pid" = "$top" ] && { saw_top=1; continue; }
+    base="${comm##*/}"
+    case "$base" in
+      claude|codex)
+        n=$((n + 1))
+        case "$NESTED_SEEN" in
+          *"(pid $pid)"*) : ;;
+          *) NESTED_SEEN="${NESTED_SEEN}    - (pid $pid) $comm"$'\n' ;;
+        esac
+        ;;
+    esac
+  done <<EOF
+$out
+EOF
+
+  [ "$saw_top" -eq 1 ] || return 1
+  NESTED_SAMPLES=$((NESTED_SAMPLES + 1))
+  [ "$n" -gt "$NESTED_MAX" ] && NESTED_MAX="$n"
+  # Published on every valid sample rather than at the end of the hop, so an
+  # interrupted or timed-out run still reports what had been observed by then.
+  R_NESTED="$NESTED_MAX"
+  return 0
+}
+
 # ------------------------------------------------------------- actor launch
 
 # Wall-clock bound without timeout(1), which is not installed on this platform.
@@ -684,6 +795,20 @@ run_bounded() { # timeout, logfile, cmd...
   set +m
 
   ACTOR_PGID="$pid"
+
+  # Counted at the launch itself. The one-hop rule says there should be exactly
+  # one; a field that restated the rule instead of observing it could never
+  # disagree with it, and so could never be evidence.
+  ACTORS_LAUNCHED=$((ACTORS_LAUNCHED + 1))
+  R_ACTORS="$ACTORS_LAUNCHED"
+  # An actor launched but no valid sample yet. If the census never runs, this is
+  # what gets reported — never a 0.
+  R_NESTED="unobserved"
+
+  # One sample before the loop, so a hop that ends immediately still gets an
+  # observation window rather than reporting `unobserved` on a race.
+  observe_nested "$pid" "$pid" || true
+
   start="$(date '+%s')"
 
   while kill -0 "$pid" 2>/dev/null; do
@@ -693,6 +818,7 @@ run_bounded() { # timeout, logfile, cmd...
       ACTOR_PGID=""
       return 124
     fi
+    observe_nested "$pid" "$pid" || true
     sleep 1
   done
 
@@ -1013,6 +1139,24 @@ report_hop() {
   esac
   [ "$DENIAL_STATE" = "unavailable" ] && \
     say "                     That is not the same as 'no denials'; treat it as unknown."
+
+  # Actor observation. Stated as what was SEEN, with the boundary and the window
+  # named, so a zero can never be read back as a containment claim.
+  say "    actors:          $R_ACTORS top-level actor(s) launched by this invocation"
+  case "$R_NESTED" in
+    n/a)
+      say "    nested actors:   n/a — nothing was launched, so nothing was observed" ;;
+    unobserved)
+      say "    nested actors:   NO OBSERVATION — the process census could not run, so the nested count is unknown."
+      say "                     That is not the same as 'none observed'; treat it as unknown." ;;
+    0)
+      say "    nested actors:   0 observed — no process named claude or codex was observed in the actor's process group across $NESTED_SAMPLES sample(s)."
+      say "                     Observation only: it is not proof that none existed. A wrapper-launched, renamed, short-lived or regrouped process is outside what this can see." ;;
+    *)
+      say "    nested actors:   $R_NESTED OBSERVED in the actor's process group across $NESTED_SAMPLES sample(s):"
+      printf '%s' "$NESTED_SEEN" | sed '/^$/d' | while IFS= read -r l; do say "$l"; done
+      say "                     One attended hop should stay one attended hop. Read the capture before accepting this handback." ;;
+  esac
 
   # Attribution, always both halves. Pre-existing dirt is named separately so it
   # can never be read as something this hop did.
