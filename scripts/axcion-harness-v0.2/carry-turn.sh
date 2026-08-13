@@ -28,9 +28,11 @@
 #                      This has to describe what the UNIT may touch, so it is a
 #                      per-task input. Too narrow gives a false stop; too wide
 #                      makes the check mean nothing.
-#   --claude-deny RULE repeatable. Passed to the Claude child as
-#                      --disallowedTools RULE, e.g. 'Bash(git push:*)'. Default:
-#                      none. It can only narrow the child's authority further.
+#   --claude-deny RULE repeatable. APPENDED to the mandatory nested-actor rules
+#                      below and passed to the Claude child as one
+#                      --disallowedTools list, e.g. 'Bash(git push:*)'. Default:
+#                      none extra. It can only narrow the child's authority
+#                      further — it cannot displace or replace a mandatory rule.
 #   --log-dir DIR      run evidence directory.
 #                      Default <checkout>/logs/harness-runs
 #   --dry-run          validate and route; launch nothing
@@ -44,6 +46,31 @@
 # at launch fixes that without editing any settings.json. It is a permission
 # policy, not containment: it makes the child ask, it does not sandbox it.
 # `--dangerously-skip-permissions` is never passed, on any path.
+#
+# NESTED ACTORS. Every Claude hop is ALSO launched with a mandatory
+# --disallowedTools set that asks the child to refuse the ordinary direct Bash
+# routes for starting another `claude` or another `codex`:
+#
+#     Bash(claude:*)   Bash(codex:*)
+#
+# It is passed with or without --claude-deny, there is no flag to turn it off,
+# and operator --claude-deny rules are APPENDED to it rather than replacing it.
+# One attended hop should stay one attended hop; without this, a hop can expand
+# into nested Claude or Codex processes that nobody launched and nobody watches.
+#
+# READ THIS HONESTLY. These are REQUESTED PERMISSION RULES, evaluated by the
+# Claude child itself. They block the DEFAULT DIRECT ROUTE. They are not OS
+# containment, not a sandbox, not a process limit, and NOT proof that nesting is
+# impossible — a determined or differently-worded invocation is not covered, and
+# this surface makes no claim that it is. What is verifiable here is the argv:
+# the rules are requested on every Claude launch. Enforcement belongs to the
+# child, and only attended operation makes that trustworthy.
+#
+# The Codex actor path carries NO equivalent. `codex exec` (0.147.0-alpha.6.5)
+# offers sandbox modes and config overrides, not a per-command deny list, so
+# there is no native already-used mechanism to request the same of a Codex hop.
+# This policy therefore covers the Claude child only, and saying otherwise would
+# be a claim this script cannot support.
 #
 # Exit codes. 0 is the only success, and the RESULT line says which success it is
 # — read that line, not the code alone.
@@ -115,6 +142,17 @@ LOG_DIR=""
 DRY_RUN=0
 ALLOW_PATHS=()
 CLAUDE_DENY=()
+
+# Requested of EVERY Claude hop, whatever else is passed. Not an option, not
+# overridable, and deliberately not derived from anything the caller supplies:
+# an operator rule can only be added after these, never in place of one.
+# `--disallowedTools` takes a space- or comma-separated list on Claude Code
+# 2.1.220 (`--disallowedTools, --disallowed-tools <tools...>`), so the mandatory
+# rules and the operator's are one list, mandatory first.
+CLAUDE_DENY_MANDATORY=(
+  'Bash(claude:*)'
+  'Bash(codex:*)'
+)
 
 TERM_GRACE_SECS=5
 KILL_SETTLE_SECS=2
@@ -627,17 +665,23 @@ launch_actor() { # actor, timeout -> exit status of the launch
       # assignment to ACTOR_PGID, leaving the signal handler with nothing to
       # terminate on exactly the hop that matters most. cd and restore instead.
       local prev_pwd="$PWD" rc_claude
-      cd "$CHECKOUT" || die 11 "cannot enter checkout: $CHECKOUT"
+      # ONE launch line, not two. The mandatory nested-actor rules are never
+      # absent, so there is no --claude-deny branch left to diverge: the
+      # operator's rules only ever extend a list that already exists. The
+      # earlier two-branch shape is what allowed a plain hop to carry no
+      # --disallowedTools at all.
+      local deny_all
+      deny_all=("${CLAUDE_DENY_MANDATORY[@]}")
       if [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
-        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default --disallowedTools ${CLAUDE_DENY[*]} (cwd=<checkout>)"
-        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
-          --permission-mode default \
-          --disallowedTools "${CLAUDE_DENY[@]}"
-      else
-        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default (cwd=<checkout>)"
-        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
-          --permission-mode default
+        deny_all+=("${CLAUDE_DENY[@]}")
       fi
+      cd "$CHECKOUT" || die 11 "cannot enter checkout: $CHECKOUT"
+      say "  nested-actor policy: requesting ${CLAUDE_DENY_MANDATORY[*]} on every Claude hop — mandatory, no override; --claude-deny appends after it."
+      say "  This is requested permission policy the child evaluates. It blocks the default direct route; it is not containment and not proof that nesting is impossible."
+      say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default --disallowedTools ${deny_all[*]} (cwd=<checkout>)"
+      run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
+        --permission-mode default \
+        --disallowedTools "${deny_all[@]}"
       rc_claude=$?
       cd "$prev_pwd" || true
       return "$rc_claude"

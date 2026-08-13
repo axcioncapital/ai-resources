@@ -95,6 +95,12 @@ make_fake_actor() { # path, argv-log, count-file, action-file, state-file
 ARGV_LOG="__ARGV__"; COUNT="__COUNT__"; ACTION_FILE="__ACTION__"; STATE="__STATE__"
 for a in "$@"; do [ "$a" = "--version" ] && { echo "fake-actor 0.0.1"; exit 0; }; done
 printf '%s\n' "$*" >>"$ARGV_LOG"
+# The same argv again, ONE ARGUMENT PER LINE and bracketed, because "$*" joins
+# with spaces and so cannot tell `--disallowedTools 'A B'` (one argument) from
+# `--disallowedTools A B` (two). Truncated per launch, so it always describes
+# the launch just made rather than an accumulation.
+: >"$ARGV_LOG.args"
+for a in "$@"; do printf '[%s]\n' "$a" >>"$ARGV_LOG.args"; done
 printf 'x' >>"$COUNT"
 REPO="$(dirname "$(dirname "$(dirname "$STATE")")")"
 STATE_REL="logs/work-loop/$(basename "$STATE")"
@@ -290,8 +296,93 @@ section "5. Attended permission-mode argv (real argv, fake binary)"
   assert_eq "deny-narrowed launch carries the turn" "0" "$RC"
   argv="$(cat "$ARGVLOG")"
   assert_contains "deny path ALSO carries --permission-mode default" "--permission-mode default" "$argv"
-  assert_contains "deny path passes the deny rule through" "--disallowedTools Bash(git push:*)" "$argv"
+  assert_contains "deny path passes the deny rule through" "Bash(git push:*)" "$argv"
   assert_absent "deny path has no permission bypass" "--dangerously-skip-permissions" "$argv"
+
+section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
+  # One attended hop must stay one attended hop. The rules below are REQUESTED of
+  # the Claude child on every launch; what this section proves is the argv, not
+  # the child's enforcement of it — see the launcher's NESTED ACTORS block.
+  #
+  # Assertions read the per-argument log, not "$*". Bracketed one-per-line is the
+  # only shape that can tell a rule passed as its own argument from two rules
+  # accidentally collapsed into one string.
+
+  # (a) No --claude-deny at all. This is the shape that used to carry no
+  # --disallowedTools whatsoever, and it is the release blocker this unit closes.
+  mkfix nested task-an claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-an --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "plain attended launch still carries the turn" "0" "$RC"
+  args="$(cat "$ARGVLOG.args")"
+  assert_contains "plain launch requests --disallowedTools at all" "[--disallowedTools]" "$args"
+  assert_contains "  denies direct Bash launch of claude" "[Bash(claude:*)]" "$args"
+  assert_contains "  denies direct Bash launch of codex" "[Bash(codex:*)]" "$args"
+  assert_contains "  and keeps --permission-mode default" "--permission-mode default" "$(cat "$ARGVLOG")"
+
+  # (b) With operator rules. The mandatory set must survive verbatim and the
+  # operator's rules must ADD to it — displacement is the failure mode.
+  mkfix nesteddeny task-ao claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ao --claude-bin "$FAKEBIN" \
+          --claude-deny 'Bash(git push:*)' --claude-deny 'WebFetch' --log-dir "$LOGD"
+  assert_eq "operator-deny launch carries the turn" "0" "$RC"
+  args="$(cat "$ARGVLOG.args")"
+  assert_contains "operator rules do not displace the claude rule" "[Bash(claude:*)]" "$args"
+  assert_contains "operator rules do not displace the codex rule" "[Bash(codex:*)]" "$args"
+  assert_contains "  operator rule 1 appended verbatim" "[Bash(git push:*)]" "$args"
+  assert_contains "  operator rule 2 appended verbatim" "[WebFetch]" "$args"
+  assert_eq "  exactly one --disallowedTools flag, one list" "1" \
+    "$(grep -cFx -- '[--disallowedTools]' "$ARGVLOG.args" | tr -d ' ')"
+  # Mandatory first, operator after: the flag, then the two mandatory rules, then
+  # the operator's. Order is what makes "appended" a checkable word.
+  assert_eq "  mandatory rules precede the operator's" \
+    "[--disallowedTools] [Bash(claude:*)] [Bash(codex:*)] [Bash(git push:*)] [WebFetch]" \
+    "$(grep -A4 -Fx -- '[--disallowedTools]' "$ARGVLOG.args" | tr '\n' ' ' | sed 's/ *$//')"
+  assert_absent "  and still no permission bypass" "--dangerously-skip-permissions" "$args"
+
+  # (c) There must be no way to ask for the set to be dropped. A flag that turned
+  # it off would make every assertion above conditional on operator goodwill.
+  assert_absent "no flag disables the mandatory set" "--allow-nested" "$(cat "$SUT")"
+  assert_absent "no flag replaces the mandatory set" "--claude-deny-replace" "$(cat "$SUT")"
+  assert_absent "the mandatory set is not built from operator input" \
+    'CLAUDE_DENY_MANDATORY=("${CLAUDE_DENY' "$(cat "$SUT")"
+
+  # (d) Operator-visible honesty. The help block must describe requested policy,
+  # and must not sell it as containment.
+  run_sut --help
+  assert_eq "--help exits 0" "0" "$RC"
+  assert_contains "help states the mandatory claude rule" "Bash(claude:*)" "$o"
+  assert_contains "help states the mandatory codex rule" "Bash(codex:*)" "$o"
+  assert_contains "help says operator rules append" "APPENDED" "$o"
+  # Needle deliberately includes --claude-deny: the help block already said "no
+  # flag to turn it off" about --permission-mode, so the short phrase passed
+  # against the pre-change launcher and proved nothing about this policy.
+  assert_contains "help says there is no way to turn it off" \
+    "with or without --claude-deny, there is no flag to turn it off" "$o"
+  assert_contains "help calls it requested permission rules" "REQUESTED PERMISSION RULES" "$o"
+  assert_contains "help refuses the containment claim" "not OS" "$o"
+  assert_contains "help refuses the impossibility claim" "NOT proof that nesting is" "$o"
+  assert_contains "help states the Codex path is not covered" "Codex actor path carries NO equivalent" "$o"
+
+  # (e) The run output an operator actually reads must say the same thing.
+  mkfix nestedsay task-ap claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ap --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_contains "run output names the policy" "nested-actor policy" "$o"
+  assert_contains "  says it is mandatory with no override" "mandatory, no override" "$o"
+  assert_contains "  says operator rules append" "--claude-deny appends" "$o"
+  assert_contains "  and does not sell it as containment" "not containment and not proof" "$o"
+
+  # (f) A Codex hop is unaffected. This unit changes the Claude launch path only,
+  # and a deny set leaking onto the Codex argv would be a claim the launcher
+  # cannot support.
+  mkfix nestedcdx task-aq codex
+  printf 'nocommit:claude' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-aq --codex-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "codex hop still carries" "0" "$RC"
+  assert_absent "codex argv carries no deny set" "--disallowedTools" "$(cat "$ARGVLOG")"
+  assert_absent "codex argv carries no claude rule" "Bash(claude:*)" "$(cat "$ARGVLOG")"
 
 section "6. One hop per invocation"
   mkfix onehop task-h claude
@@ -817,6 +908,59 @@ prove_failure() {
     assert_eq "a denial with no effect is PERMISSION_DENIED (37)" "37" "$RC"
     assert_contains "names the denied tool" "- Bash — " "$o"
     EXPECT_FAIL=0
+  fi
+
+  section "M10. Drop --disallowedTools from the Claude launch"
+  # The pre-Unit-3 plain shape restored: the flag is simply not passed, so a hop
+  # carries no nested-actor rules at all.
+  #
+  # NOT by emptying CLAUDE_DENY_MANDATORY, which was the first attempt: under
+  # `set -u` on bash 3.2 an empty array expansion aborts the launcher, so the
+  # assertions "failed" because nothing launched rather than because the rules
+  # were missing. A mutant whose failure has the wrong cause proves nothing, and
+  # the control assertion below is what keeps this one honest.
+  mut="$TMPROOT/mutant-nested.sh"
+  sed -e 's|^        --disallowedTools "${deny_all\[@\]}"$||' \
+      -e 's|^        --permission-mode default \\$|        --permission-mode default|' \
+      "$SUT" >"$mut"
+  chmod +x "$mut"
+  if grep -qF -- '--disallowedTools "${deny_all[@]}"' "$mut"; then
+    bad "M10 mutant did not apply" "the launch line did not match"
+  elif ! mutant_ok "$mut"; then bad "M10 mutant does not parse" "bad mutation"; else
+    mkfix m10 task-m10 claude
+    printf 'transition:codex' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m10 --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_contains "plain launch requests --disallowedTools at all" "[--disallowedTools]" "$(cat "$ARGVLOG.args")"
+    assert_contains "  denies direct Bash launch of claude" "[Bash(claude:*)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "  denies direct Bash launch of codex" "[Bash(codex:*)]" "$(cat "$ARGVLOG.args")"
+    EXPECT_FAIL=0
+    # The launch still HAPPENED. Without this, an aborted launcher would score as
+    # three proof-hits and the mutant would be measuring the wrong thing.
+    assert_contains "M10 control: the hop still launched" "[--permission-mode]" "$(cat "$ARGVLOG.args")"
+  fi
+
+  section "M11. Let operator rules replace the mandatory set"
+  # The pre-Unit-3 behaviour restored where --claude-deny is supplied: the
+  # operator's list becomes the whole list. The mandatory rules vanish while the
+  # flag is still present, which is the bypass a plain absence check would miss.
+  mut="$TMPROOT/mutant-nested-replace.sh"
+  sed 's|^      deny_all=("${CLAUDE_DENY_MANDATORY\[@\]}")$|      deny_all=()|' "$SUT" >"$mut"
+  chmod +x "$mut"
+  if ! grep -qF '      deny_all=()' "$mut"; then
+    bad "M11 mutant did not apply" "the deny_all seed line did not match"
+  elif ! mutant_ok "$mut"; then bad "M11 mutant does not parse" "bad mutation"; else
+    mkfix m11 task-m11 claude
+    printf 'transition:codex' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m11 --claude-bin "$FAKEBIN" \
+            --claude-deny 'Bash(git push:*)' --claude-deny 'WebFetch' --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_contains "operator rules do not displace the claude rule" "[Bash(claude:*)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "operator rules do not displace the codex rule" "[Bash(codex:*)]" "$(cat "$ARGVLOG.args")"
+    EXPECT_FAIL=0
+    # The operator's own rules DID still arrive — proof the mutant removed the
+    # mandatory set specifically, rather than breaking the launch outright.
+    assert_contains "M11 control: the operator's rules still arrived" "[WebFetch]" "$(cat "$ARGVLOG.args")"
   fi
 }
 
