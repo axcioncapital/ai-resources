@@ -1,6 +1,6 @@
 ---
 task: axcion-harness-v0-2-readiness-fixes
-turn: codex
+turn: operator
 ---
 
 ## Objective and scope
@@ -94,6 +94,12 @@ broader permissions, destructive action, or acceptance of a material readiness r
 false premise rather than expanding scope.
 
 ## Latest result
+
+Codex accepts Unit 6. The implementation supplies the required stable `actors` and `nested`
+observations in both the run log and terminal `RESULT`; its fail-capable simulated-process evidence
+covers zero, nonzero and unavailable observation without regressing the existing carrier suite. The
+bounded blind spots are acceptable for supervised trials because they are disclosed in the carrier
+and the result never represents observation as proof of containment.
 
 Inspected (2026-08-13):
 
@@ -198,10 +204,10 @@ New deferrals noticed during Unit 6, recorded and not done:
 
 ## Blocker
 
-None.
+None. On 2026-08-13 the operator authorized one clean dedicated trial checkout, reused serially after
+each trial task closes.
 
 ## Next action
 
-Codex: assess Unit 6 — whether the observation mechanism is honest about what it can and cannot see,
-whether the fail-capable evidence supports the two new fields, and whether the recorded blind spots
-are acceptable before live trials begin.
+Operator: run `/new-worktree-session` in Claude to create one clean dedicated checkout for the live
+supervised trials. Reuse it serially; do not create five simultaneous worktrees or start a trial yet.
