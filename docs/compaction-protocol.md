@@ -7,6 +7,19 @@ Two rules govern Claude Code session compaction in this workspace.
 - **Pre-compact checkpoint.** When `[COST]` fires (see workspace CLAUDE.md `Session Guardrails`), write a session-state scratchpad to the working directory containing: current step, decisions since last checkpoint, partial findings, and file paths of artifacts produced. Then prefer `/clear` + restart (reading the scratchpad) over `/compact` — you control exactly what survives rather than relying on lossy auto-summarization. If using `/compact` instead, write the scratchpad first.
 - **Post-compact resumption — trust the summary.** When resuming after compaction, treat the summary's "commits made" / "files modified" / "decisions" lists as authoritative. Do NOT re-derive them via `git log`, `git show`, or repeated Reads of `session-notes.md`/`decisions.md`. Verify only when the next action requires a specific detail the summary didn't capture (e.g., line numbers for an Edit). Cost test: if your verification doesn't change the next tool call, skip it.
 
+### Exception — an active Work Loop v2 task
+
+The trust-the-summary rule above is scoped to ordinary sessions and **does not apply while a Work Loop v2 task is active.** There, the compacted summary is orientation material, not authoritative task state.
+
+Different kinds of authority are at work, and collapsing them into a single ranking is the error this section has to avoid. **Governing-rule authority** says what the rules are and how everything else is read; **current-state authority** says what is true right now. These are not rungs on one ladder: a source that governs interpretation is not competing with a source that reports state, so asking which of the two "wins" is already the wrong question. Each source has one role, and stays inside it:
+
+- **Govern interpretation** — permanent repository and agent instructions, the Work Loop v2 skill and its executable core, and the governing plan with the applicable approved workflow. These settle what the task's contents are allowed to mean and which sources may settle anything at all. Nothing below overrides them.
+- **Establish current task state** — the validated task-state file, `logs/work-loop/{task-id}.md`, within the constraints above. It is authoritative for what the task's state *is*. It is never authoritative for what the rules are, and it does not outrank the plan or workflow that give its contents meaning.
+- **Verify factual claims** — repository and Git evidence. It settles what the repository actually contains, including where a task file's claim about the repository is wrong.
+- **Orient only** — the conversation or the compacted summary. Never authoritative for any of the three roles above.
+
+Where the summary conflicts with any durable source, **follow the durable evidence and report the discrepancy** rather than resolving it silently. Where the task file conflicts with a governing source, the governing source settles it and the conflict is reported as a defect in the task file — not resolved quietly in either direction. Re-deriving state from durable sources is the expected cost here, not a violation of the cost test — the cost test governs the ordinary rule only. The `reorient` skill owns the recovery procedure; this section only settles which source carries which kind of authority.
+
 ## Named checkpoints
 
 Four points in a typical session where pre-compact discipline matters most. At each, write the listed state to disk before compacting (or before `/clear`). All four points share the rule above — `/clear` + restart beats `/compact` when you control the scratchpad.

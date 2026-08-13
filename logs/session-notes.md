@@ -488,3 +488,73 @@ closing record rather than in `improvement-log.md`, per the task's own dispositi
 
 ### Open Questions
 None.
+## 2026-08-13 — Work Loop v2 compaction-survivability repair, Units 4–6 and closure
+
+### Summary
+
+Ran Claude's half of Work Loop v2 units 4–6 for task `work-loop-v2-compaction-survivability-repair`,
+then closed the task on Codex's verdict. Unit 4 extracted the routing-index lookup content into one
+referenced file and aligned the acceptance harness's guard to it. Unit 5 corrected the instruction
+layer's overbroad "Codex never runs git" wording to state the real boundary (never mutates; read-only
+permitted and bounded). Unit 6 was a read-only discovery that mapped deployment surfaces and
+overturned a brief premise: the three candidate "projects" are one repository in three worktrees, and
+the Work Loop is currently unrunnable in any of them because a required helper script is absent.
+
+### Decisions Made
+
+- Unit 4: accepted Boundary A (SKILL.md L366–465) as the extraction scope; index checks repointed to
+  the new reference file, the 13 frontmatter/behavior/admission checks rebound to `SKILL.md`, ceiling
+  re-based 340 → 116. Committed `a22b54b`.
+- Unit 5: corrected 8 wording sites across two files to state Claude-only Git mutation/commit
+  ownership with Codex's read-only inspection permission explicitly bounded against displacing
+  Claude's evidence duty. Committed `891a991`.
+- Unit 6 (discovery, no implementation): reframed the deployment scope from "three projects" to "one
+  repository, three worktrees"; surfaced a hard blocker (`logs/scripts/work-loop-owner.sh` absent from
+  every project checkout); explained the two previously-unexplained skill links as hand-made
+  2026-08-10 fixes masking a missing manifest declaration; left the user-vs-repo hook precedence
+  question open. Committed `2e9952a`.
+- Operator/Codex: resolved the hook-precedence question (user and repository hooks aggregate, so the
+  later user-level registration must replace or suppress the repo-level one); approved closing this
+  branch-bound task and promoting its committed work to `ai-resources/main` (no push), with
+  installation and the representative compaction proof continuing in a new main-bound Work Loop task.
+- Closed the task: reduced the state file to the four-section closing record, cleared the checkout's
+  `.owner` lease, committed `486ad78`.
+
+### Outcome
+
+Outcome check skipped (not requested).
+
+### Risky actions
+
+None.
+
+### Next Steps
+
+1. Merge this branch's committed work (`a22b54b`, `891a991`, `2e9952a`, `486ad78`) into
+   `ai-resources/main` — required before any project checkout reads the corrections, since project
+   skill links and the stable hook carrier path resolve into `main`.
+2. Open a new, main-bound Work Loop v2 task for: installing `logs/scripts/work-loop-owner.sh` into the
+   three project checkouts; declaring `reorient` (and the missing `skills` block on the two session
+   branches); adding the 5-field AGENTS.md preservation contract plus its canonical template fragment
+   and `/new-project` consumer; writing `~/.codex/hooks.json` with a single-effective-trigger
+   `SessionStart`/`compact` entry; and running the representative compaction proof against
+   `axcion-systems-builder` (main worktree).
+3. Do not copy or reopen the now-closed state file for this task.
+
+### Open Questions
+
+None — the one open unknown from Unit 6 (hook precedence) was resolved by Codex before closure.
+
+### Findings Declined
+
+- Whether the Git-boundary wording should get a permanent regression assertion in the acceptance
+  harness — declined as a standalone improvement-log item; it is an open design choice already
+  surfaced and left to Codex's judgment inside the now-closed task record, not a repo defect.
+
+### Review status
+
+All skill and harness edits this session (Units 4–5) were made under the Work Loop v2 protocol, whose
+own mechanism requires Codex's independent assessment of every unit before it is accepted or closed —
+each unit here was assessed and, for Unit 5, correction-round-eligible before acceptance. That
+assessment is the independent review this session's structural edits received; no separate review was
+sought or needed.
