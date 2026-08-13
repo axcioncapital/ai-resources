@@ -3429,3 +3429,27 @@ log is self-sufficient for the next session's baseline check. Out of scope for t
 it — Unit 3 was inspection-only and explicitly excluded launcher edits.
 
 **Target files:** `scripts/axcion-harness-v0.2/carry-turn.sh` (`on_signal()`, around `:403-410`).
+
+### 2026-08-13 — Closed-task live-trial evidence lives only in an untracked working-tree directory
+
+- **Status:** logged (pending)
+- **Severity:** medium — nothing lost yet, but the evidence a closed task's record points to can
+  disappear from a routine checkout clean with no warning.
+- **Category:** Harness v0.2 attended carrier — evidence durability.
+- **Source:** ai-resources-readiness-fixes, 2026-08-13, `axcion-harness-v0-2-readiness-fixes` closing
+  write.
+
+The closed task's record for Unit 7 points at
+`logs/harness-runs/20260813T183945-13694-axcion-harness-v0-2-readiness-fixes.claude.out` (plus a
+companion `.log`) as the evidence for the one authorised live smoke test. `logs/harness-runs/` has
+never been committed in this repository and carries no `.gitignore` entry either — it is simply
+untracked by omission, not by deliberate design. A working-tree clean, a fresh checkout, or a worktree
+teardown would silently remove the only copy of the evidence a closed, committed task record cites.
+
+**Shape of the fix (not built).** Decide deliberately whether `logs/harness-runs/` should be tracked
+(commit the run captures a closed task cites) or explicitly gitignored (documented as ephemeral,
+evidence quoted inline in the state file instead of by path). Either is fine; the current unowned
+middle state is not. Out of scope for the closing write that surfaced it — that write changes the
+state file only.
+
+**Target files:** `logs/harness-runs/` (directory-level convention), `.gitignore`.

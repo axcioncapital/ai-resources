@@ -2,61 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-09 — Closed Work Loop v2 task: phase1a full-descendant-termination
-
-### Summary
-Ran `/work-loop-v2` against the existing state file `logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md`, which carried `turn: claude` and Codex's close verdict in `## Next action` (the close token). Validated file identity (task id matched, frontmatter well-formed), then reduced the file to the § 4 closing record — Outcome, Decisions that matter, Evidence, Accepted limitations — carrying exactly what the close verdict named. Set `turn: operator` and committed the state file alone.
-
-### Decisions Made
-- No new operator decisions this session — this invocation wrote the closing record for a decision (completion speed over the literal full-descendant guarantee) the operator already made on 2026-08-09 in a prior session, which the closing record now carries forward as-is.
-
-### Risky actions
-None.
-
-### Findings Declined
-- `run-manifest.sh close` with no explicit flags again hard-errored on a markerless direct-route
-  session (this was a `/work-loop-v2`-only session, no `/prime`). Declined as a new finding —
-  duplicate of the already-logged open finding `## 2026-08-07 — run-manifest.sh close hard-errors on
-  a genuinely markerless session instead of the documented stub-and-continue`
-  (`logs/improvement-log.md`). Worked around with explicit `--date`/`--marker`, which then wrote the
-  documented wrap-time stub correctly.
-
-### Next Steps
-Bring the governing unattended-operation plan current to the superseded literal Phase 1a gate (still states the old gate, per the closing record). Phase 1f branch isolation remains unproved and Phase 2 stays forbidden until both are resolved.
-
-### Open Questions
-None.
-
-## 2026-08-09 — Session S3-p0f
-**Mandate:** Run Claude's half of Work Loop v2 on the open `axcion-harness-v0-2-p0-f-attended-policy` task — implement the explicit attended Claude permission policy in the Harness v0.2 dispatcher, then write the closing record on Codex's close verdict — done when: the four brief claims are checked against the live repository, the red/green evidence is produced and recorded, and the state file is reduced to the core § 4 closing record and committed by explicit pathspec at `turn: operator`
-- Out of scope: the root repository (read-only, including the closed P0-F discovery record and `logs/improvement-log.md`); the cancelled P0-D Monday-prep task; worktrees; courier runs; Codex launch behaviour; the `--unattended` argv and contained profile
-- Files in scope: plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh, plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh, plans/work-loop-v2-v0.2/handoff-automation-spike/README.md, logs/friction-log.md
-- Required outputs: logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md
-- Stop if: a brief's premise proves false, the baseline suite is already failing, the change would need a file outside the authorized four-path boundary, or unrelated dirty work overlaps an authorized path
-
-### Note on this block
-Written mid-session rather than by `/session-start`. This session was launched directly into
-`/work-loop-v2` and never primed, so it declared no footprint and the staging tripwire judged its
-commit against a stale 2026-08-08 marker. Operator authorized the commit; this block is the
-documented remedy (declare the real footprint) rather than disarming the guard.
-
-### Summary
-Ran Claude's half of Work Loop v2 on `axcion-harness-v0-2-p0-f-attended-policy` and closed it. All four brief claims held on inspection, the unit was implemented, and Codex's close verdict was written into the state file as the core § 4 closing record at `turn: operator`. Harness v0.2's attended Claude launches now request `--permission-mode default` explicitly instead of inheriting this checkout's `bypassPermissions`; `--unattended`, Codex and the rest of the dispatcher are untouched. One commit — `3734b35` — carrying exactly the four authorized paths.
-
-### Decisions Made
-- **Closure route (operator).** Accepted the implementation and converted the task straight to closure: no documentation fix, no test rerun, no correction cycle. The README's inaccurate `(exit-code table, 14)` cross-reference is recorded as an accepted limitation rather than fixed.
-- **Staging-guard remedy (Claude, operator-authorized).** `check-foreign-staging.sh` blocked the commit three times against stale footprints. Chose to declare this session's real footprint — a per-id marker plus a `session-notes.md` mandate block — rather than disarm or bypass the guard. Moving the stale shared marker aside was tried first as a diagnostic and reverted; it did not work, because the fallback found a second stale footprint. Logged separately in `logs/decisions.md`.
-- **Documentation scope inside the unit (routine).** Corrected three now-false statements in the dispatcher and README that the change had invalidated (the `claude_deny=none` log line, the `unattended=off` log line, and the "byte-for-byte unchanged" claim about attended launches), and refreshed the suite counts. All inside the authorized boundary.
-- **Deferrals recorded, not actioned:** the `--unattended` permission mode (separate contained-profile decision) and the stale root `rc=137` improvement-log entry (root repo was read-only).
-
-### Risky actions
-Moved the shared `logs/.session-marker` aside as a diagnostic while investigating the staging-guard block, then restored it in the next call — it is gitignored and nothing was committed in that window. Flagging it because "remove the evidence the guard reads, then retry" is a guard-defeat path, and it is now on record that a session under pressure will find it before it finds the correct fix. The commit itself was never forced: the guard was satisfied by declaring a real footprint, not by disabling it.
-
-### Findings Declined
-None — the single finding this session produced was queued.
-
-### Next Steps
-P0-F needs no follow-up; the next Harness v0.2 work is whichever Phase 0 item Codex frames next. Two things are worth doing before the next direct-route session: fix the staging-tripwire misfire (queued as a `high` finding — it blocks commits, and this is its third occurrence as a class), and consider a live attended dispatcher hop under the new flag, which would convert the current *requested*-policy evidence into *effective*-policy evidence.
 ## 2026-08-09 — Closed work-loop-v2-production-readiness-policy; operator bypassed Codex assessment
 
 ### Summary
@@ -540,6 +485,39 @@ through the canonical attended carrier (`scripts/axcion-harness-v0.2/carry-turn.
 direct `/work-loop-v2` invocation, so process freshness and reduced manual transport can actually be
 demonstrated. `plans/axcion-harness-v0.2/mvp-plan.md` still needs three to five representative tasks
 before the adopt/shrink/stop decision.
+
+### Open Questions
+None.
+
+## 2026-08-13 — Close axcion-harness-v0-2-readiness-fixes: Units 1-6 accepted, no successful live trial
+
+### Summary
+Ran the Claude half of the final Work Loop v2 unit on `axcion-harness-v0-2-readiness-fixes`. The
+state file's `## Next action` carried Codex's close verdict, so this was a closing write: checked
+file identity, ran the repo-depth ownership check (PROCEED), verified every commit reference and the
+Unit 7 evidence path resolve on disk, reduced the file to the closing record, cleared the checkout's
+ownership declaration, and committed. The task is now closed.
+
+### Decisions Made
+None made this turn — the close verdict was Codex's, recorded in the inherited `## Next action`.
+Writing the closing record was execution of that verdict, not a new decision.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Risky actions
+None.
+
+### Findings Declined
+- `logs/friction-log.md` dirty again — not queued. Already an accepted deferral on the readiness
+  task's own list ("hook-owned `logs/friction-log.md` dirt"); no new consequence surfaced this
+  session.
+
+### Next Steps
+No follow-on unit is open for this task. A future push on the attended carrier's supervised
+readiness — closing the authoritative-current-position refusal gap, or running a real live trial —
+starts as a fresh admission decision (Direct Work or a new Work Loop v2 task), not a reopening of
+this closed file.
 
 ### Open Questions
 None.
