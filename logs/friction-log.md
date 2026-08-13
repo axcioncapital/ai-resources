@@ -353,6 +353,114 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 18:32 — .claude/commands/close-worktree-session.md
+- 17:48 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-readiness-fixes/f8048aab-125c-41e5-b483-9b03e8922c21/scratchpad/handoff-axcion-harness-readiness-fixes.md
+- 12:19 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 12:19 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 12:16 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:16 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:15 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:15 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:14 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:12 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 12:12 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 12:12 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 12:11 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 12:11 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 12:11 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 12:11 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:11 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:10 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:09 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:08 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:08 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:08 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 12:00 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-readiness-fixes/2072f48a-a3ea-45da-9d35-9821bb446392/scratchpad/handoff-axcion-harness-readiness-2026-08-13.md
+- 11:51 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 11:51 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 11:50 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 11:50 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 11:50 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 11:50 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 11:50 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 11:39 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 11:29 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 11:26 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 11:26 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 11:24 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 11:24 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 11:24 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 11:24 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 11:23 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 11:22 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 11:22 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 11:22 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 11:22 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 11:22 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 11:22 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 11:22 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 11:09 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-readiness-fixes/d3830b09-b3d1-446a-98cd-cf6d69fd53cb/scratchpad/handoff-axcion-harness-readiness-fixes-2026-08-13.md
+- 11:00 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 11:00 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 11:00 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 11:00 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 11:00 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:59 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:59 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:59 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:59 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:59 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:52 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 10:52 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 10:47 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:44 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:42 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:41 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:41 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:41 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:41 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:40 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:40 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:31 — /var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/handoff-axcion-harness-v0-2-readiness-fixes.md
+- 10:23 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 10:21 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:21 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:11 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 10:11 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 10:09 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:08 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:08 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:07 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:07 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:05 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:04 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:04 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:04 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 10:04 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:03 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:02 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:02 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:02 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:02 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:00 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 10:00 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 09:59 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 09:59 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 09:59 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 09:59 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 09:59 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 09:41 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 09:41 — logs/work-loop/axcion-harness-v0-2-readiness-fixes.md
+- 09:39 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 09:38 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 09:38 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 09:38 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 09:38 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 09:37 — scripts/axcion-harness-v0.2/carry-turn.test.sh
+- 09:36 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 09:36 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 09:36 — scripts/axcion-harness-v0.2/carry-turn.sh
+- 09:35 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-readiness-fixes/7e10d340-369a-46cd-b6a4-6a9910ed10f9/scratchpad/premise-demo.sh
 - 12:28 — logs/session-notes-archive-2026-08.md
 - 12:20 — logs/scratchpads/2026-08-12-12-20-scratchpad.md
 - 12:16 — logs/work-loop/axcion-harness-v0-2-live-trial.md
@@ -3815,3 +3923,9 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
 ### Friction Events
 
 - **Failure mode:** Workflow — **Friction type: harness (a guard whose input is written by `/session-start` fires in sessions that structurally never run `/session-start`, so it judges the commit against whatever stale footprint it happens to find).** Ran `/work-loop-v2 axcion-harness-v0-2-p0-f-attended-policy` as a direct-route session — no `/prime`, no `/session-start`, which is the documented normal shape for this command ("This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or `/session-plan`"). The unit implemented cleanly and the evidence was produced. `check-foreign-staging.sh` then blocked the commit **three times**, and each block named a different declared footprint: first the Codex-side proportionality-continuity session's (`.agents/skills/work-loop-v2/SKILL.md, AGENTS.md, .codex/hooks.json, …`), then — after the stale shared marker was moved aside as a diagnostic — a second stale block's (`logs/work-loop/axcion-harness-v0-2.md, …-phase0-runtime.md, .agents/skills/work-loop-v2`). Every one of the four staged paths was explicitly authorized by the task's own brief and staged by explicit pathspec; none belonged to any other session. The 2026-08-08 marker that armed the first block belonged to a session whose own `- Out of scope:` line reads *"repairing another session's dirty dispatch.sh / dispatch.test.sh"* — it had explicitly disclaimed the exact files it was used to block. **Root cause:** the guard resolves "this session's footprint" through `logs/.session-marker[-<id>]` → the matching block in `logs/session-notes.md`, and **both are written by `/session-start`**. A direct-route command session writes neither, so the lookup does not fail — it *succeeds against a stranger*. That is the dangerous shape: a missing footprint has a documented degrade path (`no_concrete_footprint` → warn-and-allow when no live foreign session), but an **inherited** footprint looks fully resolved to the guard and produces a confident, specific, wrong block. The marker is pruned by session teardown rather than by date, so a stale one persists indefinitely and every later direct-route session inherits it. The hook's own header anticipates ghost markers arming the *no-footprint* escalation and added process-grounding for that path; the inherited-footprint path has no equivalent check. Secondary: the block text's remediation ("your declared footprint is too narrow — route each file to the RIGHT field") assumes the reader owns the footprint it printed, which in this shape they do not; following it literally would edit another session's mandate. **Prevention:** (a) the guard should treat a marker whose session id is **not this session's** as *no footprint* rather than as *this session's footprint* — degrade to the existing, already-correct no-footprint path instead of judging against a stranger; the per-id marker makes that distinguishable and `logs/.session-marker-*` is already gitignored. (b) failing that, `/work-loop-v2` (and other direct-route commands that commit) should declare a minimal footprint at invocation from the task-state file's own authorized boundary — which is exactly the information the guard wants and which the brief already carries. The workaround used here was (b) done by hand: write this session's per-id marker plus a matching `logs/session-notes.md` block from the brief's four authorized paths, which unblocked the commit **with the guard still armed** — nothing was disarmed and nothing was force-committed. Note the guard-defeat path is real and was tried first: moving the stale marker aside is a two-second `mv` on a gitignored file, and the only reason it did not work is that the fallback found a second stale footprint. A future session under time pressure will find that path before it finds the correct one. **This is the same class as the `run-manifest.sh` finding logged one session earlier** (`## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless session`) — third occurrence of "session-lifecycle infrastructure assumes every session primed", now with a commit-blocking consequence rather than a wrap-time one; worth treating as a pattern rather than as three separate tool bugs. **Owner artifact:** `ai-resources/.claude/hooks/check-foreign-staging.sh` (the marker-identity check — fix (a), the structural one) + `ai-resources/.claude/commands/work-loop-v2.md` (fix (b), the footprint declaration for direct-route commits) + `ai-resources/docs/session-marker.md` (states the marker contract these two share).
+
+## Session — 2026-08-13 (readiness-fixes worktree) (the liveness probe in `/close-worktree-session` is a no-op on this machine, and it read "clean" on a worktree with a live session in it)
+
+### Friction Events
+
+- **Failure mode:** Validation — **Friction type: harness (a safety probe that fails silently, with its own stderr suppressed, so "I could not check" is indistinguishable from "I checked and it is safe").** The operator asked to close the worktree created earlier the same day. Running `/close-worktree-session`'s Step 3 third probe verbatim — `find "$WT_PATH" -type f -not -path "*/.git/*" -newermt "-120 minutes" 2>/dev/null` — returned **nothing**, which the command's own text says to read as "no recent writes → continue". The worktree was in fact occupied: a session had made **six commits** on its branch between 12:53 and 18:24, had `logs/friction-log.md` modified and uncommitted, and had written six files **eight minutes** before the probe ran. Substituting `-mmin -120` returned all six files immediately. Cause of the silence: `-newermt` with a *relative* timestamp is a GNU-find extension; this macOS workspace runs `bfs`, which rejects it with `Invalid timestamp` — and `2>/dev/null` swallowed that error, leaving an empty result set that is textually identical to a genuine all-clear. Steps 2 and 3's other two probes did their job (the worktree was dirty, so the flow stopped anyway), which is the only reason this was a near-miss and not a loss; the probe designed to catch the *"primed long ago, editing right now"* case is precisely the one that was dead. **Root cause:** the probe was written but never executed — the same class as this repo's `zsh` tied-parameter rule and the 2026-07-13 `awk '{print $2}'` path-splitting bug fixed in this very command, i.e. shell validated by reading rather than by running. The `2>/dev/null` is what converts a portability bug into a *safety* bug: without it, the first run on this machine would have printed `Invalid timestamp` and been fixed in seconds. Note the failure direction — a broken probe here does not error, it **votes yes**. **Prevention:** (a) use POSIX-portable `-mmin -120`, never relative `-newermt`, and (b) never suppress stderr on a probe whose empty output is itself a safety verdict — if the check cannot run, that must be loud, not clean. Generalisable rule for any guard snippet in a command file: an empty result may only be trusted when the command is known to have executed successfully. **Owner artifact:** `ai-resources/.claude/commands/close-worktree-session.md` Step 3 (fixed this session — snippet changed to `-mmin -120`, `2>/dev/null` dropped, with an inline note recording why). The enforcing hook `.claude/hooks/check-destructive-liveness.sh` was checked and is **not** affected: its probe (c) reads mtimes via Python `os.path.getmtime`, so the machine-level protection was intact throughout — the prose probe a session runs by hand was the only broken copy, which is also why this went unnoticed.
