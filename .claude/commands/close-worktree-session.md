@@ -125,8 +125,19 @@ Neither catches a session that primed long ago and is *editing right now* with n
 saved to a git-visible change. Check whether the target was written to recently:
 
 ```bash
-find "$WT_PATH" -type f -not -path "*/.git/*" -newermt "-120 minutes" 2>/dev/null | head -5
+find "$WT_PATH" -type f -not -path "*/.git/*" -mmin -120 | head -5
 ```
+
+**Use `-mmin -120`, never `-newermt "-120 minutes"`, and do not suppress this probe's stderr.**
+*(Fixed 2026-08-13. The snippet previously read `-newermt "-120 minutes" 2>/dev/null`. Relative
+timestamps are a GNU-find extension: the `find` on this workspace's macOS — `bfs` — rejects the
+argument with `Invalid timestamp`, and `2>/dev/null` swallowed that error, so the probe printed
+**nothing** and read as "no recent writes". Caught by execution on a worktree whose live session
+had written six files eight minutes earlier and had six commits on its branch; the broken probe
+passed it clean. `-mmin -120` is POSIX-portable and returned all six files. A liveness probe that
+fails silently is worse than no probe — it converts "I could not check" into "I checked and it is
+safe". The enforcing hook `check-destructive-liveness.sh` is unaffected: its probe (c) reads
+mtimes through Python `os.path.getmtime`, not `find`.)*
 
 Any hit → **stop:**
 

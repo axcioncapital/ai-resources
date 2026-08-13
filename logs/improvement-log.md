@@ -2849,8 +2849,22 @@ retires with v1 is a design decision for the v2 build stream, not a mechanical s
 
 ## 2026-08-06 — The `3.1a` closed-set assertion reddens on normal repository growth
 
+- **Status:** applied 2026-08-13 — repaired in Work Loop v2 task
+  `axcion-harness-v0-2-normal-trial-1-replacement`. `KNOWN_WORKLOOP_FILES` and the whole-directory
+  `unexpected_worklog_files()` are gone; the inventory is scoped to the one commit that performed the
+  direct fix, so no later task record can redden it. Suite went 292 passed / 3 failed → 299 passed /
+  1 failed, the remaining failure being the unrelated `ridx` line-count ceiling.
 - **Severity:** medium-high
 - **Source:** `logs/scripts/work-loop-v2-slice-1.test.sh` (`3.1a` block, `KNOWN_WORKLOOP_FILES`)
+
+**The proposed `fixture-` prefix mechanism below was rejected, not adopted.** Ignoring every
+non-fixture file would also ignore `logs/work-loop/arbitrary-state.md` — the arbitrary state file
+Finding B strengthened the block to catch — so the prefix rule would have erased the detector's
+purpose. Two other facts checked at repair time argue the same way: 4 of the 29 entries in the closed
+set carried no `fixture-` prefix, and 36 genuine task records were being reported as unexpected.
+Commit-scoping keeps the failure signal: a state file the direct request opens is *added* in the
+direct-fix commit, whatever it is named. Both directions are now covered by durable paired controls in
+the same script.
 
 **What happens.** Two assertions — `3.1a no state file was opened for the direct request` and
 `3.1a every task-state file present is one this build created deliberately` — compare the contents of
@@ -3530,3 +3544,27 @@ assertion so it is its own unit rather than a drive-by edit.
 **Target files:** `scripts/axcion-harness-v0.2/carry-turn.sh` (`:629`),
 `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` (`:2559`),
 `scripts/axcion-harness-v0.2/carry-turn.test.sh` (`:414`).
+
+### 2026-08-13 — Closed-task live-trial evidence lives only in an untracked working-tree directory
+
+- **Status:** logged (pending)
+- **Severity:** medium — nothing lost yet, but the evidence a closed task's record points to can
+  disappear from a routine checkout clean with no warning.
+- **Category:** Harness v0.2 attended carrier — evidence durability.
+- **Source:** ai-resources-readiness-fixes, 2026-08-13, `axcion-harness-v0-2-readiness-fixes` closing
+  write.
+
+The closed task's record for Unit 7 points at
+`logs/harness-runs/20260813T183945-13694-axcion-harness-v0-2-readiness-fixes.claude.out` (plus a
+companion `.log`) as the evidence for the one authorised live smoke test. `logs/harness-runs/` has
+never been committed in this repository and carries no `.gitignore` entry either — it is simply
+untracked by omission, not by deliberate design. A working-tree clean, a fresh checkout, or a worktree
+teardown would silently remove the only copy of the evidence a closed, committed task record cites.
+
+**Shape of the fix (not built).** Decide deliberately whether `logs/harness-runs/` should be tracked
+(commit the run captures a closed task cites) or explicitly gitignored (documented as ephemeral,
+evidence quoted inline in the state file instead of by path). Either is fine; the current unowned
+middle state is not. Out of scope for the closing write that surfaced it — that write changes the
+state file only.
+
+**Target files:** `logs/harness-runs/` (directory-level convention), `.gitignore`.
