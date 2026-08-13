@@ -68,6 +68,10 @@
 #   25  UNCOMMITTED_HANDBACK   Claude handed back without committing the state file
 #   26  MALFORMED_TERMINAL     turn: operator, but the file is neither a core § 7
 #                              question nor a core § 4 closing record
+#   27  PERMISSION_DENIED      Claude recorded permission denials and the hop
+#                              produced no valid handback. The denied tool and
+#                              target are named, and the report says whether any
+#                              allowed change is attributable to the hop.
 #   28  INTERRUPTED            SIGINT/SIGTERM; the actor's process group was
 #                              terminated and the run stopped. Never retried.
 #   30  UNEXPECTED_COMMIT      the actor COMMITTED paths outside the allowlist.
@@ -80,8 +84,16 @@
 #
 # EVERY terminal path prints one RESULT line as its last line:
 #   RESULT outcome=<CARRIED|OPERATOR_TERMINAL|STOPPED|VALIDATED> code=<n> ...
+#          ... denials=<n|unavailable|n/a> partial=<n>
 # Neither that line nor this exit code is authoritative over the state file
 # (core § 4). A courier reads the file.
+#
+# ONE CLASSIFICATION, ONE ORDER. Everything after the actor returns is decided in
+# classify_hop, from one evidence set gathered once. `denials=unavailable` is not
+# `denials=0`: the first means no permission evidence could be read, the second
+# means Claude reported none. `partial=<n>` counts working-tree changes INSIDE
+# the allowlist that this hop introduced — changes already present at launch are
+# never counted, because they are not the actor's.
 
 set -uo pipefail
 
@@ -106,6 +118,12 @@ R_ACTOR="none"
 R_BEFORE=""
 R_AFTER=""
 R_MODE="live"
+# Classification evidence on the RESULT line. `denials` is deliberately not a
+# number when nothing could be read: `unavailable` and `0` mean different things.
+R_DENIALS="n/a"
+R_PARTIAL="0"
+
+ACTOR_CAPTURE=""
 
 LOCK_DIR=""
 RUN_LOG=""
@@ -121,8 +139,9 @@ say() {
 }
 
 result_line() { # outcome, code
-  printf 'RESULT outcome=%s code=%s task=%s mode=%s actor=%s turn_before=%s turn_after=%s\n' \
-    "$1" "$2" "${TASK:-none}" "$R_MODE" "$R_ACTOR" "${R_BEFORE:-none}" "${R_AFTER:-none}"
+  printf 'RESULT outcome=%s code=%s task=%s mode=%s actor=%s turn_before=%s turn_after=%s denials=%s partial=%s\n' \
+    "$1" "$2" "${TASK:-none}" "$R_MODE" "$R_ACTOR" "${R_BEFORE:-none}" "${R_AFTER:-none}" \
+    "$R_DENIALS" "$R_PARTIAL"
 }
 
 die() { # code, message
@@ -275,20 +294,105 @@ validate_state() { # sets ST_TURN; dies on any failure. Never mutates.
 
 git_head() { git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null; }
 
-# Working-tree lines NOT covered by the allowlist.
-foreign_worktree() {
-  local line p allowed re
+# Working-tree lines, split by the allowlist. Both halves are needed, and for
+# different reasons: the foreign half decides whether to stop, the allowed half
+# is the partial work an operator has to be told about when a hop does not
+# finish. Reporting only the foreign half made allowed partial effects invisible.
+worktree_lines() { # allowed | foreign
+  local want="$1" line p allowed re
   git -C "$CHECKOUT" status --porcelain 2>/dev/null | while IFS= read -r line; do
     p="${line:3}"; p="${p%\"}"; p="${p#\"}"
     allowed=0
     for re in "${ALLOW_PATHS[@]}"; do
       if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
     done
-    [ "$allowed" -eq 0 ] && printf '%s\n' "$line"
+    if [ "$want" = "allowed" ]; then
+      [ "$allowed" -eq 1 ] && printf '%s\n' "$line"
+    else
+      [ "$allowed" -eq 0 ] && printf '%s\n' "$line"
+    fi
   done | sort
 }
 
+foreign_worktree() { worktree_lines foreign; }
+allowed_worktree() { worktree_lines allowed; }
+
+# Lines present after the hop that were not present before it.
+#
+# This is the ONLY honest basis for saying a change belongs to THIS hop. Anything
+# already in the working tree at launch belongs to whoever left it there, and
+# attributing it to the actor is how a launcher ends up asserting that Claude
+# edited a file Claude never touched. Both inputs come from worktree_lines, which
+# sorts, so comm's precondition holds.
+new_lines() { # before-block, after-block
+  comm -13 <(printf '%s\n' "$1" | sed '/^$/d') <(printf '%s\n' "$2" | sed '/^$/d')
+}
+
+count_lines() { # block -> number of non-empty lines
+  [ -n "$1" ] || { printf '0'; return 0; }
+  printf '%s\n' "$1" | sed '/^$/d' | wc -l | tr -d ' '
+}
+
 staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort; }
+
+# ------------------------------------------------------ permission evidence
+#
+# A Claude hop launched with --output-format json ends by printing one result
+# object carrying `permission_denials`: an array of
+#   {tool_name, tool_use_id, tool_input}
+# Verified against Claude Code 2.1.220 on 2026-08-13 by forcing a PreToolUse deny
+# hook and reading the captured object. That capture file already exists — this
+# reads it, and nothing new is stored.
+#
+# THREE states, not two, and the third is the whole point:
+#   present     denials were recorded, and they are listed
+#   empty       the field was read and is empty — a positive "no denials"
+#   unavailable no capture, not JSON, no jq, or no such field
+# Collapsing `unavailable` into `empty` would turn missing evidence into a clean
+# bill of health, which is exactly the dishonest stop this unit exists to remove.
+DENIAL_STATE="n/a"     # n/a | present | empty | unavailable
+DENIALS_JSON=""
+
+read_denials() { # capture-file
+  DENIAL_STATE="unavailable"; DENIALS_JSON=""
+  local f="$1" out
+  command -v jq >/dev/null 2>&1 || return 0
+  [ -s "$f" ] || return 0
+
+  # The capture holds the actor's stdout AND stderr, so it is not guaranteed to
+  # be pure JSON. Take the last value that parses as an object carrying the
+  # field, first over the file as a whole, then line by line if that fails.
+  out="$(jq -c 'select(type=="object" and has("permission_denials")) | .permission_denials' "$f" 2>/dev/null | tail -1)"
+  if [ -z "$out" ]; then
+    out="$(grep -o '^{.*}$' "$f" 2>/dev/null | while IFS= read -r l; do
+             printf '%s' "$l" | jq -c 'select(type=="object" and has("permission_denials")) | .permission_denials' 2>/dev/null
+           done | tail -1)"
+  fi
+  [ -n "$out" ] || return 0
+
+  DENIALS_JSON="$out"
+  if [ "$(printf '%s' "$out" | jq -r 'length' 2>/dev/null)" = "0" ]; then
+    DENIAL_STATE="empty"
+  else
+    DENIAL_STATE="present"
+  fi
+  return 0
+}
+
+denial_count() {
+  [ "$DENIAL_STATE" = "present" ] || { printf '0'; return 0; }
+  printf '%s' "$DENIALS_JSON" | jq -r 'length' 2>/dev/null || printf '0'
+}
+
+# One line per denial: the tool, and the most target-like field of its input.
+denial_lines() {
+  [ "$DENIAL_STATE" = "present" ] || return 0
+  printf '%s' "$DENIALS_JSON" | jq -r '
+    .[] | "    - " + (.tool_name // "unknown tool") + " — "
+        + (( .tool_input.file_path // .tool_input.path // .tool_input.command
+           // .tool_input.url // .tool_input.pattern // (.tool_input | tojson) )
+           | tostring | .[0:160])' 2>/dev/null
+}
 
 # Paths the actor COMMITTED that the allowlist does not cover. Detection, not
 # prevention: the commit already happened by the time this runs. The value is
@@ -492,6 +596,9 @@ launch_actor() { # actor, timeout -> exit status of the launch
   local actor="$1" limit="$2"
   local out="$LOG_DIR/$RUN_ID.$actor.out"
   : >"$out"
+  # Published so the classifier can read the actor's own account of the hop —
+  # for Claude, that is where permission_denials lands.
+  ACTOR_CAPTURE="$out"
 
   case "$actor" in
     codex)
@@ -532,6 +639,283 @@ launch_actor() { # actor, timeout -> exit status of the launch
   esac
 }
 
+# ------------------------------------------------- post-hop classification
+#
+# ONE evidence set, gathered once for every outcome, and ONE ordered verdict over
+# it.
+#
+# The launcher used to decide from independent branches sitting in the order they
+# were written. Three things went wrong with that. Evidence was gathered only on
+# the paths that happened to need it, so a hop that failed or timed out reported
+# nothing about what it had already changed. Precedence was an accident of layout
+# rather than a decision. And one branch asserted more than the evidence
+# supported: an uncommitted state file was reported as "Claude edited it" even
+# when the file was already uncommitted at launch and this hop left it
+# byte-identical — the launcher blamed an actor for another writer's dirt.
+#
+# So: gather_evidence sets every fact, classify_hop is the single place
+# precedence lives, and report_hop prints the same evidence block whatever the
+# verdict. Adding a new outcome means adding one rule in one ordered list.
+
+V_CODE=0
+V_OUTCOME="CARRIED"
+V_MSG=""
+V_FIX=""
+
+# V_OUTCOME names the classification on screen. It is deliberately NOT the
+# RESULT line's outcome field: that stays the four transport words the contract
+# already documents (CARRIED, OPERATOR_TERMINAL, STOPPED, VALIDATED), so a
+# classification added here can never silently change the machine-readable
+# vocabulary a reader parses.
+verdict() { V_CODE="$1"; V_OUTCOME="$2"; V_MSG="$3"; V_FIX="${4:-}"; }
+
+gather_evidence() {
+  after_hash="$(file_hash "$STATE_FILE")"
+  after_head="$(git_head)"
+  after_foreign="$(foreign_worktree)"
+  after_allowed="$(allowed_worktree)"
+  new_foreign="$(new_lines "$before_foreign" "$after_foreign")"
+  new_allowed="$(new_lines "$before_allowed" "$after_allowed")"
+  after_dirty=0; state_dirty && after_dirty=1
+
+  committed_bad=""
+  if [ "$before_head" != "$after_head" ]; then
+    committed_bad="$(committed_foreign "$before_head" "$after_head")"
+  fi
+
+  # Read permissively. validate_state would die here, and a hop that corrupted
+  # the file still has evidence worth printing before anything is reported.
+  after_task="$(fm_value "$STATE_FILE" task 2>/dev/null)"
+  after_turn="$(fm_value "$STATE_FILE" turn 2>/dev/null)"
+  R_AFTER="${after_turn:-none}"
+
+  # Only a Claude hop reports permission evidence, so only a Claude hop can be
+  # missing it. Running the reader on a Codex hop would print "NO EVIDENCE" for a
+  # surface that never emits any, which is noise dressed as a finding.
+  if [ "$before_turn" = "claude" ]; then
+    read_denials "$ACTOR_CAPTURE"
+  else
+    DENIAL_STATE="n/a"; DENIALS_JSON=""
+  fi
+  case "$DENIAL_STATE" in
+    present)     R_DENIALS="$(denial_count)" ;;
+    empty)       R_DENIALS="0" ;;
+    unavailable) R_DENIALS="unavailable" ;;
+    *)           R_DENIALS="n/a" ;;
+  esac
+  R_PARTIAL="$(count_lines "$new_allowed")"
+}
+
+classify_hop() {
+  local pre eff fault
+
+  # 1. An effect outside the allowlist outranks everything, including a failed or
+  #    timed-out actor. A hop that escaped its boundary is the more urgent fact,
+  #    and reporting it as a plain actor failure would bury it.
+  if [ "$before_foreign" != "$after_foreign" ]; then
+    verdict 24 UNEXPECTED_EFFECT \
+      "actor '$before_turn' changed paths outside the allowlist." \
+      "Inspect the out-of-allowlist paths listed above. Widen --allow-path if the unit legitimately touches them, or revert them; then re-run."
+    return
+  fi
+
+  # 2. Codex never runs git (core § 4). Ordered ahead of the commit check so a
+  #    Codex hop that moved HEAD reads as the protocol violation it is.
+  if [ "$before_turn" = "codex" ] && [ "$before_head" != "$after_head" ]; then
+    verdict 24 UNEXPECTED_EFFECT \
+      "Codex moved HEAD ($before_head -> $after_head) — Codex never runs git (core § 4)." \
+      "Inspect \`git -C $CHECKOUT log $before_head..$after_head\` and decide whether to keep or revert those commits. Claude owns every commit for this task."
+    return
+  fi
+
+  # 3. Committed outside the allowlist. Detection, not prevention.
+  if [ -n "$committed_bad" ]; then
+    verdict 30 UNEXPECTED_COMMIT \
+      "actor '$before_turn' COMMITTED paths outside the allowlist ($before_head -> $after_head). The commit already exists — this stops rather than reporting a clean carry over it." \
+      "Inspect \`git -C $CHECKOUT diff $before_head $after_head\`. If the work is wanted, widen --allow-path; if it is not, revert those commits."
+    return
+  fi
+
+  # 4-5. The actor did not finish. Any partial effect it left is in the evidence
+  #      block above, which is the change: these used to report nothing at all.
+  if [ "$rc" -eq 124 ]; then
+    verdict 21 ACTOR_TIMEOUT \
+      "actor '$before_turn' exceeded ${ACTOR_TIMEOUT}s and was terminated." \
+      "Read $STATE_FILE and any attributable changes listed above before re-running — a killed actor can leave a partial effect. Never retried."
+    return
+  fi
+  if [ "$rc" -ne 0 ]; then
+    verdict 20 ACTOR_FAILED \
+      "actor '$before_turn' exited $rc after ${duration}s — not retried, because one invocation is one hop and you are watching this one." \
+      "Read the capture at $ACTOR_CAPTURE together with any attributable changes listed above, then decide. This script never relaunches an actor."
+    return
+  fi
+
+  # 6. The file must still be this task's, and readable, before any verdict over
+  #    its contents means anything. Same invariants validate_state enforces at
+  #    entry; applied here so they participate in the ordering instead of
+  #    exiting around it.
+  if [ ! -f "$STATE_FILE" ] || [ ! -r "$STATE_FILE" ]; then
+    verdict 13 STATE_MISSING "the state file is gone or unreadable after the hop: $STATE_FILE" \
+      "Restore it with \`git -C $CHECKOUT show HEAD:logs/work-loop/$TASK.md\`, then re-run."
+    return
+  fi
+  if [ "$after_task" != "$TASK" ]; then
+    verdict 14 IDENTITY_MISMATCH \
+      "identity mismatch after the hop — you asked for task '$TASK', the file's frontmatter now says task: '${after_task:-<absent>}'." \
+      "Read the file. The actor rewrote its identity; restore the correct task: line before re-running."
+    return
+  fi
+  case "$after_turn" in
+    codex|claude|operator) : ;;
+    "") verdict 15 BAD_TURN "no readable 'turn:' frontmatter in $STATE_FILE after the hop" \
+          "Read the file and restore a turn: of codex, claude or operator."
+        return ;;
+    *)  verdict 15 BAD_TURN "turn: '$after_turn' is not one of codex | claude | operator" \
+          "Read the file and restore a valid turn:."
+        return ;;
+  esac
+
+  # 7. Claude left its own handback uncommitted — but ONLY if this hop actually
+  #    changed the file. A file already uncommitted at launch and byte-identical
+  #    now was not edited by this actor, and saying otherwise is the dishonest
+  #    stop this unit removes. The hash comparison is what makes the claim true.
+  if [ "$before_turn" = "claude" ] && [ "$after_dirty" -eq 1 ] && [ "$after_hash" != "$before_hash" ]; then
+    pre=""
+    [ "$before_dirty" -eq 1 ] && pre=" NOTE: the file was ALREADY uncommitted before this hop, so part of that diff is not attributable to this actor."
+    verdict 25 UNCOMMITTED_HANDBACK \
+      "Claude changed logs/work-loop/$TASK.md during this hop and left it uncommitted — stopping rather than reporting a carry over a partial edit. A refused git permission looks exactly like this.$pre" \
+      "Read \`git -C $CHECKOUT diff -- logs/work-loop/$TASK.md\` with the permission evidence above. Claude commits its own handback: re-run the Claude hop. Do not commit it on Claude's behalf, and do not ask Codex to — core § 4 assigns every commit to Claude."
+    return
+  fi
+
+  # 8. Whether the hop handed back, worked out BEFORE it is judged.
+  #
+  # This has to be a computed fact rather than a verdict, because the next rule
+  # needs it: a permission denial explains a hop that did NOT hand back, but a
+  # denial on a hop that DID hand back is advisory — the turn moved anyway, and
+  # report_hop states it on the success path. Judging denials before this was
+  # wrong in exactly that case, and turned a completed carry into a failure.
+  fault=""
+  if [ "$after_hash" = "$before_hash" ]; then
+    fault="actor '$before_turn' exited cleanly but left the state file byte-identical — no observable transition."
+    [ "$before_dirty" -eq 1 ] && fault="$fault The file was already uncommitted before this hop, and it is unchanged now, so that dirt is NOT attributable to this actor."
+  elif [ "$after_turn" = "$before_turn" ]; then
+    fault="actor '$before_turn' edited the file but left turn: '$after_turn' unchanged — not an allowed transition."
+  else
+    # DEFENCE IN DEPTH, and deliberately so. Given rule 6 constrains turn: to the
+    # three known values and the branch above rejects after == before, every pair
+    # that can still reach this table is one the table allows — its reject branch
+    # is unreachable today. It is kept because it is the only place the ALLOWED
+    # set is written down: if a fourth turn value or a self-transition is ever
+    # permitted upstream, this is what stops it silently becoming a valid carry.
+    # The suite's fail-capability proof has to disable both guards at once to move
+    # a bad transition through, which is the evidence that they are redundant
+    # rather than that either is idle.
+    case "$before_turn:$after_turn" in
+      codex:claude|codex:operator|claude:codex|claude:operator) : ;;
+      *) fault="transition $before_turn -> $after_turn is not allowed." ;;
+    esac
+  fi
+
+  if [ -z "$fault" ]; then
+    verdict 0 CARRIED "" ""
+    return
+  fi
+
+  # 9. The hop did not hand back. If Claude was denied permission, that is the
+  #    cause and it is named; otherwise the non-event is reported as itself.
+  if [ "$DENIAL_STATE" = "present" ]; then
+    if [ -n "$new_allowed" ]; then
+      eff="Allowed changes attributable to this hop are listed above, so the repository is NOT unchanged."
+    else
+      eff="No working-tree change is attributable to this hop: the repository is unchanged."
+    fi
+    verdict 27 PERMISSION_DENIED \
+      "Claude was denied permission $(denial_count) time(s) and the hop produced no valid handback: $fault The denied calls are listed above. $eff" \
+      "Grant the denied tools above — narrow --claude-deny, or widen the checkout's own permissions — then re-run the hop. Nothing was retried and nothing was repaired."
+    return
+  fi
+
+  verdict 22 NO_TRANSITION "$fault" \
+    "Read $ACTOR_CAPTURE for what the actor actually did, together with any attributable changes listed above."
+}
+
+# The same block prints whatever the verdict, so an operator reads one shape and
+# never has to work out which branch produced this particular screen.
+report_hop() {
+  local line
+  say ""
+  say "  evidence:"
+  if [ "$after_hash" = "$before_hash" ]; then
+    say "    state file:      byte-identical (sha256 $before_hash)"
+  else
+    say "    state file:      changed ($before_hash -> $after_hash)"
+  fi
+  say "    uncommitted:     before=$([ "$before_dirty" -eq 1 ] && echo yes || echo no) after=$([ "$after_dirty" -eq 1 ] && echo yes || echo no)"
+  say "    turn:            $before_turn -> ${after_turn:-<unreadable>}"
+  say "    HEAD:            $before_head -> $after_head"
+  if [ "$before_head" != "$after_head" ]; then
+    say "    commits:         $(git -C "$CHECKOUT" rev-list --count "$before_head".."$after_head" 2>/dev/null)"
+  fi
+  say "    actor:           $before_turn exit=$rc duration=${duration}s capture=$ACTOR_CAPTURE"
+
+  case "$DENIAL_STATE" in
+    present)
+      say "    permission:      $(denial_count) DENIAL(S) recorded by Claude:"
+      say "$(denial_lines)" ;;
+    empty)
+      say "    permission:      none recorded (Claude reported an empty permission_denials list)" ;;
+    unavailable)
+      say "    permission:      NO EVIDENCE — the capture carries no readable permission_denials." ;;
+    *)
+      say "    permission:      n/a (only a Claude hop reports permission evidence)" ;;
+  esac
+  [ "$DENIAL_STATE" = "unavailable" ] && \
+    say "                     That is not the same as 'no denials'; treat it as unknown."
+
+  # Attribution, always both halves. Pre-existing dirt is named separately so it
+  # can never be read as something this hop did.
+  if [ -n "$new_allowed" ]; then
+    say "    allowed changes attributable to THIS hop ($(count_lines "$new_allowed")):"
+    printf '%s\n' "$new_allowed" | sed 's/^/      /' | while IFS= read -r l; do say "$l"; done
+  else
+    say "    allowed changes attributable to THIS hop: none"
+  fi
+  if [ -n "$before_allowed" ]; then
+    say "    (already present before launch, NOT this hop's: $(count_lines "$before_allowed") allowed path(s))"
+  fi
+  if [ "$before_foreign" != "$after_foreign" ]; then
+    say "    outside the allowlist — delta introduced by this hop:"
+    diff <(printf '%s\n' "$before_foreign") <(printf '%s\n' "$after_foreign") | sed 's/^/      /'
+  fi
+  if [ -n "$committed_bad" ]; then
+    say "    committed outside the allowlist:"
+    printf '%s\n' "$committed_bad" | sed 's/^/      /' | while IFS= read -r l; do say "$l"; done
+  fi
+
+  if [ "$V_CODE" -eq 0 ]; then
+    say ""
+    say "carried: the turn moved $before_turn -> $after_turn. One hop. Not continuing to '$after_turn'."
+    if [ "$DENIAL_STATE" = "present" ]; then
+      say "WARNING: the turn moved, but Claude was denied permission $(denial_count) time(s) — listed above."
+      say "The handback may be narrower than the brief asked for. Read the state file before accepting it."
+    fi
+    if [ "$after_turn" = "operator" ]; then
+      say "turn is now operator — automation is terminal there (core § 7)."
+    fi
+    say "read turn: from $STATE_FILE. Neither this exit code nor this screen is authoritative over the file (core § 4)."
+    line="$(result_line CARRIED 0)"
+    say "$line"
+    release_lock
+    exit 0
+  fi
+
+  say ""
+  say "  classified: $V_OUTCOME (exit $V_CODE)"
+  die "$V_CODE" "$V_MSG"$'\n'"Recoverable next action: $V_FIX"
+}
+
 # ------------------------------------------------------------------ the carry
 
 acquire_lock
@@ -555,7 +939,11 @@ if state_dirty; then
     claude)
       say "note: the state file is uncommitted with turn: claude — the expected Codex handoff (Codex never runs git)." ;;
     codex|operator)
-      die 25 "the state file is uncommitted with turn: $ST_TURN — Claude commits, so a previous run died between editing and committing, or its commit was refused."$'\n'"Recoverable next action: read \`git -C $CHECKOUT diff -- logs/work-loop/$TASK.md\`. If the edit is complete, commit it and re-run; if it is partial, discard it and re-run." ;;
+      # No instruction to commit here. Core § 4 assigns every commit to Claude,
+      # and this branch is read by whoever ran the script — so telling "you" to
+      # commit it quietly reassigns Claude's commit to the reader, and reads as
+      # an instruction to Codex when Codex is the one being launched.
+      die 25 "the state file is uncommitted with turn: $ST_TURN — Claude commits, so a previous run died between editing and committing, or its commit was refused."$'\n'"This script will not commit it, and Codex must not: core § 4 assigns every commit to Claude."$'\n'"Recoverable next action: read \`git -C $CHECKOUT diff -- logs/work-loop/$TASK.md\` and decide. If it is Claude's complete handback, have Claude commit it; if it is partial, discard it and re-run the Claude hop." ;;
   esac
 fi
 
@@ -617,6 +1005,7 @@ before_hash="$(file_hash "$STATE_FILE")"
 before_turn="$ST_TURN"
 before_head="$(git_head)"
 before_dirty=0; state_dirty && before_dirty=1
+before_allowed="$(allowed_worktree)"
 
 R_ACTOR="$before_turn"
 say ""
@@ -628,80 +1017,9 @@ launch_actor "$before_turn" "$ACTOR_TIMEOUT"
 rc=$?
 duration=$(( $(date '+%s') - started ))
 
-if [ "$rc" -eq 124 ]; then
-  die 21 "actor '$before_turn' exceeded ${ACTOR_TIMEOUT}s and was terminated. Read $STATE_FILE and \`git -C $CHECKOUT status\` before re-running — a killed actor can leave a partial effect."
-fi
-
-if [ "$rc" -ne 0 ]; then
-  die 20 "actor '$before_turn' exited $rc after ${duration}s — not retried, because one invocation is one hop and you are watching this one. Capture: $LOG_DIR/$RUN_ID.$before_turn.out"
-fi
-say "  exit=0 duration=${duration}s"
-
-# Re-read the same file from disk. The in-memory turn is never trusted.
-validate_state
-after_hash="$(file_hash "$STATE_FILE")"
-after_turn="$ST_TURN"
-after_head="$(git_head)"
-after_foreign="$(foreign_worktree)"
-R_AFTER="$after_turn"
-say "  after:  sha256=$after_hash turn=$after_turn head=$after_head"
-
-if [ "$before_foreign" != "$after_foreign" ]; then
-  say "  foreign worktree delta:"
-  diff <(printf '%s\n' "$before_foreign") <(printf '%s\n' "$after_foreign") | sed 's/^/    /'
-  die 24 "actor '$before_turn' changed paths outside the allowlist."
-fi
-
-if [ "$before_turn" = "codex" ] && [ "$before_head" != "$after_head" ]; then
-  die 24 "Codex moved HEAD ($before_head -> $after_head) — Codex never runs git (core § 4)."
-fi
-
-# Ordered after the Codex-HEAD guard so a Codex hop that moved HEAD is reported
-# as the protocol violation it is, rather than as a path problem.
-if [ "$before_head" != "$after_head" ]; then
-  committed_bad="$(committed_foreign "$before_head" "$after_head")"
-  if [ -n "$committed_bad" ]; then
-    say "  committed paths outside the allowlist:"
-    printf '%s\n' "$committed_bad" | sed 's/^/    /'
-    die 30 "actor '$before_turn' COMMITTED paths outside the allowlist ($before_head -> $after_head)."$'\n'"The commit already exists — this stops rather than reporting a clean carry over it."$'\n'"Recoverable next action: inspect with \`git -C $CHECKOUT diff $before_head $after_head\`. If the work is wanted, widen --allow-path; if it is not, revert those commits."
-  fi
-  say "  committed: $(git -C "$CHECKOUT" rev-list --count "$before_head".."$after_head" 2>/dev/null) commit(s), all within the allowlist"
-fi
-
-if [ "$before_turn" = "claude" ] && state_dirty; then
-  die 25 "Claude edited logs/work-loop/$TASK.md but left it uncommitted — stopping rather than reporting a carry over a partial edit. A refused git permission looks exactly like this."$'\n'"Recoverable next action: read \`git -C $CHECKOUT diff -- logs/work-loop/$TASK.md\` and check $LOG_DIR/$RUN_ID.$before_turn.out for a permission denial."
-fi
-
-if [ "$after_hash" = "$before_hash" ]; then
-  die 22 "actor '$before_turn' exited cleanly but left the state file byte-identical — no observable transition."
-fi
-if [ "$after_turn" = "$before_turn" ]; then
-  die 22 "actor '$before_turn' edited the file but left turn: '$after_turn' unchanged — not an allowed transition."
-fi
-
-# DEFENCE IN DEPTH, and deliberately so. Given validate_state constrains turn: to
-# the three known values and the guard above rejects after == before, every pair
-# that can still reach this table is one the table allows — its reject branch is
-# unreachable today. It is kept because it is the only place the ALLOWED set is
-# written down: if a fourth turn value or a self-transition is ever permitted
-# upstream, this is what stops it silently becoming a valid carry. The suite's
-# fail-capability proof has to disable both guards at once to move a bad
-# transition through, which is the evidence that they are redundant rather than
-# that either is idle.
-case "$before_turn:$after_turn" in
-  codex:claude|codex:operator|claude:codex|claude:operator)
-    say "  transition: $before_turn -> $after_turn (allowed)" ;;
-  *)
-    die 22 "transition $before_turn -> $after_turn is not allowed." ;;
-esac
-
-say ""
-say "carried: the turn moved $before_turn -> $after_turn. One hop. Not continuing to '$after_turn'."
-if [ "$after_turn" = "operator" ]; then
-  say "turn is now operator — automation is terminal there (core § 7)."
-fi
-say "read turn: from $STATE_FILE. Neither this exit code nor this screen is authoritative over the file (core § 4)."
-line="$(result_line CARRIED 0)"
-say "$line"
-release_lock
-exit 0
+# Evidence first, verdict second, report third — for EVERY outcome, including a
+# timed-out or failed actor. A hop that did not finish can still have changed the
+# repository, and the operator has to be told what it left behind.
+gather_evidence
+classify_hop
+report_hop

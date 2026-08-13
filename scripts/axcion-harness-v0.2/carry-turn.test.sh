@@ -78,6 +78,17 @@ trap cleanup EXIT
 #   commit-foreign     create AND commit an out-of-allowlist file, plus transition
 #   fail:<code>        exit <code>, touching nothing
 #   sleep:<secs>       sleep, then exit 0
+#
+# The actions below emit a Claude-shaped result object on STDOUT, which is where
+# the launcher's capture file gets it from. The permission_denials element shape
+# — {tool_name, tool_use_id, tool_input} — was read off Claude Code 2.1.220 on
+# 2026-08-13 by forcing a PreToolUse deny hook, not guessed:
+#   denied             one denial, no repository effect at all
+#   denied-partial     one denial, plus an ALLOWED file this hop created
+#   denied-carried     one denial, but the hop still transitions and commits
+#   denied-foreign     one denial, plus an out-of-allowlist file
+#   allowed-partial    an allowed file, no denial evidence, then exit 3
+#   dirty-noop         emit clean JSON with no denials, change nothing
 make_fake_actor() { # path, argv-log, count-file, action-file, state-file
   cat >"$1" <<'FAKE'
 #!/bin/bash
@@ -89,6 +100,9 @@ REPO="$(dirname "$(dirname "$(dirname "$STATE")")")"
 STATE_REL="logs/work-loop/$(basename "$STATE")"
 act="$(cat "$ACTION_FILE" 2>/dev/null)"
 stamp="$(date '+%s')-$RANDOM"
+# A Claude result object on stdout, which is exactly where the launcher's
+# capture file gets it. Everything but permission_denials is filler.
+emit_json() { printf '{"type":"result","subtype":"success","is_error":false,"result":"done","permission_denials":%s}\n' "$1"; }
 case "$act" in
   transition:*)
     sed -i '' "s/^turn: .*/turn: ${act#transition:}/" "$STATE"
@@ -113,6 +127,26 @@ case "$act" in
     git -C "$REPO" commit -q -m "actor: foreign commit" >/dev/null 2>&1 ;;
   fail:*) exit "${act#fail:}" ;;
   sleep:*) sleep "${act#sleep:}"; exit 0 ;;
+  denied)
+    emit_json '[{"tool_name":"Bash","tool_use_id":"toolu_probe1","tool_input":{"command":"git commit -m handback","description":"commit"}}]' ;;
+  denied-partial)
+    printf 'partial\n' >"$REPO/logs/work-loop/partial-note.md"
+    emit_json '[{"tool_name":"Write","tool_use_id":"toolu_probe2","tool_input":{"file_path":"logs/work-loop/partial-note.md"}}]' ;;
+  denied-carried)
+    sed -i '' "s/^turn: .*/turn: codex/" "$STATE"
+    printf '\nactor ran with a denial %s\n' "$stamp" >>"$STATE"
+    git -C "$REPO" add -- "$STATE_REL" >/dev/null 2>&1
+    git -C "$REPO" commit -q -m "actor: handed on" >/dev/null 2>&1
+    emit_json '[{"tool_name":"WebFetch","tool_use_id":"toolu_probe3","tool_input":{"url":"https://example.invalid/x"}}]' ;;
+  denied-foreign)
+    printf 'stray\n' >"$REPO/src-stray.txt"
+    emit_json '[{"tool_name":"Bash","tool_use_id":"toolu_probe4","tool_input":{"command":"git push"}}]' ;;
+  allowed-partial)
+    printf 'partial\n' >"$REPO/logs/work-loop/partial-note.md"
+    emit_json '[]'
+    exit 3 ;;
+  dirty-noop)
+    emit_json '[]' ;;
 esac
 exit 0
 FAKE
@@ -512,6 +546,110 @@ section "14. The state file is never written by the launcher"
   run_sut --checkout "$REPO" --task task-ac --claude-bin "$FAKEBIN" --log-dir "$LOGD"
   assert_eq "a failed hop left the state file byte-identical" "$before" "$(shasum -a 256 "$STATE" | cut -d' ' -f1)"
 
+section "15. Post-hop classification — one evidence set, one ordered verdict"
+
+  # 15.1 The incident this unit exists for. The state file is uncommitted BEFORE
+  # launch and byte-identical afterwards, so nothing about it is the actor's. The
+  # launcher used to report exit 25, "Claude edited ... but left it uncommitted",
+  # which was simply untrue.
+  mkfix dirtypre task-ad claude
+  printf '\npre-existing uncommitted edit\n' >>"$STATE"     # dirty before launch
+  printf 'dirty-noop' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ad --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "dirty-before + byte-identical is NO_TRANSITION, not a Claude edit" "22" "$RC"
+  assert_absent "  does NOT claim Claude changed the file" "Claude changed logs/work-loop" "$o"
+  assert_contains "  says the pre-existing dirt is not the actor's" "NOT attributable to this actor" "$o"
+  assert_contains "  and the evidence block shows both dirty states" "uncommitted:     before=yes after=yes" "$o"
+  assert_contains "  and attributes no allowed change to the hop" "attributable to THIS hop: none" "$o"
+  assert_contains "  and the RESULT line agrees" "partial=0" "$o"
+
+  # 15.2 A denial with no repository effect at all.
+  mkfix denyclean task-ae claude
+  printf 'denied' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ae --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a denial with no effect is PERMISSION_DENIED (27)" "27" "$RC"
+  assert_contains "  names the denied tool" "- Bash — " "$o"
+  assert_contains "  names the denied target" "git commit -m handback" "$o"
+  assert_contains "  says the repository is unchanged" "the repository is unchanged" "$o"
+  assert_contains "  counts the denial on the RESULT line" "denials=1 partial=0" "$o"
+
+  # 15.3 A denial AFTER allowed partial work. Same rule, different evidence: the
+  # attributable path must be listed and the "unchanged" claim withdrawn.
+  mkfix denypart task-af claude
+  printf 'denied-partial' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-af --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a denial after allowed partial work is also 27" "27" "$RC"
+  assert_contains "  lists the attributable allowed path" "partial-note.md" "$o"
+  assert_contains "  and says the repository is NOT unchanged" "repository is NOT unchanged" "$o"
+  assert_contains "  and counts it" "denials=1 partial=1" "$o"
+  assert_contains "  names the denied tool and its target" "- Write — logs/work-loop/partial-note.md" "$o"
+
+  # 15.4 Allowed partial work with NO permission evidence is a different
+  # classification, and it must still be listed rather than silently dropped —
+  # a failing actor used to report nothing about what it had already written.
+  mkfix allowpart task-ag claude
+  printf 'allowed-partial' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ag --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "allowed partial work + actor failure is ACTOR_FAILED (20)" "20" "$RC"
+  assert_absent "  and is NOT classified as a permission denial" "PERMISSION_DENIED" "$o"
+  assert_contains "  but still lists the partial path" "partial-note.md" "$o"
+  assert_contains "  and separates zero denials from unknown" "denials=0 partial=1" "$o"
+
+  # 15.5 Precedence. A disallowed effect outranks the denial that accompanied it.
+  mkfix denyforeign task-ah claude
+  printf 'denied-foreign' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ah --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a disallowed effect outranks a denial (24)" "24" "$RC"
+  assert_contains "  classified as the unexpected effect" "UNEXPECTED_EFFECT" "$o"
+  assert_contains "  and still shows the denial in the evidence" "DENIAL(S) recorded" "$o"
+
+  # 15.6 A denial that did NOT stop the handback is advisory, not a failure. The
+  # turn genuinely moved, so the hop carried — with the denial stated.
+  mkfix denycarried task-ai claude
+  printf 'denied-carried' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ai --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a denial that did not block the handback still carries" "0" "$RC"
+  assert_contains "  reports CARRIED" "RESULT outcome=CARRIED code=0" "$o"
+  assert_contains "  but warns about the denial" "WARNING: the turn moved, but Claude was denied" "$o"
+  assert_contains "  and carries the count" "denials=1" "$o"
+
+  # 15.7 Same evidence, same outcome. Pre-existing ALLOWED dirt must not change
+  # the verdict and must not be counted as this hop's partial work.
+  mkfix denydirt task-aj claude
+  printf 'pre-existing\n' >"$REPO/logs/work-loop/preexisting-note.md"   # allowed, uncommitted
+  printf 'denied' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-aj --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "identical denial evidence gives the identical outcome (27)" "27" "$RC"
+  assert_contains "  pre-existing allowed dirt is named separately" "already present before launch" "$o"
+  assert_contains "  and is NOT counted as this hop's work" "denials=1 partial=0" "$o"
+  assert_contains "  and the repository-unchanged claim still holds for the hop" "the repository is unchanged" "$o"
+
+  # 15.8 Three permission states, not two. A capture with no readable evidence
+  # must read as UNKNOWN, never as a clean "no denials".
+  mkfix noevid task-ak claude
+  printf 'transition:codex' >"$ACTION"                # emits no JSON at all
+  run_sut --checkout "$REPO" --task task-ak --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a hop with no permission evidence still carries" "0" "$RC"
+  assert_contains "  reports the evidence as UNAVAILABLE, not as zero" "denials=unavailable" "$o"
+  assert_contains "  and says so in words" "NO EVIDENCE" "$o"
+  assert_contains "  and warns it is not the same as none" "not the same as 'no denials'" "$o"
+
+  mkfix codexevid task-al codex
+  printf 'nocommit:claude' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-al --codex-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a Codex hop carries" "0" "$RC"
+  assert_contains "  and reports permission evidence as n/a, not unavailable" "denials=n/a" "$o"
+
+  # 15.9 No recovery path reassigns Claude's commit to anyone else (core § 4).
+  mkfix ownership task-am claude
+  printf 'nocommit:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-am --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "Claude's uncommitted handback still stops (25)" "25" "$RC"
+  assert_contains "  and names the ownership rule" "Claude commits its own handback" "$o"
+  assert_contains "  and forbids committing on Claude's behalf" "do not ask Codex to" "$o"
+  assert_absent "no branch tells the reader to commit the handback" \
+    "If the edit is complete, commit it and re-run" "$(cat "$SUT")"
+
 }
 
 # ------------------------------------------------------- fail-capability proof
@@ -549,8 +687,8 @@ prove_failure() {
   # this mutant has to take out the pair to prove the assertion is load-bearing.
   section "M2. Neutralise BOTH transition guards"
   mut="$TMPROOT/mutant-transition.sh"
-  sed -e 's|^if \[ "\$after_turn" = "\$before_turn" \]; then$|if false; then|' \
-      -e 's|^    die 22 "transition .*|    say "  transition: forced by mutant" ;;|' "$SUT" >"$mut"
+  sed -e 's|^  elif \[ "\$after_turn" = "\$before_turn" \]; then$|  elif false; then|' \
+      -e 's|^      \*) fault="transition .*|      *) : ;;|' "$SUT" >"$mut"
   chmod +x "$mut"
   if ! mutant_ok "$mut"; then bad "M2 mutant does not parse" "bad mutation"; else
     mkfix m2 task-m2 claude
@@ -591,7 +729,7 @@ prove_failure() {
 
   section "M5. Remove the uncommitted-handback guard"
   mut="$TMPROOT/mutant-uncommitted.sh"
-  sed 's|^if \[ "\$before_turn" = "claude" \] && state_dirty; then$|if false; then|' "$SUT" >"$mut"
+  sed 's|^  if \[ "\$before_turn" = "claude" \] && \[ "\$after_dirty" -eq 1 \] && \[ "\$after_hash" != "\$before_hash" \]; then$|  if false; then|' "$SUT" >"$mut"
   chmod +x "$mut"
   if ! mutant_ok "$mut"; then bad "M5 mutant does not parse" "bad mutation"; else
     mkfix m5 task-m5 claude
@@ -631,6 +769,54 @@ prove_failure() {
     assert_eq "  and stopped BEFORE actor launch" "0" "$(wc -c <"$m6count" | tr -d ' ')"
     EXPECT_FAIL=0
     rm -rf "$m6ld"
+  fi
+
+  section "M7. Attribute an uncommitted state file without checking the hop changed it"
+  # The pre-Unit-2 branch, restored: drop the hash comparison so ANY dirty state
+  # file after a Claude hop is blamed on Claude. This is the exact defect — a file
+  # already uncommitted at launch and byte-identical afterwards is reported as
+  # "Claude changed it".
+  mut="$TMPROOT/mutant-attribution.sh"
+  sed 's|^  if \[ "\$before_turn" = "claude" \] && \[ "\$after_dirty" -eq 1 \] && \[ "\$after_hash" != "\$before_hash" \]; then$|  if [ "$before_turn" = "claude" ] \&\& [ "$after_dirty" -eq 1 ]; then|' \
+      "$SUT" >"$mut"
+  chmod +x "$mut"
+  if ! mutant_ok "$mut"; then bad "M7 mutant does not parse" "bad mutation"; else
+    mkfix m7 task-m7 claude
+    printf '\npre-existing uncommitted edit\n' >>"$STATE"
+    printf 'dirty-noop' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m7 --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_eq "dirty-before + byte-identical is NO_TRANSITION, not a Claude edit" "22" "$RC"
+    EXPECT_FAIL=0
+  fi
+
+  section "M8. Report unreadable permission evidence as 'no denials'"
+  # Collapses the three evidence states into two. A hop whose capture carries no
+  # readable permission_denials would then read as a clean zero.
+  mut="$TMPROOT/mutant-evidence.sh"
+  sed 's|^  DENIAL_STATE="unavailable"; DENIALS_JSON=""$|  DENIAL_STATE="empty"; DENIALS_JSON=""|' "$SUT" >"$mut"
+  chmod +x "$mut"
+  if ! mutant_ok "$mut"; then bad "M8 mutant does not parse" "bad mutation"; else
+    mkfix m8 task-m8 claude
+    printf 'transition:codex' >"$ACTION"        # carries, but emits no JSON
+    run_bin "$mut" --checkout "$REPO" --task task-m8 --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_contains "reports the evidence as UNAVAILABLE, not as zero" "denials=unavailable" "$o"
+    EXPECT_FAIL=0
+  fi
+
+  section "M9. Never classify a recorded denial as a denial"
+  mut="$TMPROOT/mutant-denial.sh"
+  sed 's|^    DENIAL_STATE="present"$|    DENIAL_STATE="empty"|' "$SUT" >"$mut"
+  chmod +x "$mut"
+  if ! mutant_ok "$mut"; then bad "M9 mutant does not parse" "bad mutation"; else
+    mkfix m9 task-m9 claude
+    printf 'denied' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m9 --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_eq "a denial with no effect is PERMISSION_DENIED (27)" "27" "$RC"
+    assert_contains "names the denied tool" "- Bash — " "$o"
+    EXPECT_FAIL=0
   fi
 }
 
