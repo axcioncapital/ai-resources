@@ -22,8 +22,8 @@ continue-trial, or stop decision; and no result claims unattended readiness.
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 2 — classify every unsuccessful canonical carrier hop from its
-actual before/after repository delta and Claude permission evidence.
+Standard. Implementation mode. Unit 3 — prevent the canonical attended carrier's Claude child from
+using the default direct shell routes to launch nested Claude or Codex work.
 
 Named reason for the loop: the full readiness task spans several independently assessable changes
 and live trials, must survive multiple Claude/Codex turns, needs strict boundaries to avoid a broad
@@ -31,53 +31,48 @@ launcher rewrite, and requires assessment by Codex rather than acceptance by its
 
 ## Brief
 
-Why this unit, why now: Unit 1 is accepted, so one carrier writer now owns a checkout at a time. The
-next retained release blocker is honest stopping: an operator must be able to tell whether Claude
-was denied permission, whether allowed partial work exists, and whether Claude actually changed the
-state file without reconstructing the hop from raw logs.
+Why this unit, why now: Units 1 and 2 are accepted, so the canonical carrier now enforces one writer
+and classifies a stopped hop honestly. The next retained release blocker is the incident-proven path
+by which one attended Claude hop can expand into nested Claude or Codex processes.
 
-**Required outcome.** Replace post-hop heuristics on the canonical attended carrier with one
-deterministic classification derived from the evidence already available or minimally captured for
-the hop: state-file hash and dirty state before/after, HEAD before/after, allowed and disallowed
-working-tree deltas, committed-path delta, actor exit/timeout status, resulting `turn:`, and Claude
-`permission_denials` when present. Every unsuccessful hop must report the correct outcome, exact
-partial allowed paths if any, and a recovery action consistent with Work Loop ownership.
+**Required outcome.** Every canonical attended Claude launch must request denial of the ordinary
+direct Bash routes for starting `claude` or `codex`, whether or not the operator supplies additional
+`--claude-deny` rules. The mandatory rules must have no override, operator rules must append rather
+than replace them, and `--permission-mode default` must remain unchanged. Operator-visible text must
+describe this honestly as requested permission policy that blocks the default direct route, not as
+OS containment or proof that evasion is impossible.
 
 **Governing authority and source disposition.**
 
-- The operator's 2026-08-13 decision governs: use one Work Loop task, target the canonical attended
-  launcher, and continue through bounded supervised-readiness units after Unit 1.
-- `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` governs Work Loop roles, state,
-  evidence, and handback semantics; Claude owns repository reality and every commit.
-- `plans/axcion-harness-v0.2/mvp-plan.md` remains relevant but non-governing project direction
-  because its header says proposed/no implementation authorised. Its attended-only boundary agrees
-  with the current operator decision.
+- The operator's 2026-08-13 decision governs this task's canonical attended scope and authorises the
+  retained nested-expansion outcome as the next bounded readiness unit.
+- `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` governs roles, fail-capable evidence,
+  handback, and commits.
 - `plans/work-loop-v2-v0.2/pre-launch-preparations/dispatcher-semi-agentic-readiness-fixes-2026-08-11.md`
-  is non-governing assessment material. Its Priority 2 evidence shapes inform this unit, but its own
-  header authorises no implementation.
-- Unit 1's accepted result below is authoritative current task state. Claude identified its commit
-  to the operator as `e2ac00d`; verify the exact repository identity at entry rather than treating
-  conversation as repository evidence.
+  is non-governing assessment material. Priority 3 establishes the risk and the zero-by-default
+  outcome, but its count-and-deadline proposal is not authorised here.
+- `plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md` is non-governing background. Its
+  leading `--disallowedTools` candidate, rejection of an override, and requested-policy-versus-
+  containment distinction may inform the design but do not replace live inspection.
+- The old spike dispatcher and its tests are historical comparison only. Do not copy them or use
+  their green suite as acceptance evidence for the canonical launcher.
 
 **Check against the repository before acting.**
 
-1. Verify in `scripts/axcion-harness-v0.2/carry-turn.sh` whether `before_dirty` is captured but not
-   used when the post-Claude dirty-state branch attributes an uncommitted state file to Claude. Use
-   the existing test seam to demonstrate whether a state file dirty before launch and byte-identical
-   afterwards can be misreported as newly edited by Claude. If this premise is false, hand back the
-   evidence rather than preserving the proposed classifier shape.
-2. Search all of `scripts/axcion-harness-v0.2/carry-turn.sh` and
-   `scripts/axcion-harness-v0.2/carry-turn.test.sh` for parsing or classification of Claude
-   `permission_denials`. If present, state its actual coverage; if absent, limit the absence finding
-   to those two searched files.
-3. Verify whether the carrier snapshots and reports allowed working-tree changes attributable to
-   the launched hop, including on actor failure, timeout, permission denial, and invalid or absent
-   handback paths. Distinguish pre-existing allowed dirt from changes made during the hop.
-4. Inspect every recovery message in the canonical launcher that can follow a stopped Claude hop.
-   Identify any branch that tells Codex, or ambiguously tells the current reader, to commit Claude's
-   handback; core section 4 assigns every commit to Claude.
-5. Confirm Unit 1's checkout-wide lock and its regression cases are present before modifying the
-   classifier. Stop on a false premise or missing Unit 1 commit rather than rebuilding it here.
+1. In both in-scope canonical files, verify the exact argv produced for a Claude hop with no
+   `--claude-deny` and with one or more operator rules. Establish whether the plain path currently
+   omits `--disallowedTools` and whether the narrowed path currently carries only operator input.
+2. Verify that the existing fake-binary seam records the real argv assembled by the canonical
+   launcher and can distinguish absence, mandatory defaults, and additive operator rules. If it
+   cannot fail on those distinctions, stop rather than substituting a text grep.
+3. Check the installed Claude CLI's accepted `--disallowedTools` argument shape using existing
+   help/version evidence or a non-model parser probe only. Do not launch a real model or nested AI.
+4. Inspect the canonical Codex launch path only far enough to state whether an equivalent native,
+   already-used deny mechanism exists. This unit does not authorise wrappers, PATH interception,
+   hooks, sandbox redesign, or other new machinery. If the approved outcome cannot honestly be met
+   without such a mechanism, hand back that precise gap rather than widening the unit.
+5. Verify Unit 2's correction commit `bb0af1b298668a917fe9e39b61a0278fba363d3b` is present before
+   changing the launcher. Stop on a false premise rather than rebuilding prior units.
 
 **Scope.** Change only:
 
@@ -85,114 +80,138 @@ partial allowed paths if any, and a recovery action consistent with Work Loop ow
 - `scripts/axcion-harness-v0.2/carry-turn.test.sh`
 - this task state file
 
-The implementation mechanism is Claude's decision. Prefer one classifier or one ordered decision
-surface over independent branches that can contradict each other. Reuse the carrier's existing
-snapshots and actor capture where sufficient. Do not create a daemon, observer process, registry,
-second evidence store, retry mechanism, or semantic state field.
+The implementation mechanism is Claude's decision within those surfaces. Reuse the existing Claude
+permission-narrowing path if inspection supports it. Add no flag, override, registry, wrapper,
+process supervisor, hook, settings file, or second policy source.
 
-**Codex framing decisions and held-back work.** Unit 2 includes dirty-state attribution,
-permission-denial interpretation, partial allowed-effect reporting, and recovery wording because
-they form one dominant deliverable: classify one hop honestly from one evidence set. It excludes
-nested-agent controls, permission-mode widening including `acceptEdits`, lock changes, documentation
-cleanup, live model trials, automatic retry or resume, and adoption decisions. Do not edit or copy
-the old spike dispatcher; it may be inspected only for a factual comparison and is never acceptance
-evidence for this unit.
+**Codex framing decisions and held-back work.** This unit covers the known attended Claude-child
+expansion path and both ordinary direct targets, `claude` and `codex`. It excludes live nested-model
+attempts, arbitrary shell-evasion claims, containment, authorised nesting, invocation budgets,
+correction budgets, permission-mode widening, classifier/taxonomy reconciliation, adoption trials,
+and unattended behavior. The broader exit-taxonomy concern noticed during Unit 2's correction is
+deferred because correction protocol forbids reopening Unit 2 and it does not block this unit.
 
-**Required fail-capable evidence.** Exercise the canonical carrier path and show:
+**Required fail-capable evidence.** Exercise the canonical launcher path and show:
 
-1. a state file dirty before launch and byte-identical afterwards is not reported as newly edited by
-   Claude;
-2. a Claude permission denial with no repository effect reports the denied tool and target and says
-   the repository is unchanged;
-3. a Claude permission denial after allowed partial edits reports the denial and lists exactly the
-   attributable changed paths;
-4. allowed partial effects without permission evidence are classified separately and listed on an
-   actor failure, timeout, or invalid/no handback path represented by the existing fixture seam;
-5. a disallowed working-tree or committed effect retains precedence as an unexpected-effect stop;
-6. a valid committed Claude handback and a valid uncommitted Codex handoff retain their existing
-   success semantics;
-7. identical evidence maps to one stable outcome regardless of which legacy branch would previously
-   have encountered it;
-8. no recovery branch tells Codex to commit, discard, or otherwise repair Claude's partial handback;
-9. Unit 1's lock cases and the full canonical launcher suite still pass.
+1. pre-change, a normal attended Claude argv lacks the mandatory nested-actor deny set;
+2. post-change, both the no-extra-deny and operator-extra-deny shapes carry rules covering direct
+   Bash invocation of both `claude` and `codex`;
+3. operator `--claude-deny` values append verbatim and cannot displace the mandatory set;
+4. `--permission-mode default`, task routing, output capture, and a normal committed handback retain
+   their existing behavior;
+5. help/run output says the rules are requested policy rather than containment and exposes no
+   override;
+6. a mutation that removes or bypasses the mandatory set makes the relevant assertions fail;
+7. Unit 1 lock cases, Unit 2 classifier cases, and the full canonical suite still pass.
 
-Show at least one matched pre-change/post-change failure for the dirty-before/byte-identical incident
-shape and one fail-capable permission-denial case. Report exact commands, exit statuses, relevant
-output, outcome precedence, changed files, and the commit id. Evidence from the old spike's suite or
-a grep for outcome labels does not substitute for exercising the canonical carrier path.
+Report exact commands, exit statuses, relevant argv/output, the pre-change failure, mutation result,
+full-suite result, changed paths, and exact commit id. No live Claude/Codex invocation and no old
+spike test result count as evidence for this unit.
 
-**Completion condition.** Implement and commit one bounded deterministic post-hop classifier on the
-canonical attended launcher, with the evidence above; update this file with the current result, set
-`turn: codex`, and stop. Do not begin the nested-agent or live-trial unit.
+**Completion condition.** Implement and commit the bounded default nested-actor policy on the
+canonical attended Claude launch path, with the evidence above; update this file with the current
+result, set `turn: codex`, and stop. Do not begin adoption trials or adjacent cleanup.
 
-**Stop conditions.** Hand back to Codex without improvising if the dirty-state premise is false, if
-Claude's installed output cannot expose permission denials through the existing capture, if the
-evidence cannot distinguish pre-existing dirt from hop-attributable changes, or if the change needs
-paths outside scope. Stop for the operator if it would require broader permission authority,
-automatic repair of partial work, or a change to the attended-only release boundary.
+**Stop conditions.** Hand back without implementation if the canonical fake-argv seam cannot prove
+the policy, if installed Claude does not support the required deny shape, if a load-bearing Codex
+actor gap makes the required outcome misleading, or if the change requires anything outside scope.
+Stop for the operator if it requires permission widening, an override for nested work, containment,
+or a change to the attended-only boundary.
 
 ## Latest result
 
-Correction round on Unit 2. One frozen finding, reproduced by inspection before anything was changed:
+Inspected (2026-08-13):
 
-Reproduced (2026-08-13):
+- Claim (1): HOLDS — read `scripts/axcion-harness-v0.2/carry-turn.sh` `launch_actor`, pre-change
+  lines 631–640. Two branches. The `${#CLAUDE_DENY[@]} -gt 0` branch passed
+  `--disallowedTools "${CLAUDE_DENY[@]}"` — operator input only, nothing else. The `else` branch
+  passed no `--disallowedTools` at all. Confirmed against real argv, not by reading: the fake-actor
+  seam recorded `[-p] [/work-loop-v2 task-an] [--output-format] [json] [--permission-mode]
+  [default]` for a plain hop and `... [--disallowedTools] [Bash(git push:*)] [WebFetch]` for an
+  operator-deny hop.
+- Claim (2): HOLDS — read `carry-turn.test.sh` lines 6–11, 92–104 and 278–294. The suite passes the
+  fake binary through the ordinary `--claude-bin` option, so the launcher assembles and executes its
+  real argv; the fake records it. It distinguishes absence, mandatory defaults and additive operator
+  rules. One weakness, fixed inside this unit's scope rather than handed back: the recorder used
+  `"$*"`, which joins with spaces and so cannot tell `--disallowedTools 'A B'` from
+  `--disallowedTools A B`. It now also writes one bracketed argument per line, and every new
+  assertion reads that file.
+- Claim (3): HOLDS — `claude --version` reports `2.1.220 (Claude Code)`. `claude --help` line 64
+  reads `--disallowedTools, --disallowed-tools <tools...>` / "Comma or space-separated list of tool
+  names to deny (e.g. \"Bash(git *) Edit\")" — variadic, multi-value. Parser probe, no model
+  launched: `claude --disallowedTools 'Bash(claude:*)' 'Bash(codex:*)' --bogus-flag-xyz </dev/null`
+  printed only `error: unknown option '--bogus-flag-xyz'`. Control: the same command without the
+  deny arguments printed the identical single error, so the parser does report unknown options in
+  this mode and its silence about the two-value deny list is meaningful. (`--version` was rejected as
+  a probe — it short-circuits before validation and accepted a bogus flag too.)
+- Claim (4): HOLDS, and the finding is a gap, not a blocker — searched the canonical Codex launch
+  path (`carry-turn.sh` lines 610–619) and `codex exec --help` (`codex-cli 0.147.0-alpha.6.5`) for a
+  per-command or per-tool deny mechanism. None exists: the options are sandbox modes
+  (`read-only | workspace-write | danger-full-access`), config overrides, feature toggles and
+  approval routing. The canonical path already uses `--sandbox workspace-write`, which is a
+  filesystem policy and not a launch-deny list. This does not make the required outcome misleading,
+  because that outcome is scoped to the Claude launch path — so no wrapper, PATH interception or
+  hook was added. The launcher's help block now states the gap in words rather than leaving the
+  policy to read as if it covered both actors.
+- Claim (5): HOLDS — `git log --oneline -1 bb0af1b298668a917fe9e39b61a0278fba363d3b` returned
+  `bb0af1b fix: carry-turn.sh — permission dead end is exit 37, not 27`.
 
-- Finding (1): REPRODUCES — `.agents/skills/work-loop-v2/SKILL.md:277` lists the stop codes and names
-  "a permission dead end (`37`)"; line 289 defines it: "**`37` is a capability question, not a
-  transport failure.** A permission dead end means the child was refused something it needed."
-  `logs/work-loop/work-loop-v2-bounded-execution-verification.md:13` records, in a closed task
-  (`turn: operator`, core § 4 closing record), "The live exit taxonomy is consistent across every
-  instruction surface — `37` for a permission denial, `35` for an unavailable ownership check."
-  Searched both in-scope files for `\b37\b`: no match (grep exit 1), so `37` was unused in the
-  canonical launcher and nothing collided. `27` was present at six sites — `carry-turn.sh:71` (header
-  table) and `carry-turn.sh:834` (the verdict call), plus `carry-turn.test.sh` lines 570, 581, 622
-  and 817.
-
-  Unit 2 chose `27` by taking the next free number in this script's own exit table. That was the
-  wrong authority: the number is the Work Loop taxonomy's to assign, not the launcher's to pick.
-
-Result: all six sites now read `37`. The header entry moved into ascending order after `30` and
-carries a note saying the number is the taxonomy's to choose and why a permission dead end must not
-share a code with a transport failure — re-running or raising the timeout cannot clear it. Searched
-both files for `\b27\b` afterwards: no match (grep exit 1). No classifier behaviour, precedence,
-message text, evidence field or scope was touched, and neither the governing skill nor the accepted
-verification record was edited.
+Result: Unit 3 implemented and committed as `53dc76c13b91ed5df4a2c12b590066e8e80754e6`. Every
+canonical attended Claude launch now requests `--disallowedTools 'Bash(claude:*)' 'Bash(codex:*)'`.
+The mandatory set is a fixed array that is not derived from caller input, the two launch branches
+collapse into one line so no path can omit the flag, operator `--claude-deny` values append after
+the mandatory rules in one list, and there is no flag that drops or replaces them.
+`--permission-mode default` is unchanged. Changed paths: `scripts/axcion-harness-v0.2/carry-turn.sh`,
+`scripts/axcion-harness-v0.2/carry-turn.test.sh`.
 
 Evidence:
 
-1. **Targeted denial case.** A Claude hop with one recorded denial and no repository effect, run
-   directly against the canonical launcher: `EXIT=37`; screen carries
-   `permission:      1 DENIAL(S) recorded by Claude:`, `- Bash — git commit -m handback`,
-   `classified: PERMISSION_DENIED (exit 37)`, and
-   `RESULT outcome=STOPPED code=37 task=t1 mode=live actor=claude turn_before=claude
-   turn_after=claude denials=1 partial=0`. The denial naming and the attribution fields are
-   unchanged; only the code moved.
-2. **Full canonical launcher suite.** `./scripts/axcion-harness-v0.2/carry-turn.test.sh` → exit 0,
-   `passed: 157   failed: 0` — the same 157 as before the correction, so nothing broke.
-3. **Fail-capability still holds.** `./scripts/axcion-harness-v0.2/carry-turn.test.sh
-   --prove-failure` → exit 0, `passed: 11   failed: 0`. M9 now reads `wanted '37', got '22'`, so the
-   renumbered assertion is still load-bearing rather than merely relabelled.
+1. Pre-change failure. The final test file was run against a byte-exact copy of the pre-change
+   launcher (`sha256 ec50f1fa16e4de0cf3e256207c57bf93aed35ae1645ecbea46e6b651c772e397`):
+   `passed: 171   failed: 18`. The 18 are exactly the new claims — `plain launch requests
+   --disallowedTools at all`, `denies direct Bash launch of claude`, `denies direct Bash launch of
+   codex`, `operator rules do not displace the claude rule`, the codex twin, `mandatory rules
+   precede the operator's`, the eight help-text assertions and the four run-output assertions.
+2. Post-change argv, no `--claude-deny`. `[--disallowedTools] [Bash(claude:*)] [Bash(codex:*)]`,
+   with `--permission-mode default` still present.
+3. Post-change argv, two operator rules. Recorded in order:
+   `[--disallowedTools] [Bash(claude:*)] [Bash(codex:*)] [Bash(git push:*)] [WebFetch]` — asserted as
+   an exact string, with `grep -cFx '[--disallowedTools]'` returning `1`, so the operator's rules
+   append verbatim into one list and cannot displace the mandatory pair.
+4. Unchanged behaviour. `--permission-mode default` asserted on both shapes; task routing, output
+   capture, transition validation and the committed handback covered by the existing sections, all
+   green. A Codex hop's argv still carries no `--disallowedTools` and no `Bash(claude:*)`.
+5. Honest text. `carry-turn.sh --help` (exit 0) prints `REQUESTED PERMISSION RULES`, `They block the
+   DEFAULT DIRECT ROUTE`, `They are not OS containment, not a sandbox, not a process limit, and NOT
+   proof that nesting is impossible`, `with or without --claude-deny, there is no flag to turn it
+   off`, and `The Codex actor path carries NO equivalent`. A live run prints `nested-actor policy:
+   requesting Bash(claude:*) Bash(codex:*) on every Claude hop — mandatory, no override;
+   --claude-deny appends after it.` and `it is not containment and not proof that nesting is
+   impossible.` No override flag exists — asserted by absence checks over the launcher source.
+6. Mutation. `--prove-failure` reports `passed: 18   failed: 0`. M10 drops `--disallowedTools` from
+   the launch line: all three rule assertions correctly fail. M11 seeds `deny_all` empty so operator
+   rules become the whole list: both displacement assertions correctly fail. Each mutant carries a
+   control assertion proving the hop still launched — the first M10 attempt emptied the mandatory
+   array instead, which aborts the launcher under `set -u` on bash 3.2, and its assertions "failed"
+   for the wrong reason. That mutant was replaced.
+7. Regression. Full canonical suite `passed: 189   failed: 0` (baseline before this unit: `157/0`).
+   Unit 1 lock sections (12, 12b) and Unit 2 classifier section (15) together: 65 ok, 0 FAIL.
 
-Correction commit: `bb0af1b298668a917fe9e39b61a0278fba363d3b` (`bb0af1b`) —
-`fix: carry-turn.sh — permission dead end is exit 37, not 27`. Changed files:
-`scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`. This
-state-file handback is a separate commit, as the frozen finding directed.
+Commands: `bash scripts/axcion-harness-v0.2/carry-turn.test.sh` (exit 0),
+`bash scripts/axcion-harness-v0.2/carry-turn.test.sh --prove-failure` (exit 0),
+`bash scripts/axcion-harness-v0.2/carry-turn.sh --help` (exit 0). No live Claude or Codex model was
+invoked; the only real-binary calls were `--version`, `--help` and the argument-parser probe above.
 
-Noticed during the correction, recorded and NOT implemented — candidate deferrals, not a second
-correction round:
+Known limit, stated rather than tested around: what is proven here is the argv. Whether the child
+honours a requested rule is Claude Code's behaviour, and proving it would need a live nested-model
+attempt, which this unit excludes.
 
-- The same misalignment likely affects more than the one code that was frozen. `SKILL.md:277` also
-  assigns `36` (Claude did not touch an already-uncommitted state file — "exactly the misreport `36`
-  was split out of `25` to stop"), `23` (hop limit), `29` (budget), `33`/`34`/`35` (ownership). The
-  canonical launcher uses none of them, and Unit 2's own record asserted that "codes 23 and 29 remain
-  free" — which the taxonomy says they are not. Notably, `36` describes precisely the condition Unit 2
-  corrected, so the launcher may now be reporting `22` where the taxonomy expects `36`. Not touched:
-  the correction scope was frozen to the `27` → `37` change, and a wider taxonomy reconciliation is
-  its own unit with its own evidence.
-- Unit 2's carried-forward deferrals are unchanged: the `jq` dependency for reading permission
-  evidence, the two-entry `--allow-path` default that bounds what "allowed partial work" means, the
-  hook-owned dirty `logs/friction-log.md` interaction, and the cosmetic double slash in displayed
-  temporary lock paths.
+Deferred, noticed during this unit and not implemented: the Codex actor path has no equivalent
+nested-actor policy, and closing it would need a mechanism this unit does not authorise (wrapper,
+PATH interception, hook, or sandbox redesign). Deferrals carried forward: reconcile the remaining
+canonical launcher exit numbers with the wider Work Loop taxonomy (`23`, `29`, `33`–`36`); the `jq`
+dependency for permission evidence; the default allowlist review; hook-owned `logs/friction-log.md`
+dirt; cosmetic temporary-lock path formatting.
 
 ## Blocker
 
@@ -200,5 +219,7 @@ None.
 
 ## Next action
 
-Codex: closure check on the frozen finding only — is finding 1 resolved, and did the correction break
-anything? Correction commit `bb0af1b`; state-file handback is the commit carrying this record.
+Codex: assess Unit 3 against its completion condition — the mandatory nested-actor deny set on every
+canonical attended Claude launch, additive operator rules, no override, unchanged
+`--permission-mode default`, honest operator-visible text, and fail-capable evidence including the
+pre-change failure, both mutants and the full suite. Then close, continue, correct once, or stop.
