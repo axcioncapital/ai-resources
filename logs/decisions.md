@@ -179,3 +179,56 @@ both runs discarded; a green count from a run whose subject changed underneath i
 
 **Accepted limitation, stated in the closing record.** The diagnosis establishes that the merged
 suite is green where process inspection is permitted. It does not certify any other host.
+
+## 2026-08-13 — Close the branch-bound compaction-survivability task; deployment continues in a new main-bound task
+
+**Context.** Unit 6 discovery established that the three approved deployment-consumer checkouts are
+one repository in three worktrees, not three projects, and surfaced a hard blocker: the Work Loop
+cannot complete in any of them today because `logs/scripts/work-loop-owner.sh` is absent from all
+three. This branch's own corrections (Units 4–5) are committed but not on `ai-resources/main`, so no
+project checkout currently reads them.
+
+**Decision.** Close `work-loop-v2-compaction-survivability-repair` now, as a review-clean instruction
+repair plus a verified deployment map — explicitly not as completed deployment or completed
+operational proof. Promote its committed work to `ai-resources/main` (merge only, no push). Open a
+new, main-bound Work Loop v2 task for installation, the missing-helper fix, and the representative
+compaction proof, rather than extending this branch-bound task to cover them.
+
+**Rationale.** Installing from a branch the projects do not read would prove nothing — the projects'
+skill links and the stable hook-carrier path resolve into `main`, not into this worktree. Keeping the
+task branch-bound and closing it once its actual deliverable (instruction layer + map) was done avoids
+stretching one task across a branch boundary that changes what "done" can mean partway through.
+
+**Alternatives considered.** (a) Extend this task with further units for installation and proof —
+rejected, because the units would be no-ops until the merge happens, and mixing a branch-bound
+discovery/repair task with cross-repository, machine-level writes risked concealing a scope mistake,
+which Unit 6's own framing decision had already flagged as a reason to keep them separate. (b) Merge
+first, then continue the same task on `main` — rejected by the operator in favor of a clean new task,
+to avoid copying or concurrently reopening this state file in two places at once.
+
+## 2026-08-13 — User-level and repository-level Codex hooks aggregate; the later user-level registration must suppress the repo-level one
+
+**Context.** Unit 6 discovery could not settle, from repository or documentation evidence, whether a
+user-level `~/.codex/hooks.json` entry and the existing repository-level `ai-resources/.codex/hooks.json`
+entry for the same `SessionStart`/`compact` event would both fire or whether one would shadow the
+other. This mattered because the approved deployment plan is to add a user-level compact-hook carrier
+for machine-wide reach.
+
+**Decision.** Treat the two hook layers as additive (both fire). Any later user-level compact
+registration must be written to replace or otherwise suppress the existing repository-level
+registration, so exactly one trigger remains effective per compaction event.
+
+**Rationale.** An isolated, non-model query against the installed Codex `hooks/list` interface (a
+temporary-home, isolated check — not sourced from official documentation, which does not specify
+this) returned both the synthetic user `SessionStart`/`compact` entry and the repository
+`SessionStart`/`compact` entry as enabled simultaneously. Treating them as additive and designing the
+user-level write to suppress the repo-level one is the only reading consistent with that observation
+that avoids double-firing (the exact double-reorientation defect an earlier draft of the carrier was
+already corrected to avoid).
+
+**Alternatives considered.** Assuming the more specific (repository) hook would automatically override
+the more general (user) one — rejected as unverified; the query showed both enabled, not one
+suppressing the other. Deferring the question to the deployment unit itself — rejected, because it
+would have meant writing the user-level hook without knowing whether it introduces a double-fire
+regression, in a task whose own risk review named "single ownership" of the recovery trigger as a
+structural constraint.

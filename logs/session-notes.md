@@ -2,108 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-09 — Work Loop v2 core resolver: linked-worktree fix, planned and shipped same session
-
-### Summary
-Investigated `core-resolver-worktree-defect-report-2026-08-09.md` (the resolver rejected a linked
-worktree of `ai-resources` because it trusted the checkout by directory basename, not repository
-identity). Ran `/clarify` and `/scope` to lock a level-B plan (fix plus a four-check test script,
-report checks 3/4/6/7 explicitly out of scope), then the operator directed execution in the same
-session instead of deferring to the next one. Wrote the test first, reproduced the red case, applied
-the fix to both mirrored resolver copies, went green, ran one independent review, fixed both findings
-the review raised, and committed. Also verified — read-only, no code change — that the resolver's
-existing `WORKSPACE/projects/<one-child>` path already covers `axcion-systems-builder` and
-`axcion-systems-builder-email-os` unaffected by this change.
-
-### Decisions Made
-- Level B fix scope confirmed by operator (fix + 4-check test: worktree case, canonical control,
-  unrelated-repo negative control, mirror parity) — declined level C's full 8-check harness.
-- Operator overrode the standing reviewer rule (Codex) for this change and directed a Claude subagent
-  review instead. Recorded as a session-scoped deviation in the plan file, not a new standing rule.
-- Both review findings (unscoped `git worktree prune` risking the operator's other worktrees; resolver
-  prose overclaiming "repository identity" when the test is shared-object-store-plus-name) were fixed
-  before commit rather than logged for later.
-- Execution ran as Direct Work, not a Work Loop v2 task — using the resolver being repaired to route
-  its own repair was judged unnecessary risk.
-
-### Outcome
-Skipped (not requested).
-
-### Risky actions
-None. The one materially risky element — the test's original `git worktree prune` calls, which could
-have deregistered the operator's live worktrees on volatile paths — was caught by the independent
-review before the test script was ever run for real against the operator's tree, and fixed before commit.
-
-### Findings Declined
-- `run-manifest.sh close` hard-errored (exit 2) instead of the documented stub-and-continue: no per-id
-  marker existed and the shared `logs/.session-marker` held yesterday's `2026-08-08 S2-309`, not a
-  today-dated one. Declined as a new finding — reproduction, not new information, of the already-logged
-  open finding at `## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless session
-  instead of the documented stub-and-continue`. Per the wrap's own ADVISORY RULE, surfaced and the wrap
-  continued without a manifest for this session.
-
-### Next Steps
-None queued from this session. The resolver fix unblocks (but does not itself resume) planning
-`eval-mvp-proposal-v0.2.md` as a Work Loop task inside a recreated `ai-resources-eval` worktree — that
-recreation was explicitly left undone.
-
-### Open Questions
-None.
-
-## 2026-08-09 — Semantic-search investigation, proposal, and /memory-search MVP build
-
-### Summary
-Investigated whether semantic search would materially improve the repo (four parallel read-only sweeps
-over command retrieval, logs/decisions, Work Loop, and skills/docs discovery), delivered a prioritized
-report recommending institutional-memory search as the strongest candidate and explicitly excluding
-Work Loop (its failures are state-drift, not findability). Triaged an operator-pasted second-opinion
-review of that report against the repo's own norms, adopting four of five points (multi-class testing,
-hybrid retrieval as a contestant, the Work Loop state/context-plane split, authority-safety as an
-evaluation metric) and declining a standing eval-harness ambition as out of scope for an MVP. The
-operator then chose to skip the evaluation phase and build directly, and — after a course correction
-(see Risky actions) — chose a standalone `/memory-search` command over integrating into
-`/resolve-repo-problem`. A self-contained proposal was written and approved
-(`plans/semantic-search-mvp/proposal.md`), then built to spec: a local-embedding indexer/search script
-(`logs/scripts/memory-search.py`, model2vec, no API key) over `logs/` and `audits/` — including the
-archives and `audits/working/`, both previously unreachable by any repo tool — and the `/memory-search`
-command (search + reindex modes). Verified: reindex builds a 14,330-chunk index from 1,249 files in
-seconds; searches return path/date/status(default UNKNOWN)/snippet under a fixed "verify before
-relying" warning; hits were confirmed reaching the previously-blind corpora.
-
-### Decisions Made
-- Standalone `/memory-search` command chosen over `/resolve-repo-problem` integration — logged to
-  decisions.md.
-- Proposal's four open decisions approved as recommended: command name `/memory-search`, keep the
-  prototype as the build starting point, revert the out-of-scope `/resolve-repo-problem` edit, local
-  embedding backend for the MVP.
-- Second-opinion review triaged item-by-item rather than adopted wholesale: state/context-plane split
-  for Work Loop adopted as wording, not as a sequencing change; standing eval-harness idea declined
-  (routes through `/develop-ai-resource` if it comes at all, not built as a side effect of an MVP test).
-
-### Risky actions
-Near-miss: the operator's "I want to build an MVP" was read as an implementation go-ahead rather than
-a request for a proposal — packages were installed, a prototype script/index were created, and one live
-command file (`resolve-repo-problem.md`) was edited before any plan for that specific build was
-approved, violating the plan-before-implementation norm. The operator halted the session immediately;
-nothing unapproved was committed. Logged as a finding below.
-
-### Findings Declined
-- `run-manifest.sh close` hard-errored (no per-id marker; no today-dated shared marker — the shared
-  `logs/.session-marker` still held yesterday's `2026-08-08 S2-309`, and this direct-route session
-  never ran `/prime`). Declined as a new finding — reproduction of the already-logged open finding at
-  `## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless session instead of the
-  documented stub-and-continue`. Per the wrap's ADVISORY RULE, surfaced and the wrap continued without
-  a manifest for this session.
-
-### Next Steps
-Use `/memory-search` in real sessions for 2–3 weeks. If used: consider the `/resolve-repo-problem`
-integration (a five-line edit, deliberately deferred). If unused: retire via `/develop-ai-resource`.
-Run the pending Codex review on the new command + script (structural change class — new command;
-not yet run, status: unassessed).
-
-### Open Questions
-None.
-
 ## 2026-08-09 — Closed Work Loop v2 task: phase1a full-descendant-termination
 
 ### Summary
@@ -532,3 +430,74 @@ checkout; (3) whether a further phase of Harness v0.2 work opens as a new Work L
 
 ### Open Questions
 None.
+
+## 2026-08-13 — Work Loop v2 compaction-survivability repair, Units 4–6 and closure
+
+### Summary
+
+Ran Claude's half of Work Loop v2 units 4–6 for task `work-loop-v2-compaction-survivability-repair`,
+then closed the task on Codex's verdict. Unit 4 extracted the routing-index lookup content into one
+referenced file and aligned the acceptance harness's guard to it. Unit 5 corrected the instruction
+layer's overbroad "Codex never runs git" wording to state the real boundary (never mutates; read-only
+permitted and bounded). Unit 6 was a read-only discovery that mapped deployment surfaces and
+overturned a brief premise: the three candidate "projects" are one repository in three worktrees, and
+the Work Loop is currently unrunnable in any of them because a required helper script is absent.
+
+### Decisions Made
+
+- Unit 4: accepted Boundary A (SKILL.md L366–465) as the extraction scope; index checks repointed to
+  the new reference file, the 13 frontmatter/behavior/admission checks rebound to `SKILL.md`, ceiling
+  re-based 340 → 116. Committed `a22b54b`.
+- Unit 5: corrected 8 wording sites across two files to state Claude-only Git mutation/commit
+  ownership with Codex's read-only inspection permission explicitly bounded against displacing
+  Claude's evidence duty. Committed `891a991`.
+- Unit 6 (discovery, no implementation): reframed the deployment scope from "three projects" to "one
+  repository, three worktrees"; surfaced a hard blocker (`logs/scripts/work-loop-owner.sh` absent from
+  every project checkout); explained the two previously-unexplained skill links as hand-made
+  2026-08-10 fixes masking a missing manifest declaration; left the user-vs-repo hook precedence
+  question open. Committed `2e9952a`.
+- Operator/Codex: resolved the hook-precedence question (user and repository hooks aggregate, so the
+  later user-level registration must replace or suppress the repo-level one); approved closing this
+  branch-bound task and promoting its committed work to `ai-resources/main` (no push), with
+  installation and the representative compaction proof continuing in a new main-bound Work Loop task.
+- Closed the task: reduced the state file to the four-section closing record, cleared the checkout's
+  `.owner` lease, committed `486ad78`.
+
+### Outcome
+
+Outcome check skipped (not requested).
+
+### Risky actions
+
+None.
+
+### Next Steps
+
+1. Merge this branch's committed work (`a22b54b`, `891a991`, `2e9952a`, `486ad78`) into
+   `ai-resources/main` — required before any project checkout reads the corrections, since project
+   skill links and the stable hook carrier path resolve into `main`.
+2. Open a new, main-bound Work Loop v2 task for: installing `logs/scripts/work-loop-owner.sh` into the
+   three project checkouts; declaring `reorient` (and the missing `skills` block on the two session
+   branches); adding the 5-field AGENTS.md preservation contract plus its canonical template fragment
+   and `/new-project` consumer; writing `~/.codex/hooks.json` with a single-effective-trigger
+   `SessionStart`/`compact` entry; and running the representative compaction proof against
+   `axcion-systems-builder` (main worktree).
+3. Do not copy or reopen the now-closed state file for this task.
+
+### Open Questions
+
+None — the one open unknown from Unit 6 (hook precedence) was resolved by Codex before closure.
+
+### Findings Declined
+
+- Whether the Git-boundary wording should get a permanent regression assertion in the acceptance
+  harness — declined as a standalone improvement-log item; it is an open design choice already
+  surfaced and left to Codex's judgment inside the now-closed task record, not a repo defect.
+
+### Review status
+
+All skill and harness edits this session (Units 4–5) were made under the Work Loop v2 protocol, whose
+own mechanism requires Codex's independent assessment of every unit before it is accepted or closed —
+each unit here was assessed and, for Unit 5, correction-round-eligible before acceptance. That
+assessment is the independent review this session's structural edits received; no separate review was
+sought or needed.

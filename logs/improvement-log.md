@@ -3459,3 +3459,74 @@ it — Unit 3 was inspection-only and explicitly excluded launcher edits.
   `projects/{axcion-systems-builder,axcion-dashboard,axcion-methodology-r-d}/.claude/shared-manifest.json`,
   the same three projects' `AGENTS.md`, `.claude/commands/new-project.md`, and the chosen hook-carrier file.
 - **Notes:** audits/working/2026-08-13-resolve-verify-and-qualify-the-work-loop-v2-compaction.md
+
+### 2026-08-13 — Project checkouts install the Work Loop v2 Claude command with no owner helper, so it cannot complete Step 1.5
+
+- **Status:** logged (pending)
+- **Severity:** high — the Work Loop is not merely degraded but non-functional in every checkout that
+  has it. Step 1.5 is unconditional: "If the check cannot run, stop." Three project checkouts already
+  carry the Claude command and, between them, 28 live task-state files.
+- **Category:** Work Loop v2 deployment — missing precondition.
+- **Source:** ai-resources-compaction-survivability, 2026-08-13, `work-loop-v2-compaction-survivability-repair`
+  Work Loop v2 task, Unit 6 (discovery).
+
+`logs/scripts/work-loop-owner.sh` is absent from `projects/axcion-systems-builder`,
+`projects/axcion-systems-builder-dashboard` and `projects/axcion-systems-builder-methodology-r-d` (one
+repository, three worktrees). `.claude/commands/work-loop-v2.md` resolves in all three via symlink, so
+the Work Loop looks installed while its Step 1.5 precondition — "PROCEED / REFUSE / AMBIGUOUS" ownership
+check — cannot run. Every `/work-loop-v2` invocation in these checkouts stops before Step 2.
+
+**Shape of the fix (not built).** Ship `logs/scripts/work-loop-owner.sh` to the three checkouts as part
+of the deployment unit already scoped for this in the operator-approved next Work Loop task (main-bound,
+opened after `work-loop-v2-compaction-survivability-repair`'s closure). No separate fix needed if that
+task runs promptly; queued here so it is not lost if it does not.
+
+**Target files:** `projects/axcion-systems-builder/logs/scripts/work-loop-owner.sh` (+ the two sibling
+worktrees, by branch merge once on `main`).
+
+### 2026-08-13 — `axcion-systems-builder`'s `.codex/hooks.json` points both SessionStart hooks at a directory that does not exist, so auto-sync and permission-sanity have not run
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — silent infrastructure failure. Shared-command sync and permission-sanity
+  checking are both dark in this project with no error surfaced, which can mask further drift the
+  operator has no signal for.
+- **Category:** Project hook configuration — silent guard failure.
+- **Source:** ai-resources-compaction-survivability, 2026-08-13, `work-loop-v2-compaction-survivability-repair`
+  Work Loop v2 task, Unit 6 (discovery, noted as a deferral outside the unit's scope).
+
+`projects/axcion-systems-builder/.codex/hooks.json` registers two `SessionStart` hooks (auto-sync,
+permission-sanity), each guarded by `[ -x '…/.codex/hooks/<script>.sh' ] && { …; exit; }` inside a
+walk-up loop. `projects/axcion-systems-builder/.codex/hooks/` does not exist, so both guards fail
+silently and neither hook has run since the file was written — not investigated further, no fix built.
+
+**Shape of the fix (not built).** Establish why `.codex/hooks/` is absent (never populated, or removed)
+and either restore the referenced scripts or repoint the hooks at the correct location.
+
+**Target files:** `projects/axcion-systems-builder/.codex/hooks.json`,
+`projects/axcion-systems-builder/.codex/hooks/` (absent).
+
+### 2026-08-13 — Transport tooling still asserts "Codex never runs git" in diagnostic text and a pinned test, after the instruction layer was corrected to the narrower mutation-only boundary
+
+- **Status:** logged (pending)
+- **Severity:** medium — the underlying guards are correct (they detect a moved HEAD, which is a real
+  mutation); only the wording overstates. Low functional risk, but it now contradicts the corrected
+  instruction layer and could mislead whoever reads the diagnostic.
+- **Category:** Work Loop v2 instruction accuracy — transport layer, not yet corrected.
+- **Source:** ai-resources-compaction-survivability, 2026-08-13, `work-loop-v2-compaction-survivability-repair`
+  Work Loop v2 task, Unit 5 (deferral, outside the unit's bounded instruction-layer scope).
+
+`scripts/axcion-harness-v0.2/carry-turn.sh` L629 and
+`plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` L2559 both emit `Codex never runs git
+(core § 4)` as an exit-24 diagnostic. `carry-turn.test.sh` L414 asserts that exact string, so fixing the
+wording is a real edit with test coupling, not a comment tweak. Unit 5 corrected the instruction layer
+(`work-loop-v2/SKILL.md`, `reorient/SKILL.md`) to state the narrower boundary — Codex never *mutates*
+Git, read-only inspection is permitted — but left this transport tooling untouched as outside its
+bounded surfaces.
+
+**Shape of the fix (not built).** Update both diagnostic strings to name mutation rather than all Git
+use, and update `carry-turn.test.sh` L414's assertion to match. Small, mechanical, but touches a test
+assertion so it is its own unit rather than a drive-by edit.
+
+**Target files:** `scripts/axcion-harness-v0.2/carry-turn.sh` (`:629`),
+`plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` (`:2559`),
+`scripts/axcion-harness-v0.2/carry-turn.test.sh` (`:414`).
