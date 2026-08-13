@@ -316,8 +316,13 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
   assert_eq "plain attended launch still carries the turn" "0" "$RC"
   args="$(cat "$ARGVLOG.args")"
   assert_contains "plain launch requests --disallowedTools at all" "[--disallowedTools]" "$args"
-  assert_contains "  denies direct Bash launch of claude" "[Bash(claude:*)]" "$args"
-  assert_contains "  denies direct Bash launch of codex" "[Bash(codex:*)]" "$args"
+  # BOTH forms per actor. Which one an installed build honours is not
+  # established, so asserting only the colon form would prove a string reached
+  # argv rather than that the direct route is denied.
+  assert_contains "  denies direct Bash launch of claude (colon form)" "[Bash(claude:*)]" "$args"
+  assert_contains "  denies direct Bash launch of claude (space form)" "[Bash(claude *)]" "$args"
+  assert_contains "  denies direct Bash launch of codex (colon form)" "[Bash(codex:*)]" "$args"
+  assert_contains "  denies direct Bash launch of codex (space form)" "[Bash(codex *)]" "$args"
   assert_contains "  and keeps --permission-mode default" "--permission-mode default" "$(cat "$ARGVLOG")"
 
   # (b) With operator rules. The mandatory set must survive verbatim and the
@@ -328,17 +333,20 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
           --claude-deny 'Bash(git push:*)' --claude-deny 'WebFetch' --log-dir "$LOGD"
   assert_eq "operator-deny launch carries the turn" "0" "$RC"
   args="$(cat "$ARGVLOG.args")"
-  assert_contains "operator rules do not displace the claude rule" "[Bash(claude:*)]" "$args"
-  assert_contains "operator rules do not displace the codex rule" "[Bash(codex:*)]" "$args"
+  assert_contains "operator rules do not displace the claude colon rule" "[Bash(claude:*)]" "$args"
+  assert_contains "operator rules do not displace the claude space rule" "[Bash(claude *)]" "$args"
+  assert_contains "operator rules do not displace the codex colon rule" "[Bash(codex:*)]" "$args"
+  assert_contains "operator rules do not displace the codex space rule" "[Bash(codex *)]" "$args"
   assert_contains "  operator rule 1 appended verbatim" "[Bash(git push:*)]" "$args"
   assert_contains "  operator rule 2 appended verbatim" "[WebFetch]" "$args"
   assert_eq "  exactly one --disallowedTools flag, one list" "1" \
     "$(grep -cFx -- '[--disallowedTools]' "$ARGVLOG.args" | tr -d ' ')"
-  # Mandatory first, operator after: the flag, then the two mandatory rules, then
-  # the operator's. Order is what makes "appended" a checkable word.
+  # Mandatory first, operator after: the flag, then all four mandatory rules,
+  # then the operator's. Order is what makes "appended" a checkable word, and
+  # the exact string is what catches a mandatory rule quietly going missing.
   assert_eq "  mandatory rules precede the operator's" \
-    "[--disallowedTools] [Bash(claude:*)] [Bash(codex:*)] [Bash(git push:*)] [WebFetch]" \
-    "$(grep -A4 -Fx -- '[--disallowedTools]' "$ARGVLOG.args" | tr '\n' ' ' | sed 's/ *$//')"
+    "[--disallowedTools] [Bash(claude:*)] [Bash(claude *)] [Bash(codex:*)] [Bash(codex *)] [Bash(git push:*)] [WebFetch]" \
+    "$(grep -A6 -Fx -- '[--disallowedTools]' "$ARGVLOG.args" | tr '\n' ' ' | sed 's/ *$//')"
   assert_absent "  and still no permission bypass" "--dangerously-skip-permissions" "$args"
 
   # (c) There must be no way to ask for the set to be dropped. A flag that turned
@@ -352,8 +360,11 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
   # and must not sell it as containment.
   run_sut --help
   assert_eq "--help exits 0" "0" "$RC"
-  assert_contains "help states the mandatory claude rule" "Bash(claude:*)" "$o"
-  assert_contains "help states the mandatory codex rule" "Bash(codex:*)" "$o"
+  assert_contains "help states the mandatory claude rule (colon form)" "Bash(claude:*)" "$o"
+  assert_contains "help states the mandatory claude rule (space form)" "Bash(claude *)" "$o"
+  assert_contains "help states the mandatory codex rule (colon form)" "Bash(codex:*)" "$o"
+  assert_contains "help states the mandatory codex rule (space form)" "Bash(codex *)" "$o"
+  assert_contains "help says why both forms are listed" "which one an installed build honours" "$o"
   assert_contains "help says operator rules append" "APPENDED" "$o"
   # Needle deliberately includes --claude-deny: the help block already said "no
   # flag to turn it off" about --permission-mode, so the short phrase passed
@@ -370,6 +381,8 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
   printf 'transition:codex' >"$ACTION"
   run_sut --checkout "$REPO" --task task-ap --claude-bin "$FAKEBIN" --log-dir "$LOGD"
   assert_contains "run output names the policy" "nested-actor policy" "$o"
+  assert_contains "  lists all four mandatory rules" \
+    "requesting Bash(claude:*) Bash(claude *) Bash(codex:*) Bash(codex *) on every Claude hop" "$o"
   assert_contains "  says it is mandatory with no override" "mandatory, no override" "$o"
   assert_contains "  says operator rules append" "--claude-deny appends" "$o"
   assert_contains "  and does not sell it as containment" "not containment and not proof" "$o"
@@ -382,7 +395,8 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
   run_sut --checkout "$REPO" --task task-aq --codex-bin "$FAKEBIN" --log-dir "$LOGD"
   assert_eq "codex hop still carries" "0" "$RC"
   assert_absent "codex argv carries no deny set" "--disallowedTools" "$(cat "$ARGVLOG")"
-  assert_absent "codex argv carries no claude rule" "Bash(claude:*)" "$(cat "$ARGVLOG")"
+  assert_absent "codex argv carries no claude colon rule" "Bash(claude:*)" "$(cat "$ARGVLOG")"
+  assert_absent "codex argv carries no claude space rule" "Bash(claude *)" "$(cat "$ARGVLOG")"
 
 section "6. One hop per invocation"
   mkfix onehop task-h claude
@@ -932,8 +946,10 @@ prove_failure() {
     run_bin "$mut" --checkout "$REPO" --task task-m10 --claude-bin "$FAKEBIN" --log-dir "$LOGD"
     EXPECT_FAIL=1
     assert_contains "plain launch requests --disallowedTools at all" "[--disallowedTools]" "$(cat "$ARGVLOG.args")"
-    assert_contains "  denies direct Bash launch of claude" "[Bash(claude:*)]" "$(cat "$ARGVLOG.args")"
-    assert_contains "  denies direct Bash launch of codex" "[Bash(codex:*)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "  denies direct Bash launch of claude (colon form)" "[Bash(claude:*)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "  denies direct Bash launch of claude (space form)" "[Bash(claude *)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "  denies direct Bash launch of codex (colon form)" "[Bash(codex:*)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "  denies direct Bash launch of codex (space form)" "[Bash(codex *)]" "$(cat "$ARGVLOG.args")"
     EXPECT_FAIL=0
     # The launch still HAPPENED. Without this, an aborted launcher would score as
     # three proof-hits and the mutant would be measuring the wrong thing.
@@ -955,12 +971,39 @@ prove_failure() {
     run_bin "$mut" --checkout "$REPO" --task task-m11 --claude-bin "$FAKEBIN" \
             --claude-deny 'Bash(git push:*)' --claude-deny 'WebFetch' --log-dir "$LOGD"
     EXPECT_FAIL=1
-    assert_contains "operator rules do not displace the claude rule" "[Bash(claude:*)]" "$(cat "$ARGVLOG.args")"
-    assert_contains "operator rules do not displace the codex rule" "[Bash(codex:*)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "operator rules do not displace the claude colon rule" "[Bash(claude:*)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "operator rules do not displace the claude space rule" "[Bash(claude *)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "operator rules do not displace the codex colon rule" "[Bash(codex:*)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "operator rules do not displace the codex space rule" "[Bash(codex *)]" "$(cat "$ARGVLOG.args")"
     EXPECT_FAIL=0
     # The operator's own rules DID still arrive — proof the mutant removed the
     # mandatory set specifically, rather than breaking the launch outright.
     assert_contains "M11 control: the operator's rules still arrived" "[WebFetch]" "$(cat "$ARGVLOG.args")"
+  fi
+
+  section "M12. Keep only the colon form of each mandatory rule"
+  # The state Unit 3 was corrected from. The colon rules still arrive, so a
+  # suite that only checked those stays green — which is exactly why the space
+  # forms need their own assertions and their own mutant. If which form an
+  # installed build honours is unknown, half a set is a guess, not a policy.
+  mut="$TMPROOT/mutant-spaceform.sh"
+  sed -e "/^  'Bash(claude \*)'$/d" -e "/^  'Bash(codex \*)'$/d" "$SUT" >"$mut"
+  chmod +x "$mut"
+  if grep -qF "'Bash(claude *)'" "$mut"; then
+    bad "M12 mutant did not apply" "the space-form entries did not match"
+  elif ! mutant_ok "$mut"; then bad "M12 mutant does not parse" "bad mutation"; else
+    mkfix m12 task-m12 claude
+    printf 'transition:codex' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m12 --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_contains "  denies direct Bash launch of claude (space form)" "[Bash(claude *)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "  denies direct Bash launch of codex (space form)" "[Bash(codex *)]" "$(cat "$ARGVLOG.args")"
+    EXPECT_FAIL=0
+    # Controls. The colon forms DID still arrive, so this mutant removed the
+    # space forms specifically — and it demonstrates the gap the correction
+    # closed: a colon-only launcher passes every colon-form assertion.
+    assert_contains "M12 control: the claude colon rule still arrived" "[Bash(claude:*)]" "$(cat "$ARGVLOG.args")"
+    assert_contains "M12 control: the codex colon rule still arrived" "[Bash(codex:*)]" "$(cat "$ARGVLOG.args")"
   fi
 }
 

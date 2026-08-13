@@ -51,7 +51,11 @@
 # --disallowedTools set that asks the child to refuse the ordinary direct Bash
 # routes for starting another `claude` or another `codex`:
 #
-#     Bash(claude:*)   Bash(codex:*)
+#     Bash(claude:*)   Bash(claude *)   Bash(codex:*)   Bash(codex *)
+#
+# Both the colon form and the space form are listed for each actor, because
+# which one an installed build honours is not established and listing only one
+# would rest the policy on that guess.
 #
 # It is passed with or without --claude-deny, there is no flag to turn it off,
 # and operator --claude-deny rules are APPENDED to it rather than replacing it.
@@ -149,9 +153,20 @@ CLAUDE_DENY=()
 # `--disallowedTools` takes a space- or comma-separated list on Claude Code
 # 2.1.220 (`--disallowedTools, --disallowed-tools <tools...>`), so the mandatory
 # rules and the operator's are one list, mandatory first.
+#
+# BOTH the colon form and the space form, per actor. Which one an installed
+# build honours has not been established here: the CLI's own help writes its
+# example in the space form (`Bash(git *) Edit`), while the colon form is the
+# shape used elsewhere in this workspace. Listing only one would make the whole
+# policy rest on a guess about matching behaviour, and the argv evidence would
+# then prove that a string was passed rather than that the route is denied.
+# Listing both costs one array entry each and removes the guess. Same reason the
+# spike dispatcher's NESTED_ACTOR_DENY carries all four.
 CLAUDE_DENY_MANDATORY=(
   'Bash(claude:*)'
+  'Bash(claude *)'
   'Bash(codex:*)'
+  'Bash(codex *)'
 )
 
 TERM_GRACE_SECS=5
