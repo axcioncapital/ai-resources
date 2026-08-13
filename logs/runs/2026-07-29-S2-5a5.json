@@ -1,0 +1,44 @@
+{
+  "run_id": "2026-07-29-S2-5a5",
+  "project": "ai-resources",
+  "date": "2026-07-29",
+  "marker": "S2-5a5",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/scripts/prime-marker.sh",
+    "logs/scripts/prime-marker.test.sh",
+    "logs/loop/2026-07-29-prime-minimum-responsibility-build-2.evidence.md",
+    "logs/improvement-log.md",
+    "logs/session-notes.md",
+    "logs/scratchpads/2026-07-29-21-05-scratchpad.md",
+    "../projects/axcion-ai-system-owner/development/prime-runtime-delegation.md"
+  ],
+  "decisions_refs": [],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

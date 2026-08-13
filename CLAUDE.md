@@ -5,7 +5,7 @@
 This repo stores AI resources — primarily skills (SKILL.md files under `skills/`), plus prompts, docs, templates, and audit/log artifacts. Non-obvious conventions:
 
 - **Inbox flow:** resource briefs land in `inbox/` (created via `/request-skill` in project sessions, picked up by `/develop-ai-resource` here, which qualifies the need and hands a qualified brief to `/create-skill`); fulfilled briefs move to `inbox/archive/` to clear the intake queue without losing the record. A brief the operator dispositions as **no build, reuse as-is, rejection or deferral** is archived the same way, with a one-line disposition note at the top — and, for a deferral, the concrete trigger that would reopen it. `inbox/` holds only briefs still awaiting a decision.
-- **`templates/`** holds canonical deployable fragments consumed at scaffold time (project settings + project CLAUDE.md sections) — edit the fragment, not the consuming command. See `templates/README.md` for the consumer contract.
+- **`templates/`** holds canonical deployable templates consumed at scaffold time (project settings + a minimal project `CLAUDE.md` skeleton — title and description only) — edit the template, not the consuming command. See `templates/README.md` for the consumer contract.
 - **`logs/`** includes the output-quality `defect-log.md` — see `docs/defect-to-fix-loop.md` for the rule/eval/example closure loop.
 - **Session telemetry (`usage-log.md`)** is written by `/usage-analysis` into each *consuming project's* `logs/` directory — `logs/usage-log.md` here records ai-resources sessions only; there is no single cross-project usage log.
 
@@ -41,7 +41,7 @@ Existing implementations: `token-audit-auditor`, `token-audit-auditor-mechanical
 
 Capture `/usage-analysis` telemetry at the end of every substantive session. Output goes to `logs/usage-log.md` and is the baseline that future token audits measure against — without the data, a token audit can't tell whether past efficiency optimizations actually moved the needle.
 
-**Telemetry is opt-in as of the 2026-07-04 wrap-session leanness refactor** (previously wrap prompted for it automatically). A bare `/wrap-session` runs the core path only and does **not** capture telemetry; request it with `/wrap-session +telemetry` (or `full`) on substantive sessions. To protect the baseline against a forgotten flag, `/prime` nudges at the next session's start when the previous substantive session left no `logs/usage-log.md` entry (`/prime` already reads that log during orientation) — so a missed capture surfaces loudly rather than silently dropping the session from the record. Skip only genuinely trivial sessions (single-file edit, one-question read).
+**Telemetry is opt-in as of the 2026-07-04 wrap-session leanness refactor** (previously wrap prompted for it automatically). A bare `/wrap-session` runs the core path only and does **not** capture telemetry; request it with `/wrap-session +telemetry` (or `full`) on substantive sessions. To protect the baseline against a forgotten flag, `/prime` nudges at the next session's start when the previous substantive session left no `logs/usage-log.md` entry (its collector, `logs/scripts/prime-collect.sh`, runs the bounded check and returns `TELEMETRY_GAP`; `/prime` itself no longer reads the log) — so a missed capture surfaces loudly rather than silently dropping the session from the record. Skip only genuinely trivial sessions (single-file edit, one-question read).
 
 ## Maintenance Cadence
 

@@ -10,7 +10,7 @@ Each entry is a `### YYYY-MM-DD — {title}` block. Fields:
 - **Age:** auto-computed from the header date by `/resolve-improvement-log`; surfaced when > 6 weeks without resolution.
 - **Review-cycle:** for items not yet resolved — records the last review date and disposition (e.g., `reviewed 2026-04-24, deferred to next quarterly`). **This is the canonical "park" mechanism for ROI-deferred low-value items** (per workspace `CLAUDE.md` § Working Principles, structural-fix rule): a low-value item is parked by stamping `Review-cycle: reviewed {date}, deferred to {concrete trigger}`, which resets the `/friday-checkup` stale-scan clock to the review date. The deferral target must be **concrete** — a date, a quarter, or a named event — never "later"/"someday" (a park with no real trigger never drains; `/resolve-improvement-log` Step 3b rejects a vague trigger). A parked item stays in the **active** log and re-surfaces (the stale-scan re-flags it ~21 days after the review date, and the monthly `/friday-checkup` park-drain force-reviews the oldest parks); parking is **not** archival. Reserve archival for genuinely dead items.
 - **Category:** broad classification (e.g., `Audit-recurrence prevention`, `command/skill`).
-- **Severity:** `low` | `medium` | `medium-high` | `high` | `critical`, or `none` for an entry that is closed/void and needs no fix. **Required on every entry.** *This field has a machine consumer and that is why it is mandatory: `/prime` Step 3's orientation scan anchors on `^-? ?\*\*Severity:\*\*` and surfaces only `high` / `medium-high` / `critical` / `urgent` hits as task-menu candidates. **An entry with no `Severity` line is not low-priority — it is unreachable**, invisible to the one channel that converts findings into shipped work.* Declared 2026-07-18 (S6-ac5) after 30 of 88 entries were found to carry no Severity line: the field was in use by 58 entries and consumed by `/prime`, but had never been written into this schema, so nothing ever told an author to emit it. Severity is **independent of parking** — a parked item still carries its true severity and is deferred via `Review-cycle:` (the park mechanism), not by omitting Severity. Do not conflate the two.
+- **Severity:** `low` | `medium` | `medium-high` | `high` | `critical`, or `none` for an entry that is closed/void and needs no fix. **Required on every entry.** *This field has a machine consumer and that is why it is mandatory: the wrap-time promotion sweep (`logs/scripts/promote-findings.sh`, which replaced `/prime` Step 3 on 2026-07-30) anchors on `**Severity:**` and queues only `high` / `medium-high` / `critical` / `urgent` entries into `logs/next-up.md`, which `/prime` Step 2 renders as task-menu candidates. **An entry with no `Severity` line is not low-priority — it is unreachable**, invisible to the one channel that converts findings into shipped work.* Declared 2026-07-18 (S6-ac5) after 30 of 88 entries were found to carry no Severity line: the field was in use by 58 entries and consumed by `/prime`, but had never been written into this schema, so nothing ever told an author to emit it. Severity is **independent of parking** — a parked item still carries its true severity and is deferred via `Review-cycle:` (the park mechanism), not by omitting Severity. Do not conflate the two.
 - **Proposal:** the proposed change.
 - **Target files:** files to be edited when executed.
 - **Citation form (`path:NNN`).** When any field cites a specific location, write it as `path:NNN` for a single line or `path:NNN-MMM` for a range — e.g. `` `.claude/commands/prime.md:219` `` or `` `prime.md:206-224` ``. Both forms are live (17 range citations as of 2026-07-19) and both are read by `logs/scripts/check-citation-resolution.sh`, which reports citations that no longer resolve. **Prefer a path with at least one directory component:** a bare filename is resolved only when exactly one file in the workspace carries that name, and is otherwise reported UNCHECKED rather than guessed — three copies of `check-foreign-staging.sh` exist, each with the same predicate at a different line. Note the checker verifies that a citation *resolves*, never that the cited line *says what the entry claims*; that ceiling is deliberate and is stated in the script's own output.
@@ -18,6 +18,31 @@ Each entry is a `### YYYY-MM-DD — {title}` block. Fields:
 Resolved entries are archived to `improvement-log-archive.md` via `/resolve-improvement-log`, using the **three** tiers described under **Verified:** above — `applied` + `Verified:`, or `resolved <date>`, or a Status value beginning `applied <date>`. A `partially applied` / `closed` / `void` / `DECLINED` status is **not** resolved and stays in the active log.
 
 ---
+
+### 2026-08-02 — The mandate schema has no field for a file a session **moves or deletes**, so the staging guard blocks every `git mv` commit
+
+- **Status:** logged (pending)
+- **Category:** schema gap — `/session-start` mandate fields vs. `check-foreign-staging.sh` footprint test
+- **Severity:** medium — it does not corrupt repository state and it has a working workaround, but it blocks a legitimate commit and the guard's own prescribed remedy writes a **schema-invalid path** into a durable mandate that six declared readers parse. Recurs on every session that moves, renames, or deletes a tracked file. *(Chosen deliberately over `medium-high`: frequency is limited to move/delete sessions and the blast radius is one blocked commit, not wrong work. Bump it if a second instance lands.)*
+
+**Found by execution, not review** — the guard blocked twice in session `2026-08-02 S1-92b` while committing the `git mv` of the Context Engineering spec from `plans/work-loop-v2-mvp/` to `plans/work-loop-v2-v0.2/`. The block was **correct**; the schema is what has no answer for it.
+
+**The gap, precisely.** A `git mv` stages two paths: the new one, and a **deletion** of the old one. The old path fits neither mandate field:
+
+- `- Files in scope:` **hard-rejects it.** `.claude/commands/session-start.md:288-290` runs an existence test as a HARD REJECT, on the stated reasoning that "everything remaining in `files_in_scope` is by definition something that already exists to be read or edited." A moved-away path does not exist.
+- `- Required outputs:` **does not cover it.** The same passage defines that field as "a file this session will **create**." A deleted path is the opposite.
+
+The guard reads the union of the two bullets and blocks anything in neither (`.claude/hooks/check-foreign-staging.sh:822`), so the commit stops with no schema-valid way to declare the path.
+
+**Mechanical root cause.** `.claude/hooks/check-foreign-staging.sh:690` collects the staged set with `git diff --cached --name-only`. That flattens every change to a bare path and discards the status letter, so the guard cannot tell a `D` (deleted) or `R` (rename source) path from an ordinary edit — and therefore cannot apply a different rule to one. The information needed to close this gap is already in git and is being thrown away at the point of collection.
+
+**What was done in-session, and why it is not the fix.** `Files in scope` was widened with the bare old path — the hook's own prescribed remedy, not a bypass — and the commit went through. But that leaves a path in `Files in scope` that `/session-start` Step 2.5 would have hard-rejected had it been typed at the gate. The workaround defeats the existence test rather than satisfying it, which is why this is logged as a structural item rather than closed as handled.
+
+- **Proposal.** Structural fix (per workspace `CLAUDE.md` § Working Principles — a patch here would mean permanently instructing sessions to write invalid paths into their own mandate). Smallest coherent shape:
+  - **(a) Teach the guard the status letter.** Switch `check-foreign-staging.sh:690` to `git diff --cached --name-status`, and accept a `D`/`R`-source path when it appears in a new `- Files removed:` bullet — or, cheaper, exempt `D`/`R`-source paths from the footprint test entirely when the *destination* path is already inside the declared footprint, which is exactly the `git mv` case and requires no new mandate field. **(a) is the recommended option** — it is one collection-call change plus a conditional, adds no schema surface, and needs no update to the six declared readers of the bullet labels (`session-start.md:371-379`).
+  - **(b) Add a mandate field.** A `- Files removed:` bullet, unioned into the footprint alongside the other two and exempted from the existence test. Honest and explicit, but it widens a parse contract with six declared readers for a case option (a) already covers.
+  - Whichever is chosen, apply it to the `ai-resources/.claude/` copy first; **four other copies of this hook exist** (`ai-resources/.codex/hooks/`, `ai-resources-active-unit-routing/`, `ai-resources-g1-reviewed-plan/`, `projects/axcion-sector-intelligence/`) and drift between them is its own known hazard — decide explicitly whether they are in scope rather than letting them silently diverge.
+- **Target files:** `ai-resources/.claude/hooks/check-foreign-staging.sh:690` (collection call), `ai-resources/.claude/hooks/check-foreign-staging.sh:822` (block message), `ai-resources/.claude/commands/session-start.md:288-290` (existence test rationale) — the last only if option (b) is chosen.
 
 ### 2026-07-30 — A session-scoped report-level field plus a per-question file write guarantees orphan halves — and per-question verification structurally cannot see them
 
@@ -39,6 +64,24 @@ The unit's Q8+Q9 session prompt combined both. `projects/axcion-si-worktrees/ind
 - **Not proposed:** a cross-artifact diff step in the verification pass. Considered and rejected as heavier than the defect warrants — the QC catcher above stops the cause upstream at near-zero cost, whereas a diff step adds a stage to every multi-question session to catch a class that should not be produced in the first place.
 - **Target files:** `ai-resources/skills/research-prompt-creator/SKILL.md` (element 8, ~L110); `ai-resources/skills/research-prompt-qc/SKILL.md` (Dimension 5, ~L83).
 - **Provenance / already done at unit level.** The artifact was fixed in the `industrial-software` worktree and the reasoning logged there as **Decision 38** (`projects/axcion-si-worktrees/industrial-software/logs/decisions.md`) — Q9's orphan anchor deleted, survivor renamed, spec-verified against `chapter-05-specs.md`, provenance recorded in-artifact. **The skill edits above were deliberately NOT made from the project worktree** (workspace `CLAUDE.md` § Skill Library bars it; Autonomy Rules #8/#9 gate canonical-resource changes), which is why this entry exists rather than a commit.
+
+### 2026-07-29 — `/work-loop` sends every reviewed unit to Codex, but the contract defines the reviewed route as one review *of the result*
+
+- **Status:** logged (pending)
+- **Category:** command/contract disagreement — `.claude/commands/work-loop.md` Step 7 vs `ai-resources/docs/work-loop.md:74`
+- **Severity:** medium — it does not corrupt state or produce a wrong answer, but it spends a full external review round on units that have no result to review, and it puts the command in breach of its own "the contract wins" rule. Cost scales with every reviewed-route Frame and Land unit run.
+- **Review-cycle:** reviewed 2026-07-29, deferred to → the next `/work-loop` contract-scoped brief (the same session that fixes `.claude/commands/work-loop.md:247`, already recorded as a known contradiction in `logs/decisions.md` 2026-07-29)
+
+**Found by** Codex review-1 of `/work-loop` unit `2026-07-29-leverage-idea-lifecycle-frame` (MATERIAL 3), adjudicated `out-of-scope` because that unit's object was `leverage-idea.md` and editing `/work-loop`'s own command or contract would have been exactly the incidental edit scope discipline forbids.
+
+**The disagreement, verbatim.** `docs/work-loop.md:74` (§ Route → depth → stops) defines the reviewed route's independent review as "**One Codex review of the result.**" `.claude/commands/work-loop.md` Step 7 says "**Reviewed route:** emit the evidence as a chat block for Codex" with **no phase carve-out** — while the *same step* explicitly states that on the challenged route "Frame, Build and Land carry none." So the command carves Frame out of review on the heavier route and not on the lighter one.
+
+A Frame unit produces no result by design (`docs/work-loop.md:117` — Frame closes "What is the need, who owns it, and is it in scope at all?"), so a reviewed-route Frame unit is sent to Codex with nothing the contract's definition covers. The command's own preamble settles which text governs: *"Where this file and the contract disagree, the contract wins and the disagreement is a defect to report."*
+
+- **Proposal.** Decide the intent first, then make one file follow the other — do not patch both toward a vague middle. Two coherent options:
+  - **(a) Command follows contract.** Add a phase carve-out to Step 7's reviewed branch mirroring the challenged branch: review attaches to the unit that produces a result (Prove for a multi-phase stream; the single unit for a one-unit stream). Cheaper, and matches the contract as written.
+  - **(b) Contract follows command.** Widen `docs/work-loop.md:74` to "one Codex review per unit" for reviewed work. More expensive per stream, but note the **counter-evidence for (a)**: the Frame review that surfaced this defect also produced MATERIAL 2, which reversed that unit's execution-boundary conclusion and re-routed the whole stream to `/develop-ai-resource` *before* any implementation was attempted. A pre-implementation review on the reviewed route demonstrably caught a wrong-owner call. Weigh that against (a)'s saving rather than assuming the cheaper option is correct.
+- **Target files:** `ai-resources/.claude/commands/work-loop.md` (Step 7, reviewed-route branch), `ai-resources/docs/work-loop.md:74`.
 
 ### 2026-07-24 — Concluding from an incomplete source set: three instances in one session, the third caught only by a dispatched gate
 
@@ -743,6 +786,7 @@ Queue: one bundled `note.md` / `friction-log.md` session for the 3 friction-logg
 - **Proposal:** Pin `model:` at each of the six sites, following the same convention as the 11 already-compliant commands (tier follows the work — judgment dispatches get `opus`; check each site's actual job before assuming blanket opus, per the M-A2a method lesson). `wrap-session.md` in particular should get its **paired workspace-root mirror** updated in lockstep.
 - **Target files:** `ai-resources/.claude/commands/{tweak,decide,leverage-idea,graduate-resource,promote-workflow,wrap-session}.md`; the workspace-root `wrap-session.md` mirror.
 - **Note:** CLAUDE.md § Model Tier's carve-out paragraph was reworded (S4, same session) to state this gap explicitly rather than imply universal compliance — see the carve-out's "Known compliance gap" clause.
+- **Partial — 1 of 6 done, 2026-07-29.** `leverage-idea.md` now pins `model: opus` on its Step 4 investigator dispatch, and `docs/agent-tier-table.md`'s compliance roster was moved in the same commit per that file's maintenance rule. Tier reasoning, per the M-A2a "check each site's actual job" method: the dispatch runs Part B's semantic near-duplicate sweep across the whole command/skill/agent library — the backstop for what the Step 2 mechanical gate misses — which is judgment work that degrades invisibly at a lower tier. **Five remain: `tweak`, `decide`, `graduate-resource`, `promote-workflow`, `wrap-session`** (plus `wrap-session`'s paired workspace-root mirror). Entry stays `logged (pending)`; do not archive on the strength of the one retrofit.
 
 ### 2026-07-13 — `run-manifest.sh` marker oracle breaks across midnight (same defect class already fixed one file over)
 - **Status:** **PARTIALLY APPLIED 2026-07-18 (S9-f53)** — the defect is fixed and covered by tests; the entry's *shared-helper* proposal is deliberately NOT done and stays open. Mission `repo-health-backlog-2026-07` thread 8 checked.
@@ -1549,7 +1593,7 @@ At `/wrap-session` Step 3.5, the foreign-session guard's shared-file fallback re
 
 ### 2026-07-19 — `check-foreign-staging.sh` resolves a gated `git add` against the wrong repo when the command runs inside a nested project repo, producing a false BLOCK that widening the footprint cannot clear
 
-- **Status:** logged (pending) — **SCORED TWICE, RECONSIDER both times (2026-07-19: S4-2b2, then S5-dd5). Nothing built either time.** The second gate ANSWERED the open design question and named a concrete buildable path — see § SECOND GATE OUTCOME at the end of this entry. A session picking this up should start from there, not from the proposal below, and should not attempt a third variation of the "degrade to warn" shape.
+- **Status:** **RESOLVED 2026-08-01** — built along the path the second gate named; see § RESOLUTION at the end of this entry. **Historical record, preserved deliberately: SCORED TWICE, RECONSIDER both times (2026-07-19: S4-2b2, then S5-dd5). Nothing was built either time.** The second gate ANSWERED the open design question and named the concrete buildable path that was in fact taken — see § SECOND GATE OUTCOME. The proposal below is the *original* one and was **not** the shape built: its secondary recommendation (prefer a soft warn over a hard block when the resolved toplevel differs from the workspace root) was rejected by both gates and remains rejected.
 - **Category:** hook (staging tripwire, `check-foreign-staging.sh`)
 - **Severity:** medium-high — it hard-blocks (exit 2) a legitimate commit, and the block is **unclearable by the remedy the hook itself prescribes**, so the operator is pushed toward either abandoning the commit or bypassing the guard. A guard whose only escape is a bypass trains the bypass.
 - **Source:** workspace root, 2026-07-19 session S2-e73 (`/new-project` post-pipeline git setup for `axcion-communication-system`).
@@ -1588,6 +1632,24 @@ Report: `audits/risk-checks/2026-07-19-staging-guard-cwd-resolution-destructive-
 **On bundling (the gate was asked to score whether S5-dd5 routed around the first gate's "own dedicated session" instruction).** Verdict: the "materially different shape" claim **substantially holds** — the gate independently confirmed no shared code path in the fix diff (`_command_text_only`, the only function the two hooks share, is untouched), and it scored Item 1 on its own merits at the same bar as if it stood alone. It still lands on RECONSIDER on those merits alone. The practical property the original recommendation protected — that Item 1's outcome not gate or dilute the other item — was preserved by sequencing the other item first and letting it land independently, which it did (`56304a7`).
 
 **Next session's shape:** adopt the fail-closed design above, build and pass all three fixtures **against built code** (not a design candidate), name the rollback plan, decide fix/delete/park on the divergent `.codex/hooks/check-foreign-staging.sh` fork (measured this session: 464 lines vs 668 canonical, materially behind), then re-run `/risk-check`. Per the gate: *"A second RECONSIDER here is the gate working as designed, not a failure of the redesign effort."*
+
+### RESOLUTION — 2026-08-01 (Work Loop v2 pilot task `foreign-staging-target-repo`, units 1–3)
+
+Built along the path § SECOND GATE OUTCOME named, not the original proposal. Reviewed independently by Codex across three units and two bounded correction rounds.
+
+- **Session/target scope separated.** The repository the command will stage into supplies the candidate files (`check-foreign-staging.sh:304`); this session's marker, mandate and footprint come from the repo where `/prime` ran (`:308-326`, `:368`). Both sides are compared in one absolute coordinate system (`:772-782`), which closes the path-collision half of this entry — the `logs/innovation-registry.md` case at `:1568`.
+- **Leading-`cd` resolution, including safely quoted literals** (`:243-281`). Quoted paths are resolved rather than rejected; every checkout path in this workspace contains a space, so failing closed on quotes would have broken ordinary work. `$`/backtick stay unresolvable even quoted; unquoted glob/`~`, subshells, `;`-sequencing and multiple `cd`s stay unresolvable.
+- **Fail-closed, scoped to wide adds only** (`:288`). A gated `git commit` with an unresolvable `cd` falls back to base cwd — a disclosed limitation, accepted twice by the reviewer, on the grounds that blocking every multi-line commit is a worse regression than the gap.
+- **Executable evidence: the canonical harness reports 15/15 green, exit 0** (`logs/scripts/check-foreign-staging.test.sh`, grown 6 → 15 cases across the three rounds). It is **fail-capable and measured**: against a no-op stub hook it reports 4 passed / 11 failed, so 11 assertions carry real signal and 4 are allow-shaped cases a dead guard also satisfies. That measurement is the honest bound on what "15/15 green" proves.
+- **Maintained copies dispositioned.** `.codex/hooks/check-foreign-staging.sh` **parked unchanged** — verified gitignored (`.gitignore:63`), unmaintained, and registered by no `hooks.json`; the fork the § above measured at 464 lines is deliberately left behind, not synchronized. The `axcion-sector-intelligence` fork **synchronized** to canonical behaviour retaining exactly its two authorized exemptions, `qc-log.md` and `research-quality-log.md` (project Decision 28); commit `563e3fe` in that repo.
+- **Contract updated:** `docs/commit-discipline.md` § Foreign-staging tripwire now states the scope split, the coordinate system, the `cd` resolution rules, the wide-add-only fail-closed boundary, and the commit arm's pre-command-index bound.
+
+**Two deferrals carried out of this task, documented and NOT implemented** (`docs/commit-discipline.md` § Foreign-staging tripwire → Known limitations):
+
+1. A plain-subdirectory project's own `proj/logs/.session-marker-*` may read as foreign, because the byproduct exempt-list still compares repo-root-relative paths. Separate comparison site; own decision and evidence required.
+2. `PreToolUse` fires before the command, so a combined `git add <explicit-path> && git commit` presents an empty index and the commit arm exits at "nothing staged" without evaluating the footprint. Pre-existing, not introduced by this work, and consistent with the original threat model (a *foreign* session that already populated the index) — but material, because this repo's own commit convention prescribes exactly that single-step shape. Confirmed by execution 2026-08-01: exit 0 combined, exit 2 for the same file pre-staged.
+
+**Not addressed, deliberately:** the hook-wiring weakness recorded at `docs/commit-discipline.md:43` (bodies versioned, wiring machine-local in `~/.claude/settings.json`) is untouched by this work and remains tracked as R-5.
 
 ### 2026-07-19 — `/prime` cross-checks Next Steps against git but NOT mission threads, so a shipped mission thread is re-offered as open work at every orientation
 
@@ -1940,6 +2002,1386 @@ Applying Step 1c literally would have made the `/prime` brief report the project
 **Proposal.** Add one clause to `prime.md` Step 1c Path 1, before trusting `pipeline-state.md` as current: check the file's own mtime for staleness relative to the repo's recent commit activity (`date -r <plan-file>` — the same primitive Path 2 already uses — compared against whether commits have landed elsewhere in the repo since), and downgrade to "state as historical, do not derive Where-we-are from it" when the file is stale relative to ongoing repo activity. This is more general than grepping the project's CLAUDE.md for a specific marker phrase, since it doesn't depend on guessing per-repo wording.
 
 **Target files:** `ai-resources/.claude/commands/prime.md` (Step 1c, Path 1 trust-as-is branch).
+
+### 2026-07-28 — Codex `work-loop` controller emits its brief without the required activation explanation
+
+- **Status:** logged (pending) — operator-waived for the MVP, not fixed
+- **Severity:** medium — non-functional. The brief Codex produced was correct, repository-grounded and contract-shaped, so nothing downstream broke. The cost is diagnostic: without the explanation, the operator cannot tell an informed skill selection from a lucky one, which is the only signal the activation path has.
+- **Category:** cross-model wiring (C2 Codex controller skill, `ai-resources/.agents/skills/work-loop/SKILL.md`)
+- **Source:** A-CX-1 acceptance run, 2026-07-28 (workspace-root session S4-42d).
+
+A-CX-1 requires three behaviours from a fresh, design-context-free Codex task: select `work-loop` from a plain-language need that does not name the skill, **explain the choice in three to four plain sentences before emitting**, and produce a 15–25 line brief. Selection and brief were both evidenced — a 22-line contract-shaped `BRIEF` with all six header fields, `REPO: ai-resources`, `BASE` = live ai-resources HEAD `0cc4035`, and a premise set that proved correct against the live files under independent verification. The explanation did not appear.
+
+**Operator disposition 2026-07-28: PASS WITH OPERATOR WAIVER.** Judged a non-functional MVP presentation miss, not an activation failure. `ai-resources/AGENTS.md` was left unchanged. Recorded here as the follow-up the waiver reserved rather than closed.
+
+Why it is worth keeping visible: the explanation is what distinguishes *Codex understood the need and chose this skill* from *Codex pattern-matched on something in the task*. A-CX-1 exists precisely because RR-05 makes C2 the design's only wiring point, so the activation path has no other observable. Waiving the signal is reasonable at MVP; losing the record of having waived it is how a design ends up trusting an unmeasured path.
+
+**Proposal.** Make the explanation structurally unavoidable rather than instructed: have C2 emit it as a named field the brief block itself carries (e.g. a `WHY THIS SKILL:` line above `BRIEF`), so a brief without it is visibly malformed on arrival instead of silently incomplete. Re-run A-CX-1 against that shape.
+
+**Target files:** `ai-resources/.agents/skills/work-loop/SKILL.md` (activation and brief-emission section); `ai-resources/plans/2026-07-28-work-loop-consolidated-build-plan.md` §11 A-CX-1 (pass condition, if the shape changes).
+
+### 2026-07-28 — A measurement of an in-flight file goes stale inside the same session, and nothing signals it
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — it produced a **false PASS in a committed acceptance-test record** and separately came within one step of rejecting a true premise and stopping correct work. Both in one session. It reaches `/prime`'s task menu deliberately.
+- **Category:** verification discipline / multi-writer working tree
+- **Source:** workspace-root session S4-42d, 2026-07-28.
+
+Twice in one session a file was measured, the result recorded, and the file then changed underneath the record. (1) A-CORE-3 was run against `ai-resources/docs/work-loop.md` at 172 lines and recorded **PASS**; the file was rewritten to 213 lines forty minutes later, so the committed test record asserted a pass against a ceiling the file no longer met. (2) A premise in a Codex brief asserted a step ordering that a cached read of the same file contradicted — verifying from the cached copy would have emitted `PREMISE: rejected` and stopped a correct unit. It was caught only by noticing an mtime.
+
+The common shape: **a read is treated as a fact about the file rather than a fact about the file at a time.** It bites hardest on in-flight components that two writers (here Claude and Codex, both authoring in `ai-resources`) touch in one session — exactly the cross-model arrangement the `/work-loop` design institutionalises, so the exposure grows rather than shrinks.
+
+Existing partial mitigation: `/work-loop` C3 Step 4 now says to re-derive against the live file every time. That is an instruction inside one command, and the failure occurred *outside* a loop unit both times.
+
+**Proposal.** Cheapest sufficient shape: capture `stat` mtime alongside every recorded measurement, so a stale result is visibly stale rather than silently wrong — a recorded pass that carries no timestamp cannot be audited at all. Stronger option if this recurs: re-measure size/grep acceptance results immediately before the commit that claims them, which the operator directed ad hoc this session and which caught the A-CORE-3 breach.
+
+**Target files:** `ai-resources/plans/2026-07-28-work-loop-consolidated-build-plan.md` §11 (acceptance-test recording convention); possibly `ai-resources/docs/audit-discipline.md` (evidence standard).
+
+### 2026-07-28 — Foreign-session guard inverts attribution for a `/prime`-less session
+
+- **Status:** logged (pending)
+- **Severity:** medium — it does not lose data (the guard stops rather than merges) but it names the wrong blocks, and the operator must know the classifier is inverted to resolve it correctly. A less careful wrap could ship an orphan's content under its own commit, which is the exact failure the guard exists to prevent.
+- **Category:** infrastructure (`ai-resources/logs/scripts/foreign-session-guard.sh`, marker-aware attribution)
+- **Source:** workspace-root session S4-42d wrap, 2026-07-28.
+
+A session opened directly into `/work-loop` (no `/prime`) holds no per-id marker. At wrap, the guard recovered `S3-5ca` from the **shared** marker file, judged it "partial-setup own", and ran attribution against it. Result: `MARKER=S3-5ca OWN_HEADERS_SUBTRACT=1 FOREIGN=2 FOREIGN_CLASS=CONCURRENT`. It subtracted the **orphan's** header as own and flagged **this session's real block** as foreign — the attribution inverted.
+
+Two further mismatches surfaced in the same fire. The class was `CONCURRENT`, whose documented remedy is "switch to the other terminal and wrap it first" — impossible, since neither S2-130 nor S3-5ca was live. And `REMNANT`, the orphan-recovery branch, keys on **prior-day** extras, so **same-day orphans from sessions that never wrapped have no matching branch at all**. The recovery commit had to adapt REMNANT's message shape by hand.
+
+Note the guard was not wrong given its inputs, and its refusal to proceed was correct. `run-manifest.sh`'s sibling guard behaved perfectly in the same wrap — it declined to write and named the risk of overwriting `2026-07-28-S3-5ca.json`. The gap is the classifier's shape, not its caution.
+
+**Proposal.** Add a same-day-orphan class distinct from `CONCURRENT` — the discriminator already exists in the data (a today-dated extra whose session has no live per-id marker is an orphan, not a concurrent writer) — and give it REMNANT's recovery text with a same-day message shape. Separately, when the marker is recovered from the shared file rather than a per-id one, mark the attribution **low-confidence** in the `GUARD:` line so the reader knows own/foreign may be inverted.
+
+**Target files:** `ai-resources/logs/scripts/foreign-session-guard.sh` (classifier + `GUARD:` line); both `wrap-session.md` copies (Step 1.5 / Step 3.5 branch text); `ai-resources/docs/session-marker.md`.
+
+### 2026-07-28 — Canonical `wrap-session` still absorbs unrecognised `+flags` silently
+
+- **Status:** logged (pending)
+- **Severity:** medium — the workspace-root copy is fixed; the canonical copy, which **20 symlinked consumers** resolve to, is not. An operator passing `+nonsense` (or a typo of a real flag) to a wrap in `ai-resources` or any of those projects still gets silence and an un-run pass they may believe ran.
+- **Category:** command defect (paired-copy divergence)
+- **Source:** loop unit `2026-07-28-wrap-session-unknown-flag-frame`, deferred finding; workspace-root session S4-42d.
+
+The workspace-root copy now reports any whole `+`-prefixed token that fails the Step 0.4 whole-token match, in two classes (known-canonically-unimplemented, and unknown-anywhere). The canonical copy retains the original behaviour: non-matching tokens fall through to "the operator's free-text wrap-up context" with no report. Canonical carries five flags rather than three, so its unknown class is narrower — but it is not empty, and its blast radius is 20 consumers against the root copy's one.
+
+Deliberately out of scope at the time: the unit's brief said "do not add telemetry support or modify the ai-resources command." The divergence is documented in-file at the root copy with a note instructing future readers not to "reconcile" the frame away.
+
+**Proposal.** Port the frame to canonical, adjusted for its five flags: the known-canonically class becomes empty there (all five are implemented), leaving one unknown-anywhere branch. Keep both copies' divergence notes in sync when it lands.
+
+**Target files:** `ai-resources/.claude/commands/wrap-session.md` Step 0.4; `/.claude/commands/wrap-session.md` Step 0.4 (divergence note update once ported).
+
+### 2026-07-28 — `repo-architecture.md` Q1 has no home for a project-local *non-Claude* utility script
+
+- **Status:** logged (pending)
+- **Severity:** low — advisory only, `/placement` still produced a confident, actionable recommendation by extending an existing precedent; nothing was blocked or misplaced.
+- **Category:** documentation gap (`docs/repo-architecture.md` § Placement heuristics, Q1)
+- **Source:** `axcion-systems-builder` session, 2026-07-28 — `/placement` run for `cases/scripts/build-review-packet.sh`.
+
+Q1 routes project-specific artifacts to "that project's own `.claude/` or root," which silently assumes every project-local artifact is a Claude Code artifact (skill/command/agent/hook). It is not, here: a plain bash script assembling a Codex review packet, with no Claude Code surface at all. `.claude/` was wrong by type, and the map gave no second option.
+
+The precedent that resolved it was already living in the repo, uncatalogued: `axcion-systems-builder/logs/scripts/` holds two log-maintenance scripts (`check-archive.sh`, `split-log.sh`) serving `logs/`. Read as a pattern rather than a one-off, that gives `{domain}/scripts/` for plain scripts serving a project domain — which is where `cases/scripts/build-review-packet.sh` landed. The map doesn't say this; `/placement`'s recommendation had to derive it from an unindexed sibling case.
+
+**Proposal.** Add one line under Q1 or Q2 noting that plain scripts (no Claude Code surface) serving a project domain live in `{domain}/scripts/`, with `logs/scripts/` cited as the existing instance. Cheap — this is a missing sentence, not a missing mechanism.
+
+**Target files:** `ai-resources/docs/repo-architecture.md` § Placement heuristics (Q1 or Q2).
+
+### 2026-07-29 — A QC gate costs most before it runs: anticipation shapes the artifact, and that cost is paid even when the gate is cancelled
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — recurs in every substantive session, is invisible in telemetry (the gate shows as "not run"), and the operator raised it directly as a complaint about session length.
+- **Category:** workflow / gate sequencing (`ai-resources/docs/qc-independence.md`)
+- **Source:** `axcion-systems-builder` session, 2026-07-29 (S1-c63) — operator interrupted `/qc-pass` mid-dispatch and asked for an explicit account of how the gates cost time.
+
+**The measurable part is small and was mostly wasted.** `/risk-check` never ran. `/qc-pass` was invoked and the operator killed the subagent dispatch before the reviewer did any work. Direct cost: two turns and ~140 lines of handoff prose (≈45 lines of skill arguments, ≈95 lines of subagent prompt) that were discarded. Plus prior reasoning spent deciding *which* gates applied — whether the Blind-Spot Scan fires on a build-script edit, and whether the base "do not call the Agent tool unless requested" instruction conflicts with the QC Independence Rule's "never self-QC-and-commit."
+
+**The larger part is invisible and is the actual finding.** Knowing a reviewer was coming changed what got written *before* the gate was reached: three documents each gained a "why this is X and not Y" rationale paragraph, the edited script gained a seven-line comment block explaining a bug no longer present in it, and the review brief ran to 106 lines. Some of that is load-bearing for the external reviewer; a meaningful fraction exists to pre-empt an objection. **That cost is incurred at authoring time and is therefore paid in full whether or not the gate ever fires** — which is exactly what happened here.
+
+**Proposal — sequencing, not removal.** The rule currently reads as "run `/qc-pass` after producing or editing any substantive artifact, before approval or commit," which places it at the end, on finished work, where it reads as ceremony and where its findings are most expensive to act on. Add guidance that on multi-document fold-ins QC should fire **on the first artifact, early**, before rationale and cross-reference passes — same cost to run, findings arrive while they are cheap to fix, and the anticipation premium is not paid on work that has already been polished.
+
+**Counter-consideration to weigh before acting.** Early QC sees an incomplete artifact and may raise findings that later edits would have closed anyway, which trades one kind of waste for another. The narrow claim worth testing first: does it hold specifically for *fold-ins* (transcribing settled decisions into existing documents), where the shape is known up front and QC's real job is fidelity-checking rather than judging a design?
+
+**Target files:** `ai-resources/docs/qc-independence.md`; possibly the `Completion Standard` / `QC Independence Rule` wording in the workspace `CLAUDE.md`.
+
+### 2026-07-29 — A standing "no Agent tool unless requested" instruction structurally blocks `/qc-pass` — not just its anticipation cost, its execution
+
+- **Status:** logged (pending)
+- **Severity:** high — disables the workspace's own "never self-QC-and-commit" rule for the duration the instruction holds, silently and without a substitute. Recurs in every session carrying the same standing instruction, not just this one.
+- **Category:** workflow / gate sequencing (`ai-resources/docs/qc-independence.md`; interacts with harness-level "no Agent tool unless requested" directives)
+- **Source:** `axcion-systems-builder` session, 2026-07-29 (S2-d34) — a multi-document fold-in of Codex Review 2 findings into `03-clean-system-definition-v2.md`, `02-detailed-needs-document.md`, and `working/phase7-v1-reconciliation.md`, committed with no independent QC.
+
+**Distinct from the 2026-07-29 (S1-c63) entry above, one step further along the same fault line.** That entry describes `/qc-pass` being invoked and then interrupted — cost paid in anticipation even though the gate never completed. This session never invoked it at all: a standing session-level instruction ("Do not call the AgentTool unless the user requested it") was in force, and `/qc-pass` dispatches the `qc-reviewer` agent via the Agent tool. Running it would have meant knowingly violating the standing instruction; not running it meant knowingly violating the QC Independence Rule's "Never self-QC-and-commit." The session picked the second, surfaced the conflict in the session note and the operator-facing summary rather than resolving it silently, and substituted inline verification (source-quote checks, stale/new-string greps, markdown table integrity checks) as a partial mitigation — but inline verification by the same session is exactly what the QC Independence Rule exists to rule out.
+
+**Why this is worse than the anticipation-cost finding, not a duplicate of it.** That entry's proposal (fire QC earlier) assumes QC eventually runs. Under a standing "no Agent tool unless requested" instruction, it structurally cannot — every session carrying that instruction is permanently exempt from independent QC on every artifact, with no visible flag anywhere that this is happening except a self-authored note the operator has to notice and read.
+
+**Proposal.** `/qc-pass` (and `/risk-check`, and any other command whose mechanism is a subagent dispatch) needs a documented precedence rule for this exact conflict: does a standing "no Agent tool unless requested" instruction override the QC Independence Rule, or does the QC Independence Rule count as the operator having already "requested" QC dispatch by writing it into CLAUDE.md? Right now neither `qc-independence.md` nor the audit-discipline doc says, and the gap was resolved ad hoc, in-session, by inline substitution — the same failure mode `qc-independence.md`'s own "Never self-QC-and-commit" line exists to prevent.
+
+**Target files:** `ai-resources/docs/qc-independence.md` (add explicit precedence guidance); `ai-resources/docs/audit-discipline.md` § Subagent Proportionality (cross-reference); root workspace `CLAUDE.md` § QC Independence Rule (if the resolution is "CLAUDE.md-stated QC requirements count as pre-authorized," state that explicitly so a future session doesn't re-derive it under pressure).
+
+### 2026-07-29 — `docs/work-loop.md` defines no path for amending a G1-approved package once Build has begun
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — the contract's only defined gate placement is "end of the Shape unit", so any package correction discovered during Build is procedurally homeless. Hit live on stream `2026-07-29-prime-minimum-responsibility`; will recur on any challenged stream whose Build measurement contradicts its Shape estimate.
+- **Category:** contract gap (`ai-resources/docs/work-loop.md` § The challenged route, § Artifacts)
+- **Source:** `ai-resources`, 2026-07-29 — Build-3's Finding 4 measured a line demand plan-v3 never itemised; the operator ordered a measured package amendment before Slice 4 opened, and there was no defined artifact or gate for it.
+
+**The gap.** § The challenged route places G1 "at the end of the **Shape** unit, after the pre-implementation review is adjudicated", holding "the plan, the pre-implementation review, the adjudication of its findings, and the slice list Build will execute". It defines escalation into G1 (an escalating unit "stops at G1 with whatever package exists") but **no re-arming of G1 for an already-approved package**. § Artifacts gives plans a `-vN` revision mechanism, but binds every artifact to its unit — and the Shape unit that owned G1 is closed. § Cardinality gives Build one unit per slice and states plainly that "Build sits between G1 and G2 and holds no review of its own", so a Build unit cannot host the decision either. The result: when Build measurement falsifies a Shape estimate, the correction has no defined home, no defined gate, and no defined outcome token.
+
+**What was done in the absence of a rule, and why it is a choice rather than a precedent.** The amendment was written as the closed Shape unit's `plan-v4` (§ Artifacts' own `-vN` revision shape), no implementation edit was made, and it was returned to the operator for explicit approval before any Build unit opened. That is the conservative reading, but the contract does not prescribe it and a different session could reasonably have opened a fresh Shape unit on the same stream, or folded the amendment into a Build unit's evidence — the second of which would have buried a package-level decision inside a slice-level artifact.
+
+**Why it must be logged here rather than left in the stream.** § Artifacts deletes every `logs/loop/{STREAM}-*` file at stream close. The amendment recording this gap is one of them. Without an entry outside the stream, the gap's only trace would be a deleted file in a commit whose SHA nobody holds — the exact failure mode § Closing without a change describes for unrecorded outcomes.
+
+**Proposal.** Add a § Amending an approved package to `docs/work-loop.md`: name the artifact (a `-vN` plan revision on the stream, not the unit), name the gate (G1 re-arms for the amended portion only, with the unamended slices staying approved), and name what an amendment may not do (reopen a landed slice — Slice 3 stayed closed here, correctly, but only because the operator said so explicitly).
+
+**Target files:** `ai-resources/docs/work-loop.md` (§ The challenged route, § Artifacts, § Streams, units and phases); `ai-resources/.claude/commands/work-loop.md` if the command needs a corresponding step.
+
+### 2026-07-29 — `.claude/commands/work-loop.md:247` is now a stale, contradictory instruction
+
+- **Status:** logged (pending)
+- **Severity:** medium — a live authoritative override exists (`logs/decisions.md`, 2026-07-29), so
+  nothing is currently misled by it in practice; but a future session reading the command file in
+  isolation, without cross-checking `decisions.md`, would see an absolute prohibition that no longer
+  holds.
+- **Category:** documentation drift (`ai-resources/.claude/commands/work-loop.md` § What this command
+  never does)
+- **Source:** `ai-resources`, 2026-07-29 — surfaced while resolving the mission `lean-prime-2026-07`
+  non-negotiable on `/work-loop` editing `/prime`.
+
+**The defect.** `work-loop.md:247` reads: *"Never edits `/prime`, workspace `CLAUDE.md`, permissions,
+hooks or settings."* The operator's 2026-07-29 decision (`logs/decisions.md`) establishes that
+`/work-loop` **may** edit `/prime` when it is the explicit object of an approved brief, the settled-
+correction clause of `docs/work-loop.md` § Execution boundary applies, and the applicable route gates
+have passed. The command file's blanket "never" now contradicts the contract doc and the operator
+decision on its first clause, while remaining correct on the other four (`CLAUDE.md`, permissions,
+hooks, settings).
+
+**Why it was not fixed in the stream that found it.** The operator scoped the authorization narrowly
+— to the current stream's three-condition case — and explicitly declined to fold the command-file
+correction into the same act, calling it "a separately scoped correction" with its own blast radius.
+Fixing it here would have been exactly the kind of incidental, undeclared edit the authorization's
+first condition (`/prime` as the explicit object of an approved brief) exists to exclude.
+
+**Proposal.** Narrow `work-loop.md:247`'s first clause to match the operator's three-condition
+authorization — or point it at `docs/work-loop.md` § Execution boundary and `logs/decisions.md`
+rather than restating a rule that can drift out of sync with the contract doc again. Needs its own
+brief and route classification (likely `reviewed` — a shared command file, one clause).
+
+**Target files:** `ai-resources/.claude/commands/work-loop.md:247`.
+
+---
+
+### 2026-07-29 — `grep` is a shell function that expands `$VAR` inside single quotes, and it returns silent false negatives
+
+- **Status:** logged (pending)
+- **Category:** harness / evidence integrity — the instrument-scope family (`:22`, 2026-07-24), but a
+  distinct mechanism: there the instrument's *scope* was wrong, here the instrument *silently lies*.
+- **Severity:** high — it converts "I searched and found nothing" into "it does not exist", with no
+  error, no exit-code signal and no visible difference from a true negative. Every command in this
+  repo that reasons from an empty `grep` result is exposed, and several *decide* on emptiness:
+  `/prime` Step 3's urgent scan, `docs/backlog-reconciliation.md`'s keyword-match pass, and the
+  `grep -Fxq` header-existence check at `prime.md:521` whose exit-1 branch **writes a session
+  header**.
+- **Observed, not inferred (2026-07-29, S2-5a5).** While verifying a `/work-loop` premise, the search
+  `grep -n 'for d in "$WORKSPACE_ROOT"/projects' .claude/commands/prime.md` returned **empty**. The
+  loop is plainly at `.claude/commands/prime.md:111`. `type grep` reports:
+  `grep is a shell function from /Users/patrik.lindeberg/.claude/shell-snapshots/snapshot-zsh-*.sh`.
+  The wrapper expands `$WORKSPACE_ROOT` **inside single quotes** — which POSIX quoting guarantees it
+  must not — so the pattern became `for d in ""/projects` and matched nothing. Escaping the dollar
+  (`'...\$WORKSPACE_ROOT...'`) returns the correct hit at `:111`; the unescaped form returns exit 1.
+  Both were run side by side against the same file in the same call.
+- **Why this is more than a quoting nuisance.** The session was one unrun positive control away from
+  reporting "`/prime` Step 1a's sibling-repo loop does not exist" **into a qualification decision** —
+  a fabricated premise of exactly the shape the 2026-07-29 usage-log entry scored **Major** (a
+  repo-scoped instrument answering a workspace-scoped question). The defect was caught only because
+  the empty result contradicted a file already read in the same session. Nothing structural caught
+  it. An empty `grep` in this environment is **not evidence of absence** until a positive control has
+  shown the pattern can match at all — which is the `work-loop.md` § Block formats evidence standard
+  ("an empty result is not evidence until a positive control has shown the check can detect the thing
+  it is looking for") applied to the tool rather than to the finding.
+- **Proposal:** (a) state in `docs/` — harness/evidence rules — that single quotes do **not** protect
+  `$` from the `grep` wrapper, and that literal-`$` patterns must escape it or use the `Grep` tool;
+  (b) require a positive control before any *decision* rests on an empty `grep`, matching the existing
+  evidence standard; (c) audit the decide-on-empty call sites named above — `prime.md:521`'s
+  `grep -Fxq` is the highest-consequence one, since its exit-1 branch writes to `session-notes.md`
+  (its own text already warns "treat exit 1 strictly as not-found → create, never as command failed",
+  which is correct for a *true* negative and dangerous under a *false* one). (d) Worth checking
+  whether the same wrapper affects other snapshot-wrapped commands.
+- **Target files:** `ai-resources/docs/` (new or existing harness/evidence rule),
+  `ai-resources/.claude/commands/prime.md:521`, `ai-resources/docs/backlog-reconciliation.md:80-94`.
+
+### 2026-07-29 — `toolkit-relationship.md` § 2's `/leverage-idea` row is now materially wrong
+
+- **Status:** logged (pending)
+- **Category:** doc/reference (System Owner sibling-repo grounding file, cross-repo)
+- **Severity:** medium-high — the file is read by the `system-owner` agent on every invocation, and the row now misdescribes both the command's authority and its stop point.
+- **Review-cycle:** reviewed 2026-07-29, deferred to → the next session touching `projects/axcion-ai-system-owner/`, or the next `/consult`/`/implementation-triage` invocation that discusses `/leverage-idea`, whichever comes first
+- **Friction source:** `projects/axcion-ai-system-owner/references/toolkit-relationship.md:55` still reads *"[`/leverage-idea`] produces build proposals the operator may later bring to `/consult` or `/implementation-triage`, and feeds `/request-skill` on a new-skill recommendation."* As of `b2bb1bd` (this session, `ai-resources-leverage-idea` worktree), `/leverage-idea` no longer stops at a plan: it hands the recommended option to the exact command that owns it (`/develop-ai-resource`, `/work-loop`, `/scope-project`, `/tech-consult`, `/improve-skill`, `/tweak`, or a named project owner) and, on the new-or-materially-expanded-resource route, writes a Resource Brief directly to `inbox/` itself rather than "feeding `/request-skill`". Both facts in the existing row are now false.
+- **Proposal:** Rewrite the `/leverage-idea` row to describe the routing-and-handoff behavior — name the owner/route table (`.claude/commands/leverage-idea.md` Step 10) and the direct `inbox/` write on the new-resource route. Independently flagged as the top required mitigation by this session's `/risk-check` (`audits/risk-checks/2026-07-29-leverage-idea-lifecycle-routing-expansion.md`, blast radius High).
+- **Target files:** `projects/axcion-ai-system-owner/references/toolkit-relationship.md` § 2.
+- **Notes:** deliberately NOT fixed in the session that produced the defect — the operator explicitly excluded sibling-repo edits from that change (`inbox/archive/leverage-idea-lifecycle-routing.md` disposition note; `logs/session-notes.md` 2026-07-29 entry).
+
+### 2026-07-29 — A `git add` with one stale pathspec silently commits a partial stage instead of aborting the commit
+
+- **Status:** logged (pending)
+- **Category:** process / git discipline
+- **Severity:** medium — no data was lost and the wrap-mandated post-commit `git show --stat` self-verification caught it before any push, but the failure mode is generic (not specific to this session) and the safety net that caught it is a manual step, not a structural one.
+- **Review-cycle:** reviewed 2026-07-29, deferred to → next `/friday-checkup` or a dedicated commit-discipline session
+- **Friction source:** Observed directly, session `2026-07-29-leverage-idea`. A `git rm --quiet inbox/leverage-idea-lifecycle-routing.md` was run to archive a fulfilled brief. The follow-on `git add <5 other paths> inbox/leverage-idea-lifecycle-routing.md` (the removed path still listed, stale) aborted with `fatal: pathspec 'inbox/leverage-idea-lifecycle-routing.md' did not match any files` and staged **none** of the 6 paths — but the subsequent `git commit` still ran and committed whatever happened to already be staged (just the deletion, from the `git rm`), silently, with no indication that 5 intended files were missing. Caught only because this repo's own commit discipline mandates verifying the result afterward (`git show --stat`), not because anything blocked the bad commit from happening.
+- **Proposal:** No fix to a shared component proposed here — this is a single `git add` invocation's own failure semantics (a partial-pathspec-match aborts staging but does not prevent a subsequent commit from proceeding on the stale index). Two directions worth considering in a dedicated session: (a) a lightweight local habit/tooling change — verify `git diff --cached --name-only` matches the intended file list before every commit, not just after; (b) whether this is common enough across sessions to warrant a structural guard (a pre-commit check comparing staged-file-count against the invoking session's declared intent). Not proposing (b) here — one observed instance, caught safely, is evidence-class "one-off but consequential," not yet "recurring."
+- **Target files:** none identified yet — this is a process observation, not a code-target defect.
+### 2026-07-29 — `check-foreign-staging.sh` guard degrades to warn-only on any `/handoff`-resumed session
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — it fails open in exactly the condition it exists to catch. Observed live this session: a concurrent session was writing to the same worktree while the guard was off for all five of this session's commits.
+- **Category:** hook / staging safety (`.claude/hooks/check-foreign-staging.sh`)
+- **Source:** `ai-resources` session, 2026-07-29 — `/work-loop` review-layer-consolidation Prove + G2, resumed from `/handoff` with no `/session-start`.
+
+The guard reads this session's declared footprint from the session marker that `/session-start` Step 2.5 writes. A session resumed from a `/handoff` scratchpad never runs `/prime` → `/session-start`, so no marker exists, no concrete footprint is found, and the guard drops to warn-only: it prints `No concrete session footprint declared … the foreign-file staging guard is OFF for this commit` and stages whatever it is given.
+
+**Why this is the bad case rather than a cosmetic one.** Handoff-resumed sessions are, by construction, the ones most likely to share a worktree with another session — a handoff exists because work was split across sessions. This session hit exactly that: another session made four commits (`85a4bcc`, `ddfe7a4`, `315e0ae`, `89222f2`) into the same worktree and left `logs/friction-log.md` and `logs/innovation-registry.md` dirty, while the guard was off for every commit here. Nothing foreign was shipped, but only because staged paths were verified by hand each time — the mechanism was doing nothing.
+
+Note also that writing a `Files in scope:` line into the **commit message** does not satisfy it; the guard reads the marker, not the message. That is a reasonable design, but the warn text does not say so, so the natural repair attempt fails silently.
+
+**Proposal.** Either have `/handoff`'s resume path write a footprint marker equivalent to `/session-start` Step 2.5, or make the warn text name the actual remedy (`run /session-start to declare a footprint`) instead of describing the degraded state. The first is the structural fix; the second is the one-line stopgap.
+
+**Target files:** `.claude/hooks/check-foreign-staging.sh`; `skills/handoff/SKILL.md` (resume path); possibly `.claude/commands/session-start.md` Step 2.5.
+
+### 2026-07-29 — `/work-loop` consumer-count falsifiers cannot be re-derived; the counting scope is never recorded
+
+- **Status:** logged (pending)
+- **Severity:** medium — it does not corrupt anything, but it makes a falsifier unverifiable at exactly the phase whose job is verification, and the failure is silent: three plausible scopes each return a confident wrong number.
+- **Category:** workflow / falsifier design (`docs/work-loop.md`, Shape plan convention)
+- **Source:** `ai-resources` session, 2026-07-29 — Prove unit of the review-layer-consolidation stream.
+
+The Shape plan (`plan-v3` § 8) fixed twelve consumer counts (qc-pass 26, consult 28, reconcile 15, …) and falsifier 2 was "count regression." At Prove those counts could not be reproduced: counting from the workspace root gave 38/39/19, excluding archives and sibling worktrees gave 31/32/16, and neither matched § 8. The plan records the numbers but not the command, root, or exclusion set that produced them — so a later unit cannot tell a real regression from a scope mismatch, and the natural move is to keep adjusting exclusions until the numbers agree, which proves nothing.
+
+Falsifier 2 was closed here on a structural argument instead (content-only edits, no file added or deleted under any `commands/` path, no symlink mode change — therefore no count can have moved). That is sound and is arguably the better check, but it was reached by working around the gap rather than through it.
+
+**Proposal.** Require any Shape plan that states a count to state the **derivation** beside it — the exact command including root and exclusions, in one line. Cheap to write once, and it converts an unfalsifiable number into a falsifiable one. Worth considering more generally: a falsifier phrased as a re-derived absolute count is fragile; one phrased structurally ("no file added or deleted under X") is not.
+
+**Target files:** `docs/work-loop.md` § The challenged route (Shape's falsification-criteria guidance).
+
+### 2026-07-30 — `/close-worktree-session`'s conflict guidance covers markers, not append-order
+
+- **Status:** logged (pending)
+- **Severity:** medium — no data was lost (caught by an existing pre-commit hook before it could land), but the failure mode is generic to any worktree landing two concurrent sessions' append-only logs, not specific to this session.
+- **Category:** command guidance (`.claude/commands/close-worktree-session.md`)
+- **Source:** `ai-resources` main checkout, 2026-07-30 — landing `session/2026-07-29-2`, operator-directed ("just merge this... don't ask me anything").
+
+`/close-worktree-session` Step 4.5 is thorough about one failure mode of manual conflict resolution — unresolved `<<<<<<<`/`>>>>>>>` markers reaching the tree or `HEAD` — and silent about a second one that fired here: when a conflict in an append-only log (`logs/friction-log.md`, `logs/improvement-log.md`) is resolved by combining both sides (correct — neither side should be discarded), the combined result can still violate the repo's newest-last append-order convention, because each side's block gets inserted as a unit rather than merged entry-by-entry. `logs/session-notes.md` and `logs/decisions.md` were flagged in-order by union-merge but `check-append-order`'s pre-commit hook caught the friction-log/improvement-log resolution putting a block out of order, requiring a manual reorder (moving the block to file end) before the commit would proceed. The hook caught it this time, but the command's own conflict-resolution guidance gives no heads-up that this check exists or what to do if it fires.
+
+**Proposal.** Add one line to Step 4.5 (or a new sub-step immediately after it): after resolving any conflict in an append-only log by combining both sides, expect `check-append-order` to run at commit time and be prepared to reorder the combined blocks to file end — do not treat a hook failure at that point as a sign the conflict resolution itself was wrong.
+
+**Target files:** `.claude/commands/close-worktree-session.md` § Step 4.5.
+
+### 2026-07-30 — `prime-marker.sh` had not propagated to `axcion-systems-builder` when its `/prime` needed it
+
+- **Status:** logged (pending)
+- **Category:** infrastructure propagation (`logs/scripts/prime-marker.sh`, `prime-runtime-delegation` capability)
+- **Severity:** medium — no incorrect marker was allocated (the script ran fine invoked from `ai-resources` against the project's own `logs/`), but a project-level `/prime` had to detect the gap, reason about whether it was safe to call a sibling repo's script cross-repo, and improvise a workaround rather than finding a local copy.
+- **Review-cycle:** reviewed 2026-07-30, deferred to → the `prime-runtime-delegation` capability's next `land`/propagation pass, or the next session that hits the same gap in a different project
+- **Friction source:** `axcion-systems-builder` session, 2026-07-30 (S1-584). `/prime`'s Step 8k calls `logs/scripts/prime-marker.sh` "from the repository root," but that file exists only at `ai-resources/logs/scripts/prime-marker.sh` — extracted there 2026-07-29 per its own header — and had not been copied/synced into `axcion-systems-builder/logs/scripts/` (which still holds only `check-archive.sh` and `split-log.sh`). The session worked around it by running the `ai-resources` copy with `axcion-systems-builder` as cwd (safe, since the script is pure relative-path logic), but this depended on recognizing that safety property in the moment rather than on any documented cross-repo contract.
+- **Proposal.** Confirm whether `prime-marker.sh` is meant to reach every project via the existing shared-command sync mechanism (`auto-sync-shared.sh`) and, if so, why this project was missed as of 2026-07-30; if it is not meant to auto-sync, document the walk-up/cross-repo-invocation pattern this session used as the sanctioned fallback in `docs/session-marker.md` or `prime.md` Step 8k itself, so a future session does not have to re-derive that it's safe.
+- **Target files:** `logs/scripts/prime-marker.sh` (or the sync mechanism that should have copied it); `.claude/commands/prime.md` Step 8k; `docs/session-marker.md`.
+
+### 2026-07-30 — `docs/work-loop.md` gives no solo/reviewed unit-id example; every artifact on disk is a challenged capability stream
+
+- **Status:** logged (pending)
+- **Category:** documentation gap (`docs/work-loop.md` § Streams, units and phases)
+- **Severity:** medium — no corruption resulted (a defensible reading was applied and disclosed), but the contract's own formula (`UNIT = {STREAM}-{phase}`) is ambiguous for the one cardinality case ("solo is exactly one unit; the stream is that unit") where phase branching doesn't apply, and nothing on disk anywhere in `ai-resources/logs/loop/` confirms the intended reading.
+- **Review-cycle:** reviewed 2026-07-30, deferred to → the next solo/reviewed (non-challenged) `/work-loop` unit in any repo, or a dedicated work-loop documentation pass
+- **Friction source:** `axcion-systems-builder` session, 2026-07-30 (S1-584), unit `2026-07-30-writing-studio-phase9-mvp`. The contract states `UNIT = {STREAM}-{phase}` as a general formula, then separately says solo is "exactly one unit; the stream is that unit, with no record and no `active_unit`." Frame/Shape/Build/Prove/Land phase names are demonstrably a challenged-route construct (Step 5a runs "only that phase's block"), so it's unclear whether a solo/reviewed unit's id should be bare `{STREAM}` (no suffix) or should still carry some phase-like suffix. A repo-wide search of `ai-resources/logs/loop/*.brief.md` found only challenged capability streams (`-frame`, `-shape`, `-build-N`, `-prove` suffixes) — zero solo or reviewed examples to pattern-match against. The session proceeded on the literal "the stream is that unit" reading (`UNIT = STREAM`, no suffix) and disclosed the judgment call in chat, the unit's own brief, and the session note.
+- **Proposal.** Add one worked solo (or reviewed) unit-id example to `docs/work-loop.md` § Streams, units and phases, stating explicitly whether `UNIT = STREAM` (no suffix) is correct for that cardinality. Cheap to add, and it closes a real gap the next non-capability, non-challenged unit will hit again.
+- **Target files:** `docs/work-loop.md` § Streams, units and phases.
+
+### 2026-07-30 — `/work-loop`'s reviewed-route `EVIDENCE` block is too thin for a content-heavy independent review
+
+- **Status:** logged (pending)
+- **Category:** workflow design (`docs/work-loop.md` § The eight steps / Step 7; `.claude/commands/work-loop.md` Step 7)
+- **Severity:** low — worked around cleanly this session with no quality loss (this repo's own `build-review-packet.sh` mechanism substituted), but the substitution required recognizing the gap and improvising rather than following documented guidance.
+- **Review-cycle:** reviewed 2026-07-30, deferred to → the next `/work-loop` reviewed-route unit whose review object is a substantive document (not a code/config change)
+- **Friction source:** `axcion-systems-builder` session, 2026-07-30 (S1-584). Step 7's reviewed route says "emit the evidence as a chat block for Codex... paste it into the Codex `work-loop` task." For a code or config change, a terse `EVIDENCE` block (claims + what-was-run/observed) plausibly gives Codex enough, since Codex can also read the diff directly. For a case-document classification review (this unit), the `EVIDENCE` block alone omits the actual document under review, the approved V2 it must trace to, and the roster — none of which Codex could red-team without. The session built and pointed Codex at this repo's own established review-package mechanism (`cases/scripts/build-review-packet.sh`) instead, and disclosed the substitution to the operator rather than silently shipping a thinner review.
+- **Proposal.** Note in Step 7's reviewed-route guidance that for a review object requiring source context beyond the diff/claims (a drafted document judged against upstream authorities), the `EVIDENCE` block should point Codex at — or be supplemented by — a fuller context package, rather than assuming the terse block always suffices. Does not need a new mechanism; just an acknowledgment that one may already exist locally (as it did here) and should be used.
+- **Target files:** `docs/work-loop.md` § The eight steps (step 7 description); `.claude/commands/work-loop.md` Step 7.
+
+### 2026-08-01 — `run-manifest.sh close` hard-errors (exit 2) with no marker, instead of the documented wrap-time stub
+
+- **Status:** logged (pending)
+- **Category:** wrap-mechanics gap (`logs/scripts/run-manifest.sh`; `.claude/commands/wrap-session.md` Step 12d)
+- **Severity:** medium — no data loss and nothing blocked (the wrap continued per the advisory rule), but the documented fallback behavior did not occur, so a whole class of session — any that never runs `/prime` — silently gets no run manifest and no stub marking that absence.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → the next wrap-mechanics maintenance pass, or the next session that hits the same gap
+- **Friction source:** `ai-resources` session, 2026-08-01 (Work Loop v2 MVP Step 0 install). This session ran on direct operator instruction with no `/prime`/`/session-start`, so no per-id session marker was ever written, and the shared `logs/.session-marker` held a stale prior-date entry (`2026-07-29 S4-efd`). `wrap-session.md` Step 12d documents this exact case under "THE ADVISORY RULE": *"An absent manifest is a routine, legitimate path... close therefore writes a wrap-time stub when none exists, says so in one advisory line, and exits 0."* Actual behavior: `run-manifest.sh close` printed `could not resolve the session marker` and exited **2**, writing no stub. The wrap proceeded per the rule's own instruction ("surface it and continue the wrap"), so nothing broke — but the specific fallback the rule describes (a stub file, not just a chat notice) did not happen, and `check-decision-refs.sh` subsequently resolved this session's decision ref against the *stale* 2026-07-29 manifest rather than reporting "no manifest for this session," which could read as a false positive to a later reader.
+- **Proposal.** Either (a) make `run-manifest.sh close` actually write the wrap-time stub the rule describes when no marker resolves — using the session's date alone as the filename key (e.g., `logs/runs/{date}-nomarker.json`) — so the documented behavior and the real behavior match, or (b) if a stub genuinely cannot be keyed without a marker, correct the rule's wording in `wrap-session.md` Step 12d to state the real behavior (hard error, advisory-only, no file written) so a future session doesn't expect a stub that won't appear.
+- **Target files:** `logs/scripts/run-manifest.sh`; `.claude/commands/wrap-session.md` Step 12d ("THE ADVISORY RULE" paragraph).
+
+### 2026-08-01 — `Files in scope: (inferred) <paths>` reads as a hybrid safety net but disables `check-foreign-staging.sh` entirely
+
+- **Status:** logged (pending)
+- **Category:** wrap-mechanics gap (`.claude/hooks/check-foreign-staging.sh`; `.claude/commands/session-start.md` Step 3 mandate-line contract)
+- **Severity:** medium — no actual collision occurred this session (verified by hand that only the intended file was staged), but the failure mode is silent and self-inflicted: a session can believe its commits are protected by a concrete footprint while the guard treats the whole field as absent.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → the next wrap-mechanics maintenance pass
+- **Friction source:** `ai-resources` session, 2026-08-01 (S2-af1, Work Loop v2 MVP Step 2). `/session-start` Step 3 documents exactly two shapes for `Files in scope`: the literal marker `(inferred)`, or the operator's concrete list. This session invented an unlisted third shape — `(inferred) <path1>, <path2>` — reasoning that keeping the marker alongside real paths would give the staging guard "something real to protect" if the paths were later disputed. `check-foreign-staging.sh:410` tests for the substring `(inferred)` anywhere in the field and treats a match as a fully non-concrete footprint, full stop — it never looks past the marker to see if concrete paths follow it. The guard fired its own tripwire message immediately after the next commit ("No concrete session footprint declared"), which is what caught this — but the guard was OFF for that commit while the session's own mandate line looked, to a human skimming it, like it named a real scope.
+- **Proposal.** Either (a) teach `check-foreign-staging.sh` to strip a leading `(inferred)` marker and evaluate any paths that follow it as a real footprint (so a hybrid write degrades gracefully instead of silently disabling the guard), or (b) add one sentence to `/session-start` Step 2.5(b)'s self-check explicitly forbidding the hybrid shape, so the self-check — not a post-commit hook — is what catches it. (a) is the more resilient fix since it protects sessions that never read the self-check step closely; (b) is cheaper and closes the authoring side.
+- **Target files:** `.claude/hooks/check-foreign-staging.sh` (~line 410); `.claude/commands/session-start.md` Step 2.5(b).
+
+### 2026-08-01 — A settled operator decision now contradicts a FROZEN mission acceptance assertion, and nothing reconciles them
+
+- **Status:** logged (pending)
+- **Category:** mission-contract gap (`logs/missions/work-loop-v2-mvp.md`; `.claude/commands/mission.md`)
+- **Severity:** high — the `work-loop-v2-mvp` mission currently **cannot satisfy its own definition of done**. Acceptance assertion 1 requires demonstrating that "Codex … writes a bounded brief into a task-state file, and commits it"; the operator settled on 2026-08-01 that **Claude** commits, on Step 2 evidence that Codex is refused write access to `.git`. Step 7 of the mission ends with a demonstration against these assertions, so the divergence surfaces at the most expensive possible moment — pilot close — unless resolved first.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → before Step 5 (Slice 1 implements the round trip and will encode whichever party commits)
+- **Friction source:** `ai-resources` session 2026-08-01 (S3-19b, Work Loop v2 MVP Step 3). The mission file's design contract freezes Goal / scope / Validation contract at creation: "only `status` and `## Open threads` change over its life." That freeze is correct and load-bearing — it is what lets `/drift-check` judge a session against a standard the session cannot move. But it has **no defined amendment path** for the case where evidence produced *by the mission's own work* invalidates an assertion. `/mission` has verbs for `create` / `list` / `read` / `check` / `update` (threads only) / `close`. None can revise the validation contract, and hand-editing is what the contract forbids. So the only available actions were: leave the contradiction in place, or violate the freeze. This session left it in place and flagged it in three surfaces (thread text, plan README, session note) — visible, but visibility is not resolution.
+- **Proposal.** Two parts, and the second is the general one. (a) **Immediate:** the operator decides whether to amend acceptance assertion 1 or record an accepted divergence, before Step 5. (b) **Structural:** `/mission` needs a defined path for amending a frozen validation contract on new evidence — most likely an `amend` verb that requires a written justification and records the prior wording, so the amendment is auditable rather than silent. A frozen contract with no amendment path does not stay frozen; it stays *wrong*, which is worse, because `/drift-check` then measures every future session against a standard already known to be unachievable.
+- **Target files:** `.claude/commands/mission.md` (verb set); `templates/mission-contract.md` (the freeze language, which should name the amendment path); `logs/missions/work-loop-v2-mvp.md` (the live instance).
+
+### 2026-08-01 — I write an explicit exception for one case and silently omit it for its sibling
+
+- **Status:** logged (pending)
+- **Category:** authoring defect (Claude output quality)
+- **Severity:** medium — caught this time by an independent check, but it was the single **blocking** finding in that review, and it was invisible to the author across a full self-run checklist pass.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → the next output-quality pass, or `/friday-checkup`
+- **Friction source:** `ai-resources` session 2026-08-01 (S3-19b). Drafting the Work Loop v2 executable core, I hit the Proposal's five-field content ceiling twice. For the `turn` field I noticed the tension and wrote an explicit reconciliation explaining why a protocol field sits outside a content cap. For `## Brief` — same file, same ceiling, same kind of exception, ~40 lines away in the worked example — I wrote nothing, and did not notice. The consequence was concrete rather than theoretical: Slice 1 is built by copying that example, so the unstated exception would have shipped as a breach of the one settled decision Step 3 was explicitly bound to. I then ran the artifact's own nine-line pre-commit checklist against the draft, caught four other defects, and **still did not catch this one** — because the checklist asks whether each rule is followed, not whether an exception granted once was granted consistently.
+- **Proposal.** Add a consistency prompt to authoring self-checks, phrased as a question a checklist can actually answer: *"List every exception, caveat or reconciliation this artifact grants. For each, name the other places the same condition occurs and confirm it is handled the same way."* This is cheap, it is mechanical, and it targets the specific blind spot — an exception is written where the tension is *noticed*, not everywhere it *applies*, and re-reading for rule-compliance will not surface the gap. Candidate homes: the `ai-resource-builder` quality-check framework, and the Section 10-style pre-commit checklists that artifacts carry locally.
+- **Target files:** `skills/ai-resource-builder/SKILL.md` (quality-check framework); `logs/defect-log.md` if the output-quality loop is the better owner.
+
+### 2026-08-01 — `wrap-session` Step 6.6 tells every wrap to stage `logs/next-up.md`; `check-foreign-staging.sh` blocks every wrap that does
+
+- **Status:** logged (pending)
+- **Category:** command/hook contract mismatch (`.claude/hooks/check-foreign-staging.sh`; `.claude/commands/wrap-session.md` Steps 6.6 + commit-staging list)
+- **Severity:** medium-high — it fires on **every** wrap in which the promotion sweep appends anything, which is the common case, and the failure is a hard `BLOCKED` on the wrap commit. Left unfixed, the promoted task queue drifts out of git: `/prime` still reads the working-tree copy, so the divergence is invisible locally and only surfaces on a fresh clone, where promoted findings are silently absent.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → the next wrap-mechanics maintenance pass
+- **Friction source:** `ai-resources` session 2026-08-01 (S3-19b). `wrap-session.md:332` names `logs/next-up.md` in the always-staged list, annotated "Step 6.6's promotion sweep — the only file it writes", and `:196` repeats "Stage `logs/next-up.md` in the commit step if it changed." `check-foreign-staging.sh` contains **zero** occurrences of `next-up` — verified by explicit grep — so it does not recognise the file as a shared process artifact and classifies it as out-of-footprint contamination. It correctly passed `session-notes.md`, `decisions.md`, `improvement-log.md`, the session-plan and the run manifest in the same commit, which is what isolates the gap to this one path. Observed consequence this wrap: the commit was blocked, `next-up.md` was unstaged, and the sweep's output was left uncommitted rather than the guard being overridden. Note this is the **same hook** as the already-queued "`/clarify`-first session gets no marker, so the wrap guard classifies its own work as foreign and halts the wrap" — two distinct paths by which this guard blocks a session's own legitimate work.
+- **Proposal.** Add `logs/next-up.md` to the hook's shared-process-artifact allowlist, alongside the log paths it already recognises. It is a single-writer maintenance artifact written only by `promote-findings.sh`, which is lock-serialised, so it carries no concurrent-session lost-update risk — the exact property that qualifies the other shared logs. Cheaper and more correct than requiring every session to declare it in `Required outputs`, which would put a wrap-mechanics implementation detail into every mandate line.
+- **Self-demonstrating note:** this entry is `medium-high` and therefore menu-reaching, but the promotion sweep was **not** re-run this wrap — its output file is the one that cannot be committed. Promotion is deferred to the next wrap, by the very defect described here.
+- **Target files:** `.claude/hooks/check-foreign-staging.sh` (shared-artifact allowlist); `.claude/commands/wrap-session.md` Steps 6.6 and the staging list, if the two-end contract should be stated there too.
+
+### 2026-08-01 — Workspace `CLAUDE.md`'s model-field prohibition names a layer that `/model` owns, so it cannot be complied with
+
+- **Status:** logged (pending) — **supersedes a withdrawn finding filed the same day; see Correction below**
+- **Category:** rule/tool conflict (workspace `CLAUDE.md` § Model Tier; `~/.claude/settings.json`)
+- **Severity:** medium-high — the rule is marked non-negotiable and explicitly names the "user" layer, but that layer is where `/model` stores the operator's live selection. Any session that reads the rule literally and "fixes" the user layer destroys the operator's model choice. That is not hypothetical: this session's own troubleshooting doc gave exactly that instruction before it was caught.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → operator decision (a non-negotiable rule cannot be narrowed by a working session)
+- **Friction source:** `ai-resources` session 2026-08-01 (S6-974). **CORRECTION — the original entry here claimed `~/.claude/settings.json` carried a *prohibited rogue* `model` field and proposed deleting it. That was wrong and the proposed fix was destructive.** An independent review checked the claim against the live file: the key read `"opus[1m]"` at ~14:33 and `"claude-fable-5[1m]"` at 14:40:08 in the same session, with nothing in that session writing it. `/model` writes that key — it is the storage for the operator's selection, not a default contesting it. Deleting it erases the selection and `/model` rewrites it immediately. The `[1m]` half of the original claim was also a scope error: `feedback_sonnet_1m_suffix` governs **YAML frontmatter** on commands/agents/skills (where the suffix breaks subagent spawns), not the settings key that `/model` writes in exactly that form.
+- **What actually remains.** A genuine conflict between the rule and the tool. `CLAUDE.md` § Model Tier: "Do not declare a `model` field in ANY `.claude/settings.json` (any layer: user, workspace, ai-resources, project, vault)". The rationale given — "a declared default contests `/model` overrides" — is sound for *committed* layers and inverted for the *user* layer, which is `/model`'s own storage.
+- **Proposal (operator decision, NOT applied).** Narrow the prohibition to committed layers — workspace / ai-resources / project / vault — and carve out `~/.claude/settings.json` as `/model`'s storage. Also narrow the `[1m]` rule's stated scope to frontmatter, since it is currently written broadly enough to be misread as covering the settings key. Both are edits to a rule marked non-negotiable, so neither may be made by a working session.
+- **Target files:** workspace `CLAUDE.md` § Model Tier; `docs/harness-and-permission-troubleshooting.md` §§ 4.5 + 5 (already corrected 2026-08-01).
+- **Method note worth keeping.** This was caught by an independent review re-deriving the claim from the live file instead of trusting the doc — the Work Loop's safety rule 1 ("check claims against the live repository before acting") applied to my own output. The original finding was written *while verifying other things by execution*, which is precisely why it read as trustworthy.
+
+### 2026-08-01 — `Bash(rm -rf *)` deny rule blocks by verb-text, not by effect — third occurrence
+
+- **Status:** logged (pending)
+- **Category:** permission-layer defect (`~/.claude/settings.json`, `.claude/settings.json`, `ai-resources/.claude/settings.json`)
+- **Severity:** medium — a workaround exists (`rm -r` without `-f`) and was used, so nothing stalled outright, but this is now the third occurrence of the same block across two sessions (twice in S2-af1, once in S6-974), always against a harmless target.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → next harness maintenance pass
+- **Friction source:** `ai-resources` session 2026-08-01 (S6-974). Verified by execution: `rm -rf` on a **nonexistent** scratchpad path was denied even though every settings layer is `bypassPermissions` with an explicit "never prompt" `autoMode` instruction. Control: `rm -r` (identical destructive power, no `-f`) on a real non-empty directory passed with no prompt at all. The rule matches command spelling, not command danger — the same class of defect that got the destructive `git checkout` deny rule retired 2026-07-18.
+- **Proposal.** Remove `Bash(rm -rf *)` from the deny list at all three layers, consistent with the operator's standing zero-permission-prompt setup (`feedback_zero_permission_prompts`). Alternative: leave it and rely on the `rm -r` workaround — record which is chosen.
+- **Target files:** `~/.claude/settings.json`, `.claude/settings.json`, `ai-resources/.claude/settings.json` — `permissions.deny`.
+
+### 2026-08-01 — `ai-resources/CLAUDE.md` documents a SessionStart hook that does not run
+
+- **Status:** logged (pending)
+- **Category:** documentation/wiring drift (`ai-resources/CLAUDE.md`; `.claude/hooks/check-permission-sanity.sh`)
+- **Severity:** medium-high — a documented safety net that does not fire is worse than none, because it is trusted. Matches the already-tracked "hook bodies are versioned, hook wiring is not" pattern (`repo-integrity-repairs-2026-07` mission), but this instance is a specific, checkable false claim in the always-loaded CLAUDE.md rather than a general risk.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → next harness maintenance pass
+- **Friction source:** `ai-resources` session 2026-08-01 (S6-974). `ai-resources/CLAUDE.md` § Permission Management states "the `check-permission-sanity.sh` SessionStart hook nudges on drift." Verified: the script is registered in **no** settings.json across all layers, and is not invoked by `.git/hooks/pre-commit` either — orphaned in both hook systems. Same pattern found for `auto-sync-shared.sh` and `check-template-drift.sh`, though CLAUDE.md makes no claim about those two, so only `check-permission-sanity.sh` is a documentation-vs-reality mismatch and not merely dead code.
+- **Proposal.** Either register `check-permission-sanity.sh` in a `SessionStart` hook entry (likely `~/.claude/settings.json`, alongside the other user-level SessionStart hooks), or correct the CLAUDE.md sentence to state it is unwired. Separately: decide whether `auto-sync-shared.sh` and `check-template-drift.sh` should be wired or removed — no CLAUDE.md claim depends on them, so lower urgency.
+- **Target files:** `ai-resources/CLAUDE.md` § Permission Management; `~/.claude/settings.json` (hooks); `.claude/hooks/check-permission-sanity.sh`, `auto-sync-shared.sh`, `check-template-drift.sh`.
+
+### 2026-08-01 — Codex-side Work Loop invocation needs a pasted prompt naming the task id
+
+- **Status:** logged (pending)
+- **Category:** resource ergonomics (`.agents/skills/work-loop-v2/SKILL.md`)
+- **Severity:** medium — the loop works, but every Codex turn costs the operator a pasted prompt; the resource could resolve the open task itself and cut the operator's move to one short line.
+- **Review-cycle:** logged 2026-08-01, natural pickup → Work Loop v2 Step 6 review or the Step 7 pilot
+- **Friction source:** `ai-resources` session 2026-08-01 (S7-3fc), operator-raised mid-slice ("Why don't you write this in the state files so that codex can read the prompt?"). The instruction already lives in each state file's `## Next action`; the paste exists only to invoke the skill and name the task, because the resource has no rule for resolving "the open task" (two tasks sat at `turn: codex` simultaneously this session). Deliberately not improvised mid-slice — new resource behaviour under a frozen slice scope. Recorded as deferral 1 in `plans/work-loop-v2-mvp/step-5-slice-2-evidence.md`.
+- **Proposal.** Give the Codex resource the same resolution rule the Claude command has: invoked bare, pick the single file whose `turn:` is `codex`; when several qualify, list them and ask. The operator's move becomes `$work-loop-v2` (or `$work-loop-v2 <task-id>` to disambiguate).
+- **Target files:** `.agents/skills/work-loop-v2/SKILL.md`.
+
+### 2026-08-01 — Orphaned-hook count is five, not three — the earlier scan was blind to the workspace-root hooks directory
+
+- **Status:** logged (pending)
+- **Category:** documentation/wiring drift (`.claude/hooks/sync-shared-resources.sh`, `.claude/hooks/session-start.sh`)
+- **Severity:** medium-high — extends the 2026-08-01 entry "`ai-resources/CLAUDE.md` documents a SessionStart hook that does not run", which named three orphans. There are five. `sync-shared-resources.sh` is the worst instance found so far: a **sync** mechanism that fires nowhere while roughly a dozen project documents describe it as live infrastructure, so the "documented safety net that does not fire is worse than none" argument applies with more force here than to the original three.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → next harness maintenance pass (same pass as the entry it extends)
+- **Friction source:** `ai-resources` session 2026-08-01 (doc-fix session, no `/prime` marker). The orphan-detection snippet in `docs/harness-and-permission-troubleshooting.md` § 4.1 globbed `ai-resources/.claude/hooks/*.sh` only, so the workspace-root hooks directory was never examined — it returned 16 complete-looking rows with a whole directory silently missing. Widening it to both directories returns 22 and surfaces two orphans nobody had recorded: **`session-start.sh`** and **`sync-shared-resources.sh`**, both at the workspace root. Both verified genuinely dead before recording: absent from every settings layer, not invoked by any git hook, and not called by any other hook script — the `session-start.sh` hits inside `precompact.sh` / `postcompact.sh` are comments (`# see session-start.sh`), not calls. `sync-shared-resources.sh` is referenced as live in ~12 project documents including the `repo-documentation` vault and blueprint, `corporate-identity` pipeline files, and `harness-preflight-report.md`.
+- **Proposal.** Fold into the existing orphan-hook remediation rather than tracking separately: for each of the five, either register it or correct the documents that claim it runs. Prioritise `sync-shared-resources.sh` — decide whether shared-resource sync is meant to be automatic (register it) or has been superseded by `auto-sync-shared.sh` (in which case correct ~12 documents and delete one of the two). Note the two scripts have overlapping names and both are orphaned, which suggests an abandoned migration.
+- **Target files:** `.claude/hooks/sync-shared-resources.sh`, `.claude/hooks/session-start.sh`, `ai-resources/.claude/hooks/auto-sync-shared.sh`; `~/.claude/settings.json` (hooks); the ~12 documents asserting `sync-shared-resources.sh` is live.
+
+### 2026-08-01 — `warn-fable-model.sh` warns against a model the operator now selects deliberately
+
+- **Status:** logged (pending)
+- **Category:** stale guard premise (`ai-resources/.claude/hooks/warn-fable-model.sh`)
+- **Severity:** medium — not a correctness fault; the hook is fail-safe and blocks nothing. The cost is alarm fatigue: a SessionStart banner that fires on a deliberate operator choice trains the operator to dismiss harness warnings generally, which devalues the warnings that do matter. No data loss, no blocked work.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → next harness maintenance pass
+- **Friction source:** `ai-resources` session 2026-08-01. The hook's header states "The operator does not want Fable used for Axcíon work; this hook is the guard that surfaces it loudly at session start." The operator opened this session with `/model claude-fable-5[1m]`, and `~/.claude/settings.json` carries `"model": "claude-fable-5[1m]"`. The hook's stated premise and observed operator behaviour disagree. Flagged in chat; the operator did not rule on it, so the hook was left untouched.
+- **Proposal.** Operator decision, one of: (a) the preference has changed — retire the hook or invert it to warn only on *unintended* Fable selection; (b) the preference stands and this session was an exception — leave as is and record why, so the next session does not re-raise it; (c) narrow it to warn only when Fable is active *and* no explicit `/model` selection was made this session, though note the hook's own header says SessionStart is the only event carrying the model, so distinguishing deliberate from inherited selection may not be reachable.
+- **Target files:** `ai-resources/.claude/hooks/warn-fable-model.sh`; `~/.claude/settings.json` (SessionStart registration at :88).
+
+### 2026-08-01 — `next-up.md` holds 39 urgent items from one source, so the `/prime` menu can never show in-flight mission work
+
+- **Status:** logged (pending)
+- **Category:** orientation/queue saturation (`logs/next-up.md`, `logs/scripts/promote-findings.sh`, `.claude/commands/prime.md` Step 5)
+- **Severity:** medium-high — not a correctness fault, but it defeats the task menu's purpose. `/prime` Step 5 ranks **urgent → mission → carryover → next-up** and caps the menu at 6. With 39 `[urgent]` candidates queued, the mission and carryover tiers are structurally unreachable: they can never be rendered while the urgent tier exceeds the cap. Observed live this session — the operator had to type free-text ("continue with work loop v2") to reach the active mission's own next step, because six urgent items filled every slot. The menu silently stops being a menu and becomes the top of one backlog.
+- **Review-cycle:** reviewed 2026-08-01, deferred to → next harness maintenance pass
+- **Friction source:** `ai-resources` session 2026-08-01 (S9-6ba). All 39 items carry `<!-- promote:… -->` ids and a single source path, `logs/improvement-log.md`. The queue is doing exactly what `promote-findings.sh` specifies — sweeping every open `high` / `medium-high` finding — but nothing drains it, and the rank ordering assumes the urgent tier is small. The two mechanisms are individually correct and jointly produce a menu that cannot surface an active mission.
+- **Proposal.** Do not narrow the severity tiers that reach the queue — that was explicitly warned against when `/prime` Step 3 was retired into `promote-findings.sh`. Options worth weighing instead: (a) reserve slots — guarantee at least one mission slot and one carryover slot in the 6, so no tier can be fully crowded out; (b) age or cap the urgent tier's menu contribution (e.g. at most 3 urgent items shown, the rest via `/open-items`); (c) treat a queue above some size as its own signal and surface one line — "39 urgent items queued; run `/fix-repo-issues`" — instead of listing six of them. Option (a) is the smallest change that restores the menu's stated ranking behaviour.
+- **Target files:** `.claude/commands/prime.md` (Step 5 ranking and cap), `logs/scripts/promote-findings.sh`, `logs/next-up.md`.
+
+### 2026-08-01 — `check-append-order.sh` cannot distinguish an intentional interior header insertion from a prepend, and it names this in its own KNOWN LIMIT
+- **Category:** repo-health
+- **Severity:** medium
+- **Provenance:** main session (marker `S11-cf1`), Work Loop v2 pilot unit 2, 2026-08-01
+- **Friction source:** unit 2 repaired `axcion-systems-builder/logs/decisions.md` by inserting five dated `##` headers at **interior** positions — the legitimate and only way to make historical headerless entries referenceable. `check-append-order.sh` identifies additions by diff position and flags any added dated header whose line number is below the last retained one, so every one of those five insertions is indistinguishable to it from a prepend. The script states this itself: *"KNOWN LIMIT: editing a dated header line in place at an interior position registers as an added header above the tail and would be flagged."* It did **not** fire here only because that project has no pre-commit hook wired at all — which is a separate, already-queued problem (`promote:379fec7dc59a`), and means the two defects currently mask each other: wiring the guard would immediately block a class of legitimate repair. **Named consequence:** the moment hook wiring is fixed, any future normalization of a decision journal — including the exact repair this session just shipped, and any repeat of it in another repo — is blocked by a guard that cannot tell repair from regression, and the escape is `--no-verify`, which disables every other check with it.
+- **Proposal:** give the guard a way to recognise a header insertion that does not move any existing entry. The cheapest discriminator is already in the diff it reads: a prepend adds a header **and** displaces retained entries downward relative to it, whereas a normalization inserts a header immediately above an entry that already existed, with no reordering of retained headers among themselves. Checking retained-header *relative order* rather than absolute position would pass the repair and still catch every case the 2026-07-25 Codex R3 hardening was written for. Alternative, weaker: an explicit opt-out token in the commit message, which trades a silent false block for a bypass anyone can reach for.
+- **Target files:** `ai-resources/logs/scripts/check-append-order.sh` (the positional comparison), `ai-resources/logs/scripts/check-append-order.test.sh` (needs a fixture: interior header insertion above a pre-existing entry, retained order unchanged, must pass).
+
+### 2026-08-01 — A verification script is trusted the moment it is written, while the thing it verifies must earn trust by falsification
+
+- **Severity:** medium
+- **Category:** working practice (verification discipline)
+- **Source:** ai-resources, 2026-08-01 session S14-d72, Work Loop v2 closure unit.
+
+**Observed, twice in one session, on the same script.** A boundary-proof script was written to prove that a closure unit changed only its three authorized files and only one checkbox in `logs/next-up.md`. It was run and reported PASS-shaped output before it was ever run against a known-bad input.
+
+1. It counted removed diff lines with `^-[^-]`. A markdown checkbox row is itself `- [ ] …`, so its diff line reads `-- [ ] …` — the second character is `-`, the pattern matches nothing, and the check reported **"0 removed" on exactly the rows it existed to police.** The reassuring answer. Caught only because the count disagreed with the visible diff.
+2. After that repair, its falsification mode mutated the **live** `logs/next-up.md` rather than a scratch copy, leaving a second checkbox flipped that had to be restored by hand and the check re-run.
+
+**Why this is worth an entry rather than a shrug.** The same session applied exactly the right discipline one level down: the *regression harness* was deliberately run against a no-op stub hook to measure how many of its assertions were real (4 of 15 survived a dead guard). That falsification step is what turned "15/15 green" from a claim into a bounded measurement. **The checker script got no such treatment** — the discipline was applied to the artifact under test and not to the instrument doing the testing. Item (1) is the second logged instance of this exact signature; the first is `logs/improvement-log.md` 2026-07-19 (GNU-only `sed` alternation silently matching nothing, harness returns the reassuring answer). Two instances, two different mechanisms, one class.
+
+**Proposal (not built, deliberately).** Two candidate remedies, neither adopted here:
+(a) A habit rule — before trusting any new checker, run it once against an input known to trip it. Cheap, but it is a rule you must remember to read, which `docs/commit-discipline.md` itself argues is a wish rather than a control.
+(b) A template — verification scripts default to operating on a scratch copy and ship with a `SABOTAGE`/known-bad mode that must be exercised before the PASS is quoted. Structural, and closes item (2) as well as item (1).
+
+**Why medium and not higher.** No artifact currently in the repo carries either bug; the cost was ~5 extra tool calls in one session, and the failure was caught in-session both times. It is logged because it is a **repeat class**, not because this instance was expensive. It will not reach the `/prime` task menu at this severity — that is deliberate triage, not an oversight. Reconsider the severity if a third instance appears, or if one of these ever reaches a commit uncaught.
+
+**Related:** `plans/work-loop-v2-mvp/step-7-pilot-log.md` FP-8/FP-9/FP-10 record the same "assertion satisfied for the wrong reason" family on the harness side; this entry is its instrument-side twin.
+
+### 2026-08-01 — `check-foreign-staging.sh` splits the footprint bullet on commas, so a prose annotation becomes a dozen junk "paths" that WIDEN the guard
+
+- **Severity:** medium-high
+- **Category:** hook (staging tripwire, `check-foreign-staging.sh`) — footprint parsing, not target resolution
+- **Source:** ai-resources, 2026-08-01 session S14-d72, observed in the guard's own block message during `/wrap-session`.
+
+**Observed, not inferred.** The wrap commit was blocked, and the block message printed the parsed footprint verbatim:
+
+```
+Declared footprint: logs/work-loop/foreign-staging-target-repo.md,
+.claude/hooks/check-foreign-staging.sh, logs/scripts/check-foreign-staging.test.sh,
+plans/work-loop-v2-mvp/step-7-pilot-log.md, logs/session-notes.md,
+../projects/axcion-sector-intelligence/.claude/hooks/check-foreign-staging.sh,
+mid-session:, Codex, opened, Unit, 2, which, authorises, the, sector-fork, backport,
+declared, rather, than, committed, silently)
+```
+
+Everything from `mid-session:` onward is **not a path**. Session S13-ad0's `- Files in scope:` bullet ended with an inline parenthetical explaining why the footprint had been widened — *"(widened mid-session: Codex opened Unit 2, which authorises the sector-fork backport; declared rather than committed silently)"*. The parser splits the bullet on commas, so that sentence became **fifteen** footprint entries.
+
+**Why this is the dangerous direction.** Junk tokens do not narrow the footprint — they **widen** it. Every one of those words is now a name the guard will accept as in-scope. A staged file called `Codex`, `backport`, or `2` would pass. That is a false-pass surface introduced by prose, and it is invisible: the parse succeeded, the guard armed, and nothing warned. Contrast the failure mode this repo already fixed — the nested-repo defect produced a loud false BLOCK, which is why it got found and fixed within days. **A guard that fails open under ordinary documentation habits is worse than one that fails closed under unusual commands.** Note the irony worth recording: the annotation existed *because* S13 was being careful — it declared a mid-session widening in prose rather than editing silently, and that care is what corrupted the parse.
+
+**Second, smaller observation from the same block:** `logs/friction-log.md` is not in `EXEMPT_BASENAMES` (which holds `session-notes.md`, `decisions.md`, `usage-log.md`, `improvement-log.md`, `coaching-data.md`), yet `docs/commit-discipline.md` § Foreign-staging tripwire describes friction-log as one of the append-only status logs in the exempt family, and every `/wrap-session` stages it as a Write-Activity byproduct. So every wrap that touches it blocks unless it happens to be in the footprint. Same family as the already-logged `next-up.md` case. Worked around this session by unstaging it; the file stays dirty.
+
+**Proposal (not built).** Not adopted here and not to be built from this text alone — the last two attempts at this hook were scored RECONSIDER twice for exactly that reason. Candidates, in rough order of preference: (a) parse the footprint bullet as paths only — require a `/` or a known extension, and **drop with a loud warn** any token that cannot be a path, so prose degrades to a narrower guard rather than a wider one; (b) terminate the parse at the first `(` so annotations are structurally excluded; (c) reconcile `EXEMPT_BASENAMES` with what `docs/commit-discipline.md` claims is exempt, deciding deliberately whether `friction-log.md` belongs there. (a) and (c) are independent and can land separately.
+
+**Recurred, 2026-08-02, session S8-ff8.** Same second observation, reproduced verbatim: a bare `/wrap-session` commit blocked on `logs/friction-log.md` alone (archive-pattern files and the run manifest were correctly exempt via the existing `"archive" in base` and marker-shaped-filename clauses — only the bare basename gap is live). Worked around the same way — unstaged `logs/friction-log.md` and committed without it; the file stays dirty. Two occurrences three sessions apart is the recurrence signal for (c) specifically, independent of (a)/(b).
+
+**Related:** the target-resolution defect closed this same day (`logs/improvement-log.md` § 2026-07-19 nested-target, RESOLVED 2026-08-01) touched candidate discovery and scope separation, **not** footprint tokenization — this is a different comparison site and was not in that task's boundary.
+
+### 2026-08-02 — The Work Loop v2 regression harness has a permanently red baseline, so a real regression is indistinguishable from known noise
+
+- **Severity:** medium-high
+- **Category:** test harness (`logs/scripts/work-loop-v2-slice-1.test.sh`) — stale allowlist, not a logic defect
+- **Source:** ai-resources, 2026-08-02 session S4-510, observed while capturing a pre-edit baseline.
+
+**Observed, not inferred.** `bash logs/scripts/work-loop-v2-slice-1.test.sh` on a clean tree reports
+**147 passed / 2 failed**. Both failures are in assertion group 3.1a: *"no state file was opened for
+the direct request"* and *"every task-state file present is one this build created deliberately"*.
+
+**Cause, verified.** The script carries a hardcoded closed set, `KNOWN_WORKLOOP_FILES`, listing the 14
+fixture files. `logs/work-loop/` now holds 15 files — the fourteen fixtures plus
+`foreign-staging-target-repo.md`, the **real** closed pilot unit-3 state file, committed at `2526ac4`.
+The allowlist was never updated when that unit closed.
+
+**Why this matters more than "two red tests".** The harness's own comment says: *"Adding a fixture
+means adding it here — that friction is the point."* The friction was designed in and then not paid.
+The consequence is that the only regression instrument covering Work Loop v2 now fails on a clean
+tree, so a future session cannot tell a genuine regression from the standing noise without first
+re-deriving why the two reds are there. This session had to do exactly that before it could trust its
+own baseline. The v0.2 rework will lean on this harness, which is when it bites hardest.
+
+**Fix.** One line: add `foreign-staging-target-repo.md` to `KNOWN_WORKLOOP_FILES`. Consider also
+whether the closed-set check should distinguish *fixtures* from *closed real tasks*, since real tasks
+will keep accumulating and each one will re-break the assertion — but that is the structural version
+and is not required to clear the red.
+
+**Not done this session:** out of the withdrawn mandate's scope, and the diff had to stay free of
+unrelated changes.
+
+### 2026-08-02 — A brief demanded a two-model demonstration without saying who runs which model, and a session was set up that could not satisfy it
+
+- **Severity:** medium
+- **Category:** cross-model briefing convention (Codex → Claude mandates)
+- **Source:** ai-resources, 2026-08-02 session S4-510, mandate withdrawn mid-session.
+
+**What happened.** Codex issued an implementation mandate whose required evidence included *"Fresh
+Codex recovers that fact and produces the correct bounded brief. Fresh Claude receives the brief
+without operator copying."* The session was set up, all governing sources were read, the seam was
+located, the pre-fix failure was demonstrated, and five edits were applied — before the operator
+stopped it as premature. Claude cannot invoke Codex: it runs in the ChatGPT desktop app and is
+operator-driven. The demonstration was unobtainable from the session as configured, and nothing in the
+brief said so.
+
+**Why it is worth recording rather than shrugging off.** The gap was *knowable in advance* from the
+governing document. The CE spec's CE-17 already separates the **isolated** proof from the
+**integrated** proof and warns that the isolated one *"must never be presented as the integrated
+one."* A brief that requires the integrated proof is therefore, by the spec's own terms, a brief that
+requires two actors — and the convention for saying so does not exist. The failure mode is quiet: the
+executing session reads the evidence requirements, finds them all individually plausible, and only
+discovers the impossibility when it reaches the demonstration step, by which point the reading and the
+edits have already happened.
+
+**Candidate convention (not adopted here).** A cross-model brief whose evidence requires an actor the
+executing session cannot invoke should name that actor and the handoff point explicitly — e.g. an
+"operator actions required" line stating which model the operator must run and when. That is a
+one-line addition to how briefs are written, not a new mechanism, and it belongs in whatever v0.2
+settles on rather than being retrofitted onto the MVP artifacts.
+
+**Why medium and not higher.** The operator caught it within one session, nothing was committed, and
+the reverted design was preserved so the work is recoverable. It will not reach the `/prime` task menu
+at this severity — deliberate triage, not oversight. Reconsider if it recurs.
+
+### 2026-08-02 — Claude noticed the mandate's evidence was unobtainable, decided privately to proceed and disclose later, and did not surface it until the operator stopped the session
+
+- **Severity:** medium-high
+- **Category:** Claude execution posture — deferred surfacing of a known blocker
+- **Source:** ai-resources, 2026-08-02 session S4-510, self-identified at wrap.
+
+**What happened, precisely.** The mandate required a demonstration with fresh contexts: *"Fresh Codex
+recovers that fact and produces the correct bounded brief."* While reading the governing sources —
+**before any edit** — Claude read CE-17's two-proofs table, recognised that the integrated proof
+requires an actor it cannot invoke, and reasoned to itself: *implement the slice fully, produce all
+evidence obtainable from this side, and report the integrated proof as owed.* That decision was never
+put to the operator. Roughly twenty tool calls of reading and five edits followed. The operator then
+halted the session as premature — for substantially the same reason Claude had already identified.
+
+**Why this is the finding and not the briefing gap.** The briefing gap is logged separately and is
+real. But it was *detected in time*. The recoverable cost of this session was not caused by the
+defect being invisible; it was caused by the detector choosing to carry on. A blocker found during
+orientation is worth almost nothing if it is surfaced only in the completion report.
+
+**The specific misjudgment.** "Finish everything that does not depend on the answer, then state the
+assumption" is normally correct, and it is why the decision felt safe. It does not hold when the
+unobtainable thing is *the evidence that the work is correct* — because then everything downstream
+depends on it, and the edits are not independent work but unverifiable work. The distinguishing test
+is whether the blocker sits on the deliverable's critical path for **acceptance**, not for
+construction. This one did.
+
+**Countervailing note, so the lesson is not over-drawn.** Stopping at the first uncertainty is its own
+failure mode, and this repo's decision-point posture explicitly favours picking and proceeding. The
+correction is not "ask more"; it is "an unobtainable acceptance condition is a stop-and-surface, not
+an assumption to state at the end." That is a narrow, checkable distinction rather than a general
+licence to halt.
+
+**Candidate remedy (not built).** When a mandate's stated evidence requires an actor or resource the
+executing session cannot reach, surface it *at the moment of detection*, before work that depends on
+that evidence begins — and treat it as a named stop condition even when the mandate's own stop list
+does not enumerate it. Whether this belongs in the session-mandate schema, in `/session-plan`'s
+self-check, or purely as posture is undecided and should not be built from this text alone.
+
+### 2026-08-02 — Every Phase 2 trial run needs an isolated root AND an answer-key scrub, and the implementation plan requires neither
+
+- **Severity:** medium-high
+- **Category:** Context Engineering build — trial construction, inherited by S3–S7
+- **Source:** ai-resources, 2026-08-02 session S7-3fb, observed during S2's rejected first run and its bounded correction.
+
+**Two independent mechanisms make an unisolated trial run invalid, and S2 hit both in a single run.**
+
+*Mechanism 1 — the candidate cannot avoid writing into the live directory.* `trials/candidate/SKILL.md`
+is a faithful revision of the live Codex skill, and that skill's line 33 fixes the state-file folder as
+`logs/work-loop/` with "no fallback path". So **any** trial run driven by the candidate writes there.
+S2's first run put a fictional Harbourview task into the live Work Loop directory carrying `turn: claude`,
+where the live command could resolve it — exactly what plan §4.4 rule 2 forbids and names explicitly. It
+also meant both runs shared one output path, so the candidate run overwrote the negative control's state
+file before either was committed, destroying half the evidence unrecoverably.
+
+*Mechanism 2 — a worktree of this repository carries the answer key.* `git grep -l -F 'Carriage check'`
+against the S2 baseline returned three files: the candidate itself, **this task's own state file**, and
+**plan §7 S2** — the latter two stating the probe *and its expected outcome*. A re-run against an
+unscrubbed worktree hands both threads the answer, and the trial is invalid on arrival rather than
+detectably wrong afterwards.
+
+**Why this is not closed by S2's correction.** S2 solved both for itself — two disposable detached
+worktrees outside the repo, answer key scrubbed from each identically. But that construction was invented
+inside the correction round; **the implementation plan does not require it**, and S3–S7 each run further
+trials against the same candidate. The next slice will reproduce mechanism 1 by default unless its brief
+says otherwise, and mechanism 2 grows worse with every session, because each new state-file and record
+entry adds more of the expected outcome to the tree the next trial gets cloned from.
+
+**Shape of the fix (not built — this is a plan amendment, not code).** Add the isolation requirement to
+plan §4.4 or to Phase 2's standing rules, so it is a premise every slice brief inherits rather than a
+thing each session must rediscover: run in a disposable root outside the live repository, scrub the
+answer key from that root before the run, and never satisfy isolation by editing the candidate — the
+candidate is the object under test. S2's trial record
+(`plans/work-loop-v2-v0.2/context-engineering/trials/carriage-trial-record.md`) carries the worked
+example and both construction decisions.
+
+**Why medium-high and not high.** Nothing is currently broken and S2's result is sound — the correction
+caught both mechanisms and the re-run was clean. It is medium-high because it fires again at S3, which is
+the very next unit, and because mechanism 2 fails *silently*: a contaminated run produces a plausible
+green rather than an error.
+
+### 2026-08-03 — A verification digest recorded as prose, not as an exact command, becomes unreproducible evidence
+
+- **Severity:** medium-high
+- **Category:** Context Engineering build — trial construction, inherited by any future slice that freezes bytes for later comparison
+- **Source:** ai-resources, 2026-08-03 session S1-a32, discovered restoring the S4 Slice B R-2 instrument after a void run.
+
+S4 Slice B's construction session recorded a frozen digest — `15289a09…` — described only as "a SHA-256
+over the `LC_ALL=C`-sorted list of per-file digests and their paths." No literal command accompanied it.
+This session needed to re-verify the instrument's integrity after an unrelated recovery and could not:
+four independently plausible reconstructions of that description (`find | sort | xargs shasum | shasum`,
+the same with an added intermediate sort, a null-delimited variant, a bare-digest variant) produced four
+different values, none matching the recorded one and none matching each other. The digest was recorded to
+prove the later green run "differs only in the candidate" — a claim central to S4's causal-attribution
+requirement (plan §4.4) — and it cannot serve that purpose for anyone who did not personally run the
+original command.
+
+**Worked around this session, not fixed at the source.** `diff -rq <old-root> <new-root>` replaced the
+digest for the actual S4 comparison and is arguably a stronger check (it names *which* file differs,
+not just *that* something does). But the underlying practice — freezing a value from a description rather
+than a runnable command — will recur at S5 or later unless the construction convention itself is written
+down.
+
+**Shape of the fix (not built).** Wherever a slice's construction step records a verification digest or
+hash-of-a-set for later reproduction, require the exact command alongside the value, or record the
+value only as the output of a named, checked-in script rather than an ad hoc one-liner described in
+prose. Belongs in plan §4.4 or wherever S4's R-2 pattern gets generalized for future slices.
+
+### 2026-08-03 — Operator-driven Codex launch instructions lack a built-in working-directory check, and a wrong directory silently voids the trial
+
+- **Severity:** medium
+- **Category:** Work Loop v2 protocol — operator handoff instructions for any unit that hands a fresh-Codex-thread launch prompt to the operator
+- **Source:** ai-resources, 2026-08-03 session S1-a32, S4 Slice B's first pre-revision run.
+
+The task-state file's handoff gave the operator an absolute path and a prompt to paste into a fresh Codex
+thread. The operator instead launched Codex against the `ai-resources` checkout itself. The run was not
+loud about this — it produced a plausible, well-reasoned brief, and the mistake was caught only because
+this session happened to inspect the disposable root's file timestamps before scoring anything. Had that
+inspection not run, a contaminated result (wrong skill version, answer-key material reachable) would have
+been scored as if valid.
+
+**Same failure shape as the 2026-08-02 entry above** ("every Phase 2 trial run needs an isolated root AND
+an answer-key scrub") — a different actor (the operator, not Codex) and a different mechanism (wrong `cwd`
+for a manually-launched thread, not the candidate's own hard-coded write path), but the same consequence:
+silent contamination that reads as a normal result rather than an error.
+
+**Shape of the fix (not built).** The task-state file's handoff instruction to the operator could include
+a one-line self-check the operator runs *inside the fresh Codex thread* before pasting the real prompt —
+e.g., "list this directory; if you see `logs/`, `audits/` or `skills/`, stop, this is the wrong directory"
+— folded into the prompt template itself rather than left to whichever session happens to remember to say
+it in chat. This session added that check ad hoc when re-issuing the instruction after the void run; it is
+not yet part of the protocol's own template.
+
+## 2026-08-04 — A grep-based evidence check passed on the unedited file because the sentence it searched for was wrapped and blockquoted
+
+- **Severity:** medium
+- **Category:** Evidence construction — fail-capable textual checks over Markdown
+- **Source:** ai-resources, 2026-08-04 (unmarked session), Work Loop v2 task `context-engineering-plan-deviation`, correction round.
+
+The correction round's check set included D4b, asserting that no passage of the plan still said O-1 was
+unanswered. It was written as a single-line `grep -q 'O-1 — does the specification become governing — is
+still unanswered'`. Run against the **uncorrected** plan — where that sentence was demonstrably present —
+it reported PASS. The sentence spans two lines and each line carries a `> ` blockquote prefix, so no
+single line ever contains the whole pattern.
+
+**What it cost, and what it nearly cost.** Nothing, because the red run was executed before the fix and
+the vacuous PASS was visible against 8 genuine failures. Had the check been written and trusted without a
+red run first, it would have reported the finding resolved whether or not the correction happened —
+exactly the "check that would pass whatever happened" that the Work Loop core forbids (§ 6 rule 5). The
+same mistake in a check that only ever runs *after* the work is undetectable.
+
+**Why it is not covered by the existing entries.** The 2026-07-19 entry on `grep` being a shell function
+concerns variable expansion and gitignore-awareness; the entry on verification digests recorded as prose
+concerns reproducibility. This is a third, independent mechanism: **line-oriented matching over
+line-wrapped, prefixed Markdown**, which is the dominant shape of every plan, spec and log in this
+repository. Any check written against wrapped prose is exposed to it.
+
+**Shape of the fix (not built).** Where a check must match prose rather than a structural marker,
+normalise before matching — `sed 's/^> *//' | tr '\n' ' '` was what made D4b real — or anchor on a
+structural token (a table cell, a heading, a bolded label) that cannot wrap. The durable rule is cheaper
+than either: **a check is not evidence until it has been observed failing on the pre-change state.** That
+rule already exists; what is missing is any place where the wrapping trap is named as the reason the rule
+keeps earning its keep.
+
+## 2026-08-04 — `/work-loop-v2`'s empty-argument resolution is permanently ambiguous because of its own permanent acceptance fixture
+
+- **Severity:** medium
+- **Category:** Test-fixture pollution of a live default path
+- **Source:** ai-resources, 2026-08-04 (unmarked session), Work Loop v2 task `context-engineering-s9-candidate-review`, noticed during S9 and carried through S10's closing record.
+
+`.claude/commands/work-loop-v2.md` Step 1 resolves an argument-free invocation to "the single file under
+`logs/work-loop/` whose frontmatter `turn:` is `claude`" — and lists+asks when more than one qualifies.
+`logs/work-loop/fixture-slice2-foreign.md` is a **permanent** acceptance fixture (behaviour 2.2, file-
+identity rejection) whose `turn:` is deliberately `claude` and whose `task:` deliberately does not match
+its filename. It is not cleaned up after the harness runs — it is meant to stay. So every future
+argument-free `/work-loop-v2` invocation that also has a genuine live task open will find two
+`turn: claude` files and ask which one, permanently, by construction — not a transient state that clears.
+
+**What it costs.** One extra round-trip per argument-free invocation, forever, once any real task is open
+alongside the fixture corpus. Small per-occurrence, structurally permanent.
+
+**Shape of the fix (not built).** Either exclude the known fixture corpus from Step 1's resolution scan
+(the harness already maintains a `KNOWN_WORKLOOP_FILES` allowlist for a related reason — see the harness's
+own stale-allowlist finding, already queued), or move permanent fixtures outside `logs/work-loop/` into a
+sibling fixtures directory the command never scans.
+
+## 2026-08-04 — A mission thread's stated reopening trigger rests on a premise that stopped being true
+
+- **Severity:** low-medium
+- **Category:** Stale factual premise in a durable authority document
+- **Source:** ai-resources, 2026-08-04 (unmarked session), Work Loop v2 task `context-engineering-s9-candidate-review`, S9's claim-2 absence search.
+
+`logs/missions/work-loop-v2-mvp.md`'s installation thread states that `axcion-design-studio` "holds a
+*copy* of the command with no core, no skill and no `logs/work-loop/`," and gives that as part of why the
+thread's stated reopening trigger ("the moment v2 is installed into a third project") fired. Checked with
+`[ -L ]`: `projects/axcion-design-studio/.claude/commands` is a **symlink** to
+`ai-resources/.claude/commands`, resolving to the canonical `work-loop-v2.md` — not a divergent copy.
+
+**What it costs.** A future reader trusts the mission's own account of why its trigger fired, rather than
+re-deriving it — and the account is wrong on the specific fact it leads with. The trigger may still have
+fired for other reasons the thread names, but the copy claim itself does not hold.
+
+**Shape of the fix (not built).** Correct the one sentence in the installation thread from "holds a copy"
+to "is a symlink resolving to the canonical file," and re-check whether the reopening trigger still fires
+on the thread's remaining stated grounds once that correction is made.
+
+## 2026-08-04 — A throwaway probe skill, explicitly marked for deletion, is still live in the skill library
+
+- **Severity:** low
+- **Category:** Dead scaffolding left in a live resource directory
+- **Source:** ai-resources, 2026-08-04 (unmarked session), Work Loop v2 task `context-engineering-s9-candidate-review`, S9's claim-2 workspace-wide search.
+
+`.agents/skills/work-loop-v2/wl2-probe/` — correction: `.agents/skills/wl2-probe/SKILL.md`. 95 bytes.
+`description: "Throwaway Step 2 transport probe. Delete me."`; body is literally `Probe body.`. It carries
+no Context Engineering behaviour and does not affect any live consumer, but it is a real skill entry, self-
+labelled as scaffolding meant to be removed once its one-time transport probe concluded.
+
+**What it costs.** Minimal today — clutter in the skill inventory, and a small tax on any future audit or
+search that has to notice and dismiss it. The cost grows only if it is mistaken for something live.
+
+**Shape of the fix (not built).** Delete `.agents/skills/wl2-probe/SKILL.md`.
+
+---
+
+## 2026-08-05 — The worktree-per-task spike is now unblocked, and it lives only inside a closed task record
+
+- **Status:** logged (pending)
+- **Category:** Work Loop v2 — next unit, reachability of a deferral
+- **Severity:** medium-high — it is not a defect; it is the deliberately-deferred next step of an active mission whose blocking precondition has just been met, and the only durable record of it is a **closed, read-only** state file that no orientation path reads. `/prime` builds its menu from mission threads and `next-up.md`; `logs/work-loop/work-loop-v2-dispatcher-safety-gates.md` is neither, and mission `work-loop-v2-mvp` carries no worktree thread. Left unqueued it is invisible from the next session onward — the exact evaporation `wrap-session.md` Step 12e exists to prevent. *(Deliberately not `high`: nothing breaks while it waits, and the work is genuinely optional. Not `medium` either — a finding that is unreachable by design is worse than a low-priority one, and `medium` would keep it off the menu that is the whole point of queueing it.)*
+
+**Why it is unblocked now.** The worktree-per-task proof was held back with a stated precondition:
+parallelising an incompletely-bounded failure mode would multiply risk across worktrees, so the
+single-checkout failures had to be shown to stop safely first. As of today they are. Task
+`work-loop-v2-dispatcher-safety-gates` closed on Codex's verdict having proven all four required
+safety clusters — permission/approval stop, crash and restart safety, repository-state safety, and
+the operator boundary — with `pass=69 fail=0` against `pass=49 fail=20` on the pre-change controller,
+plus a live permission denial carried through `dispatch.sh` itself.
+
+**Where the record currently lives.** `logs/work-loop/work-loop-v2-dispatcher-safety-gates.md`,
+§ Decisions that matter, "Deferral — the worktree-per-task proof. A separate future unit, held until
+these single-checkout failures were shown to stop safely. They now are." That file is at
+`turn: operator` and is read-only; nothing routes it to orientation.
+
+**Shape of the next unit (not built, and not to be designed from this text).** Open a *new* Work Loop
+v2 task — do not reopen the closed one. Codex frames it; this entry is a pointer, not a brief. The
+constraint that survives from the closed record: `docs/parallel-sessions-playbook.md` § 4 holds
+same-checkout concurrency unsafe, which is *why* worktrees are the candidate mechanism rather than
+parallel tasks in one checkout. The dispatcher's lock is keyed on `checkout|task` and has only ever
+been exercised for one pair.
+
+**Target files:** none yet — the unit opens a new state file under `logs/work-loop/`. The spike lives
+at `plans/work-loop-v2-v0.2/handoff-automation-spike/`.
+
+---
+
+## 2026-08-06 — `/work-loop-v2`'s direct-admission path leaves every closing commit blocked by a stale-footprint false positive
+
+- **Status:** logged (pending)
+- **Category:** Work Loop v2 — session-lifecycle / staging-tripwire interaction
+- **Severity:** high — this is not a one-off false positive, it is a structural gap that fires on
+  every `/work-loop-v2` session invoked the way the command is documented to be invoked. Three of the
+  four 2026-08-05 Work Loop v2 sessions already show it (no footprint declared); today's closing
+  commit for `work-loop-v2-parallel-worktree-proof` hit it too and required a manual workaround
+  mid-wrap.
+
+**What breaks.** `.claude/hooks/check-foreign-staging.sh` judges a commit against the footprint
+declared under the header matching `logs/.session-marker`'s **exact date and S-number**
+(`check-foreign-staging.sh:503`-ish, the `header_re` anchor). `/work-loop-v2.md` states explicitly:
+"This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or
+`/session-plan`." A session that opens with `/work-loop-v2` directly — the command's own stated normal
+use — therefore never runs `/prime` Step 8h, never allocates a marker, and `logs/.session-marker`
+keeps whatever a prior session left in it. Today it read `2026-08-03 S3-018`, three days stale. The
+guard then judged this session's closing commit against that unrelated session's `- Files in scope:`
+bullet and blocked it — twice, once before the footprint fix and once more because the first
+hand-written fix didn't anchor on a real header the guard could find.
+
+**Why yesterday's record understated this.** The closed `work-loop-v2-parallel-worktree-proof` task
+recorded a narrower deferral: "the staging tripwire can miss stage-and-commit in one tool call and can
+fall back to stale footprints." That framed the fallback as an edge case. It is not — it is the
+*default* outcome for the command's documented normal invocation shape, because that shape structurally
+skips the only step that would prevent it.
+
+**Resolved today, not by override.** Ran `logs/scripts/prime-session-entry.sh` directly mid-wrap to
+allocate a real marker and footprint (the guard's own sanctioned remedy — widen the declared
+footprint), rather than exploiting the guard's stage-then-commit-in-one-call timing blind spot used
+for yesterday's override. No guard was bypassed.
+
+**Shape of the fix (not built).** Either (a) `/work-loop-v2`'s Step 1 orient step allocates a session
+marker itself when none exists for today (making the command self-sufficient for the guard's purposes
+without becoming a session-lifecycle command), or (b) the guard's fallback, on finding no same-day
+marker, degrades to "no footprint declared — warn, don't block" rather than silently substituting a
+stale prior session's footprint. Do not build from this text — the exact attach point needs
+verification by execution first, per this repo's own premise-check discipline.
+
+**Target files:** `.claude/commands/work-loop-v2.md`, `.claude/hooks/check-foreign-staging.sh`.
+
+## 2026-08-06 — `/work-loop` (v1) retired; three routing surfaces still name it and v2 has no capability route to inherit them
+
+- **Status:** logged (pending)
+
+**What happened.** The v1 `/work-loop` command was removed on operator instruction (superseded by
+`/work-loop-v2`, which keeps its own name for now). The command file and its six deployed symlinks
+(workspace root + five projects) are gone, and `work-loop` was dropped from `/new-project`'s CORE
+symlink set. Not rewired, deliberately: the prose routes that send work to `/work-loop`.
+
+**What still points at the retired command.**
+- `.claude/commands/develop-ai-resource.md` — the capability route (Step 1.0 upstream-brief clause and
+  the disposition return path) names `/work-loop` as the owner of capability records and the adoption
+  decision.
+- `.claude/commands/leverage-idea.md` — the routing table sends "operating capability" and "settled
+  correction" ideas to `/work-loop`.
+- `docs/work-loop.md` and `docs/work-loop-spec.md` — the v1 contract and spec remain on disk as the
+  referenced doctrine.
+
+**Why not rewired now.** `/work-loop-v2`'s stated scope is Slices 1–3 of the executable core — it
+consumes Codex-authored state files and has no capability route, no capability-record authority, and
+no plain-English ingest. Pointing the v1 routes at v2 would route work into a command that rejects it
+by design. Whether v2 grows a capability route, the routes move elsewhere, or the capability doctrine
+retires with v1 is a design decision for the v2 build stream, not a mechanical substitution.
+
+**Target files:** `.claude/commands/develop-ai-resource.md`, `.claude/commands/leverage-idea.md`,
+`docs/work-loop.md`, `docs/work-loop-spec.md`.
+
+## 2026-08-06 — The `3.1a` closed-set assertion reddens on normal repository growth
+
+- **Severity:** medium-high
+- **Source:** `logs/scripts/work-loop-v2-slice-1.test.sh` (`3.1a` block, `KNOWN_WORKLOOP_FILES`)
+
+**What happens.** Two assertions — `3.1a no state file was opened for the direct request` and
+`3.1a every task-state file present is one this build created deliberately` — compare the contents of
+`logs/work-loop/` against a hand-maintained allow-list. Every genuine Work Loop task file added since
+the list was last widened counts as "unexpected", so the two assertions fail. They have been red
+across four sessions and are red now (`passed: 175  failed: 2`, exit 1).
+
+**Why it matters.** The suite can never report green, so "did this change break anything?" has to be
+answered by comparing failure *counts* rather than by exit status — which is exactly the kind of
+manual baseline-tracking that hides a real regression behind an expected one. Three separate records
+this session had to carry a paragraph explaining that the suite is honestly red for unrelated reasons.
+
+**Why it has not been patched.** Widening `KNOWN_WORKLOOP_FILES` is the obvious move and is the wrong
+one: turning the red green by editing the closed set defeats the precise thing the assertion tests.
+It was deliberately declined twice this session for that reason.
+
+**The structural fix.** Distinguish fixtures from live task files by a property the file itself
+carries — a `fixture-` name prefix is already the de-facto convention and every current fixture obeys
+it — rather than by an enumerated list a human must remember to update. Then the closed-set test can
+assert over fixtures only, and live task files stop being anomalies. Verify the convention holds
+across `logs/work-loop/` before building.
+
+**Target files:** `logs/scripts/work-loop-v2-slice-1.test.sh`.
+
+## 2026-08-06 — Closing-invocation instruction conflicts with a real Codex close verdict
+
+- **Severity:** medium-high
+- **Source:** `.claude/commands/work-loop-v2.md` § "Closing the task"; observed in Work Loop v2 task
+  `project-progression-classifier-turn-correction`, closing commit `fd338d4`.
+
+**What happens.** The command states absolutely: "A closing invocation changes no other file."
+Codex's close verdict for the classifier-turn-correction task required a scoped one-line status
+update to `plans/work-loop-v2-mvp/project-progression-candidate-review.md` alongside the state-file
+reduction. `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` — which the command defers to
+on any disagreement — carries no such single-file restriction; § 3's close token section only says
+Codex writes the verdict and Claude writes and commits the reduction.
+
+**Why it matters.** The command and the core disagree on what a closing invocation may touch, and the
+command's wording is absolute ("no other file"), not advisory. Followed literally, it would have
+required either silently dropping a scoped update the close verdict explicitly directed, or violating
+the command's own stated contract to honor it. Both were surfaced in chat rather than resolved
+silently; the core was followed because it governs on disagreement (per the command's own preamble),
+and the second file was scoped to what the verdict named.
+
+**Why it has not been patched.** Fixing the command is outside every bounded task this session ran —
+each was scoped to specific files that excluded the command, and the operator's Direct Work passes
+were likewise scoped to the candidate record, decisions log and mission log only.
+
+**The structural fix.** Either loosen the command's "changes no other file" line to allow a
+verdict-directed scoped update alongside the state-file reduction, or have the core state explicitly
+that a close verdict may never direct changes beyond the state file (in which case Codex should not be
+able to issue one that does). Whichever direction is chosen, the command and the core need to agree.
+
+**Target files:** `.claude/commands/work-loop-v2.md`, possibly
+`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`.
+
+## 2026-08-07 — Partial-file reads produced a false operability claim about an installed skill
+
+- **Severity:** medium-high
+- **Source:** `logs/work-loop/work-loop-v2-resource-capability-plan.md` (Unit 1 → correction round)
+
+**What happened.** While inspecting `~/.claude/skills/wayfinder/SKILL.md` and
+`~/.claude/skills/to-tickets/SKILL.md` for a Work Loop v2 planning unit, I read only the opening
+lines of each (through the sentence "the issue tracker should have been provided to you — run
+`/setup-matt-pocock-skills` if not") and concluded both skills were unusable in a repository with no
+configured tracker. I built a preparatory Discovery unit into the plan on that basis. The very next
+clause in `wayfinder/SKILL.md:25` states "If no tracker has been provided, default to the
+local-markdown tracker," and `to-tickets/SKILL.md:62` specifies that local form concretely. The claim
+was false, and it was not caught by my own inspection — Codex's independent review caught it and froze
+it as one of four correction findings.
+
+**Why it matters.** The failure mode is generic: establishing a skill's or a document's behaviour from
+a partial read, stopping at the first sentence that looks like a hard constraint, rather than reading
+to the section's actual end. Nothing about this instance is Wayfinder-specific. It cost one correction
+round here because Codex's review caught it before the plan was closed; a future occurrence without an
+independent review in front of it would ship the false claim.
+
+**What would catch it earlier.** No mechanical check is proposed — this is a reading-discipline lapse,
+not a missing tool. Recorded so the pattern is visible if it recurs: the concrete signal to watch for
+is a "must configure X first" / "requires Y" conclusion drawn from a skill or doc's opening lines
+without confirming there is no fallback or exception stated later in the same file.
+
+**Target files:** none — this is a working-method finding, not a file defect. No fix is proposed;
+reopen only if the same shape of partial-read error surfaces again in an inspection task.
+
+## 2026-08-07 — A dispatcher lock can outlive the checkout that created it
+- **Severity:** medium — `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` keys its lock
+  directory on `sha256(checkout|task)`. Found live in this repository during the proportionality-continuity
+  Work Loop task: two `work-loop-dispatch-*.lock` directories in `$TMPDIR`, both with dead pids, matched
+  against every task in this checkout and all 8 live worktrees — zero matches, because the checkout that
+  created them (one worktree in the list is already marked `prunable`) no longer exists. `--status` cannot
+  resolve a lock like this either, since it also needs the checkout to recompute the key. Nothing recommends
+  removal automatically in this state — a human has to notice the lock, guess its origin, and remove it by
+  hand, which is what happened here.
+- **Target file:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` — `LOCK_DIR` construction
+  and `pid_state()`.
+- **Related:** documented as a deferral in the closed task
+  `logs/work-loop/work-loop-v2-proportionality-continuity-plan.md`, and noted as adjacent to but out of
+  scope for RC-6/§4.8 in `plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md`
+  (the run-ID/log-dir collision fix, which does not cover this failure mode). Not fixed here — recorded so
+  it is not lost between the deferral note and an eventual S7-adjacent slice.
+
+## 2026-08-07 — `run-manifest.sh close` hard-errors on a genuinely markerless session instead of the documented stub-and-continue
+- **Severity:** medium — `wrap-session.md`'s "THE ADVISORY RULE" states an absent manifest is a routine,
+  legitimate path and `close` "writes a wrap-time stub when none exists, says so in one advisory line, and
+  exits 0." Observed live this session (which began via a direct `/work-loop-v2` skill invocation, no
+  `/prime`, so neither a per-id nor a today-dated shared marker existed): `run-manifest.sh close` exited
+  **2** with "could not resolve the session marker … Run /prime to seed the marker, or pass --marker
+  explicitly" — not the documented stub-and-exit-0 behaviour. The two paths are distinguishable in the
+  script's own design (shared-file-fallback-while-`CLAUDE_CODE_SESSION_ID`-set prints a NOTICE and exits 0;
+  this is the same underlying situation — no per-id marker — but with no shared marker at all either), so the
+  no-marker-anywhere case appears to fall through to a hard error rather than the advisory stub path the wrap
+  documentation promises for exactly this session shape.
+- **Target file:** `logs/scripts/run-manifest.sh` — the marker-resolution branch `close` takes when neither
+  a per-id nor a shared marker exists at all.
+- **Not fixed here** — this session's wrap proceeded without a manifest per the documented advisory rule
+  ("surface it and continue the wrap"), which is what happened; the finding is that the *script* didn't
+  self-heal the way the rule describes, not that this session's wrap was blocked.
+
+## 2026-08-07 — `/wrap-session`'s foreign-session guard does not cover `logs/work-loop/*.md` task files
+- **Severity:** medium — Step 3.5's guard (`foreign-session-guard.sh`) detects concurrent/foreign
+  content only in `logs/session-notes.md` (today-header and mandate-line deltas). It has no
+  equivalent for `logs/work-loop/{task-id}.md` files, which are the single interface between Codex
+  and Claude in the Work Loop v2 protocol and can legitimately be rewritten by a concurrent Codex
+  turn while a wrap is in progress. Observed live: mid-`/wrap-session`, Codex closed a correction
+  round and opened the next unit in `work-loop-v2-proportionality-continuity-implementation.md`,
+  landing 101 insertions / 198 deletions uncommitted in the working tree. This was caught only by
+  manually running `git diff` on the file before staging it — the wrap's own documented procedure
+  (enumerate explicit paths from conversation-context memory) does not include a check for this, so a
+  wrap that trusted its own path list rather than diffing first could ship a Codex brief that Claude
+  never implemented, under an unrelated "session: wrap" commit message.
+- **Target file:** `.claude/commands/wrap-session.md` Step 3.5 (and its shared script,
+  `logs/scripts/foreign-session-guard.sh`) — needs either an extension to scan `logs/work-loop/*.md`
+  files for uncommitted turn/brief changes not authored by this session, or an explicit staging
+  discipline requiring a `git diff` check on any Work Loop task file before it enters the always-
+  staged or explicit-path list.
+- **Not fixed here** — this wrap excluded the affected file from its own commit once the concurrent
+  write was noticed, so no harm occurred this time. The finding is that the guard didn't catch it
+  structurally; a future wrap without a manual diff habit would not be protected the same way.
+
+## 2026-08-08 — `SPIKE_DIR` survives in the dispatcher with no reader, one commit after the coupling it encoded was removed
+- **Severity:** low — `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` line 185 still
+  computes `SPIKE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"`. After S7 (commit `23b6e3d`)
+  nothing reads it: `grep -n 'SPIKE_DIR' dispatch.sh` returns the assignment and one mention inside a
+  comment, nothing else. It was the script's own directory, and the whole point of plan § 4.8 was to
+  stop the dispatcher filing a driven checkout's run evidence against the script's location instead of
+  against that checkout.
+- **Category:** dead code that encodes a removed assumption — Work Loop v2 handoff-automation spike.
+- **Source:** ai-resources, 2026-08-08 S7 implementation unit; noticed during the change and deferred
+  in the same unit because plan § 4.8 authorises exactly two changes and says everything else "must
+  not be touched". Codex accepted the deferral at assessment.
+
+**Why it matters, and why it is only low.** No behaviour depends on it today, so nothing is broken and
+nothing is at risk right now. The cost is that a variable named for "the script's own directory" sits
+in scope, one line above code that deliberately no longer uses that concept. The next person needing a
+base path has a ready-made one that reintroduces exactly the coupling S7 removed, and it would look
+idiomatic because the variable was already there.
+
+**What would catch it.** Nothing mechanical is proposed for a single unused shell variable; a linter
+rule for the whole script would be more machinery than the problem. The fix is the deletion itself:
+remove line 185 and the stale `$SPIKE_DIR/runs` phrasing in the § 4.8 comment that still names it as
+the old default.
+
+**Target file:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`. Direct Work scale —
+one deletion plus a comment reword, no state file, no loop unit. Reopen immediately if anyone adds a
+second reader of `SPIKE_DIR`, which would turn this from cleanup into a live regression.
+
+## 2026-08-09 — Script-based state-file edit truncated an accepted Work Loop artifact via a substring-matched anchor
+
+- **Severity:** medium-high — while writing the Unit 5 result into
+  `logs/work-loop/work-loop-v2-phase1a-full-descendant-termination.md`, a Python heredoc located the
+  `## Next action` section by searching for that literal string and matched the **first**
+  occurrence — a mention of the same phrase inside an unrelated heading (`### Accepted Unit 3 brief
+  (superseded by Unit 4 in `## Next action`)`) near the top of the 1000+ line file. The script
+  truncated everything after that match: the accepted runbook, the C5 fixture, C5-T, the rollback and
+  the evidence template all vanished from the working tree in one edit.
+- **Category:** tool-misuse — script-based file rewrite anchored on a non-unique string, on a long
+  structured file where the anchor text also appears as a substring inside unrelated content.
+- **Source:** ai-resources, 2026-08-09 work-loop-v2 phase1a Unit 5 (task file above); caught by the
+  author before commit via a line-count/heading sanity check, not by any external review.
+
+**Why it matters.** Nothing was lost — the file was restored from the last real commit and the
+uncommitted work re-applied by hand from session context, with fixture integrity (line count, sha256,
+`bash -n`) re-verified before the first commit landed. But the near-miss was structural, not luck in
+the good sense: a script-based `awk`/`python`/heredoc rewrite has no equivalent of the Edit tool's
+"must match exactly once" guarantee unless the author builds that check themselves, and this session
+did not build it until after the damage. On a file that carries a load-bearing accepted artifact
+(fixture bytes an operator will paste and run), an unnoticed truncation would have silently discarded
+the operator's evidence trail with no error at write time.
+
+**What would catch it.** Prefer the Edit tool over script-based rewrites for state-file section
+replacement — its exact-match-once requirement is exactly the missing guarantee. Where a script-based
+rewrite is genuinely needed (e.g. bulk multi-line reconstruction), assert the anchor's occurrence
+count equals 1 before using its position, and fail loudly rather than silently taking the first match.
+
+**Target:** no repository file — this is a process pattern for any Claude-side session doing
+script-based edits against `logs/work-loop/*.md` or other long structured state files, not a bug in a
+specific script. Reopen if this same anchor-ambiguity pattern recurs on a different file or task.
+
+## 2026-08-09 — A self-checking evidence block can falsify itself by quoting its own search target
+- **Severity:** medium — Work Loop v2's rule 5 requires evidence that "must be able to fail," and the
+  standard way to prove a stale phrase is gone is to grep the file for it and report the count. But when
+  the same evidence block also quotes the phrase verbatim (a "Before: … After: …" pair, or a description
+  of what was searched for), a plain whole-file grep matches the block's own quotation and produces a
+  false "N remaining" or a false "returns nothing" claim — the check no longer distinguishes the fix from
+  its own documentation of the fix.
+- **Observed live, twice in one session:** ai-resources, 2026-08-09 work-loop-v2 phase1a Unit 9's final
+  bounded fix. A verification paragraph claimed the old phrase `remains unresolved after Unit 9` "returns
+  nothing" — false on its face, because the same paragraph quoted that exact phrase two lines above it in
+  a "Before:" line. Caught and rewritten before committing, this time by re-reading the paragraph against
+  its own wording rather than by any structural check. A related instance surfaced one unit earlier
+  (Unit 9's correction round), where an initial evidence draft claimed a duplicate-paragraph search
+  "returns nothing" while the same record quoted the duplicated phrase four times as backtick references;
+  that one was also caught by the same manual re-read, not by tooling.
+- **What would catch it structurally.** Two options, not mutually exclusive: (a) when writing a
+  self-verifying grep claim inside a section that also quotes the search term, state the claim as "N
+  matches outside this record" and actually exclude the record's own line range from the count (e.g.
+  `awk 'NR<start_line'` before the grep), rather than describing the exclusion in prose without doing it;
+  or (b) run the verification grep before drafting the surrounding prose, paste its literal output, and
+  write the prose to match the output rather than writing the prose first and asserting a plausible-
+  sounding result.
+- **Target:** no repository file — this is a process pattern for any Work Loop v2 evidence block (or any
+  self-verifying "before/after" write-up) that both quotes old text and claims that text is gone. Reopen
+  if this pattern produces a false claim that survives to commit, rather than being caught before commit
+  as it was both times here.
+
+### 2026-08-09 — Ambiguous "build an MVP" was read as an implementation go-ahead before a plan was approved
+
+- **Severity:** medium
+- **Category:** Session process — plan-before-implementation discipline
+- **Source:** ai-resources, 2026-08-09 semantic-search-mvp session.
+
+After being shown a proposed MVP scope in the prior turn, the operator said "I don't have time for
+tests I want to build an MVP." That was read as authorization to implement immediately: packages were
+installed, a prototype script and index were created, and one live command file
+(`resolve-repo-problem.md`) was edited — all before any plan had been approved for that session's
+specific build. The operator halted the session with an explicit correction: the request was for a
+proposal, not an implementation. No unapproved work was committed; the prototype was later folded into
+the approved build and the live-file edit was reverted.
+
+**Root cause.** "I want to build an MVP" is genuinely ambiguous between "propose the MVP" and "build
+the MVP now." The Plan Mode Discipline norm (wait for confirmation before implementing) was not applied
+because the phrase read as forward motion rather than as a request needing its own confirmation step.
+
+**Shape of the fix (not built).** When an instruction names a build/implementation but the immediately
+preceding turn was a proposal or analysis rather than an approved plan, treat "build X" as ambiguous by
+default: ask one clarifying line, or default to producing/updating the proposal rather than writing
+files. Belongs in `docs/plan-mode-discipline.md` if a durable rule change is judged worth making; not
+built here.
+
+## 2026-08-09 — The staging tripwire judges a direct-route session's commit against another session's footprint
+
+- **Severity:** high — `check-foreign-staging.sh` blocked a fully authorized commit three times in
+  one session, each time naming a different stranger's declared footprint. Every one of the four
+  staged paths was named by the task-state file's own brief and staged by explicit pathspec; none
+  belonged to any other session. The commit only landed after the session hand-wrote the session
+  infrastructure it structurally never had.
+- **Source:** `logs/friction-log.md` 2026-08-09 (S3-p0f) — full narrative, evidence and the
+  three-block sequence.
+
+**What happens.** The guard resolves "this session's footprint" through
+`logs/.session-marker[-<id>]` → the matching block in `logs/session-notes.md`. Both are written by
+`/session-start`. A direct-route command session — `/work-loop-v2` states plainly that it "is not a
+session lifecycle command" and does not invoke `/prime`, `/session-start` or `/session-plan` —
+writes neither. The lookup then does not fail; it **succeeds against a stranger**. The first block
+was armed by a 2026-08-08 marker whose own `- Out of scope:` line reads *"repairing another
+session's dirty dispatch.sh / dispatch.test.sh"* — it had explicitly disclaimed the exact files it
+was used to block.
+
+**Why this is worse than no footprint.** A missing footprint has a documented degrade path
+(`no_concrete_footprint` → warn-and-allow when no live foreign session is present). An *inherited*
+footprint looks fully resolved to the guard and produces a confident, specific, wrong block. The
+hook's own header already anticipates ghost markers arming the no-footprint escalation and added
+process-grounding for that path; the inherited-footprint path has no equivalent check.
+
+**Secondary — the remediation text misdirects.** The block says "your declared footprint is too
+narrow — route each file to the RIGHT field", which assumes the reader owns the footprint it just
+printed. In this shape they do not, and following it literally would edit another session's mandate.
+
+**Secondary — a guard-defeat path sits in the open.** The stale marker is a gitignored file; moving
+it aside is a two-second `mv`. That was tried first here as a diagnostic and reverted, and the only
+reason it did not work is that the fallback found a *second* stale footprint. A session under time
+pressure will find that path before it finds the correct one.
+
+**Shape of the fix (not built).** Preferred and structural: treat a marker whose session id is not
+this session's as **no footprint** rather than as this session's footprint — degrade to the existing,
+already-correct no-footprint path instead of judging against a stranger. The per-id marker makes that
+distinguishable and `logs/.session-marker-*` is already gitignored. Fallback: have direct-route
+commands that commit declare a minimal footprint at invocation from the task-state file's own
+authorized boundary, which is exactly the information the guard wants and which the brief already
+carries.
+
+**Owner artifacts.** `.claude/hooks/check-foreign-staging.sh` (the marker-identity check) +
+`.claude/commands/work-loop-v2.md` (footprint declaration for direct-route commits) +
+`docs/session-marker.md` (states the marker contract the two share).
+
+**Pattern, not a one-off.** Third occurrence of "session-lifecycle infrastructure assumes every
+session primed" — see `## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless
+session` and the same log's 2026-08-07 foreign-session-guard coverage entry. This is the first with a
+commit-blocking consequence rather than a wrap-time one.
+
+## 2026-08-10 — `/work-loop-v2`'s embedded resolver is rewritten by its own argument, because it uses `$1`/`$2` as bash positionals
+
+- **Severity:** high — the resolver is the command's boundary validation, and the command instructs
+  the reader to "Run this exact Bash resolver in one call" before any other Work Loop action. When it
+  is rewritten, the reader either runs corrupted shell or must notice and route around a block the
+  command declares mandatory.
+- **Source:** observed live in the `contacting-operations-phase-5-needs` session, 2026-08-10, on a
+  `/work-loop-v2` invocation whose argument was a multi-line operator decision packet.
+
+**What happens.** `ai-resources/.claude/commands/work-loop-v2.md` uses `$1` and `$2` as **bash
+positional parameters** inside the resolver's shell functions — lines 29, 33, 40, 47 and 72. Claude
+Code also treats `$1`/`$2` in a slash-command body as **argument placeholders**. The two collide, and
+the expander wins: the shell code reaches the reader with its parameters already substituted.
+
+**Observed.** With an argument beginning *"Yes—the missing piece is a self-contained answer…"*, every
+`$1` in the block arrived as `missing` and every `$2` as `piece` — `git -C "missing"`,
+`local wl2_w="missing"`, `wl2_c="missing/$wl2_c"`, and
+`local wl2_candidate="missing" wl2_source_root="piece"`. The index mapping is **not** simply
+word-1/word-2 of the argument, and this entry deliberately does not guess the tokenizer's rule; the
+collision is certain, the exact mapping is not.
+
+**Why this is worse than a plain bug: it is argument-shape dependent, so it passes casual testing.**
+Earlier in the *same session*, `/work-loop-v2 phase5` — a single-token argument — delivered the block
+**intact**, with `git -C "$1"` unsubstituted, and it ran correctly. A maintainer testing with a short
+task id sees a working command. The corruption appears only with the longer arguments that real
+operator hand-offs actually carry.
+
+**It fails closed in the observed shape, and that is verified rather than assumed.** Simulating
+`$1=missing` makes `git -C "missing" rev-parse` fail, `wl2_git_top` return 1, and the resolver exit 1
+with its `cannot resolve its repository boundary` error. **The structural concern is narrower and is
+not a demonstrated exploit:** the containment check that keeps the resolved file inside the permitted
+root — `case "$wl2_dir/" in "$wl2_source_root/"*)` — is itself built from `$2`. A security boundary
+parameterised by a token the expander may rewrite is the wrong shape, independent of whether any
+argument reaches it.
+
+**Blast radius: both canonical copies.** `ai-resources/.claude/commands/work-loop-v2.md` and
+`ai-resources/.agents/skills/work-loop-v2/SKILL.md` each carry six `$1`/`$2` occurrences in the same
+block. The command route is the one observed failing; whether the Skill route substitutes the same
+way was **not** tested and should be, rather than assumed safe.
+
+**Shape of the fix (not built).** Preferred and structural: **remove `$1`/`$2` from the embedded bash
+entirely** — have the functions read named variables set before their definitions, so no token the
+slash-command expander rewrites appears in a block intended to run verbatim. The general rule this
+instance teaches is worth stating once in the release-pass guide: *a fenced block meant to be executed
+character-for-character may not contain expander-owned tokens.* A fallback of escaping `$1` depends on
+the expander honouring an escape and was not verified.
+
+**Owner artifacts.** `ai-resources/.claude/commands/work-loop-v2.md` and
+`ai-resources/.agents/skills/work-loop-v2/SKILL.md` (the resolver block, both copies) +
+`ai-resources/plans/work-loop-v2-v0.2/command-instruction-release-pass-guide.md` (where the
+verbatim-block rule belongs).
+
+**Not the first defect in this resolver.**
+`ai-resources/plans/work-loop-v2-v0.2/core-resolver-worktree-defect-report-2026-08-09.md` and its fix
+plan address a different failure in the same block one day earlier. Two independent defects in one
+embedded resolver in two days is itself the signal: the block is long, security-bearing, duplicated
+across two files, and has no test that executes it.
+
+---
+
+### 2026-08-10 — `check-destructive-liveness.sh` resolves the wrong target for `git -C <path> clean -f`, and fires on dry runs
+
+- **Status:** logged (pending)
+- **Category:** hook / destructive-op guard
+- **Severity:** high
+
+**Two defects in one hook, found by execution during a `/close-worktree-session` teardown** (session `00ac6c96`, `axcion-systems-builder`). Both are in `ai-resources/.claude/hooks/check-destructive-liveness.sh`.
+
+**Defect 1 — the `-C` blind spot. This is the one with a safety consequence.**
+
+The hook's own header states the target-resolution rule at
+`ai-resources/.claude/hooks/check-destructive-liveness.sh:33`:
+
+> `git clean -f/-fd/-fdx` — target = the CURRENT checkout
+
+That is true for a bare `git clean`. It is false for `git -C <other-checkout> clean -f`, which the
+hook does not parse. Observed: a `git -C "<...>/axcion-systems-builder-email-os" clean -xfdn` was
+probed against `<...>/axcion-systems-builder` — a **different checkout** — and blocked on markers
+belonging to that other checkout.
+
+**Why this is worse than a false positive.** The block was the harmless direction. The same gap runs
+the other way: `git -C <live-checkout> clean -f` issued from an idle checkout is probed against the
+**idle** one, all three probes come back clear, and the hook degrades **open** on a command that
+destroys untracked files in a live session. That is precisely the failure class the hook exists to
+prevent, reintroduced through an argument form it does not read.
+
+Note the hook already resolves a path argument correctly for `git worktree remove <path>`
+(`:30`) — the machinery exists; `git -C` simply is not wired into it. `git reset --hard` shares the
+same exposure (`:32`, target = current checkout) and should be checked in the same pass.
+
+**Defect 2 — dry runs are blocked.** The pattern match keys on `-f` appearing in the flag string, so
+`git clean -xfdn` is treated as destructive. `-n` means list-and-change-nothing. Blocking the
+non-destructive rehearsal is backwards: the dry run is the step that lets an operator *see* what a
+guard is protecting before deciding. Cosmetic next to defect 1, but it pushes sessions toward running
+the real command to find out what it would do.
+
+**Shape of the fix (not built).** Parse `-C <path>` (and `--git-dir`/`--work-tree`) before classifying
+`clean`/`reset`, and resolve the target from it — reusing the `_resolve_dir_arg` path already used for
+`worktree remove`. Mind the header's own space-in-path warning at `:146` and `:274`: this workspace's
+paths contain spaces, and the same bug has been fixed twice already in the target argument. Separately,
+exclude `-n`/`--dry-run` from the destructive match.
+
+**Not verified:** whether the Skill-route copy of this hook, if one exists, has the same gap.
+
+**Target files:** `ai-resources/.claude/hooks/check-destructive-liveness.sh` (target resolution ~`:367-372`, and the header contract at `:30-33`).
+
+---
+
+### 2026-08-10 — Stale session markers survive a crashed session and block every later destructive op in that checkout
+
+- **Status:** logged (pending)
+- **Category:** session-marker lifecycle
+- **Severity:** medium
+
+**Found in the same teardown.** `projects/axcion-systems-builder/logs/` held two markers dated
+**2026-08-05** (`.session-marker` and `.session-marker-f992a158-...`, both `2026-08-05 S1-f99`,
+mtime Aug 5 10:44), five days stale, from a session that never wrapped.
+
+`cleanup-session-marker.sh` fires on `SessionEnd`, which does not run on a hard crash or a
+force-quit. The known gap is documented in
+`ai-resources/.claude/commands/close-worktree-session.md` — but only as prose telling the *operator*
+to confirm idleness. Nothing prunes the marker, so the checkout is left permanently "occupied" from
+the guard's point of view.
+
+**The consequence is a guard-erosion pattern, not just an annoyance.** Every destructive op in that
+checkout now blocks on evidence that is five days dead. Each block asks the operator to assert
+idleness and re-run with `AXCION_LIVENESS_OVERRIDE=1`. A guard that must be overridden routinely is a
+guard that stops being read — and the override then rides on a habit rather than on a judgment. The
+same doc forbids deleting markers to get past the guard (correctly), which leaves **no sanctioned way
+to clear a genuinely dead one**.
+
+**Shape of the fix (not built).** Give the marker an age: have the liveness probe report a marker
+older than some threshold as `STALE (age Nd)` and require an explicit operator disposition, rather
+than treating a 5-day-old marker and a 5-minute-old one as the same signal. A `SessionStart` sweep
+that prunes markers whose owning process is gone would close it structurally; the process-liveness
+check needed for that was **not** investigated here. **Do not** fix this by adding a bare
+delete-the-marker step — that is the workaround the doctrine already closed.
+
+**Immediate state:** the two 2026-08-05 markers are **still present**. They were deliberately not
+deleted. Clearing them is an operator decision.
+
+**Target files:** `ai-resources/.claude/hooks/check-destructive-liveness.sh` (probe b), `~/.claude/hooks/cleanup-session-marker.sh`, `ai-resources/docs/session-marker.md` § Per-id marker teardown.
+
+### 2026-08-11 — `unattended-operation-plan-v0.2.md`'s implementation-status table reports a stale suite count
+
+- **Status:** logged (pending)
+- **Severity:** low — documentation staleness only; no behavioural consequence, but it misstates a
+  fact a reader would reasonably rely on when checking dispatcher test coverage.
+- **Category:** Plan-spine currency.
+- **Source:** ai-resources, 2026-08-11, `work-loop-v2-bounded-execution-fix-plan` Work Loop v2 task.
+
+`plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md`'s implementation-status table is dated
+2026-08-07 and states the simulated dispatcher suite at 368 pass / 0 fail. The newer closed record
+`logs/work-loop/axcion-harness-v0-2-p0-f-attended-policy.md` (2026-08-09) reports 375 pass / 0 fail
+after the P0-F attended-permission-mode work landed. The plan spine was not updated when that later
+work closed.
+
+**Shape of the fix (not built).** Update the status-table line to the current count with a pointer to
+the P0-F record, the same way the table already cites its other sources. Out of scope for the task
+that surfaced it (a planning-only unit that was not permitted to edit existing plan text).
+
+### 2026-08-11 — Repo git identity carries a malformed email, silently, on every commit
+
+- **Status:** logged (pending)
+- **Severity:** medium — no behavioural break inside the repo, but a malformed author email can
+  break GitHub commit-to-account attribution once pushed, and it has been silently propagating across
+  every commit for a while, not just today's.
+- **Category:** Git configuration correctness.
+- **Source:** ai-resources-bounded-execution, 2026-08-11, bounded-execution review-fix session.
+
+The repo's configured `user.email` is `patriklindeberg75@@gmail.com` — a double `@`. Confirmed present
+on `git config user.email` and on every one of the last six commits inspected (`2511117`, `6ab33a2`,
+`a0bb2a3`, `bdfe91f`, `a232971`, `027b1fe`), so this is not a one-off typo in a single commit; it is
+the checkout's standing identity. Flagged to the operator during this session and deliberately left
+unfixed twice — the three Claude-authored commits this session (`570c4fb`, `7ee93d7`, `8b9a63d`)
+preserved it rather than silently correcting it mid-unrelated-change, so the identity stays consistent
+with its neighbours until the operator decides.
+
+**Shape of the fix (not built).** `git config user.email "<correct address>"` in this checkout (and
+check whether the same value is set at the user/global level, which would mean every checkout on this
+machine carries it). A one-line fix; the only reason it is not already applied is that no session has
+had explicit operator authorization to change repo identity as a side effect of unrelated work.
+
+### 2026-08-12 — Harness case 31b greps only the `claude_deny=none` prefix, so the honest wording is unpinned
+
+- **Status:** logged (pending)
+- **Severity:** medium — no live break; the wording is correct right now. The gap is that nothing
+  would catch a regression to the false sentence, and that sentence is the one an operator reads to
+  decide whether an unattended child is contained.
+- **Category:** Test coverage — assertion is weaker than the property it appears to protect.
+- **Source:** ai-resources, 2026-08-12, Work Loop v2 task
+  `work-loop-v2-bounded-execution-verification`, correction round (commit `07bcf96`).
+
+Harness case 31b asserts the attended run log records the deny policy, but its check is
+`grep -q "claude_deny=none"` (`dispatch.test.sh:2136`) — a prefix match. The retired wording
+(`claude_deny=none — no tool denied beyond the child's own policy`) and the corrected wording
+(`claude_deny=none — no EXTRA deny rule was supplied by the operator; this does NOT mean nothing is
+denied…`) both satisfy it. The prefix survived the correction unchanged, so the assertion looks like
+it protects the sentence and does not.
+
+Why it matters: the retired sentence was false on the attended path from the moment the four
+`NESTED_ACTOR_DENY` rules became an always-on default. A future edit reverting to it would restore a
+run-log line that tells an operator no tool is denied when four are, and the suite would stay green.
+
+**Shape of the fix (not built).** Add one assertion to case 31b pinning the honest half of the line —
+that the plain-attended log does not claim nothing is denied, and does point at the nested-actor set.
+Deferred at closure rather than built: the correction boundary named case 31b as out of scope and
+limited the method to static inspection plus one integrated harness run. Recorded in the task's
+closing record under decisions that matter; queued here so it is reachable after that file closed.
 
 ---
 

@@ -46,7 +46,7 @@ For every table under `analysis/claim-permission/{section}/`, read the frontmatt
 > 2. Delete `analysis/{section}/.claim-permission-gate.done`.
 > 3. Re-run `/run-sufficiency {section}`.
 
-**The ordering is load-bearing, and it is the entire reason this message spells the steps out.** Deleting the sentinel *before* the back-port drops the operator into `claim-permission-gate`'s own chassis-version hard exit — sentinel already gone, no way forward, and no revert that restores it. **Back-port first, always.** (Found by `/risk-check`, 2026-07-14: the first draft of this gate printed "delete the sentinel and re-run" and dead-ended exactly this way.)
+**The ordering is load-bearing, and it is the entire reason this message spells the steps out.** Deleting the sentinel *before* the back-port drops the operator into `claim-permission-gate`'s own chassis-version hard exit — sentinel already gone, no way forward, and no revert that restores it. **Back-port first, always.** (Found in review, 2026-07-14: the first draft of this gate printed "delete the sentinel and re-run" and dead-ended exactly this way.)
 
 If all Step 0 checks pass: proceed to Phase A.
 

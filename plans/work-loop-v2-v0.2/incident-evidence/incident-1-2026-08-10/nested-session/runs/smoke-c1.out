@@ -1,0 +1,13 @@
+```
+Direct Work — docs/fixture-guide.md:3 cited docs/does-not-exist-anywhere.md (absent from docs/); repointed the citation to docs/protected-zones.md, which exists and carries the path→review routing table.
+Not admitted as an incident (small and reversible; Work Loop core § 2).
+```
+
+Two notes on the call:
+
+- **Why the fast path:** the fix is a one-line dead-link repoint. `docs/fixture-guide.md` matches no row in `docs/protected-zones.md`, and nothing about behavior or shared state changes. Step 2a names this case explicitly ("a dead link, a wrong path string or a stale reference is small and reversible"), so no incident record, index entry, or improvement-log entry was written — that absence is the point of the exit, not an omission.
+- **On the pre-existing triage note:** `audits/working/2026-08-10-resolve-fixture-guide-dead-reference.md` covers this same fault and recommends the same target. `ISSUE` didn't cite it, so the Step 12c bridge didn't formally apply; I confirmed its evidence independently (read line 3, listed `docs/`) rather than adopting its diagnosis. I did not carry over its root-cause claim — that the reference "was never repointed after the routing table moved" — because nothing in this repo evidences a prior move, and it's tagged with what looks like an opaque marker token rather than a file:line citation. The dead reference is established; its history is not.
+
+One thing worth your judgment: `protected-zones.md` is a protected-zone lookup table, so "the routing table" is a slightly loose label for it. It's the only table in `docs/` and matches the triage recommendation, but if the guide's Step 4 was meant to point at a genuine routing doc (something like `repo-architecture.md`, which doesn't exist here), the honest fix would be deleting the reference instead. Say the word and I'll switch it to a removal.
+
+Uncommitted, per the workspace rule — commit when it looks right to you.

@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>EmailOS MVP Run Card</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+  <main>
+    <!-- RETIREMENT BANNER — added 2026-08-11, Axcíon Harness v0.2 Phase 0 (Work Loop v1 retirement) -->
+    <aside role="note" aria-label="Retired content notice" style="box-sizing:border-box;max-width:100%;margin:0 0 2rem;padding:1.25rem 1.5rem;background:#7a2e0e;color:#fff6ed;border:2px solid #c2410c;border-radius:8px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:1rem;line-height:1.55;">
+      <p style="margin:0 0 .75rem;font-size:1.1rem;font-weight:700;letter-spacing:.01em;color:#ffedd5;">&#9888;&#65039; Historical record &mdash; Work Loop v1 is retired. Do not follow the routing on this page.</p>
+      <p style="margin:0 0 .75rem;color:#fff6ed;">This page routes work to <code style="background:rgba(0,0,0,.35);padding:.1em .4em;border-radius:4px;color:#ffedd5;">/work-loop</code>, which <strong>no longer exists</strong>. The command was deleted on 2026-08-06 (<code style="background:rgba(0,0,0,.35);padding:.1em .4em;border-radius:4px;color:#ffedd5;">0516bf6</code>) and its Codex controller skill was retired on 2026-08-11 under Axc&#237;on Harness v0.2 Phase 0, which required Work Loop v2 to be the only plausible semantic router.</p>
+      <p style="margin:0 0 .75rem;color:#fff6ed;"><strong>The live Work Loop is v2:</strong> <code style="background:rgba(0,0,0,.35);padding:.1em .4em;border-radius:4px;color:#ffedd5;">/work-loop-v2</code> on the Claude side, <code style="background:rgba(0,0,0,.35);padding:.1em .4em;border-radius:4px;color:#ffedd5;">.agents/skills/work-loop-v2/SKILL.md</code> on the Codex side, with <code style="background:rgba(0,0,0,.35);padding:.1em .4em;border-radius:4px;color:#ffedd5;">plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md</code> as its executable core. <strong>v2 is not a renamed v1</strong> &mdash; it has a different admission rule (Direct Work is the default), a different unit cycle and a different artifact set. Do not map the steps below onto it.</p>
+      <p style="margin:0;color:#fff6ed;">The content below is <strong>preserved unchanged as historical evidence</strong> of how routing worked at the time of writing. Read it as a record, not as an instruction.</p>
+    </aside>
+    <article class="page run-card">
+      <div class="brandline" aria-label="Axcíon run card">
+        <span class="wordmark">Axcíon</span>
+        <span class="edition">Systems building · Operator run card</span>
+      </div>
+      <header>
+        <p class="eyebrow">Printable SOP · repository state 2026-07-30</p>
+        <h1>EmailOS: current state to pilot-ready MVP</h1>
+        <p class="lede">Choose the command by what it owns. Do not run every command as a compulsory stage.</p>
+        <div class="topline">
+          <span class="pill">Now: Systems Builder</span>
+          <span class="pill">Blockers: A2 + A3</span>
+          <a class="pill" href="../lessons/0001-emailos-road-to-mvp.html">Return to lesson</a>
+        </div>
+      </header>
+
+      <table>
+        <tbody>
+          <tr>
+            <th>Command map</th>
+            <td>
+              <strong>Rough, ownerless idea:</strong> <code>/leverage-idea</code> ·
+              <strong>system definition:</strong> Systems Builder ·
+              <strong>project creation:</strong> Project Planning + <code>/new-project</code> ·
+              <strong>operating capability:</strong> <code>/work-loop</code> ·
+              <strong>AI artifact inside a slice:</strong> <code>/develop-ai-resource</code>.
+              There is no live <code>/develop-capability</code> command.
+            </td>
+          </tr>
+          <tr>
+            <th>Do not restart intake</th>
+            <td>
+              EmailOS already has a case and detailed Needs Document. Do not run
+              <code>/leverage-idea</code>; continue from the current Systems Builder state.
+            </td>
+          </tr>
+          <tr>
+            <th>1 · Complete Needs</th>
+            <td>
+              In Systems Builder: <code>/prime</code> →
+              <code>/session-start "EmailOS Phase 5–6 — close A2/A3 and prepare Review 1"</code>.
+              Close A2: CRM owner, EmailOS builder, operator. Close A3: compliance/guidance source,
+              maintainer, machine-check owner. Run <code>/qc-pass</code> and
+              <code>/reconcile cases/email-system/02-detailed-needs-document.md</code>.
+            </td>
+          </tr>
+          <tr>
+            <th>2 · Definition package</th>
+            <td>
+              Produce <code>03</code> V2 → <code>04</code> MVP/roadmap → compare ≥2 approaches →
+              <code>05</code> V3 → <code>06</code> Implementation Brief. Run QC + reconcile on each.
+              At reviews use phase <code>6</code>, <code>8</code>, <code>9</code>, then <code>12</code>:
+              <code>bash cases/scripts/build-review-packet.sh {build|verify} email-system &lt;phase&gt;</code>.
+            </td>
+          </tr>
+          <tr>
+            <th>3 · Plan the project</th>
+            <td>
+              In Project Planning:
+              <code>/context-builder &lt;absolute-path-to-06&gt;</code> (treat <code>01</code>–<code>05</code>
+              as authority; engineered route) →
+              <code>/plan-draft</code> / <code>/plan-refine email-os</code> /
+              <code>/plan-evaluate email-os</code> until PASS →
+              <code>/spec-draft email-os</code> / <code>/spec-refine email-os</code> /
+              <code>/spec-evaluate email-os</code> until PASS.
+            </td>
+          </tr>
+          <tr>
+            <th>4 · Create EmailOS</th>
+            <td>
+              From the workspace root: <code>/new-project email-os</code>. Continue through Stage 5.
+              This establishes the project and initial technically verified implementation; it does
+              not by itself prove that the operating workflow is pilot-ready.
+            </td>
+          </tr>
+          <tr>
+            <th>5 · Develop capability</th>
+            <td>
+              Open the new EmailOS project and run:
+              <code>/work-loop "Develop EmailOS as an operating capability. Treat Systems Builder 01–06 and /new-project Stage 5 results as settled evidence; build only unproven end-to-end slices."</code>
+              Expect Frame → Shape/G1 → one Build unit per complete behaviour → Prove/G2.
+            </td>
+          </tr>
+          <tr>
+            <th>Artifact side branch</th>
+            <td>
+              If—and only if—a slice needs a new skill, command, agent, prompt or similar durable AI
+              artifact, carry the bounded handoff to <code>/develop-ai-resource</code>. Return its
+              disposition to the live <code>/work-loop</code> capability record and resume.
+            </td>
+          </tr>
+          <tr>
+            <th>6 · Stop at pilot-ready</th>
+            <td>
+              Stop after Prove/G2 confirms, using synthetic or redacted data: CRM remains authoritative;
+              drafts meet the approved bar; approval cannot be bypassed; Gmail/CRM state stays aligned;
+              suppression, replies, failures and recovery work. The real 10–15-contact wave is Land
+              and belongs to the next lesson.
+            </td>
+          </tr>
+        </tbody>
+      </table>
+
+      <section class="strip">
+        <div class="callout">
+          <strong>No duplicate build:</strong> reuse Stage 5 evidence when it proves a behaviour;
+          <code>/work-loop</code> builds and proves only the remaining operating gaps.
+        </div>
+        <div class="callout stop">
+          <strong>Three different milestones:</strong> <code>04</code> defines the MVP;
+          <code>/new-project</code> builds an implementation; <code>/work-loop</code> proves the
+          operating capability is safe to release into a pilot.
+        </div>
+      </section>
+
+      <footer class="footer">
+        <span><strong>Memory hook:</strong> route → define → create → develop → release</span>
+        <span><a href="../../../docs/work-loop.md">Capability process authority</a></span>
+      </footer>
+    </article>
+  </main>
+</body>
+</html>

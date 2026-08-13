@@ -34,12 +34,21 @@ Depth levels:
 8. Set AUDIT_DIR to `{AI_RESOURCES}/audits/`.
 9. Set ANALYSIS_PATH to `{AUDIT_DIR}/workflow-analysis-{workflow-name}-YYYY-MM-DD.md` using today's date.
 10. Set CRITIQUE_PATH to `{AUDIT_DIR}/workflow-critique-{workflow-name}-YYYY-MM-DD.md` using today's date.
-11. Check for the workflow definition document. Look in order:
+11. **Resolve the workflow's project-instruction file — once, here.** Check in order and take the first that exists:
+    - `{WORKFLOW_PATH}/CLAUDE.md`
+    - `{WORKFLOW_PATH}/CLAUDE.md.template`
+    - `"None"` — only if **both** are absent.
+
+    Set WORKFLOW_CLAUDE_MD to that resolved value. Every later consumer uses this variable; do not re-derive the path anywhere downstream.
+
+    **Why the `.template` fallback exists.** A canonical workflow template stores its project instruction file under the non-active filename `CLAUDE.md.template`, so that a file named `CLAUDE.md` does not sit inside `ai-resources/` being auto-loaded as nested instructions. `/deploy-workflow` Step 3a renames it to `CLAUDE.md` when a real project is created. Both filenames are therefore legitimate: the `.template` form is what a canonical workflow looks like on disk, and the plain form is what a deployed project looks like. Resolving only the plain name would report `"None"` for every canonical workflow and silently drop the rule-enforcement cross-reference from the analysis.
+
+12. Check for the workflow definition document. Look in order:
     - `{WORKFLOW_PATH}/reference/stage-instructions.md`
     - `{WORKFLOW_PATH}/stage-instructions.md`
-    - `{WORKFLOW_PATH}/CLAUDE.md` (as fallback)
-    Set STAGE_INSTRUCTIONS to the first found, or "None" if none found.
-12. Set WORKFLOW_CLAUDE_MD to `{WORKFLOW_PATH}/CLAUDE.md` (or "None" if it doesn't exist).
+    - WORKFLOW_CLAUDE_MD from step 11, if it is not `"None"` (as fallback)
+
+    Set STAGE_INSTRUCTIONS to the first found, or "None" if none found. The third option reuses the already-resolved value rather than naming `CLAUDE.md` again — a second hard-coded path here would go stale the moment the first one changed.
 
 ---
 

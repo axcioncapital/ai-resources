@@ -10,7 +10,7 @@ Every skill must declare both `model:` and `effort:` in frontmatter. The Claude 
 
 | Work type | `model:` | `effort:` | Examples |
 |---|---|---|---|
-| **Judgment** — deciding what should be done; ambiguity-heavy synthesis, design, prose review, triage | `opus` | `high` | `refinement-deep`, `pipeline-review`, `triage`, `coach`, `summary` |
+| **Judgment** — deciding what should be done; ambiguity-heavy synthesis, design, prose review, triage | `opus` | `high` | `pipeline-review`, `triage`, `coach`, `summary` |
 | **Structured / execution** — doing what's been decided; repeatable factual workflows, scaffolding, orchestration | `sonnet` | `medium` | `wrap-session`, `prime`, `handoff`, `friction-log`, `request-skill` |
 | **Mechanical** — counts, format checks, log appends, pattern matching | `haiku` | `low` | `note`, `resolve-improvement-log` |
 
@@ -30,8 +30,8 @@ Example skill frontmatter:
 
 ```yaml
 ---
-name: refinement-deep
-description: Run a deep review of the work you just produced...
+name: pipeline-review
+description: Deep design review of a single command pipeline...
 model: opus
 effort: high
 ---

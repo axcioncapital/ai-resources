@@ -1,0 +1,53 @@
+{
+  "run_id": "2026-08-01-S7-3fc",
+  "project": "ai-resources",
+  "date": "2026-08-01",
+  "marker": "S7-3fc",
+  "model": "claude-fable-5",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-08-01-S7-3fc",
+  "mission": "work-loop-v2-mvp",
+  "context": {
+    "pack_path": "output/context-packs/command-20260801-b7e3a/pack.md",
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/session-notes.md",
+    "logs/session-plan-2026-08-01-S7-3fc.md",
+    "logs/scratchpads/2026-08-01-S7-3fc-scratchpad.md",
+    "logs/work-loop/fixture-slice2-fresh.md",
+    "logs/work-loop/fixture-slice2-foreign.md",
+    "logs/work-loop/fixture-slice2-correction.md",
+    "logs/work-loop/fixture-slice2-menu.md",
+    "logs/work-loop/fixture-target.md",
+    "logs/scripts/work-loop-v2-slice-1.test.sh",
+    ".claude/commands/work-loop-v2.md",
+    ".agents/skills/work-loop-v2/SKILL.md",
+    "plans/work-loop-v2-mvp/step-5-slice-2-evidence.md",
+    "logs/missions/work-loop-v2-mvp.md",
+    "logs/improvement-log.md",
+    "logs/next-up.md",
+    "logs/runs/2026-08-01-S7-3fc.json"
+  ],
+  "decisions_refs": [],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

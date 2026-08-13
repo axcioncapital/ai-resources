@@ -46,7 +46,7 @@ For each suggestion, check whether it conflicts with a change just applied in St
 
 ## Step 4: Evaluate (Subagent)
 
-**The main agent** reads `skills/ai-resource-builder/references/evaluation-framework.md` from the repo. Then spawn a subagent — **explicitly pin `model: opus` on the spawn.** A `general-purpose` subagent carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the behavioral analysis and convention gate would quietly run below the tier this judgment needs. Pin it. (Pin-the-tier convention established 2026-07-03 — but the tier is **per-dispatch, not blanket opus**: `/qc-pass`, `/refinement-pass`, `/refinement-deep`, `/friday-journal` pin `opus`, while `/risk-check` deliberately pins `sonnet` as a logged cost exception (`logs/decisions.md` 2026-07-05). Do not "correct" risk-check to opus. Tier declared here 2026-07-12 per W3.2 M-A2a.) Pass it ONLY:
+**The main agent** reads `skills/ai-resource-builder/references/evaluation-framework.md` from the repo. Then spawn a subagent — **explicitly pin `model: opus` on the spawn.** A `general-purpose` subagent carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the behavioral analysis and convention gate would quietly run below the tier this judgment needs. Pin it. (Pin-the-tier convention established 2026-07-03 — the tier is **per-dispatch, not blanket opus**: judgment dispatches such as `/refinement-pass` and `/friday-journal` pin `opus`, while mechanical scan dispatches pin `sonnet` as a logged cost exception (`logs/decisions.md` 2026-07-05). Tier declared here 2026-07-12 per W3.2 M-A2a.) Pass it ONLY:
 
 - The evaluation framework contents (that you just read)
 - The modified SKILL.md (and any bundled resources)
@@ -103,23 +103,15 @@ If the same issue persists after Pass 1 and the regression check (2 fix attempts
    ```
 3. Flag the stall for Patrik in Step 7 results
 
-### 5e: Post-Edit QC (Subagent)
+### 5e: Deterministic fix verification
 
-After Pass 1, the regression check, and any stall handling, run an independent post-edit QC pass before proceeding to Step 6.
+After Pass 1, the regression check, and any stall handling, verify the fixes mechanically before Step 6 — no subagent, no review pass.
 
-Spawn a fresh subagent, passing it ONLY:
+For each entry in the Step 5b fix ledger: open the edited passage, confirm it says what the ledger claims, and confirm the YAML description still matches the body where a trigger, exclusion or output format changed. Re-read the changed sections end-to-end once, in order, for anything the individual edits broke between them.
 
-- The evaluation framework contents (already read in Step 4)
-- The fixed SKILL.md (and any modified bundled resources)
-- The fix ledger from Step 5b (what was changed, why, which issue each fix resolved)
+**An independent post-edit QC subagent ran here until 2026-07-29,** with a loop back into 5b and a re-run of 5e. It was removed with the rest of the automatically-stacked review layer: the skill change gets one independent review, sized to its consequence, per `ai-resources/docs/qc-independence.md` § The rule — Step 4's evaluation pass is this pipeline's own engine and is unaffected. If verification keeps surfacing new breakage, that is a stall: log it per 5d and surface it to Patrik in Step 7 rather than iterating.
 
-The subagent's task: "Verify that each logged fix resolved its target issue, check for regressions introduced by the fixes, and confirm the edited passages read cleanly in context. Do not re-run the full evaluation — focus on the fixed state."
-
-The subagent must NOT receive the original feedback, the improvement conversation, or the original evaluator's report beyond the fix ledger.
-
-Capture the post-edit QC report. If it surfaces unresolved BLOCKING/IMPORTANT issues or regressions, loop back into Step 5b for one additional fix pass (then re-run 5e once). If issues persist after that pass, log a stall per 5d and surface to Patrik in Step 7.
-
-**Skip 5e only for:** single-edit fix passes, or formatting-only changes with no content risk (matches CLAUDE.md carve-out).
+**Skip 5e only for:** single-edit fix passes, or formatting-only changes with no content risk.
 
 ## Step 6: Verify Against Embedded Spec and Original Feedback
 
@@ -142,7 +134,7 @@ Show Patrik:
 
 1. **The skill** — complete final version after all changes and auto-fixes
 2. **Evaluation report** — the subagent's full output (with shallow-evaluation flag if triggered)
-3. **Fixes applied** — what Critical/Major issues were found, how they were resolved, whether secondary fixes were needed, and the post-edit QC verdict from Step 5e
+3. **Fixes applied** — what Critical/Major issues were found, how they were resolved, whether secondary fixes were needed, and the Step 5e verification result
 4. **Feedback resolution** — status of each original feedback item (Resolved / Partially resolved / Unresolved)
 5. **Remaining issues** — any Minor issues, spec verification mismatches, or shallow-evaluation concerns
 6. **The diff** — complete diff from the baseline version (Step 0) to the final version

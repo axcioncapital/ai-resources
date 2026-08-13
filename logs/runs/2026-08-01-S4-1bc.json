@@ -1,0 +1,47 @@
+{
+  "run_id": "2026-08-01-S4-1bc",
+  "project": "ai-resources",
+  "date": "2026-08-01",
+  "marker": "S4-1bc",
+  "model": "claude-opus-5[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-08-01-S4-1bc",
+  "mission": "work-loop-v2-mvp",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "plans/work-loop-v2-mvp/step-4-slice-plan.md",
+    "logs/missions/work-loop-v2-mvp.md",
+    "plans/work-loop-v2-mvp/README.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/session-plan-2026-08-01-S4-1bc.md",
+    "logs/scratchpads/2026-08-01-13-47-scratchpad.md",
+    "logs/next-up.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-01-amended-the-work-loop-v2-mvp-mission-s-frozen"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

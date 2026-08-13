@@ -1,6 +1,6 @@
 # Applying Audit Recommendations
 
-> **When to read this file:** Before applying a permission change or frontmatter change derived from an audit (`/token-audit`, `/repo-dd`, `/audit-repo`, `/audit-claude-md`, or similar); OR before landing a structural change in any of the classes listed under `Risk-check change classes` below. **Model-default changes (adding `"model"` to settings.json or a default-model line in CLAUDE.md) are prohibited — audit recommendations suggesting them must be rejected outright, not run through this discipline.** See workspace `CLAUDE.md` § Model Tier.
+> **When to read this file:** Before applying a permission change or frontmatter change derived from an audit (`/token-audit`, `/repo-dd`, `/audit-repo`, `/audit-claude-md`, or similar); OR before landing a structural change in any of the classes listed under `Structural change classes` below. **Model-default changes (adding `"model"` to settings.json or a default-model line in CLAUDE.md) are prohibited — audit recommendations suggesting them must be rejected outright, not run through this discipline.** See workspace `CLAUDE.md` § Model Tier.
 
 Audits produce recommendations based on static file counts, structural patterns, and reference-spec comparison. They do not model runtime command behavior. Recommendations are not specs — applying them verbatim can silently break live workflows.
 
@@ -53,9 +53,9 @@ Advisory, not a gate — nothing blocks on `blind`. Reach for it when an absence
 
 **Origin:** mission `repo-health-backlog-2026-07` thread 11, 2026-07-18. The thread was filed as "every absence-claim in every past audit is unreliable"; execution narrowed it to the dot-rooted ad-hoc form and found zero committed sites affected. The narrowing is the finding — a blanket rewrite of every `grep` in the repo would have been the wrong fix.
 
-## Risk-check change classes
+## Structural change classes
 
-If a session touches a structural change in any of the following classes, run `/risk-check` at two session boundaries (not per-change — see *When to fire* below):
+A change in any of the following classes is **high-consequence**: it takes the third row of `qc-independence.md` § The rule — one risk-aware Codex review before implementation, then the deterministic execution-time safeguards. The list is a **consequence test, not a trigger that fires a command**; no gate fires from it automatically.
 
 - Hook edits (`.claude/hooks/*.sh`)
 - Permission changes (`settings.json` `allow` / `ask` / `deny` edits)
@@ -64,38 +64,36 @@ If a session touches a structural change in any of the following classes, run `/
 - New symlinks
 - Automation with shared-state effects (scripts that auto-write to logs, cross-repo writes, auto-commit patterns) — INCLUDES reordering or restructuring of existing shared-state ops (e.g., changing when an archive step runs relative to a log append), not only new automation
 
-**Class-boundary clarification — gitignored local settings (added 2026-07-03).** A gitignored, machine-local `settings.local.json` edit is **out-of-class** for the permission-change bullet above ONLY when BOTH hold: (a) the edit is a deletion or correction *mandated by an existing workspace rule* (e.g., removing a prohibited `"model"` field per workspace `CLAUDE.md` § Model Tier), AND (b) it has zero blast radius (untracked file, single machine, no consumer parses it). Such an edit proceeds without `/risk-check`, and the session must name this clarification in one line (chat + session note) when relying on it. Everything else in the class stays gated — tracked `settings.json`, any `allow`/`ask`/`deny` change, `defaultMode`/`additionalDirectories` edits, any addition. **No self-waivers:** outside this bounded shape, a session may never skip the gate on a listed class on its own materiality judgment — a one-line operator confirmation is required first, always. *(Origin: 2026-07-03 S2 silent self-waiver incident. Shaped as a class-boundary clarification per SO advisory 2026-07-03 — not a discretionary carve-out a session can self-apply. Consistent with workspace `CLAUDE.md` Autonomy Rule #9, which delegates class definitions to this section. Follow-up owed: sync the SO-vault `risk-topology.md` §3/§4 two-end contract in an SO session.)*
+**Class-boundary clarification — gitignored local settings (added 2026-07-03).** A gitignored, machine-local `settings.local.json` edit is **out-of-class** for the permission-change bullet above ONLY when BOTH hold: (a) the edit is a deletion or correction *mandated by an existing workspace rule* (e.g., removing a prohibited `"model"` field per workspace `CLAUDE.md` § Model Tier), AND (b) it has zero blast radius (untracked file, single machine, no consumer parses it). Such an edit proceeds without a risk-aware review, and the session must name this clarification in one line (chat + session note) when relying on it. Everything else in the class stays gated — tracked `settings.json`, any `allow`/`ask`/`deny` change, `defaultMode`/`additionalDirectories` edits, any addition. **No self-waivers:** outside this bounded shape, a session may never skip the gate on a listed class on its own materiality judgment — a one-line operator confirmation is required first, always. *(Origin: 2026-07-03 S2 silent self-waiver incident. Shaped as a class-boundary clarification per SO advisory 2026-07-03 — not a discretionary carve-out a session can self-apply. Consistent with workspace `CLAUDE.md` Autonomy Rule #9, which delegates class definitions to this section. Follow-up owed: sync the SO-vault `risk-topology.md` §3/§4 two-end contract in an SO session.)*
 
-Inline `_*` comment keys in `settings.json` are rejected schema-side at session load — do not sanction them in risk-check reports. See `permission-template.md` § PreToolUse[Edit] decision-block pattern → Caveats for the canonical fallback (`.claude/PERMISSIONS-NOTES.md` sibling file).
+Inline `_*` comment keys in `settings.json` are rejected schema-side at session load — do not sanction them in review reports. See `permission-template.md` § PreToolUse[Edit] decision-block pattern → Caveats for the canonical fallback (`.claude/PERMISSIONS-NOTES.md` sibling file).
 
-For change classes outside this list, `/risk-check` is optional — operators can still invoke it when a change feels risky.
-
-### When to fire (two-gate model)
-
-- **Plan-time gate** — once, after the plan is approved, if the planned work touches any class above. The `$ARGUMENTS` payload describes the *design* (e.g., "edit hook X to add Y; allow Bash(rg:*) in workspace settings"). Catches design risk before tokens are spent on execution.
-- **End-time gate** — once, before commit, batched across every in-class change the session actually made. The `$ARGUMENTS` payload describes the *executed* change set. Catches drift, emergent coupling, and scope creep that the plan-time gate didn't surface.
-
-Sessions without an explicit plan (auto-mode quick fixes, single-file edits) skip the plan-time gate and run only the end-time gate. Sessions that touch no class skip both gates.
-
-Each gate fires once per session. Mid-session re-invocation of `/risk-check` is operator-discretionary, not required by this rule. The point of the two-gate model is to avoid per-change firing — that pattern multiplied tokens without proportionate signal.
-
-**Premise-verification precondition (both gates).** Before either gate dispatches its reviewer subagent, the invoking command runs a bounded pre-dispatch premise check on the payload: run every script it cites, open every line it cites, and re-derive every count (recording the primitive used), then correct any false claim in the payload *before* the subagent sees it. A gate that reasons from an unverified premise produces confident, expensive, wrong output — the ~360k-token miss of 2026-07-14 (`logs/improvement-log.md`). This is Problem Reality applied to the gate's **input**, symmetric with the Dimension-7 / premise checks the reviewers already apply to their **output**. Implemented in `risk-check.md` Step 2.6 and `consult.md` Step 3.6.
-
-### Verdict semantics
-
-- **GO** — proceed with the change as planned.
-- **PROCEED-WITH-CAUTION** — proceed but apply the paired mitigations listed in the report before the change lands. Do NOT land the change without applying the mitigations. Note the mitigations in the commit message.
-- **RECONSIDER** — redesign before proceeding. Re-invoke `/risk-check` after the redesign. Do NOT downgrade the verdict to push the change through.
+A change outside this list is sized on its own consequence by the same rule. The list names what is *always* high-consequence; it does not cap the row.
 
 ### Invocation semantics
 
-`/risk-check` is operator-invoked (manually typed slash command) or inline-invoked by other commands such as `/friday-act`. There is no auto-firing hook — this is a discipline enforced by this file, the workspace `CLAUDE.md` Autonomy Rules, and the commit review loop.
+**No command fires on a class match.** `/risk-check` was retired on 2026-07-30 and must not be rebuilt. A class match above means one thing only: the change takes the **risk-aware review** row of `qc-independence.md` § The rule — one Codex review, briefed with the seven dimensions and the premise-verification precondition. There is no plan-time gate, no end-time gate, and no separate command to run.
+
+> **In transition (2026-07-29).** This states the policy, which is now authoritative. Callers that still invoke a review automatically are being removed slice by slice — `/prime` and `/session-plan` are excluded from that work and keep firing until their own follow-up lands. Where a caller still fires, the caller is stale, not this rule.
+
+Where that review surfaces a decision the operator must take, it is surfaced as a decision, not as a verdict token. Apply what the review found before the change lands, and say plainly when a material finding is left unresolved (`qc-independence.md` § Findings).
 
 ### Overlap with the top-3 analysis
 
-An audit-derived permission change triggers BOTH requirements:
+An audit-derived permission change is in-class above, so it takes the risk-aware review row **and** the top-3-commands-affected analysis (above).
 
-- the top-3-commands-affected analysis (above), AND
-- `/risk-check` (this section).
+These are complementary, not redundant: the top-3 analysis is a mechanical check that the audit's recommendation does not break existing commands; the risk-aware review judges the broader posture (usage cost, permissions surface, blast radius, reversibility, hidden coupling) of the change as a whole. The mechanical check runs first — it is cheaper, and its result is an input to the review.
 
-These are complementary, not redundant: the top-3 analysis confirms the audit's recommendation does not break existing commands; `/risk-check` evaluates the broader risk posture (usage cost, permissions surface, blast radius, reversibility, hidden coupling) of the planned change as a whole.
+## Subagent Proportionality
+
+> **When to read this section:** when deciding whether a change needs a dispatched subagent (QC-pass, extra reviewer, red-team) or whether inline verification suffices — and when a mandatory gate above has fired on a change that does not warrant its full ceremony.
+
+Default to **inline verification** — targeted grep/read, read-back, self-check against the rubric. Reserve dispatched subagents (QC-pass, extra reviewers, red-team) for changes that are genuinely architectural, high-risk, high-blast-radius, or need independent judgment. This does **not** waive QC: it picks the lightest form that actually verifies the change — inline self-check for light edits (per the `qc-independence.md` skip conditions), a dispatched independent pass for substantive or uncertain artifacts.
+
+- **Do not stack gates.** A change already cleared by the gates it needs — its one Codex review, `/blindspot-scan`, operator sign-off on the *exact* diffs, an inline re-grep — does not also get a review subagent on top. Gate ceremony scales with the task's real risk, not by default.
+- **Keep a mandatory gate proportionate.** When a required gate (e.g. one of the structural change classes above) fires on a light change, run the lightest form that satisfies it. Before dispatching a *heavy* subagent, state in one line why the main session cannot do the check inline.
+- **Do not over-correct into banning subagents.** They remain the right tool for real architecture, protected doctrine, and high-blast-radius work. The failure mode is overuse, not existence.
+
+This doctrine governs **gate ceremony**, which is why it lives here beside the change classes rather than in `qc-independence.md`: "do not stack gates" ranges over `/blindspot-scan` and every other control, not only review. For how the independent review itself works — which changes get one, context isolation, the risk-aware brief, the unreachable-reviewer fallback — see `qc-independence.md`.
+
+*(Moved here from the workspace-root `CLAUDE.md` on 2026-07-27, migration Stage 5 §6.2. The plan deliberately left the destination open between this file and `qc-independence.md`; decided here because the operative rules are about gate proportionality, not QC mechanics.)*

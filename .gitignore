@@ -17,6 +17,9 @@ credentials*.json
 # Local-only Claude Code settings (operator overrides, not shared)
 .claude/settings.local.json
 
+# Isolated git worktrees created by EnterWorktree (checkouts, never repo content)
+.claude/worktrees/
+
 # Python
 __pycache__/
 *.pyc
@@ -34,6 +37,21 @@ logs/.prime-mtime
 logs/.session-marker
 # Per-session-id identity oracle (Option 2′, keyed by CLAUDE_CODE_SESSION_ID — un-clobberable by a concurrent /prime; see docs/session-marker.md)
 logs/.session-marker-*
+
+# Work Loop v2 per-checkout ownership declaration (R2, "the checkout declares its writer"): one task
+# id + claim date, written by whoever creates the task's state file, cleared at closure. It MUST stay
+# checkout-local — a committed copy would replicate across worktrees on merge and then declare every
+# checkout the owner, which is the exact failure the declaration exists to refuse. Read/written by
+# logs/scripts/work-loop-owner.sh; see docs/parallel-sessions-playbook.md § 4.
+logs/work-loop/.owner
+
+# Promotion mutex held by logs/scripts/promote-findings.sh for the length of one sweep. Removed by
+# the script's own EXIT trap; ignored here so a crashed run's residue can never be committed.
+logs/.promote.lock/
+
+# Derived semantic-search index built by logs/scripts/memory-search.py (/memory-search command) —
+# regenerable at any time via `/memory-search reindex`, never committed
+logs/.memory-index/
 
 # Archived inbox briefs (Layer C settings.json also denies Read on this path)
 inbox/archive/
@@ -53,6 +71,45 @@ output/
 # the canonical fix (id-55) — a third copy nobody maintains is exactly the drift this repo keeps paying for.
 # Ignored so it cannot be committed by accident. If Codex is ever adopted for real, the decision to track
 # and sync this mirror is a deliberate one to make — not an outcome of a wildcard staging command.
-.codex/
-.agents/
+#
+# THREE FILES ARE NOW DELIBERATELY TRACKED (operator choice (a), 2026-08-08, Work Loop v2 slice S6).
+# This is the deliberate decision the note above reserves, and it is narrowed to three named paths —
+# it does NOT adopt or maintain the rest of the mirror. S6's post-compaction reorientation lives in
+# these files, so leaving them untracked meant `git clean -x` could delete the slice silently and no
+# commit could revert it. The remaining ~60 `.codex/` files stay ignored and unmaintained.
+#
+# Same ladder reason as the `.agents/` block below: git does not descend into an excluded directory,
+# so `.codex/` had to become `.codex/*` before any negation inside it could be evaluated. `AGENTS.md`
+# stays ignored at every depth; only the repository-root one is re-included, via the leading slash.
+# Verified with `git check-ignore -v` after the edit.
+.codex/*
+!.codex/hooks.json
+!.codex/hooks/
+.codex/hooks/*
+!.codex/hooks/work-loop-reorient.sh
 AGENTS.md
+!/AGENTS.md
+
+# `.agents/` stays ignored EXCEPT the skills deliberately adopted (operator call, 2026-07-28 S3;
+# extended to work-loop-v2, 2026-08-01 S6, and handoff-thread, 2026-08-07). This is the "deliberate
+# decision to track" the note above reserves — narrowed to named subtrees, not an adoption of the
+# mirror. The four `source-command-*` skills and the `wl2-probe` throwaway remain ignored and
+# unmaintained; the Codex mirror does too, apart from the three S6 files named in the block above.
+#
+# The 2026-07-28 S3 entry `!.agents/skills/work-loop/` was removed on 2026-08-11 when the Work Loop
+# v1 Codex controller skill was retired (Axcíon Harness v0.2 Phase 0). Nothing re-includes that path
+# now, which is intended: v1 must not return to a fresh clone.
+#
+# Why a ladder and not one `!.agents/skills/work-loop-v2/`: git does not descend into an excluded
+# directory, so a negation for a path inside `.agents/` never gets evaluated. Each level must be
+# re-included before the next can be excluded. Verified with `git check-ignore -v` after the edit.
+#
+# Each adopted skill needs its OWN re-include line — a negation for one skill does not cover a
+# sibling. Without one, a new resource works on this machine and does not exist in a fresh clone,
+# silently (Work Loop v2 slice plan, "Two obligations that are not behaviours", item 1).
+.agents/*
+!.agents/skills/
+.agents/skills/*
+!.agents/skills/work-loop-v2/
+!.agents/skills/handoff-thread/
+!.agents/skills/reorient/

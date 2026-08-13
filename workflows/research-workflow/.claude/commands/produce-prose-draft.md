@@ -138,7 +138,7 @@ Merged diagnostic review (`chapter-prose-reviewer`) and compliance gate (`prose-
 2. Read the source document (for transformation comparison and Degraded mode).
 3. Read `/ai-resources/skills/chapter-prose-reviewer/SKILL.md`.
 4. Read `/ai-resources/skills/prose-compliance-qc/SKILL.md`.
-5. Launch a qc-reviewer sub-agent. Pass it:
+5. Launch a qc-gate sub-agent. Pass it:
    - Both skill contents
    - The prose file content
    - The source document content

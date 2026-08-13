@@ -5,45 +5,49 @@ Single source of truth for the canonical shape of a new Axcíon AI project's `.c
 ## What's here
 
 - `project-settings.json.template` — canonical `permissions` block + two `SessionStart` hooks (auto-sync + permission-sanity). Pure data; no template-time substitution. Hook commands resolve `$CLAUDE_PROJECT_DIR` at hook runtime.
-- `project-claude-md/header.md` — the project title + description block written only on fresh CLAUDE.md creation. Contains two mustache-style placeholders: `{{NAME}}` and `{{PROJECT_DESCRIPTION}}`. These intentionally use the same `{{...}}` syntax that research-workflow templates use for deploy-time placeholders (e.g., `{{WORKSPACE_ROOT}}`) and are intentionally DIFFERENT from the single-brace `{name}` / `{project-description}` tokens that the `/new-project` agent substitutes in bash source — separating the two syntaxes prevents agent global-substitution from corrupting the consumer's search strings.
-- `project-claude-md/input-file-handling.md` — `## Input File Handling` canonical section.
-- `project-claude-md/commit-rules.md` — `## Commit Rules` canonical section.
-- `project-claude-md/compaction.md` — `## Compaction` canonical section.
-- `project-claude-md/session-boundaries.md` — `## Session Boundaries` canonical section.
+- `project-claude-md.md` — the **entire** canonical project `CLAUDE.md`: a title heading and a description, nothing else. Contains two mustache-style placeholders, `{{NAME}}` and `{{PROJECT_DESCRIPTION}}`, resolved once at file creation. These intentionally use the same `{{...}}` syntax that research-workflow templates use for deploy-time placeholders (e.g. `{{WORKSPACE_ROOT}}`) and are intentionally DIFFERENT from the single-brace `{name}` / `{project-description}` tokens that the `/new-project` agent substitutes in bash source — separating the two syntaxes prevents agent global-substitution from corrupting the consumer's search strings.
 - `incident-log-template.md` — canonical fillable shape for a `/resolve-incident` per-incident record. Consumed by `/resolve-incident` (Step 5 — reads and fills pre-edit; Step 8 — writes filled record to `audits/incidents/`). Contains `{FIELD}` placeholders replaced at runtime by the command, not at scaffold time.
 - `mission-contract.md` — canonical shape for a multi-session mission contract (mission-contract subsystem, added 2026-06-09). Consumed by `/mission create`, which substitutes the frontmatter (`mission_id` / `mission_name` / `status` / `started`) and writes the file to `<repo>/logs/missions/<id>.md`. Body sections (Goal / In-Out scope / Validation contract / Open threads) are authoring prompts the operator fills in. Frozen at creation; only `status` and `Open threads` mutate, via `/mission` only.
+- `capability-record.md` — **RETIRED LEGACY, no live writer** (Work Loop v1 subsystem, added 2026-07-28; retired 2026-08-11). Canonical shape for one operating-capability development record. Its only writer was `/work-loop` (v1), deleted 2026-08-06; the v1 Codex controller skill was retired 2026-08-11. **Work Loop v2 does not produce capability records** and has no equivalent artifact — do not read this template as a v2 shape. It is kept for one reason: `/develop-ai-resource` Step 1.0 still *reads* a capability record when a brief claims upstream qualification, and needs the shape to verify that claim. Since no component emits such a brief today, that check exists to reject unproven claims, not to service a live producer. Method and process lived in `skills/capability-development/SKILL.md` and `docs/work-loop.md`, both now inert v1 method documents with unresolved ownership.
 
-The four CLAUDE.md section fragments contain NO substitution tokens — they are constants. Only `header.md` contains `{name}` / `{project-description}`. `incident-log-template.md` and `mission-contract.md` use placeholders resolved at runtime by their consuming command.
+`project-claude-md.md` is the only CLAUDE.md template. `incident-log-template.md` and `mission-contract.md` use placeholders resolved at runtime by their consuming command; `capability-record.md` carries the same placeholder style but has no live writer to resolve them; `project-settings.json.template` carries none.
+
+## What a project `CLAUDE.md` contains
+
+Title, description, and **only** rules that are genuinely project-specific — a rule that applies to every turn in that project's sessions and can live nowhere else (the workspace `## CLAUDE.md Scoping` rule). A direct-route project additionally carries the line `**Execution route:** direct` immediately under the description.
+
+**Workspace rules are never copied in.** Input-file handling, commit and push behaviour, compaction, session boundaries, QC discipline and model tiering are workspace-level; the workspace-root `CLAUDE.md` loads in every session, so a per-project restatement is duplication, not insurance. **No `## Model Selection` section** — model defaults are prohibited at every layer, and `/new-project` no longer scaffolds one.
+
+Most new projects need no project-specific section at all. A file that is title plus description is a correct result.
 
 ## Consumer contract
 
-Four consumers:
+Four live consumers, plus one retired:
 
-1. **`/new-project`** (step 2 + step 4) — the original consumer; writes both `settings.json` and the CLAUDE.md canonical sections when scaffolding a new project.
-2. **`/deploy-workflow`** (step 4, sub-step `### Ensure permissions baseline in deployed settings.json`) — added 2026-05-25. Consumes `project-settings.json.template` only (not the CLAUDE.md fragments), and only writes when the deployed project's `.permissions.allow` is empty.
+1. **`/new-project`** (step 2 + step 4 + Direct Route step 3) — the original consumer; writes `settings.json` and the project `CLAUDE.md` when scaffolding a new project.
+2. **`/deploy-workflow`** (step 4, sub-step `### Ensure permissions baseline in deployed settings.json`) — added 2026-05-25. Consumes `project-settings.json.template` only (not the CLAUDE.md skeleton), and only writes when the deployed project's `.permissions.allow` is empty. Note that the Research Workflow ships its **own** specialist project `CLAUDE.md` as `CLAUDE.md.template`, stored inside the workflow, not here — `/new-project` hands Research Workflow requests to `/deploy-workflow` at its Step 0.3a rather than scaffolding them.
 3. **`/resolve-incident`** (Step 5 + Step 8) — added 2026-05-28. Consumes `incident-log-template.md` only. Step 5 reads the template and fills all pre-edit fields; Step 8 writes the filled record as a new file under `audits/incidents/{DATE}-{SLUG}.md`. Does not write to any project CLAUDE.md or settings.json.
 4. **`/mission create`** (Step 2) — added 2026-06-09. Consumes `mission-contract.md` only. Reads the template, substitutes the four frontmatter fields, and writes the file to `<repo>/logs/missions/<id>.md`. Does not touch any project CLAUDE.md or settings.json.
+5. **`/work-loop`** (v1, capability units only) — added 2026-07-28, **retired 2026-08-11**. This was `capability-record.md`'s only writer. The command was deleted on 2026-08-06 and its Codex controller skill retired on 2026-08-11, so **`capability-record.md` now has no producer**. Work Loop v2 did not inherit this consumer role and writes no capability records. The template's only remaining reader is `/develop-ai-resource` Step 1.0, which verifies a record's shape when a brief claims upstream qualification.
 
 All consumers:
 
 1. Read the relevant template file(s).
 2. Apply the merge/fill logic locally. Templates are read-only — do not mutate them in place.
 3. For `settings.json`: the predicate "already has a non-empty `permissions.allow` array" still gates the merge (consumers 1 and 2 only).
-4. For CLAUDE.md: the per-section idempotency check (`grep -q '^## <heading>'`) still gates the append (consumer 1 only).
+4. For `CLAUDE.md`: **write-once.** The `[ ! -f ]` guard gates the whole write (consumer 1 only). An existing project `CLAUDE.md` is left byte-for-byte unchanged — never overwritten, never appended to, never backfilled.
 
-When adding a fifth consumer, update this contract list and the `## What's here` description for the affected template file.
+When adding a sixth consumer, update this contract list and the `## What's here` description for the affected template file.
 
-## 2026-04-13 decision — verdict 2026-05-25: **KEEP**
+## 2026-04-13 decision — **SUPERSEDED 2026-07-27**
 
-The 2026-04-13 "Commit Rules propagate by explicit copy" decision held that workspace-level CLAUDE.md inheritance into project sessions was unreliable, so each project CLAUDE.md must mirror load-bearing workspace rules in short form. Re-checked 2026-05-25:
+The 2026-04-13 "Commit Rules propagate by explicit copy" decision held that workspace-level CLAUDE.md inheritance into project sessions was unreliable, so each project CLAUDE.md had to mirror load-bearing workspace rules in short form. That produced five fragments here (`header.md`, `input-file-handling.md`, `commit-rules.md`, `compaction.md`, `session-boundaries.md`), reaffirmed as KEEP on 2026-05-25.
 
-- No evidence that Claude Code's CLAUDE.md inheritance behavior has changed.
-- The workaround is in active use but **unevenly applied** across existing projects (only `/new-project` writes these sections; once a project is scaffolded, newly-added canonical sections are not backfilled). Verdict-relevant only as supporting evidence — the architectural decision is correct; the propagation gap is a separate concern.
-- The workspace `## CLAUDE.md Scoping` rule ("short pointer acceptable; verbatim duplication is not") is satisfied because the per-project sections are short-form mirrors, not verbatim copies of the workspace text.
+**Superseded 2026-07-27.** The premise was retired: the workspace-root `CLAUDE.md` does load in project sessions, so the mirrors were duplication rather than insurance — and duplication with a cost, since each copy drifts from its canonical source independently. The five fragments were deleted, the mirrored sections were removed from 26 project files, and this directory now holds one minimal skeleton.
 
-**Verdict:** KEEP. Templates encode the canonical short-form mirrors so `/new-project` writes them consistently to every new project. Next re-check: revisit if Claude Code release notes announce a change to per-project CLAUDE.md inheritance behavior, or if the inheritance gap stops appearing in `coaching-data.md`.
+The load-bearing assumption is recorded plainly because everything above rests on it: **the workspace-root `CLAUDE.md` loads in every session opened at `projects/<name>/`.** If that is ever found false, the removals are pure deletions and each is recoverable by `git revert` of its own commit. Re-check if Claude Code release notes announce a change to CLAUDE.md inheritance behaviour, or if the inheritance gap reappears in `coaching-data.md`.
 
 ## Out-of-scope follow-ups (flagged here so they don't get lost)
 
-- **Backfill gap:** existing projects do not receive newly-canonized sections retroactively. A separate one-shot backfill command (or a `/friday-checkup` rule) could close this. Not addressed by this template extraction.
-- **Audit diff:** an audit (e.g., `/audit-claude-md`) could diff each project's CLAUDE.md against these templates and flag missing canonical sections. Not built here.
+- **Five legacy `## Model Selection` sections** survive in `buy-side-service-plan`, `global-macro-analysis`, `nordic-pe-screening-project`, `obsidian-pe-kb` and `project-planning`. Advisory prose only; `/prime` tolerates both presence and absence. Left for a separate cleanup pass.
+- **Audit diff:** an audit (e.g. `/audit-claude-md`) could flag project CLAUDE.md files that have re-accumulated workspace-rule mirrors. Not built here.

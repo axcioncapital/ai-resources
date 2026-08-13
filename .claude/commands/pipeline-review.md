@@ -21,7 +21,7 @@ Input: `$ARGUMENTS` (optional) — a pipeline path. If provided, skip the shortl
 
 ## Registry contract (do not silently drift)
 
-Contract lives at `ai-resources/audits/pipeline-review-registry.md § Registry contract` — do not paraphrase here. Drift-guard: registry and memo writes are audit-trail-grade (not cleanly `git revert`-able; the bumped row preserves history only via git log). Per the `/risk-check` plan-time review of this command (Dimension 5: Hidden coupling, Medium): this pointer exists so the contract does not silently drift on later runs.
+Contract lives at `ai-resources/audits/pipeline-review-registry.md § Registry contract` — do not paraphrase here. Drift-guard: registry and memo writes are audit-trail-grade (not cleanly `git revert`-able; the bumped row preserves history only via git log). Per the plan-time review of this command (Dimension 5: Hidden coupling, Medium): this pointer exists so the contract does not silently drift on later runs.
 
 ---
 
@@ -54,7 +54,7 @@ Contract lives at `ai-resources/audits/pipeline-review-registry.md § Registry c
     Wait for `y` (proceed as recovery), `d` (defer — exit with note), or any other input (abort cleanly).
 14. If `DAYS_ELAPSED ≤ 10`, do not emit the marker. Continue silently.
 
-The `>10` threshold matches `/friday-checkup` Step 0 — one missed weekly cycle plus slack. Documented here so future tightening to 7 has to be a deliberate decision, not a drive-by edit. The `[CADENCE-LATE]` marker is itself the `/risk-check` Dimension-5 mitigation for this step.
+The `>10` threshold matches `/friday-checkup` Step 0 — one missed weekly cycle plus slack. Documented here so future tightening to 7 has to be a deliberate decision, not a drive-by edit. The `[CADENCE-LATE]` marker is itself the Dimension-5 (hidden coupling) mitigation from the plan-time review for this step.
 
 ---
 
@@ -176,7 +176,7 @@ This step runs whenever `PICKED_PIPELINES` is non-empty — i.e., every cycle th
     - Update its row: set `Last reviewed = {DATE}`, `Last memo = {DATE}`, `Friction flag = N`.
 29. Write the updated registry back in one pass — not per-pipeline. Failed pipelines leave their rows untouched so the next cycle re-surfaces them.
 
-This batched-write rule is a required mitigation from the `/risk-check` plan-time review of this command. Per-pipeline writes would leave the registry in a partial-update state if a subagent fails mid-batch.
+This batched-write rule is a required mitigation from the plan-time review of this command. Per-pipeline writes would leave the registry in a partial-update state if a subagent fails mid-batch.
 
 ---
 

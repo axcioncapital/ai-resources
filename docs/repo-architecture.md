@@ -41,7 +41,7 @@
 │   ├── agents/                                  # canonical agents (autosynced to projects)
 │   └── hooks/                                   # ai-resources hooks
 ├── audits/                                      # audit artifacts
-│   ├── risk-checks/                             # `/risk-check` reports
+│   ├── risk-checks/                             # historical risk-review reports (command retired 2026-07-30)
 │   ├── incidents/                               # `/resolve-incident` per-incident full records
 │   ├── pipeline-review-registry.md              # registry for `/pipeline-review` (subsumed `/audit-critical-resources` on 2026-05-29)
 │   ├── friday-checkup-YYYY-MM-DD.md             # weekly/monthly/quarterly checkup reports
@@ -105,17 +105,36 @@
 | **Operational log** (session-notes, decisions, friction, etc.) | `ai-resources/logs/<name>.md` | Project-specific logs live in the project's own `logs/`. |
 | **Audit artifact** (dated audit/checkup output) | `ai-resources/audits/<name-or-subdir>/<YYYY-MM-DD>-<slug>.md` | Audit-specific subdirs (e.g., `audits/risk-checks/`) keep the root tidy. |
 | **Standalone prompt** (consumed by non-Claude tools) | `ai-resources/prompts/<name>.md` | Read directly by GPT-5/Perplexity flows. |
-| **Workflow template** (graduated from `workflows/active/`) | `ai-resources/workflows/<name>/` | Graduated via `/graduate-resource`. |
+| **Workflow template** (graduated from `workflows/active/`) | `ai-resources/workflows/<name>/` | Graduated via `/graduate-resource`. Any file that would be *auto-loaded* at its canonical path is stored under a non-active filename and renamed at deploy time — see **Non-active filenames for specialist templates** below. |
 | **Obsidian KB vault** (cross-project reuse) | `knowledge-bases/<name>/` | Deployed via `/deploy-kb` standalone option. Project-scoped vaults instead live under `projects/<project>/vault/`. |
 | **Style reference** (style/formatting source) | `ai-resources/style-references/<name>.md` | Loaded by prose/formatting skills. |
 | **Skill request brief** (intake) | `ai-resources/inbox/<slug>-brief.md` | Qualified by `/develop-ai-resource`, which hands a qualified brief to the build engine. Moved to `inbox/archive/` once the build engine fulfills it — or, when the operator accepts a no-build / reuse / rejection / deferral disposition, archived with a one-line disposition note (a deferral names its reopening trigger). |
 | **Plan artifact** (retained from a session) | `ai-resources/plans/<name>.md` (in-repo) **or** `~/.claude/plans/<auto-slug>.md` (Claude Code plan-mode default; outside repo) | Retain in-repo when load-bearing; otherwise let plan-mode default location apply. |
+| **Multi-document build project** (a governing set of plans/specs for a build spanning many sessions) | `ai-resources/plans/<project-slug>/` — a folder, with a `README.md` naming the **authority order** across its documents | Distinct from `docs/`: these govern *construction* and go stale when the build ships. Keep them out of `docs/` when `docs/` already hosts the runtime contract for the thing being rebuilt — otherwise a future session reads the build's destination reference as current requirements. The surviving runtime contract graduates to `docs/` at ship; the plan set stays as the build record. Example: `plans/work-loop-v2-mvp/` (2026-08-01). |
 | **Workspace-level rule (cross-project)** | `~/Claude Code/Axcion AI Repo/CLAUDE.md` | Always loaded in every workspace session. |
 | **ai-resources project rule** | `ai-resources/CLAUDE.md` | Always loaded in ai-resources sessions. |
 | **Project-specific rule** | `projects/<project>/CLAUDE.md` | Always loaded in that project's sessions. |
 | **Permission shape (canonical)** | `ai-resources/docs/permission-template.md` | Source of truth referenced by `/permission-sweep` and `/new-project`. |
-| **Deployable canonical fragment** (consumed at scaffold time, not at runtime) | `ai-resources/templates/<name>` | Read by `/new-project` via walk-up to `ai-resources/`; never auto-distributed. Edit the fragment, not the consuming command. Examples: `templates/project-settings.json.template`, `templates/project-claude-md/*.md`. |
+| **Deployable canonical fragment** (consumed at scaffold time, not at runtime) | `ai-resources/templates/<name>` | Read by `/new-project` via walk-up to `ai-resources/`; never auto-distributed. Edit the fragment, not the consuming command. Examples: `templates/project-settings.json.template`, `templates/project-claude-md.md`. |
 | **Project-retirement context pack** (content + briefing + git bundles preserved from one or more projects being retired) | `artifacts/<slug>-context/` | Tracked by the root repo, so it survives the retirement of the projects it describes and is pushed off-machine. Distinct from `archive/` (gitignored, holds the relocated repos themselves). Pairs with `/archive-project`: the pack is the *reading* path, the archived repo is the *recovery* path. Built by hand; no pipeline. Example: `artifacts/merged-os-context/`. |
+
+### Non-active filenames for specialist templates
+
+A template is a *document* while it sits in `ai-resources/`, and becomes an *instruction file* only once it is deployed. Where those two states share a filename, Claude Code cannot tell them apart: it loads any `CLAUDE.md` as nested instructions for sessions working under that directory, and any `.claude/settings.json` as live configuration. A canonical template stored under the active name is therefore silently in force inside the resource repo — carrying deployed-project rules and unresolved `{{PLACEHOLDER}}` tokens into sessions that have nothing to do with a deployed project.
+
+**Rule: store such a template under a non-active filename; the deploying command renames it.**
+
+| Canonical (inert, in `ai-resources/`) | Deployed (active, in the project) | Renamed by |
+|---|---|---|
+| `workflows/<name>/CLAUDE.md.template` | `CLAUDE.md` | `/deploy-workflow` Step 3a |
+| `templates/project-settings.json.template` | `.claude/settings.json` | `/new-project`, `/deploy-workflow` Step 4 |
+
+Two obligations come with the rule, and both have already failed once in practice:
+
+- **Rename before any placeholder pass.** Fill scopes are built from `*.md` / `*.json` globs, which a `.template` suffix does not match. A rename that happens after filling produces a deployment that reports success and ships a file whose placeholders are all unresolved. `/deploy-workflow` Step 7a hard-stops on this.
+- **Readers must resolve both names.** Anything that reads a canonical template's instruction file — `/analyze-workflow`, `workflow-system-analyzer` — resolves `CLAUDE.md` first, then `CLAUDE.md.template`, and only then reports "None". Resolving the active name alone returns "not found" for every canonical template and silently drops it from the analysis.
+
+*(Convention recorded 2026-07-27, Change 1. The `templates/` row predates it and follows the same shape.)*
 
 **Project-local exceptions** (live in project's own `.claude/`, never in ai-resources):
 - Pipeline-stage commands tightly coupled to one project's workflow (e.g., `pipeline-stage-3a.md` for `/new-project`).
@@ -154,7 +173,7 @@ The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`
 | CLAUDE.md layering | three layers | Workspace CLAUDE.md (cross-project) + ai-resources CLAUDE.md (resource-repo rules) + project CLAUDE.md (project-specific). All always-loaded for sessions in their scope. |
 | Permission template | one source of truth | `ai-resources/docs/permission-template.md` defines canonical settings shapes for all four layers (user / workspace / ai-resources / project). `/permission-sweep` audits drift; `/new-project` emits canonical shape per project. |
 
-| Audit discipline | one source of truth | `ai-resources/docs/audit-discipline.md` lists `/risk-check` change classes, two-gate firing model, and Friday-cadence tiers. |
+| Audit discipline | one source of truth | `ai-resources/docs/audit-discipline.md` lists the structural change classes and the Friday-cadence tiers. How a change in one of those classes is reviewed: `ai-resources/docs/qc-independence.md`. |
 | Logs split | parallel | Workspace `logs/` (workspace-level decisions, innovations, sessions). ai-resources `logs/` (canonical resource-work logs). Project `logs/` (project-specific sessions). Each session writes to its own scope. |
 | Command/agent ↔ knowledge-bases | read-only, downward | `/expert-check` (via the `expert-check-reviewer` agent) reads book-summary notes from a target KB vault under `knowledge-bases/` by path, topic-matched against the step subject. Read-only; advisory output only; requires an explicit KB target (no all-KB default). First shared consumer of `knowledge-bases/` vault content as command input. |
 
@@ -196,7 +215,7 @@ The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`
 
 > **CLAUDE.md scoping rule** (from workspace CLAUDE.md): project CLAUDE.md is for cross-session project-specific rules only — content that applies to *every turn* in that project's sessions and cannot live elsewhere. Do not duplicate skill methodology, workflow methodology, or canonical workspace rules.
 
-### Q5: Is the change a structural change class? Then run `/risk-check`.
+### Q5: Is the change a structural change class? Then it is high-consequence.
 
 Change classes (per `audit-discipline.md`):
 - Hook edits (`.claude/hooks/*.sh`)
@@ -206,7 +225,7 @@ Change classes (per `audit-discipline.md`):
 - New symlinks
 - Automation with shared-state effects
 
-**Two-gate firing model:** plan-time once (after plan approval) + end-time once (before commit). Per-change firing is the failure mode the gate model exists to prevent.
+**What that means:** the change takes the risk-aware review row of `qc-independence.md` § The rule — one Codex review carrying the seven risk dimensions, before implementation, then the deterministic execution-time safeguards. No command fires from the class match; the class is a consequence test, not a trigger.
 
 ### Q6: Will the artifact write a log? Pick the right log.
 
@@ -261,7 +280,7 @@ Mechanical changes (renaming a single skill, adding the 71st skill, etc.) do **n
 - `ai-resources/CLAUDE.md` — repo-level rules
 - `~/Claude Code/Axcion AI Repo/CLAUDE.md` — workspace-level rules
 - `ai-resources/docs/ai-resource-creation.md` — placement rules + canonical pipelines
-- `ai-resources/docs/audit-discipline.md` — `/risk-check` classes, Friday-cadence tiers
+- `ai-resources/docs/audit-discipline.md` — structural change classes, Friday-cadence tiers
 - `ai-resources/docs/permission-template.md` — canonical settings shapes
 
 - `ai-resources/docs/agent-tier-table.md` — agent model tiering

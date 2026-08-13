@@ -123,7 +123,9 @@ The live file's entry count should be **at least** the baseline count (appends o
 > **⚠ `Severity:` IS MANDATORY ON EVERY ENTRY — and this is the single most consequential field you
 > write. Do not make it conditional again.**
 >
-> **Why.** `/prime` Step 3 builds the next session's task menu with this scan, and nothing else:
+> **Why.** The wrap-time promotion sweep (`logs/scripts/promote-findings.sh`) reads this field to
+> fill `logs/next-up.md`, and `/prime` Step 2 builds the next session's task menu from that queue and
+> nothing else:
 > ```
 > grep -nE -B6 "^- \*\*Severity:\*\* *(high|HIGH|medium-high|critical|urgent)" logs/improvement-log.md
 > ```
@@ -135,7 +137,7 @@ The live file's entry count should be **at least** the baseline count (appends o
 > and actioned zero times.* The finding was never lost. It was **unreachable**.
 >
 > **Know where each level lands — state the routing when you choose one:**
-> - `high` / `medium-high` → reaches the `/prime` task menu. Use for anything that should be *worked on*.
+> - `high` / `medium-high` → promoted to `logs/next-up.md` at wrap, and so reaches the `/prime` task menu. Use for anything that should be *worked on*.
 > - `medium` / `low` → recorded, but **does NOT reach the menu**. Surfaced only by `/open-items`.
 >   That is defensible triage, but it must be a **deliberate** choice, not a surprise. If a finding
 >   deserves action, it needs `medium-high` or above — anything less is a decision to defer it

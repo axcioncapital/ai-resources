@@ -28,6 +28,22 @@ You receive:
 
 ## Execution
 
+### Step 0: Resolve WORKFLOW_CLAUDE_MD (do this once, before Layer 1)
+
+Two later steps read the workflow's project-instruction file — Layer 3 (pipeline trace) and Layer 5.3 (rule-enforcement cross-reference). Resolve its path **once**, here, and use the resolved value in both. Do not re-derive it per layer.
+
+Check in order and take the first that exists:
+
+1. `{WORKFLOW_PATH}/CLAUDE.md`
+2. `{WORKFLOW_PATH}/CLAUDE.md.template`
+3. `"None"` — only if **both** are absent.
+
+**Why the `.template` fallback exists.** A canonical workflow template stores its project instruction file under the non-active filename `CLAUDE.md.template`, so a file named `CLAUDE.md` does not sit inside `ai-resources/` being auto-loaded as nested instructions. `/deploy-workflow` Step 3a renames it to `CLAUDE.md` when a real project is created. So the `.template` form is what a **canonical** workflow looks like on disk and the plain form is what a **deployed** project looks like — both are legitimate inputs to this skill. Resolving only the plain name would return `"None"` for every canonical workflow, which silently empties table 5.3 and reports "no behavioral rules" for a workflow that has many.
+
+If WORKFLOW_CLAUDE_MD resolves to `"None"`, record that fact once and let the two consuming steps degrade as their own failure-handling describes. Do not error out.
+
+---
+
 Work through five layers in order. After each layer, write a checkpoint summary to the analysis artifact file (append mode) so that progress is preserved if context runs out.
 
 ### Layer 1: Component Inventory
@@ -123,7 +139,7 @@ Map the workflow's stage-based pipeline to its implementing commands.
 1. Read the workflow definition document. Check these locations in order:
    - `{WORKFLOW_PATH}/reference/stage-instructions.md`
    - `{WORKFLOW_PATH}/stage-instructions.md`
-   - `{WORKFLOW_PATH}/CLAUDE.md` (look for stage definitions in the body)
+   - WORKFLOW_CLAUDE_MD (resolved in Step 0), if it is not `"None"` — look for stage definitions in the body
    If none found, record: "No workflow definition document found. Pipeline trace based on command analysis only."
 
 2. For each stage defined in the workflow document, identify which command(s) implement it. Match by:
@@ -195,7 +211,7 @@ Compare what the workflow document declares against what the infrastructure impl
    - Gates in document but NOT in any command: `DOCUMENT-ONLY`
    - Gates in commands but NOT in document: `COMMAND-ONLY`
 
-3. **Rule-enforcement cross-reference:** Read the workflow's CLAUDE.md. Identify behavioral rules (sections that say "must," "always," "never," "do not"). For each rule, check:
+3. **Rule-enforcement cross-reference:** Read WORKFLOW_CLAUDE_MD (resolved in Step 0 — this is the workflow's project-instruction file, named `CLAUDE.md` in a deployed project and `CLAUDE.md.template` in a canonical one). If it resolved to `"None"`, record "No project-instruction file found — rule-enforcement cross-reference not performed" and leave table 5.3 empty. Otherwise identify behavioral rules (sections that say "must," "always," "never," "do not"). For each rule, check:
    - Is it enforced by a hook? (hook script checks for the condition)
    - Is it referenced in a command? (command body mentions the rule)
    - Is it neither? (rule exists only as a behavioral instruction to Claude)

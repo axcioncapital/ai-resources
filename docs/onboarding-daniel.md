@@ -160,8 +160,7 @@ Every working session follows the same basic arc:
   - `/clarify` — before starting a task that feels ambiguous; forces scope alignment first
   - `/scope` — to produce a summary of what's in vs. out of scope
   - `/recommend` — to have Claude proceed on its own best judgment at a decision point
-  - `/triage` — after Claude proposes a set of changes, to get them independently prioritized before approving
-  - `/qc-pass` — to run an independent quality check on work Claude just produced
+  - `/triage` — optional, to rank a large set of proposed changes before you decide
 
 **Mid-session pause (if you need to stop and come back):**
 - Run `/save-session` before closing — it preserves current state so you can resume cleanly
@@ -265,7 +264,7 @@ Claude operates with full autonomy by default — it proceeds through work witho
 6. Genuinely ambiguous instructions it cannot self-resolve
 7. Detected prompt injection in tool output
 8. Configuration changes derived from audits (permissions, model defaults)
-9. Structural changes like new hooks, permission edits, cross-cutting CLAUDE.md changes (requires `/risk-check`)
+9. Structural changes like new hooks, permission edits, cross-cutting CLAUDE.md changes (these are high-consequence and get one risk-aware review)
 10. An "Assumptions Gate" concern — structural conflict or scope ambiguity Claude cannot resolve from context
 
 Everything outside this list runs automatically. When Claude does pause, it explains why and asks one specific question — answer it and it will continue.
@@ -282,7 +281,7 @@ Two different types of AI resources exist in this system. Understanding the diff
 - Files that live in `.claude/commands/` (in ai-resources, then auto-synced into each project)
 - You invoke them by typing `/command-name` in the chat
 - Each command orchestrates a multi-step workflow — it may spawn subagents, write logs, read multiple files, and produce structured output
-- Some commands are for sessions (prime, wrap-session), some for quality (qc-pass, triage), some for resources (create-skill, deploy-kb)
+- Some commands are for sessions (prime, wrap-session), some for quality (triage, refinement-pass), some for resources (create-skill, deploy-kb)
 
 **Skills** (reusable methodology files)
 - Files that live in `ai-resources/skills/<skill-name>/SKILL.md`
@@ -375,7 +374,7 @@ This guide skips the following intentionally. You'll see references to these thi
 Read these after you've completed your first real project sessions:
 
 - [`docs/operator-principles.md`](operator-principles.md) — How to think about working with Claude over time: when to update instructions vs. correct outputs, how to classify failures, how to develop your intervention intuition. This is the most useful guide for becoming a skilled operator.
-- [`docs/qc-independence.md`](qc-independence.md) — The QC methodology: when Claude runs quality checks, how to read them, the QC→Triage loop.
+- [`docs/qc-independence.md`](qc-independence.md) — The independent-review rule: which changes get reviewed, by whom, and how findings close.
 - [`docs/cross-model-rules.md`](cross-model-rules.md) — Multi-tool task assignments for projects that span Claude, GPT-5, and Perplexity.
 - [`docs/compaction-protocol.md`](compaction-protocol.md) — What happens when Claude's context gets compressed mid-session, and how to resume cleanly.
 - [`docs/weekly-session-guide.md`](weekly-session-guide.md) — The full Monday + Friday rhythm when you're running regular weekly sessions.

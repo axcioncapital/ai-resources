@@ -1,0 +1,375 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Route Before You Build — Axcíon AI Resource Development</title>
+  <link rel="stylesheet" href="../assets/course.css">
+</head>
+<body>
+  <main>
+    <!-- RETIREMENT BANNER — added 2026-08-11, Axcíon Harness v0.2 Phase 0 (Work Loop v1 retirement) -->
+    <aside role="note" aria-label="Retired content notice" style="box-sizing:border-box;max-width:100%;margin:0 0 2rem;padding:1.25rem 1.5rem;background:#7a2e0e;color:#fff6ed;border:2px solid #c2410c;border-radius:8px;font-family:system-ui,-apple-system,'Segoe UI',sans-serif;font-size:1rem;line-height:1.55;">
+      <p style="margin:0 0 .75rem;font-size:1.1rem;font-weight:700;letter-spacing:.01em;color:#ffedd5;">&#9888;&#65039; Historical record &mdash; Work Loop v1 is retired. Do not follow the routing on this page.</p>
+      <p style="margin:0 0 .75rem;color:#fff6ed;">This page routes work to <code style="background:rgba(0,0,0,.35);padding:.1em .4em;border-radius:4px;color:#ffedd5;">/work-loop</code>, which <strong>no longer exists</strong>. The command was deleted on 2026-08-06 (<code style="background:rgba(0,0,0,.35);padding:.1em .4em;border-radius:4px;color:#ffedd5;">0516bf6</code>) and its Codex controller skill was retired on 2026-08-11 under Axc&#237;on Harness v0.2 Phase 0, which required Work Loop v2 to be the only plausible semantic router.</p>
+      <p style="margin:0 0 .75rem;color:#fff6ed;"><strong>The live Work Loop is v2:</strong> <code style="background:rgba(0,0,0,.35);padding:.1em .4em;border-radius:4px;color:#ffedd5;">/work-loop-v2</code> on the Claude side, <code style="background:rgba(0,0,0,.35);padding:.1em .4em;border-radius:4px;color:#ffedd5;">.agents/skills/work-loop-v2/SKILL.md</code> on the Codex side, with <code style="background:rgba(0,0,0,.35);padding:.1em .4em;border-radius:4px;color:#ffedd5;">plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md</code> as its executable core. <strong>v2 is not a renamed v1</strong> &mdash; it has a different admission rule (Direct Work is the default), a different unit cycle and a different artifact set. Do not map the steps below onto it.</p>
+      <p style="margin:0;color:#fff6ed;">The content below is <strong>preserved unchanged as historical evidence</strong> of how routing worked at the time of writing. Read it as a record, not as an instruction.</p>
+    </aside>
+    <header class="hero">
+      <p class="eyebrow">Lesson 1 · Axcíon AI resource development</p>
+      <h1>Route before you build.</h1>
+      <p class="lede">
+        Your notes are evidence of a need, not proof of a solution. This lesson teaches you how to
+        decide which lifecycle owns that need before anyone drafts a skill, command, process or plan.
+      </p>
+      <div class="lesson-meta">
+        <span class="pill">10–15 minutes</span>
+        <span class="pill">One tangible win: choose the right first route</span>
+        <span class="pill">Repository state: 2026-07-30</span>
+      </div>
+      <nav class="jump" aria-label="Lesson sections">
+        <a href="#idea">The big idea</a>
+        <a href="#three-lanes">Three lanes</a>
+        <a href="#lifecycle">The lifecycle</a>
+        <a href="#fix">Fix routing</a>
+        <a href="#review">Review rule</a>
+        <a href="#practice">Practice</a>
+      </nav>
+    </header>
+
+    <section class="sheet principle" id="idea">
+      <div>
+        <p class="eyebrow">The one idea to remember</p>
+        <h2>Your first decision is about ownership, not format.</h2>
+        <p>
+          A rough note might say “we need a drafting skill.” That is already a proposed mechanism.
+          The real need could be “we need to produce consistent first drafts.” The repository treats
+          those as different questions.
+        </p>
+        <p>
+          First decide who owns the outcome. Only then decide whether a skill, command, instruction,
+          normal prompt, manual habit or no build at all is the smallest useful mechanism.
+        </p>
+      </div>
+      <blockquote>
+        Notes describe friction. Qualification decides the mechanism.
+      </blockquote>
+    </section>
+
+    <section class="sheet" id="three-lanes">
+      <p class="eyebrow">Recognition skill</p>
+      <h2>Put the need into one of three lanes.</h2>
+
+      <div class="grid">
+        <article class="card">
+          <div class="number">1</div>
+          <h3>Operating capability</h3>
+          <p>
+            Something a project needs to be able to <em>do</em>: prepare buyer emails, run a
+            publishing process, or make a repeatable decision.
+          </p>
+          <span class="command">/work-loop "&lt;operating outcome&gt;"</span>
+          <p><strong>Owner:</strong> the project and its operating outcome.</p>
+        </article>
+
+        <article class="card">
+          <div class="number">2</div>
+          <h3>New AI artifact</h3>
+          <p>
+            A proposed skill, command, agent, hook, prompt, script, reference file or persistent
+            instruction—or a material expansion of one.
+          </p>
+          <span class="command">/develop-ai-resource &lt;need or brief&gt;</span>
+          <p><strong>Owner:</strong> the artifact lifecycle.</p>
+        </article>
+
+        <article class="card">
+          <div class="number">3</div>
+          <h3>Bounded correction</h3>
+          <p>
+            A known defect or settled change to something that already exists. The owner depends on
+            the size and the resource type.
+          </p>
+          <span class="command">/work-loop "&lt;settled correction&gt;"</span>
+          <p><strong>Owner:</strong> the existing object and its correction path.</p>
+        </article>
+      </div>
+
+      <div class="callout" style="margin-top: 1.25rem">
+        <strong>Why this matters:</strong> an operating capability may need an AI artifact, but the
+        artifact is only one component. `/work-loop` keeps the outcome and adoption decision;
+        `/develop-ai-resource` qualifies and builds the artifact.
+      </div>
+    </section>
+
+    <section class="sheet" id="lifecycle">
+      <p class="eyebrow">From messy notes to a decision</p>
+      <h2>The common lifecycle has five questions.</h2>
+
+      <div class="flow" aria-label="Lifecycle sequence">
+        <span>1. Capture &amp; draft the brief</span><b>→</b>
+        <span>2. Route</span><b>→</b>
+        <span>3. Shape</span><b>→</b>
+        <span>4. Build &amp; prove</span><b>→</b>
+        <span>5. Land</span>
+      </div>
+
+      <div class="route">
+        <div class="route-label">1 · Capture &amp; draft</div>
+        <div>
+          <h3>Preserve the raw need, then draft the brief—not the final resource.</h3>
+          <p>
+            Keep the notes as input. The first draft should extract the desired outcome, evidence,
+            examples, trigger conditions, exclusions and open assumptions. Do not turn the notes
+            directly into a finished skill or command. If the input is a messy idea dump, use:
+          </p>
+          <span class="command">/leverage-idea path/to/notes.md</span>
+          <p>
+            It distils the notes, checks evidence, generates distinct options, recommends one and
+            creates a self-contained handoff. It does not implement.
+          </p>
+          <div class="why-box">
+            <strong>What “drafting” means in this lifecycle:</strong> draft the problem statement,
+            brief and proposed structure before the implementation plan. Writing the final
+            <code>SKILL.md</code> or command body is already implementation.
+          </div>
+        </div>
+      </div>
+
+      <div class="route">
+        <div class="route-label">2 · Route</div>
+        <div>
+          <h3>Name the owner before the mechanism.</h3>
+          <p>
+            `/leverage-idea` classifies the domain. An operating outcome goes to `/work-loop`; a new
+            or materially expanded AI artifact goes to `/develop-ai-resource`; a settled skill
+            improvement goes to `/improve-skill`.
+          </p>
+          <div class="why-box">
+            <strong>Reason:</strong> this prevents a plausible artifact from becoming the answer to
+            a problem that belongs to a project, a habit, a normal prompt or an existing resource.
+          </div>
+        </div>
+      </div>
+
+      <div class="route">
+        <div class="route-label">3 · Shape</div>
+        <div>
+          <h3>Turn the need into a falsifiable plan.</h3>
+          <p>
+            A useful plan states the outcome, files or surfaces touched, build order, boundaries,
+            evidence and what would prove the approach wrong. “Create a skill” is an action;
+            “the skill triggers for X, does not trigger for Y, and produces Z” is a testable plan.
+          </p>
+          <p>
+            For an operating capability, this is the `/work-loop` Shape phase. For a rough
+            AI-resource idea, `/leverage-idea` writes the first implementation plan and a raw brief;
+            `/develop-ai-resource` then qualifies whether that plan should become a durable artifact.
+          </p>
+        </div>
+      </div>
+
+      <div class="route">
+        <div class="route-label">4 · Build &amp; prove</div>
+        <div>
+          <h3>Implement the smallest approved slice, then observe it.</h3>
+          <p>
+            `/work-loop` builds one slice at a time and later proves the stream against Shape's
+            falsification criteria. `/develop-ai-resource` builds one minimum candidate, asks whether
+            it is well made, belongs in the system and does what it claims, then simplifies it.
+          </p>
+          <div class="callout warning">
+            A file existing is not runtime evidence. A command claiming it checks something is not
+            evidence that the check ran. Record what was executed and what was observed.
+          </div>
+        </div>
+      </div>
+
+      <div class="route">
+        <div class="route-label">5 · Land</div>
+        <div>
+          <h3>Make a lifecycle decision, not a vague “done.”</h3>
+          <p>
+            A candidate can ship, revise, defer or be deleted. A capability can be adopted, held or
+            rejected. No build, reuse and deferral are valid outcomes when the evidence supports them.
+          </p>
+          <p>
+            The operator owns adoption. The AI can recommend and demonstrate; it does not quietly
+            turn a candidate into policy.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="sheet" id="fix">
+      <p class="eyebrow">When something already exists</p>
+      <h2>Choose the fix path by uncertainty and consequence.</h2>
+
+      <table>
+        <thead>
+          <tr>
+            <th>What you have</th>
+            <th>Use</th>
+            <th>Why</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>A one-line cosmetic correction</td>
+            <td><code>/tweak</code></td>
+            <td>Small, explicit, rapid path; no structural redesign.</td>
+          </tr>
+          <tr>
+            <td>A settled change to an existing skill</td>
+            <td><code>/improve-skill</code></td>
+            <td>The skill, requested improvement and mechanism are already known.</td>
+          </tr>
+          <tr>
+            <td>A settled correction to an existing command, agent, script, hook or doc</td>
+            <td><code>/work-loop</code></td>
+            <td>It verifies premises, sizes the route, implements and returns evidence.</td>
+          </tr>
+          <tr>
+            <td>An unclear symptom with no trusted diagnosis</td>
+            <td><code>/resolve-repo-problem</code></td>
+            <td>Investigates and plans without applying a fix.</td>
+          </tr>
+          <tr>
+            <td>A mid-session fault to diagnose and fix now</td>
+            <td><code>/resolve-incident</code></td>
+            <td>Diagnosis, bounded fix, verification receipt and incident record.</td>
+          </tr>
+          <tr>
+            <td>An improvement that may change the mechanism or materially expand the resource</td>
+            <td><code>/develop-ai-resource</code></td>
+            <td>The need and system fit must be qualified again before building.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout stop" style="margin-top: 1.25rem">
+        <strong>Stop condition:</strong> if you cannot state whether the problem is a known correction
+        or a new capability, do not choose `/improve-skill` merely because a skill is nearby. Start
+        with investigation or qualification.
+      </div>
+    </section>
+
+    <section class="sheet" id="review">
+      <p class="eyebrow">Current review policy</p>
+      <h2>Use one independent review layer, sized to consequence.</h2>
+
+      <div class="grid">
+        <article class="card">
+          <h3>Small or mechanical</h3>
+          <p>No model review. Verify deterministically by read-back, grep or execution.</p>
+        </article>
+        <article class="card">
+          <h3>Normal, consequential</h3>
+          <p>One independent Codex review of the result after deterministic evidence exists.</p>
+        </article>
+        <article class="card">
+          <h3>High-consequence</h3>
+          <p>One risk-aware Codex review before implementation, then retain execution safeguards.</p>
+        </article>
+      </div>
+
+      <div class="callout warning" style="margin-top: 1.25rem">
+        <strong>Transition note, 2026-07-30:</strong> the review-layer consolidation was adopted on
+        2026-07-29, but some callers still describe older automatic or stacked review behavior.
+        For review policy, follow <code>docs/qc-independence.md</code>. Inside `/work-loop`, follow
+        <code>docs/work-loop.md</code> when its command text disagrees with the contract. Surface the
+        mismatch rather than silently combining both procedures.
+      </div>
+
+      <p>
+        A build engine's own skill evaluation is part of that engine; it is not permission to stack
+        several general reviews. The independent review exists to catch premise, scope and system-fit
+        errors that the authoring process is least likely to see in its own work.
+      </p>
+
+      <div class="callout">
+        <strong>Temporary manual bridge outside `/work-loop`:</strong> if the approved plan creates a
+        new command or skill, or otherwise falls into a high-consequence class, hand that plan to
+        Codex once for the risk-aware review <em>before</em> allowing the build engine to implement.
+        For a normal consequential change, give Codex the implemented result plus deterministic
+        evidence once. Do not add `/qc-pass` or `/risk-check` on top unless the operator deliberately
+        chooses one as the documented substitute or specialist check.
+      </div>
+    </section>
+
+    <section class="sheet" id="practice">
+      <p class="eyebrow">Retrieval practice</p>
+      <h2>Choose the owner before revealing the answer.</h2>
+      <p>
+        Say your answer aloud or write it down. The effort of retrieving the route is what turns this
+        from a readable guide into a usable skill.
+      </p>
+
+      <details>
+        <summary>Scenario A — “Here are four pages of ideas for improving our AI workflows.”</summary>
+        <p>
+          Start with <code>/leverage-idea</code>. The notes contain possible mechanisms but no settled
+          owner. Its job is to distil, investigate, classify and hand off without implementing.
+        </p>
+      </details>
+
+      <details>
+        <summary>Scenario B — “This existing skill needs a clearer failure response; the change is fully specified.”</summary>
+        <p>
+          Use <code>/improve-skill</code>. The target, desired change and mechanism are settled, so
+          repeating full artifact qualification would add no decision value.
+        </p>
+      </details>
+
+      <details>
+        <summary>Scenario C — “Our project must reliably prepare a buyer briefing before every call.”</summary>
+        <p>
+          Use <code>/work-loop</code> for an operating capability. A drafting skill may become one
+          component later, but the project outcome and adoption decision remain with the capability.
+        </p>
+      </details>
+
+      <details>
+        <summary>Scenario D — “Add a new slash command that automatically writes shared state.”</summary>
+        <p>
+          Qualify the artifact through <code>/develop-ai-resource</code>. It is also high-consequence,
+          so the current review policy requires a risk-aware independent review before implementation.
+        </p>
+      </details>
+
+      <details>
+        <summary>Scenario E — “The command has a typo in one sentence.”</summary>
+        <p>
+          Use <code>/tweak</code>. This is a bounded cosmetic correction; deterministic read-back is
+          more proportionate than a general model review.
+        </p>
+      </details>
+
+      <div class="why-box" style="margin-top: 1.25rem">
+        <strong>Your real-world exercise:</strong> take the next genuine note dump you produce. Before
+        running any command, write one sentence naming the lane and why. Then compare your reasoning
+        with the route `/leverage-idea` or `/work-loop` selects.
+      </div>
+    </section>
+
+    <section class="sheet sources">
+      <h2>Primary sources</h2>
+      <p>
+        Repository sources:
+        <a href="../../../.claude/commands/leverage-idea.md">`/leverage-idea`</a>,
+        <a href="../../../.claude/commands/develop-ai-resource.md">`/develop-ai-resource`</a>,
+        <a href="../../../docs/ai-resource-creation.md">AI Resource Creation Rules</a>,
+        <a href="../../../docs/work-loop.md">`/work-loop` contract</a>,
+        <a href="../../../docs/qc-independence.md">Independent Review Rule</a>,
+        <a href="../../../.claude/commands/create-skill.md">`/create-skill`</a>, and
+        <a href="../../../.claude/commands/improve-skill.md">`/improve-skill`</a>.
+      </p>
+      <p>
+        Next:
+        <a href="../reference/ai-resource-lifecycle-playbook.html">open the printable lifecycle playbook</a>.
+        Ask your AI teacher about any route that remains unclear.
+      </p>
+    </section>
+  </main>
+</body>
+</html>

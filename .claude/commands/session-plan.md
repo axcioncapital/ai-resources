@@ -15,11 +15,13 @@ Session orchestrator. Run after `/prime` to plan HOW the session will run before
 **Leading-token normalization — run this FIRST, before anything reads `$ARGUMENTS`.** Callers may prefix the intent with zero or more literal `{key:value}` tokens. Strip leading tokens in a loop until the remaining text begins with something else, capturing each:
 
 - `{gate:post-plan}` → set `POST_PLAN_GATE = true`. The invoking branch has declared that it will hold an approval gate after this command finishes. Consumed by Step 8.
+- `{plan:overwrite}` (forwarded by `/session-start` Step 4 on the auto path) → set `PLAN_OVERWRITE = true`. The same-session re-invocation check below **takes option 2 (overwrite) without prompting**. Auto mode has already held its one approval gate at `/session-start` Step 2.6, so stopping here to ask would add a second stop its contract does not allow. **This silently overwrites a plan file written earlier in the same session** — accepted deliberately: under the marker-scoped path only *this* session can own that file, and auto mode re-planning its own session is the intended case.
+- `{gate:auto}` (forwarded by `/session-start` Step 4 on the auto path) → set `AUTO_GATE = true`. Consumed by Step 8: write the plan, then **begin execution without a second stop** — auto mode's single approval was already taken at `/session-start` Step 2.6. *(Until 2026-07-30 this token meant "return to `/prime` without executing"; `/prime` no longer has a step to return to.)*
 - Any other `{key:value}` token → strip and ignore (forward-compatible; an unrecognized token must never reach `INTENT`).
 
 If no leading token is present, `POST_PLAN_GATE` is unset — **this is the common case and the default**, and it reproduces this command's pre-2026-07-18 behaviour exactly.
 
-**Everywhere below, `$ARGUMENTS` denotes the stripped remainder, never the raw argument string.** This normalization must precede the `UPCOMING_INTENT` assignment further down this step: that assignment caches `$ARGUMENTS` *verbatim*, so a token stripped only at Step 1 would already have leaked into `UPCOMING_INTENT` and from there into the plan file's `## Intent` line. (Caught by `/risk-check`, 2026-07-18 — the first design of this change stripped at Step 1 and had exactly that hole.)
+**Everywhere below, `$ARGUMENTS` denotes the stripped remainder, never the raw argument string.** This normalization must precede the `UPCOMING_INTENT` assignment further down this step: that assignment caches `$ARGUMENTS` *verbatim*, so a token stripped only at Step 1 would already have leaked into `UPCOMING_INTENT` and from there into the plan file's `## Intent` line. (Caught in review, 2026-07-18 — the first design of this change stripped at Step 1 and had exactly that hole.)
 
 Read `logs/session-notes.md`. Resolve this session's marker via `docs/session-marker.md` § Marker resolution (per-session-id oracle first, loud fallback to the shared file). If `MARKER` is empty (absent or stale), hard-fail per the uniform writer contract: `[/session-plan Step 0] HARD-FAIL: session marker unresolved (logs/.session-marker-${CLAUDE_CODE_SESSION_ID} and shared logs/.session-marker both absent or stale). Run /prime to populate the marker for this session, then retry.`
 
@@ -35,6 +37,8 @@ Set `TODAY` = today in `YYYY-MM-DD` format (`date '+%Y-%m-%d'` or the date prefi
 > 3. Write new plan to `logs/session-plan-${TODAY}-${MARKER}-pass2.md` instead — continue to Step 1, output to pass2
 >
 > Default (no response within the turn): **option 1 — keep current plan**.
+
+**If `PLAN_OVERWRITE` is set, do not emit this prompt at all** — take option 2 directly (OUTPUT_TARGET = `logs/session-plan-${TODAY}-${MARKER}.md`) and continue to Step 1.
 
 Apply the chosen option: Option 1 → stop, no changes. Option 2 → continue to Step 1 (OUTPUT_TARGET = `logs/session-plan-${TODAY}-${MARKER}.md`). Option 3 → continue to Step 1 (OUTPUT_TARGET = `logs/session-plan-${TODAY}-${MARKER}-pass2.md`).
 
@@ -92,7 +96,7 @@ Apply the three-tier heuristic from `ai-resources/skills/ai-resource-builder/ref
 
 Map `INTENT` to one tier. Set `RECOMMENDED_MODEL`.
 
-Read `ACTIVE_MODEL` from the system-prompt context (the model identifier already in context). Do not run any external command. Compare against the **active session model only**. (`/prime` Step 4's model-alignment check compares the session model against the project's *recommended posture*, where one is declared; this step checks task-requirement fit. Note there is no such thing as a project model *default* — defaults are prohibited at every layer per workspace `CLAUDE.md` § Model Tier.)
+Read `ACTIVE_MODEL` from the system-prompt context (the model identifier already in context). Do not run any external command. Compare against the **active session model only**. This step checks task-requirement fit, and it is the **only** model check in the session-entry chain — `/prime`'s Step 4 model-alignment reporting was retired 2026-07-30. Note there is no such thing as a project model *default* — defaults are prohibited at every layer per workspace `CLAUDE.md` § Model Tier.
 
 - If `RECOMMENDED_MODEL` tier matches `ACTIVE_MODEL` tier: note `match`.
 - If mismatch: emit one line `→ /model {shortname}` (e.g., `→ /model opus`). No confirmation prompt.
@@ -116,12 +120,12 @@ Produce a bulleted list of absolute paths.
 
 ---
 
-## Step 4 — Resolve reminder (conditional)
+## Step 4 — Unresolved-finding reminder (conditional)
 
-Check conversation context for recent QC findings (a `/qc-pass` result with unresolved findings in this session).
+Check conversation context for an independent review (Codex, or an inline self-review fallback) whose material findings are still unresolved in this session.
 
-- If QC findings are present in context: emit "Invoke `/resolve` to address the QC findings before proceeding."
-- If no QC findings in context: omit this step entirely.
+- If unresolved material findings are present: emit "Address the open review findings before proceeding — an unresolved material finding is a halt-and-surface (`ai-resources/docs/qc-independence.md` § Findings)."
+- If none in context: omit this step entirely.
 
 ---
 
@@ -146,7 +150,7 @@ Based on `INTENT` and the source material in Step 3, recommend one posture:
 
 Name specific stop points (or state "None").
 
-**Compaction discipline:** for long-running sessions, see `ai-resources/docs/compaction-protocol.md` § Named checkpoints for the four state-saving points (post-inspection, post-implementation, post-QC, pre-closeout) and what to write to disk at each.
+**Compaction discipline:** for long-running sessions, see `ai-resources/docs/compaction-protocol.md` § Named checkpoints for the four state-saving points (post-inspection, post-implementation, post-review, pre-closeout) and what to write to disk at each.
 
 ---
 
@@ -154,15 +158,15 @@ Name specific stop points (or state "None").
 
 If `INTENT` suggests the work may touch a structural change class (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands or skills, new symlinks, automation with shared-state effects — full class list: `ai-resources/docs/audit-discipline.md`):
 
-Emit: "Run `/risk-check` after the plan is approved (plan-time gate). Run it again before commit (end-time gate)."
+Emit: "Structural change class touched — this work is high-consequence, so its one independent review is briefed **risk-aware** (`ai-resources/docs/qc-independence.md` § Risk-aware review). No separate gate runs."
 
-If no structural class appears likely: state "No structural change classes apparent — run `/risk-check` if scope changes."
+If no structural class appears likely: state "No structural change classes apparent — re-size the review if scope changes."
 
-**Tripwire:** any edit that *reorders* operations against shared state (logs, session files, cross-session artifacts) qualifies as automation-with-shared-state-effects — even when the command being edited already exists. The "existing-command refactor" framing does NOT exempt the change from `/risk-check`.
+**Tripwire:** any edit that *reorders* operations against shared state (logs, session files, cross-session artifacts) qualifies as automation-with-shared-state-effects — even when the command being edited already exists. The "existing-command refactor" framing does NOT exempt the change from risk-aware review sizing.
 
 **Environment-fit check (launch/runtime-gated tooling only):** if the planned work product is an executable or launcher whose value depends on *how the operator triggers it* (terminal script, shell alias, `.zshrc` function, OS entrypoint), confirm the trigger environment fits before the plan is approved. Known baseline: the operator launches Claude Code via the **VS Code extension** (opens a folder/window), not a terminal — terminal-only tooling ships inert (real incident 2026-06-10 S3: `cc-worktree.sh` terminal launcher built through the full gate chain, zero functional value). If the planned artifact assumes a terminal launch, flag the mismatch in the plan's Risk section and prefer a VS Code-native or in-session slash-command shape. Skip this check entirely for non-executable work (docs, commands, skills, analyses).
 
-Do not evaluate structural risk yourself. Point to `/risk-check`.
+Name the classes touched; do not adjudicate the risk yourself. Sizing the review is the reviewer's brief, not this command's verdict.
 
 ---
 
@@ -208,7 +212,7 @@ Write to `OUTPUT_TARGET` (overwrite if present):
 {bulleted list or "None"}
 
 ## Risk
-{risk-check pointer, or "No structural change classes apparent — run /risk-check if scope changes."}
+{review-sizing line from Step 6, or "No structural change classes apparent — re-size the review if scope changes."}
 ```
 
 **Self-check before writing.** A plan is a self-contained execution brief, not a pointer to other docs. The draft must pass ALL of the following before write — if any fails, expand the relevant section first:
@@ -224,24 +228,45 @@ No `Class:` line is written to `logs/session-notes.md` — the field was removed
 
 ---
 
-## Step 8 — Confirm, then either hand back to a caller-declared gate or auto-proceed
+## Step 8 — Confirm, then either hold the declared gate or begin execution
 
-**Branch on `POST_PLAN_GATE` (set by Step 0's leading-token normalization).**
+**Branch on `AUTO_GATE` first, then on `POST_PLAN_GATE` (both set by Step 0's leading-token normalization).**
 
-**If `POST_PLAN_GATE` is set** — the invoking branch declared a post-plan approval gate. Emit:
+> **This step is a terminal owner as of 2026-07-30.** `/prime` now ends at dispatch (its Step 9), so there is nowhere left to "return to" — every branch below either begins execution here or holds a gate and begins execution on `go`. Before this change, two of the three branches handed control back to `/prime` 8c.11 / 8c.12 / 8a.3.d, none of which still exist. Stream `2026-07-30-prime-session-entry-ownership`, S6.
 
-> Plan ready — review `{OUTPUT_TARGET}`. Reply `go` to start execution, or run `/qc-pass` on the plan first.
+**If `AUTO_GATE` is set** — reached through auto mode's chain (`/prime` 8c.9 → `/session-start` Step 4 → here). Auto mode's single approval was taken at `/session-start` Step 2.6 **and it covers execution**, so this branch does not pause. Emit:
 
-Then **stop and wait for the operator. Do NOT begin execution.** The gate belongs to the caller; this command's job ends at the plan write. Today the only caller that sets this is `/prime` 8a (numbered-menu task selection), whose Step 8a.d owns the pause — see the note below for why it cannot be left to recall.
+> Plan written to `{OUTPUT_TARGET}` ({autonomy posture}). Begin execution.
+
+Then **begin execution** under that posture and run § Post-plan execution below. *(Ownership moved here 2026-07-30. This branch previously emitted "Returning to /prime" and stopped — with `/prime` 8c.12 deleted, that wording strands the session after the operator has already approved the work.)*
+
+**If `POST_PLAN_GATE` is set** — the invoking branch declared a post-plan approval gate (today: `/prime` 8a, a numbered menu pick). Emit:
+
+> Plan ready — review `{OUTPUT_TARGET}`. Reply `go` to start execution.
+
+Then **stop and wait for the operator.** On `go`, begin execution under the declared posture and run § Post-plan execution. On anything else, do not start. *(The pause was always emitted here; the `go` continuation moved here 2026-07-30 from `/prime` 8a.3.d.)*
 
 **If `POST_PLAN_GATE` is unset** (the default — free-text intent via `/prime` 8b, a direct `/session-plan` invocation, or `/session-start` invoked outside a gated branch), emit:
 
 > Plan written to `{OUTPUT_TARGET}` ({autonomy posture}). Begin execution.
 
-Do NOT emit a `/qc-pass` handoff and do NOT pause for operator confirmation. The session begins under the declared autonomy posture immediately. The operator can run `/qc-pass`, `/contract-check`, or `/drift-check` at any time on their own initiative — and `/session-plan` Step 0's collision-detection prompts plus Step 1's `(none derived)` sentinels remain the only *self-imposed* gates that pause this command. Everything else flows through.
+Then begin execution immediately and run § Post-plan execution. Do NOT emit a review handoff and do NOT pause for operator confirmation. The operator can run `/contract-check` or `/drift-check` at any time on their own initiative — and Step 0's collision-detection prompts plus Step 1's `(none derived)` sentinels remain the only *self-imposed* gates that pause this command.
 
-> **Why this is a token and not a sentence telling you to remember `/prime` 8a.d.** This command is chain-invoked, so Step 8 is the *most recently loaded* instruction at the decision point, while the caller's pause was loaded many turns earlier and may sit behind intervening tool output. When those two conflict, the recency-favoured reading wins — and before 2026-07-18 the recency-favoured reading was "begin execution", i.e. execute a plan the operator has never seen. The token makes the caller's gate a fact present in *this* step's own inputs rather than something the reader has to recall. **Do not "simplify" this back into an unconditional instruction, and do not resolve a future conflict here by weakening `/prime` 8a's pause** — the 8a/8b split is deliberate: a numbered menu pick is not the operator stating the work, so it gets an approval gate that free-text intent does not. Source: `logs/improvement-log.md` 2026-07-18.
+> **Why the gate is a token and not a sentence telling you to remember the caller's pause.** This command is chain-invoked, so Step 8 is the *most recently loaded* instruction at the decision point, while the caller's intent was loaded many turns earlier and may sit behind intervening tool output. When those two conflict, the recency-favoured reading wins — and before 2026-07-18 the recency-favoured reading was "begin execution", i.e. execute a plan the operator has never seen. The token makes the caller's gate a fact present in *this* step's own inputs rather than something the reader has to recall. **Do not "simplify" it back into an unconditional instruction, and do not resolve a future conflict by weakening it** — the 8a/8b split is deliberate: a numbered menu pick is not the operator stating the work, so it gets an approval gate that free-text intent does not. Source: `logs/improvement-log.md` 2026-07-18.
 
-**Manual-QC opt-in:** if the operator wants a plan-time QC sweep before execution, they invoke `/qc-pass` directly. The chained-from-`/session-start` default skips this — judgment errors are caught downstream by `/drift-check` mid-session and `/contract-check` near wrap, per workspace `Decision-Point Posture`.
+## § Post-plan execution
+
+**Shared by all three Step 8 branches, and by `/session-start` Step 4's direct route** — which reaches this section without a plan file, and is the only caller that does. It is a section rather than a fourth branch precisely so the direct route cannot drift from the engineered one: both terminal owners cite this one text.
+
+Run the picked work in the operator-given order without pausing between items. Emit a one-line between-gate summary at each item boundary (workspace `CLAUDE.md` § Between-gate summaries) — visibility, not an approval gate. Complete the mandate fully within this session where context allows; if context is clearly constrained, follow the workspace `Context constraint deferral` rule and flag the deferral rather than rushing to close. During execution:
+
+- Size the independent review to the change per `ai-resources/docs/qc-independence.md`. **No review fires automatically.**
+- Follow `ai-resources/docs/compaction-protocol.md` checkpoints on long work.
+- Surface `[SCOPE]` / `[HEAVY]` / `[AMBIGUOUS]` / `[COST]` guardrail flags.
+- Commit directly per the workspace `Commit behavior` rule. Do not push — pushes are batched to wrap.
+
+**On mandate completion** emit `Mandate complete. Run /wrap-session to capture telemetry and journal the session. Push pending — let me know when to push.` Do not auto-invoke `/wrap-session` — the operator decides when to wrap. *(This reminder was previously owned by `/prime` 8c.13, which the auto route reached and the other two routes never did; anchoring it here is what puts it on every terminal path.)*
+
+**No plan-time review fires here.** A plan is not an artifact this command reviews, and no review is spawned automatically (`ai-resources/docs/qc-independence.md`). Judgment errors are caught downstream by `/drift-check` mid-session and `/contract-check` near wrap, per workspace `Decision-Point Posture`.
 
 $ARGUMENTS

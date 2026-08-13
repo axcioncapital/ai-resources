@@ -159,3 +159,10 @@
 | 2026-07-26 | command | .claude/commands/deploy-kb.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect. |
 | 2026-07-26 | command | .claude/commands/request-skill.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect. |
 | 2026-07-26 | command | .claude/commands/graduate-resource.md | triaged:false-positive | **EVIDENCE — preserved deliberately, do not delete.** Same worktree-detection defect. Seven false rows from a single session — the recurrence rate the improvement-log entry predicted, now measured rather than inferred. |
+| 2026-07-29 | command | .claude/commands/promote-workflow.md | triaged:project-specific | — |
+| 2026-07-29 | command | .claude/commands/lean-repo.md | triaged:project-specific | — |
+| 2026-07-29 | agent | .claude/agents/pipeline-review-auditor.md | triaged:project-specific | — |
+| 2026-07-29 | command | .claude/commands/resolve-incident.md | triaged:project-specific | — |
+| 2026-07-29 | command | .claude/commands/resolve-repo-problem.md | triaged:project-specific | — |
+| 2026-07-31 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.claude/commands/work-loop.md | n/a:existing-canonical-resource | — |
+| 2026-08-11 | command | .claude/commands/work-loop-v2.md | n/a:landed-canonical-this-session | — |

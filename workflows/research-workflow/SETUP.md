@@ -11,11 +11,20 @@ Use this checklist to initialize a new research project from this template.
 ```bash
 cp -r ai-resources/workflows/research-workflow/ projects/[project-name]/
 cd projects/[project-name]/
+mv CLAUDE.md.template CLAUDE.md     # activate the project instruction file — see below
 ```
 
 Replace `[project-name]` with a kebab-case identifier (e.g., `market-entry-analysis`).
 
 The whole `ai-resources/workflows/research-workflow/` directory IS the template — there is no separate `project-template/` subdirectory. Run the copy from the workspace root (the directory that contains both `ai-resources/` and `projects/`). *(Path corrected 2026-07-03 — the previous `workflows/active/research-workflow/project-template/` path never existed post-restructure.)*
+
+### Why the source file is named `CLAUDE.md.template`
+
+In the canonical template the project instruction file is stored as **`CLAUDE.md.template`**, not `CLAUDE.md`. Claude Code loads any file named `CLAUDE.md` as nested instructions for sessions working under its directory — so a live filename inside `ai-resources/workflows/` would push this project's rules, and its unresolved `{{PLACEHOLDER}}` tokens, into resource-repo sessions that have nothing to do with a research project. The inert `.template` suffix keeps it a document until a real project exists.
+
+**The rename is required, not cosmetic.** Everything downstream — the placeholder tables in §3 below, `/verify-chapter`'s confidentiality lookup in §8, the Stage-5 Project Config parse — reads a file named `CLAUDE.md`. Rename it immediately after the copy, before filling any placeholders.
+
+`/deploy-workflow` does this for you in its Step 3a and then hard-stops the deployment if a `CLAUDE.md.template` is still present when placeholder filling begins. The manual path above has no such guard, so do it as the first action after `cd`. *(Filename convention introduced 2026-07-27, Change 1.)*
 
 ## 1.5 Grant ai-resources visibility (per-machine, gitignored)
 

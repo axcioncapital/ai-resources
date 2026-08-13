@@ -1164,3 +1164,88 @@ No additional levers — session was efficient.
 - **When a gate corrects a caller-supplied "verified" fact, write the correction back to the source the fact came from, not only into the audit report (~10–20k per occurrence, compounding).** The mission count was wrong in `/prime` output, in the session plan, and in the brief. A correction that lands only in `audits/risk-checks/` leaves three upstream copies live for the next session to inherit — and this repo has already logged one case (S10-163) of a prior pass's findings sitting on disk unread. Smaller per-occurrence than the levers above; it is what stops a caught error from being re-caught later at full price.
 - **Reach for `Read`/`Glob` before wrapping read-only inspection in compound Bash (~3–6k/session).** Three denials, three round-trips, all on `ls`/`head`/`wc`/`diff` pipelines the harness rules already route to dedicated tools. Cheap, mechanical, and new this session rather than a carried item.
 - **Finish the wrap-tail batch (~2–3k/session).** Fifth consecutive entry carrying this. Genuine movement — 3-in-1 at wrap open and a 2-in-1 mid-tail, up from two batched calls last time — but the tail still fragments. Smallest item here, listed to close the loop rather than to bank the tokens.
+
+### 2026-08-01 | Acceptable
+
+**Task:** Installed a new multi-session build project ("Work Loop v2 MVP") — committed four governing documents plus an authority README into `plans/work-loop-v2-mvp/`, created the project's mission contract, and added a canonical-home row to the repo architecture map; second turn wrapped the session.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 3 |
+| Files read | 9 (re-reads: 3) |
+| Files written/edited | 9 |
+| Tool calls | 46 total (Bash ~30, Read 2, Write 6, Edit 5, Skill 2, Agent 1) |
+| Subagents | 1 |
+| Rework cycles | 1 |
+
+**Findings:**
+- `docs/repo-architecture.md`, `logs/session-notes.md` (3x), and `logs/decisions.md` were each read more than once with no edits between the repeat reads on the same file — pin the tail content after the first read or extract only the needed section, rather than re-reading to re-orient (Re-reads, Moderate).
+- README's "commands not present" section was drafted, then required a verification pass and rewrite after Bash searches found 3 of 4 claimed-absent commands actually exist as user-level Pocock skills — verify existence claims before drafting them, not after (Rework, Moderate).
+- Several independent wrap-mechanics greps (promote-findings, innovation-registry, improvement-log) and two partial `SKILL.md` reads ran as separate sequential calls with no dependency between them (Tool overhead / Missed parallelization, Minor).
+- Trend: this session breaks a 3-session "Wasteful" streak (S10–S12, compounding scope-mismatched verification and un-batched wrap tails) — improvement, though the same verification/wrap-tail pattern is still visibly present at lower severity.
+
+**Recommendation:** Before asserting a factual claim about repo state (e.g., "command X doesn't exist"), run the verification search first and draft the claim from its result — avoids the draft-then-correct cycle seen on the README.
+
+**Estimated savings:** ~1.5–2k tokens per avoided rework cycle (redraft + re-verification context) × 1 occurrence this session ≈ 2k tokens/session; if the same claim-then-verify pattern recurs at ~1 cycle/session, ~20–30k tokens over a 10–20 session horizon.
+
+**Additional levers (ROI-ranked):**
+- Batch the wrap-tail verification greps (promote-findings/innovation-registry/improvement-log) into one combined Bash call — saves ~3-5 round-trip tool-call overheads/session (~1–2k tokens), smaller than the rework fix since these are cheap reads already.
+- Read `logs/session-notes.md` once per wrap turn instead of up to 3 times (initial tail, post-archive tail, raw-format check) — ~0.5–1k tokens/session; smaller because the file is small and re-reads were partly forced by the archive hook changing file state mid-session.
+- Pull the two `skill-usage-analyzer/SKILL.md` partial reads into a single read covering both needed sections — negligible (~0.2k tokens/session) but free to fix alongside the above.
+
+### 2026-08-01 (S14-d72) | Wasteful
+
+**Task:** Continuation of S13-ad0 (no `/prime` this session — marker `S14-d72` derived from the session-id prefix for record-keeping, mandate inherited). Closed the Work Loop v2 pilot task `foreign-staging-target-repo`: verified all of Codex's assessment and closure premises against the live repo by execution, ran a regression-harness check Codex had not performed (quantifying a previously prose-only blind spot — 4/15 passed against a no-op stub hook), resolved one scope question, made 3 authorized file edits, built a boundary-proof script and a probe script, and wrote the closing record plus a pilot-log reflection. Commits `0bfdf82`, `f041fda`, `2526ac4`, `207ed59`.
+
+| Metric | Value |
+|--------|-------|
+| Exchanges | 8 |
+| Files read | 11 (re-reads: 2 — the hook and the core doc, each read via 3 different line-range slices) |
+| Files written/edited | 11 |
+| Tool calls | ~50 total (Bash ~32, Edit ~11, Read ~5, Write ~3, Skill 1, Agent 1) |
+| Subagents | 1 |
+| Rework cycles | 2, both on the same artifact |
+
+**Findings:**
+
+- **A verification script carried two separate defects, each requiring a fix-and-rerun on the same artifact (Rework, Major).** First: the regex `^-[^-]` was meant to count removed checkbox rows in a git diff, but a removed checkbox line reads `-- [ ] …` in the diff, so the pattern matched nothing and the script reported "0 removed" on exactly the rows it existed to police — a repeat of a failure class already logged in this repo's improvement-log on 2026-07-19 (GNU-vs-BSD sed idioms: a pattern silently matches nothing and the harness returns the reassuring answer). Second, after that fix: the script's falsification mode mutated the LIVE `logs/next-up.md` instead of a copy, leaving a stray flipped checkbox that had to be restored by hand and the check rerun (~3 extra tool calls). Two distinct defects on one artifact is the Major case under this log's rubric.
+- **One denied call (Tool overhead, Minor).** An inline multi-line Bash probe (git init + heredocs + env vars) was permission-denied and had to be rewritten as a standalone script file, run via `bash <path>` (~2 extra calls). Flagging as a recurring shape worth watching, not a one-off.
+- **Some wrap-sequence Bash calls ran sequentially with no dependency between them (Missed parallelization, Minor).** Continues a pattern this log has carried across several prior entries under "wrap-tail batching."
+- **Process note, not a waste category: the preceding session S13-ad0 left no usage-log entry at all** — a telemetry gap, and not the first one this log has recorded.
+- **Counter-signal — do not score as waste.** Several Bash calls re-verified claims made by Codex and by Claude's own prior-session turns rather than trusting the summaries. Two claims did not survive checking: a repository rule Codex cited that does not exist, and a Claude claim carried from the prior session. This spend is exactly what this repo's independent-review posture is for and prevented two errors from shipping into a closure record.
+- **Trend:** reverses the immediately preceding entry, which had broken a 3-session Wasteful streak — this session is Wasteful again, but the character is materially smaller than the streak it echoes. S10–S12's Major findings were large-scale rediscovery or fan-out spend (60–330k) or a fabricated premise reaching a dispatched gate; this session's Major finding is a self-contained rework loop inside one small verification script (~5 extra tool calls total), same category (rework) as S11-637 and S12-3cd but roughly an order of magnitude smaller in cost.
+
+**Recommendation:** Apply the same falsifiability discipline this session already used for the regression harness (ran it against a known-bad case — a no-op stub hook — before trusting "15/15 green") to every new verification/checker script, before relying on its output: run it once against a synthetic input KNOWN to trip the check. Had the checkbox-counting script been run against one deliberately-removed checkbox row first, the regex bug would have surfaced immediately instead of after it had already reported a false "0 removed."
+
+**Estimated savings:** ~2–3 extra tool calls for the regex rewrite + rerun (~1–2k tokens) + ~3 extra tool calls for the live-file restore + rerun (~1.5–2k tokens) ≈ **~3–4k tokens this session.** This is the second logged instance of the "pattern silently matches nothing, harness returns the reassuring answer" signature (first: 2026-07-19 sed idioms) — if it recurs at roughly this rate across script-authoring sessions, ~15–25k over a 10–20 session horizon. Modest in absolute size; flagged mainly because it is a repeat failure class, not because of its cost.
+
+**Additional levers (ROI-ranked):**
+- **Default falsification/mutation-testing scripts to write against a scratch copy, never a live tracked file, as a template habit rather than a per-script judgment call.** Closes the whole defect class rather than this one instance — ranked above the primary's raw savings only in durability, not in immediate token size.
+- **Script-ify Bash probes involving heredocs/env vars/git init from the first draft, rather than attempting an inline multi-line command first (~1–2k/occurrence).** Smaller than the primary since it is a single recurring shape, not a two-part failure class.
+- **Finish the wrap-tail batching lever (~1–2k/session), carried across multiple prior entries with partial movement each time.** Smallest item here, listed to close the loop rather than to bank the tokens.
+
+### 2026-08-02 (S4-510) | Wasteful
+
+| Metric | Value |
+|---|---|
+| Session type | Implementation, mandate withdrawn mid-session |
+| Files written/edited | 9 written (all log/session artifacts) + 3 edited-then-reverted |
+| Tool calls | ~48 total (Bash ~22, Read ~14, Edit ~7, Write ~2, Skill 3) |
+| Subagents | 0 |
+| Rework cycles | 1, total — the entire implementation was reverted |
+
+**Findings:**
+
+- **~25 tool calls produced output that was discarded, and the blocker was detected before they ran (Rework, Major).** Claude read the governing sources, reached CE-17's two-proofs table, and recognised that the mandate's required demonstration — a fresh Codex thread handing a brief to a fresh Claude session — needs an actor it cannot invoke. It then decided privately to proceed and disclose the gap in the completion report. Roughly twenty further calls of reading and five edits followed before the operator halted the session for substantially that reason. The cost is not attributable to the defect being invisible; it was seen. Full analysis and the narrow corrective distinction (an unobtainable *acceptance* condition is a stop-and-surface, unlike an unobtainable construction detail) are in `logs/improvement-log.md`, 2026-08-02, promoted to `next-up.md`.
+- **Five sequential wrap-tail calls to establish log formats (Missed parallelization, Minor).** `improvement-log` tail → `improvement-log` grep → `Read improvement-log` → `usage-log` tail → `usage-log` header grep ran one at a time with no dependency between them; two calls would have done. This is the **fifth** consecutive entry carrying the "wrap-tail batching" lever with partial movement each time — at this point the repeat itself is the signal, not the token cost.
+- **Counter-signal — do not score as waste: the pre-edit baseline capture.** Checksums, the ceiling/bypass greps and the harness run were taken *before* any edit. That spend is what made the revert verifiable by comparison rather than asserted, and it caught the pre-existing 147/2 harness state so the two red assertions were not misattributed to this session's edits. Roughly 4 calls, and every one of them earned its place.
+- **Also not waste: parallel batching in the governing-source phase.** Six read pairs were issued concurrently (command+SKILL, transport-seam+pilot-structure, FP-4+Unit-3, README+proposal, and two evidence greps). This is a genuine improvement over the sequential-read pattern several prior entries flagged, and it should be read as the lever working where it was applied.
+- **Trend.** Third consecutive Wasteful entry, but the character differs again. S14-d72's Major was a defective verification script looping on itself; this one is a *judgment* loop — no artifact was defective, and every individual step was competently executed. That is the harder class: nothing in the execution looks wrong when read step by step, and the waste is visible only from the decision made at the start.
+
+**Recommendation:** When a mandate's stated evidence requires an actor, tool or resource the executing session cannot reach, surface it at the moment of detection and before any work that depends on that evidence begins — treating it as a stop condition even when the mandate's own stop list does not enumerate it. Deliberately narrow: this is not "ask more often", which would fight the repo's decision-point posture. The test is whether the unobtainable thing sits on the deliverable's critical path for **acceptance** rather than for construction.
+
+**Estimated savings:** ~25 tool calls (~40–60k tokens) this session, had the conflict been raised when it was noticed rather than carried. The reading itself was not wasted — the pre-fix evidence and the reverted design are both preserved and reusable — so the recoverable portion is the edit-and-revert cycle plus the verification around it, ~8–10 calls (~15–20k), with the remainder recoverable only if the retry reuses the scratchpad rather than re-reading the sources.
+
+**Additional levers (ROI-ranked):**
+- **Close the wrap-tail batching lever properly rather than partially.** Five entries have now named it; each session recovers 1–2k and the pattern returns. The structural version is a single wrap-time call that emits every log format probe at once, not a per-session intention to batch.
+- **Reuse the continuity scratchpad on the CE retry instead of re-reading the six governing sources (~30–40k on the next attempt).** Larger than the primary in absolute terms, but conditional on the retry happening.

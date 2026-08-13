@@ -37,6 +37,17 @@ Example entry (not a real record — for reference only):
 
 ---
 
+## 2026-08-01 — workspace/blindspot-scan
+
+- **Scope:** workspace (all repos and projects)
+- **Gate:** blindspot-scan
+- **Trigger:** Operator directive, 2026-08-01 — "disable blindspot scan from here on".
+- **Action:** retire
+- **Detail:** The automatic gate is off. Workspace `CLAUDE.md` § Blind-Spot Scan Gate replaced by § Blind-Spot Scan (no auto-fire, no reinstatement); the wrap-time nudge removed from both `ai-resources/.claude/commands/wrap-session.md` (Step 11) and root `.claude/commands/wrap-session.md` (Step 4.6, plus the CORE-path listing in Step 0.4). `/blindspot-scan` itself is retained and runs only on explicit operator invocation. `/scope-project` Step 3's optional pre-brief adjunct is left in place — it is operator-optional, not an auto-fire.
+- **Review-cycle:** permanent
+
+---
+
 ## 2026-05-28 — ai-resources/bright-line-review
 
 - **Scope:** ai-resources

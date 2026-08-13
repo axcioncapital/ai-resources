@@ -9,7 +9,7 @@ This is the stable rubric the per-session feedback collector measures a session 
 **Goal-state sources (do not duplicate — read these for the actual definitions):**
 - `projects/repo-documentation/vault/architecture/system-doc.md` §2 (System Vision and Target State: six goals + four self-* properties) and §4.5 (Information Flows and Feedback Loops, including the *open* loops).
 - `projects/repo-documentation/vault/principles/principles.md` — OP-1 (north star: compound toward autonomous operation), OP-9 (anti-speculation constraint), OP-11 (surfacing principle drift is a recurring obligation).
-- Workspace `CLAUDE.md` § Autonomy Rules (the pause-list) and `ai-resources/docs/audit-discipline.md` § Risk-check change classes — the danger surface for the safety dimension.
+- Workspace `CLAUDE.md` § Autonomy Rules (the pause-list) and `ai-resources/docs/audit-discipline.md` § Structural change classes — the danger surface for the safety dimension.
 - `projects/repo-documentation/vault/architecture/risk-topology.md` — load-bearing components.
 
 ## What this collector is (and is NOT)
@@ -26,7 +26,7 @@ For each dimension the collector pulls concrete signals from the just-written se
 | 2 | **Leanness / cost** | system-doc §2.5 (context + token + speed constraints) | Token/context cost out of proportion to value; always-loaded weight (CLAUDE.md lines, hooks) added without earning it; rework churn. |
 | 3 | **Principle-adherence drift** | OP-11, system-doc §4.5 (open loop: principles → live enforcement) | A session that strained or violated a named OP-/DR-/QS-/AP- principle. OP-11 makes surfacing this a recurring obligation — this is the manual stand-in until automated enforcement (W2.2) exists. |
 | 4 | **Friction** | system-doc §4.5 (session improvement loop), AP-9, AP-11 | Where the operator intervened, repeated feedback, or fought the system. Classify the friction *type* (AP-9), do not just record the symptom. |
-| 5 | **Safety / guardrail-gap** | Workspace `CLAUDE.md` § Autonomy Rules pause-list; `audit-discipline.md` § Risk-check change classes; risk-topology.md | An irreversible/destructive/external action taken or nearly taken; a gate that *should* have fired but didn't; prompt-injection encountered in tool output; a shared-state clobber; a deletion outside session scope. This is the data the operator uses to design guardrails later. |
+| 5 | **Safety / guardrail-gap** | Workspace `CLAUDE.md` § Autonomy Rules pause-list; `audit-discipline.md` § Structural change classes; risk-topology.md | An irreversible/destructive/external action taken or nearly taken; a gate that *should* have fired but didn't; prompt-injection encountered in tool output; a shared-state clobber; a deletion outside session scope. This is the data the operator uses to design guardrails later. |
 
 ## Routing (where each signal goes)
 
@@ -46,7 +46,7 @@ The collector writes **only** these two shared-state logs, plus its own assessme
 - **med** — a near-miss: the action was nearly taken but caught, or a gate fired late.
 - **low** — a latent gap: no harm occurred, but a guardrail would close a hole the session exposed.
 
-## Hard constraints on the collector (load-bearing — risk-check mitigations)
+## Hard constraints on the collector (load-bearing — review mitigations)
 
 1. **Enforced per-session append cap (fail loud, not silent).** `/friday-checkup` blocks Friday execution when `improvement-log.md` exceeds 7 active entries (`friday-act.md` soft-cap). The collector therefore appends **at most 2 entries to `improvement-log.md` per session**, with `guardrail-candidate` (safety) signals taking priority for a slot. `friction-log.md` is not soft-capped but the collector still caps friction appends at ~3 to avoid noise. Any signal beyond the cap is **listed in the assessment block** with a visible "N further signals not logged (per-session cap)" line — never silently dropped (OP-3).
 2. **Provenance tag on every appended entry.** Every collector-written entry is visibly machine-authored so the Friday pipeline can rank operator-authored signal above machine-extracted signal (QS-9, AP-4). `improvement-log.md` entries carry a `**Provenance:** wrap-collector (machine-authored) {date}` field; `friction-log.md` entries are prefixed `**[wrap-collector]**`. This tag doubles as the revert marker — a single grep prunes all collector entries if the change is rolled back.

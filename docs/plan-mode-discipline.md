@@ -2,7 +2,7 @@
 
 > **When to read this file:** When entering or exiting plan mode in a QC-fix flow, when the harness forces plan-mode re-entry, or when a fix targets a previously approved plan — for the QC-fix re-entry exception and the plan-QC tiebreaker.
 
-**For QC-fix re-entry only —** do not re-enter plan mode to address QC findings on work you just completed in the same session. When `/qc-pass` surfaces issues on recently-landed work and the operator directs a fix, execute the fix in the same flow as the original work — no fresh Explore pass, no new Plan agent, no AskUserQuestion-before-ExitPlanMode ritual.
+**For review-fix re-entry only —** do not re-enter plan mode to address review findings on work you just completed in the same session. When an independent review surfaces issues on recently-landed work and the operator directs a fix, execute the fix in the same flow as the original work — no fresh Explore pass, no new Plan agent, no AskUserQuestion-before-ExitPlanMode ritual.
 
 Re-enter plan mode only for genuinely new planning work: a new task, a direction change, or a fix whose scope the operator has not already seen. A follow-up correction to your own recently-announced output is not new planning.
 

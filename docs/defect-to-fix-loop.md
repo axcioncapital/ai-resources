@@ -17,7 +17,7 @@ Source: AI strategy governing document §5.8 (Defect capture). Paired log: `../l
 
 Choose by *what the system is missing*, not by convenience:
 
-- **Rule** — when the system needs a **clearer constraint**. The desired behaviour can be stated as a short instruction. Lands in the relevant skill's `SKILL.md`, a `docs/` principle file (e.g. `analytical-output-principles.md`), or an always-loaded `CLAUDE.md` rule. *(An always-loaded `CLAUDE.md` rule is a `/risk-check` change class — gate it.)*
+- **Rule** — when the system needs a **clearer constraint**. The desired behaviour can be stated as a short instruction. Lands in the relevant skill's `SKILL.md`, a `docs/` principle file (e.g. `analytical-output-principles.md`), or an always-loaded `CLAUDE.md` rule. *(An always-loaded `CLAUDE.md` rule is a change class — high-consequence, so it takes one risk-aware review before landing.)*
 - **Eval case** — when the defect **must be tested and prevented from silently returning**. A constraint alone won't catch regression; you need a check that re-fires on future work. (Landing place below.)
 - **Example** — when the system needs a **better model of the desired output**. The fix is a concrete sample, not a rule. Lands in `style-references/` or a skill's examples.
 
@@ -25,7 +25,7 @@ Choose by *what the system is missing*, not by convenience:
 
 This workspace has no automated output-quality test harness yet, so "eval" maps to the nearest re-firing check, chosen by where the defect lives:
 
-- **Cross-cutting class** (e.g. `generic-prose`, `missed-contradiction`, `wrong-tone` — defects that recur across many artifacts) → add a re-firing check to the `qc-reviewer` agent or its `skills/ai-resource-builder/references/review-principles.md`. Precedent: the gate-calibration bright-line fix codified into `review-principles.md`.
+- **Cross-cutting class** (e.g. `generic-prose`, `missed-contradiction`, `wrong-tone` — defects that recur across many artifacts) → add a re-firing check to `skills/ai-resource-builder/references/review-principles.md`, which the review brief draws on. Precedent: the gate-calibration bright-line fix codified into `review-principles.md`.
 - **Skill-local class** (a defect specific to one skill's output) → add a check to that skill's own quality-check section (Step 6 "Quality Check" in `skills/ai-resource-builder/SKILL.md`).
 
 Eval cases created here should **feed** the planned slot-5 eval substrate (governing-doc roadmap), not fork a parallel one. Until that substrate exists, an eval-routed defect is a re-firing QC check; when the substrate lands, these checks become its seed cases.
@@ -42,7 +42,7 @@ The arc is not done when the log exists. It is done when the **first defect clas
 
 ## Wiring status
 
-Session 1 (2026-06-04) built this document and `defect-log.md` — the detection-and-closure *design*. Session 2 (2026-06-04, S8, risk-checked GO) wired the capture and detection paths:
+Session 1 (2026-06-04) built this document and `defect-log.md` — the detection-and-closure *design*. Session 2 (2026-06-04, S8, risk-reviewed GO) wired the capture and detection paths:
 
 - ✅ **`/log-defect` capture command** — `ai-resources/.claude/commands/log-defect.md` (shipped S8). Captures one entry, classifies, detects recurrence at capture time.
 - ✅ **Recurrence-scan step** — `/friday-checkup` Step 6 Defect-log recurrence scan, all tiers (shipped S8). Surfaces `[DEFECT-RECURRENCE]` follow-up lines.

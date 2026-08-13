@@ -40,11 +40,9 @@ Every agent must declare `model:` explicitly in frontmatter — no implicit inhe
 | project-manager | opus | Judgment (project-content adjudication grounded in active project's constitution docs; escalates to system-owner via Function A for general structure questions; redirects change-shaped structure questions to /consult). Added 2026-05-28. |
 | project-state-scrub-verifier | sonnet | Structured two-pass confidentiality check (deterministic marker/keyword scan + semantic pass) over staged Strategic Context Snapshots before any vault write. Invoked by /refresh-project-state. **Row added 2026-07-12 (M-A4)** — agent existed; row was missing. |
 | project-state-snapshot-agent | sonnet | Structured generation of one Strategic Context Snapshot per project, read-only toward the scanned project. Invoked by /refresh-project-state. **Row added 2026-07-12 (M-A4)** — agent existed; row was missing. |
-| qc-reviewer | opus | QC judgment. Correct. |
 | reconcile-reviewer | opus | Judgment (mandate-compliance scoring, resource-activation audit, genericness check, root-cause classification for `/reconcile`). Graduated to canonical 2026-07-03 from buy-side-service-plan (origin). |
 | refinement-reviewer | opus | Refinement judgment. Correct. |
 | repo-dd-auditor | sonnet | Questionnaire-driven factual audit. Correct. |
-| risk-check-reviewer | sonnet | Risk evaluation across six dimensions (consumer inventory + calibration-guided dimension scoring). Added 2026-04-27. Retiered opus→sonnet 2026-07-05 — deliberate cost-reduction exception to the judgment→opus convention (`logs/decisions.md` 2026-07-05); Opus depth preserved as an operator-invoked `/consult` second-opinion offer on non-GO verdicts. |
 | scope-architecture-agent | opus | Judgment (Stage 3 of /scope-project — document-architecture map, four-test justification, resists over-documentation). Added 2026-07-01. |
 | scope-qc-evaluator | opus | Judgment (Stage 5 of /scope-project — consolidated control-pack QC, five-way verdict, three-way ledger; context-isolated). Added 2026-07-01. |
 | scope-synthesis-agent | sonnet | Structured consolidation (Stage 2 of /scope-project — raw material → thematic synthesis). Added 2026-07-01. |
@@ -117,6 +115,23 @@ These agents exist as regular-file copies (not symlinks) in `projects/strategic-
 | self-review-agent | opus | Judgment (periodic OS self-review; checks staleness, contradictions, unowned risks). Project-local to strategic-os. Added 2026-05-27. |
 | state-retrieval-agent | sonnet | Structured cross-project read of strategic-signal files; returns snapshot for state view and decision queries. Project-local to strategic-os. Added 2026-05-27. |
 
+## `general-purpose` dispatch-pinning — compliance roster
+
+`general-purpose` has no frontmatter of its own, so an un-pinned spawn silently inherits the session model — a judgment dispatch could run at Haiku on a Haiku session with no signal. Pinning the tier in the spawn instruction (e.g. *"pin `model: opus` on the spawn"*) is permitted **per-dispatch, never blanket**, and is the target state. It is not a banned "default": it overrides nothing the operator chose, unlike a `settings.json` default, which contests `/model` for every dispatch. Ratified 2026-07-12 (W3.2 M-A2a; rationale in `logs/decisions.md` 2026-07-12). The prohibition on model *defaults* itself stays canonical in workspace `CLAUDE.md` § Model Tier.
+
+**Known compliance gap — tracked, not silently ignored.** As of 2026-07-29:
+
+| State | Commands |
+|---|---|
+| Pins the tier (9) | `/refinement-pass`, `/friday-journal`, `/drift-check`, `/contract-check`, `/resolve-repo-problem`, `/leverage-idea`, `/cleanup-worktree`, plus skill-pipeline evaluators — all `opus`. (Count was 12 until 2026-07-30, when `/qc-pass`, `/risk-check` and `/refinement-deep` were retired.) |
+| Spawns `general-purpose` unpinned, not yet retrofitted (≥5) | `tweak`, `decide`, `graduate-resource`, `promote-workflow`, `wrap-session` |
+
+Tracked in `logs/improvement-log.md` 2026-07-12. Do not read the gap as tolerance for new unpinned spawns — **new commands pin from creation.**
+
+This roster is perishable compliance data: it goes stale on every retrofit. Update it here when a command is retrofitted; it deliberately does not live in the always-loaded workspace `CLAUDE.md`.
+
+*(Moved here from the workspace-root `CLAUDE.md` on 2026-07-27, migration Stage 5 §6.4.)*
+
 ## Maintenance
 
-When adding a new agent, place it in the table. When changing an agent's tier, update the table in the same commit.
+When adding a new agent, place it in the table. When changing an agent's tier, update the table in the same commit. When a command is retrofitted to pin its `general-purpose` dispatch tier, move it between the two rows of the compliance roster above in the same commit.

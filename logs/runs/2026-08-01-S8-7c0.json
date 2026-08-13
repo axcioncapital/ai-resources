@@ -1,0 +1,56 @@
+{
+  "run_id": "2026-08-01-S8-7c0",
+  "project": "ai-resources",
+  "date": "2026-08-01",
+  "marker": "S8-7c0",
+  "model": "claude-fable-5",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-08-01-S8-7c0",
+  "mission": "work-loop-v2-mvp",
+  "context": {
+    "pack_path": "output/context-packs/project-20260801-b7e41/pack.md",
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/scripts/work-loop-v2-slice-1.test.sh",
+    ".claude/commands/work-loop-v2.md",
+    ".agents/skills/work-loop-v2/SKILL.md",
+    "logs/work-loop/fixture-target.md",
+    "logs/work-loop/fixture-target-2.md",
+    "logs/work-loop/fixture-slice3-deescalate.md",
+    "logs/work-loop/fixture-slice3-deferral.md",
+    "logs/work-loop/fixture-slice3-limits.md",
+    "logs/work-loop/fixture-slice3-close.md",
+    "plans/work-loop-v2-mvp/step-5-slice-3-evidence.md",
+    "logs/missions/work-loop-v2-mvp.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/next-up.md",
+    "logs/session-plan-2026-08-01-S8-7c0.md",
+    "logs/scratchpads/2026-08-01-S8-7c0-scratchpad.md",
+    "logs/session-notes-archive-2026-07.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-01-work-loop-v2-slice-3-admission-discipline-lives"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

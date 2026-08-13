@@ -263,8 +263,8 @@ Proposed week mandate for {WEEK}:
 - Any finding in Phase B requires a structural change
 
 **Quality checks required:**
-- /qc-pass after every creation or improvement
-- /triage before approving any suggestion set
+- one independent review per change, sized to its consequence — not a review chain
+- reviews and /triage are operator-invoked, never automatic
 
 **Threshold overrides:**
 {any overrides from the conversation; "none" if default}

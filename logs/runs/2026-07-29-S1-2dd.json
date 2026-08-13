@@ -1,0 +1,45 @@
+{
+  "run_id": "2026-07-29-S1-2dd",
+  "project": "ai-resources",
+  "date": "2026-07-29",
+  "marker": "S1-2dd",
+  "model": "claude-opus-5[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-29-S1-2dd",
+  "mission": "lean-prime-2026-07",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan-v4.md",
+    "logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md",
+    "logs/improvement-log.md",
+    "logs/decisions.md",
+    "logs/session-notes.md",
+    "logs/scratchpads/2026-07-29-20-22-scratchpad.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-29-operator-decision-work-loop-may-edit-prime-under"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

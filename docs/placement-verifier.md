@@ -80,9 +80,9 @@ The verifier procedure itself writes nothing. Logging is delegated to `/friction
 
 ---
 
-## Two-gate firing model — by analogy to `/risk-check`
+## Two-gate firing model
 
-This procedure mirrors `/risk-check`'s plan-time + end-time firing pattern (`ai-resources/docs/audit-discipline.md § When to fire`). The reason for two gates here is the same as for `/risk-check`: a plan-time gate catches placement errors before tokens are spent on the wrong-place write; an end-time gate catches drift between what the pipeline planned and what it actually wrote.
+The two gates here are this verifier's own, and they are **deterministic path checks, not reviews** — nothing about them changed when the review layer was consolidated on 2026-07-29. The reason for two: a plan-time gate catches placement errors before tokens are spent on the wrong-place write; an end-time gate catches drift between what the pipeline planned and what it actually wrote.
 
 - **Plan-time** fires after the pipeline has decided what path(s) to write, before the first `Write`.
 - **End-time** fires after the pipeline has finished writing, before the operator-facing commit prompt.
@@ -103,4 +103,4 @@ A pipeline that writes only one file at a known canonical home may skip the end-
 
 - If `repo-architecture.md § Canonical homes by artifact type` is reorganized, this procedure stays valid because it anchors by section heading, not line number.
 - If a new `ARTIFACT_TYPE` is added to the canonical-home table, this procedure handles it automatically — no edit needed here.
-- If the two-gate pattern in `audit-discipline.md § When to fire` changes, review whether the analogy still holds and update the cross-reference above.
+- These two gates stand on their own; they no longer borrow their shape from another control, so no cross-reference needs re-checking when review policy changes.

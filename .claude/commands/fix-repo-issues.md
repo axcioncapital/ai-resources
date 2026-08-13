@@ -134,7 +134,7 @@ Aggregate all items across scopes into a unified ranking, applying:
 Group items into:
 
 - **Plan-into-batch** (P1) — clear scope, well-defined fix, target 3–6 items. Items the execution session can apply without further research.
-- **Park** — out of scope for this plan. Reason: `needs-dedicated-session`, `decision-needed`, `multi-file-refactor`, `needs-/innovation-sweep`, `needs-/create-skill`, `risk-check-class`, `low-roi` (the item fails the named-consequence test per `docs/materiality-bar.md` — no statable consequence of leaving it unfixed; mirrors `/friday-act` Step 3.1a's named-consequence overlay). `low-roi` is a free-text Park *reason* only — never promote it to a scanned status token in the source logs.
+- **Park** — out of scope for this plan. Reason: `needs-dedicated-session`, `decision-needed`, `multi-file-refactor`, `needs-/innovation-sweep`, `needs-/create-skill`, `structural-class`, `low-roi` (the item fails the named-consequence test per `docs/materiality-bar.md` — no statable consequence of leaving it unfixed; mirrors `/friday-act` Step 3.1a's named-consequence overlay). `low-roi` is a free-text Park *reason* only — never promote it to a scanned status token in the source logs.
 - **Skip** — already resolved (cross-matched against improvement-log applied + verified, OR git-reconciled at Step 3.0 with reason `already-resolved (commit {hash})`), or low-signal (`[LOW]` already filtered by scanner, but catch operator-flagged trivia here).
 
 Honor any free-form hint in `$ARGUMENTS` — e.g., "improvement-log only" restricts Plan-into-batch to items whose source is `logs/improvement-log.md` across all selected scopes.
@@ -229,7 +229,7 @@ Do NOT execute fixes in the planning session that produced this file.
 - **Source:** [{absolute_source_path}]({absolute_source_path}){:line N if applicable}  *(always render the absolute path — the plan file lives in `ai-resources/audits/fix-plans/` but item sources span scopes; absolute paths keep links resolvable regardless of where the execution session is `cd`'d)*
 - **Fix:** {concrete instruction — file to edit, edit shape, expected outcome}
 - **Post-fix log update:** {improvement-log status flip / friction-log `[FADING-GATE] verified` annotation / innovation-registry status update / none}
-- **QC needed:** {yes — run /qc-pass after applying | no — log-hygiene-only edit}
+- **Review needed:** {yes — high-consequence, takes one independent review before landing (`docs/qc-independence.md` § The rule) | no — log-hygiene-only edit}
 
 ### [{scope_slug}/id-02] {one-line description}
 - ...
@@ -282,13 +282,12 @@ Do NOT execute any fixes in this session. Do NOT auto-spawn the execution sessio
 - **Subagent contract.** The scanner writes full normalized notes to `audits/working/` per scope and returns a ≤30-line summary per invocation, per the subagent-contract rule in `ai-resources/CLAUDE.md`.
 - **Scope-prefixed ids.** Each scanner has its own `id-01..id-NN` numbering scoped to its working directory. The main session aggregates across scopes using scope-slug prefixes (`[ai-resources/id-01]`, `[workspace/id-01]`, `[project-{name}/id-01]`) — no global renumbering. Notes files always co-locate under `ai-resources/audits/working/` regardless of source scope (single audit-trail directory).
 - **Triage hint.** `$ARGUMENTS` is a free-form filter applied to triage (Step 3), not to scope selection (Step 1). If unparseable, ignore and note in Step 4 assumptions.
-- **Plan-file QC.** Plan files are substantive artifacts. After Step 5, an operator running `/qc-pass` on the written plan is appropriate but not auto-triggered — the inline clarify gate at Step 4 already provided one round of operator review.
+- **Plan-file review.** Plan files are substantive artifacts. After Step 5, an operator asking for a review of the written plan is appropriate but not auto-triggered — the inline clarify gate at Step 4 already provided one round of operator review.
 - **Boundary recap.** Sibling commands and their distinct triggers:
   - `/open-items` — read-only inline backlog report (no plan file).
   - `/fix-repo-issues` — proactive batch-plan from the persistent backlog (this command).
   - `/resolve-repo-problem` — reactive single-fault triage (something broke).
   - `/friday-act` — Friday-cadence orchestrator (audit-driven, tier-aware).
-  - `/resolve` — post-QC triage (QC-finding-sourced fixes only).
   - `/innovation-sweep` — innovation-registry triage (untriaged detected entries).
   - `/develop-ai-resource` — inbox brief fulfillment (build-shaped items). It qualifies the need, then hands a qualified brief to `/create-skill`.
 - **No companion execute command.** The plan file is self-explanatory enough that fresh-session Claude can pick it up via natural language. If execution sessions repeatedly need scaffolding, revisit and consider a `/execute-fix-plan` sibling.

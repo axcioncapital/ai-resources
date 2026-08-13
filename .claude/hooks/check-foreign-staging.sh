@@ -144,7 +144,12 @@ def _add_is_wide(command):
     # Boundary-anchored (Symptom B) so a quoted/heredoc `git add` mention cannot gate.
     for m in re.finditer(_VERB_BOUNDARY + r'git\s+add\b([^&|;]*)', command):
         args = m.group(1)
-        if re.search(r'(^|\s)(-A|--all|-u|--update|\.)(\s|$)', args):
+        # `)` terminates the token as well as whitespace/end — otherwise a wide add
+        # inside a subshell, `(cd x; git add .)`, is not even SEEN as wide and exits
+        # ungated at the early exit below, which is the recorded C4 blind spot
+        # (2026-08-01). `./docs/x.md` still does not match: the `\.` arm requires the
+        # token to be exactly `.`, and there the next char is `/`.
+        if re.search(r'(^|\s)(-A|--all|-u|--update|\.)(\s|$|\))', args):
             return True
     return False
 
@@ -220,13 +225,152 @@ def _foreign_cli_here(root_dir):
             n += 1
     return (True, n)
 
-project_dir = os.environ.get("CLAUDE_PROJECT_DIR", "") or os.getcwd()
-repo_root = sh(["git", "-C", project_dir, "rev-parse", "--show-toplevel"]).strip()
+# ---- Target-repository resolution (2026-08-01, unit foreign-staging-target-repo) ----
+# The repository to judge is the one the COMMAND will actually affect — not the
+# session's project root. Preferring CLAUDE_PROJECT_DIR was the defect: it stays
+# pinned to the session root, so a gated command run inside a NESTED repo was
+# judged against the parent (false block), and `cd nested && git add .` inspected
+# parent paths that the add could never stage (silent pass — worse).
+#
+# Settled BY EXECUTION, not inference (session S13-ad0, probe registered in this
+# hook and removed): a PreToolUse hook payload DOES carry a `cwd` key, os.getcwd()
+# equals it, and both track the Bash tool's cwd as it stands BEFORE the command
+# runs — while CLAUDE_PROJECT_DIR stays pinned to the session root regardless.
+# Because that cwd is the PRE-command one, cwd alone cannot resolve
+# `cd nested && git add .`; the leading-`cd` parse below is still required.
+base_dir = (payload.get("cwd") or "").strip() or os.getcwd()
+
+# Exactly one supported command shape moves the target: a single leading literal
+# `cd <path> &&`. `&&` is load-bearing — it guarantees the cd SUCCEEDED before the
+# git verb runs. `;`, a newline, a subshell `( ... )`, multiple `cd`s, or a path
+# carrying a variable/glob/`~` cannot give that guarantee (with `;` or a newline the
+# add still runs, in the ORIGINAL cwd, when the cd fails), so those shapes are
+# treated as UNRESOLVED and fail closed rather than being evaluated against a
+# repository that may not be the target.
+_UNSAFE_ANY  = re.compile(r'[$`]')          # shell expansion — unsafe even when quoted
+_UNSAFE_BARE = re.compile(r'[*?~\[\]]')     # glob / tilde — expand only when UNquoted
+target_dir = base_dir
+unresolved_target = False
+
+_all_cds = re.findall(r'(?:^|[\n;&|(])\s*cd\s+([^\s;&|)]+)', scan)
+if _all_cds:
+    # Parse the leading `cd` from the RAW command, NOT from `scan` (correction 2,
+    # 2026-08-01). _command_text_only() blanks quoted spans, so
+    # `cd "nested dir" && git add .` arrives here as `cd "" && git add .`; stripping
+    # the quotes then yields an EMPTY path, which silently resolved to base_dir —
+    # i.e. the wrong repository, with no block and no warning. Quoted paths are the
+    # normal case in this workspace (every checkout path contains spaces), so these
+    # are resolved rather than rejected; rejecting them would fail closed on ordinary
+    # work. Anchored at position 0, so a heredoc body — which can never precede the
+    # first command — cannot reach this match.
+    _lead = re.match(r'''^\s*cd\s+(?:"([^"]*)"|'([^']*)'|([^\s;&|)]+))\s*&&''', cmd)
+    if _lead and len(_all_cds) == 1 and "(" not in scan:
+        _dq, _sq, _bare = _lead.group(1), _lead.group(2), _lead.group(3)
+        _quoted = _bare is None
+        _cd_path = _sq if _sq is not None else (_dq if _dq is not None else _bare)
+        if not _cd_path.strip():
+            unresolved_target = True                      # `cd ""` resolves to nothing
+        elif _UNSAFE_ANY.search(_cd_path):
+            unresolved_target = True                      # $VAR / `cmd` — never evaluate
+        elif not _quoted and _UNSAFE_BARE.search(_cd_path):
+            unresolved_target = True                      # unquoted glob or ~
+        else:
+            target_dir = _cd_path if os.path.isabs(_cd_path) \
+                else os.path.join(base_dir, _cd_path)
+    else:
+        unresolved_target = True
+
+# Fail closed ONLY for wide adds — the shape whose blast radius is the whole working
+# tree of an unknown repository. A gated `git commit` with an unresolvable cd falls
+# back to base_dir; that is a disclosed limitation, not an oversight (the brief's
+# required behaviours name the wide-add case, and blocking every multi-line commit
+# would be a false-block regression far worse than the gap).
+if unresolved_target and is_add_wide:
+    sys.stderr.write(
+        "[staging-tripwire] BLOCKED — unresolvable target repository.\n"
+        "This command contains a working-tree-wide `git add` AND changes directory in\n"
+        "a form this guard cannot resolve safely, so it cannot tell which repository\n"
+        "would be staged, or judge the staged set against this session's footprint.\n"
+        "\n"
+        "Supported:   a single leading `cd <literal-path> && git add ...`\n"
+        "Unsupported: subshells `( ... )`, `;` or newline sequencing, multiple `cd`s,\n"
+        "             and paths containing variables, globs or `~`.\n"
+        "\n"
+        "STOP and surface to the operator. Then either run the add from inside the\n"
+        "target repository, or stage explicit pathspecs (`git add <path>`), which are\n"
+        "not gated.\n")
+    sys.exit(2)
+
+repo_root = sh(["git", "-C", target_dir, "rev-parse", "--show-toplevel"]).strip()
 if not repo_root:
     sys.exit(0)  # not a git repo → nothing to guard, degrade open
 
-logs_dir = os.path.join(repo_root, "logs")
-repo_name = os.path.basename(repo_root.rstrip("/"))  # for footprint prefix-stripping
+# ---- SESSION scope vs TARGET scope (correction 1, 2026-08-01) ----
+# Two different repositories, and collapsing them into one silently DISARMS this
+# guard for the very case the target-resolution fix was written for.
+#
+#   TARGET scope  — `repo_root` above. Where the candidate files come from: the
+#                   repository the command will actually stage into.
+#   SESSION scope — below. Where THIS session's marker and mandate live. The
+#                   marker contract (docs/session-marker.md) makes
+#                   logs/.session-marker-${CLAUDE_CODE_SESSION_ID} and
+#                   logs/session-notes.md relative to the repo where /prime and
+#                   /session-start ran — NOT to whatever repo a later command
+#                   happens to target.
+#
+# The originating case is exactly the divergent one: a session rooted in the
+# workspace repo, staging into a freshly-initialised nested repo that has no logs/
+# at all. Reading the footprint from the target there finds no marker, so the
+# no-concrete-footprint branch fires and the guard turns itself OFF — or, worse, it
+# finds ANOTHER session's marker and judges against a stranger's footprint.
+session_dir = os.environ.get("CLAUDE_PROJECT_DIR", "") or os.getcwd()
+
+def _session_state_root(start):
+    """The directory whose `logs/` actually holds THIS session's state.
+
+    NOT the git toplevel (correction 2, 2026-08-01). `docs/session-marker.md:17`
+    makes the marker path **cwd-relative**, and `:97` records the supported shape
+    this breaks on: a project that is a plain SUBDIRECTORY of a repo
+    (`projects/axcion-website/`) is not its own git repo yet keeps its **own**
+    `logs/session-notes.md` and its own marker namespace. Resolving via
+    `git rev-parse --show-toplevel` walks straight past that project to the repo
+    root, reads a sibling's session state — or none at all — and so can disable the
+    guard or judge against the wrong footprint, which is the same failure the
+    session/target split was introduced to remove.
+
+    Walks upward and returns the first ancestor carrying this session's own per-id
+    marker; that marker is unique to this session, so a hit is unambiguous. Falls
+    back to the shared marker, then to `session-notes.md`, then (via the caller) to
+    the git toplevel — preserving today's behaviour wherever the project IS the
+    repo root, which is the common case."""
+    try:
+        base = os.path.realpath(start)
+    except Exception:
+        return ""
+    sid = os.environ.get("CLAUDE_CODE_SESSION_ID", "")
+    probes = []
+    if sid:
+        probes.append(os.path.join("logs", ".session-marker-" + sid))
+    probes.append(os.path.join("logs", ".session-marker"))
+    probes.append(os.path.join("logs", "session-notes.md"))
+    for probe in probes:                       # strongest signal first, each to the root
+        d = base
+        while True:
+            if os.path.exists(os.path.join(d, probe)):
+                return d
+            parent = os.path.dirname(d)
+            if parent == d:
+                break
+            d = parent
+    return ""
+
+session_repo_root = _session_state_root(session_dir) \
+    or sh(["git", "-C", session_dir, "rev-parse", "--show-toplevel"]).strip() \
+    or repo_root
+logs_dir = os.path.join(session_repo_root, "logs")
+# Footprint tokens are written relative to the SESSION repo, so the optional
+# leading repo-name segment they may carry is the session repo's name.
+repo_name = os.path.basename(session_repo_root.rstrip("/"))
 
 def warn_open(msg):
     out = {"hookSpecificOutput": {
@@ -467,8 +611,8 @@ for tok in re.split(r'[,;\s]+', footprint_raw):
 # the no_concrete_footprint gate above, which is what makes the asymmetry hold.
 #
 # Do NOT "fix" this by adding validation to required_outputs in this change — that is a
-# separate, larger change touching every writer of the mandate line (/session-start,
-# /prime Step 8c.7). Scope it on its own if wanted.
+# separate, larger change touching every writer of the mandate line (/session-start
+# Step 3, the sole writer since 2026-07-29). Scope it on its own if wanted.
 _PATH_SHAPE = re.compile(r'/|\.(?:md|sh|json|ya?ml|py|ts|js|txt|csv|toml|ini)$', re.I)
 
 for tok in re.split(r'[,;\s]+', outputs_raw):
@@ -477,7 +621,7 @@ for tok in re.split(r'[,;\s]+', outputs_raw):
         continue
     # Leading `/` = not a repo-relative path. Git candidate paths are ALWAYS
     # repo-root-relative, so such a token could never match one; dropping it keeps
-    # prose like "a `/risk-check` report under …" out of the block message.
+    # prose like "a review report under …" out of the block message.
     if tok.startswith("/"):
         continue
     if not _PATH_SHAPE.search(tok) and tok not in ("CLAUDE.md", "SKILL.md"):
@@ -518,12 +662,24 @@ if is_add_wide:
         re.search(r'\bgit\s+add\b[^&|;]*\s(-u|--update)\b', scan)
         and not re.search(r'\bgit\s+add\b[^&|;]*\s(-A|--all)\b', scan)
         and not re.search(r'\bgit\s+add\b[^&|;]*\s\.(\s|$)', scan))
+    # `git add .` stages only what lies under the directory the add RUNS IN. That
+    # directory is target_dir (the pre-command cwd, plus any supported leading `cd`),
+    # so scope the candidate set by target_dir's path RELATIVE TO the resolved repo
+    # root. Deriving it from the repo root rather than from the cd token's raw text
+    # is what lets the nested-repo and same-repo cases share one code path: when
+    # target_dir IS the repo root — `cd nested && git add .`, where the nested dir is
+    # itself a repo — the relative path is "." and nothing is filtered out. The old
+    # text-based version set subdir="nested" against the PARENT repo, where `nested/`
+    # is gitignored, so it filtered every candidate away and passed silently.
     subdir = None
-    mcd = re.search(r'\bcd\s+([^\s;&|]+)\s*&&.*\bgit\s+add\b[^&|;]*\s\.(\s|$)', scan)
-    if mcd:
-        subdir = re.sub(r'^\./', '', mcd.group(1).strip().strip('"').strip("'")).rstrip("/")
-        if repo_name and subdir.startswith(repo_name + "/"):
-            subdir = subdir[len(repo_name) + 1:]
+    if re.search(r'\bgit\s+add\b[^&|;]*\s\.(\s|$|\))', scan):
+        try:
+            _rel = os.path.relpath(os.path.realpath(target_dir),
+                                   os.path.realpath(repo_root))
+        except Exception:
+            _rel = "."
+        if _rel not in (".", "") and not _rel.startswith(".."):
+            subdir = _rel
     for is_untracked, path in porcelain_entries():
         if add_u_only and is_untracked:
             continue
@@ -546,7 +702,7 @@ if not candidates:
 # ---- Exempt-list ----
 EXEMPT_BASENAMES = {
     "session-notes.md", "decisions.md", "usage-log.md",
-    "improvement-log.md", "coaching-data.md",
+    "improvement-log.md", "coaching-data.md", "next-up.md",
 }
 # Write-once / append-only process-artifact directories (repo-relative prefixes).
 EXEMPT_DIR_PREFIXES = ("audits/risk-checks/", "audits/working/")
@@ -609,11 +765,25 @@ def in_footprint(path):
     # with a current, correct footprint. For a glob token, match with fnmatch;
     # collapse `**`→`*` first since fnmatch's `*` already crosses `/`. Keep the
     # literal arm for non-glob tokens (exact path or directory prefix).
+    #
+    # COORDINATE TRANSLATION (correction 1, 2026-08-01). `path` is relative to the
+    # TARGET repo; footprint tokens are relative to the SESSION repo. Those are the
+    # same coordinate system in the ordinary case and DIFFERENT ones the moment a
+    # command targets a nested repo — so both sides are resolved to absolute paths
+    # before comparing. Doing it here rather than at parse time keeps one explicit
+    # conversion point instead of two half-converted lists.
+    #
+    # This is also what makes an in-footprint ALLOW possible across the boundary: a
+    # session declaring `projects/foo/bar.md` and a candidate `bar.md` in the nested
+    # repo `projects/foo` resolve to the same absolute path and match, while parent
+    # dirt in the session repo can never enter the target's candidate set at all.
+    path_abs = os.path.normpath(os.path.join(repo_root, path))
     for fp in footprint:
+        fp_abs = os.path.normpath(os.path.join(session_repo_root, fp))
         if "*" in fp:
-            if fnmatch.fnmatch(path, fp.replace("**", "*")):
+            if fnmatch.fnmatch(path_abs, fp_abs.replace("**", "*")):
                 return True
-        elif path == fp or path.startswith(fp + "/"):
+        elif path_abs == fp_abs or path_abs.startswith(fp_abs + os.sep):
             return True
     return False
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Handoff Thread"
+  short_description: "Continue this task in a new Codex thread"
+  default_prompt: "Use $handoff-thread to hand this task off to a new Codex thread."

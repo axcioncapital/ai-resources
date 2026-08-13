@@ -1,0 +1,50 @@
+{
+  "run_id": "2026-08-03-S3-018",
+  "project": "ai-resources",
+  "date": "2026-08-03",
+  "marker": "S3-018",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/work-loop/context-engineering-s7-regression.md",
+    "logs/scripts/work-loop-v2-slice-1.test.sh",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-1/",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-3/",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-4/",
+    "plans/work-loop-v2-v0.2/context-engineering/trials/regression/r-5/",
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-08.md",
+    "logs/decisions.md",
+    "logs/scratchpads/2026-08-04-10-10-scratchpad.md",
+    "logs/friction-log.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-04-decline-the-s7-grouped-regression-run"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

@@ -3563,3 +3563,829 @@ None.
 3. The context pack asserted "no file in the workspace mentions S6-623" (actual: 12 files). Cause is the documented `.gitignore`-honouring-grep trap — `docs/audit-discipline.md:37`, `logs/scripts/search-canary.sh`; `.gitignore:56` ignores `projects/axcion-content-programme/`, so dot-rooted `grep -r X .` returns 0 while `command grep -r X .` returns 12. The same trap caught this session's own first verification before the canary exposed it.
 
 One pack conflict was a **false positive**: `improvement-log.md:180`'s "the declared schema field is the more honest fix" concerns `/mission check`'s assertion field, a different artifact — not a contradiction of S6-623's rejection. It is, however, live precedent for the same shape (declare the field at filing time, read it at execution time).
+## 2026-07-23 — Session S1-0e1
+**Mandate:** Build Commit 2 of 2 of the `/new-project` direct-route feature (session-harness lean posture for `direct` projects) — edit prime.md/session-start.md/session-plan.md/wrap-session.md so a project with `**Execution route:** direct` skips the committed `logs/session-plan-*.md`, the run-manifest start/close stubs, and the full mandate schema — done when: the four command files carry the direct-route branch on disk, /risk-check has returned a verdict that is honored, and an independent /qc-pass has passed before commit.
+- Out of scope: redesigning the marker allocator; changing the engineered code path; touching the 20 existing projects (all fail-safe to engineered)
+- Files in scope: .claude/commands/prime.md, .claude/commands/session-start.md, .claude/commands/session-plan.md, .claude/commands/wrap-session.md, docs/session-marker.md
+- Stop if: /risk-check returns RECONSIDER or NO-GO — record the design on disk and build nothing
+- Allowed inputs: logs/scratchpads/2026-07-23-11-58-scratchpad.md, .claude/commands/new-project.md, docs/control-pack-schema.md, docs/audit-discipline.md
+
+Resume from handoff scratchpad `logs/scratchpads/2026-07-23-11-58-scratchpad.md` — build **Commit 2 of 2** of the `/new-project` direct-route feature: the session-harness lean posture for `direct` projects (`/prime` 8a-8c, `/session-start`, `/session-plan`, `/wrap-session` skip committed session-plan / run-manifest / full mandate schema on the exact `**Execution route:** direct` predicate; fail-safe to today's behavior otherwise). `/risk-check` runs first (structural, high-blast-radius, mission-adjacent); on RECONSIDER record the design and stop.
+
+## 2026-07-23 — Commit 2 of 2 shipped via a loud OP-11 exception, after two RECONSIDER cycles
+
+### Summary
+Resumed the `/new-project` direct-route handoff and completed Commit 2 (the session-harness lean posture for `direct` projects). The first design was `/risk-check` RECONSIDER'd (three Highs — it removed the full mandate block, blinding `concurrent-session-check`); honored, nothing built, design recorded. Per the operator's correction — RECONSIDER rejects the design, not the correction — redesigned to preserve the safety spine (marker, full mandate block incl. `Files in scope`, run-manifest) and remove only the ceremony (auto-`/session-plan`, the committed plan file, a dangling plan-file prompt, empty findings-disposition). The re-gate RECONSIDER'd again, but on OP-9 alone (zero live consumer + my own weak evidence citations) — the reviewer verified the design sound and confirmed zero of ten plan-file consumers break. Landed via a deliberate OP-11 exception in `decisions.md`, after an independent `/qc-pass` returned GO. Committed `c776462`.
+
+### Decisions Made
+- Redesign Commit 2 to keep the marker, full mandate block, and run-manifest for direct-route sessions — removing only the auto-chain, the committed plan file, the 8a plan-file prompt, and empty findings-disposition. (Operator-directed correction of the first RECONSIDER'd design.)
+- Land the revised design via a loud OP-11 exception rather than deferring to a live consumer or re-gating further. (Operator decision via explicit choice: "Proceed via OP-11 + land.")
+- Mitigate the re-gate's one residual gap: `session-start` Step 3 now writes resolved inferred paths instead of the literal `(inferred)` for direct-route sessions, so `concurrent-session-check` is never blinded for want of a plan file.
+- Corrected my own first-draft "problem-reality" evidence citations after the re-gate reviewer showed they measured unrelated ceremony classes; replaced with the genuinely on-point citations (`session-start.md` 3,905 tok/invocation + `session-plan.md` ~1,717).
+- Full record: `logs/decisions.md` 2026-07-23 (S1-0e1).
+
+### Risky actions
+None. Both `/risk-check` RECONSIDER verdicts were honored (no override, per explicit operator instruction not to run further checks); the OP-11 landing followed the gate's own sanctioned recommendation, and an independent `/qc-pass` (GO, no BLOCKING findings) ran before commit.
+
+### Next Steps
+- `/wrap-session` push gate: 3 unpushed commits (2 in ai-resources, 1 in project-planning) awaiting confirmation.
+- No functional follow-up required — Commit 2 is shipped, tested (16/16 predicate matrix), and QC'd GO. If a real `direct`-route project is created later, the harness behavior should be exercised live per the design's 7-point verification list.
+
+### Open Questions
+None.
+
+### Findings Declined
+- QC reviewer's cross-reference anchor-text mismatch (`docs/session-marker.md` cross-refs say "§ Direct-route detection"; the actual heading is "### Direct-route detection predicate" under "## Direct-route harness exception") — cosmetic, resolvable by any reader, no named consequence.
+
+## 2026-07-24 — Session S1-7fe
+**Mandate:** Triage the 30 open HIGH-severity entries in `logs/improvement-log.md`, verifying each by execution then closing, parking, or downgrading it — done when: all 30 entries carry an explicit disposition, closed entries are archived to `logs/improvement-log-archive.md`, and the `/prime` Step 3 scan emits materially fewer than today's 399 lines
+- Out of scope: editing `.claude/commands/prime.md` — the scan design itself, twice /risk-check RECONSIDER'd
+- Files in scope: logs/improvement-log.md, logs/improvement-log-archive.md
+- Stop if: an entry's disposition would require building a fix rather than judging status — log it and move on
+- Mission: repo-health-backlog-2026-07
+
+
+Triage the 30 open HIGH-severity entries in `logs/improvement-log.md` — close, park, or downgrade what no longer earns HIGH.
+
+## 2026-07-24 — Triage sweep cuts /prime's improvement-log scan ~20%, catches two of its own false closes
+
+### Summary
+Triaged the 30 open HIGH-severity entries in `logs/improvement-log.md` that `/prime`'s Step 3 scan surfaces at every orientation. Verified each against the live repo rather than trusting the entry text; closed 5, downgraded 5 to `medium`, annotated 2 with corrections, left 18 genuinely still open. Caught and reversed two of my own incorrect closes before commit, after a second independent check found each had verified only one clause of a two-part claim. Scan emit fell from 399 to 319 lines (81,008 to 71,710 chars); entry count conserved at 187 across the active log and archive.
+
+### Decisions Made
+- Declined the original menu item (mission thread 15's twice-RECONSIDER'd `/prime` scan redesign) after measuring that 3 of its 4 named sub-tasks were already fixed live; operator chose to triage the backlog instead of building the redesign or editing the scan's emit shape. Logged to `decisions.md`.
+- Discovered by execution, before any disposition was applied: parking (`Review-cycle:` reset) does not shrink the scan — a parked entry is required to stay in the active log and keeps its `Severity:` line. Only archiving or downgrading severity removes an entry from the scan's anchor match. Adjusted the plan's disposition categories accordingly.
+- Reversed 2 of 7 initial closes (`close-worktree-session` stash-pop entry; friction-log header-grammar entry) after a second, differently-targeted check found each verified only one clause of a two-part claim. Both restored to the active log with a note recording exactly what was confirmed and what remains open.
+
+### Risky actions
+None. Two false closes were caught and reversed before commit — nothing incorrect shipped. The AskUserQuestion scope gate and the plan-approval gate both fired as designed.
+
+### Next Steps
+- The largest remaining scan-cost driver (26 of 40 surviving hits are `medium-high`, treated as urgent-tier by the anchor) is out of reach without editing `.claude/commands/prime.md`, which is twice `/risk-check` RECONSIDER'd — a dedicated session would need to re-gate that design, not extend today's triage.
+- `/friday-act` candidate: 13 of 19 project `improvement-log.md` files carry no `Severity` schema, so `/prime`'s urgent scan returns zero there silently (already logged, `:127`).
+- A new finding was queued this session (compound-claim partial-verification failure) — it is a doc note, not a build task; no follow-up session required.
+
+### Open Questions
+None.
+
+### Findings Declined
+- Mission-thread-15 sub-task discrepancy (3 of 4 sub-tasks already fixed live) — already fully captured in the entry's own annotation this session; no separate action needed.
+- A `git status --cached` invalid-flag typo during the prior commit step — cosmetic, no consequence; the following `git commit` ran independently and succeeded.
+
+## 2026-07-24 — Independent re-verification of the HIGH backlog; new mission scoped around the existing one
+
+### Summary
+Ran `/clarify` on "find priority repo problems, verify with a subagent, rank by severity/ROI." Locked scope (ai-resources only; truth-pass then verify; broken-infra + correctness + leanness; high/medium-high depth) via `AskUserQuestion`, then executed: extracted the 30 open high/medium-high `improvement-log.md` entries, discovered mid-scan that an earlier session today (S1-7fe) had already triaged this backlog, and ran 3 Opus-pinned subagents to independently re-verify all 30 against live disk. Result: 23 confirmed real, 2 already-fixed, 0 fabricated. Presented a severity/ROI-ranked list, then created mission `repo-integrity-repairs-2026-07` scoped to the 16 non-overlapping items (out of the existing `repo-health-backlog-2026-07` mission's territory).
+
+### Decisions Made
+- Scoped the new mission to exclude `repo-health-backlog-2026-07`'s threads 3/7/10/12/15 rather than folding all findings into one contract, to avoid the "two frozen contracts over one backlog" pattern that mission's own 2026-07-19 truth-pass identified as the cause of prior circling. Logged to `decisions.md`.
+- Authored `logs/missions/repo-integrity-repairs-2026-07.md` directly (read the template for shape, wrote the full contract by hand) rather than running `/mission create`'s literal placeholder-substitution steps — the content was already fully derived from the verification pass, so templating it first and back-filling would have added a step with no new information.
+- Ordered the mission's Wave 1 so threads 1 (`check-archive.sh` wrong-repo write) and 2 (13 projects missing `logs/scripts/`) are fixed together — thread 2 is the mechanism that forces thread 1's failure path, so fixing either alone leaves the other's half live.
+
+### Risky actions
+None. All work this session was read-only analysis plus one new file (the mission contract) and three subagent-written verification-notes files. No existing file was edited; no destructive command ran.
+
+### Next Steps
+- Pick up mission `repo-integrity-repairs-2026-07`, Wave 1 threads 1–10 (see the mission file) — start with threads 1+2 together per the mission's own non-negotiable ordering.
+- Do not fold `repo-health-backlog-2026-07`'s threads 3/7/10/12/15 into the new mission — they stay with their own mission.
+- `:848` and `:1154` in `logs/improvement-log.md` are verified already-fixed and should be closed with citations at the next improvement-log maintenance pass (not done this session — out of this session's locked scope, which was analysis only).
+
+### Open Questions
+None.
+
+### Findings Declined
+- **Own mid-session claim: "two improvement-log entries are invisible to `/prime`'s severity anchor due to a missing dash-prefix."** Raised in chat, then retracted after batch-C verification: `prime.md:245`'s anchor already tolerates both the missing dash and bold asterisks. The two entries (`:1114`, `:1135`) are genuinely `MED` (medium)-tier, which the scan correctly excludes by design — not a defect. Declined, not queued.
+- Every other verified-real item from the triage was either queued into the new mission (16 items) or explicitly named as belonging to the sibling mission (5 items) or as needing a dedicated session (4 items). Nothing was silently dropped.
+
+## 2026-07-24 — Session S2-81c
+
+**Mandate:** Diagnose the repository mechanisms behind mission `repo-integrity-repairs-2026-07` Wave 1 (threads 1–10) and produce a least-complex structural correction plan for external (Codex) review — analysis only, no implementation — done when: a correction plan covering all 10 Wave 1 threads (causal mechanism, competing explanation, recommended correction, files affected, before/after behaviour, tests, rollback, approval-required items) is written to `audits/working/2026-07-24-wave1-correction-plan.md`
+- Out of scope: implementing or applying any fix; editing `.claude/commands/prime.md`; threads 3/7/10/12/15 of `repo-health-backlog-2026-07`; Wave 2 threads 11–16
+- Files in scope: logs/scripts/check-archive.sh, .claude/commands/wrap-session.md, .claude/commands/risk-check.md, .claude/commands/contract-check.md, .claude/commands/close-worktree-session.md, .claude/settings.json, .claude/agents/, logs/improvement-log.md, logs/missions/repo-integrity-repairs-2026-07.md, ../CLAUDE.md, ../.claude/commands/wrap-session.md, logs/innovation-registry.md (widened 2026-07-25 wrap — scope evolved via live operator direction across the session: implementation, Codex R3 review + fixes, merge to main, push, cleanup, wrap-time innovation triage)
+- Stop if: (none stated)
+- Required outputs: audits/working/2026-07-24-wave1-correction-plan.md
+- Mission: repo-integrity-repairs-2026-07
+
+## 2026-07-25 — Codex R3 review of Wave 1 correction: 3 findings fixed, merged to main, pushed
+
+### Summary
+Continuation of Session S2-81c (Wave 1 correction, mission `repo-integrity-repairs-2026-07`): the implementation branch `mission/wave1-correction` (6 commits, isolated worktree) was delivered to Codex via a pushed branch and received an independent implementation review (R3). Codex confirmed 2 of 10 threads correct (§1 wrong-repo archive fix, §7 conflict-marker hook) but found 3 real defects: the append-order guard (§3/thread 4) used a date-gate + text-identity check instead of the approved purely-positional invariant, letting a backdated prepend and an exact-duplicate-header prepend through; the "two entry formats" improvement-log item (thread 10) was closed prematurely while 3 of 5 live writers still emit no `Severity` line; and the `/contract-check` fifth-trigger mirror into workspace `CLAUDE.md` (thread 7) was never applied (cross-repo — the ai-resources branch structurally could not carry it). All three were independently verified against the actual code/log state, then fixed: the guard was rewritten positionally with 2 new regression tests (backdated prepend, duplicate-header prepend), the log entry was reverted to `partially applied` with the writer-sweep parked as a new 2026-07-25 entry, and the CLAUDE.md mirror was applied in the workspace-root repo. The corrected branch was re-pushed, fast-forward merged into `main`, the installed pre-commit hook was refreshed to match the tracked copy (guards now live), both repos were pushed to origin, and the branch/worktree/bundle scaffolding was removed.
+
+### Decisions Made
+- **Append-order guard redesign (positional, not date/text).** Rewrote `check-append-order.sh` to identify additions strictly by `git diff --cached` line position and reject any added header above the last retained header — dropping the prior date-gate (`>= newest retained date`) and text-identity matching, both of which Codex demonstrated as bypassable. **Rationale:** the archive hazard this guard exists to prevent is purely positional (`check-archive.sh` treats file-top as oldest), so any check keyed on date or text content is a weaker proxy for the actual invariant. **Alternatives considered:** patching the existing date-gate to also cover backdated entries — rejected, because it would not fix the independent text-identity hole and would leave two special-cased conditions instead of one general one.
+- **Reverted thread-10 "two entry formats" closure to `partially applied`, parked the writer-sweep rather than fixing all 3 writers inline.** The live `2026-07-21` PowerPoint entry proved 3 writers (`leverage-idea.md`, `improve.md`, `resolve-repo-problem.md`) still ship entries with no `Severity` line. **Rationale:** fixing all 3 writer templates plus a schema-regression test is a broader multi-file change than the Wave 1 correction pass and not itself a defect in the shipped Wave 1 edits — per the workspace CLAUDE.md ROI/structural-fix rule, a structural fix needing its own session is parked, not patched on top of a correction commit. **Alternatives considered:** inline-fixing all 3 writers now — rejected as scope growth beyond what Codex's finding required (the finding was "don't claim it's closed," not "fix everything now").
+- **Finding #3 disposition — mirror the CLAUDE.md trigger rather than amend the plan to drop it.** Operator-directed via AskUserQuestion; kept three-way consistency (contract-check.md / risk-check.md / workspace CLAUDE.md) over trading it for CLAUDE.md leanness.
+- **Fast-forward merge to `main`, not a merge commit.** Branch and main had a clean linear ancestor relationship (0 commits behind); ff-only preserves per-section commit granularity already designed into the branch (one commit per plan section, independently revertible).
+- Operator confirmed both pushes (initial branch push, then the corrected branch + merge-to-main push) via explicit y/n per workspace CLAUDE.md push gate; confirmed cleanup (branch/worktree/bundle deletion) via explicit y.
+
+### Outcome
+(Outcome check skipped — not requested this wrap.)
+
+### Risky actions
+None ungated. Two `git push` operations landed directly on `main` (both repos) and a branch/worktree/14MB-bundle deletion occurred — all were explicitly operator-confirmed (y/n) before execution per the workspace CLAUDE.md push gate and destructive-action autonomy rules; no action was taken without a prior confirmation.
+
+### Next Steps
+- Consider `/mission update` on `repo-integrity-repairs-2026-07` thread 10 — its closure bundled two entries; one (two-entry-formats) is now reverted to `partially applied` and the mission contract may want to reflect that.
+- The parked writer-sweep follow-up (3 improvement-log writers still missing `Severity`) is logged as a `2026-07-25` entry in `logs/improvement-log.md`, medium-high severity — will surface via `/prime` Step 3 in a future session.
+
+### Findings Declined
+- **Codex R3 finding #1 (append-order guard date-gate/text-identity weakness)** — already fixed this session (`logs/scripts/check-append-order.sh` rewritten positionally, 2 new regression tests added, full suite + hook integration re-verified). No queue entry: nothing remains open.
+- **Codex R3 finding #3 (contract-check fifth-trigger mirror missing from workspace CLAUDE.md)** — already fixed this session (bullet added to workspace-root `CLAUDE.md` § Contract-Conformance Check, committed `0a4c774`). No queue entry: nothing remains open.
+
+**Findings: 5 — queued 3 (severity: 1 medium-high [writer-side Severity gap, 3 writers], 2 medium [innovation-registry worktree false-positive; `check-foreign-staging.sh` EXEMPT_BASENAMES missing 3 of `wrap-session.md`'s own always-staged shared logs — surfaced live by this very wrap's commit step]), declined 2 (both already fixed this session). 3 + 2 = 5.**
+
+### Open Questions
+None.
+
+## 2026-07-25 — Session S1-940
+
+**Mandate:** Commit the untracked `repo-integrity-repairs-2026-07` mission file, then verify Wave 1 threads 1–9 against the mission's acceptance assertions and tick only those that pass — done when: the mission file is tracked in git, and each of threads 1–9 carries either a tick with a cited verification or a recorded one-line reason it stays open, with thread 10 left unticked and its revert reason recorded.
+- Out of scope: Wave 2 threads 11–16; the sibling missions `repo-health-backlog-2026-07` and `research-workflow-deploy-fitness`; thread 10, which stays open by design rather than by omission.
+- Files in scope: logs/missions/repo-integrity-repairs-2026-07.md, .claude/commands/wrap-session.md, ../.claude/commands/wrap-session.md
+- Scope extension (operator-directed, post-mandate): after the verification pass completed, the operator directed follow-on work — `/mission update` on threads 4 and 8, then closing assertion 3 by adding the missing append-direction warnings at the 3 uncovered write sites across both `wrap-session.md` copies.
+- Stop if: a thread can only be verified by editing `.claude/commands/prime.md` (mission non-negotiable — it belongs to the sibling mission's thread 15); verifying a thread would require deleting a stale marker or archive file that the thread cites as evidence; a thread's acceptance assertion cannot be checked by execution or inspection, in which case leave it open rather than tick it on a commit subject alone.
+- Allowed inputs: logs/scripts/check-archive.sh, logs/scripts/check-append-order.sh, .claude/settings.json, logs/improvement-log-archive.md, .claude/commands/wrap-session.md, ../.claude/commands/wrap-session.md, .claude/agents/lean-repo-auditor.md, .claude/commands/risk-check.md, .claude/commands/contract-check.md, .claude/commands/close-worktree-session.md, ../CLAUDE.md
+- Mission: repo-integrity-repairs-2026-07
+
+Commit the untracked `repo-integrity-repairs-2026-07` mission file, then verify Wave 1 threads 1–9 against the mission's acceptance assertions and tick those that pass; thread 10 stays open with a recorded reason.
+
+### Summary
+Committed the previously-untracked `repo-integrity-repairs-2026-07` mission file, then verified Wave 1 threads 1–9 against the mission's own validation contract rather than against the commit subjects that claimed them — only 4 of 9 actually passed (1, 3, 6, 7), not the 8 an initial commit-message read suggested. Ticked those four; the other five (2, 5, 8, 9, plus already-open thread 10) stay open with recorded evidence, including thread 2's count moving the wrong way (14 of 27 projects now lack `logs/scripts/`, up from 13). Operator then directed follow-on work via `/mission update`: threads 4 and 8 were revised with new evidence rather than closed, closing assertion 3 required adding append-direction prose warnings at 3 previously-uncovered write sites across both `wrap-session.md` copies (canonical + workspace-root), and `/risk-check` gated a hook install (`check-append-order.sh` + `pre-commit`) into the workspace-root repo, which had had no commit-boundary protection of any kind. Thread 4 then closed on its own literal test — a 4-of-4 count across both copies.
+
+### Decisions Made
+- **Declined to soften the mission's frozen `## Validation contract` assertion 3, even though I proposed it first.** The `/mission update` design contract freezes that section at creation precisely so a session cannot redefine its own pass/fail test; satisfying the assertion as written turned out to cost ~3 lines of prose, so there was nothing to trade away by softening it. Self-caught before any write via the `update` verb's byte-comparison guard, which would have reverted the edit regardless.
+- **Thread 8 disposition — reduce scope, do not close.** The shipped conflict-marker guard blocks the corruption but leaves `/close-worktree-session` with zero stash handling for the operator to resolve. Recorded as a narrower open thread rather than treated as closed.
+- **Corrected a false premise I fed to the `/risk-check` gate.** I told the reviewer the workspace-root repo had no skills (implying the SKILL.md validator half of the hook would no-op); it actually has 6 tracked `SKILL.md` files. The reviewer's consumer inventory caught this; I re-verified by execution (`git ls-files`) and tested all 6 against the validator's actual rules — 0 of 6 would currently block, but the dependency is now disclosed in the install commit rather than left unstated.
+
+### Risky actions
+Installed a `pre-commit` hook into the workspace-root repo, which can block every future commit there. Gated by an independent `/risk-check` (PROCEED-WITH-CAUTION, 0 High / 4 Medium), all four required mitigations applied, and verified before commit by falsification — a deliberately backdated entry staged into the repo's real `logs/decisions.md` was blocked with exit 1, then the file was restored and confirmed byte-identical to a pre-test backup. No QC-PENDING block: a structural hook-install change gets `/risk-check` as its required gate, not a stacked `/qc-pass` on top (workspace CLAUDE.md § Subagent Proportionality, "do not stack gates").
+
+### Findings Declined
+- **Thread 2's worsening count (13→14 projects missing `logs/scripts/`)** — already tracked as mission thread 2 with this session's updated evidence recorded inline; no separate improvement-log entry needed.
+- **The `.git/hooks/` unversioned-wiring gap, now duplicated in a second repo by this session's own hook install** — already tracked as sibling mission `repo-health-backlog-2026-07` thread 3 (an installer design twice `/risk-check` RECONSIDER'd); this session's install is disclosed as a second instance in commit `503fe8f`, not a new entry.
+
+**Findings: 3 — queued 1 (severity: 1 medium-high [unverified-premise pattern fed to a gate]), declined 2 (both already tracked under existing mission threads). 1 + 2 = 3.**
+
+### Next Steps
+- Wave 1 remaining, ranked: thread 2 (worsening — fix requires `new-project.md` to provision `logs/scripts/` on scaffold, currently 0 matches); threads 5 and 9 (small, self-contained, untouched); thread 8 (narrowed to stash handling only); thread 10 (blocked on the parked writer-sweep, `2026-07-25` improvement-log entry).
+- `logs/scripts/check-append-order.sh` and its `pre-commit` hook are now live in the workspace-root repo — worth confirming they survive the next fresh clone or `/permission-sweep`-style audit, since `.git/hooks/` is unversioned by construction.
+
+### Open Questions
+- The workspace-root repo carries a pre-existing **uncommitted** `logs/decisions.md` change (a `2026-07-19` entry, ~23 lines) that predates this session and is unrelated to it. Left untouched deliberately — flagged to the operator, not resolved or staged here.
+## 2026-07-25 — Session S2-1d2
+
+**Mandate:** Symlink the 3 canonical commands that root `/prime` instructs invoking into the workspace-root `.claude/commands/`, and correct the false `warn-settings-change.sh` premise in the 5 live system-owner-v2 plan files — done when: all 3 symlinks resolve to their canonical targets, and none of the 5 plan files asserts the script exists.
+- Out of scope: the other 30 root-missing canonical commands (several deliberately project-scoped, e.g. `explore-section` is Design Studio-local); the ~12 historical records naming `warn-settings-change.sh` (repo snapshots, phase-1 inventories, June consultation outputs, integrity reports) — editing them would falsify the point-in-time record; mission thread 5, dropped mid-session as churn on a wrong premise.
+- Files in scope: projects/project-planning/Project Plans/system-owner-v2/context-pack.md, projects/project-planning/Project Plans/system-owner-v2/per-unit-plan.md, projects/project-planning/Project Plans/system-owner-v2/synthesis.md, projects/project-planning/Project Plans/system-owner-v2/control-pack/execution-roadmap.md, projects/project-planning/Project Plans/system-owner-v2/control-pack/technical-design.md
+- Stop if: a root symlink target turns out to be a real file rather than absent; a system-owner-v2 file turns out to be a historical record rather than a live plan.
+- Required outputs: .claude/commands/session-start.md, .claude/commands/session-plan.md, .claude/commands/concurrent-session-check.md
+- Mission: repo-integrity-repairs-2026-07
+
+Two verified repo fixes, both threads of mission `repo-integrity-repairs-2026-07`: (1) symlink the 3 canonical commands that root `/prime` instructs invoking but which do not exist at the workspace root (thread 11, narrowed from 33 to 3); (2) correct the false `warn-settings-change.sh` premise in the 5 live system-owner-v2 plan files, leaving the ~12 historical records untouched (thread 13, narrowed).
+
+**Thread 5 dropped mid-session.** Scoped as "add the `command grep` antibody to 4 audit agents"; verification showed `token-audit-auditor.md`, `diagnostics-scanner.md` and `fix-repo-issues-scanner.md` contain **zero** occurrences of `grep`, and `repo-dd-auditor.md`'s single occurrence is prose, not a scan site. There is no exposure to harden. `logs/scripts/search-canary.sh`'s header already records the same 2026-07-18 finding and its deliberate decision — *"no site edits were made: editing immune sites would be churn with no consequence."* Disposition: close thread 5 as already-correctly-decided, citing the canary header. Root cause of the mis-scope: counted the *absence of a mitigation* and read it as *presence of a vulnerability*.
+
+### Decisions Made
+- Linked exactly 3 of 33 missing root commands (`session-start.md`, `session-plan.md`, `concurrent-session-check.md`), not all 33 — several of the other 30 are deliberately project-scoped (`explore-section.md` is Design Studio-local; `pm.md`/`archive-project.md`/`scope-project.md`/`project-next-steps.md` are project-flow commands). Whether the remaining 30 belong at root is left open as a design question, not decided here.
+- Corrected 5 of ~17 files referencing the deleted `warn-settings-change.sh`, not all ~17 — the other ~12 are point-in-time historical records (repo snapshots, phase-1 inventories, June consultation outputs, an integrity report); editing them would falsify the record of what was true when written.
+- Applied the `/risk-check` reviewer's mitigation (a 4th symlink, `.claude/agents/context-discovery.md`) rather than accepting the PROCEED-WITH-CAUTION verdict's caution and proceeding without it — the finding (root's `.claude/agents/` had no `context-discovery.md`, which `session-start.md` invokes) was independently re-verified before acting.
+- Dropped mission thread 5 mid-session rather than executing it as scoped — the routine-decision reasoning and full evidence trail are recorded in the mission file itself (`logs/missions/repo-integrity-repairs-2026-07.md`, thread 5) and in commit `83793f0`, not duplicated here.
+- Kept the mission's ticked-thread text rather than deleting it, when asked "did you remove them from the mission?" — ticking (invisible to `/prime`'s task menu) achieves the "stop re-surfacing finished work" goal while preserving the closure reason; operator did not request deletion after the tradeoff was explained.
+
+### Outcome
+Skipped (not requested — `+audit` / `full` not passed).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested — `+audit` / `full` not passed).
+
+### Risky actions
+None — all writes were to non-shared-state files (own mission threads, own plan/manifest, 5 doc corrections, 4 new additive symlinks each verified absent beforehand). The one structural change (new symlinks) went through `/risk-check` before landing, per the mandatory gate.
+
+### Session Assessment
+Skipped (not requested — `+feedback` / `full` not passed).
+
+### Findings Queued
+- **Reviewer and executor independently made the identical instrument-scope error on the same finding** — this session's own initial scoping and the prior S1-940 session's mission-note re-verification both counted "no `command grep` antibody present" as "scan site is exposed," for agents that turn out to have zero grep scan sites at all. Two independent occurrences of the same mis-scoping pattern; queued at `logs/improvement-log.md` (severity: medium-high) with a proposed structural fix (require a precondition count alongside any "lacks mitigation X" claim).
+
+### Findings Declined
+- Thread 2's worsening count and thread 8/9's "still open, unchanged" status — already re-verified and recorded in-place in the mission file by the prior S1-940 session; no new finding to file, this session did not touch those threads.
+- The workspace-root repo's own uncommitted `logs/friction-log.md` (~281 lines, from a prior session's wrap) and ~14 other stale uncommitted files (old risk-check reports, stray session-plan/run files from 2026-07-14/18/19) — visible directly via `git status`, not a hidden defect requiring a log entry to be rediscoverable, and not created or broken by this session's work. Already flagged to the operator in chat and in Next Steps below.
+
+**Findings: 3 — queued 1 (severity: medium-high), declined 2. 1 + 2 = 3.**
+
+### Next Steps
+- Mission `repo-integrity-repairs-2026-07`: 8 of 16 threads closed. 8 remain open (2, 8, 9, 10, 12, 14, 15, 16). Threads 8 and 9 are flagged by the prior session's own Next Steps as "small, self-contained, untouched" — good next pick.
+- The leftover uncommitted files noted above (friction-log.md and ~14 stray files) should get a dedicated commit or `/log-sweep` pass at some point — not urgent, but they will keep showing up as working-tree noise until then.
+
+### Open Questions
+None.
+## 2026-07-25 — Session S3-4fd
+**Mandate:** Complete five verified-premise repo-integrity fixes in one wave — stash handling in `/close-worktree-session`, verify-first rewrite of 5 deploy-fitness threads, 2 friction-log subheader repairs, and 2 already-fixed thread closures — done when: `command grep -ci stash` on `close-worktree-session.md` returns >0 with the guard proven by execution; all 5 deploy-fitness thread lines read verify-first; every friction-log session block carries a `### Friction Events` subheader; and threads 8/15/16/10 plus the repo-health `git checkout` thread are ticked with cited evidence.
+- Out of scope: repo-health threads 2, 9, 12, 14, 15; the hook-wiring installer; check-archive.sh
+- Files in scope: .claude/commands/close-worktree-session.md, logs/missions/research-workflow-deploy-fitness.md, logs/friction-log.md, logs/missions/repo-integrity-repairs-2026-07.md, logs/missions/repo-health-backlog-2026-07.md
+- Stop if: a premise fails re-verification at execution time — drop that item rather than build on it
+- Mission: repo-integrity-repairs-2026-07
+
+**Gate waiver (operator-authorized, 2026-07-25).** Item 1 (`/close-worktree-session` stash handling) falls in the `/risk-check` "automation with shared-state effects" change class, so a plan-time gate was owed. The operator was told the gate was owed and explicitly directed "DO not run risk check. Run item 1 too." Recorded here per `docs/audit-discipline.md` § Risk-check change classes — "No self-waivers … a one-line operator confirmation is required first, always." This is that confirmation, not a session-side materiality judgment. The end-time gate is likewise waived by the same instruction.
+
+Wave: five verified-premise repo-integrity items bundled into one session — (1) add stash handling to `/close-worktree-session`; (2) downgrade the deploy-fitness mission's threads 3/4/6/7/8 to verify-premise-first; (3) repair the 2 friction-log session blocks invisible to their four parsers; (4) close mission thread 10 (already fixed, verified); (5) close the repo-health `git checkout` thread (already retired, verified against all three settings files).
+
+### Summary
+Executed the wave as a single operator-approved session. Fixed `/close-worktree-session`'s stash handling (root cause found by execution: the command checked the worktree but never the main checkout, which is what actually drove the 2026-07-17 incident), downgraded 5 deploy-fitness mission threads to verify-first framing, and repaired 2 friction-log parser-visibility defects. Also closed the 3 source `improvement-log.md` entries these fixes satisfy, since `/prime` scans entries, not mission threads. Two of the five originally planned items were dropped at execution time on re-verification, not shipped as false closes.
+
+### Decisions Made
+- Item 1 (`/close-worktree-session`, `/risk-check` "automation with shared-state effects" class) proceeded with the plan-time AND end-time gate explicitly waived by the operator ("DO not run risk check. Run item 1 too") — recorded as an operator-authorized waiver, not a self-waiver, per `docs/audit-discipline.md` § Risk-check change classes.
+- Settled the 2026-07-17 incident's open empirical question by building a throwaway test repo with a falsifiable control case, rather than reasoning about `.gitattributes merge=union` from documentation alone. Result: `git stash pop` does honor the driver, but three logs (including the one the incident damaged) are deliberately outside its coverage — so the new conflict-marker gate is real, load-bearing protection, not redundant with the driver.
+- Dropped mission thread 10 mid-wave rather than closing it: initial recommendation had verified only one of its two clauses. Caught on re-read of the thread's own text before ticking it.
+- Dropped the repo-health `git checkout` item: it is a frozen validation-contract assertion, not a mission thread; the actual corresponding thread was already closed by a prior session.
+- Closed 3 `improvement-log.md` entries beyond the mission-thread ticks, on the reasoning that `/prime` Step 3 scans entries directly and a ticked mission thread does not suppress its source entry.
+
+### Risky actions
+None taken beyond the disclosed, operator-approved gate waiver on item 1 (recorded above). No subagent QC-pass ran on that change either, per this session's standing instruction not to use the Agent tool unless asked — verification was inline and execution-based (fixture tests with controls, byte-hash checks on the mission file's frozen sections).
+
+### Next Steps
+- Mission `repo-integrity-repairs-2026-07`: 11 of 16 threads closed. 5 remain open (2, 9, 10, 12, 14). Thread 10 needs the parked writer-sweep (three improvement-log writers — `leverage-idea.md`, `improve.md`, `resolve-repo-problem.md` — still emit no `Severity:` line) before it can close.
+- 5 commits from this session are unpushed pending the wrap push-gate confirmation.
+
+### Open Questions
+None.
+
+### Findings Declined
+None — no new findings surfaced this session outside the improvement-log entries already dispositioned (queued/resolved) during execution.
+
+## 2026-07-26 — Session S1-2d0
+
+**Mandate:** Complete picked menu items: (1) add a `Severity:` line to the improvement-log entry templates in `leverage-idea.md`, `improve.md` and `resolve-repo-problem.md`, closing mission thread 10; (2) provision `logs/scripts/` (`check-archive.sh` + `split-log.sh`) in the 14 projects lacking it and fix `new-project.md` to scaffold it, closing mission thread 2 — done when: all three writers emit `Severity` (0 → 3), the unprovisioned-project count reaches 0 of 27, `new-project.md` scaffolds `logs/scripts`, and threads 10 and 2 are ticked with cited evidence.
+- Out of scope: the 13 projects that already have `logs/scripts/` — no replacement, no symlinking; their deliberately customised thresholds are preserved.
+- Files in scope: .claude/commands/leverage-idea.md, .claude/commands/improve.md, .claude/commands/resolve-repo-problem.md, .claude/commands/new-project.md, logs/scripts/check-archive.sh, logs/scripts/split-log.sh, logs/missions/repo-integrity-repairs-2026-07.md, logs/improvement-log.md
+- Stop if: a premise fails re-verification at execution time — drop that item rather than build on it
+- Required outputs: logs/scripts/check-archive.sh and logs/scripts/split-log.sh created in projects/{axcion-ai-system-owner,axcion-ai-system-redesign,axcion-communication-system,axcion-copy-factory,axcion-design-studio,axcion-linkedin-os,axcion-pitch-engine,axcion-systems-builder,axcion-website,corporate-identity,management-os,personal,repo-documentation,strategic-os}
+- Mission: repo-integrity-repairs-2026-07
+
+**Gate waiver (operator-authorized, 2026-07-26).** Item 2 edits project-creation automation (`new-project.md`) and writes into 14 project repos, placing it in the `/risk-check` "automation with shared-state effects" change class, so a plan-time gate was owed. The conflict was surfaced before any write: `/risk-check` dispatches a reviewer subagent, while this session carries a standing instruction not to use the Agent tool unless asked. The operator was given three options and replied "go both but skip risk check". Recorded per `docs/audit-discipline.md` § Risk-check change classes — "No self-waivers … a one-line operator confirmation is required first, always." This is that confirmation, not a session-side materiality judgment.
+
+**Premise corrections established before execution (re-verified, not inherited from the thread text).** (a) The unprovisioned count is **14 of 27**, not the thread's 13 — `personal/` joined. (b) The thread's "walk-up" framing is false: `wrap-session.md:31` calls `bash logs/scripts/check-archive.sh` on a plain relative path, so in the 14 projects the call fails outright and their logs have never been archived. (c) The 13 provisioned copies are **not** broken — they resolve `PROJECT_DIR` from their own location, which is correct for a local copy, and several carry deliberate customisation (`axcion-brand-book` uses 1500/700 thresholds against canonical 500/400). Replacing or symlinking them would destroy real settings, so they are out of scope. (d) Disclosed consequence, operator-approved: provisioning switches archiving **on**, so at the next wrap four projects (`axcion-website` 1861 lines, `axcion-design-studio` 1065, `axcion-ai-system-redesign` 684, `strategic-os` 512) will have session notes trimmed to the last 10 entries with the remainder moved to an archive file.
+
+Auto multi-item: writer-sweep for the three `Severity`-less improvement-log writers (mission thread 10); `logs/scripts/` provisioning for the 14 projects lacking it plus the `new-project.md` scaffold fix (mission thread 2).
+
+### Summary
+
+Ran the two `/prime` auto-mode items picked at session start, both closing threads on mission `repo-integrity-repairs-2026-07`. Item 1 (writer-sweep) turned out to cover five writers, not the three the source entry named — found by enumerating every improvement-log append-site rather than trusting the list. Item 2 (provisioning) turned out to be 13 real projects, not 14, and its "wrong-repo write" framing was false — the actual defect was that unprovisioned projects never archived at all. Both threads closed with cited evidence; the mission moved from 11 to 13 of 16 threads closed.
+
+### Decisions Made
+
+- **Writer-sweep scope, item 1.** The mandate named three writers (from the source improvement-log entry). Before writing anything, enumerated every file that appends to `improvement-log.md` and found five — `resolve-incident.md` and `fix-project-issues.md` were missing from the list. Fixed all five rather than the three named, since closing on the incomplete list would have been a second false closure on the same thread (already reverted once, 2026-07-25, for exactly that).
+- **`resolve-incident.md` fix triggered its own stated obligation.** That file's line 199 declares a verbatim field-name contract requiring it be updated *in the same commit* whenever the schema block it points to changes. The first writer-sweep commit changed that schema and didn't honor the contract; a second commit did.
+- **Severity backfill for the one remaining unclassified entry.** The `2026-07-21 — PowerPoint production capability` entry (the writer-sweep defect's own live demonstration case) was backfilled at `medium`, not `high` — it is a deliberately parked capability with a real activation trigger, and `medium` lets it surface via its `Review-cycle:` without being promoted into the urgent task menu that `high`/`medium-high` would trigger.
+- **`personal/` dropped from provisioning, item 2.** The mandate's Required-outputs list named 14 projects including `personal/`. On inspection it is a completely empty directory — no `CLAUDE.md`, no `.claude/`, no `logs/`, not its own git repo. Provisioning it would have been infrastructure for a consumer that does not exist. Dropped under the mandate's own stop-if clause rather than built. Real count: 13 of 26 real projects.
+- **Copy, not symlink, for the 13 provisioned projects.** Several existing `logs/scripts/` copies elsewhere in the repo carry deliberate customisation (`axcion-brand-book` runs 1500/700-line thresholds against canonical 500/400). Symlinking would silently remove that ability. Copies match the established topology.
+- **The 13 already-provisioned projects were left untouched, including divergent ones.** They resolve their archive target from their own location, which is correct for a local copy — the wrong-repo defect only bit projects with no local copy. Normalising them was judged destructive churn, not a fix, and was out of scope by the mandate.
+- **Operator's "skip risk check" instruction applied to both the plan-time and end-time gate.** Item 2 (project-creation automation, 14-repo writes) is a `/risk-check` change class. The operator's mid-session reply — "go both but skip risk check" — was recorded as a plan-time waiver in the mandate block. At wrap, `/wrap-session` Step 12b's end-time gate would ordinarily fire on the same change class; treated as covered by the same instruction rather than re-asking, consistent with the prior session's (S3-4fd) explicit pattern of extending an operator waiver to both checkpoints. Not a self-waiver — the underlying authorization is the operator's own words, applied to its natural symmetric checkpoint.
+
+### Risky actions
+
+Cross-repo writes into 13 project repos (creating `logs/scripts/check-archive.sh` + `split-log.sh` where absent — additive only, no existing file overwritten, verified by pre-flight before each write) under an operator-authorized `/risk-check` waiver; no independent QC-pass ran on either item, per this session's standing instruction not to use the Agent tool unless asked. Verification was inline and execution-based throughout (fixture tests, byte-comparison against canonical, falsification tests with declared-first expectations, a mandatory pre-flight refusing to overwrite). No destructive action was taken or nearly taken.
+
+### Next Steps
+
+- Mission `repo-integrity-repairs-2026-07`: 13 of 16 threads closed. 3 remain open (9, 12, 14).
+- 33 commits are unpushed across 14 repos, pending this wrap's push-gate confirmation.
+- **Two repos need an operator decision before they can be pushed:** `axcion-ai-system-redesign` has no upstream configured and no remote at all; `axcion-pitch-engine` has a remote (`origin`) but no upstream branch set. Both will need `git push -u origin main` (or equivalent) rather than a bare `git push`.
+- Four projects now exceed canonical archive thresholds and will archive at their own next wrap — expected, not a defect: `axcion-website`, `axcion-design-studio`, `axcion-ai-system-redesign`, `strategic-os`.
+
+### Open Questions
+
+- Does `axcion-ai-system-redesign` need a GitHub remote created, or is it intentionally local-only? It currently has no remote configured at all, so its 2 unpushed commits (including this session's) cannot be pushed until that's resolved.
+
+### Findings Declined
+
+- **Recurring "incomplete source set" pattern (this session's two instances: the three-writers list was five; the 13-vs-14 project count).** Already tracked as a named class by the `2026-07-24` and `2026-07-25` improvement-log entries. Declined a new entry — this session's instances are corroborating evidence, recorded inline in the mission thread closures (`logs/missions/repo-integrity-repairs-2026-07.md` threads 2 and 10) rather than duplicated as a fresh log entry.
+## 2026-07-29 — Session S1-2dd
+
+**Mandate:** Produce the immutable Shape PLAN for `/work-loop` stream `2026-07-29-prime-minimum-responsibility` — an implementable plan reducing canonical `prime.md` from 830 to ≤300 lines without weakening session initialization or changing the operator experience — done when: the PLAN is written to `logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan.md` with a line budget on every retained `/prime` section, one authoritative owner named for every delegated responsibility, vertical Build slices with dependencies and rollback defined, a stated qualification route for any new durable artifact, and the unit stopped at G1 for Codex review.
+- Out of scope: Slices 2, 3, 4 and 5 — this session executes Slice 1 only. Prove and Land are separate units.
+- Files in scope: .claude/commands/prime.md, .claude/commands/session-start.md, .claude/commands/session-plan.md, .claude/commands/build-context.md, .claude/commands/work-loop.md, .claude/agents/context-discovery.md, .claude/hooks/check-foreign-staging.sh, docs/work-loop.md, docs/session-marker.md, docs/context-pack-schema.md, docs/backlog-reconciliation.md, logs/scripts/run-manifest.sh, logs/loop/2026-07-29-prime-minimum-responsibility-frame.evidence.md, logs/loop/2026-07-29-prime-minimum-responsibility-frame.brief.md, logs/missions/lean-prime-2026-07.md
+- Stop if: a stated premise fails verification at execution time — report the failure rather than build the plan on it.
+- Required outputs: logs/loop/2026-07-29-prime-minimum-responsibility-shape.brief.md, logs/loop/2026-07-29-prime-minimum-responsibility-shape.plan.md, logs/loop/2026-07-29-prime-minimum-responsibility-shape.evidence.md, logs/loop/2026-07-29-prime-minimum-responsibility-build-1.brief.md, logs/loop/2026-07-29-prime-minimum-responsibility-build-1.evidence.md
+- Mission: lean-prime-2026-07
+
+**Mandate amended 2026-07-29, after G1.** The block above was written for the **Shape** unit, whose defining property is that the object under work stays untouched — hence its original `Out of scope: editing any object under work`. G1 then approved the slice list, the Shape unit closed, and Build unit `-build-1` opened to execute **Slice 1**, which edits `prime.md` and nine other files by design. The footprint was widened to Slice 1's approved census and the stale out-of-scope clause replaced. Surfaced by `check-foreign-staging.sh`, which blocked the Slice 1 commit against the narrower footprint — the guard working as intended, not overridden. `.codex/agents/context-discovery.toml` was briefly edited by Slice 1 and has been **reverted** (operator call, 2026-07-29): `.gitignore:52-59` classifies `.codex/` as an unmaintained operator experiment whose adoption is a separate lifecycle decision, so syncing it inside a slice was out of bounds. It is correctly absent from the fields above, Slice 1's tracked census is 9 files, and `git revert` on `1b96aa6` is a complete rollback. See the build-1 evidence, R2.
+
+### Summary
+
+Continued `/work-loop` stream `2026-07-29-prime-minimum-responsibility` from the prior handoff.
+Produced `shape.plan-v4.md`, a measured package amendment showing `prime.md` cannot reach ≤430 or
+≤300 under a relocation-only package (behaviour-preserving lands 419, aggressive 316 — both short).
+Then executed an operator decision resolving the mission's outstanding non-negotiable — `/work-loop`
+may edit `/prime` under three conditions, recorded in `logs/decisions.md` with the prior process
+violation left on the record rather than erased. Re-scoped Slice 2 from a narrow allocator-only
+capability to one "Prime runtime delegation" capability and opened its record and hand-off brief,
+suspended pending `/develop-ai-resource` qualification. No edit was made to `prime.md` itself.
+
+### Decisions Made
+
+Both substantive decisions were operator-directed and are formally recorded in `logs/decisions.md`
+(not restated here): (1) the `/work-loop`-may-edit-`/prime` scope resolution — three conditions,
+ratifies Slices 1 and 3, process violation stays on record, `work-loop.md:247` stays stale pending a
+separately scoped fix; (2) plan-v4's falsification conclusion is scoped to the relocation-only
+package, not to ≤300 generally — recorded as a corrected reading, plan-v4 itself left unedited
+(immutable per `docs/work-loop.md` § Artifacts). One routine judgment call: severity levels on the
+two findings queued to `improvement-log.md` at wrap (medium-high, medium — reasoned in each entry).
+
+### Risky actions
+
+**A gate that should have fired but didn't, discovered and recorded this session (not newly risky
+today).** The mission's non-negotiable required an operator decision in `logs/decisions.md` before
+any `/work-loop` unit edited `prime.md`; Slices 1 and 3 (prior sessions) edited it first and the
+decision entry did not exist until this session. Fully disclosed and recorded in `logs/decisions.md`,
+2026-07-29, which explicitly forbids any future session from citing it as evidence the decision
+preceded the edits. No destructive git operation, no push, and no permission bypass occurred this
+session.
+
+### Next Steps
+
+- Run `/develop-ai-resource` in upstream mode against `logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md` (capability: `prime-runtime-delegation`, record at `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`). Do not preselect a shape — reuse, one script, several scripts, or no build are all admissible.
+- Before Step 3 of that pipeline: confirm the operator's posture on Agent-tool use — `/risk-check` and `/qc-pass` both dispatch subagents, and this session's standing no-Agent-tool-unless-asked instruction is a live, already-logged conflict with no documented precedence rule.
+- After qualification returns: produce the measured package amendment (resulting `prime.md` line count **and** runtime cost) before Slice 2 resumes, per the brief's constraints.
+- Separately: `.claude/commands/work-loop.md:247` needs its own scoped correction — queued to `improvement-log.md` this wrap, not yet actioned.
+- Consider a `/mission` update to `lean-prime-2026-07`'s `## Open threads` reflecting the re-scoped capability.
+
+### Open Questions
+
+None beyond what `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`'s
+`## Current phase and next action` already states as the pointer.
+
+### Findings Declined
+
+None — both findings surfaced this session (the work-loop amendment-path contract gap, and the stale
+`work-loop.md:247` line) were queued to `logs/improvement-log.md`, not declined.
+## 2026-07-29 — Session S2-5a5
+
+**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility` (mission `lean-prime-2026-07`). Run `/develop-ai-resource` in upstream mode against `logs/loop/2026-07-29-prime-minimum-responsibility-build-2.brief.md` — capability `prime-runtime-delegation`, record at `projects/axcion-ai-system-owner/development/prime-runtime-delegation.md`. Shape is NOT preselected: reuse, one script, several scripts and no build are all admissible.
+- Mission: lean-prime-2026-07
+- **Operator directive, this session:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed or completed. Verification is by direct inspection and deterministic executable tests only.
+
+### Summary
+
+Corrected a mis-picked task from `/prime` (caught by the operator before any write), then resumed the
+actual open `/work-loop` unit: build-2 of stream `2026-07-29-prime-minimum-responsibility` (mission
+`lean-prime-2026-07`). Ran `/develop-ai-resource` in upstream mode against the build-2 brief under the
+operator directive above. Qualified and built one artifact — `logs/scripts/prime-marker.sh`, the
+marker allocator extracted to a real script, proven equivalent to the live `prime.md` block by a
+20/0 differential test under both bash and zsh — and **declined** the brief's other two candidate
+responsibilities after re-deriving their premises: two of the brief's four premises were false as
+stated. Also found and logged a high-severity harness defect (a shell `grep` wrapper that silently
+mis-evaluates single-quoted `$VAR` patterns), caught only because a positive control was run before
+trusting an empty search result inside this same qualification.
+
+### Decisions Made
+
+- **Capability record `prime-runtime-delegation.md`, D3:** build the allocator only; decline Step 1a's
+  and Step 1d's scans for v1, each with a stated reopening trigger; keep the allocator's 88 comment
+  lines **in the script** rather than relocating them to `docs/session-marker.md` — a deliberate
+  deviation from plan-v3's slice text, reasoned in D3 (zero orientation cost in a script vs. a read
+  cost in a doc; co-location with the code they guard).
+- **Gates:** `/risk-check`, `/qc-pass`, all subagent dispatch — operator-directed decline this session,
+  recorded as declined (never passed, never waived) in the evidence file, the capability record's D3,
+  and both commit messages.
+- **Routine:** logged the `grep`-wrapper finding at `high` severity given its blast radius (several
+  commands decide on an empty `grep` result, one of which writes a session header on that branch) —
+  reasoned inline in the improvement-log entry.
+
+### Risky actions
+
+None taken. One near-miss avoided, not executed: a `grep` instrument bug nearly produced a fabricated
+premise (an empty search read as "this code doesn't exist") inside a qualification decision — caught
+by running a positive control on the instrument before trusting the result, so nothing false shipped.
+Logged as a harness defect below, not a materialized session risk.
+
+### Next Steps
+
+1. Produce the measured package amendment before Slice 2 resumes — two of its three inputs are now
+   measured (`prime.md` 635 → ~493 projected; orientation-cost delta −10,870 chars per read × 29
+   consumers); the third (what merged Slice 4+5 can still reach) is unmeasured.
+2. Resume Build Slice 2: replace `prime.md` Step 8k with a call to `logs/scripts/prime-marker.sh`,
+   **and repoint `logs/scripts/prime-allocator.test.sh` at the script in the same commit** — landing
+   one half without the other recreates the "green run over dead code" defect that file's own header
+   already documents from 2026-07-14.
+3. Decide on independent Codex review before or alongside the wiring — the route is `challenged` and
+   that obligation is currently **unmet**, not waived, per operator direction this session.
+- `/work-loop` picks this up naturally next session via Tier 1 resume (`active_unit` still build-2).
+
+### Open Questions
+
+None beyond what the capability record's `## Current phase and next action` already states.
+
+### Findings Declined
+
+- **The initial mis-pick of the wrong `/prime` menu item** — declined: caught and corrected before any
+  write (zero cost), and matches the already-extensively-logged assert-from-recall failure family;
+  no new prevention beyond what that family already prescribes (verify session state before acting on
+  an ambiguous instruction).
+- **Premise: `mission.md:47-48` does not duplicate Step 1d's scan** — declined for the improvement-log
+  channel: fully recorded durably in the capability record's D3 and the unit's evidence file, which is
+  the correct durable home for a brief-specific verification finding, not a recurring infra defect.
+- **Premise: Step 1a's scan is only partly deterministic (classification half is judgement)** — same
+  disposition and same reasoning as above; recorded in D3 and the evidence file.
+- **`prime-allocator.test.sh`'s awk-extraction fragility** — declined: pre-existing and already
+  self-documented in that file's own header comment (`:8-16`, dated 2026-07-14); not new this session.
+- **`run-manifest.sh` restates `/prime` marker semantics in 11 comment sites** — declined: an
+  informational observation from this session's verification pass, comments only (no duplicated
+  logic), no maintenance-drift risk beyond a future edit updating one without the other — not worth a
+  separate queue entry.
+
+Findings: 6 — queued 1 (severity: high), declined 5. 1 + 5 = 6.
+
+## 2026-07-29 — Session S3-060
+
+**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility`, unit **build-2** (mission `lean-prime-2026-07`). In order: (1) update the measured package amendment — record that **only `prime-marker.sh` qualified**, and that the two judgment-bearing scans (Step 1a's git cross-check, Step 1d's mission scan) **remain in `/prime`**; (2) resume **Build Slice 2** — replace `prime.md` Step 8k with a call to `logs/scripts/prime-marker.sh` **and** repoint `logs/scripts/prime-allocator.test.sh` at the script **in the same commit**; (3) run both test suites; (4) **stop after closing Build-2 — do not begin Slice 4.**
+- Mission: lean-prime-2026-07
+- **Operator directive, this session:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed or completed. Verification is by direct inspection and deterministic executable tests only.
+## 2026-07-29 — Session S4-efd
+
+**Work:** Continue `/work-loop` stream `2026-07-29-prime-minimum-responsibility`, unit **build-4** (mission `lean-prime-2026-07`). Resumed from the S3-060 handoff scratchpad. In order: (1) capture the **live smoke test** of the extracted allocator — the first production allocation through `logs/scripts/prime-marker.sh` (directive 7); (2) open Build unit `2026-07-29-prime-minimum-responsibility-build-4` (brief → `active_unit` → commit); (3) verify premises; (4) execute **merged Slice 4+5** under plan-v5 § 3 **Budget A** (behaviour-preserving), aiming ≤430 lines; (5) resolve the retired `prime-marker.test.sh` before Prove.
+- Mission: lean-prime-2026-07
+- **Operator directives, carried verbatim from the S3-060 authorization:** `/risk-check`, `/qc-pass` and all subagent dispatch are **operator-declined** — recorded as declined, never as passed, satisfied or waived, and **not** encoded as a QC-PENDING commit-block. Keep every executable rule in `/prime`; relocate or compress rationale only. Preserve Step 1a cross-check, Step 1d mission scan, Step 3 `medium-high` handling, Step 7 reply classifier. **If ≤430 cannot be reached without changing behaviour, STOP and record the measured shortfall — do not force the target.** Do not open Prove until build-4 closes.
+
+### Summary
+
+Resumed from the S3-060 handoff. Captured the **live smoke test** of the extracted allocator (directive 7): registered a falsifiable prediction (`S4-efd`) before running `logs/scripts/prime-marker.sh`, then matched it exactly — the first production allocation through the script. Opened Build unit `build-4`, verified premises, then executed **merged Slice 4+5** on `prime.md`: **503 → 413 lines** (orientation 356 → 266, dispatch unchanged at 147), landing Slice 5 (the stale `/new-project` step-11a citation) in the same unit. Verified with a rule-preservation diff carrying its own falsification control (which caught and reverted one over-compression), Step 7 byte-identity, 28/28 symlink resolution, and the allocator suite (19/0). Retired `prime-marker.test.sh` per directive 6 — its own FATAL message prescribed it once Slice 2 landed. Closed build-4 and opened the **Prove (G2)** unit.
+
+### Decisions Made
+
+- Registered the allocator prediction (`S4-efd`) **before** running it, so the match is falsifiable evidence rather than an assumption.
+- Reverted one compression — Step 1a's `$AI_RESOURCES` git-log call — after the rule-preservation diff showed it had turned a literal command into a prose reference. Restored per plan-v4 § 2's rule/rationale boundary.
+- Retired `logs/scripts/prime-marker.test.sh`: its own FATAL message prescribed retirement once Slice 2 landed, and no live consumer referenced it (only log records did).
+- **≤300 mission target recorded MISSED by 113** (413 lines), not renegotiated, per D2. **≤430 waypoint MET by 17.**
+- Scoped the Prove unit's 14 behavioural falsification criteria to a **scratch checkout**, not this working checkout — they write markers, headers and run manifests that would otherwise contaminate the artifacts `F-ARTIFACTS` asserts on.
+- `/risk-check`, `/qc-pass` and subagent dispatch stayed operator-declined for this unit, carried verbatim from the S3-060 authorization — recorded as declined, never as passed or waived.
+
+### Risky actions
+
+None. No destructive git operations, no external writes, no shared-state clobber. Four commits landed this session across two repos (`ai-resources`, `axcion-ai-system-owner`); none pushed.
+
+### Next Steps
+
+Prove unit is open: `2026-07-29-prime-minimum-responsibility-prove`. Next session: stand up a scratch checkout and run the 14 behavioural falsification criteria from `…shape.plan.md` § 6 — F-MENU, F-NUM/F-FREE/F-AUTO, F-1GATE, F-8AGATE, F-8BNOGATE, F-ARTIFACTS, F-DIRECT/F-ENG, F-MISSION, F-FAIL — then send the evidence to Codex for the G2 review. F-LINES (falsified, recorded), F-ALLOC, F-SEED and F-QUAL are already evidenced and carried forward, not re-run.
+
+### Open Questions
+
+None blocking. Noted, not resolved: rationale for the 13 orientation regions is now split across five destination docs — a future editor changing a rule in `prime.md` without reading its cited rationale is a real, unmitigated risk.
+## 2026-07-29 — `/work-loop` unit: `/leverage-idea` lifecycle-routing brief routed out to `/develop-ai-resource`
+
+### Summary
+Ran one `/work-loop` unit (skill `work-loop`, worktree `ai-resources-leverage-idea`) against a
+Codex-authored brief asking `/leverage-idea` to become an evidence-grounded routing-and-handoff
+command instead of stopping at an implementation plan. Verified all six of the brief's premises
+(confirmed, with positive controls), classified the route `reviewed` (14 project symlinks), wrote
+Frame evidence diagnosing five defects in the shipped command, and sent it to Codex for review. Codex's
+review reversed the unit's initial judgment: the requested change moves the command's authority, input
+domain and output contract at once, which is a material expansion under `docs/work-loop.md:48` and
+belongs to `/develop-ai-resource`, not to a `/work-loop` settled correction. Adjudicated all four
+review findings, wrote a raw handoff brief to `inbox/`, logged one `/work-loop` contract defect the
+review also surfaced, and closed the unit `routed-out`. `.claude/commands/leverage-idea.md` was never
+edited.
+
+### Decisions Made
+- **`routed-out`, not implemented here** — accepted Codex's MATERIAL 2 finding in full; the command's
+  three-axis expansion (authority / input domain / output contract) is material, not a settled
+  correction. Superseded, did not delete, the Frame evidence's original narrower judgment (append-only
+  rule).
+- **MATERIAL 1 rejected** — Codex's "agent authority gap" claim rested on inspecting 3 files; the
+  governing rules doc `docs/ai-resource-creation.md` names agent definitions under
+  `/develop-ai-resource`'s authority four times, uninspected by the reviewer. Kept the narrower true
+  observation (the command's own list omits the word "agent") as a text-fix note in the handoff.
+- **MATERIAL 3 (a real `/work-loop` contract/command disagreement) logged, not fixed inline** — fixing
+  it would have edited `/work-loop`'s own files, outside this unit's declared object
+  (`leverage-idea.md`). Logged to `logs/improvement-log.md` instead.
+- **D1 (the bridge-matrix bypass) travels with the rest of the expansion rather than being split out**
+  — it is very likely a settled correction on its own, but the brief's stated need was the whole
+  expansion; splitting it out would be a new, narrower brief.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None — no destructive or external action taken; no gate skipped. One notable near-miss avoided: the
+unit's initial route judgment (implement inside `/work-loop`) would have satisfied the brief's own
+falsification condition ("any proposed new durable AI resource bypasses `/develop-ai-resource`") had
+it not been caught by review before any edit was made.
+
+### Next Steps
+Run `/develop-ai-resource inbox/leverage-idea-lifecycle-routing.md` in a fresh session to qualify
+whether and how `/leverage-idea` should be expanded. A legitimate outcome of that command is "no
+build." Full evidentiary trail (premises, route reasoning, all five defects, adjudication) is
+recoverable at commit `1a40c60` (`logs/loop/2026-07-29-leverage-idea-lifecycle-frame.*`, deleted from
+the working tree at stream close per `docs/work-loop.md` § Artifacts).
+
+### Open Questions
+None.
+## 2026-07-29 — /leverage-idea → routing-and-handoff command: qualified, built, gated, committed (merge pending)
+
+### Summary
+Ran `/develop-ai-resource` on `inbox/leverage-idea-lifecycle-routing.md` — the raw brief routed out of
+`/work-loop`'s `2026-07-29-leverage-idea-lifecycle-frame` unit. Qualified through Step 1 (verdict:
+improve an existing shared resource, no new component), built the expansion (Step 2), self-verified by
+execution and a simplify pass (Step 3), then ran independent `/qc-pass` + `/risk-check` on operator
+authorization. Both returned non-passing verdicts; all findings were independently re-verified, fixed
+(re-QC waived by the operator), and the candidate was committed. Landed in this worktree
+(`session/2026-07-29-leverage-idea`, commit `b2bb1bd`); merging into `main` was scoped, dry-run
+verified clean, and left pending for the operator to trigger.
+
+### Decisions Made
+- **(Claude, `/develop-ai-resource` Step 1.6)** Verdict: improve an existing shared resource —
+  `.claude/commands/leverage-idea.md`, no new component. Mechanism is direct edit, not `/improve-skill`
+  (object is a command, not a skill). Complexity budget cleared on both prongs (net-simplification +
+  cited evidence in `logs/improvement-log.md` 2026-07-12).
+- **(Operator)** Authorized fresh-context subagents specifically for `/qc-pass` and `/risk-check` on
+  this candidate (the session's default posture otherwise excludes the Agent tool), with a conditional
+  rule: both PASS/GO → commit; either non-passing → stop and show findings before committing.
+- **(Operator)** Keep the tracked `inbox/` write on the new-AI-resource route — the one genuinely new
+  behavior flagged at the Step 4 report.
+- **(Operator)** No edits to the System Owner sibling repo (`projects/axcion-ai-system-owner/`) in this
+  change; `toolkit-relationship.md`'s stale `/leverage-idea` row is a named, deferred follow-up.
+- **(Operator, risk-accepted — logged to `decisions.md`)** After both gates returned non-passing
+  verdicts: apply the identified fixes and commit, **skipping the re-QC** that would ordinarily follow
+  a QC-REVISE fix pass. See `decisions.md` 2026-07-29 for rationale and alternatives considered.
+- **QC fixes applied** (`qc-reviewer` verdict: REVISE, all three fixed): `develop-ai-resource.md:22`
+  stop-point wording updated (`/leverage-idea` no longer described as stopping at a plan); Step 7's
+  `## Capability` heading-form clause added, preventing a brief from this command's own main route
+  from tripping `/develop-ai-resource` Step 1.0's malformed-upstream-handoff check; `WORKSPACE` in the
+  Step 4 investigator brief redefined by ancestor walk-up instead of parent-of-`AI_RESOURCES` (latent,
+  not live today, but wrong once a worktree sits outside the workspace root).
+- **Risk-check mitigations dispositioned** (`risk-check-reviewer` verdict: PROCEED-WITH-CAUTION, blast
+  radius High — inherent to the 14-project symlink fan-out): `toolkit-relationship.md` — DEFERRED
+  (sibling repo excluded by operator instruction); stale `leverage-idea.md` line citations in four
+  `plans/2026-07-28-develop-capability-build-plan*.md` files — DECLINED (all four carriers are
+  SUPERSEDED/HALTED with DO-NOT-IMPLEMENT banners; the live build authority cites the command nowhere);
+  `/work-loop` input-shape compatibility — VERIFIED (accepts a plain-English need, matching the payload
+  shape this command now hands it).
+
+### Risky actions
+The first commit attempt silently staged only the brief's deletion — a prior `git rm` had already
+removed `inbox/leverage-idea-lifecycle-routing.md` from the pathspec list, so the follow-on `git add`
+with that stale path in it aborted with a fatal pathspec error and staged nothing else, but the
+subsequent `git commit` still ran against whatever was already staged (the deletion alone) rather than
+failing loudly. Caught immediately by the mandated post-commit `git show --stat` self-verification,
+before any push; corrected by re-staging the full file set and amending. No push occurred against the
+incomplete commit. Worth a structural look: a `git add` that partially fails on a multi-path invocation
+should probably be treated as blocking, not silently proceeding to commit whatever did stage.
+
+### Findings Declined
+- Stale `/leverage-idea.md` line-number citations in four `plans/2026-07-28-develop-capability-build-plan*.md`
+  files — not queued: all four carriers are SUPERSEDED/HALTED with DO-NOT-IMPLEMENT banners, and the
+  live build authority (`plans/2026-07-28-work-loop-consolidated-build-plan.md`) cites the command
+  nowhere. No live consumer to protect. (Full check: this session's `/risk-check` report.)
+
+### Next Steps
+- **Land the branch.** `session/2026-07-29-leverage-idea` is 7 commits ahead of `main`; a dry-run merge
+  (`git merge-tree --write-tree`) came back clean with no conflicts. Run
+  `git -C ".../ai-resources" merge session/2026-07-29-leverage-idea` from the main checkout, then decide
+  on push (gated, per this session's wrap prompt below).
+- **The branch has no upstream and is not on GitHub** — until merged or pushed, these 7 commits exist
+  on this machine only. Do not delete the `ai-resources-leverage-idea` worktree before that happens.
+- Separate follow-up session: update `projects/axcion-ai-system-owner/references/toolkit-relationship.md`
+  § 2's `/leverage-idea` row (sibling repo, excluded from this change by operator instruction) — now
+  queued in `logs/improvement-log.md` 2026-07-29 (severity medium-high) so it stays reachable.
+- 5 of 6 commands remain unretrofitted for the `general-purpose` dispatch-pinning carve-out (`tweak`,
+  `decide`, `graduate-resource`, `promote-workflow`, `wrap-session`) — tracked, not blocking.
+- New this session: a `git add`-with-stale-pathspec near-miss queued to `logs/improvement-log.md`
+  2026-07-29 (severity medium) — see § Risky actions above.
+
+### Open Questions
+Whether to merge into `main` and/or push now, or leave both for a later session — explicitly left to
+the operator, not yet decided as of this wrap.
+## 2026-07-29 — Closed the review-layer-consolidation work-loop stream at G2
+
+### Summary
+
+Resumed from a `/handoff` scratchpad mid-Prove on the `2026-07-29-review-layer-consolidation` stream and took it through to stream close. Finished the P3/P4 verification the prior session left half-done, adjudicated Codex Prove review-1 (verdict REVISE), applied the resulting repairs, and closed the stream on the operator's G2 approval. Prove and the review together found **24 live references to machinery the four Build slices had already declared removed** — five caught by the protected-safeguard pass, nineteen more by adjudicating the review. Two were materially broken producer/consumer contracts that would have silently dropped a high-consequence item's review. All protected safeguards verified unchanged throughout.
+
+### Decisions Made
+
+**On the review adjudication**
+- **M1 accepted in part** — 19 sites repaired, 7 declined. The line drawn: this stream removed the *automatic* firings, but `/qc-pass` and `/risk-check` survive as operator-invoked commands and `audit-discipline.md` § Risk-check change classes is a live heading. A site is a defect when it makes a review fire as a standing step or names a field/verdict no producer emits; a site that names the live taxonomy or describes an operator invoking a surviving command is not. Rekeying the latter would break valid pointers to simulate migration.
+- **M2, m1, m2 accepted in full** — the `work-loop.md:105` omission, the falsifier 1/4 wording, and the missing LIMITATIONS section.
+- **One of my own calls reversed mid-verification** — I initially declined the `parallel-sessions-playbook` sites, then the deterministic sweep flagged `:227`'s "`/risk-check`-gated" as the identical phrase I had just repaired in `lean-repo.md:92`. Treating the same phrase differently by file type is not defensible; repaired for consistency, reversal recorded in the evidence rather than dropped.
+- **Two defects found by following the review's lead rather than its list** — `resolve-incident.md:217,243` still escalated on a "RECONSIDER verdict" the command no longer produces. Codex did not cite them.
+- **Falsifier 2 closed structurally, not by re-counting** — plan-v3's counting scope could not be reproduced (three attempts, three different totals, none matching). Chose the structural argument over adjusting exclusions until the numbers agreed. Recorded as a limitation and queued as an improvement item.
+
+**On closure (operator-directed)**
+- **G2 APPROVED by the operator**, with all four remaining items deferred and no further review round. Closure executed per `docs/work-loop.md` § Artifacts as two commits — evidence marked `Status: complete` first (`b8ef77f`), then the stream-closing commit deleting all 19 `logs/loop/{STREAM}-*` files (`1c82aef`), so the final evidence state exists in git before deletion. Same two-commit resolution used at `94a4618`.
+- **Telemetry not captured** — operator-directed (`core path only`). Deliberate, not an omission.
+- **Concurrent session's dirty files left untouched** — operator-directed.
+
+### Risky actions
+
+**Deleted 19 files in the stream-closing commit** (`logs/loop/2026-07-29-review-layer-consolidation-*`) — contract-required, operator-directed, all recoverable at `b8ef77f`, and the other open stream (`2026-07-29-prime-minimum-responsibility-*`) was verified untouched before staging. Separately: the `check-foreign-staging.sh` guard was **off for all five commits** this session (no session marker on a `/handoff`-resumed session) while a concurrent session was actively writing to the same worktree — staged paths were verified by hand on every commit instead. Queued as a medium-high improvement item.
+
+### Findings Declined
+
+- **The pattern-scope method rule** (a reference sweep must be keyed on the concept, not the token — four consecutive units declared the sweep complete and each was wrong). Declined a separate improvement entry: it is recorded durably as the method rule in the stream's `logs/decisions.md` closure record, which is the right home for a rule derived from a closed stream.
+- **The four deferred follow-ups** (prime-owned files; workspace-root `CLAUDE.md`; `projects/positioning-research`; `work-loop.md:105`). Declined queueing — the operator explicitly took ownership at G2 and all four are recorded with line numbers in the closure record. Duplicating them into `improvement-log.md` would create two backlogs for one set of items.
+- **"This unit repaired what it reviewed"** — a real limitation (24 sites changed by the session judging them, no independent read of the repairs), but it is stated in the Prove evidence § 12 and in the closure record, and the operator adjudicated G2 with it visible. Nothing further to queue.
+
+### Next Steps
+
+- **Follow-up 4 is the one that matters** — `.claude/commands/work-loop.md:105` still orders two stacked `/risk-check` gates on the challenged route and cites `docs/audit-discipline.md:73-81`, a line range S1 deleted. Until it lands, the command running the loop contradicts the policy the loop just shipped. It was correctly excluded from this stream (a stream may not rewrite the contract it runs under) and is now unblocked, because that stream has closed.
+- Follow-ups 1–3 (prime-owned files, workspace-root `CLAUDE.md`, `projects/positioning-research`) as the operator sequences them. Follow-up 2 is what makes the change visible in workspace-rooted sessions at all.
+- The other open stream `2026-07-29-prime-minimum-responsibility` still has Frame evidence and a Shape brief on disk, awaiting its Shape unit.
+
+### Open Questions
+
+- A concurrent session was working this same stream in this worktree (four commits, plus dirty `logs/friction-log.md` and `logs/innovation-registry.md` left in place per instruction). Whether it still has uncommitted work is unknown from here — worth confirming before that worktree is used again.
+## 2026-07-30 — Created and landed worktree `session/2026-07-29-2` into main (merge conflict resolved, log append-order fixed)
+
+### Summary
+Ran `/new-worktree-session` to create an isolated worktree (`ai-resources-2`, branch `session/2026-07-29-2`) for parallel work, opened it in a new VS Code window. Later ran `/close-worktree-session` to land it; the standard guard correctly blocked on uncommitted changes in the worktree (auto-generated log-append content), which was committed rather than discarded. The merge into `main` then conflicted in `logs/friction-log.md` and `logs/improvement-log.md` — both pure-append conflicts against a concurrent session's own merged-in work — resolved by combining both sides' entries rather than picking one. That combination left two other logs (`session-notes.md`, `decisions.md`, already union-merged) with entries out of the repo's required newest-last order, tripping the `check-append-order` pre-commit hook; fixed by relocating the misplaced blocks to file end, content and internal order unchanged. Merge committed (`b15880e`), post-merge duplicate-header and conflict-marker checks passed clean, worktree removed and branch deleted.
+
+### Decisions Made
+- **(Operator)** "Just merge this, don't ask me anything" — instruction to proceed through the uncommitted-changes and merge-conflict guards without further questions. Interpreted as authorization to resolve conflicts safely (preserve all content, never discard) rather than to bypass safety checks recklessly: committed the worktree's dirty files instead of discarding them, combined both sides of the append-only conflicts instead of picking one, and fixed the resulting append-order violation structurally rather than with `--no-verify`.
+- **(Claude)** Resolved the `friction-log.md`/`improvement-log.md` merge conflicts by concatenating both sides (HEAD's block, then the branch's block) since both were pure appends with no in-place edits on either side — no content lost.
+- **(Claude)** Did not use `--no-verify` when `check-append-order` blocked the merge commit; instead relocated the two misplaced blocks (`session-notes.md` lines 305–343, `decisions.md` lines 252–314) to end-of-file to satisfy the append-order contract.
+- **(Claude, per operator's "2")** Named the worktree unit `2` (branch `session/2026-07-29-2`) since no descriptive unit name was supplied when `/new-worktree-session` was invoked.
+- **(Claude)** Triaged 5 pre-existing `detected` innovation-registry rows (from the merged-in worktree's own session work, dated 2026-07-29: `promote-workflow.md`, `lean-repo.md`, `pipeline-review-auditor.md`, `resolve-incident.md`, `resolve-repo-problem.md`) as `triaged:project-specific` — all are edits to commands/agents already living in this canonical `ai-resources` repo, so no further graduation destination applies.
+
+### Outcome
+(Step 6.4 skipped — not requested)
+
+### Risky actions
+Resolved a git merge conflict on shared log files, combining content from a concurrent session, rather than stopping per `/close-worktree-session`'s normal guard ("never auto-resolve a merge conflict — stop and hand back control"). Done under explicit, repeated operator instruction after an initial guard trip on uncommitted worktree changes. Mitigated by verifying no conflict markers landed in the working tree or `HEAD` (both checks confirmed clean) and by never discarding either side's content. Also removed a worktree and deleted a branch — both guarded, both completed cleanly (worktree was clean at removal time, branch was fully merged before deletion).
+
+### Next Steps
+- Two other session worktrees remain open: `ai-resources-leverage-idea` (branch `session/2026-07-29-leverage-idea`, per its own session note 7 commits ahead, dry-run-clean) and `ai-resources-work-loop` (branch `session/2026-07-29-work-loop`). Neither was touched this session — landing each is a separate `/close-worktree-session` call from the main checkout.
+- Commits are unpushed on `main` pending this wrap's push gate.
+
+### Findings Declined
+- **Operator override of the merge-conflict stop-and-handback guard.** Not queued as a separate improvement-log entry — it is a one-off, explicitly operator-directed override (not a recurring defect pattern), and it is already recorded above under `### Risky actions` with its mitigation.
+
+### Open Questions
+None.
+## 2026-07-30 — Retired /qc-pass, /risk-check, /resolve, /refinement-deep — Codex is the second opinion
+
+### Summary
+Operator instruction: retire the QC-pass and risk-check gates, since Codex second-opinion review now covers that role. The 2026-07-29 review-layer consolidation had already made Codex the reviewer in policy but explicitly deferred the cross-project migration ("26 projects link to them"); this session completed that migration and executed the retirement. Deleted `/qc-pass`, `/risk-check`, `/resolve`, `/refinement-deep`, the `qc-reviewer` and `risk-check-reviewer` agents, their `.codex` twins, ~180 project symlinks, 3 forked `qc-pass.md` copies, and two `.codex` auto-nudge hooks that were still live-firing on every Write/Edit. Found and fixed five genuine functional breaks (not just stale prose) where deleted resources were still actively invoked or spawned: `/prime` 8c.11, `/new-project`'s symlink scaffolding, `/friday-journal` + `/cleanup-worktree`'s subagent spawns, and the research-workflow template's manifest + commands. Renamed `audit-discipline.md` § "Risk-check change classes" → "Structural change classes" throughout. Verified clean: no dead agent spawns, no broken symlinks, all touched JSON/shell parses.
+
+### Decisions Made
+- **(Operator, via AskUserQuestion)** Blast radius: retire the QC-loop machinery (`/resolve`, `/refinement-deep`) alongside the two named commands, not just the two, and not keeping `/qc-pass` as a Codex-unreachable fallback.
+- **(Operator, via AskUserQuestion)** Sweep depth: fix wiring + docs (commands/agents/hooks/settings/CLAUDE.md/docs/skills/templates/workflow-templates); leave `logs/`, `audits/`, `plans/`, `reports/` untouched as historical record.
+- **(Claude)** Repointed `/friday-journal` and `/cleanup-worktree`'s deleted `qc-reviewer` spawns to a tier-pinned `general-purpose` dispatch with the rubric inlined, rather than leaving them broken or inventing a replacement named agent.
+- **(Claude)** Repointed the research-workflow template's spawns to its own pre-existing local `qc-gate` agent rather than the deleted canonical `qc-reviewer`.
+- Full context, rationale, and alternatives considered logged in `logs/decisions.md` under this same date/title.
+
+### Outcome
+(Step 6.4 skipped — not requested)
+
+### Risky actions
+None — all deletions were of resources whose canonical successor (Codex review) already existed in policy since 2026-07-29; nothing irreversible outside normal git history, and everything deleted is recoverable from git immediately prior to the retirement commits.
+
+### Next Steps
+- Push the two unpushed commits (`ai-resources` `38981e5`, workspace root `dc30c9d`) via this wrap's push gate.
+- Two other session worktrees remain open from a prior session (`ai-resources-leverage-idea`, `ai-resources-work-loop`) — untouched this session, landing each is a separate `/close-worktree-session` call.
+
+### Findings Declined
+None — no findings surfaced this session beyond the retirement work itself, which was fully executed and verified, not deferred.
+
+### Open Questions
+None.
+## 2026-07-31 — Supervised work-loop repair, Slice 1 Shape — plan reviewed twice, G1 approved
+
+### Summary
+Acquired sole-writer ownership of the dedicated repair worktree (`ai-resources-g1-reviewed-plan`,
+branch `codex/2026-07-31-g1-reviewed-plan-invariant`) per `docs/work-loop-repair-workflow.md`, after
+verifying a prior session's committed release. Ran the Shape unit for Slice 1 (G1 reviewed-plan
+integrity) to completion: transcribed and adjudicated an independent Codex review of plan-v2 (3
+material findings), produced plan-v3, then plan-v4 after an operator-directed proportionality
+withdrawal on one finding's design, transcribed and adjudicated a zero-finding closure review-2, ran
+the mandated pre-G1 identity comparison, and presented the G1 package. **Operator approved G1**, bound
+to the exact plan-v4/review-2 identities. Wrote the implementation handoff, released ownership, and
+verified the worktree clean. No object under repair (`docs/work-loop.md`,
+`.claude/commands/work-loop.md`, `.agents/skills/work-loop/SKILL.md`, `templates/capability-record.md`)
+was touched — this unit is planning-and-review only; nothing has been implemented.
+
+All substantive work happened in the dedicated repair worktree, on a branch not yet merged to `main`.
+Nothing in this `ai-resources` checkout was modified by the repair work itself — only this wrap's own
+bookkeeping touches this checkout.
+
+### Decisions Made
+- **Wrap-routing (mine, stated not asked).** This session's persistent shell cwd was confirmed to be
+  this main checkout, not the repair worktree — verified before writing anything, since the repair
+  workflow forbids writing to that worktree without re-acquiring ownership (already explicitly
+  released) and forbids any diff there outside the approved four-file/`logs/loop/` scope. No conflict
+  needed resolving in practice; confirmed rather than assumed.
+- **Decisions-journal routing (mine, stated not asked).** The session's substantive operator decisions
+  — widening Slice 1's implementation scope from three files to four (plan-v2), and withdrawing the
+  RV2-01 byte-identity/verbatim-persistence requirement as disproportionate (plan-v4) — are **not**
+  duplicated into this checkout's `logs/decisions.md`. They are already durably recorded, append-only,
+  inside the repair unit's own Shape evidence artifact
+  (`logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.evidence.md`, on the repair branch), per the
+  repair workflow's own artifact discipline (§14: "Do not create multiple permanent planning-document
+  families"). A `logs/decisions.md` pointer entry is the stream-close convention
+  (`docs/work-loop.md` § Closing without a change) and belongs to this stream's eventual close, not to
+  an in-flight Shape unit — recorded here so the omission reads as deliberate, not missed.
+- **G1 approval, operator-issued, on the repair branch.** Bound to `plan-v4` (commit `df45a2b1a42a2140c85a56e71c395407dc9eb903`,
+  blob `9ae4839afc8ccb23c4bd50a2644f32213273ed90`) and `review-2` (commit `12b22dd9acfc76094f0803f29d64b5935ead4f83`,
+  blob `848ee9f940c562f421c6ef727e358d21c73a299f`). Authorizes only the exact one-slice, four-file
+  package plan-v4 states; the zsh-syntax annotation permits safe shell forms during verification only,
+  not additional scope.
+
+### Risky actions
+None. Every write this session was confined to `logs/loop/` on a dedicated branch, staged by explicit
+pathspec; nothing under repair was touched; nothing was pushed mid-session.
+
+### Session Assessment
+Skipped (Step 6.5 not requested — no `+feedback`/`full` flag).
+
+### Next Steps
+- **The real continuation point is the repair handoff, not a command in this checkout:**
+  `logs/loop/2026-07-31-g1-reviewed-plan-invariant-shape.handoff-2.md`
+  (commit `833762c2a0570287f0e9ec31743bdeffbac59a2e`, worktree
+  `ai-resources-g1-reviewed-plan`, branch `codex/2026-07-31-g1-reviewed-plan-invariant`). A new Claude
+  session must verify it, explicitly acquire ownership, then open the Build unit and implement the
+  G1-approved plan-v4 package — exactly the four files it names, nothing else.
+- Two prior-session worktrees remain open and untouched (`ai-resources-leverage-idea`,
+  `ai-resources-work-loop`) — same as noted in the entry above; still someone else's separate
+  `/close-worktree-session` call.
+- This wrap's push gate, if confirmed, ships both this checkout's wrap commit and the repair branch's
+  accumulated commits (same origin, different branch) — see the push prompt below.
+
+### Findings Declined
+- **Shell-syntax hazard in the plan's mandatory shell note** (declined for `improvement-log.md`).
+  Two distinct zsh hazards surfaced this session — unquoted word-splitting (silent false negative,
+  Frame §1) and `:l` read as a lowercase parameter modifier (loud failure, Shape evidence §9.5). Not
+  queued as a general-system finding: it is already actionable and recorded inside the repair stream's
+  own artifacts (plan-v4 §11.5's shell note, and the handoff's method note), which the next Build
+  session will read directly. Duplicating it into this checkout's `improvement-log.md` would be a
+  second, less-precise copy of guidance that already has an owner and a concrete next reader.
+
+### Open Questions
+None. The repair stream's next action is fully specified in the handoff.
+
+## 2026-07-31 — work-loop repair, Slice 1 (G1 reviewed-plan integrity) — Build, Prove, correction, closure
+
+### Summary
+Continued the `/work-loop` repair program from a G1-approved plan (prior session) through the full
+Build → Prove → correction → closure sequence, entirely in the dedicated worktree
+`ai-resources-g1-reviewed-plan` (branch `codex/2026-07-31-g1-reviewed-plan-invariant`). Implemented the
+four-file G1-reviewed-plan-integrity slice, took a full Codex Prove review with two material findings,
+adjudicated both, spent the single bounded correction pass under an explicit operator scope binding,
+and closed the stream at operator direction: **G2 approved, G3 adopted.** Slice 1 is complete.
+
+### Decisions Made
+- **Build unit opened and implemented** — plan-v4's exact G1-approved four-file slice, one atomic
+  commit (`8762fc7f…`). All 20 acceptance criteria and every fixture measured with positive controls
+  in the Build evidence.
+- **Prove review-1 adjudicated** — both material findings reproduced against live files before
+  disposition (not accepted on the reviewer's word alone). G1-PV1-01 (Shape-only `hold-reframe` leaking
+  into Prove/reviewed-route, introduced by my own Build rendering) → `deferred`. G1-PV1-02 (A20/F12 fail
+  because the repair-workflow doc sits outside the approved-base diff, traced to a pre-Shape commit) →
+  `operator`, three options presented, Option A recommended.
+- **Operator approved Option A** — a narrow, Slice-1-only scope binding recognizing
+  `docs/work-loop-repair-workflow.md` at its exact pre-existing blob as pre-Shape governance, not an S1
+  target. Does not touch approved base, plan-v4's identity, or the four-file scope.
+- **Correction pass spent once, on both findings together** — 5 sites corrected in 2 files (3 the
+  review specified, 2 more surfaced by the required negative search — one of which was the most exposed
+  leak of the five and unnamed in the review). Supersession entries appended to Build and Prove
+  evidence; nothing rewritten. All affected criteria re-measured at the final HEAD.
+- **Operator's "speed + 90%" priority override** arrived after the correction was already committed —
+  ran only the four named checks against the completed work, reported nothing further to commit, and
+  named the two ways prior work already exceeded that override's intended scope rather than silently
+  conforming after the fact.
+- **Operator closure override** — waived Prove `review-2` transcription, accepted the resolution,
+  **G2 APPROVED** at candidate HEAD `179bc0d6…`, waived representative Use with residual limitations
+  accepted, **G3 ADOPT**. Wrote and committed the `CLOSE` block (append-only). Released ownership.
+  Chose to retain `logs/loop/` artifacts rather than delete them (this repair does not use
+  `/work-loop`'s own stream-close deletion) — flagged as a judgment call rather than decided silently.
+
+### Findings Declined
+None this session beyond what the repair stream's own evidence already records as deferred (BF-1,
+BF-2, OF-1, OF-3 — each with a reopening trigger, none new).
+
+### Risky actions
+None. Every commit in the worktree was staged by explicit pathspec; no destructive git operation was
+run; every operator override was verified against Git before being acted on rather than taken on trust.
+
+### Next Steps
+Slices 2–8 of `docs/work-loop-repair-workflow.md` § 12 remain (Active-unit routing · G2 candidate
+integrity · working state/ownership · transition/phase enforcement · review quality · Diagnose & Fix
+adoption · legacy consolidation). Slice 1 is the worked template for the Shape→Build→Prove→G2/G3
+sequence in that worktree. Deferred BF-1/BF-2/OF-1/OF-3 are candidates for a future slice's scope, not
+orphaned.
+
+### Open Questions
+None. Slice 1 is closed and adopted; the durable Git pointer is recorded in the Prove evidence CLOSE
+block.
+
+### Review status (Step 12b)
+The structural-class changes this session produced — `docs/work-loop.md`, `.claude/commands/work-loop.md`,
+`.agents/skills/work-loop/SKILL.md`, `templates/capability-record.md` — were made in the separate
+`ai-resources-g1-reviewed-plan` worktree, under `docs/work-loop-repair-workflow.md`'s own governance,
+which deliberately excludes the standard `/work-loop` review-independence path for changes to
+`/work-loop` itself. Independent review ran through that program's own mechanism instead: Codex Prove
+`review-1` (2 material findings), both reproduced and adjudicated by Claude, one bounded correction pass
+under an operator-approved scope binding, then operator-directed G2 approval and G3 adoption in lieu of
+a closure `review-2` (explicitly waived by the operator). Reviewed, not unassessed — via the repair
+program's substitute gate rather than this repo's ordinary QC path.

@@ -53,11 +53,9 @@ Examples:
 8. Set `REPORT_DIR` = `{PROJECT_ROOT}/logs/reconcile-reports/`. Create if missing (`mkdir -p`).
 9. Compute `SLUG` from `TARGET_OUTPUT_PATH`'s basename (lowercase, non-alphanumeric runs → single `-`, strip leading/trailing `-`). Set `REPORT_PATH` = `{REPORT_DIR}/{DATE}-{SLUG}.md`. If it already exists from an earlier invocation today, append `-2`, `-3`, etc.
 
-### Step 3 — Opportunistic mandate cross-check via `/contract-check`
+### Step 3 — (removed)
 
-10. Invoke `/contract-check {MANDATE_RUBRIC_PATH}` via the Skill tool. `/contract-check` uses `mandate-rubric.md` as the contract but auto-detects its own artifact from today's git activity (`contract-check.md` § Step 3 — it has no argument grammar for targeting an arbitrary historical file). Its Step 5 output always echoes `Artifact: '{path}' (auto-detected from uncommitted/today's changes).` — parse that path. Two outcomes:
-    - **The parsed path matches `TARGET_OUTPUT_PATH`** (the common case — reconciling something just produced this session): capture its verdict (CONTRACT-ALIGNED / MINOR-DRIFT / MAJOR-DRIFT) as `CONTRACT_CHECK_RESULT`.
-    - **The parsed path differs, or `/contract-check` aborted (no today's changes) or errored:** set `CONTRACT_CHECK_RESULT` = `"unavailable — {reason}"`. This is expected and not a failure of `/reconcile` — proceed without it. `reconcile-reviewer`'s own mandate-compliance scoring (Step 4 below) does not depend on this cross-check; it is corroborating evidence only, never a hard dependency.
+10. *Nothing runs here.* An automatic `/contract-check` sat at this step until 2026-07-29. It was removed with the rest of the stacked review layer: the file itself already conceded the result was *"corroborating evidence only, never a hard dependency"*, and `reconcile-reviewer` in Step 4 produces the mandate-compliance judgment this command exists to emit. The operator can still invoke `/contract-check` directly when cumulative drift across several rounds is the actual question.
 
 ### Step 4 — Spawn `reconcile-reviewer` subagent
 
@@ -67,7 +65,6 @@ Examples:
     - `MANDATE_RUBRIC_PATH`
     - `RESOURCE_MAP_PATH`
     - `FORENSIC_SOURCES` — `{PROJECT_ROOT}/logs/session-notes.md`, `{PROJECT_ROOT}/logs/decisions.md`, plus instruction to check `git log` for `TARGET_OUTPUT_PATH`'s production window
-    - `CONTRACT_CHECK_RESULT` — from Step 3
     - `REPORT_PATH`
     - `DATE`
 13. Subagent returns a ≤30-line summary ending with `REPORT: {absolute path}` as its last line.
@@ -93,10 +90,10 @@ Examples:
     - `Full report: {REPORT_PATH}`
 18. Append guidance by disposition:
     - `Accept as-is` → "No action needed — the output meets the bar."
-    - `Revise in place` → "Route the output-level fix through /resolve."
+    - `Revise in place` → "Apply the output-level fix directly; use /triage first if there are many."
     - `Rerun under a corrected workflow` → "The gap is upstream of this artifact — apply the workflow/repo-level fix before regenerating."
     - `Escalate` → "The mandate itself can't judge this — resolve the rubric gap with the operator before re-running /reconcile."
 
 ### Step 7 — No commit, no execution
 
-19. `/reconcile` is a diagnostic gate. It does not rewrite the target output, does not apply any recommended fix, and does not commit the report. The operator (or a follow-up `/resolve` / `/resolve-repo-problem` / `improvement-log.md` entry, per the fix's named channel) decides the next action.
+19. `/reconcile` is a diagnostic gate. It does not rewrite the target output, does not apply any recommended fix, and does not commit the report. The operator (or a follow-up `/triage` / `/resolve-repo-problem` / `improvement-log.md` entry, per the fix's named channel) decides the next action.

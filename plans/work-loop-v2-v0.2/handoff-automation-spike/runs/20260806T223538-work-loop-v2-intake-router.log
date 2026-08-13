@@ -1,0 +1,18 @@
+run=20260806T223538-work-loop-v2-intake-router mode=live task=work-loop-v2-intake-router
+checkout=/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources
+state=/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/work-loop/work-loop-v2-intake-router.md
+max_hops=1 timeout=900s carry_one=1
+allow_paths=^logs/work-loop/ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/ ^logs/friction-log\.md$ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/runs/
+initial: turn=claude sha256=d03f04f8c0bad6fc8ed9e375c8df733fc0dacc0a35af8a6e0b839f9469aae166 head=9fb59b17dda714b237f692be4f31197864c9fc56
+note: the state file is uncommitted with turn: claude — the expected Codex handoff (Codex never runs git).
+
+hop=1 actor=claude
+  before: sha256=d03f04f8c0bad6fc8ed9e375c8df733fc0dacc0a35af8a6e0b839f9469aae166 turn=claude head=9fb59b17dda714b237f692be4f31197864c9fc56
+  launch: mode=live actor=claude bin=/Users/patrik.lindeberg/.local/bin/claude version=2.1.220 (Claude Code)
+  cmd: claude -p '/work-loop-v2 work-loop-v2-intake-router' --output-format json (cwd=<checkout>)
+  exit=0 duration=400s
+  after:  sha256=d52356e43b9d854372aba1cab14952e34d3d2ae172d9ccd9c0d8f2d61eb11872 turn=codex head=c2036d5fc14b852bb50acf7ff8112b3499bb03a9
+  transition: claude -> codex (allowed)
+
+carry-one: the turn moved claude -> codex. One hop carried; not continuing to 'codex'.
+carry-one: read turn: from /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/logs/work-loop/work-loop-v2-intake-router.md. Neither this exit code nor any screen is authoritative over the file (core § 4).

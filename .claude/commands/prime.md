@@ -6,292 +6,87 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 **Principle:** Prime never asserts state from a single source. Each surfaced next-step or status claim must be cross-checked against git log since the claim's source timestamp before being reported as current.
 
-**Output discipline:** The operator is a non-developer. The brief must be short and scannable — convert terse log shorthand into plain English (short sentences, common words). Show only what the operator needs to choose the next task; everything else stays silent unless it needs attention.
+**Output + execution discipline:** The operator is a non-developer — the brief is short, scannable, plain English (short sentences, common words), and shows only what is needed to pick the next task; everything else stays silent unless it needs attention. Orientation's reads are now **two script calls** — Step 0's sync and Step 1's collector — plus Step 4's exception checks. **Batch Steps 0 and 1 into one message**; firing them serially is the main avoidable latency, and the collector resolves its own repo root, so it does not wait on the sync. **One ordering dependency must survive the batching:** Step 4's working-tree `git status` runs *after* Step 0's sync, so it sees post-pull state. Steps 1a–1d, 2 and 5 read `STATE` and issue no calls of their own — a step that finds itself running a `git log`, a `grep` over a log file or a directory listing has re-implemented the collector and should be corrected, not extended.
 
-**Execution discipline:** The orientation steps issue many *independent* read-only git/file calls; running them one-at-a-time is the main avoidable latency. Batch independent calls into a single message with multiple tool calls rather than firing them serially. Safe to fire together: **Step 1** (session-notes + log-trio reads), **Step 1b** (scratchpad listing), **Step 2** (`next-up.md`), **Step 3** (`friction-log.md` + `improvement-log.md`); **Step 0**'s per-repo `pull` may join the same batch. **Three ordering dependencies must be preserved — do not hoist a dependent call into the batch ahead of what it needs:** (1) **Step 1a**'s git cross-check consumes both `CWD_REPO` / `AI_RESOURCES` (established in Step 0) *and* the entry date parsed in Step 1, so it runs *after* Step 0 and Step 1, never alongside them; (2) **Step 4**'s working-tree `git status` must run *after* the Step 0 pulls so it sees post-pull state; (3) **Step 1c** depends on **Step 0 only** — both its file reads and its one optional path-2 `git log` resolve against `CWD_REPO`. Hoisted into the batch ahead of Step 0, the path is unresolved, the read silently misses, and the brief block never renders — the same failure mode as (1). It does **not** depend on Step 1a: Step 1c deliberately does not consume Step 1a's merged result set (that set spans sibling repos and is wrongly scoped for plan position — see Step 1c's ground-truth rule), so the two are independent and may batch together once Step 0 has run. Everything else across steps 0–4 is independent and should be batched.
-
-0. **Pull latest.** Determine the cwd's git root: `CWD_REPO=$(git -C "$(pwd)" rev-parse --show-toplevel 2>/dev/null)`.
-   If this fails, note `Pulled: n/a (not a git repo)` and skip to step 1.
-
-   Define `AI_RESOURCES="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"`.
-
-   **BEHIND-CHECK FIRST — do not pull a repo that has nothing to pull.** For each repo, fetch and ask
-   how far behind it is *before* running any rebase:
+0. **Sync.** Run the sync owner. It fetches, **skips the pull entirely when the repo is not behind**,
+   pulls with `--rebase --autostash`, aborts and restores on a conflicted rebase, classifies the outcome
+   and counts unpushed commits — for this repo and for `ai-resources`. The behind-check removes an
+   incident class rather than saving time; the four result shapes and the autostash-pop case:
+   `docs/commit-discipline.md` § Orientation pull.
 
    ```bash
-   GIT_TERMINAL_PROMPT=0 git -C "$REPO" fetch --quiet 2>/dev/null
-   BEHIND=$(git -C "$REPO" rev-list --count HEAD..@{u} 2>/dev/null || echo "")
+   AI_RESOURCES="/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources"
+   SYNC=$(bash "$AI_RESOURCES/logs/scripts/prime-sync.sh")
    ```
 
-   - `BEHIND` = `0` → **skip the pull entirely.** Record `up to date`. **Do not run `pull --rebase`.**
-   - `BEHIND` empty (no upstream / detached HEAD) → record `skip (no upstream configured)`; no pull.
-   - `BEHIND` ≥ 1 → run the pull below.
+   `SYNC` returns `CWD_REPO: {absolute path}` — **the repository root every later step scopes its reads
+   to** — followed by one `SYNC: {repo} — {result}` line per repo. Outside a git repo `CWD_REPO` reads
+   `(none)`; carry that and continue. **Never stop on a sync failure:** every failure comes back as a
+   classified result string, and Step 6 shows it only as an exception (a failure, unpushed commits, or
+   `autostash-conflict`). Tripwire: `logs/scripts/prime-sync.test.sh`.
 
-   **Why this guard exists, and why it is not merely an optimisation (2026-07-14, S5 → fixed S8).**
-   `/prime` ran `pull --rebase --autostash` unconditionally, hit a content conflict in
-   `logs/session-notes.md`, and **halted orientation mid-rebase** — leaving the repo in a
-   `rebase-in-progress` state at the very start of a session. **The conflict was entirely spurious:
-   `origin/main` had not moved at all** (`[ahead 5]`, zero behind), so there was nothing to pull.
-   `--rebase` nonetheless replayed local commits — including a local **merge** commit — flattening it
-   and re-applying conflicts that the merge had already resolved.
-   **This repo creates local merge commits by design** (`/close-worktree-session` Step 4 makes them),
-   so rebasing local history re-litigates settled conflicts. It will happen again on any
-   merge-bearing history. The behind-check removes the whole class: with nothing to pull, there is
-   nothing to rebase.
-
-   Run `GIT_TERMINAL_PROMPT=0 git -C "$CWD_REPO" pull --rebase --autostash`. If `$CWD_REPO` differs
-   from `$AI_RESOURCES`, also run `GIT_TERMINAL_PROMPT=0 git -C "$AI_RESOURCES" pull --rebase --autostash`.
-   `--rebase --autostash` is explicit (not left to per-machine `pull.rebase` config) so a dirty working
-   tree from a prior same-day session is stashed, rebased over, and popped back in one command — the
-   rebase no longer refuses to start, removing the failure-and-recovery round-trip. Capture each result:
-   - **Rebase conflicted mid-flight — the case that had NO defined handling and halted a session start.**
-     If the pull leaves the repo mid-rebase (`git -C "$REPO" rev-parse --verify -q REBASE_HEAD` succeeds,
-     or `git -C "$REPO" status` reports `rebase in progress`), **do not attempt to resolve it and do not
-     stop the session.** Restore the repo and keep orienting:
-     ```bash
-     git -C "$REPO" rebase --abort 2>/dev/null
-     ```
-     Record `failed: rebase conflicted — aborted, repo restored; local history unchanged`. Carry it to
-     the Step 6 brief as a ⚠ line. Orientation continues on the pre-pull state, which is a perfectly
-     good state to work from. **A failed pull must never leave the operator in a half-rebased repo at
-     the moment they are trying to start work** — that turns a no-op into an incident.
-   - **Autostash pop conflict — detect FIRST, before the exit-code cases below.** With `--autostash`, the history rebase can succeed (exit 0) while the *pop* of the stashed dirty tree conflicts. Git prints `Applying autostash resulted in conflicts. Your changes are safe in the stash.` but still **returns exit 0**, so the exit-code cases below would mislabel it `updated`. Detect it via any of three signals (OR — robust to git wording changes): the captured pull output contains `Applying autostash resulted in conflicts`; OR `git -C "$REPO" stash list` shows a residual `autostash` entry; OR `git -C "$REPO" status --short` shows a conflicted (`UU`) path. If any fires → `autostash-conflict` (the working tree now carries conflict markers and `stash@{0}` is preserved). Classify this BEFORE the two exit-0 cases.
-   - Exit 0 + "Already up to date." → `up to date`
-   - Exit 0, no "Already up to date." → `updated`
-   - Exit non-zero + "no tracking information" → `skip (no upstream configured)`
-   - Exit non-zero, other → `failed: {first relevant stderr line}`
-
-   After pulling each repo, check for unpushed commits:
-   `git -C "$REPO" log @{u}..HEAD --oneline 2>/dev/null | wc -l`
-   If count > 0, append ` — {N} unpushed` to that repo's result string (e.g., `up to date — 3 unpushed`).
-   If the upstream check itself fails (detached HEAD, no upstream), omit the unpushed clause silently.
-
-   Do not stop on failure — record and continue. The result is carried to step 4 and surfaced in the step 6 brief only as an exception (pull failure, unpushed commits, or an `autostash-conflict`).
-
-1. Read the last entry from `/logs/session-notes.md`. Extract: date, summary, next steps, open questions.
-   If the file doesn't exist or is empty, this is the first session — note that and skip to step 2.
-
-   **Read method (deterministic — do not improvise against same-day clutter).** Several same-day entries
-   (`S1`, `S2`, …) commonly stack in this file and a single entry can run 30+ lines, so any fixed
-   "last N lines" window is unreliable. Locate the last entry's date-header with one grep, then read
-   from that line to EOF in one targeted call:
-   ```
-   Bash(grep -n "^## [0-9]" logs/session-notes.md | tail -1)   # → START line of the last entry
-   Read(logs/session-notes.md, offset=START)                   # header-to-EOF, single read
-   ```
-   The grep is anchored to a date header (`^## [0-9]`) so a `## Heading` inside an entry body or fenced
-   code block cannot false-match. This captures the full last entry in two calls regardless of length
-   or how many same-day sessions stacked.
-
-   **Pre-fetch the log-trio** (token-audit R4, 2026-05-25). After reading `session-notes.md`, also tail-read the last 10 lines of `logs/decisions.md` and the last 30 lines of `logs/usage-log.md` — these files are touched by `/wrap-session` at session-end and a recurring Edit-before-Read failure on `session-notes.md` (3 of last 4 sessions per usage-log telemetry) is eliminated when the log-trio is already in `/prime`'s context. Use:
-   ```
-   Bash(tail -n 10 logs/decisions.md)
-   Bash(tail -n 30 logs/usage-log.md)
-   ```
-   Skip silently if either file does not exist. The pre-fetch is bounded read scope; no main-session reasoning happens over these lines at /prime time — they live in context for the eventual wrap.
-
-   **Telemetry-gap nudge (2026-07-04 — `/wrap-session` telemetry is opt-in, so a forgotten `+telemetry` silently drops a session from the `usage-log` baseline).** This is the one cheap exception to "no reasoning over the pre-fetched log-trio": take the date of the most recent `## ` header in `session-notes.md` (the last wrapped session). If that date does **not** appear in the last 30 lines of `logs/usage-log.md` just read, AND that last session was non-trivial (its note carries a real `### Summary`, not a one-line or aborted entry), then the prior substantive session captured no telemetry — set a telemetry-gap flag and emit the ⚠ telemetry line in the brief (Step 6 template). Skip silently if either file is absent, the dates match, or the last session was trivial. Advisory only — it never blocks; it prompts a backfill.
-
-1a. **Cross-check Next Steps against git log and sibling entries.** Detection logic only — this command has no brief-level Next Steps list; see steps 5–6.
-
-   *Canonical primitive.* The merged-multi-repo git cross-check below is the **reference implementation** of the reconcile-at-read primitive now documented in `docs/backlog-reconciliation.md` (shared by `/fix-project-issues`, `/fix-repo-issues`, `/open-items`). The mechanism here and the doc must stay in sync — if you change the scan/classification logic in one, update the other.
-
-   *Git cross-check:* Parse the `## YYYY-MM-DD` header date from the source entry. Run:
-   `git -C "$CWD_REPO" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null`
-
-   If `$CWD_REPO` differs from `$AI_RESOURCES` (the variable established in Step 0), ALSO run the same command against `$AI_RESOURCES` and merge the two result sets before the keyword-match pass below:
-   `git -C "$AI_RESOURCES" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null`
-
-   Rationale: dual-repo Cluster A blindspot — Next Steps written in a project session may have been resolved by commits that landed in the ai-resources repo (canonical command edits, doc edits, log-status flips), and vice versa. Checking only the cwd-repo's git log misses those cross-repo resolutions and surfaces likely-DONE items as still-open in the menu.
-
-   *Sibling project-repo extension (id-01, fix-plan 2026-06-04-1823):* the dual-repo merge above still misses a third class — a Next Step resolved by a commit that landed in **another project repo** (project A's session primed while the resolving commit is in project B, or a cwd=`ai-resources` prime whose Next Step was closed by a commit in, say, `strategic-os`). Extend the merge to also scan the active sibling project repos. Derive `WORKSPACE_ROOT` as the parent of `$AI_RESOURCES`, enumerate git repos one level under `projects/`, and run the same `--since` query against each, merging all non-empty results into the same result set:
+1. **Collect state.** Run the collector from the repository root. It performs every bounded read
+   orientation needs — the last `session-notes.md` entry, its Next Steps bullets, the merged
+   multi-repo commit set for a bounded window since that entry's date, the newest scratchpad, the
+   plan-position cascade, active missions, `logs/next-up.md`, the shared-file concurrency advisory,
+   the calling repository's identity and the telemetry-gap test. Read bounds live in the collector,
+   not here: `docs/heavy-read-discipline.md` § Bounded-read recipes.
 
    ```bash
-   WORKSPACE_ROOT="$(dirname "$AI_RESOURCES")"
-   for d in "$WORKSPACE_ROOT"/projects/*/; do
-     repo="$(git -C "$d" rev-parse --show-toplevel 2>/dev/null)" || continue   # skip non-repos
-     [ "$repo" = "$CWD_REPO" ] && continue                                     # already scanned above
-     [ "$repo" = "$AI_RESOURCES" ] && continue                                 # already scanned above
-     git -C "$repo" log --since="<entry-date>T00:00:00" --pretty="%h %s" --all 2>/dev/null
-   done
+   STATE=$(bash "$AI_RESOURCES/logs/scripts/prime-collect.sh")
    ```
 
-   Cost note: this scans **all** repos under `projects/*/` (one `rev-parse` + `git log` per repo) — `/prime` has no operator scope menu, so unlike `/fix-repo-issues` Step 1 there is no interactive active/selected filter; the scan is bounded by *output* (`--since` returns nothing for repos with no commits since the entry date), not by *invocation count* (every project repo still gets the two cheap git calls). A repo that is `--show-toplevel`-equal to one already scanned is skipped (no double-count). Any directory that is not a git repo, or whose `git` call errors, is skipped silently — same fall-through posture as the dual-repo check below. The merged set (cwd + ai-resources + sibling project repos) feeds the single keyword-match pass below; the match/classify logic is unchanged.
+   `STATE` carries `CWD_REPO` and `TELEMETRY_GAP` as scalars, and fenced blocks — `LAST_ENTRY`,
+   `NEXT_STEPS`, `COMMITS`, `SCRATCHPAD`, `POSITION`, `MISSIONS`, `NEXT_UP`, `FOREIGN_SHARED`. **A
+   block being absent means that source does not exist here:** skip it silently, add no brief line,
+   spend no menu slot. `CWD_REPO` repeats Step 0's value and never disagrees with it. **Concurrent-session
+   liveness is NOT collected** — the SessionStart hook already reported it in this session's context;
+   read that and issue no scan of your own. `TELEMETRY_GAP` is the collector's own bounded `usage-log.md`
+   test, so the nudge survives without `/prime` reading either log (`ai-resources/CLAUDE.md`
+   § Session Telemetry requires the nudge; it never required the prefetch). Tripwire:
+   `logs/scripts/prime-collect.test.sh`.
 
-   For each Next Steps bullet, check if any commit subject across the merged result set contains keywords from that bullet. Classify the bullet:
-   - **Match found → likely-DONE.** Do NOT promote it into the numbered menu (step 5) — the menu must not spend slots on probably-finished work.
-   - **No match → still open.** It becomes a carryover/menu candidate for step 5.
+1a. **Judge which Next Steps are done.** For each `NEXT_STEPS` bullet, test whether any `COMMITS`
+   subject carries its distinctive keywords. Match → likely-DONE; keep it out of the menu. No match →
+   still open; it becomes a carryover candidate for step 5. When in doubt, still-open. `/prime` never
+   edits `session-notes.md`, so the operator can always check the source if a likely-DONE call looks
+   wrong. The scan and its fall-through posture belong to `docs/backlog-reconciliation.md` — the
+   collector is that primitive's reference implementation; the classification is judgement and stays
+   here. `COMMITS` opens with a `window:` line and may end with a `truncated:` line — **when it is
+   truncated, an unmatched bullet proves nothing**, so keep it still-open and never report it DONE.
+   When `FOREIGN_SHARED` is present, carry its paths to Step 6 as the shared-file advisory: a
+   concurrent session may be mid-edit on them. It names a surface; it never blocks.
 
-   `/prime` never edits `session-notes.md`, so every Next Step bullet stays untouched in the source file — the operator can verify there directly if a likely-DONE call looks wrong. If either git command fails or returns nothing, fall through to whichever result set succeeded; if both fail, treat all bullets as still-open and continue.
+1b. **Scratchpad.** When `SCRATCHPAD` is present, its `resume_with:` line is a strong candidate for
+   menu item 1, tagged `[carryover]`. No brief line of its own; never auto-resumes — the operator
+   decides by picking it.
 
-   *Sibling-entry informational note (TOCTOU Phase 2+3 atomic shape):* Under marker-scoped session writes (see `docs/session-marker.md`), each session writes its own marker-bearing header `## YYYY-MM-DD — Session ${MARKER}`. Multiple same-day headers is the EXPECTED shape, not a hazard — do NOT emit a `⚠` warning (per `principles.md § AP-10`: no error handling for impossible-or-normal scenarios).
+1c. **Plan position.** When `POSITION` is present, set `PROJECT_POSITION` = `{where_we_are, status,
+   next_action}` from it — each **one short plain-English sentence** per the Step 5 conversion rules —
+   and derive a one-line readiness verdict from it plus the open questions in `LAST_ENTRY`. An
+   `anchor:` of `inferred-from-plan-structure` means no completion marker was found: say the position
+   is inferred rather than stated. When `POSITION` is absent — the normal shape in any repo without a
+   plan — leave `PROJECT_POSITION` unset and omit the block entirely rather than showing empty labels.
+   The full four-point readiness check belongs to `/project-next-steps`, not here.
 
-   Count distinct marker-bearing headers — `SIBLING_COUNT` is consumed downstream only as a gate (the shared-dir advisory immediately below, and the `/concurrent-session-check` liveness note); it no longer drives its own standalone Step 6 display line:
+1d. **Missions.** When `MISSIONS` is present, set `ACTIVE_MISSIONS` = its entries, each
+   `{id, name, repo, open_threads[]}`, and carry it to Steps 5, 6 and the 8m binding sub-step. Absent
+   is the common case: no prompt, no line, no item.
 
-   ```bash
-   TODAY=$(date '+%Y-%m-%d')
-   SIBLING_COUNT=$(grep -c "^## ${TODAY}" logs/session-notes.md 2>/dev/null || echo 0)
-   ```
+2. **Next-up queue.** Take every line in `STATE`'s `NEXT_UP` block as a menu candidate for step 5 — the collector already filtered them to unchecked items. This is now the **only** channel by which a severity-tagged finding reaches the menu — `logs/scripts/promote-findings.sh` fills the queue at wrap. An absent or empty file is normal, not an error: skip silently, and the menu falls back to step 1a's still-open Next Steps.
 
-   `SIBLING_COUNT`'s own standalone Step 6 informational line was trimmed in the 2026-07 brief-simplification pass; it now exists solely to gate the shared-dir advisory below and to inform the `/concurrent-session-check` liveness note (Step 1a below).
+   *(Step 3 — the bounded urgent-log scan — was retired 2026-07-30. Orientation no longer greps the backlog: promotion is a write, orientation is a read, and the scan re-ran at every `/prime` in every project to re-derive a set that changes only when a finding is written. The severity contract it carried, including the `medium-high` menu-reach tier that must not be narrowed alone, moved to `logs/scripts/promote-findings.sh` with it. Record: `logs/decisions.md`, 2026-07-30. The numbering gap is deliberate.)*
 
-   *Concurrent-detected shared-dir advisory (C.2, 2026-06-05; extended id-15, 2026-06-05).* When `SIBLING_COUNT > 1` — a concurrent same-day session is likely active — the marker protocol protects per-session log writes, but two surfaces are watched by no guard: **foreign uncommitted edits to shared command/doc files** (`.claude/commands/`, `docs/`) AND **foreign in-place edits to the non-append shared logs** under `logs/` (`improvement-log.md`, `improvement-log-archive.md`, `decisions.md`) — these logs take in-place status flips / entry archiving (not atomic appends), so a foreign mid-edit there is a genuine lost-update surface (see `audits/2026-06-05-concurrent-session-collision-diagnostics-fix.md` § 5). The append-only marker-disambiguated `logs/session-notes.md` is deliberately EXCLUDED — the marker/header model already protects it, and including it would false-positive on every concurrent session. Run one **read-only** check to make both surfaces visible:
-
-   ```bash
-   FOREIGN_SHARED=$(git status --short -- .claude/commands docs logs/improvement-log.md logs/improvement-log-archive.md logs/decisions.md 2>/dev/null)
-   ```
-
-   This is read-only (no `git add`, no write). If `FOREIGN_SHARED` is non-empty, carry the dirty paths to Step 6 as an exception line naming the foreign-dirty shared files/logs — these are files a concurrent session may be mid-edit on, so editing them this session risks a lost-update collision. If `SIBLING_COUNT ≤ 1` or the check returns nothing, skip silently (no line). The advisory only *names* the surface; it does not block.
-
-   *Live-foreign-session check → `/concurrent-session-check` nudge (S3, 2026-06-12).* `SIBLING_COUNT` above counts same-day *headers* — it cannot tell a live session from one that already wrapped (the marker is date-pruned, not liveness-pruned), so it is the wrong gate for a "you have a concurrent session right now" nudge. Reuse instead the per-id marker set. `/prime` writes this session's own per-id marker only at Step 8 (after orientation), so at Step 1a time **every** today-dated `logs/.session-marker-*` other than this session's own is a foreign session that primed in this checkout today and has not torn down. (Since 2026-07-18 this set is pre-cleaned: `detect-concurrent-session.sh` runs at every session start — i.e. before any `/prime` — and prunes markers whose session provably has no Claude CLI process left in this checkout, so a surviving foreign marker here is much more likely to be genuinely live. This step's own read stays today-scoped and heuristic; the hook is the authority on liveness.) Run one **read-only** scan:
-
-   ```bash
-   # LIVE_FOREIGN_HERE — count of un-wrapped foreign sessions in THIS checkout (same signal as detect-concurrent-session.sh).
-   LIVE_FOREIGN_HERE=0
-   if [ -n "${CLAUDE_CODE_SESSION_ID}" ]; then
-     SELF_MARKER="logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
-     for f in logs/.session-marker-*; do
-       [ -f "$f" ] || continue                       # glob matched nothing → no per-id markers
-       [ "$f" = "$SELF_MARKER" ] && continue          # exclude this session's own (defensive — not yet written at orientation)
-       c=$(cat "$f" 2>/dev/null)
-       [ "${c%% *}" = "$TODAY" ] && LIVE_FOREIGN_HERE=$((LIVE_FOREIGN_HERE + 1))
-     done
-   fi
-   ```
-
-   If `CLAUDE_CODE_SESSION_ID` is unset (old CLI), the oracle is unavailable — leave `LIVE_FOREIGN_HERE=0` and skip the nudge silently (degrade safe; `detect-concurrent-session.sh` still covers the SessionStart-level alert via its own old-CLI fallback). If `LIVE_FOREIGN_HERE >= 1`, carry it to Step 6, which emits the `/concurrent-session-check` nudge line. This is the planning-time pair of the SessionStart hook: the hook says "a session is live — isolate"; this line says "a session is live — so check your next task won't collide before you pick it." Independent of `SIBLING_COUNT` (strictly more precise); never blocks.
-
-1b. **Detect a resumable continuity scratchpad.** `/handoff` continuity mode and `/wrap-session` Step 0.5 both write session-state scratchpads to `logs/scratchpads/`. Surface the most recent one so the operator can choose to resume it.
-
-   - List `logs/scratchpads/` for files matching the glob `*-scratchpad.md` **exactly** — this excludes other files that may share the directory (e.g., `*-implementation-plan.md`).
-   - Select the most recent by **filesystem mtime** — the most-recently-modified `*-scratchpad.md` file wins (e.g. `ls -t` over the matches). Do NOT sort by the `YYYY-MM-DD-HH-MM` timestamp in the filename: that timestamp is typed by the AI session that produced the scratchpad and its time-of-day component is unreliable (observed skew of 2–3 hours ahead of real write time), so lexical filename order does NOT track chronological order. `logs/scratchpads/` is gitignored — it is never populated by `git checkout` or `git pull` — so mtime always reflects the actual local write time and is the reliable chronological signal here.
-   - **QC-PENDING precedence (commit-block).** Before applying the date comparison below, check whether any `*-scratchpad.md` carries an unresolved `**QC-PENDING:**` marker — a deferred architectural-change commit-block (see `docs/qc-independence.md` § Subagent-unavailable fallback). If one does, **select that scratchpad** (the most recent such, if several) regardless of mtime, and treat it as **exempt from the date-supersession skip below** — it surfaces until the deferred `/qc-pass` passes, the commit lands, and the resume flow deletes the scratchpad. A QC-PENDING scratchpad must never be silently buried by a newer trivial scratchpad.
-   - Compare the selected scratchpad's date — the `YYYY-MM-DD` date portion of its mtime — to the date of the last `session-notes.md` entry from Step 1:
-     - Scratchpad date **≥** last entry date → surface it. Read its `## Resume With` section and take the first content line.
-     - Scratchpad date **<** last entry date → a later wrap superseded it; skip silently. **Exception:** a `**QC-PENDING:**` scratchpad is never skipped on this rule — surface it regardless of date.
-   - If `logs/scratchpads/` is absent or has no `*-scratchpad.md` file, skip silently.
-   - When surfaced, the scratchpad feeds a **carryover** menu candidate: the first content line of its `## Resume With` section is a strong candidate for menu item 1 (step 5). (The standalone `↩ Resumable scratchpad: {path}` Step 6 display line was trimmed in the 2026-07 brief-simplification pass — the scratchpad's existence now surfaces only via that menu candidate, or via the QC-PENDING advisory below when applicable. Line 137's QC-PENDING commit-block advisory is a separate line and still emits.) This step does NOT auto-resume — the operator decides by picking that menu item or answering the direction prompt.
-   - **QC-PENDING surfacing.** When the surfaced scratchpad carries a `**QC-PENDING:**` marker, flag it prominently as a **commit-block** — emit an advisory line, "⚠ Architectural artifact awaits independent QC — do NOT commit until `/qc-pass` passes (per the QC-PENDING scratchpad)", in addition to placing its `## Resume With` first line (the QC instruction) as menu item 1. Do not let the marker line itself be mistaken for the next action; the action is the `## Resume With` first line.
-
-1c. **Read the project's plan position.** Detect where the project actually stands against its plan, so the brief can lead with *where we are and what is next* rather than only a backlog menu. This step is a **zero-cost no-op in any repo without a plan** — including `ai-resources` itself, which has no `pipeline/` — and adds no reads, no line, and no menu item there.
-
-   *Cascade source.* This reuses the detection cascade documented in `.claude/commands/project-next-steps.md` (Step 2), which in turn derives from `skills/session-guide-generator/SKILL.md` Step 2. One deliberate divergence: **position is checked before the plan spine, reordered for cost.** The source command lists the plan first; here `pipeline-state.md` is small and authoritative, so it is the cheap happy path and short-circuits the expensive one. That inversion is intentional — do not "correct" it back.
-
-   Detect in this order and **stop as soon as position is confident**:
-
-   1. `$CWD_REPO/pipeline/pipeline-state.md` — if present, read it. Its stage table states position directly. This is the common case — 19 project repos carry this file as of 2026-07-19, the large majority.
-   2. Otherwise, the plan spine — first that exists: `pipeline/project-plan.md`, a `plan/` directory at the project root, phase/workflow definitions in the project `CLAUDE.md`, the latest `logs/session-plan*.md`.
-   3. Neither exists → **skip silently.** No `PROJECT_POSITION`, no brief block, no cost.
-
-   **Resolve the spine to exactly one file before going further.** Two of the four spine options are not single files, and the bounded-read recipe below is undefined for them — resolve first, then apply it to the resolved `<plan-file>`:
-   - `pipeline/project-plan.md` or `logs/session-plan*.md` → already a file (for the glob, take the most recent by mtime, same `ls -t` rule Step 1b uses).
-   - A `plan/` **directory** → take the lowest-numbered / lexically-first `*.md` inside it that still carries an incomplete marker; that file is `<plan-file>`. Do not read the directory's other files.
-   - Project **`CLAUDE.md`** → `<plan-file>` is `CLAUDE.md` itself, and the grep below is scoped to its phase/workflow section rather than the whole file.
-
-   If the spine resolves to nothing readable, treat it as case 3 above and skip silently. Do **not** fall back to reading several candidates "to be sure" — that is the unbounded behaviour this step exists to prevent.
-
-   **Bounded read — NEVER a full read of the plan file.** On the step-2 fallback, do **not** `Read` the plan whole. Plan files run long and grow monotonically, and a full read here re-opens the exact cost class that Step 3 below exists to prevent (see its warning: ~50–60k tokens per orientation, named in five consecutive telemetry entries before the 2026-07-13 fix). Instead, grep for stage/phase headers and completion markers and read only a bounded slice around the first incomplete one:
-   ```
-   Bash(grep -nE "^#{2,3} +(Stage|Phase|W[0-9])|^- \[[ x]\]|✅|\*\*(complete|done)\*\*" <plan-file> | head -n 40)
-   Read(<plan-file>, offset=<first incomplete marker>, limit=40)
-   ```
-   If the grep returns **stage/phase headers but no completion markers at all** — a real and common shape (verified 2026-07-19 against a live 900-line project plan, which carries `### Phase Vn` headers and no checkboxes) — anchor the slice on the **last** header instead, as the furthest-along section, and say the position is inferred from plan structure rather than from an explicit completion marker. If the grep returns nothing at all, skip silently per case 3. Do not improvise a wider read to find markers that are not there.
-
-   A future edit that "simplifies" this into a plain `Read` is a regression, not a simplification — do not.
-
-   **Ground truth — Step 1a's merged result set is deliberately NOT reused by either path.** Step 1a's merged git log is anchored to `--since=<last session-notes entry date>`. That window is correct for adjudicating last session's Next Steps and **too narrow for plan position**: a plan step completed weeks ago falls outside it entirely and would be reported as still-pending — the precise defect the cross-check exists to prevent. So:
-   - **Path 1 (`pipeline-state.md` present):** trust the file as-is and issue **no git call at all.** It is a maintained completion signal, not an inference. Do **not** try to corroborate it against Step 1a's result set: that set merges commits from `$CWD_REPO`, `$AI_RESOURCES`, *and* every sibling repo under `projects/*/` into one unattributed list (see Step 1a), so a commit from ai-resources or an unrelated project reads as movement on this project's stage. There is also no cheap way to learn when the state file was last updated — `Read` returns no mtime. Trusting the file is both cheaper and more honest than a corroboration this step cannot actually perform.
-   - **Path 2 (plan-marker fallback):** Step 1a's window is insufficient, and plan markers are the one signal stale enough to need checking. Resolve the plan file's own last-modified date first, then issue **exactly one** git call scoped to `$CWD_REPO`:
-     ```
-     Bash(date -r <plan-file> +%F 2>/dev/null)                                  # filesystem stat, not a git call
-     Bash(git -C "$CWD_REPO" log --since=<that date> --pretty="%h %s" 2>/dev/null)
-     ```
-     Check whether the first incomplete marker already appears done in those commit subjects. **One git call is the ceiling** — do not fan out across sibling repos the way Step 1a does. If `date -r` fails, skip the corroboration entirely and report the marker as-is rather than spending a second call hunting for a date.
-
-   **Readiness verdict.** Derive from the plan position plus the open questions already extracted from `session-notes.md` in Step 1 — both are in context, so this costs nothing extra. Emit a verdict plus one short reason. Keep it to that: the full four-point OK/GAP readiness check belongs to `/project-next-steps`, not here.
-
-   Set `PROJECT_POSITION` = `{where_we_are, status, next_action}`, each **one short plain-English sentence** per the Step 5 conversion rules, and carry it to Step 6. If detection reached step 3 above (no plan, no state), leave `PROJECT_POSITION` unset and carry nothing.
-
-1d. **Scan active missions (mission-contract subsystem).** A *mission* is a multi-session goal (`/mission`); a session can bind to one so `/drift-check` measures its trajectory against the mission's validation contract. This step makes active missions visible and is a **zero-cost no-op when none exist** — when no `logs/missions/` dir is present in any enumerated repo, this step adds no prompt, no menu item, and no brief line.
-
-   Reuse the Step 1a repo enumeration (`CWD_REPO`, `AI_RESOURCES`, sibling `projects/*/` repos — already de-duped there). For each enumerated repo, scan **`<repo>/logs/missions/*.md` only — never `<repo>/logs/missions/archive/`** (closed missions are archived and must not reappear here, keeping the scan bounded as missions accumulate):
-
-   ```bash
-   # ACTIVE_MISSIONS — one entry per active mission across enumerated repos.
-   WORKSPACE_ROOT="$(dirname "$AI_RESOURCES")"   # same derivation as Step 1a
-   for repo in "$CWD_REPO" "$AI_RESOURCES" "$WORKSPACE_ROOT"/projects/*/; do
-     [ -d "$repo/logs/missions" ] || continue
-     for m in "$repo"/logs/missions/*.md; do
-       [ -f "$m" ] || continue
-       grep -q '^status: active' "$m" || continue   # active only
-       # capture: mission_id (frontmatter), mission_name, repo, and the `## Open threads` unchecked `- [ ]` lines
-     done
-   done
-   ```
-
-   Build `ACTIVE_MISSIONS` = list of `{id, name, repo, open_threads[]}`. If the list is empty, set a flag and skip all mission-related additions below (the common case). Carry `ACTIVE_MISSIONS` to Step 5 (menu candidates), Step 6 (brief), and the Step 8 binding sub-step.
-
-2. **Read `next-up.md`.** Read `logs/next-up.md` if it exists. Collect every unchecked checkbox item (`- [ ]` lines). These are routine menu candidates for step 5.
-
-   `next-up.md` is **not** a universal file — it exists in some project log directories and is absent in others. `/prime` does not create it. If the file is absent, skip silently; the menu falls back to the still-open Next Steps from step 1a plus the urgent items from step 3. An absent or empty `next-up.md` is normal, not an error.
-
-3. **Scan for urgent problems — bounded scan, NEVER a full read.** Collect only **unresolved HIGH / urgent** items from `logs/friction-log.md` and `logs/improvement-log.md`.
-
-   **Do NOT `Read` either file.** They are long (~400 L and ~650 L, and both grow monotonically) and a full read of the pair cost ~50–60k tokens at *every* orientation in *every* project — a defect named in five consecutive `usage-log` telemetry entries before it was fixed (2026-07-13; see `logs/improvement-log.md` of that date). The `decisions.md` pre-fetch in Step 1 is already bounded; this step now matches it. A future edit that "simplifies" this back into a `Read` re-opens the single most expensive recurring leak in the harness — do not.
-
-   Issue exactly these three bounded scans:
-
-   ```
-   Bash(grep -nE -B6 "^-? ?\*\*Severity:\*\* *\*{0,2}(high|HIGH|medium-high|critical|urgent)" logs/improvement-log.md)
-   Bash(grep -nE "HIGH|urgent|do-now" logs/friction-log.md | grep -viE "resolved|verified|shipped|archived|declined" | head -n 40)
-   Bash(python3 -c "
-import re,os
-p='logs/improvement-log.md'
-if os.path.exists(p):
-    L=open(p,encoding='utf-8').read().split('\n')
-    H=[i for i,l in enumerate(L) if re.match(r'^#{2,3} \d{4}-\d{2}-\d{2}',l)]
-    n=sum(1 for k,s in enumerate(H) if not any(re.match(r'^-? ?\*\*Severity:\*\*',x) for x in L[s:(H[k+1] if k+1<len(H) else len(L))]))
-    print(f'UNCLASSIFIED: {n} of {len(H)} entries carry no Severity field') if n else None")
-   ```
-
-   The three scans do different jobs — the files have different shapes, and the third measures a gap rather than reading content:
-   - **`improvement-log.md` is schema'd** (`### {date} — {title}` / `- **Status:**` / `- **Severity:**`). The `-B6` window is sized to carry each severity hit's **header and status lines** back with it — that is what makes the filter below applicable without a second read. Do not narrow it: at `-B4` the header is lost on entries whose status runs to multiple lines.
-
-     The severity anchor is `^-? ?\*\*Severity:\*\*` — the `-? ?` tolerates the **un-dashed** variant (`**Severity:** …` with no leading `- `), which two live entries use. Widened 2026-07-18; the old `^- ` anchor silently skipped them.
-
-     The `\*{0,2}` before the value tolerates a **bolded severity value** (`- **Severity:** **high**`), which two live entries use. Widened 2026-07-19; the old anchor required the value to start immediately after the colon-space and silently skipped both. **Do not widen further to admit a delimiter before the value** — `logs/improvement-log.md:13` is the log's own schema block and reads ``- **Severity:** `low` | `medium` | `medium-high` | `high` | `critical` ``. An anchor loose enough to match that vocabulary *declaration* injects a phantom urgent item into the task menu of every consumer. The backtick is what excludes it today; `\*{0,2}` matches zero asterisks and then fails on it. That exclusion is load-bearing and was verified by execution before this widening shipped.
-   - **The third scan is a COUNT, not a content read — and that distinction is the whole design.** Entries carrying no `Severity` field cannot be reached by any severity anchor. The tempting fix is to widen the scan until it sees them; that is wrong, and it is why the backlog item asking for it was mis-scoped. An entry with no Severity field is not *hidden HIGH work* — it is **unclassified**, and dumping unclassified entries into the task menu would make the menu worse while multiplying the token cost this step exists to bound. So the scan reports the *number* in one line and stops. Visible, bounded, honest: the operator learns the backlog has an unclassified tail without paying to read it. The real remedy is to give those entries a `Severity` field (a log-hygiene task for `/friday-act`), not to loosen this scan. Print nothing when the count is zero.
-   - **`friction-log.md` has no severity field** — its severity words are free text inside prose bullets, and its resolution stamps (`— **Resolved:**`, `[FADING-GATE] verified`) sit on the *same* line as the finding, which is why the same-line `grep -v` works. Treat its hits as **candidates to judge, not findings**: incidental matches are expected (a shell variable named `HIGH`, a quoted phrase), and they are cheap to discard in-context because only the matching lines are returned.
-
-   Then apply the filter to the returned lines only:
-   - Include an item if it carries `high`, `medium-high`, `critical`, `urgent`, or `do-now`. **`medium-high` IS included — it is the deliberate second tier of menu-reach, not a borderline case.**
-   - Exclude anything marked `low` or `medium`, and exclude entries whose status is `resolved`, `applied`, `verified`, or operator-`DECLINED`.
-
-     **`medium-high` is load-bearing here and this wording was stale until 2026-07-24.** The rule previously read *"include only if it carries a HIGH-severity marker (`HIGH`, `urgent`, `critical`, or `do-now`)"* and *"exclude anything marked `LOW` or `MED`"* — naming `medium-high` in **neither** clause. That silence read as an anchor-vs-filter contradiction and nearly cost the tier its menu-reach: a 2026-07-24 change proposed deleting `medium-high` from the anchor above (a ~70% emit reduction), on the premise that the filter already discarded it. **It does not, and three other files say so explicitly** — `wrap-session.md` Step 12e (*"Only `high` and `medium-high` reach the `/prime` task menu"*), `.claude/agents/session-feedback-collector.md:138` (*"`high` / `medium-high` → reaches the `/prime` task menu. Use for anything that should be worked on."*), and `logs/improvement-log.md:13`, the log's own schema. The anchor was right; this prose was wrong. `/risk-check` returned RECONSIDER on the deletion (report: `audits/risk-checks/2026-07-24-narrow-prime-step3-severity-anchor-medium-high.md`).
-
-     **So: narrowing this tier is a POLICY change to what earns a place on the task menu, not a cost optimisation, and it may not be made here alone.** Changing it requires updating the writer-side guidance in `wrap-session.md` Step 12e and `session-feedback-collector.md` in the same commit, plus a `logs/decisions.md` record. A large Step 3 emit is a signal that too many `medium-high` items are genuinely open — the remedy is backlog triage, not a quieter scan.
-   - If either file does not exist, its scan returns nothing — skip silently.
-
-   Each surviving item becomes an **urgent** menu candidate for step 5.
-
-4. **Exception checks.** Compute the following, but carry each to step 6 only when it is abnormal — a normal value is never displayed. **Model alignment (below) is the one exception:** it is always carried to Step 6 regardless of match/mismatch — see its bullet for the display-styling split.
+4. **Exception checks.** Compute the following, but carry each to step 6 only when it is abnormal — a normal value is never displayed.
    - **Working tree:** if the environment's git-status snapshot is non-empty, run `git status --short` and `git diff --stat HEAD` once to confirm it is still current. The env snapshot is point-in-time from session start and can be stale vs actual HEAD (e.g., files already committed in the prior session). Carry forward only if the live result shows unexpected uncommitted changes. This is a Prime-time orientation check, distinct from the commit-time "no pre-commit git status" rule.
-   - **Model alignment:** read the active session model identifier from the system-prompt context — do not run any external command, the identifier is already in context. Identify the cwd-nearest project `CLAUDE.md` and read its `## Model Selection` section for the project's **recommended posture** (advisory prose — never a declared default; defaults are prohibited per workspace `CLAUDE.md` § Model Tier). Three cases, all defined:
-     - **Section present, and it names exactly ONE tier** → compare the session model against it. On match, plain styling (`Model: {session model}`); on mismatch, warning styling with a hint (`⚠ Model: you are on {session model}; this project recommends {recommended} → /model {recommended}`).
-     - **Section present, but it names MORE THAN ONE tier** (e.g. "lean Sonnet for routine edits; reach for Opus on plan drafting") → emit the plain line only (`Model: {session model}`). **Never emit a `→ /model` nudge here.** A conditional posture resolves against the *task*, and Step 4 does not yet know the task — collapsing it to a single tier would fire a false downgrade warning at nearly every session start. This is the **normal** shape of the section as `/new-project` step 11a now writes it, not an edge case.
-     - **No project `CLAUDE.md`** (session opened at the workspace root) → emit the plain line only (`Model: {session model}`). There is nothing to compare against; do **not** invent a recommendation.
-     - **Project `CLAUDE.md` present but carries no `## Model Selection` section** → same as above: emit the plain line only, no warning. This is a *normal* state, not a defect — the section is optional, and a missing one means the project has expressed no preference. (Defined 2026-07-12: previously undefined, and `/new-project` step 11a is the section's only writer, so every project scaffolded before that step existed lands here.)
-
-     Unlike the other checks in this step, ALWAYS carry the model line forward to Step 6.
-   - **Pull result:** carry forward the step 0 result only on failure, when there are unpushed commits, or on an `autostash-conflict` (a pop conflict that returned exit 0 — see Step 0). The `autostash-conflict` case is the highest-priority pull exception: the working tree silently holds conflict markers, so the brief must say so.
+   - **Sync result:** carry forward a `SYNC` line from Step 0 only on a `failed:` result, when it carries an unpushed clause, or on `autostash-conflict`. The `autostash-conflict` case is the highest-priority exception: the working tree silently holds conflict markers, so the brief must say so.
    - **Phase READMEs.** If the cwd-rooted project has a `work/` directory, scan it (one level deep) for files matching `W*-*-README.md` (or `Wn-*-README.md`). Capture the matching file paths only — do not read file bodies. Skip silently if `work/` is absent or contains no matches. Bounded scan: one `ls`/`find -maxdepth 2`-equivalent; do not recurse deeper.
 
 5. **Build the numbered task menu.** Merge candidates from:
    - Step 1a — still-open Next Steps from the last session → tag `[carryover]`.
-   - Step 1b — the scratchpad `## Resume With` line, if any → tag `[carryover]`.
+   - Step 1b — the scratchpad `resume_with:` line, if any → tag `[carryover]`.
    - Step 1d — each active mission's `## Open threads` unchecked items, but ONLY for missions whose repo (from `ACTIVE_MISSIONS`, Step 1d) equals `CWD_REPO` (Step 0) → tag `[mission:<id>]`. Skip building a candidate for any mission whose repo ≠ `CWD_REPO` — it is not actionable from this checkout (the Step 8a/8c cross-repo guard would stop it anyway). Step 1d's multi-repo scan and those guards are unchanged and remain in place as defense-in-depth. Omit entirely if `ACTIVE_MISSIONS` is empty or none of its entries match `CWD_REPO`.
-   - Step 2 — unchecked `next-up.md` items → tag `[next-up]`.
-   - Step 3 — unresolved HIGH/urgent problems → tag `[urgent]`.
+   - Step 2 — unchecked `next-up.md` items. An item carrying a `<!-- promote:… -->` id was promoted from a severity-tagged backlog finding → tag `[urgent]`; any other item → tag `[next-up]`. **That id is what preserves the two tiers now that one queue feeds both** — without the split, a promoted `high` finding would rank below ordinary carryover.
 
    Step 1c's `PROJECT_POSITION` is **not** a menu candidate — it renders as its own block in Step 6 and does not consume a numbered slot. Overlap between that block's `Next:` line and menu item 1 is **expected and deliberately not deduped**: the block *explains* the next step, the menu *selects* it, and a stable numbered selector is worth the small repetition. Do not add dedupe logic here.
 
@@ -299,27 +94,20 @@ if os.path.exists(p):
 
    Convert each menu item to **one plain-English sentence** (short sentences, common words — the operator is a non-developer):
    - Keep command names and file names literal (`/kb-review`, `next-up.md`).
-   - Drop priority codes (`HIGH`/`MED`/`LOW`), status tags, and section anchors (`§3`, `WU3`) from the displayed text — keep a step number only when it aids meaning.
-   - Append one short tag: `[urgent]`, `[mission: <id>]`, `[carryover]`, or `[next-up]`. (Every `[mission:<id>]` candidate reaching this step already has repo == `CWD_REPO` per the Step 5 filter above, so no cross-repo tag variant is needed here; the Step 8a/8c cross-repo guards remain in place as defense-in-depth regardless.)
-
-   Example conversions:
-   - `**/kb-review Step 7 registry-stub spec contradicts the registry convention** — MED, do-now` → `Fix the /kb-review command — its Step 7 instructions clash with the registry format.`
-   - `Resolve Q1 (core v2 motivation) — without it, Goals (§3) cannot be populated` → `Decide the main reason for the KB v2 rebuild — other plan sections are blocked until this is settled.`
+   - Drop priority codes (`HIGH`/`MED`/`LOW`), status tags, section anchors (`§3`, `WU3`), the trailing source path and the `<!-- promote:… -->` id from the displayed text — keep a step number only when it aids meaning.
+   - Append one short tag: `[urgent]`, `[mission: <id>]`, `[carryover]`, or `[next-up]`. Every `[mission:<id>]` candidate reaching this step already has repo == `CWD_REPO`, so no cross-repo tag variant is needed.
 
 6. **Output the brief — this and nothing else.** All displayed text (exception lines, menu items) uses the plain-English conversion rules from step 5. Emit an exception line only when it is real; omit the whole line otherwise.
 
 ```
 ## Prime — {date}
 
-Model: {session model}
-{⚠ Model: you are on {session model}; this project recommends {recommended} → /model {recommended} — replaces the plain line above; only on mismatch}
 {⚠ Working tree: {short summary} — only if unexpectedly dirty}
-{⚠ Pull: {result} — only on failure or unpushed commits}
-{⚠ Pull: autostash pop conflicted — working tree has conflict markers; stash@{0} preserved. Resolve the markers (or `git checkout --theirs`/`--ours`) and `git stash drop` before starting work. — only on an `autostash-conflict` result from Step 0}
-{⚠ Concurrent session may be editing shared files: {foreign-dirty paths under .claude/commands / docs / the non-append logs improvement-log.md / improvement-log-archive.md / decisions.md}; check before editing them — only when SIBLING_COUNT > 1 and the Step 1a read-only `git status` found foreign-dirty shared files/logs}
-{⚠ Concurrent session live in this checkout — before starting a task, run `/concurrent-session-check <task>` to confirm it won't collide, or `/concurrent-session-check` (no argument) to see which menu items are safe. — only when Step 1a found LIVE_FOREIGN_HERE >= 1}
+{⚠ Sync: {result} — only on a `failed:` result or an unpushed clause}
+{⚠ Sync: autostash pop conflicted — working tree has conflict markers; stash@{0} preserved. Resolve the markers (or `git checkout --theirs`/`--ours`) and `git stash drop` before starting work. — only on an `autostash-conflict` result from Step 0}
+{⚠ Concurrent session may be editing shared files: {the paths in STATE's FOREIGN_SHARED block}; check before editing them — only when that block is present}
+{⚠ Concurrent session live in this checkout — before starting a task, run `/concurrent-session-check <task>` to confirm it won't collide, or `/concurrent-session-check` (no argument) to see which menu items are safe. — only when the SessionStart concurrency hook reported a live foreign session in this checkout; `/prime` reads that message from context and runs no scan of its own}
 {⚠ Phase READMEs detected: {paths}; read before opening the relevant work unit — only if step 4 surfaced any}
-{⚠ Architectural artifact awaits independent QC — do NOT commit until `/qc-pass` passes (per the QC-PENDING scratchpad at {path}). — only when step 1b surfaced a QC-PENDING scratchpad}
 {⚠ Last substantive session ({date}) left no `usage-log` telemetry — run `/usage-analysis` now to backfill it, or wrap future substantive sessions with `/wrap-session +telemetry`. — only when the Step 1 telemetry-gap flag fired}
 {◎ Active mission(s): {for each mission in ACTIVE_MISSIONS where mission.repo == CWD_REPO: "<id> — <name>"} — only if at least one same-repo active mission exists; advisory, names the multi-session goal(s) this work can serve}
 
@@ -330,13 +118,9 @@ Where we are:
 
 Next tasks:
   1. {plain-English task}   [{tag}]
-  2. {plain-English task}   [{tag}]
-  3. {plain-English task}   [{tag}]
-  4. {plain-English task}   [{tag}]
-  5. {plain-English task}   [{tag}]
-  6. {plain-English task}   [{tag}]
+  2. {plain-English task}   [{tag}]     … one line per candidate, up to 6
 
-Type 1–6 to start that task. Type `auto` to run the #1 item end-to-end with a single approval gate, or `auto 1,3` (or `auto 1 3`) to run several items back-to-back under one combined approval gate. Or tell me something else.
+Type 1–6 to start that task. Type `auto` to run the #1 item end-to-end with a single approval gate, or `auto N` for a different item. Or tell me something else.
 
 Full backlog & inbox: /open-items
 ```
@@ -350,481 +134,131 @@ Full backlog & inbox: /open-items
    - A bare number `1` through `6` (within the rendered menu range) — or `do 2` / `task 2` / `option 2` — → **task selection.** Go to step 8a.
    - `auto` / `a` (case-insensitive, trimmed) — or `do auto` / `run auto` → **auto mode**, picked item = #1. Go to step 8c.
    - `auto N` (single number within menu range) → **auto mode**, picked item = #N. Go to step 8c.
-   - `auto N,M,...` or `auto N M ...` (multiple numbers within menu range, separated by commas or spaces) → **auto mode (multi-item)**, picked items = those numbers in the order given. Go to step 8c.
    - Anything else (a sentence, a different task, a question) → **free-text intent.** Go to step 8b.
-   - If the reply is ambiguous (a number outside the rendered menu range, an `auto N` where N is outside range, or "2 but first do X"), ask once for a plain number, the word `auto` (optionally followed by one or more item numbers), or a sentence, then classify the re-response.
+   - If the reply is ambiguous (a number outside the rendered menu range, an `auto N` where N is outside range, or "2 but first do X"), ask once for a plain number, the word `auto` (optionally followed by one item number), or a sentence, then classify the re-response.
 
-8m. **Mission binding (shared sub-step — referenced by 8a / 8b / 8c).** Resolves which active mission, if any, this session serves. **Skip entirely — no prompt, no output — when `ACTIVE_MISSIONS` (Step 1d) is empty** (the common case). Run only after a non-plan-mode dispatch is confirmed (i.e., past each branch's plan-mode guard), and before the branch calls `/session-start` (8a/8b) or writes the inline mandate (8c). Resolve `MISSION_ID`:
-   - If the picked/stated task came from a `[mission:<id>]` menu item → `MISSION_ID = <id>`. **Auto-bound; no prompt.** (Primary path — picking a mission's open thread IS the binding.)
-   - Else, emit exactly one line: `This session serves which active mission? {[1] <id> — <name> … [N] …} — or 'none'.` Parse the reply: a number → that mission's id; `none` / empty / anything else → no mission. One prompt only; default is `none`.
-   - Carry `MISSION_ID` forward. If unset/`none`, the session has no mission bullet and everything downstream proceeds exactly as today.
+8m. **Mission binding (shared sub-step — 8a / 8b / 8c).** Resolves which active mission, if any, this
+   session serves. **Skip entirely — no prompt, no output — when `ACTIVE_MISSIONS` (Step 1d) is empty**
+   (the common case). Run after the branch's guards (8g) and before 8h.
+   - Picked item is `[mission:<id>]`-sourced → `MISSION_ID = <id>`, **auto-bound, no prompt.** Picking a
+     mission's open thread IS the binding.
+   - Otherwise emit exactly one line: `This session serves which active mission? {[1] <id> — <name> … [N] …} — or 'none'.`
+     A number → that mission's id; `none` / empty / anything else → no mission. One prompt only; default `none`.
 
-   **Wiring:** 8a and 8b prepend `{mission:<id>}` to the args passed to `/session-start` (which strips and records it — see `session-start.md` Step 1). 8c writes the `- Mission: <id>` bullet inline in its Step 8c.7 mandate block. When `MISSION_ID` is unset, none of this happens.
+   **Wiring:** all three branches prepend `{mission:<id>}` to the `/session-start` args; that command
+   strips it and writes the `- Mission: <id>` mandate bullet (`session-start.md` Step 1). When
+   `MISSION_ID` is unset, none of this happens. The cross-repo guard is **8g.2**, which fires before this
+   binding and before any write — do not move 8m earlier to "cover" that case.
 
-   **Cross-repo note:** the pre-write cross-repo mission guard (Steps 8a sub-step a0, 8c sub-step 2.5) fires *before* this binding, deriving the picked mission's repo from `ACTIVE_MISSIONS` (Step 1d), not from `MISSION_ID` here — so a wrong-repo pick is caught before any marker/header write. Do not move Step 8m earlier to "cover" that case; the guard already does, and 8m must stay after the write per the marker contract. (8b/free-text needs no guard — there is no `[mission:<id>]` menu item to mis-pick.)
-
-8k. **Marker allocation (shared sub-step — referenced by 8a / 8b / 8c).** Allocate this session's marker per the TOCTOU Phase 2+3 atomic contract (canonical: `docs/session-marker.md`). Produces `${TODAY}` and `${MARKER}`, and writes `logs/.session-marker` plus the per-id `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}`. Run it once per non-plan-mode dispatch — after the branch's cross-repo mission guard (8a sub-step a0 / 8c sub-step 2.5) and before the branch's header-existence check.
-
-   **Caller contract — ordering is the caller's responsibility (mirrors 8m's Wiring note).** This sub-step produces `${MARKER}` and writes only the marker files; it does NOT touch `session-notes.md`. The calling branch owns the rest of the marker → header → mtime ordering: after 8k returns, run the `grep -Fxq` header-existence check, append this session's marker-bearing header (with the branch's own work-description text), then write `logs/.prime-mtime` — in that order. Marker before header so the header can embed `${MARKER}`; mtime after the append so `/session-start` Step 0.5 sees this session's own write. `/session-start` Step 3 and `/session-plan` Step 0 both require THIS session's marker-bearing header to exist.
+8h. **Session entry (shared sub-step — referenced by 8a / 8b / 8c).** One owner performs the complete
+   sequence — allocate the marker, append this session's marker-bearing header, stamp the mtime — in that
+   order. The order is load-bearing and is enforced inside the script rather than restated here. Takes one
+   parameter, `WORK_DESC`. Run it after the caller's guards and before `/session-start`.
 
    ```bash
-   TODAY=$(date '+%Y-%m-%d')
-   # Allocate N = 1 + the highest S{N} seen across FOUR sources, then CLAIM it atomically.
-   # Take the MAX of all four; never trust one alone (each sees a different slice of the
-   # same S{N} namespace):
-   #   (a) logs/.session-marker        — this checkout's last allocation.
-   #   (b) session-notes.md, worktree  — headers this checkout has written.
-   #   (c) session-notes.md, ALL refs  — headers a WORKTREE session allocated and COMMITTED.
-   #   (d) the shared claim dir        — allocations IN FLIGHT in any checkout, committed or not.
-   #
-   # (d) is the fix for the defect (a)-(c) cannot see. A git worktree is a separate checkout
-   # with its own (a) and its own (b), and (c) only sees what has been COMMITTED — so an
-   # UNCOMMITTED, in-flight allocation in another checkout is invisible to all three, and two
-   # checkouts hand out the SAME S{N}. The duplicate `## <today> — Session S{N}` header then
-   # lands the moment the branch merges, breaking the `grep -Fxq` "does my header exist" check
-   # that /prime 8a, /session-start Step 3 and /session-plan Step 0 all rely on.
-   # Real incidents: 2026-07-13 S6 (committed-header collision → fixed by (c)) and
-   # 2026-07-13 S11 (uncommitted in-flight collision → (c) did not cover it; S12 yielded by hand).
-   #
-   # CLAIMING IS ATOMIC, NOT ADVISORY. `mkdir` is atomic on POSIX: exactly one caller can create
-   # a given directory, and every other caller gets EEXIST. So the claim loop below is a genuine
-   # mutex across checkouts — not merely a narrower race window. Two /prime runs firing at the
-   # same instant CANNOT both win the same S{N}; the loser sees EEXIST and takes the next number.
-   #
-   # Do NOT "fix" this by making worktrees reserve markers up front — that reintroduces the
-   # shared allocator worktrees exist to remove. A claim is made at allocation time, by whoever
-   # allocates. Nothing is held; nothing is reserved ahead.
-   #
-   # ⚠ KNOWN GAP, ACCEPTED (operator call, 2026-07-13 S13): a checkout running an OLD copy of
-   # this block neither writes claims nor reads them. `prime.md` is a REAL FILE in a worktree
-   # (not a symlink), so a worktree on a branch predating this change keeps allocating blind, and
-   # the mutex protects only the checkouts that have it. Not a flaw in the mechanism — the cost of
-   # the mechanism living in a branch-tracked file. Refresh (rebase/merge) a long-lived worktree
-   # branch before trusting the mutex across it. See docs/session-marker.md § Known gap.
-   #
-   # FAIL-SAFE INVARIANT — LOAD-BEARING, DO NOT INVERT:
-   # HIGH is seeded from the marker file BEFORE any scan, and every scan below only ever RAISES
-   # it. So a git failure, a missing common dir, or /prime running outside a git repo degrades to
-   # the old marker-file-only behaviour — it can NEVER reset HIGH to 0 and allocate S1 over an
-   # existing S5. Any future edit that scans first and consults the marker file second
-   # reintroduces exactly that destructive regression. (friction-log.md 2026-07-13.)
-   HIGH=0
-   if [ -f logs/.session-marker ]; then                         # (a) — seeds HIGH. Must stay first.
-     PREV=$(cat logs/.session-marker)
-     case "$PREV" in
-       # SUFFIX-TOLERANT, AND THIS IS THE MOST DANGEROUS LINE IN THE ALLOCATOR.
-       # Markers now read `2026-07-14 S7-a4f`, not just `2026-07-14 S7`. The old
-       # `${PREV##*S}` yielded `7-a4f`, which the `*[!0-9]*` guard below REJECTS — leaving
-       # HIGH=0, so the next allocation is S1 ON TOP OF AN EXISTING S7. That is precisely the
-       # "destructive regression" the invariant above warns against, and it would have shipped
-       # silently. Strip the date, strip the leading S, then strip the suffix — never `##*S`,
-       # which would also cut at an `S` inside the id suffix.
-       "${TODAY} S"*) tok="${PREV#* }"; n="${tok#S}"; n="${n%%-*}"
-                      case "$n" in ''|*[!0-9]*) ;; *) [ "$n" -gt "$HIGH" ] && HIGH="$n";; esac;;
-     esac
-   fi
-   for n in $( { grep -hoE "^## ${TODAY} — Session S[0-9]+" logs/session-notes.md 2>/dev/null   # (b)
-                 git grep -hoE "^## ${TODAY} — Session S[0-9]+" \
-                     $(git for-each-ref --format='%(refname)' refs/heads 2>/dev/null) \
-                     -- logs/session-notes.md 2>/dev/null                                       # (c)
-               } | grep -oE '[0-9]+$' ); do
-     case "$n" in ''|*[!0-9]*) continue;; esac
-     [ "$n" -gt "$HIGH" ] && HIGH="$n"
-   done
-   # (d) Shared claim dir. Empty CLAIMS => degrade to (a)-(c) silently and safely (fail-safe).
-   CLAIMS=""
-   GIT_COMMON=$(git rev-parse --path-format=absolute --git-common-dir 2>/dev/null)
-   if [ -n "$GIT_COMMON" ] && [ -d "$GIT_COMMON" ]; then
-     # `--path-format=absolute` is REQUIRED: the bare command returns a RELATIVE `.git` from a
-     # main checkout but an ABSOLUTE path from a worktree. Without it this resolves against the
-     # wrong cwd. (Verified 2026-07-13.)
-     #
-     # SCOPE the namespace by the cwd's path INSIDE the repo. Worktrees of one repo share a common
-     # dir AND sit at the repo root (empty prefix) → they SHARE a claim namespace, which is exactly
-     # what the mutex needs. But a project that is a plain SUBDIRECTORY of a repo — e.g.
-     # projects/axcion-website/, which is NOT its own repo yet keeps its own logs/session-notes.md
-     # and therefore its own S{N} sequence — would otherwise share a claim namespace with unrelated
-     # siblings under the same .git, inflating its S{N}. Scoping keeps namespace == session-notes.
-     SCOPE=$(git rev-parse --show-prefix 2>/dev/null | tr -d '\n' | tr -c 'A-Za-z0-9._-' '-')
-     [ -z "$SCOPE" ] && SCOPE="_root"
-     CLAIMS="$GIT_COMMON/axcion-session-markers/$SCOPE"
-     mkdir -p "$CLAIMS" 2>/dev/null || CLAIMS=""
-   fi
-   if [ -n "$CLAIMS" ]; then
-     # `find`, NOT a glob. The Bash tool's real shell is ZSH, where an UNMATCHED glob triggers
-     # NOMATCH: the command errors and the loop body never runs — which is exactly the state on
-     # the FIRST /prime of every day, in every repo. Under bash the literal survives and `[ -d ]`
-     # skips it, so a bash-only test PASSES while the real shell CRASHES. Verified both ways,
-     # 2026-07-13 (caught by the end-time /risk-check). Do NOT "simplify" this back to a glob.
-     for n in $(find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d -name "${TODAY}-S*" 2>/dev/null \
-                | sed 's|.*-S||'); do
-       case "$n" in ''|*[!0-9]*) continue;; esac
-       [ "$n" -gt "$HIGH" ] && HIGH="$n"
-     done
-     # Prune claims not dated today (bounded growth). -type d never follows symlinks here, and
-     # -mindepth 1 plus the non-empty CLAIMS guard above make the rm -rf reach nothing outside
-     # this directory.
-     find "$CLAIMS" -mindepth 1 -maxdepth 1 -type d ! -name "${TODAY}-*" -exec rm -rf {} + 2>/dev/null
-   fi
-   # SESSION-ID SUFFIX — this is what actually makes collisions IMPOSSIBLE, rather than merely
-   # unlikely. The claim-dir mutex below narrows the race but cannot close it: a checkout
-   # running an older copy of prime.md neither writes claims nor reads them, so it allocates
-   # blind (the "known gap" above — it produced FOUR real collisions in two days). A marker
-   # carrying 3 characters of this session's own id cannot collide with another session's
-   # marker no matter what N either picks, because no two sessions share an id. The uniqueness
-   # now lives in the NAME, not in a lock every participant must honour. (The mutex is retained
-   # as belt-and-braces — it still yields tidy sequential numbers — but it is no longer
-   # load-bearing for correctness.)
-   #
-   # Degrades safe: no CLAUDE_CODE_SESSION_ID (older CLI) → empty suffix → legacy bare S{N},
-   # exactly today's behaviour. Readers accept both grammars.
-   ID3=$(printf '%s' "${CLAUDE_CODE_SESSION_ID:-}" | tr -cd 'A-Za-z0-9' | cut -c1-3)
-   if [ -n "$ID3" ]; then SFX="-${ID3}"; else SFX=""; fi
-
-   # Atomic claim loop. mkdir succeeds for exactly one caller; the loser bumps and retries.
-   N=$((HIGH + 1))
-   while : ; do
-     if [ -z "$CLAIMS" ]; then MARKER="S${N}${SFX}"; break; fi        # no common dir → no mutex, old behaviour
-     if mkdir "$CLAIMS/${TODAY}-S${N}" 2>/dev/null; then        # ← the atomic step
-       MARKER="S${N}${SFX}"
-       printf '%s\n' "${CLAUDE_CODE_SESSION_ID:-unknown} $(date '+%H:%M:%S')" \
-         > "$CLAIMS/${TODAY}-S${N}/owner" 2>/dev/null           # debug breadcrumb only; never read for logic
-       break
-     fi
-     N=$((N + 1))
-     if [ "$N" -gt 999 ]; then MARKER="S${N}${SFX}"; break; fi        # runaway guard — cannot spin forever
-   done
-   echo "${TODAY} ${MARKER}" > logs/.session-marker
-   # Identity oracle (Option 2′): also write a per-session-id marker file no concurrent /prime can clobber.
-   [ -n "${CLAUDE_CODE_SESSION_ID}" ] && echo "${TODAY} ${MARKER}" > "logs/.session-marker-${CLAUDE_CODE_SESSION_ID}"
-   # Orphan cleanup — REMOVED here (2026-07-18), owned by detect-concurrent-session.sh.
-   # The old "prune per-id markers not dated today" loop was a category error: a marker's
-   # date records when its session STARTED, never whether it ENDED — so it deleted a live
-   # overnight session's marker (making that session invisible to every guard) while
-   # leaving same-day ghosts armed. The SessionStart hook now prunes markers on LIVENESS
-   # (no foreign Claude CLI process with cwd in this checkout → provably dead → rm),
-   # fires before any /prime can run, and is registered once at the user level by
-   # absolute path — so stale worktree copies of THIS file cannot carry the old
-   # behaviour the way a prime-side prune would. Do not re-add a date-based prune.
+   MARKER_LINE=$(bash "$AI_RESOURCES/logs/scripts/prime-session-entry.sh" "$WORK_DESC") || exit 1
+   TODAY="${MARKER_LINE%% *}"; MARKER="${MARKER_LINE#* }"
    ```
 
-   Same-day re-invocations increment within the day (`S1` → `S2` → …); a new day resets to `S1`.
-
-8a. **Task selected by number.**
-   1. Resolve the number to its menu item → `TASK_TEXT` (the plain-English task text).
-   2. **Plan-mode guard.** If a plan-mode system reminder is present in context (plan mode is active), do NOT run `/session-start` or `/session-plan`, and do NOT write anything. Output:
-      > Task {N} noted: {TASK_TEXT}. You're in plan mode — I won't run `/session-start` yet. Exit plan mode when you're ready to execute, then re-send `{N}` (or say `go`) and I'll run `/session-start` and `/session-plan` for this task.
-
-      Then stop.
-   3. If plan mode is **not** active:
-      a0. **Cross-repo mission guard.** If the picked item is `[mission:<id>]`-sourced AND that mission's repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), STOP before any write and emit:
-         > ⚠ This task belongs to mission `{id}`, which lives in `{repo}` — but you're priming in `{CWD_REPO}`. Setting it up here would write the marker/header and run `/session-start` in the *wrong* repo. Open `{repo}` as your session folder and re-run `/prime` there to work on this mission. (Reply `here` to override and set it up in the current repo anyway.)
-
-         Wait for the operator. On `here` → proceed to sub-step a. On anything else → stop, write nothing. A same-repo pick (mission repo == `CWD_REPO`) skips this guard silently. Derive the repo from `ACTIVE_MISSIONS` here, not from Step 8m's later `MISSION_ID` — this guard must fire before the sub-step-a marker/header write.
-      a. **Determine this session's marker.** Run the **Step 8k marker-allocation sub-step** (shared with 8b/8c) to allocate this session's number and obtain `${TODAY}` and `${MARKER}`. 8k writes `logs/.session-marker` and the per-id marker; it does NOT touch `session-notes.md` — the header write below is this branch's responsibility.
-
-         **Ensure this session's marker-bearing entry exists** in `/logs/session-notes.md`. Check for THIS session's header with a literal whole-line grep (full-file, so immune to entry length; `-Fx` matches the em-dash and `${MARKER}` verbatim with no regex risk):
-         ```
-         Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
-         ```
-         **exit 0 → header already present** (rare — same-marker re-invocation): reuse it, append `TASK_TEXT` as a work-description line beneath it. **exit 1 → header absent** (the common case at `/prime` time): append a new `## ${TODAY} — Session ${MARKER}` header with `TASK_TEXT` as the work description. Treat exit 1 strictly as "not found → create", never as "command failed → skip the write" — suppressing this session's header breaks the `/session-start` / `/session-plan` precondition noted below.
-
-         Foreign concurrent sessions write under their own marker-bearing headers (e.g., `## YYYY-MM-DD — Session S2`); those do NOT count as "this session's header." The marker is the disambiguator. The pre-Phase-2 "no duplicate same-day header" rule is replaced by "this session writes only under its own marker-bearing header." This must happen before step c — `/session-start` Step 3 and `/session-plan` Step 0 require THIS session's marker-bearing header to exist.
-
-         **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime` (for `/session-start` Step 0.5's foreign-write check):
-
-         ```bash
-         stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-           || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-         ```
-
-         Order: marker first (top of step a), header append (middle), mtime last. Marker before append so the header can embed `${MARKER}`; mtime after append so `/session-start` Step 0.5's check sees this session's own write.
-      a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
-      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with **`{gate:post-plan}`** — always, on this branch — and additionally with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
-
-         **The `{gate:post-plan}` token is what makes step d's pause survive the chain**, and it is mandatory on 8a. `/session-start` Step 1 strips and captures it, Step 4 forwards it to `/session-plan`, and `/session-plan` Step 8 branches on it to hand control back here instead of auto-executing. Omitting it silently reverts to the pre-2026-07-18 defect: `/session-plan`'s auto-proceed instruction is the freshest one at the decision point and wins over step d below, so the session begins executing a plan the operator has never approved. **8b must NOT pass this token** — see 8b.3.d. Source: `logs/improvement-log.md` 2026-07-18.
-      c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
-
-         **Note on the real call path:** `/session-start` Step 4 already chain-invokes `/session-plan`, so in practice the chain reaches it there and this sub-step is satisfied by that hop. Either way the gate token travels with it.
-
-         **Direct-route branch (Commit 2, 2026-07-23).** For a direct-route project (`DIRECT=1` via the canonical predicate, `docs/session-marker.md` § Direct-route detection), `/session-start` Step 4 **skips** this chain — no `/session-plan` is invoked and **no plan file is written.** This sub-step c is a no-op on the direct route; go straight to step d's direct branch.
-      d. **Pause.** After `/session-plan` finishes (engineered) or after `/session-start` returns (direct), output the review prompt:
-
-         **Engineered route (`DIRECT=0`, plan file written):**
-         > Plan ready — review `logs/session-plan-${TODAY}-${MARKER}.md`. Reply `go` to start execution, or run `/qc-pass` on the plan first.
-
-         **Direct route (`DIRECT=1`, no plan file):** there is no plan file to review. Output instead:
-         > Mandate written — review it in `logs/session-notes.md` (this session's `## ${TODAY} — Session ${MARKER}` block). Reply `go` to start execution, or run `/session-plan` first if you want a durable plan.
-
-         Wait for the operator either way. Do NOT begin execution on your own.
-
-         As of 2026-07-18 this pause is **also carried mechanically** by the `{gate:post-plan}` token from step b (engineered route), so it no longer depends on this instruction being recalled at a decision point many turns downstream. If a future edit removes the token, this sentence alone will not hold the gate — that is precisely the failure the token was added to fix. On the direct route no plan exists to gate, so the pause is this sub-step's own lean go-prompt above.
-
-8b. **Free-text intent.** The operator named the work directly instead of picking a number.
-   1. Resolve the operator's stated work → `TASK_TEXT` (the work description, including any inline scope boundary like "just the refactor, not the follow-up PRs").
-   2. **Plan-mode guard.** If a plan-mode system reminder is present in context (plan mode is active), do NOT run `/session-start` or `/session-plan`, and do NOT write anything. Output:
-      > Free-text task noted: {TASK_TEXT}. You're in plan mode — I won't run `/session-start` yet. Exit plan mode when you're ready to execute, then re-send the task (or say `go`) and I'll run `/session-start` and `/session-plan` for it.
-
-      Then stop.
-   3. If plan mode is **not** active:
-      a. **Determine this session's marker.** Run the **Step 8k marker-allocation sub-step** (shared with 8a/8c) to allocate this session's number and obtain `${TODAY}` and `${MARKER}`, then ensure this session's marker-bearing entry exists (same contract as Step 8a — see `docs/session-marker.md`).
-
-         Check for THIS session's header with a literal whole-line grep (full-file, immune to entry length; `-Fx` matches the em-dash verbatim):
-         ```
-         Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
-         ```
-         **exit 0** → reuse the existing header, append `TASK_TEXT`. **exit 1** → create a new `## ${TODAY} — Session ${MARKER}` header with `TASK_TEXT`. Exit 1 means "not found → create", never "command failed → skip".
-
-         **After the append succeeds**, write `session-notes.md`'s mtime to `logs/.prime-mtime`:
-
-         ```bash
-         stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-           || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-         ```
-
-         Order: marker → header append → mtime (same contract as Step 8a.3.a).
-      a2. **Mission binding.** Run the Step 8m sub-step (skips silently if no active missions). If it resolves a `MISSION_ID`, prepend `{mission:<id>}` to the `/session-start` args in step b.
-      b. Invoke the `/session-start` command with `TASK_TEXT` as its arguments (becomes the mandate), prefixed with `{mission:<id>}` if step a2 bound one. It runs its own mandate-confirmation prompt — that is expected; do not suppress it.
-      c. After `/session-start` finishes, invoke the `/session-plan` command with `TASK_TEXT` as its arguments (becomes the intent). It writes `logs/session-plan-${TODAY}-${MARKER}.md` (marker-scoped per `docs/session-marker.md`). If THIS session's marker-scoped plan already exists, `/session-plan` Step 0 surfaces a 3-option keep/overwrite/pass2 prompt — that is expected mid-chain; the operator answers it normally.
-
-         **Direct-route branch (Commit 2, 2026-07-23).** For a direct-route project (`DIRECT=1`, `docs/session-marker.md` § Direct-route detection), `/session-start` Step 4 **skips** the `/session-plan` chain — no plan file is written. This sub-step c is a no-op on the direct route; go straight to step d (which begins execution regardless).
-      d. **Begin execution immediately** under full autonomy (per workspace CLAUDE.md Autonomy Rules). No second `go`/`proceed` confirmation required — the operator stating the work directly IS the go signal. This is 8b's structural delta vs 8a, which pauses for explicit `go` after `/session-plan`. (On the direct route the only difference is that no plan artifact exists — execution still begins immediately.)
-
-         **8b passes no `{gate:post-plan}` token** (contrast 8a.3.b). That absence is what preserves this branch's auto-execute behaviour: `/session-plan` Step 8 treats an unset gate as the default and proceeds. Adding the token here would convert 8b into 8a and introduce a pause the operator has not asked for.
-
-8c. **Auto mode.** The operator typed `auto` (optionally with item numbers) — run the picked menu item(s) end-to-end with a single combined approval gate and no per-stage prompts.
-
-   1. **Resolve PICKED_ITEMS.** Parse the operator's reply:
-      - `auto` / `a` (no number) → `PICKED_ITEMS` = [item #1 from the menu built in Step 5].
-      - `auto N` — or the equivalent `N auto` shape (`^[1-6]\s+auto$`, normalized by Step 7) → `PICKED_ITEMS` = [item #N].
-      - `auto N,M,...` or `auto N M ...` → `PICKED_ITEMS` = [item #N, item #M, ...] in the order the operator gave them. Deduplicate while preserving first-seen order.
-
-      Validate that every requested number is within the rendered menu range. If any number is out of range, ask once for a valid `auto` reply and re-classify (per Step 7 ambiguity rule). If the menu has zero items, output `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop.
-
-      `PICKED_ITEMS_TEXT` is a short comma-joined preview of the picked items' plain-English text (used in operator-facing messages below). `SINGLE_ITEM` is true when `PICKED_ITEMS` has exactly one entry.
-
-   1.5. **Per-item done-condition presence-check.** Before any disk write (marker, header, mandate, plan — all at Step 8c.3 and later), verify every picked item carries a derivable done-condition. An auto-bundle that includes an unscoped item wastes the single approval gate (and any `/risk-check`) on work that cannot be graded — the item is recognized as unscoped only mid-execution, after the gate has passed (logged: vault W2.4 finding #1 + session-harness friday-act #4, 2026-06-04 S6 — "review the System Owner reference files" entered the executable set with no specifiable done-condition).
-
-      For each item in `PICKED_ITEMS`, attempt to derive a one-line done-condition — an observable deliverable, check, or target (file written, item checked off, finding addressed, commit landed, count reached). The item text plus its source (the `[urgent]` / `[carryover]` / `[next-up]` line it came from) is the evidence. An item whose text names only an activity with no observable end-state (e.g. "review X", "look into Y", "think about Z") and whose source line supplies no target fails the check.
-
-      - **All items pass** → proceed to Step 8c.2 unchanged.
-      - **One or more items fail** → hold the failing items back. Do NOT write anything yet. Emit:
-
-        > Auto mode — {K} of {N} picked items have no concrete done-condition and were held back:
-        > {for each held item: `  • {item text} — needs a concrete deliverable (file / check / target). Define it, then re-pick this item.`}
-        >
-        > {if any items passed:} I can proceed with the {M} scoped item(s): {passed-items-text}. Reply `go` to run those, or restate the held item(s) with a deliverable.
-        > {if zero items passed:} Restate the held item(s) with a deliverable (file / check / target), then re-send `auto`.
-
-        On `go` with a non-empty passed set → set `PICKED_ITEMS` to the passed subset (preserve order), recompute `PICKED_ITEMS_TEXT` / `SINGLE_ITEM`, and proceed to Step 8c.2. On a restated item → re-run this check against the restatement. If zero items passed and the operator does not restate, stop without writing.
-
-   2. **Plan-mode guard.** If a plan-mode system reminder is present in context, output: `Auto mode noted: {PICKED_ITEMS_TEXT}. You're in plan mode — I won't write anything yet. Exit plan mode and re-send 'auto' (or 'go') to proceed.` Then stop.
-
-   2.5. **Cross-repo mission guard (deliberate auto-mode exception).** Before the Step 8c.3 marker/header write: if any picked item is `[mission:<id>]`-sourced AND that mission's repo (from `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 0), STOP and emit the same wrong-repo warning as Step 8a's cross-repo guard, listing each offending picked item and its repo. Wait; on `here` → proceed to 8c.3; on anything else → stop, write nothing. This is a **deliberate single-condition exception** to auto mode's "single approval gate, no per-stage prompts" contract (fires ONLY when a picked mission's repo ≠ `CWD_REPO`) — do not remove it as a stray prompt. It is load-bearing here because the 8c.3 header write precedes the 8c.6 approval gate, so this is the only point that stops a wrong-repo header before disk. Derive the repo from `ACTIVE_MISSIONS`, not from the Step 8c.3.5 auto-bind (which runs after the write). Same-repo picks skip it silently.
-
-   3. **Marker resolution + marker-bearing header + mtime marker** (same contract as Step 8a — see `docs/session-marker.md`). Run the **Step 8k marker-allocation sub-step** (shared with 8a/8b) to allocate this session's number and obtain `${TODAY}` and `${MARKER}`, then write the marker-bearing header and mtime as below:
-
-      Check for THIS session's header with a literal whole-line grep (full-file, immune to entry length; `-Fx` matches the em-dash verbatim):
-      ```
-      Bash(grep -Fxq "## ${TODAY} — Session ${MARKER}" logs/session-notes.md)
-      ```
-      **exit 0** → reuse the existing header, append the work-description line. **exit 1** → create a new `## ${TODAY} — Session ${MARKER}` header. Exit 1 means "not found → create", never "command failed → skip".
-
-      Work-description line text:
-      - If `SINGLE_ITEM`: the picked item's plain-English text.
-      - If multi-item: `Auto multi-item: {item-N text}; {item-M text}; ...` listing every picked item separated by `;` in operator order.
-
-      Then write `logs/.prime-mtime` (after the header append, never before):
-
-      ```bash
-      stat -f %m logs/session-notes.md 2>/dev/null > logs/.prime-mtime \
-        || stat -c %Y logs/session-notes.md 2>/dev/null > logs/.prime-mtime
-      ```
-
-   3.5. **Mission binding (auto-bind only).** Run the Step 8m sub-step in **auto-bind-only mode**: if any picked item is `[mission:<id>]`-sourced, set `MISSION_ID` to that mission (first such, if several). **Do NOT emit the interactive binding prompt in auto mode** — auto mode's contract is a single approval gate with no per-stage prompts. If no picked item is mission-sourced, `MISSION_ID` stays unset. The bound mission (if any) is disclosed in the Step 8c.6 approval gate and written as the `- Mission:` bullet in Step 8c.7.
-
-   3.6. **Compute `DIRECT` (Commit 2, 2026-07-23).** Evaluate the canonical route predicate once here (`docs/session-marker.md` § Direct-route detection — read the project-root `CLAUDE.md` for an exact `**Execution route:** direct` line; `DIRECT=0` for engineered / absent / malformed / wrong-case). Carry `DIRECT` forward to the Step 8c.6 gate disclosure line and the Step 8c.8 plan-write skip. If unevaluated for any reason, both consumers must treat it as `DIRECT=0` (fail-safe: the plan file is written — today's behaviour).
-
-   4. **Derive mandate fields** inline (matches `/session-start` Step 2 logic without the confirmation prompt). Apply to each picked item, then compose:
-      - `work_scope` — one sentence naming the work and its concrete deliverable. For `SINGLE_ITEM`, derived from the picked item. For multi-item, compose as `Complete picked menu items: (1) {item-N work + deliverable}; (2) {item-M work + deliverable}; ...` listing every picked item.
-      - `exit_condition` — an observable condition (file written, item checked off, finding addressed, commit landed). For `SINGLE_ITEM`, the item's exit. For multi-item, `all picked items closed in their respective source files` unless every item shares a single concrete exit, in which case use that.
-      - `out_of_scope` — `(none stated)` unless any picked item explicitly bounds itself; in multi-item mode, combine any bounds with `;`.
-      - `files_in_scope` — union of inferred source paths across all picked items. Flag as `(inferred)` per `/session-start` Step 3 convention.
-      - `stop_if` — `(none stated)` unless any picked item carries a `[BLOCKING]`-style halt condition; if multiple do, combine with `;`.
-      - `allowed_inputs`, `required_outputs` — leave absent (no `(none stated)` placeholder).
-
-   4.5. **Context discovery (engine pre-step).** Optionally invoke the **`context-discovery` agent** to pre-populate `files_in_scope` / `allowed_inputs` / `required_outputs` from the active project's CLAUDE.md routing map. Mirrors `/session-start` Step 2.4 but runs inline without re-emit (the Step 8c.6 approval gate is the operator's first sight of the mandate).
-
-      **Skip silently if any of these conditions hold** — no warning, no agent invocation, proceed to Step 8c.5:
-
-      a. `work_scope` is fewer than 5 whitespace-separated tokens.
-      b. `work_scope` matches a known meta-command literal: `/prime`, `/open-items`, `/wrap-session`, `/handoff`, `/clear`.
-      c. No `CLAUDE.md` exists at the project root: `! [ -f "$(git rev-parse --show-toplevel 2>/dev/null)/CLAUDE.md" ]`.
-
-      **Otherwise, invoke the agent** via the Agent tool with `subagent_type: context-discovery` and three fields:
-
-      - `TASK_DESCRIPTION = {work_scope}` (from Step 8c.4)
-      - `CWD_PROJECT = $(git rev-parse --show-toplevel)`
-      - `INVOCATION_MODE = auto-prime`
-
-      Parse the agent's first line for outcome class per `ai-resources/docs/context-pack-schema.md § 5b`:
-
-      | First line shape | Outcome | Action |
-      |---|---|---|
-      | `**Pack:** {abs path} \| tracked` or `\| untracked` | `success-enriched` or `success-insufficient` (read readiness booleans in summary lines 5–6 to distinguish) | Read pack frontmatter; apply fields below |
-      | `**Pack:** (skipped — {reason})` | `engine-skipped` | Carry no pack; proceed to 8c.5 |
-      | `**Pack:** (none — engine failed){...}` | `engine-error` | Log one chat line: `Note: context engine failed — {cause from summary, or "no cause given"}. Proceeding with derived mandate.` Carry no pack |
-
-      **No timeout enforcement.** The Agent tool runs to completion; the engine is best-effort. If it never returns, the chain stalls — operator can interrupt and re-invoke without the engine pre-step.
-
-      **For `success-enriched` and `success-insufficient`:** Read the pack file at the path from line 1. Parse YAML frontmatter for `files_in_scope`, `allowed_inputs`, `required_outputs`, `sufficient_to_plan`, `sufficient_to_implement`.
-
-      Apply to derived mandate state:
-      1. `files_in_scope` — REPLACE the `(inferred)` value from Step 8c.4 with the engine's concrete list.
-      2. `allowed_inputs` — SET to engine value if absent in Step 8c.4.
-      3. `required_outputs` — SET to engine value if absent in Step 8c.4.
-      4. Capture `PACK_PATH` (line 1), `PACK_TRACKED` (`tracked` or `untracked` token from line 1), `PACK_OUTCOME` (`success-enriched` or `success-insufficient`), and `PACK_INSUFFICIENT_NOTE` if `success-insufficient` (one short sentence: `"sufficient_to_implement=false, {N} missing-context items"`).
-
-      Carry `PACK_PATH`, `PACK_TRACKED`, `PACK_OUTCOME`, `PACK_INSUFFICIENT_NOTE` forward to Step 8c.6 (approval gate) and Step 8c.7 (mandate write).
-
-   5. **Derive plan fields** inline (matches `/session-plan` Step 2 + 5–7 logic without the per-stage prompts):
-      - `INTENT` — one-sentence summary. For `SINGLE_ITEM`, the item's summary. For multi-item, e.g. `Run {N} picked menu items in order: {short label-1}; {short label-2}; ...`.
-      - `RECOMMENDED_MODEL` — apply `/session-plan` Step 2 three-tier heuristic (deciding → opus; doing → sonnet; mechanical → haiku) to the picked items as a whole. For multi-item, pick the higher-cognitive-load tier across the set (e.g., one deciding item + four doing items → opus). Compare to `ACTIVE_MODEL` from the system-prompt context. Emit `→ /model {shortname}` on mismatch.
-      - `AUTONOMY_POSTURE` — `Full autonomy` default; downgrade to `Gated` if any picked item touches structural change classes (hook edits, permission changes, cross-cutting CLAUDE.md edits, new commands/skills, new symlinks, new always-loaded content, automation with shared-state effects — full list: `ai-resources/docs/audit-discipline.md`).
-      - `STRUCTURAL_RISK` — boolean: true if any picked item triggers any structural class.
-
-   6. **Single approval gate.** Emit one block — this is the only operator-facing pause in auto mode, regardless of how many items were picked. The block below uses chat-echo styling (icons `→` / `·`, multi-bullet layout); the disk-write at Step 8c.7 follows the load-bearing parse contract instead. Do not propagate the gate-block styling to the disk write.
-
-      For `SINGLE_ITEM`, render the **Picked item** line as `**Picked item:** {item text}` with a single **Source** line.
-
-      For multi-item, replace the single **Picked item** / **Source** pair with a `**Picked items:**` numbered list — one line per picked item with its menu number, plain-English text, and source path link. Example:
-
-      ```
-      **Picked items:**
-        1. {item-1 text}  ·  [{source-1 path}]({source-1 path})
-        3. {item-3 text}  ·  [{source-3 path}]({source-3 path})
-        5. {item-5 text}  ·  [{source-5 path}]({source-5 path})
-      ```
-
-      Full gate block:
-
-      ```
-      ## Auto Mode — {YYYY-MM-DD}
-
-      {single-item: **Picked item:** {item text}  /  **Source:** [{source path}]({source path})}
-      {multi-item: **Picked items:** block as shown above}
-
-      **Mandate**
-      → Work: {work_scope} — complete fully within this session where context allows.
-      · Out of scope: {out_of_scope}
-      · Files in scope: {files_in_scope_written}{ (inferred) if applicable}
-      · Done when: {exit_condition}
-      · Stop if: {stop_if}
-      {· Mission: {MISSION_ID} — only if Step 8c.3.5 bound one}
-
-      {if PACK_PATH is set (Step 8c.4.5 produced a pack):}
-      **Context pack** — {PACK_OUTCOME} ({PACK_TRACKED})
-      → `{PACK_PATH}`
-      {if PACK_OUTCOME == success-insufficient:}
-      ⚠ {PACK_INSUFFICIENT_NOTE} — review missing-context items in the pack before execution.
-
-      **Plan**
-      → Intent: {INTENT}
-      → Model: {RECOMMENDED_MODEL} — {match | → /model {shortname}}
-      → Autonomy: {AUTONOMY_POSTURE}
-      {→ Route: direct — no committed plan file will be written (Step 8c.8 skipped); mandate + run-manifest still written. — only if DIRECT=1}
-
-      {if STRUCTURAL_RISK is true:}
-      **Risk-check**
-      → Will run before execution begins (structural class detected). On RECONSIDER or NO-GO, auto mode pauses; mandate and plan are retained on disk for revision.
-
-      ---
-
-      Reply `go` to write mandate + plan and begin execution.
-      Reply `edit` to adjust before writing.
-      Reply `abort` to stop without writing anything.
-
-      Default (no response within the turn): **abort** — nothing written.
-      ```
-
-      **Parser:**
-      - `go` / `y` / `yes` (case-insensitive, trimmed) → proceed to 8c.7.
-      - `abort` → output `Auto mode aborted. Nothing written.` Stop.
-      - `edit` → ask one prompt: `What should change? State corrections in 'b: / a: / r: / f:' syntax (b=work_scope, a=allowed_inputs, r=required_outputs, f=files_in_scope), or other text as a free amendment to work_scope.` Apply corrections, re-emit the gate block once, accept only `go` or `abort` on the re-response. Do not loop further.
-      - Anything else (including free text not preceded by `edit`) → re-ask once: `Reply 'go', 'edit', or 'abort'. Free-text refinements require 'edit' first.` Accept only `go` / `edit` / `abort` on the re-response.
-
-   6.5. **`Files in scope` mechanical check (pre-write).** Auto mode has no `/session-start` Step 2.5 equivalent — it derives `files_in_scope` at Step 8c.4 and writes it at 8c.7 with **nothing in between** — which makes it the *less* guarded of the two mandate-writing paths, and the one the operator never sees the field on before it lands. Apply `/session-start` Step 2.5 check 3 verbatim before the write:
-
-   a. **Shape test — HARD REJECT.** Every entry must look like a path (contains `/`, or a known extension, or is a bare `CLAUDE.md`/`SKILL.md`; globs pass). **Prose never reaches disk.** `(inferred)` remains the one legal non-listed shape. On failure, re-derive mechanically — `git diff --name-only`, `find`, `grep -rl` — and paste the output.
-   b. **Existence test — HARD REJECT, made safe by routing.** `test -e` each entry. A file this session will **create** is not a file *in scope* — it is a **required output**, and the mandate has a field for it (`- Required outputs:`). Route it there; then everything left in `files_in_scope` already exists, and the hard reject carries zero false-positive risk. Auto mode derives both fields itself at Step 8c.4, so it can do this routing without asking. *(A "warn, never reject" variant was cut on 2026-07-14 System-Owner review — a warning is a soft nudge to a model that can rationalise past it, which is the exact failure this check exists to stop. Do not re-weaken it.)*
-
-   **The companion rule: paste the paths themselves, from a command's output. A reference to the command is not a footprint** — its consumer (`check-foreign-staging.sh`) is a parser, not a reader, and a prose footprint makes that guard **fail open**, leaving the session with no staging protection while appearing to have declared a scope.
-
-   *(Added 2026-07-14. The five-for-five recall-assertion pattern in `logs/improvement-log.md` is the trigger; the fifth instance was committed **inside the session shipping this check**, in the prompt handed to the reviewer whose job was to catch it. The habit is not "I forget to check" — it is that a plausible recollection is indistinguishable from an observation from the inside. Only the machine separates them, so the machine has to do it.)*
-
-   7. **Write mandate.** Locate today's `## YYYY-MM-DD` header in `logs/session-notes.md`. **Append the mandate line immediately after the header, before any existing body content** — placement contract identical to `/session-start` Step 3. Format identical to `/session-start` Step 3 exact bullet structure:
-
-      ```
-      **Mandate:** {work_scope} — done when: {exit_condition}
-      - Out of scope: {out_of_scope}
-      - Files in scope: {files_in_scope_written}
-      - Stop if: {stop_if}
-      - Allowed inputs: {allowed_inputs}      ← write only if set; omit the bullet entirely if absent
-      - Required outputs: {required_outputs}  ← write only if set; omit if absent
-      - Context pack: {PACK_PATH}             ← write only if Step 8c.4.5 produced a pack; omit if absent
-      - Mission: {MISSION_ID}                 ← write only if Step 8c.3.5 bound a mission; omit if absent
-      ```
-
-      **Parse contract:** the `**Mandate:**` line shape, the bullet labels (`- Out of scope:`, `- Files in scope:`, `- Stop if:`, `- Allowed inputs:`, `- Required outputs:`), and the `(inferred)` / `(none stated)` markers are load-bearing. Four downstream readers depend on them (verified pre-flight, 2026-05-29): canonical `/wrap-session` Step 7a, workspace-root `wrap-session.md` Step 2b, `/drift-check` Step 5, and `/contract-check` Step 2.5c. Do not insert extra prose into the `**Mandate:**` line itself or rename labels. The "complete fully within this session where context allows" posture lives in Step 8c.10's execution behavior, not in the mandate line — keeping it out of the disk-write preserves the two-segment parse contract (head ` — done when: ` tail).
-
-      The `- Context pack:` bullet (added 2026-05-29 for the Context Engine Phase 2) and the `- Mission:` bullet (added 2026-06-09 for the mission-contract subsystem) are **informational pass-through, not part of the five-label parse contract.** All four readers above use fixed-list extraction or labeled-bullet pass-through; they silently ignore both. The `- Context pack:` bullet locates the pack; the `- Mission:` bullet records which multi-session mission this session served and is read by **`/drift-check` only**, as a second reference standard (see `docs/session-marker.md` § Mandate-line bullet contract).
-
-   7.5. **Write the run-manifest start-stub (W3.2 R3).** After the mandate line lands on disk, write this session's durable start-stub. Auto mode never calls `/session-start`, so without this step every auto-mode session would be invisible to crash/orphan detection — the exact blind spot R3 exists to close. Schema: `docs/spine-schemas.md` § 1. Mirrors `/session-start` Step 3.5; keep the two in sync.
-
-      > **⚠ `MARKER`, `MISSION_ID`, and `PACK_PATH` are values YOU hold from earlier steps — NOT shell variables.** Each Bash call gets a fresh shell (env vars do not persist across tool calls), so `--marker "${MARKER}"` would expand empty and no stub would be written. **Substitute the literal values**; omit a flag whose value is unset. `--date` / `--marker` may be omitted entirely — the script self-resolves them from the marker oracle written in step 3 above.
-
-      ```bash
-      d="$(pwd)"; RM=""
-      while [ "$d" != "/" ]; do
-        for cand in "$d/ai-resources/logs/scripts/run-manifest.sh" "$d/logs/scripts/run-manifest.sh"; do
-          [ -f "$cand" ] && { RM="$cand"; break 2; }
-        done
-        d=$(dirname "$d")
-      done
-      # Marker + date omitted on purpose — the script resolves them itself.
-      # Add --mission / --pack-path ONLY if this session actually bound one.
-      [ -n "$RM" ] && bash "$RM" start \
-        --model "<the active session model identifier, e.g. claude-opus-4-8[1m]>" \
-        --mandate-ref "logs/session-notes.md#<today>-<MARKER>" \
-        --mission "<MISSION_ID from step 3.5 — omit this flag if none was bound>" \
-        --pack-path "<PACK_PATH from step 4.5 — omit this flag if no pack>"
-      ```
-
-      `start` is idempotent. If the walk-up finds no script, skip silently — an additive durable-state substrate must never block the auto-mode chain. **Not a gate** (`principles.md § OP-5`): nothing reads the manifest yet.
-
-   8. **Write plan.** **Direct-route skip (Commit 2, 2026-07-23):** if `DIRECT=1` (canonical predicate, `docs/session-marker.md` § Direct-route detection), **skip this step entirely** — a direct-route project gets no committed `logs/session-plan-*.md`. The Step 8c.6 approval gate already disclosed the direct route; note "direct route — no plan file" in the gate block. The mandate (8c.7) and run-manifest (8c.7.5) are still written. Then proceed to step 9. For `DIRECT=0` (engineered), write the plan as below.
-
-      Write to `logs/session-plan-${TODAY}-${MARKER}.md` (marker + date resolved in step 3; canonical contract `docs/session-marker.md`) using `/session-plan` Step 7 schema (`## Intent`, `## Model`, `## Source Material`, `## Findings / Items to Address`, `## Execution Sequence`, `## Scope Alternatives`, `## Autonomy Posture`, `## Risk`). Apply `/session-plan` Step 7 self-check (length floor ≥25 substantive lines, concrete Findings, concrete Execution Sequence, realistic Scope Alternatives).
-
-      For multi-item auto, structure the plan so each picked item is visible:
-      - `## Source Material` lists every picked item's source path (one bullet per item).
-      - `## Findings / Items to Address` has one subsection (`### Item N — {short label}`) per picked item, capturing the concrete findings for that item.
-      - `## Execution Sequence` groups stages by picked item in the operator-given order (e.g., `### Stage 1 — Item 1: {label}`, `### Stage 2 — Item 3: {label}`, …). No per-item operator pause between stages — the single approval gate at Step 8c.6 covers them all.
-
-      Under TOCTOU Phase 2+3 atomic, no concurrent-session collision check is needed — each session writes its own marker-scoped plan, so foreign-session collisions are structurally impossible.
-
-   9. **Run `/risk-check` if STRUCTURAL_RISK is true.** This is the plan-time gate per workspace Autonomy Rules #9. The single approval gate at step 8c.6 disclosed this in advance, so the operator is not surprised. Verdict handling:
-       - **GO** → proceed to 8c.10.
-       - **RECONSIDER / NO-GO** → output `Risk-check verdict: {verdict}. Mandate and plan retained on disk. Auto mode paused — review {risk-check report path} before resuming.` Stop. The plan and mandate stay on disk for the operator to revise.
-
-       If STRUCTURAL_RISK is false, skip this step silently.
-
-   10. **Begin execution under {AUTONOMY_POSTURE}.** No further confirmation gate — the Step 8c.6 approval covered execution for every picked item. For multi-item auto, run the items in the operator-given order; do NOT pause between items. Complete the mandate fully within this session where context allows; if context is clearly constrained (extended session, approaching compaction), follow the workspace `Context constraint deferral` rule — flag the deferral and log it, do not rush. Between items, emit a brief between-gate summary per workspace `Between-gate summaries` rule (one short line: what just finished, what's next).
-
-       **During execution:**
-       - Run `/qc-pass` on substantive artifacts before declaring them complete.
-       - For long-running work, follow `ai-resources/docs/compaction-protocol.md` named checkpoints.
-       - Surface `[SCOPE]`, `[HEAVY]`, `[AMBIGUOUS]`, `[COST]` guardrail flags per workspace rules.
-       - Commit directly per workspace `Commit behavior` rule (no pre-commit checks, no permission asks).
-
-   11. **On mandate completion.** Output: `Mandate complete. Run /wrap-session to capture telemetry and journal the session. Push pending — let me know when to push.` Do not auto-invoke `/wrap-session` — the operator decides when to wrap.
+   **Located absolutely; runs against the current repository.** cwd owns the `logs/` it writes, so each
+   checkout keeps its own marker sequence and the call resolves from every consumer, not only
+   `ai-resources`. If any step fails the script exits non-zero and `|| exit 1` stops the branch before the
+   next write; re-running `/prime` recovers, at the cost of one burned marker number. Marker grammar, the
+   header shape and the ordering rule live in the script beside the code they guard, with
+   `logs/scripts/prime-allocator.test.sh` as the tripwire. **Never reinline this logic:** code inside an
+   executable prompt is validated by reading rather than by running, which is the defect the extraction
+   fixed. Canonical protocol: `docs/session-marker.md`.
+
+8g. **Guards (shared sub-step — 8a / 8b / 8c).** Two, in this order, **before any write.**
+
+   1. **Plan mode.** If a plan-mode system reminder is in context, write nothing — no marker, no header,
+      no mtime — and output `{TASK_TEXT} noted. You're in plan mode — nothing written. Exit plan mode and
+      re-send to proceed.` Then stop.
+   2. **Cross-repo mission.** If the picked item is `[mission:<id>]`-sourced AND that mission's repo (from
+      `ACTIVE_MISSIONS`, Step 1d) ≠ `CWD_REPO` (Step 1), STOP before any write and emit:
+
+      > ⚠ This task belongs to mission `{id}`, which lives in `{repo}` — but you're priming in
+      > `{CWD_REPO}`. Setting it up here would write the marker/header and run `/session-start` in the
+      > *wrong* repo. Open `{repo}` as your session folder and re-run `/prime` there. (Reply `here` to
+      > override and set it up in the current repo anyway.)
+
+      Wait. On `here` proceed; on anything else stop, having written nothing. Same-repo picks skip
+      silently. Derive the repo from `ACTIVE_MISSIONS`, never from 8m's later `MISSION_ID` — this guard
+      must fire before 8h writes. In auto mode this is a **deliberate single-condition exception** to the
+      one-gate contract; do not remove it as a stray prompt.
+
+8a. **Numbered selection.** Resolve the number to its menu item → `TASK_TEXT`. Run 8g, then 8m, then 8h
+   with `WORK_DESC = TASK_TEXT`. Dispatch: invoke `/session-start` with
+   `"{gate:post-plan} {mission:<id>, if bound} TASK_TEXT"`. Then Step 9.
+
+   **`{gate:post-plan}` is mandatory on this branch.** `/session-start` Step 1 captures it, Step 4
+   forwards it (engineered) or branches on it (direct), and `/session-plan` Step 8 holds the pause and
+   owns the `go` continuation. It is the *only* thing distinguishing a numbered pick from free-text on
+   either route: omit it and the session begins executing a plan nobody approved
+   (`logs/improvement-log.md` 2026-07-18). **8b must NOT pass it.**
+
+8b. **Free-text intent.** Resolve the operator's stated work → `TASK_TEXT`, keeping any inline scope bound
+   ("just the refactor, not the follow-up PRs"). Run 8g, then 8m, then 8h with `WORK_DESC = TASK_TEXT`.
+   Dispatch: invoke `/session-start` with `"{mission:<id>, if bound} TASK_TEXT"`. Then Step 9.
+
+   **Pass no `{gate:post-plan}` token.** Its absence is what lets this branch proceed without a second
+   confirmation — the operator stating the work IS the go signal — and that is 8b's only structural
+   difference from 8a. Adding the token here would convert 8b into 8a.
+
+8c. **Auto mode.** Run one picked menu item end-to-end with a single approval gate and no per-stage
+   prompts. **One item only.** 8c owns picking, the guards and dispatch; it does not derive, echo or write
+   the mandate, the manifest or the plan.
+
+   1. **Resolve `PICKED_ITEM`.** `auto` / `a` → item #1. `auto N`, or the equivalent `N auto` shape
+      (`^[1-6]\s+auto$`, normalized by Step 7) → item #N. Validate N against the rendered menu range; out
+      of range → ask once for a valid `auto` reply and re-classify (Step 7 ambiguity rule). Empty menu →
+      `No tracked next steps — auto mode needs a task. Tell me what to work on.` and stop.
+
+   2. **Done-condition presence-check.** Before any disk write, the picked item must carry an observable
+      deliverable — a file written, an item checked off, a finding addressed, a commit landed, a count
+      reached. The item text plus its source line is the evidence. An item naming only an activity
+      ("review X", "look into Y", "think about Z") whose source line supplies no target **fails**: hold
+      it, write nothing, and emit:
+
+      > Auto mode — `{PICKED_ITEM_TEXT}` has no concrete done-condition, so I've held it.
+      > Restate it with a deliverable (file / check / target), then re-send `auto`.
+
+      Re-run this check against any restatement. If the operator does not restate, stop without writing.
+      Rationale and the logged trigger: `docs/session-marker.md` § Auto-mode done-condition check.
+
+   3. **Guards, write, bind.** Run 8g, then 8h with `WORK_DESC = PICKED_ITEM_TEXT`, then 8m in
+      **auto-bind-only** mode — set `MISSION_ID` from a `[mission:<id>]` item without emitting the
+      interactive prompt, because auto mode holds one gate. Then evaluate `DIRECT` once via the canonical
+      predicate (`docs/session-marker.md` § Direct-route detection); if it cannot be evaluated for any
+      reason treat it as `DIRECT=0` — fail-safe, meaning the plan file is written. **8h's three writes
+      precede the approval gate by necessity and `abort` does not roll them back** — see 8c.9.
+
+      *(Sub-steps 4–8 retired 2026-07-30 — the plan-mode and cross-repo guards moved to the shared 8g, the
+      mandate composition to `/session-start`, and `STRUCTURAL_RISK` was deleted with `/risk-check`. The
+      numbering gap is deliberate; retained identifiers keep their numbers.)*
+
+   9. **Dispatch.** Invoke `/session-start` via the Skill tool with
+      `args = "{gate:auto} {plan:overwrite} {mission:<id>, if bound} {MANDATE_TEXT}"`, where
+      `MANDATE_TEXT` is the picked item's work plus its concrete deliverable and any bound it states.
+      Under `{gate:auto}` that command suppresses its Step 2 echo and wait, runs Step 2.4 discovery and
+      Step 2.5 validation in order, then holds **one** approval gate — on **every** engine outcome,
+      including skipped and failed. On `go` it writes the mandate and the run-manifest stub and reaches
+      `/session-plan`, which writes the plan and begins execution. `{plan:overwrite}` pre-answers
+      `/session-plan` Step 0 so the chain does not stop to ask. On `abort` nothing further is written;
+      the marker, header and mtime from 8h remain because they precede the gate — say so:
+      `Auto mode aborted. No mandate, manifest or plan written — today's session header remains.`
+      Then Step 9.
+
+   10. **Direct route.** When `DIRECT=1`, `/session-start` Step 4 does not chain to `/session-plan` and no
+      `logs/session-plan-*.md` is written; the mandate and run-manifest still are, and Step 4 becomes the
+      terminal owner. The gate block at 8c.9 disclosed this.
+
+      *(Sub-steps 11–13 retired 2026-07-30 — 11 with `STRUCTURAL_RISK`, 12 (execution start, posture,
+      guardrail flags, between-item summaries, checkpoints) and 13 (the wrap reminder) to `/session-plan`
+      § Post-plan execution, which every terminal path reaches; 13 previously sat on the auto route alone.)*
+
+9. **Stop.** **`/prime` ends at dispatch.** Execution, the autonomy posture, the post-plan pause and its
+   `go`, the guardrail flags, between-item summaries, compaction checkpoints and the wrap reminder all
+   belong to `/session-start` Step 4 (direct route) and `/session-plan` Step 8 + § Post-plan execution
+   (all routes). Do not begin work here, and do not chain into `/wrap-session`. The step is named so that
+   "did `/prime` stop?" is an observation rather than an inference.

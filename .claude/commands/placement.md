@@ -42,7 +42,7 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
    - Touches a specific project (`projects/<name>/`) → that project's `CLAUDE.md`.
    - Touches permissions / settings.json → `{AI_RESOURCES}/docs/permission-template.md`.
    - Touches model selection or tier → (for agents) `{AI_RESOURCES}/docs/agent-tier-table.md`.
-   - Touches `/risk-check`, audit cadence, or change classes → `{AI_RESOURCES}/docs/audit-discipline.md`.
+   - Touches review sizing, audit cadence, or change classes → `{AI_RESOURCES}/docs/audit-discipline.md`.
    - Touches resource creation pipelines → `{AI_RESOURCES}/docs/ai-resource-creation.md`.
 
 6. Do **not** read project workspaces, skill libraries, or agent definitions exhaustively. The architecture map is the contract; deeper reads are only justified when `CHANGE` names a specific existing file the recommendation will modify.
@@ -56,7 +56,7 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
    - **Q2** Which artifact type (skill / command / agent / hook / doc / prompt / style-reference / log / audit / manifest)?
    - **Q3** If a slash command, which spawn shape (subagent vs. main-session vs. advisory)?
    - **Q4** If rule-shaped or prose-shaped, which layer?
-   - **Q5** Does the change qualify as a structural class for `/risk-check`?
+   - **Q5** Does the change qualify as a structural change class (making it high-consequence)?
    - **Q6** Will it write a log? Which one?
    - **Q7** Is it a dated audit output?
    - **Q8** Is it a manifest, configuration, or template?
@@ -76,7 +76,7 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
     - Workflow deployment / sync → `/deploy-workflow` / `/sync-workflow`
     - Direct edit (no pipeline) → state "no pipeline; edit directly"
 
-11. Determine whether `/risk-check` is required. Required iff `CHANGE` falls into one of the change classes listed in `{AI_RESOURCES}/docs/audit-discipline.md § Risk-check change classes` (the canonical source — do not maintain an inline copy of the list here). If required, note which gate fires (plan-time, end-time, or both — per the same doc's § When to fire (two-gate model)).
+11. Determine whether `CHANGE` is **high-consequence**. It is iff `CHANGE` falls into one of the change classes listed in `{AI_RESOURCES}/docs/audit-discipline.md § Structural change classes` (the canonical source — do not maintain an inline copy of the list here). If it does, note that the change takes the risk-aware review row of `{AI_RESOURCES}/docs/qc-independence.md § The rule` — one risk-aware review before implementation. No gate fires from the class match.
 
 ---
 
@@ -100,9 +100,9 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
 
 **Pipeline:** {/develop-ai-resource → {engine} | /create-skill | /improve-skill | /migrate-skill | /new-project | /graduate-resource | /deploy-workflow | /sync-workflow | none — edit directly}
 
-**Risk-check:** {not required | required: plan-time | required: end-time | required: both} — {one-line reason}
+**Review sizing:** {mechanical — deterministic verification only | consequential — one Codex review | high-consequence — one risk-aware Codex review} — {one-line reason}
 
-**Architecture-map sections consulted:** {section names from repo-architecture.md, e.g., "Q2 (artifact type), Q5 (risk-check classes)"}
+**Architecture-map sections consulted:** {section names from repo-architecture.md, e.g., "Q2 (artifact type), Q5 (structural change classes)"}
 
 **Notes:** {one short paragraph — flag ambiguities, alternative placements considered, or non-obvious coupling. Omit if no notes.}
 
@@ -121,4 +121,4 @@ This command is **not** auto-wired into `/create-skill` or any other pipeline. O
 
 15. `/placement` is advisory only. It does not create files, edit settings, or invoke any pipeline. The operator reads the recommendation and decides whether to proceed (and via which pipeline).
 
-16. If the operator approves the recommendation and proceeds with the named pipeline, that pipeline runs under its own rules (including its own `/risk-check` requirements and QC).
+16. If the operator approves the recommendation and proceeds with the named pipeline, that pipeline runs under its own rules (including its own review sizing).

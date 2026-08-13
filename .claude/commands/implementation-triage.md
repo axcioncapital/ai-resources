@@ -1,5 +1,5 @@
 ---
-description: Implementation triage — structured worth-doing verdict (WORTH-DOING / MARGINAL / NOT-WORTH-DOING) on a proposed implementation, oriented around ROI, perfectionism risk, and downstream impact. Mirrors /risk-check's verdict shape but ROI-oriented, not risk-oriented.
+description: Implementation triage — structured worth-doing verdict (WORTH-DOING / MARGINAL / NOT-WORTH-DOING) on a proposed implementation, oriented around ROI, perfectionism risk, and downstream impact. ROI-oriented, not risk-oriented.
 model: opus
 ---
 
@@ -60,6 +60,6 @@ Output the agent's response verbatim to the operator. The verdict on the first l
 
 ### Notes for the executor
 
-- The verdict shape mirrors `/risk-check`'s GO / PROCEED-WITH-CAUTION / RECONSIDER pattern but is oriented around ROI, not risk. The two commands coexist (per `references/toolkit-relationship.md` § 2). The operator runs `/risk-check` for risk-class changes; `/implementation-triage` for ROI-class judgments.
+- The verdict shape is GO / PROCEED-WITH-CAUTION / RECONSIDER, oriented around ROI, not risk. Risk is judged inside the change's one independent review, sized to consequence (`ai-resources/docs/qc-independence.md`); `/implementation-triage` answers the separate question of whether the work is worth doing at all.
 - Per locked Decision 1, this command writes nothing to disk at v1. Output is chat-only.
 - The three-tier verdict is fixed at v1. If a fourth tier is needed (e.g., "WORTH-DOING-LATER" for valid-but-deferred), operator decides at v1.1.

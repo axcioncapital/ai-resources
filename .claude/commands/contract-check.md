@@ -8,11 +8,11 @@ allowed-tools: Bash(git *), Read, Task
 Check whether an artifact still matches what was originally agreed at the start of work. `/contract-check` resolves the original contract, identifies the current artifact, then delegates an **independent** comparison to a fresh-context subagent. The subagent receives only the contract text and the artifact text — no QC history, no session conversation, no creation context. Advisory only — it modifies no files and does not correct course; it tells the operator whether a correction is needed.
 
 `/contract-check` is the artifact-content drift complement to `/drift-check` (which watches session trajectory). Use it when:
-- Two or more rounds of QC pass → resolve findings → re-QC have completed (the two-pass cap moment — see `ai-resources/docs/qc-independence.md` § QC → Triage Auto-Loop).
+- A review found a material issue that forced a redesign, and the redesign has now been reviewed in turn (`ai-resources/docs/qc-independence.md` § Findings). Two reviews of the same work is the moment cumulative drift becomes invisible to either one.
 - A long-running session has produced cumulative local fixes and the operator wants to verify the result still matches the original brief.
 - An artifact built across multiple sessions reaches a checkpoint.
 - The operator suspects drift but `/drift-check` returns ALIGNED (because session trajectory looks fine, but the artifact itself has wandered).
-- A `/risk-check` (or other gate) caused the **deliverable itself** to change — a redesign, a dropped component, an exit condition rendered unsatisfiable. **Key on the deliverable changing, not on the verdict token:** a `PROCEED-WITH-CAUTION` whose findings the operator resolved by cutting scope qualifies; a `RECONSIDER` resolved by a purely internal redesign may not.
+- A review or other gate caused the **deliverable itself** to change — a redesign, a dropped component, an exit condition rendered unsatisfiable. **Key on the deliverable changing, not on the verdict token:** a `PROCEED-WITH-CAUTION` whose findings the operator resolved by cutting scope qualifies; a `RECONSIDER` resolved by a purely internal redesign may not.
 
 Input: `$ARGUMENTS` — optional. Interpreted as:
 - **If a valid file path** (exists on disk, or starts with `/` or `./` or matches `**/*.md` or `**/*.json` etc.) → use as the contract path. Read the file at that path as `CONTRACT`.
@@ -112,10 +112,10 @@ Input: `$ARGUMENTS` — optional. Interpreted as:
 
 ### Step 4 — Delegate the independent conformance comparison
 
-9. Spawn one general-purpose subagent (fresh context) — **explicitly pin `model: opus` on the spawn.** `general-purpose` carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the contract-conformance judgment would quietly run below the tier it needs. Pin it. (Pin-the-tier convention established 2026-07-03 — but the tier is **per-dispatch, not blanket opus**: `/qc-pass`, `/refinement-pass`, `/refinement-deep`, `/friday-journal` pin `opus`, while `/risk-check` deliberately pins `sonnet` as a logged cost exception (`logs/decisions.md` 2026-07-05). Do not "correct" risk-check to opus. Tier declared here 2026-07-12 per W3.2 M-A2a.) Brief (verbatim structure):
+9. Spawn one general-purpose subagent (fresh context) — **explicitly pin `model: opus` on the spawn.** `general-purpose` carries no tier of its own, so an un-pinned spawn silently inherits the session model: on a Sonnet or Haiku session the contract-conformance judgment would quietly run below the tier it needs. Pin it. (Pin-the-tier convention established 2026-07-03 — the tier is **per-dispatch, not blanket opus**: judgment dispatches such as `/refinement-pass` and `/friday-journal` pin `opus`, while mechanical scan dispatches pin `sonnet` as a logged cost exception (`logs/decisions.md` 2026-07-05). Tier declared here 2026-07-12 per W3.2 M-A2a.) Brief (verbatim structure):
 
    ```
-   You are an independent contract-conformance reviewer for an in-progress work artifact. Judge whether the current state of the artifact still matches its original contract — the brief, mandate, plan, or spec that was agreed at the start of work, before any QC iterations modified the draft.
+   You are an independent contract-conformance reviewer for an in-progress work artifact. Judge whether the current state of the artifact still matches its original contract — the brief, mandate, plan, or spec that was agreed at the start of work, before any review iterations modified the draft.
 
    You have NO view of the session's conversation, no view of the QC history, and no view of any intermediate drafts. Judge solely from the two texts below.
 
@@ -148,7 +148,7 @@ Input: `$ARGUMENTS` — optional. Interpreted as:
    5. Still matches the contract's intent — the soft fit, not just literal-match. A research extract may legitimately expand on the brief; a settings.json edit may not.
 
    Calibrate strictness by contract type:
-   - **Hard contracts** (settings.json edit, hook script, skill spec, mandate with explicit deliverable counts, structural change with risk-check mitigations) → literal-match. Any added scope is MINOR-DRIFT; any removed commitment is MAJOR-DRIFT.
+   - **Hard contracts** (settings.json edit, hook script, skill spec, mandate with explicit deliverable counts, structural change with review mitigations) → literal-match. Any added scope is MINOR-DRIFT; any removed commitment is MAJOR-DRIFT.
    - **Soft contracts** (research brief, advisory question, knowledge-file purpose statement, exploratory spec) → intent-match. Reasonable elaboration is ALIGNED. Drift only fires when the artifact answers a different question than the brief asked, or skips a required dimension the brief named.
 
    ---
@@ -203,5 +203,5 @@ Input: `$ARGUMENTS` — optional. Interpreted as:
 ### Notes for future extension
 
 - **Freeze-baseline at `/scope` time** (deferred). The cleanest contract source is one written explicitly at start-of-work to `logs/contracts/{date}-{slug}.md`. Adding a write step to `/scope` (and to `/session-start`, `/create-skill` Step 4, etc.) is a separate change that improves auto-detect reliability. Until that lands, auto-detect order in Step 2 falls back through session-plan, mandate-block, and project briefs.
-- **Two-pass cap interaction.** When the two-pass cap fires (`ai-resources/docs/qc-independence.md` § QC → Triage Auto-Loop — "structural resolution required"), `/contract-check` is the right instrument to surface *what* structurally drifted. Future work may auto-invoke this command at the cap; today it is operator-triggered.
+- **Post-redesign interaction.** When a review's material finding forces a redesign (`ai-resources/docs/qc-independence.md` § Findings), `/contract-check` is the right instrument to surface *what* structurally drifted between the original mandate and the redesigned artifact. Operator-triggered; nothing invokes it automatically.
 - **Per-project-type calibration.** The hard/soft contract distinction in Step 4 is the v1 calibration knob. If the verdicts come back consistently mis-calibrated for a project type, tune the rubric or add per-project-type instructions.

@@ -1,0 +1,52 @@
+{
+  "run_id": "2026-08-01-S6-974",
+  "project": "ai-resources",
+  "date": "2026-08-01",
+  "marker": "S6-974",
+  "model": "claude-opus-5[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-08-01-S6-974",
+  "mission": "work-loop-v2-mvp",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    ".gitignore",
+    ".agents/skills/work-loop-v2/SKILL.md",
+    "logs/scripts/work-loop-v2-slice-1.test.sh",
+    "logs/session-plan-2026-08-01-S6-974.md",
+    "logs/session-notes.md",
+    "logs/work-loop/fixture-slice1-codex.md",
+    "logs/work-loop/fixture-target.md",
+    "plans/work-loop-v2-mvp/step-5-slice-1-evidence.md",
+    "logs/missions/work-loop-v2-mvp.md",
+    "docs/harness-and-permission-troubleshooting.md",
+    "logs/decisions.md",
+    "logs/session-notes-archive-2026-07.md",
+    "logs/decisions-archive-2026-07.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-01-no-separate-codex-review-for-work-loop-v2-slice-1"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

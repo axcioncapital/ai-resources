@@ -59,7 +59,7 @@ So `## 2026-07-12 (S4) — R3 Pass 2: HOLD. The gate does not hold…` → `logs
 
 **There is deliberately no `-2`/`-3` de-duplication suffix.** An earlier draft of this section specified one. It was wrong twice: it de-duplicated *within a manifest* when the real ambiguity is two identically-titled *headers* in `decisions.md`, and a `-2` ref resolves to **nothing** — no such anchor exists — so it manufactured the very orphan it was meant to prevent. Two decisions in one session simply get distinct headers. The session writing the ref is the session writing the header, so this costs nothing.
 
-**Why the header text and not `{date}-{marker}`.** A date+marker key **collides on data that already exists**: `decisions.md` carries two distinct `## 2026-07-12 (S4)` entries (R3 Pass 2 HOLD; § Model Tier carve-out), which a date+marker ref flattens into one ambiguous anchor. Slugging the header text is collision-free by construction, is indifferent to the live `##`/`###` header-level inconsistency, and works for entries carrying no `(S{N})` marker at all. (Established via `/risk-check` PROCEED-WITH-CAUTION, 2026-07-12 — `audits/risk-checks/2026-07-12-wire-decision-ref-into-wrap-session-manifest-close.md`, Dimension 5.)
+**Why the header text and not `{date}-{marker}`.** A date+marker key **collides on data that already exists**: `decisions.md` carries two distinct `## 2026-07-12 (S4)` entries (R3 Pass 2 HOLD; § Model Tier carve-out), which a date+marker ref flattens into one ambiguous anchor. Slugging the header text is collision-free by construction, is indifferent to the live `##`/`###` header-level inconsistency, and works for entries carrying no `(S{N})` marker at all. (Established via a risk review, PROCEED-WITH-CAUTION, 2026-07-12 — `audits/risk-checks/2026-07-12-wire-decision-ref-into-wrap-session-manifest-close.md`, Dimension 5.)
 
 **Archival staleness — handled, not merely accepted.** When `decisions.md` rotates to `decisions-archive-YYYY-MM.md`, the *file* half of an already-written ref goes stale while the `#{slug}` half stays valid. `check-decision-refs.sh` therefore indexes the live log **and every monthly archive**, so a ref whose month has rotated still resolves. Any future resolver must do the same. Related class: `improvement-log.md` 2026-06-27.
 
@@ -100,8 +100,8 @@ This is the closed set. Do not invent a per-command variant.
 |---|---|---|
 | **1 Mechanical** | Schema/lint/reference-integrity/format — scripts and hooks | Fully deterministic |
 | **2 Functional** | Executes on realistic inputs incl. empty/error states | Script-driven fixtures |
-| **3 Mandate** | Solves the intended problem, stays in scope | Model judgment (`/qc-pass`, `/contract-check`) |
-| **4 Independent** | Separate evaluator, clean context | O6 profile (§7); `qc-reviewer` shell |
+| **3 Mandate** | Solves the intended problem, stays in scope | Model judgment (the change's independent review, `/contract-check`) |
+| **4 Independent** | Separate evaluator, clean context | O6 profile (§7); context-isolated reviewer shell |
 | **5 Real-world** | Rendering/deployment/user-path/artifact-opening | Designed now, built later — trigger: first artifact class with a real-world surface |
 
 **Minimum-level floor per output class:**
@@ -165,7 +165,7 @@ Every dispatching command runs the same four mechanical checks on a subagent's r
 |---|---|---|---|
 | **Planner** | Business context, project files | The task; writes the spec + selects the rubric + **authors the evaluation scope line** | — |
 | **Generator** | Clean context | Spec + inputs | The planner's reasoning beyond the spec; the rubric's scoring detail |
-| **Evaluator** | Clean context (`qc-reviewer` isolation shell) | Output + rubric + golden-task reference outputs | The generator's reasoning, context pack, or prompt framing |
+| **Evaluator** | Clean context (context-isolated reviewer shell) | Output + rubric + golden-task reference outputs | The generator's reasoning, context pack, or prompt framing |
 
 **The structural win:** in most review setups, the reviewed party authors the scope the reviewer judges against. Here, the **planner** — not the generator whose output is being judged — authors the evaluation scope line. That one reassignment closes the leak without new machinery.
 

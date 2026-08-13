@@ -334,7 +334,9 @@ Rules:
 
 Apply non-conflicting suggestions automatically; skip any that would modify or reverse a Step 4 change and note what was skipped and why. One additional round max.
 
-### Step 6: Quality Check
+### Step 6: Author's self-check
+
+**This is authoring hygiene, not a review.** It is the writer proofreading their own change at the cheapest point. It neither substitutes for nor adds to the one independent review the change takes (`docs/qc-independence.md` § The rule) — a resource edit is sized by that rule like any other change.
 
 Scan the modified resource for:
 
@@ -372,7 +374,7 @@ If changes span 3+ sections significantly but don't require new sections, flag a
 2. **Enumerate every match** into the spec's affected-file list, each classified: writer (emits the path) / exact-path reader (constructs the path — silent-break risk) / glob reader (matches `name-*` — safe unless the rename changes the stem the glob anchors on) / hook regex / doc reference / paired copy (lockstep edit required).
 3. **Reconcile against the contract registry, both directions.** If the path has a two-end/contract registry (e.g. `docs/session-marker.md`), diff it against the grep result: add any consumer the grep found but the registry lacks, and re-classify any load-bearing runtime parser the registry misfiled as "narrative." The registry is authoritative only after this reconciliation.
 
-The grep is mechanical; the inventory miss is consistent across authors. Close it here, before the spec is written — not at `/risk-check`, which is downstream of the cheap fix point.
+The grep is mechanical; the inventory miss is consistent across authors. Close it here, before the spec is written — not at the independent review, which is downstream of the cheap fix point. The review consumes this inventory; it does not rebuild it.
 
 ## Misinterpretation Check
 
@@ -386,7 +388,7 @@ For the resource (Create mode) or the changed sections (Improve mode), list the 
 
 Apply the rewrites that close real failure modes; skip cosmetic ones. Skip the whole check for trivial artifacts (single-rule fix, one-line correction).
 
-This catches authoring-time ambiguity before `/qc-pass` (post-edit) or `[AMBIGUOUS]` (consumption-time) — both downstream of the cheap fix point.
+This catches authoring-time ambiguity before the independent review (post-edit) or `[AMBIGUOUS]` (consumption-time) — both downstream of the cheap fix point.
 
 ## Required Sections Checklist
 

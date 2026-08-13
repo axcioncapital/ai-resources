@@ -1,0 +1,126 @@
+# {{PROJECT_TITLE}}
+
+## Project Context
+
+**What:** {{PROJECT_DESCRIPTION}}
+
+**Analytical lens:** {{ANALYTICAL_LENS}}
+
+**Current Section:** {{CURRENT_SECTION}}
+
+**Document architecture:** {{DOCUMENT_ARCHITECTURE}}. See `reference/stage-instructions.md` for full sequence constraints.
+
+**Evidence calibration:** {{EVIDENCE_CALIBRATION}}
+
+## Operator Profile
+
+{{OPERATOR_NAME}} is the sole operator. They review outputs at defined gates, make editorial decisions requiring domain judgment, and approve stage transitions. Claude Code executes; the operator reviews and directs.
+
+## Project Config
+
+> **Forward contract — Stage 5 commands are the first live consumers (as of canonical landing 2026-05-28).** The 13 fields below are the declarative project values that ~6 downstream consumers (Stage 5 commands, three Stage-2 skills, `country-parity-checker`, Bundle-2 reference docs) are *intended* to read at runtime. The Stage 5 commands (`produce-prose-draft`, `produce-formatting`, `produce-jargon-gloss`) are wired to read this block as part of the FX-B1 Path A landing — they parse `Document model:` (field #13) first for mode dispatch, then read the mode-relevant fields. Other consumers remain forward-contract until separately wired. When you read this section, assume only the wired consumers parse the block unless you've separately verified additional consumer parsers exist. Full schema documentation, per-consumer field-fan-out, single-source-of-truth rules, canonical parse format, default-value semantics for `Document model`, and migration-trigger conditions live at `docs/project-config-schema.md`.
+
+```markdown
+**Report set:** [{{REPORT_SET}}]  # parameterizes Stage 5 commands; report-count derived from list length
+**Section IDs:** [{{SECTION_IDS}}]  # parameterizes per-section paths
+**Country set:** [{{COUNTRY_SET}}]  # CANONICAL; reference/source-class-hierarchy.md § Project Country Set is the derived mirror
+**Country superset:** [{{COUNTRY_SUPERSET}}]  # for "pan-region" leakage detection; always a superset of Country set
+**Languages:** [{{LANGUAGES}}]  # ISO 639-1 codes; parameterizes research-prompt-creator language blocks; empty = English-only
+**Deal-size lens:** "{{DEAL_SIZE_LENS}}"  # operator-facing only; cited in size-class tags
+**Domain:** "{{DOMAIN}}"  # parameterizes jargon-gloss whitelist activation
+**Verification posture:** "{{VERIFICATION_POSTURE}}"  # per-claim-cited | lighter-than-formal | interpretive-only
+**Source-availability:** "{{SOURCE_AVAILABILITY}}"  # public-only | mixed | paid-databases-allowed
+**Research-area-phrase:** "{{RESEARCH_AREA_PHRASE}}"  # parameterizes Perplexity-prefix in run-execution.md and stage-instructions.md
+**Current period:** "{{CURRENT_PERIOD}}"  # parameterizes freshness classes (CURRENT, RECENT, BASELINE)
+**Delivery vault:** "{{DELIVERY_VAULT}}"  # optional; consumed by produce-knowledge-file; default no-op
+**Document model:** "{{DOCUMENT_MODEL}}"  # enum: "report" | "section"; required (halt on missing); discriminates Stage 5 dispatch
+```
+
+For full field documentation (types, examples, canonical parse format, consumer fan-out, GR-2 migration triggers), read `docs/project-config-schema.md`.
+
+## Confidentiality Boundaries
+
+<!-- REQUIRED SETUP: Replace this section before running /verify-chapter. -->
+<!-- List all confidential identifiers (deal names, company names, financial terms) that must NOT appear in outbound GPT-5 API calls. /verify-chapter checks this list before constructing each API call. -->
+
+Confidential identifiers for this project:
+- {{CONFIDENTIAL_IDENTIFIER_1}}
+- {{CONFIDENTIAL_IDENTIFIER_2}}
+
+If this project has no confidentiality constraints, replace the list with: "No confidentiality constraints for this project."
+
+## Workflow Overview
+
+Five-stage pipeline: Preparation → Execution → Analysis & Gap Resolution → Report Production → Final Production.
+
+Artifact chain: Task Plan → Research Plan → Answer Specs → Deep Research Reports → Research Extracts → Cluster Analytical Memos → Section Directives → Report Prose
+
+**IMPORTANT:** For detailed stage instructions, read `reference/stage-instructions.md`. For file naming rules, read `reference/file-conventions.md`. For QC standards and evidence handling, read `reference/quality-standards.md`. For writing voice and style, read `reference/style-guide.md`. Only load these when actively working on the relevant stage or task.
+
+**Deployment contract:** For the list of reference files this workflow requires every consuming project to provide (path, role, consuming-command map), read `docs/required-reference-files.md`. Consult before deploying this workflow template to a new project.
+
+## Skill Dependency Chain
+
+Research workflow skills form a pipeline. When modifying any skill in this chain, check downstream skills for impact:
+
+```
+research-plan-creator → answer-spec-generator → [external: GPT-5 execution]
+→ cluster-analysis-pass → evidence-to-report-writer
+```
+
+## Workflow Status Command
+
+`/workflow-status` — Read-only command that displays a structured status view of every stage in the research workflow, then runs a QC health check via subagent using the `workflow-evaluator` skill. Both phases always run together. Source workflow: `reference/stage-instructions.md`. Skill reference integrity is checked against `ai-resources/skills/`.
+
+## Utility Commands
+
+`/audit-repo` — Run a workspace health check. Analyzes file organization, CLAUDE.md health, skill inventory, commands, settings, and best practices. Report written to `reports/repo-health-report.md`.
+
+## Cross-Model Rules
+
+- Research Execution GPT produces evidence (Stage 2) — Claude does not substitute its own research
+- Research Execution GPT verifies Claude's prose for fact-checking (Stage 4) — Claude does not fact-check its own writing
+- Perplexity handles factual retrieval and gap-filling — Claude routes queries, does not guess answers
+
+## Autonomy Rules
+
+When executing a process or workflow, proceed through stages automatically unless:
+- A step is tagged [Operator] — always pause for input
+- A step is tagged [Operator + Claude Code] — proceed if no issues found, pause only if you find something that changes the project's logic, scope, or structure
+- An evaluation report contains critical findings — pause and show the findings
+- A gate fails — pause and explain what failed
+
+For non-critical issues (formatting, minor wording, small structural fixes), apply the fix and note what you changed. Do not pause for approval on minor fixes.
+
+## Context Isolation Rules
+
+See `reference/stage-instructions.md` § Context Isolation Rules.
+
+## Friction Logging
+
+Pipeline commands auto-start a friction log session via hook (`friction-log: true` in command frontmatter). The operator can also log friction manually:
+
+- `/friction-log start` — start a new session block
+- `/friction-log [description]` — append a friction event
+- `/improve` — run the improvement analyst on session friction (end-of-session)
+
+## Citation Conversion Rule
+
+See `reference/stage-instructions.md` § Citation Conversion Rule.
+
+## Bright-Line Rule
+
+See `reference/stage-instructions.md` § Bright-Line Rule.
+
+## Commit Rules
+
+`Write` operations targeting files under `preparation/`, `execution/`, `analysis/` and `report/` trigger an individual best-effort auto-commit through the PostToolUse hook. `Edit` operations and files outside those directories are not covered. At completion, stage and commit any remaining approved work once. Push only through the confirmation provided by `/wrap-session`.
+
+## Compaction
+
+When `/compact` fires, preserve:
+- The current pipeline/stage identifier and active working directory (which section, which stage, which command is mid-run).
+- Paths to any subagent-output files the main session has not yet read.
+- Any pending operator gate the session is holding at.
+
+Auto-compact drops these by priority; name them explicitly so they survive.

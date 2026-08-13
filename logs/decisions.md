@@ -1,192 +1,181 @@
 # Decision Journal
 
-> Archive: [decisions-archive-2026-07.md](decisions-archive-2026-07.md)
-
-## 2026-07-19 (S4-2b2) — Delete `warn-settings-change.sh`; and the SO v2 B3 plan that expects to wire it is now doubly invalid
-
-**Context.** Mission `repo-health-backlog-2026-07`, thread 14(a). `/risk-check` → PROCEED-WITH-CAUTION (`audits/risk-checks/2026-07-19-bundled-staging-hook-repo-resolution-thread-14-orphan-hooks.md`); five Mediums, no High.
-
-**Decision — delete the orphan rather than repair-and-wire.** `.claude/hooks/warn-settings-change.sh` (workspace root; the only copy — `find` across the workspace and `~/.claude`) is removed. Three independently sound reasons, all re-derived this session: (1) it is registered in **zero** settings files (`command grep -rl "warn-settings-change" --include="*.json"` across the workspace root and `~/.claude` → no hits); (2) it **fails open on the real payload shape** — `:6` read `d.get('file_path')` where the PreToolUse payload nests the value under `tool_input`, so on any live payload it extracted `''`, matched nothing, and exited 0; it is a blocking gate that has never blocked; (3) repairing it means wiring a *blocking* PreToolUse gate across the settings layers — a permissions-surface expansion the operator's standing architecture (`bypassPermissions` floor plus model-side rules; "never add to deny list") points away from. Reversible: the file is git-tracked (`ff46804`).
-
-**⚠ The reason I originally gave was FALSE, and is deliberately NOT used here.** I briefed the gate that the defect was "actively replicating" because the file is cited in `projects/axcion-ai-system-owner/output/consultations/consult-2026-07-14-repo-repair-pilot-v1.md` as *"proof the `exit 2` pattern works"*. The reviewer read that document; it is the one that **caught and killed** that plan (`:103-127` — *"It proves the opposite… It has never run… had it been wired, it would have silently passed every settings.json write"*), and `logs/decisions.md:73` records the operator declining to land the hook that would have copied it (`require-gate.sh`, confirmed absent from disk). I cited a document by its subject and asserted the reverse of its content. No replication is underway; it was stopped 2026-07-14, five days before this gate. Recorded because the *class* — assert-from-plausible-derivation, caught by an adversary and never by self-check — is this mission's subject.
-
-**⚠ Load-bearing consequence for ANOTHER project, which is why this entry is loud.** System Owner v2 **stage S2, build item B3** explicitly directs: *"Wire the already-built-but-unwired `warn-settings-change.sh` (root, PreToolUse, exits 2) into the live settings"* (`projects/project-planning/Project Plans/system-owner-v2/control-pack/technical-design.md:32-34`; sequenced at `execution-roadmap.md:30`; cross-referenced from `projects/repo-documentation/vault/architecture/system-doc.md:200`). Verified by direct read this session — dated 2026-07-03, carrying no superseded marker, i.e. live. **That plan's premise was already false before this deletion** (it assumes the script works once wired; the 2026-07-14 consult established it fails open). The deletion makes the reference dangle as well. **SO v2's B3 needs re-planning from scratch — not "wire the existing script" but "build a working protected-zone detector."** I found this only because the gate's consumer inventory looked for *dependents*; I had enumerated only *registrations*. **Registration-absence is not dependency-absence** — that is the generalisable lesson, and it is the second time this session an absence claim was scoped too narrowly.
-
-**Alternatives considered.** (i) Repair-and-wire — rejected on reason (3) above, and because the repaired guard would still need its own `/risk-check` for the permissions expansion. (ii) Leave it in place unranked — rejected; thread 14 names *"leaving a broken guard in place unranked"* as the failure mode itself, and an inert file that looks like a guard is the repo's single most-repeated defect class. (iii) Delete silently — rejected; that is precisely the silent drift into another project's forward plan that `OP-11` forbids, and the gate scored Principle Alignment Medium on exactly this tension.
-
-**Routed, NOT done here — three docs in a separate repo.** The gate's mitigation asked for `projects/repo-documentation/vault/blueprint/blueprint.md:105`, `vault/components/hooks.md:153-168`, and `vault/architecture/system-doc.md:200` to be updated in the same or an immediately-following commit; all three carry `status: active`. **`projects/repo-documentation` is its own git repo** (`git rev-parse --show-toplevel` resolves to itself, not the workspace root), and this mission's non-negotiable states *"a thread that turns out to live in another repo is surfaced and routed, never reached into."* So they are routed here rather than edited — deliberate deviation from the literal mitigation, in favour of the mission boundary the same gate confirmed was drawn correctly. Same for the two SO v2 control-pack files under `projects/project-planning` (also its own repo). **Follow-up owner: whoever next runs a `repo-documentation` vault pass and an SO v2 planning pass.**
-
-**Decided by:** Claude under the operator's `go 4,6` authorization following a bundle-RECONSIDER verdict; the delete recommendation was pre-disclosed at the auto-mode approval gate and scored adversarially by `/risk-check` before landing.
-
----
-
-## 2026-07-19 (S5-dd5) — Landing a fix to a global SPOF hook against a test harness known to be untrustworthy
-
-**Context.** Mission `repo-health-backlog-2026-07`, thread 16. `/risk-check` cleared the destructive-override fix as PROCEED-WITH-CAUTION with three required mitigations, one of which was: *"Re-run the full 14-case harness (not just the new cases) before landing, since this file is a global SPOF."* Running it revealed the harness reports **12 PASS / 5 FAIL → "RED — do not ship"** on the unmodified hook — and that neither number is trustworthy. It hard-codes a `$WT` worktree and a branch that were both deleted (verified absent by execution), so 5 cases are false-RED, while ≥3 `worktree remove` cases pass only because the target is unresolvable and the hook fail-closes — they would pass identically if liveness detection were deleted outright. **The mitigation's precondition was false.**
-
-**Decision.** Land items 3(a) and 3(b) anyway, on a **before/after differential over an unchanged environment** (12 PASS/5 FAIL → 16 PASS/5 FAIL; the same 5 pre-existing failures, no new ones, 4 new override cases passing), and **state the caveat explicitly in the commit message** rather than claiming the mitigation was satisfied as written.
-
-**Rationale.** The mitigation's *purpose* is "do not break something else on a globally-registered hook." The change is confined to the override-detection expression and the audit-line wording; it does not touch the liveness probes, which is precisely where the rot sits. The parts of the harness that *are* sound — the 6 hermetic NEGATIVE payload cases, plus 4 new fixtures written this session — directly exercise the changed path. A differential over a fixed environment therefore delivers the signal the mitigation exists for, even though absolute greenness is unavailable. The fix was additionally verified against a **deliberately broken control**: a copy of the hook with the old expression restored, against which both inert override shapes are ACCEPTED, proving the new fixtures are not vacuous.
-
-**This reverses an earlier decision made in the same session,** which is why it is recorded. The first call was to defer item 3 entirely on the grounds that a required mitigation could not be honestly satisfied. That was over-conservative: it treated "the harness is untrustworthy" as uniformly disqualifying, without asking *which parts* of the harness bear on *this* change. The reversal is on the evidence, not on schedule pressure.
-
-**Alternatives considered.** (i) **Defer item 3 to a future session** — rejected; it leaves a live defect (inert overrides accepted, audit trail asserting unverified successes) standing for no gain, since the blocker is a stale fixture and not a risk in the change. (ii) **Repair the harness first, then land** — rejected as scope: making it hermetic requires synthesizing an occupied checkout and isolating ambient marker state, which is genuine design work on the test for a global SPOF and deserves its own scoped session; it is now queued HIGH. (iii) **Edit the harness until it goes green, then claim the mitigation** — rejected outright, and it is the important rejection: several passes are *already* fake, so a green suite is exactly what this defect looks like. That is the repo's most-repeated failure class (inert safeguard) and adopting it here would have meant committing the disease as the cure.
-
-**Second decision, same change set.** For defect (b) (the audit record asserting outcomes at PreToolUse, before execution), adopted the gate's **candidate (ii)** — relabel the record to assert only that an override was requested and accepted — over **candidate (i)** (add real `outcome`/`exit_code`). Rationale: (i) requires a PostToolUse counterpart, i.e. a new registration on a globally-registered hook, which is a separately-scoped change warranting its own `/risk-check` rather than a rider on this landing. (ii) fully closes the defect as described at zero new wiring. Recorded so a later session does not read the narrower fix as an oversight.
-
-**Decided by:** Claude under the operator's `1,3,4 auto` authorization and `go` at the single auto-mode approval gate; the landing decision was made after the gate returned and is documented in commit `56304a7`'s message, including the rollback plan the mitigation required.
-
-## 2026-07-19 (S6-e72) — Reversed the "never hand-tick a mission thread" instruction; completion records must not be gated on repairing the tool that writes them
-
-**Context.** The operator reported feeling he was "doing a circle with these problems and fixes." A fresh-context truth-pass over the 11 open threads of `repo-health-backlog-2026-07` found 5 already finished, 1 not worth doing, 0 false — and four of the five finished threads *said so in their own text*. They were left unticked deliberately: the mission file carried a standing instruction that hand-ticking is "the unverified-tick mechanism thread 12 exists to fix" and "the tick is not mine to make." Meanwhile `/prime` Step 1d builds its task menu from **unchecked `- [ ]` lines only** (`prime.md:188`, `:249`). Finished work therefore re-entered the menu at every orientation and was re-picked — threads 5, 11 and 14 each rediscovered and dropped mid-session across three consecutive sessions (S4-2b2, S5-dd5, S6-e72).
-
-**Decision.** Replace the standing instruction with a completion rule: **a thread is ticked when its closure cites evidence of execution** — a commit hash, a live `file:line`, or a test result. `/mission check` remains defective (thread 12) and is explicitly *not* the required path. Delivered through the sanctioned `/mission update` verb, with the frozen-prefix sha256 (`a268ff03…`) verified byte-identical before and after the write; Goal / In-scope-Out-of-scope / Validation contract untouched. Two standing requirements added: every thread must state what breaks if it is never fixed (no nameable consequence → close it), and no line citation may be acted on without re-derivation.
-
-**Rationale.** The instruction was written to prevent unverified ticks, and it did — by preventing *verified* ones too. A tick carrying cited execution evidence is **strictly better-evidenced than the `check` tick it was waiting for**, because `check`'s defect is precisely that it ticks *without* opening the validation contract. Waiting for the repair therefore purchased nothing and cost the same discovery three times. The deeper error was structural: **completion records were gated on the repair of the tool that writes them**, and that repair kept being refused (thread 12 has now taken two `/risk-check` RECONSIDERs). Any control whose failure mode is "the record cannot be written" will manufacture exactly this loop.
-
-**Alternatives considered.** (i) **Wait for thread 12's fix, as the instruction directed** — rejected; it took a second RECONSIDER today, so the wait is open-ended, and the loop was already running at a measured cost of 12 sessions in 2 days with 29 of 58 repo commits touching the control layer. (ii) **Tick via `/mission check`** — rejected; that is the defective instrument, and using it would have recorded exactly the unverified tick the instruction feared. (iii) **Hand-edit the mission file** — rejected; the contract forbids it and `/mission update` (shipped 2026-07-19, `38fdffb`) is the sanctioned path that did not exist when the instruction was written. (iv) **Retain closed threads verbatim** (the prior repopulation's convention) — rejected in favour of one-line closure citations, because this file is read at every orientation and its length is a recurring cost; full detail survives in `improvement-log.md` and git history.
-
-**Consequence accepted.** A thread can now be ticked on evidence a future reader judges insufficient. That is a smaller, correctable failure than the one being fixed: an over-eager tick is visible in the file and revertible, whereas a frozen completion record is invisible and re-bills its cost every session.
-
-**Decided by:** Claude, on the operator's instruction to "remove the ones that I keep circling or add some other fix so I don't fall into this trap." The truth-pass verdicts came from a fresh-context subagent; the contract reversal is my call and is recorded here because it overrides a written standing instruction.
-
----
-
-## 2026-07-19 (S6-e72 cont.) — Prime absorbs plan-position detection directly rather than invoking `/project-next-steps`
-
-**Context.** The operator asked `/prime` to show the project's actual next step, not backlog noise — sourced from the detection logic already built for `/project-next-steps`. That command runs on `model: opus` with an unbounded plan read (~15–40k tokens per invocation); `/prime` runs on `model: sonnet` under an incident-backed cost rule (its Step 3 carries a do-not-regress warning citing a ~50–60k-token full-log-read regression, named in five consecutive telemetry entries before its 2026-07-13 fix).
-
-**Decision.** `/prime` does NOT invoke `/project-next-steps`. It absorbs a bounded version of the same detection cascade as its own new Step 1c (~3–6k tokens), reordered to check `pipeline-state.md` before the plan spine — the cheap, authoritative happy path, present in 19 of the operator's 24 project repos.
-
-**Alternatives considered.** (i) **Invoke the full command on every `/prime` run** — rejected; re-opens the exact cost class Step 3 exists to prevent, on every session start, in every project. (ii) **Invoke it conditionally, only when a plan file exists** — rejected as the cheaper option's more expensive twin; still pays opus-tier depth (the four-point readiness check, the full A–D structure) for what only needs a two-line brief block.
-
-**Consequence accepted.** Two detection logics now exist for adjacent purposes — `/prime`'s bounded Step 1c and `/project-next-steps`' full cascade — rather than one shared implementation. Step 1c documents itself as deriving from the same source and explicitly cedes the full readiness check to the standalone command, to keep the two from drifting into contradictory logic over time.
-
-**Decided by:** Operator, via a `/clarify` multiple-choice answer ("Absorb the read into prime — Recommended"), before planning began. Implementation QC'd twice (`qc-reviewer`, plan-stage and post-implementation), both passes REVISE, both fully resolved before commit (`bf0c8a5`).
-
-## 2026-07-19 (S7-5a1) — Ship `check-citation-resolution.sh` deliberately unwired, with a delete-by date
-
-**Context.** `/risk-check` returned PROCEED-WITH-CAUTION on a new command-invoked scan that reports `path:NNN` citations which no longer resolve. Hidden coupling and Principle alignment both scored Medium for one reason: it is new detection with **no closure channel and zero consumers**. This repo has precedent on both sides — `F-11 — two dead guards` (built, registered nowhere), and `warn-settings-change.sh`, deleted 2026-07-19 as "an unwired guard that failed open".
-
-**Decision — ship it unwired, and bound the tension with a deletion trigger rather than an intention.** It is registered in no `settings.json` event and called by no command. Wiring it into a hook now would inherit the open HIGH that hook registrations in this workspace are unversioned (mission thread 3), so a fresh clone would get a guard that silently never fires — the exact failure `warn-settings-change.sh` was deleted for.
-
-**The trigger, recorded because an unwired guard with no expiry is how the orphan class starts:** wire it into `/friday-act`'s log-hygiene pass at the next monthly-tier `/friday-checkup`, **or delete it**. If neither has happened by the following monthly checkup, delete it — do not let it sit unwired for a third cycle. The same trigger is written into the script's own header, so it travels with the file rather than only living here.
-
-**Alternatives considered.** (i) *Register it as a hook now* — rejected: inherits the unversioned-wiring defect, and the gate scored that as the higher risk. (ii) *Don't build it, record the design only* — rejected: PROCEED-WITH-CAUTION is not the mandate's stop condition (that is RECONSIDER/NO-GO), and the check found two genuine dangling citations on its first live run, so the problem is real rather than inferred.
-
-**What it deliberately does not do.** It verifies that a citation *resolves*, never that the cited line *says what the citing entry claims*. Of the five recorded instances of the defect it descends from, a presence-check would have caught **zero** — every one carried a plausible citation that was simply wrong. That ceiling is stated in the script's own output so a clean run cannot be misread as an all-clear.
-
-**Decided by:** Claude, under the S7-5a1 mandate, applying both `/risk-check` mitigations. Gate report: `audits/risk-checks/2026-07-19-citation-resolution-scan-logs-scripts.md`.
-
----
-
-## 2026-07-23 (S1-0e1) — Land `/new-project` direct-route lean harness (Commit 2) ahead of a live consumer — a deliberate OP-11 anticipatory-build exception
-
-**Context.** Commit 2 of the direct-route feature makes the session harness lean for a project whose `CLAUDE.md` carries `**Execution route:** direct`: it skips the `/session-plan` auto-chain, the committed `logs/session-plan-*.md` file, the dangling 8a plan-file prompt, and empty findings-disposition — while keeping the marker, the full mandate block (`Files in scope` included), and the run-manifest. `/risk-check` returned **RECONSIDER twice today**. The first (superseded) verdict caught two real defects — it removed too much and blinded `concurrent-session-check`. The revised design fixed both; the re-gate (`…-re-gate.md`) verified the fixes, confirmed **zero of ten plan-file consumers break** (each tolerates plan-file absence), and rated blast radius "High by reach, well-mitigated by construction, not things-will-break." The **second** RECONSIDER rests on **Dimension 6 (OP-9 speculative abstraction): zero live consumers exist**, plus a Dimension-7 citation defect in the design's first-draft evidence (now corrected).
-
-**Decision — land it now, recording the anticipatory build as a deliberate, loud exception.** The "zero live consumers" objection is **circular**: the `**Execution route:** direct` label did not exist before Commit 1, so a mechanism cannot have a live consumer before it is built — requiring one to *permit* the build is a contradiction, not a gate. The ceremony cost the route removes is real and measured, not inferred: `session-start.md` = 3,905 tokens/invocation (`token-audit-2026-07-03:122`) + `session-plan.md` = ~1,717 (`token-audit-2026-05-18:122`) ≈ **5,600 tokens/session** for the two commands made optional, before the mandate round-trips or the ≥25-line plan write. This is the framework's own sanctioned path for a worth-it anticipatory build (OP-11), taken instead of deferral — **not** an override of the gate.
-
-**What ships, and the two genuine fixes preserved.** Mandate-block retention (closes the superseded design's unconditional `concurrent-session-check` blind spot) and the 8a.3.d pause-message correction. Plus a mitigation for the re-gate's one residual Medium: for `DIRECT=1`, `session-start` writes the *resolved* inferred paths rather than the literal `(inferred)` marker, so a direct session ships a concrete footprint and never lands in UNKNOWN-SCOPE for want of a plan file. `docs/session-marker.md`'s registry records the direct-route exception and that bounded limitation. Every branch is `if DIRECT=1`; all 20+ existing projects (zero route lines) are `DIRECT=0` = byte-for-byte unchanged; the engineered path is untouched; `git revert` restores prior behaviour in one step.
-
-**Alternatives considered.** (i) *Defer until a real direct project exists* (the reviewer's lean recommendation, and the prior mandate's stop condition) — rejected by the operator: requiring a live user of a mechanism before allowing the mechanism to be created is circular, and the fix should not end in deferral when the design is sound and the overhead is documented. (ii) *Re-gate the corrected design to earn a GO/PWC* — foreclosed: the operator directed no further risk checks this session. (iii) *Override the gate silently* — rejected: this record is the opposite of a silent override; OP-11 is the framework's declared mechanism for exactly this situation.
-
-**Independent QC still applies.** This decision authorises the anticipatory build; it does not waive the pre-commit `/qc-pass` (workspace QC-independence rule), which runs before the commit lands.
-
-**Decided by:** Patrik (operator), 2026-07-23, choosing "Proceed via OP-11 + land" over "Stop — hold at 2nd RECONSIDER" after the re-gate. Executed by Claude under the S1-0e1 mandate. Gate reports: `audits/risk-checks/2026-07-23-commit-2-of-2-new-project-direct-route-lean-session-harness.md` (superseded, RECONSIDER) and `audits/risk-checks/2026-07-23-commit-2-revised-direct-route-lean-harness-re-gate.md` (revised, RECONSIDER on OP-9). **Canonical committed spec of the shipped behaviour: `docs/session-marker.md` § Direct-route harness exception** (the working design note `audits/working/2026-07-23-commit2-revised-design.md` is gitignored local scratch, not part of the tree).
-
-## 2026-07-24 — Triage the 30 open HIGH improvement-log entries instead of building or shrinking /prime's scan
-
-**Context.** `/prime`'s menu item 1 was mission thread 15: a twice-`/risk-check`-RECONSIDER'd redesign of the Step 3 orientation scan (399 lines / 81,008 chars per session). The operator asked to build it while explicitly skipping the safety check. Before setting the session up, measuring the current state found 3 of the redesign's 4 named sub-tasks already fixed live, and that 40% of the scan's cost came from entries already marked RESOLVED/DECLINED/FIXED — a fact the twice-rejected design never used, because closing entries doesn't touch `prime.md` at all.
-
-**Decision.** Triage the 30 open HIGH-severity backlog entries by verifying each against the live repo, over two other options: (i) archive closed entries only, or (ii) archive plus a small `prime.md` emit-shape edit to approach the 40-line budget.
-
-**Rationale.** Triage does not touch `.claude/commands/prime.md` — the surface both risk reviews rejected — so the operator's "skip the safety check" instruction cost nothing here; `/risk-check` would not have fired on this path regardless. It also directly tests the load-bearing but unverified premise (many open entries no longer earn HIGH) rather than assuming it.
-
-**Alternatives considered.** (i) Archive-only — smaller win (~40%), no `prime.md` risk, would not have surfaced the two false-close near-misses this session caught. (ii) Archive + emit-shape edit — closer to budget, but edits `prime.md`, the exact surface twice rejected; shipping it under an explicit "skip the check" instruction would have been a real, uncontested override of two independent RECONSIDER verdicts, not a moot one.
-
-**Decided by:** Patrik (operator), 2026-07-24, via `AskUserQuestion` selecting "Triage the 30 open items instead" over the archive-only and archive-plus-edit options. Executed by Claude under the S1-7fe mandate.
-
-## 2026-07-24 (cont.) — Scope the new mission around the existing one instead of merging findings into a single contract
-
-**Context.** An independent 3-subagent re-verification of the 30 open high/medium-high `improvement-log.md` entries (run after, and separate from, the same-day S1-7fe triage) confirmed 23 as real, still-open defects. The operator then asked to create a mission from the verified list. An active mission, `repo-health-backlog-2026-07`, already covers adjacent ground — its open threads 3, 7, 10, and its gate-held threads 12, 15 — overlapping several items this session's verification also touched (hook-wiring versioning, reviewer premise-check antibody, repo-at-rest liveness, `/mission check`, the `/prime` Step 3 scan redesign).
-
-**Decision.** Create a second mission, `repo-integrity-repairs-2026-07`, scoped to the 16 verified items that do NOT overlap the existing mission's threads, with those five threads explicitly named as out-of-scope and pointed back at their owning mission — rather than (a) merging all findings into `repo-health-backlog-2026-07`'s existing thread list, or (b) creating one new mission covering everything found, overlaps included.
-
-**Rationale.** `repo-health-backlog-2026-07`'s own 2026-07-19 truth-pass diagnosed "12 sessions in 2 days" of circling as caused partly by threads that were really the same work item approached from two directions at once. Two frozen mission contracts both claiming the same thread would reproduce exactly that failure — a session picking up the item would not know which contract's Validation contract to satisfy. Keeping the boundary explicit (rather than silently deduplicating) means a future session reading either mission file sees the split and why, instead of discovering it by collision.
-
-**Alternatives considered.** (i) Merge into `repo-health-backlog-2026-07` — rejected: that mission's Goal and Validation contract are frozen at creation and already scoped to its own 10 threads; adding 16 more would silently redefine "done" for a mission already in progress, which is the drift `/contract-check` exists to catch, applied here to a mission file instead of a work artifact. (ii) One new mission covering all 23 verified-real items, overlaps included — rejected: would immediately create the exact two-contracts-one-thread conflict the sibling mission's own diagnosis warns against, on its first day.
-
-**Decided by:** Claude, under the Decision-Point Posture rule (pick the recommended option and proceed) — the operator asked for "a mission" without specifying scope-vs-merge, and the conflict was resolvable from the sibling mission's own on-disk diagnosis rather than being a genuine ambiguity requiring an operator question.
-
-## 2026-07-25 (S2-81c cont.) — Append-order guard: rebuilt as a purely positional check, not date-gated or text-identity
-
-**Context.** Codex R3 (independent implementation review of mission `repo-integrity-repairs-2026-07` Wave 1) demonstrated two real bypasses of the shipped `check-append-order.sh`: a backdated entry prepended above existing entries (missed because the guard only position-checked entries dated `>=` the newest retained entry), and an entry whose header text exactly duplicated an existing header (missed because additions were identified by text match, not diff position). The approved plan's invariant was purely positional ("every newly-added header below every retained header") — the shipped script had quietly weakened it to a date/text proxy during implementation.
-
-**Decision.** Rewrote the guard to identify additions strictly by their `git diff --cached` new-file line number (never by header text or entry date), and to reject any added header positioned above the last retained header. Added two regression cases (backdated prepend, exact-duplicate-header prepend) alongside the five already-shipped cases; all seven pass, and the pre-commit-hook integration suite (arms A-F, including the end-to-end real-commit block) still passes unchanged.
-
-**Rationale.** The failure this guard exists to prevent — `check-archive.sh` archiving the wrong entries because it treats file-top as oldest — is purely a matter of position in the file, not the entry's date or the uniqueness of its header text. A date-gated or text-identity check is a proxy for the real invariant and, as demonstrated, a leaky one. A positional check matches the actual mechanism 1:1 and has no equivalent gap by construction.
-
-**Alternatives considered.** (i) Patch the date-gate to also flag backdated entries, and add explicit duplicate-header detection as a second condition — rejected: two special-cased patches layered on the same script, each covering one demonstrated hole, with no assurance a third proxy-shaped hole doesn't exist. (ii) Leave the guard as shipped and log Codex's finding for a later session — rejected: this is exactly the append-order hazard the mission was created to close, and the fix was small, already-tested, and already isolated on the correction branch.
-
-**Decided by:** Claude, under the Decision-Point Posture rule — both findings were independently reproduced against the actual script before any fix was written; the positional rewrite was the mission plan's own originally-approved invariant, so this restores rather than redesigns intent.
-
-## 2026-07-25 (S2-81c cont.) — Revert the "two entry formats" closure to partially applied; park the writer-sweep instead of fixing all writers inline
-
-**Context.** The same Codex R3 review found the mission's thread-10 closure of the 2026-07-14 "two entry formats" improvement-log entry premature: it cited only two writers (`wrap-session.md`, `session-feedback-collector.md`) that now emit a `Severity` line, but three other live writers (`leverage-idea.md`, `improve.md`, `resolve-repo-problem.md`) still do not. The live `2026-07-21 — PowerPoint production capability` entry, produced via the `leverage-idea` PARK path, is proof: it shipped with no `Severity` line and is invisible to `/prime` Step 3's severity-anchored scan.
-
-**Decision.** Reverted the entry's `Status` line from `CLOSED — FIXED` back to `partially applied`, naming the three remaining writers and the live proof. Logged a new `2026-07-25` improvement-log entry (medium-high severity) proposing the structural fix — every writer emits `Severity` plus a schema-regression test — and left it `logged (pending)` rather than implementing it in this pass.
-
-**Rationale.** Fixing three command templates plus adding a new regression test is a broader multi-file change than what Codex's finding required, and is not itself a defect in the Wave 1 edits that shipped — it is scope the original thread-10 closure claimed to cover but didn't. Per the workspace CLAUDE.md ROI/structural-fix rule, a structural fix that needs its own session gets parked, not patched onto an unrelated correction commit.
-
-**Alternatives considered.** (i) Fix all three writer templates inline now, in the same correction pass — rejected: expands the correction's scope beyond "un-claim a false closure," and none of the three writers were part of the original Wave 1 plan's file list. (ii) Leave the entry `CLOSED — FIXED` and just note the gap in chat — rejected: an over-claimed closure is exactly the silent-invisibility failure mode this entry itself is about; leaving the false CLOSED status on record would reproduce the defect it diagnoses.
-
-**Decided by:** Claude, under the Decision-Point Posture rule — the revert-and-park split follows directly from the workspace CLAUDE.md's own "structural fix as default, ROI decides scope" rule; no operator ambiguity to resolve.
-
-## 2026-07-25 (S1-940) — Declined to revise the mission's frozen validation-contract assertion; satisfied it as written instead
-
-**Context.** While updating mission `repo-integrity-repairs-2026-07` threads 4 and 8 via `/mission update`, the session's own prior note on thread 4 recommended rewriting acceptance-contract assertion 3 (which requires an append-direction prose warning at each of 4 write sites, counted across both copies of `wrap-session.md`) to instead require the mechanical `check-append-order.sh` guard that had shipped in its place. That recommendation was about to be executed.
-
-**Decision.** Declined to revise assertion 3. Satisfied it literally instead — added the ~3 missing lines of prose across the two uncovered write sites (canonical `decisions.md` write site; both workspace-root mirror sites) — bringing the count to 4 of 4. Assertion 3 was left byte-identical (verified via `/mission update`'s own frozen-prefix sha256 hash comparison, before and after).
-
-**Rationale.** The `/mission` command's design contract freezes the Goal / scope / Validation contract at creation specifically so a later working session cannot redefine its own pass/fail test — the over-claiming failure this whole mission exists to correct. A session softening its own acceptance rule when the rule proves inconvenient is a structural instance of that failure, regardless of whether the substitute control (the mechanical guard) is genuinely good — which it is, and which was landed separately as defense-in-depth, not as a replacement. The assertion also turned out to be cheap to satisfy outright, removing any practical argument for trading it away.
-
-**Alternatives considered.** (i) Revise assertion 3 to require the guard instead of prose, as the prior note proposed — rejected on the ground above; would also have been mechanically blocked by the `update` verb's byte-comparison revert. (ii) Leave assertion 3 unsatisfied and thread 4 open, landing only the guard — rejected as leaving cheaply-available, higher-fidelity coverage (a prose warning read by every future contributor, not only by git-hook-aware ones) on the table for no reason.
-
-**Decided by:** Claude, under the Decision-Point Posture rule — reversing my own prior-note recommendation once it conflicted with the mission's own frozen-contract mechanism; no operator ambiguity to resolve, and the operator's "1" / "continue" replies directed the *task* (update threads 4/8) without specifying *how* to resolve the assertion.
-
-## 2026-07-25 (S2-1d2) — Scoped both fixes narrowly (3 of 33 links; 5 of ~17 files) and dropped a third thread rather than executing it as written
-
-**Context.** Session S2-1d2 picked up mission `repo-integrity-repairs-2026-07` threads 5, 11, and 13. Thread 11 names 33 root-missing canonical commands; thread 13 names "9 live dependents" (re-derived: ~17 total references) of a deleted script; thread 5 claims 4 audit agents lack a `command grep` antibody.
-
-**Decision.** (1) Linked only the 3 commands the root `/prime` flow actually instructs (`session-start.md`, `session-plan.md`, `concurrent-session-check.md`), not all 33 missing commands. (2) Corrected only the 5 files that are live, forward-looking build instructions, not all ~17 files that mention the deleted script. (3) Dropped thread 5 entirely rather than adding the antibody to 4 agents, after verifying none of them contain a recursive-grep scan site to protect.
-
-**Rationale.** For (1): several of the other 30 missing commands are deliberately project-scoped by design (`explore-section.md` is Design Studio-local; `pm.md`/`archive-project.md`/`scope-project.md`/`project-next-steps.md` are project-flow commands) — linking them at root would import project-specific tooling into a shared namespace, which is a worse defect than the one being fixed. For (2): the other ~12 files are point-in-time historical records (repo snapshots, phase-1 inventories, June consultation outputs, an integrity report); editing them would falsify what was true when they were written — the mission's own thread 13 fix must not become a second defect of the same shape it is fixing. For (3): the thread's premise does not hold on inspection — the named agents contain zero grep scan sites, so there is no exposure for an antibody to mitigate; adding one would be inert text, and thread 5 had already been independently mis-verified once before (by the S1-940 session's own re-check), which raised rather than lowered the bar for checking it directly this time.
-
-**Alternatives considered.** (i) Execute thread 11 and 13 at full stated scope (33 links, ~17 file edits) — rejected: would create a namespace-pollution defect and an audit-trail-falsification defect, each arguably worse than the thread being closed. (ii) Add the antibody to all 4 named agents in thread 5 as originally scoped — rejected once direct inspection showed zero scan sites in 3 of the 4 and a prose-only mention in the 4th; there was nothing to hardn. (iii) Leave thread 5 open rather than closing it — rejected: the thread's claim is false, not merely unverified, so leaving it open would keep re-surfacing a non-defect at every future mission read.
-
-**Decided by:** Claude, under the Decision-Point Posture rule. All three scoping calls were made from verified evidence (path existence checks, `command grep` counts, `find` for the deleted script) gathered before the decision, not from the thread text alone. No operator ambiguity to resolve — the operator's "go" approved the plan that already stated this scoping; the thread-5 drop was surfaced in chat as it happened, and the operator did not object.
-
-## 2026-07-25 (S3-4fd) — Ran `/close-worktree-session`'s stash fix without `/risk-check`, on explicit operator instruction
-
-**Context.** Item 1 of a five-item wave, mission `repo-integrity-repairs-2026-07` thread 8. The fix restructures `/close-worktree-session`'s merge/commit path (adds a main-checkout pre-flight and a conflict-marker gate), which falls in the `/risk-check` "automation with shared-state effects" change class per `docs/audit-discipline.md` — normally a mandatory plan-time gate.
-
-**Decision — waived, on the operator's explicit instruction, not a session-side call.** I surfaced the gate obligation before starting and asked whether to run `/risk-check` (which would dispatch a reviewer subagent, conflicting with this session's standing instruction not to use the Agent tool unless asked) or drop item 1. The operator replied: *"DO not run risk check. Run item 1 too."* Recorded per `docs/audit-discipline.md` § Risk-check change classes — "No self-waivers … a one-line operator confirmation is required first, always." This is that confirmation. Also recorded inline in `logs/session-notes.md` under this session's mandate block as a "Gate waiver (operator-authorized)" note, so the waiver is visible without cross-referencing this file.
-
-**Mitigation applied in place of the gate.** Rather than skip verification entirely, I substituted execution-based inline checks for the dispatched review: (1) built a throwaway git repo with a falsifiable control case to settle whether `git stash pop` honors `.gitattributes merge=union` (it does — but three logs, including the one the 2026-07-17 incident damaged, are deliberately excluded from that driver, so the fix's new gate is real coverage, not redundant); (2) ran the new conflict-marker-scan command against both a marker-bearing and a clean fixture before writing it into the command file, catching that its exit codes are inverted from a normal check; (3) verified `command grep -ci stash` moved from 0 to a positive count post-edit. No independent subagent QC-pass ran on the change.
-
-**Alternatives considered.** (i) Drop item 1 from the wave, ship the other four — offered to the operator as the no-gate-needed alternative; declined. (ii) Run `/risk-check` anyway despite the standing no-Agent-tool instruction — not offered as a live option, since it would have required breaking a different explicit instruction from earlier in the session to satisfy this one. (iii) Treat the standing no-Agent-tool instruction as implicitly waiving `/risk-check` too, without asking — rejected; a scope-implied waiver on a mandatory gate is exactly the self-waiver the audit-discipline doc forbids, so I surfaced the conflict instead of resolving it silently.
-
-**Decided by:** the operator, directly and explicitly, after the tradeoff was named. Not a Decision-Point-Posture pick-and-proceed call.
-
-## 2026-07-26 — Operator's risk-check waiver applied to both the plan-time and end-time gate
-
-**Context.** Session S1-2d0 ran auto-mode item 2 (provisioning `logs/scripts/` in 14 projects + a `new-project.md` scaffold edit) — a `/risk-check` "automation with shared-state effects" change class. Mid-session, the conflict between the mandatory gate and the standing no-Agent-tool instruction was surfaced to the operator, who replied "go both but skip risk check." That reply was recorded as a plan-time waiver in the mandate block. At wrap, `/wrap-session` Step 12b's end-time gate would ordinarily fire on the same touched change class.
-
-**Decision.** Treated the operator's instruction as covering the end-time gate too, rather than re-surfacing the same conflict a second time in the same session for the same change.
-
-**Rationale.** The operator's words ("skip risk check") named the gate mechanism, not a specific checkpoint — the plan-time and end-time gates are two invocations of the identical `/risk-check` command against the identical change set already reviewed once. Re-asking would have restated a conflict the operator had already resolved, with no new information since the plan-time ask. The immediately preceding session (S3-4fd, 2026-07-25) established the same pattern explicitly in its own gate-waiver note ("The end-time gate is likewise waived by the same instruction"), so this is applying a precedent already set in this mission, not inventing a new one.
+> Archive: [decisions-archive-2026-08.md](decisions-archive-2026-08.md)
+
+## 2026-08-09 — Close work-loop-v2-production-readiness-policy without a Codex assessment
+
+**Context.** The task's discovery unit was complete and committed at `turn: codex`, awaiting Codex's
+assessment of the recommended production policy (§ 3), five operator decisions (§ 4) and five
+implementation units (§ 5). The operator directed that Codex not be used for this assessment.
+
+**Decision.** Replace the Codex assessment with an independent `/research` subagent pass that
+re-verified all eight of the discovery's findings against the live repository by opening the actual
+files, rather than trusting the discovery's own prose. Act on that verdict directly rather than
+waiting for Codex.
+
+**Rationale.** The research surfaced a material change the discovery could not have known about:
+commit `9c66f26` (2026-08-07) added `dispatch.sh --unattended`, which disables the dispatched child's
+hooks entirely. That made the discovery's central recommendation for the shared-writer problem
+(D1 — edit `log-write-activity.sh` to suppress telemetry for dispatched actors) unnecessary: the
+ambient writer cannot fire in a contained hop, so there is nothing left to suppress. D1 was replaced
+with a launch precondition (`--unattended`) rather than a hook edit, and the plan's only planned
+structural-change unit (U2) was dropped as a result.
 
 **Alternatives considered.**
-- *Re-ask at wrap time.* Rejected as needless — same change, same operator, same session, no new facts since the plan-time answer.
-- *Treat the plan-time waiver as silently covering the end-time gate without recording the extension.* Rejected — per `docs/audit-discipline.md` § Risk-check change classes, waivers are recorded explicitly rather than inferred; this entry is that record for the symmetric checkpoint.
-- *Run `/risk-check` anyway at wrap, overriding the standing no-Agent-tool instruction.* Not offered as a live option — it would have broken a different explicit session instruction to satisfy this one, the same reasoning the S3-4fd precedent already worked through.
+- *Wait for Codex, as the protocol's normal path.* Rejected by explicit operator direction — the
+  operator judged the research route sufficient for this task's stakes.
+- *Execute the discovery's recommendation unchanged (D1 as originally written).* Rejected once the
+  research showed it was superseded: it would have spent a structural-class hook edit and its
+  risk-aware review on a problem that had already stopped existing three days earlier.
+- *Treat the state file as final without re-verification.* Rejected — the discovery was three days
+  old, several commits had landed since, and the state file's own protocol (core § 6 rule 1) requires
+  checking claims against the live repository before acting on them, regardless of which party does
+  the checking.
+
+**Recorded departure from protocol.** The Work Loop v2 executable core assigns the close verdict to
+Codex (§ 3 step 5); this closure did not go through that step. It is recorded in the closed state
+file's Accepted limitations as an operator-directed exception for this task, not as a change to the
+protocol itself.
+
+## 2026-08-11 — Tailored structural-resolution route for the Work Loop v2 bounded-execution incident
+
+**Context.** A 2026-08-10 Work Loop v2 session escaped its bounded courier path into an interactive
+Claude session that spawned ≥13 Claude processes to test instruction files. Claude's first-pass fix
+plan recommended adding a control (`--allow-nested-actors N`) without first comparing removal or
+simplification, and it self-contradicted about what the proposed control could prove.
+
+**Decision.** The operator directed a tailored eight-step route rather than a full run of the
+Repository Problem Resolution SOP's Lane B: establish the failure from preserved run evidence (no
+live reproduction); a blind raw-evidence review by a genuinely fresh Codex context; Claude reconciles
+that into a causal model and options at a zero complexity budget; operator scope approval; isolated
+clean-checkout implementation; independent verification; one genuine attended pilot capped at one
+Claude invocation and ten minutes; close only on observed behaviour, not harness success alone. The
+SOP is applied as non-governing methodology, subordinate to the Work Loop v2 executable core — it adds
+no state-file field and does not override core close/continue/correct/stop.
+
+**Rationale.** The incident's root mechanism was unbounded verification cost from nested AI
+invocation. A route that itself required a costly live reproduction or new AI-backed verification
+before design approval would repeat the failure it exists to prevent. Establishing failure from
+already-preserved evidence, and deferring construction decisions to a design gate, keeps the
+correction bounded while still passing through independent challenge before any implementation.
+
+**Alternatives considered.**
+- *Run the full unmodified SOP Lane B sequence.* Not rejected in substance — the tailoring keeps all
+  five Lane B gates — but the route was made explicit and case-specific rather than assumed generic,
+  because a generic run would have invited exactly the same disproportionate-verification failure at
+  a different step.
+- *Accept Claude's first-pass plan as final.* Rejected — it proposed new permanent machinery
+  (`--allow-nested-actors N`) with no verified authorised use case anywhere in the evidence, and
+  self-contradicted about whether its own proposed control was containment.
+
+**Recorded departure from protocol.** None — this decision operates alongside the Work Loop v2 core
+rather than against it; the SOP's subordination to the core, and the prohibition on it creating a
+second state system, are stated explicitly in the accepted plan
+(`plans/work-loop-v2-v0.2/bounded-execution-fix-plan-v0.1.md` § 0.1).
+
+## 2026-08-11 — Second bounded-execution incident joins the plan, scoped to system-level lessons only
+
+**Context.** A second Work Loop v2 dispatcher stop occurred 2026-08-11, in a different worktree
+(`../ai-resources-eval`, task `eval-mvp-v0.2-adoption-readiness-fix`): a 900-second actor timeout
+(exit `21`), reportedly caused by an oversized implementation unit. The operator supplied a detailed
+incident report and asked whether it belonged inside `bounded-execution-fix-plan-v0.2.md`.
+
+**Decision.** Yes, in the same plan — but only its system-level lessons. In scope: the eval timeout as
+a second verify-first entry in Gate 2's evidence set; brief sizing promoted P1→P0; U2's evidence
+extended to exit 21; U4 expanded into a truthful recovery contract; a rejection of "raise the
+timeout" as a substitute fix; the eval evidence chain added to the compaction-safe manifest. Out of
+scope, named explicitly and excluded from the plan: the EV-1 through EV-6 content repairs, the
+staging-hook registry correction, the eval branch's merge readiness, and its stale suite baselines.
+
+**Rationale.** The two incidents are the two failure modes of the same courier boundary — one escaped
+it, one couldn't fit inside it — so the system-level fix belongs in one place. But the eval content
+issues are evidence *of* the sizing defect this plan addresses, not instances *of* the dispatcher
+defect itself; folding them in would let an already-oversized-unit incident produce an oversized
+planning artifact, which is the exact failure mode under discussion.
+
+**Alternatives considered.** (a) A separate plan for incident 2 — rejected, because the two incidents
+share a root mechanism (courier boundary) and splitting the plan would duplicate §§ 0.5–0.7's
+manifest, ladder and courier-preservation reasoning. (b) Importing the eval content findings wholesale
+— rejected for the reason above; also would have pulled unrelated-task commits into this plan's
+review surface. (c) Treating incident 2 as fully confirmed rather than verify-first — rejected; every
+report is a lead until checked against its own named artifacts (SOP `:435`), and this one had not
+been.
+
+## 2026-08-11 — Unauthorized Codex commit taken over rather than trusted or discarded wholesale
+
+**Context.** Codex committed `2511117` on top of `6ab33a2` without authorization, implementing four
+review-corrections that were Claude's responsibility. The operator directed independent inspection —
+"do not assume its implementation is correct" — with authority to replace the commit after
+verification, not to push.
+
+**Decision.** Inspected the diff and ran the full simulated harness (424/424 green at that point),
+then wrote separate probes targeting cases Codex's own test additions did not cover — since Codex
+authored both the fix and the tests proving it, its suite could not be trusted as independent
+evidence. Found all four fixes behaviourally correct. Rather than reimplementing from scratch or
+accepting the commit as-is, kept the implementation and added the one regression its suite was
+missing (case 41b — the attribution mechanism the O2 fix depends on), proving it fail-capable against
+two hand-built mutants before trusting it green. Reset to `6ab33a2`, staged exactly the three touched
+files, and committed as a Claude-authored replacement (`570c4fb`), leaving `audits/working/` and all
+unrelated files untouched.
+
+Two further requests in the same session applied the same standard — independent verification plus a
+fail-capable regression proven against the pre-fix dispatcher — to two more named review findings
+(`7ee93d7`, `8b9a63d`), each strictly scoped to the one finding named and leaving the rest, including
+the explicitly off-limits fabricated U3 fixture, untouched.
+
+**Rationale.** An unauthorized commit from another actor is not evidence of correctness or of error —
+treating it as either without inspection would have been the same failure mode from either direction.
+Verifying independently and keeping what holds up is more efficient than a blanket reimplementation,
+and is the only way to also catch what the original author's own tests couldn't see (the missing
+case 41b would have shipped invisibly otherwise).
+
+**Alternatives considered.** (a) Trust the harness Codex left behind as sufficient proof — rejected,
+because the author and the test author were the same actor, so a shared blind spot would be invisible
+to that suite by construction. (b) Discard the commit and reimplement from the review findings alone
+— rejected as wasteful once inspection showed the implementation itself was sound; the actual gap was
+narrower (one missing regression) than a full reimplementation would have addressed. (c) Fix the
+malformed git identity (`patriklindeberg75@@gmail.com`) while replacing the commit — rejected, since
+every recent commit in the repo already carries it and silently changing it would create an
+inconsistent identity mid-history; flagged to the operator instead.
+
+## 2026-08-12 — 15 failing harness cases diagnosed as environmental, not repaired
+
+**Context.** The Codex assessment of the merged bounded-execution repair froze three findings. The
+second required diagnosing 15 failing 27-series harness cases: "If they are real merge regressions,
+repair only the ceremony/bounded-execution interaction they expose. If they are caused by the
+restricted verification environment, demonstrate that with fail-capable evidence from the normal
+supported test environment." The reviewers' own run had ended `exit 1, pass=408 fail=15`, and the
+blocker said the dispatcher must not enter its attended pilot while the integrated harness is red.
+
+**Decision.** Diagnosed the failures as environmental and made **no repair** to the dispatcher or
+the harness. Evidence: one full integrated run on the corrected tree in the normal supported
+environment, `exit 0, pass=454 fail=0`, with every reported-failing case passing (`27`, `27b`–`27n`,
+`27L`) and bounded-execution cases `40`–`47` passing.
+
+**Rationale.** The reviewers' failures were concentrated in the 27-series *control* assertions —
+"escapee alive and OUTSIDE the actor's group", "the orphan is re-parented to pid 1", "a live
+root-owned PID is available". Those controls probe whether the host permits process-group and
+ancestry inspection at all; they are not assertions about dispatcher behaviour. A failed control
+short-circuits the behavioural assertion behind it, which is also why the two runs are not
+comparable on totals (423 assertions there, 454 here) — the failing run never reached the
+assertions the controls guard. The suite is demonstrably fail-capable in both directions: it exited
+`1` for the reviewers, and its controls are written to fail loudly exactly when the environment
+cannot establish the process facts.
+
+**Load-bearing supporting fact.** The green result is attributable to the merged code rather than to
+this correction: the dispatcher diff against `f994900` changes exactly one executable line (the
+`claude_deny=none` log string), and everything else in `dispatch.sh` is comment text. Without that
+check, a correction round that edits prose and then reports a green suite invites the reading that
+the edits produced the green.
+
+**Alternatives considered.** (a) Repair the 27-series interaction as a merge regression — rejected,
+since inspection showed nothing to repair: the cases pass unmodified. Changing working code to
+satisfy a failure that only occurs where process inspection is forbidden would have introduced a
+real defect to chase an artefact. (b) Treat the red suite as blocking and hand back rather than
+diagnose — rejected, because the frozen finding explicitly provided the environmental branch and
+asked for it to be demonstrated, so handing back would have been a refusal to do the named work.
+(c) Report the earlier mixed harness runs, where `dispatch.sh` was edited mid-run — rejected and
+both runs discarded; a green count from a run whose subject changed underneath it is not evidence.
+
+**Accepted limitation, stated in the closing record.** The diagnosis establishes that the merged
+suite is green where process inspection is permitted. It does not certify any other host.

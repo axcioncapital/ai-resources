@@ -41,7 +41,7 @@ Read these five reference files first. If any one of them cannot be read, ABORT 
 
 If `projects/axcion-ai-system-owner/references/systems-building-principles.md` exists with `status: active`, also read it. If `status: TBD — operator-provided` or missing, skip.
 
-This abort-on-missing-read mitigation is required by the `/risk-check` plan-time review of `/pipeline-review` (Dimension 5: Hidden coupling, Medium risk). Silent degrade would let the memo ship with shallow grounding and no operator signal.
+This abort-on-missing-read mitigation is required by the plan-time review of `/pipeline-review` (Dimension 5: Hidden coupling, Medium risk). Silent degrade would let the memo ship with shallow grounding and no operator signal.
 
 ---
 
@@ -125,7 +125,7 @@ If none, write `(none — no cross-resource interactions detected in this read)`
 The single best command to run next to apply the most important picked recommendation:
 
 - **For skill-shaped pipelines:** `/improve-skill {PIPELINE_PATH} — {one-line focus area}`.
-- **For command-shaped pipelines:** open a fresh session, edit the command file with the picked changes inline, then `/qc-pass` to validate before commit.
+- **For command-shaped pipelines:** open a fresh session, edit the command file with the picked changes inline, then give the change the one independent review its consequence earns before commit (`ai-resources/docs/qc-independence.md` § The rule).
 
 If no improvements were proposed, write `(none — no fix session warranted this cycle)`.
 ```

@@ -35,7 +35,7 @@ Additionally: read the per-cluster permission tables from `/analysis/claim-permi
    > 2. Delete `analysis/{section}/.claim-permission-gate.done`.
    > 3. Re-run `/run-sufficiency {section}`, then re-invoke `/run-synthesis {section}`.
 
-   **The ordering is load-bearing.** `claim-permission-gate` carries its own chassis-version hard exit, so deleting the sentinel *before* the back-port lands the operator in a second hard exit with the sentinel already gone. Never print "delete the sentinel and re-run" without the back-port step first (found by `/risk-check`, 2026-07-14 — the first draft of this gate dead-ended exactly that way).
+   **The ordering is load-bearing.** `claim-permission-gate` carries its own chassis-version hard exit, so deleting the sentinel *before* the back-port lands the operator in a second hard exit with the sentinel already gone. Never print "delete the sentinel and re-run" without the back-port step first (found in review, 2026-07-14 — the first draft of this gate dead-ended exactly that way).
 
    **Also apply the re-stamp invariant — a version field alone is forgeable.** `chassis_version` is self-asserted frontmatter; a hand-pasted line defeats a bare presence-and-date check. So additionally require:
 

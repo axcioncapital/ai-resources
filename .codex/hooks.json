@@ -1,0 +1,103 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Read|Grep|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.codex/hooks/check-heavy-tool.sh'",
+            "timeout": 5,
+            "statusMessage": "Heavy-tool check..."
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.codex/hooks/friction-log-auto.sh'",
+            "timeout": 5,
+            "statusMessage": "Checking friction log..."
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.codex/hooks/log-write-activity.sh'",
+            "timeout": 5,
+            "statusMessage": "Logging write activity..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|Write|Edit|Agent|Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.codex/hooks/friction-log-auto.sh'",
+            "timeout": 5,
+            "statusMessage": "Friction-event check..."
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.codex/hooks/friday-checkup-reminder.sh'",
+            "timeout": 5,
+            "statusMessage": "Checking Friday cadence..."
+          }
+        ]
+      },
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.codex/hooks/work-loop-reorient.sh'",
+            "timeout": 5,
+            "statusMessage": "Work Loop reorientation..."
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.codex/hooks/check-stop-reminders.sh'",
+            "timeout": 5,
+            "statusMessage": "Checking session-end reminders..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash '/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.codex/hooks/coach-reminder.sh'",
+            "timeout": 5,
+            "statusMessage": "Checking coach reminder..."
+          },
+          {
+            "type": "command",
+            "command": "bash '/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/.codex/hooks/improve-reminder.sh'",
+            "timeout": 5,
+            "statusMessage": "Checking improve reminder..."
+          }
+        ]
+      }
+    ]
+  }
+}

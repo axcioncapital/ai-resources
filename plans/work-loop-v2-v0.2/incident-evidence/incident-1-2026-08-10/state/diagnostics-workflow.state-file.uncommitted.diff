@@ -1,0 +1,37 @@
+diff --git a/logs/work-loop/diagnostics-workflow.md b/logs/work-loop/diagnostics-workflow.md
+index d18aab2..3a1e476 100644
+--- a/logs/work-loop/diagnostics-workflow.md
++++ b/logs/work-loop/diagnostics-workflow.md
+@@ -1,6 +1,6 @@
+ ---
+ task: diagnostics-workflow
+-turn: codex
++turn: claude
+ ---
+ 
+ ## Objective and scope
+@@ -9,7 +9,7 @@ Develop and verify the smallest coherent, standardized repository Diagnose & Fix
+ Scope: the canonical fault-handling resources in this checkout, their Work Loop v2 routing entries, directly coupled tests, templates, logs, documentation, and canonical consumer definitions. Project symlinks that resolve to the canonical main checkout are downstream deployment surfaces to account for, not separate repositories to edit. Excluded by Codex framing: the Work Loop executable core; `/fix-repo-issues` and `/fix-project-issues` beyond confirming their boundary; unrelated cleanup; edits inside project repositories; push, merge, or adoption.
+ 
+ ## Lane and unit
+-Standard. Implementation mode. Unit 4 — correction round on the three frozen findings.
++Standard. Implementation mode. Unit 4 — final tightly-bounded fix after the correction round.
+ 
+ Named reason for the loop: the work spans several coupled command and consumer surfaces, its scope must stay bounded, and the result needs assessment by Codex before it counts as complete.
+ 
+@@ -66,8 +66,13 @@ Evidence: the frozen findings reproduce at `HEAD` — `git grep -c 'more than a
+ 
+ ## Blocker
+ 
+-`.claude/commands/` is not writable in this run. The hop was launched headless with `--permission-mode default` and did not inherit the checkout's `bypassPermissions`, so the `Edit` against `.claude/commands/resolve-repo-problem.md` was refused and finding 2's last two sites could not be corrected. Clearing it needs a run with write access to `.claude/commands/` — an attended session in this checkout, or a spike hop launched with `bypassPermissions`.
++None for an attended Claude run in this checkout using the operator-approved `acceptEdits` permission for the two command files. The dispatcher cannot carry this hop because it hardcodes `--permission-mode default`.
+ 
+ ## Next action
+ 
+-Codex: assess the correction round on the frozen findings only. Findings 1 and 3 are resolved in both command bodies; finding 2's governing contract is resolved and consistent across MANUAL and AUTO, but two restatements of the superseded narrow condition survive at `.claude/commands/resolve-repo-problem.md:13` and `:206`, with replacement text written above. No accepted Unit 4 behaviour was broken. Decide whether to close with finding 2's residue as a written limitation, or to open the bounded final fix for those two lines in a run that can write `.claude/commands/` — noting that no behavioural re-run backs these corrections, and that Unit 4's own verification floor asks for one.
++Final tightly-bounded fix permitted under Work Loop core § 3, “If the correction was not enough”:
++
++1. In `.claude/commands/resolve-repo-problem.md:13`, replace the surviving “actionable repository fix” queue condition with: “when the failure was confirmed and triage ended in one of the three ranked options: Quick patch, Structural fix or Defer.”
++2. In the same file's closing section (currently around line 206), replace the surviving “actionable repository fix is recommended” condition with: “when the failure is confirmed and triage ended in one of the three ranked options, Defer included”.
++
++Change exactly those two sites and no other command text. Do not run the behavioral matrix or launch nested Claude sessions. Verify only that both stale conditions are gone, both replacements agree with the already-correct MANUAL/AUTO contract, and the final diff from correction commit `9a8399c` contains those two wording edits plus this state-file handback. Commit the bounded final fix, set `turn: codex`, and stop. Newly noticed issues remain deferrals.

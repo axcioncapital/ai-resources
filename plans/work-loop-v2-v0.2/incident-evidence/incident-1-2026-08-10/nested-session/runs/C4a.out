@@ -1,0 +1,17 @@
+Only the record and its index entry were written — no repository fix.
+
+```
+Incident not confirmed — 2026-08-10
+Reported failure: logs/decisions.md is title-line-only, so Step 14's 15-line read returns almost nothing and the diagnosis loses its decision history.
+What was tried: Ran the Step 14 read verbatim — `tail -15 logs/decisions.md` returned exactly `# Decisions` (12 bytes), so the mechanical premise is true. But `git log -p --all -- logs/decisions.md` shows one commit (init) creating it with that single line, and `git show` at all three commits returns byte-identical content; no stash, no other refs. Nothing was ever lost.
+What would reopen it: a commit/stash/reflog state showing the file once held entries, or a recorded run where the empty read produced a materially wrong diagnosis.
+No changes made. No follow-up queued.
+Record: audits/incidents/2026-08-10-logs-decisions-md-holds-only-its-title-line-so-the-step-14.md
+```
+
+The premise is true; the conclusion isn't. A log with zero entries reading as zero entries is a truthful null result, not a fault — and Step 14 (`resolve-incident.md:144`) says so itself: *"for context — a past decision **may** explain the current state."* Nothing downstream consumes it. Both implied fixes fail at the proof gate: populating `decisions.md` means inventing history into a shared append-only log, and patching Step 14 means editing a protected shared command to handle a case it already handles correctly.
+
+Two things to flag:
+
+- **A separate, real condition I did not act on** (out of scope per Hard rule 3): `.claude/commands/resolve-repo-problem.md:55` cites `logs/decisions.md` **2026-07-05** for the per-dispatch model-tier cost exception. No such entry exists here. That's a dangling citation to a *specific* missing entry — a different claim from "the file is empty" — so it's recorded in the incident record for you to route rather than folded into this run.
+- **No commit.** `logs/incident-log.md` is modified and `audits/incidents/` is new. Committing is your call; per workspace rules, no push.

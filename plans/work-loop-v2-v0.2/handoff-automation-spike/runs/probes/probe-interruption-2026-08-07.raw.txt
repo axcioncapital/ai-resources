@@ -1,0 +1,114 @@
+### BEFORE THE FIX — dispatch.sh at commit 2dd2112 (trap 'release_lock' EXIT INT TERM)
+
+probe root: /var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//wl2-probe1a.wQdjmm
+dispatcher: /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/81c70cec-c014-429b-98a8-22d7fe2cdb2e/scratchpad/dispatch-prefix-2dd2112.sh
+
+dispatcher pid: 68577
+actor pid: 68632   grandchild pid: 68634
+lock dir: /var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//work-loop-dispatch-14be47a9a87f3b9c.lock (present before signal: yes)
+
+=== sending SIGTERM to the dispatcher (68577) ===
+
+--- 3 seconds after SIGTERM ---
+  dispatcher 68577   : ALIVE
+  actor      68632   : ALIVE
+  grandchild 68634   : ALIVE
+  lock dir           : released
+
+--- can a second dispatcher start on the same checkout+task? ---
+  YES — exit 0. A second dispatcher was admitted while the first is ALIVE.
+  ---- second dispatcher output ----
+  run=20260807T091224-probe-task mode=dry-run task=probe-task
+  checkout=/private/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/wl2-probe1a.wQdjmm/co
+  state=/private/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/wl2-probe1a.wQdjmm/co/logs/work-loop/probe-task.md
+  max_hops=4 timeout=900s carry_one=0
+  allow_paths=^logs/work-loop/ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/
+  initial: turn=claude sha256=819b8369b1559aab3ac5eb0670e2c771f4b594b42aaf675ad05e5408fb82508b head=5444570376d744df6d8efa547739c6a70df32989
+  dry-run: would launch actor 'claude' for task 'probe-task'; launching nothing.
+
+--- 8 seconds after SIGTERM ---
+  dispatcher 68577   : ALIVE
+  actor      68632   : ALIVE
+  grandchild 68634   : ALIVE
+
+--- dispatcher output so far ---
+  run=20260807T091219-probe-task mode=simulated task=probe-task
+  checkout=/private/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/wl2-probe1a.wQdjmm/co
+  state=/private/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/wl2-probe1a.wQdjmm/co/logs/work-loop/probe-task.md
+  max_hops=4 timeout=600s carry_one=0
+  allow_paths=^logs/work-loop/ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/
+  initial: turn=claude sha256=819b8369b1559aab3ac5eb0670e2c771f4b594b42aaf675ad05e5408fb82508b head=5444570376d744df6d8efa547739c6a70df32989
+  
+  hop=1 actor=claude
+    before: sha256=819b8369b1559aab3ac5eb0670e2c771f4b594b42aaf675ad05e5408fb82508b turn=claude head=5444570376d744df6d8efa547739c6a70df32989
+    launch: mode=simulated cmd=
+    ( sleep 600 ) &
+    echo "$!" > "/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//wl2-probe1a.wQdjmm/grandchild.pid"
+    echo $$ > "/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//wl2-probe1a.wQdjmm/actor.pid"
+    sleep 600
+  
+/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/81c70cec-c014-429b-98a8-22d7fe2cdb2e/scratchpad/probe-1a.sh: line 129: 68577 Killed: 9               bash "$DISPATCH" --checkout "$d" --task probe-task --log-dir "$ROOT/runs" --timeout 600 --max-hops 4 --actor-cmd "$ACTOR" > "$ROOT/dispatch.out" 2>&1
+
+probe complete.
+
+
+### AFTER THE FIX — dispatch.sh as committed by this work
+
+probe root: /var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//wl2-probe1a.P8ylCq
+dispatcher: /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+
+dispatcher pid: 68830
+actor pid: 68888   grandchild pid: 68890
+lock dir: /var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//work-loop-dispatch-670a5813653ef3e7.lock (present before signal: yes)
+
+=== sending SIGTERM to the dispatcher (68830) ===
+
+--- 3 seconds after SIGTERM ---
+  dispatcher 68830   : gone
+  actor      68888   : gone
+  grandchild 68890   : gone
+  lock dir           : released
+
+--- can a second dispatcher start on the same checkout+task? ---
+  YES — exit 0. A second dispatcher was admitted while the first is gone.
+  ---- second dispatcher output ----
+  run=20260807T091234-probe-task mode=dry-run task=probe-task
+  checkout=/private/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/wl2-probe1a.P8ylCq/co
+  state=/private/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/wl2-probe1a.P8ylCq/co/logs/work-loop/probe-task.md
+  max_hops=4 timeout=900s carry_one=0
+  deadline=none — upper bound is max_hops * timeout = 3600s
+  allow_paths=^logs/work-loop/ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/
+  claude_deny=none — the Claude child holds this checkout's normal authority
+  initial: turn=claude sha256=819b8369b1559aab3ac5eb0670e2c771f4b594b42aaf675ad05e5408fb82508b head=615f7c6df37cb739d671ddf35b0c00aa330f8cb4
+  dry-run: would launch actor 'claude' for task 'probe-task'; launching nothing.
+
+--- 8 seconds after SIGTERM ---
+  dispatcher 68830   : gone
+  actor      68888   : gone
+  grandchild 68890   : gone
+
+--- dispatcher output so far ---
+  run=20260807T091229-probe-task mode=simulated task=probe-task
+  checkout=/private/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/wl2-probe1a.P8ylCq/co
+  state=/private/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/wl2-probe1a.P8ylCq/co/logs/work-loop/probe-task.md
+  max_hops=4 timeout=600s carry_one=0
+  deadline=none — upper bound is max_hops * timeout = 2400s
+  allow_paths=^logs/work-loop/ ^plans/work-loop-v2-v0\.2/handoff-automation-spike/
+  claude_deny=none — the Claude child holds this checkout's normal authority
+  initial: turn=claude sha256=819b8369b1559aab3ac5eb0670e2c771f4b594b42aaf675ad05e5408fb82508b head=615f7c6df37cb739d671ddf35b0c00aa330f8cb4
+  
+  hop=1 actor=claude
+    before: sha256=819b8369b1559aab3ac5eb0670e2c771f4b594b42aaf675ad05e5408fb82508b turn=claude head=615f7c6df37cb739d671ddf35b0c00aa330f8cb4
+    launch: mode=simulated timeout=600s cmd=
+    ( sleep 600 ) &
+    echo "$!" > "/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//wl2-probe1a.P8ylCq/grandchild.pid"
+    echo $$ > "/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//wl2-probe1a.P8ylCq/actor.pid"
+    sleep 600
+  
+  STOP [28] interrupted by SIGTERM during hop 1 (actor 'claude') — task probe-task
+    terminating actor process group 68888
+    the actor was killed mid-hop; it may have left a partial effect. Nothing is retried.
+    Recoverable next action: read /private/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/wl2-probe1a.P8ylCq/co/logs/work-loop/probe-task.md and `git -C /private/var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T/wl2-probe1a.P8ylCq/co status`, decide what the
+    hop actually completed, then re-run this dispatcher. Run evidence: /var/folders/cd/hdqdzkks7zb67xvd7pglm8ym0000gn/T//wl2-probe1a.P8ylCq/runs/20260807T091229-probe-task.log
+
+probe complete.

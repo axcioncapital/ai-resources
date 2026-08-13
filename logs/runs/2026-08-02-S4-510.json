@@ -1,0 +1,49 @@
+{
+  "run_id": "2026-08-02-S4-510",
+  "project": "ai-resources",
+  "date": "2026-08-02",
+  "marker": "S4-510",
+  "model": "claude-opus-5[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-08-02-S4-510",
+  "mission": "work-loop-v2-mvp",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-08.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/next-up.md",
+    "logs/usage-log.md",
+    "logs/scratchpads/2026-08-02-13-08-scratchpad.md",
+    "logs/session-plan-2026-08-02-S4-510.md",
+    "logs/runs/2026-08-02-S4-510.json"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-02-work-loop-v2-context-engineering-integration"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "deferred",
+  "outcome": "ABANDONED",
+  "failure_class": "instruction-conflict",
+  "incidents_refs": [],
+  "incident_waived": "Process/judgment defect, not an output-quality defect: nothing was shipped — the work was reverted and verified byte-identical to HEAD. Its durable home is logs/improvement-log.md 2026-08-02 (severity medium-high, promoted to next-up.md), which is the correct routing for an execution-posture finding. defect-log.md is scoped to output-quality defects per ai-resources/CLAUDE.md."
+}

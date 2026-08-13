@@ -1,0 +1,43 @@
+{
+  "run_id": "2026-08-06-S2-2de",
+  "project": "ai-resources",
+  "date": "2026-08-06",
+  "marker": "S2-2de",
+  "model": "claude-fable-5[1m]",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-08-06-S2-2de",
+  "mission": "work-loop-v2-mvp",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-08.md",
+    "logs/decisions.md",
+    "logs/session-plan-2026-08-06-S2-2de.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-06-work-loop-v2-project-progression-proposal-adopt"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

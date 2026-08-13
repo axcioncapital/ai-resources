@@ -1,0 +1,46 @@
+{
+  "run_id": "2026-07-18-S3-919",
+  "project": "ai-resources",
+  "date": "2026-07-18",
+  "marker": "S3-919",
+  "model": "claude-fable-5",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-07-18-S3-919",
+  "mission": "research-workflow-deploy-fitness",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/decisions.md",
+    "logs/missions/research-workflow-deploy-fitness.md",
+    ".claude/agents/log-sweep-auditor.md",
+    ".claude/commands/log-sweep.md",
+    ".claude/commands/graduate-resource.md",
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-07.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-07-18-s3-919-research-workflow-deploy-gate-re-decided"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

@@ -30,7 +30,7 @@ The main agent passes you:
 ### Step 1: Ground yourself in what already ran
 
 Read the `fresh`/`STALE` INPUT_FILES and the EVIDENCE_LOGS. Also read, for the tier doctrine you audit drift against:
-- `{AUDIT_ROOT}/docs/audit-discipline.md` § Risk-check change classes (the canonical risk-tier model — the fuller Risk-Classification-by-Change-Type table is `projects/repo-documentation/vault/architecture/risk-topology.md` if reachable).
+- `{AUDIT_ROOT}/docs/audit-discipline.md` § Structural change classes (the canonical risk-tier model — the fuller Risk-Classification-by-Change-Type table is `projects/repo-documentation/vault/architecture/risk-topology.md` if reachable).
 - `{AUDIT_ROOT}/docs/ai-resource-creation.md` rule #7 (the complexity-budget gate you score components against).
 
 Do not read the whole repo. Ground findings in the audit outputs + evidence logs + targeted greps.
@@ -70,11 +70,11 @@ and **state the scanned scope explicitly in the report**, so a reader can see wh
 
 *Falsifiability — check the instrument before you trust the measurement.* Before reporting any Q3 result, run the corrected scan against a **known-positive**: a command you already know is used only from a project (`/explore-section`, invoked in `axcion-design-studio`, is the standing ground truth). If the scan does not find it, the scan is broken and **every Q3 result this pass is void** — report the instrument failure instead of the findings. The question is never *"is there evidence of use?"* but *"would my method see the evidence if it existed?"*
 
-> **Why this contract exists (2026-07-13).** The unqualified version of Q3 — an `ai-resources/`-only grep emitting `zero live callers = orphan` — produced a confident, operator-approved instruction to delete **six** commands, **four of which were in live use**, including `/explore-section`, the primary command of a live project. It survived this audit's own self-check. Only a batched `/risk-check` and a direct filesystem verification stopped it. Do not restore the shorthand.
+> **Why this contract exists (2026-07-13).** The unqualified version of Q3 — an `ai-resources/`-only grep emitting `zero live callers = orphan` — produced a confident, operator-approved instruction to delete **six** commands, **four of which were in live use**, including `/explore-section`, the primary command of a live project. It survived this audit's own self-check. Only a batched risk review and a direct filesystem verification stopped it. Do not restore the shorthand.
 
 ### Step 3: Produce the disposition-grouped simplification plan
 
-Classify each finding into exactly one disposition: **Remove** / **Merge** / **Make-conditional** / **Simplify** / **Defer-loading** / **Retain** / **Investigate**. For each structural item give: the component + path, the disposition + one-line rationale, its `/risk-check` change class (if any — new/removed command/skill, hook edit, cross-cutting CLAUDE.md, symlink, shared-state automation), and a one-line rollback note. End with the **top-5 bottlenecks** ranked by operational drag.
+Classify each finding into exactly one disposition: **Remove** / **Merge** / **Make-conditional** / **Simplify** / **Defer-loading** / **Retain** / **Investigate**. For each structural item give: the component + path, the disposition + one-line rationale, its structural change class (if any — new/removed command/skill, hook edit, cross-cutting CLAUDE.md, symlink, shared-state automation), and a one-line rollback note. End with the **top-5 bottlenecks** ranked by operational drag.
 
 **A Q3 finding may never be dispositioned `Remove`.** A grep that found nothing is not evidence of absence, so it cannot carry deletion authority (see Q3's verdict contract above). Q3-sourced findings go to **Investigate**, carrying the `no evidence of use in scanned scope → CONFIRM BEFORE DELETE` verdict and the scanned scope. `Remove` remains available to Q1 and Q2 findings, where the evidence is positive (a control demonstrably firing on trivial work; a component demonstrably failing the budget) rather than an absence.
 

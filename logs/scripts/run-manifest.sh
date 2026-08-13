@@ -35,7 +35,8 @@
 #   Manifests live under the CALLER's checkout, same convention as the other log scripts:
 #   `${CLAUDE_PROJECT_DIR:-$(pwd)}/logs/runs/`. Override with `--runs-dir`.
 #
-# Two-end contract: `/session-start` Step 3 and `/prime` Step 8c.7 call `start`;
+# Two-end contract: `/session-start` Step 3 calls `start` (the sole caller since
+# 2026-07-29 — `/prime` auto mode reaches it by delegating to `/session-start`);
 # `/wrap-session` calls `close`. Consumers R4 / M-D2 will read these files once they land.
 
 set -uo pipefail
@@ -258,7 +259,7 @@ fi
 #   cannot be attributed to it whatever it contains.
 #
 #   An earlier version of this guard compared the marker's 3-character id suffix against this
-#   session's first three alphanumerics. That was NOT collision-resistant — `/prime` Step 8k cuts
+#   session's first three alphanumerics. That was NOT collision-resistant — prime-session-entry.sh cuts
 #   the suffix to 3 chars, so two sessions sharing a 3-char id prefix produce the same suffix and
 #   the guard waved the second one through (reproduced: session `abc99999-…` accepted marker
 #   `S3-abc` from a different `abc…` session and wrote its manifest). Lengthening the suffix was

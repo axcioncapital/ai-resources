@@ -2,7 +2,7 @@
 model: opus
 ---
 
-Take an open list of operator-decision questions that Claude just surfaced (after `/qc-pass`, `/scope`, `/clarify`, or any mid-stream Claude turn) and resolve each one autonomously: research it against project files, pick the best-grounded decision, report a short inline summary of what was decided, and proceed. Pause only on items where the evidence is too thin to decide without guessing — those are handed back to the operator.
+Take an open list of operator-decision questions that Claude just surfaced (after a review, `/scope`, `/clarify`, or any mid-stream Claude turn) and resolve each one autonomously: research it against project files, pick the best-grounded decision, report a short inline summary of what was decided, and proceed. Pause only on items where the evidence is too thin to decide without guessing — those are handed back to the operator.
 
 This is the **autonomous-by-default** posture: the operator invokes `/decide` and trusts it to settle the list and continue the underlying work, rather than picking each item by hand. Every decision is still reported inline with its reason before the task moves on — nothing is applied invisibly.
 
@@ -18,14 +18,14 @@ Operator-invoked only. Do NOT auto-fire.
 
    b. **Auto-detect from recent context** (used when `$ARGUMENTS` is empty). Scan the conversation tail for one of the following, in priority order:
 
-      - **`## QC Review` block** (produced by `/qc-pass`) with a `### Findings` subsection — typically followed by a `/resolve` invocation producing a `Real / Low-signal / Skip` table where some items are marked `Needs operator judgment: {what to decide}`. Treat each `Real` item flagged for operator judgment as one question.
+      - **An independent review's `### Findings` section** (a Codex review, or an inline self-review fallback) containing items the review left to operator judgment. Treat each such item as one question.
       - **`5. **Decisions you are making**` section** (produced by `/scope` — verified against `scope.md:11`). Each bullet under this heading is one question.
       - **`**Clarifying questions**` numbered list** (produced by `/clarify` — verified against `clarify.md:11`). Each item is one question. Note: `/clarify` emits prose, not a block delimiter — the heading is the marker.
       - **Numbered list in the last Claude turn** that semantically reads as a list of pending operator decisions (e.g., "Q1 ... Q2 ... Q3 ..." or "1. ... 2. ... 3. ..." where each item ends in a question or asks for a choice). Use this fallback only if none of the structured markers above match.
 
    c. **Ambiguity guard.** If two or more candidate lists are present in recent context and the operator's invocation did not name which one, STOP and ask: *"Multiple candidate lists in context — {brief description of each}. Which one?"* Do NOT silently pick the most recent. Picking is silent narrowing.
 
-   d. **No list found.** If neither `$ARGUMENTS` nor auto-detection yields a list, STOP and tell the operator: *"No decision list found in recent context. Paste the questions, or invoke after `/qc-pass` / `/scope` / `/clarify`."*
+   d. **No list found.** If neither `$ARGUMENTS` nor auto-detection yields a list, STOP and tell the operator: *"No decision list found in recent context. Paste the questions, or invoke after a review / `/scope` / `/clarify`."*
 
 2. **Prior-decision check.** Before treating any item as open, verify that the question hasn't already been decided. Read (tail only, not whole file):
 
@@ -140,14 +140,14 @@ This applies only to chat-surface prose. Embedded file excerpts quoted as eviden
 
 ## Composition
 
-- **After `/qc-pass`** → run `/resolve` to triage findings → `/decide` settles `Real` items marked `Needs operator judgment` and continues.
+- **After an independent review** → `/decide` settles the findings the review left to operator judgment and continues.
 - **After `/scope`** → `/decide` grounds and settles the "5. Decisions you are making" items, then continues.
 - **After `/clarify`** → `/decide` researches and settles each clarifying question, then continues.
 - **Mid-stream Claude turn that surfaced a decision list** → `/decide` operates on that list directly.
 
 `/decide` and `/recommend` both proceed autonomously rather than gating on the operator. The difference is grounding: `/decide` does per-question evidence research + a tailored QC pass before each pick and reports the auditable reason; `/recommend` applies judgment across the list without that per-question grounding. Use `/decide` when you want the picks grounded and auditable; `/recommend` for a faster judgment-only pass. They compose; they do not substitute.
 
-**Built-in QC.** `/decide` runs a tailored self-QC pass (Step 6) before emitting output, fired by an independent fresh-context subagent. Operators do not need to manually chain `/decide` → `/qc-pass` — the QC is mandatory whenever at least one item is `Decided`.
+**Built-in check.** `/decide` runs a tailored self-check (Step 6) before emitting output, fired by an independent fresh-context subagent. This is internal to the command and is not a general review — it does not stack with, or substitute for, the one independent review the change itself gets (`ai-resources/docs/qc-independence.md`). It fires whenever at least one item is `Decided`.
 
 ## Exclusions
 

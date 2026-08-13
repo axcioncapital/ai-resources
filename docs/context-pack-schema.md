@@ -2,7 +2,7 @@
 
 Canonical format for context packs produced by the **Context Engine** — the read-only discovery layer that, given a vague task description, identifies load-bearing repo files for a pre-change repo modification and assembles a cited brief for the next agent.
 
-This doc defines the **pack contract**: file layout, frontmatter fields, body sections, citation rules, authority hierarchy, and the handoff prompt that closes every pack. Both consumers — the `/build-context` command (manual entry) and the engine pre-steps in `/session-start` Step 2.4 and `/prime` Step 8c.4.5 (auto entry) — produce packs that conform to this schema.
+This doc defines the **pack contract**: file layout, frontmatter fields, body sections, citation rules, authority hierarchy, and the handoff prompt that closes every pack. Both consumers — the `/build-context` command (manual entry) and the engine pre-step in `/session-start` Step 2.4 (auto entry, reached directly or via `/prime` auto mode) — produce packs that conform to this schema.
 
 This is distinct from the **research context packs** produced by the three project-local `/create-context-pack` instances (at `projects/buy-side-service-plan/`, `projects/nordic-pe-macro-landscape-H1-2026/`, and `ai-resources/workflows/research-workflow/`). Those packs target human readers for domain research with a 5-section schema (Purpose / Background / Key Terminology / Content Map / Scope Boundaries) and write to `execution/context-packs/`. This engine writes for agent consumers, at a different path (`output/context-packs/`), with structured frontmatter. No naming or path collision.
 
@@ -58,7 +58,7 @@ missing_context:          # optional — concrete gaps the engine identified but
 **`consumer`** — declares who the pack is *for*. Three values:
 - `human` — the operator reads the pack to orient before opening a task. Used by manual `/build-context` invocations with no downstream agent yet.
 - `agent` — a downstream sub-agent (QC reviewer, refinement reviewer, custom builder) consumes the pack. Used when the operator chains the pack into another command.
-- `session-input` — the pack feeds into `/session-start` Step 2.4 (or `/prime` Step 8c.4.5) for mandate pre-population. Default for the auto path.
+- `session-input` — the pack feeds into `/session-start` Step 2.4 for mandate pre-population. Default for the auto path.
 
 This field is a Phase 2 hook — Phase 2 consumer behaviors (pre-edit check enforcement, drift-relative-to-pack, closeout-against-contract) will dispatch differently per consumer. In Phase 1 the field is informational only.
 
@@ -171,7 +171,7 @@ If a claim cannot be cited, it goes in **Missing context** as kind `rule` or `de
 
 ## 5b. Agent → caller summary parse contract
 
-The `context-discovery` agent returns a fixed-template markdown summary to its caller (`/build-context`, `/session-start` Step 2.4, `/prime` Step 8c.4.5). The summary's role is operator-visible chat display; the **pack file on disk is the source of truth** for structured fields.
+The `context-discovery` agent returns a fixed-template markdown summary to its caller (`/build-context`, `/session-start` Step 2.4). The summary's role is operator-visible chat display; the **pack file on disk is the source of truth** for structured fields.
 
 Callers extract two things from the summary:
 
@@ -329,7 +329,7 @@ Improve the Friday checkup workflow — operator-supplied scope: the weekly cade
 ## 9. Versioning and changes
 
 This is v1 of the schema. Future versions will be documented in this file under a new `## Version history` section at bottom. Breaking changes (renamed required fields, removed sections) require:
-1. An update to the canonical `/build-context` command and the engine pre-steps in `/session-start` Step 2.4 and `/prime` Step 8c.4.5 (so producers emit the new shape).
+1. An update to the canonical `/build-context` command and the engine pre-step in `/session-start` Step 2.4 (so producers emit the new shape).
 2. An update to any Phase 2 consumers (pre-edit check, drift-relative-to-pack) that parse the schema.
 3. A migration note in `logs/decisions.md` documenting the reason.
 

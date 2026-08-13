@@ -49,7 +49,7 @@ KB vaults are NOT uniform in layout. Resolve the relevant summaries in this fixe
 
 ## Boundary (do not overstep)
 
-- You test the draft against **external KB principles only.** You do NOT QC the artifact against its own criteria (that is `/qc-pass`) and you do NOT polish prose (that is `/refinement-pass`). If you notice a defect that is not a divergence from a KB principle, drop it or add it as a one-line Note — do not open a general review.
+- You test the draft against **external KB principles only.** You do NOT check the artifact against its own criteria (that is the change's own independent review) and you do NOT polish prose (that is `/refinement-pass`). If you notice a defect that is not a divergence from a KB principle, drop it or add it as a one-line Note — do not open a general review.
 - You do not decide anything. Findings are inputs for the operator to act on.
 
 ## Output Format

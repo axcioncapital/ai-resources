@@ -1,0 +1,54 @@
+{
+  "run_id": "2026-08-01-S9-6ba",
+  "project": "ai-resources",
+  "date": "2026-08-01",
+  "marker": "S9-6ba",
+  "model": "claude-opus-5",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md#2026-08-01-S9-6ba",
+  "mission": "work-loop-v2-mvp",
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/work-loop/fixture-step6-admission.md",
+    "plans/work-loop-v2-mvp/issue-codex-request-intake.md",
+    "logs/scripts/work-loop-v2-slice-1.test.sh",
+    "plans/work-loop-v2-mvp/step-5-slice-3-evidence.md",
+    "plans/work-loop-v2-mvp/step-6-review-brief.md",
+    "plans/work-loop-v2-mvp/step-6-review-findings.md",
+    "plans/work-loop-v2-mvp/step-6-candidate-review.md",
+    ".agents/skills/work-loop-v2/SKILL.md",
+    "plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md",
+    "logs/session-plan-2026-08-01-S9-6ba.md",
+    "logs/scratchpads/2026-08-01-S9-6ba-scratchpad.md",
+    "logs/session-notes.md",
+    "logs/decisions.md",
+    "logs/improvement-log.md",
+    "logs/next-up.md"
+  ],
+  "decisions_refs": [
+    "logs/decisions.md#2026-08-01-work-loop-v2-step-6-finding-c-deferred-rather"
+  ],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "deferred",
+  "outcome": "PARTIAL",
+  "failure_class": null,
+  "incidents_refs": []
+}

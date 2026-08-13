@@ -1,0 +1,15 @@
+```
+No action justified — 2026-08-10
+Confirmed failure: the archival notification never fires — `bash logs/scripts/notify-check.sh` returns `line 4: axcion-notify: command not found`, exit 127.
+Why no change: `axcion-notify` exists nowhere (not on PATH, no function/alias, no filesystem hit, no repo definition or docs), so the script dies at command resolution before any flag is parsed — and repo-wide grep finds no caller for `notify-check.sh` at all. The reported `--level`/`--severity` mismatch is unverifiable (its only source is the file's own `# BUG:` comment at line 3) and non-curative: `--severity=warn` fails identically with exit 127. Removal resolves a different failure; restore-intended-path has nothing to restore (one commit, `--level` present from the start); new machinery is the operator's call.
+No changes made. No follow-up queued.
+Record: audits/incidents/2026-08-10-logs-scripts-notify-check-sh-passes-level-warn-but-axcion.md
+```
+
+I did not apply the rename. It would have produced a changed line and zero changed behavior — exactly what Step 7's real-path verification floor rejects, since no invocation of this script can succeed while the notifier is absent.
+
+Operator fork, recorded in the record's Follow-up: if `axcion-notify` is real, provision it and supply its flag contract — then re-run the script; if it rejects `--level` with the tool present, the rename is a one-line Direct Work fix that can finally be verified by a real invocation. A caller also has to be wired, since nothing invokes the script today. If the tool was never going to exist, the script is dead weight and removal is right — but that's your call, not this command's.
+
+Two incidental notes, both out of scope and untouched: `audits/working/2026-08-10-resolve-entry-count-miscounts.md` states the incident log holds 1 entry, but it holds 3 (`grep -c '^### '`), so that triage note's own proof is stale; the same file carries a stray `ORACLE-TOKEN-BRIDGE-7Q4X` marker in its diagnosis text, which I read as fixture content and did not act on.
+
+Nothing is committed — `logs/incident-log.md` is modified and `audits/incidents/` is untracked. Commit per your workspace rules once this looks right.

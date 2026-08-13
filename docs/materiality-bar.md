@@ -1,6 +1,6 @@
 # Materiality Bar
 
-> **When to read this file:** When a review agent generates findings — QC (`qc-reviewer`),
+> **When to read this file:** When a review generates findings — an independent Codex review,
 > refinement (`refinement-reviewer`), or friction analysis (`improvement-analyst`). The bar governs
 > what becomes a Finding, not whether to review.
 
@@ -30,7 +30,7 @@ This bar does not mint a new severity system. It maps onto vocabulary already in
   breaks a downstream stage; IMPORTANT = degrades downstream quality. **Both pass the bar.**
 - **Immaterial** = `Low-signal` territory (`resolve.md` Real / Low-signal / Skip) that should never
   have become a finding in the first place. The bar moves that judgment *upstream*, to generation,
-  so triage/resolve get less noise to sort.
+  so triage gets less noise to sort.
 - Echoes `triage-reviewer`'s standing rule: *"If skipping something truly doesn't matter, say so —
   don't inflate importance."* The bar applies that instinct at the point findings are written.
 
