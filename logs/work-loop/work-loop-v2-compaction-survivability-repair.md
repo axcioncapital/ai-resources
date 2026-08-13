@@ -87,10 +87,32 @@ Preserving everything the brief names, the only genuinely index-shaped content i
 **The arithmetic does not resolve cleanly, so alternatives are returned rather than a single prescription:**
 
 - **Boundary A — index only.** Move L366–465 → `references/routing-index.md`. 617 − 100 = **517**. This preserves every named behavior, but **satisfies none of the three numbers** — it is still 17 over the advisory 500 and 177 over the binding 340.
-- **Boundary B — index plus two adjacent lookup blocks.** Add `### What an intake result contains` (L353–365, 13) and `### Repository-problem reference` (L329–338, 10). 617 − 123 = **494**. Clears the advisory 500 with 6 lines of headroom. Still 154 over the binding 340.
-- **Boundary C — reach 340.** Requires moving ≥277 lines, which cannot be done from lookup content alone: after the index and both adjacent blocks there is no lookup left, so it would have to take behavior — the courier-mode block (L212–305, 94) or the brief-writing sub-sections (L488–549, 62). That is a restructure of the Work Loop's behavioral text, not a compliance edit, and it would put the seam and courier rules behind a second read.
+- **Boundary B — index plus two adjacent lookup blocks.** Add `### What an intake result contains` (L353–365, 13) and `### Repository-problem reference` (L329–338, 10). 617 − 123 = **494**. Clears the advisory 500 with 6 lines of headroom. *Superseded by the correction below: it was sized to clear the 500-line number, which Claim 1 established does not govern this file, and it moves the intake-result contract, which is behavior. Boundary A is the recommendation.*
+- **Boundary C — "reach 340 in SKILL.md" was the wrong target and is withdrawn.** See the correction below: the 340 guard does not measure SKILL.md by design. It measures `$RIDX_F`, the routing index.
 
-**The repository has already handled this exact situation once, and not by splitting.** The same guard was re-based 320 → 340 by the unit that grew the file, deliberately and with its reasoning written down (L1143–1148). That is a recorded precedent for re-basing the ceiling with justification, and it is a real option beside splitting.
+### Correction — the 340 guard measures the routing index, not the skill
+
+**The frozen finding reproduces, and it defeats the operator choice this unit previously reported.** The guard is not a ceiling on the skill that happens to be aimed at `SKILL_F`; it is a ceiling on the *routing index* that currently falls on `SKILL_F` only because the index still lives there.
+
+*Evidence, by direct inspection.* The harness already carries the split, stated in its own comment at L978–979: *"`WL2_ROUTER_FILE` lets a mutated copy be substituted, which is how the five required failing cases are demonstrated. **Existing checks keep reading `$SKILL_F`.**"* And the two families are bound to different variables in code:
+
+- `routing_res()` at **L859** reads **`$SKILL_F`** — the routing *behavior* checks are already anchored to the skill and are unaffected by any repoint.
+- `idx()` (L1002), `marked_idx()` (L1045) and `collide()` (L1070) read **`$RIDX_F`** — the index *inventory* checks follow the variable.
+
+Across the whole `ridx` region (L1000–1160) every file reference is `$RIDX_F`; there are **zero** direct `$SKILL_F` references in that region — searched L1000–1160 for both names. So repointing `RIDX_F` at an extracted `references/routing-index.md` carries the index assertions to the file that then holds the index, and the 340 assertion at L1150 (`wc -l < '$RIDX_F'`) measures the artifact its own comment names: *"a guard against the index turning into a catalogue."*
+
+**With Boundary A the arithmetic is comfortable.** The extracted index (L366–465, 100 lines, plus a title and read-me-when line ≈ 103) sits **237 lines under the 340 ceiling**, and `SKILL.md` falls to **517**.
+
+**But the repoint is not a one-line change, and this is the part that constrains the implementation unit.** Thirteen `ridx` checks currently read `$RIDX_F` while testing content that stays in `SKILL.md` under Boundary A. They must be rebound to `$SKILL_F` in the same commit or they go red:
+
+| Checks | Reads | Content stays in SKILL.md because |
+|---|---|---|
+| L1134, L1136 (`desc_line()`, L1132) | `awk 'NR<=6 && /^description:/'` | The YAML **frontmatter description is Codex's activation trigger**. A `references/` file has no frontmatter, so these two cannot follow the index under any boundary. |
+| L1119, L1123, L1129 (`route_step()`, L1117) | `awk '/^## Routing/…'` | The `## Routing a request` H2 and its steps are routing **behavior**, which the brief's preservation list keeps in place. L1129 also asserts exactly one `^## Routing` heading exists. |
+| L1125 | `grep -qi 'Direct Work'` | Admission language, protected by the same list. |
+| L1088, the four-part loop at L1090–1091, L1093, L1095 (`result_block()`, L1087) | `awk '/^### What an intake result contains/…'` | L353–365 is the intake-result **contract** — behavior, not lookup — so Boundary A deliberately leaves it. |
+
+**One consequence Codex must weigh, stated plainly.** After the repoint, **no executable check constrains `SKILL.md`'s own length**; it would sit at 517 under the advisory 300-line warning and the non-governing 500-line convention only. And a 340 ceiling over a ~103-line index leaves 237 lines of headroom, which defeats the guard's stated purpose — the harness comment justifies its number by noting *"340 leaves 9 lines of headroom, so the next addition still has to justify itself rather than sliding under an open-ended limit."* Preserving that intent means re-basing the number **down** to fit the index (roughly 115–120), and optionally adding a second ceiling bound to `$SKILL_F`. Both are technical calibration inside the implementation unit, not policy.
 
 ### Claim 4 — consumers and dependencies
 
@@ -104,11 +126,17 @@ Result: the size finding is **misattributed but not baseless.** The `>500 lines`
 
 Evidence: the determination could have read the other way at each step and did so unevenly — the Work Loop standard was searched for a number and returned none, `ai-resource-builder` was searched for Codex scope and returned no match, while the harness search returned a concrete binding path (`SKILL_F` L251) and a failing arithmetic comparison. The 340 breach is falsifiable by `wc -l`: at ≤340 the assertion passes. The harness was **not executed** — running it would write fixture state, which this unit's brief forbids — so the breach is reported as arithmetic against the assertion's own literal, not as an observed test run.
 
-**Conclusion: a compliance edit is required, but on a corrected basis and with the boundary left open.**
+**Conclusion (revised by the correction): a compliance edit is required, on a corrected basis, and no operator choice is involved.**
 
-The `>500` finding should be accepted in substance and rejected in citation. The binding rule is the 340-line harness ceiling, not the 500-line skill-library budget. The minimum safe boundary that preserves every behavior the brief names is **Boundary B — move L366–465 plus L353–365 and L329–338 (123 lines) to `references/` inside the skill folder, taking the file to 494** — which clears the advisory numbers but still leaves the binding ceiling red. Closing that gap requires an operator-owned choice between re-basing the ceiling with written justification (the recorded precedent) and restructuring behavioral text (which the brief's preservation list resists). That choice is policy, not technical judgment.
+The `>500` finding is accepted in substance and rejected in citation. The binding rule is the 340-line harness ceiling, not the 500-line skill-library budget.
 
-Compatibility risks that must constrain the later implementation unit: (i) L26–132 is immovable and byte-parity-locked to the Claude command; (ii) the ≥28 `ridx` harness assertions must be repointed via `WL2_ROUTER_FILE` in the same commit or the acceptance harness goes red; (iii) the Reorient gate must stay above the resolver block near the top.
+The minimum safe boundary is **Boundary A — move the route indexes at L366–465 (100 lines) to `references/routing-index.md` inside the skill folder, and repoint the harness's default `RIDX_F` to that file.** This is bounded and technical throughout: the guard then measures the routing index it says it protects (≈103 lines against its ceiling), `SKILL.md` falls to 517, every index assertion follows the content it tests, and **no behavioral text moves** — so the brief's preservation list is satisfied in full.
+
+**The previously reported 340-versus-restructure operator choice was false and is withdrawn.** It rested on reading the 340 ceiling as a limit on `SKILL.md`. The ceiling is bound to `$RIDX_F`, not to `$SKILL_F`, and the harness comment at L978–979 states the separation outright. Nothing here requires the operator.
+
+Compatibility risks that must constrain the later implementation unit: (i) L26–132 is immovable and byte-parity-locked to the Claude command; (ii) the repoint is **not** a single-variable change — the thirteen checks tabulated above must be rebound to `$SKILL_F` in the same commit, and the two `desc_line` checks can never follow the index because a `references/` file carries no frontmatter; (iii) the Reorient gate must stay above the resolver block near the top; (iv) re-basing the ceiling down to fit the index (≈115–120) is needed to preserve the guard's stated headroom discipline, otherwise the repoint buys compliance at the cost of the guard's purpose.
+
+Internal-contradiction check on this correction: the withdrawn Boundary C and the withdrawn operator choice are marked as withdrawn in place rather than deleted, so no earlier sentence still asserts a 340 limit on `SKILL.md`. Claim 1's table entry for the 340 rule reads *"Yes, by exact path"* — that remains true as the repository stands today, because `RIDX_F` currently defaults to `$SKILL_F`; it is the repoint that changes which artifact it binds, and the correction says so explicitly. Claim 2's map and Claim 4's dependency findings are untouched by this correction and still hold.
 
 Repository state: **this unit wrote exactly one file, this state file.** No instruction file, script, setting, project file or user-level file was written; the harness was not run. `logs/friction-log.md` is excluded from the commit and was not edited by this unit — as Unit 2 established, hook telemetry appends one write-activity line per Write/Edit, so its hash moved from `1888b75d…92999ccf` without any deliberate change.
 
@@ -116,8 +144,8 @@ Deferrals noticed and not done: (i) the file's growth from 116 to 617 lines sinc
 
 ## Blocker
 
-None blocking the handback. One item needs an operator decision before an implementation unit can be framed to completion: no extraction that preserves the brief's protected behaviors reaches the binding 340-line ceiling, so the ceiling must either be re-based with justification or behavioral text must move.
+None. The frozen finding is resolved: the operator choice was false and is withdrawn, and the remedy is bounded and technical.
 
 ## Next action
 
-Codex: accept or reject the corrected basis for the size finding, then frame the implementation unit around Boundary B — or stop for the operator on the 340-versus-restructure choice named in the conclusion. The harness repointing via `WL2_ROUTER_FILE` must be inside whichever unit moves the index.
+Codex: closure check on the frozen finding only — is the `RIDX_F` reconciliation resolved, and did the correction introduce an internal contradiction? The correction reproduced the finding by inspection (`routing_res()` at L859 reads `$SKILL_F`; the index helpers read `$RIDX_F`; zero `$SKILL_F` references in L1000–1160), revised the conclusion to Boundary A with the repoint, withdrew the false operator choice in place, and recorded the thirteen checks that must rebind to `$SKILL_F` in the same commit. Nothing beyond this state file was changed and no harness was run.
