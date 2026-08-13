@@ -3517,3 +3517,24 @@ Proposal: author `AGENTS.md` **for Codex** rather than deriving it. It needs onl
 **Proposal.** Delete the five dangling symlinks wherever they appear rather than repairing them; drop the stale `qc-pass`, `refinement-deep`, `qc-reviewer` entries from each `.claude/shared-manifest.json` `shared` array; and reword `CLAUDE.md` Rule #9, the QC → Triage Auto-Loop section, and the propagation checklist's P2/P6/P7 to name whatever now carries the gate's intent — per `38981e5`, a Codex second-opinion pass. Until that rewording lands, any structural change is either ungated or blocked, depending on which document is trusted.
 
 **Target files:** workspace `CLAUDE.md` (Rule #9, QC → Triage Auto-Loop), `ai-resources/docs/qc-independence.md`, `ai-resources/docs/audit-discipline.md`, `projects/axcion-sector-intelligence/roadmap/pre-batch-propagation-checklist.md` (P2/P6/P7), and the per-project `.claude/shared-manifest.json` files.
+
+---
+
+## Concurrent-session protection is disarmed by default, and nothing gates cross-worktree writes
+
+- **Status:** logged (pending)
+- **Severity:** medium — the foreign-staging tripwire failed open in all ten live sessions simultaneously, and no control covers an agent writing across eleven worktrees at once.
+- **Category:** session infrastructure (`ai-resources/docs/commit-discipline.md`, `check-foreign-staging.sh`, `/session-start`)
+- **Source:** `axcion-sector-intelligence` worktrees, 2026-08-13, observed while propagating shared-spec files into ten units with ten peer sessions live.
+
+**The finding.** Two gaps compound.
+
+**First — the tripwire is opt-in and nobody opted in.** `check-foreign-staging.sh` reads this session's footprint from the `- Files in scope:` bullet that `/session-start` writes, and **fails open** when it is absent. Across ten live worktree sessions, *zero* had a session marker and *zero* had declared a footprint. `commit-discipline.md` already names this as the guard's #1 failure; what this session adds is the frequency — it was not one session missing the step, it was **ten out of ten**, for three days. A guard that is armed only by a step nobody runs is not a guard.
+
+**Second — nothing gates cross-worktree writes at all.** The discipline is written around one session staging inside one repo: explicit pathspec, no directory wildcards, `/cleanup-worktree` and `/permission-sweep` barred while a concurrent session is live. None of it covers what happened here — a single agent running `git checkout main -- <paths>` and `ln -sf` across **eleven worktrees** whose sessions were all live. `git checkout <tree-ish> -- <path>` silently overwrites the working-tree copy; had any of those five paths carried an uncommitted edit from a live session, it would have been destroyed with no trace and no guard firing. It did not happen here only because a pre-flight check confirmed all five paths were unmodified everywhere — an ad-hoc check, not a control.
+
+**Why it stayed invisible.** Both gaps are silent by construction. The tripwire's fail-open is deliberate and correct in isolation (a guard that blocked on its own parse failure would be worse), and it emits only a soft warning nobody is reading three days later. And the cross-worktree case simply has no owner: worktrees each have their own index, so the shared-index reasoning that underpins the existing rules does not reach them.
+
+**Proposal.** Three separable pieces, smallest first. (1) Make the missing footprint **visible** rather than silent — have `/prime` surface "tripwire disarmed: no `Files in scope` declared" once at session start, so the operator learns it before three days of work accumulate. (2) Extend `commit-discipline.md` with a **cross-checkout** clause: before writing to sibling worktrees of the same repo, enumerate live sessions (`ListAgents` or the per-id marker set) and either confirm the target paths are unmodified in every target, or stop. (3) Consider whether `git checkout <tree-ish> -- <path>` deserves the same gating as the destructive verbs already covered — it is a silent working-tree overwrite wearing a read-shaped name.
+
+**Target files:** `ai-resources/docs/commit-discipline.md` (new cross-checkout clause), `ai-resources/.claude/commands/prime.md` (disarmed-tripwire surfacing), and `.claude/hooks/check-foreign-staging.sh` if the gating in (3) is adopted.
