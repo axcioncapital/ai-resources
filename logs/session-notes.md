@@ -2,108 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-09 — Work Loop v2 core resolver: linked-worktree fix, planned and shipped same session
-
-### Summary
-Investigated `core-resolver-worktree-defect-report-2026-08-09.md` (the resolver rejected a linked
-worktree of `ai-resources` because it trusted the checkout by directory basename, not repository
-identity). Ran `/clarify` and `/scope` to lock a level-B plan (fix plus a four-check test script,
-report checks 3/4/6/7 explicitly out of scope), then the operator directed execution in the same
-session instead of deferring to the next one. Wrote the test first, reproduced the red case, applied
-the fix to both mirrored resolver copies, went green, ran one independent review, fixed both findings
-the review raised, and committed. Also verified — read-only, no code change — that the resolver's
-existing `WORKSPACE/projects/<one-child>` path already covers `axcion-systems-builder` and
-`axcion-systems-builder-email-os` unaffected by this change.
-
-### Decisions Made
-- Level B fix scope confirmed by operator (fix + 4-check test: worktree case, canonical control,
-  unrelated-repo negative control, mirror parity) — declined level C's full 8-check harness.
-- Operator overrode the standing reviewer rule (Codex) for this change and directed a Claude subagent
-  review instead. Recorded as a session-scoped deviation in the plan file, not a new standing rule.
-- Both review findings (unscoped `git worktree prune` risking the operator's other worktrees; resolver
-  prose overclaiming "repository identity" when the test is shared-object-store-plus-name) were fixed
-  before commit rather than logged for later.
-- Execution ran as Direct Work, not a Work Loop v2 task — using the resolver being repaired to route
-  its own repair was judged unnecessary risk.
-
-### Outcome
-Skipped (not requested).
-
-### Risky actions
-None. The one materially risky element — the test's original `git worktree prune` calls, which could
-have deregistered the operator's live worktrees on volatile paths — was caught by the independent
-review before the test script was ever run for real against the operator's tree, and fixed before commit.
-
-### Findings Declined
-- `run-manifest.sh close` hard-errored (exit 2) instead of the documented stub-and-continue: no per-id
-  marker existed and the shared `logs/.session-marker` held yesterday's `2026-08-08 S2-309`, not a
-  today-dated one. Declined as a new finding — reproduction, not new information, of the already-logged
-  open finding at `## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless session
-  instead of the documented stub-and-continue`. Per the wrap's own ADVISORY RULE, surfaced and the wrap
-  continued without a manifest for this session.
-
-### Next Steps
-None queued from this session. The resolver fix unblocks (but does not itself resume) planning
-`eval-mvp-proposal-v0.2.md` as a Work Loop task inside a recreated `ai-resources-eval` worktree — that
-recreation was explicitly left undone.
-
-### Open Questions
-None.
-
-## 2026-08-09 — Semantic-search investigation, proposal, and /memory-search MVP build
-
-### Summary
-Investigated whether semantic search would materially improve the repo (four parallel read-only sweeps
-over command retrieval, logs/decisions, Work Loop, and skills/docs discovery), delivered a prioritized
-report recommending institutional-memory search as the strongest candidate and explicitly excluding
-Work Loop (its failures are state-drift, not findability). Triaged an operator-pasted second-opinion
-review of that report against the repo's own norms, adopting four of five points (multi-class testing,
-hybrid retrieval as a contestant, the Work Loop state/context-plane split, authority-safety as an
-evaluation metric) and declining a standing eval-harness ambition as out of scope for an MVP. The
-operator then chose to skip the evaluation phase and build directly, and — after a course correction
-(see Risky actions) — chose a standalone `/memory-search` command over integrating into
-`/resolve-repo-problem`. A self-contained proposal was written and approved
-(`plans/semantic-search-mvp/proposal.md`), then built to spec: a local-embedding indexer/search script
-(`logs/scripts/memory-search.py`, model2vec, no API key) over `logs/` and `audits/` — including the
-archives and `audits/working/`, both previously unreachable by any repo tool — and the `/memory-search`
-command (search + reindex modes). Verified: reindex builds a 14,330-chunk index from 1,249 files in
-seconds; searches return path/date/status(default UNKNOWN)/snippet under a fixed "verify before
-relying" warning; hits were confirmed reaching the previously-blind corpora.
-
-### Decisions Made
-- Standalone `/memory-search` command chosen over `/resolve-repo-problem` integration — logged to
-  decisions.md.
-- Proposal's four open decisions approved as recommended: command name `/memory-search`, keep the
-  prototype as the build starting point, revert the out-of-scope `/resolve-repo-problem` edit, local
-  embedding backend for the MVP.
-- Second-opinion review triaged item-by-item rather than adopted wholesale: state/context-plane split
-  for Work Loop adopted as wording, not as a sequencing change; standing eval-harness idea declined
-  (routes through `/develop-ai-resource` if it comes at all, not built as a side effect of an MVP test).
-
-### Risky actions
-Near-miss: the operator's "I want to build an MVP" was read as an implementation go-ahead rather than
-a request for a proposal — packages were installed, a prototype script/index were created, and one live
-command file (`resolve-repo-problem.md`) was edited before any plan for that specific build was
-approved, violating the plan-before-implementation norm. The operator halted the session immediately;
-nothing unapproved was committed. Logged as a finding below.
-
-### Findings Declined
-- `run-manifest.sh close` hard-errored (no per-id marker; no today-dated shared marker — the shared
-  `logs/.session-marker` still held yesterday's `2026-08-08 S2-309`, and this direct-route session
-  never ran `/prime`). Declined as a new finding — reproduction of the already-logged open finding at
-  `## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless session instead of the
-  documented stub-and-continue`. Per the wrap's ADVISORY RULE, surfaced and the wrap continued without
-  a manifest for this session.
-
-### Next Steps
-Use `/memory-search` in real sessions for 2–3 weeks. If used: consider the `/resolve-repo-problem`
-integration (a five-line edit, deliberately deferred). If unused: retire via `/develop-ai-resource`.
-Run the pending Codex review on the new command + script (structural change class — new command;
-not yet run, status: unassessed).
-
-### Open Questions
-None.
-
 ## 2026-08-09 — Closed Work Loop v2 task: phase1a full-descendant-termination
 
 ### Summary
@@ -529,6 +427,64 @@ Three items remain operator-owned and were deliberately left undecided by the cl
 whether to fix the second ambient-writer deferral (`detect-innovation.sh`) now or wait for a unit
 that trips it; (2) integration into `main`, push, and worktree removal/retention for this trial
 checkout; (3) whether a further phase of Harness v0.2 work opens as a new Work Loop task.
+
+### Open Questions
+None.
+
+## 2026-08-13 — Axcíon Harness v0.2 goes live for normal attended pilot use
+
+### Summary
+Direct-route session (no `/prime`/`/session-start`) running Claude's half of Work Loop v2 task
+`axcion-harness-v0-2-go-live` across two units and closure, via `/work-loop-v2` invoked three times.
+Unit 1 rewired the live Codex Work Loop skill's attended courier route from the spike dispatcher to
+the canonical carrier `scripts/axcion-harness-v0.2/carry-turn.sh`. Unit 2 (Adoption-mode discovery)
+inspected the accepted evidence and recommended adopting the carrier for normal attended pilot use.
+The operator accepted and issued the close verdict; Claude wrote the closing record. Net effect: the
+live Work Loop v2 instructions now actually select the canonical carrier for an attended carry, for
+the first time.
+
+### Decisions Made
+- **Unit 1 route change** — Codex-framed, Claude-implemented, Codex-accepted: attended courier
+  invocation in `.agents/skills/work-loop-v2/SKILL.md` moved from
+  `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` to
+  `scripts/axcion-harness-v0.2/carry-turn.sh`, with exact `--checkout`/`--task` inputs and a
+  per-task-derived four-line `--allow-path` set. Unattended routing to the spike dispatcher preserved
+  unchanged, in its own subsection.
+- **Unit 2 lifecycle recommendation, operator-accepted** — adopt for normal attended pilot use, single
+  checkout/single writer, one hop per invocation; not unattended, not concurrent, not final Phase 3
+  adoption. Three Unit 1 deferrals ruled: untracked `logs/harness-runs/` accumulation and absent
+  route-regression check are nonblocking pilot limitations; absent carrier-level cross-worktree
+  ownership check is nonblocking *only* for single-checkout/single-writer use.
+- **Operator ruling on the new finding** — the `logs/innovation-registry.md` ambient-writer gap
+  (a second hook-owned path the documented allow-path omits) is a safe-stop limitation, not a release
+  blocker: an affected task stops before launch, nothing runs or changes. Routed as small Direct Work
+  for later, not fixed this session.
+- **Closure** — operator issued the close verdict; routine decisions on record shape (four-heading
+  closing record, ownership-declaration clear) were Claude's per core § 3/§ 4, not separately flagged.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Risky actions
+None. Every route-check assertion was verified against both the pre-change file (must fail) and the
+post-change file (must pass) before being trusted; two existing regression suites
+(`work-loop-v2-core-resolver.test.sh`, `work-loop-v2-slice-1.test.sh`) were re-run and their result
+counts compared before/after rather than assumed unaffected.
+
+### Findings Declined
+None — no findings surfaced this session beyond the two already queued as deferrals inside the
+closed Work Loop task record itself (the innovation-registry allow-path gap and the intermittent
+stale-marker staging tripwire), which live in `logs/work-loop/axcion-harness-v0-2-go-live.md`'s
+closing record rather than in `improvement-log.md`, per the task's own disposition.
+
+### Next Steps
+- Start routing real pilot tasks through `/work-loop-v2` using the now-live attended carrier
+  (`scripts/axcion-harness-v0.2/carry-turn.sh`) to accumulate the Phase 3 real-task evidence set
+  (`plans/axcion-harness-v0.2/mvp-plan.md` § Real-task proof).
+- Small Direct Work, low urgency: add `^logs/innovation-registry\.md$` as a fourth fixed
+  `--allow-path` line in `.agents/skills/work-loop-v2/SKILL.md` § *Courier mode*.
+- Not urgent: revisit `logs/harness-runs/` (gitignore, or move `--log-dir` outside the repo) before
+  final Phase 3 adoption.
 
 ### Open Questions
 None.

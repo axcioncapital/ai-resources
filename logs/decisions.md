@@ -179,3 +179,48 @@ both runs discarded; a green count from a run whose subject changed underneath i
 
 **Accepted limitation, stated in the closing record.** The diagnosis establishes that the merged
 suite is green where process inspection is permitted. It does not certify any other host.
+
+## 2026-08-13 — Axcíon Harness v0.2 adopted for normal attended pilot use
+
+**Context.** `plans/axcion-harness-v0.2/mvp-plan.md` Phase 2's exit condition — a real bounded task
+crossing a fresh-process handoff via the canonical carrier — was met by the closed
+`axcion-harness-v0-2-live-trial` task. The carrier existed, was deterministically tested (98/0, five
+fail-capability mutants), and had proven itself in one live handback, but no live Work Loop
+instruction actually selected it: the skill still routed attended courier use to the spike dispatcher.
+
+**Decision.** Task `axcion-harness-v0-2-go-live`, run across two Work Loop v2 units. Unit 1 changed
+`.agents/skills/work-loop-v2/SKILL.md` so the attended courier command now invokes
+`scripts/axcion-harness-v0.2/carry-turn.sh` with exact checkout/task inputs and a task-derived
+allow-path policy, leaving unattended routing to the spike dispatcher untouched. Unit 2, an
+Adoption-mode discovery unit, then recommended — and the operator accepted — **adopting the carrier
+for normal attended pilot use**: single checkout, single writer, one hop per invocation. Not
+unattended, not concurrent, not cross-worktree, no automatic landing or push, and explicitly not
+final Phase 3 adopted status (that bar is still the governing plan's three-to-five representative
+tasks and its later adopt/shrink/stop verdict).
+
+**Rationale.** The one real fresh-process carry cost the operator exactly one action — the foreground
+launch — with zero prompts and a clean `code=0` exit. The only untested element of the pilot
+configuration (the allow-path policy in the canonical checkout, as opposed to the isolated trial
+checkout the one live carry actually ran in) fails safe: a wrong allow-path produces a pre-launch
+refusal, not a corrupting run. Withholding the release to eliminate that one uncertainty would trade
+the operator's stated ASAP priority for a failure mode that already announces itself.
+
+**Ruling on the newly found deferral.** Unit 2 surfaced one item not previously deferred: a second
+ambient writer (`detect-innovation.sh`, a user-level `PostToolUse` hook) will dirty
+`logs/innovation-registry.md` — a path outside the documented allow-path set — the first time a pilot
+unit edits a `.claude/commands`, `.claude/agents` or `.claude/hooks` file. The operator ruled this a
+**safe-stop limitation, not a release blocker**: the affected carry stops before launching anything,
+so nothing runs and nothing changes. Routed as small Direct Work for later rather than fixed inline,
+since fixing it fell outside Unit 2's Adoption-mode discovery scope.
+
+**Alternatives considered and rejected.** *Revise before pilot use* — would hold the release for a
+one-line allow-path addition whose absence already produces a self-diagnosing stop. *Continue the
+pre-pilot trial* — would gather more evidence without the harness being usable, when the missing
+evidence is exactly what normal use produces. *Stop* — contradicted by the deterministic suite, the
+one clean live carry, and the fail-closed stop-code contract.
+
+**Accepted limitations, carried into the closing record.** No carrier-level cross-worktree ownership
+check (`work-loop-owner` is called from the spike dispatcher, not from `carry-turn.sh`) — nonblocking
+only for single-checkout, single-writer use, and must close before any wider ownership or concurrency
+claim. Untracked `logs/harness-runs/` accumulation and the absence of a permanent route-selection
+regression check — both nonblocking, both to revisit before final Phase 3 adoption.
