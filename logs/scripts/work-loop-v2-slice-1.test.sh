@@ -977,7 +977,15 @@ check "seam  the hand-off and the unit-2 hand-back are two commits, not one" \
 #
 # WL2_ROUTER_FILE lets a mutated copy be substituted, which is how the five
 # required failing cases are demonstrated. Existing checks keep reading $SKILL_F.
-RIDX_F="${WL2_ROUTER_FILE:-$SKILL_F}"
+#
+# The index moved out of the skill (Unit 4 of work-loop-v2-compaction-survivability-repair,
+# Boundary A). $RIDX_F now names the file that actually holds the inventories, so every
+# assertion below reads the artifact whose behavior it verifies: inventory, marker,
+# collision and catalogue-growth checks follow the index here, while the frontmatter,
+# routing-behavior, admission and intake-contract checks stayed on $SKILL_F where their
+# content stayed. Before the extraction both families read one variable, which is why
+# the 340-line guard measured a 617-line skill instead of the index it names.
+RIDX_F="${WL2_ROUTER_FILE:-.agents/skills/work-loop-v2/references/routing-index.md}"
 
 AX_PRIMARY="/work-loop-v2 /develop-ai-resource /scope-project /new-project /project-next-steps \
 /consult /pm /tech-consult /open-items /resolve-repo-problem /resolve-incident /repo-dd \
@@ -1085,7 +1093,9 @@ check "ridx  /leverage-idea is named as excluded, with its router-within-router 
   "grep -q 'leverage-idea' '$RIDX_F' && grep -qi 'router' '$RIDX_F'"
 
 # --- the intake result contract: one owner, four parts, no default stack ------
-result_block() { awk '/^### What an intake result contains/{f=1;next} /^### /{f=0} f' "$RIDX_F"; }
+# Reads $SKILL_F, not $RIDX_F: the intake-result contract is routing behavior and
+# Boundary A deliberately left it in the skill.
+result_block() { awk '/^### What an intake result contains/{f=1;next} /^### /{f=0} f' "$SKILL_F"; }
 check "ridx  the intake result contract exists" "[ -n \"\$(result_block)\" ]"
 for part in 'interpreted outcome' 'one owner' 'one short reason' 'next instruction'; do
   check "ridx  the intake result names its required part: $part" \
@@ -1113,23 +1123,26 @@ check "ridx  the owner is chosen before admission is applied" \
 # the routing steps: mode is classified after admission, never at intake. Order is
 # the claim, so reordering the steps turns it red — which loose word-matching could
 # never do.
+# Reads $SKILL_F: the routing steps are behavior and stayed in the skill.
 route_step() {
-  awk '/^## Routing/{f=1;next} /^## /{f=0} f' "$RIDX_F" | grep -n -- "$1" | head -1 | cut -d: -f1
+  awk '/^## Routing/{f=1;next} /^## /{f=0} f' "$SKILL_F" | grep -n -- "$1" | head -1 | cut -d: -f1
 }
 check "ridx  mode is classified after admission, never at intake" \
   "[ -n \"\$(route_step 'Classify the mode')\" ] && [ -n \"\$(route_step 'admission test')\" ] && \
    [ \"\$(route_step 'Classify the mode')\" -gt \"\$(route_step 'admission test')\" ]"
 check "ridx  only an admitted Work Loop unit acquires a mode" \
-  "awk '/^## Routing/{f=1;next} /^## /{f=0} f' '$RIDX_F' | grep -qi 'never acquires one'"
+  "awk '/^## Routing/{f=1;next} /^## /{f=0} f' '$SKILL_F' | grep -qi 'never acquires one'"
 check "ridx  Direct Work is preserved as the default for small reversible work" \
-  "grep -qi 'Direct Work' '$RIDX_F'"
+  "grep -qi 'Direct Work' '$SKILL_F'"
 check "ridx  a specialist owner is not wrapped in a Work Loop unit" \
   "routing_res | grep -qi 'do not wrap'"
 check "ridx  a continue request is one intake case, not a parallel router" \
-  "routing_res | grep -qi 'continue' && ! grep -c '^## Routing' '$RIDX_F' | grep -qv '^1\$'"
+  "routing_res | grep -qi 'continue' && ! grep -c '^## Routing' '$SKILL_F' | grep -qv '^1\$'"
 
 # --- the description makes the router reachable without naming the skill -----
-desc_line() { awk 'NR<=6 && /^description:/' "$RIDX_F"; }
+# Reads $SKILL_F and can never follow the index: the YAML frontmatter description is
+# Codex's activation trigger, and a references/ file carries no frontmatter.
+desc_line() { awk 'NR<=6 && /^description:/' "$SKILL_F"; }
 check "ridx  the skill description offers routing, not only framing" \
   "desc_line | grep -qi 'rout'"
 check "ridx  the description still preserves Direct Work" \
@@ -1140,14 +1153,16 @@ check "ridx  the description still preserves Direct Work" \
 # stay within a stated ceiling. Both are cheap proxies for "names, not methods".
 check "ridx  ask-matt's prose was not copied into the skill" \
   "! grep -qi 'the route most work travels' '$RIDX_F' && ! grep -qi 'smart zone' '$RIDX_F'"
-# Ceiling raised 320 -> 340 by the mode-contract unit. It is an implementation
-# guard against the index turning into a catalogue, not operator authority: the
-# mode contract added the classification step, the three worked examples and the
-# scope note, taking the file 314 -> 331. The guard is kept and re-based, not
-# deleted — 340 leaves 9 lines of headroom, so the next addition still has to
-# justify itself rather than sliding under an open-ended limit.
-check "ridx  the skill stays under its 340-line ceiling" \
-  "[ \"\$(wc -l < '$RIDX_F')\" -le 340 ]"
+# Ceiling history: 320 -> 340 by the mode-contract unit, then 340 -> 116 when the
+# index left the skill. It is an implementation guard against the index turning into
+# a catalogue, not operator authority. The number is re-based, never widened by
+# default: 340 over an extracted 107-line index would have left 237 lines of
+# headroom and stopped constraining anything, which is the opposite of what the
+# guard says it does. 116 keeps the same 9-line headroom the 340 re-base used, so
+# the next addition still has to justify itself rather than sliding under an
+# open-ended limit.
+check "ridx  the routing index stays under its 116-line ceiling" \
+  "[ \"\$(wc -l < '$RIDX_F')\" -le 116 ]"
 
 # =============================================================================
 # MODE CONTRACT — Unit 3 of work-loop-v2-intake-router
