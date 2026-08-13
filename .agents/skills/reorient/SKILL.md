@@ -34,14 +34,50 @@ compacted.
 
 ### 2. Resolve the authoritative task without guessing
 
-Use the exact active `logs/work-loop/{task-id}.md` path and bound checkout
-preserved through compaction. Verify that the path is inside the checkout
-reported by `pwd`.
+Resolve the task in this order, and stop at the first step that fails.
 
-If the exact task path or checkout binding did not survive compaction, stop.
-Do not scan `logs/work-loop/`, choose the newest file, infer a task from branch
-names, or create replacement state. Ask the operator for the missing task id or
-path.
+**First — the preserved path.** Use the exact active `logs/work-loop/{task-id}.md`
+path and bound checkout preserved through compaction. Verify that the path is
+inside the checkout reported by `pwd`. This is the primary route; the fallback
+below applies only when it is unavailable.
+
+**Second — a strictly validated checkout declaration.** Only if the exact path
+did not survive, read this checkout's `logs/work-loop/.owner`. It is one
+gitignored line, `{task-id} {YYYY-MM-DD}`. Accept the task id it names **only
+when every one of these passes**:
+
+1. The file **exists** and holds exactly one task id and one claim date, in that
+   shape. If there is no declaration, the fallback does not apply — go to
+   *Third* and stop. There is no id to validate, and nothing downstream may
+   stand in for one.
+2. `logs/scripts/work-loop-owner.sh check --depth local --checkout {pwd} --task {declared-id}`
+   returns `PROCEED`. `REFUSE` or `AMBIGUOUS` ends reorientation. Where the
+   checkout does not carry that script, make the same reads by hand — they are
+   plain file reads and need no git. **Read this verdict only as confirmation of
+   an id you already read in check 1.** The same command answers `PROCEED` for a
+   checkout that declares no writer at all, so a bare `PROCEED` is not evidence
+   that a task exists.
+3. `logs/work-loop/{declared-id}.md` exists in this checkout.
+4. That file's frontmatter `task:` is identical to the declared id.
+5. Its `turn:` is present and is one of `claude`, `codex`, `operator`.
+6. `turn:` is not `operator`. A closed task's declaration is stale, not a
+   pointer to resume from.
+
+Any failure stops reorientation with the specific check named. Every check above
+is local to this checkout and runs no git, which is what keeps the fallback
+inside Codex's authority.
+
+**What the fallback does not establish.** It cannot tell you whether this task is
+also claimed in another checkout, or whether its state file is replicated — both
+need `git worktree list`. Those are repository-depth checks owned by Claude at
+its Step 1 and by the dispatcher at admission, and recovering a pointer here does
+not substitute for them. State that residual plainly when you report.
+
+**Third — stop.** If neither route establishes the task, stop. Do not scan
+`logs/work-loop/`, choose the newest file, select among candidates, infer a task
+from branch names, or create replacement state. Ask the operator for the missing
+task id or path. The fallback recovers *one declared* task; it never discovers a
+task.
 
 If an unattended run may be active, use the Work Loop dispatcher's read-only
 `--status` operation before reading or touching task state. Never edit a task
@@ -139,8 +175,13 @@ the explicit `Next:` instruction for the actor whose turn it actually is.
 
 ## Failure Behavior
 
-- Missing exact task path or checkout binding: stop and ask the operator for
-  it; do not search for a likely task.
+- Missing exact task path or checkout binding: try the validated `.owner`
+  fallback in Step 2, and stop and ask the operator if any of its checks fails;
+  do not search for a likely task either way.
+- A `.owner` declaration that is unreadable, holds more than one id, has no
+  matching state file, or names a closed task: stop and report which check
+  failed. Never repair or delete the declaration from here — this skill is
+  read-only.
 - Missing or contradictory authority: identify the precise conflict and obtain
   repository evidence or Claude inspection before continuing.
 - Live unattended run: report its status and do not edit task state.

@@ -3415,3 +3415,47 @@ log is self-sufficient for the next session's baseline check. Out of scope for t
 it — Unit 3 was inspection-only and explicitly excluded launcher edits.
 
 **Target files:** `scripts/axcion-harness-v0.2/carry-turn.sh` (`on_signal()`, around `:403-410`).
+
+### 2026-08-13 — Work Loop v2 compaction recovery is absent outside `ai-resources`
+
+- **Status:** logged (pending) — **commit 1 (instruction layer) landed 2026-08-13**; the deployment
+  layer is what remains pending, and it is still blocked on the operator's hook-carrier decision.
+- **Severity:** medium-high — silent failure that lands exactly when context is already lost;
+  exposure is prospective (all recent Work Loop tasks ran inside `ai-resources` or its worktrees,
+  and no `.owner` file exists on disk yet), but the first Work Loop unit run from a project
+  repository has no compaction recovery at all.
+- **Category:** session-issue
+- **Source:** /resolve-repo-problem 2026-08-13
+- **Friction source:** A Codex-authored report ("Work Loop v2 — Required Fixes Report", 12 Aug 2026)
+  claimed eight compaction-survivability defects. Triage verified each against live state: 4 confirmed
+  (Reorient gate missing from Work Loop v2; no `.owner` fallback in Reorient; project-scope AGENTS.md
+  lacks the preservation contract; `compaction-protocol.md` contradicts Work Loop's evidence-precedence
+  order), 2 partial (hook message does not name `reorient`; hook has no carrier reaching project repos),
+  and 2 rejected as non-defects (core-header authority already resolved in-file; the five-compaction
+  acceptance test contradicts a recorded closing-record decision). Three root causes, not one:
+  (A) deployment scope — `reorient`, the compact hook and the preservation contract exist only in
+  `ai-resources`; (B) integration lag — work-loop-v2, the hook and reorient were built on different days
+  and nothing names `reorient`; (C) authority-text staleness. One ownership-boundary violation found in
+  the report's own proposal: its `.owner` validation step 7 ("repository-depth ownership checks still
+  pass") would require `git worktree list` inside a Codex-side skill that runs no git — the fallback must
+  stay local-depth only.
+- **Proposal:** Structural fix, sequenced as two commits. Commit 1 (instruction layer, `ai-resources`
+  only, ordinary Codex review): add a short Reorient gate to `work-loop-v2/SKILL.md` and correct its
+  "compaction that lost the thread" wording to route to Reorient before `handoff-thread`; name `$reorient`
+  in the compact hook's emitted message; add a Work-Loop-scoped exception to `docs/compaction-protocol.md`;
+  add a **local-depth-only** `.owner` fallback to `reorient/SKILL.md` (exact preserved path →
+  `work-loop-owner.sh check --depth local` → stop without mutation), retaining every existing prohibition.
+  Commit 2 (deployment layer, **risk-aware Codex review required** — fires four structural change classes:
+  hook, user-level settings file, skill deployment, scaffolding template): add `reorient` and
+  `handoff-thread` to three project `shared-manifest.json` files, add the preservation pointers to those
+  projects' `AGENTS.md`, register a compact hook at a scope that reaches project sessions, and add a
+  `skills` block to the `/new-project` manifest template. Proof case is **one** compaction from a project
+  repository, not five. **Operator decision still open:** hook carrier — user-level `~/.codex/hooks.json`
+  (recommended; covers every checkout including future ones, but creates a new unversioned settings layer)
+  vs. repo-local `.codex/hooks.json` per project (travels with the repo, but drifts and needs three new
+  files plus a script copy).
+- **Target files:** `.agents/skills/work-loop-v2/SKILL.md`, `.agents/skills/reorient/SKILL.md`,
+  `.codex/hooks/work-loop-reorient.sh`, `docs/compaction-protocol.md`,
+  `projects/{axcion-systems-builder,axcion-dashboard,axcion-methodology-r-d}/.claude/shared-manifest.json`,
+  the same three projects' `AGENTS.md`, `.claude/commands/new-project.md`, and the chosen hook-carrier file.
+- **Notes:** audits/working/2026-08-13-resolve-verify-and-qualify-the-work-loop-v2-compaction.md

@@ -16,6 +16,13 @@ You frame the work and judge the result. **Claude owns repository reality: it ch
 This file does not restate the executable core resolved below; where they disagree, the core wins and
 the difference is a defect. Its read point is Routing step 3 because most routes do not need it.
 
+**Compaction gate — reorient before you act.** If this task has been through a context compaction, or
+the conversation may otherwise be incomplete, invoke `$reorient` before routing, preparing, assessing,
+continuing, correcting or closing any unit. Continue only once it has established the authoritative
+task, its bound checkout and the next action; if it cannot, **stop without changing state** and say so.
+The `reorient` skill owns that procedure and it is deliberately not restated here — a second copy would
+be free to drift from the one that governs.
+
 <!-- work-loop-v2-core-resolution:start -->
 ### Resolve the executable core
 
@@ -191,7 +198,9 @@ Where a checkout carries `logs/scripts/work-loop-owner.sh`, `check --depth local
 
 **An open task leases its checkout until it closes.** That is the price of continuity between handoffs, and it is deliberate: a session-scoped lease cannot survive a session ending, and surviving one is the whole point. The cost is bounded and visible — starting a *different* task in that checkout is refused until this one closes. Ordinary serial reuse is unaffected, because closure clears the declaration.
 
-**When a new Codex task starts at all.** Only where the thread has ended or must end: a fresh session, a compaction that lost the thread, or a deliberate hand-off. **Ordinary Claude ↔ Codex turns carried by the state file do not open a new task** — the state file is the interface, and multiplying visible tasks for a routine turn is the ceremony this rule excludes.
+**When a new Codex task starts at all.** Only where the thread has ended or must end: a fresh session, or a deliberate hand-off. **Ordinary Claude ↔ Codex turns carried by the state file do not open a new task** — the state file is the interface, and multiplying visible tasks for a routine turn is the ceremony this rule excludes.
+
+**A compaction is not one of those cases.** Routine compaction is recovered *in the current task*, in this order: invoke `$reorient`; continue in that same task once it re-establishes authoritative state; stop without changing state where it cannot. A new task — or `handoff-thread` — is for a deliberate move between threads, never the routine recovery path. Turning every compaction into a hand-off is how completed work gets done twice.
 
 - **Prefer a genuinely fresh task over a transcript-preserving fork.** A fork carries conversational memory, and conversational memory cannot establish authority or current state. A fresh task is forced to read the durable sources, which is the property wanted.
 - **Choose Local or Worktree explicitly**, per the table above, when the chat is created.

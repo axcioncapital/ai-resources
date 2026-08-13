@@ -45,7 +45,7 @@ jq -cn --arg cwd "$CWD" --arg common "$COMMON_DIR" '{
     hookEventName: "SessionStart",
     additionalContext: (
       "WORK LOOP REORIENT — this session was compacted. Checkout: " + $cwd +
-      " (git common dir: " + $common + "). Before your next move, re-read from disk the active Work Loop pointers preserved under AGENTS.md § Compaction: the exact active logs/work-loop/{task-id}.md path, the bound checkout, the governing plan path with its workflow and phase, and the current ## Next action. Do not continue from the compacted summary. If those pointers did not survive the compaction, say so — do not go looking for the task."
+      " (git common dir: " + $common + "). If a Work Loop v2 task is active, invoke $reorient now, before your next move. It re-reads from disk the active Work Loop pointers preserved under AGENTS.md § Compaction: the exact active logs/work-loop/{task-id}.md path, the bound checkout, the governing plan path with its workflow and phase, and the current ## Next action. Use the exact preserved task path first; only if it did not survive, use a strictly validated logs/work-loop/.owner declaration in this checkout. If neither establishes the task, stop and say so — do not go looking for the task. Do not continue from the compacted summary."
     )
   }
 }' 2>/dev/null || exit 0
