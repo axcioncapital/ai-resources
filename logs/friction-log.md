@@ -355,6 +355,7 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
 #### Write Activity
 - 19:25 — logs/work-loop/eval-v0-3-restart.md
 - 19:25 — logs/work-loop/eval-v0-3-restart.md
+- 19:25 — logs/work-loop/eval-v0-3-restart.md
 - 19:23 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
 - 19:13 — logs/work-loop/eval-v0-3-restart.md
 - 19:13 — logs/work-loop/eval-v0-3-restart.md
