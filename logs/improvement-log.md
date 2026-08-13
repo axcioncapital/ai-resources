@@ -3474,3 +3474,46 @@ Proposal: author `AGENTS.md` **for Codex** rather than deriving it. It needs onl
 **Target files:** `ai-resources/workflows/research-workflow/.claude/commands/run-execution.md` (Step 2.4 — line 122 on origin/main as of 2026-08-11), and an audit of the other `delegate-qc` steps in the same workflow (lines 15, 56, 123 and 171 also name `qc-gate`).
 
 **Verified against current canonical, 2026-08-11** — not merely against the local checkout, which is 512 commits behind origin. On `origin/main`: `workflows/research-workflow/.claude/commands/run-execution.md` still delegates Step 2.4 to `qc-gate`; `workflows/research-workflow/.claude/agents/qc-gate.md` is still `tools: Read` / `model: sonnet`; `skills/research-extract-verifier/SKILL.md` still declares `model: opus` / `allowed-tools: Read, Write`. The defect is live on canonical, not an artifact of a stale local copy. The same check confirms the ladder-depth finding above: `origin/main:skills/research-extract-creator/SKILL.md` still has zero occurrences of "ladder" or "depth".
+
+---
+
+## Depth-sensitive symlinks are tracked in git, so they cannot be correct in both a repo checkout and its worktrees
+
+- **Status:** logged (pending)
+- **Severity:** medium — 968 broken symlinks across eleven worktrees today; the two families cannot converge while both stay tracked, so every `main`→unit merge conflicts on ~170 paths.
+- **Category:** repo structure (`axcion-sector-intelligence`) + shared hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`)
+- **Source:** `axcion-sector-intelligence` worktrees, 2026-08-13, found while propagating `main`'s shared-spec updates into the ten Phase-A units.
+
+**The finding.** Two families of symlinks are tracked in git at a **path depth that is only valid in one checkout**. `projects/axcion-sector-intelligence/` sits two levels below the workspace root; `projects/axcion-si-worktrees/<unit>/` sits three. A relative link needs four `../` from the first and five from the second, so one tracked blob cannot serve both.
+
+- **`.claude/commands` + `.claude/agents`** — `main` tracks these at four `../`. In a worktree they dangle. Two units (`cleantech-equipment`, `managed-it-cloud`) already committed corrected five-`../` versions, so `git merge main` there produces **178 add/add conflicts**; the other eight have correct links present but **untracked**, so the same merge is refused outright with "untracked working tree files would be overwritten".
+- **`reference/skills/`** — 80 tracked entries committed 2026-07-15 (`c1c5e45`) as **absolute paths into the authoring machine's home directory** (`/Users/patrik.lindeberg/...`). Broken in all twelve checkouts on any other machine. All 80 targets exist locally under `ai-resources/skills/`, so nothing is lost — only the paths are wrong.
+
+**Why it stayed invisible.** The auto-sync hook's idempotency guard (`[ -e "$target" ] || [ -L "$target" ] && continue`) skips any target that already exists **as a link, including a broken one**. So the hook never repairs a dangling link, it only declines to create one. And the practical blast radius is small enough to go unnoticed: of ~24 skill-load paths in the pipeline commands, 22 read `ai-resources/skills/<name>` directly and work fine. Only `/produce-knowledge-file` (Stage 5) and `/audit-repo` route through `reference/skills/`. **Stage 3 is not affected** — `run-cluster.md` loads `cluster-analysis-pass` and `cluster-memo-refiner` from `ai-resources/skills/` directly.
+
+**Interim state, 2026-08-13.** 122 links repaired in the working tree — every `.claude/` link with a canonical target, plus `reference/skills/repo-health-analyzer`. All twelve checkouts now resolve their real consumers. **Not committed**: the repair modifies 121 tracked symlinks, and committing it is precisely the divergence this entry proposes to eliminate. The remaining ~77 `reference/skills/` links per checkout are still broken and were deliberately left alone — no command reads them.
+
+**Proposal.** Stop tracking both families and generate them per checkout, which is what the hook already does correctly for `.claude/` (it emits relative targets via `os.path.relpath`, matching `repo-architecture.md` § Symlink topology rule 5). Concretely: `git rm --cached` both families, add them to `.gitignore`, extend `auto-sync-shared.sh` with a manifest-driven `reference/skills/` pass sourcing `ai-resources/skills/` (mirroring the existing opt-in `skills.shared` block for `.agents/skills/`), and fix the idempotency guard to repair a **broken** link rather than skip it. This fixes all twelve checkouts including the authoring machine's, and ends the merge-conflict class permanently.
+
+**Scope caution.** `auto-sync-shared.sh` is shared by ~28 projects, and its `EXCLUDE_COMMANDS` / `EXCLUDE_AGENT_GLOBS` assignments carry a documented format contract that `/fix-symlinks` re-parses. Change where the lists are *applied*, never how they are *assigned*.
+
+**Target files:** `ai-resources/.claude/hooks/auto-sync-shared.sh`, each project's `.claude/shared-manifest.json`, and `.gitignore` + tracked-symlink removal on `main` and the eleven `unit/*` branches.
+
+---
+
+## `/qc-pass`, `/risk-check`, `/resolve`, `/refinement-deep` were retired but their consumer references were never cleaned up
+
+- **Status:** logged (pending)
+- **Severity:** medium — `CLAUDE.md` Autonomy Rule #9 gates structural changes on a command that no longer exists, so the gate cannot fire.
+- **Category:** canonical retirement follow-through (`ai-resources/.claude/`) + workspace `CLAUDE.md` + `axcion-sector-intelligence` manifests
+- **Source:** `axcion-sector-intelligence` worktrees, 2026-08-13, found while looking for the `/risk-check` gate that Rule #9 requires.
+
+**The finding.** Commit `38981e5` (2026-07-30, "batch: retire /qc-pass, /risk-check, /resolve, /refinement-deep — Codex is the second opinion") removed four commands and two agents (`qc-reviewer`, `risk-check-reviewer`) from `ai-resources`. The retirement itself is deliberate and fine. **The consumer references were not removed with it.** Five dangling symlinks now sit in every affected project (55 across the eleven sector worktrees alone), plus the workspace root's own `.claude/`.
+
+**The live contradiction.** Workspace `CLAUDE.md` still routes through the retired commands in three places: **Autonomy Rule #9** ("structural change classes gated by `/risk-check`"), the **QC → Triage Auto-Loop** and QC methodology (`/qc-pass`), and — in this project — `roadmap/pre-batch-propagation-checklist.md`, whose **P2, P6 and P7** are all parked behind a `/risk-check` that cannot run. P2 is marked *time-sensitive* and is owed before any two-question unit runs its prompts.
+
+**Why it is easy to miss.** A retired command's symlink still appears by filename in the session's command list, because the lister does not validate that the link resolves. The command looks available right up until it is invoked.
+
+**Proposal.** Delete the five dangling symlinks wherever they appear rather than repairing them; drop the stale `qc-pass`, `refinement-deep`, `qc-reviewer` entries from each `.claude/shared-manifest.json` `shared` array; and reword `CLAUDE.md` Rule #9, the QC → Triage Auto-Loop section, and the propagation checklist's P2/P6/P7 to name whatever now carries the gate's intent — per `38981e5`, a Codex second-opinion pass. Until that rewording lands, any structural change is either ungated or blocked, depending on which document is trusted.
+
+**Target files:** workspace `CLAUDE.md` (Rule #9, QC → Triage Auto-Loop), `ai-resources/docs/qc-independence.md`, `ai-resources/docs/audit-discipline.md`, `projects/axcion-sector-intelligence/roadmap/pre-batch-propagation-checklist.md` (P2/P6/P7), and the per-project `.claude/shared-manifest.json` files.
