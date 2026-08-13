@@ -122,8 +122,64 @@ Challenge a false premise rather than improvising.
 
 ## Latest result
 
-Unit 5 discovery, inspected 2026-08-13. Nothing was operated: no carrier run, no model launch, no
-signal, no trial checkout or task, no manufactured denial. Only this state file changed.
+Unit 5 discovery, corrected 2026-08-13. Nothing was operated across either round: no carrier run, no
+model launch, no signal, no trial checkout or task, no manufactured denial. No launcher, test or other
+file changed — only this state file. The correction round changed reasoning only, as instructed.
+
+### Correction round — all three frozen findings resolved
+
+Each was reproduced by inspection before being corrected.
+
+**(1) The arithmetic — RESOLVED.** Reproduced: the prose read "eleven carrier invocations" while the
+table specified 1 + 9 + 2 + 2, i.e. at least 14. The prose was simply wrong, and the two "+" signs hid
+the gap rather than marking it. Corrected to **13**, with the difference from 14 accounted for
+explicitly: the probe merges into the permission shape's first hop, because that hop *is* a
+deny-induced refusal against a real bounded unit and asks the probe's question by construction. The
+merge is defended for both branches of the answer, and the case where it does not hold — the first
+permission hop recording no denial — is stated as a branch rather than absorbed into a "+". The three
+independent normal repetitions are untouched at 9, and neither recovery sequence lost a hop. The two
+optional recovery-framing hops are now named and excluded from the 13 instead of hiding inside it.
+See § *The minimum remaining real operations*.
+
+**(2) The subtracted evidence field — RESOLVED.** Reproduced: the result said "the one field no run
+establishes is nested-actor count" and the execution contract then read "Priority 5's nine, minus
+nested-actor count" — a silent contract change. The contract is restored to nine in full, and the
+field is disposed of as an open gap with a named route rather than removed. Verified by inspection
+that the gap is real: `ACTOR_PGID` is only assigned, passed to `terminate_actor_group`, and cleared;
+`terminate_actor_group` signals the group and probes its liveness without ever enumerating it;
+`pgrep`, `ps -` and any nested-actor counter return no match; and the `RESULT` line's nine fields
+contain no process count. Actor count is separately shown *not* to be a gap. The requested deny argv is
+explicitly refused as proof of an observed zero, on the launcher's own words. The smallest honest
+disposition is a bounded prerequisite that must land **before** the trials, since the field is a
+per-hop observation — with the stated alternative that the field becomes an accepted limitation and the
+matching release criterion is then unmet. Nothing was implemented. See § *The nested-actor evidence
+gap*.
+
+**(3) The unreconciled release criterion — RESOLVED.** Reproduced: the previous recommendation said
+"proceed" while leaving the authoritative-position-source criterion marked "still unproven", with no
+reconciliation against this task's exit condition. Determined from the task's own scope text and from
+repository evidence that the criterion is **out of scope, unmet, and owned elsewhere**, and disposed of
+explicitly on that basis — which is the disposal route the exit condition allows. The consequence is
+now stated in the recommendation rather than buried: this task cannot produce the assessment's compound
+"Ready for supervised semi-agentic use" label whatever the trials return, and adoption must not be
+recommended while the criterion is unresolved. The unit did not broaden into intake work and
+implemented nothing. See § *The two additional release criteria*.
+
+**Did the correction break anything? No.** Re-checked each unaffected conclusion against the corrected
+text: the operator-as-launcher reconciliation is preserved verbatim and is unaffected by all three
+findings; the candidate-run table, the "no old run counts after Units 1–4" conclusion and its
+`denials=`/`partial=` identity marker are untouched; the recovery-rule mapping per exit code is
+untouched; the two conflicts (courier ownership, exit-taxonomy divergence) are untouched; the
+session-marker criterion remains SATISFIED on the same evidence. Inside the execution contract only two
+lines moved — the evidence-fields line and the operation counts — and every other clause still holds.
+Nothing was removed except the incorrect arithmetic and the silent subtraction.
+
+**Newly noticed, recorded as a deferral and not implemented:** the corrected minimum assumes each
+normal trial task closes in three hops. If a trial task needs a correction round of its own, that task
+costs two further hops. This does not change the *minimum*, which is what Priority 5 asks for, but it
+means the realistic budget is higher than 13 and the operator should not read 13 as a forecast.
+
+### The original discovery record, as corrected
 
 ### Surfaces inspected, and the bounded searches behind every absence
 
@@ -191,7 +247,8 @@ after, commit count and allowlist verdict); outcome classification; operator int
 closed at `turn: operator` with a core § 4 closing record); and elapsed time. **The one field no run
 establishes is nested-actor count** — the launcher had no nested-actor policy before Unit 3, and the
 current `RESULT` line still carries no such field, so that field has never been measurable on this
-surface.
+surface. That is an open evidence gap, disposed of below; it is not a field this discovery may
+subtract from Priority 5's nine.
 
 ### Whether any candidate can count after Units 1–4 — no, and the marker is mechanical
 
@@ -267,19 +324,41 @@ a carrier run would look for evidence that is present under a different name, or
 ### The minimum remaining real operations
 
 Priority 5 requires three shapes and at least three repetitions of the normal one. Read against the
-carrier's one-hop-per-invocation contract, that is **eleven carrier invocations, not five**, and no
-fewer:
+carrier's one-hop-per-invocation contract, the minimum is **13 carrier invocations**, and the "+"
+signs that hid the real figure are resolved below rather than carried forward.
 
-| Shape | Operations | Why not fewer |
+| Shape | Invocations | Why not fewer |
 |---|---|---|
-| **Probe** | 1 | Whether a `--disallowedTools` refusal populates `permission_denials` is **unproven**. The carrier's own comment records that the field's shape was verified by forcing a `PreToolUse` deny hook, not by a deny-list refusal; all four surviving live captures report `permission_denials` length `0`. The entire `37` path — and therefore the permission trial — rests on this, and it is one cheap bounded observation. |
-| **Normal ×3** | 9 (3 tasks × 3 hops) | One task carried to closure yields claude→codex, codex→claude and claude→operator — the shape the 2026-08-12 sequence already demonstrated. Three *tasks*, not three units in one task, because a single task closes once and closure is part of the normal case. The three hops inside one task legitimately belong to one trial sequence and do not need separate repetition. |
-| **Permission interruption + resume** | 2 + | One hop that hits the denial, then a **fresh narrowed recovery unit** after operator approval. Not a re-run (clause 2). |
-| **Controlled stop + recovery** | 2 + | One hop interrupted, then a fresh narrowed recovery unit after partial-effect inspection and operator approval. The stop half alone was proven live on 2026-08-11 under the old launcher; the recovery half never has been. |
+| **Normal ×3** | 9 (3 tasks × 3 hops) | One task carried to closure yields claude→codex, codex→claude and claude→operator — the shape the 2026-08-12 sequence already demonstrated. Three *tasks*, not three units in one task, because a single task closes once and closure is part of the normal case. The three hops inside one task legitimately belong to one trial sequence and need no separate repetition. |
+| **Permission interruption + resume** | 2 | The denial hop, then the resume hop. The resume is a **fresh narrowed recovery unit** after operator approval, never a re-run (clause 2). The denial hop **is** the probe — see below. |
+| **Controlled stop + recovery** | 2 | The interrupted hop, then the resume hop, after partial-effect inspection and operator approval. The stop half alone was proven live on 2026-08-11 under the old launcher; the recovery half never has been. |
+| **Probe** | 0 additional | Merged into the permission shape's first hop. |
 
-The probe and the two nonzero shapes may reuse the normal trials' checkouts once those close; they
-must not run concurrently in one checkout, because the carrier's lock is checkout-wide (Unit 1) and
-would refuse — correctly — with exit `17`.
+**The probe is not a separate operation.** It asks one question — does a `--disallowedTools` refusal
+populate `permission_denials`? — and the permission shape's first hop asks that question by
+construction, because that hop *is* a deny-induced refusal against a real bounded unit. Running a
+throwaway probe first and then repeating the same shape as a trial would be the same observation
+twice. Removing it is what takes the honest figure from the ≥14 the previous table implied down to 13;
+it weakens neither the three independent normal repetitions nor either recovery sequence, because it
+removes nothing from them.
+
+**Why merging is safe rather than optimistic.** The hop returns usable evidence whichever way the
+question resolves. If the refusal *is* recorded, that hop is the permission interruption and the
+sequence continues to its resume. If it is *not* recorded, the hop has still answered the probe — and
+the answer is that this surface cannot produce the permission shape by deny-list, which is a finding,
+not a wasted run. **The 13 therefore holds only where the first permission hop produces a recorded
+denial.** Where it does not, the permission shape needs a different denial mechanism and its own
+count; that is a genuine branch, and it is stated here rather than absorbed into a "+".
+
+Two invocations are **optional and excluded from the 13**: after each nonzero stop, Codex must frame
+the narrowed recovery unit, and that framing may be carried through the carrier as a Codex hop or
+handled by the operator conversing with Codex directly. Priority 5 does not require it to be carried.
+Carrying both makes the total 15.
+
+The two nonzero shapes may reuse a normal trial's checkout once that task closes; they must not run
+concurrently in one checkout, because the carrier's lock is checkout-wide (Unit 1) and would refuse —
+correctly — with exit `17`. Five trial tasks are needed in total: three normal, one permission, one
+controlled-stop. The recovery shapes get their own tasks so that neither contaminates a normal repeat.
 
 ### Execution contract per remaining operation
 
@@ -305,10 +384,45 @@ invented here.
   and recorded it as an invocation decision, not a durable default.
 - **Expected classification:** `0`/`CARRIED` for the normal repeats; `37` (or `25`, if the denial
   blocks the commit rather than an edit) for the permission shape; `28` for the controlled stop.
-- **Evidence fields:** Priority 5's nine, minus nested-actor count, which this surface cannot report.
+- **Evidence fields:** Priority 5's nine, in full. Eight are producible today; nested-actor count is
+  not, and its disposition is the next section — it is a prerequisite on the trials, not a subtraction
+  from the contract.
 - **Approval gates:** creating each trial checkout; every `acceptEdits` invocation; every resume after
   a nonzero stop (clause 5); and the final adoption decision.
 - **Terminal condition:** `turn: operator` is terminal for automation (core § 4, core § 7).
+
+### The nested-actor evidence gap, and its smallest honest disposition
+
+**Actor count is not a gap.** `launch_actor` makes exactly one `run_bounded` call per hop, so one
+invocation is one actor launch by construction, and the run log records the resolved binary path and
+its version string. The `RESULT` line's `actor=` field is the actor's *name*, not a count; the count
+comes from the one-hop contract, not from a counter.
+
+**Nested-actor count is a real gap, and the requested deny set is not a substitute.** Inspected
+`carry-turn.sh`: `ACTOR_PGID` appears only where it is assigned, passed to `terminate_actor_group`,
+and cleared. `terminate_actor_group` signals the group with `kill -TERM "-$pgid"` and probes liveness
+with `kill -0 "-$pgid"` — it terminates descendants without ever enumerating them. Searched the file
+for `pgrep`, `ps -`, and any nested-actor counter: no match. The `RESULT` line has nine fields
+(`outcome`, `code`, `task`, `mode`, `actor`, `turn_before`, `turn_after`, `denials`, `partial`) and
+none is a process count. The mandatory `--disallowedTools` set is *requested* policy that the child
+evaluates, and the launcher's own help says so in terms — "NOT proof that nesting is impossible". So
+argv proves a request was made; it does not prove an observed zero, and this discovery does not claim
+otherwise.
+
+**Smallest honest disposition: a bounded prerequisite, framed by Codex, landing before the trials.**
+Observe the count of `claude` and `codex` processes in the actor's process group during the hop, and
+record it in the run log and on the existing `RESULT` line. It is bounded because both inputs already
+exist — the pgid is already tracked for termination, and the run log and `RESULT` line already exist —
+so it adds no evidence file, no state source and no policy. It must carry its own limit in the same
+breath: the field reads *observed nested actors in the actor's process group*, not *no nested actor
+existed*, because a descendant that leaves the group is not observed. **It must land before the
+trials, not after**, because the field is a per-hop observation: adding it afterwards would mean
+re-running every trial to collect it.
+
+**If that prerequisite is not authorised**, the honest alternative is to record nested-actor count as
+an accepted limitation — and then the assessment's criterion "nested AI work is prevented by default
+and bounded when approved" rests on requested argv alone and is **not met**. What must not happen is
+both: subtracting the field *and* claiming the criterion. This unit implements nothing here.
 
 ### The two additional release criteria
 
@@ -319,34 +433,69 @@ invented here.
   file, and it never writes `logs/session-notes.md` or any `.session-marker`. The criterion remains
   open for `dispatch.sh` (11 matches), which this task's scope excludes.
 - **"A project without an authoritative current-position source is refused rather than reconstructed"
-  — STILL UNPROVEN, and not the carrier's to satisfy.** The carrier takes an exact `--task` and has no
-  routing surface at all, so the criterion lands on the Codex intake layer. Searching `SKILL.md` for
-  `authoritative current|current-position|position source|refuse|refused`, the nearest clause is line
-  519: "Where no current-state source exists, derive only what the governing sources and verified
-  repository evidence support — do not invent continuity to cover the gap." That is guidance to derive
-  carefully, not a refusal, and `SKILL.md` line 190 states that Codex's enforcement is
-  "instruction-borne" while only the dispatcher's is "exit-code-borne". Nothing was implemented here.
+  — OUT OF THIS TASK'S SCOPE, UNMET, AND EXPLICITLY DISPOSED OF HERE. It constrains the readiness
+  label this task may produce.**
+
+  *Scope.* This task's own boundary excludes **strategic routing**. The criterion is a routing and
+  intake behaviour: it governs whether work may be framed for a project at all, before any turn
+  exists to carry.
+
+  *The carrier has no surface it could be implemented on.* Searched `carry-turn.sh` for
+  `route|routing|project-state|PROJECT\.md|pipeline-state|current-position`: five matches, and none is
+  project routing — `--dry-run validate and route`, and four occurrences of "direct route" inside the
+  nested-actor policy text. The carrier takes an exact `--task`, reads one named state file, and
+  discovers no project truth.
+
+  *Ownership.* The criterion lands on the Codex intake layer, `SKILL.md` § *Routing*. Searching that
+  file for `authoritative current|current-position|position source|refuse|refused`, the nearest clause
+  is line 519 — "Where no current-state source exists, derive only what the governing sources and
+  verified repository evidence support — do not invent continuity to cover the gap." That is guidance
+  to derive carefully, not a refusal. Line 190 records that Codex's enforcement is "instruction-borne"
+  while only the dispatcher's is "exit-code-borne". So the behaviour is unenforced there too.
+
+  *Disposition under this task's exit condition.* The exit condition allows a retained requirement to
+  be "explicitly disposed of from current repository evidence". This is that disposal: the criterion is
+  **out of scope, unmet, and owned elsewhere** — not satisfied, and not silently dropped. Closing this
+  requirement needs a separately owned prerequisite on the intake layer, which is not framed here.
+
+  *The consequence, stated rather than buried.* The assessment's label "Ready for supervised
+  semi-agentic use" is compound: it requires all eight release criteria. With this one unmet, **this
+  task cannot produce that label**, whatever the trials return. The most it can honestly conclude is a
+  narrower claim about the canonical attended carrier — that its retained transport and safety
+  requirements are met and its supervised trials passed. Nothing was implemented here, and this unit
+  did not broaden into intake work.
 
 ### Recommendation
 
-**Revise the trial design, then proceed.** The retained Priority 5 design cannot be run as written —
-it is a dispatcher design, driven by Codex, and Codex's own skill does not authorise it to launch the
-canonical carrier. Three revisions make it runnable without changing this task's scope or asking for
-any new capability:
+**Revise the trial design and close one prerequisite; then proceed — and do not adopt against the
+assessment's compound label.** The retained Priority 5 design cannot be run as written: it is a
+dispatcher design driven by Codex, and Codex's own skill does not authorise it to launch the canonical
+carrier. Four changes make it runnable without changing this task's scope or asking for any new
+capability:
 
 1. **The operator is the launcher for every trial hop.** No skill change, no scope change; core § 4
    already makes operator-carried turns the default.
-2. **Add the one probe operation first.** Whether a `--disallowedTools` refusal populates
-   `permission_denials` decides whether the permission-interruption trial can be run at all on this
-   surface. It is one cheap observation, and running the trial without it risks spending real model
-   turns to discover the shape is unreachable.
-3. **Count the normal repeats in tasks and hops, not runs** — three tasks, nine invocations — and
-   treat each task's three hop directions as one trial sequence.
+2. **Close the nested-actor observation prerequisite before the trials start.** It is a per-hop
+   observation, so it cannot be added afterwards without re-running everything. Codex frames it as a
+   bounded unit; this discovery neither designs nor implements it.
+3. **Merge the denial probe into the permission shape's first hop.** It is the same observation, and
+   the hop returns usable evidence whichever way the question resolves.
+4. **Count the normal repeats in tasks and hops** — three tasks, nine invocations, each task's three
+   hop directions being one trial sequence. Total minimum **13 invocations across five trial tasks**,
+   rising if the first permission hop records no denial, and 15 if both recovery framings are carried.
 
-One operator decision is genuinely needed before anything starts: **authorising the three dedicated
-trial checkouts**, since the previous trial checkout was deleted and none can be reused. The bounded
-deliverable for each trial task is left for Codex to frame; repository evidence does not settle it and
-this unit did not invent it.
+**Two constraints ride on the outcome, and they are not conditions the trials can lift:**
+
+- The trials cannot produce the assessment's label **"Ready for supervised semi-agentic use"**, because
+  that label is compound and the authoritative-position-source criterion is out of this task's scope
+  and unmet. The honest ceiling for this task is a narrower claim about the canonical attended carrier.
+- If the nested-actor prerequisite is not authorised, the "nested AI work is prevented by default"
+  criterion is also unmet, and adoption must not be recommended as though the field were merely absent.
+
+One operator decision is genuinely needed before anything starts: **authorising the dedicated trial
+checkouts** — five tasks' worth, since the previous trial checkout was deleted and none can be reused.
+The bounded deliverable for each trial task is left for Codex to frame; repository evidence does not
+settle it and this unit did not invent it.
 
 Nothing here makes a live trial unsafe or impossible, so no Unit 1–4 deferral is promoted.
 
@@ -363,6 +512,5 @@ None.
 
 ## Next action
 
-Codex: assess the Unit 5 discovery — whether the evidence resolves the named unknown, whether the
-courier conflict is reconciled the way this handback reads it, and whether the revised trial design
-and its operator gates are the right frame. Decide close, continue, correct once, or stop.
+Codex: run the closure check on the frozen findings only — are findings 1, 2 and 3 resolved, and did
+the correction break anything in the Unit 5 reasoning? Then close, or use the menu.
