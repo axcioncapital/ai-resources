@@ -68,14 +68,21 @@
 #   25  UNCOMMITTED_HANDBACK   Claude handed back without committing the state file
 #   26  MALFORMED_TERMINAL     turn: operator, but the file is neither a core § 7
 #                              question nor a core § 4 closing record
-#   27  PERMISSION_DENIED      Claude recorded permission denials and the hop
-#                              produced no valid handback. The denied tool and
-#                              target are named, and the report says whether any
-#                              allowed change is attributable to the hop.
 #   28  INTERRUPTED            SIGINT/SIGTERM; the actor's process group was
 #                              terminated and the run stopped. Never retried.
 #   30  UNEXPECTED_COMMIT      the actor COMMITTED paths outside the allowlist.
 #                              Detection, not prevention.
+#   37  PERMISSION_DENIED      Claude recorded permission denials and the hop
+#                              produced no valid handback. The denied tool and
+#                              target are named, and the report says whether any
+#                              allowed change is attributable to the hop.
+#                              The number is NOT this script's to choose: the
+#                              Work Loop exit taxonomy assigns 37 to a permission
+#                              dead end (.agents/skills/work-loop-v2/SKILL.md).
+#                              A permission dead end is a capability question —
+#                              re-running or raising the timeout will not change
+#                              it, so it must not share a code with a transport
+#                              failure.
 #
 # NO RETRY. A failed actor is reported, not relaunched. One hop means one launch,
 # so the operator sees the failure and decides. (The spike retried once when the
@@ -831,7 +838,7 @@ classify_hop() {
     else
       eff="No working-tree change is attributable to this hop: the repository is unchanged."
     fi
-    verdict 27 PERMISSION_DENIED \
+    verdict 37 PERMISSION_DENIED \
       "Claude was denied permission $(denial_count) time(s) and the hop produced no valid handback: $fault The denied calls are listed above. $eff" \
       "Grant the denied tools above — narrow --claude-deny, or widen the checkout's own permissions — then re-run the hop. Nothing was retried and nothing was repaired."
     return

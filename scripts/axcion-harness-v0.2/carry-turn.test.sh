@@ -567,7 +567,7 @@ section "15. Post-hop classification — one evidence set, one ordered verdict"
   mkfix denyclean task-ae claude
   printf 'denied' >"$ACTION"
   run_sut --checkout "$REPO" --task task-ae --claude-bin "$FAKEBIN" --log-dir "$LOGD"
-  assert_eq "a denial with no effect is PERMISSION_DENIED (27)" "27" "$RC"
+  assert_eq "a denial with no effect is PERMISSION_DENIED (37)" "37" "$RC"
   assert_contains "  names the denied tool" "- Bash — " "$o"
   assert_contains "  names the denied target" "git commit -m handback" "$o"
   assert_contains "  says the repository is unchanged" "the repository is unchanged" "$o"
@@ -578,7 +578,7 @@ section "15. Post-hop classification — one evidence set, one ordered verdict"
   mkfix denypart task-af claude
   printf 'denied-partial' >"$ACTION"
   run_sut --checkout "$REPO" --task task-af --claude-bin "$FAKEBIN" --log-dir "$LOGD"
-  assert_eq "a denial after allowed partial work is also 27" "27" "$RC"
+  assert_eq "a denial after allowed partial work is also 37" "37" "$RC"
   assert_contains "  lists the attributable allowed path" "partial-note.md" "$o"
   assert_contains "  and says the repository is NOT unchanged" "repository is NOT unchanged" "$o"
   assert_contains "  and counts it" "denials=1 partial=1" "$o"
@@ -619,7 +619,7 @@ section "15. Post-hop classification — one evidence set, one ordered verdict"
   printf 'pre-existing\n' >"$REPO/logs/work-loop/preexisting-note.md"   # allowed, uncommitted
   printf 'denied' >"$ACTION"
   run_sut --checkout "$REPO" --task task-aj --claude-bin "$FAKEBIN" --log-dir "$LOGD"
-  assert_eq "identical denial evidence gives the identical outcome (27)" "27" "$RC"
+  assert_eq "identical denial evidence gives the identical outcome (37)" "37" "$RC"
   assert_contains "  pre-existing allowed dirt is named separately" "already present before launch" "$o"
   assert_contains "  and is NOT counted as this hop's work" "denials=1 partial=0" "$o"
   assert_contains "  and the repository-unchanged claim still holds for the hop" "the repository is unchanged" "$o"
@@ -814,7 +814,7 @@ prove_failure() {
     printf 'denied' >"$ACTION"
     run_bin "$mut" --checkout "$REPO" --task task-m9 --claude-bin "$FAKEBIN" --log-dir "$LOGD"
     EXPECT_FAIL=1
-    assert_eq "a denial with no effect is PERMISSION_DENIED (27)" "27" "$RC"
+    assert_eq "a denial with no effect is PERMISSION_DENIED (37)" "37" "$RC"
     assert_contains "names the denied tool" "- Bash — " "$o"
     EXPECT_FAIL=0
   fi
