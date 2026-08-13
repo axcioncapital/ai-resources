@@ -120,98 +120,77 @@ or a change to the attended-only boundary.
 
 ## Latest result
 
-Inspected (2026-08-13):
+Correction round on Unit 3. One frozen finding, reproduced then corrected. Correction commit
+`51b140a02a0031107960e78bd0b802fbc0363ecd`, on top of the Unit 3 implementation
+`53dc76c13b91ed5df4a2c12b590066e8e80754e6`.
 
-- Claim (1): HOLDS — read `scripts/axcion-harness-v0.2/carry-turn.sh` `launch_actor`, pre-change
-  lines 631–640. Two branches. The `${#CLAUDE_DENY[@]} -gt 0` branch passed
-  `--disallowedTools "${CLAUDE_DENY[@]}"` — operator input only, nothing else. The `else` branch
-  passed no `--disallowedTools` at all. Confirmed against real argv, not by reading: the fake-actor
-  seam recorded `[-p] [/work-loop-v2 task-an] [--output-format] [json] [--permission-mode]
-  [default]` for a plain hop and `... [--disallowedTools] [Bash(git push:*)] [WebFetch]` for an
-  operator-deny hop.
-- Claim (2): HOLDS — read `carry-turn.test.sh` lines 6–11, 92–104 and 278–294. The suite passes the
-  fake binary through the ordinary `--claude-bin` option, so the launcher assembles and executes its
-  real argv; the fake records it. It distinguishes absence, mandatory defaults and additive operator
-  rules. One weakness, fixed inside this unit's scope rather than handed back: the recorder used
-  `"$*"`, which joins with spaces and so cannot tell `--disallowedTools 'A B'` from
-  `--disallowedTools A B`. It now also writes one bracketed argument per line, and every new
-  assertion reads that file.
-- Claim (3): HOLDS — `claude --version` reports `2.1.220 (Claude Code)`. `claude --help` line 64
-  reads `--disallowedTools, --disallowed-tools <tools...>` / "Comma or space-separated list of tool
-  names to deny (e.g. \"Bash(git *) Edit\")" — variadic, multi-value. Parser probe, no model
-  launched: `claude --disallowedTools 'Bash(claude:*)' 'Bash(codex:*)' --bogus-flag-xyz </dev/null`
-  printed only `error: unknown option '--bogus-flag-xyz'`. Control: the same command without the
-  deny arguments printed the identical single error, so the parser does report unknown options in
-  this mode and its silence about the two-value deny list is meaningful. (`--version` was rejected as
-  a probe — it short-circuits before validation and accepted a bogus flag too.)
-- Claim (4): HOLDS, and the finding is a gap, not a blocker — searched the canonical Codex launch
-  path (`carry-turn.sh` lines 610–619) and `codex exec --help` (`codex-cli 0.147.0-alpha.6.5`) for a
-  per-command or per-tool deny mechanism. None exists: the options are sandbox modes
-  (`read-only | workspace-write | danger-full-access`), config overrides, feature toggles and
-  approval routing. The canonical path already uses `--sandbox workspace-write`, which is a
-  filesystem policy and not a launch-deny list. This does not make the required outcome misleading,
-  because that outcome is scoped to the Claude launch path — so no wrapper, PATH interception or
-  hook was added. The launcher's help block now states the gap in words rather than leaving the
-  policy to read as if it covered both actors.
-- Claim (5): HOLDS — `git log --oneline -1 bb0af1b298668a917fe9e39b61a0278fba363d3b` returned
-  `bb0af1b fix: carry-turn.sh — permission dead end is exit 37, not 27`.
+**Finding 1 — RESOLVED.** Reproduced by inspection before any change:
 
-Result: Unit 3 implemented and committed as `53dc76c13b91ed5df4a2c12b590066e8e80754e6`. Every
-canonical attended Claude launch now requests `--disallowedTools 'Bash(claude:*)' 'Bash(codex:*)'`.
-The mandatory set is a fixed array that is not derived from caller input, the two launch branches
-collapse into one line so no path can omit the flag, operator `--claude-deny` values append after
-the mandatory rules in one list, and there is no flag that drops or replaces them.
-`--permission-mode default` is unchanged. Changed paths: `scripts/axcion-harness-v0.2/carry-turn.sh`,
-`scripts/axcion-harness-v0.2/carry-turn.test.sh`.
+- `claude --help` line 64 on `2.1.220`: `--disallowedTools, --disallowed-tools <tools...>` / "Comma
+  or space-separated list of tool names to deny (e.g. \"Bash(git *) Edit\")". The CLI's own example
+  is written in the space form.
+- `grep -n -A5 '^CLAUDE_DENY_MANDATORY=(' scripts/axcion-harness-v0.2/carry-turn.sh` returned two
+  entries, `'Bash(claude:*)'` and `'Bash(codex:*)'` — colon form only.
+- Searched `plans/work-loop-v2-v0.2/handoff-automation-spike/` for the historical set:
+  `dispatch.sh:345-350` defines `NESTED_ACTOR_DENY` with all four forms, and its comment gives the
+  reason — "which one the installed build honours is not worth guessing at when listing both costs
+  one array entry". `README.md:399` states the same four. Read for the finding only; no spike test
+  result is used as acceptance evidence here.
+
+The finding is correct as stated. Colon-only argv evidence proves two strings reach the command
+line, not that the ordinary direct route is denied.
+
+**The correction.** `CLAUDE_DENY_MANDATORY` now carries, in this order, `Bash(claude:*)`,
+`Bash(claude *)`, `Bash(codex:*)`, `Bash(codex *)`. Requested on every canonical attended Claude
+launch. Unchanged: no override flag, operator `--claude-deny` still appends after the mandatory set,
+`--permission-mode default`, task routing, output capture, the attended-only boundary, and the
+non-containment wording.
 
 Evidence:
 
-1. Pre-change failure. The final test file was run against a byte-exact copy of the pre-change
-   launcher (`sha256 ec50f1fa16e4de0cf3e256207c57bf93aed35ae1645ecbea46e6b651c772e397`):
-   `passed: 171   failed: 18`. The 18 are exactly the new claims — `plain launch requests
-   --disallowedTools at all`, `denies direct Bash launch of claude`, `denies direct Bash launch of
-   codex`, `operator rules do not displace the claude rule`, the codex twin, `mandatory rules
-   precede the operator's`, the eight help-text assertions and the four run-output assertions.
-2. Post-change argv, no `--claude-deny`. `[--disallowedTools] [Bash(claude:*)] [Bash(codex:*)]`,
-   with `--permission-mode default` still present.
-3. Post-change argv, two operator rules. Recorded in order:
-   `[--disallowedTools] [Bash(claude:*)] [Bash(codex:*)] [Bash(git push:*)] [WebFetch]` — asserted as
-   an exact string, with `grep -cFx '[--disallowedTools]'` returning `1`, so the operator's rules
-   append verbatim into one list and cannot displace the mandatory pair.
-4. Unchanged behaviour. `--permission-mode default` asserted on both shapes; task routing, output
-   capture, transition validation and the committed handback covered by the existing sections, all
-   green. A Codex hop's argv still carries no `--disallowedTools` and no `Bash(claude:*)`.
-5. Honest text. `carry-turn.sh --help` (exit 0) prints `REQUESTED PERMISSION RULES`, `They block the
-   DEFAULT DIRECT ROUTE`, `They are not OS containment, not a sandbox, not a process limit, and NOT
-   proof that nesting is impossible`, `with or without --claude-deny, there is no flag to turn it
-   off`, and `The Codex actor path carries NO equivalent`. A live run prints `nested-actor policy:
-   requesting Bash(claude:*) Bash(codex:*) on every Claude hop — mandatory, no override;
-   --claude-deny appends after it.` and `it is not containment and not proof that nesting is
-   impossible.` No override flag exists — asserted by absence checks over the launcher source.
-6. Mutation. `--prove-failure` reports `passed: 18   failed: 0`. M10 drops `--disallowedTools` from
-   the launch line: all three rule assertions correctly fail. M11 seeds `deny_all` empty so operator
-   rules become the whole list: both displacement assertions correctly fail. Each mutant carries a
-   control assertion proving the hop still launched — the first M10 attempt emptied the mandatory
-   array instead, which aborts the launcher under `set -u` on bash 3.2, and its assertions "failed"
-   for the wrong reason. That mutant was replaced.
-7. Regression. Full canonical suite `passed: 189   failed: 0` (baseline before this unit: `157/0`).
-   Unit 1 lock sections (12, 12b) and Unit 2 classifier section (15) together: 65 ok, 0 FAIL.
+1. Post-correction argv, no `--claude-deny`: `[--disallowedTools] [Bash(claude:*)] [Bash(claude *)]
+   [Bash(codex:*)] [Bash(codex *)]`, with `--permission-mode default` still present.
+2. Post-correction argv, two operator rules, asserted as an exact ordered string:
+   `[--disallowedTools] [Bash(claude:*)] [Bash(claude *)] [Bash(codex:*)] [Bash(codex *)]
+   [Bash(git push:*)] [WebFetch]`. `grep -cFx '[--disallowedTools]'` returns `1`, so it remains one
+   flag and one list, mandatory first.
+3. New mutant M12 removes only the two space-form entries. Both space-form assertions correctly
+   fail, and two control assertions show `[Bash(claude:*)]` and `[Bash(codex:*)]` still arrive. That
+   control is the point of the mutant: it demonstrates the exact pre-correction state, in which a
+   colon-only suite stayed green. M10 (flag dropped) and M11 (operator rules replace the mandatory
+   set) now fail on all four rules. `--prove-failure` reports `passed: 26   failed: 0`.
+4. Help and run output. `carry-turn.sh --help` (exit 0) lists all four rules and states why both
+   forms are present: "which one an installed build honours is not established and listing only one
+   would rest the policy on that guess". A live run prints `requesting Bash(claude:*) Bash(claude *)
+   Bash(codex:*) Bash(codex *) on every Claude hop — mandatory, no override; --claude-deny appends
+   after it.` The non-containment and no-override text is unchanged and still asserted.
+5. Parser probe, no model launched:
+   `claude --disallowedTools 'Bash(claude:*)' 'Bash(claude *)' 'Bash(codex:*)' 'Bash(codex *)'
+   --bogus-flag-xyz </dev/null` printed only `error: unknown option '--bogus-flag-xyz'`. The control
+   without the deny arguments printed the identical single error, so the parser does report unknown
+   options in this mode and accepts all four rule strings, including the space forms.
+6. Pre-change failure, re-measured with the corrected tests against a byte-exact copy of the
+   pre-Unit-3 launcher: `passed: 172   failed: 26`.
+
+**Did the correction break anything?** No. Full canonical suite `passed: 198   failed: 0`, up from
+`189/0` before the correction and `157/0` before Unit 3. Unit 1 lock sections (12, 12b) and Unit 2
+classifier section (15) together: 65 ok, 0 FAIL — the same counts as before the correction.
 
 Commands: `bash scripts/axcion-harness-v0.2/carry-turn.test.sh` (exit 0),
 `bash scripts/axcion-harness-v0.2/carry-turn.test.sh --prove-failure` (exit 0),
 `bash scripts/axcion-harness-v0.2/carry-turn.sh --help` (exit 0). No live Claude or Codex model was
-invoked; the only real-binary calls were `--version`, `--help` and the argument-parser probe above.
+invoked; real-binary calls were `--version`, `--help` and the parser probe above.
 
-Known limit, stated rather than tested around: what is proven here is the argv. Whether the child
-honours a requested rule is Claude Code's behaviour, and proving it would need a live nested-model
-attempt, which this unit excludes.
+Known limit, unchanged by this correction: what is proven is the argv. Whether the child honours a
+requested rule is Claude Code's behaviour, and establishing that would need a live nested-model
+attempt, which this unit excludes. Listing both forms removes the need to guess which form matches;
+it does not turn the argv proof into an enforcement proof.
 
-Deferred, noticed during this unit and not implemented: the Codex actor path has no equivalent
-nested-actor policy, and closing it would need a mechanism this unit does not authorise (wrapper,
-PATH interception, hook, or sandbox redesign). Deferrals carried forward: reconcile the remaining
-canonical launcher exit numbers with the wider Work Loop taxonomy (`23`, `29`, `33`–`36`); the `jq`
-dependency for permission evidence; the default allowlist review; hook-owned `logs/friction-log.md`
-dirt; cosmetic temporary-lock path formatting.
+Nothing newly noticed entered this correction. Deferrals carried forward, unchanged: the Codex actor
+path has no equivalent nested-actor policy and closing it would need a mechanism this unit does not
+authorise; reconcile the remaining canonical launcher exit numbers with the wider Work Loop taxonomy
+(`23`, `29`, `33`–`36`); the `jq` dependency for permission evidence; the default allowlist review;
+hook-owned `logs/friction-log.md` dirt; cosmetic temporary-lock path formatting.
 
 ## Blocker
 
@@ -219,7 +198,5 @@ None.
 
 ## Next action
 
-Codex: assess Unit 3 against its completion condition — the mandatory nested-actor deny set on every
-canonical attended Claude launch, additive operator rules, no override, unchanged
-`--permission-mode default`, honest operator-visible text, and fail-capable evidence including the
-pre-change failure, both mutants and the full suite. Then close, continue, correct once, or stop.
+Codex: run the closure check on the frozen finding only — is finding 1 resolved, and did the
+correction break anything. Then close, or use the menu in core § 3.
