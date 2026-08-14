@@ -5,6 +5,14 @@
 # harness proves controller logic only. It deliberately cannot prove live
 # product transport — that is a separate, explicitly-labelled live run.
 #
+# ONE EXCEPTION TO "replaced by --actor-cmd", and it is not a relaxation. The
+# cross-transport cases (12e) launch the ATTENDED CARRIER as well, and
+# carry-turn.sh REFUSES --actor-cmd, --simulate and --fake-actor outright
+# (carry-turn.sh 316-317). Its sanctioned test route is a stub binary passed
+# with --claude-bin, which is how carry-turn.test.sh works. So those cases are
+# still controller evidence with no real model involved — the seam is a
+# different one because the other program's boundary says it must be.
+#
 # Case 0 is the harness's own falsifiability proof: it points the suite at an
 # ABSENT dispatcher and asserts the suite fails. A harness that stays green with
 # the thing under test removed is not evidence.
@@ -136,6 +144,65 @@ checkout_lock_for() { # checkout -> checkout lock dir
   printf '%s/checkout-%s.lock' "$(lock_root_for "$1")" \
     "$(printf '%s' "$c" | shasum -a 256 | cut -c1-16)"
 }
+
+# ------------------------------------------------------- the OTHER transport
+# The attended carrier. Cross-transport contention cannot be proven by planting
+# a lock directory: what is under test is precisely whether one program's code
+# OBSERVES the lease the other program's code takes, so both sides are launched
+# for real and each takes its own lease through its own acquire path.
+CARRY_BIN="${CARRY_BIN:-$REPO_ROOT/scripts/axcion-harness-v0.2/carry-turn.sh}"
+
+# Mirrored from carry-turn.sh acquire_lock (639): the CANONICAL checkout path
+# hashed, under the CALLER'S ${TMPDIR} and nothing else. Mirrored rather than
+# imported, for the same reason lock_root_for above is — and with the same
+# hazard: if this and the launcher ever disagree, every assertion below passes
+# against a directory the launcher never writes.
+carrier_lock_for() { # checkout -> the carrier's lock dir
+  local c; c="$(cd "$1" && pwd -P)"
+  printf '%s/axcion-harness-v0.2.%s.lock' "${TMPDIR:-/tmp}" \
+    "$(printf '%s' "$c" | shasum -a 256 | cut -c1-16)"
+}
+
+# A stub `claude` for the carrier. It answers --version, because the carrier
+# probes it before every launch; it records each REAL launch, which is what the
+# "nothing was launched" assertions read; and it then does what a Claude hop
+# does — move the turn and commit it (core § 4).
+#
+# The count is the load-bearing part. An exit code alone cannot separate "the
+# lease refused this run" from "the run failed for some other reason", so every
+# case below asserts the exit code AND that the actor never started.
+make_carry_stub() { # path count-file state-file hold-secs
+  cat >"$1" <<'STUB'
+#!/bin/bash
+COUNT="__COUNT__"; STATE="__STATE__"; HOLD="__HOLD__"
+for a in "$@"; do [ "$a" = "--version" ] && { echo "carry-stub 0.0.1"; exit 0; }; done
+printf 'x' >>"$COUNT"
+[ "$HOLD" -gt 0 ] && sleep "$HOLD"
+REPO="$(cd "$(dirname "$STATE")/../.." && pwd -P)"
+awk 'NR==3{print "turn: codex"; next}{print}' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+printf '\ncarrier stub ran\n' >>"$STATE"
+git -C "$REPO" add -- "logs/work-loop/$(basename "$STATE")" >/dev/null 2>&1
+git -C "$REPO" commit -qm "carrier stub: handed on" >/dev/null 2>&1
+printf '{"type":"result","subtype":"success","is_error":false,"result":"done","permission_denials":[]}\n'
+exit 0
+STUB
+  sed -e "s|__COUNT__|$2|" -e "s|__STATE__|$3|" -e "s|__HOLD__|$4|" "$1" >"$1.tmp"
+  mv "$1.tmp" "$1"
+  chmod +x "$1"
+}
+
+carry_calls() { # count-file -> number of real carrier actor launches
+  [ -f "$1" ] && wc -c <"$1" | tr -d ' ' || printf '0'
+}
+
+# The carrier's default allowlist is ^logs/work-loop/ and ^logs/harness-runs/.
+# A dispatcher sharing the checkout writes its run log to runs/, which is
+# outside that set, so an unwidened carrier would stop at 18 FOREIGN_UNSTAGED —
+# a refusal that has nothing to do with a lease. Widening it here keeps the
+# thing being measured the thing under test. The carrier's own run log goes
+# OUTSIDE the checkout for the mirror-image reason: logs/harness-runs/ is not in
+# the DISPATCHER's allowlist.
+CARRY_ALLOW=(--allow-path '^logs/work-loop/' --allow-path '^runs/')
 
 run_dispatch() { # sandbox task [extra args...] -> writes $OUT, sets $RC
   local d="$1" t="$2"; shift 2
@@ -447,6 +514,188 @@ expect_rc 35 "$RC" "a BROKEN ownership helper refuses with exit 35 too" "$OUT"
 [ -s "$d.calls" ] && bad "no actor was launched with a broken check" \
                          "actors ran: $(tr '\n' ';' <"$d.calls")" \
                       || ok "no actor was launched with a broken check"
+
+# ---------------------------------------------------------------- case 12e
+# CROSS-TRANSPORT CONTENTION — the attended carrier against the unattended
+# dispatcher. FAILING FIRST, deliberately: all four must FAIL against the code
+# as it stands, and the failure each records is UNSAFE ADMISSION — the second
+# program launches an actor while the first is live in the same working tree,
+# or on the same logical task in another one.
+#
+# WHY THEY FAIL TODAY, and it is an inference from two absences rather than from
+# the presence of two locks. dispatch.sh roots its two leases in the Git common
+# directory (LOCK_ROOT, line 644); carry-turn.sh keys a single lease under the
+# caller's ${TMPDIR} (line 639). Neither source contains any read of the other's
+# path — dispatch.sh has zero occurrences of `axcion-harness-v0.2.`, carry-turn.sh
+# zero of `work-loop-dispatch-locks`. Each program is internally correct and
+# jointly blind, which is also why this is the contention least likely to be
+# noticed: both programs report a clean single-writer run.
+#
+# WHAT MUST HAPPEN AFTER THE SHARED-LEASE CHANGE: the second program refuses
+# with 17 and launches nothing. That is written as an assertion rather than as a
+# comment, so these turn green by behaviour and not by being rewritten.
+#
+# The four are the two acquisition directions across the two resources:
+#   12e-1  carrier holds a CHECKOUT   -> dispatcher on another task refused
+#   12e-2  dispatcher holds a CHECKOUT -> carrier on another task refused
+#   12e-3  carrier holds a TASK        -> dispatcher on that task refused
+#   12e-4  dispatcher holds a TASK     -> carrier on that task refused
+echo
+echo "Case 12e-1 — a live CARRIER holds the checkout; a DISPATCHER on ANOTHER task starts"
+d="$(new_sandbox)"
+state_file "$d" "xt-carried"    "claude"
+state_file "$d" "xt-dispatched" "codex"
+CCOUNT="$SANDBOX_ROOT/xt1.count"; : >"$CCOUNT"
+CSTUB="$SANDBOX_ROOT/xt1.stub"
+make_carry_stub "$CSTUB" "$CCOUNT" "$d/logs/work-loop/xt-carried.md" 8
+( bash "$CARRY_BIN" --checkout "$d" --task xt-carried --claude-bin "$CSTUB" \
+    --timeout 60 "${CARRY_ALLOW[@]}" --log-dir "$SANDBOX_ROOT/xt1-carry-runs" \
+    >/dev/null 2>&1 ) &
+carrier=$!
+sleep 3
+# The setup assertion is not ceremony. Without it a green result could mean the
+# carrier never took a lease at all, and the case would be proving nothing.
+[ -d "$(carrier_lock_for "$d")" ] \
+  && ok "12e-1 setup — the carrier's lease is live before the dispatcher starts" \
+  || bad "12e-1 setup — the carrier's lease is live before the dispatcher starts" \
+         "no lock at $(carrier_lock_for "$d")"
+rm -f "$d.calls"
+BEFORE="$(git -C "$d" rev-parse HEAD)"
+run_dispatch "$d" xt-dispatched --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 17 "$RC" "a dispatcher is refused while a CARRIER holds the checkout" "$OUT"
+[ -s "$d.calls" ] && bad "  and the dispatcher launched no actor" \
+                         "actors ran: $(tr '\n' ';' <"$d.calls")" \
+                  || ok "  and the dispatcher launched no actor"
+[ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "  and committed nothing" \
+  || bad "  and committed nothing" "HEAD moved from $BEFORE"
+wait "$carrier" 2>/dev/null
+# The control. Without it this case would pass just as well against a carrier
+# that never launched anything and a dispatcher that refuses everything.
+[ "$(carry_calls "$CCOUNT")" = "1" ] \
+  && ok "  control — the carrier that HELD the lease did launch its own actor" \
+  || bad "  control — the carrier that HELD the lease did launch its own actor" \
+         "launches: $(carry_calls "$CCOUNT")"
+
+echo
+echo "Case 12e-2 — a live DISPATCHER holds the checkout; a CARRIER on ANOTHER task starts"
+d="$(new_sandbox)"
+state_file "$d" "xt-carried"    "claude"
+state_file "$d" "xt-dispatched" "codex"
+rm -f "$d.calls"
+( bash "$DISPATCH_BIN" --checkout "$d" --task xt-dispatched --log-dir "$d/runs" \
+    --timeout 40 --actor-cmd 'sleep 8; exit 0' >/dev/null 2>&1 ) &
+dispatcher=$!
+sleep 3
+[ -d "$(checkout_lock_for "$d")" ] \
+  && ok "12e-2 setup — the dispatcher's checkout lease is live before the carrier starts" \
+  || bad "12e-2 setup — the dispatcher's checkout lease is live before the carrier starts" \
+         "no lock at $(checkout_lock_for "$d")"
+CCOUNT="$SANDBOX_ROOT/xt2.count"; : >"$CCOUNT"
+CSTUB="$SANDBOX_ROOT/xt2.stub"
+make_carry_stub "$CSTUB" "$CCOUNT" "$d/logs/work-loop/xt-carried.md" 0
+BEFORE="$(git -C "$d" rev-parse HEAD)"
+OUT="$(bash "$CARRY_BIN" --checkout "$d" --task xt-carried --claude-bin "$CSTUB" \
+        --timeout 60 "${CARRY_ALLOW[@]}" --log-dir "$SANDBOX_ROOT/xt2-carry-runs" 2>&1)"; RC=$?
+expect_rc 17 "$RC" "a carrier is refused while a DISPATCHER holds the checkout" "$OUT"
+[ "$(carry_calls "$CCOUNT")" = "0" ] \
+  && ok "  and the carrier launched no actor" \
+  || bad "  and the carrier launched no actor" "launches: $(carry_calls "$CCOUNT")"
+[ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "  and committed nothing" \
+  || bad "  and committed nothing" "HEAD moved from $BEFORE"
+wait "$dispatcher" 2>/dev/null
+
+echo
+echo "Case 12e-3 — a live CARRIER holds the TASK in a linked worktree; a DISPATCHER starts on it here"
+d="$(new_sandbox)"
+state_file "$d" "xt-shared" "claude"
+# The declaration is made BEFORE the worktree exists, so exactly ONE checkout
+# claims the task. Without it, repo-depth ownership would read a replicated
+# state file and return AMBIGUOUS (work-loop-owner.sh 278-282), and the
+# dispatcher would stop at 34 — a refusal, but not the one under test. What is
+# being measured here is admission with ownership already settled.
+bash "$d/logs/scripts/work-loop-owner.sh" claim --checkout "$d" --task xt-shared \
+  --depth repo >/dev/null 2>&1 \
+  && ok "12e-3 setup — this checkout declares the task" \
+  || bad "12e-3 setup — this checkout declares the task" "claim did not succeed"
+WT="$SANDBOX_ROOT/xt3-wt"
+git -C "$d" worktree add -q -b xt3-lane "$WT" >/dev/null 2>&1
+[ -f "$WT/logs/work-loop/xt-shared.md" ] \
+  && ok "12e-3 setup — the state file replicates into the linked worktree" \
+  || bad "12e-3 setup — the state file replicates into the linked worktree" "absent"
+CCOUNT="$SANDBOX_ROOT/xt3.count"; : >"$CCOUNT"
+CSTUB="$SANDBOX_ROOT/xt3.stub"
+make_carry_stub "$CSTUB" "$CCOUNT" "$WT/logs/work-loop/xt-shared.md" 8
+( bash "$CARRY_BIN" --checkout "$WT" --task xt-shared --claude-bin "$CSTUB" \
+    --timeout 60 "${CARRY_ALLOW[@]}" --log-dir "$SANDBOX_ROOT/xt3-carry-runs" \
+    >/dev/null 2>&1 ) &
+carrier=$!
+sleep 3
+[ -d "$(carrier_lock_for "$WT")" ] \
+  && ok "12e-3 setup — the carrier's lease is live in the worktree" \
+  || bad "12e-3 setup — the carrier's lease is live in the worktree" \
+         "no lock at $(carrier_lock_for "$WT")"
+rm -f "$d.calls"
+BEFORE="$(git -C "$d" rev-parse HEAD)"
+run_dispatch "$d" xt-shared --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 17 "$RC" "a dispatcher is refused while a CARRIER holds the same task elsewhere" "$OUT"
+[ -s "$d.calls" ] && bad "  and the dispatcher launched no actor" \
+                         "actors ran: $(tr '\n' ';' <"$d.calls")" \
+                  || ok "  and the dispatcher launched no actor"
+[ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "  and committed nothing" \
+  || bad "  and committed nothing" "HEAD moved from $BEFORE"
+wait "$carrier" 2>/dev/null
+[ "$(carry_calls "$CCOUNT")" = "1" ] \
+  && ok "  control — the carrier that HELD the task did launch its own actor" \
+  || bad "  control — the carrier that HELD the task did launch its own actor" \
+         "launches: $(carry_calls "$CCOUNT")"
+git -C "$d" worktree remove --force "$WT" >/dev/null 2>&1
+
+echo
+echo "Case 12e-4 — a live DISPATCHER holds the TASK here; a CARRIER starts on it in a linked worktree"
+d="$(new_sandbox)"
+state_file "$d" "xt-shared" "claude"
+bash "$d/logs/scripts/work-loop-owner.sh" claim --checkout "$d" --task xt-shared \
+  --depth repo >/dev/null 2>&1 \
+  && ok "12e-4 setup — this checkout declares the task" \
+  || bad "12e-4 setup — this checkout declares the task" "claim did not succeed"
+WT="$SANDBOX_ROOT/xt4-wt"
+git -C "$d" worktree add -q -b xt4-lane "$WT" >/dev/null 2>&1
+rm -f "$d.calls"
+( bash "$DISPATCH_BIN" --checkout "$d" --task xt-shared --log-dir "$d/runs" \
+    --timeout 40 --actor-cmd 'sleep 8; exit 0' >/dev/null 2>&1 ) &
+dispatcher=$!
+sleep 3
+[ -d "$(task_lock_for "$d" xt-shared)" ] \
+  && ok "12e-4 setup — the dispatcher's TASK lease is live before the carrier starts" \
+  || bad "12e-4 setup — the dispatcher's TASK lease is live before the carrier starts" \
+         "no lock at $(task_lock_for "$d" xt-shared)"
+CCOUNT="$SANDBOX_ROOT/xt4.count"; : >"$CCOUNT"
+CSTUB="$SANDBOX_ROOT/xt4.stub"
+make_carry_stub "$CSTUB" "$CCOUNT" "$WT/logs/work-loop/xt-shared.md" 0
+BEFORE="$(git -C "$WT" rev-parse HEAD)"
+# 17, not 33. The carrier gains a repo-depth ownership check in the same change,
+# and this worktree does NOT declare the task — so ownership alone would also
+# refuse this run. The expected code is the LEASE code because the dispatcher
+# takes its leases before it performs ownership admission (dispatch.sh 1192 vs
+# 2336) and the shared contract is written against what the dispatcher already
+# does. If the implementation orders admission first, this becomes 33; the
+# behaviour under test — refused, nothing launched — is the same either way, and
+# the launch count below is the assertion that does not move.
+expect_rc_note="lease refusal precedes ownership admission"
+OUT="$(bash "$CARRY_BIN" --checkout "$WT" --task xt-shared --claude-bin "$CSTUB" \
+        --timeout 60 "${CARRY_ALLOW[@]}" --log-dir "$SANDBOX_ROOT/xt4-carry-runs" 2>&1)"; RC=$?
+expect_rc 17 "$RC" "a carrier is refused while a DISPATCHER holds the same task elsewhere ($expect_rc_note)" "$OUT"
+[ "$(carry_calls "$CCOUNT")" = "0" ] \
+  && ok "  and the carrier launched no actor" \
+  || bad "  and the carrier launched no actor" "launches: $(carry_calls "$CCOUNT")"
+[ "$(git -C "$WT" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "  and committed nothing in the worktree" \
+  || bad "  and committed nothing in the worktree" "HEAD moved from $BEFORE"
+wait "$dispatcher" 2>/dev/null
+git -C "$d" worktree remove --force "$WT" >/dev/null 2>&1
 
 # ================================================================= case 13
 # Regression for the gap the 2026-08-05 live run exposed: a Claude hop killed
