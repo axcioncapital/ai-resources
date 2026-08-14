@@ -15,86 +15,76 @@ Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; chan
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 3b2 — implement fail-closed repository-depth ownership admission in the attended carrier.
+Standard. Implementation mode. Unit 3b2r — implement carrier ownership admission with ownership-valid ordinary fixtures.
 
 Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
 
 ## Brief
 
-Unit 3b1 is accepted as failing-first evidence: the complete carrier suite now has 350 assertions, with all 316 prior assertions and 17 setup/control/discriminator assertions green, while exactly 17 new ownership-admission assertions fail because the current carrier launches instead of returning 35/33/34. The required behavior and exit taxonomy are settled by approved proposal §4.4 and §5.5 cases 19–20. This unit implements that admission and makes ordinary test fixtures representative without changing the frozen expectations.
+Unit 3b1 is accepted failing-first evidence at 333/17 over 350 assertions. The first 3b2 brief correctly stopped on a false premise before implementation: globally packaging the owner helper makes old section 12b controls encounter a replicated-state AMBIGUOUS condition they were written before ownership admission to model. The approved proposal already settles that condition as a refusal. This corrected brief preserves section 12b's distinct over-refusal controls by establishing valid ownership when admission is intended and restoring a unique state location before the final main-checkout control.
 
-Required outcome: make `scripts/axcion-harness-v0.2/carry-turn.sh` run the checkout's `logs/scripts/work-loop-owner.sh check --depth repo --checkout <checkout> --task <task>` after live leases are acquired and before any actor launches. Map outcomes fail-closed:
+Required production outcome: make `scripts/axcion-harness-v0.2/carry-turn.sh` run the checkout's `logs/scripts/work-loop-owner.sh check --depth repo --checkout <checkout> --task <task>` after both live leases are acquired and before any actor launch. Map PROCEED/0 to continue, REFUSE/3 to carrier exit 33, AMBIGUOUS/4 to exit 34, and missing/unreadable/failed/unrecognized helper results to exit 35. Preserve the helper's reason on 33/34, fail closed on 35, launch no actor on any ownership stop, write no declaration, and release both leases through existing cleanup.
 
-- PROCEED / exit 0: continue normally.
-- REFUSE / exit 3: stop at carrier exit 33 and preserve the helper's reason.
-- AMBIGUOUS / exit 4: stop at carrier exit 34 and preserve the helper's reason.
-- Helper missing, unreadable, unsourceable, or any other failed/unrecognized result: stop at carrier exit 35.
+Required fixture reconciliation in `scripts/axcion-harness-v0.2/carry-turn.test.sh`:
 
-No ownership stop may launch an actor, write a declaration, commit fixture work, or leave either live lease behind. Do not reorder the approved lease-first, ownership-second admission sequence.
-
-Necessary test-fixture compatibility: update `scripts/axcion-harness-v0.2/carry-turn.test.sh` so ordinary `mkfix` repositories package and track the real owner helper, because representative checkouts now require it. Keep the explicit missing-helper case genuinely missing by removing or omitting that helper only in that case before launch. Preserve all 350 assertions, including the three direct helper-oracle checks and the PROCEED over-refusal control.
+- Ordinary `mkfix` repositories package and track the real owner helper.
+- Section 12e's missing-helper case removes the tracked helper from both the fixture index and disk before launch, so it reaches ownership exit 35 without creating an out-of-allowlist deletion.
+- In section 12b, after the task lease is removed and before the linked-worktree admission control, use the real owner helper's local claim operation to declare task `task-bb` in that linked worktree. The control may then prove: task lease free + ownership settled in this checkout → admitted. Update only the assertion wording/comments needed to state that prerequisite; do not change its expected exit 0 or launch count.
+- Preserve the section 12b check that checkout X's still-live legacy lock refuses at exit 17; lease admission remains first, so that refusal precedes ownership.
+- Remove the linked worktree after that live-lock refusal and before the final main-checkout no-holder control. With the linked copy gone, the main checkout again has the unique state file, so repo-depth ownership PROCEED and the existing exit-0 control is legitimate.
+- Preserve the 350-assertion total. Do not delete or skip the section 12b controls or weaken section 12e's replicated-state AMBIGUOUS case.
 
 Evidence required:
 
-- Preserve failing-first evidence from `logs/harness-runs/carrier-owner-admission-red-unit-3b1-20260814.out`: 333 passed, 17 failed, exit 1; all failures confined to section 12e.
-- Show the bounded production admission diff, its placement between lease acquisition and actor launch, the 0/3/4/catch-all mapping, and how existing cleanup releases both leases on ownership stops.
-- Show the bounded fixture-packaging diff and how the missing-helper case remains a real absence rather than an assertion-only simulation.
-- Run the complete ordinary carrier suite exactly once after implementation, synchronously in the foreground. Capture complete stdout/stderr and append `SUITE_EXIT=<code>` to `logs/harness-runs/carrier-owner-admission-green-unit-3b2-20260814.out`.
-- Record exact totals and failing names. The acceptance target is the unchanged 350-assertion total at 350/0, but report actual behavior and stop without diagnosis if red.
-- Confirm no existing assertion, ownership expectation, actor-launch check, lease cleanup check or production exit behavior was weakened, removed, skipped or rewritten.
-- Commit the two allowed implementation/test files and this state file; hand back at `turn: codex` with the implementation commit hash and evidence. A state-only pointer commit may follow.
+- Preserve the Unit 3b1 raw red evidence: `logs/harness-runs/carrier-owner-admission-red-unit-3b1-20260814.out`, 333/17, exit 1.
+- Show production placement, the 0/3/4/catch-all mapping, and cleanup path.
+- Show ordinary helper packaging, the genuine missing-helper removal, the local ownership declaration used by section 12b, and linked-worktree removal ordering.
+- Run the complete ordinary carrier suite exactly once after implementation, synchronously in the foreground. Capture complete stdout/stderr plus `SUITE_EXIT=<code>` in `logs/harness-runs/carrier-owner-admission-green-unit-3b2r-20260814.out`.
+- Record exact totals and failures. Acceptance target is the unchanged 350/0; report actual behavior and stop without diagnosis if red.
+- Confirm no assertion was deleted, skipped or weakened and no production surface outside the carrier changed.
+- Commit the two bounded code/test files and this state file; hand back at `turn: codex` with the implementation commit hash. A pointer commit may follow.
 
-Constraints:
+Constraints: only `scripts/axcion-harness-v0.2/carry-turn.sh` and `scripts/axcion-harness-v0.2/carry-turn.test.sh` may change beyond state. Do not change helpers, dispatcher, instructions, executable core, carrier boundaries, test selector behavior or raw evidence. Run the suite once, foreground only; no rerun or detached execution.
 
-- Allowed implementation surfaces: `scripts/axcion-harness-v0.2/carry-turn.sh` and `scripts/axcion-harness-v0.2/carry-turn.test.sh` only.
-- Do not change the shared lease helper, owner helper, dispatcher, Work Loop instructions, executable core, or any existing test expectation.
-- Preserve the carrier's attended boundaries: no status mode, simulated-actor seam, worktree creation, loop mode or unattended behavior.
-- Do not add a general test selector or the deferred broken-helper sub-case in this unit.
-- Run the complete suite once only. Foreground execution is mandatory; no `&`, `nohup`, detachment, asynchronous execution or rerun.
-- Do not stage or commit the raw harness output.
+Open deferrals carried without action: helper pin-file write/copy durability, carrier process-group parameter naming, dispatcher case selection, duplicated fixture-packaging knowledge, and explicit broken-owner-helper coverage.
 
-Open deferrals carried without action: helper pin-file write/copy durability, carrier process-group parameter naming, dispatcher case selection, duplicated helper-packaging knowledge in fixtures, and explicit broken-owner-helper controller coverage.
+Stop if the corrected ownership-valid fixtures still conflict with a frozen assertion, if cleanup cannot release both leases, if any broader production change is required, or if the full suite remains red.
 
-Stop and hand back without broadening if the admission cannot fit between lease acquisition and actor launch, if cleanup does not release both leases, if production outside the carrier must change, or if the post-implementation suite remains red.
-
-Completion condition: the attended carrier enforces repository-depth ownership before actor launch with exits 33/34/35; ordinary fixtures package the required helper while the missing-helper case remains genuine; the unchanged 350-assertion carrier suite has run once with durable evidence; the bounded files and state are committed; and the task hands back at `turn: codex`.
+Completion condition: carrier ownership admission with 33/34/35 is implemented before actor launch; section 12b and 12e fixtures express valid and invalid ownership conditions without contradictory expectations; the unchanged 350-assertion suite has run once with durable evidence; bounded files/state are committed; and the task hands back at `turn: codex`.
 
 ## Latest result
 
 Inspected (2026-08-14):
 
-- Claim (1) — the Unit 3b1 failing-first evidence is preserved as stated: HOLDS — read `logs/harness-runs/carrier-owner-admission-red-unit-3b1-20260814.out`; its tail reads `passed: 333   failed: 17` and `SUITE_EXIT=1`, and all 17 named failures are the section 12e names (`an absent ownership helper refuses (35)`, `a REFUSE ownership verdict stops the carry (33)`, `an AMBIGUOUS ownership verdict stops the carry (34)` and their sub-assertions).
-- Claim (2) — exits 33, 34 and 35 are free in the carrier's taxonomy: HOLDS — read the exit-code table in `scripts/axcion-harness-v0.2/carry-turn.sh:116-167`; it assigns 0, 10–22, 24–26, 28, 30 and 37, and no entry uses 33, 34 or 35.
-- Claim (3) — the owner helper answers `check --depth repo` with the 0/3/4 codes and the reason wording section 12e asserts: HOLDS — read `logs/scripts/work-loop-owner.sh:47-49,70-72,268-269,278-281`; `already claimed by checkout` is at line 269 and `replicated copies authorise nobody` at line 280, and a scratch probe reproduced both an `EXIT=4` AMBIGUOUS and an `EXIT=0` PROCEED verdict against the helper directly.
-- Claim (4) — the carrier has a point after live lease acquisition and before any actor launch: HOLDS — read `scripts/axcion-harness-v0.2/carry-turn.sh:1400-1495`; `acquire_lock` runs at 1400, `validate_state` at 1411, and `launch_actor` at 1495, mirroring the dispatcher's placement at `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh:2331-2367`.
-- Claim (5) — existing cleanup releases both leases on an ownership stop: HOLDS — read `carry-turn.sh:296-305` (`die` calls `release_lock` on every path) and `logs/scripts/work-loop-lease.sh:243-253` (`wl_lease_release` removes both the task and the checkout lease directory when owned and not pinned).
-- Claim (6) — making ordinary `mkfix` repositories package the owner helper preserves all 350 assertions and reaches 350/0: **FALSE** — searched `scripts/axcion-harness-v0.2/carry-turn.test.sh` for every `worktree add` (lines 912, 1139, 1175); line 912 is inside section 12b, which is an ordinary `mkfix` fixture that creates a linked worktree while `task-bb.md` is already committed, so the state file replicates and no checkout declares it. That is the same construction section 12e case 20b freezes as AMBIGUOUS. A scratch probe built exactly that shape and ran the real helper: `check --depth repo` returns `verdict: AMBIGUOUS ... replicated copies authorise nobody`, `EXIT=4`, both from the linked worktree and from the main checkout. With the helper packaged in ordinary fixtures, the carrier would therefore stop at 34 where section 12b requires a carry.
+- Claim (1): HOLDS — read `scripts/axcion-harness-v0.2/carry-turn.sh`; `acquire_lock` (legacy lock, then `wl_lease_acquire carry`) runs at line 1400 and `launch_actor` at line 1495 in the pre-change file, so a placement after `validate_state` is after both live leases and before any actor launch.
+- Claim (2): HOLDS — searched the same file for its exit taxonomy (`die N` / `exit N` / `result_line`); the used set is 0 10 11 12 13 14 15 16 17 18 19 20 24 25 26 28 30 and 37, so 33, 34 and 35 are free.
+- Claim (3): HOLDS — read `logs/scripts/work-loop-owner.sh`; `check|claim|clear`, `--checkout/--task/--depth local|repo`, and `verdict()` maps PROCEED→0, REFUSE→3, AMBIGUOUS→4; usage/argument failures use 10/11/12.
+- Claim (4): HOLDS — read `die()` at carry-turn.sh line 296; it calls `release_lock` → `wl_lease_release` before exiting, so 33/34/35 release both leases through the existing cleanup with no new path.
+- Claim (5): HOLDS — read `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` lines 2335–2370; the carrier's messages are that block's own wording ("ownership refused for task", "ownership is AMBIGUOUS for task", "the ownership check is unavailable").
+- Claim (6): HOLDS — read `carry-turn.test.sh`; `mkfix` packaged only `work-loop-lease.sh`, `add_owner_helper` existed separately, and section 12e case 19 asserted the helper's absence rather than removing it.
+- Claim (7): HOLDS — read section 12b lines 934–956; the over-refusal control ran against a linked worktree holding a replicated `task-bb.md` with no declaration, which repo-depth ownership settles as AMBIGUOUS, and the final main-checkout control ran while that worktree still existed.
+- Claim (8): HOLDS — `logs/harness-runs/carrier-owner-admission-red-unit-3b1-20260814.out` is present and unmodified; line 430 reads `passed: 333   failed: 17` and line 449 `SUITE_EXIT=1`, i.e. 350 assertions.
+- Claim (9): HOLDS — searched `carry-turn.sh` for `ALLOW_PATHS=(`; the default set is `^logs/work-loop/ ^logs/harness-runs/`, so an untracked `logs/work-loop/.owner` written by a fixture claim is inside the allowlist and cannot cause a spurious exit 18.
 
-Result: Unit 3b2 was not implemented. Claim (6) is false, so the unit does not begin. No production file, test file or fixture was changed; `git diff` over `scripts/axcion-harness-v0.2/carry-turn.sh` and `scripts/axcion-harness-v0.2/carry-turn.test.sh` is empty, and the carrier suite was not run.
+Result: Unit 3b2r is implemented and the complete ordinary carrier suite is green at the unchanged 350 assertions, 0 failures, exit 0. Carrier ownership admission now runs after both live leases and before any actor launch; the section 12b and 12e fixtures express valid and invalid ownership conditions without contradictory expectations.
 
-Prior accepted evidence, unchanged: Unit 3b1 red at 333/17, test commit `b883c3f6`, pointer `2a8aba9b`. Controller evidence before the new red tests: dispatcher 482/0, carrier 316/0, owner helper 92/0, shared lease helper 50/0. Accepted implementation includes owner-suite fixture packaging `e859d377`, shared helper/dispatcher through `5255628a`, carrier shared lease `04de80a7`, pin correction `2bef1acf`, and cross-transport fixture correction `33d90df9`.
+Evidence:
+
+- Production placement — `scripts/axcion-harness-v0.2/carry-turn.sh` lines 1429–1466, immediately after `validate_state`/`R_BEFORE` and before the restart-safety block, therefore after `acquire_lock` (line 1400) and before `launch_actor`. Mapping: `0` → `say "ownership: PROCEED — …"`; `3` → `die 33` "ownership refused for task"; `4` → `die 34` "ownership is AMBIGUOUS for task"; catch-all `*` → `die 35` "the ownership check ran and failed (exit N)"; missing or unreadable helper → `die 35` "the ownership check is unavailable". Cleanup path: every stop is `die`, which calls `release_lock` → `wl_lease_release`, so both leases are released and no actor is launched and no declaration written. Exit codes 33/34/35 are documented in the header taxonomy and named as shared with the dispatcher.
+- Fixture reconciliation — `mkfix` now copies and tracks `$OWNER_BIN` beside the lease library. Section 12e case 19 removes the tracked helper genuinely (`git rm --cached` + `rm -f` + commit, mirroring 12c's lease-library removal), so the working tree stays clean and the run reaches ownership rather than exit 18. Section 12b declares `task-bb` in the linked worktree with the helper's own `claim --depth local` before the over-refusal control — local, because at repo depth `claim` reads the same replicated state as AMBIGUOUS and writes nothing. The linked worktree is removed immediately after the still-live legacy-lock refusal and before the final main-checkout control, which restores the unique-state-file condition that ownership admits.
+- Suite run — one foreground run after implementation: `logs/harness-runs/carrier-owner-admission-green-unit-3b2r-20260814.out`, `passed: 350   failed: 0`, `SUITE_EXIT=0`. Section 12b shows "with the task lease free and ownership settled the worktree IS admitted" and "with no live holder the second task carries normally"; section 12e shows 35 for the absent helper, 33 for REFUSE, 34 for AMBIGUOUS, each with zero launches and no commit, plus the present-helper control carrying at 0.
+- Fail capability — the red evidence from Unit 3b1 is the same suite at 333/17, exit 1, against the same 350 assertions with no production change. The only difference between the two runs is this unit's production block and the fixture reconciliation, so the green run could have read differently and did.
+- No assertion deleted, skipped or weakened — `assert_eq` 155, `assert_contains` 176, `assert_absent` 32, inline `ok` 4, inline `bad` 14, identical at `HEAD` and in the working tree; the totals still sum to 350.
+- No production surface outside the carrier changed — `git status --porcelain` shows only `scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh` and this state file as this unit's work. `logs/friction-log.md` was already modified before this unit began and was not touched or staged; `logs/harness-runs/` remains untracked, as it was for the Unit 3b1 red evidence.
+
+Prior accepted evidence, unchanged: Unit 3b1 red at 333/17 (test commit `b883c3f6`, pointer `2a8aba9b`); first Unit 3b2 false-premise handback (state commit `eb17cb49`); dispatcher 482/0, carrier 316/0, owner helper 92/0, shared lease helper 50/0; implementation commits `e859d377`, `5255628a`, `04de80a7`, `2bef1acf`, `33d90df9`.
+
+Deferrals carried without action, plus one noticed in this unit: helper pin-file write/copy durability; carrier process-group parameter naming; dispatcher case selection; duplicated fixture-packaging knowledge — now more visible, because `add_owner_helper` is redundant with `mkfix` for the three 12e fixtures that still call it, and the two places that know how to package a helper could be one; explicit broken-owner-helper coverage — the `*` catch-all arm (exit 35, "ran and failed") has production code but no case in the ordinary suite, since only the missing-helper arm is exercised.
 
 ## Blocker
 
-The brief's required fixture change and its frozen 350/0 acceptance target cannot both hold. Packaging the owner helper in ordinary `mkfix` repositories turns four currently green section 12b assertions red, because section 12b is the one ordinary fixture that contains a linked worktree:
-
-- `carry-turn.test.sh:939` — `with the task lease free the worktree IS admitted` expects exit 0; repo-depth ownership returns AMBIGUOUS, so the carrier would stop at 34.
-- `carry-turn.test.sh:940` — `and carried` expects `RESULT outcome=CARRIED code=0`; a stop prints `outcome=STOPPED`.
-- `carry-turn.test.sh:941` — `and its actor ran` expects 1 launch; an ownership stop launches nothing.
-- `carry-turn.test.sh:953` — `with no live holder the second task carries normally` expects exit 0, run from the main checkout while the linked worktree still exists (it is removed at line 956); the same AMBIGUOUS verdict applies there.
-
-This is not a defect in the admission and not a fixture-packaging detail. Section 12b's over-refusal control and section 12e case 20b describe the same repository condition — one task's state file committed in two checkouts with no declaration — and require opposite outcomes from it. Section 12b was written before repository-depth ownership existed, when a second linked worktree of a free task was unconditionally admissible.
-
-The two candidate repairs both change section 12b beyond the fixture compatibility the brief authorises, so neither is Claude's to choose:
-
-1. Give section 12b's linked worktree an explicit ownership declaration and remove that worktree before the line 952 run. `work-loop-owner.sh claim` cannot produce this — it runs the same check first and refuses to write on AMBIGUOUS (`work-loop-owner.sh:380`) — so the declaration would have to be written by hand into the fixture. This also changes what the control proves: it would no longer be `task lease free → worktree admitted`, but `task lease free and ownership declared → worktree admitted`.
-2. Accept section 12b's worktree cases as superseded by section 12e and restate them, which lowers the assertion total below 350 and rewrites existing expectations.
-
-Two smaller points found while inspecting, neither of them blocking and neither implemented:
-
-- Case 19 (`carry-turn.test.sh:1083-1105`) needs the helper removed from the Git index as well as the working tree once `mkfix` tracks it, exactly as section 12c does for the lease library at line 969. A tracked-then-deleted helper is an out-of-allowlist working-tree change and the carrier would stop at 18 before reaching ownership admission, so the case would go green for the wrong reason.
-- `add_owner_helper` (`carry-turn.test.sh:352-357`) becomes redundant at its three call sites once `mkfix` packages the helper. It is idempotent, so leaving it costs nothing; removing it is cosmetic and is not proposed here.
+None.
 
 ## Next action
 
-Codex: decide how section 12b's over-refusal control and section 12e case 20b are reconciled, given that both describe one task's state file committed in two checkouts with no declaration and require opposite outcomes. Either authorise a specific rewrite of section 12b's worktree cases (naming the new assertion total, since 350/0 is no longer reachable unchanged), or reframe Unit 3b2's fixture requirement so ordinary `mkfix` packaging does not apply to section 12b. Then re-issue the unit. No implementation work was done and nothing outside this state file was changed.
+Codex: assess Unit 3b2r against its completion condition — carrier ownership admission implemented before actor launch with the 0/3/4/catch-all mapping and fail-closed 35; section 12b and 12e fixtures ownership-valid without contradictory expectations; the unchanged 350-assertion suite green at 350/0, exit 0, from one foreground run; bounded files and state committed. Then decide close, continue, correct once, or stop, and say whether the two authorized live validations open next.

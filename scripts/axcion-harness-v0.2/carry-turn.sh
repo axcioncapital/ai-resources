@@ -154,6 +154,20 @@
 #                              terminated and the run stopped. Never retried.
 #   30  UNEXPECTED_COMMIT      the actor COMMITTED paths outside the allowlist.
 #                              Detection, not prevention.
+#   33  OWNERSHIP_REFUSED      repository-depth ownership says this task belongs
+#                              to a different checkout. Continue it there, or
+#                              close it there first. Nothing was launched.
+#   34  OWNERSHIP_AMBIGUOUS    ownership cannot be established — usually a state
+#                              file replicated across checkouts with none of them
+#                              declaring it. Not a condition to work around: the
+#                              operator names the owner. Nothing was launched.
+#   35  OWNERSHIP_UNAVAILABLE  the ownership check could not run at all — the
+#                              helper (logs/scripts/work-loop-owner.sh) is
+#                              missing, unreadable, or failed. FAILS CLOSED: an
+#                              absent check is not a passed check.
+#                              33, 34 and 35 are the Work Loop's ownership codes
+#                              and are shared with the unattended dispatcher, so
+#                              one condition reads the same on both transports.
 #   37  PERMISSION_DENIED      Claude recorded permission denials and the hop
 #                              produced no valid handback. The denied tool and
 #                              target are named, and the report says whether any
@@ -1411,6 +1425,45 @@ say "allow-path: ${ALLOW_PATHS[*]}"
 validate_state
 R_BEFORE="$ST_TURN"
 say "initial: turn=$ST_TURN sha256=$(file_hash "$STATE_FILE") head=$(git_head)"
+
+# ------------------------------------------------------- ownership admission
+# The two leases taken above answer "is another run live?". They cannot answer
+# "does this task belong to this checkout?", because a lease dies with its
+# process and a task outlives one. That second question is the durable
+# declaration's, and this surface asks it at REPO depth — it may run git, so
+# unlike interactive Codex it can see the other worktrees of this repository.
+#
+# Two things it catches that nothing else does: the same task already claimed in
+# a DIFFERENT checkout, and a state file REPLICATED across checkouts with no
+# declaration deciding which copy is authoritative. Both are refused here, before
+# an actor is launched and therefore before anything is committed.
+#
+# THIS CHECK FAILS CLOSED. A checkout without the helper, or with one that cannot
+# be read or cannot run, gets exit 35 and launches NOTHING — it does not skip
+# with a visible line. The distinction that matters is between a check that ran
+# and found nothing wrong and a check that never ran: only the first is evidence.
+# The checkouts most likely to lack the helper — older siblings, partial copies —
+# are exactly the ones most likely to hold a conflicting writer.
+#
+# The wording is dispatch.sh's own (its ownership block), not a second vocabulary
+# invented here: one shared contract, one set of words, so an operator who has
+# read one transport's refusal can read the other's. Every stop below goes
+# through die(), which releases both leases on its way out — an ownership refusal
+# must not leave behind a lease that would refuse the next run for a reason that
+# never existed.
+OWNER_HELPER="$CHECKOUT/logs/scripts/work-loop-owner.sh"
+if [ -f "$OWNER_HELPER" ] && [ -r "$OWNER_HELPER" ]; then
+  OWNER_OUT="$(bash "$OWNER_HELPER" check --checkout "$CHECKOUT" --task "$TASK" --depth repo 2>&1)"
+  OWNER_RC=$?
+  case "$OWNER_RC" in
+    0) say "ownership: PROCEED — $(printf '%s' "$OWNER_OUT" | sed -n 's/^reason: //p')" ;;
+    3) die 33 "ownership refused for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: continue the task in the checkout named above, or close it there first. Nothing was launched." ;;
+    4) die 34 "ownership is AMBIGUOUS for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: this is not a failure to work around — decide which checkout owns the task, remove the copies that are not authoritative, and record the owner with \`work-loop-owner.sh claim\`. Nothing was launched." ;;
+    *) die 35 "the ownership check ran and failed (exit $OWNER_RC) in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: ownership is unestablished, so nothing was launched. Fix or replace $OWNER_HELPER, then re-run." ;;
+  esac
+else
+  die 35 "the ownership check is unavailable: $OWNER_HELPER is missing or unreadable in $CHECKOUT"$'\n'"Recoverable next action: ownership cannot be established without it, so nothing was launched and nothing was committed. Copy the helper into this checkout — or run the task in a checkout that carries it — then re-run."
+fi
 
 # Restart safety. Truth comes from the file and Git, never from an in-memory turn.
 if state_dirty; then

@@ -369,8 +369,18 @@ mkfix() { # name, task-id, turn
   mkstate_in "$REPO" "$task" "$turn"
   # Tracked, not dropped in loose: an untracked helper is an out-of-allowlist
   # working-tree change and the launcher would correctly stop on it (exit 18).
+  #
+  # BOTH helpers, because the launcher now runs BOTH checks on every carry: the
+  # shared lease, then repository-depth ownership admission. A fixture carrying
+  # only the lease library would reach ownership with no helper and stop at 35,
+  # so every ordinary case in this suite would be testing the fail-closed path
+  # instead of the behaviour it names. The cases that need one of them ABSENT
+  # remove it explicitly (12c for the lease library, 12e for the owner helper),
+  # which is also the only way an absence stays visible in the case that asserts
+  # it rather than being an accident of what mkfix happens not to copy.
   mkdir -p "$REPO/logs/scripts"
   cp "$LEASE_BIN" "$REPO/logs/scripts/work-loop-lease.sh" 2>/dev/null || true
+  cp "$OWNER_BIN" "$REPO/logs/scripts/work-loop-owner.sh" 2>/dev/null || true
   printf 'seed\n' >"$REPO/seed.txt"
   git -C "$REPO" add -A >/dev/null 2>&1
   git -C "$REPO" commit -q -m init >/dev/null 2>&1
@@ -934,9 +944,24 @@ section "12b. The live lock is checkout-wide, not per task"
   # The over-refusal control. With the task lease free, the worktree carries —
   # a different checkout is still legitimate concurrency, and the change must not
   # have turned every worktree into a refusal.
+  #
+  # Ownership has to be SETTLED for that to be what this control measures. The
+  # worktree add above replicated task-bb's state file into a second checkout with
+  # neither one declaring it, and repository-depth ownership reads exactly that as
+  # AMBIGUOUS — the approved refusal for replicated state, proved on its own in
+  # 12e case 20b. Left unsettled, this control would stop at 34 and the lease
+  # would never be reached, so it would no longer be testing the lease at all.
+  #
+  # The declaration is made with the helper's own LOCAL claim, not a hand-written
+  # marker and not a repo-depth one. Local is the depth that can still write here:
+  # at repo depth `claim` runs the same replicated-state read and refuses, writing
+  # nothing — which is 12e case 20a's warning, and the reason claiming is never
+  # the way out of an ambiguity.
   rm -rf "$xtl"
+  bash "$WT/logs/scripts/work-loop-owner.sh" claim --checkout "$WT" \
+       --task task-bb --depth local >/dev/null 2>&1
   run_sut --checkout "$WT" --task task-bb --claude-bin "$WT_FAKE" --log-dir "$TMPROOT/xwide-wt.runs"
-  assert_eq "with the task lease free the worktree IS admitted" "0" "$RC"
+  assert_eq "with the task lease free and ownership settled the worktree IS admitted" "0" "$RC"
   assert_contains "  and carried" "RESULT outcome=CARRIED code=0" "$o"
   assert_eq "  and its actor ran" "1" "$(wc -c <"$WT_COUNT" | tr -d ' ')"
   assert_eq "  while checkout X's legacy lock is still held" "1" "$([ -d "$xld" ] && echo 1 || echo 0)"
@@ -947,13 +972,21 @@ section "12b. The live lock is checkout-wide, not per task"
   assert_eq "checkout X is still refused after the worktree carry (17)" "17" "$RC"
   rm -rf "$xld"
 
+  # The worktree goes NOW, before the last control, and the ordering is
+  # load-bearing rather than tidy. While it exists it both declares task-bb and
+  # holds a copy of its state file, so repository-depth ownership would refuse
+  # checkout X (33) and the control below would never reach the lease it is about.
+  # Removing it takes the declaration with it — the marker is untracked, so it
+  # lives only in that working tree — and leaves X holding the task's one and only
+  # state file, which is the unique-copy condition ownership admits.
+  git -C "$XREPO" worktree remove --force "$WT" >/dev/null 2>&1
+
   # With the holder gone, the same checkout admits the second task normally —
   # the refusal is about concurrency, not a permanent binding to one task.
   run_sut --checkout "$XREPO" --task task-bb --claude-bin "$BB_FAKE" --log-dir "$XLOGD"
   assert_eq "with no live holder the second task carries normally" "0" "$RC"
   assert_eq "  and both of its leases were released" "0" \
     "$([ -d "$(task_lease_for "$XREPO" task-bb)" ] || [ -d "$(checkout_lease_for "$XREPO")" ] && echo 1 || echo 0)"
-  git -C "$XREPO" worktree remove --force "$WT" >/dev/null 2>&1
 
 section "12c. The shared lease library must be present"
   # An absent lease library means the live lease cannot be taken, and an absent
@@ -1082,9 +1115,17 @@ section "12e. Repository-depth ownership admission before actor launch"
   # --- Case 19: the helper is missing, so the check cannot run at all.
   mkfix noowner task-bh claude
   printf 'transition:codex' >"$ACTION"
-  # mkfix packages the lease library and nothing else, so the helper is already
-  # absent. Asserted rather than assumed: if a later change starts packaging it,
-  # this case would silently stop testing an absent helper.
+  # mkfix packages the helper into every fixture, so this case has to REMOVE it —
+  # from the index and from disk, the same way 12c removes the lease library. A
+  # `rm` alone would leave a tracked deletion in the working tree, which is an
+  # out-of-allowlist change and would stop the launcher at 18 before ownership was
+  # ever reached: the case would then pass for a reason that has nothing to do
+  # with an absent helper.
+  git -C "$REPO" rm -q --cached logs/scripts/work-loop-owner.sh >/dev/null 2>&1
+  rm -f "$REPO/logs/scripts/work-loop-owner.sh"
+  git -C "$REPO" commit -q -m "remove the ownership helper" >/dev/null 2>&1
+  # Asserted rather than assumed: if the removal above ever stopped working, this
+  # case would silently stop testing an absent helper.
   assert_eq "12e setup — the fixture carries no ownership helper" "0" \
     "$([ -f "$REPO/logs/scripts/work-loop-owner.sh" ] && echo 1 || echo 0)"
   assert_eq "12e setup — but it does carry the lease library, so the lease is not the stop" "1" \
