@@ -29,6 +29,11 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../.." && pwd)"   # logs/scripts -> logs -> checkout root
 OWNER_BIN="${OWNER_BIN:-$HERE/work-loop-owner.sh}"
 DISPATCH_BIN="${DISPATCH_BIN:-$REPO_ROOT/plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh}"
+# The dispatcher now sources the shared lease library from the checkout it is
+# pointed at, and fail-closes at exit 11 when it is absent. A fixture without it
+# is not a representative checkout, so new_repo() packages it beside the owner
+# helper. Resolved the same way OWNER_BIN is, and overridable for the same reason.
+LEASE_BIN="${LEASE_BIN:-$HERE/work-loop-lease.sh}"
 
 PASS=0; FAIL=0
 SANDBOX_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/wl2-owner-test.XXXXXX")"
@@ -72,6 +77,7 @@ new_repo() { # -> path on stdout
   # tracked, not dropped in loose, or the dispatcher would correctly read it as
   # an out-of-allowlist foreign file.
   cp "$OWNER_BIN" "$d/logs/scripts/work-loop-owner.sh" 2>/dev/null || true
+  cp "$LEASE_BIN" "$d/logs/scripts/work-loop-lease.sh" 2>/dev/null || true
   git -C "$d" add .gitignore README.md logs/scripts 2>/dev/null
   git -C "$d" commit -qm "sandbox base" >/dev/null 2>&1
   # -P: on macOS $TMPDIR is a symlink, and the helper reports canonical paths.
