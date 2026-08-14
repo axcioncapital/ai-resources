@@ -1,33 +1,40 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** **Draft — material repository-evidence amendment pending fresh review and operator
-re-freeze**, 2026-08-14. Grants no target-implementation authority. This revision reopens the plan on
-operator decision (2026-08-14) after primary-source research
-([`t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md`](t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md))
-proved two of the frozen plan's premises false: the destination-section identity it assigned the
-governing autonomy clause, and the completeness of citation-only treatment for the core's and the Codex
-skill's existing categorical consequence/hard-to-reverse operator-gate language. No target implementation
+**Status:** **Re-frozen for implementation**, 2026-08-14, on the operator's explicit content-bound
+approval of the corrected plan content at commit `ccf134b860b057de56c8da5452ce43ab36e4bf66`, blob
+`3fd5322fc3d499de01661dfb5d645def482b6168`. This is the plan's live authority record, and it binds to
+that exact substantive content — every section from `## 1. Fixed Point` onward. No target implementation
 surface — core, skill, command, autonomy rules, session-plan, carrier, dispatcher, or tests — has been
-edited under either freeze; T1 remains the only implemented and operator-approved tracer (§ Fixed Point
-below, unchanged). Before this amendment resumes as an implementation basis, it requires one fresh
-bounded implementation-plan review and the operator's explicit content-bound re-freeze of the amended
-commit/blob (§ Plan-readiness statement).
+edited under any freeze; T1 remains the only implemented and operator-approved tracer (§ Fixed Point
+below, unchanged). Implementation resumes at **T1a**, which this plan already sequences between T1 and
+T2 (§ 3.1a; ordering constraints 1 and 1b). The matching readiness record is § Plan-readiness statement.
+
+**Lineage of this re-freeze — research, review, correction.** The prior freeze was reopened on operator
+decision (2026-08-14) after primary-source research
+([`t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md`](t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md),
+blob `16d5203bcfcdb3f6ddd19a1e4baf36612650efa6`, verdict REVISE) proved two of that freeze's premises
+false: the destination-section identity it assigned the governing autonomy clause, and the completeness
+of citation-only treatment for the core's and the Codex skill's existing categorical
+consequence/hard-to-reverse operator-gate language. The plan was amended on that evidence, then given one
+fresh, isolated bounded implementation-plan review (verdict CORRECT), then one bounded correction
+resolving all four of that review's findings, with the closure check passing. The approval recorded above
+is bound to the content that correction produced.
 
 **Prior freeze identity — superseded, preserved as history.** This plan was previously frozen at
 commit `fe2c62fddf8124caf44836b8237e44e06041db6f`, blob `d1a6162b8e92c9689f261b85607dfcdb89105c6d`,
 itself a status-only announcement over substantive content fixed at commit
 `cab3b7a28195f427deaa0d5322e9686f9dc53814`, blob `1cbcbf4ed78bb73d16406dccfb748f4b022242f4`
 (`git diff` between the two blobs touches only the Status preamble — confirmed by inspection). That
-freeze is superseded by this draft reopening; it is recorded here as historical provenance, not as a
-live authority this revision can be read against.
+freeze is superseded by the reopening and by this re-freeze; it is recorded here as historical
+provenance, not as a live authority this revision can be read against.
 
 **Frozen content identity — historical, not live.** The superseded freeze bound to the exact substantive
 plan content — every section from `## 1. Fixed Point` onward — at commit
 `cab3b7a28195f427deaa0d5322e9686f9dc53814`, blob `1cbcbf4ed78bb73d16406dccfb748f4b022242f4`. That
 status record was the only part of the file the superseded freeze changed; no substantive content was
-altered by it. This amendment is a substantive change to that content and is therefore a re-freeze
-candidate, not an edit under the old freeze — which is exactly why it returns to draft rather than
-claiming continued frozen status.
+altered by it. This amendment was a substantive change to that content, so it could not be an
+edit under the old freeze; it returned to draft and has now been re-frozen in its own right, at the
+commit and blob recorded in the Status block above.
 
 **Accepted limitation carried forward from the superseded freeze — unchanged by this amendment.** T8 may
 count S4 and S8 as `blocked` verdicts while the MVP pre-authorized capability set remains empty (§ 3.4),
@@ -42,12 +49,13 @@ table correctly classifies item 6 as a retained Fixed Point fact with no tracer.
 retained as it stands and is not a re-freeze blocker: it was noticed outside the review findings this
 amendment addresses, and it alters neither the tracer sequence nor implementation authority.
 
-**Correction history.** Three correction rounds have now run, and each numbered its own findings from 1.
+**Correction history.** Four correction rounds have now run, and each numbered its own findings from 1.
 They are therefore labelled by round throughout this document — **Unit 4 Finding N** for the planning
 unit's own correction, **Unit 5 Finding N** for the fresh implementation-plan review's frozen findings,
-and **primary-source finding N** for this reopening's evidence-driven amendment (numbered per the report
-section that raised it — e.g. "primary-source finding 1" cites report § 1). An unqualified "Finding N"
-appears nowhere; where rounds touched the same text, every applicable label appears.
+**primary-source finding N** for this reopening's evidence-driven amendment (numbered per the report
+section that raised it — e.g. "primary-source finding 1" cites report § 1), and **Unit 11 finding N** for
+the fresh isolated review that preceded this re-freeze. An unqualified "Finding N" appears nowhere; where
+rounds touched the same text, every applicable label appears.
 
 **Governs:** [`work-loop-v2-autonomy-authority-capability-proposal-v0.1.md`](work-loop-v2-autonomy-authority-capability-proposal-v0.1.md),
 content-bound approved at commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67` (blob
@@ -1058,14 +1066,18 @@ past T8's or T9's bar is an operator-owned change to the Fixed Point.
 
 ## Plan-readiness statement
 
-This artifact is **draft**, reopened from its prior freeze on operator decision, 2026-08-14, after
-primary-source research disproved two of that freeze's premises (this file's Status block; report
+This artifact is **re-frozen for implementation** at commit `ccf134b860b057de56c8da5452ce43ab36e4bf66`,
+blob `3fd5322fc3d499de01661dfb5d645def482b6168`, on the operator's explicit content-bound approval of
+2026-08-14 (this file's Status block; report
 [`t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md`](t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md)).
-It grants no target-edit authority on its own — the same as the prior freeze required before its own
-review, and unchanged by this amendment. Before implementation resumes, this amended content requires:
-one fresh, isolated bounded implementation-plan review against the approved proposal and the primary-source
-report's evidence, and the operator's explicit content-bound re-freeze of the reviewed commit/blob. Until
-both occur, no status-reconciliation, T2, T3a, or later target-implementation unit may begin — T1 remains
-the only implemented and operator-approved tracer. The Work Loop state file for task
-`autonomy-authority-capability` remains the only runtime state; no progress tracker, review ledger, risk
-document, test-strategy document, or parallel handoff was created by this unit.
+Both gates the prior draft set are now satisfied: one fresh, isolated bounded implementation-plan review
+ran against the approved proposal and the primary-source report's evidence (verdict CORRECT, its four
+findings corrected in one bounded round, closure check passed), and the operator gave the explicit
+content-bound re-freeze of that reviewed and corrected commit/blob. Implementation may therefore resume,
+beginning at **T1a**, the status-reconciliation tracer this plan already sequences between T1 and T2 — T1
+remains the only tracer implemented and operator-approved so far, and T2 may not start before T1a lands.
+This record grants implementation authority over the exact content frozen above and nothing else: it
+changes no scope, sequencing, specification or evidence bar in this plan, and authorizes nothing the
+Fixed Point excludes. The Work Loop state file for task `autonomy-authority-capability` remains the only
+runtime state; no progress tracker, review ledger, risk document, test-strategy document, or parallel
+handoff was created by this unit.
