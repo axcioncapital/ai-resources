@@ -9,13 +9,15 @@ Phase 1 of the accepted Work Loop v2 cross-transport concurrency proposal is imp
 
 What is in place:
 
-- **One shared repository-rooted live-lease contract**, in the new `logs/scripts/work-loop-lease.sh`, used by both transports. The attended carrier (`scripts/axcion-harness-v0.2/carry-turn.sh`) and the unattended dispatcher (`plans/work-loop-v2-mvp/handoff-automation-spike/dispatch.sh`) acquire and release the same task-and-checkout lease, so a run of either program is visible to the other.
+- **One shared repository-rooted live-lease contract**, in the new `logs/scripts/work-loop-lease.sh`, used by both transports. The attended carrier (`scripts/axcion-harness-v0.2/carry-turn.sh`) and the unattended dispatcher (`plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`) acquire and release the same task-and-checkout lease, so a run of either program is visible to the other.
 - **Fail-closed repository-depth ownership admission in the attended carrier, before it launches an actor.** A carrier hop that cannot establish ownership refuses rather than proceeding.
 - **A durable record on early refusal.** A pre-actor exit-17 lease refusal now writes both a human-readable refusal naming the attended holder and a machine-readable terminal record carrying `actor_launched=no`. Before the fix, that refusal happened earlier than the dispatcher's log destination existed and left no artifact.
 - **Every pin result reported as itself** by both carrier and dispatcher, and a pin in the shared helper that is durable-or-explicit rather than silently best-effort.
 - **The required Work Loop instruction updates only** — `.agents/skills/work-loop-v2/SKILL.md` (6 lines changed). No change to the executable core.
 
-Both transports' intentional boundaries are preserved: the dispatcher was never used as the Work Loop courier during this task, and no work was performed in the main checkout.
+Both transports' intentional boundaries are preserved — they share invariants and result vocabulary without being merged into one command surface — and no work was performed in the main checkout.
+
+**The dispatcher was used as a Work Loop courier during this task.** In the genuine case-23 contention, Codex launched the unattended dispatcher against this same task and checkout while the attended carrier held the leases; that is precisely what made the proof genuine rather than simulated. It never carried a turn to completion — it refused at exit 17 before launching an actor, which was the behaviour under test. Every hop that did complete for this task was carried by the attended carrier. Separately, Unit 10's brief excluded any use of the dispatcher as courier for the case-23 retry, and no transport was launched there.
 
 ## Decisions that matter
 
@@ -27,7 +29,7 @@ Both transports' intentional boundaries are preserved: the dispatcher was never 
 
 - **`LOCK_KEY` is unassigned in `dispatch.sh`.** Pre-existing, not introduced by this repair, and not on the Phase 1 surface. Fixing it would be an unrelated edit inside a task whose scope excluded repairs.
 - **Phase 2 task-aware automatic worktrees, and any change to D4.** Explicitly excluded by the task's own scope. Phase 2 is the next proposal stage and depends on an operator integration decision on Phase 1 first.
-- **The retained interactive same-task limitation.** Deliberately kept, not overlooked: the attended path still refuses a second same-task actor rather than coordinating one, and relaxing that would reopen the very over-refusal control that Unit 3b2 identified as load-bearing.
+- **The interactive same-task limitation (proposal §3 F5).** Two interactive sessions on one checkout for the *same* task, and an operator who proceeds past a refusal, are **prevented by nothing** — the limit is stated rather than covered by claim (`logs/scripts/work-loop-owner.sh` 36–39, repeated in `.agents/skills/work-loop-v2/SKILL.md` 199). Interactive enforcement is instruction-borne; only the dispatcher's is exit-code-borne. It stays open deliberately: closing it would mean enforcing instructions on a live model session, a different and larger problem than the one Phase 1 set out to solve. The mitigating structure is that Claude makes every commit (core §4), so every unit crosses one repository-depth ownership check before anything is committed.
 
 **A false premise was handed back once and honoured.** Unit 3b2 found that ordinary `mkfix` helper packaging could not preserve the over-refusal control in the carrier's section 12b, and handed back rather than building around it. Unit 3b2r then implemented the admission properly.
 
@@ -58,5 +60,5 @@ Intermediate red-to-green transitions on the dispatcher suite: 498/5 → 503/0 (
 
 1. **The genuine fan-out-two pair (case 24) is unrun.** Broader operational confidence should not be claimed until the next real pair of concurrent Work Loop tasks supplies it. That pair is the intended natural producer of this evidence — it does not need to be manufactured.
 2. **Case 23 was not repeated end-to-end after the logging fix.** Its acceptance is composite: a genuine pre-fix live contention observation plus a post-fix durable-logging proof plus the full 537/0 regression gate. Each half is real; the single unbroken post-fix run is what is missing.
-3. **The interactive same-task limitation is retained by design**, not resolved.
+3. **The interactive same-task limitation stays open by design** (proposal §3 F5), not resolved. Nothing prevents two interactive sessions on one checkout for the same task, or an operator proceeding past a refusal.
 4. **Live evidence in `logs/harness-runs/` is untracked** and will not survive a clean checkout.
