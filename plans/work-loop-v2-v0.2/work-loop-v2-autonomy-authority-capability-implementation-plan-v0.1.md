@@ -299,13 +299,21 @@ reject").
 - **Side effects:** none outside the one file.
 - **Public seam:** the core file's own header and its two dated notes; every reader that treats the
   header as the file's live status indicator.
-- **Fail-capable evidence:** (a) `grep -q "draft for operator approval"` on the core's line-3 status must
-  go from matching (before) to not matching (after); (b) a diff confirming lines 9–12 (the T1 authority
-  paragraph) and every section from `## 1.` onward are byte-unchanged by this commit; (c) the two
-  amendment notes still name their original approval dates and still state a limitation was once true —
-  read them and confirm the historical claim is preserved, not deleted; (d) `grep -qv "pre-authorized
-  capabilities"` on the core — this item introduces no governing clause; (e)
-  `work-loop-v2-core-resolver.test.sh` stays green.
+- **Fail-capable evidence (corrected — Unit 11 findings 1, 2):** (a) `grep -q "draft for operator
+  approval"` on the core's line-3 status must go from matching (before) to not matching (after); (b) two
+  paired diffs, not one blanket claim over "every section from `## 1.` onward" — that claim is false on
+  its face, since this item's own Intended change edits text inside §3 and §4: (b-i) a diff confirming
+  lines 9–12 (the T1 authority paragraph) are byte-unchanged; (b-ii) a diff of the whole core with the
+  header line and the two note blockquotes (pre-commit lines 165–167 and 285–287) excluded must be empty
+  — the header and the two notes are the *only* body content this item may touch, and (b-ii) is what
+  makes that boundary fail-capable rather than asserted; (c) the two amendment notes still name their
+  original approval dates and still state a limitation was once true — read them and confirm the
+  historical claim is preserved, not deleted; (d) `! grep -q "pre-authorized capabilities"` on the whole
+  core (note the leading `!`, not `grep -qv`) — this item introduces no governing clause. `grep -qv` on a
+  multi-line file returns success whenever *any* line lacks the phrase, which is true of nearly every
+  file regardless of whether the phrase appears elsewhere in it; it cannot prove absence and would pass
+  even if T2's clause had already leaked into the core. `! grep -q` genuinely fails if the phrase appears
+  anywhere; (e) `work-loop-v2-core-resolver.test.sh` stays green.
 - **Review row:** high-consequence — the executable core is the shared authority document for the entire
   Work Loop regardless of edit size (same ground as T1, T2, T4); one risk-aware Codex review before
   implementation.
@@ -360,18 +368,24 @@ authority document that states two contradictory current rules about when the op
   is correct.
 - **Side effects:** none outside the one file.
 - **Public seam:** the core file's own text, as in § 3.1.
-- **Fail-capable evidence:** (a) `grep -q "pre-authorized capabilities"` on the core must go from not
-  matching (before) to matching (after) — forgetting the clause fails it; (b) a diff confirming the
-  authority line approved at § 3.1 and the header reconciled at § 3.1a are unchanged by this commit,
-  proving this item did not reopen either fixed point; (c) `grep -n '^## [0-9]'` on the core must return
-  exactly eight headings, numbered 1–8 in order, with headings 1–7's title text byte-identical to their
-  pre-commit text — a check that fails immediately under any renumbering; (d) the bare categorical strings
-  "the change would be hard to reverse" and "anything else that is genuinely consequential" (core's
-  current lines 469, 475) must **not** match verbatim after the edit; (e) a paired coverage check — every
-  operator-reserved-decision and mandatory-stop-or-handback class named in proposal §6 is represented by
-  some clause in the reconciled core §7, read and confirmed by a human or reviewer diff, not a keyword
-  grep that could pass on an accidental partial match; (f) `work-loop-v2-core-resolver.test.sh` stays
-  green.
+- **Fail-capable evidence (corrected — Unit 11 finding 3):** (a) `grep -q "pre-authorized capabilities"`
+  on the core must go from not matching (before) to matching (after) — forgetting the clause fails it;
+  (b) a diff confirming the authority line approved at § 3.1 and the header reconciled at § 3.1a are
+  unchanged by this commit, proving this item did not reopen either fixed point; (c) `grep -n '^## [0-9]'`
+  on the core must return exactly eight headings, numbered 1–8 in order, with headings 1–7's title text
+  byte-identical to their pre-commit text — a check that fails immediately under any renumbering; (d) all
+  **five** identified categorical gates, not two — each of the following bare current strings must **not**
+  match verbatim after the edit, checked individually so a partial reconciliation is visible rather than
+  hidden behind an aggregate pass: (d-i) "and any decision that is hard to reverse" (core's current line
+  26); (d-ii) "Genuinely consequential work stops and goes to the operator instead" (lines 59–60);
+  (d-iii) "The change would be hard to reverse." (line 469); (d-iv) "Anything else that is genuinely
+  consequential." (line 475); (d-v) "is the answer for consequential situations" (line 477). A commit that
+  clears (d-iii) and (d-iv) while leaving (d-i), (d-ii), or (d-v) intact is a partial reconciliation and
+  fails this specification — the canonical core would still make consequence an automatic operator gate
+  through the clauses left standing; (e) a paired coverage check — every operator-reserved-decision and
+  mandatory-stop-or-handback class named in proposal §6 is represented by some clause in the reconciled
+  core §7, read and confirmed by a human or reviewer diff, not a keyword grep that could pass on an
+  accidental partial match; (f) `work-loop-v2-core-resolver.test.sh` stays green.
 - **Review row:** high-consequence — same surface and reach as T1 and § 3.1a; one risk-aware Codex review
   before implementation, covering both halves of this one coherent change together, not as two separate
   reviews.
@@ -433,10 +447,14 @@ item 1 rejects, even after the core itself is reconciled at § 3.2.
   § 3.2, once it lands; proposal §4, §6.
 - **Precondition:** § 3.2's reconciled core exists and is committed — this item cites the corrected
   boundary, so it cannot state it accurately before that boundary is settled.
-- **Outputs:** the skill's line-508 bullet no longer states an unqualified "anything hard to reverse"
-  transfer. It instead names the operator-reserved and mandatory-stop-or-handback classes core § 7 now
-  states (or cites them directly), so Codex's own operating text matches the reconciled core rather than
-  restating the pre-reconciliation categorical rule.
+- **Outputs (corrected — Unit 11 finding 4):** the skill's line-508 bullet no longer states a
+  freestanding categorical "anything hard to reverse" transfer. It must **cite** the reconciled core § 7
+  boundary by reference — the same "cite, don't restate" discipline this plan already applies at § 3.2
+  and § 3.3 to prevent a second, driftable copy of the governing rule — rather than enumerate proposal
+  §6's operator-reserved-decision and mandatory-stop-or-handback classes inside the skill itself. A bare
+  wording substitution ("anything irreversible," "anything with major consequence," or similar) that
+  still stands alone as its own categorical rule, without deferring to core § 7, does not satisfy this
+  Output — it would leave the same semantic defect under new words.
 - **Guaranteed behavior:** the skill's "What you never do" list keeps its other items unchanged
   (committing or mutating Git state, silently repairing a bad brief, reopening strategy after every
   result, adding a second review/state system, answering a nonzero dispatcher exit by leaving it,
@@ -445,15 +463,23 @@ item 1 rejects, even after the core itself is reconciled at § 3.2.
   condition, not part of this conflict).
 - **Failure behavior:** a diff that removes the bullet outright (silently dropping Codex's operator-stop
   duty rather than correcting its scope) fails this specification, as does a diff that leaves the bare
-  "anything hard to reverse" phrase in place.
+  "anything hard to reverse" phrase in place, **and so does a diff that replaces it with a differently-
+  worded but still freestanding categorical rule that does not cite core § 7** (Unit 11 finding 4) — an
+  exact-phrase check alone cannot catch this, which is why the fail-capable evidence below adds a
+  structural check rather than a wider synonym scan.
 - **Side effects:** none outside the one file.
 - **Public seam:** the skill's own text, read by Codex per its own "when to read" convention.
-- **Fail-capable evidence:** (a) the bare string "Decide anything hard to reverse" must **not** match
-  verbatim in the skill after the edit; (b) the skill still states, in some form, that a genuinely
-  operator-reserved or mandatory-stop-or-handback decision (per the reconciled core § 7) is not Codex's
-  to make — read and confirmed, not grepped, since the replacement wording is not fixed by this
-  specification; (c) the skill's other "What you never do" bullets are byte-unchanged (diff); (d)
-  `work-loop-v2-slice-1.test.sh` stays green as a regression check.
+- **Fail-capable evidence (corrected — Unit 11 finding 4):** (a) the bare string "Decide anything hard to
+  reverse" must **not** match verbatim in the skill after the edit — a cheap regression guard, not proof
+  of the semantic fix; (b) `grep -q "core § 7"` on the replacement bullet must match — this is the
+  structural proof the bullet defers to the reconciled boundary rather than standing alone; a rewrite
+  that drops the citation while merely changing the trigger word fails (b) even though it would pass (a);
+  (c) the replacement bullet does **not** itself enumerate proposal §6's operator-reserved-decision or
+  mandatory-stop-or-handback class list verbatim — read and confirmed against proposal §6's exact list,
+  a narrow one-bullet comparison, not a broad text scan; duplicating the list here would create the same
+  second-copy drift risk this plan bars everywhere else the governing rule is cited; (d) the skill's
+  other "What you never do" bullets are byte-unchanged (diff); (e) `work-loop-v2-slice-1.test.sh` stays
+  green as a regression check.
 - **Scope boundary:** this file, this one bullet only; depends on § 3.2 landing first.
 - **Review row:** high-consequence — this bullet defines Codex's own operator-escalation duty, the same
   authority-boundary class § 3.2 and T4 sit in; one risk-aware Codex review before implementation.
@@ -674,11 +700,16 @@ unit contract.
   therefore stale (confirmed by reading both — core lines 165–167, 285–287).
 - **Intended change:** the header line, and the present-tense clause in each of the two notes. No
   autonomy policy content — the proposal §1 clause is not touched by this tracer.
-- **Verification:** (a) `grep -qv "draft for operator approval"` on the core's status line, after; (b) a
-  diff proving lines 9–12 (T1's authority paragraph) and every section from `## 1.` onward are
-  byte-unchanged; (c) both notes still name their original approval dates; (d) `grep -qv "pre-authorized
-  capabilities"` on the core — confirms this tracer adds no clause; (e)
-  `work-loop-v2-core-resolver.test.sh` stays green.
+- **Verification (corrected — Unit 11 findings 1, 2):** (a) `grep -q "draft for operator approval"` on
+  the core's status line: matches before, must not match after; (b) two paired diffs, not one blanket
+  claim over "every section from `## 1.` onward" — that claim is false on its face, since this tracer's
+  own Intended change edits text inside §3 and §4: (b-i) a diff confirming lines 9–12 (T1's authority
+  paragraph) are byte-unchanged; (b-ii) a diff of the whole core with the header line and the two note
+  blockquotes (pre-commit lines 165–167 and 285–287) excluded must be empty — the header and the two
+  notes are the *only* body content this tracer may touch; (c) both notes still name their original
+  approval dates; (d) `! grep -q "pre-authorized capabilities"` on the whole core (note the leading `!`,
+  not `grep -qv`, which returns success whenever any line lacks the phrase and so cannot prove absence)
+  — confirms this tracer adds no clause; (e) `work-loop-v2-core-resolver.test.sh` stays green.
 - **Exit condition:** the header states canonical status, both notes are corrected to past tense, and no
   governing-clause content exists in the core yet.
 - **Scope boundary:** this file only, and within it the header and the two notes only. No consumer file,
@@ -708,12 +739,16 @@ unit contract.
   decision to the operator, while every class proposal §6 names as operator-reserved or a mandatory
   stop/handback trigger remains represented in the reconciled text. § 3.2's Outputs give the exact target
   semantics; the implementing unit drafts the literal replacement prose for its own risk-aware review.
-- **Verification:** (a) `grep -q "pre-authorized capabilities"` on the core: must not match before, must
-  match after; (b) a diff proving T1's authority paragraph and T1a's reconciled header are unchanged by
-  this commit; (c) `grep -n '^## [0-9]'` on the core returns exactly eight headings, 1–8 in order, with
-  headings 1–7's titles byte-identical to their pre-commit text; (d) the bare strings "the change would
-  be hard to reverse" and "anything else that is genuinely consequential" must not match verbatim after
-  the edit; (e) a reviewer-read coverage check that every proposal §6 operator-reserved-decision and
+- **Verification (corrected — Unit 11 finding 3):** (a) `grep -q "pre-authorized capabilities"` on the
+  core: must not match before, must match after; (b) a diff proving T1's authority paragraph and T1a's
+  reconciled header are unchanged by this commit; (c) `grep -n '^## [0-9]'` on the core returns exactly
+  eight headings, 1–8 in order, with headings 1–7's titles byte-identical to their pre-commit text; (d)
+  all **five** identified categorical gates, checked individually: "and any decision that is hard to
+  reverse" (line 26), "Genuinely consequential work stops and goes to the operator instead" (lines
+  59–60), "The change would be hard to reverse." (line 469), "Anything else that is genuinely
+  consequential." (line 475), and "is the answer for consequential situations" (line 477) must each not
+  match verbatim after the edit — clearing only some of the five is a partial reconciliation, not a pass;
+  (e) a reviewer-read coverage check that every proposal §6 operator-reserved-decision and
   mandatory-stop-or-handback class is still represented in the reconciled core §7; (f)
   `work-loop-v2-core-resolver.test.sh` stays green.
 - **Exit condition:** the clause is present verbatim at `## 8.`, `## 1.`–`## 7.` are unrenumbered, the
@@ -754,12 +789,18 @@ Gated on T2. See § 3.3a for the full specification; this tracer entry is the bo
   list); it restates the same categorical rule T2 reconciles in the core, and conflicts with proposal
   §4/§15 item 1 on the same ground (§ Repository Delta, "Codex skill categorical hard-to-reverse gate"
   row).
-- **Intended change:** reword the one bullet to match the reconciled core § 7 boundary. No other bullet in
-  "What you never do" changes.
-- **Verification:** (a) the bare string "Decide anything hard to reverse" must not match verbatim after
-  the edit; (b) the skill still states, in some form, that a genuinely operator-reserved or
-  mandatory-stop-or-handback decision is not Codex's to make — read and confirmed, not grepped; (c) the
-  list's other bullets are byte-unchanged (diff); (d) `work-loop-v2-slice-1.test.sh` stays green.
+- **Intended change (corrected — Unit 11 finding 4):** reword the one bullet so it **cites** the
+  reconciled core § 7 boundary rather than restating a freestanding categorical rule under new words — a
+  synonym substitution for "hard to reverse" that still stands alone as its own trigger is not this
+  tracer's target shape. No other bullet in "What you never do" changes.
+- **Verification (corrected — Unit 11 finding 4):** (a) the bare string "Decide anything hard to
+  reverse" must not match verbatim after the edit — a regression guard, not proof of the fix; (b)
+  `grep -q "core § 7"` on the replacement bullet must match — structural proof it defers to the
+  reconciled boundary rather than standing alone; a differently-worded but still freestanding categorical
+  rule passes (a) and fails (b); (c) the replacement bullet does not itself enumerate proposal §6's
+  operator-reserved-decision or mandatory-stop-or-handback class list verbatim (read and confirmed
+  against proposal §6's exact list); (d) the list's other bullets are byte-unchanged (diff); (e)
+  `work-loop-v2-slice-1.test.sh` stays green.
 - **Exit condition:** the bullet cites the reconciled boundary; no other "What you never do" content
   changed.
 - **Scope boundary:** this file, this one bullet only; depends on T2.
