@@ -1,6 +1,6 @@
 # The Work Loop — executable core
 
-**Version:** v0.1 (MVP). **Status:** draft for operator approval.
+**Version:** v0.1 (MVP). **Status:** canonical — content at commit `5fef08ff` approved by the operator on 2026-08-14.
 
 **What this is.** The one document that says how the Work Loop runs. The Claude Code command and
 the Codex resource **link to this file** and never restate what is in it. One owner, no drift. The
@@ -162,9 +162,9 @@ Four statements make that bar checkable rather than a matter of taste:
 These four are owned here. The Codex skill and the Claude command cite this section; neither restates
 them.
 
-> *Added 2026-08-07. This clause was approved on its own; the document's header still reads
-> **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
-> approval of the rest of the file.*
+> *Added 2026-08-07. This clause was approved on its own, and the rest of the file was not
+> approved with it at that time. That limitation was superseded on 2026-08-14, when the
+> operator's content-bound approval of commit `5fef08ff` made the whole file canonical.*
 
 ### Continuing — accepting the unit and opening the next
 
@@ -282,9 +282,9 @@ never transport.
 The operator carrying the turn themselves remains valid and is the default. A courier is an option
 they approve, not a stage the loop acquires.
 
-> *Added 2026-08-06. This clause was approved on its own; the document's header still reads
-> **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
-> approval of the rest of the file.*
+> *Added 2026-08-06. This clause was approved on its own, and the rest of the file was not
+> approved with it at that time. That limitation was superseded on 2026-08-14, when the
+> operator's content-bound approval of commit `5fef08ff` made the whole file canonical.*
 
 **A request that is refused admission opens no file** (§ 2). Direct Work leaves no state behind.
 
