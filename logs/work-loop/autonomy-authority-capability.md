@@ -60,7 +60,7 @@ Evidence:
 3. `bash logs/scripts/work-loop-v2-core-resolver.test.sh` → **4 passed, 0 failed** (unchanged from Unit 7's baseline).
 4. `bash logs/scripts/work-loop-v2-slice-1.test.sh` → **308 passed, 0 failed** (unchanged from Unit 7's baseline).
 5. Line-3 draft-status header: `sed -n '3p'` → `**Version:** v0.1 (MVP). **Status:** draft for operator approval.`, byte-identical to before. `git status --porcelain` shows only the executable core plus this state file changed by this unit (the pre-existing unrelated `logs/friction-log.md` modification predates this unit and is untouched by it).
-6. Implementation commit: recorded below after commit. Resulting core blob: `30c62c418d3bd29b6c4a17841c90886f7be5ffe8`.
+6. Implementation commit: `5fef08fff11a1009b30d925f49d68844fc4e2f03`. Resulting core blob: `30c62c418d3bd29b6c4a17841c90886f7be5ffe8`.
 
 ## Blocker
 None.
