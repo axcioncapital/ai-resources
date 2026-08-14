@@ -15,49 +15,47 @@ Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; chan
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 3a2b foreground recovery — capture one complete carrier-suite result in the foreground before any analysis.
+Standard. Discovery mode. Unit 3a2c — capture the complete post-correction dispatcher regression result.
 
 Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
 
 ## Brief
 
-Two earlier Unit 3a2b verification carries stopped without a trustworthy suite result. The first stopped at carrier exit `20` after the laptop slept and the Claude connection closed. The second stopped at exit `22` because Claude backgrounded the suite, exited the one-shot actor, and left the state byte-identical; its partial output has 131 passing assertions but no totals or exit code. On 2026-08-14 the operator explicitly approved this fresh, smaller foreground-only recovery. It preserves both stopped attempts as evidence and does not repeat either hop.
+The ordinary carrier suite is now accepted at exit 0, passed 316, failed 0. The last full dispatcher regression ran before the cross-transport 12e fixture correction and reported pass 471, fail 11, with all 11 failures confined to those then-obsolete fixture oracles; the corrected targeted 12e slice subsequently passed 21/0 and its stale-oracle mutant failed exactly the setup assertions. The approved proposal's rollout step 4 still requires the full existing dispatcher suite after the combined changes, so this unit closes that one remaining dispatcher-level unknown without adding analysis or implementation.
 
-Named unknown: whether the complete ordinary `scripts/axcion-harness-v0.2/carry-turn.test.sh` suite is green on the current committed implementation.
+Named unknown: whether the complete ordinary `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` suite is green on the current committed implementation and corrected fixtures.
 
-Required outcome: run that suite exactly once, synchronously in the foreground, and write its complete stdout/stderr plus an unambiguous final exit-code line to the new file `logs/harness-runs/carrier-suite-unit-3a2b-foreground-20260814.out`. The shell invocation must not return until the suite itself has terminated and the exit-code line has been appended. Only after that foreground command returns, read the durable output footer and record the exact exit code and passed/failed totals in this state file. If failures exist, record their case/assertion names without fixing or rerunning anything.
+Required outcome: run the complete ordinary dispatcher suite exactly once, synchronously in the foreground, and write its complete stdout/stderr plus an unambiguous final exit-code line to `logs/harness-runs/dispatcher-suite-unit-3a2c-foreground-20260814.out`. The shell invocation must not return until the suite terminates and the exit-code line has been appended. Only after that command returns, read the durable output footer and record the exact exit code and passed/failed totals in this state file. If failures exist, record their case/assertion names without fixing, diagnosing or rerunning anything.
 
 Constraints and evidence:
 
-- Verify the suite path, then run the complete ordinary suite once from its intended harness directory. Do not use `--prove-failure`.
-- Foreground execution is mandatory. Do not use `&`, `nohup`, `disown`, a detached process, an asynchronous/background tool call, or any mechanism that lets the actor finish before the suite. Do not say that the suite is still running or that a later turn will record its result; this is a one-shot `claude -p` process and there is no later turn.
-- Use one foreground shell sequence that redirects the suite's stdout/stderr to the new raw-output path, captures its exit code even when nonzero, and appends exactly `SUITE_EXIT=<code>` after the suite terminates. Wait for that sequence to return before touching the state file.
-- Preserve both raw output files whether the suite passes or fails. Do not overwrite, truncate or delete the earlier partial file `logs/harness-runs/carrier-suite-unit-3a2b-recovery-20260814.out`. Do not stage or commit either harness-run artifact; the state file points to the new complete one.
-- Do no baseline reconstruction, source inspection, diagnosis or remediation in this recovery. The previous brief's extra analysis is deliberately removed to minimize post-run response work.
+- Verify the suite path, then run the complete ordinary suite once from its intended directory.
+- Foreground execution is mandatory. Do not use `&`, `nohup`, `disown`, a detached process, an asynchronous/background tool call, or any mechanism that lets the actor finish before the suite. There is no later turn in the one-shot `claude -p` process.
+- Use one foreground shell sequence that redirects stdout/stderr to the exact new raw-output path, captures the suite exit code even when nonzero, and appends exactly `SUITE_EXIT=<code>` after termination. Wait for that sequence to return before touching the state file.
+- Preserve the raw output whether green or red. Do not stage or commit it.
+- Do no source inspection, baseline reconstruction, diagnosis or remediation. Do not edit any source or test file, run any other suite, or repeat this suite.
 - Edit and commit only this state file by explicit pathspec. Hand back at `turn: codex` with the state commit hash.
-- Do not edit any source or test file, run any other suite, or repeat the carrier suite.
 
-Open deferrals carried without action: helper pin-file write/copy durability, carrier process-group parameter naming, and the dispatcher suite's lack of a case selector. None belongs in this recovery.
+Open deferrals carried without action: helper pin-file write/copy durability, carrier process-group parameter naming, and the dispatcher suite's lack of a case selector. None belongs in this verification unit.
 
-Stop after recording the one captured result, whether green or red. If the suite cannot start, record that fact without substitution.
+Stop after recording the one completed result, whether green or red. If the suite cannot start, record that fact without substitution.
 
-Completion condition: one complete ordinary carrier suite has run once in the foreground; its raw output and appended exit code exist at the new exact harness-run path above; the exact result is recorded without analysis or source changes; only the state file is committed; and the task hands back at `turn: codex`.
+Completion condition: one complete ordinary dispatcher suite has run once in the foreground; its raw output and appended exit code exist at the exact path above; the exact result is recorded without analysis or source changes; only the state file is committed; and the task hands back at `turn: codex`.
 
 ## Latest result
 
 Inspected (2026-08-14):
-- Claim (1) — the suite exists at `scripts/axcion-harness-v0.2/carry-turn.test.sh`: HOLDS — listed that exact path; found a regular executable file, 92551 bytes, mode `-rwxr-xr-x`.
-- Claim (2) — the required output path is new: HOLDS — listed `logs/harness-runs/carrier-suite-unit-3a2b-foreground-20260814.out`; `ls` returned "No such file or directory", so nothing was overwritten.
-- Claim (3) — the earlier partial output must survive: HOLDS — listed `logs/harness-runs/` before and after the run; `carrier-suite-unit-3a2b-recovery-20260814.out` is unchanged at 5687 bytes, mtime Aug 14 14:59.
-- Claim (4) — no `carry-turn.test.sh` process survived the stopped background attempt: HOLDS — searched the live process table with `pgrep -fl 'carry-turn.test.sh'`; no match (exit 1).
 
-Unit 3a2b foreground recovery — named unknown resolved. The complete ordinary carrier suite is GREEN on the current committed implementation.
+- Claim (1) the ordinary dispatcher suite exists at `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`: HOLDS — ran `ls -l` on that exact path; found a regular executable file, `-rwxr-xr-x`, 189050 bytes, mtime Aug 14 12:53.
+- Claim (2) the required raw-output path is new: HOLDS — listed `logs/harness-runs/` for `dispatcher-suite-unit-3a2c-*`; no match before the run (only the 3a2b carrier outputs and the harness `.out`/`.log` pairs were present).
 
-Result: `scripts/axcion-harness-v0.2/carry-turn.test.sh` was run exactly once, synchronously in the foreground from its own harness directory, with no `--prove-failure`, no `&`, no `nohup`, no detachment and no background tool call. The shell sequence did not return until the suite had terminated and `SUITE_EXIT=0` had been appended. Recorded result: **exit code 0, passed 316, failed 0** — no failing case or assertion names to record. Both stopped attempts are superseded as suite evidence and their raw files are preserved untouched. No source or test file was edited, no other suite was run, and the suite was not repeated.
+Result: Unit 3a2c ran the complete ordinary dispatcher suite exactly once, synchronously in the foreground, from `plans/work-loop-v2-v0.2/handoff-automation-spike`. The suite is **green at exit 0, pass 482, fail 0**. No failing case or assertion was reported, so no case/assertion names are recorded. Nothing was diagnosed, fixed, rerun or otherwise changed; no source or test file was touched. This closes the last dispatcher-level unknown that the accepted proposal's rollout step 4 required after the combined changes: the prior full-suite reading of pass 471 / fail 11 is superseded, and all 11 previously failing assertions — every one confined to the then-obsolete cross-transport 12e fixture oracles — now pass on the committed implementation with the corrected fixtures. The total assertion count is unchanged at 482 (471 + 11), so the correction converted the stale-oracle failures rather than removing or skipping them.
 
-Evidence: durable raw output at `logs/harness-runs/carrier-suite-unit-3a2b-foreground-20260814.out` — 363 lines / 15395 bytes, opening `carry-turn.sh — deterministic suite`, footer `passed: 316   failed: 0` followed by the appended `SUITE_EXIT=0`. The check could have read differently: the suite exits 1 and prints a `failing:` block naming each case when any assertion fails, and its own `--prove-failure` mode exists to demonstrate that the assertions do fail against mutated launchers — the same harness returned pass=19 fail=2 on the Unit 3a2a stale-oracle mutant. The foreground exit code was also echoed independently of the file as `FOREGROUND_RETURNED rc=0`, so the file footer and the shell's own status agree. This recovery's state commit is `8be728e9`; it changed only this state file, and neither harness-run artifact is staged or committed.
+Evidence: durable raw output at `logs/harness-runs/dispatcher-suite-unit-3a2c-foreground-20260814.out`, 688 lines, whose final two lines are the suite's own footer `pass=482 fail=0  (all cases SIMULATED — no live product transport)` and the appended `SUITE_EXIT=0`. The foreground shell sequence captured the suite's exit status into `rc` and appended `SUITE_EXIT=$rc` only after the suite terminated, and it returned `rc=0`; the state file was not touched until that sequence had returned. The check could have read differently: a nonzero `rc` would have been written verbatim into the same `SUITE_EXIT=` line, and any failing assertion would have appeared as a `  FAIL ` result line in the same file — a `grep -n -E '^pass=|^SUITE_EXIT=|FAIL'` over the output returns only the footer, the exit line, and five case *titles* containing the word, with no result-line FAIL. The raw output is preserved and deliberately left unstaged and uncommitted, as the brief requires.
 
-Accepted implementation and targeted controller evidence through Unit 3a2a is unchanged: shared helper and dispatcher through `5255628a`; carrier shared lease at `04de80a7`; carrier pin correction at `2bef1acf`; cross-transport 12e fixture correction at `33d90df9` with state pointer `50874ea2`.
+Accepted evidence carried forward: Unit 3a2b carrier suite green at exit 0, passed 316, failed 0 (`logs/harness-runs/carrier-suite-unit-3a2b-foreground-20260814.out`), state commit `8be728e9`, pointer commit `f9125746`. Implementation and targeted controller evidence through Unit 3a2a: shared helper and dispatcher through `5255628a`; carrier shared lease at `04de80a7`; carrier pin correction at `2bef1acf`; cross-transport 12e fixture correction at `33d90df9` with state pointer `50874ea2`, targeted pass 21 / fail 0 and stale-oracle mutant pass 19 / fail 2.
+
+Deferrals carried without action, unchanged: helper pin-file write/copy durability; carrier process-group parameter naming; the dispatcher suite's lack of a case selector. None was in this verification unit's scope and none was implemented.
 
 ## Blocker
 
@@ -65,4 +63,4 @@ None.
 
 ## Next action
 
-Codex: assess the Unit 3a2b foreground recovery result — the ordinary carrier suite is green at exit 0, passed 316, failed 0 — and decide whether the controller-level acceptance coverage for Phase 1 is now sufficient, or which unit opens next toward the two authorized live validations. The three carried deferrals are still open and untouched: helper pin-file write/copy durability, carrier process-group parameter naming, and the dispatcher suite's lack of a case selector.
+Codex: assess Unit 3a2c. Both controller suites are now green on the committed implementation — carrier 316/0 and dispatcher 482/0 — so the rollout step 4 controller-level unknown is closed. Decide whether that completes the controller-evidence portion of the exit condition and what opens next: the two explicitly authorized live validations (one genuine cross-transport contention proof, one genuine fan-out-two Work Loop pair), or a prior step. The three carried deferrals remain unimplemented and are for the closure record, not for a new unit.
