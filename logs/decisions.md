@@ -362,3 +362,37 @@ verifiable, and it is an in-place edit to a file with a live concurrent writer).
 
 **Confirmed by.** The concurrent session re-verified the measurement independently and withdrew its
 recommendation, noting it had "reasoned about the risk instead of measuring it."
+
+---
+
+## 2026-08-14 — Accept a temporary 500-line budget overrun on `work-loop-v2/SKILL.md` rather than split it inside the incident fix
+
+**Context.** Fixing the 2026-08-14 unit-packaging incident required adding split triggers, a
+front-loaded-evidence rule, and mode-dependent packaging lines to `.agents/skills/work-loop-v2/SKILL.md`.
+The file was already over `ai-resource-builder`'s 500-line body budget before this session started
+(552 lines at `HEAD`), and the additions pushed it to 580.
+
+**Decision.** Ship the incident fix at 580 lines rather than splitting the skill into `references/`
+siblings in the same session. Log the breach to `logs/improvement-log.md` with full schema
+(`Category` / `Severity: low` / `Proposal` / `Review-cycle`) and an explicit operator-acceptance line,
+deferred to the next change that adds body lines to the file (backstop: 2026 Q4).
+
+**Rationale.** Splitting a live instruction file that both a Codex skill session and the dispatcher read
+on every invocation needs its own progressive-disclosure design (which sections are load-bearing on
+every run vs. reachable on demand) and its own review. Folding it into an incident fix would have been
+exactly the scope creep an independent review round confirmed was otherwise absent from this change.
+Per the workspace's structural-fix rule, "too expensive to do structurally right now" means park for a
+dedicated session, not patch around it by trimming prose that would cost load-bearing rules.
+
+**Alternatives considered.**
+- Trim existing prose to fit under 500 lines before adding the new material (rejected — the file's whole
+  failure mode is guidance being forgotten under time pressure; cutting rules to satisfy a line count is
+  the wrong trade).
+- Split into `references/` now, in the same session (rejected — see rationale; a session already three
+  review rounds deep is the wrong context for a structural redesign of a shared instruction file).
+- Silently exceed the budget with no log entry (rejected — the workspace's own schema requires
+  `Severity` on every entry precisely so a real gap stays reachable rather than disappearing; an
+  unlogged breach is the failure mode the schema exists to prevent).
+
+**Confirmed by.** Operator, explicitly, in the round-3 wrap-up instruction: "Accept the temporary
+575-line exception explicitly" (later 580 after the bounded cleanup pass).

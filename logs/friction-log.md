@@ -353,6 +353,31 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 20:25 — logs/decisions.md
+- 20:25 — logs/session-notes.md
+- 20:24 — logs/scratchpads/2026-08-14-20-24-scratchpad.md
+- 20:22 — .claude/commands/work-loop-v2.md
+- 20:21 — .claude/commands/work-loop-v2.md
+- 20:21 — .claude/commands/work-loop-v2.md
+- 20:20 — .agents/skills/work-loop-v2/SKILL.md
+- 20:12 — .claude/commands/work-loop-v2.md
+- 20:12 — .claude/commands/work-loop-v2.md
+- 20:07 — .agents/skills/work-loop-v2/SKILL.md
+- 20:06 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 20:06 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 20:06 — .claude/commands/work-loop-v2.md
+- 20:04 — .claude/commands/work-loop-v2.md
+- 20:02 — .agents/skills/work-loop-v2/SKILL.md
+- 19:53 — logs/scripts/work-loop-v2-slice-1.test.sh
+- 19:53 — .agents/skills/work-loop-v2/SKILL.md
+- 19:53 — .claude/commands/work-loop-v2.md
+- 19:52 — .claude/commands/work-loop-v2.md
+- 19:41 — .agents/skills/work-loop-v2/SKILL.md
+- 19:40 — .claude/commands/work-loop-v2.md
+- 19:40 — .agents/skills/work-loop-v2/SKILL.md
+- 19:40 — .claude/commands/work-loop-v2.md
+- 19:40 — .claude/commands/work-loop-v2.md
+- 19:37 — .agents/skills/work-loop-v2/SKILL.md
 - 11:48 — logs/scratchpads/2026-08-14-11-48-scratchpad.md
 - 11:39 — logs/work-loop/eval-v0-3-partial-fixes.md
 - 11:35 — logs/work-loop/eval-v0-3-partial-fixes.md

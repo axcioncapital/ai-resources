@@ -2,131 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-11 — Work Loop v2 bounded-execution fix plan, full task lifecycle
-
-### Summary
-Ran Claude's side of the `work-loop-v2-bounded-execution-fix-plan` Work Loop v2 task end to end:
-Unit 1 (premise-checked plan write), one correction round on five frozen findings, one final bounded
-fix (state-file cleanup), and the closing record. The task produced an operator-reviewable plan for
-the 2026-08-10 bounded-execution incident and implemented no dispatcher or operating-contract fix, as
-scoped. Task is closed.
-
-### Decisions Made
-- Codex's correction findings were reproduced by inspection before being corrected (not accepted on
-  narrative). Most consequential: dropped the plan's own leading proposal, `--allow-nested-actors N`,
-  for want of any verified authorised use case, and recast the P0 boundary from four constructions to
-  four outcomes with construction left to a design gate.
-- Operator directed a tailored structural-resolution route (Repository Problem Resolution SOP applied
-  as non-governing methodology, subordinate to the Work Loop executable core) — logged separately in
-  `decisions.md`.
-- Closure: confirmed Codex's `Close the task:` verdict (which a prior invocation had left uncommitted)
-  and reduced the state file to core § 4's four-section closing record.
-
-### Outcome
-Outcome check skipped (not requested).
-
-### Risky actions
-None — every commit stayed inside the state file's declared scope; no dispatcher, harness, or nested
-model invocation ran at any point in this task.
-
-### Findings Declined
-- The SOP's own unconfirmed gate/verdict vocabulary and its three missing sibling documents
-  (`repository-problem-resolution-sop.md:37,59`) — already recorded as a named deferral in the
-  accepted plan and the task's closing record; not queued separately, no new information to add.
-- The observation that this task's state file sat uncommitted between a Codex write and the next
-  Claude pickup twice — the operator explicitly declined to address it inside this closed task and
-  routed it through the accepted plan's own process instead; not a standalone open item.
-
-### Next Steps
-Implementation of the accepted plan's P0 outcomes has not started. The plan's own § 6.4/§ 11
-recommend opening a **new** Work Loop v2 task (not reopening this closed one) for the first outcome,
-starting with a discovery unit that establishes the incident's failure from preserved run evidence.
-That is Codex's move to frame.
-
-### Open Questions
-None.
-
-## 2026-08-11 — Bounded-execution fix plan v0.2, three revision rounds
-
-### Summary
-Took the accepted `bounded-execution-fix-plan-v0.1.md` through three operator-directed revision
-rounds into a new `bounded-execution-fix-plan-v0.2.md`: (1) applied six findings from an independent
-SOP-conformance review; (2) incorporated a second incident — a 2026-08-11 eval-repair dispatcher
-timeout — as a verify-first input, adding a new P0 outcome (brief sizing) while explicitly excluding
-the eval task's own content repairs; (3) applied four tightly bounded corrections the operator caught
-in the round-2 result. v0.1 was left unchanged throughout, since its approval is tied to committed
-content. Planning only — nothing implemented, nothing authorized.
-
-### Decisions Made
-- **Two bounded-execution failures, one plan, scope split by system-level vs. content-level.** The
-  operator directed that incident 2 (eval-repair timeout) belongs in the same plan as incident 1 only
-  for its system-level lessons — brief sizing, recovery semantics, evidence-loss pattern. The EV-1
-  through EV-6 content repairs, the staging-hook registry correction, the eval branch's merge
-  readiness, and its stale suite baselines stay out, as evidence of the sizing defect rather than
-  part of the dispatcher fix, and belong to the eval-repair task. Logged separately in
-  `decisions.md`.
-- Every causal claim from both incident reports (postmortem and eval-repair report) is treated as an
-  unverified hypothesis until checked against named run artifacts — carried through all three rounds,
-  not just asserted once.
-- Brief sizing promoted from P1 to P0 (new outcome O5, new unit U11) on the operator's judgment that
-  an oversized unit is the failure mode that makes the other four P0 outcomes unreachable, not a mere
-  refinement.
-- Four SOP-review findings and four round-3 corrections were operator-supplied, not self-identified;
-  applied as scoped, no broader rewrite.
-
-### Risky actions
-None — every change stayed inside the planning artifact; no dispatcher run, no live reproduction, no
-nested AI invocation, no write into either incident checkout (both are read-only evidence sources).
-
-### Next Steps
-The plan's own § 0.4 route step 1 is next: a discovery unit establishing both incidents from
-preserved evidence (read-only, no live reproduction), which is Codex's move to open as a new Work
-Loop v2 unit under the still-open planning task. This session did not open it.
-
-### Open Questions
-None.
-
-## 2026-08-11 — Work Loop v2 Unit 10: landed the concurrent-task-isolation mechanism on canonical main
-
-### Summary
-Ran Unit 10 of `work-loop-v2-concurrent-task-isolation` via `/work-loop-v2`. All four of the
-brief's premises held by inspection, so the nine verified implementation files (separate writable
-checkouts, one visible task owner per checkout, no duplicate logical-task ownership, later-handoff
-checkout reuse) were landed as one commit on canonical `main` (`323b57f` → `0d9e335`), byte-identical
-to the independently verified task branch, without importing branch history or the task state file.
-Both concurrency suites passed from canonical main (owner 92/0, dispatcher 389/0) and unrelated
-uncommitted operator work in canonical was left untouched. Between the hand-back and this wrap,
-Codex assessed and closed the task externally: the case is now **Integrated, awaiting operational
-validation**, with the operator asked to exercise the mechanism on the next genuine pair of
-concurrent Work Loop tasks and report back.
-
-### Decisions Made
-- Landed exactly the nine briefed paths as a single commit, staged by explicit pathspec, rather than
-  a directory-level add — kept canonical's unrelated dirty work untouched.
-- Dropped a self-authored revert-command test that used `git reset --hard`; the permission layer
-  correctly denied it because canonical held uncommitted operator work that command would have
-  destroyed. Used `git revert --no-edit` in the hand-back instead — the safe, non-destructive form.
-- Left the two undeclared `axcion-harness-v0-2-*-monday-prep` state files in canonical untouched and
-  recorded as a deferral — they are a different task's ambiguous ownership state, which the new
-  mechanism correctly refuses to guess at rather than a defect in this landing.
-
-### Outcome
-Outcome check skipped (not requested).
-
-### Session Value Audit — 80/20 Review
-Skipped (not requested).
-
-### Risky actions
-One command in this session was denied by the permission layer before execution: a self-authored
-revert-command test containing `git reset --hard` against canonical, which held uncommitted operator
-work the command would have destroyed. The denial was correct and no destructive action occurred;
-the test was dropped rather than retried. No other risky action taken or nearly taken.
-
-### Next Steps
-Task `work-loop-v2-concurrent-task-isolation` is closed (Codex's verdict). No further Claude unit is
-open on it. The operator's follow-up is real-world usage: run the mechanism on the next genuine pair
-of concurrent Work Loop tasks in this repository and report whether checkouts, ownership, and
-handoff reuse behaved as intended.
 ## 2026-08-11 — Took ownership of an unauthorized Codex commit, then fixed two more review findings
 
 ### Summary
@@ -648,6 +523,71 @@ No follow-on unit is open. `eval-v0-3-partial-fixes` is closed (`turn: operator`
 `logs/work-loop/.owner` lease was cleared in the same closing write, so this checkout is free for the
 next task. Whether the EV-3/CE-9 procedure is adopted for routine use remains a later, separate operator
 decision grounded in the recorded PARTIAL evidence — not something this correction reopens.
+
+### Open Questions
+None.
+
+## 2026-08-14 — Work Loop v2 unit-packaging and hop-termination fix, three-round independent review
+
+### Summary
+A pasted incident report described a real 2026-08-14 Work Loop v2 failure: a helper-plus-first-consumer
+unit timed out at 902 seconds, and a correctly narrowed follow-up unit spent 593 seconds re-establishing
+accepted baseline evidence and exited having changed nothing after Claude ended the hop on a progress
+note ("waiting for the baseline run to finish"). Ran `/develop-ai-resource` to qualify and build a fix.
+Verdict: improve two existing resources, not build a new one. Edited `.agents/skills/work-loop-v2/SKILL.md`
+(Codex side — new split triggers, a rule against front-loaded baseline evidence, and mode-dependent
+packaging lines required inside every brief) and `.claude/commands/work-loop-v2.md` (Claude side — a hop
+must end in a written outcome or an explicit refusal, never a progress note; required evidence cannot be
+silently downgraded to a deferral). The operator ran three rounds of independent review in place of the
+unreachable Codex reviewer, each on both a Standards and a Spec axis; every finding across all three
+rounds was adopted. Shipped as commit `16de1622`.
+
+### Decisions Made
+- **Route through `/develop-ai-resource` rather than straight to `/improve-skill`**, because the
+  system-fit question (core doc vs. skill vs. command — which artifact should own the anti-progress-only-
+  termination rule) was genuinely open, not settled. Confirmed by inspection: neither the core doc, the
+  skill, nor the command had any prior coverage of background-process termination.
+- **Ship two edits, not a new resource.** Rejected "restate the guidance more strongly" as sufficient —
+  the existing § *Size the unit against the clock* guidance was already the 2026-08-11 fix for the same
+  failure class, and this incident is that fix recurring. The structural half (mode-dependent packaging
+  lines Claude checks and refuses on) is what makes this attempt different from the last one.
+- **Round 1 fixes (operator review):** written-state contradiction between "every invocation ends in
+  written state" and refusal-must-change-nothing — corrected to split the invariant by admission status.
+  Enforcement widened from checking one packaging line to all four. Harness evidence added (37 new checks,
+  negative-control-verified against pre-change files). 500-line SKILL.md budget breach — corrected
+  attribution (pre-existing at 552 lines, not caused by this session) and parked rather than fixed inline.
+- **Round 2 fixes (operator review):** the mandatory `Primary edit begins after:` line was made
+  mode-dependent (Implementation only) after the operator caught that Discovery/Adoption units make no
+  primary edit and would have been permanently deadlocked by the requirement. Outcome list rewritten as
+  generic rather than an incomplete enumeration that had silently dropped closing/correction/de-escalation.
+  Refusal invariant corrected from "no state file was opened" to "no state-file write" (identity/ownership
+  checks necessarily read the file). Claude may not unilaterally downgrade required evidence to a deferral.
+  Improvement-log entry rebuilt to the full schema (Category/Severity/Proposal/Review-cycle with a concrete
+  trigger). **Self-caught in this round, not by the operator:** the harness's own pre-existing regression
+  check failed because the fix's wording invented "Adoption unit" as a new unit kind — Adoption is a mode
+  fitted onto the existing discovery-unit kind per core § 3. Corrected throughout.
+- **Round 3 (bounded cleanup per explicit operator instruction, no new tests, no further broad review):**
+  "Four lines" renamed to "mode-dependent packaging lines" to match the mode-dependent count. Implementation's
+  fourth line now accepts a quoted before-state where no meaningful failing test exists (matches core § 3's
+  existing refusal of ceremonial tests for prose/documentation changes). `Evidence explicitly deferred:`
+  formally defined to take `None.` rather than being droppable. Written outcomes scoped explicitly to
+  invocations that pass the refusal gates. Operator accepted the resulting 580-line SKILL.md overrun
+  explicitly, recorded in `improvement-log.md`. Runtime proof deferred to the next real dispatched hop.
+
+### Risky actions
+None — no destructive, irreversible, or external action was taken. Push was not run mid-session (correctly
+deferred to this wrap per the gated-push rule).
+
+### Findings Declined
+None — every finding raised in this session's three review rounds was adopted; nothing was declined.
+
+### Next Steps
+Run `/work-loop-v2` on the next real unit (the open `work-loop-v2-concurrency-repair-proposal` task, or
+whichever the operator opens next) to get the first genuine runtime evidence that the new packaging-line
+enforcement and hop-termination rule hold under an actual dispatched hop — the harness only proves the
+rules are worded as intended, not that Claude obeys them live. Expect one handback: the currently open
+task predates the new contract and carries no packaging lines, so it will bounce once as a false premise
+before Codex repackages it — that is the new contract working, not a defect.
 
 ### Open Questions
 None.
