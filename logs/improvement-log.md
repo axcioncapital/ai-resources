@@ -3818,3 +3818,47 @@ non-symlink copy — verify whether it carries the same literal.
 
 **Target files:** `.claude/commands/wrap-session.md` (~L190); workspace-root
 `/.claude/commands/wrap-session.md` if it mirrors the defect.
+
+---
+
+## `research-extract-verifier` enumerates four stop conditions; the chassis has carried five since 2026-07-14
+
+- **Status:** logged (pending)
+- **Severity:** medium — silent, and it misfires in exactly the direction that damages a thin-yield unit. No current unit is affected; the next one legitimately closing on Condition 5 is.
+- **Category:** shared skill (`ai-resources/skills/research-extract-verifier/`)
+- **Source:** `axcion-sector-intelligence` / `building-services-install` worktree, 2026-08-13, surfaced by the Step-2.4 pass-2 verification and confirmed at the residual-items sweep.
+
+**The finding.** `SKILL.md` Check 6 (Stop Condition Verification, S-13) opens: *"every research subtask must close on one of 4 conditions"*, and enumerates Conditions 1–4 only. The project chassis it cites — `reference/quality-standards.md § Research Stop Conditions` — carries **five**, and states at that section: *"Condition 5 was added 2026-07-14 to close a structural trap, and it is load-bearing. Conditions 1–4 alone are **not exhaustive**."* The skill was not updated when the chassis was re-cut.
+
+**Why it matters rather than just reads oddly.** Check 6 does not merely report the closing condition — it matches the subtask against the enumerated list. A subtask that closes legitimately on Condition 5 matches nothing in the skill's list, so the skill reads it as meeting **no** stop condition and flags `INCOMPLETE-RESEARCH`. That is a false failure on a correctly-executed subtask, and it lands on the thinnest evidence — precisely the case Condition 5 was added to protect. The failure is silent in both directions: a verifier following the skill has no way to see that a fifth condition exists, and the chassis has no way to know the skill is not reading it.
+
+**Not currently biting, which is why it needs logging rather than fixing under pressure.** Every one of `building-services-install`'s twelve extracts closed on Condition 1, so nothing in this unit turned on it. That makes this cheap to fix now and expensive to discover later.
+
+**Proposal.** Add Condition 5 to the Check 6 enumeration and to the candidate-matching steps beneath it, quoting the chassis text rather than paraphrasing. Then add the guard the chassis already uses elsewhere: have Check 6 assert the condition count it read against the chassis, and halt loudly on mismatch instead of flagging the extract — so the next re-cut surfaces as a skill error, not as a false `INCOMPLETE-RESEARCH` on someone's research.
+
+**Worth checking while there:** whether any other skill enumerates the stop conditions independently rather than reading them from the chassis. This is unlikely to be the only copy.
+
+**Target files:** `ai-resources/skills/research-extract-verifier/SKILL.md` (Check 6, ~L108–126).
+
+---
+
+## The deployed `source-class-hierarchy.md` carries the pilot unit's question numbers — the canonical template is clean, so this is a deployment defect
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — it mis-maps nearly every scarce component in a unit that is not the pilot, and it silently affects roughly ten sibling worktrees.
+- **Category:** workflow deployment (`ai-resources/workflows/research-workflow/reference/`) — instantiation step, **not** the template
+- **Source:** `axcion-sector-intelligence` / `building-services-install` worktree, 2026-08-13. Surfaced by both Step-2.4 pass-2 verifiers, then re-diagnosed at the residual-items sweep.
+
+**The finding, and it is not the one first recorded.** The checkpoint logged this as a stale reference file. It is narrower and more actionable than that: **the canonical template `ai-resources/workflows/research-workflow/reference/source-class-hierarchy.template.md` is clean** — verified 2026-08-13, it carries no question numbers at all. The defect is in the *deployed* copy. Each unit worktree appears to have been seeded from the **precision-components pilot's already-instantiated file** rather than from the clean template re-instantiated against that unit's own research plan.
+
+**What it looks like in a non-pilot unit.** In `building-services-install`, the deployed table's "Source Class Hierarchy by Evidence Need" rows read: company existence and ownership → `(Q4)`; named transactions → `(Q5, Q7)`; valuation multiples → `(Q10)`; FDI-screening → `(Q11)`. **None of those match this unit.** Here Q4 is the named-transaction question, the valuation-multiple ceiling sits at Q8-A05, and FDI-screening is Q12. The same rows also read "Finnish **industrials** EV/EBITDA", while this unit's Q6 classified it as B2B technical services rather than industrials.
+
+**Why it matters.** `research-extract-verifier` Check 7 (source-surface coverage) maps a scarce component to its evidence-need row through this table. Fed the pilot's numbering, it mis-maps and produces false-scarcity FLAGs. In this unit every verifier across both passes had to be told explicitly to map by **semantic evidence-need identity** rather than by the printed question number — an instruction that happened to be given, and that nothing in the workflow requires. Unhandled, Check 7 would have mis-mapped nearly every scarce component.
+
+**Proposal.** Two parts, and the second is the one that lasts. **(a)** Re-instantiate the deployed file per unit from the clean template against that unit's own research plan — or, cheaper and probably better, **strip the question numbers from the deployed copies entirely** and let the rows key on evidence-need identity alone, which is how the verifiers were told to read them anyway. **(b)** Fix the instantiation step so a new unit is seeded from `*.template.md` and never from a sibling's instantiated file; a template that is clean at source and dirty at every deployment means the copy step, not the template, is the defect.
+
+**Scope caution.** Roughly ten sibling unit worktrees each hold their own copy. Fixing this one locally strands the correction on one branch — the pattern already on record for this repo. The instantiation fix belongs canonically; the per-unit strip needs a sweep across the worktrees, ideally at one moment when sessions are not live in them.
+
+**Related but distinct, and deliberately not folded in:** `building-services-install`'s own `preparation/answer-specs/.../chapter-02-specs.md` § Q4-A07 still says "Tag BASELINE explicitly", contradicting both its own A03 rule and that unit's Decision G1-3 compound `STRUCTURAL-to-BASELINE` label. That is a unit-local approved Stage-1 artifact and an operator call for that unit, not a shared-resource item — recorded in the unit's Step-2.4 pass-2 checkpoint.
+
+**Target files:** `ai-resources/workflows/research-workflow/reference/source-class-hierarchy.template.md` (verified clean — for reference only); the unit-deployment step that instantiates it; and `reference/source-class-hierarchy.md` in each unit worktree.
