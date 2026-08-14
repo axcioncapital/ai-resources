@@ -1,32 +1,53 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** **Frozen for implementation**, 2026-08-14. Reviewed once (verdict: CORRECT), corrected once,
-then frozen on the operator's decision to accept the one remaining review finding as a written limitation
-(executable core § 3, *If the correction was not enough* — "accept it as a written limitation"). This
-artifact converts the approved proposal into one repository-grounded plan, per the operator's 2026-08-14
-compact-workflow process decision; the freeze is what makes it the implementation basis.
+**Status:** **Draft — material repository-evidence amendment pending fresh review and operator
+re-freeze**, 2026-08-14. Grants no target-implementation authority. This revision reopens the plan on
+operator decision (2026-08-14) after primary-source research
+([`t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md`](t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md))
+proved two of the frozen plan's premises false: the destination-section identity it assigned the
+governing autonomy clause, and the completeness of citation-only treatment for the core's and the Codex
+skill's existing categorical consequence/hard-to-reverse operator-gate language. No target implementation
+surface — core, skill, command, autonomy rules, session-plan, carrier, dispatcher, or tests — has been
+edited under either freeze; T1 remains the only implemented and operator-approved tracer (§ Fixed Point
+below, unchanged). Before this amendment resumes as an implementation basis, it requires one fresh
+bounded implementation-plan review and the operator's explicit content-bound re-freeze of the amended
+commit/blob (§ Plan-readiness statement).
 
-**Frozen content identity.** The freeze binds to the exact substantive plan content — every section from
-`## 1. Fixed Point` onward — at commit `cab3b7a28195f427deaa0d5322e9686f9dc53814`, blob
-`1cbcbf4ed78bb73d16406dccfb748f4b022242f4`. This status record is the only part of the file the freeze
-changed; no substantive content was altered. A later substantive change is a re-freeze, not an edit.
+**Prior freeze identity — superseded, preserved as history.** This plan was previously frozen at
+commit `fe2c62fddf8124caf44836b8237e44e06041db6f`, blob `d1a6162b8e92c9689f261b85607dfcdb89105c6d`,
+itself a status-only announcement over substantive content fixed at commit
+`cab3b7a28195f427deaa0d5322e9686f9dc53814`, blob `1cbcbf4ed78bb73d16406dccfb748f4b022242f4`
+(`git diff` between the two blobs touches only the Status preamble — confirmed by inspection). That
+freeze is superseded by this draft reopening; it is recorded here as historical provenance, not as a
+live authority this revision can be read against.
 
-**Accepted limitation carried into the freeze.** T8 may count S4 and S8 as `blocked` verdicts while the
-MVP pre-authorized capability set remains empty (§ 3.4), so the twelve-row evidence period can finish
-without those two capability-dependent scenarios actually executing. Consequence: this weakens evidence
-completeness for dependency-registry behavior (S4) and authorized push / draft-PR behavior (S8). It does
-**not** authorize either capability, expand the capability envelope, or enable unattended execution.
+**Frozen content identity — historical, not live.** The superseded freeze bound to the exact substantive
+plan content — every section from `## 1. Fixed Point` onward — at commit
+`cab3b7a28195f427deaa0d5322e9686f9dc53814`, blob `1cbcbf4ed78bb73d16406dccfb748f4b022242f4`. That
+status record was the only part of the file the superseded freeze changed; no substantive content was
+altered by it. This amendment is a substantive change to that content and is therefore a re-freeze
+candidate, not an edit under the old freeze — which is exactly why it returns to draft rather than
+claiming continued frozen status.
 
-**Deferral recorded at the freeze.** The *Deferred, not scheduled in this plan* list names §14 item 6
-alongside items 13–15, while the §14 traceability table correctly classifies item 6 as a retained Fixed
-Point fact with no tracer. That wording is retained as it stands and is not a freeze blocker: it was
-noticed outside the frozen review findings, and it alters neither the tracer sequence nor implementation
-authority.
+**Accepted limitation carried forward from the superseded freeze — unchanged by this amendment.** T8 may
+count S4 and S8 as `blocked` verdicts while the MVP pre-authorized capability set remains empty (§ 3.4),
+so the twelve-row evidence period can finish without those two capability-dependent scenarios actually
+executing. Consequence: this weakens evidence completeness for dependency-registry behavior (S4) and
+authorized push / draft-PR behavior (S8). It does **not** authorize either capability, expand the
+capability envelope, or enable unattended execution.
 
-**Correction history.** Two correction rounds have run, and each numbered its own findings from 1. They
-are therefore labelled by round throughout this document — **Unit 4 Finding N** for the planning unit's
-own correction, **Unit 5 Finding N** for the fresh implementation-plan review's frozen findings. An
-unqualified "Finding N" appears nowhere; where the two rounds touched the same text, both labels appear.
+**Deferral carried forward from the superseded freeze — unchanged by this amendment.** The *Deferred,
+not scheduled in this plan* list names §14 item 6 alongside items 13–15, while the §14 traceability
+table correctly classifies item 6 as a retained Fixed Point fact with no tracer. That wording is
+retained as it stands and is not a re-freeze blocker: it was noticed outside the review findings this
+amendment addresses, and it alters neither the tracer sequence nor implementation authority.
+
+**Correction history.** Three correction rounds have now run, and each numbered its own findings from 1.
+They are therefore labelled by round throughout this document — **Unit 4 Finding N** for the planning
+unit's own correction, **Unit 5 Finding N** for the fresh implementation-plan review's frozen findings,
+and **primary-source finding N** for this reopening's evidence-driven amendment (numbered per the report
+section that raised it — e.g. "primary-source finding 1" cites report § 1). An unqualified "Finding N"
+appears nowhere; where rounds touched the same text, every applicable label appears.
 
 **Governs:** [`work-loop-v2-autonomy-authority-capability-proposal-v0.1.md`](work-loop-v2-autonomy-authority-capability-proposal-v0.1.md),
 content-bound approved at commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67` (blob
@@ -123,12 +144,14 @@ none), run and reported in § Safe deterministic checks run below.
 
 | Component | Path | Classification | Basis |
 |---|---|---|---|
-| Executable core, authority line | `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md:9-10` | **Modify** | Confirmed present verbatim: "Built from the Proposal (`work-loop-v2-mvp-proposal-v0.4.md`), which stays authoritative. Where this file and the Proposal disagree, the Proposal wins." Proposal §14 item 1 targets exactly this line. |
-| Executable core, governing rule | same file, § 1 (new) | **Add** | No §1 clause exists in the core today; the file currently has no numbered governing-autonomy section (confirmed by full read). |
-| Codex skill authority hierarchy | `.agents/skills/work-loop-v2/SKILL.md:429` | **Keep, reconcile wording only** | The skill already states: "current operator decision → canonical operator-approved project plan → applicable approved workflow or SOP → authoritative current state → verified repository reality → settled implementation decision → operator source material or exploratory context → Codex proposal or preference" — near-identical to proposal §3.1's eight-level hierarchy. No semantic change needed; only a pointer to the now-canonical §1 rule, if the plan reviewer judges one is needed. |
-| Claude command | `.claude/commands/work-loop-v2.md` | **Keep, reconcile wording only** | One hit at line 126, framing-only ("never performs Codex's preparation, authority or selection judgments itself"); already consistent with the dual-key model. No contradiction found. |
-| `docs/autonomy-rules.md` | whole file (51 lines, read in full) | **Keep, reconcile wording only** | Trigger 8 (audit-derived harness-configuration confirmation) and trigger 9 (structural-class risk-aware review, pointing at `qc-independence.md` and `audit-discipline.md`) already implement the retained rules proposal §14 item 3 names as "already-compatible." No content change is authorized by the proposal; only referencing §1 is in scope, and the proposal explicitly forbids weakening triggers 8–9. |
-| `.claude/commands/session-plan.md` Step 5 "Autonomy posture" | lines ~132–150 | **Uncertain — likely no change, confirm at review** | This step classifies **session-level pause granularity** (Full autonomy / Gated / Operator-in-the-loop) for planning a session's wrap behavior — a different axis from §1's per-action semantic/capability authority test. It is not contradictory. Whether "reconcile ... to reference the same §1 rule" requires even a cross-reference here, or nothing, is a plan-review judgment, not resolved by this document. |
+| Executable core, authority line | `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md:9-10` | **Modify — implemented and operator-approved at T1** | Confirmed present verbatim before T1: "Built from the Proposal (`work-loop-v2-mvp-proposal-v0.4.md`), which stays authoritative. Where this file and the Proposal disagree, the Proposal wins." Proposal §14 item 1 targeted exactly this line; T1's revision is implemented and operator-approved (Fixed Point, T1). |
+| Executable core, governing rule | same file, **§ 8 (new, appended)** | **Add — corrected destination (primary-source finding 1, report § 1–2)** | The core already has seven real numbered sections, §§1–7 (`## 1. Who does what` through `## 7. When to stop and ask`); it lacks only the governing-autonomy clause, not a numbered section generally. Placing the clause at "§1 (new)" — the frozen plan's original instruction — would collide with the existing §1 and force renumbering §§1–7 to §§2–8, silently invalidating at least 25 internal core self-references and roughly 198 explicit `core §N` references across the 15-file live/operational set (report § 2), with no proposal requirement supporting it. Appending as new `## 8.` requires zero renumbering and satisfies both the proposal's "add … to the now-canonical core" (§14 item 2) and the plan's own "new numbered section" contract (§3.2). |
+| Executable core, categorical consequence/hard-to-reverse gate | same file, lines 26, 59–60, 469, 475, 477 | **Modify — semantic, not citation-only (primary-source finding 5, report § 3 item 5)** | The core currently states unqualified categorical rules — "any decision that is hard to reverse" is operator-owned (line 26); "genuinely consequential work stops and goes to the operator instead" (lines 59–60); "the change would be hard to reverse" and "anything else that is genuinely consequential" as unconditional Stop-for-operator triggers (lines 469, 475); "stop … is the answer for consequential situations" (line 477). The approved proposal states the opposite governing principle at §4 and §15 item 1: "Consequence is not an automatic operator gate. It scales evidence and containment," transferring the decision only for a missing operator-owned decision, an unaccepted risk, a material solution-envelope change, or capability-envelope expansion (§4, §6 "Operator-reserved decisions" and "Mandatory stop or handback"). Pasting the §1 clause into the core without reconciling these clauses would leave the canonical authority document making two contradictory current-status claims about when the operator must be involved. See revised T2 (§ 3.2). |
+| Codex skill authority hierarchy | `.agents/skills/work-loop-v2/SKILL.md:429` | **Keep, reconcile wording only** | The skill already states: "current operator decision → canonical operator-approved project plan → applicable approved workflow or SOP → authoritative current state → verified repository reality → settled implementation decision → operator source material or exploratory context → Codex proposal or preference" — near-identical to proposal §3.1's eight-level hierarchy. No semantic change needed; only a pointer to the now-canonical §8 rule, if the plan reviewer judges one is needed. |
+| Codex skill categorical hard-to-reverse gate | `.agents/skills/work-loop-v2/SKILL.md:508` (within "What you never do") | **Modify — semantic, not citation-only (primary-source finding 6, report § 3 item 6)** | The live skill states, categorically: "Decide anything hard to reverse — that is the operator's, via core § 7." This is the same unqualified transfer-on-consequence rule the core carries, restated for Codex, and it conflicts with proposal §4/§15 item 1 on the same ground. The frozen plan's T3 treated this file as citation-only; that premise is false for this line and must be corrected as its own semantic reconciliation, gated on T2's revised core language (§ 3.3, new tracer T3a). Skill lines 465–475's four-condition re-check trigger ("a consequential or hard-to-reverse claim") is a different, narrower, proportional re-check condition on Codex's own review-reproduction discipline, not a categorical operator-authority transfer, and needs no semantic change (report § 3 item 6). |
+| Claude command | `.claude/commands/work-loop-v2.md` | **Keep, reconcile wording only** | One hit at line 126, framing-only ("never performs Codex's preparation, authority or selection judgments itself"); already consistent with the dual-key model. No contradiction found — confirmed still true; this file carries no categorical consequence/hard-to-reverse language for the same reason the skill's line 429 hierarchy does not, and is not part of the semantic-conflict inventory. |
+| `docs/autonomy-rules.md` | whole file (51 lines, read in full) | **Keep, reconcile wording only** | Trigger 8 (audit-derived harness-configuration confirmation) and trigger 9 (structural-class risk-aware review, pointing at `qc-independence.md` and `audit-discipline.md`) already implement the retained rules proposal §14 item 3 names as "already-compatible." No content change is authorized by the proposal; only referencing §8 is in scope, and the proposal explicitly forbids weakening triggers 8–9. The primary-source report's semantic-conflict inventory (report § 3 items 5–6) is scoped to the executable core and the Codex skill only and does not name this file; this plan does not extend the conflict finding here without its own evidence. |
+| `.claude/commands/session-plan.md` Step 5 "Autonomy posture" | lines ~132–150 | **Uncertain — likely no change, confirm at review** | This step classifies **session-level pause granularity** (Full autonomy / Gated / Operator-in-the-loop) for planning a session's wrap behavior — a different axis from the governing autonomy rule's (core §8) per-action semantic/capability authority test. It is not contradictory. Whether "reconcile ... to reference the same rule" requires even a cross-reference here, or nothing, is a plan-review judgment, not resolved by this document. |
 | `docs/qc-independence.md` | whole file (71 lines, read in full) | **Keep** | Already implements proposal §4's "one proportional risk-aware review where the existing QC rule requires it" exactly (three-row table: none / one Codex review / one risk-aware Codex review). No change identified. |
 | `docs/audit-discipline.md` § Structural change classes | lines 56–110 | **Keep** | Already implements the no-self-waiver rule and the structural-change-class list proposal §14 item 3 requires retained. No change identified. |
 | Carrier, `--unattended`/`--contained`/`--sandbox` refusal | `scripts/axcion-harness-v0.2/carry-turn.sh:296-320` | **Keep (confirms proposal §9's claim)** | `refuse_flag()` names each flag and refuses with an explicit reason ("this is the attended surface and it has no unattended mode"). Matches proposal §9 verbatim. |
@@ -161,16 +184,34 @@ authorized to touch (this artifact, the state file); no test suite left residue 
 
 ### Ordering constraints and risky assumptions
 
-1. **The core's authority status and the §1 policy insertion are two ordered gates, not one edit
+1. **The core's authority status and the governing-clause insertion are two ordered gates, not one edit
    (corrected — Unit 5 Finding 1).** Proposal §14 item 1 revises the core's authority status and requires
    operator approval "at an identifiable commit — that approval is what makes the core canonical; it has
-   not happened yet." Item 2 then adds the §1 clause "to the now-canonical core." The proposal's own
-   wording therefore places the approval *between* the two items, so they cannot land in one commit:
+   not happened yet." Item 2 then adds the proposal §1 clause "to the now-canonical core." The proposal's
+   own wording therefore places the approval *between* the two items, so they cannot land in one commit:
    doing so would insert governing policy into a core that is not yet canonical, which is the exact
    fixed point item 1 exists to establish. T1 performs item 1 and ends at operator approval; T2 performs
    item 2 and may not begin until that approval exists. Every other reconciliation tracer (skill,
-   command, autonomy rules, session-plan) is sequenced after T2 — they cite a §1 clause that must exist
-   first — not because their own edits are large.
+   command, autonomy rules, session-plan) is sequenced after T2 — they cite a clause (core §8) that must
+   exist first — not because their own edits are large.
+1a. **The clause's destination is core § 8, never core § 1, and existing §§1–7 are never renumbered
+   (primary-source finding 1–2, report §§ 1–2).** The frozen plan's original Repository Delta row placed
+   the clause at "same file, §1 (new)" on the false premise that the core "currently has no numbered
+   governing-autonomy section." The core's §1 is *Who does what* and already exists; inserting a new §1
+   would silently renumber §§1–7 to §§2–8 and invalidate roughly 25 internal core self-references and
+   198 explicit `core §N` references across the 15-file live/operational set, with both deterministic
+   suites staying green throughout — a corruption that mechanical regression testing cannot catch. No
+   proposal requirement names a specific destination number; proposal §14 item 2's "add … from §1"
+   identifies the clause's *source*, not its destination. Appending as new `## 8.` satisfies the plan's
+   own "new numbered section" contract with zero renumbering. This governs every tracer and citation
+   below that names the clause's destination.
+1b. **A separate status-reconciliation gate sits between T1 and T2 (primary-source finding 7, report §
+   4).** The core's header still reads `Status: draft for operator approval`, contradicting the
+   operator's T1 approval already on record. Reconciling that header and the two dated amendment notes
+   (core lines 165–167, 285–287) is necessary but is not T2's job — mixing status provenance with new
+   policy would make T2 verify two independently checkable behaviors as one change, against the operator's
+   compact-workflow requirement for one meaningful behavior per unit. New tracer **T1a** (§ 3.1a, Execution
+   Plan) performs this reconciliation after T1's approval and before T2 begins.
 2. **No tracer in this plan touches workspace `CLAUDE.md`.** Corrected: the earlier draft scheduled it as
    a required, deferred unit; the bounded read above found no proven conflict, so nothing is scheduled.
    The retained fact is the boundary itself — a **different git repository** from this checkout — carried
@@ -187,10 +228,14 @@ authorized to touch (this artifact, the state file); no test suite left residue 
    6, 14). This plan does not schedule new work to close the descendant-containment gap; doing so would
    expand scope beyond what §15 approved. If a later tracer's evidence changes that judgment, it returns
    to the operator as a scope question, not a decision this plan or its tracers make silently.
-5. **Risky assumption:** the plan assumes `.agents/skills/work-loop-v2/SKILL.md`'s existing authority
-   hierarchy (line 429) needs no substantive rewrite, only a citation. If the plan reviewer or the
-   implementing unit finds a real conflict (not just missing cross-reference), that tracer's scope grows
-   and should be re-split rather than absorbed silently.
+5. **Risky assumption — narrowed (primary-source finding 6, report § 3 item 6).** The plan previously
+   assumed the entire Codex skill needed no substantive rewrite, only a citation. Primary-source
+   inspection confirmed this holds for the authority hierarchy at line 429, but disproved it for the
+   categorical "Decide anything hard to reverse" gate at line 508: that clause restates the same
+   consequence-as-automatic-gate rule the core carries and conflicts with proposal §4/§15 item 1 on the
+   same ground. T3 keeps the citation-only scope for line 429 and the Claude command; the semantic
+   reconciliation for line 508 is re-split into its own tracer, **T3a** (§ 3.3a, Execution Plan), rather
+   than absorbed silently into T3.
 
 ---
 
@@ -201,82 +246,217 @@ actually requires. Uses the proposal's own language throughout, per the brief's 
 
 ### 3.1 Executable-core authority status (proposal §14 item 1 — corrected, Unit 5 Finding 1)
 
-This specification changes **only** the core's authority status. It inserts no governing policy: the §1
-clause is § 3.2's job, and it may not begin until the operator has approved this item's commit.
+This specification changes **only** the core's authority status. It inserts no governing policy: the
+proposal §1 clause is § 3.2's job, and it may not begin until the operator has approved this item's
+commit. **Implemented and operator-approved** (Fixed Point) — this section is retained as the record of
+what T1 did, unchanged by this amendment.
 
 - **Inputs:** the core's current `:9-10` authority line ("Built from the Proposal … the Proposal wins").
 - **Outputs:** that line rewritten so the core is no longer subordinate, with
   `work-loop-v2-mvp-proposal-v0.4.md` recorded as historical rationale rather than a live overriding
-  authority. No numbered §1 section is added by this item.
+  authority. No numbered governing-autonomy section is added by this item.
 - **Guaranteed behavior:** every consumer that resolves "the executable core" (the two live command/skill
   resolver blocks, confirmed byte-identical by `work-loop-v2-core-resolver.test.sh` check 4) continues to
   resolve the same file; no second copy is created.
 - **Failure behavior:** until the operator approves this exact commit, the core is **not** canonical, and
   no consumer, tracer, or brief may cite it as the canonical source of a governing autonomy rule. A
-  commit that both rewrites the authority line and adds §1 fails this specification — it manufactures
-  canonical authority the approval has not yet granted.
+  commit that both rewrites the authority line and adds the governing-autonomy clause fails this
+  specification — it manufactures canonical authority the approval has not yet granted.
 - **Side effects:** none outside the one file; this is a documentation-authority change, not a runtime
   behavior change.
 - **Public seam:** the core file's own text; every consumer points at it by relative path (confirmed: 60
   tracked references, § Repository Delta).
 - **Fail-capable evidence:** (a) `grep -q "the Proposal wins"` on the core must go from matching (before)
-  to not matching (after) — a no-op edit fails it; (b) `grep -q "pre-authorized capabilities"` (the §1
+  to not matching (after) — a no-op edit fails it; (b) `grep -q "pre-authorized capabilities"` (the
   clause's distinguishing text) must **not** match either before or after — this item adds no clause, so
   a match after is a scope violation, not a success; (c) `work-loop-v2-core-resolver.test.sh` stays green,
   proving no consumer's embedded copy drifted. Check (b) is what makes the split enforceable rather than
   merely stated.
 
-### 3.2 Governing autonomy clause, inserted into the now-canonical core (proposal §14 item 2)
+### 3.1a Executable-core status reconciliation (new — primary-source finding 7, report § 4)
 
-- **Inputs:** the approved §1 clause text (proposal §1, verbatim); the core **as approved at § 3.1's
-  identifiable commit**.
-- **Precondition (load-bearing):** operator approval of § 3.1's commit exists and is identifiable. Absent
-  it, this specification does not execute — it is not a judgment call for the implementing unit.
-- **Outputs:** the core with a new numbered section carrying the §1 clause verbatim.
-- **Guaranteed behavior:** one copy of the rule, in the canonical core; no consumer gains a second
-  competing statement of it.
-- **Failure behavior:** if the clause is paraphrased rather than carried verbatim, or if the §1 text is
-  duplicated into any consumer file by this item, the specification fails and the change is reverted, not
-  accepted as a variant.
+**One behavior only: reconcile the canonical artifact's own stated status to the T1 approval already on
+record.** It adds no autonomy policy and is not T2's job — bundling status provenance with a new
+governing clause would make two independently verifiable behaviors into one change, against the
+operator's compact-workflow requirement of one meaningful behavior per unit (report § 4, "Inside T2 —
+reject").
+
+- **Inputs:** the core's current line-3 status ("`Status:` draft for operator approval"); the two dated
+  amendment notes at core lines 165–167 and 285–287; T1's approval record, commit `9a0fdb41…`.
+- **Precondition (load-bearing):** T1's operator approval exists and is identifiable (§ 3.1). Absent it,
+  there is no approval to reconcile the header to.
+- **Outputs:** the header states the core's actual current status — canonical, per the operator's
+  content-bound T1 approval — instead of "draft for operator approval." The two amendment notes are
+  preserved as provenance (each amendment really was approved on its own, at the time, without approving
+  the rest of the file) but their present-tense claim that the header "still reads draft … and that is
+  deliberately unchanged" is corrected to state that this limitation applied when the amendment landed
+  and was superseded once T1 made the whole core canonical.
+- **Guaranteed behavior:** the T1 authority paragraph (lines 9–12) and every other line outside the
+  header and the two notes are byte-unchanged; no autonomy policy content is introduced.
+- **Failure behavior:** a commit that also adds the governing-autonomy clause, or that deletes rather
+  than corrects the two notes' historical claim, fails this specification — the first collapses this
+  item into T2's scope, the second destroys real provenance.
+- **Side effects:** none outside the one file.
+- **Public seam:** the core file's own header and its two dated notes; every reader that treats the
+  header as the file's live status indicator.
+- **Fail-capable evidence:** (a) `grep -q "draft for operator approval"` on the core's line-3 status must
+  go from matching (before) to not matching (after); (b) a diff confirming lines 9–12 (the T1 authority
+  paragraph) and every section from `## 1.` onward are byte-unchanged by this commit; (c) the two
+  amendment notes still name their original approval dates and still state a limitation was once true —
+  read them and confirm the historical claim is preserved, not deleted; (d) `grep -qv "pre-authorized
+  capabilities"` on the core — this item introduces no governing clause; (e)
+  `work-loop-v2-core-resolver.test.sh` stays green.
+- **Review row:** high-consequence — the executable core is the shared authority document for the entire
+  Work Loop regardless of edit size (same ground as T1, T2, T4); one risk-aware Codex review before
+  implementation.
+
+### 3.2 Governing autonomy clause, appended as new core § 8, and categorical-gate reconciliation (proposal §14 item 2; scope expanded — primary-source finding 1, 5, report §§ 1–3)
+
+**One coherent resulting core blob**, not two independently justifiable edits bundled together: this
+specification both appends the verbatim clause and reconciles the core's existing categorical
+consequence/hard-to-reverse language, because leaving the second half undone would produce a canonical
+authority document that states two contradictory current rules about when the operator must be involved
+(§ Repository Delta, "categorical consequence/hard-to-reverse gate" row).
+
+- **Inputs:** the approved proposal §1 clause text, verbatim; the core **as approved at § 3.1's
+  identifiable commit and as reconciled at § 3.1a**; the core's current categorical-gate clauses at
+  lines 26, 59–60, 469, 475, 477; proposal §4 ("Consequence changes safeguards, not ownership") and §6
+  ("Operator-reserved decisions", "Mandatory stop or handback").
+- **Precondition (load-bearing):** operator approval of § 3.1's commit exists and is identifiable, and
+  § 3.1a's status reconciliation has landed. Absent either, this specification does not execute — it is
+  not a judgment call for the implementing unit.
+- **Outputs — two parts of one change:**
+  1. **Clause insertion.** The core gains new `## 8. The governing autonomy rule` (or an equivalent title
+     that does not collide with `## Mode` — slice-1's own reserved-heading assertion), placed after
+     existing `## 7.`, carrying the proposal §1 clause verbatim. Existing `## 1.` through `## 7.` are
+     **not renumbered, retitled, or reordered** — this is the corrected destination from § Repository
+     Delta and ordering constraint 1a.
+  2. **Categorical-gate reconciliation.** The core's current unqualified statements that categorical
+     "hard to reverse" or "genuinely consequential" character alone routes a decision to the operator
+     (lines 26, 59–60, 469, 475, 477) are rewritten so that consequence scales containment and evidence
+     rather than automatically transferring the decision — matching proposal §4/§15 item 1 — while the
+     operator's *actual* reserved authority is preserved and made explicit: the specific classes proposal
+     §6 names as **Operator-reserved decisions** (changing outcome or priority, material scope change,
+     product/business behavior not already delegated, operating-model/architecture/cost/risk/governance
+     change, accepting undelegated material residual risk, capability-envelope expansion, production/
+     communication/credential/destructive-shared-state action without existing delegation, resolving
+     genuinely tied operator intentions, changing the authority policy itself) and **Mandatory stop or
+     handback** (unsupported load-bearing premise, a materially invalid plan whose repair exceeds the
+     envelope, unproducible required verification, an ungranted or unsafely-enforceable capability,
+     inventing operator intent, bypassing or self-expanding the control system, materially tied governing
+     sources). This is the exact target semantic content, not the final prose — the implementing unit
+     drafts the literal replacement text for its own risk-aware review, bounded by this specification's
+     inputs, outputs, and failure behavior below.
+- **Guaranteed behavior:** one copy of the governing rule, in the canonical core; no consumer gains a
+  second competing statement of it. Every class proposal §6 lists as operator-reserved or a mandatory
+  stop/handback trigger remains represented somewhere in the reconciled core §7 — reconciliation narrows
+  the *categorical* language, it does not silently drop a real operator protection.
+- **Failure behavior:** if the clause is paraphrased rather than carried verbatim, or duplicated into any
+  consumer file by this item, the specification fails and the change is reverted, not accepted as a
+  variant. If the reconciliation removes, narrows, or fails to represent any class proposal §6 names as
+  operator-reserved or a mandatory stop/handback trigger, the specification fails on the same terms — a
+  weakened operator boundary is not an acceptable side effect of removing the categorical language. A
+  commit that renumbers `## 1.`–`## 7.` fails this specification regardless of whether the clause itself
+  is correct.
 - **Side effects:** none outside the one file.
 - **Public seam:** the core file's own text, as in § 3.1.
 - **Fail-capable evidence:** (a) `grep -q "pre-authorized capabilities"` on the core must go from not
   matching (before) to matching (after) — forgetting the clause fails it; (b) a diff confirming the
-  authority line approved at § 3.1 is unchanged by this commit, proving this item did not reopen the
-  approved fixed point; (c) `work-loop-v2-core-resolver.test.sh` stays green.
+  authority line approved at § 3.1 and the header reconciled at § 3.1a are unchanged by this commit,
+  proving this item did not reopen either fixed point; (c) `grep -n '^## [0-9]'` on the core must return
+  exactly eight headings, numbered 1–8 in order, with headings 1–7's title text byte-identical to their
+  pre-commit text — a check that fails immediately under any renumbering; (d) the bare categorical strings
+  "the change would be hard to reverse" and "anything else that is genuinely consequential" (core's
+  current lines 469, 475) must **not** match verbatim after the edit; (e) a paired coverage check — every
+  operator-reserved-decision and mandatory-stop-or-handback class named in proposal §6 is represented by
+  some clause in the reconciled core §7, read and confirmed by a human or reviewer diff, not a keyword
+  grep that could pass on an accidental partial match; (f) `work-loop-v2-core-resolver.test.sh` stays
+  green.
+- **Review row:** high-consequence — same surface and reach as T1 and § 3.1a; one risk-aware Codex review
+  before implementation, covering both halves of this one coherent change together, not as two separate
+  reviews.
 
-### 3.3 Wording reconciliation (skill, command, autonomy rules, session-plan)
+### 3.3 Wording reconciliation — citation-only scope (skill authority hierarchy, Claude command)
 
-- **Inputs:** the now-canonical core's §1 text; the four files' current authority-adjacent language
-  (inventoried above).
-- **Outputs:** each file's phrasing points at the same §1 rule where it currently states an equivalent or
-  overlapping rule; no file gains a second, competing statement of the governing rule. **All four files
-  are in scope, `session-plan.md` included (corrected — Unit 5 Finding 3):** proposal §14 item 3 names it, so a
-  reviewer-time "change / no change" choice is not available to this plan. Its required change is bounded
-  and citation-shaped — Step 5 "Autonomy posture" gains one sentence recording that session-level pause
-  granularity is a planning classification and does not decide per-action authority, which §1 of the
-  canonical core governs. Step 5's three postures, their selection criteria, and the "name specific stop
-  points" instruction are unchanged.
+**Scope narrowed from the frozen plan (primary-source finding 6, report § 3 item 6).** This
+specification now covers exactly the citation-shaped reconciliation confirmed to need no semantic
+change: the Codex skill's existing authority hierarchy (line 429) and the Claude command's framing note
+(line 126). The skill's categorical hard-to-reverse gate (line 508) is **not** in this specification's
+scope — it needs a semantic rewrite, not a citation, and is specified separately at § 3.3a. `docs/
+autonomy-rules.md` and `session-plan.md` retain their own specifications below (§ 3.3, continued, and
+this section's original scope for those two files is otherwise unchanged).
+
+- **Inputs:** the now-canonical core's § 8 text; the skill's line-429 hierarchy and the command's
+  line-126 framing note; `docs/autonomy-rules.md` and `session-plan.md`'s current authority-adjacent
+  language (inventoried above).
+- **Outputs:** each file's phrasing points at the same core § 8 rule where it currently states an
+  equivalent or overlapping rule; no file gains a second, competing statement of the governing rule.
+  **All four files remain in scope, `session-plan.md` included (corrected — Unit 5 Finding 3):** proposal
+  §14 item 3 names it, so a reviewer-time "change / no change" choice is not available to this plan. Its
+  required change is bounded and citation-shaped — Step 5 "Autonomy posture" gains one sentence recording
+  that session-level pause granularity is a planning classification and does not decide per-action
+  authority, which core § 8 governs. Step 5's three postures, their selection criteria, and the "name
+  specific stop points" instruction are unchanged.
 - **Guaranteed behavior:** `docs/autonomy-rules.md` triggers 8 and 9 remain textually intact (proposal's
   explicit retention requirement); the structural-class risk-aware review at trigger 9 is reworded, not
-  replaced, to cite §1. `session-plan.md` Step 5 gains a cross-reference only — no posture is added,
-  removed, renamed, or re-scoped.
-- **Failure behavior:** any diff that removes or narrows trigger 8 or 9, or that duplicates §1's text
-  instead of citing it, fails this specification and must be reverted, not accepted as a variant.
+  replaced, to cite core § 8. `session-plan.md` Step 5 gains a cross-reference only — no posture is added,
+  removed, renamed, or re-scoped. Neither the skill's line 429 nor the command's line 126 gains any
+  content beyond a citation.
+- **Failure behavior:** any diff that removes or narrows trigger 8 or 9, that duplicates the proposal §1
+  clause's text instead of citing core § 8, or that introduces semantic content into the skill's line
+  429 or the command's line 126 beyond a citation, fails this specification and must be reverted, not
+  accepted as a variant.
 - **Side effects:** none beyond the four files.
 - **Public seam:** each file is read directly by its own consumers (Codex reads the skill; Claude reads
   the command; both read `docs/autonomy-rules.md` per its own "when to read" banner; `/session-plan`
   reads its own command file).
 - **Fail-capable evidence (corrected — Findings 3 and 5):** `work-loop-v2-slice-1.test.sh`'s existing
   skill-text assertions cover CE-9 and orientation phrasing already in the skill — they do **not** exercise
-  this new §1-citation behavior, so citing them alone is not evidence for this change. The genuinely
-  failable check is a new, targeted one added per tracer: a grep for the §1 citation text, failing before
-  the edit and passing after, run against each of the four files in turn — the skill, the command,
+  this new core-§8-citation behavior, so citing them alone is not evidence for this change. The genuinely
+  failable check is a new, targeted one added per tracer: a grep for the core-§8 citation text, failing
+  before the edit and passing after, run against each of the four files in turn — the skill, the command,
   `docs/autonomy-rules.md`, and `session-plan.md`. Two paired negative checks accompany them: a line-by-line
   diff proving `docs/autonomy-rules.md` triggers 8 and 9 lost no clause, and a diff proving
   `session-plan.md` Step 5's three posture headings and their criteria are byte-unchanged. The existing
   suite is reported separately, as a regression check that nothing else moved — not as proof the new
   citation exists.
+
+### 3.3a Codex skill: reconcile the categorical hard-to-reverse gate (new — primary-source finding 6, report § 3 item 6)
+
+**Claude's framing decision, marked as such:** this item is re-split out of the frozen plan's T3 because
+the skill's line-508 gate is a genuine semantic conflict, not a missing citation — treating it as
+citation-only would leave Codex's own operating instructions stating the categorical rule proposal §4/§15
+item 1 rejects, even after the core itself is reconciled at § 3.2.
+
+- **Inputs:** the skill's current line-508 text, "Decide anything hard to reverse — that is the
+  operator's, via core § 7," inside the "What you never do" list; the reconciled core § 7 language from
+  § 3.2, once it lands; proposal §4, §6.
+- **Precondition:** § 3.2's reconciled core exists and is committed — this item cites the corrected
+  boundary, so it cannot state it accurately before that boundary is settled.
+- **Outputs:** the skill's line-508 bullet no longer states an unqualified "anything hard to reverse"
+  transfer. It instead names the operator-reserved and mandatory-stop-or-handback classes core § 7 now
+  states (or cites them directly), so Codex's own operating text matches the reconciled core rather than
+  restating the pre-reconciliation categorical rule.
+- **Guaranteed behavior:** the skill's "What you never do" list keeps its other items unchanged
+  (committing or mutating Git state, silently repairing a bad brief, reopening strategy after every
+  result, adding a second review/state system, answering a nonzero dispatcher exit by leaving it,
+  authorizing nested-actor invocation) — this item touches only the one bullet. Skill lines 465–475's
+  four-condition re-check trigger is unaffected (report § 3 item 6: a different, narrower, proportional
+  condition, not part of this conflict).
+- **Failure behavior:** a diff that removes the bullet outright (silently dropping Codex's operator-stop
+  duty rather than correcting its scope) fails this specification, as does a diff that leaves the bare
+  "anything hard to reverse" phrase in place.
+- **Side effects:** none outside the one file.
+- **Public seam:** the skill's own text, read by Codex per its own "when to read" convention.
+- **Fail-capable evidence:** (a) the bare string "Decide anything hard to reverse" must **not** match
+  verbatim in the skill after the edit; (b) the skill still states, in some form, that a genuinely
+  operator-reserved or mandatory-stop-or-handback decision (per the reconciled core § 7) is not Codex's
+  to make — read and confirmed, not grepped, since the replacement wording is not fixed by this
+  specification; (c) the skill's other "What you never do" bullets are byte-unchanged (diff); (d)
+  `work-loop-v2-slice-1.test.sh` stays green as a regression check.
+- **Scope boundary:** this file, this one bullet only; depends on § 3.2 landing first.
+- **Review row:** high-consequence — this bullet defines Codex's own operator-escalation duty, the same
+  authority-boundary class § 3.2 and T4 sit in; one risk-aware Codex review before implementation.
 
 ### 3.4 Capability envelope and subset (documentation-only for MVP)
 
@@ -430,12 +610,13 @@ unreleased surface.
   item-11 measures; a tally showing zero of any measure is only credible alongside the individual task
   evidence it was drawn from, not asserted alone.
 
-**Distinguishing semantic behavior from capability enforcement (brief requirement):** 3.1, 3.2, 3.3, 3.6,
-and 3.7 are semantic Work Loop policy (what the rule says, whether an actor follows it, and whether real
-and constructed use both confirm it). 3.4 stops at documentation and an explicit enforced/requested
-distinction — it does not build enforcement. Mechanical capability enforcement (sandbox/network
-restriction inside the carrier) is named in the Fixed Point as deferred and is **not** specified here
-because the proposal does not schedule it for MVP; specifying it would silently expand scope.
+**Distinguishing semantic behavior from capability enforcement (brief requirement):** 3.1, 3.1a, 3.2, 3.3,
+3.3a, 3.6, and 3.7 are semantic Work Loop policy (what the rule says, whether an actor follows it, and
+whether real and constructed use both confirm it). 3.4 stops at documentation and an explicit
+enforced/requested distinction — it does not build enforcement. Mechanical capability enforcement
+(sandbox/network restriction inside the carrier) is named in the Fixed Point as deferred and is **not**
+specified here because the proposal does not schedule it for MVP; specifying it would silently expand
+scope.
 
 **Distinguishing the attended carrier from the unattended dispatcher (brief requirement):** every
 specification above targets the attended carrier's documentation and state-file conventions, and § 3.6's
@@ -449,15 +630,22 @@ here modifies and not a surface any trial may invoke.
 
 Small vertical tracer bullets. Risky assumptions and real seams (the core's canonicity gate, the
 capability envelope's actual baseline, the workspace-`CLAUDE.md` boundary) are addressed early rather than
-deferred. Tracers were renumbered in this correction round: T1 split into T1 and T2 (Unit 5 Finding 1), so what
-were T2–T8 are now T3–T9.
+deferred. Tracers were renumbered once already: T1 split into T1 and T2 (Unit 5 Finding 1), so what were
+T2–T8 became T3–T9. This amendment does not renumber further — it inserts two new tracers at decimal
+identifiers, **T1a** (between T1 and T2, primary-source finding 7) and **T3a** (after T3, primary-source
+finding 6), so every existing tracer keeps its identity and every existing cross-reference to T1–T9 stays
+correct.
 
 ### T1 — Executable core: authority status only (§14 item 1; split — Unit 5 Finding 1)
 
+**Implemented and operator-approved** (Fixed Point; T1 implementation commit `5fef08fff11a1009b30d925f49d68844fc4e2f03`, approval record commit `9a0fdb41fa27ae7ac813504a5145a59d465b93b7`). Retained
+unchanged as the historical record of what T1 did.
+
 - **Behaviour:** the core is no longer textually subordinate to proposal v0.4, which becomes recorded
   historical rationale. No governing policy is inserted by this tracer.
-- **Starting evidence:** current `:9-10` subordination line (confirmed present verbatim); no §1 section
-  exists.
+- **Starting evidence:** current `:9-10` subordination line (confirmed present verbatim); the core had
+  no governing-autonomy clause (its existing `## 1.` *Who does what* is a different, pre-existing
+  section — corrected wording, primary-source finding 2, report § 2).
 - **Intended change:** rewrite `:9-10` only.
 - **Verification:** three independent checks — (a) `grep -q "the Proposal wins"` on the core: matches
   before, must not match after; (b) `grep -q "pre-authorized capabilities"`: must not match before **and
@@ -466,55 +654,129 @@ were T2–T8 are now T3–T9.
 - **Exit condition:** the operator approves this exact revised commit. Proposal §14 item 1 states this
   approval "is what makes the core canonical; it has not happened yet," so the tracer ends **at** the
   approval, not at the commit. No later tracer may cite the core as canonical until it exists.
-- **Scope boundary:** this file only, and within it the authority line only. No consumer file, and no §1
-  clause, is touched.
+- **Scope boundary:** this file only, and within it the authority line only. No consumer file, and no
+  governing-autonomy clause, is touched.
 - **Review row (`qc-independence.md`):** high-consequence — the executable core is the shared authority
   document for the entire Work Loop; one risk-aware Codex review before implementation, per proposal
   §15's closing paragraph naming "the executable core" explicitly.
 
-### T2 — Executable core: insert the §1 governing clause (§14 item 2; split — Unit 5 Finding 1)
+### T1a — Executable core: status reconciliation (new — primary-source finding 7, report § 4)
 
-- **Behaviour:** the now-canonical core carries the approved §1 governing autonomy rule verbatim.
-- **Starting evidence:** T1's operator-approved commit exists and is identifiable; the core has no §1
-  section.
-- **Precondition:** T1's approval. Without it this tracer does not start — it is a gate, not a judgment
-  call for the implementing unit. Proposal §14 item 2 says the clause is added "to the now-canonical
-  core," and a core that is not yet canonical cannot receive it.
-- **Intended change:** add the §1 clause, verbatim, as a new numbered section.
-- **Verification:** (a) `grep -q "pre-authorized capabilities"` on the core: must not match before, must
-  match after; (b) a diff proving T1's approved authority line is unchanged by this commit; (c)
+Gated on T1's approval, gates T2. See § 3.1a for the full specification; this tracer entry is the bounded
+unit contract.
+
+- **Behaviour:** the core's header states its actual current status — canonical, per T1's recorded
+  approval — instead of "draft for operator approval," and the two dated amendment notes (core lines
+  165–167, 285–287) are corrected to say their limitation applied when the amendment landed and was
+  superseded by T1, rather than claiming the header "is deliberately unchanged" in the present tense.
+- **Starting evidence:** the core's line-3 status still reads "draft for operator approval," contradicting
+  the T1 approval record already on file (commit `9a0fdb41…`); the two notes' present-tense claim is
+  therefore stale (confirmed by reading both — core lines 165–167, 285–287).
+- **Intended change:** the header line, and the present-tense clause in each of the two notes. No
+  autonomy policy content — the proposal §1 clause is not touched by this tracer.
+- **Verification:** (a) `grep -qv "draft for operator approval"` on the core's status line, after; (b) a
+  diff proving lines 9–12 (T1's authority paragraph) and every section from `## 1.` onward are
+  byte-unchanged; (c) both notes still name their original approval dates; (d) `grep -qv "pre-authorized
+  capabilities"` on the core — confirms this tracer adds no clause; (e)
   `work-loop-v2-core-resolver.test.sh` stays green.
-- **Exit condition:** the clause is present verbatim and the approved authority line is intact.
+- **Exit condition:** the header states canonical status, both notes are corrected to past tense, and no
+  governing-clause content exists in the core yet.
+- **Scope boundary:** this file only, and within it the header and the two notes only. No consumer file,
+  and no governing-autonomy clause, is touched.
+- **Review row:** high-consequence — same surface and reach as T1; one risk-aware Codex review before
+  implementation.
+
+### T2 — Executable core: append the governing autonomy clause as § 8, and reconcile categorical consequence/hard-to-reverse gates (§14 item 2; split — Unit 5 Finding 1; scope expanded — primary-source finding 1, 5, report §§ 1–3)
+
+- **Behaviour:** the now-canonical, status-reconciled core carries the approved proposal §1 governing
+  autonomy rule verbatim, appended as new `## 8.`, **and** its existing categorical consequence/hard-to-
+  reverse operator-gate language (lines 26, 59–60, 469, 475, 477) is reconciled so the two do not state
+  contradictory rules about when the operator must be involved. See § 3.2 for the exact target clauses,
+  the required semantic change, and the boundaries the reconciliation must not cross.
+- **Starting evidence:** T1's operator-approved commit and T1a's status reconciliation both exist and are
+  identifiable; the core has `## 1.` through `## 7.` and no governing-autonomy clause; its current §7
+  states unqualified "hard to reverse" / "genuinely consequential" as automatic operator-transfer
+  triggers, which conflicts with proposal §4 and §15 item 1's "consequence is not an automatic operator
+  gate" (confirmed by reading both texts — § Repository Delta).
+- **Precondition:** T1's approval and T1a's reconciliation. Without both, this tracer does not start —
+  it is a gate, not a judgment call for the implementing unit. Proposal §14 item 2 says the clause is
+  added "to the now-canonical core," and a core whose own status is still contradictory is not a coherent
+  target to add governing policy to.
+- **Intended change:** two changes landing as one coherent commit — (1) append the proposal §1 clause,
+  verbatim, as new `## 8.`, with existing `## 1.`–`## 7.` untouched and unrenumbered; (2) reword lines
+  26, 59–60, 469, 475 and 477 so consequence/hard-to-reverse character alone no longer transfers a
+  decision to the operator, while every class proposal §6 names as operator-reserved or a mandatory
+  stop/handback trigger remains represented in the reconciled text. § 3.2's Outputs give the exact target
+  semantics; the implementing unit drafts the literal replacement prose for its own risk-aware review.
+- **Verification:** (a) `grep -q "pre-authorized capabilities"` on the core: must not match before, must
+  match after; (b) a diff proving T1's authority paragraph and T1a's reconciled header are unchanged by
+  this commit; (c) `grep -n '^## [0-9]'` on the core returns exactly eight headings, 1–8 in order, with
+  headings 1–7's titles byte-identical to their pre-commit text; (d) the bare strings "the change would
+  be hard to reverse" and "anything else that is genuinely consequential" must not match verbatim after
+  the edit; (e) a reviewer-read coverage check that every proposal §6 operator-reserved-decision and
+  mandatory-stop-or-handback class is still represented in the reconciled core §7; (f)
+  `work-loop-v2-core-resolver.test.sh` stays green.
+- **Exit condition:** the clause is present verbatim at `## 8.`, `## 1.`–`## 7.` are unrenumbered, the
+  categorical gate language no longer transfers decisions on consequence alone, and no proposal §6
+  operator-reserved or mandatory-stop class was dropped.
 - **Scope boundary:** this file only. No consumer file is touched.
-- **Review row:** high-consequence — same surface and same reach as T1; one risk-aware Codex review
-  before implementation. The split does not lower either half's tier.
+- **Review row:** high-consequence — same surface and reach as T1 and T1a; one risk-aware Codex review
+  before implementation, covering both halves of this one coherent change together.
 
-### T3 — Reconcile Codex skill and Claude command wording
+### T3 — Reconcile Codex skill and Claude command wording — citation-only scope (scope narrowed — primary-source finding 6, report § 3 item 6)
 
-- **Behaviour:** the skill and command cite the now-canonical §1 rule where they state or imply an
-  equivalent principle; no duplicate statement of the rule is introduced.
+- **Behaviour:** the skill's line-429 authority hierarchy and the command's line-126 framing note cite
+  the now-canonical core § 8 rule where they state or imply an equivalent principle; no duplicate
+  statement of the rule is introduced. The skill's separate categorical hard-to-reverse gate (line 508)
+  is **not** in this tracer's scope — see T3a.
 - **Starting evidence:** skill line 429's existing hierarchy; command line 126's framing note (§ Repository
-  Delta table).
-- **Intended change:** small, citation-shaped edits only.
+  Delta table); both confirmed to need only a citation, not a semantic rewrite.
+- **Intended change:** small, citation-shaped edits only, to these two locations.
 - **Verification (corrected — Unit 4 Finding 5):** the existing `work-loop-v2-slice-1.test.sh` assertions cover
   CE-9/orientation phrasing, not this citation — they are reported as a regression check only. The
-  genuinely failable evidence is a new, targeted grep for the §1-citation text in both files: must not
-  match before the edit, must match after.
-- **Exit condition:** both files cite §1 where relevant; no semantic hierarchy content changed.
-- **Scope boundary:** these two files only; depends on **T2** landing first (ordering constraint 1) —
-  there is no §1 clause to cite until T2 has added it to an approved-canonical core.
+  genuinely failable evidence is a new, targeted grep for the core-§8-citation text in both files: must
+  not match before the edit, must match after.
+- **Exit condition:** both files cite core § 8 where relevant; no semantic hierarchy content changed; the
+  skill's line 508 is untouched by this tracer.
+- **Scope boundary:** these two files, these two locations only; depends on **T2** landing first
+  (ordering constraint 1) — core § 8 does not exist to cite until T2 lands.
 - **Review row:** normal/consequential — one Codex review (not risk-aware; no hook, permission,
   cross-cutting-CLAUDE.md, new-command/skill, symlink, or shared-state-automation class is touched).
 
+### T3a — Codex skill: reconcile the categorical hard-to-reverse gate (new — primary-source finding 6, report § 3 item 6)
+
+Gated on T2. See § 3.3a for the full specification; this tracer entry is the bounded unit contract.
+
+- **Behaviour:** the skill's line-508 bullet, "Decide anything hard to reverse — that is the operator's,
+  via core § 7," no longer states an unqualified categorical transfer; it names or cites the reconciled
+  core § 7's actual operator-reserved and mandatory-stop-or-handback boundary.
+- **Starting evidence:** the bullet's current text (confirmed present verbatim, "What you never do"
+  list); it restates the same categorical rule T2 reconciles in the core, and conflicts with proposal
+  §4/§15 item 1 on the same ground (§ Repository Delta, "Codex skill categorical hard-to-reverse gate"
+  row).
+- **Intended change:** reword the one bullet to match the reconciled core § 7 boundary. No other bullet in
+  "What you never do" changes.
+- **Verification:** (a) the bare string "Decide anything hard to reverse" must not match verbatim after
+  the edit; (b) the skill still states, in some form, that a genuinely operator-reserved or
+  mandatory-stop-or-handback decision is not Codex's to make — read and confirmed, not grepped; (c) the
+  list's other bullets are byte-unchanged (diff); (d) `work-loop-v2-slice-1.test.sh` stays green.
+- **Exit condition:** the bullet cites the reconciled boundary; no other "What you never do" content
+  changed.
+- **Scope boundary:** this file, this one bullet only; depends on T2.
+- **Review row:** high-consequence — this bullet defines Codex's own operator-escalation duty, the same
+  authority-boundary class T2 and T4 sit in; one risk-aware Codex review before implementation.
+
 ### T4 — Reconcile `docs/autonomy-rules.md` wording
 
-- **Behaviour:** trigger 9's structural-class risk-aware review language cites §1 where it overlaps;
-  triggers 8 and 9 remain textually intact otherwise.
-- **Starting evidence:** full-file read (above); triggers 8–9 as currently worded.
+- **Behaviour:** trigger 9's structural-class risk-aware review language cites core § 8 where it
+  overlaps; triggers 8 and 9 remain textually intact otherwise.
+- **Starting evidence:** full-file read (above); triggers 8–9 as currently worded. Not part of the
+  primary-source report's semantic-conflict inventory (§ Repository Delta) — this tracer's scope is
+  unchanged by this amendment.
 - **Intended change:** citation-shaped wording only.
 - **Verification:** re-read triggers 8–9 post-edit; confirm no clause was removed or narrowed (line-by-line
   diff, not a summary).
-- **Exit condition:** wording cites §1; no trigger content lost.
+- **Exit condition:** wording cites core § 8; no trigger content lost.
 - **Scope boundary:** this file only; depends on T2.
 - **Review row (corrected — Unit 4 Finding 3):** high-consequence, regardless of edit size. §15's closing
   paragraph names `docs/autonomy-rules.md` explicitly as a separate high-consequence unit for *any*
@@ -528,15 +790,15 @@ proposal §14 item 3 names session-plan language among the four surfaces to reco
 required and only its *shape* was open. The shape is fixed here.
 
 - **Behaviour:** Step 5 "Autonomy posture" states that session-level pause granularity is a planning
-  classification and does not decide per-action authority, which the canonical core's §1 governs.
+  classification and does not decide per-action authority, which the canonical core's § 8 governs.
 - **Starting evidence:** Step 5's current text — three postures (Full autonomy / Gated /
   Operator-in-the-loop), their selection criteria, and the "Name specific stop points" instruction —
-  contains no reference to §1 (confirmed by targeted read; the §1 citation text does not appear in the
-  file).
+  contains no reference to the governing clause (confirmed by targeted read; the core-§8 citation text
+  does not appear in the file).
 - **Intended change:** one bounded, citation-shaped sentence added to Step 5. No posture is added,
   removed, renamed, or re-scoped; no criterion changes.
-- **Verification:** (a) a grep for the §1 citation text in `.claude/commands/session-plan.md` must not
-  match before the edit and must match after; (b) a diff proving the three posture headings and their
+- **Verification:** (a) a grep for the core-§8 citation text in `.claude/commands/session-plan.md` must
+  not match before the edit and must match after; (b) a diff proving the three posture headings and their
   bullet criteria are byte-unchanged — this is the check that fails if the "citation-shaped" bound is
   exceeded.
 - **Exit condition:** the citation is present and Step 5's posture content is provably unchanged. There
@@ -705,8 +967,9 @@ promoted into MVP, or silently dropped.
 | §14 item | Disposition |
 |---|---|
 | 1 (revise core, obtain approval) | **T1 (corrected — Unit 5 Finding 1; split from item 2, ends at operator approval)** |
-| 2 (add §1 clause) | **T2 (corrected — Unit 5 Finding 1; own tracer, gated on T1's approval, so policy cannot enter a not-yet-canonical core)** |
-| 3 (reconcile skill/command/autonomy-rules/session-plan) | T3 (skill, command), T4 (autonomy-rules), **T5 (session-plan — corrected, Unit 5 Finding 3: a required bounded citation change, no longer a reviewer-time change/no-change choice)** |
+| — (not a §14 item) | **T1a (added — primary-source finding 7, report § 4; reconciles the core's stale status header before T2 may begin; gated on T1, gates T2)** |
+| 2 (add §1 clause) | **T2 (corrected — Unit 5 Finding 1; own tracer, gated on T1's approval and T1a's reconciliation, so policy cannot enter a not-yet-canonical or self-contradictory core; scope expanded — primary-source finding 1, 5, report §§ 1–3 — to append the clause at core § 8, not §1, and reconcile the core's own categorical consequence/hard-to-reverse language against it)** |
+| 3 (reconcile skill/command/autonomy-rules/session-plan) | T3 (skill line 429, command — citation-only, scope narrowed by primary-source finding 6), **T3a (added — primary-source finding 6, report § 3 item 6; the skill's line-508 categorical hard-to-reverse gate is a semantic conflict, not a citation)**, T4 (autonomy-rules), **T5 (session-plan — corrected, Unit 5 Finding 3: a required bounded citation change, no longer a reviewer-time change/no-change choice)** |
 | 4 (define baseline envelope; defer connected-development profile) | **T6 (corrected — Unit 5 Finding 2; the envelope is stated, and every non-deferred §11 control is mapped to a surface and fail-capable evidence)** |
 | 5 (record subset in brief, profile in evidence) | T6 |
 | 6 (carrier attended-first; defer sandbox/network enforcement) | Fixed Point (Keep — no tracer; already true, stated as a retained fact) |
@@ -722,34 +985,46 @@ promoted into MVP, or silently dropped.
 
 ### Internal consistency check
 
-Every tracer (T1–T9) carries all six required fields (Behaviour, Starting evidence, Intended change,
-Verification, Exit condition, Scope boundary) plus its qc-independence review row — confirmed by the
-table structure above; none is missing a field. Every proposed implementation surface named in a tracer
-(executable core, skill, command, autonomy-rules, session-plan, state-file field contract, carrier test
-suite, evaluation instrument) appears first in § Repository Delta's classification table and § Implementation
-Specification's per-capability entry before it appears in a tracer — cross-checked by section: T1↔3.1,
-T2↔3.2, T3↔3.3, T4↔3.3, T5↔3.3 (session-plan, corrected — its required change is now specified there,
-not left to the reviewer), T6↔3.4 (skill placement; envelope and control map, corrected), T7↔3.5,
-T8↔3.6 (twelve scenario contracts, corrected), T9↔3.7 (real-task evidence, added). No tracer introduces a
-surface absent from both earlier sections.
+Every tracer (T1, T1a, T2, T3, T3a, T4–T9) carries all six required fields (Behaviour, Starting
+evidence, Intended change, Verification, Exit condition, Scope boundary) plus its qc-independence review
+row — confirmed by the table structure above; none is missing a field. Every proposed implementation
+surface named in a tracer (executable core, skill, command, autonomy-rules, session-plan, state-file
+field contract, carrier test suite, evaluation instrument) appears first in § Repository Delta's
+classification table and § Implementation Specification's per-capability entry before it appears in a
+tracer — cross-checked by section: T1↔3.1, T1a↔3.1a (added), T2↔3.2 (scope expanded), T3↔3.3 (scope
+narrowed), T3a↔3.3a (added), T4↔3.3, T5↔3.3 (session-plan, corrected — its required change is now
+specified there, not left to the reviewer), T6↔3.4 (skill placement; envelope and control map,
+corrected), T7↔3.5 (nested-actor evidence), T8↔3.6 (twelve scenario contracts, corrected), T9↔3.7
+(real-task evidence, added). No tracer introduces a surface absent from both earlier sections.
 
-Two ordering facts this check confirms after the correction round: **T2 may not start before T1's
-operator approval** (Unit 5 Finding 1's whole point — the gate is stated in both § 3.2 and T2, and in ordering
-constraint 1, with no third place able to contradict them); and **T3, T4, T5 and T6 all depend on T2**,
-because each cites a §1 clause that does not exist until T2 lands. T6 and T3 both touch the Codex skill;
-T6 is sequenced after T3 in the same file for that reason, though neither tracer's own scope depends on
-the other's content.
+Three ordering facts this check confirms after this amendment: **T1a may not start before T1's operator
+approval, and T2 may not start before T1a lands** (primary-source finding 7 — the gate is stated in
+§ 3.1a, § 3.2, T1a and T2, and in ordering constraints 1 and 1b, with no third place able to
+contradict them); **T3, T4, T5 and T6 all depend on T2, and T3a also depends on T2** (T3a additionally
+depends on T2's reconciled §7 boundary specifically, not merely its existence), because each cites core
+§8 or the reconciled §7 language, neither of which exists until T2 lands; and T6 and T3 both touch the
+Codex skill — T6 is sequenced after T3 in the same file for that reason, though neither tracer's own
+scope depends on the other's content. T3a also touches the Codex skill but a different bullet (line 508
+vs. line 429/T6's brief-preparation section), so it does not conflict with either.
 
-Exit-condition strictness, after Unit 5 Finding 5: T1 ends at an operator approval; T8 ends only with all twelve
-rows carrying a verdict; T9 ends only at 3–5 organic tasks across ≥2 real capability shapes. None of the
-three has an alternate exit reachable by recording a limitation — the only route past T8's or T9's bar is
-an operator-owned change to the Fixed Point.
+Exit-condition strictness, after Unit 5 Finding 5: T1 ends at an operator approval; T1a ends at the
+status reconciliation landing (no operator gate of its own beyond its risk-aware review); T8 ends only
+with all twelve rows carrying a verdict; T9 ends only at 3–5 organic tasks across ≥2 real capability
+shapes. None of the T8/T9 pair has an alternate exit reachable by recording a limitation — the only route
+past T8's or T9's bar is an operator-owned change to the Fixed Point.
 
 ---
 
 ## Plan-readiness statement
 
-This artifact is draft until a fresh bounded implementation-plan review accepts it and the plan is frozen
-(operator process decision, 2026-08-14). It grants no target-edit authority on its own. The Work Loop
-state file for task `autonomy-authority-capability` remains the only runtime state; no progress tracker,
-review ledger, risk document, test-strategy document, or parallel handoff was created by this unit.
+This artifact is **draft**, reopened from its prior freeze on operator decision, 2026-08-14, after
+primary-source research disproved two of that freeze's premises (this file's Status block; report
+[`t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md`](t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md)).
+It grants no target-edit authority on its own — the same as the prior freeze required before its own
+review, and unchanged by this amendment. Before implementation resumes, this amended content requires:
+one fresh, isolated bounded implementation-plan review against the approved proposal and the primary-source
+report's evidence, and the operator's explicit content-bound re-freeze of the reviewed commit/blob. Until
+both occur, no status-reconciliation, T2, T3a, or later target-implementation unit may begin — T1 remains
+the only implemented and operator-approved tracer. The Work Loop state file for task
+`autonomy-authority-capability` remains the only runtime state; no progress tracker, review ledger, risk
+document, test-strategy document, or parallel handoff was created by this unit.

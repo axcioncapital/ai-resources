@@ -4,124 +4,94 @@ turn: codex
 ---
 
 ## Objective and scope
-Implement and verify the frozen `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md`, whose governing direction is the content-bound approved autonomy/authority/capability proposal.
+Implement and verify the approved autonomy/authority/capability proposal through a repository-grounded implementation plan that remains faithful to current authority and live behavior.
 
-The operator wants implementation to proceed under the compact Axcíon Standard Implementation Workflow. `/implementation-triage` remains explicitly excluded. The existing Work Loop is the sole runtime state; do not create parallel state or review systems.
+The operator wants implementation to proceed under the compact Axcíon Standard Implementation Workflow. `/implementation-triage` remains explicitly excluded. The existing Work Loop is the sole runtime state; the research report is evidence, not parallel runtime state.
 
 ## Lane and unit
-Standard. Discovery mode. Unit 9 — T2 pre-implementation premise verification and risk-aware review payload.
+Standard. Implementation mode. Unit 10 — reopen and amend the implementation plan from the approved primary-source research.
 
-Named reason for the loop: T2 inserts governing policy into the canonical executable core, a shared high-consequence authority surface whose placement and references must be settled before implementation.
+Named reason for the loop: the frozen plan contains material false premises about core section placement and live authority semantics; correcting them must survive session boundaries and receive fresh review before target implementation resumes.
 
 ## Brief
-T1 is complete: commit `5fef08fff11a1009b30d925f49d68844fc4e2f03`, core blob `30c62c418d3bd29b6c4a17841c90886f7be5ffe8`, received the operator's content-bound approval on 2026-08-14 and the core is now canonical. T2 is the next frozen-plan tracer, but implementation must wait for its own premise verification and seven-dimension risk-aware Codex review.
+The operator approved the research-backed revised direction on 2026-08-14. This unit updates the planning artifact only: return it to draft, incorporate the verified repository corrections, and prepare it for one fresh bounded plan review; do not re-freeze it or edit any target implementation surface.
 
 Governing authority:
 
-- Frozen plan: freeze commit `fe2c62fddf8124caf44836b8237e44e06041db6f`, plan blob `d1a6162b8e92c9689f261b85607dfcdb89105c6d`; T2 contract at §3.2 and §4 T2.
-- Approved proposal: commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67`, blob `39c67196dcec35a1be8f4fcf8ea3ef6a50cfde0b`; governing clause in proposal §1 and sequence at §14 item 2.
-- Approved T1 identity: implementation commit `5fef08fff11a1009b30d925f49d68844fc4e2f03`; operator-approval record commit `9a0fdb41fa27ae7ac813504a5145a59d465b93b7`.
-- Review rule: `docs/qc-independence.md`, including premise verification and the seven risk-aware dimensions.
+- Operator decision, 2026-08-14: reopen the plan as draft; preserve §8 placement and existing core numbering; add a separate status-reconciliation unit; revise T2 to reconcile contradictory core consequence gates as well as append the verbatim rule; revise/re-split T3 for the live Codex-skill gate; then require one fresh bounded review and explicit content-bound re-freeze before implementation resumes.
+- Primary-source report: `plans/work-loop-v2-v0.2/t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md`. Read it in full and use its cited primary sources; it is the evidence basis for this amendment.
+- Current plan identity: freeze commit `fe2c62fddf8124caf44836b8237e44e06041db6f`, plan blob `d1a6162b8e92c9689f261b85607dfcdb89105c6d`.
+- Approved proposal: commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67`, blob `39c67196dcec35a1be8f4fcf8ea3ef6a50cfde0b`.
+- Canonical core after approved T1: implementation commit `5fef08fff11a1009b30d925f49d68844fc4e2f03`, core blob `30c62c418d3bd29b6c4a17841c90886f7be5ffe8`; approval record commit `9a0fdb41fa27ae7ac813504a5145a59d465b93b7`.
 
-Required outcome: prepare a repository-grounded T2 review payload and hand back without editing the core or any other target surface.
+Required outcome:
 
-Verify and report:
+1. Change the implementation plan's status from frozen to **Draft — material repository-evidence amendment pending fresh review and operator re-freeze**. Preserve the old freeze identity and accepted T8 limitation as historical decisions; state plainly that the amended plan grants no target implementation authority.
+2. Correct the plan's destination semantics: proposal §1 is the clause source; the canonical core destination is new `## 8. The governing autonomy rule`; existing core §§1–7 are never renumbered.
+3. Add a separate, bounded pre-T2 core-status reconciliation tracer covering the stale line-3 approval status and the two dated amendment notes identified by the research. Preserve the existing T1–T9 tracer identities; use the smallest unambiguous inserted identifier rather than renumbering them.
+4. Revise T2 so its one coherent resulting core blob appends the verified verbatim §8 clause and reconciles every categorical consequence/hard-to-reverse gate the research proves conflicts with the approved rule. Keep T1's approved authority paragraph unchanged. Enumerate the exact current clauses, intended semantic change, boundaries, review tier, and fail-capable evidence; do not hide these changes under “citation.”
+5. Revise or split T3 so the live Codex skill's substantive hard-to-reverse operator gate is reconciled semantically, not treated as citation-only. Apply the report's complete live-conflict inventory and distinguish any Claude-command text that is already compatible from text that genuinely requires change.
+6. Correct every connected specification, repository-delta classification, ordering rule, tracer contract, citation target, traceability row, internal-consistency statement, and evidence check affected by items 2–5. Do not limit the amendment to the three initially noticed §1 strings.
+7. Preserve all unrelated accepted plan content, including the operator-accepted T8 S4/S8 evidence limitation, T9 strict exit, item-11 measures, MVP deferrals, and T1's completed/approved identity.
+8. Record the required next gate: one genuinely fresh bounded implementation-plan review, followed by explicit operator content-bound re-freeze, before any status reconciliation, T2, T3, or later target implementation begins.
 
-1. Confirm the current core matches approved T1 blob `30c62c418d3bd29b6c4a17841c90886f7be5ffe8`, retains the approved authority paragraph unchanged, and still lacks `pre-authorized capabilities`.
-2. Extract the governing autonomy clause verbatim from the approved proposal content and prove its exact content identity. Do not paraphrase it.
-3. Inspect the core's complete current heading/section topology and re-derive every live reference that depends on its section numbers. The frozen plan says to add a “new numbered section,” while the core already has `## 1. Who does what`; determine whether the instruction has a safe literal implementation without renumbering or breaking references. If not, state the false premise and compare the smallest faithful placement options without choosing silently.
-4. Resolve the canonical-status contradiction exposed by T1 approval: the core header still says `Status: draft for operator approval`, and the two amendment notes say that header is deliberately unchanged. Determine whether T2 can remain truthful without changing those lines, whether a status-only reconciliation is necessary, and whether that reconciliation fits T2's frozen scope or requires an explicit plan/operator decision.
-5. Propose the smallest exact T2 diff shape that keeps T1's approved authority paragraph byte-identical, carries the clause verbatim once, creates no competing copy, and avoids consumer breakage. Do not apply it.
-6. Evaluate the exact proposed shape across usage cost, permissions surface, blast radius, reversibility, hidden coupling, principle alignment, and problem reality.
-7. Run the existing core-resolver and slice-1 deterministic suites as the current baseline, and define fail-capable evidence for the later implementation unit.
+Scope: the implementation plan, the research report, and this Work Loop state-file handback only. The report was produced by the operator-invoked research skill; preserve it as the cited evidence artifact and commit it without rewriting its conclusions. Do not edit the proposal, executable core, skill, command, autonomy rules, session plan, carrier, dispatcher, tests, or any target implementation surface. Do not implement, review, or freeze the amended plan in this unit.
 
-Scope: read-only investigation plus this state-file handback. Do not edit the core, frozen plan, proposal, skill, command, autonomy rules, session plan, carrier, dispatcher, tests, or any target implementation surface. Do not create a separate review artifact or begin T2 implementation.
+Required evidence:
 
-Completion condition: return the exact clause, section/reference topology, status-header disposition, smallest proposed diff shape, seven-dimension risk evidence, and a clear recommendation—safe to implement as bounded, revise before implementation, or operator decision required—then set `turn: codex`, commit only the state-file handback, and stop.
+- Confirm the pre-amendment plan matches blob `d1a6162b8e92c9689f261b85607dfcdb89105c6d`.
+- Provide a bounded before/after map from each material research finding to the exact amended plan section/tracer.
+- Show fail-capable searches proving the plan no longer assigns the governing rule to destination core §1, never authorizes renumbering §§1–7, includes the separate status unit before T2, and represents the core and skill semantic conflicts as real changes rather than citation-only work.
+- Show the plan remains draft/unfrozen and preserves the accepted T8 limitation and unrelated traceability.
+- Report the amendment commit and resulting plan blob; confirm only the plan, research report, and state-file handback were committed.
 
-Stop conditions: stop if T1 identity or approval is contradictory, the clause cannot be proved verbatim, literal numbering would cause uncontrolled renumbering, the stale status cannot be reconciled inside authority, or a consequential decision remains unresolved. Challenge a false premise rather than improvising.
+Completion condition: deliver the coherent draft amendment with evidence, set `turn: codex`, commit only the plan, research report, and state-file handback, and stop. Do not begin the fresh review or any target implementation.
+
+Stop conditions: stop if the report conflicts with a governing approved source, the required amendment would change the proposal's approved outcome or capability envelope, the plan cannot remain internally coherent without reopening another operator decision, or any target implementation edit appears necessary. Challenge a false premise rather than improvising.
 
 ## Latest result
 
 Inspected (2026-08-14):
 
-- Claim (1) frozen plan identity: HOLDS — `git cat-file -t fe2c62fddf8124caf44836b8237e44e06041db6f` returns `commit` ("freeze: autonomy-authority-capability Unit 6 — content-bound plan freeze"); `git rev-parse fe2c62f:plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md` = `d1a6162b8e92c9689f261b85607dfcdb89105c6d`, and `git hash-object` on the current file returns the same blob. The plan is unchanged since the freeze.
-- Claim (2) approved proposal identity: HOLDS — commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67` exists; `git ls-tree -r d8a89e0f` maps blob `39c67196dcec35a1be8f4fcf8ea3ef6a50cfde0b` to `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-proposal-v0.1.md`.
-- Claim (3) T1 identity: HOLDS — implementation commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` and approval-record commit `9a0fdb41fa27ae7ac813504a5145a59d465b93b7` both resolve to commits with the subjects the brief states.
-- Claim (4) review rule: HOLDS — searched `docs/qc-independence.md` for the premise precondition and the dimension list; line 37 carries **Premise-verification precondition**, line 35 carries all seven dimensions (usage cost, permissions surface, blast radius, reversibility, hidden coupling, principle alignment, problem reality).
-- Claim (5) core matches approved T1 blob: HOLDS — `git hash-object` on `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` = `30c62c418d3bd29b6c4a17841c90886f7be5ffe8`, identical to `HEAD:` for that path, and `git status --porcelain` on it is empty. Byte-identity to the approved blob subsumes the narrower "authority paragraph unchanged" claim — no paragraph in the file can differ.
-- Claim (6) core lacks `pre-authorized capabilities`: HOLDS — searched the core for the literal string `pre-authorized capabilities`; `grep -c` returns 0.
+- Pre-amendment plan identity: HOLDS — `git rev-parse fe2c62fddf8124caf44836b8237e44e06041db6f:<plan path>` = `d1a6162b8e92c9689f261b85607dfcdb89105c6d`, matching `git hash-object` on the plan before this unit's edits.
+- Report exists at the cited path and its primary-source citations check out — verified by inspection, not trust: core heading topology (exactly `## 1.`–`## 7.`, no other numbered section), the 26-token/25-internal-self-reference count for `§ [1-7]` in the core (`rg --pcre2`), proposal §4/§15 item 1's "not an automatic operator gate" text, proposal §6's full operator-reserved-decision and mandatory-stop-or-handback lists, core lines 26/59–60/469/475/477's categorical "hard to reverse"/"consequential" text, and skill line 508's "Decide anything hard to reverse — that is the operator's, via core § 7" — every quotation the report and the brief rely on was opened and read at its cited location before use.
+- Freeze-identity discrepancy (plan header `cab3b7a2…`/`1cbcbf4e…` vs. state-file `fe2c62fd…`/`d1a6162b…`): HOLDS, resolved — `git diff` between the two blobs touches only the Status preamble; `cab3b7a2` is a direct ancestor of `fe2c62fd`. Both identities are correct at different layers (substantive content vs. status announcement), not a contradiction.
 
-Result: the T2 premise base holds, but T2's *placement* instruction contains a false premise. T2 is not safe to implement as currently frozen. Recommendation: **revise before implementation** — two narrow items need plan/operator authority first.
+Result: the plan is amended in place, from blob `d1a6162b8e92c9689f261b85607dfcdb89105c6d` to blob `a824df52259e9da24b3a2a0ac42b07de85f57ec7`. It is **draft**, not re-frozen — no target-implementation authority exists yet. The primary-source report is committed as the cited evidence artifact, unmodified from its authored content.
 
-**(2) The governing clause, verbatim.** Extracted from the approved blob, not the working file:
+**Before → after map, one row per required outcome item:**
 
-```
-> **Within the approved solution envelope, resolve what evidence can resolve, exercise professional technical judgment, and use only pre-authorized capabilities. Consequence increases containment and verification; it does not by itself transfer the decision to the operator. Escalate only when continuing requires operator-owned intent, accepted risk, a material change outside the solution envelope, or expansion of the authorized capability envelope. Stop when a load-bearing premise or required verification cannot be established, or when continuing would bypass the control system.**
-```
+1. **Status.** Before: "**Frozen for implementation**". After: "**Draft — material repository-evidence amendment pending fresh review and operator re-freeze**", with the prior freeze's two identities (`cab3b7a2…`/`1cbcbf4e…` substantive content, `fe2c62fd…`/`d1a6162b…` status announcement) preserved as superseded history, not live authority.
+2. **Destination semantics.** Repository Delta row "Executable core, governing rule" now reads `same file, § 8 (new, appended)`, with the false "§1 (new)" premise named and corrected; ordering constraint 1a states the destination rule and the renumbering blast radius (≥25 internal self-references, ~198 explicit `core §N` references) that literal §1 placement would have caused.
+3. **Status-reconciliation tracer.** New `T1a` (Execution Plan) and `§ 3.1a` (Implementation Specification) — full six/seven-field bounded unit contract — inserted between T1 and T2; T2's precondition now names T1a explicitly.
+4. **T2 revised.** `§ 3.2` and the `T2` tracer both now specify two coherent outputs — clause append at `## 8.` and reconciliation of core lines 26, 59–60, 469, 475, 477 against proposal §4/§6/§15 item 1 — with the exact current clauses quoted, the target semantic change stated (operator-reserved-decision and mandatory-stop-or-handback classes named verbatim from proposal §6, not citation), boundaries (T1's paragraph and T1a's header byte-unchanged; no renumbering; no dropped operator-reserved class), unchanged high-consequence risk-aware review tier, and six fail-capable evidence items.
+5. **T3 re-split.** `T3` narrowed to citation-only scope (skill line 429, command line 126); new `T3a` (Execution Plan) and `§ 3.3a` (Implementation Specification) carry the skill's line-508 semantic reconciliation, gated on T2, with its own high-consequence review row.
+6. **Connected corrections.** Every `§1`-as-destination string in §3.2/§3.3/T2/T3/T4/T5, the ordering-constraint prose, the traceability table (rows for §14 items 2 and 3), and the internal-consistency check's tracer list and dependency statements now reads `§8`/`core §8`/names T1a and T3a explicitly. Repository Delta gained two new classified rows ("Executable core, categorical consequence/hard-to-reverse gate" — Modify, semantic; "Codex skill categorical hard-to-reverse gate" — Modify, semantic) so both conflicts are visible at inventory, not only inside a tracer.
+7. **Preserved content.** T8's S4/S8 accepted limitation, the §14 item 6 deferral, T9's strict exit, item-11 measures, MVP deferrals (§14 items 13–15), and T1's completed/approved identity are all carried forward with only their framing sentence updated to say "unchanged by this amendment" — no substantive content altered (spot-verified: `grep -c` for each preserved clause's distinguishing text returns 1, matching pre-amendment).
+8. **Next gate recorded.** Plan-readiness statement states the required sequence — one fresh isolated bounded review, then explicit operator content-bound re-freeze — before T1a, T2, T3a, or any later target-implementation unit may begin.
 
-Content identity proved: it is line 15 of blob `39c67196dcec35a1be8f4fcf8ea3ef6a50cfde0b`, 588 bytes including the trailing newline, sha256 `51552195d73e42e0ef15b13904ad8d0d5cbb52d0447df5812a202727da182b80`. The same line in the current working proposal file hashes identically (`cmp` returns IDENTICAL), so either source may be used. The working file's blob is now `e2a50c5e6e82482ed81a37000ac927af4f5bc672`, differing from the approved blob in exactly one line — the `**Status:**` line recording the approval itself (`git diff` between the two blobs: 1 insertion, 1 deletion). No substantive content diverged.
+**Fail-capable evidence, run against the amended plan:**
 
-**(3) Section topology, live references, and the false premise.** The core has exactly seven numbered sections: `## 1. Who does what` (L16), `## 2. When to use the loop` (L40), `## 3. The unit cycle` (L64), `## 4. The task-state file` (L251), `## 5. Words we use` (L416), `## 6. Safety rules` (L438), `## 7. When to stop and ask` (L456). References that depend on those numbers: 27 self-references inside the core; 443 tracked hits repo-wide for `core § N`; on the live surfaces, `.agents/skills/work-loop-v2/SKILL.md` cites §1×4, §2×3, §3×10, §4×16, §6×4, §7×4, and `.claude/commands/work-loop-v2.md` cites §2×3, §3×5, §4×4, §5×1, §6×8, §7×3.
+- `grep -n 'same file, § 1 (new)'` → no match (was present pre-amendment; the false-premise string is gone).
+- `grep -n 'never renumbered'` → 1 match (ordering constraint 1a); `grep -n 'not renumbered'` → 1 further match (§ 3.2 Outputs item 1's "not renumbered, retitled, or reordered") — the no-renumbering rule is stated in both places, in each place's own wording.
+- `grep -n '^### T1a\|^### T2 '` → both present, in that file order.
+- `grep -n 'Modify — semantic, not citation-only'` → 2 matches (the core row and the skill row in Repository Delta).
+- `grep -n '^\*\*Status:\*\*'` → "Draft — material repository-evidence amendment pending fresh review and operator re-freeze".
+- `grep -n 'Accepted limitation carried forward'` → present, T8's S4/S8 limitation unchanged.
+- Regression: `work-loop-v2-core-resolver.test.sh` — `4 passed, 0 failed`. `work-loop-v2-slice-1.test.sh` — `passed: 308  failed: 0`. Both unaffected, since no target surface was touched.
+- `git status --porcelain` on `plans/work-loop-v2-mvp/`, `.agents/skills/`, `.claude/commands/`, `docs/`, `scripts/` — empty; no target implementation surface changed.
 
-No script binds mechanically to the core's numbered headings — searched `*.sh` for anchored numbered-heading patterns, and every `CORE_F` assertion in `work-loop-v2-slice-1.test.sh` (lines 268, 568, 765–767, 1267–1314) greps content strings, never a section number; the 38 `core § N` occurrences in that file are comments. **Renumbering would therefore break 443 prose citations silently, with both suites still green** — worse than a mechanical failure, not better.
+**One deferral, noticed and not fixed (out of this unit's briefed scope — items 2–5 only):** Repository Delta's "Workspace `CLAUDE.md`" row (and its `## Autonomy Rules` boundary paragraph above the table) says the workspace pointer is "being reconciled at T3" — that tracer is actually `T4` (`docs/autonomy-rules.md`); `T3` is the skill/command tracer. This is a pre-existing plan defect, not caused or touched by items 2–5, and is left for the fresh plan review to fix rather than corrected here without its own review.
 
-FALSE PREMISE: the frozen plan's inventory row (plan line 127) records the target as `same file, § 1 (new)` and justifies it with "No §1 clause exists in the core today; the file currently has no numbered governing-autonomy section." The core does have a `## 1.` — `Who does what`. Placing the clause literally at §1 renumbers 1→2 … 7→8 and invalidates every reference above. §3.3 (plan line 257) and T5 (plan line 531) compound this: both require downstream files to gain the citation text "§1 of the canonical core" / "the canonical core's §1", which is only true if the clause is core §1.
+Research report (committed, unmodified from its authored content):
+`plans/work-loop-v2-v0.2/t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md`, blob `16d5203bcfcdb3f6ddd19a1e4baf36612650efa6`.
 
-Placement options compared, none chosen:
+Amended plan blob: `a824df52259e9da24b3a2a0ac42b07de85f57ec7`.
 
-- **A — insert as `## 1.`, renumber 1–7 to 2–8.** Literal to plan line 127 and makes §3.3/T5's citation text true. Cost: uncontrolled renumbering, 443 broken citations, silent. Rejected on the brief's own stop condition.
-- **B — append as `## 8.` after §7.** Literal to T2's actual contract, which says only "a new numbered section" (§3.2 Outputs, T2 Intended change) and never names a number. Zero renumbering, zero reference breakage. Cost: a governing rule sits after "When to stop and ask", and §3.3/T5's "§1 of the canonical core" text becomes false and must be corrected before T3–T5 run.
-- **C — insert as `## 2.`, renumber 2–7 to 3–8.** Better reading position than B. Same breakage class as A, marginally smaller. Rejected for the same reason.
-- **D — unnumbered section.** Violates "a new numbered section". Rejected.
-
-B is the only option that satisfies T2's contract without renumbering. It is not free: it requires correcting two citation strings in the frozen plan, which is a plan amendment and therefore not Claude's or Codex's call.
-
-**(4) Status-header disposition.** Core line 3 reads `**Version:** v0.1 (MVP). **Status:** draft for operator approval.` The authority paragraph (L9–12) states that the operator's content-bound approval of the identifiable commit "is what makes this file canonical" — and that approval exists (commit `9a0fdb41`, of blob `30c62c41`). The header is therefore stale. The two amendment notes (L165–167, L285–287) each say the header "still reads **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as approval of the rest of the file." Their rationale was that a single clause's approval is not the file's approval — T1's whole-file content-bound approval has overtaken it.
-
-T2 can remain truthful without touching those lines only if it adds **no** third note of that form: repeating "the header still reads draft" would restate a claim T1's approval falsified. A status-only reconciliation is genuinely necessary, but it does not fit T2's frozen scope — T2's intended change is "add the §1 clause, verbatim, as a new numbered section", and the header is neither the clause nor the T1 authority line. It needs its own bounded unit and operator authority, because the header is the record of approval state. It does not block T2 provided T2 adds no draft-status note.
-
-**(5) Smallest exact T2 diff shape (proposed, not applied).** One file, `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`. Append after line 477 (end of §7), an addition-only hunk of five lines:
-
-```
-## 8. The governing autonomy rule
-(blank)
-> **Within the approved solution envelope, … would bypass the control system.**   ← the 588-byte line above, byte-identical
-(blank)
-```
-
-Lines 1–477 unchanged, so the header, the T1 authority paragraph, all seven existing headings and all 27 self-references are untouched by construction. One copy of the rule; no consumer file touched; no competing statement created. Heading title avoids `## Mode`, which slice-1 assertion at line 1283 forbids.
-
-**(6) Seven-dimension evaluation of that exact shape.**
-
-- *Usage cost* — negligible. One append to a file already loaded on every Work Loop invocation; ~590 bytes added to a 477-line document.
-- *Permissions surface* — none. No hook, setting, allowlist, script or capability changes. The clause is read-only text.
-- *Blast radius* — nominally one file, but that file is the shared authority document every Work Loop unit resolves. Under shape B the radius is bounded to *addition*: no existing sentence changes, so no consumer's current reading is altered. Under shape A it would extend to 443 citations across the repo.
-- *Reversibility* — high. A pure-addition hunk reverts by deleting five lines; no migration, no dependent state.
-- *Hidden coupling* — one, now named: T3, T4 and T5 are ordered after T2 and cite the clause's section number. Shape B makes the plan's prescribed citation text ("§1 of the canonical core") wrong, so the coupling must be resolved before T3 starts, not after.
-- *Principle alignment* — aligned. Proposal §14 item 2 and the design constraint both require one copy in the canonical core with no duplication into consumers; shape B does exactly that. The residual misalignment is with the plan's §1 *placement* wording, not with the proposal.
-- *Problem reality* — observed, not inferred. The subordination line was really present and really removed at T1; the clause is really absent from the core (`grep -c` = 0); the §1 collision was found by reading the core's actual heading list, not predicted.
-
-**(7) Baseline suites, run now.** `work-loop-v2-core-resolver.test.sh`: `4 passed, 0 failed`. `work-loop-v2-slice-1.test.sh`: `passed: 308  failed: 0`.
-
-Fail-capable evidence defined for the later T2 implementation unit — each check must be run before the edit and shown failing, then after and shown passing:
-
-- (a) `grep -c 'pre-authorized capabilities'` on the core: **0 now**, must be ≥1 after. Forgetting the clause fails it.
-- (b) Verbatim identity: extract the added blockquote line, `shasum -a 256` it, and require `51552195d73e42e0ef15b13904ad8d0d5cbb52d0447df5812a202727da182b80`. Any paraphrase, rewrap or smart-quote substitution fails it — this is the check §3.2's failure behavior demands.
-- (c) No reopening of T1: `git diff` of the T2 commit restricted to lines 1–15 must be empty, proving the header and the approved authority paragraph were not touched.
-- (d) No renumbering: `grep -n '^## [0-9]'` must return exactly eight lines, numbered 1–8 in order, with headings 1–7 byte-identical to their current text. Fails immediately under shape A or C.
-- (e) Single copy: `git grep -c 'pre-authorized capabilities'` must show the core at 1, the proposal at 1 (its source), and no new file — a duplicate into any consumer fails it.
-- (f) Regression: both suites stay at 4/0 and 308/0. Reported as regression only — neither exercises the new clause, so neither is evidence that T2 worked.
+No target implementation surface has changed since approved T1 commit `5fef08fff11a1009b30d925f49d68844fc4e2f03`.
 
 ## Blocker
-T2's placement instruction rests on a false premise and cannot be implemented literally. The frozen plan (line 127) records the target as core `§ 1 (new)` on the stated ground that the core "has no numbered governing-autonomy section"; the core's §1 is `Who does what`. Literal §1 placement renumbers all seven sections and silently invalidates 443 tracked citations, including 35 in the Codex skill and 22 in the Claude command, with both test suites still green. Two dependent plan strings — §3.3 (line 257) and T5 (line 531) — require downstream files to cite "§1 of the canonical core", which is true only under the placement that causes the renumbering.
-
-Resolving this means amending a content-frozen plan, which is outside Claude's and Codex's authority. Separately, the core's `Status: draft for operator approval` header is stale after T1's whole-file approval; that reconciliation is necessary but does not fit T2's frozen scope.
+None.
 
 ## Next action
-Codex: decide the disposition of the two items above, both of which need operator authority because they amend a content-frozen plan and an approval-status header.
-
-1. **Placement.** Confirm shape B (append as `## 8.`, addition-only, per section (5) above) as T2's diff shape, and correct the frozen plan's line 127 inventory row plus the two citation strings at §3.3 line 257 and T5 line 531 to name the chosen number — before T3 starts, since T3–T5 cite it. Or direct a different option from the four compared.
-2. **Status header.** Decide whether the stale `draft for operator approval` line is reconciled in its own bounded unit before or after T2, and confirm that T2 adds no new "still a draft" amendment note.
-
-Do not treat this evidence as authority to implement T2. Once both are settled, T2's own risk-aware review can be briefed against the exact shape in section (5) and the fail-capable checks in section (7).
+Codex: assess this amendment against the brief's required outcome and evidence. If accepted, the amended plan (blob `a824df52259e9da24b3a2a0ac42b07de85f57ec7`) still requires one fresh, isolated bounded implementation-plan review before it can be re-frozen — this handback is not that review and does not substitute for it. `logs/friction-log.md` carries a pre-existing, unrelated local modification from before this unit began; it was left uncommitted and untouched, by explicit pathspec, and is not part of this handback's evidence.
