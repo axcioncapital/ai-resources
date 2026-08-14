@@ -27,6 +27,10 @@ DISPATCH_BIN="${DISPATCH_BIN:-$HERE/dispatch.sh}"
 # handoff-automation-spike -> work-loop-v2-v0.2 -> plans -> checkout root
 REPO_ROOT="${REPO_ROOT:-$(cd "$HERE/../../.." && pwd)}"
 OWNER_BIN="${OWNER_BIN:-$REPO_ROOT/logs/scripts/work-loop-owner.sh}"
+# The shared live-lease library. Sourced by the dispatcher out of the CHECKOUT it
+# drives — the same resolution the ownership helper uses — so every sandbox has
+# to carry it for the same reason every sandbox carries the ownership helper.
+LEASE_BIN="${LEASE_BIN:-$REPO_ROOT/logs/scripts/work-loop-lease.sh}"
 
 PASS=0; FAIL=0
 SANDBOX_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/wl2-dispatch-test.XXXXXX")"
@@ -83,6 +87,9 @@ new_sandbox() { # -> path on stdout
   # correctly read it as an out-of-allowlist foreign file. Case 12d removes it
   # deliberately — that is the fail-closed case, and it must be the only one.
   cp "$OWNER_BIN" "$d/logs/scripts/work-loop-owner.sh" 2>/dev/null || true
+  # Same argument for the lease library, and the same single exception: case 12f
+  # removes it deliberately, and that must be the only case without it.
+  cp "$LEASE_BIN" "$d/logs/scripts/work-loop-lease.sh" 2>/dev/null || true
   git -C "$d" add README.md other.txt logs/scripts 2>/dev/null
   git -C "$d" commit -qm "sandbox base"
 
@@ -696,6 +703,67 @@ expect_rc 17 "$RC" "a carrier is refused while a DISPATCHER holds the same task 
   || bad "  and committed nothing in the worktree" "HEAD moved from $BEFORE"
 wait "$dispatcher" 2>/dev/null
 git -C "$d" worktree remove --force "$WT" >/dev/null 2>&1
+
+# ---------------------------------------------------------------- case 12f
+# THE LEASE ITSELF FAILS CLOSED when its shared library cannot be sourced.
+#
+# This is the sibling of 12d, one control over. 12d covers a checkout whose
+# OWNERSHIP check cannot run; this covers a checkout whose LIVE LEASE cannot be
+# taken, because the library that implements it is not there. Both are absences,
+# and an absent check is not a passed check: the checkouts most likely to lack
+# the library — older siblings, partial copies — are exactly the ones most likely
+# to hold a conflicting writer.
+#
+# The code is 11, not 33/34/35. Those three are the OWNERSHIP taxonomy and this
+# is not an ownership fact; 11 is the outcome this dispatcher already uses for
+# every other lease-infrastructure failure (an unresolvable Git common directory,
+# an uncreatable lock root). Reusing it keeps leases and durable ownership
+# separate, which is the distinction the whole shared-lease design rests on.
+#
+# The exit code alone would not be evidence. A dispatcher that refuses
+# everything passes an exit-code assertion, so the case also measures that NO
+# actor was launched, that HEAD did not move, and — in the control below — that
+# the same run proceeds and does launch once the library is present.
+echo
+echo "Case 12f — an ABSENT lease library refuses before launch and takes no lease"
+d="$(new_sandbox)"
+state_file "$d" "lease-missing" "codex"
+rm -f "$d.calls"
+git -C "$d" rm -q --cached logs/scripts/work-loop-lease.sh >/dev/null 2>&1
+rm -f "$d/logs/scripts/work-loop-lease.sh"
+git -C "$d" commit -qm "remove the lease library" >/dev/null 2>&1
+BEFORE="$(git -C "$d" rev-parse HEAD)"
+run_dispatch "$d" lease-missing --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 11 "$RC" "an ABSENT lease library refuses with exit 11" "$OUT"
+case "$OUT" in
+  *"lease"*"missing or unreadable"*) ok "the refusal names the missing lease library" ;;
+  *) bad "the refusal names the missing lease library" "$OUT" ;;
+esac
+[ -s "$d.calls" ] && bad "no actor was launched without the lease library" \
+                         "actors ran: $(tr '\n' ';' <"$d.calls")" \
+                      || ok "no actor was launched without the lease library"
+[ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "no commit was made without the lease library" \
+  || bad "no commit was made without the lease library" "HEAD moved from $BEFORE"
+# A refusal must not leave a lease behind. The run never took one, so the two
+# lease directories must be absent — a refusal that half-acquired would refuse
+# the NEXT run for a reason that never existed.
+{ [ ! -d "$(task_lock_for "$d" lease-missing)" ] && [ ! -d "$(checkout_lock_for "$d")" ]; } \
+  && ok "the refused run left no lease directory behind" \
+  || bad "the refused run left no lease directory behind" \
+         "$(task_lock_for "$d" lease-missing) / $(checkout_lock_for "$d")"
+
+# The control. Same fixture recipe, same command, library PRESENT — it must
+# proceed and must launch. Its own sandbox, for the reason case 12d's control
+# spells out: reusing the refused one would make the control depend on the very
+# thing under test.
+dl="$(new_sandbox)"
+state_file "$dl" "lease-present" "codex"
+rm -f "$dl.calls"
+run_dispatch "$dl" lease-present --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 0 "$RC" "control — with the lease library present the same run proceeds" "$OUT"
+[ -s "$dl.calls" ] && ok "control — the actor did run once the lease could be taken" \
+                   || bad "control — the actor did run once the lease could be taken" "no calls"
 
 # ================================================================= case 13
 # Regression for the gap the 2026-08-05 live run exposed: a Claude hop killed

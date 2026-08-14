@@ -125,7 +125,16 @@
 # this script; the four meanings are spelled out under the table.
 #   0   SUCCESS                see the four meanings below — it is not one thing
 #   10  BAD_USAGE
-#   11  BAD_CHECKOUT
+#   11  BAD_CHECKOUT           also the LEASE-INFRASTRUCTURE outcome: an
+#                              unresolvable or unreadable Git common directory,
+#                              an uncreatable lease root, and a checkout whose
+#                              shared lease library (logs/scripts/work-loop-lease.sh)
+#                              is missing or unreadable. That last one FAILS
+#                              CLOSED and launches nothing — an absent lease is
+#                              not a taken lease. It is 11 and not 33/34/35
+#                              because those three are the OWNERSHIP taxonomy and
+#                              a lease is not an ownership fact; the two are kept
+#                              apart deliberately.
 #   12  BAD_TASK_ID            traversal or illegal characters
 #   13  STATE_MISSING
 #   14  IDENTITY_MISMATCH      filename stem != frontmatter task:
@@ -636,66 +645,97 @@ pid_state() { # pid -> "LIVE|reason" / "ABSENT|reason" / "UNKNOWN|reason"
 # These govern LIVE PROCESS exclusivity only. Open-task exclusivity is the
 # declaration's job (logs/work-loop/.owner, logs/scripts/work-loop-owner.sh):
 # a lock cannot outlive its process, and continuity between handoffs must.
-LOCK_ROOT="$(git -C "$CHECKOUT" rev-parse --git-common-dir 2>/dev/null)" \
-  || { printf 'STOP [11] cannot resolve the Git common directory for %s\n' "$CHECKOUT" >&2; exit 11; }
-case "$LOCK_ROOT" in /*) ;; *) LOCK_ROOT="$CHECKOUT/$LOCK_ROOT" ;; esac
-LOCK_ROOT="$(cd "$LOCK_ROOT" 2>/dev/null && pwd -P)" \
-  || { printf 'STOP [11] the Git common directory for %s is not readable\n' "$CHECKOUT" >&2; exit 11; }
-LOCK_ROOT="$LOCK_ROOT/work-loop-dispatch-locks"
+#
+# THE MECHANISM NOW LIVES IN ONE PLACE, NOT TWO. Everything above was
+# implemented here and, separately, in the attended carrier — two programs
+# holding one invariant, which is exactly the shape that let the original
+# composite key be wrong in both at once. The implementation moved to
+# logs/scripts/work-loop-lease.sh and BOTH transports source it, so a lease this
+# dispatcher takes is a lease the carrier observes and vice versa. What is left
+# below is this program's own half: its wording, its exit codes, its call sites.
+#
+# THE LIBRARY IS SOURCED, NOT RUN, and it has to be. The lease must be held by
+# THIS process for the whole of its life — the pid it records is what --status
+# inspects, and the release runs from this script's own EXIT trap. A subprocess
+# could not hold either.
+#
+# RESOLVED FROM THE CHECKOUT BEING DRIVEN, like the ownership helper below and
+# for the same reason: the lease is a fact about that checkout's repository, and
+# a checkout that cannot produce the library is a checkout whose lease cannot be
+# established. Migration constraint 2 of the accepted proposal says such a
+# checkout fails closed rather than skipping with a visible line, so that is what
+# happens here — before any lease path is computed and long before an actor is
+# launched. The code is 11, the outcome this dispatcher already uses for every
+# other lease-infrastructure failure; 33/34/35 are the ownership taxonomy and a
+# lease is not an ownership fact.
+LEASE_LIB="$CHECKOUT/logs/scripts/work-loop-lease.sh"
+if [ ! -f "$LEASE_LIB" ] || [ ! -r "$LEASE_LIB" ]; then
+  printf 'STOP [11] the shared lease library is missing or unreadable: %s\n' "$LEASE_LIB" >&2
+  printf '  Recoverable next action: the live lease cannot be taken without it, so nothing was\n' >&2
+  printf '  launched and nothing was committed. Copy the library into this checkout — or run the\n' >&2
+  printf '  task in a checkout that carries it — then re-run.\n' >&2
+  exit 11
+fi
+# shellcheck source=../../../logs/scripts/work-loop-lease.sh
+. "$LEASE_LIB" || {
+  printf 'STOP [11] the shared lease library could not be sourced: %s\n' "$LEASE_LIB" >&2
+  exit 11
+}
 
-# LOCK_DIR is the TASK lock. The name is kept because the pin/survivors
-# machinery, the EXIT trap and --status all key on it, and the thing being
-# pinned — an actor tree that belongs to a task — is the task's.
-LOCK_DIR="$LOCK_ROOT/task-$(printf '%s' "$TASK" | shasum -a 256 | cut -c1-16).lock"
-CHECKOUT_LOCK_DIR="$LOCK_ROOT/checkout-$(printf '%s' "$CHECKOUT" | shasum -a 256 | cut -c1-16).lock"
-LOCK_OWNED=0
-CHECKOUT_LOCK_OWNED=0
+wl_lease_init "$CHECKOUT" "$TASK"
+case "$?" in
+  0) ;;
+  1) printf 'STOP [11] cannot resolve the Git common directory for %s\n' "$CHECKOUT" >&2; exit 11 ;;
+  *) printf 'STOP [11] the Git common directory for %s is not readable\n' "$CHECKOUT" >&2; exit 11 ;;
+esac
 
-# Each lock directory records who holds it in plain text, so a refusal can NAME
-# the conflict instead of printing a hash. A refusal nobody can act on is the
-# failure mode this whole change exists to remove.
+# Read-only views of the paths the library resolved. They are NOT a second
+# derivation — nothing here recomputes a root, a hash or a name — they are the
+# library's own values under the names this script's --status branch and its pin
+# reporting already use. LOCK_DIR is the TASK lease: the name is kept because the
+# thing being pinned, an actor tree that belongs to a task, is the task's.
+LOCK_ROOT="$WL_LEASE_ROOT"
+LOCK_DIR="$WL_LEASE_TASK_DIR"
+CHECKOUT_LOCK_DIR="$WL_LEASE_CHECKOUT_DIR"
+
+# The library takes both leases in the task-then-checkout order, records who
+# holds each in plain text, and rolls the task lease back if the checkout lease
+# is refused. What stays here is the REFUSAL WORDING and the exit code — the
+# library prints nothing and standardises neither, because this dispatcher's
+# refusals and the carrier's are each their own program's contract.
+#
+# A refusal must NAME the conflict rather than print a hash: a refusal nobody can
+# act on is the failure mode this whole change exists to remove. Holder fields
+# come back empty when the metadata is unreadable, and empty renders as
+# "unrecorded" — never as a free lease.
 acquire_lock() {
-  mkdir -p "$LOCK_ROOT" 2>/dev/null \
-    || { printf 'STOP [11] cannot create the lock root %s\n' "$LOCK_ROOT" >&2; exit 11; }
+  wl_lease_acquire dispatch "$$"
+  case "$?" in
+    0) return 0 ;;
+    1) printf 'STOP [11] cannot create the lock root %s\n' "$LOCK_ROOT" >&2; exit 11 ;;
+  esac
 
-  if mkdir "$LOCK_DIR" 2>/dev/null; then
-    LOCK_OWNED=1
-    printf '%s\n' "$$" >"$LOCK_DIR/pid"
-    printf '%s\n' "$TASK" >"$LOCK_DIR/task"
-    printf '%s\n' "$CHECKOUT" >"$LOCK_DIR/checkout"
-  else
-    if [ -f "$LOCK_DIR/survivors" ]; then
+  if [ "$WL_LEASE_RESOURCE" = task ]; then
+    if [ "$WL_LEASE_REFUSAL" = pinned ]; then
       printf 'STOP [17] the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)\n' "$TASK" "$LOCK_DIR" >&2
-      sed 's/^/  /' "$LOCK_DIR/survivors" >&2
+      sed 's/^/  /' "$WL_LEASE_SURVIVORS" >&2
       exit 17
     fi
     printf 'STOP [17] another dispatcher holds task %s (%s)\n' "$TASK" "$LOCK_DIR" >&2
-    printf '  it is running in checkout: %s\n' "$(cat "$LOCK_DIR/checkout" 2>/dev/null || printf 'unrecorded')" >&2
+    printf '  it is running in checkout: %s\n' "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}" >&2
     exit 17
   fi
 
-  # Second resource. Taken AFTER the task lock, and the task lock is released if
-  # this one is refused — holding a lock we are not going to use would refuse the
-  # next run for a reason that no longer exists.
-  if mkdir "$CHECKOUT_LOCK_DIR" 2>/dev/null; then
-    CHECKOUT_LOCK_OWNED=1
-    printf '%s\n' "$$" >"$CHECKOUT_LOCK_DIR/pid"
-    printf '%s\n' "$TASK" >"$CHECKOUT_LOCK_DIR/task"
-    printf '%s\n' "$CHECKOUT" >"$CHECKOUT_LOCK_DIR/checkout"
-  else
-    local holder; holder="$(cat "$CHECKOUT_LOCK_DIR/task" 2>/dev/null || printf 'an unrecorded task')"
-    rm -rf "$LOCK_DIR" 2>/dev/null; LOCK_OWNED=0
-    if [ -f "$CHECKOUT_LOCK_DIR/survivors" ]; then
-      printf 'STOP [17] a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)\n' "$CHECKOUT_LOCK_DIR" >&2
-      sed 's/^/  /' "$CHECKOUT_LOCK_DIR/survivors" >&2
-      exit 17
-    fi
-    printf 'STOP [17] another dispatcher is already running in this checkout (%s)\n' "$CHECKOUT" >&2
-    printf '  it is running task: %s\n' "$holder" >&2
-    printf '  two dispatchers in one checkout share a working tree and index, so either could\n' >&2
-    printf '  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.\n' >&2
+  if [ "$WL_LEASE_REFUSAL" = pinned ]; then
+    printf 'STOP [17] a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)\n' "$CHECKOUT_LOCK_DIR" >&2
+    sed 's/^/  /' "$WL_LEASE_SURVIVORS" >&2
     exit 17
   fi
+  printf 'STOP [17] another dispatcher is already running in this checkout (%s)\n' "$CHECKOUT" >&2
+  printf '  it is running task: %s\n' "${WL_LEASE_HOLDER_TASK:-an unrecorded task}" >&2
+  printf '  two dispatchers in one checkout share a working tree and index, so either could\n' >&2
+  printf '  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.\n' >&2
+  exit 17
 }
 
 # A pinned lock is NOT released, by anything, including the EXIT trap. It is the
@@ -703,44 +743,26 @@ acquire_lock() {
 # while a descendant of the stopped actor may still be alive: the process that
 # knows about the survivors is about to exit, so the only thing that can carry
 # that knowledge forward is the lock it leaves behind.
-LOCK_PINNED=0
+#
+# The pin FILE — its two machine-read line formats, the both-leases rule, and the
+# guards that stop a pin claiming a lease this run never acquired — is the
+# library's. What stays here is the OPERATOR-FACING line, which is this
+# dispatcher's wording and names this dispatcher's exit 17.
 pin_lock() { # survivor-pids, unknown-reason
-  local survivors="${1:-}" unknown="${2:-}"
-  [ "$LOCK_OWNED" -eq 1 ] || return 0
-  LOCK_PINNED=1
-  {
-    printf 'PINNED by dispatcher pid %s at %s\n' "$$" "$(date '+%Y-%m-%dT%H:%M:%S')"
-    printf 'task: %s\n' "$TASK"
-    [ -n "$survivors" ] && printf 'descendants still running: %s\n' "$survivors"
-    [ -n "$unknown" ]   && printf 'sweep incomplete: %s\n' "$unknown"
-    printf '\n'
-    printf 'This lock is deliberately NOT released. A second dispatcher must not run on this\n'
-    printf 'task while a descendant of the stopped actor may still be alive.\n'
-    printf 'To clear it: confirm the pids above are gone (`ps -o pid,ppid,pgid,command -p <pid>`),\n'
-    printf 'kill any that remain, then `rm -rf %s`.\n' "$LOCK_DIR"
-  } >"$LOCK_DIR/survivors" 2>/dev/null
-  # BOTH locks are pinned, because a survivor holds both resources. It belongs to
-  # this task, so a second dispatcher on the same task must be refused; and it is
-  # still running inside this checkout's working tree, so a second dispatcher on
-  # a DIFFERENT task in that checkout must be refused too. Pinning only the task
-  # lock would leave the checkout open to exactly the contamination the survivor
-  # makes possible.
-  [ "$CHECKOUT_LOCK_OWNED" -eq 1 ] && cp "$LOCK_DIR/survivors" "$CHECKOUT_LOCK_DIR/survivors" 2>/dev/null
+  # Return 1 is the library's "nothing was owned, so nothing was pinned" — the
+  # same condition the guard on LOCK_OWNED used to express here, and the same
+  # answer: there is nothing to report.
+  wl_lease_pin "${1:-}" "${2:-}" "$TASK" || return 0
   local msg="  the task lock is PINNED at $LOCK_DIR (and this checkout's lock at $CHECKOUT_LOCK_DIR) — a second dispatcher is refused (exit 17) until you clear them by hand."
   printf '%s\n' "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
+  return 0
 }
 
-release_lock() {
-  # Pinned beats owned. Every exit path calls this — die(), the EXIT trap, the
-  # signal handler — so the check belongs here rather than at each call site,
-  # where one missed caller would silently undo the invariant.
-  [ "$LOCK_PINNED" -eq 1 ] && return 0
-  [ "$LOCK_OWNED" -eq 1 ] && rm -rf "$LOCK_DIR" 2>/dev/null
-  [ "$CHECKOUT_LOCK_OWNED" -eq 1 ] && rm -rf "$CHECKOUT_LOCK_DIR" 2>/dev/null
-  LOCK_OWNED=0
-  CHECKOUT_LOCK_OWNED=0
-}
+# Pinned beats owned, and that check lives inside the library rather than at each
+# call site — one missed caller would silently undo the invariant. Every exit
+# path of this script reaches here: die(), the EXIT trap, the signal handler.
+release_lock() { wl_lease_release; }
 
 # ------------------------------------------------- descendant identification
 #
