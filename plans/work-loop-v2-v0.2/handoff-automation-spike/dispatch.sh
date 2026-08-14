@@ -140,12 +140,15 @@
 #   14  IDENTITY_MISMATCH      filename stem != frontmatter task:
 #   15  BAD_TURN               turn: not in {codex, claude, operator}
 #   16  FOREIGN_STAGED         something already staged; refuse to sweep it in
-#   17  LOCK_HELD              another dispatcher holds this task, or is already
-#                              running in this checkout. TWO locks are checked,
-#                              both under the repository's Git common directory:
-#                              one keyed by task, one keyed by checkout. Either
-#                              one being held refuses the run, and the message
-#                              names the conflicting task or checkout.
+#   17  LOCK_HELD              another Work Loop run holds this task, or is
+#                              already running in this checkout. TWO locks are
+#                              checked, both under the repository's Git common
+#                              directory: one keyed by task, one keyed by
+#                              checkout. Either one being held refuses the run,
+#                              and the message names the conflicting task or
+#                              checkout AND which program holds it — the lease is
+#                              shared with the attended carrier, so the holder is
+#                              not necessarily another dispatcher.
 #   18  FOREIGN_UNSTAGED       out-of-allowlist working-tree changes already present
 #   19  GIT_HAZARD             index.lock held, or a merge/rebase/cherry-pick in progress
 #   20  ACTOR_FAILED           non-zero exit (retried once when nothing changed)
@@ -708,6 +711,34 @@ CHECKOUT_LOCK_DIR="$WL_LEASE_CHECKOUT_DIR"
 # act on is the failure mode this whole change exists to remove. Holder fields
 # come back empty when the metadata is unreadable, and empty renders as
 # "unrecorded" — never as a free lease.
+#
+# IT MUST ALSO NAME THE RIGHT PROGRAM. The lease became shared, so the holder of
+# a lease this dispatcher is refused is no longer necessarily a dispatcher: an
+# attended carry takes the same two leases through the same library. These lines
+# said "another dispatcher" unconditionally, and against a carrier-held lease
+# that is a false statement pointing the operator at the wrong process to look
+# for. The library already records which program holds each lease
+# (WL_LEASE_HOLDER_PROGRAM); this reads it.
+#
+# The vocabulary is the CARRIER'S, deliberately (carry-turn.sh 778-783): the two
+# transports refuse each other, so an operator reading one refusal has to
+# recognise the program named in the other. What is NOT shared is the message
+# structure — this dispatcher keeps its own STOP-code shape, its own detail
+# lines and its own remedy sentence, and the library still prints nothing. The
+# holder label is the only thing held in common.
+#
+# `dispatch` renders as "another dispatcher", not the carrier's "an unattended
+# dispatched run": from inside the dispatcher that IS another dispatcher, and it
+# is the wording the existing suite and exit-code table already carry.
+holder_label() { # -> a phrase naming who holds the lease
+  case "${WL_LEASE_HOLDER_PROGRAM:-}" in
+    carry)    printf 'an attended carry' ;;
+    dispatch) printf 'another dispatcher' ;;
+    "")       printf 'another Work Loop run (program unrecorded)' ;;
+    *)        printf 'another Work Loop run (%s)' "$WL_LEASE_HOLDER_PROGRAM" ;;
+  esac
+}
+
 acquire_lock() {
   wl_lease_acquire dispatch "$$"
   case "$?" in
@@ -715,13 +746,18 @@ acquire_lock() {
     1) printf 'STOP [11] cannot create the lock root %s\n' "$LOCK_ROOT" >&2; exit 11 ;;
   esac
 
+  local who; who="$(holder_label)"
+
   if [ "$WL_LEASE_RESOURCE" = task ]; then
+    # The PINNED lines are left program-agnostic on purpose. "the previous run"
+    # is true whichever transport pinned it, so there is nothing false to fix
+    # here, and the survivor pids inside the lease are what the operator acts on.
     if [ "$WL_LEASE_REFUSAL" = pinned ]; then
       printf 'STOP [17] the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)\n' "$TASK" "$LOCK_DIR" >&2
       sed 's/^/  /' "$WL_LEASE_SURVIVORS" >&2
       exit 17
     fi
-    printf 'STOP [17] another dispatcher holds task %s (%s)\n' "$TASK" "$LOCK_DIR" >&2
+    printf 'STOP [17] %s holds task %s (%s)\n' "$who" "$TASK" "$LOCK_DIR" >&2
     printf '  it is running in checkout: %s\n' "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}" >&2
     exit 17
   fi
@@ -731,9 +767,12 @@ acquire_lock() {
     sed 's/^/  /' "$WL_LEASE_SURVIVORS" >&2
     exit 17
   fi
-  printf 'STOP [17] another dispatcher is already running in this checkout (%s)\n' "$CHECKOUT" >&2
+  printf 'STOP [17] %s is already running in this checkout (%s)\n' "$who" "$CHECKOUT" >&2
   printf '  it is running task: %s\n' "${WL_LEASE_HOLDER_TASK:-an unrecorded task}" >&2
-  printf '  two dispatchers in one checkout share a working tree and index, so either could\n' >&2
+  # "two Work Loop runs", not "two dispatchers": the hazard is one working tree
+  # and one index with two live writers in it, and that is the same hazard
+  # whichever transport the other writer arrived by.
+  printf '  two Work Loop runs in one checkout share a working tree and index, so either could\n' >&2
   printf '  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.\n' >&2
   exit 17
 }

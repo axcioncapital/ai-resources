@@ -238,6 +238,21 @@ expect_rc() { # want got label [detail]
   if [ "$2" -eq "$1" ]; then ok "$3"; else bad "$3" "expected exit $1, got $2 — ${4:-}"; fi
 }
 
+# Substring assertions over a captured refusal, for the holder-identity checks
+# below. `case` rather than `grep`: one of the phrases under test contains
+# parentheses, which grep would read as pattern syntax rather than as text.
+#
+# The NEGATIVE half is the load-bearing one. "an attended carry holds task X"
+# also contains no "another dispatcher", but a message that named both would
+# satisfy the positive assertion alone while still telling the operator to go
+# looking for the wrong process.
+out_has()   { # needle out label
+  case "$2" in *"$1"*) ok "$3" ;; *) bad "$3" "expected to contain: $1 — got: $2" ;; esac
+}
+out_lacks() { # needle out label
+  case "$2" in *"$1"*) bad "$3" "expected NOT to contain: $1 — got: $2" ;; *) ok "$3" ;; esac
+}
+
 # Exactly one occurrence of FLAG in a recorded argv, immediately followed by
 # VALUE on the next line. Two separate `grep -Fqx` calls would pass on an argv
 # that carried the flag and the value in unrelated positions — which is not the
@@ -430,6 +445,13 @@ outer=$!
 sleep 2
 run_dispatch "$d" lock-task --actor-cmd "$FLIP"
 expect_rc 17 "$RC" "exits 17 while another dispatcher holds the task" "$OUT"
+# The DISPATCHER-HELD control for the holder-identity assertions in 12e. Those
+# check that a carrier-held lease is not reported as a dispatcher; this checks
+# the other direction, that reading the holder did not lose the case it was
+# already getting right. Without it, a refusal that said "an attended carry"
+# unconditionally would pass 12e and be just as wrong.
+out_has 'another dispatcher holds task lock-task' "$OUT" \
+  "  and the TASK refusal names a dispatcher, because a dispatcher holds it"
 
 # Case 12b/12c — the two halves the composite ${TMPDIR} key could not enforce.
 # Both are exercised against the SAME live holder above, so they measure real
@@ -453,6 +475,9 @@ case "$OUT" in
   *lock-task*) ok "the checkout refusal names the task already running there" ;;
   *)           bad "the checkout refusal names the task already running there" "$OUT" ;;
 esac
+# The CHECKOUT half of the same control.
+out_has 'another dispatcher is already running in this checkout' "$OUT" \
+  "the checkout refusal names a dispatcher, because a dispatcher holds it"
 
 wait "$outer" 2>/dev/null
 
@@ -590,6 +615,16 @@ rm -f "$d.calls"
 BEFORE="$(git -C "$d" rev-parse HEAD)"
 run_dispatch "$d" xt-dispatched --actor-cmd "$FLIP_TO_OPERATOR"
 expect_rc 17 "$RC" "a dispatcher is refused while a CARRIER holds the checkout" "$OUT"
+# REFUSING IS NOT THE WHOLE CONTRACT. The proposal's § 4.1 property 5 and its
+# § 5 case 3 both require the refusal to NAME the attended holder, because the
+# operator's next move is to find that process — and this line said "another
+# dispatcher" for a lease whose recorded program is `carry`, sending them after
+# a process that does not exist. The exit code was already right when this was
+# wrong, which is why the code alone could not catch it.
+out_has 'an attended carry is already running in this checkout' "$OUT" \
+  "  and the refusal names the ATTENDED CARRIER as the holder"
+out_lacks 'another dispatcher' "$OUT" \
+  "  and does not call the carrier a dispatcher"
 [ -s "$d.calls" ] && bad "  and the dispatcher launched no actor" \
                          "actors ran: $(tr '\n' ';' <"$d.calls")" \
                   || ok "  and the dispatcher launched no actor"
@@ -691,6 +726,14 @@ rm -f "$d.calls"
 BEFORE="$(git -C "$d" rev-parse HEAD)"
 run_dispatch "$d" xt-shared --actor-cmd "$FLIP_TO_OPERATOR"
 expect_rc 17 "$RC" "a dispatcher is refused while a CARRIER holds the same task elsewhere" "$OUT"
+# The TASK half of the holder-identity contract, and the one this defect was
+# first reproduced on. The detail line below it — the holder's checkout — was
+# already right, which made the wrong subject harder to notice: the message
+# named a real directory and the wrong kind of process holding it.
+out_has 'an attended carry holds task xt-shared' "$OUT" \
+  "  and the refusal names the ATTENDED CARRIER as the task holder"
+out_lacks 'another dispatcher' "$OUT" \
+  "  and does not call the carrier a dispatcher"
 [ -s "$d.calls" ] && bad "  and the dispatcher launched no actor" \
                          "actors ran: $(tr '\n' ';' <"$d.calls")" \
                   || ok "  and the dispatcher launched no actor"
@@ -808,6 +851,66 @@ run_dispatch "$dl" lease-present --actor-cmd "$FLIP_TO_OPERATOR"
 expect_rc 0 "$RC" "control — with the lease library present the same run proceeds" "$OUT"
 [ -s "$dl.calls" ] && ok "control — the actor did run once the lease could be taken" \
                    || bad "control — the actor did run once the lease could be taken" "no calls"
+
+# ---------------------------------------------------------------- case 12g
+# THE HOLDER LABEL'S TWO FALLBACKS. A held lease whose `program` file is missing,
+# empty or unrecognised is still HELD — the refusal must say so without guessing
+# which transport left it. Guessing is the specific failure: naming a dispatcher
+# by default is exactly what 12e caught, and naming a carrier by default would be
+# the same mistake pointing the other way.
+#
+# These two PLANT a lease directory rather than launching a second program, and
+# that is the one place in this suite where planting is the right instrument.
+# 12e asks whether one program OBSERVES the other's lease, which a planted
+# directory cannot answer. This asks what the message SAYS about metadata that no
+# healthy program writes — an absent `program` file (an older lease predating the
+# shared library, or a partially-written one) and a value from some future
+# program. Neither can be produced by running a program that is working
+# correctly, so a real launch could not set up either case.
+#
+# The lease is planted with pid/task/checkout but no `survivors` file, so it is
+# HELD and not PINNED — the pinned branches exit before the label is used.
+plant_lease() { # lease-dir holding-task holding-checkout [program]
+  mkdir -p "$1"
+  printf '%s\n' "$$"  >"$1/pid"
+  printf '%s\n' "$2"  >"$1/task"
+  printf '%s\n' "$3"  >"$1/checkout"
+  [ "$#" -ge 4 ] && printf '%s\n' "$4" >"$1/program"
+  return 0
+}
+
+echo
+echo "Case 12g — a held lease with no recorded program, and one from an unknown program"
+d="$(new_sandbox)"
+state_file "$d" "label-task" "codex"
+rm -f "$d.calls"
+BEFORE="$(git -C "$d" rev-parse HEAD)"
+# No `program` file at all: WL_LEASE_HOLDER_PROGRAM comes back empty.
+plant_lease "$(task_lock_for "$d" label-task)" label-task "$d"
+run_dispatch "$d" label-task --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 17 "$RC" "a lease with no recorded program still refuses with 17" "$OUT"
+out_has 'another Work Loop run (program unrecorded) holds task label-task' "$OUT" \
+  "  and the refusal says the program is unrecorded rather than guessing"
+out_lacks 'another dispatcher' "$OUT" \
+  "  and does not guess a dispatcher"
+[ -s "$d.calls" ] && bad "  and launched no actor" "actors ran: $(tr '\n' ';' <"$d.calls")" \
+                  || ok "  and launched no actor"
+[ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "  and committed nothing" || bad "  and committed nothing" "HEAD moved from $BEFORE"
+rm -rf "$(task_lock_for "$d" label-task)"
+
+# An unrecognised program name is reported verbatim: the operator can act on a
+# name they can search for, and a name this dispatcher does not know is still
+# more than "another run".
+plant_lease "$(checkout_lock_for "$d")" other-task "$d" some-future-runner
+rm -f "$d.calls"
+run_dispatch "$d" label-task --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 17 "$RC" "a lease held by an UNKNOWN program still refuses with 17" "$OUT"
+out_has 'another Work Loop run (some-future-runner) is already running in this checkout' "$OUT" \
+  "  and the refusal reports the unknown program name verbatim"
+[ -s "$d.calls" ] && bad "  and launched no actor" "actors ran: $(tr '\n' ';' <"$d.calls")" \
+                  || ok "  and launched no actor"
+rm -rf "$(checkout_lock_for "$d")" "$(task_lock_for "$d" label-task)"
 
 # ================================================================= case 13
 # Regression for the gap the 2026-08-05 live run exposed: a Claude hop killed
