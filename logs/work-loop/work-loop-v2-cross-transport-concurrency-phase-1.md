@@ -88,7 +88,7 @@ Deferrals recorded, not done:
 
 Staged by explicit pathspec: `scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, this state file. `logs/friction-log.md` and the untracked `logs/harness-runs/` files were left alone.
 
-Commit: see `## Next action` — recorded on the next write; the commit for this unit is the one whose message names unit 3a1.
+Commit: `04de80a7` — 3 files, 341 insertions, 110 deletions.
 
 ## Blocker
 
