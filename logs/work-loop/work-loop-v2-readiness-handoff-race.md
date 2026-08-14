@@ -84,7 +84,8 @@ Evidence:
 - Persistent-conflict response, quoted from SKILL.md: "Your message says Claude completed the handoff, but it is not yet visible in this checkout. I cannot assess it until those sources converge."
 - Boundaries preserved and re-derived: core § 4 still lists exactly 5 active content fields (`grep -c` = 5); "never permission to override `turn:`" now appears twice in core (lines 290, 299); the multiple-matching-task disambiguation clause is unchanged in SKILL.md.
 - Diff limited to `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` (+18), `.agents/skills/work-loop-v2/SKILL.md` (+14/-1), `logs/scripts/work-loop-v2-slice-1.test.sh` (+49) and this task file. `.claude/commands/work-loop-v2.md` was inspection-only and is unchanged.
-- Rollback: `git revert <implementation-commit>` after integration.
+- Implementation commit: `8a61a496` on `session/2026-08-14-work-loop-v2-fixes`.
+- Rollback: `git revert 8a61a496` after integration.
 
 Limitations and deferrals:
 
