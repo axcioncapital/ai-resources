@@ -1530,6 +1530,37 @@ check "prop  the skill keeps reproduction conditional and countable" \
 check "prop  the skill does not restate core § 3's four statements" \
   "! grep -qiE '85–90|minimum necessary work|scaled to consequence|perfection pass' '$SKILL_F'"
 
+# --- CE-9 continuation integrity: the two carry duties (eval-v0-3-partial-fixes) --
+# The first valid EV-3/CE-9 paired trial scored PARTIAL: the source-opened run
+# recovered SD-3 ordering, the live blocker and the correct next unit, but its brief
+# omitted the approved project objective and collapsed the authoritative position to
+# a phase label. Both omissions were permitted by the live text, which required the
+# nine determinations to be *established* and returned only one compressed operator
+# line. These assertions bind the corrected contract: the carry duty exists, it names
+# the position facts that must survive, and it did not grow into a stage the operator
+# reads. Read them as a set — the first four alone would license a new orientation
+# ceremony, and the last three alone would license dropping the duty again.
+check "ce9   the skill states that establishing the determinations is not carrying them" \
+  "grep -qi 'Establishing the nine is not carrying them' '$SKILL_F'"
+check "ce9   the approved outcome and position must reach the brief, not only be established" \
+  "grep -qi 'must also reach the brief itself' '$SKILL_F'"
+check "ce9   the position keeps its source-supported precision" \
+  "grep -qi 'the last completed unit and any open unit' '$SKILL_F'"
+check "ce9   collapsing the position to a phase label is named as the failure" \
+  "grep -qi 'never collapsed to a phase label' '$SKILL_F'"
+# The fresh-thread path points at the one rule instead of carrying a second copy.
+check "ce9   the fresh-thread recovery binds to the orientation rule" \
+  "grep -qi 'Re-establishing them is internal' '$SKILL_F'"
+check "ce9   the carry duty is stated once, not duplicated" \
+  "[ \"\$(grep -ci 'Establishing the nine is not carrying them' '$SKILL_F')\" = '1' ]"
+# Over-correction guards. Requirement 3 of the brief: the operator-facing line stays
+# concise and the brief stays the single hand-off artifact. A change that satisfied
+# the four above by adding a checklist or a second document fails here.
+check "ce9   the one-line operator shape is unchanged" \
+  "grep -q 'Current position → governing workflow and phase → what is ready → what is blocked → recommended next unit → why it matters.' '$SKILL_F'"
+check "ce9   orientation still writes nothing and adds no stage" \
+  "grep -qi 'Orientation writes nothing' '$SKILL_F' && grep -qi 'it is not a stage, a gate or a checklist the operator sees' '$SKILL_F'"
+
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \
   "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|fixture-slice2|fixture-slice3|fixture-target|$CODEX_TASK'"
