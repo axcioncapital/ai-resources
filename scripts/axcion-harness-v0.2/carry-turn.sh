@@ -812,13 +812,55 @@ release_lock() { wl_lease_release; }
 # here is the OPERATOR-FACING line, which is this surface's wording and names this
 # surface's exit 17.
 #
-# Return 1 from the library is its "nothing was owned, so nothing was pinned": the
-# ordinary state of a run that was refused, or that never reached acquire_lock. It
-# is the no-owned-lease condition, not a failure, and there is nothing to report.
+# THE LIBRARY ANSWERS WITH THREE OUTCOMES AND THEY NEED THREE ANSWERS. This used
+# to read `wl_lease_pin ... || return 0`, which merged every one of them into
+# silence:
+#
+#   0  pinned, and every owned lease carries durable evidence a later run reads.
+#   1  nothing was owned, so nothing was pinned — the ordinary state of a run that
+#      was refused, or never reached acquire_lock. Not a failure, nothing to say.
+#   2  owned and pinned, but at least one lease has NO durable record. The
+#      DIRECTORIES are still there and still refuse the next run; what is missing
+#      is the written reason inside them.
+#
+# rc=2 is why the merge mattered. Silence there leaves the operator in front of a
+# held lease with nothing inside explaining it, and the obvious reading — a stale
+# lock, safe to delete — is the unsafe one. So it is said out loud, and the rc=0
+# success line is withheld, because announcing a pin that recorded nothing is the
+# same false claim in the opposite direction.
+#
+# An unrecognised code is reported as unrecognised rather than assumed benign: the
+# library may grow a fourth outcome, and inheriting silence by default is exactly
+# how this defect arrived the first time.
+#
+# The pin FILE — its line formats, the both-leases rule, and the guards that stop
+# a pin claiming a lease this run never acquired — is the library's. What stays
+# here is the OPERATOR-FACING wording, which is this surface's and names this
+# surface's exit 17.
 pin_leases() { # survivor-pids, unknown-reason
-  wl_lease_pin "${1:-}" "${2:-}" "$TASK" || return 0
-  say "  BOTH leases are now PINNED and deliberately NOT released — the TASK lease for '$TASK' ($TASK_LOCK_DIR) and this CHECKOUT's lease ($LOCK_DIR)."
-  say "  The next Work Loop run on this task, or in this checkout, is refused with exit 17 until you confirm the pids above are gone and remove those two directories by hand."
+  local rc=0
+  # Split from any `local` declaration on purpose: `local x="$(cmd)"` reports
+  # `local`'s status, not the command's, and the same trap applies to capturing a
+  # return code that this whole function now turns on.
+  wl_lease_pin "${1:-}" "${2:-}" "$TASK"; rc=$?
+  case "$rc" in
+    0)
+      say "  BOTH leases are now PINNED and deliberately NOT released — the TASK lease for '$TASK' ($TASK_LOCK_DIR) and this CHECKOUT's lease ($LOCK_DIR)."
+      say "  The next Work Loop run on this task, or in this checkout, is refused with exit 17 until you confirm the pids above are gone and remove those two directories by hand."
+      ;;
+    1)
+      : # nothing was owned, so nothing was pinned. There is no lease to describe.
+      ;;
+    2)
+      say "  WARNING: the pin RECORD could not be persisted for: ${WL_LEASE_PIN_FAILED:-an unnamed lease}."
+      say "  Those lease directories are deliberately RETAINED and were NOT released, so the next Work Loop run on this task, or in this checkout, is still refused with exit 17."
+      say "  What is missing is the written reason inside them, so a later run and --status cannot say why they are held. Do NOT read them as a removable stale lease: confirm the pids above are gone before removing anything by hand."
+      ;;
+    *)
+      say "  WARNING: the lease library returned an UNRECOGNISED pin result ($rc), so this launcher cannot tell what was recorded."
+      say "  Treat the lease directories as retained: they were NOT released, and the next Work Loop run on this task, or in this checkout, is still refused with exit 17. Confirm the pids above are gone before removing anything by hand."
+      ;;
+  esac
   return 0
 }
 

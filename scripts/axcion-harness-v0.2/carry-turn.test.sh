@@ -1243,6 +1243,116 @@ section "12e. Repository-depth ownership admission before actor launch"
     "$([ -f "$AREPO/logs/work-loop/.owner" ] || [ -f "$AWT/logs/work-loop/.owner" ] && echo 1 || echo 0)"
   git -C "$AREPO" worktree remove --force "$AWT" >/dev/null 2>&1
 
+section "12f. Every pin result is reported as itself"
+  # The lease library answers a pin with THREE distinct outcomes — 0 durably
+  # pinned, 1 nothing owned, 2 owned and pinned but with no durable record. This
+  # launcher used to write `wl_lease_pin ... || return 0`, which merged 1, 2 and
+  # any future code into the silent no-owned path. rc=2 is the one that matters:
+  # the lease DIRECTORIES are retained and still refuse the next run, but the
+  # written reason inside them is missing, so the operator meets an unexplained
+  # held lease and the obvious reading — a removable stale lock — is the unsafe
+  # one. 12d's success case is the rc=0 control for this section.
+
+  # A `ps` that injects a survivor exactly as SURVPSDIR does, and ALSO makes the
+  # pin record unpersistable. The block is a DIRECTORY where the `survivors` file
+  # has to go: `>` then cannot create the file for any user, root included, so
+  # the forcing needs no privilege and nothing destructive, and `[ -f ]` — the
+  # same test the library, acquire and `--status` recognise a pin by — is false
+  # afterwards. Same device the library's own suite uses.
+  #
+  # It blocks at the point the launcher LOOKS, which is after the leases are
+  # acquired and before the pin is written. Earlier invocations, before the lease
+  # directories exist, simply fail to mkdir and leave nothing behind.
+  PINBLOCKPSDIR="$TMPROOT/pinblock-ps"
+  mkdir -p "$PINBLOCKPSDIR"
+  cat >"$PINBLOCKPSDIR/ps" <<'PSBLOCK'
+#!/bin/bash
+for d in ${WL_TEST_PIN_BLOCK:-}; do mkdir -p "$d/survivors" 2>/dev/null; done
+out="$(/bin/ps "$@" 2>/dev/null)"; rc=$?
+[ -n "$out" ] && printf '%s\n' "$out"
+prev=""; g=""
+for a in "$@"; do [ "$prev" = "-g" ] && g="$a"; prev="$a"; done
+if [ -n "$g" ]; then printf '%s %s\n' "$PPID" "$g"; rc=0; fi
+exit "$rc"
+PSBLOCK
+  chmod +x "$PINBLOCKPSDIR/ps"
+
+  # Replace the library's pin with one that returns a chosen code, and commit it
+  # so the working tree stays clean — an untracked or modified helper is an
+  # out-of-allowlist change and the launcher would stop on that instead. rc=1 and
+  # an unrecognised code have no route through the real library from here, so the
+  # override is the only way to reach them; rc=2 above is forced for real.
+  stub_pin_rc() { # repo, rc, pinned-flag
+    printf '\nwl_lease_pin() { WL_LEASE_PINNED=%s; return %s; }\n' "$3" "$2" \
+      >>"$1/logs/scripts/work-loop-lease.sh"
+    git -C "$1" add -- logs/scripts/work-loop-lease.sh >/dev/null 2>&1
+    git -C "$1" commit -q -m "stub the pin result" >/dev/null 2>&1
+  }
+
+  # rc=2 — owned, pinned, and the record did NOT persist.
+  mkfix pinnorec task-bk claude
+  printf 'ignore-term:30' >"$ACTION"
+  ktl="$(task_lease_for "$REPO" task-bk)"; kcl="$(checkout_lease_for "$REPO")"
+  o="$(WL_TEST_PIN_BLOCK="$ktl $kcl" PATH="$PINBLOCKPSDIR:$PATH" "$SUT" \
+        --checkout "$REPO" --task task-bk --claude-bin "$FAKEBIN" \
+        --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  assert_eq "an unpersisted pin record is still ACTOR_TIMEOUT (the outer outcome is unchanged)" "21" "$RC"
+  assert_contains "  and the teardown warning still stands" "could not be confirmed gone" "$o"
+  assert_contains "  and says the pin RECORD could not be persisted" \
+    "pin RECORD could not be persisted" "$o"
+  assert_contains "  and NAMES the resources whose evidence is missing" \
+    "task checkout" "$o"
+  assert_contains "  and says the lease directories were RETAINED, not released" \
+    "deliberately RETAINED" "$o"
+  assert_contains "  and says the next run is still refused" "still refused with exit 17" "$o"
+  assert_contains "  and warns against reading them as a removable stale lease" \
+    "removable stale lease" "$o"
+  # The false success line is the whole failure this case exists to prevent: a
+  # pin that recorded nothing must never be announced as one that did.
+  assert_absent "  and does NOT claim the durable pin succeeded" \
+    "BOTH leases are now PINNED" "$o"
+  assert_eq "  the TASK lease directory is retained" "1" "$([ -d "$ktl" ] && echo 1 || echo 0)"
+  assert_eq "  the CHECKOUT lease directory is retained" "1" "$([ -d "$kcl" ] && echo 1 || echo 0)"
+  assert_eq "  and the evidence really is absent, not merely unmentioned" "0" \
+    "$([ -f "$ktl/survivors" ] && echo 1 || echo 0)"
+  # What the operator meets next. The refusal is the reason the directories are
+  # kept, so it has to survive the missing record.
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-bk --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a SECOND carry is still REFUSED (17) with the record missing" "17" "$RC"
+  assert_eq "  and launched nothing further" "$n_before" "$(invocations)"
+  rm -rf "$ktl/survivors" "$kcl/survivors" "$ktl" "$kcl"
+
+  # rc=1 — nothing was owned, so nothing was pinned. The ordinary state of a run
+  # that never acquired a lease, and it stays SILENT: reporting it would tell the
+  # operator about a lease that does not exist.
+  mkfix pinnone task-bl claude
+  printf 'ignore-term:30' >"$ACTION"
+  stub_pin_rc "$REPO" 1 0
+  o="$(PATH="$SURVPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bl \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  assert_eq "rc=1 is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_absent "  and says nothing about a pin at all" "PINNED" "$o"
+  assert_absent "  and raises no persistence warning" "could not be persisted" "$o"
+  assert_absent "  and reports no unrecognised result" "UNRECOGNISED" "$o"
+
+  # An unrecognised code. The library has three today; a fourth added later must
+  # not silently arrive as "nothing owned". Unknown is reported as unknown.
+  mkfix pinodd task-bm claude
+  printf 'ignore-term:30' >"$ACTION"
+  stub_pin_rc "$REPO" 3 1
+  mtl="$(task_lease_for "$REPO" task-bm)"; mcl="$(checkout_lease_for "$REPO")"
+  o="$(PATH="$SURVPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bm \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  assert_eq "an unrecognised pin result is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_contains "  and is reported as unrecognised, with the code" \
+    "UNRECOGNISED pin result (3)" "$o"
+  assert_contains "  and says the leases are retained and the next run refused" \
+    "still refused with exit 17" "$o"
+  assert_absent "  and does NOT claim the durable pin succeeded" \
+    "BOTH leases are now PINNED" "$o"
+  rm -rf "$mtl" "$mcl"
+
 section "13. Dry run and the Codex direction"
   mkfix dry task-z claude
   run_sut --checkout "$REPO" --task task-z --claude-bin "$FAKEBIN" --dry-run --log-dir "$LOGD"
