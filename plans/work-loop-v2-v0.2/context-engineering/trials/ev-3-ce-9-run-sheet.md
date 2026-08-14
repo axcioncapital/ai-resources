@@ -18,8 +18,11 @@ result**. The Run A attempt of 2026-08-13 reached the Harbourview sources throug
 Drive connector; it is recorded **FAIL — blindness breach**, its output was discarded rather than
 scored, and it does not become a trial by being re-read. The operator-approved diagnostic turn of
 2026-08-14 was run to find out whether the connector could be closed at all; it answered a question
-about the instrument, not about recovery, and its answer is discarded. Both are evidence about the
-instrument. Neither may be counted, quoted or scored as Run A.
+about the instrument, not about recovery, and its answer is discarded. A third, the Run A of 2026-08-14 10:00 UTC+3, was blind in
+fact — nothing was reached — but it was stopped by a confirmation clause this sheet has since corrected,
+and its Run B was never launched. It is **not** revived by the correction: a half-trial cannot be
+completed later, and scoring it now would be choosing which half to keep. All three are evidence about
+the instrument. None may be counted, quoted or scored as Run A.
 
 **Lifecycle boundary.** This sheet prepares **one trial**. One trial is one observation, not a
 reliability claim. It authorises nothing else: not the six-scenario eval pack, not adoption of any eval
@@ -42,14 +45,30 @@ or core. Those remain operator decisions and are outside this sheet entirely.
   ```
   CE9_CONTROL="$HOME/ce-9-control-$(date -u +%Y%m%dT%H%M%SZ)"
   mkdir -p "$CE9_CONTROL/.codex-home"
-  cp ~/.codex/auth.json ~/.codex/config.toml "$CE9_CONTROL/.codex-home/"
+  cp ~/.codex/auth.json "$CE9_CONTROL/.codex-home/"
+  awk '/^\[/{exit} /^model[a-z_]* *=/{print}' ~/.codex/config.toml \
+    > "$CE9_CONTROL/.codex-home/config.toml"
   ls -A "$CE9_CONTROL"
   ls -A "$CE9_CONTROL/.codex-home"
+  cat "$CE9_CONTROL/.codex-home/config.toml"
   ```
 
   The first listing must show **`.codex-home` and nothing else**. The second must show **`auth.json`
-  and `config.toml` and nothing else**. Those two files are all Codex needs to start; everything else a
-  Codex home accumulates is history, and history is what a control must not have.
+  and `config.toml` and nothing else**. The `cat` must show **only `model` and `model_reasoning_effort`
+  lines** — two lines on this account. Anything else in that file means the `awk` reached past the
+  first `[section]` heading and the home is not clean; fix it before going further.
+
+  **Your normal `config.toml` is not copied, and that is the point.** It declares MCP servers — two on
+  this account — and a copied declaration survives into the run. On 2026-08-14 a Run A launched from a
+  copied config exposed and invoked `mcp__node_repl__js`, an MCP-server tool whose kernel was pointed at
+  `~/.codex`, the very directory holding the earlier Harbourview sessions. Only the read boundary stopped
+  it. The route is closed here instead, by not carrying the declaration into the home at all.
+
+  **The two model lines are carried on purpose.** Codex starts perfectly well with no `config.toml` at
+  all, so they are not needed to *start* — they are needed so Run A and Run B run the same model at the
+  same reasoning effort. A pair whose two halves ran different models measures the model, not recovery.
+  They are ordinary settings and hold no credential; `auth.json` is not opened, read or quoted by any
+  step here.
 
   **Never delete or empty an earlier control home to make a fresh one.** An earlier home holds the
   transcript of an earlier run, and that transcript is the evidence for whatever that run was recorded
@@ -103,11 +122,26 @@ or core. Those remain operator decisions and are outside this sheet entirely.
   | Flag | Closes |
   |---|---|
   | `--disable apps` | the account's connectors — Google Drive and anything else synced to the login |
-  | `-c 'mcp_servers={}'` | every MCP server declared in the copied `config.toml` |
+  | `-c 'mcp_servers={}'` | an MCP server supplied by a *later* override on this command line — **and nothing else** |
   | `--ask-for-approval never` | escalation — the run cannot ask you to widen what it may reach |
 
-  Verified against `codex-cli 0.147.0` on 2026-08-14: launched together on this account, with a fresh
-  control home, the model's own tool registry contained no Drive or Google entry at all.
+  **The middle row used to claim more than it does, and the claim was false.** Verified mechanically
+  against `codex-cli 0.147.0` on 2026-08-14, with no model turn: given a home whose `config.toml`
+  declares an MCP server, `codex mcp list --json` reports that server, and adding `-c 'mcp_servers={}'`
+  reports it still. The override does not clear a declaration that is already in the file. What removes
+  the declaration is the control-home shape above — the file never contains one — and what *proves* it
+  removed is check 5 in § 3a. Keep the flag: it costs nothing and closes the override route. Do not rely
+  on it for anything else.
+
+  Also verified on 2026-08-14: launched together on this account, with a fresh control home, the model's
+  own tool registry contained no Drive or Google entry at all. That part held.
+
+  **What the two boundaries prove, separately and together.** They are not independent, and this sheet
+  no longer pretends they are. The read boundary denies the filesystem, including `~/.codex`; the
+  control-home shape plus check 5 denies a configured MCP server; `--disable apps` denies the account's
+  connectors. On 2026-08-14 the read boundary was the only thing standing between the run and the
+  earlier Harbourview sessions, because the capability side rested on a flag that did not work. Both
+  halves are therefore required, and each is now checked rather than assumed.
 - About the length of two ordinary briefing exchanges.
 
 **Where each thing runs.** Every command in § 2 runs from the repository root. **Run B** also runs from
@@ -212,7 +246,7 @@ blindness a property of what it can reach rather than a promise about what you t
 
 ### 3a. Run A — the memory-only control
 
-**Prove the boundary before you launch it.** Five checks. Set the checkout path once first — run
+**Prove the boundary before you launch it.** Six checks. Set the checkout path once first — run
 `git rev-parse --show-toplevel` from the repository root and use what it prints:
 
 ```
@@ -299,6 +333,46 @@ echo "checked=$CHECKED denied=$DENIED"
 earlier control home exists. On any later trial it means the loop found nothing it should have found —
 treat that as unproved and stop.
 
+**Check 5 — no MCP server is configured for this run.** This is the check that replaces the flag the
+table above demotes. Expect exactly `[]` and `exit=0`.
+
+```
+CODEX_HOME="$CE9_CONTROL/.codex-home" codex mcp list --json; echo "exit=$?"
+```
+
+Anything other than `[]` means the control home carries an MCP server declaration, and a declared server
+is a tool the run can call. **Run A is not launched.** Do not try to clear it with `-c 'mcp_servers={}'`
+— that is the thing 2026-08-14 proved does not work. Rebuild the home from § 1 instead.
+
+This check reads no credential, opens no `auth.json`, and launches no model turn: `codex mcp list` reads
+the configuration and prints the server list, nothing more. That matters because the alternative —
+noticing an MCP tool once the run is under way — puts the judgement after the exposure instead of before
+it.
+
+**Run check 5 after check 4, never before.** It creates one empty scaffold directory, `tmp/`, inside the
+control home — verified on 2026-08-14 as `tmp/arg0` containing no files, and unchanged by a second run.
+That is not history, but it is a hit, so a § 1 freshness listing run *after* check 5 must allow it:
+
+```
+ls -A "$CE9_CONTROL/.codex-home" | grep -vxE 'auth\.json|config\.toml|tmp'
+```
+
+Expect no output, and expect `find "$CE9_CONTROL/.codex-home/tmp" -type f` to find nothing. A `tmp/`
+with files in it is not the scaffold and the home is not clean.
+
+**Prove to yourself that check 5 can fail.** It runs on a throwaway home outside the control directory,
+which is deleted straight afterwards; the control home is never touched.
+
+```
+P=$(mktemp -d)
+printf '[mcp_servers.probe]\ncommand = "/bin/echo"\n' > "$P/config.toml"
+CODEX_HOME="$P" codex mcp list --json; echo "exit=$?"
+rm -rf "$P"
+```
+
+Expect one server named `probe` to print — the state check 5 refuses. If this prints `[]` too, check 5
+is passing for the wrong reason and proves nothing. Stop.
+
 **Launch it under both boundaries, from the control directory.**
 
 ```
@@ -308,10 +382,15 @@ CODEX_HOME="$CE9_CONTROL/.codex-home" sandbox-exec -p "$CE9_PROFILE" \
 ```
 
 **All three flags are required and none is optional.** `--disable apps` closes the account's
-connectors, `-c 'mcp_servers={}'` clears any MCP server the copied `config.toml` declares, and
+connectors, `-c 'mcp_servers={}'` closes the override route to an MCP server, and
 `--ask-for-approval never` means the run cannot ask you to widen what it may reach. Dropping any one of
 them re-opens a route to the sources that the read boundary does not cover, and the trial it produces
 is not a control. Record the launch command verbatim (§ 4).
+
+**The flags are not the whole capability boundary, and check 5 is the part that is.** MCP servers
+declared in the home are closed by the § 1 home shape and proved closed by check 5 — not by any flag on
+this line. A run launched with all three flags out of a home that still declares a server is not a
+control, whatever the command line looks like.
 
 If Codex will not start inside the boundaries, or will not start in a control home with no history,
 **stop and record that** (§ 7). Do not drop a boundary or reuse an old home to get the trial finished:
@@ -347,9 +426,31 @@ What's the next unit — go ahead and brief it.
 
 **Before you score it, confirm the isolation held.** The boundaries are the enforcement; this is the
 check that they were in force for this run. Read back what Run A actually did and check five things: it
-worked in `$CE9_CONTROL`; it opened, listed or searched no file under this repository; it made no
-connector, app or MCP call; it was asked to approve nothing and you approved nothing; and it reached no
-Harbourview source by any other route. Record that confirmation — § 4 requires it.
+worked in `$CE9_CONTROL`; it **successfully opened** no file under this repository or anywhere else
+outside `$CE9_CONTROL`; no connector or app tool was available to it or called by it, no server-backed
+`mcp__*` tool was available to it or called by it, and no call returned content from outside the
+machine; it was asked to approve nothing and you approved nothing; and it reached no Harbourview source
+by any other route. Record that confirmation — § 4 requires it.
+
+**Judge reach, not tool names.** Codex exposes two client-side primitives, `list_mcp_resources` and
+`list_mcp_resource_templates`, that enumerate whatever MCP servers are configured. When check 5 passed
+there are none, so they return `{"resources":[]}` and `{"resourceTemplates":[]}` with no server
+contacted and nothing retrieved. **A run that called them and got empty arrays back has reached
+nothing, and is a clean control.** This is not a nicety: on 2026-08-14 an otherwise clean Run A was
+stopped and its Run B withheld because an earlier version of this paragraph asked for "no MCP call",
+which those two calls technically are.
+
+The line that matters runs elsewhere. These four are findings and the empty enumeration is not:
+
+| Seen in Run A | Verdict |
+|---|---|
+| `list_mcp_*` called, empty arrays returned | not a breach — nothing was reached |
+| a server-backed `mcp__*` tool present in the registry, called or not | breach — check 5 should have caught it before launch |
+| any connector or app tool present or called | breach |
+| any successful read outside `$CE9_CONTROL`, or any content returned from off the machine | breach |
+
+A refused read is not a successful one. Codex reporting that its own shell command was denied is the
+boundary working (see above), and it stays that way however many times it happens.
 
 > **If Run A reached any Harbourview source, or any part of this checkout, or reached outside the
 > machine through a connector, the trial is FAIL** — a blindness breach, with the route it took written
@@ -391,15 +492,18 @@ For **each** run, keep:
 - whether the thread was fresh and what, if anything, was already in its context;
 - **the directory it ran in.** For Run A, also the § 3a boundary evidence — check 0's exit status, the
   `checked=`/`denied=`/`other=` counts from check 1, the three exit statuses from check 2, check 3's
-  exit status, and check 4's two results — plus **the launch command verbatim, showing all three
-  capability flags**, and the after-the-run isolation confirmation: that it worked in `$CE9_CONTROL`,
-  made no connector, app or MCP call, was asked to approve nothing, and reached no file in this checkout
-  and no Harbourview source by any route. These are recorded observations, not assumptions: a trial
-  whose control boundary was never proved has not established that the control was blind.
+  exit status, check 4's two results, and check 5's output and exit status — plus **the launch command
+  verbatim, showing all three capability flags**, and the after-the-run isolation confirmation: that it
+  worked in `$CE9_CONTROL`, had no connector, app or server-backed `mcp__*` tool available or called,
+  returned no content from off the machine, was asked to approve nothing, and successfully opened no file
+  in this checkout and reached no Harbourview source by any route. These are recorded observations, not
+  assumptions: a trial whose control boundary was never proved has not established that the control was
+  blind.
 
   **Record the control home by path, not by contents.** `$CE9_CONTROL` holds a copy of your Codex
-  credentials. The path and the freshness-check output are the evidence; the contents of `auth.json`
-  and `config.toml` never go into a result, a transcript quote or a commit.
+  credentials. The path, the freshness-check output and check 5's server list are the evidence; the
+  contents of `auth.json` never go into a result, a transcript quote or a commit, and neither does
+  anything from your normal `config.toml`.
 
 **Do not create a transcript file, a results log or a runner record in this repository.** The result
 destination is § 6.
@@ -454,7 +558,7 @@ recovery being measured.
 |---|---|
 | **PASS** | Layer A holds for both runs **and** Layer B holds for Run B. |
 | **PARTIAL** | Layer A holds, Layer B does not — the fact travelled, the brief is wrong or thin. |
-| **FAIL** | Any of: the discriminator does not reach Run B; Run A reaches the corrective unit; the two outputs are indistinguishable; **preflight step 4 exited `0`** — an invalid instrument; **either thread was not fresh, or received more than § 3 allows, or Run A reached this checkout or any Harbourview source, or Run A ran without all three capability flags or in a reused control home, or a permission or access-expansion prompt appeared in Run A** — a blindness breach. |
+| **FAIL** | Any of: the discriminator does not reach Run B; Run A reaches the corrective unit; the two outputs are indistinguishable; **preflight step 4 exited `0`** — an invalid instrument; **either thread was not fresh, or received more than § 3 allows, or Run A reached this checkout or any Harbourview source, or a connector, app or server-backed `mcp__*` tool was available to Run A, or Run A ran without all three capability flags or in a reused control home, or a permission or access-expansion prompt appeared in Run A** — a blindness breach. |
 
 **A contaminated run is discarded; the trial is still recorded FAIL.** These two are separate acts and
 both are required. The affected run's *output* is not scored on its merits — a brief produced by a thread
@@ -493,9 +597,9 @@ Record exactly these nine things, and nothing more:
 2. Preflight outcomes — step 3 exit status and hit location, step 4 exit status.
 3. Run A: thread identifier, freshness confirmed, what it received, the launch command verbatim with
    all three capability flags, and the § 3a boundary evidence — the check 0, 2 and 3 exit statuses, the
-   check 1 counts, check 4's two results, the control-home path and the directory it ran in, and that
-   it reached no file in this checkout, no Harbourview source and no connector, and was asked to
-   approve nothing.
+   check 1 counts, check 4's two results, check 5's server list, the control-home path and the directory
+   it ran in, and that it successfully opened no file in this checkout, reached no Harbourview source,
+   had no connector, app or server-backed `mcp__*` tool available, and was asked to approve nothing.
 4. Run B: thread identifier, freshness confirmed, what it received.
 5. The captured outputs, or exact pointers to them (§ 4).
 6. Layer A outcome for both runs.
@@ -514,15 +618,17 @@ Stop, record what happened, and hand back rather than pressing on if:
 - preflight step 4 exits `0` — the instrument is broken (§ 2 step 5). Record the trial **FAIL**, invalid
   instrument;
 - either thread turns out not to have been fresh, or received more than § 3 permits, or Run A reached
-  this checkout or any Harbourview source, or Run A reached a connector, or a permission or
-  access-expansion prompt appeared in Run A — that run's output is discarded rather than scored, and the
-  trial is recorded **FAIL**, blindness breach, naming the rule that broke;
+  this checkout or any Harbourview source, or a connector, app or server-backed `mcp__*` tool was
+  available to Run A, or a permission or access-expansion prompt appeared in Run A — that run's output
+  is discarded rather than scored, and the trial is recorded **FAIL**, blindness breach, naming the rule
+  that broke. An empty `list_mcp_*` enumeration is none of those and stops nothing (§ 3a);
 - the § 3a boundary checks do not come out as stated — check 0 does not exit `0`, a Harbourview file is
   readable inside the boundary, `other` is above zero, a named source does not exit `1`, check 3 does
   not exit `0`, check 4 finds history in the control home or leaves an earlier control home readable,
-  or Codex will not start inside the boundaries. Run A is **not launched** and **no trial is
-  recorded**: this is a hand-back about the boundary, not a verdict about recovery. Weakening the
-  boundary to proceed is the one repair not available here;
+  check 5 prints anything but `[]` or its own failure demonstration prints `[]`, or Codex will not start
+  inside the boundaries. Run A is **not launched** and **no trial is recorded**: this is a hand-back
+  about the boundary, not a verdict about recovery. Weakening the boundary to proceed is the one repair
+  not available here;
 - Codex will not start in a control home that has no history, or the three capability flags cannot be
   used together with the read boundary on this machine. Run A is **not launched** and **no trial is
   recorded** — this is a hand-back about the instrument. Reusing an old control home, or dropping a
