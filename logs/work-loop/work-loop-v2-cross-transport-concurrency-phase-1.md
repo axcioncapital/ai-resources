@@ -1,68 +1,62 @@
 ---
 task: work-loop-v2-cross-transport-concurrency-phase-1
-turn: codex
+turn: operator
 ---
 
-## Objective and scope
+## Outcome
 
-Implement and validate Phase 1 of the accepted Work Loop v2 cross-transport concurrency proposal: one shared repository-rooted live-lease contract used by the attended carrier and unattended dispatcher, plus fail-closed repository-depth ownership admission before the carrier launches an actor. Complete the controller-level acceptance coverage, preserve both transports' intentional boundaries and existing behavior, make only the necessary Work Loop instruction updates, and run the two explicitly authorized live validations after the implementation has passed independent assessment.
+Phase 1 of the accepted Work Loop v2 cross-transport concurrency proposal is implemented in this worktree (`session/2026-08-14-concurrency-fix-2`), at pilot quality, and is ready for an operator integration decision.
 
-Task exit condition: the Phase 1 implementation and required instruction changes are committed in this worktree, the relevant controller suites and failure paths pass, one genuine cross-transport contention proof and one genuine fan-out-two Work Loop pair produce the accepted evidence, and the final limitations and rollback path are recorded for an operator integration decision.
+What is in place:
 
-Scope: the Phase 1 files and test surfaces named in `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-and-task-aware-worktrees-implementation-proposal-2026-08-13.md`, plus this state file. Temporary linked worktrees may be created only when the approved live validations require them; implementation remains bound to this checkout.
+- **One shared repository-rooted live-lease contract**, in the new `logs/scripts/work-loop-lease.sh`, used by both transports. The attended carrier (`scripts/axcion-harness-v0.2/carry-turn.sh`) and the unattended dispatcher (`plans/work-loop-v2-mvp/handoff-automation-spike/dispatch.sh`) acquire and release the same task-and-checkout lease, so a run of either program is visible to the other.
+- **Fail-closed repository-depth ownership admission in the attended carrier, before it launches an actor.** A carrier hop that cannot establish ownership refuses rather than proceeding.
+- **A durable record on early refusal.** A pre-actor exit-17 lease refusal now writes both a human-readable refusal naming the attended holder and a machine-readable terminal record carrying `actor_launched=no`. Before the fix, that refusal happened earlier than the dispatcher's log destination existed and left no artifact.
+- **Every pin result reported as itself** by both carrier and dispatcher, and a pin in the shared helper that is durable-or-explicit rather than silently best-effort.
+- **The required Work Loop instruction updates only** — `.agents/skills/work-loop-v2/SKILL.md` (6 lines changed). No change to the executable core.
 
-Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; changes to the executable core; automatic merge, landing, push, branch deletion, worktree cleanup or other destructive cleanup; a scheduler, registry, service or lease database; and concurrency outside Work Loop v2. No work is performed in the main checkout.
+Both transports' intentional boundaries are preserved: the dispatcher was never used as the Work Loop courier during this task, and no work was performed in the main checkout.
 
-## Lane and unit
+## Decisions that matter
 
-Standard. Discovery mode. Unit 10 — retry the genuine cross-transport contention proof (proposal case 23).
+**Case 23 (genuine cross-transport contention) is accepted on composite evidence, not on a single end-to-end post-fix run.** The genuine pre-fix live run did produce the required behaviour: a real attended carrier hop held the shared lease, a real unattended dispatcher attempt for the same task and repository lost with exit 17, the refusal named the attended carrier as holder, and no second actor was launched. Its only missing artifact was the requested early-refusal log. Unit 9r2 then fixed that exact logging-order defect and proved the durable record directly; Unit 9r3 carried that case inside the full green dispatcher regression suite. Repeating the live model launch would have added orchestration cost without testing an unproven behaviour.
 
-Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
+**The operator decided on 2026-08-14 to close at pilot quality rather than manufacture case 24.** Case 24 (a genuine fan-out-two Work Loop pair) needs two top-level Work Loop tasks in two worktrees. A single interactive Claude session cannot safely create two top-level actors, and the alternatives — operator-coordinated dual sessions, or re-enabling automated transport — both cost more than the remaining uncertainty is worth at this stage. Unit 10 stopped on exactly this and launched no transport.
 
-## Brief
+**Deferrals carried out of this closure, each with why it stays outside Phase 1:**
 
-The implementation and controller gates are accepted. Proposal §7 step 5 now requires one genuine carrier-versus-dispatcher contention proof before case 24. This is being run interactively from the VS Code Claude session: no dispatcher or carrier is carrying the Work Loop turn; those programs appear only as the live subjects being validated.
+- **`LOCK_KEY` is unassigned in `dispatch.sh`.** Pre-existing, not introduced by this repair, and not on the Phase 1 surface. Fixing it would be an unrelated edit inside a task whose scope excluded repairs.
+- **Phase 2 task-aware automatic worktrees, and any change to D4.** Explicitly excluded by the task's own scope. Phase 2 is the next proposal stage and depends on an operator integration decision on Phase 1 first.
+- **The retained interactive same-task limitation.** Deliberately kept, not overlooked: the attended path still refuses a second same-task actor rather than coordinating one, and relaxing that would reopen the very over-refusal control that Unit 3b2 identified as load-bearing.
 
-Governing authority: the operator-approved Phase 1 proposal §5 case 23 and §7 step 5. The required observable outcome is that a real attended carrier hop holds the shared lease, a real unattended dispatcher attempt for the same task/repository loses with exit 17, the refusal names the attended holder and is durably recorded under the requested log directory, and the losing dispatcher launches no actor.
+**A false premise was handed back once and honoured.** Unit 3b2 found that ordinary `mkfix` helper packaging could not preserve the over-refusal control in the carrier's section 12b, and handed back rather than building around it. Unit 3b2r then implemented the admission properly.
 
-Check against the repository before acting: verify this exact worktree and task binding; verify no transport run or lease is currently in flight; verify HEAD contains `40bb184e` and the accepted Unit 9r3 handoff; inspect the preserved failed case-23 evidence so the retry uses a new evidence directory and does not repeat its missing-log mistake. Treat the earlier live attempt as historical evidence, not as a successful case.
+## Evidence
 
-Scope: one live case-23 retry, its evidence under `logs/harness-runs/`, and this state file. No source or test edits. Excluded: repairs, controller-suite reruns, case 24, Phase 2, main checkout, push, cleanup, and any use of the dispatcher as the Work Loop courier.
+**Branch:** `session/2026-08-14-concurrency-fix-2`. **Merge-base with `main`:** `212fa918`. **Head at closure:** `1ea47608`, plus this closing commit.
 
-Required evidence: exact carrier and dispatcher invocations; both exit codes; the durable losing-dispatcher log path and its human refusal plus machine-readable terminal record; proof the dispatcher launched no actor; the holder label shown to the loser; final lease status; and the commit containing only the state-file handoff. Keep repository facts separate from actor claims.
+**Implementation span:** `54d9db9c` (unit 1, four cross-transport contention cases as a red slice) through `5bd3226b` (unit 9r3). Twelve files changed against `main`: +4044 / −278 lines.
 
-Stop and hand back without retrying if safe orchestration would require an unsupported nested actor, if either transport cannot complete, if the loser does not exit 17, if durable evidence is absent, or if any source/test edit appears. Preserve partial evidence.
+**Controller gates, each red-before-green where a fix was involved:**
 
-Completion condition: case 23 is either proven once with all required live evidence and returns at `turn: codex`, or it returns a precise blocker without repair or repetition.
+| Suite | Result |
+|---|---|
+| Shared lease helper (`work-loop-lease.test.sh`) | 67 / 0 |
+| Owner suite | 92 / 0 (was 86/6 on a fixture-packaging omission) |
+| Carrier suite (`carry-turn.test.sh`) | 350 / 0 |
+| Dispatcher suite (`dispatch.test.sh`) | 537 / 0, exit 0 — the final full regression gate |
 
-## Latest result
+Intermediate red-to-green transitions on the dispatcher suite: 498/5 → 503/0 (unit 7), 510/7 → 517/0 (unit 8r2), then 537/0 at unit 9r3.
 
-Unit 10 did not run case 23. It stopped at the brief's own stop clause — "safe orchestration would require an unsupported nested actor" — before creating a worktree, a scratch task file or a lease, and before launching either transport. Nothing was launched and nothing outside this state file changed.
+**Live evidence:** the genuine case-23 carrier-versus-dispatcher observation — dispatcher exit 17, carrier exit 22, holder label correct — is recorded in `plans/work-loop-v2-v0.2/dispatcher-work-loop-harness-autonomy-improvement-report-2026-08-14.md` (§1.1, §2.7, and Evidence consulted), committed at `5d38c76f`.
 
-Inspected (2026-08-14), all read-only, the brief's four pre-flight checks first:
+**Run artifacts:** `logs/harness-runs/` in this worktree, including `20260814-unit9r3-dispatcher-suite-full.out` (the 537/0 gate), `20260814-unit8-holder-label-green.out`, `20260814-unit8-dispatcher-red.out` and the unit-6 gate outputs. This directory is **untracked** — it is local working evidence, not committed history.
 
-- Worktree and task binding: HOLDS — `git rev-parse --show-toplevel` is `.../ai-resources-concurrency-fix-2`; `work-loop-owner.sh check --depth repo` returns PROCEED, "this checkout already declares task 'work-loop-v2-cross-transport-concurrency-phase-1'".
-- Nothing in flight: HOLDS — `dispatch.sh --status` reports `checkout-lock: free` and `run: none in flight` against the shared lease root `.../ai-resources/.git/work-loop-dispatch-locks/`; `ps -ax` matched no `dispatch.sh`, `carry` or `carrier` process.
-- HEAD: HOLDS — HEAD is `5bd3226b` (the Unit 9r3 handoff) and `git merge-base --is-ancestor 40bb184e HEAD` succeeds, so the implementation commit is contained.
-- Preserved case-23 evidence: HOLDS — `ls -d logs/harness-runs/case23-live-dispatcher` returns "No such file or directory". The directory's absence *is* the preserved failure, so a retry cannot reuse it; a new evidence directory was reserved at `logs/harness-runs/unit10-case23-preflight/`.
+**Rollback path:** nothing from this task has been merged to `main` or pushed. Rollback is to decline the merge and discard the branch; the repository returns to `212fa918` with no revert needed. If a partial rollback is ever wanted after a merge, the implementation is separable at file level — `logs/scripts/work-loop-lease.sh` and its test are new files, and the carrier and dispatcher changes are confined to `carry-turn.sh` and `dispatch.sh`.
 
-Blocking finding, established by inspection of the two transports rather than by argument:
+## Accepted limitations
 
-1. A real carrier hop cannot hold the lease without launching a real AI process. `scripts/axcion-harness-v0.2/carry-turn.sh` line 348 refuses `--actor-cmd`, `--simulate` and `--fake-actor` with "there is no simulated-actor seam on this surface, so no run of it can report simulated transport as live". Proposal §7 names that absence as a boundary whose loss is a *stop* condition, so it is not mine to work around.
-2. `--dry-run` is not a hold. `acquire_lock` runs at `carry-turn.sh` line 1456 and the dry-run branch at line 1550 prints, calls `release_lock` and exits — the lease is held for milliseconds, not for the window a contending dispatcher needs.
-3. The carrier hop cannot use a scratch task in this checkout. `work-loop-owner.sh check --task case23-live-holder --depth repo` returns **REFUSE, exit 3**: "this checkout is claimed by open task 'work-loop-v2-cross-transport-concurrency-phase-1'". That is Phase 1 working as designed, so the holder hop needs a separate checkout, and the carrier must therefore carry either this task (recursion — its actor would be handed this same open Unit 10) or a scratch task in a temporary worktree.
-4. Either way the carrier's actor would be a `claude` process launched by this Claude session. This session is top-level and attended — parent is the VS Code extension binary, not a transport, and its argv carries no `--disallowedTools` — so nothing *mechanically* stops it. What stops it is the design: `carry-turn.sh` lines 84–100 and `dispatch.sh` lines 328–357 apply the four `Bash(claude:*) / Bash(codex:*)` deny rules to every hop precisely so "one attended hop stays one attended hop", and record that "the only demonstrated use of nested AI invocation in the whole evidence set is the 2026-08-10 failure this exists to prevent". Producing this project's cross-transport proof by the one orchestration the project forbids would be evidence Codex would have to discount.
-
-Evidence: `logs/harness-runs/unit10-case23-preflight/preflight.out` — the read-only status and the ownership refusal above, captured verbatim. The status output ends "status is read-only. It launched nothing and wrote nothing." `git status --porcelain` shows no change to any source, test or transport file.
-
-The supported orchestration, for Codex to reframe against, not applied here: case 23 needs **two top-level launchers**, which is the shape the first attempt used ("the attended carrier held the leases while Codex separately launched the dispatcher", autonomy report line 128). Concretely — the operator runs `carry-turn.sh` for a scratch task in a temporary linked worktree from their own terminal; that hop takes the task and checkout leases; this session then runs `dispatch.sh` for the *same scratch task* from this checkout, which must lose on the **task** lease at exit 17 across two checkouts. The defect that killed the first attempt is already fixed and no longer needs a waiting actor: the loser's own durable run log under its `--log-dir` (Unit 9r2, Case 12h) is the artifact, and `dispatch.sh --status` is a deterministic marker for when the holder actually holds.
-
-Carried forward: live case 23 remains unaccepted; case 24 remains unrun; `LOCK_KEY` being unassigned in `dispatch.sh` remains a pre-existing deferral outside this unit.
-
-## Blocker
-
-Unit 10 cannot be completed from this session alone. Every route to a real carrier hop holding the shared lease requires this Claude session to launch a `claude` actor — the nested-actor shape both transports' mandatory deny sets exist to prevent — because the carrier has no simulated-actor seam, `--dry-run` does not hold the lease, and ownership admission refuses a second task in this checkout. A second top-level launcher (the operator, or Codex) is the missing piece, not a repair to any file.
-
-## Next action
-
-Codex: reframe Unit 10 around two top-level launchers, or send it to the operator. The decision needed is who launches the holding carrier hop — this session cannot without nesting an actor under itself. If the reframe stands, name the scratch task id, the temporary worktree, and which side runs which transport.
+1. **The genuine fan-out-two pair (case 24) is unrun.** Broader operational confidence should not be claimed until the next real pair of concurrent Work Loop tasks supplies it. That pair is the intended natural producer of this evidence — it does not need to be manufactured.
+2. **Case 23 was not repeated end-to-end after the logging fix.** Its acceptance is composite: a genuine pre-fix live contention observation plus a post-fix durable-logging proof plus the full 537/0 regression gate. Each half is real; the single unbroken post-fix run is what is missing.
+3. **The interactive same-task limitation is retained by design**, not resolved.
+4. **Live evidence in `logs/harness-runs/` is untracked** and will not survive a clean checkout.
