@@ -3928,3 +3928,59 @@ non-symlink copy — verify whether it carries the same literal.
 - *Systemic, Friday-cadence:* (a) decide whether the SessionStart symlink hook should report — not silently skip — a shared command shadowed by a stale regular file, since that is exactly how this stayed invisible; (b) audit the other 31 regular files in that worktree's `.claude/commands/` for the same shadowing; (c) fold into the standing propagation guidance that `CLAUDE.md` and forked command files are the two things a narrow copy gets wrong in opposite directions (see the 2026-08-13 `CLAUDE.md` identity-overwrite incident).
 
 **Source:** `projects/axcion-si-worktrees/architecture-engineering-services/logs/session-notes.md`, sessions S1-e76 (2026-08-13) and S2-dc4 (2026-08-14).
+
+## 2026-08-14 — `executor-routing-guide.md` has no canonical copy anywhere, and one unit worktree does not hold it at all (PENDING)
+
+**Status:** PENDING — logged for the Friday cadence. The rule change itself is operator-ruled and applied in one worktree; the canonical propagation is gated by CLAUDE.md Autonomy Rules #8/#9 and deliberately not applied here.
+
+**Symptom.** Two current project reference documents in the sector-intelligence programme gave **opposite instructions** about what may be done with Perplexity output. `reference/executor-routing-guide.md` (v1.0, 2026-08-04): *"Perplexity citations have a known error rate; a Perplexity answer is a lead, not an accessed source. Every load-bearing claim still requires the executor to open the underlying source."* `reference/stage-instructions.md` Step 2.S4, *Merge Supplementary Evidence*: merges Perplexity output into APPROVED Research Extracts and lets it move coverage verdicts. Neither document cites the other; 2.S4 predates the guide.
+
+**Why it matters, with evidence.** The `finance-accounting-bpo` unit produced two first-hand cases in one week that Step 2.S4 as written would have installed as evidence on sources nobody opened:
+1. **An unreached domain.** The approved pass-1 query brief said `administergroup.fi`; the company's actual domain is `administergroup.com`. Administer's own filings were never reached — a retrieval gap that would have merged as a scarcity finding.
+2. **An unindexed repository.** Perplexity returned nothing from `tem.fi`, `toimialaraportit.fi` or `julkaisut.valtioneuvosto.fi` across two attempts, with and without a domain filter, while two ordinary web searches found `Taloushallintoalan toimialaraportti 2019` (TEM julkaisuja 2019:50) immediately. This is the dangerous direction — it runs toward a **confirmed scarcity** entry, which is harder to reverse than a missing claim and leaves no downstream trace.
+
+**Operator ruling, 2026-08-14: the guide governs.** Step 2.S4 gains a source-opening precondition — a MERGE/PARTIAL verdict authorises a merge only after an executor has opened the underlying source; unopened material merges as a `[SUPPLEMENTARY — LEAD]` pointer with no Claim ID, no Strength, no Evidence lens and no coverage-verdict movement. The guide gains the reciprocal statement plus a **Perplexity-negative-≠-absence** rule. Applied on `unit/finance-accounting-bpo` across three files (`stage-instructions.md`, `executor-routing-guide.md`, `quality-standards.md:96`).
+
+**The propagation problem — this is the part that needs the cadence.** The two files do not propagate the same way, and one cannot propagate at all.
+- `stage-instructions.md` **has an inheritance path.** Canonical template at `ai-resources/workflows/research-workflow/reference/stage-instructions.md`; ten of eleven unit worktrees hold byte-identical copies (md5 `3093da5e…`). Edit canonical once → `/sync-workflow`. **Caveats:** `risk-security-compliance-services` has diverged (md5 `1018b93f…`) and needs its 2.S block checked by hand; and the canonical template already differs from all eleven worktrees (SessionStart reports drift across 8 files), so the sync carries unrelated changes and must be reviewed, not applied blind.
+- `executor-routing-guide.md` **has no canonical copy.** It does not exist in `ai-resources/workflows/research-workflow/reference/`. Ten worktrees hold identical copies (md5 `642ec2c8…`) and **`industrial-software` does not hold the file at all** — that unit is running Stage-2 executor routing with no routing guide. **This is true independently of the ruling above and is the more urgent half.** Proposed: promote the guide into the workflow template first, edit it there, then sync all eleven — which closes the `industrial-software` gap as a side effect.
+- `quality-standards.md` is a per-worktree reference file with the same problem and should ride the same sync rather than be fixed eleven times.
+
+**Also found while the file was open.** `executor-routing-guide.md`'s routing table and routing-test question 3 both scoped their niche-surface rule to **German** official/legal sources — carried over from a German-market project, in a programme whose `Country set` is `[Finland]`. It had already been cited as generic authority for "official/legal surfaces → Research GPT," which is the right conclusion read through a row that names the wrong country. Generalised to the project's country set (plus government publication repositories) in the F2 copy; the same edit is owed wherever the guide lands canonically.
+
+**Ordering note.** This and the pending `stage-instructions.md` Evidence-Pack reconciliation (P4) both edit the same canonical file. Land them in one pass, not two.
+
+**Source:** `projects/axcion-si-worktrees/finance-accounting-bpo` — `reports/executor-routing-vs-2s4-conflict-v1.md` (full write-up with the drafted wording), `logs/decisions.md` F2-21/F2-22, `roadmap/pre-batch-propagation-checklist.md` **P10**.
+
+## 2026-08-14 — Measured: a third of one sector unit's deep citation permalinks are dead four days after delivery; the Evidence Pack lane has no Source Log (PENDING)
+
+**Status:** PENDING — logged for the Friday cadence and for the Phase-A re-evaluation gate. No repair applied anywhere; the disposition below is a standing operator decision, not a backlog item awaiting someone's time.
+
+**Symptom, measured.** The `cleantech-equipment` (C3) sector-intelligence unit ran a systematic resolve-only sweep across its Research Extract citations — 22 URLs drawn positionally (positions 5, 14, 23, 32, 41 of each pack's numbered source list) across the eight packs that had failed an earlier check. Split by URL depth before execution, because shallow addresses resolve almost regardless of whether anyone opened them:
+
+- **Deep permalinks — 4 of 12 dead (33%).** The headline.
+- Shallow (root or standing page) — 2 of 9 dead (22%), plus 1 WAF-blocked.
+- Overall — 6 of 21 dead (29%), excluding one host known to serve bot challenges.
+
+The packs were delivered **2026-08-10** and swept **2026-08-14**. A live citation set does not decay at 33% in four days. An earlier pass over 33 URLs had returned 4 hard 404s (~12% blended, all deep permalinks); the depth-corrected rate is near three times that.
+
+**Why it reads as "citations written without the page being opened" and not as link rot.** Three independent lines:
+1. The deep rate itself, four days after delivery.
+2. **Two of the nine shallow URLs are also dead** — `…/company/` and `…/references/`, exactly the paths a writer *constructs* by pattern rather than visits. The shallow set was the control group and should have been near-clean.
+3. **One row carries the signature outright.** A claim quotes Sulzer's 2025 provisions — CHF 92.5m warranties/liabilities, CHF 12.2m environmental. Both figures are **correct** and sit in the real Note 25. The URL actually cited resolves to a live page: "7 Employee benefit plans", an unrelated note carrying neither figure. The content was obtained; the address was not transcribed from what was opened. The earlier pass found the same shape twice more (Vahterus, Terex): right facts, dead address, correct content at a different official URL.
+
+**Root cause is a lane property, not a unit defect.** The Evidence Pack delivery lane ships **no Source Log** — flagged 2026-08-10 as the lane's highest-leverage gap and still open. Without one, nothing distinguishes an opened source from a constructed address. This sweep is the first instrument that has tested it directly.
+
+**Scale.** 13 confirmed defective citation instances on C3 (7 with a repair in hand, 6 never cured because the sweep was resolve-only). Indicated lane-wide load: **~29% of roughly 191 URLs — on the order of 50–55 dead citations** in that unit's failing packs. Stated as an indication, not a measurement.
+
+**Disposition — all 13 repairs WITHHELD, standing (Decision C3-10, operator, 2026-08-14).** Repairing the seven with cures would produce an extract set that *reads* as checked while most of it has never been pulled, with nothing on the page telling a later reader which is which. Cures are recorded durably, so deferral is cheap. **Not to be applied at Stage 3, Stage 4, or on a later checkpoint pass without a fresh operator decision at the gate.**
+
+**Why this is here and not only in the unit's worktree — this is the cadence-relevant half.** Every one of the eleven Phase-A sector units came through the **same Evidence Pack lane with the same missing Source Log**, and **nine of eleven have never had a single citation URL pulled**. The one partial comparison (`managed-it-cloud`, zero hard 404s across 26 URLs) was not drawn from its own source registers and is not a valid control. So the open questions are batch-level:
+1. **Is a citation-integrity check a precondition for any unit entering Stage 3, or does the programme accept the lane's citations as delivered?** A "no" is legitimate — every fact re-derived during the check came back correct — but it should be a decision on the record, not a default.
+2. **If yes, at what width?** Cheapest discriminator first: **one properly-drawn resolve-only sweep on a second unit**, reusing C3's draw rule verbatim. That settles lane-wide versus C3-specific for a fraction of the cost of the full ~191-URL sweep, which stays deferred.
+
+**What this does NOT claim** — stated because the headline number is easy to over-read: it is **not** a measured lane-wide rate (one unit, positional draw, ten units unmeasured); it does **not** say any fact is wrong (the failure is address integrity, not factual accuracy — every re-derived figure held); it moved **no** verdict (C3's extract-grade gate is separately MET at 11 of 11 APPROVED and untouched); and it says nothing about **claim over-reach**, a class no URL-resolution check can detect — three such findings are confirmed on C3 and a clean resolve rate would not have cleared them. That class remains uninstrumented programme-wide.
+
+**Filed on two surfaces, deliberately** — same pattern as P10 above. The full basis lives at `projects/axcion-si-worktrees/cleantech-equipment/roadmap/citation-integrity-read-cleantech-equipment-v1.md`, which is stranded on `unit/cleantech-equipment` until C3 merges. This entry is the copy that will actually be read.
+
+**Source:** `projects/axcion-si-worktrees/cleantech-equipment` — `roadmap/citation-integrity-read-cleantech-equipment-v1.md` (the gate-input read, full basis), `execution/extract-verification/cleantech-equipment/cleantech-equipment-codex-spotcheck-record-pass2.md` (raw record), `execution/checkpoints/cleantech-equipment/cleantech-equipment-codex-spotcheck-sampling-list-pass2.md` (reusable draw rule), `logs/decisions.md` C3-6/C3-9/**C3-10**.
