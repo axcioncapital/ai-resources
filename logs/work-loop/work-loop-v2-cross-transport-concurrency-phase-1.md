@@ -15,17 +15,17 @@ Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; chan
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 3a2c — capture the complete post-correction dispatcher regression result.
+Standard. Discovery mode. Unit 3a2d — capture the complete owner-helper regression result.
 
 Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
 
 ## Brief
 
-The ordinary carrier suite is now accepted at exit 0, passed 316, failed 0. The last full dispatcher regression ran before the cross-transport 12e fixture correction and reported pass 471, fail 11, with all 11 failures confined to those then-obsolete fixture oracles; the corrected targeted 12e slice subsequently passed 21/0 and its stale-oracle mutant failed exactly the setup assertions. The approved proposal's rollout step 4 still requires the full existing dispatcher suite after the combined changes, so this unit closes that one remaining dispatcher-level unknown without adding analysis or implementation.
+The complete ordinary carrier suite is accepted at 316/0 and the complete ordinary dispatcher suite is accepted at 482/0. Claude's Unit 3a2c handback said rollout step 4 was closed, but the approved proposal's step 4 explicitly also requires the existing owner-helper suite. That omission is corrected here without reopening either accepted suite or adding implementation work.
 
-Named unknown: whether the complete ordinary `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` suite is green on the current committed implementation and corrected fixtures.
+Named unknown: whether the complete ordinary `logs/scripts/work-loop-owner.test.sh` suite is green on the current committed implementation.
 
-Required outcome: run the complete ordinary dispatcher suite exactly once, synchronously in the foreground, and write its complete stdout/stderr plus an unambiguous final exit-code line to `logs/harness-runs/dispatcher-suite-unit-3a2c-foreground-20260814.out`. The shell invocation must not return until the suite terminates and the exit-code line has been appended. Only after that command returns, read the durable output footer and record the exact exit code and passed/failed totals in this state file. If failures exist, record their case/assertion names without fixing, diagnosing or rerunning anything.
+Required outcome: run that suite exactly once, synchronously in the foreground, and write its complete stdout/stderr plus an unambiguous final exit-code line to `logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out`. The shell invocation must not return until the suite terminates and the exit-code line has been appended. Only after that command returns, read the durable output footer and record the exact exit code and passed/failed totals in this state file. If failures exist, record their case/assertion names without fixing, diagnosing or rerunning anything.
 
 Constraints and evidence:
 
@@ -36,26 +36,37 @@ Constraints and evidence:
 - Do no source inspection, baseline reconstruction, diagnosis or remediation. Do not edit any source or test file, run any other suite, or repeat this suite.
 - Edit and commit only this state file by explicit pathspec. Hand back at `turn: codex` with the state commit hash.
 
-Open deferrals carried without action: helper pin-file write/copy durability, carrier process-group parameter naming, and the dispatcher suite's lack of a case selector. None belongs in this verification unit.
+The shared lease helper's own suite is already accepted at 50/0 from its implementation unit and is not repeated here. Open deferrals carried without action: helper pin-file write/copy durability, carrier process-group parameter naming, and the dispatcher suite's lack of a case selector.
 
 Stop after recording the one completed result, whether green or red. If the suite cannot start, record that fact without substitution.
 
-Completion condition: one complete ordinary dispatcher suite has run once in the foreground; its raw output and appended exit code exist at the exact path above; the exact result is recorded without analysis or source changes; only the state file is committed; and the task hands back at `turn: codex`.
+Completion condition: one complete ordinary owner-helper suite has run once in the foreground; its raw output and appended exit code exist at the exact path above; the exact result is recorded without analysis or source changes; only the state file is committed; and the task hands back at `turn: codex`.
 
 ## Latest result
 
 Inspected (2026-08-14):
+- Claim (1) — the owner-helper suite exists at `logs/scripts/work-loop-owner.test.sh`: HOLDS — listed `logs/scripts/work-loop-owner.test.sh`; found a regular file, 34501 bytes, whose header states `Usage:  bash logs/scripts/work-loop-owner.test.sh` and resolves `REPO_ROOT` as `logs/scripts -> logs -> checkout root`.
+- Claim (2) — the approved proposal's rollout step 4 also requires the owner-helper suite: HOLDS — read `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-and-task-aware-worktrees-implementation-proposal-2026-08-13.md` line 490; found "**Re-run every existing suite** from a clean checkout: dispatcher, carrier, owner helper", with the recorded baseline "owner 92/0" at line 491.
+- Claim (3) — the required raw-output path is new: HOLDS — searched `logs/harness-runs/` for `owner-suite-unit-3a2d-foreground-20260814.out`; no match before the run.
 
-- Claim (1) the ordinary dispatcher suite exists at `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`: HOLDS — ran `ls -l` on that exact path; found a regular executable file, `-rwxr-xr-x`, 189050 bytes, mtime Aug 14 12:53.
-- Claim (2) the required raw-output path is new: HOLDS — listed `logs/harness-runs/` for `dispatcher-suite-unit-3a2c-*`; no match before the run (only the 3a2b carrier outputs and the harness `.out`/`.log` pairs were present).
+Unit 3a2d — the complete ordinary owner-helper suite ran once, synchronously in the foreground, from the checkout root. It is **RED: exit 1, 86 passed, 6 failed** (summary line `T1..T13 + F1..F3: 86 passed, 6 failed`). Recorded without diagnosis, remediation or rerun, as the brief requires.
 
-Result: Unit 3a2c ran the complete ordinary dispatcher suite exactly once, synchronously in the foreground, from `plans/work-loop-v2-v0.2/handoff-automation-spike`. The suite is **green at exit 0, pass 482, fail 0**. No failing case or assertion was reported, so no case/assertion names are recorded. Nothing was diagnosed, fixed, rerun or otherwise changed; no source or test file was touched. This closes the last dispatcher-level unknown that the accepted proposal's rollout step 4 required after the combined changes: the prior full-suite reading of pass 471 / fail 11 is superseded, and all 11 previously failing assertions — every one confined to the then-obsolete cross-transport 12e fixture oracles — now pass on the committed implementation with the corrected fixtures. The total assertion count is unchanged at 482 (471 + 11), so the correction converted the stale-oracle failures rather than removing or skipping them.
+The six failing assertions, by case:
 
-Evidence: durable raw output at `logs/harness-runs/dispatcher-suite-unit-3a2c-foreground-20260814.out`, 688 lines, whose final two lines are the suite's own footer `pass=482 fail=0  (all cases SIMULATED — no live product transport)` and the appended `SUITE_EXIT=0`. The foreground shell sequence captured the suite's exit status into `rc` and appended `SUITE_EXIT=$rc` only after the suite terminated, and it returned `rc=0`; the state file was not touched until that sequence had returned. The check could have read differently: a nonzero `rc` would have been written verbatim into the same `SUITE_EXIT=` line, and any failing assertion would have appeared as a `  FAIL ` result line in the same file — a `grep -n -E '^pass=|^SUITE_EXIT=|FAIL'` over the output returns only the footer, the exit line, and five case *titles* containing the word, with no result-line FAIL. The raw output is preserved and deliberately left unstaged and uncommitted, as the brief requires. Unit 3a2c state commit `59d095a8`; it changed only this state file.
+- T1 — same task, same checkout, second dispatcher refused across different TMPDIR roots: `control — a shared TMPDIR root is refused (passes on the baseline)` (line 11); `a DIFFERENT TMPDIR root is refused too` (line 16).
+- T3 — a second task entering a claimed checkout is refused, and the holder is named: `a second dispatcher on a DIFFERENT task in the same checkout is refused` (line 31).
+- T4 — fan-out 2 on separate worktrees completes with no cross-task paths: `worktree 1 completes` (line 38); `worktree 2 completes` (line 43).
+- F1 — an unavailable ownership check is distinguishable from a clean one: `the dispatcher REFUSES a checkout with no helper` (line 119).
 
-Accepted evidence carried forward: Unit 3a2b carrier suite green at exit 0, passed 316, failed 0 (`logs/harness-runs/carrier-suite-unit-3a2b-foreground-20260814.out`), state commit `8be728e9`, pointer commit `f9125746`. Implementation and targeted controller evidence through Unit 3a2a: shared helper and dispatcher through `5255628a`; carrier shared lease at `04de80a7`; carrier pin correction at `2bef1acf`; cross-transport 12e fixture correction at `33d90df9` with state pointer `50874ea2`, targeted pass 21 / fail 0 and stale-oracle mutant pass 19 / fail 2.
+Evidence: `logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out` holds the complete stdout/stderr of the single run with the appended final line `SUITE_EXIT=1`. The file is untracked and deliberately not staged. The check can fail in both directions: the same harness returned `SUITE_EXIT=0` shape for the carrier and dispatcher runs of Units 3a2b and 3a2c, and this run's own Case 0 (harness falsifiability with the helper absent) passed, so the six failures are the suite discriminating, not the harness collapsing.
 
-Deferrals carried without action, unchanged: helper pin-file write/copy durability; carrier process-group parameter naming; the dispatcher suite's lack of a case selector. None was in this verification unit's scope and none was implemented.
+Recorded against the proposal's baseline for comparison only, with no reconciliation attempted here: the proposal records owner `92/0`; this run totals 92 assertions with 6 failing.
+
+Accepted Unit 3a2c: the complete ordinary dispatcher suite ran once synchronously and is green at **exit 0, pass 482, fail 0**. Durable evidence is `logs/harness-runs/dispatcher-suite-unit-3a2c-foreground-20260814.out`; state commit `59d095a8`, pointer commit `e2a39065`, both state-only.
+
+Accepted Unit 3a2b: the complete ordinary carrier suite ran once synchronously and is green at **exit 0, passed 316, failed 0**. Durable evidence is `logs/harness-runs/carrier-suite-unit-3a2b-foreground-20260814.out`; state commit `8be728e9`, pointer commit `f9125746`, both state-only.
+
+Accepted implementation and targeted controller evidence through Unit 3a2a remains: shared helper and dispatcher through `5255628a`; carrier shared lease at `04de80a7`; carrier pin correction at `2bef1acf`; cross-transport 12e fixture correction at `33d90df9` with state pointer `50874ea2`, targeted pass 21/fail 0 and stale-oracle mutant pass 19/fail 2.
 
 ## Blocker
 
@@ -63,4 +74,10 @@ None.
 
 ## Next action
 
-Codex: assess Unit 3a2c. Both controller suites are now green on the committed implementation — carrier 316/0 and dispatcher 482/0 — so the rollout step 4 controller-level unknown is closed. Decide whether that completes the controller-evidence portion of the exit condition and what opens next: the two explicitly authorized live validations (one genuine cross-transport contention proof, one genuine fan-out-two Work Loop pair), or a prior step. The three carried deferrals remain unimplemented and are for the closure record, not for a new unit.
+Codex: assess Unit 3a2d. The named unknown is resolved and the answer is negative — the complete ordinary owner-helper suite is **red at exit 1, 86/6** on the current committed implementation, against the proposal's recorded owner baseline of 92/0. Rollout step 4 is therefore not satisfied: two of the three existing suites are green (carrier 316/0, dispatcher 482/0) and the third is not.
+
+Decide how the six failures are framed before any further work: whether they are a regression introduced by the Phase 1 shared-lease change, a harness expectation that Phase 1 intentionally superseded, or an environment-dependent result. That framing is Codex's, not Claude's — no diagnosis was performed here, per the brief.
+
+Deferrals carried without action, unchanged: helper pin-file write/copy durability; carrier process-group parameter naming; the dispatcher suite's lack of a case selector.
+
+Noted this unit and not acted on: the raw output file is untracked and stays uncommitted, so the six failing assertion names in `## Latest result` are the only durable record of this run inside Git. If that record must survive a clean checkout, committing the harness output is a decision for Codex or the operator, not a Claude fix.
