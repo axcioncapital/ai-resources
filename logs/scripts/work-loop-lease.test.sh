@@ -115,6 +115,32 @@ case "$MODE" in
       "$([ -f "$WL_LEASE_TASK_DIR/survivors" ] && printf yes || printf no)" \
       "$([ -f "$WL_LEASE_CHECKOUT_DIR/survivors" ] && printf yes || printf no)" >>"$OUT"
     exit 0 ;;
+  pin-block-task|pin-block-checkout)
+    # FORCE the durable pin evidence to be unpersistable, deterministically.
+    #
+    # A DIRECTORY is put where the `survivors` FILE has to go. `>` then cannot
+    # create the file for ANY user, root included, so the forcing does not
+    # depend on privilege and needs nothing destructive. And `[ -f .../survivors ]`
+    # — the exact test wl_lease_acquire and wl_lease_status use to recognise a
+    # pin — is false afterwards, so what a later process sees is precisely the
+    # state a lost write leaves behind. Blocking one resource at a time is what
+    # separates a task-evidence failure from a checkout-replication failure.
+    if [ "$MODE" = "pin-block-task" ]; then BLOCKED="$WL_LEASE_TASK_DIR"
+    else BLOCKED="$WL_LEASE_CHECKOUT_DIR"; fi
+    mkdir "$BLOCKED/survivors" 2>/dev/null \
+      || { printf 'BLOCK-SETUP-FAILED %s\n' "$BLOCKED" >>"$OUT"; exit 72; }
+    wl_lease_pin "7777" "" "$TK"; prc=$?
+    # `${...-}` and not `${...}`: under the PRE-FIX library the variable does not
+    # exist, and `set -u` would kill the driver before it could report the false
+    # success this case exists to show.
+    printf 'PIN rc=%s pinned=%s failed=[%s] task_evidence=%s checkout_evidence=%s\n' \
+      "$prc" "$WL_LEASE_PINNED" "${WL_LEASE_PIN_FAILED-<unset>}" \
+      "$([ -f "$WL_LEASE_TASK_DIR/survivors" ] && printf yes || printf no)" \
+      "$([ -f "$WL_LEASE_CHECKOUT_DIR/survivors" ] && printf yes || printf no)" >>"$OUT"
+    wl_lease_release
+    printf 'AFTER-RELEASE task=%s checkout=%s\n' \
+      "$(present "$WL_LEASE_TASK_DIR")" "$(present "$WL_LEASE_CHECKOUT_DIR")" >>"$OUT"
+    exit 0 ;;
   abandon)
     # Leave the lease behind on purpose: no release. Models a run still holding.
     [ "$HOLD" -gt 0 ] && sleep "$HOLD"
@@ -463,6 +489,84 @@ OUT="$(bash "$LEASE_LIB" acquire 2>&1)"; RC=$?
   || bad "executing the library directly exits 64" "rc=$RC $OUT"
 printf '%s' "$OUT" | grep -q 'SOURCED' \
   && ok "and it says it must be sourced" || bad "and it says it must be sourced" "$OUT"
+
+# ================================================================= case 11
+echo
+echo "Case 11 — the TASK pin evidence cannot persist: the pin says so instead of reporting success"
+# The failure this pair exists to catch is not a lost file. It is a pin that
+# RETURNS SUCCESS having recorded nothing a later process can read, so the
+# caller announces a pin that is not there and the operator is told to inspect
+# survivors that were never written down.
+d="$(new_checkout)"
+B11="$SANDBOX_ROOT/c11.out"
+contend "$LEASE_LIB" "$d" block-task-evidence pinner 0 "$B11" pin-block-task >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 0 ] && ok "setup — the run acquired both leases and then pinned with the task evidence blocked" \
+               || bad "setup — the run acquired and pinned" "rc=$RC $(cat "$B11")"
+grep -q 'PIN rc=2 pinned=1 ' "$B11" \
+  && ok "the pin reports the OWNED-BUT-NOT-DURABLY-PINNED outcome (rc=2), not ordinary success" \
+  || bad "the pin reports rc=2 rather than success" "$(cat "$B11")"
+grep -q 'failed=\[task\]' "$B11" \
+  && ok "and it names the TASK resource as the one without durable evidence" \
+  || bad "and it names the task resource" "$(cat "$B11")"
+grep -q 'task_evidence=no checkout_evidence=yes' "$B11" \
+  && ok "and the checkout evidence still persisted — the two writes fail independently" \
+  || bad "the checkout evidence still persisted independently" "$(cat "$B11")"
+# The safety half. Whatever the evidence did, the lease directories are the
+# thing that refuses the next run, and PINNED must keep release away from them.
+grep -q 'AFTER-RELEASE task=present checkout=present' "$B11" \
+  && ok "and release left BOTH leases in place — a pin whose evidence failed is still a pin" \
+  || bad "release left both leases in place" "$(cat "$B11")"
+L11="$SANDBOX_ROOT/c11-later.out"
+contend "$LEASE_LIB" "$d" block-task-evidence later 0 "$L11" >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 17 ] \
+  && ok "a later run on the same task is still REFUSED, not admitted" \
+  || bad "a later run on the same task is refused" "rc=$RC $(cat "$L11")"
+grep -q 'resource=task' "$L11" \
+  && ok "and it is the task lease that refuses it" \
+  || bad "and the task lease refuses it" "$(cat "$L11")"
+# The other affected owned resource: a DIFFERENT task in the same checkout.
+L11b="$SANDBOX_ROOT/c11-later-other.out"
+contend "$LEASE_LIB" "$d" block-task-other later 0 "$L11b" >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 17 ] \
+  && ok "and a different task in the same checkout is refused by the checkout lease" \
+  || bad "a different task in the same checkout is refused" "rc=$RC $(cat "$L11b")"
+grep -q 'resource=checkout refusal=pinned' "$L11b" \
+  && ok "and THAT refusal reads PINNED, because its own evidence did persist" \
+  || bad "and that refusal reads pinned" "$(cat "$L11b")"
+
+# ================================================================= case 12
+echo
+echo "Case 12 — the CHECKOUT pin evidence cannot replicate: reported distinctly from a task failure"
+d="$(new_checkout)"
+B12="$SANDBOX_ROOT/c12.out"
+contend "$LEASE_LIB" "$d" block-checkout-evidence pinner 0 "$B12" pin-block-checkout >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 0 ] && ok "setup — the run acquired both leases and then pinned with the checkout evidence blocked" \
+               || bad "setup — the run acquired and pinned" "rc=$RC $(cat "$B12")"
+grep -q 'PIN rc=2 pinned=1 ' "$B12" \
+  && ok "the pin reports rc=2 here too" \
+  || bad "the pin reports rc=2" "$(cat "$B12")"
+grep -q 'failed=\[checkout\]' "$B12" \
+  && ok "and it names the CHECKOUT resource — distinguishable from the task failure in case 11" \
+  || bad "and it names the checkout resource" "$(cat "$B12")"
+grep -q 'task_evidence=yes checkout_evidence=no' "$B12" \
+  && ok "and the task evidence persisted, so one failure did not become two" \
+  || bad "the task evidence persisted" "$(cat "$B12")"
+grep -q 'AFTER-RELEASE task=present checkout=present' "$B12" \
+  && ok "and release left both leases in place" \
+  || bad "release left both leases in place" "$(cat "$B12")"
+L12="$SANDBOX_ROOT/c12-later.out"
+contend "$LEASE_LIB" "$d" block-checkout-evidence later 0 "$L12" >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 17 ] \
+  && ok "a later run on the same task is refused" \
+  || bad "a later run on the same task is refused" "rc=$RC $(cat "$L12")"
+grep -q 'refusal=pinned' "$L12" \
+  && ok "and the surviving task evidence still gives it the PINNED reason" \
+  || bad "and it reads pinned" "$(cat "$L12")"
+L12b="$SANDBOX_ROOT/c12-later-other.out"
+contend "$LEASE_LIB" "$d" block-checkout-other later 0 "$L12b" >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 17 ] \
+  && ok "and a different task in the same checkout is still refused by the checkout lease" \
+  || bad "a different task in the same checkout is refused" "rc=$RC $(cat "$L12b")"
 
 # ==================================================================== done
 echo

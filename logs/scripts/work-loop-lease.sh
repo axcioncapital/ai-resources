@@ -63,8 +63,15 @@
 #                   reason to treat the lease as free.
 #
 # wl_lease_pin <survivors> <unknown> [task-label]
-#     0  pinned
+#     0  pinned, and EVERY lease this run owns carries durable evidence that a
+#        later process recognises as pinned
 #     1  nothing was owned, so nothing was pinned
+#     2  owned and pinned, but at least one owned lease has NO durable evidence
+#        — WL_LEASE_PIN_FAILED names which. The leases are still held and still
+#        must not be released; what is missing is the RECORD that tells the next
+#        run and the operator why. The three outcomes are distinct on purpose:
+#        "nothing owned" and "owned but not durably pinned" need opposite
+#        responses from the caller, and a single non-zero would merge them.
 #
 # wl_lease_release
 #     0  always. Pinned beats owned, checked HERE so no call site can skip it.
@@ -74,6 +81,10 @@
 #
 # State the caller may read (all maintained here):
 #   WL_LEASE_TASK_OWNED, WL_LEASE_CHECKOUT_OWNED, WL_LEASE_PINNED  (0 | 1)
+#   WL_LEASE_PIN_FAILED  space-separated resource names — task, checkout — whose
+#                        durable pin evidence could not be verified. Empty when
+#                        every owned lease carries evidence a later process
+#                        recognises. Set by wl_lease_pin only.
 
 # Refuse direct execution. A caller that invoked this as a command and got exit
 # 0 would believe it holds a lease it never took, which is the one failure this
@@ -96,6 +107,7 @@ WL_LEASE_CHECKOUT_DIR=''
 WL_LEASE_TASK_OWNED=0
 WL_LEASE_CHECKOUT_OWNED=0
 WL_LEASE_PINNED=0
+WL_LEASE_PIN_FAILED=''
 WL_LEASE_RESOURCE=''
 WL_LEASE_REFUSAL=''
 WL_LEASE_SURVIVORS=''
@@ -214,29 +226,88 @@ wl_lease_acquire() { # program pid
 # PARTIAL ACQUISITION IS THE CASE THAT MATTERS. The guards below are why a pin
 # never claims a resource the run did not acquire: a run refused the checkout
 # lease pins only its task lease, and `--status` then reports exactly that.
+#
+# DURABLE OR EXPLICIT. A pin's whole value is what a LATER process reads, so
+# whether it worked is decided by reading the evidence back — never by the
+# write's exit status. A path that is not a regular file, and a filesystem that
+# accepted bytes it did not keep, both look like success to the writer and like
+# nothing at all to the next reader. That gap is what let a pin report ordinary
+# success having recorded nothing.
+wl_lease__pin_evidence_ok() { # lease-dir
+  # `-f` is deliberately the SAME test wl_lease_acquire and wl_lease_status use,
+  # so "verified" here means "recognised there" and cannot drift from it. The
+  # marker line is the stricter half: a file created and then truncated passes
+  # `-f` while telling the operator nothing.
+  [ -f "$1/survivors" ] || return 1
+  grep -q '^PINNED by pid ' "$1/survivors" 2>/dev/null || return 1
+  return 0
+}
+
+# The pin file's content, emitted rather than captured into a variable, and
+# taking its timestamp as an argument so the caller stamps ONCE and both owned
+# leases receive identical text. Emitting keeps this at ordinary parse level:
+# inside a `$( )` the apostrophe in a comment word such as "transports'" reads
+# as an opening quote to the command-substitution scanner, and the function
+# silently stops parsing.
+wl_lease__pin_text() { # survivor-pids unknown-reason task-label stamp
+  printf 'PINNED by pid %s at %s\n' "$$" "$4"
+  printf 'task: %s\n' "$3"
+  # These two line formats are read back by --status and asserted by the
+  # transports' suites. Change them here or nowhere.
+  [ -n "$1" ] && printf 'descendants still running: %s\n' "$1"
+  [ -n "$2" ] && printf 'sweep incomplete: %s\n' "$2"
+  printf '\n'
+  printf 'This lease is deliberately NOT released. A second run must not start on this\n'
+  printf 'task while a descendant of the stopped actor may still be alive.\n'
+  printf 'To clear it: confirm the pids above are gone (`ps -o pid,ppid,pgid,command -p <pid>`),\n'
+  printf 'kill any that remain, then `rm -rf %s`.\n' "$WL_LEASE_TASK_DIR"
+  return 0
+}
+
 wl_lease_pin() { # survivor-pids unknown-reason [task-label]
   local wl_surv="${1:-}" wl_unk="${2:-}" wl_label="${3:-$WL_LEASE_TASK}"
+  local wl_stamp wl_name wl_d
   [ "$WL_LEASE_TASK_OWNED" -eq 1 ] || return 1
+
+  # PINNED is set FIRST and stays set whatever the evidence does. It is what
+  # keeps wl_lease_release away from the directories, and a pin whose evidence
+  # failed to persist needs that more than one whose evidence is intact: the
+  # directory is then the only thing left refusing the next run.
   WL_LEASE_PINNED=1
-  {
-    printf 'PINNED by pid %s at %s\n' "$$" "$(date '+%Y-%m-%dT%H:%M:%S')"
-    printf 'task: %s\n' "$wl_label"
-    # These two line formats are read back by --status and asserted by the
-    # transports' suites. Change them here or nowhere.
-    [ -n "$wl_surv" ] && printf 'descendants still running: %s\n' "$wl_surv"
-    [ -n "$wl_unk" ]  && printf 'sweep incomplete: %s\n' "$wl_unk"
-    printf '\n'
-    printf 'This lease is deliberately NOT released. A second run must not start on this\n'
-    printf 'task while a descendant of the stopped actor may still be alive.\n'
-    printf 'To clear it: confirm the pids above are gone (`ps -o pid,ppid,pgid,command -p <pid>`),\n'
-    printf 'kill any that remain, then `rm -rf %s`.\n' "$WL_LEASE_TASK_DIR"
-  } >"$WL_LEASE_TASK_DIR/survivors" 2>/dev/null
+  WL_LEASE_PIN_FAILED=''
+
+  # Stamped ONCE, then written to each owned lease independently. The checkout
+  # copy used to be a `cp` from the task file, which chained the two: a task
+  # write that failed took the checkout evidence down with it, and one fault
+  # was reported as — and looked exactly like — two.
+  wl_stamp="$(date '+%Y-%m-%dT%H:%M:%S')"
+
   # BOTH leases are pinned when both are held, because a survivor holds both
   # resources: it belongs to this task, and it is still running inside this
   # checkout's working tree. Pinning only the task lease would leave the
   # checkout open to exactly the contamination the survivor makes possible.
-  [ "$WL_LEASE_CHECKOUT_OWNED" -eq 1 ] \
-    && cp "$WL_LEASE_TASK_DIR/survivors" "$WL_LEASE_CHECKOUT_DIR/survivors" 2>/dev/null
+  #
+  # PARTIAL ACQUISITION IS STILL THE CASE THAT MATTERS: the `continue` below is
+  # the guard that stops a pin claiming a resource this run never acquired.
+  for wl_name in task checkout; do
+    if [ "$wl_name" = task ]; then
+      wl_d="$WL_LEASE_TASK_DIR"
+    else
+      [ "$WL_LEASE_CHECKOUT_OWNED" -eq 1 ] || continue
+      wl_d="$WL_LEASE_CHECKOUT_DIR"
+    fi
+    wl_lease__pin_text "$wl_surv" "$wl_unk" "$wl_label" "$wl_stamp" \
+      >"$wl_d/survivors" 2>/dev/null
+    wl_lease__pin_evidence_ok "$wl_d" \
+      || WL_LEASE_PIN_FAILED="${WL_LEASE_PIN_FAILED}${WL_LEASE_PIN_FAILED:+ }$wl_name"
+  done
+
+  # WHAT THIS CANNOT DO. Where no durable marker is physically possible, no
+  # return value makes one exist. The honest boundary is: the lease DIRECTORY
+  # still refuses the next run — it is never released while PINNED — and this
+  # says out loud that the reason behind that refusal was not recorded, so the
+  # caller can tell the operator rather than announce a pin that is not there.
+  [ -z "$WL_LEASE_PIN_FAILED" ] || return 2
   return 0
 }
 
