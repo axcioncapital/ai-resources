@@ -72,6 +72,8 @@ This correction restores the intended fixture; it does not weaken fail-closed he
 
 Two coverage observations, both consequences of the same root cause and not separate defects — the current 86 passes overstate coverage: T4's two passing cross-task-path assertions (raw output lines 48–49) are vacuous, because nothing ran, `HEAD` equals `BASE`, and the `git diff` range at test lines 268–273 is empty; and F1's "nothing was committed" pass (line 124) currently passes for the wrong reason, since exit 11 also commits nothing. Both become genuine evidence once the fixture is complete.
 
+Unit 3a2e is inspection only: no source, test, instruction or raw-output file was edited, and no suite, case or mutant was run. Verified by `git status` — the only tracked change is this state file. State commit `4085ab54`.
+
 Prior accepted results carried unchanged. Unit 3a2d, not accepted as a green gate: owner suite red at exit 1, 86/6 against the recorded 92/0 baseline; raw evidence as above; state commit `58e1ed25`, pointer commit `72f240a0`.
 
 Accepted Unit 3a2c: complete ordinary dispatcher suite **482/0**, exit 0; durable output `logs/harness-runs/dispatcher-suite-unit-3a2c-foreground-20260814.out`; state `59d095a8`, pointer `e2a39065`.
