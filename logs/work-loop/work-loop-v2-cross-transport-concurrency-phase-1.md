@@ -60,7 +60,7 @@ The six failing assertions, by case:
 
 Evidence: `logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out` holds the complete stdout/stderr of the single run with the appended final line `SUITE_EXIT=1`. The file is untracked and deliberately not staged. The check can fail in both directions: the same harness returned `SUITE_EXIT=0` shape for the carrier and dispatcher runs of Units 3a2b and 3a2c, and this run's own Case 0 (harness falsifiability with the helper absent) passed, so the six failures are the suite discriminating, not the harness collapsing.
 
-Recorded against the proposal's baseline for comparison only, with no reconciliation attempted here: the proposal records owner `92/0`; this run totals 92 assertions with 6 failing.
+Recorded against the proposal's baseline for comparison only, with no reconciliation attempted here: the proposal records owner `92/0`; this run totals 92 assertions with 6 failing. State commit `58e1ed25`, state-only.
 
 Accepted Unit 3a2c: the complete ordinary dispatcher suite ran once synchronously and is green at **exit 0, pass 482, fail 0**. Durable evidence is `logs/harness-runs/dispatcher-suite-unit-3a2c-foreground-20260814.out`; state commit `59d095a8`, pointer commit `e2a39065`, both state-only.
 
