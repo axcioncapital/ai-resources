@@ -77,6 +77,8 @@ Deferrals noticed during this hop, recorded and not done:
 2. `LOCK_ROOT` / `LOCK_DIR` / `CHECKOUT_LOCK_DIR` are kept as aliases rather than renaming ~14 call sites to the `WL_LEASE_*` names. Purely mechanical, but it would inflate a hop that deliberately defers broad verification.
 3. `dispatch.test.sh` still mirrors the lease path derivation in `lock_root_for` / `task_lock_for` / `checkout_lock_for` instead of sourcing the library. The suite's own comment at those functions names this drift hazard; the same argument now applies to the shared library.
 
+Unit 2b1 commit: `1f0938a7bc0e680583e7abe1ecc933ebe5b5b902`, staging exactly `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` and this state file.
+
 Prior accepted units, unchanged: Unit 1 at `54d9db9c` and `b67f88d9`; Unit 2a at `c409c12a` and pointer correction `1b736816`.
 
 ## Blocker
