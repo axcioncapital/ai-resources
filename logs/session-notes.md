@@ -583,4 +583,71 @@ promoted 4 findings that would otherwise have stayed unreachable.
 
 ### Open Questions
 
+## 2026-08-14 — Closed eval-v0-3-restart via /work-loop-v2
+
+### Summary
+Ran the Claude half of the final Work Loop v2 unit on `eval-v0-3-restart`. The state file's
+`## Next action` carried Codex's close verdict, so this was a closing write: resolved the task from
+the one non-fixture state file at `turn: claude`, ran the repo-depth ownership check (PROCEED),
+reduced the file to the closing record (Outcome / Decisions that matter / Evidence / Accepted
+limitations), cleared the checkout's ownership declaration, and committed. The task is now closed.
+Outcome recorded: **PARTIAL** on the first live EV-3/CE-9 paired trial — Layer A held, Layer B did
+not fully hold on the full-objective and current-state dimensions.
+
+### Decisions Made
+None made this turn — the close verdict was Codex's, recorded in the inherited `## Next action`.
+Writing the closing record was execution of that verdict, not a new decision.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Risky actions
+None.
+
+### Next Steps
+No follow-on unit is open for this task. Adoption of the EV-3/CE-9 procedure remains a later,
+separate operator decision based on the recorded PARTIAL operating evidence — not a reopening of
+this closed file. Two prior deferrals stay parked: account-side plugin-catalogue repopulation and
+unreported reasoning-effort parity, both to reopen only if later evidence makes either consequential.
+
+### Open Questions
+None.
+
+## 2026-08-14 — Work Loop v2: closed eval-v0-3-partial-fixes, corrected CE-9 continuation-integrity gap
+
+### Summary
+Ran Claude's half of the Work Loop v2 unit `eval-v0-3-partial-fixes`, then the closing invocation once
+Codex assessed and closed it. The task corrected the two misses the prior `eval-v0-3-restart` PARTIAL
+result exposed: a continuation brief must carry the approved project objective and the exact
+authoritative current-state position into the brief itself, not only establish them internally. Fixed
+with two wording insertions in `.agents/skills/work-loop-v2/SKILL.md` (four changed lines), proved with
+eight new red-then-green assertions added to `logs/scripts/work-loop-v2-slice-1.test.sh` before the edit
+landed (302/6 red, 308/0 green; baseline 300/0), and checked against the preserved Run B transcript
+read-only — both duties failed under the pre-fix contract, as expected. No CE-9 command, scenario or
+model turn ran, per the operator's explicit prohibition on rerunning the trial.
+
+### Decisions Made
+- **Codex's close verdict, not a Claude decision:** the scope-section deferral raised at hand-back
+  (whether `## Scope of this version` needed a dated entry) was closed as **not owed**, not carried
+  forward — that section records capability additions, and this correction implements already-approved
+  CE-9 meaning rather than adding one.
+- **Codex corrected the evidence count in the closing record:** the committed diff carries eight new
+  CE-9 assertions total (six carry-duty, two over-correction guards); the exact-once check is one of
+  those eight, not a ninth. Applied verbatim into the closing record.
+- Routine: two commits made directly on the state file and the corrected surface, per the Work Loop v2
+  core's "Claude makes every commit" rule — no separate approval sought for either.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Risky actions
+None.
+
+### Next Steps
+No follow-on unit is open. `eval-v0-3-partial-fixes` is closed (`turn: operator`); the checkout's
+`logs/work-loop/.owner` lease was cleared in the same closing write, so this checkout is free for the
+next task. Whether the EV-3/CE-9 procedure is adopted for routine use remains a later, separate operator
+decision grounded in the recorded PARTIAL evidence — not something this correction reopens.
+
+### Open Questions
 None.
