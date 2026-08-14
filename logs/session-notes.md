@@ -2,50 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-11 — Work Loop v2 bounded-execution fix plan, full task lifecycle
-
-### Summary
-Ran Claude's side of the `work-loop-v2-bounded-execution-fix-plan` Work Loop v2 task end to end:
-Unit 1 (premise-checked plan write), one correction round on five frozen findings, one final bounded
-fix (state-file cleanup), and the closing record. The task produced an operator-reviewable plan for
-the 2026-08-10 bounded-execution incident and implemented no dispatcher or operating-contract fix, as
-scoped. Task is closed.
-
-### Decisions Made
-- Codex's correction findings were reproduced by inspection before being corrected (not accepted on
-  narrative). Most consequential: dropped the plan's own leading proposal, `--allow-nested-actors N`,
-  for want of any verified authorised use case, and recast the P0 boundary from four constructions to
-  four outcomes with construction left to a design gate.
-- Operator directed a tailored structural-resolution route (Repository Problem Resolution SOP applied
-  as non-governing methodology, subordinate to the Work Loop executable core) — logged separately in
-  `decisions.md`.
-- Closure: confirmed Codex's `Close the task:` verdict (which a prior invocation had left uncommitted)
-  and reduced the state file to core § 4's four-section closing record.
-
-### Outcome
-Outcome check skipped (not requested).
-
-### Risky actions
-None — every commit stayed inside the state file's declared scope; no dispatcher, harness, or nested
-model invocation ran at any point in this task.
-
-### Findings Declined
-- The SOP's own unconfirmed gate/verdict vocabulary and its three missing sibling documents
-  (`repository-problem-resolution-sop.md:37,59`) — already recorded as a named deferral in the
-  accepted plan and the task's closing record; not queued separately, no new information to add.
-- The observation that this task's state file sat uncommitted between a Codex write and the next
-  Claude pickup twice — the operator explicitly declined to address it inside this closed task and
-  routed it through the accepted plan's own process instead; not a standalone open item.
-
-### Next Steps
-Implementation of the accepted plan's P0 outcomes has not started. The plan's own § 6.4/§ 11
-recommend opening a **new** Work Loop v2 task (not reopening this closed one) for the first outcome,
-starting with a discovery unit that establishes the incident's failure from preserved run evidence.
-That is Codex's move to frame.
-
-### Open Questions
-None.
-
 ## 2026-08-11 — Bounded-execution fix plan v0.2, three revision rounds
 
 ### Summary
@@ -543,6 +499,45 @@ No follow-on unit is open for this task. Adoption of the EV-3/CE-9 procedure rem
 separate operator decision based on the recorded PARTIAL operating evidence — not a reopening of
 this closed file. Two prior deferrals stay parked: account-side plugin-catalogue repopulation and
 unreported reasoning-effort parity, both to reopen only if later evidence makes either consequential.
+
+### Open Questions
+None.
+
+## 2026-08-14 — Work Loop v2: closed eval-v0-3-partial-fixes, corrected CE-9 continuation-integrity gap
+
+### Summary
+Ran Claude's half of the Work Loop v2 unit `eval-v0-3-partial-fixes`, then the closing invocation once
+Codex assessed and closed it. The task corrected the two misses the prior `eval-v0-3-restart` PARTIAL
+result exposed: a continuation brief must carry the approved project objective and the exact
+authoritative current-state position into the brief itself, not only establish them internally. Fixed
+with two wording insertions in `.agents/skills/work-loop-v2/SKILL.md` (four changed lines), proved with
+eight new red-then-green assertions added to `logs/scripts/work-loop-v2-slice-1.test.sh` before the edit
+landed (302/6 red, 308/0 green; baseline 300/0), and checked against the preserved Run B transcript
+read-only — both duties failed under the pre-fix contract, as expected. No CE-9 command, scenario or
+model turn ran, per the operator's explicit prohibition on rerunning the trial.
+
+### Decisions Made
+- **Codex's close verdict, not a Claude decision:** the scope-section deferral raised at hand-back
+  (whether `## Scope of this version` needed a dated entry) was closed as **not owed**, not carried
+  forward — that section records capability additions, and this correction implements already-approved
+  CE-9 meaning rather than adding one.
+- **Codex corrected the evidence count in the closing record:** the committed diff carries eight new
+  CE-9 assertions total (six carry-duty, two over-correction guards); the exact-once check is one of
+  those eight, not a ninth. Applied verbatim into the closing record.
+- Routine: two commits made directly on the state file and the corrected surface, per the Work Loop v2
+  core's "Claude makes every commit" rule — no separate approval sought for either.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Risky actions
+None.
+
+### Next Steps
+No follow-on unit is open. `eval-v0-3-partial-fixes` is closed (`turn: operator`); the checkout's
+`logs/work-loop/.owner` lease was cleared in the same closing write, so this checkout is free for the
+next task. Whether the EV-3/CE-9 procedure is adopted for routine use remains a later, separate operator
+decision grounded in the recorded PARTIAL evidence — not something this correction reopens.
 
 ### Open Questions
 None.

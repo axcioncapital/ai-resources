@@ -3834,3 +3834,46 @@ None.
 
 **Work:** Work Loop v2 dispatcher run — task axcion-harness-v0-2-phase0-p0-d-monday-prep (headless)
 - Files in scope: logs/work-loop/, plans/work-loop-v2-v0.2/handoff-automation-spike/, logs/friction-log.md, logs/session-notes.md, plans/work-loop-v2-v0.2/handoff-automation-spike/runs/, logs/work-loop/axcion-harness-v0-2-phase0-p0-d-monday-prep.md
+## 2026-08-11 — Work Loop v2 bounded-execution fix plan, full task lifecycle
+
+### Summary
+Ran Claude's side of the `work-loop-v2-bounded-execution-fix-plan` Work Loop v2 task end to end:
+Unit 1 (premise-checked plan write), one correction round on five frozen findings, one final bounded
+fix (state-file cleanup), and the closing record. The task produced an operator-reviewable plan for
+the 2026-08-10 bounded-execution incident and implemented no dispatcher or operating-contract fix, as
+scoped. Task is closed.
+
+### Decisions Made
+- Codex's correction findings were reproduced by inspection before being corrected (not accepted on
+  narrative). Most consequential: dropped the plan's own leading proposal, `--allow-nested-actors N`,
+  for want of any verified authorised use case, and recast the P0 boundary from four constructions to
+  four outcomes with construction left to a design gate.
+- Operator directed a tailored structural-resolution route (Repository Problem Resolution SOP applied
+  as non-governing methodology, subordinate to the Work Loop executable core) — logged separately in
+  `decisions.md`.
+- Closure: confirmed Codex's `Close the task:` verdict (which a prior invocation had left uncommitted)
+  and reduced the state file to core § 4's four-section closing record.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Risky actions
+None — every commit stayed inside the state file's declared scope; no dispatcher, harness, or nested
+model invocation ran at any point in this task.
+
+### Findings Declined
+- The SOP's own unconfirmed gate/verdict vocabulary and its three missing sibling documents
+  (`repository-problem-resolution-sop.md:37,59`) — already recorded as a named deferral in the
+  accepted plan and the task's closing record; not queued separately, no new information to add.
+- The observation that this task's state file sat uncommitted between a Codex write and the next
+  Claude pickup twice — the operator explicitly declined to address it inside this closed task and
+  routed it through the accepted plan's own process instead; not a standalone open item.
+
+### Next Steps
+Implementation of the accepted plan's P0 outcomes has not started. The plan's own § 6.4/§ 11
+recommend opening a **new** Work Loop v2 task (not reopening this closed one) for the first outcome,
+starting with a discovery unit that establishes the incident's failure from preserved run evidence.
+That is Codex's move to frame.
+
+### Open Questions
+None.
