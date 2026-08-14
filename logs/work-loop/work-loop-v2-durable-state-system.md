@@ -89,8 +89,20 @@ None.
 
 ## Next action
 
-Codex: assess Tracer bullet 1 against the brief's completion condition — the validator suite is green, every classification and rejection is fail-capable, the validator has no write path, and no runtime consumer switched. Three points need an explicit decision rather than silent acceptance:
+Codex: closure check on the frozen finding only — are the dangling-option cases now resolved, and did the correction break something.
 
-1. **Accepted limit, deliberate.** The validator checks emptiness only for `Latest result`, `Next action`, and a `blocked` record's `Blocker`. The accepted architecture's numbered check list (§ 2, item 6 and 7) stops there, so an empty `Objective and scope`, `Lane and unit`, or any closed-record section is accepted. Confirm this is the intended contract or name it as a finding.
-2. **Frontmatter key order is not enforced**, only the exact key set and single occurrence of each. The accepted contract states an order for body headings and shows `task`/`status`/`turn` in an example, but does not state it as a rule. Confirm or correct.
-3. **Deferral, recorded and not done.** `logs/friction-log.md` is being appended by a repository hook during Work Loop units and now shows up in every scoped diff as unrelated noise. Not touched here — it is outside this unit's boundary and outside the plan's scope. Recorded so a later decision is deliberate.
+Reproduced first (2026-08-14), before any change: `bash logs/scripts/work-loop-state.sh validate --checkout` and `validate --task` (each with the value-taking flag as the last argument) both ran a background process that was still alive after a 3-second watchdog wait and had to be `kill -9`ed — no output, no exit, matching the frozen finding exactly. Root cause confirmed: Bash's `shift 2` past the end of the positional list is a silent no-op rather than an error, so `$1` never changed and the `case`/`while` loop spun.
+
+Correction made: `logs/scripts/work-loop-state.sh`, the `--checkout`/`--task` arms of the argument loop. Before consuming `$2`, each arm now checks `[ "$#" -ge 2 ]` and calls `die 10 "--checkout requires a value"` / `die 10 "--task requires a value"` if not — the smallest guard that closes the gap without touching any other branch. `${2:-}` reverted to plain `$2`, since the guard makes the value's presence certain by the time it is read.
+
+Verified by direct reproduction: both dangling-option invocations now exit 10 with the stated message in under a second, run in the foreground with no backgrounding needed. Two focused regression cases were added to `logs/scripts/work-loop-state.test.sh` (X9, X10), each run under an internal 5-second watchdog so a future regression fails the suite instead of hanging the test process; a case that got the message right but the harness's status-vs-diagnostic parsing wrong was caught and fixed inside this same correction before being counted as evidence.
+
+Evidence:
+
+- Full validator suite: **63 passed, 0 failed** (61 from the unit plus X9/X10 from this correction).
+- Falsifiability preserved: the same suite against an absent validator is **8 passed, 54 failed** (up from 52, because X9/X10's failure mode is also fail-capable against an absent binary).
+- Regression, unchanged from the unit's own evidence: `work-loop-owner.test.sh` **92 passed, 0 failed**; `work-loop-v2-slice-1.test.sh` **308 passed, 0 failed**.
+- `bash -n` on both `work-loop-state.sh` and `work-loop-state.test.sh`: clean.
+- Scoped diff: `git status --porcelain` shows exactly `logs/scripts/work-loop-state.sh`, `logs/scripts/work-loop-state.test.sh`, this state file, and `logs/friction-log.md` (the recorded hook-noise deferral, unchanged from the unit, not staged). Nothing else in the repository moved.
+
+Nothing beyond the frozen finding was touched: the deliberate emptiness limit and the unordered exact frontmatter key set were left exactly as accepted, and the `logs/friction-log.md` deferral was not acted on.

@@ -89,8 +89,14 @@ esac
 CHECKOUT=""; TASK=""
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --checkout) CHECKOUT="${2:-}"; shift 2 ;;
-    --task)     TASK="${2:-}";     shift 2 ;;
+    # A dangling option — one whose value is missing because it is the last
+    # argument — must fail closed here. Without the $# guard, `shift 2` on the
+    # last argument silently shifts only what remains (Bash's shift with a
+    # count greater than $# is a no-op past what is available, not an error),
+    # so $1 never changes and the loop spins forever instead of reaching the
+    # "is required" check below.
+    --checkout) [ "$#" -ge 2 ] || die 10 "--checkout requires a value"; CHECKOUT="$2"; shift 2 ;;
+    --task)     [ "$#" -ge 2 ] || die 10 "--task requires a value";     TASK="$2";     shift 2 ;;
     *) die 10 "unknown argument '$1'" ;;
   esac
 done

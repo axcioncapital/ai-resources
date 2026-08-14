@@ -525,6 +525,43 @@ CO_SP="$(cd "$CO_SP" && pwd -P)"
 write_open "$CO_SP" x8-space active claude
 expect_class ACTIVE_CLAUDE "$CO_SP" x8-space "X8  a checkout path containing a space works"
 
+# A DANGLING option — the value-taking flag is the last argument, so its value
+# is missing rather than merely absent from the invocation. Correction round,
+# 2026-08-14: `shift 2` past the end of the positional list is a Bash no-op, not
+# an error, so the loop never advanced and spun forever instead of reaching the
+# "is required" check. Each case is run with a background timeout because a
+# regression here hangs the test process itself rather than failing it.
+# Sets HX_STATUS to "RC=<n>" or "HUNG", and HX_DIAG to whatever the process
+# printed. Kept as two variables rather than one encoded string, so a
+# diagnostic that happens to contain "RC=" can never be misread as the signal.
+HX_STATUS=""; HX_DIAG=""
+hangs_or_exits() { # args...
+  local diagfile rc
+  diagfile="$(mktemp "$SANDBOX_ROOT/hx.XXXXXX")"
+  bash "$STATE_BIN" "$@" >"$diagfile" 2>&1 &
+  local pid=$!
+  ( sleep 5; kill -9 "$pid" 2>/dev/null ) &
+  local watchdog=$!
+  if wait "$pid" 2>/dev/null; then rc=0; else rc=$?; fi
+  kill "$watchdog" 2>/dev/null; wait "$watchdog" 2>/dev/null
+  HX_DIAG="$(cat "$diagfile")"; rm -f "$diagfile"
+  if [ "$rc" -eq 137 ] || [ "$rc" -eq 143 ]; then HX_STATUS="HUNG"; else HX_STATUS="RC=$rc"; fi
+}
+
+hangs_or_exits validate --checkout
+case "$HX_STATUS" in
+  RC=10) ok "X9  a dangling --checkout (no value) exits BAD_USAGE (10), not a hang" ;;
+  HUNG)  bad "X9  a dangling --checkout (no value) exits BAD_USAGE (10), not a hang" "the process hung and was killed by the watchdog" ;;
+  *)     bad "X9  a dangling --checkout (no value) exits BAD_USAGE (10), not a hang" "got $HX_STATUS — $HX_DIAG" ;;
+esac
+
+hangs_or_exits validate --checkout "$CO" --task
+case "$HX_STATUS" in
+  RC=10) ok "X10 a dangling --task (no value) exits BAD_USAGE (10), not a hang" ;;
+  HUNG)  bad "X10 a dangling --task (no value) exits BAD_USAGE (10), not a hang" "the process hung and was killed by the watchdog" ;;
+  *)     bad "X10 a dangling --task (no value) exits BAD_USAGE (10), not a hang" "got $HX_STATUS — $HX_DIAG" ;;
+esac
+
 # ================================================================== summary
 echo
 echo "=============================================================="
