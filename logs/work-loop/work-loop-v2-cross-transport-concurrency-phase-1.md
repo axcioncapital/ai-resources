@@ -89,7 +89,7 @@ Evidence:
   - in-suite case 0b (naive one-composite-key lease, no second resource, no rollback): the same two-contender scenario admits **both**, so the scenario discriminates a correct lease from a plausible wrong one.
   - whole suite pointed at a naive composite-key library: `pass=22 fail=28`, exit 1.
   - whole suite pointed at a nonexistent library path: `pass=12 fail=38`, exit 1.
-- Final diff: `git status --short --untracked-files=all` after all runs is identical to the pre-work record above; `git rev-parse HEAD` still `b67f88d9` before the commit. Staged by explicit pathspec, `git diff --cached --name-only`: `logs/scripts/work-loop-lease.sh`, `logs/scripts/work-loop-lease.test.sh`, `logs/work-loop/work-loop-v2-cross-transport-concurrency-phase-1.md`. Commit `4ba60b09`.
+- Final diff: `git status --short --untracked-files=all` after all runs is identical to the pre-work record above; `git rev-parse HEAD` still `b67f88d9` before the commit. Staged by explicit pathspec, `git diff --cached --name-only`: `logs/scripts/work-loop-lease.sh`, `logs/scripts/work-loop-lease.test.sh`, `logs/work-loop/work-loop-v2-cross-transport-concurrency-phase-1.md`. Commit `c409c12a`. That hash could not be written into the file it names, so this pointer is corrected in the immediately following commit, exactly as unit 1's pointer was.
 
 Deferrals — recorded, not done, all for the integration unit:
 
