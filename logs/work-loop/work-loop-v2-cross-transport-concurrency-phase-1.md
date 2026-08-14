@@ -15,71 +15,70 @@ Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; chan
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 2b1 — wire the accepted shared lease helper into the dispatcher and remove the dispatcher's duplicate inline lease implementation.
+Standard. Discovery mode. Unit 2b2a — run and classify the dispatcher regression suite after shared-helper wiring.
 
 Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
 
 ## Brief
 
-The previous Unit 2b carry stopped at exit `22` after 593 seconds with no file or state transition: Claude completed baseline preparation and ended while waiting for a broad baseline. The operator has approved this fresh, smaller recovery unit. It has one dominant deliverable—dispatcher wiring—and deliberately defers broad verification.
+Unit 2b1 is accepted at commit `1f0938a7bc0e680583e7abe1ecc933ebe5b5b902`: the dispatcher consumes the accepted helper, duplicate inline leasing is removed, targeted case 12f went red then green, syntax passed and focused case 12 passed 7/0. This verification unit now answers one named question only: did that wiring preserve the dispatcher regression surface outside the intentionally carrier-dependent 12e failures?
 
 Governing sources and authority:
 
-- Current operator decision: Phase 1 and its two bounded live validations are approved; D4 is retained; Phase 2 is deferred; this narrowed recovery unit is approved after the stopped carry.
-- Approved implementation basis: `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-and-task-aware-worktrees-implementation-proposal-2026-08-13.md`, especially §§ 4.2–4.5 and § 7 step 2.
-- Accepted shared authority: `logs/scripts/work-loop-lease.sh` and its contract at commit `c409c12a1a298f5163685677de8da158ee33e5f1`.
-- Accepted Unit 2a constraints: `wl_lease_pin` returns 1 when no lease is owned; the helper prints no pin message; it is intentionally source-only and mode 644. Preserve dispatcher behavior at its call sites rather than changing the helper.
+- Current operator decision: Phase 1 and its two bounded live validations are approved; D4 is retained; Phase 2 is deferred.
+- Approved implementation basis: `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-and-task-aware-worktrees-implementation-proposal-2026-08-13.md`, especially § 5 and § 7 steps 2–4.
+- Accepted failing-first boundary: Unit 1 cases 12e-1 through 12e-4 at commits `54d9db9c` and `b67f88d9` remain intentionally red until carrier integration. Their last accepted isolated signature was `pass=25 fail=11`; surrounding cases 12 and 12d were 15/15 green.
+- Accepted dispatcher wiring: Unit 2b1 at `1f0938a7bc0e680583e7abe1ecc933ebe5b5b902`.
 
-Required outcome: make `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` source and use the accepted helper for lease initialization, acquisition, pinning, release and lease status; remove its duplicate inline lease machinery. Preserve its current lock root and names, task-then-checkout order, rollback, actor-lifecycle cleanup, exit codes, refusal/pin reporting, read-only status, and separation between leases and durable ownership.
+Required outcome: execute the existing dispatcher regression surface once and classify every failure. Establish whether all failures are confined to the already accepted 12e cross-transport cases and whether all other dispatcher cases, including new case 12f, pass through the shared helper.
 
-Check before editing, narrowly:
+Execution and evidence:
 
-1. Map the existing dispatcher lease functions, state and call sites to the accepted helper contract. Do not run a broad baseline before the primary edit.
-2. Confirm the helper's root and lock names are compatible with the dispatcher's current paths and identify the existing fail-closed infrastructure outcome suitable for a missing or unreadable helper. If compatibility fails or a new exit code is required, stop and hand back.
-3. Record `git status --short --untracked-files=all`; preserve ambient friction-log and harness-run files.
+- Inspect only enough of `dispatch.test.sh` to identify its supported whole-suite or case-selection command. Do not edit production or test files.
+- Run the dispatcher suite once. If the harness supports excluding 12e, run the complete non-12e surface and separately use the accepted 12e result already recorded; if it does not, run the whole suite and classify its output by case.
+- Remain active until the foreground test command completes or the courier stops. Do not end the turn with a progress-only message such as “waiting for the run.”
+- Report the exact command, exit code, pass/fail counts, elapsed time if available, and every failing case identifier.
+- Confirm whether case 12f is green and whether any failure exists outside 12e.
+- Compare the observed 12e failure signature with the accepted `pass=25 fail=11` signature if 12e ran. Do not rewrite or weaken 12e.
+- Record final `git status --short --untracked-files=all`. Preserve ambient `logs/friction-log.md` and harness captures.
+- Change only this state file, set `turn: codex`, and commit it by explicit pathspec. Report the commit hash.
 
-Implementation and evidence for this hop only:
+Explicitly deferred: the helper's own full suite and focused helper matrix; carrier integration; carrier verification; instruction changes; controller acceptance across both transports; and both live validations. This unit is evidence-only and must not fix a failure it discovers.
 
-- Add one targeted failing-first dispatcher integration case showing that a missing or unreadable lease helper refuses before actor launch with the compatible existing infrastructure outcome. Run that case red before the production edit and green afterwards. Keep the fixture narrowly local to this case.
-- Source the accepted helper fail-closed, replace the dispatcher's inline lease calls/state with its contract, and delete the duplicate inline implementation rather than leaving dormant code.
-- Handle `wl_lease_pin` returning 1 as the accepted no-owned-lease condition, and preserve the dispatcher's existing pin log/message at the caller.
-- Run `bash -n` on each changed shell file.
-- Run one focused existing acquire/refuse/release smoke through the real dispatcher entry path. Choose the smallest existing case that proves the dispatcher actually traverses the shared helper.
-- Report the targeted red/green output, syntax output, focused smoke output, and the removed inline functions/state.
-- Report the final diff and confirm that no helper, carrier, instruction, core, policy or unrelated file changed.
-- Stage only `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, narrowly required `dispatch.test.sh`, and this state file by explicit pathspec. Report `git diff --cached --name-only` and the final commit hash.
+Stop and hand back with the evidence if any non-12e failure appears, the suite cannot be run within the safety boundary, or the expected 12e signature changes. Do not edit implementation or tests in this unit.
 
-Explicitly deferred to Unit 2b2 verification: the full dispatcher baseline/regression suite, the full helper suite, the complete lease/rollback/pin/status matrix, and the Unit 1 cross-transport 12e red-signature check. Do not run them in this hop. The carrier and all instruction surfaces remain later units.
-
-Stop and hand back if the accepted helper contract is insufficient, path compatibility fails, a behavior or exit-code change is needed, the targeted fixture cannot be kept narrow, or completing the wiring requires helper, carrier, instruction or core changes. Challenge any false premise rather than improvising.
-
-Completion condition: the dispatcher is committed using the accepted shared helper with its duplicate inline lease machinery removed; the targeted fail-closed case is red then green; syntax and one focused real-dispatcher smoke pass; external behavior is preserved at the mapped call sites; only the dispatcher, narrowly required test, and state file are committed; and the state hands back at `turn: codex` for a separate verification unit.
+Completion condition: one completed dispatcher regression run is classified; case 12f is accounted for; every failure is identified as either an unchanged intentional 12e failure or an unexpected regression; no production/test file changed; and the committed state hands back at `turn: codex`.
 
 ## Latest result
 
 Inspected (2026-08-14):
-- Claim (1) — the dispatcher's inline lease functions, state and call sites map onto the accepted helper contract: HOLDS. Read `dispatch.sh` 610–743 and grepped it for `LOCK_ROOT|LOCK_DIR|LOCK_OWNED|LOCK_PINNED|acquire_lock|release_lock|pin_lock|CHECKOUT_LOCK`; found the derivation (639–650), `acquire_lock` (657–699), `pin_lock` (706–732), `release_lock` (734–743), and the call sites at 398 (`die`), 1128 (`pin_lock`), 1182 and 1186 (signal handler and EXIT trap), 1192 (`acquire_lock`), 2379/2419/2660 (`release_lock`), plus the read-only `--status` branch at 1217–1291. Every one maps to `wl_lease_init` / `_acquire` / `_pin` / `_release`; the `--status` branch needs the two resolved paths only.
-- Claim (2a) — the helper's root and lock names are compatible with the dispatcher's current paths: HOLDS. Compared `work-loop-lease.sh` 91–129 against `dispatch.sh` 639–650; both derive the root from `git rev-parse --git-common-dir`, both use the fixed subdirectory `work-loop-dispatch-locks`, and both key the two leases as `task-<16>.lock` / `checkout-<16>.lock` from the identical expression `printf '%s' "$X" | shasum -a 256 | cut -c1-16`. Byte-identical paths, so no in-flight or pinned lease is orphaned by the change.
-- Claim (2b) — an existing fail-closed infrastructure outcome fits a missing or unreadable helper, so no new exit code is required: HOLDS. Searched the exit-code table in `dispatch.sh` 124–248 and the ownership gate at 2336–2348. Exit `11` BAD_CHECKOUT is already this dispatcher's outcome for every other lease-infrastructure failure (unresolvable Git common directory 639–640, unreadable one 642–643, uncreatable lease root 658–659) and is reached the same way, by direct `printf` + `exit` rather than `die()`, which is required because `die()` calls `release_lock`. `33`/`34`/`35` were rejected: proposal § 4.4 (line 296) binds those three to the ownership taxonomy, and a lease is not an ownership fact. Confirmed no `die N` call precedes the lease block, so the pre-source refusal path is reachable and safe.
-- Claim (2c) — the helper resolves from the checkout being driven: HOLDS. Proposal § 4.5 constraint 2 (lines 310–314) frames the case as "older checkouts may not carry the helper" and directs fail-closed "exactly as the ownership check already does"; `dispatch.sh` 2336 resolves `work-loop-owner.sh` from `$CHECKOUT`, and 2251 does the same for `prime-session-entry.sh`. Same resolution used.
-- Claim (3) — ambient working-tree state recorded: `git status --short --untracked-files=all` before the edit showed ` M logs/friction-log.md`, ` M logs/work-loop/work-loop-v2-cross-transport-concurrency-phase-1.md` and 20 untracked `logs/harness-runs/` files. All preserved; none staged except this state file.
 
-Result: `dispatch.sh` now sources the accepted shared lease library from `$CHECKOUT/logs/scripts/work-loop-lease.sh` and takes, pins and releases its live lease through it. The duplicate inline machinery is deleted, not left dormant — the root/key derivation, both `mkdir` acquisitions, the holder writes, the rollback, the pin-file writer, the both-leases pin copy and the release body are all gone, together with the `LOCK_OWNED`, `CHECKOUT_LOCK_OWNED` and `LOCK_PINNED` state variables. What remains on the dispatcher's side is its own half: the four exit-17 refusal messages, the exit-11 infrastructure outcomes, the operator-facing pin line, and the three-state read-only `--status` rendering. `LOCK_ROOT`, `LOCK_DIR` and `CHECKOUT_LOCK_DIR` survive as read-only views assigned from `WL_LEASE_ROOT` / `_TASK_DIR` / `_CHECKOUT_DIR` — no second derivation, and the ~14 `--status` and pin references stay untouched. `wl_lease_pin` returning 1 is handled at the caller as the accepted no-owned-lease condition, matching the old `[ "$LOCK_OWNED" -eq 1 ] || return 0` guard. Net `dispatch.sh` change: 105 insertions, 83 deletions.
+- Claim (1) — Unit 2b1 is at commit `1f0938a7bc0e680583e7abe1ecc933ebe5b5b902` and wired the dispatcher to the shared helper: HOLDS. `git log -1` resolves that full hash to `batch: … unit 2b1, dispatcher wired to the shared live lease`; `git show --stat` on it lists exactly three files — this state file, `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` (+188/−…) and `dispatch.test.sh` (+68).
+- Claim (2) — case 12f exists in the dispatcher suite: HOLDS. Searched `dispatch.test.sh` for `^echo "Case 12`; found `Case 12f — an ABSENT lease library refuses before launch and takes no lease` at line 728.
+- Claim (3) — cases 12e-1 through 12e-4 exist and are still the cross-transport cases: HOLDS. Same search found them at lines 551, 588, 617 and 664, under their Unit 1 titles, unedited by this unit.
+- Claim (4) — `dispatch.test.sh` supports a whole-suite or case-selection command: HOLDS, and it is whole-suite only. Read the harness header (lines 1–40) and searched the whole file for `CASE_FILTER|_ONLY|--case|getopts|"$@"` at top level; the documented usage block (lines 20–21) offers `bash dispatch.test.sh` and the `DISPATCH_BIN` override and nothing else, and no top-level argument parsing exists. There is no 12e exclusion switch. The brief's fallback therefore applies: run the whole suite and classify by case.
+- Claim (5) — the accepted 12e signature is `pass=25 fail=11`, with surrounding cases 12 and 12d 15/15 green: HOLDS, with one qualification the comparison depends on. Read the Unit 1 record at `git show b67f88d9:logs/work-loop/…phase-1.md` lines 106–117: that figure is labelled there as `SLICE pass=25 fail=11`, taken from a temporary assembled slice of the suite preamble plus cases 12, 12d and 12e — not from a whole-suite run. So the `fail=11` half is directly comparable to today's whole-suite run and the `pass=25` half is not; the comparison below is made on the failure set, not on the pass total.
+
+Result: the dispatcher regression suite was run once, complete, after the Unit 2b1 shared-helper wiring. It ends `pass=471 fail=11`, exit 1. Every one of the 11 failures falls inside cases 12e-1 through 12e-4 — the Unit 1 cross-transport cases that are intentionally red until carrier integration. No failure exists anywhere else in the 98-case surface, and case 12f is green. Nothing was fixed, edited or re-run; this unit is evidence only.
 
 Evidence:
-- Targeted failing-first case, new `dispatch.test.sh` case 12f — an absent lease library must refuse before launch. RED against the unwired dispatcher: `pass=4 fail=3`, with `FAIL an ABSENT lease library refuses with exit 11 — expected exit 11, got 0`, `FAIL the refusal names the missing lease library`, and `FAIL no actor was launched without the lease library` (the run completed and the actor ran: `actors ran: lease-missing`). GREEN after the production edit: `pass=7 fail=0`. The two controls in the same case pass in both directions, so the case cannot be satisfied by a dispatcher that refuses everything.
-- Syntax: `bash -n` clean on `dispatch.sh`, `dispatch.test.sh` and `work-loop-lease.sh`.
-- Focused real-dispatcher smoke, existing case 12 (`a second dispatcher on the same checkout/task is refused`): `pass=7 fail=0`. It proves the dispatcher actually traverses the shared library on every lease path — task lease acquired then refused (exit 17), the TMPDIR-independence assertion, a different task in the same checkout refused via the checkout lease, the checkout refusal naming the holding task (which reads `WL_LEASE_HOLDER_TASK`), both leases released after the run, and the lease root resolving inside the Git common directory.
-- Scope: `git status` shows only `dispatch.sh` and `dispatch.test.sh` changed by this hop. No helper, carrier, instruction, core, policy or unrelated file was touched; `logs/friction-log.md` and the untracked `logs/harness-runs/` files are the pre-existing ambient state and were left alone.
 
-Deferrals noticed during this hop, recorded and not done:
-1. `--status` keeps its own rendering rather than calling `wl_lease_status`. The library's report is a different, shorter format, and the brief requires the dispatcher's read-only status behavior preserved; converging the two would change output the suite asserts on. Worth deciding deliberately in a later unit.
-2. `LOCK_ROOT` / `LOCK_DIR` / `CHECKOUT_LOCK_DIR` are kept as aliases rather than renaming ~14 call sites to the `WL_LEASE_*` names. Purely mechanical, but it would inflate a hop that deliberately defers broad verification.
-3. `dispatch.test.sh` still mirrors the lease path derivation in `lock_root_for` / `task_lock_for` / `checkout_lock_for` instead of sourcing the library. The suite's own comment at those functions names this drift hazard; the same argument now applies to the shared library.
+- Command, run from `plans/work-loop-v2-v0.2/handoff-automation-spike/`: `bash dispatch.test.sh`. Exit code `1`. Elapsed 380 s. Final line: `pass=471 fail=11  (all cases SIMULATED — no live product transport)`. Exit 1 is the harness's own `[ "$FAIL" -eq 0 ] || exit 1`, so it reports the 12e failures and not a harness fault.
+- Failure classification — all 11 `FAIL` lines, attributed to the case header each sits under:
+  - 12e-1 (2 failures): `a dispatcher is refused while a CARRIER holds the checkout` — `expected exit 17, got 0`; `and the dispatcher launched no actor` — `actors ran: xt-dispatched`.
+  - 12e-2 (3): `a carrier is refused while a DISPATCHER holds the checkout` — `expected exit 17, got 0`; `and the carrier launched no actor` — `launches: 1`; `and committed nothing` — `HEAD moved`.
+  - 12e-3 (3): `a dispatcher is refused while a CARRIER holds the same task elsewhere` — `expected exit 17, got 0`; `and the dispatcher launched no actor` — `actors ran: xt-shared`; `and committed nothing` — `HEAD moved`.
+  - 12e-4 (3): `a carrier is refused while a DISPATCHER holds the same task elsewhere (lease refusal precedes ownership admission)` — `expected exit 17, got 0`; `and the carrier launched no actor` — `launches: 1`; `and committed nothing in the worktree` — `HEAD moved`.
+  - 2 + 3 + 3 + 3 = 11. `grep -c '^  FAIL '` over the captured run returns 11, so the attribution is exhaustive and nothing was missed outside the four case blocks.
+- 12e signature unchanged. The failure set matches the Unit 1 record case for case: the same four cases, the same primary assertion `expected exit 17, got 0` in each, and the same asymmetry — 12e-1's third assertion `and committed nothing` PASSES today, exactly as the Unit 1 record noted at its line 150, while the equivalent assertion fails in 12e-2, 12e-3 and 12e-4. No 12e case moved in either direction, and nothing in 12e was rewritten or weakened.
+- Case 12f green: `pass=7 fail=0` within the case — the exit-11 refusal, the message naming the missing lease library, no actor launched, no commit made, no lease directory left behind, plus both controls (with the library present the same run proceeds, and the actor does run). The controls passing is what stops 12f being satisfied by a dispatcher that refuses everything.
+- Cases 12 and 12d: 15 PASS, 0 FAIL across the two — the same `15/15 green` the Unit 1 record accepted. The shared helper did not disturb the ordinary same-transport refusal surface.
+- The evidence can fail. This run had 11 red assertions and exit 1, so the harness was demonstrably capable of reporting failure on this invocation; the claim being made is about *where* the failures are, and a regression outside 12e would have appeared in the same `FAIL` grep that produced the list above. Case 0 is the harness's own falsifiability proof — it points the suite at an absent dispatcher and asserts the suite fails — and it passed in this run.
+- No production or test file changed. Final `git status --short --untracked-files=all`: ` M logs/friction-log.md`, ` M logs/work-loop/work-loop-v2-cross-transport-concurrency-phase-1.md`, and 22 untracked `logs/harness-runs/` captures. The friction log and the harness captures are the pre-existing ambient state and were left alone; the suite output was captured outside the repository, under `$TMPDIR`, so it added nothing to the working tree.
 
-Unit 2b1 commit: `1f0938a7bc0e680583e7abe1ecc933ebe5b5b902`, staging exactly `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` and this state file.
+Prior accepted units, unchanged: Unit 1 at `54d9db9c` and `b67f88d9`; Unit 2a at `c409c12a` and pointer correction `1b736816`; Unit 2b1 at `1f0938a7`.
 
-Prior accepted units, unchanged: Unit 1 at `54d9db9c` and `b67f88d9`; Unit 2a at `c409c12a` and pointer correction `1b736816`.
+Deferral noticed during this unit, recorded and not done: the suite has no case-selection switch, so any future unit that needs a subset pays the full 380 s or hand-assembles a slice as Unit 1 did. Adding a filter would touch the test harness, which this evidence-only unit must not do. Worth deciding deliberately if verification units recur.
 
 ## Blocker
 
@@ -87,12 +86,11 @@ None.
 
 ## Next action
 
-Codex: assess Unit 2b1 against its completion condition — the dispatcher wired to the accepted shared helper, its duplicate inline lease machinery removed, case 12f red then green, syntax clean, and one focused real-dispatcher acquire/refuse/release smoke passing, with only the dispatcher, its narrowly required test and this state file committed.
+Codex: assess Unit 2b2a against its completion condition — one complete dispatcher regression run classified, case 12f accounted for, every failure identified as either an unchanged intentional 12e failure or an unexpected regression, and no production or test file changed.
 
-Three judgments this hop deliberately left to you rather than settling on its own:
+Two things this unit deliberately left to you rather than settling on its own:
 
-1. The missing-or-unreadable lease library takes exit `11`, the existing lease-infrastructure outcome, not a new code and not one of the ownership codes `33`/`34`/`35`. Confirm that reuse is the intended reading of proposal § 4.5 constraint 2, which prescribes the fail-closed *manner* but names no code.
-2. The refusal now also stops `--status` in a checkout without the library, because `--status` needs the resolved lease paths to report anything. That is a superset of "refuses before actor launch" and still read-only, but it is a behavior change at a surface the brief asked to preserve. Accept or reject it explicitly.
-3. The three deferrals recorded in `## Latest result` — `wl_lease_status` unused, the `LOCK_*` path aliases retained, and the suite's mirrored path derivation — are candidates, not work. Decide which belong to Unit 2b2 verification and which are separate.
+1. The accepted `pass=25 fail=11` figure is recorded in the Unit 1 record as a `SLICE` result from a hand-assembled subset, not a whole-suite total. The comparison above is therefore made on the failure set — same four cases, same assertions, same 12e-1 asymmetry — and not on the pass count. Confirm that is the intended reading of "unchanged 12e signature".
+2. Whether the deferral above (the suite has no case-selection switch) belongs to a later unit or is dropped.
 
-Then open Unit 2b2 for the deferred verification: the full dispatcher baseline and regression suite, the full helper suite, the complete lease/rollback/pin/status matrix, and the Unit 1 cross-transport 12e red-signature check.
+Then decide what follows: the deferred helper suite and focused helper matrix, or carrier integration.
