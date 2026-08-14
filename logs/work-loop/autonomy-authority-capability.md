@@ -62,71 +62,81 @@ Completion condition: produce the consolidated planning artifact and evidence, r
 Stop conditions: hand back without target edits if the approved content identity fails, repository reality materially contradicts a fixed decision, the plan cannot cover the approved MVP without expanding scope or authority, a required external repository/checkout cannot be inspected, or meaningful plan evidence would require launching an actor or causing an external effect. Challenge a false premise rather than hiding it in the plan.
 
 ## Latest result
-Inspected (2026-08-14), Unit 4 (Discovery — planning-only, no target implementation):
+Correction round on Unit 4's consolidated implementation plan. All five frozen findings reproduced by
+inspection first (none was stale), then corrected in
+`plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md`. No
+target-implementation surface changed — same exclusion list as Unit 4.
 
-- Claim (1) — approved proposal identity and Unit 3's status-only successor relationship: HOLDS.
-  `git diff d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67 5b0d5fd857a2d663dfc298071faf2033f884b0eb -- plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-proposal-v0.1.md`
-  shows exactly the status-line change already recorded in Unit 3; `git hash-object` on the current
-  working file returns `e2a50c5e6e82482ed81a37000ac927af4f5bc672`, matching commit `5b0d5fd8`'s tree
-  exactly (no drift since Unit 3's commit). `git log --oneline -3` confirms `5b0d5fd8` is HEAD.
+**Finding 1 (false capability-concept absence claim) — corrected.** Reproduced first:
+`git grep -ln "capability envelope\|capability subset\|capability profile\|runtime profile"` with no
+path restriction returns exactly two files — the approved proposal (§3.2's "Plan capability envelope" /
+"Runtime profile", §7) and the plan itself. The finding was real. Correction: the plan's Repository Delta
+now states the search accurately — the concept is *described* in the governing proposal, and separately
+confirmed **absent from all eight live implementation surfaces** (skill, command, executable core,
+`docs/autonomy-rules.md`, `docs/qc-independence.md`, `docs/audit-discipline.md`, `carry-turn.sh`,
+`dispatch.sh` — reproduced zero-hit on that bounded set). Every downstream `greenfield`/`zero-hit`
+conclusion (Components table row, § 3.3 Inputs, T5 Starting evidence) was rewritten to the corrected,
+narrower claim.
 
-Produced the consolidated planning artifact at
-`plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md`,
-containing Fixed Point, Repository Delta, Implementation Specification, and Execution Plan (tracers
-T1–T7, a named evidence-gathering phase, and explicit deferrals), per the brief. It changes no target
-implementation surface — the proposal, the executable core, the Codex skill, the Claude command,
-`docs/autonomy-rules.md`, `docs/qc-independence.md`, `docs/audit-discipline.md`, the carrier, the
-dispatcher, and workspace `CLAUDE.md` were all inspected, none edited.
+**Finding 2 (unsupported workspace `CLAUDE.md` requirement) — corrected.** Reproduced first: proposal
+§14 item 3 (line 487) names only "the Codex skill, Claude command, autonomy rules, and session-plan
+language" — not workspace `CLAUDE.md`. §15's closing paragraph (line 521) is conditional ("changes to
+... remain a separate high-consequence unit"), not a mandate that a change occurs. A bounded read of
+workspace `CLAUDE.md` lines 129–133 (`## Autonomy Rules`) found only a pointer to
+`ai-resources/docs/autonomy-rules.md` (already reconciled at T3) and no competing or conflicting
+statement. The finding was real. Correction: the Components table row, both ordering-constraint entries,
+and the "Deferred" section's first bullet now classify the file **Keep — repository-boundary finding
+retained, no required edit proven**; no tracer touches it; the separate-git-repository fact is kept as a
+standing constraint for *if* future evidence proves otherwise, not as a scheduled deferral.
 
-Result: the plan is grounded in live repository inspection, not documentation alone —
+**Finding 3 (review-row accuracy) — corrected.** Reproduced first: §15's closing paragraph names
+`docs/autonomy-rules.md` and "the executable core" both explicitly, with no size exception — the plan's
+T3 had proposed "normal/consequential, confirm at review" and T5 had permitted core placement under a
+normal review. Both were real gaps. Correction: T3's review row is now risk-aware Codex review (matching
+T1's tier), citing §15 directly. T5 is redesigned to place its content in the Codex skill only (not the
+executable core) — a placement decision marked as Claude's own framing choice with its reason (§5 Step 2,
+smallest sufficient option) — so its normal-review tier is now actually correct rather than assumed; § 3.3
+and T5 both carry the placement decision explicitly.
 
-- **Tracked-surface inventory** (all `git grep`/`git ls-tree`/`git log` on this checkout's tracked
-  sources): `work-loop-v2-executable-core` (60 hits — live consumers isolated to the command and
-  skill); `work-loop-v2-mvp-proposal-v0.4|Proposal wins` (21 hits — live authority hit is the core
-  itself); `capability envelope|capability subset|capability profile|runtime profile` across the
-  skill, command, core, `plans/**`, `docs/**` — **bounded negative result: zero hits**, confirming the
-  capability-envelope/subset concept (proposal §3.2, §7, §11) does not exist anywhere in tracked
-  sources today. `git -C .. rev-parse --show-toplevel` resolves to a **separate git repository**
-  (`workspace-root`, remote `axcioncapital/workspace-root.git`); workspace `CLAUDE.md` is tracked
-  there, outside this repository and this task's checkout/state-file/ownership scope — a boundary the
-  proposal did not state and this plan now surfaces explicitly rather than absorbing silently.
-- **Safe deterministic checks run** (hermetic; none launched a live Claude/Codex actor, the carrier,
-  the dispatcher, or any external effect): `work-loop-v2-slice-1.test.sh` 308/0 (matches the count
-  recorded in the closed `eval-v0-3-partial-fixes` task — no drift); `work-loop-v2-core-resolver.test.sh`
-  4/0; `work-loop-owner.test.sh` 92/0; `dispatch.test.sh` (fully simulated) 454/0; `carry-turn.test.sh`
-  (hermetic, fake actor) 285/0, including nested-actor assertions on both the observed and unobserved
-  path — satisfying proposal §14 item 7's "verify ... on a host where process observation is
-  available" as an evidence record rather than new code.
-  **Deliberately not run:** any live Claude/Codex hop through the carrier or dispatcher, any
-  `--unattended` live launch, and the twelve proposal §12 autonomy-scenario paired live trials —
-  all would launch a real actor or cause an external effect, excluded by the brief and scheduled
-  instead as Execution Plan tracer T7 (its own later phase, not this unit).
-- **§14 traceability table** — all fifteen items mapped exactly once, to a tracer (T1–T6), the T7
-  evidence-gathering phase, an already-true Fixed Point fact (item 6), a contingent follow-up (item
-  12), or an explicit out-of-MVP deferral (items 13–15) — reproduced in the artifact.
-- **Internal consistency check** — every tracer (T1–T7) carries all six required fields (Behaviour,
-  Starting evidence, Intended change, Verification, Exit condition, Scope boundary) plus its
-  `qc-independence.md` review row; every implementation surface a tracer names was classified first in
-  Repository Delta and specified first in Implementation Specification (T1↔3.1, T2↔3.2, T3↔3.2,
-  T4↔session-plan row, T5↔3.3, T6↔3.4, T7↔3.5) — reproduced in the artifact.
+**Finding 4 (scenario suite vs. real-task evidence conflated) — corrected.** Reproduced first: proposal
+§14 items 8–9 (scenario suite) and item 10 (`3–5 real Standard tasks across at least two capability
+shapes`) are separate numbered steps under "Evidence-gathering period," and item 10's "real" tasks are
+categorically different from item 8's "paired live behavioural trials." T7 had folded item 10 into the
+same twelve constructed trials. The finding was real. Correction: T7 is now scoped to items 8–9 only; a
+new T8 covers items 10–11 (3–5 organic Standard-lane tasks across ≥2 capability shapes, with the item-11
+measures tallied against them); § 3.5 is corrected and a new § 3.6 added; the §14 traceability table and
+internal consistency check are updated for items 9–12 and T8.
 
-Evidence:
-- `git diff --check` returned clean.
-- `git diff --name-only` lists `logs/friction-log.md` and this state file. `logs/friction-log.md` is
-  the same pre-existing unrelated change flagged at Unit 3 (untouched since, not staged here). The new
-  planning artifact is untracked (`git status --porcelain` shows `??`) until this commit adds it — it
-  is the one file this Discovery unit was scoped to create.
-- No target-implementation file changed: `git status --porcelain` before and after this unit's work
-  differs only by the two files this unit is authorized to touch (the new artifact, this state file)
-  plus the pre-existing unrelated friction-log change.
+**Finding 5 (fail-capable specificity) — corrected.** Reproduced first: T1's cited resolver-suite check
+proves consumer path resolution, not that the old subordination line is gone or the new clause is
+present; T2 cited pre-existing CE-9/orientation assertions that do not exercise a new citation; T5's
+five-heading count and sample text do not distinguish a *requested* capability from one the carrier has
+actually *enforced/observed* — and the carrier's own confirmed MVP list (proposal §11, verified live by
+this plan's test runs) does not include sandbox/network enforcement. All three gaps were real. Correction:
+T1 now specifies three independent checks (subordination-line absence, clause-text presence, resolver
+suite for drift); T2 now specifies a new targeted before/after grep instead of relying on unrelated
+existing assertions; T5/§3.3 now require any recorded "effective profile" to state sandbox/network
+capabilities as "requested, not carrier-verified" rather than "effective," mirroring the carrier's own
+`nested=unobserved` vs `nested=0` honesty convention.
+
+### Verification that the corrections themselves are consistent
+
+- `git diff --check` on the corrected plan: clean.
+- `git diff --name-only`: `logs/friction-log.md` (same pre-existing unrelated change, still untouched),
+  this state file, and the plan artifact — no target-implementation file touched by this correction round
+  either.
+- Swept the corrected file for stale references: no bare `T1–T7` remains; every `T7` reference now reads
+  either the corrected scope-8–9 tracer or a `T7 and T8` pairing; the internal consistency check and
+  traceability table both cite `T1–T8`.
 
 ## Blocker
 None.
 
 ## Next action
-Codex: assess the consolidated plan artifact — confirm the Fixed Point matches the approved proposal
-without narrowing or widening §15, the Repository Delta's classifications and the workspace-`CLAUDE.md`
-repository-boundary finding are sound, the Implementation Specification stays documentation/evidence-only
-where the proposal defers enforcement, and the §14 traceability table and internal consistency check are
-complete — then either open the fresh bounded implementation-plan review that freezes the plan, or hand
-back specific findings for one bounded correction.
+Codex: run the closure check on findings 1–5 only — are they resolved, and did the correction break
+anything? One item noticed while correcting Finding 2 is a candidate deferral, not implemented: the
+"Deferred, not scheduled" section's second bullet still lists proposal item **11** among the
+out-of-MVP-deferred items (`§14 items 6, 11, 13–15`); that citation predates this correction round, item
+11 is actually covered by T7/T8 rather than deferred, and it was left untouched because it falls outside
+the five frozen findings. Close the task, or use the §3 "if the correction was not enough" menu if a
+finding did not resolve cleanly.

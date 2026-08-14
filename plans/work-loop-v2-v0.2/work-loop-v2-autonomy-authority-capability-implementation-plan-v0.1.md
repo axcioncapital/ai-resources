@@ -76,13 +76,24 @@ none), run and reported in § Safe deterministic checks run below.
 - `git grep -n "authority\|autonomy\|Proposal wins\|governing rule" .claude/commands/work-loop-v2.md
   .agents/skills/work-loop-v2/SKILL.md .claude/commands/session-plan.md` — targeted per-file scan (results
   below, per file).
-- `git grep -ln "capability envelope\|capability subset\|capability profile\|runtime profile"` across
-  `.agents/skills/work-loop-v2/SKILL.md`, `.claude/commands/work-loop-v2.md`, the executable core, and
-  `plans/**`, `docs/**` — **zero hits**. The capability-envelope/subset concept proposal §3.2, §7, §11
-  describe does not exist anywhere in tracked sources today.
+- `git grep -ln "capability envelope\|capability subset\|capability profile\|runtime profile"` with no
+  path restriction returns exactly two files: the proposal itself (`work-loop-v2-autonomy-authority-
+  capability-proposal-v0.1.md` — §3.2's "Plan capability envelope" / "Runtime profile" hierarchy, §7's
+  "Capability model") and this plan, which restates that language. **Corrected finding (was stated as a
+  zero-hit "greenfield" claim — that was false; the phrase is literally in the approved proposal).** The
+  same search bounded to the eight tracked **live implementation surfaces** —
+  `.agents/skills/work-loop-v2/SKILL.md`, `.claude/commands/work-loop-v2.md`, the executable core,
+  `docs/autonomy-rules.md`, `docs/qc-independence.md`, `docs/audit-discipline.md`, `carry-turn.sh`, and
+  `dispatch.sh` — returns **zero hits**. The honest claim is narrower than what was first written: the
+  concept is *described* in the governing proposal and now in this plan, but is not implemented,
+  referenced, or enforced in any live implementation surface today.
 - `git -C .. rev-parse --show-toplevel` from this checkout resolves to `/Users/patrik.lindeberg/Claude
   Code/Axcion AI Repo`, a **separate git repository** (`origin` = `axcioncapital/workspace-root.git`)
   from `ai-resources`. Workspace-root `CLAUDE.md` is tracked there, not in this repository or worktree.
+  A bounded read of that file's `## Autonomy Rules` section (lines 129–133) found only a short pointer
+  summary to `ai-resources/docs/autonomy-rules.md` — the file being reconciled at T3 — and no separate or
+  competing statement of a governing autonomy rule. No conflict was found; see the Components table row
+  below for the corrected classification.
 
 ### Components, classified
 
@@ -105,8 +116,8 @@ none), run and reported in § Safe deterministic checks run below.
 | State file capability-context fields | `logs/work-loop/{task}.md` `## Brief` / `## Latest result` | **Modify (content shape, not structure)** | Proposal §3.2: "the current brief records the selected capability subset and the execution evidence records the actual runtime profile. No second approval artifact or capability ledger is created." The five-field ceiling (executable core § 4) is unchanged; this is new *content* inside existing fields, confirmed by re-reading the core's field table — no sixth field is authorized. |
 | Evaluation — deterministic layer | `logs/scripts/work-loop-v2-slice-1.test.sh` | **Keep** | Ran the suite: 308 passed, 0 failed — matches the exact count recorded in the closed `eval-v0-3-partial-fixes` task, confirming no drift since that fix landed. |
 | Evaluation — behavioural layer | `eval-mvp-proposal-v0.2.md` (12-scenario table proposal §12 references) | **Add (paired live trials), Keep (mechanism)** | No runner exists (confirmed: `git grep` finds no runner implementation, only the proposal text and the CE-9 instrument). `logs/work-loop/eval-v0-3-restart.md` shows the CE-9 paired-trial *mechanism* already executed once (result: PARTIAL) — but CE-9 is Context Engineering's own recovery scenario, not one of this proposal's twelve autonomy scenarios. The twelve scenarios in §12 have not been run under this mechanism yet. |
-| Capability envelope / subset concept | none — greenfield | **Add** | Confirmed absent by the zero-hit search above. This is genuinely new documentation content (not code): a definition of the workspace baseline, where a plan-level envelope would be recorded, and where a unit selects a subset — inside existing artifacts, per proposal §3.2, §7, §11. |
-| Workspace `CLAUDE.md` | `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md` | **Out of this repository's bound — surfaced, not silently absorbed** | Tracked in the separate `workspace-root` git repository, not in `ai-resources` or this worktree. This Work Loop task's state file, its task-ownership helper (`work-loop-owner.sh --depth repo`), and this checkout's git identity are all scoped to `ai-resources`. A tracer that edits workspace `CLAUDE.md` cannot be executed, committed, or owned from this checkout or this task's state file; it requires its own task (or Direct Work) opened inside the `workspace-root` checkout, under that repository's own git identity and review. Proposal §15's closing paragraph already names workspace `CLAUDE.md` as cross-cutting and separately gated — this plan adds the concrete finding that it is also a **different repository**, which the proposal did not state. |
+| Capability envelope / subset concept | described in the proposal (§3.2, §7, §11); absent from all eight live implementation surfaces | **Add (to the live surfaces only)** | Corrected: not a "greenfield" claim about tracked sources — the proposal itself already names the concept. The accurate gap is that no live implementation surface (skill, command, core, autonomy-rules, qc-independence, audit-discipline, carrier, dispatcher) references or enforces it yet. |
+| Workspace `CLAUDE.md` | `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md` | **Keep — repository-boundary finding retained; no required edit proven** | Corrected: §14 item 3 does **not** name workspace `CLAUDE.md` (it names the Codex skill, Claude command, autonomy rules, and session-plan language only). §15's closing paragraph is conditional — *if* workspace `CLAUDE.md` changes, that change is a separate high-consequence unit — it does not itself require a change. A bounded read of the file's `## Autonomy Rules` section found only a pointer to `ai-resources/docs/autonomy-rules.md` (being reconciled at T3) and no conflicting statement, so no edit is proven necessary. The valid, retained finding is narrower than originally stated: workspace `CLAUDE.md` is tracked in a **separate git repository** (`workspace-root`, not `ai-resources`), outside this task's checkout, state file, and ownership helper (`work-loop-owner.sh --depth repo`) — so *if* future evidence proves a required change, that change cannot be executed, committed, or owned from this task and needs its own task (or Direct Work) opened inside the `workspace-root` checkout. |
 
 ### Safe deterministic checks run
 
@@ -131,16 +142,17 @@ authorized to touch (this artifact, the state file); no test suite left residue 
    what makes the core canonical; it has not happened yet." Every other reconciliation tracer (skill,
    command, autonomy rules, session-plan) is sequenced after it for that reason, not because their own
    edits are large.
-2. **A tracer touching workspace `CLAUDE.md` cannot run inside this task.** It is a hard boundary, not a
-   scheduling preference (see table row above). This plan schedules it as a named, deferred, separately
-   opened unit — never silently folded into a tracer scoped to this repository.
-2a. Corollary risk: because that separate unit is outside this Work Loop task's state file, nothing in
-    *this* task can mechanically verify it lands. The Execution Plan records it as an explicit deferral
-    with a named trigger, not as a step this task will silently skip.
-3. **The MVP evidence-gathering phase (§14 items 8–12) is not one small tracer.** Proposal §12 states the
-   cost directly: exercising the full twelve-scenario table costs roughly twelve paired live trials until
-   a runner exists. Treating it as a single bullet would misrepresent its size; this plan schedules it as
-   its own phase with its own per-scenario units, opened only after the MVP mechanical tracers close.
+2. **No tracer in this plan touches workspace `CLAUDE.md`.** Corrected: the earlier draft scheduled it as
+   a required, deferred unit; the bounded read above found no proven conflict, so nothing is scheduled.
+   The retained fact is the boundary itself — a **different git repository** from this checkout — carried
+   as a standing constraint that applies *only if* a future tracer's evidence later proves an actual
+   required edit. It is not evidence that one is needed now, and this plan does not manufacture one.
+3. **The MVP evidence-gathering work (§14 items 8–12) is not one small tracer, and it is not one phase.**
+   Proposal §12 states the scenario-suite cost directly: exercising the full twelve-scenario table costs
+   roughly twelve paired live trials until a runner exists — that is T7 below. Separately, §14 item 10
+   requires 3–5 **real** Standard-lane tasks across at least two capability shapes — organic operational
+   use, not constructed scenarios — recorded at T8. Folding item 10 into the scenario-suite trials was a
+   correction-round finding (Finding 4); the two are scheduled as distinct units for that reason.
 4. **Descendant containment is an accepted open limitation, not a blocker for this MVP.** The proposal
    already scopes unattended release and the connected-development trial out of MVP (§9, §11, §14 items 4,
    6, 14). This plan does not schedule new work to close the descendant-containment gap; doing so would
@@ -174,9 +186,13 @@ actually requires. Uses the proposal's own language throughout, per the brief's 
   behavior change by itself.
 - **Public seam:** the core file's own text is the seam; every consumer already points at it by relative
   path (confirmed: 60 tracked references, § Repository Delta).
-- **Fail-capable evidence:** a diff showing only the §9-10 rewrite and the new §1 section; the resolver
-  test suite still green after the edit (byte-identity check would fail if a consumer's embedded copy
-  drifts from the file).
+- **Fail-capable evidence (corrected — Finding 5):** the resolver suite proves consumers still resolve
+  the same file; it does **not** prove the subordination line is gone or the clause is present, so two
+  targeted checks are required in addition: (a) `grep -q "the Proposal wins" <core file>` must go from
+  matching (before) to not matching (after); (b) a grep or diff for the approved §1 clause's distinguishing
+  text (e.g. "pre-authorized capabilities") must go from not matching (before) to matching (after). Both
+  are genuinely failable — a same-file no-op edit fails (a), and forgetting to add the clause fails (b).
+  The resolver suite stays as a *third*, independent check that no consumer's embedded copy drifted.
 
 ### 3.2 Wording reconciliation (skill, command, autonomy rules, session-plan)
 
@@ -193,26 +209,52 @@ actually requires. Uses the proposal's own language throughout, per the brief's 
 - **Public seam:** each file is read directly by its own consumers (Codex reads the skill; Claude reads
   the command; both read `docs/autonomy-rules.md` per its own "when to read" banner; `/session-plan`
   reads its own command file).
-- **Fail-capable evidence:** a diff per file; `work-loop-v2-slice-1.test.sh`'s skill-text assertions (the
-  suite already greps live skill text for specific phrases) still green, proving no accidental removal of
-  asserted language.
+- **Fail-capable evidence (corrected — Finding 5):** `work-loop-v2-slice-1.test.sh`'s existing skill-text
+  assertions cover CE-9 and orientation phrasing already in the skill — they do **not** exercise this new
+  §1-citation behavior, so citing them alone is not evidence for this change. The genuinely failable check
+  is a new, targeted one added for this tracer: a grep for the §1 citation text, failing before the edit
+  and passing after, run against both the skill and the command. The existing suite is reported
+  separately, as a regression check that nothing else moved — not as proof the new citation exists.
 
 ### 3.3 Capability envelope and subset (documentation-only for MVP)
 
 - **Inputs:** proposal §3.2, §7 (baseline / pre-authorizable / operator-reserved capability classes),
   §14 items 4–5.
+- **Placement decision (corrected — Claude's framing decision):** the earlier draft placed this content
+  in the executable core's §4 state-file example. Any edit to the executable core is explicitly
+  high-consequence under §15 regardless of size (Finding 3). To avoid bundling a documentation-only
+  convention into that review track, this content is placed in the Codex skill's existing
+  brief-preparation guidance (`.agents/skills/work-loop-v2/SKILL.md`, the same section T2 already touches)
+  instead — the smallest sufficient, reversible option per proposal §5 Step 2. The core's five-field
+  contract is read, not edited, by this item.
 - **Outputs:** a defined MVP workspace baseline capability envelope (documentation), and a stated content
   shape for where a unit's selected subset appears in `## Brief` and where the effective runtime profile
   appears in `## Latest result` — inside the existing five-field state-file structure, not a new field.
 - **Guaranteed behavior:** the connected-development profile (§11) is explicitly named as deferred, not
   silently omitted; no enforcement code is implied or required by this item alone.
+- **The enforced/requested distinction (corrected — Finding 5).** The carrier's MVP enforcement list
+  (proposal §11) is exact: it observes and enforces task/checkout/state-file/actor/turn identity,
+  task-scoped write paths, no-bypass-mode, symmetric nested-actor refusal, one-hop/timeout/deadline
+  limits, and terminal classification — confirmed live by this plan's own test runs. It does **not**
+  enforce or observe per-invocation sandbox or network/tool restriction today (also confirmed). The
+  recorded "effective runtime profile" must therefore only assert what the carrier actually observed for
+  those enforced items; for sandbox/network it must state the **requested** or **selected** capability
+  and explicitly disclose that the carrier cannot currently verify it was enforced — never label an
+  unobserved property "effective." This mirrors the carrier's own honesty convention for nested-actor
+  counts (`nested=unobserved` is a distinct state from `nested=0`, per `carry-turn.sh`).
 - **Failure behavior:** a tracer that tries to *enforce* a capability subset mechanically is out of MVP
-  scope per §14 item 4's explicit deferral, and is a scope violation, not this specification's job.
+  scope per §14 item 4's explicit deferral, and is a scope violation, not this specification's job. A
+  brief or evidence block that claims sandbox/network enforcement as "effective" without the carrier
+  having observed it is a failure of this specification, not an acceptable approximation.
 - **Side effects:** none — this is a documentation and state-file-content convention.
-- **Public seam:** the state-file template/example in the executable core (§4) is the seam a Codex brief
-  and a Claude evidence block both already read.
-- **Fail-capable evidence:** the executable core's example state file (§4) still shows exactly five
-  fields after the addition; a sample brief demonstrates the subset language without adding a heading.
+- **Public seam:** the Codex skill's brief-preparation section (not the executable core — see placement
+  decision above) is the seam a Codex brief is written from; the state file's existing `## Brief` /
+  `## Latest result` fields are what a Claude evidence block reads and writes.
+- **Fail-capable evidence:** a before/after diff of the skill section showing the new convention added
+  without a new state-file field being introduced (checked against the core's unedited five-field
+  contract); a sample brief demonstrating the subset language; a sample evidence block that states a
+  sandbox/network capability as "requested, not carrier-verified" rather than "effective" — a version of
+  the check that would fail if the wording collapsed the two.
 
 ### 3.4 Nested-actor prevention — evidence record only
 
@@ -224,7 +266,11 @@ actually requires. Uses the proposal's own language throughout, per the brief's 
 - **Fail-capable evidence:** the suite result itself; a suite that could only ever report "unobserved"
   would not prove this, and it does not — both paths are asserted and both pass.
 
-### 3.5 Autonomy scenario paired live trials
+### 3.5 Autonomy scenario paired live trials (proposal §14 items 8–9 only)
+
+**Corrected scope (Finding 4):** this item covers §14 items 8–9 — the twelve constructed §12 scenarios —
+only. It is a distinct evidence type from §14 item 10's real-task operational evidence, specified
+separately at § 3.6 below; the two must not be reported as the same evidence.
 
 - **Inputs:** proposal §12's twelve-scenario table; the `eval-v0-3-restart` shape as the only proven
   paired-trial mechanism (Layer A / Layer B distinction, PASS/PARTIAL/FAIL verdict, thread-id evidence).
@@ -235,17 +281,41 @@ actually requires. Uses the proposal's own language throughout, per the brief's 
   discipline).
 - **Failure behavior:** where a trial cannot be run safely (would require an unauthorized capability, or
   would touch workspace `CLAUDE.md`), it is recorded as blocked with the reason, not skipped silently.
-- **Side effects:** each trial is itself a real Standard-lane exercise of the carrier/dispatcher within
-  their existing authorized profiles — no new capability is granted by running it.
+- **Side effects:** each trial is a **constructed** exercise of the carrier/dispatcher within their
+  existing authorized profiles — no new capability is granted by running it, and it does not itself count
+  toward §14 item 10's real-task requirement (§ 3.6).
 - **Public seam:** the Work Loop task-state file per trial, same as every other unit in this task family.
 - **Fail-capable evidence:** the trial's own thread IDs, run-sheet commit, and stated verdict — the same
   evidence shape `eval-v0-3-restart.md` already demonstrates.
 
-**Distinguishing semantic behavior from capability enforcement (brief requirement):** 3.1–3.2 and 3.5 are
-semantic Work Loop policy (what the rule says, whether an actor follows it). 3.3 stops at documentation —
-it explicitly does not build enforcement. Mechanical capability enforcement (sandbox/network restriction
-inside the carrier) is named in the Fixed Point as deferred and is **not** specified here because the
-proposal does not schedule it for MVP; specifying it would silently expand scope.
+### 3.6 Real-task operational evidence (proposal §14 item 10, added — Finding 4)
+
+- **Inputs:** proposal §14 item 10 ("Use the attended carrier for 3–5 real Standard tasks across at least
+  two capability shapes") and item 11 (the measures to record across both this and § 3.5).
+- **Outputs:** 3–5 records of **organic** Standard-lane Work Loop tasks — ordinary work already scoped to
+  run through the loop, not scenarios constructed to exercise it — spanning at least two distinct
+  capability shapes (e.g., a read/local-edit task and a task touching a pre-authorized network or
+  registry capability, once such a profile exists).
+- **Guaranteed behavior:** each recorded task is one this task family would have run anyway; none is
+  fabricated or relabeled from § 3.5's constructed trials.
+- **Failure behavior:** if fewer than two genuinely distinct capability shapes are available inside the
+  MVP capability envelope (§ 3.3) to draw real tasks from, that is recorded as a limitation blocking this
+  item's exit condition, not papered over by counting the same shape twice.
+- **Side effects:** none beyond the ordinary effects of the real work each task already does.
+- **Public seam:** each task's own Work Loop state file, plus a short consolidated tally of the measures
+  in item 11 (escalations, unauthorized continuations, capability-selection errors, false-positive
+  blocks, false completions) across the 3–5 tasks — no new durable artifact, an addition to this task
+  family's own records.
+- **Fail-capable evidence:** the 3–5 tasks' own state-file closing records, cross-referenced against the
+  item-11 measures; a tally showing zero of any measure is only credible alongside the individual task
+  evidence it was drawn from, not asserted alone.
+
+**Distinguishing semantic behavior from capability enforcement (brief requirement):** 3.1, 3.2, 3.5, and
+3.6 are semantic Work Loop policy (what the rule says, whether an actor follows it, and whether real and
+constructed use both confirm it). 3.3 stops at documentation and an explicit enforced/requested
+distinction — it does not build enforcement. Mechanical capability enforcement (sandbox/network
+restriction inside the carrier) is named in the Fixed Point as deferred and is **not** specified here
+because the proposal does not schedule it for MVP; specifying it would silently expand scope.
 
 **Distinguishing the attended carrier from the unattended dispatcher (brief requirement):** every
 specification above targets the attended carrier's documentation and state-file conventions. The
@@ -266,9 +336,11 @@ deferred.
   subordinate to proposal v0.4.
 - **Starting evidence:** current §9-10 subordination line (confirmed present); no §1 section exists.
 - **Intended change:** rewrite §9-10; add the §1 clause verbatim from the approved proposal.
-- **Verification:** `work-loop-v2-core-resolver.test.sh` stays green (byte-identity check unaffected,
-  since both consumers still resolve the same, now-updated, file); a human/Codex diff read confirms only
-  the authority line and the new section changed.
+- **Verification (corrected — Finding 5):** three independent checks, none of which the others can
+  substitute for — (a) `grep -q "the Proposal wins"` on the core: matches before, must not match after;
+  (b) a grep for the §1 clause's distinguishing text: must not match before, must match after; (c)
+  `work-loop-v2-core-resolver.test.sh` stays green, proving no consumer's embedded copy drifted from the
+  file.
 - **Exit condition:** the operator approves this exact revised commit — this is the one step proposal
   §14 item 1 states explicitly requires identifiable operator approval before the core is canonical.
 - **Scope boundary:** this file only. No consumer file is touched in the same tracer.
@@ -283,8 +355,10 @@ deferred.
 - **Starting evidence:** skill line 429's existing hierarchy; command line 126's framing note (§ Repository
   Delta table).
 - **Intended change:** small, citation-shaped edits only.
-- **Verification:** `work-loop-v2-slice-1.test.sh` stays green (it already asserts specific skill-text
-  phrases; a careless edit that removes asserted language fails immediately).
+- **Verification (corrected — Finding 5):** the existing `work-loop-v2-slice-1.test.sh` assertions cover
+  CE-9/orientation phrasing, not this citation — they are reported as a regression check only. The
+  genuinely failable evidence is a new, targeted grep for the §1-citation text in both files: must not
+  match before the edit, must match after.
 - **Exit condition:** both files cite §1 where relevant; no semantic hierarchy content changed.
 - **Scope boundary:** these two files only; depends on T1 landing first (ordering constraint 1).
 - **Review row:** normal/consequential — one Codex review (not risk-aware; no hook, permission,
@@ -300,9 +374,10 @@ deferred.
   diff, not a summary).
 - **Exit condition:** wording cites §1; no trigger content lost.
 - **Scope boundary:** this file only; depends on T1.
-- **Review row:** the plan flags this for the reviewer's own call (Repository Delta table) — propose
-  normal/consequential given the change is wording-only and the file is not itself in the structural-class
-  list, but confirm at plan review rather than resolving unilaterally here.
+- **Review row (corrected — Finding 3):** high-consequence, regardless of edit size. §15's closing
+  paragraph names `docs/autonomy-rules.md` explicitly as a separate high-consequence unit for *any*
+  change, and notes its review "must reflect" its cross-cutting reach. One risk-aware Codex review before
+  implementation, with the seven dimensions and the premise-verification precondition, same as T1.
 
 ### T4 — Confirm or adjust `session-plan.md` Step 5
 
@@ -323,19 +398,24 @@ deferred.
 
 - **Behaviour:** the MVP baseline capability envelope is defined; the state-file content shape for a
   unit's selected subset and effective runtime profile is stated, inside the existing five fields.
-- **Starting evidence:** confirmed absence (zero-hit search, § Repository Delta); executable core's
-  current example state file (five fields, no capability content).
-- **Intended change:** new documentation content — likely inside the executable core (where the state
-  file's field table and example already live) or the Codex skill's brief-preparation guidance; exact
-  placement is an implementing-unit decision inside this specification's bounds, not a new artifact.
-- **Verification:** the executable core's example state file still shows exactly five top-level fields
-  after the change; no second approval artifact is created (both are explicit fail conditions in the
-  proposal and in § 3.3 above).
+- **Starting evidence (corrected — Finding 1):** the concept is described in the approved proposal
+  (§3.2, §7) but confirmed absent from all eight live implementation surfaces (§ Repository Delta); the
+  executable core's current example state file shows five fields, no capability content.
+- **Intended change (corrected placement — Finding 3, see § 3.3):** new documentation content placed in
+  the Codex skill's brief-preparation guidance (`.agents/skills/work-loop-v2/SKILL.md`) only. The
+  executable core is **not** edited by this tracer — that avoids triggering the core's high-consequence
+  review track for a documentation-only convention, per §5 Step 2's "smallest sufficient" test.
+- **Verification (corrected — Finding 5):** (a) the executable core's example state file is unchanged
+  (diff against T1's committed version — proves this tracer touched no core content); (b) a sample brief
+  demonstrates the subset language without adding a state-file heading; (c) a sample evidence block
+  states a sandbox/network capability as "requested, not carrier-verified," never "effective" — a check
+  that fails if the wording collapses the enforced/requested distinction (§ 3.3).
 - **Exit condition:** the envelope and subset/profile content shape are documented; connected-development
   profile enforcement remains explicitly deferred, named as such.
-- **Scope boundary:** documentation only; no carrier or dispatcher code.
-- **Review row:** normal/consequential — touches the canonical core's own field contract (post-T1), one
-  Codex review.
+- **Scope boundary:** the Codex skill only; no carrier, dispatcher, or executable-core edit.
+- **Review row (corrected — Finding 3):** normal/consequential, one Codex review — confirmed clean of the
+  high-consequence track because, with the placement decision above, this tracer touches only the skill
+  (already T2's review tier), not the core.
 
 ### T6 — Nested-actor prevention evidence record
 
@@ -349,28 +429,50 @@ deferred.
 - **Scope boundary:** evidence recording only.
 - **Review row:** small/mechanical — deterministic verification only, no review needed.
 
-### T7 — Autonomy scenario evidence-gathering phase (§14 items 8–12)
+### T7 — Autonomy scenario suite (§14 items 8–9 only; corrected — Finding 4)
 
-- **Behaviour:** each of the twelve proposal §12 scenarios gets one paired live trial, using the
-  `eval-v0-3-restart` mechanism.
+- **Behaviour:** each of the twelve proposal §12 scenarios gets one paired live **constructed** trial,
+  using the `eval-v0-3-restart` mechanism.
 - **Starting evidence:** zero trials of these twelve specific scenarios exist yet (CE-9's one executed
   trial is a different, Context-Engineering-specific scenario).
 - **Intended change:** none to the repository's mechanism; this phase *uses* the existing instrument.
 - **Verification:** each trial's own PASS/PARTIAL/FAIL verdict, thread IDs, and run-sheet commit.
 - **Exit condition:** the phase ends when the scenario table is exercised, or when the operator accepts a
   bounded subset as sufficient evidence (a value/risk judgment for that later assessment, not this plan).
-- **Scope boundary:** each trial is its own bounded unit; none may fold into T1–T6.
+  This item alone does **not** satisfy §14 item 10 — see T8.
+- **Scope boundary:** each trial is its own bounded unit; none may fold into T1–T6 or into T8's real-task
+  count.
 - **Review row:** each trial is itself a live Standard-lane exercise, individually assessed by Codex per
   the ordinary Work Loop cycle — not a single batch review of all twelve.
 - **Note:** not scheduled as one small tracer — ordering constraint 3 explains why, and the proposal's own
   stated cost (~twelve paired live trials) is carried here rather than compressed.
 
+### T8 — Real-task operational evidence (§14 items 10–11; added — Finding 4)
+
+- **Behaviour:** 3–5 **organic** Standard-lane Work Loop tasks, spanning at least two distinct capability
+  shapes, are run through the attended carrier as part of this task family's ordinary work, and the item
+  11 measures (unnecessary escalations, unauthorized continuations, capability-selection errors,
+  false-positive blocks, false completions) are tallied across them.
+- **Starting evidence:** zero tasks tagged for this purpose exist yet; the capability shapes available
+  depend on T5's documented MVP baseline envelope.
+- **Intended change:** none to the repository's mechanism; this item observes real work already
+  happening, it does not construct scenarios.
+- **Verification:** each task's own Work Loop state-file closing record; a consolidated tally against the
+  item-11 measures, cross-referenced to the individual task evidence it was drawn from.
+- **Exit condition:** 3–5 real tasks across ≥2 capability shapes recorded, or an explicit limitation
+  recorded if fewer than two genuinely distinct shapes exist inside the MVP envelope.
+- **Scope boundary:** does not fold into T7's constructed-trial count; each task is independently a real
+  unit of this task family's other work, not manufactured for this item.
+- **Review row:** each task is reviewed at its own normal Work Loop review tier; this item adds only the
+  consolidated tally, which is evidence recording, not itself a reviewable change.
+
 ### Deferred, not scheduled in this plan
 
-- **Workspace `CLAUDE.md` reconciliation** — genuinely required by proposal §14 item 3 and §15's closing
-  paragraph, but structurally outside this task's checkout and state file (ordering constraint 2). Named
-  here as an explicit deferral with its trigger: open as a separate task inside the `workspace-root`
-  checkout once T1–T4 have landed and the reconciled §1 text is stable enough to cite there.
+- **Workspace `CLAUDE.md` reconciliation — corrected, not scheduled (Finding 2).** No tracer in this plan
+  touches it; the bounded read in § Repository Delta found no proven required change. The retained,
+  narrower fact is the boundary itself (a separate git repository from this checkout), carried only as a
+  standing constraint that would apply *if* future evidence proves an edit is actually needed — not
+  scheduled as a deferral with a trigger, because nothing here establishes that it is needed.
 - **Descendant-containment closure, connected-development trial, unattended release, later
   pre-authorized-profile generalization, production/communication/credential profiles** (§14 items 6, 11,
   13–15) — explicitly out of MVP scope per the proposal itself; not scheduled by this plan (ordering
@@ -393,23 +495,25 @@ promoted into MVP, or silently dropped.
 | 7 (symmetric nested-actor prevention; verify on host) | T6 |
 | 8 (scenarios as paired live trials) | T7 |
 | 9 (run the scenario suite) | T7 |
-| 10 (3–5 real Standard tasks, ≥2 capability shapes) | T7 (folded into the same evidence-gathering phase; each trial is itself a real Standard task) |
-| 11 (record escalations/errors/blocks/false-completion) | T7 |
-| 12 (correct only demonstrated failures) | Contingent follow-up after T7's results — not a fixed tracer, per the proposal's own "correct only demonstrated failures" instruction (nothing to correct until T7 produces evidence) |
+| 10 (3–5 real Standard tasks, ≥2 capability shapes) | **T8 (corrected — Finding 4; was wrongly folded into T7's constructed trials, now its own item with its own real-task evidence)** |
+| 11 (record escalations/errors/blocks/false-completion) | T7 and T8 together — each records its own measures; T8 tallies them |
+| 12 (correct only demonstrated failures) | Contingent follow-up after T7 and T8's results — not a fixed tracer, per the proposal's own "correct only demonstrated failures" instruction (nothing to correct until both produce evidence) |
 | 13 (generalize profiles only where trials show value) | Deferred — later release, out of MVP |
 | 14 (unattended release after full-lifetime containment) | Deferred — out of MVP; blocked on the open descendant-containment limitation (Repository Delta, "Uncertain / requires proof" row) |
 | 15 (production/communication/credential profiles later) | Deferred — out of MVP |
 
 ### Internal consistency check
 
-Every tracer (T1–T7) carries all six required fields (Behaviour, Starting evidence, Intended change,
+Every tracer (T1–T8) carries all six required fields (Behaviour, Starting evidence, Intended change,
 Verification, Exit condition, Scope boundary) plus its qc-independence review row — confirmed by the
 table structure above; none is missing a field. Every proposed implementation surface named in a tracer
 (executable core, skill, command, autonomy-rules, session-plan, state-file field contract, carrier test
 suite, evaluation instrument) appears first in § Repository Delta's classification table and § Implementation
 Specification's per-capability entry before it appears in a tracer — cross-checked by section: T1↔3.1,
-T2↔3.2, T3↔3.2, T4↔(session-plan row, Repository Delta), T5↔3.3, T6↔3.4, T7↔3.5. No tracer introduces a
-surface absent from both earlier sections.
+T2↔3.2, T3↔3.2, T4↔(session-plan row, Repository Delta), T5↔3.3 (skill placement, corrected), T6↔3.4,
+T7↔3.5 (scenario suite, corrected scope), T8↔3.6 (real-task evidence, added). No tracer introduces a
+surface absent from both earlier sections. T5 and T2 both touch the Codex skill; T5 is sequenced after T2
+in the same file for that reason, though neither tracer's own scope depends on the other's content.
 
 ---
 
