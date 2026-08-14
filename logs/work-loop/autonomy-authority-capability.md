@@ -9,62 +9,180 @@ Implement and verify the approved autonomy/authority/capability proposal through
 The operator wants implementation to proceed under the compact Axcíon Standard Implementation Workflow. `/implementation-triage` remains explicitly excluded. The existing Work Loop is the sole runtime state; the research report is evidence, not parallel runtime state.
 
 ## Lane and unit
-Standard. Implementation mode. Unit 12 — record the status-only content-bound re-freeze in both live status records of the corrected implementation plan.
+Standard. Discovery mode. Unit 13 — verify T1a's premises and prepare the isolated risk-aware review payload without editing the executable core.
 
-Named reason for the loop: the corrected plan governs high-consequence changes to the canonical core and live authority rules; its exact approved content must be durably identifiable before implementation resumes.
+Named reason for the loop: the canonical core is shared authority infrastructure, so the frozen plan requires a risk-aware independent review before its status reconciliation is implemented.
 
 ## Brief
-The operator explicitly approved re-freezing the exact corrected plan content on 2026-08-14 after primary-source research, fresh isolated review, and one bounded correction. Claude's premise check correctly found that the plan carries two live status records: the preamble and `## Plan-readiness statement`. Record the approval consistently in both records without changing the Fixed Point, repository delta, implementation specification, tracer plan, or any target implementation surface.
+Unit 12 is accepted: the corrected implementation plan is re-frozen and T1a is now the required next tracer. Before implementation, this unit establishes the repository facts and exact proposed three-surface wording that the mandatory risk-aware Codex review must judge; it changes no target file.
 
-Approved content identity:
+Governing authority:
 
-- Corrected plan commit: `ccf134b860b057de56c8da5452ce43ab36e4bf66`.
-- Corrected plan blob: `3fd5322fc3d499de01661dfb5d645def482b6168`.
-- Primary-source report blob: `16d5203bcfcdb3f6ddd19a1e4baf36612650efa6`.
+- Re-frozen implementation plan at status-record commit `e45a581f89291ff45ec263d35d9b38e65117b3e2`, plan blob `7b254fcbaeda669ecb8a300e72d9bb5203619505`; T1a is specified by § 3.1a and the Execution Plan's T1a entry.
+- T1 implementation commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` and approval-record commit `9a0fdb41fa27ae7ac813504a5145a59d465b93b7`.
+- `docs/qc-independence.md` § Risk-aware review: verify the review premises before dispatch and provide the seven dimensions—usage cost, permissions surface, blast radius, reversibility, hidden coupling, principle alignment, and problem reality.
 
-Required outcome: change only the plan's two status/approval records so they consistently say the plan is **re-frozen for implementation** over the exact corrected content above, record the operator's 2026-08-14 content-bound approval, and preserve the research/review/correction lineage. The readiness statement must record that its fresh-review and operator-re-freeze conditions are satisfied and that implementation may resume with T1a, which the plan already sequences before T2. Retain the accepted T8 S4/S8 evidence limitation and every historical freeze/amendment identity as history rather than live authority.
+Required outcome: return one self-contained review payload containing (1) verified primitive evidence for every T1a premise, cited line, count, and script; (2) the exact proposed replacement wording for the core status header and both dated amendment notes; (3) a zero-context predicted diff showing only those three allowed surfaces; (4) an explicit consumer inventory for anything that parses, quotes, or semantically relies on the current header or note wording; and (5) factual inputs for all seven risk dimensions. Do not perform the review verdict and do not implement the patch—the fresh Codex review follows this handback.
 
-Scope: the plan's opening status/approval preamble, the body of its final `## Plan-readiness statement`, and this state-file handback only. Preserve the `## Plan-readiness statement` heading and every line from `## 1. Fixed Point` through the line immediately before that heading byte-for-byte. The readiness edit records fulfillment of existing gates; it may not alter implementation scope, sequencing, specifications, evidence bars, or authority. Do not edit the research report, proposal, executable core, skill, command, autonomy rules, session plan, carrier, dispatcher, tests, or any target implementation surface. Do not begin T1a.
+Claims to verify against the repository:
 
-Codex framing decision: widening this unit to the second live status record is the smallest faithful repair of the false premise. It does not amend the operator-approved substantive content: the operator approved re-freezing corrected blob `3fd5322f...`, and these status-only edits are the record that applies that approval. The prior option of preserving contradictory live status is rejected because it would defeat the unit's purpose. The omission of T1a from the old blocking sentence is resolved here only by stating the already-governing sequence accurately; it is not a new tracer or plan change.
+1. The current core is still the T1-approved baseline, and T1's content-bound approval is identifiable; report the current core blob and the evidence tying it to T1/its approval record.
+2. The only stale live-status text targeted by T1a is the line-3 status plus the two dated notes currently identified by their text and section, not by remembered line numbers alone. Quote the exact current text and stable enclosing headings.
+3. T1's authority paragraph remains exactly the approved text and is outside the proposed patch.
+4. No governing-autonomy clause has landed: on the whole core, `! grep -q "pre-authorized capabilities"` must succeed.
+5. The core-resolver suite named by T1a exists and passes in the current baseline; run the exact cited script and report its command, exit code, and summary.
+6. Search tracked live sources for exact or semantic dependencies on `draft for operator approval` and both notes' present-tense header claim. Inventory any consumer that parses, quotes, tests, or makes an authority decision from them; distinguish live consumers from historical evidence. Bound and report the searched paths and patterns so a zero-result claim can fail.
 
-Required evidence:
+The proposed wording must state only that the whole core is canonical under T1's approval, preserve both notes' original dates and historical truth, and say their limitation was superseded when T1 made the core canonical. It must not add or paraphrase the proposal §1 autonomy rule, change the T1 authority paragraph, revise any other operator gate, or touch headings/section numbering.
 
-1. Confirm the pre-freeze plan matches blob `3fd5322fc3d499de01661dfb5d645def482b6168`.
-2. Show a zero-context diff proving only the opening status/approval preamble and the body of `## Plan-readiness statement` changed.
-3. Prove `## 1. Fixed Point` through the line immediately before `## Plan-readiness statement` is byte-identical before and after, and confirm the readiness heading itself is unchanged.
-4. Show that both status records identify the re-freeze consistently, that the readiness record says its two gates are satisfied and names T1a as the next implementation unit, and that the historical freeze identities plus the accepted T8 S4/S8 limitation remain present.
-5. Report the re-freeze commit and resulting plan blob.
+Required risk payload, dimension by dimension: identify the concrete exposure, evidence, and available safeguard for usage cost; permissions surface; blast radius on other components; reversibility; hidden coupling; principle alignment; and problem reality. Also state any unresolved premise, consumer, or wording choice that would require revision or an operator decision rather than reviewer inference.
 
-Completion condition: record the content-bound re-freeze consistently in both live status records, set `turn: codex`, commit only the plan plus state-file handback, and stop. The next assessment checks only approval-record consistency and preservation of the reviewed substantive content.
+Required fail-capable evidence: preserve the baseline outputs for the status-string match, the two note matches, the absence of `pre-authorized capabilities`, and the resolver test; provide a predicted diff whose path and hunks would expose any fourth edit; and give exclusion proofs for the T1 authority paragraph and all content outside the three allowed surfaces. A proposed check that could pass after an extra edit is insufficient.
 
-Stop conditions: stop if the current plan differs from the approved blob, any line in the preserved middle range would need to change, the readiness edit would alter plan substance rather than status, or any target implementation edit appears necessary. Challenge a false premise rather than improvising.
+Scope: read-only investigation plus this state-file handback. No edit to the executable core, plan, skill, command, autonomy rules, session plan, carrier, dispatcher, tests, or research report. Temporary material outside tracked repository state is permitted only if needed to render the predicted diff and must not become a project artifact. Codex's framing holds T2 and all later tracers outside this unit because T1a gates them.
+
+Completion condition: return the complete premise-verified review payload, set `turn: codex`, commit only this state-file handback, and stop. This is a Discovery unit: do not implement T1a.
+
+Stop conditions: hand back a false premise if the approved baseline, targeted surfaces, consumer inventory, or cited test differs materially from the frozen plan. Stop for the operator only if repository evidence reveals a real authority/scope/risk decision; otherwise expose uncertainty for the reviewer rather than improvising.
 
 ## Latest result
 
-Inspected (2026-08-14), against `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md`:
+Inspected (2026-08-14):
 
-- Claim (1) — the pre-freeze worktree plan is the approved corrected content: HOLDS — `git hash-object` returned `3fd5322fc3d499de01661dfb5d645def482b6168`, and `git status --short` on that pathspec returned no line, so the worktree copy was unmodified before this unit.
-- Claim (2) — commit `ccf134b8...` carries that blob for the plan: HOLDS — `git rev-parse ccf134b860b057de56c8da5452ce43ab36e4bf66:<plan>` returns `3fd5322fc3d499de01661dfb5d645def482b6168`.
-- Claim (3) — the primary-source report blob exists: HOLDS — `git cat-file -t 16d5203bcfcdb3f6ddd19a1e4baf36612650efa6` returns `blob`.
-- Claim (4) — the plan carries exactly two live status/approval records, the preamble and `## Plan-readiness statement`: HOLDS — searched the whole file for `this artifact is|grants no|re-freeze|re-frozen|remains draft|is \*\*draft|until .*(occur|frozen)|may begin|no target-edit`; every match fell in the preamble (lines 4, 13, 28, 42) or in `## Plan-readiness statement` (lines 1061, 1064, 1067–1068), except line 1011, which is a §14 traceability-table row describing T1a and asserts no status. No third status record exists.
-- Claim (5) — the plan already sequences T1a between T1 and T2: HOLDS — searched the plan for `T1a`; § 3.1a defines it (line 689), line 661 places it "between T1 and T2", line 1011 records "gated on T1, gates T2", and lines 1041–1043 state the ordering gate is repeated in § 3.1a, § 3.2, T1a, T2 and ordering constraints 1 and 1b.
-- Claim (6) — the historical freeze identities are present to retain as history: HOLDS — searched the plan for `fe2c62fd|cab3b7a2|d1a6162b|1cbcbf4e`; matched at preamble lines 17, 19, 26.
-- Claim (7) — the T8 S4/S8 accepted limitation is present to carry forward: HOLDS — searched the plan for `S4 and S8`; matched at lines 33, 941, 948.
+- Claim (1): HOLDS — `git hash-object` on the worktree core and `git rev-parse HEAD:plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` both return blob `30c62c418d3bd29b6c4a17841c90886f7be5ffe8`; `git rev-parse 5fef08ff…:<core>` and `git rev-parse 9a0fdb41…:<core>` return the same blob; `git log --oneline 5fef08ff..HEAD -- <core>` returns no commits. `git show 9a0fdb41…` contains the operator's content-bound approval paragraph naming implementation commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` and blob `30c62c41…`. The current core is byte-identical to the T1-approved baseline and the approval is identifiable by both commit and blob.
+- Claim (2): HOLDS — `grep -n "draft for operator approval" <core>` returns exactly three lines: 3, 166, 286. `grep -n "deliberately unchanged" <core>` returns exactly 166 and 286. `grep -n "Status:" <core>` returns only line 3. The three surfaces, quoted and located by stable heading rather than by line number alone, are in payload section A. No fourth stale live-status surface exists in the core.
+- Claim (3): HOLDS — `sed -n '9,12p' <core>` returns the four-line authority paragraph byte-identical to the text added by `git show 5fef08ff… -- <core>`; the predicted diff's exclusion proof (b-i) confirms lines 9–12 are unchanged by the proposed patch.
+- Claim (4): HOLDS — `! grep -q "pre-authorized capabilities" <core>` succeeds; `grep -c` returns 0. No governing-autonomy clause has landed.
+- Claim (5): HOLDS — `bash logs/scripts/work-loop-v2-core-resolver.test.sh` → exit 0, `4 passed, 0 failed` (checks 1–4: linked-worktree resolution, canonical-checkout resolution, unrelated-repo rejection, deployed resolver blocks byte-identical). The script exists at that path and is executable.
+- Claim (6): HOLDS — searched all 1810 tracked files with `git grep -F` for `draft for operator approval` (12 files), `deliberately unchanged` (5), `Do not read this amendment` (2), `header still reads` (7), `approved on its own` (5); searched `logs/scripts`, `.claude`, `.agents` for `work-loop-v2-executable-core`, `Status:** draft` and `Status.*draft for operator`. Full inventory with the live/historical split is in payload section C. No runtime artifact and no test parses, quotes or asserts on the header (the `.claude`/`.agents`/`logs/scripts` pattern search returned zero, and the four files that name the core reference it only as a path constant or, in `work-loop-v2-slice-1.test.sh:266–274`, for the § 3 hand-off token).
 
-Result: both live status records now record the same content-bound re-freeze, and the reviewed substantive middle of the plan is byte-identical. Plan blob `3fd5322fc3d499de01661dfb5d645def482b6168` → `7b254fcbaeda669ecb8a300e72d9bb5203619505`. The re-freeze commit is the commit carrying this hand-back — the only commit touching both the plan and this state file after `ccf134b8...`.
+Result: Unit 13's read-only verification is complete. Every T1a premise holds against the current repository; nothing was implemented and no target file was edited. The self-contained risk-review payload for the mandatory risk-aware Codex review follows.
 
-Evidence:
+Evidence: the six checks above, each naming its command and its returned value; the predicted diff in section B rendered from a scratchpad copy (never a tracked file) and put through the frozen plan's own exclusion proofs (a), (b-i), (b-ii), (c) and (d), each reported with the value that would have exposed a fourth edit. `git status --porcelain` shows only this state file plus the pre-existing, unrelated `logs/friction-log.md` modification, which predates this unit and is untouched by it.
 
-1. **Pre-freeze identity.** `git hash-object` on the plan returned `3fd5322fc3d499de01661dfb5d645def482b6168` before any edit, matching the approved blob exactly.
-2. **Only the two status records changed.** `git diff -U0` returns eight hunks, all inside the two in-scope regions: `@@ -3,7 +3,4 @@`, `@@ -11,4 +8,14 @@`, `@@ -21,2 +28,2 @@`, `@@ -28,3 +35,3 @@`, `@@ -45 +52 @@`, `@@ -48,3 +55,4 @@` in the opening preamble, and `@@ -1061,2 +1069,3 @@`, `@@ -1064,8 +1073,11 @@` in the readiness-statement body. 42 insertions, 30 deletions; no hunk falls between them.
-3. **The reviewed middle is byte-identical, and the check can fail.** The range `## 1. Fixed Point` through the line immediately before `## Plan-readiness statement` (lines 60–1058 before, 68–1066 after) hashes to `d4570c7ab612aacad21d517b74280219e2338fd46c6726fd9abf7658f93baeed` in both states, and `cmp` reports no difference. Negative control: appending a single byte to the extracted "after" copy made `cmp` report a difference immediately, so the comparison distinguishes success from failure rather than passing regardless. The `## Plan-readiness statement` heading itself is absent from `git diff -U0` output, so it is unchanged.
-4. **The two records agree, and the retained content survives.** Both now carry `re-frozen for implementation` (lines 3 and 1069) and both name commit `ccf134b8...` and blob `3fd5322f...` (lines 4–5 and 1069–1070). The readiness record states both prior gates are satisfied — the fresh isolated review with verdict CORRECT, its four findings corrected in one bounded round with the closure check passing, and the operator's content-bound re-freeze — and names **T1a** as where implementation resumes, with T2 still gated behind it. A search for the superseded live-draft language (`this artifact is \*\*draft|grants no target|no target-edit authority|Until.*both occur`) now returns no match anywhere in the file. The three historical freeze identities remain at preamble lines 17, 19, 26, and the T8 S4/S8 accepted limitation remains at lines 40, 949, 956.
-5. **Resulting identity.** Plan blob `7b254fcbaeda669ecb8a300e72d9bb5203619505`, in the commit carrying this hand-back.
+### A. Proposed wording — the three allowed surfaces, exact
 
-**Scope judgment stated out loud, for assessment.** The brief put the whole opening preamble in scope. Inside it, the *Correction history* paragraph said "Three correction rounds have now run" and named only three label families, while the plan body cites a fourth — `Unit 11 finding N`, at lines 302, 371, 450, 467, 472, 703, 742, 792, 796. Since the required outcome asks this record to preserve the research/review/correction lineage, and that round is the one the operator's approval binds to, the count was corrected to four and the `Unit 11 finding N` family named. This changes no scope, sequencing, specification, evidence bar or authority — it makes a lineage statement match the document it describes. Flagged rather than assumed, per core § 6 rule 4.
+**A1 — status header (core line 3, under the document title `# The Work Loop — executable core`).**
 
-**Deferral, not done here.** The plan's §14 *Deferred, not scheduled in this plan* list names item 6 alongside items 13–15, while the §14 traceability table classifies item 6 as a retained Fixed Point fact with no tracer. The preamble already records this as a known, non-blocking wording inconsistency. It sits in the preserved middle range, so correcting it would have broken the byte-identity proof this unit owes. Left unimplemented.
+Current: `**Version:** v0.1 (MVP). **Status:** draft for operator approval.`
+
+Proposed: ``**Version:** v0.1 (MVP). **Status:** canonical — content-bound operator approval at commit `5fef08ff` (2026-08-14).``
+
+115 characters. The file's longest existing line is 317, so the width is in family. No other line in the core depends on line 3's text.
+
+**A2 — first dated note (core lines 165–167; enclosing heading `### The "good enough, proceed" judgment` at line 144, inside `## 3. The unit cycle` at line 64).**
+
+Current:
+
+```
+> *Added 2026-08-07. This clause was approved on its own; the document's header still reads
+> **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
+> approval of the rest of the file.*
+```
+
+Proposed:
+
+```
+> *Added 2026-08-07. This clause was approved on its own, and the rest of the file was not
+> approved with it at that time. That limitation was superseded on 2026-08-14, when the
+> operator's content-bound approval of commit `5fef08ff` made the whole file canonical.*
+```
+
+**A3 — second dated note (core lines 285–287; enclosing heading `### An approved courier may carry the turn` at line 262, inside `## 4. The task-state file` at line 251).** Identical to A2 except the preserved original date `2026-08-06`.
+
+Both notes stay three lines, so the core's line count and every downstream line number are unchanged (477 lines before and after). Both keep their original date and both keep the historical claim that the clause was approved on its own and did not then approve the rest of the file — corrected from a present-tense assertion about the header to a dated statement that the limitation applied then and was superseded by T1. Nothing here adds or paraphrases proposal §1, touches the T1 authority paragraph, revises any other operator gate, or changes a heading or section number.
+
+A third dated note exists at core line 411 (`Added 2026-08-01`, the "Who commits: Claude" note). It makes no draft-status claim, is not a T1a surface, and exclusion proof (b-ii) confirms it is untouched.
+
+### B. Predicted diff — zero context beyond the three surfaces
+
+```diff
+--- plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
++++ plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+@@ -1,6 +1,6 @@
+ # The Work Loop — executable core
+ 
+-**Version:** v0.1 (MVP). **Status:** draft for operator approval.
++**Version:** v0.1 (MVP). **Status:** canonical — content-bound operator approval at commit `5fef08ff` (2026-08-14).
+ 
+ **What this is.** The one document that says how the Work Loop runs. The Claude Code command and
+ the Codex resource **link to this file** and never restate what is in it. One owner, no drift. The
+@@ -162,9 +162,9 @@
+ These four are owned here. The Codex skill and the Claude command cite this section; neither restates
+ them.
+ 
+-> *Added 2026-08-07. This clause was approved on its own; the document's header still reads
+-> **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
+-> approval of the rest of the file.*
++> *Added 2026-08-07. This clause was approved on its own, and the rest of the file was not
++> approved with it at that time. That limitation was superseded on 2026-08-14, when the
++> operator's content-bound approval of commit `5fef08ff` made the whole file canonical.*
+ 
+ ### Continuing — accepting the unit and opening the next
+ 
+@@ -282,9 +282,9 @@
+ The operator carrying the turn themselves remains valid and is the default. A courier is an option
+ they approve, not a stage the loop acquires.
+ 
+-> *Added 2026-08-06. This clause was approved on its own; the document's header still reads
+-> **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
+-> approval of the rest of the file.*
++> *Added 2026-08-06. This clause was approved on its own, and the rest of the file was not
++> approved with it at that time. That limitation was superseded on 2026-08-14, when the
++> operator's content-bound approval of commit `5fef08ff` made the whole file canonical.*
+ 
+ **A request that is refused admission opens no file** (§ 2). Direct Work leaves no state behind.
+```
+
+One file, three hunks, three surfaces. The frozen plan's fail-capable checks run against this predicted result:
+
+- (a) `sed -n '3p'` piped to `grep -q "draft for operator approval"` — matches before, does not match after. Both values observed.
+- (b-i) `diff <(sed -n '9,12p' before) <(sed -n '9,12p' after)` — identical. T1's authority paragraph is excluded.
+- (b-ii) `diff <(sed -e '3d;165,167d;285,287d' before) <(sed -e '3d;165,167d;285,287d' after)` — empty. This is the exclusion proof that would expose a fourth edit anywhere in the file: a hunk outside the three surfaces makes it non-empty. It is not a check that could pass after an extra edit.
+- (c) `grep -n "Added 2026-08-0"` on the result returns lines 165 (`2026-08-07`), 285 (`2026-08-06`) and 411 (`2026-08-01`, out of scope). Both original dates preserved; both historical claims preserved, not deleted.
+- (d) `! grep -q "pre-authorized capabilities"` on the whole result — succeeds. No governing clause is introduced.
+- (e) `work-loop-v2-core-resolver.test.sh` is green on the baseline now (exit 0, 4/4). Its only reference to the core is the path constant `SEMANTIC_REL` at line 31; it asserts nothing about the core's body. On that mechanism the change cannot break it — but this is the one item whose post-change value has not been observed, because running it against the edited file requires the edit, which this unit is forbidden to make. It must be re-run and reported at implementation time.
+
+### C. Consumer inventory — what parses, quotes, tests or decides from the header and the two notes
+
+Bounds: all 1810 tracked files in this checkout (`git grep`, patterns listed under Claim 6). Untracked files, other worktrees and Notion are outside these bounds and were not searched.
+
+**Live consumers that would be left stale by T1a (T1a's scope boundary is the core file only, so it does not fix them):**
+
+1. `plans/work-loop-v2-v0.2/work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md:363–365` and `:894` — status "implementation-ready; not yet executed." Its **Amendment discipline** rule and risk item **R-2** both instruct a future executor to append a dated note saying "the header is deliberately unchanged." After T1a that instruction is false and would reintroduce the exact stale claim T1a removes. This is the sharpest coupling found and the strongest single argument for a follow-on fix.
+2. `plans/work-loop-v2-v0.2/resource-capability-development-plan-v0.1.md:121` — an "Authority status" table row asserting the core's header "Reads **draft for operator approval**." The document is explicitly `Status: Draft — not approved and not authorized for implementation`, so it governs nothing today, and the same table already carries an independently stale row ("Proposal v0.4 AUTHORITATIVE within MVP scope", contradicted by T1).
+3. `plans/axcion-harness-v0.2/mvp-plan.md:398` and `:521` — names the core's draft-vs-deployed status mismatch as an open item to resolve. T1a satisfies it; the text then describes a closed item as open.
+
+**Semantic authority consumer (rule-level, no quoted text):**
+
+4. `.agents/skills/work-loop-v2/SKILL.md:429, :431` — "an unapproved draft stays a labelled proposal, and only a genuine explicit operator decision governs" and "A draft does not govern." No reference to the core's header, so nothing breaks. But it is the rule under which the current header actively argues against the core's own governing status — this is the concrete cost of leaving T1a undone, not a risk of doing it.
+
+**Historical evidence, correctly left as-is (records of what was true at the time):**
+
+5. `plans/work-loop-v2-v0.2/handoff-automation-investigation-2026-08-05.md:32`; `plans/work-loop-v2-v0.2/t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md:91, :93` (the primary-source finding that specified T1a); `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md:217, :706` (T1a's own Starting evidence, which must keep describing the pre-change state); `logs/session-notes-archive-2026-08.md:2731`; `logs/missions/work-loop-v2-mvp.md:79, :90`; `logs/session-plan-2026-08-02-S6-6d7.md`, `logs/session-plan-2026-08-02-S9-d4a.md`; the four spike run/probe transcripts under `plans/work-loop-v2-v0.2/handoff-automation-spike/runs/`.
+
+**No consumer at all:** no script, hook, test or runtime artifact parses or asserts on the header. Searching `logs/scripts`, `.claude` and `.agents` for `Status:** draft` and `Status.*draft for operator` returned zero matches. The four files naming the core (`SKILL.md:38`, `work-loop-v2.md:26`, `work-loop-v2-core-resolver.test.sh:31`, `work-loop-v2-slice-1.test.sh:266`) use it as a resolver path constant or, in the last case, to test the § 3 hand-off token — none reads line 3.
+
+### D. Risk dimensions — factual inputs for the review
+
+- **Usage cost.** One file, three hunks, six changed lines, no line-count change. Verification is five greps/diffs plus one 4-check script that runs in under a second. Negligible; no subagent, no fan-out.
+- **Permissions surface.** No change. No settings file, hook, permission list, allowlist or `.git` configuration is touched. The edit is one tracked markdown file plus this state file.
+- **Blast radius.** The core is the shared authority document for the whole Work Loop — both the Codex skill and the Claude command resolve and read it every invocation, so the file's reach is maximal. The reach of *this text* is not: no code path, test or runtime artifact reads line 3 or the two notes (section C, "No consumer at all"). Three prose documents quote the header (C1–C3); one is implementation-ready and would be left carrying a false instruction. Safeguard: fix C1 in a bounded follow-on, or record it as an accepted, named limitation with the reason.
+- **Reversibility.** Full. One `git revert` of one commit restores blob `30c62c41…` exactly; the pre-change blob is already pinned in this file and in the T1 approval record. No migration, no external system, no state that survives the revert.
+- **Hidden coupling.** One found, and it is not hidden after this search: C1's Amendment-discipline instruction. Two structural couplings checked and cleared — the notes keep three lines each so no line number anywhere shifts, and `work-loop-v2-slice-1.test.sh`'s core assertion targets § 3's hand-off token, not the header. The one unobserved value is (e) post-change, named in section B.
+- **Principle alignment.** The change makes the core's stated status match a recorded operator decision; it removes a contradiction rather than creating a rule. It aligns with the core's own § 6 rule 4 (scope and success criteria do not change quietly) and with the skill's authority hierarchy at `SKILL.md:429–431`, under which the current header undercuts the very document the loop treats as its contract. It adds no autonomy policy, which is exactly what keeps T1a separate from T2.
+- **Problem reality.** Real and evidenced, not inferred. The core says `Status: draft for operator approval` at line 3 while its own authority paragraph at lines 9–12 says content-bound approval of the identifiable commit is what makes it canonical, and commit `9a0fdb41…` records that approval and states "The core is now canonical." Those are contradictory current-status claims in one blob. The frozen plan gates T2 on resolving it (§ 3.1a, ordering constraints 1 and 1b) so that policy does not enter a self-contradictory canonical document.
+
+### E. Unresolved for the reviewer or the operator
+
+1. **Header wording is a choice, not a derivation.** A1 names commit `5fef08ff` and the date inside the status line. A shorter form (`canonical`, with provenance left to the authority paragraph) is equally faithful to § 3.1a's Outputs. The frozen plan does not specify the wording, so the reviewer picks — this is Codex's framing call, not a repository fact.
+2. **Consumer C1 is a real decision, not an inference.** T1a's scope boundary forbids touching it. Whether it becomes a bounded follow-on or a named accepted limitation is Codex's call at the closure check, or the operator's if it is really about accepting risk.
+3. **Check (e) has no post-change value yet** (section B). Its mechanism is verified; its result is not. It must be re-run at implementation.
+4. Nothing found in this unit reopens a settled decision or reveals a hard-to-reverse consequence, so nothing here is escalated to the operator by Claude.
+
+### F. Deferral noticed during this unit, not done
+
+`plans/work-loop-v2-v0.2/resource-capability-development-plan-v0.1.md:121` carries a second stale authority row — "Proposal v0.4 AUTHORITATIVE within MVP scope" — already contradicted by T1's approved authority paragraph. It is unrelated to T1a's surfaces, sits in a document explicitly marked not approved and not authorized for implementation, and blocks nothing. Recorded, not fixed.
 
 ## Blocker
 
@@ -72,4 +190,4 @@ None.
 
 ## Next action
 
-Codex: assess the re-freeze record only — whether the two live status records identify the same approved commit and blob consistently, whether the readiness record correctly states both gates satisfied and T1a as the resumption point, and whether the reviewed substantive content between them is preserved. Two items need an explicit call: the in-scope *Correction history* lineage correction described above, and the §14 item-6 deferral. T1a has not begun and no target implementation surface was touched.
+Codex: run the mandatory risk-aware review of T1a against the payload above — verdict on the section A wording, the section B predicted diff and its exclusion proofs, the section C consumer inventory, and the section D dimensions. Decide the two open items in section E: the header wording, and whether consumer C1 (`work-loop-v2-proportionality-continuity-implementation-plan-v0.1.md:363–365, :894`) becomes a bounded follow-on or a named accepted limitation. Claude implemented nothing and edited no target file; implementation of T1a starts only after this review returns.
