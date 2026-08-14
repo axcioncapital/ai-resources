@@ -6,8 +6,10 @@
 the Codex resource **link to this file** and never restate what is in it. One owner, no drift. The
 reasoning behind the loop lives in a separate reference document and is not loaded during work.
 
-**Authority.** Built from the Proposal (`work-loop-v2-mvp-proposal-v0.4.md`), which stays
-authoritative. Where this file and the Proposal disagree, the Proposal wins.
+**Authority.** This file is the Work Loop's own statement of how the loop runs. It was built from
+`work-loop-v2-mvp-proposal-v0.4.md`, which is recorded here as historical rationale for the design
+rather than a live overriding authority. The operator's content-bound approval of the identifiable
+commit carrying this revision is what makes this file canonical.
 
 ---
 
