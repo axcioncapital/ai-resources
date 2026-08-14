@@ -7,6 +7,9 @@ argument-hint: "[the task id whose state file to act on, or nothing to use the o
 Run Claude's half of one Work Loop v2 unit: read the task-state file, check the brief's premises against the live repository, then either hand back a false premise or implement the unit and hand back evidence. Codex frames and assesses; Claude owns repository reality and makes every commit. Not for small reversible fixes — those are Direct Work and open no state file (core § 2).
 
 Input: `$ARGUMENTS` — a task id, or empty to use the only state file whose `turn:` is `claude`.
+The case-insensitive operator shorthands `y` and `ur turn` mean *"the other AI has finished its
+part; now it is your turn to review or act"* (core § 4). Treat either one as empty input, never as a
+task id or approval. The state file still decides whether it is actually Claude's turn.
 
 This command requires the executable core on every invocation. Apply the resolver contract below,
 then read the one absolute path it prints **before any other Work Loop action**.
@@ -140,7 +143,11 @@ When invoked on an existing state file that carries its reason, admission was de
 
 ## Step 1 — Orient
 
-Read the state file at `logs/work-loop/{task-id}.md`. Resolve `{task-id}` from `$ARGUMENTS`, or — if empty — from the single file under `logs/work-loop/` whose frontmatter `turn:` is `claude`. If more than one qualifies, list them and ask which. Never guess.
+Read the state file at `logs/work-loop/{task-id}.md`. First normalize `$ARGUMENTS` by trimming
+surrounding whitespace and comparing case-insensitively: exact `y` or `ur turn` becomes empty input.
+Resolve `{task-id}` from any remaining input, or — if empty — from the single file under
+`logs/work-loop/` whose frontmatter `turn:` is `claude`. If more than one qualifies, list each brief
+name and task id and ask which. Never guess.
 
 Read the repository, not the conversation (core § 3 step 1).
 
@@ -274,8 +281,17 @@ Core § 3's close token in `## Next action` is Codex's close verdict; core § 4 
    ```
 
    Leaving it in place is the failure this step exists to prevent: the next task in that checkout would be refused by a task that has already finished. `clear` refuses to remove another task's declaration, and a checkout that has none is a no-op, so running it is always safe. `logs/work-loop/.owner` is gitignored, so this changes nothing that gets committed.
-3. `git add` the state file by explicit pathspec, commit, stop. A closing invocation changes no other file.
+3. `git add` the state file by explicit pathspec and commit. A closing invocation changes no other
+   file. Then report the final repository state under Step 6 and stop.
 
-## Step 6 — Report in one line
+## Step 6 — Report clearly
 
-Say what happened, in plain words: which task, whether a premise failed, what was committed. Then stop. Assessment is Codex's move, not yours.
+For an ordinary hand-back, say in one plain-language line which brief and task ran, whether a premise
+failed, and what was committed. Then stop. Assessment is Codex's move, not yours.
+
+For a closing invocation, report the whole-task result after the closing commit in exactly these
+terms: `Implementation: COMPLETE`, followed by one merge state —
+`READY FOR OPERATOR-AUTHORIZED MERGE INTO MAIN` with the branch and closing commit;
+`ALREADY ON MAIN — NO MERGE REQUIRED` with the closing commit; or `NOT READY` with the specific
+repository blocker. Do not describe a completed unit or an uncommitted close verdict as a completed
+implementation, and do not merge or authorize the merge yourself.

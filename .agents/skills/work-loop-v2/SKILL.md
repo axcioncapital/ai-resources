@@ -1,6 +1,6 @@
 ---
 name: "work-loop-v2"
-description: "Use only when the request (1) names the Work Loop, (2) points at an existing logs/work-loop/{task-id}.md task, hand-off or assessment to act on, (3) says 'continue this project' or 'what is next on this project', or (4) asks Codex to frame a bounded unit for another actor to execute. Then route it to the one capability that owns it — the operator, an Axcíon command, a Matt skill, or the Work Loop itself — and, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Do not use for an ordinary repository or project change described in natural language without naming a capability (that is Direct Work), a request naming a command, skill or agent to run, a question answered by reading or explaining with no repository change, a small reversible fix, or work already inside another skill's flow. Claude executes and makes every commit; you do neither."
+description: "Use only when the request (1) names the Work Loop, (2) points at an existing logs/work-loop/{task-id}.md task, hand-off or assessment to act on, (3) says 'continue this project' or 'what is next on this project', (4) asks Codex to frame a bounded unit for another actor to execute, or (5) says 'y' or 'ur turn' in an active Work Loop hand-off. Then route it to the one capability that owns it — the operator, an Axcíon command, a Matt skill, or the Work Loop itself — and, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Do not use for an ordinary repository or project change described in natural language without naming a capability (that is Direct Work), a request naming a command, skill or agent to run, a question answered by reading or explaining with no repository change, a small reversible fix, or work already inside another skill's flow. Claude executes and makes every commit; you do neither."
 ---
 
 # work-loop-v2 — Codex side
@@ -147,15 +147,28 @@ Core § 4 defines the interface between you and Claude, and places the operator 
 
 | `turn:` you set | The Next line says |
 |---|---|
-| `claude` | **Next:** run `/work-loop-v2` in Claude. |
+| `claude` | **Next:** for **{brief name}** (`{task-id}`), run `/work-loop-v2 {task-id}` in Claude. |
 | `operator` | **Next:** {the decision or information you need from them}. |
 | — (Direct Work, no file) | **Next:** have Claude do this directly — no loop task. |
 | — (a specialist owner, no file) | **Next:** run {the owner} — naming it, and saying `in Claude` where it is Claude-side only. |
 | `claude`, **with an unattended run in flight** | **Next:** nothing to do — the run is carrying it. Name the deadline and where the evidence will be. See *Unattended runs*. |
 
+For an open unit, **{brief name}** is the exact text after the dash in `## Lane and unit` (core
+§ 3). Carry it verbatim, together with the task id, every time the inline Claude instruction is
+written — opening, continuing, correcting or closing. An older state file with no usable brief name
+does not justify the bare instruction: use the task id as the temporary label and say that the brief
+name is missing.
+
 **The carve-out in the last row matters.** "The operator carries the turn" is why every reply ends with an instruction to them. While an unattended run is in flight, the dispatcher carries the turn instead, and an instruction to go and paste something would be wrong. The Next line then reports rather than directs.
 
 Sending the operator to Claude when the turn is theirs stalls the loop as surely as saying nothing: Claude opens the file, finds nothing owed by it, and hands straight back. Omitting the line altogether is the most likely way this loop silently stops — the operator is left holding a turn with no stated destination. Treat it as part of the output, not as courtesy.
+
+**Operator shorthand — `y` and `ur turn`.** In an active Work Loop hand-off, either message means:
+*"The other AI has finished its part; now it is your turn to review or act."* Treat it as the
+operator carrying the already-recorded turn, not as yes/no approval, a task id, a new request, or
+permission to change scope. Read the state file and confirm `turn: codex` before acting. With exactly
+one matching open task, take that turn; with none, report the mismatch; with more than one, list the
+brief names and task ids and ask which one. The shorthand never overrides the state file.
 
 **The folder is core § 4's, not a choice.** Create `logs/work-loop/` if it does not exist. There is no fallback path — if you cannot write there, say so and stop.
 
@@ -464,6 +477,15 @@ Discharge every duty inside prepare, brief, assess and escalate, and add no mach
 
 Claude hands back with `turn: codex`. Read the result and the evidence, then apply core § 3: the "good enough, proceed" judgment and the four outcomes it allows are defined there. Yours is the executive call, not a hunt for more to improve.
 
+**Make status unmistakable in every operator-facing assessment.** Immediately before the `Next`
+line, write the three lines core § 3 requires: `Progress`, `Implementation`, and `Merge readiness`.
+Do not collapse a completed unit into a completed implementation. Use an exact `X/Y` and percentage
+where the approved plan or state fixes the total; otherwise give a labelled percentage estimate and
+name the remaining scope instead of inventing a denominator. `Implementation: COMPLETE` means the
+entire `## Objective and scope` is accepted and no implementation unit remains. Until then it is
+`IN PROGRESS`. A close verdict still reports `Merge readiness: NOT READY — awaiting Claude's closing
+record and commit`; Claude reports the final merge state after that commit.
+
 **Claude runs the checks and reports the evidence. You assess that evidence.** Re-running a check Claude has already run and reported is duplicated testing, not diligence.
 
 You may reproduce a check only under one of these four conditions, and you say which one applies when you do:
@@ -493,7 +515,7 @@ If Claude handed back a **false premise**, that is a correct outcome, not a fail
 
 The closing decision is yours (core § 3 step 5); the closed file is not. Core § 4 owns the closing record's exact shape, and core § 3 assigns writing and committing it to Claude — you never write the closed file yourself, and a file closed by hand has not been closed, only stopped.
 
-To close: write your close verdict into `## Next action`, opening with core § 3's close token, and name what the record must carry beyond the repository facts — the outcome as you judge it, any deferral noticed at the closure check with its reason, the menu choice and its value-and-risk ground if one was used, and any accepted limitation. Set `turn: claude`, and end your reply with the Next instruction: run `/work-loop-v2` in Claude. Claude reduces the file to core § 4's closing record — the active fields do not survive the reduction — sets `turn: operator`, and makes the commit.
+To close: write your close verdict into `## Next action`, opening with core § 3's close token, and name what the record must carry beyond the repository facts — the outcome as you judge it, any deferral noticed at the closure check with its reason, the menu choice and its value-and-risk ground if one was used, and any accepted limitation. Set `turn: claude`, and end your reply with the named Next instruction from § *The seam*, including the brief name and task id. Claude reduces the file to core § 4's closing record — the active fields do not survive the reduction — sets `turn: operator`, and makes the commit.
 
 ---
 

@@ -110,12 +110,17 @@ said it is not.
 **Where the record sits.** Write it as the second sentence of `## Lane and unit`, before the unit:
 
 ```
-Standard. Implementation mode. Unit 3 — {what this unit does}.
+Standard. Implementation mode. Unit 3 — {brief name}.
 ```
 
 The position is what makes it a record rather than prose. A unit whose *subject* is modes will name
 all three further down that field, and a reader that scanned the whole field would count three
 records where there is one.
+
+The text after the dash is the **brief name**. Make it short but specific enough that the operator
+can distinguish this hand-off from another open task. Codex carries that exact name, plus the task
+id, in every operator-facing `Next` line that sends the turn to Claude. This adds no field: it names
+the unit text the record already requires.
 
 Each mode binds to a unit kind step 4 already defines, so no new kind is invented:
 
@@ -163,6 +168,28 @@ them.
 > *Added 2026-08-07. This clause was approved on its own; the document's header still reads
 > **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
 > approval of the rest of the file.*
+
+### Operator-facing progress, completion and merge readiness
+
+Every Codex assessment ends with three separate status lines immediately before its `Next` line:
+
+```
+Progress: {X/Y accepted units and percentage, or a labelled percentage estimate plus what remains}
+Implementation: IN PROGRESS | COMPLETE — {plain-language reason}
+Merge readiness: NOT READY | READY FOR OPERATOR-AUTHORIZED MERGE INTO MAIN | ALREADY ON MAIN — {reason}
+```
+
+Use an exact fraction where the approved plan or current state fixes the total. If the remaining
+units cannot yet be known without doing the work, give a labelled percentage estimate and name the
+remaining scope; never invent a denominator merely to look precise.
+
+The three lines answer different questions. Accepting one unit advances **Progress** but does not
+make the whole implementation complete. `Implementation: COMPLETE` is reserved for the point where
+the entire `## Objective and scope` has been accepted and no implementation unit remains. A Codex
+close verdict is still `Merge readiness: NOT READY` because Claude has not yet written and committed
+the closing record. After that closing commit, Claude reports the repository fact: ready for an
+operator-authorized merge into main, already on main with no merge needed, or not ready with the
+specific blocker. Neither actor merges or authorizes its own work.
 
 ### Continuing — accepting the unit and opening the next
 
@@ -256,6 +283,13 @@ may change later if real use justifies it. Its role as the single interface does
 turn between them. This matters most at the very start: a new request reaches Codex by the operator
 telling it, before any file exists. Requiring the file first would be circular — the file is created
 *by* admitting the request, so it cannot also be the way the request arrives.
+
+**Operator shorthand.** In an active Work Loop hand-off, an operator message consisting of `y` or
+`ur turn` means: *"The other AI has finished its part; now it is your turn to review or act."* It
+carries the turn already written in the state file. It is not yes/no approval, a task id, a new
+request, scope authority or permission to override `turn:`. The receiving actor reads the state
+file and proceeds only when the recorded turn names it; if several state files name it, the actor
+asks which brief the operator means.
 
 ### An approved courier may carry the turn
 
