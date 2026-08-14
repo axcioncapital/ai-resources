@@ -15,61 +15,77 @@ Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; chan
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 5 correction — add the attended carrier to SKILL.md's repository-depth assignment, per the frozen finding.
+Standard. Discovery mode. Unit 6 — broad Phase 1 controller regression gate across the shared lease helper, owner helper, attended carrier, and unattended dispatcher.
 
 Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
 
 ## Brief
 
-Unit 4r2b is accepted: implementation `294feb28` (pointer `742cdb94`) recovered the dispatcher partial and produced focused 19/8 red to 27/0 green evidence across both operator channels, while preserving outer exit 28 and later refusal 17. Phase 1 transport behavior is now implemented and independently assessed; the approved proposal requires exactly two accompanying Work Loop instruction corrections before the broad regression and live-validation gates. This unit makes those two edits and no other policy or core change.
+Unit 5 and its frozen correction are accepted: the proposal's two instruction changes landed at `9226c7c4`, and correction `61f7d08d` added the attended carrier to the repository-depth assignment without breaking either accepted edit. Phase 1 implementation and instruction work are therefore complete enough to enter proposal §7 step 4. This unit answers one question only: do all four relevant controller suites pass together on the current implementation before either live validation begins?
 
-Governing authority: the operator-approved Phase 1 proposal bound at `10d2eeb6f8868b2f073e11150dc1a50a95ea760a`, §1 “What must change in Work Loop instructions, and no more.” Verified implementation reality: carrier repository-depth ownership admission at `52ecf472`, carrier pin reporting at `1da14105`, dispatcher shared lease/pin reporting through `294feb28`, and shared helper at `f4396a7c`. The executable core is excluded; Phase 2 remains deferred and D4 remains.
+Governing authority: the operator-approved Phase 1 proposal bound at `10d2eeb6f8868b2f073e11150dc1a50a95ea760a`, especially §7 step 4 and the adopt/revise/stop gate. Accepted implementation evidence: shared helper `f4396a7c`; dispatcher integration `1f0938a7`; carrier integration `04de80a7`; carrier ownership admission `52ecf472`; carrier pin-result handling `1da14105`; dispatcher pin-result handling `294feb28`; instruction commits `9226c7c4` and `61f7d08d`. Phase 2, D4, the executable core, live cases 23/24, integration, cleanup, push, and main checkout remain outside this unit.
 
-Required outcome in `.agents/skills/work-loop-v2/SKILL.md`, and only there: (1) correct the stale limitation sentence that says only the dispatcher has exit-code-borne enforcement, now that the attended carrier also enforces shared leases and repository-depth ownership before actor launch; preserve the still-true interactive/operator-bypass limitation. (2) make the existing `33`/`34`/`35` ownership-stop taxonomy explicitly true for both the attended carrier and unattended dispatcher, without inventing new codes or changing the transports' distinct surfaces.
+Required outcome: from this bound worktree, run the complete current suites for (1) `logs/scripts/work-loop-lease.test.sh`, (2) `logs/scripts/work-loop-owner.test.sh`, (3) `scripts/axcion-harness-v0.2/carry-turn.test.sh`, and (4) `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`. Capture each suite's command, exit code, pass/fail count, and raw output path under `logs/harness-runs/`. Establish the current counts rather than forcing historical counts: the relevant recorded baselines are helper 67/0, owner 92/0, carrier 350/0, and dispatcher 482/0, but focused assertions added later may legitimately increase a suite count.
 
-Claims to verify before editing:
+Claims to verify before running:
 
-1. Confirm the current “Not prevented” paragraph still ends with “only the dispatcher's is exit-code-borne,” and identify the minimum truthful replacement supported by the implemented carrier and dispatcher behavior.
-2. Confirm the current stopped-outcome taxonomy already assigns `33`/`34`/`35` to ownership stops but sits in unattended-run context without explicitly saying the attended carrier now shares those codes. Identify the smallest addition that removes that ambiguity.
-3. Search the complete skill for other statements that would become false or duplicated by these two edits. Bound any absence claim to `.agents/skills/work-loop-v2/SKILL.md`; do not expand into the executable core or Claude command.
+1. Confirm all four suite files exist and identify their complete-suite invocation from their own executable/header behavior or accepted repository convention.
+2. Confirm the implementation source and test files named above have no uncommitted changes before the gate. The already-known ambient `logs/friction-log.md` modification and untracked harness outputs are not implementation dirt; report any other relevant dirt and stop rather than hiding it.
+3. Confirm no dispatcher run is in flight and no shared task or checkout lease is held for this task before starting. This is a verification claim, not permission to clear a lease.
 
-Evidence required:
+Evidence required: four raw output files, four observed exit codes, four explicit pass/fail summaries, and a compact comparison with the recorded baselines. The evidence must show the actual failing assertion and stop if any suite is nonzero; do not fix a failure in this unit. After the runs, report whether any source or test file changed. Commit only this state file with explicit pathspec; raw harness outputs may remain uncommitted as evidence.
 
-- Show the exact before and after text for both corrections and tie each to the verified implementation source that makes it true.
-- Run a bounded text assertion that fails against the committed pre-edit skill and passes afterwards: the obsolete “only the dispatcher” claim must be absent; the surviving interactive/operator-bypass limitation must remain; and the ownership-stop wording must explicitly cover attended carrier plus unattended dispatcher with `33`/`34`/`35`. Instruction text is the behavior under test here, so a targeted content assertion is proportionate; do not invent a permanent test framework.
-- Run `git diff --check` on the bounded edit. Do not run transport suites in this unit; their behavior is already accepted and the full regression gate follows.
-- Commit only `.agents/skills/work-loop-v2/SKILL.md` and this state file, using explicit pathspecs. Report the implementation commit and any pointer commit.
+Codex framing decision: the four suites are one regression-gate deliverable, not four implementation units, because this unit changes no product code and constructs no fixtures. Run them sequentially and stop on the first nonzero result so a real regression is not buried and the bounded clock is respected. Do not re-run a completed green suite.
 
-Codex framing decisions: these are the proposal's two required instruction edits in one documentation deliverable. No wording cleanup, duplicate-warning refactor, executable-core change, Claude-command change, full regression, or live validation belongs here.
+Stop if a suite is missing or cannot be invoked, relevant implementation/test dirt exists, a live lease or run blocks safe execution, any suite exits nonzero, the tests would require main checkout, or the unit would need to change anything except the state file and raw evidence logs. Challenge a false premise and hand back; do not improvise around it.
 
-Stop if the proposal's two premises are false, truthful wording requires changing a transport or the executable core, the edit would reopen D4 or Phase 2, or any bounded assertion remains red. Do not silently broaden policy.
-
-Completion condition: both and only the proposal §1 instruction corrections are committed; the stale limitation is removed without hiding the real residual limitation; ownership codes `33`/`34`/`35` are explicitly cross-transport; bounded assertions and whitespace validation pass; and the task hands back at `turn: codex`.
+Completion condition: all four complete suites have run once against the current Phase 1 worktree, each exits 0 with explicit counts and durable raw output, no relevant source/test file changed, the evidence comparison is recorded, and the task hands back at `turn: codex`.
 
 ## Latest result
 
-Inspected (2026-08-14) — the frozen finding reproduced before it was corrected:
+Inspected (2026-08-14):
 
-- Finding (1): REPRODUCES — read `.agents/skills/work-loop-v2/SKILL.md` line 197. The paragraph read "both need `git worktree list` across the registered worktrees, and this loop assigns repository-depth checks to Claude at Step 1 and to the dispatcher at admission, not to you. Those are the actors that establish it". It named two actors and omitted the attended carrier.
-- The omission is materially stale, confirmed at the source rather than by recall: `scripts/axcion-harness-v0.2/carry-turn.sh` line 1498 runs `check --checkout "$CHECKOUT" --task "$TASK" --depth repo` and lines 1502–1507 refuse with `33`/`34`/`35`, each `die()` before any actor launches. `git show --stat 52ecf472` confirms that block entered at the accepted carrier admission commit. So the carrier has established repository-depth ownership since `52ecf472`, and the sentence excluded it.
+- Claim (1): HOLDS — searched the four named paths; all four exist. `logs/scripts/work-loop-lease.test.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh` and `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` are mode-executable; `logs/scripts/work-loop-owner.test.sh` is not (mode 644). Each file's own `Usage:` header names `bash <file>` as the complete-suite invocation, so `bash <file>` is the uniform route and the missing execute bit changes nothing. `carry-turn.test.sh`'s header distinguishes the bare invocation (the green suite) from `--prove-failure` (the separate mutant proof); the bare form was used.
+- Claim (2): HOLDS — ran `git status --porcelain` limited to the eight implementation and test paths (`work-loop-lease.sh`, `work-loop-lease.test.sh`, `work-loop-owner.sh`, `work-loop-owner.test.sh`, `carry-turn.sh`, `carry-turn.test.sh`, `dispatch.sh`, `dispatch.test.sh`); output was empty. Whole-tree status showed only the known ambient `logs/friction-log.md`, this state file carrying Codex's brief, and untracked `logs/harness-runs/` — none of which is implementation dirt.
+- Claim (3): **FALSE AS WRITTEN** — searched the live lease root by sourcing the helper and calling the read-only `wl_lease_status` for this checkout and task. Both leases are HELD: `task-f026eaec09add182.lock` and `checkout-0d1f538516e4119f.lock` under `ai-resources/.git/work-loop-dispatch-locks`, both recording `pid=96236 program=carry` for this exact task and this exact checkout. No dispatcher run is in flight (`ps -ax` matched no `dispatch.sh`; the only match is that carrier process). The holder is the attended carrier that launched this very Claude invocation, which is the behavior Unit 5's accepted correction `61f7d08d` introduced — so the claim as worded can never hold for any attended unit of this task, not merely this one. No lease was cleared.
 
-Result: the frozen finding is resolved, and only it. `.agents/skills/work-loop-v2/SKILL.md` line 197 now reads "this loop assigns repository-depth checks to Claude at Step 1, to the attended carrier before it launches an actor, and to the unattended dispatcher at admission — not to you." The attended carrier is added to the existing assignment; the paragraph's load-bearing conclusion is preserved verbatim ("not to you. Those are the actors that establish it, and a read-only look of your own does not stand in for their check"), as is the closing exposure bound about every unit crossing a Claude entry. The change is one line and one sentence; the diff touches nothing else. No transport, executable core, Claude command or reference file was touched, and D4 and Phase 2 are untouched.
+Claim (3) did not block execution, and this was established by inspection rather than assumed: all four suites build throwaway checkouts under `$TMPDIR` (`SANDBOX_ROOT` / `TMPROOT` via `mktemp -d`) and resolve their lease roots from those sandbox repositories' own Git common directories, so the real repository's held leases never participate. The gate ran, changed no file outside this state file and the untracked evidence logs, and the brief's operative stop condition — "a live lease or run blocks safe execution" — did not fire. Codex owns whether the premise needs rewording, and it matters beyond wording for live cases 23 and 24, where an attended carrier holding both leases is a real condition rather than an artifact.
 
-Evidence: the Unit 5 bounded content assertion, extended with five checks (C1–C5) for this finding, run against the committed pre-correction skill from `git show HEAD:` and against the corrected file. **12 passed / 2 failed red before, 14 passed / 0 failed green after.** The two that flipped are exactly C1 (stale two-actor assignment must be absent) and C2 (attended carrier must be named). C3–C5 assert the load-bearing conclusion, "not to you", and the exposure bound and passed in both runs — they would have caught a correction that resolved the omission by deleting the limit. A1–B5 are Unit 5's two accepted edits and also passed in both runs, which is the "did the correction break something" guard: the obsolete "only the dispatcher" claim stays absent, both residual-limitation clauses stay present, the cross-transport `33`/`34`/`35` statement and the unattended taxonomy row stay intact, and no code `38` was invented. `git diff --check -- .agents/skills/work-loop-v2/SKILL.md` exits 0. Transport suites were not run, per the frozen finding's bound; the broad regression gate still follows. Correction commit `61f7d08d`, touching only `.agents/skills/work-loop-v2/SKILL.md` (1 line) and this state file; this pointer commit records it.
+Result: **the regression gate is RED and was stopped at the fourth suite, so proposal §7 step 4 is not satisfied and neither live validation may begin.** Three suites pass; the dispatcher suite exits 1 with 5 failures. No failure was fixed and no source or test file changed — post-run `git status --porcelain` over `logs/scripts/`, `scripts/axcion-harness-v0.2/` and `plans/work-loop-v2-v0.2/handoff-automation-spike/` was empty, identical to the pre-run check.
 
-Prior accepted evidence remains: Unit 5's two instruction corrections at `9226c7c4` (pointer `32fd2c9d`), 5/5 red to 10/0 green; dispatcher pin reporting 19/8 red to 27/0 green at `294feb28` (pointer `742cdb94`); carrier caller 32/7 red to 39/0 green at `1da14105`; helper 61/6 red to 67/0 green at `f4396a7c`; dispatcher 482/0; carrier 350/0; owner helper 92/0; carrier ownership red 333/17 and green 350/0; earlier cross-transport red/green and stale-oracle mutant evidence.
+Evidence — four suites, run sequentially from this bound worktree, raw output durable under `logs/harness-runs/`:
 
-Open after this correction: broad plan-gate regression; authorized live cases 23 and 24; final limitations and rollback record. Nothing new was noticed during this correction, so no new deferral is recorded. The deferral Unit 5 recorded for line 197 is now closed by this correction — Codex reclassified it as part of proposal §1's required narrowing rather than a third improvement. Previously deferred without action, unchanged: duplicate carrier and dispatcher warning wording, absent positive carrier rc=0 assertion, carrier process-group parameter naming, dispatcher case selection, duplicated fixture-packaging knowledge, explicit broken-owner-helper catch-all coverage, and the unreachable helper entry state.
+| # | Command | Exit | Counts | Baseline | Raw output |
+|---|---|---|---|---|---|
+| 1 | `bash logs/scripts/work-loop-lease.test.sh` | 0 | pass=67 fail=0 | 67/0 — matches | `logs/harness-runs/20260814-unit6-gate-1-lease.out` |
+| 2 | `bash logs/scripts/work-loop-owner.test.sh` | 0 | 92 passed, 0 failed | 92/0 — matches | `logs/harness-runs/20260814-unit6-gate-2-owner.out` |
+| 3 | `bash scripts/axcion-harness-v0.2/carry-turn.test.sh` | 0 | passed=371 failed=0 | 350/0 — +21 assertions, fail still 0 | `logs/harness-runs/20260814-unit6-gate-3-carrier.out` |
+| 4 | `bash plans/.../handoff-automation-spike/dispatch.test.sh` | **1** | pass=498 **fail=5** | 482/0 — **contradicted** | `logs/harness-runs/20260814-unit6-gate-4-dispatcher.out` |
+
+The five failures are one root plus four cascades, all inside Case 12e-3 ("a live CARRIER holds the TASK in a linked worktree; a DISPATCHER starts on it here"). The root is the case's own setup:
+
+```
+FAIL  12e-3 setup — the carrier's TASK lease is live before the dispatcher starts
+      no lease at .../co.kldl1p/.git/work-loop-dispatch-locks/task-a962de0d108a7487.lock
+FAIL  a dispatcher is refused while a CARRIER holds the same task elsewhere
+      expected exit 17, got 0
+FAIL    and the dispatcher launched no actor        actors ran: xt-shared;
+FAIL    and committed nothing                       HEAD moved from d9a9684e
+FAIL    control — the carrier that HELD the task did launch its own actor   launches: 0
+```
+
+The carrier in the linked worktree took no task lease and launched nothing (`launches: 0`), so no lease existed for the dispatcher to be refused by; the dispatcher then correctly proceeded, and the remaining three assertions fell out of that. The sibling cross-transport cases 12e-1, 12e-2 and 12e-4 all pass, including 12e-1's control proving a carrier does launch in this harness when it is not in a linked worktree. Read-only history: `git log -S'12e-3'` places the case's introduction at `54d9db9c`, the Unit 1 **red** slice, which Unit 2b1 `1f0938a7` was to turn green. Whether this is a case that was never fully turned green, or a regression from the later carrier ownership-admission work at `52ecf472`, is a framing call and is left to Codex — this unit diagnosed no further and fixed nothing.
+
+The evidence can fail and did: suite 4 returned a nonzero exit and named the failing assertions, and each suite's own Case 0 is a falsifiability proof that goes red when the artifact under test is removed.
+
+Two records that need reconciling, both Codex's to judge: the recorded dispatcher baseline of 482/0 is contradicted by the current complete run at 503 assertions with 5 red, so either that baseline came from a focused slice rather than the complete suite or something regressed after it was taken; and the carrier suite is now 371 rather than the recorded 350, with fail still 0, consistent with the brief's allowance for later-added focused assertions.
+
+Prior accepted implementation is unchanged: shared helper and durable pin contract; dispatcher and carrier shared-lease integration; carrier repository-depth ownership admission; both transports' explicit pin-result handling; instruction commits `9226c7c4` and `61f7d08d`. Open: this red gate, authorized live cases 23 and 24, and the final limitations/rollback record.
 
 ## Blocker
 
-None.
+The Phase 1 regression gate does not pass. `dispatch.test.sh` exits 1 with 5 failures rooted in Case 12e-3's setup — the carrier in a linked worktree takes no task lease and launches no actor. Proposal §7 step 4 requires the gate before either authorized live validation, so live cases 23 and 24 stay closed until Codex frames the repair.
 
 ## Next action
 
-Codex: run the closure check on the frozen finding only. Two questions, per core § 3:
-
-1. Is the finding resolved? The attended carrier is now named in SKILL.md line 197's repository-depth assignment, and the paragraph's load-bearing conclusion that Codex's local read cannot establish repository-depth ownership is preserved verbatim. Evidence: C1/C2 flipped red to green; C3–C5 held in both runs.
-2. Did the correction break anything? A1–B5 — Unit 5's two accepted edits — passed in both the red and the green run, and `git diff --check` exits 0. The diff is one line in one file.
-
-Anything newly noticed at this closure check is a deferral, not a second correction round.
+Codex: assess the red gate. Decide whether Case 12e-3 is an unclosed Unit 1 red case or a regression from the carrier ownership-admission work at `52ecf472`, and frame the repair unit accordingly. Also decide whether claim (3) needs rewording, given that the attended carrier now holds both leases for the whole of every attended Claude unit — which bears on live cases 23 and 24, not only on brief wording.
