@@ -28,6 +28,12 @@ SUT="$HERE/carry-turn.sh"
 # carry it or the fixture is not modelling a real checkout. Section 12c removes it
 # deliberately, and that must stay the only case without it.
 LEASE_BIN="${LEASE_BIN:-$(cd "$HERE/../.." && pwd -P)/logs/scripts/work-loop-lease.sh}"
+# The durable ownership helper. It answers a different question from the lease —
+# "does this task belong to this checkout?" rather than "is another run live?" —
+# and the launcher resolves it out of the CHECKOUT too. Only section 12e carries
+# it, because only 12e is about ownership; every other fixture is deliberately
+# untouched by this unit.
+OWNER_BIN="${OWNER_BIN:-$(cd "$HERE/../.." && pwd -P)/logs/scripts/work-loop-owner.sh}"
 
 PASS=0
 FAIL=0
@@ -335,6 +341,19 @@ plant_lease() { # lease-dir, pid, task-id, checkout, program
   printf '%s\n' "$3" >"$1/task"
   printf '%s\n' "$4" >"$1/checkout"
   printf '%s\n' "$5" >"$1/program"
+}
+
+# Package the ownership helper into an existing fixture, TRACKED and committed.
+# Tracked for the same reason mkfix tracks the lease library: `logs/scripts/` is
+# outside the launcher's default allow-path set, so an untracked helper is an
+# out-of-allowlist working-tree change and the launcher would correctly stop at
+# exit 18 before it ever reached ownership admission — the case would then pass
+# or fail for a reason that has nothing to do with ownership.
+add_owner_helper() { # checkout
+  mkdir -p "$1/logs/scripts"
+  cp "$OWNER_BIN" "$1/logs/scripts/work-loop-owner.sh" 2>/dev/null || return 1
+  git -C "$1" add -- logs/scripts/work-loop-owner.sh >/dev/null 2>&1
+  git -C "$1" commit -q -m "package the ownership helper" >/dev/null 2>&1
 }
 
 # Build a fixture. Sets: REPO STATE ACTION ARGVLOG COUNTF FAKEBIN LOGD
@@ -1036,6 +1055,152 @@ section "12d. An unprovable shutdown pins both leases"
   assert_eq "  and the TASK lease is PINNED" "1" "$([ -f "$btl/survivors" ] && echo 1 || echo 0)"
   assert_eq "  and the CHECKOUT lease is PINNED" "1" "$([ -f "$bcl/survivors" ] && echo 1 || echo 0)"
   rm -rf "$btl" "$bcl"
+
+section "12e. Repository-depth ownership admission before actor launch"
+  # The leases above answer "is another run live?". They cannot answer "does this
+  # task belong to this checkout?", because a lease dies with its process and a
+  # task outlives one. That second question is the durable declaration's, and the
+  # launcher must ask it at REPO depth — it may run git, so unlike interactive
+  # Codex it can see the other worktrees of the repository.
+  #
+  # Proposal §4.4 binds the three stops to 33, 34 and 35, which are free in this
+  # launcher's taxonomy and already mean ownership across the Work Loop. §5.5
+  # cases 19 and 20 are the two rows these assertions come from. The admission
+  # mirrors dispatch.sh 2336-2367, so the messages asserted here are that block's
+  # own wording rather than a second vocabulary invented for the carrier.
+  #
+  # THE CHECK FAILS CLOSED. A checkout without the helper gets 35 and launches
+  # NOTHING. An absent check is not a passed check, and the checkouts most likely
+  # to lack the helper — older siblings, partial copies — are exactly the ones
+  # most likely to hold a conflicting writer.
+  #
+  # Every case here asserts the exit code AND a launch count of zero. The count is
+  # what makes it more than an exit-code assertion: a launcher that stopped after
+  # starting an actor would satisfy the code and still have admitted the second
+  # writer this admission exists to refuse.
+
+  # --- Case 19: the helper is missing, so the check cannot run at all.
+  mkfix noowner task-bh claude
+  printf 'transition:codex' >"$ACTION"
+  # mkfix packages the lease library and nothing else, so the helper is already
+  # absent. Asserted rather than assumed: if a later change starts packaging it,
+  # this case would silently stop testing an absent helper.
+  assert_eq "12e setup — the fixture carries no ownership helper" "0" \
+    "$([ -f "$REPO/logs/scripts/work-loop-owner.sh" ] && echo 1 || echo 0)"
+  assert_eq "12e setup — but it does carry the lease library, so the lease is not the stop" "1" \
+    "$([ -f "$REPO/logs/scripts/work-loop-lease.sh" ] && echo 1 || echo 0)"
+  before_head="$(git -C "$REPO" rev-parse HEAD)"
+  run_sut --checkout "$REPO" --task task-bh --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "an absent ownership helper refuses (35)" "35" "$RC"
+  assert_contains "  and says the check could not run" "ownership check is unavailable" "$o"
+  assert_eq "  and launched nothing" "0" "$(invocations)"
+  assert_eq "  and committed nothing" "$before_head" "$(git -C "$REPO" rev-parse HEAD)"
+  # The discriminators. Without these the case would be satisfied by a launcher
+  # that refused for a lease reason, or that carried and reported success.
+  assert_absent "  and it is not the lease refusal" "code=17" "$o"
+  assert_absent "  and it did not carry" "outcome=CARRIED" "$o"
+  # A refusal before any lease is taken must leave no lease behind, or it refuses
+  # the NEXT run for a reason that never existed.
+  assert_eq "  and left no lease directory behind" "0" \
+    "$([ -d "$(task_lease_for "$REPO" task-bh)" ] || [ -d "$(checkout_lease_for "$REPO")" ] && echo 1 || echo 0)"
+
+  # The control. Same recipe, helper PRESENT and ownership settled — the run must
+  # proceed and must launch. Without it, every assertion above would be satisfied
+  # by a launcher that refuses everything, which is not the behaviour claimed.
+  mkfix yesowner task-bk claude
+  add_owner_helper "$REPO"
+  printf 'transition:codex' >"$ACTION"
+  assert_eq "control setup — the helper is packaged and committed" "1" \
+    "$([ -f "$REPO/logs/scripts/work-loop-owner.sh" ] && echo 1 || echo 0)"
+  bash "$REPO/logs/scripts/work-loop-owner.sh" check --checkout "$REPO" \
+       --task task-bk --depth repo >/dev/null 2>&1
+  assert_eq "control setup — repo-depth ownership says PROCEED (0)" "0" "$?"
+  run_sut --checkout "$REPO" --task task-bk --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "control — with the helper present and ownership clear the run carries" "0" "$RC"
+  assert_eq "  and its actor ran" "1" "$(invocations)"
+
+  # --- Case 20a: repo-depth ownership REFUSE.
+  # The task is declared by the MAIN checkout; the launcher is pointed at a linked
+  # worktree of the same repository. Repo depth sees one claimant and it is not
+  # this checkout, so the verdict is REFUSE.
+  #
+  # The declaration is made BEFORE the worktree exists, and that ordering is
+  # load-bearing rather than tidy: once the state file has replicated into a
+  # second checkout with nothing declaring it, `claim` itself reads AMBIGUOUS and
+  # writes nothing — so claiming afterwards would produce case 20b's condition
+  # instead of this one, and the case would assert 33 against an ambiguity.
+  mkfix ownref task-bi claude
+  OREPO="$REPO"
+  add_owner_helper "$OREPO"
+  bash "$OREPO/logs/scripts/work-loop-owner.sh" claim --checkout "$OREPO" \
+       --task task-bi --depth repo >/dev/null 2>&1
+  assert_eq "12e-20a setup — the main checkout declares the task" "0" "$?"
+  RWT="$TMPROOT/ownref-wt"
+  git -C "$OREPO" worktree add -q -b ownref-lane "$RWT" >/dev/null 2>&1
+  assert_eq "12e-20a setup — the state file replicates into the linked worktree" "1" \
+    "$([ -f "$RWT/logs/work-loop/task-bi.md" ] && echo 1 || echo 0)"
+  # The fixture's own condition, proven directly against the helper. This
+  # separates "the fixture reaches the intended ownership verdict" from "the
+  # launcher acts on it" — so a red assertion below cannot be blamed on a fixture
+  # that never produced a REFUSE in the first place.
+  bash "$RWT/logs/scripts/work-loop-owner.sh" check --checkout "$RWT" \
+       --task task-bi --depth repo >/dev/null 2>&1
+  assert_eq "12e-20a setup — repo-depth ownership says REFUSE (3) from the worktree" "3" "$?"
+  RWT_ARGV="$TMPROOT/ownref-wt.argv"; : >"$RWT_ARGV"
+  RWT_COUNT="$TMPROOT/ownref-wt.count"; : >"$RWT_COUNT"
+  RWT_ACTION="$TMPROOT/ownref-wt.action"; printf 'transition:codex' >"$RWT_ACTION"
+  RWT_FAKE="$TMPROOT/ownref-wt.actor"
+  make_fake_actor "$RWT_FAKE" "$RWT_ARGV" "$RWT_COUNT" "$RWT_ACTION" \
+                  "$RWT/logs/work-loop/task-bi.md"
+  before_head="$(git -C "$RWT" rev-parse HEAD)"
+  run_sut --checkout "$RWT" --task task-bi --claude-bin "$RWT_FAKE" \
+          --log-dir "$TMPROOT/ownref-wt.runs"
+  assert_eq "a REFUSE ownership verdict stops the carry (33)" "33" "$RC"
+  assert_contains "  and names the stop as an ownership refusal" "ownership refused for task" "$o"
+  assert_contains "  and carries the helper's own reason" "already claimed by checkout" "$o"
+  assert_eq "  and launched nothing" "0" "$(wc -c <"$RWT_COUNT" | tr -d ' ')"
+  assert_eq "  and committed nothing in the worktree" "$before_head" "$(git -C "$RWT" rev-parse HEAD)"
+  assert_absent "  and it is not the lease refusal" "code=17" "$o"
+  assert_absent "  and it did not carry" "outcome=CARRIED" "$o"
+  git -C "$OREPO" worktree remove --force "$RWT" >/dev/null 2>&1
+
+  # --- Case 20b: repo-depth ownership AMBIGUOUS.
+  # No checkout declares the task and its state file exists in two of them.
+  # Replicated copies authorise nobody, so neither checkout may proceed — and
+  # this is the condition that must NOT be resolved by claiming.
+  mkfix ownamb task-bj claude
+  AREPO="$REPO"
+  add_owner_helper "$AREPO"
+  AWT="$TMPROOT/ownamb-wt"
+  git -C "$AREPO" worktree add -q -b ownamb-lane "$AWT" >/dev/null 2>&1
+  assert_eq "12e-20b setup — the state file replicates into the linked worktree" "1" \
+    "$([ -f "$AWT/logs/work-loop/task-bj.md" ] && echo 1 || echo 0)"
+  assert_eq "12e-20b setup — and no checkout declares the task" "0" \
+    "$([ -f "$AREPO/logs/work-loop/.owner" ] || [ -f "$AWT/logs/work-loop/.owner" ] && echo 1 || echo 0)"
+  bash "$AWT/logs/scripts/work-loop-owner.sh" check --checkout "$AWT" \
+       --task task-bj --depth repo >/dev/null 2>&1
+  assert_eq "12e-20b setup — repo-depth ownership says AMBIGUOUS (4)" "4" "$?"
+  AWT_ARGV="$TMPROOT/ownamb-wt.argv"; : >"$AWT_ARGV"
+  AWT_COUNT="$TMPROOT/ownamb-wt.count"; : >"$AWT_COUNT"
+  AWT_ACTION="$TMPROOT/ownamb-wt.action"; printf 'transition:codex' >"$AWT_ACTION"
+  AWT_FAKE="$TMPROOT/ownamb-wt.actor"
+  make_fake_actor "$AWT_FAKE" "$AWT_ARGV" "$AWT_COUNT" "$AWT_ACTION" \
+                  "$AWT/logs/work-loop/task-bj.md"
+  before_head="$(git -C "$AWT" rev-parse HEAD)"
+  run_sut --checkout "$AWT" --task task-bj --claude-bin "$AWT_FAKE" \
+          --log-dir "$TMPROOT/ownamb-wt.runs"
+  assert_eq "an AMBIGUOUS ownership verdict stops the carry (34)" "34" "$RC"
+  assert_contains "  and names the stop as ownership ambiguity" "ownership is AMBIGUOUS for task" "$o"
+  assert_contains "  and carries the helper's own reason" "replicated copies authorise nobody" "$o"
+  assert_eq "  and launched nothing" "0" "$(wc -c <"$AWT_COUNT" | tr -d ' ')"
+  assert_eq "  and committed nothing in the worktree" "$before_head" "$(git -C "$AWT" rev-parse HEAD)"
+  assert_absent "  and it is not the lease refusal" "code=17" "$o"
+  assert_absent "  and it did not carry" "outcome=CARRIED" "$o"
+  # An ambiguity is the operator's to resolve, so the launcher must not have
+  # written a declaration of its own on the way past.
+  assert_eq "  and declared nothing on its own account" "0" \
+    "$([ -f "$AREPO/logs/work-loop/.owner" ] || [ -f "$AWT/logs/work-loop/.owner" ] && echo 1 || echo 0)"
+  git -C "$AREPO" worktree remove --force "$AWT" >/dev/null 2>&1
 
 section "13. Dry run and the Codex direction"
   mkfix dry task-z claude

@@ -15,64 +15,68 @@ Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; chan
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 3a2f — restore the owner suite's dispatcher fixtures by packaging the required shared lease helper.
+Standard. Implementation mode. Unit 3b1 — freeze the carrier's repository-depth ownership admission as failing controller tests.
 
 Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
 
 ## Brief
 
-Unit 3a2e established that all six owner-suite failures share one deterministic test-fixture packaging omission: `new_repo()` in `logs/scripts/work-loop-owner.test.sh` copies the owner helper but not the newly mandatory `work-loop-lease.sh`, so every dispatcher-backed case fail-closes at exit 11 before reaching its intended assertion. Production behavior is correct and the assertions remain semantically correct. This unit applies only the smallest correction needed to make those fixtures representative and restore the approved rollout step 4 gate.
+Controller rollout step 4 is restored and accepted: carrier 316/0, dispatcher 482/0, owner helper 92/0, and shared lease helper 50/0. A direct bounded source search now confirms the next approved implementation gap: `scripts/axcion-harness-v0.2/carry-turn.sh` has no invocation of `work-loop-owner.sh check --depth repo` and no ownership exits 33/34/35. The proposal requires that admission before any carrier actor launch. This first test-first unit freezes the three required failure paths without changing production code.
 
-Required outcome: update `logs/scripts/work-loop-owner.test.sh` so each `new_repo()` fixture packages the repository's shared lease helper alongside the existing owner helper before `logs/scripts` is staged and committed. Preserve all current expectations, assertion counts, fail-closed production behavior and test intent. Then run the complete ordinary owner-helper suite exactly once and record its exact result.
+Required outcome: add focused controller cases to `scripts/axcion-harness-v0.2/carry-turn.test.sh` that prove the current carrier lacks all three required repository-depth ownership stops:
 
-Prepared implementation boundary from the accepted diagnosis: resolve the lease helper beside the existing owner/dispatcher paths, and copy it into each fixture repository's `logs/scripts/work-loop-lease.sh` inside `new_repo()` before the existing whole-directory `git add`. Claude owns the exact code, but the correction must remain within this one test file.
+1. Ownership helper missing or unreadable: carrier must exit 35 and launch no actor.
+2. Repository-depth ownership verdict REFUSE: carrier must exit 33 and launch no actor.
+3. Repository-depth ownership verdict AMBIGUOUS: carrier must exit 34 and launch no actor.
+
+Each case must use isolated fixtures and the harness's sanctioned stub-binary route, assert the exact exit code, assert zero actor launches, and retain enough output evidence to distinguish the ownership stop from lease refusal or ordinary actor failure. The expectations come directly from approved proposal §4.4 and §5.5 cases 19–20; do not redesign them.
 
 Evidence required:
 
-- Failing-first evidence is the preserved Unit 3a2d run: exit 1, 86 passed, 6 failed, with all six identical missing-lease exit-11 paths in `logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out`.
-- Show the exact fixture-packaging diff and why T4 linked worktrees inherit the helper through the fixture base commit.
-- Run `logs/scripts/work-loop-owner.test.sh` exactly once after the edit, synchronously in the foreground. Capture complete stdout/stderr and append exactly `SUITE_EXIT=<code>` after termination in `logs/harness-runs/owner-suite-unit-3a2f-postfix-20260814.out`.
-- Record exact passed/failed totals and any failing names. The expected gate is the proposal's recorded 92/0 baseline, but report what actually occurs rather than changing assertions to obtain it.
-- Confirm the assertion total is unchanged and no assertion or expected exit code was weakened, removed, skipped or rewritten.
-- Commit the test correction and this state file. Hand back at `turn: codex` with the implementation commit hash and evidence. A state-only pointer commit may follow if needed to record the hash.
+- Verify first that the bounded carrier source has no repository-depth ownership invocation or 33/34/35 mapping. If that premise is false, stop and hand back without adding tests.
+- Show the exact new test cases and why each fixture reaches its intended ownership condition while the shared lease helper remains present and usable.
+- Run the complete ordinary carrier suite exactly once after adding the tests, synchronously in the foreground, capturing complete stdout/stderr and appending `SUITE_EXIT=<code>` to `logs/harness-runs/carrier-owner-admission-red-unit-3b1-20260814.out`.
+- The new cases must fail against current production for their intended missing-admission reason. Record the exact total and the new failing assertions. Existing pre-Unit-3b1 assertions must remain green; if unrelated failures occur, stop and report them without diagnosis.
+- Commit only the new tests and this state file. Hand back at `turn: codex` with the test commit hash and evidence; a state-only pointer commit may follow.
 
 Constraints:
 
-- Allowed implementation surface: `logs/scripts/work-loop-owner.test.sh` only.
-- Do not change `dispatch.sh`, `work-loop-owner.sh`, `work-loop-lease.sh`, any production exit code, any assertion expectation, or any Work Loop instruction.
-- Do not add a new absent-lease assertion in this unit. The accepted dispatcher suite already covers deliberate exit 11 for an absent lease library; adding adjacent coverage is not required to restore the owner gate.
-- Foreground execution is mandatory. Do not use `&`, `nohup`, `disown`, detachment or asynchronous execution, and do not rerun the suite.
+- Allowed implementation surface: `scripts/axcion-harness-v0.2/carry-turn.test.sh` only.
+- Do not edit `carry-turn.sh`, any helper, dispatcher, instruction, expected production behavior, or existing assertion.
+- Do not add a general case selector or restructure the harness. The dispatcher selector deferral does not enter this unit.
+- Run the complete suite once only. Foreground execution is mandatory; no `&`, `nohup`, detachment, asynchronous tool call or rerun.
 - Do not stage or commit the raw harness output.
 
-Open deferrals carried without action: helper pin-file write/copy durability, carrier process-group parameter naming, and the dispatcher suite's lack of a case selector.
+Open deferrals carried without action: helper pin-file write/copy durability, carrier process-group parameter naming, dispatcher case selection, and duplicated helper-packaging knowledge in test fixtures.
 
-Stop and hand back without broadening if the one-file fixture correction cannot restore the intended paths, if any production change appears necessary, or if the post-fix suite remains red. Do not diagnose a new red result inside this unit.
+Stop if a correct test cannot isolate ownership admission from the live-lease gate without modifying production, or if the current carrier already implements the required behavior.
 
-Completion condition: the one test fixture packages the required shared lease helper without weakening assertions; the full owner-helper suite has run once after the edit with durable output and exact totals; the correction and state are committed; no other implementation surface changed; and the task hands back at `turn: codex`.
+Completion condition: three falsifiable ownership-admission controller cases exist in the one allowed test file; they run red against current production for the intended missing-admission reason while all existing assertions remain green; the tests and state are committed; and the task hands back at `turn: codex` without production changes.
 
 ## Latest result
 
 Inspected (2026-08-14):
 
-- Claim (1) `new_repo()` copies the owner helper but not `work-loop-lease.sh`: HOLDS — read `logs/scripts/work-loop-owner.test.sh` lines 60–81; the only helper copy was `cp "$OWNER_BIN" "$d/logs/scripts/work-loop-owner.sh"`, and `grep -n 'cp "' logs/scripts/work-loop-owner.test.sh` returned no lease copy.
-- Claim (2) the shared lease helper exists beside the owner helper: HOLDS — `ls -la logs/scripts/` shows `work-loop-lease.sh` (12250 bytes) alongside `work-loop-owner.sh`.
-- Claim (3) `new_repo()` already stages the whole `logs/scripts` directory before committing: HOLDS — line 75 was `git -C "$d" add .gitignore README.md logs/scripts`, so a file copied before it is tracked without a staging change.
-- Claim (4) all six Unit 3a2d failures are the same missing-lease exit-11 path: HOLDS — `grep -n FAIL logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out` returns exactly six lines (11, 16, 31, 38, 43, 119), and each detail line reads `STOP [11] the shared lease library is missing or unreadable: .../logs/scripts/work-loop-lease.sh`; the file ends `86 passed, 6 failed` / `SUITE_EXIT=1`.
-- Claim (5) the fail-closed lease check is production behavior in the dispatcher, not a test artifact: HOLDS — `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` lines 671–682 resolve `$CHECKOUT/logs/scripts/work-loop-lease.sh` and `exit 11` when it is missing or unsourceable.
-- Claim (6) the F1 case's expected exit 35 is reachable once the lease is packaged: HOLDS — lines 534–542 remove only `work-loop-owner.sh` from the fixture, so the lease check passes and the missing-owner-helper check is the one that fires.
-- Claim (7) `logs/scripts` is not gitignored, so the copied helper is really tracked: HOLDS — searched `.gitignore` for `logs/scripts` and `lease`; the only matches are prose comments at lines 45, 48 and 52, no ignore rule.
+- Claim (1): HOLDS — searched `scripts/axcion-harness-v0.2/carry-turn.sh` for `work-loop-owner`, `--depth` and `depth repo`; the only match is a prose comment at line 664 that names the durable declaration to contrast it with the lease. No invocation exists.
+- Claim (2): HOLDS — searched the same file with `grep -nE '\b(33|34|35)\b'`; no match, so none of the three ownership exits is implemented or even mentioned.
+- Claim (3): HOLDS — the one allowed implementation surface `scripts/axcion-harness-v0.2/carry-turn.test.sh` exists and parses (`bash -n`, exit 0).
+- Claim (4): HOLDS — read proposal §4.4 (lines 291–299: carrier ownership stops take 33/34/35, free in the carrier's documented taxonomy) and §5.5 cases 19–20 (lines 385–386: absent helper → 35; REFUSE/AMBIGUOUS → 33/34; both controller, both failing-first). The expectations were taken from there unchanged.
+- Claim (5): HOLDS — read `plans/.../dispatch.sh` lines 2336–2367, the admission the proposal says to mirror, and used its wording for the asserted messages rather than inventing carrier-local text.
 
-Result: Unit 3a2f corrected the owner suite's fixture packaging in `logs/scripts/work-loop-owner.test.sh` only. Two hunks: a `LEASE_BIN="${LEASE_BIN:-$HERE/work-loop-lease.sh}"` resolution beside the existing `OWNER_BIN`/`DISPATCH_BIN` lines, and one `cp "$LEASE_BIN" "$d/logs/scripts/work-loop-lease.sh" 2>/dev/null || true` inside `new_repo()`, placed after the owner-helper copy and before the existing `git add ... logs/scripts`. T4's linked worktrees inherit the helper without their own copy because `add_worktree()` runs `git worktree add -q "$p" -b "$name" main`, and `main` is the fixture base commit that now tracks `logs/scripts/work-loop-lease.sh`. No production file, exit code, assertion, expectation or Work Loop instruction was touched; no assertion was skipped, weakened or added.
+Result: Unit 3b1 complete. `carry-turn.test.sh` gained section **12e — Repository-depth ownership admission before actor launch**, carrying the three required stops plus one over-refusal control. Production was not touched: the only changed file is the allowed test file. Complete ordinary carrier suite, run once in the foreground: **333 passed / 17 failed, SUITE_EXIT=1** against a 350-assertion total — 34 new assertions, of which 17 are the intended red and 17 (fixture setup, control, discriminators) are green. All **316** pre-Unit-3b1 assertions remain green; the failing list contains nothing outside section 12e.
 
-Evidence: the full owner-helper suite ran exactly once after the edit, synchronously in the foreground — `bash logs/scripts/work-loop-owner.test.sh` — with complete stdout/stderr and a trailing `SUITE_EXIT=0` in `logs/harness-runs/owner-suite-unit-3a2f-postfix-20260814.out` (untracked, not staged). Result **92 passed, 0 failed**, exit 0, matching the proposal's recorded baseline; `grep -c '  FAIL'` on that output returns 0. Before: the preserved Unit 3a2d run in `logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out` was 86 passed / 6 failed, exit 1. The assertion total is unchanged at 92 (86 + 6 = 92 before, 92 + 0 = 92 after) — the six previously failing named cases pass rather than having disappeared. The suite remains able to fail: its own Case 0 points the run at an absent helper and asserts the suite fails, and it passed in this run. Implementation commit `e859d377`.
+Evidence: each case proves its own fixture reaches the intended verdict by running the helper directly, then asserts the carrier acts on it — so a red assertion cannot be blamed on a fixture that never produced the condition. The three fixture oracles all passed: `REFUSE (3) from the worktree` ok, `AMBIGUOUS (4)` ok, control `PROCEED (0)` ok. The carrier ignored all three: expected `35`/`33`/`34`, got `0` in each; `launched nothing` expected `0`, got `1`; `committed nothing` shows HEAD moving (e.g. `601fd438… → 6080b8ee…`); and the forbidden-string check found `outcome=CARRIED`. That is the missing-admission reason and no other. The evidence can fail in both directions: the control run (helper present, ownership PROCEED) carries with exit 0 and one launch, so a launcher that refused everything would fail it, and the `code=17` discriminator passes now and separates an ownership stop from a lease refusal once production lands. Raw output: `logs/harness-runs/carrier-owner-admission-red-unit-3b1-20260814.out` (untracked by instruction).
 
-Accepted Unit 3a2e diagnosis: all six Unit 3a2d failures are caused by `new_repo()` omitting `work-loop-lease.sh`; production is not implicated. Every affected dispatcher fixture exits 11 before lock or ownership behavior. Smallest justified correction is one test file: resolve the lease helper and copy it into `new_repo()` before the existing fixture commit. State commit `4085ab54`, pointer `b9144b30`.
+Fixture note for the implementing unit: the three ownership fixtures package `work-loop-owner.sh` locally via a new `add_owner_helper` fixture function, tracked and committed because `logs/scripts/` sits outside the carrier's default allow-path set. `mkfix` was deliberately left unchanged, so no existing fixture moved.
 
-Unit 3a2d failing-first evidence: complete owner suite **86/6**, exit 1, against baseline 92/0; raw output `logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out`; state `58e1ed25`, pointer `72f240a0`.
+Deferrals noticed during this unit, recorded and not done:
 
-Accepted regression evidence: dispatcher **482/0**, exit 0 (`59d095a8` / `e2a39065`); carrier **316/0**, exit 0 (`8be728e9` / `f9125746`); shared lease helper suite **50/0** from its implementation unit.
+1. **`mkfix` does not package the ownership helper.** Once the admission is implemented, every existing carrier fixture would fail closed at exit 35, because none of them carries `logs/scripts/work-loop-owner.sh`. This is fixture packaging that belongs with the implementing unit — the same shape as the 3a2f lease-helper packaging — and doing it now would touch every existing case's fixture for no present benefit.
+2. **The "present but broken helper" sub-case is not covered.** The dispatcher proves it (`dispatch.test.sh` case 12d, a helper that exits 99 → 35 via the catch-all arm). It is a fourth expectation and the brief froze three, so it was not added.
 
-Accepted implementation through Unit 3a2a remains: shared helper and dispatcher through `5255628a`; carrier shared lease at `04de80a7`; carrier pin correction at `2bef1acf`; cross-transport fixture correction at `33d90df9` with pointer `50874ea2`, targeted 21/0 and stale-oracle mutant 19/2.
+Accepted controller regression evidence carried forward: dispatcher **482/0**, owner helper **92/0**, shared lease helper **50/0**. Carrier is now **333/17 by design** until the implementing unit lands.
+
+Accepted implementation through Unit 3a2f: shared helper and dispatcher through `5255628a`; carrier shared lease at `04de80a7`; carrier pin correction at `2bef1acf`; cross-transport fixture correction at `33d90df9`; owner-suite fixture packaging at `e859d377`.
 
 ## Blocker
 
@@ -80,4 +84,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 3a2f. The rollout step 4 owner gate is restored at 92/0, exit 0, with the correction confined to `logs/scripts/work-loop-owner.test.sh` and no assertion changed. Decide close, continue to the next Phase 1 unit, or correct once. Deferrals carried without action are unchanged: helper pin-file write/copy durability, carrier process-group parameter naming, and the dispatcher suite's lack of a case selector. One deferral is added by this unit: the owner suite's `new_repo()` now duplicates the dispatcher's own helper-packaging knowledge in a second place, so a future third shared helper would silently reproduce this same failure — not done now because a shared fixture-packaging routine is outside this unit's one-file boundary.
+Codex: assess Unit 3b1. The three frozen ownership-admission cases exist in the one allowed test file, run red against current production for the missing-admission reason only, and all 316 pre-existing assertions stay green with no production change. Decide whether to accept and open the implementing unit (3b2) that adds the repository-depth admission to `carry-turn.sh`, and whether deferral 1 — packaging the ownership helper in `mkfix` — enters that unit or stays held.
