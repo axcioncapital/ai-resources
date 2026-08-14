@@ -2,61 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-11 — Took ownership of an unauthorized Codex commit, then fixed two more review findings
-
-### Summary
-Codex had committed `2511117` on top of `6ab33a2`, implementing review-corrections that were
-Claude's responsibility, without authorization and unpushed. The operator directed independent
-inspection and replacement rather than trusting it. Verified the four fixes were behaviourally
-correct, added one missing regression Codex's own suite never exercised, and replaced the commit
-as `570c4fb`. Two further requests in the same session fixed two remaining review findings
-one at a time — the unattended-profile widening (`7ee93d7`) and the O3 exact-target truncation /
-no-jq gap (`8b9a63d`) — each with a fail-capable regression proven against the pre-fix dispatcher
-and the full harness run green before commit. Nothing pushed.
-
-### Decisions Made
-- **Kept Codex's four fixes rather than reimplementing from scratch**, after independent inspection
-  (harness + hand-written probes targeting cases its own tests didn't cover) found them behaviourally
-  correct. Added the missing regression rather than rewriting working code.
-- **Judged the narrowed no-rerun wording as "sits beside" the existing hard rule, not "contradicts"
-  it** — per the plan's own stop condition, which required stopping if it read as a contradiction.
-  Logged as a decision below given the plan explicitly gated proceeding on this call.
-- **Preserved the malformed git identity (`patriklindeberg75@@gmail.com`) rather than fixing it**,
-  since it is the repo's configured identity and every recent commit already carries it; flagged
-  separately for the operator rather than corrected inline.
-- **Scoped each fix strictly to the named finding**, leaving the fabricated U3 fixture and all
-  remaining low findings untouched across all three requests, per explicit operator instruction each
-  time.
-- **Chose fall-through-on-failure over fall-through-on-absence for the O3 parser tiers** (jq → python3
-  → placeholder): a broken-but-present jq must not be read as "no denials", which was the original
-  defect recurring one layer down.
-- Routine: test-fixture corrections (probe defects, a non-discriminating tail assertion, a vacuous
-  placeholder-absence assertion) were fixed and re-verified rather than left in place, each documented
-  inline in the test file explaining why the first version didn't discriminate.
-
-### Risky actions
-None — every change was independently verified before commit (harness + fail-capable regression
-proof against the pre-fix dispatcher or hand-built mutants), all three commits stayed local per
-explicit operator instruction, and nothing outside the three named files plus README was touched.
-
-### Findings Declined
-- The remaining review findings (standards MEDIUM × 2, spec MEDIUM U3, 4 lows) — declined as new
-  queue items. Not a gap: they are already fully recorded in
-  `audits/working/code-review-6ab33a2-{spec,standards}.md`, and the operator is actively working
-  through them one at a time by explicit instruction each session. Queueing them separately would
-  duplicate a list the operator is already driving.
-
-### Next Steps
-No open task from this session. The plan's own next step is unchanged: a discovery unit for both
-incidents is Codex's move, not Claude's. Remaining review findings, explicitly left untouched:
-standards MEDIUM (contradictory `claude_deny=none` wording; untracked-file recovery instruction),
-spec MEDIUM (fabricated U3 fixture — explicitly off-limits per operator instruction), and four
-low findings (stale README deny-rule sentence, early P1 prohibition, duplicated allowlist logic,
-mislabeled case 31b).
-
-### Open Questions
-None.
-
 ## 2026-08-12 — Work Loop v2 bounded-execution: correction round and task closure
 
 ### Summary
@@ -588,6 +533,23 @@ enforcement and hop-termination rule hold under an actual dispatched hop — the
 rules are worded as intended, not that Claude obeys them live. Expect one handback: the currently open
 task predates the new contract and carries no packaging lines, so it will bounce once as a false premise
 before Codex repackages it — that is the new contract working, not a defect.
+
+### Open Questions
+None.
+
+## 2026-08-14 — Closed Work Loop v2 task: readiness-handoff-race
+
+### Summary
+Ran Claude's half of one Work Loop v2 unit via `/work-loop-v2`, on Codex's close verdict for task `work-loop-v2-readiness-handoff-race`. Two live state files carried `turn: claude`; since neither the operator's shorthand nor an explicit task id was given, listed both and asked which — operator confirmed the readiness-handoff-race task with its close verdict text. Validated file identity, ran the repo-depth ownership check (PROCEED), reduced the state file to the four-heading closing record, cleared the checkout's task declaration, and committed.
+
+### Decisions Made
+Routine: proceeded with the closing invocation exactly as Codex's `Close the task:` verdict specified — no re-judgment of the verdict, per the executable core's "Codex closes, Claude writes and commits" division.
+
+### Risky actions
+None.
+
+### Next Steps
+Operator decision pending: merge `session/2026-08-14-work-loop-v2-fixes` into `main` (23 unpushed commits, branch is READY FOR OPERATOR-AUTHORIZED MERGE per the closing report) — not something this command performs. Two residual items flagged in the closing record: (1) `logs/friction-log.md` carries an ambient hook-driven modification excluded from every commit in this task; (2) the negative-control scratch worktree at `.../scratchpad/nc-wt` is still registered — remove the directory and run `git worktree prune` when convenient.
 
 ### Open Questions
 None.

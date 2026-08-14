@@ -1,0 +1,40 @@
+{
+  "run_id": "2026-08-14-direct",
+  "project": "ai-resources-work-loop-v2-fixes",
+  "date": "2026-08-14",
+  "marker": "direct",
+  "model": "unknown",
+  "lane": null,
+  "mandate_ref": "logs/session-notes.md",
+  "mission": null,
+  "context": {
+    "pack_path": null,
+    "always_loaded_estimate_tok": 0
+  },
+  "resources": {
+    "skills": [],
+    "subagents": [],
+    "tools_notable": []
+  },
+  "files_changed": [
+    "logs/work-loop/work-loop-v2-readiness-handoff-race.md",
+    "logs/session-notes.md",
+    "logs/session-notes-archive-2026-08.md"
+  ],
+  "decisions_refs": [],
+  "validation": [],
+  "evaluator_findings": {
+    "sidecar_refs": [],
+    "verdicts": []
+  },
+  "overrides": [],
+  "cost": {
+    "turns": 0,
+    "subagents": 0,
+    "token_estimate": null
+  },
+  "stop_reason": "completed",
+  "outcome": "DELIVERED",
+  "failure_class": null,
+  "incidents_refs": []
+}

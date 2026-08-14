@@ -3877,3 +3877,57 @@ That is Codex's move to frame.
 
 ### Open Questions
 None.
+## 2026-08-11 — Took ownership of an unauthorized Codex commit, then fixed two more review findings
+
+### Summary
+Codex had committed `2511117` on top of `6ab33a2`, implementing review-corrections that were
+Claude's responsibility, without authorization and unpushed. The operator directed independent
+inspection and replacement rather than trusting it. Verified the four fixes were behaviourally
+correct, added one missing regression Codex's own suite never exercised, and replaced the commit
+as `570c4fb`. Two further requests in the same session fixed two remaining review findings
+one at a time — the unattended-profile widening (`7ee93d7`) and the O3 exact-target truncation /
+no-jq gap (`8b9a63d`) — each with a fail-capable regression proven against the pre-fix dispatcher
+and the full harness run green before commit. Nothing pushed.
+
+### Decisions Made
+- **Kept Codex's four fixes rather than reimplementing from scratch**, after independent inspection
+  (harness + hand-written probes targeting cases its own tests didn't cover) found them behaviourally
+  correct. Added the missing regression rather than rewriting working code.
+- **Judged the narrowed no-rerun wording as "sits beside" the existing hard rule, not "contradicts"
+  it** — per the plan's own stop condition, which required stopping if it read as a contradiction.
+  Logged as a decision below given the plan explicitly gated proceeding on this call.
+- **Preserved the malformed git identity (`patriklindeberg75@@gmail.com`) rather than fixing it**,
+  since it is the repo's configured identity and every recent commit already carries it; flagged
+  separately for the operator rather than corrected inline.
+- **Scoped each fix strictly to the named finding**, leaving the fabricated U3 fixture and all
+  remaining low findings untouched across all three requests, per explicit operator instruction each
+  time.
+- **Chose fall-through-on-failure over fall-through-on-absence for the O3 parser tiers** (jq → python3
+  → placeholder): a broken-but-present jq must not be read as "no denials", which was the original
+  defect recurring one layer down.
+- Routine: test-fixture corrections (probe defects, a non-discriminating tail assertion, a vacuous
+  placeholder-absence assertion) were fixed and re-verified rather than left in place, each documented
+  inline in the test file explaining why the first version didn't discriminate.
+
+### Risky actions
+None — every change was independently verified before commit (harness + fail-capable regression
+proof against the pre-fix dispatcher or hand-built mutants), all three commits stayed local per
+explicit operator instruction, and nothing outside the three named files plus README was touched.
+
+### Findings Declined
+- The remaining review findings (standards MEDIUM × 2, spec MEDIUM U3, 4 lows) — declined as new
+  queue items. Not a gap: they are already fully recorded in
+  `audits/working/code-review-6ab33a2-{spec,standards}.md`, and the operator is actively working
+  through them one at a time by explicit instruction each session. Queueing them separately would
+  duplicate a list the operator is already driving.
+
+### Next Steps
+No open task from this session. The plan's own next step is unchanged: a discovery unit for both
+incidents is Codex's move, not Claude's. Remaining review findings, explicitly left untouched:
+standards MEDIUM (contradictory `claude_deny=none` wording; untracked-file recovery instruction),
+spec MEDIUM (fabricated U3 fixture — explicitly off-limits per operator instruction), and four
+low findings (stale README deny-rule sentence, early P1 prohibition, duplicated allowlist logic,
+mislabeled case 31b).
+
+### Open Questions
+None.
