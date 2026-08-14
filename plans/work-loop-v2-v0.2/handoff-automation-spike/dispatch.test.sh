@@ -130,11 +130,21 @@ FLIP_TO_OPERATOR='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
 
 NOOP='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls"; exit 0'
 
-# The lock locations, mirrored from dispatch.sh. They moved out of ${TMPDIR} and
-# into the repository's Git common directory, and the one composite checkout|task
-# key became two independent locks — see the "locks" block in dispatch.sh for
-# why. Defined ONCE here, above every user: six copies of the old expression had
-# drifted into the suite, and each was a place this change could have been missed.
+# The lease locations, mirrored from logs/scripts/work-loop-lease.sh — the shared
+# library BOTH transports now source (dispatch.sh 671-697, carry-turn.sh 679-706).
+# They moved out of ${TMPDIR} and into the repository's Git common directory, and
+# the one composite checkout|task key became two independent leases — see the
+# "lease" block in dispatch.sh for why. Defined ONCE here, above every user: six
+# copies of the old expression had drifted into the suite, and each was a place
+# this change could have been missed.
+#
+# Mirrored rather than imported, deliberately. Sourcing the library to assert the
+# library's own output would make every assertion below true by construction: the
+# oracle would move whenever the thing it checks moved. The mirror is the whole
+# point, and it carries the matching hazard — if this and the two launchers ever
+# disagree, the assertions pass against a directory neither launcher writes. Case
+# 12e's controls are what catch that: each one requires the OTHER side to have
+# really launched, which a phantom lease path cannot produce.
 lock_root_for() { # checkout -> lock root dir
   local c g
   c="$(cd "$1" && pwd -P)"
@@ -159,16 +169,18 @@ checkout_lock_for() { # checkout -> checkout lock dir
 # for real and each takes its own lease through its own acquire path.
 CARRY_BIN="${CARRY_BIN:-$REPO_ROOT/scripts/axcion-harness-v0.2/carry-turn.sh}"
 
-# Mirrored from carry-turn.sh acquire_lock (639): the CANONICAL checkout path
-# hashed, under the CALLER'S ${TMPDIR} and nothing else. Mirrored rather than
-# imported, for the same reason lock_root_for above is — and with the same
-# hazard: if this and the launcher ever disagree, every assertion below passes
-# against a directory the launcher never writes.
-carrier_lock_for() { # checkout -> the carrier's lock dir
-  local c; c="$(cd "$1" && pwd -P)"
-  printf '%s/axcion-harness-v0.2.%s.lock' "${TMPDIR:-/tmp}" \
-    "$(printf '%s' "$c" | shasum -a 256 | cut -c1-16)"
-}
+# THERE IS NO SEPARATE CARRIER ORACLE, and its absence is the point of this
+# change. The carrier used to key ONE lock on the canonical checkout path under
+# the caller's ${TMPDIR}; it now canonicalizes --checkout (carry-turn.sh 408) and
+# hands it to wl_lease_init (696), exactly as the dispatcher does (503, 685). One
+# derivation, so one mirror: task_lock_for and checkout_lock_for above answer for
+# BOTH transports. A second carrier-shaped helper here would be the drift the
+# shared library exists to remove.
+#
+# The carrier also still READS the old ${TMPDIR} lock for one release
+# (legacy_lock_check, carry-turn.sh 724-741). That path is a refusal-only
+# compatibility read, never a lease this suite plants or observes, so nothing
+# below derives it.
 
 # A stub `claude` for the carrier. It answers --version, because the carrier
 # probes it before every launch; it records each REAL launch, which is what the
@@ -524,23 +536,29 @@ expect_rc 35 "$RC" "a BROKEN ownership helper refuses with exit 35 too" "$OUT"
 
 # ---------------------------------------------------------------- case 12e
 # CROSS-TRANSPORT CONTENTION — the attended carrier against the unattended
-# dispatcher. FAILING FIRST, deliberately: all four must FAIL against the code
-# as it stands, and the failure each records is UNSAFE ADMISSION — the second
-# program launches an actor while the first is live in the same working tree,
-# or on the same logical task in another one.
+# dispatcher. These four were written FAILING FIRST against the pre-shared-lease
+# code, and the failure each recorded was UNSAFE ADMISSION — the second program
+# launched an actor while the first was live in the same working tree, or on the
+# same logical task in another one.
 #
-# WHY THEY FAIL TODAY, and it is an inference from two absences rather than from
-# the presence of two locks. dispatch.sh roots its two leases in the Git common
-# directory (LOCK_ROOT, line 644); carry-turn.sh keys a single lease under the
-# caller's ${TMPDIR} (line 639). Neither source contains any read of the other's
-# path — dispatch.sh has zero occurrences of `axcion-harness-v0.2.`, carry-turn.sh
-# zero of `work-loop-dispatch-locks`. Each program is internally correct and
-# jointly blind, which is also why this is the contention least likely to be
-# noticed: both programs report a clean single-writer run.
+# WHY THEY FAILED THEN, and it was an inference from two absences rather than
+# from the presence of two locks. dispatch.sh rooted its two leases in the Git
+# common directory; carry-turn.sh keyed a single lease under the caller's
+# ${TMPDIR}. Neither source read the other's path. Each program was internally
+# correct and jointly blind, which is also why this is the contention least
+# likely to be noticed: both programs reported a clean single-writer run.
 #
-# WHAT MUST HAPPEN AFTER THE SHARED-LEASE CHANGE: the second program refuses
-# with 17 and launches nothing. That is written as an assertion rather than as a
-# comment, so these turn green by behaviour and not by being rewritten.
+# WHAT HOLDS NOW: both transports resolve their leases through the one shared
+# library (see the mirror block above), so the second program refuses with 17 and
+# launches nothing. That is asserted rather than asserted-in-a-comment, so these
+# turn green by behaviour and not by being rewritten — the expected exit codes,
+# launch counts and HEAD checks below are unchanged from the failing version.
+#
+# The setup assertions moved with the code, and only the setup assertions. They
+# used to observe a carrier-shaped ${TMPDIR} lock that no longer exists; they now
+# observe the shared lease the carrier actually takes. An oracle pointing at a
+# directory nobody writes is the one way these cases could go green while proving
+# nothing, so each is paired with a control that requires a REAL launch.
 #
 # The four are the two acquisition directions across the two resources:
 #   12e-1  carrier holds a CHECKOUT   -> dispatcher on another task refused
@@ -562,10 +580,12 @@ carrier=$!
 sleep 3
 # The setup assertion is not ceremony. Without it a green result could mean the
 # carrier never took a lease at all, and the case would be proving nothing.
-[ -d "$(carrier_lock_for "$d")" ] \
-  && ok "12e-1 setup — the carrier's lease is live before the dispatcher starts" \
-  || bad "12e-1 setup — the carrier's lease is live before the dispatcher starts" \
-         "no lock at $(carrier_lock_for "$d")"
+# The CHECKOUT lease is the one under test here: the dispatcher below runs a
+# DIFFERENT task in the same working tree, so the task lease cannot refuse it.
+[ -d "$(checkout_lock_for "$d")" ] \
+  && ok "12e-1 setup — the carrier's CHECKOUT lease is live before the dispatcher starts" \
+  || bad "12e-1 setup — the carrier's CHECKOUT lease is live before the dispatcher starts" \
+         "no lease at $(checkout_lock_for "$d")"
 rm -f "$d.calls"
 BEFORE="$(git -C "$d" rev-parse HEAD)"
 run_dispatch "$d" xt-dispatched --actor-cmd "$FLIP_TO_OPERATOR"
@@ -639,10 +659,15 @@ make_carry_stub "$CSTUB" "$CCOUNT" "$WT/logs/work-loop/xt-shared.md" 8
     >/dev/null 2>&1 ) &
 carrier=$!
 sleep 3
-[ -d "$(carrier_lock_for "$WT")" ] \
-  && ok "12e-3 setup — the carrier's lease is live in the worktree" \
-  || bad "12e-3 setup — the carrier's lease is live in the worktree" \
-         "no lock at $(carrier_lock_for "$WT")"
+# The TASK lease is the one under test here, and it is the mirror image of 12e-1:
+# the dispatcher below runs in a DIFFERENT checkout, so the checkout lease cannot
+# refuse it. The lease root is the repository's, not the worktree's, which is
+# exactly what lets a lease taken in $WT be seen from $d — deriving it from $WT
+# is what proves that, since a per-worktree root would resolve somewhere else.
+[ -d "$(task_lock_for "$WT" xt-shared)" ] \
+  && ok "12e-3 setup — the carrier's TASK lease is live before the dispatcher starts" \
+  || bad "12e-3 setup — the carrier's TASK lease is live before the dispatcher starts" \
+         "no lease at $(task_lock_for "$WT" xt-shared)"
 rm -f "$d.calls"
 BEFORE="$(git -C "$d" rev-parse HEAD)"
 run_dispatch "$d" xt-shared --actor-cmd "$FLIP_TO_OPERATOR"
