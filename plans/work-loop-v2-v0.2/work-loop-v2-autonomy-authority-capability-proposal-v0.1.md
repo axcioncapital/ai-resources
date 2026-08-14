@@ -307,12 +307,11 @@ Attendance is a release property of the harness, not an authority principle.
 
 ### Current release posture
 
-Two enforcement surfaces exist today, and each can host only part of §11's requirements:
+The attended one-hop carrier ([`carry-turn.sh`](../../scripts/axcion-harness-v0.2/carry-turn.sh)) is the release surface for constrained Standard turns, and it is the *only* Standard enforcement surface — §15 item 5's "the carrier is the Standard enforcement surface" is accurate as written and this proposal does not qualify it. The carrier hosts task/turn/state-file identity, task-scoped write-path evidence, one-hop and timeout limits, and terminal before/after classification. It refuses `--unattended`, `--contained`, and `--sandbox` by design, so it does **not** itself enforce §11's per-invocation sandbox or network/tool restriction today. That is a real gap in the attended MVP path, and no other surface closes it: the dispatcher's contained profile (`dispatch.sh --unattended`, from the handoff-automation spike) is a structurally separate program for a structurally separate operator-presence condition, not a second live surface an attended Standard turn can invoke or that can supply missing controls to one. It applies an OS-backed Bash sandbox and a strict, empty network allowlist and fails closed (`exit 31 UNATTENDED_UNAVAILABLE`) — useful evidence that this kind of containment is buildable — but its own descendant containment is incomplete (a fully detached daemon can survive a stop command), so it remains unsafe to release even on its own unattended terms.
 
-- The existing [one-hop carrier](../../scripts/axcion-harness-v0.2/carry-turn.sh) is attended and refuses `--unattended`, `--contained`, and `--sandbox` by design. It is the release surface for constrained Standard turns and hosts task/turn/state-file identity, task-scoped write-path evidence, one-hop and timeout limits, and terminal before/after classification.
-- The dispatcher's contained profile (`dispatch.sh --unattended`, from the handoff-automation spike) applies an OS-backed Bash sandbox and a strict, empty network allowlist, and fails closed (`exit 31 UNATTENDED_UNAVAILABLE`) rather than running uncontained. It is the surface that can host §11's per-invocation sandbox and network/tool restriction — but its descendant containment is not yet complete (a fully detached daemon can survive a stop command), so it may not be claimed as a safe unattended release surface.
+Consequence for §11's sandbox/network requirements and for the connected-development profile trial it names: that trial cannot begin under the attended MVP release until the carrier itself mechanically enforces per-invocation sandbox and network/tool restriction. This proposal does not prescribe that mechanism. Instead it defers both the carrier-side enforcement and the connected-development trial out of the MVP sequence (§14): they are named as the target, not claimed as already met by routing through the dispatcher's separate unattended profile.
 
-That limitation — descendant containment remaining insufficient for a safe unattended claim — should remain explicit and mechanically enforced regardless of which surface is used.
+Descendant containment remaining insufficient for a safe unattended claim should remain explicit and mechanically enforced regardless of which surface is discussed.
 
 ### Strategic target
 
@@ -369,12 +368,12 @@ Codex containment should use its native sandbox, network controls, approval poli
 
 ### MVP enforcement
 
-These are allocated across the two enforcement surfaces named in §9: the carrier hosts identity, path, one-hop/timeout limits, and terminal evidence for every constrained Standard turn; the dispatcher's contained profile hosts the per-invocation sandbox and network/tool restriction where that profile is selected, and remains unclaimed as a safe unattended surface until descendant containment is complete.
+The attended carrier (§9) is the only Standard enforcement surface and hosts most of this list directly. Two items — per-invocation sandbox and network/tool restriction — are not enforced by the carrier today; they are listed here as the target the carrier must eventually meet, and §14 defers them out of the MVP sequence rather than treating another surface as already meeting them.
 
 - exact task, checkout, state file, actor, and turn (carrier);
 - task-scoped write paths (carrier);
-- explicit sandbox and permission mode per invocation (dispatcher's contained profile, where selected);
-- network and external tools disabled unless selected by an approved profile (dispatcher's contained profile);
+- explicit sandbox and permission mode per invocation (target for the carrier; not enforced today — deferred, see §9 and §14);
+- network and external tools disabled unless selected by an approved profile (target for the carrier; not enforced today — deferred, see §9 and §14);
 - no raw bypass mode;
 - no nested Claude or Codex actor (carrier refuses symmetrically today; full descendant containment remains a dispatcher/Phase 2 blocker);
 - no push, merge, deploy, credential access, or destructive shared-state operation in the baseline profile;
@@ -382,7 +381,7 @@ These are allocated across the two enforcement surfaces named in §9: the carrie
 - before/after repository evidence;
 - terminal classification that cannot turn missing evidence into success (carrier).
 
-The MVP should also exercise one narrow, plan-authorized connected-development profile assembled from independently granted capabilities. It should include only capabilities required by the selected trial—such as an approved documentation domain, approved package registry, branch namespace, draft PR creation, or remote CI—and must not imply merge, deployment, credentials, or general external-write authority.
+A narrow, plan-authorized connected-development profile — assembled from independently granted capabilities such as an approved documentation domain, approved package registry, branch namespace, draft PR creation, or remote CI, and never implying merge, deployment, credentials, or general external-write authority — remains part of the strategic model, but its trial is deferred out of the MVP sequence (§14) until the carrier itself mechanically enforces the per-invocation sandbox and network/tool restriction named above (§9).
 
 Allowed-path diff checking remains a useful evidence backstop, but preventative sandbox and permission controls should own the primary boundary.
 
@@ -399,7 +398,7 @@ Allowed-path diff checking remains a useful evidence backstop, but preventative 
 
 ### Later only after evidence
 
-- additional reusable collaboration profiles beyond the one narrow MVP trial;
+- additional reusable collaboration profiles beyond the one narrow connected-development trial, once that trial runs (§9, §11);
 - broader registry, network, or remote-service profiles;
 - contained unattended workers;
 - production or communication profiles, if a real repeated use case and acceptable risk model emerge;
@@ -486,9 +485,9 @@ The main adversarial protections are:
 1. Revise the executable core so it is no longer subordinate: replace its `:9-10` "Where this file and the Proposal disagree, the Proposal wins" line, and record `work-loop-v2-mvp-proposal-v0.4.md` as historical rationale for the core rather than a live overriding authority. Obtain operator approval of that revision at an identifiable commit — that approval is what makes the core canonical; it has not happened yet.
 2. Add the governing autonomy clause from §1 to the now-canonical core.
 3. Reconcile the Codex skill, Claude command, autonomy rules, and session-plan language to reference the same §1 rule. This may remove merely inconsistent phrasing; it may not remove or weaken `docs/autonomy-rules.md`'s audit-derived harness-configuration confirmation (`:18`) or `docs/audit-discipline.md`'s no-self-waiver rule for structural change classes — both are retained for the MVP per operator decision. The already-compatible item is the structural-class risk-aware review at `docs/autonomy-rules.md:19`, which already scales review to consequence; reconciling its wording to §1 is in scope. Any future removal or weakening of the retained rules requires new evidence and separate operator authority.
-4. Define the baseline workspace capability envelope and one narrow, plan-authorized connected-development profile for the MVP trial.
+4. Define the baseline workspace capability envelope for the MVP trial. The narrow, plan-authorized connected-development profile named in §11 is deferred: it is not part of this MVP sequence until the carrier itself mechanically enforces per-invocation sandbox and network/tool restriction (§9, §11) — this sequence does not yet schedule that enforcement work.
 5. Record the unit subset in the existing Work Loop brief and the effective profile in existing execution evidence.
-6. Keep the carrier attended-first as the release surface for constrained Standard turns, hosting the identity, path, and evidence items §11 assigns it; use the dispatcher's contained `--unattended` profile only for the sandbox/network items the carrier cannot host, and do not claim unattended release safety while descendant containment blockers remain open.
+6. Keep the carrier attended-first as the sole Standard enforcement surface, hosting the identity, path, and evidence items §11 assigns it directly. Its refusal of `--sandbox`, `--contained`, and `--unattended` means per-invocation sandbox and network/tool restriction are not enforced within it today; this proposal defers those two requirements and the connected-development trial (§11, step 4) out of MVP scope rather than routing them through the dispatcher's separate unattended profile, which is a different program for a different operator-presence condition and cannot supply controls to an attended turn. Do not claim unattended release safety while descendant containment blockers remain open.
 7. Add symmetric nested-actor prevention and verify the carrier on a host where process observation is available.
 8. Add the autonomy scenarios as paired live behavioural trials — the only mechanism that can exercise semantic scenarios today. Implementing and authorizing a runner that automates them is separate future work, not a prerequisite this step assumes.
 
