@@ -637,20 +637,39 @@ echo
 echo "Case 12e-3 — a live CARRIER holds the TASK in a linked worktree; a DISPATCHER starts on it here"
 d="$(new_sandbox)"
 state_file "$d" "xt-shared" "claude"
-# The declaration is made BEFORE the worktree exists, so exactly ONE checkout
-# claims the task. Without it, repo-depth ownership would read a replicated
-# state file and return AMBIGUOUS (work-loop-owner.sh 278-282), and the
-# dispatcher would stop at 34 — a refusal, but not the one under test. What is
-# being measured here is admission with ownership already settled.
-bash "$d/logs/scripts/work-loop-owner.sh" claim --checkout "$d" --task xt-shared \
-  --depth repo >/dev/null 2>&1 \
-  && ok "12e-3 setup — this checkout declares the task" \
-  || bad "12e-3 setup — this checkout declares the task" "claim did not succeed"
 WT="$SANDBOX_ROOT/xt3-wt"
 git -C "$d" worktree add -q -b xt3-lane "$WT" >/dev/null 2>&1
 [ -f "$WT/logs/work-loop/xt-shared.md" ] \
   && ok "12e-3 setup — the state file replicates into the linked worktree" \
   || bad "12e-3 setup — the state file replicates into the linked worktree" "absent"
+# THE DECLARATION BELONGS TO THE CARRIER'S CHECKOUT, and which checkout holds it
+# IS the setup. The carrier gained its own repo-depth ownership admission in this
+# change (carry-turn.sh 1496-1508), so it launches only where the task is
+# ownership-valid. It runs in $WT, so $WT is where the task must be declared.
+# Declaring it in $d instead — which this case did until the carrier acquired
+# that check — leaves $WT REFUSED at 33 before launch: no actor, no task lease,
+# and a dispatcher that then sails through. That is precisely the unsafe
+# admission this case exists to catch, so it must never be the setup.
+#
+# --depth local, and the depth is not incidental. The worktree add above
+# replicated the state file into a second checkout with neither one declaring
+# it, and a repo-depth claim runs exactly that read, returns AMBIGUOUS and
+# writes nothing (work-loop-owner.sh 278-282) — claiming is never the way out of
+# an ambiguity. Local is the depth that can still record a declaration here, and
+# it is what carry-turn.test.sh's own ownership-settled control uses.
+#
+# $d is left undeclared deliberately, and one declaration is the maximum: a
+# second one in $d would make the task claimed by two checkouts, which is
+# AMBIGUOUS for both and would refuse the carrier again by another route.
+# Nothing is lost by leaving $d undeclared, because the dispatcher takes its
+# leases (dispatch.sh 1249) before it performs ownership admission (2370): it
+# meets the carrier's live task lease first and refuses with 17. If that order
+# were ever reversed it would refuse with 33 here — still refused, still nothing
+# launched, but a loud failure in this case rather than a silent pass.
+bash "$WT/logs/scripts/work-loop-owner.sh" claim --checkout "$WT" --task xt-shared \
+  --depth local >/dev/null 2>&1 \
+  && ok "12e-3 setup — the carrier's worktree declares the task" \
+  || bad "12e-3 setup — the carrier's worktree declares the task" "claim did not succeed"
 CCOUNT="$SANDBOX_ROOT/xt3.count"; : >"$CCOUNT"
 CSTUB="$SANDBOX_ROOT/xt3.stub"
 make_carry_stub "$CSTUB" "$CCOUNT" "$WT/logs/work-loop/xt-shared.md" 8
