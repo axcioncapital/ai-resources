@@ -1,8 +1,27 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** Draft. Reviewed once (verdict: CORRECT), corrected once, **not frozen**. Grants no
-implementation authority. This artifact converts the approved proposal into one repository-grounded plan
-for the plan review to judge and freeze, per the operator's 2026-08-14 compact-workflow process decision.
+**Status:** **Frozen for implementation**, 2026-08-14. Reviewed once (verdict: CORRECT), corrected once,
+then frozen on the operator's decision to accept the one remaining review finding as a written limitation
+(executable core § 3, *If the correction was not enough* — "accept it as a written limitation"). This
+artifact converts the approved proposal into one repository-grounded plan, per the operator's 2026-08-14
+compact-workflow process decision; the freeze is what makes it the implementation basis.
+
+**Frozen content identity.** The freeze binds to the exact substantive plan content — every section from
+`## 1. Fixed Point` onward — at commit `cab3b7a28195f427deaa0d5322e9686f9dc53814`, blob
+`1cbcbf4ed78bb73d16406dccfb748f4b022242f4`. This status record is the only part of the file the freeze
+changed; no substantive content was altered. A later substantive change is a re-freeze, not an edit.
+
+**Accepted limitation carried into the freeze.** T8 may count S4 and S8 as `blocked` verdicts while the
+MVP pre-authorized capability set remains empty (§ 3.4), so the twelve-row evidence period can finish
+without those two capability-dependent scenarios actually executing. Consequence: this weakens evidence
+completeness for dependency-registry behavior (S4) and authorized push / draft-PR behavior (S8). It does
+**not** authorize either capability, expand the capability envelope, or enable unattended execution.
+
+**Deferral recorded at the freeze.** The *Deferred, not scheduled in this plan* list names §14 item 6
+alongside items 13–15, while the §14 traceability table correctly classifies item 6 as a retained Fixed
+Point fact with no tracer. That wording is retained as it stands and is not a freeze blocker: it was
+noticed outside the frozen review findings, and it alters neither the tracer sequence nor implementation
+authority.
 
 **Correction history.** Two correction rounds have run, and each numbered its own findings from 1. They
 are therefore labelled by round throughout this document — **Unit 4 Finding N** for the planning unit's
