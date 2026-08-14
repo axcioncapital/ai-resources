@@ -484,8 +484,14 @@ sixth consequence gate would hide which reconciliation actually ran.
   T2 does — a check that cannot fail, which core § 6 rule 5 forbids and which this plan's own § 3.2
   failure behavior would otherwise never catch. Every string in (d) and (g) is therefore matched against
   the file **normalized to a single logical line** (newlines and runs of whitespace collapsed to one
-  space) on both the before and the after run, and **each check must be shown matching before and not
-  matching after** — the before-run is what proves the check can fail. This is a mechanical correction to
+  space), on both the before run and the after run, and **every string must be shown matching before the
+  edit** — the before-run is what proves the check reads real text and can fail. **What the after-run must
+  show depends on which kind of string it is.** The **six removed strings** — (d)'s five categorical
+  consequence gates, and (g)'s scope-transfer clause "a change to scope goes to the operator" — must
+  **not** match after. The **one retained string** — (g)'s disclosure obligation "Scope and success
+  criteria do not change quietly" — must **still** match after; that is the whole point of pairing it into
+  (g). A uniform "must not match after" would make (g) unsatisfiable, because its two halves are
+  deliberately opposite. This is a mechanical correction to
   how the strings are matched. It does **not** change the semantic evidence bar, does not remove or merge
   any check, and does not widen T2's scope; the repository's own suites already normalize the same way for
   the same reason (`logs/scripts/work-loop-v2-slice-1.test.sh`, `core_flat()` and `flat_of()`).
@@ -866,9 +872,10 @@ unit contract.
   counted inside (d)** — "a change to scope goes to the operator" matches before and not after, paired in
   the same check with "Scope and success criteria do not change quietly", which must match both before and
   after. **Matching discipline:** every string in (d) and (g) is matched against the file normalized to a
-  single logical line, and each is shown matching before and not matching after — the core hard-wraps its
-  prose, so a literal match on (d-ii) or on rule 4 finds nothing even before the edit and could never fail
-  (§ 3.2, *Matching discipline*).
+  single logical line, and **every** string is shown matching **before** the edit — the core hard-wraps its
+  prose, so a literal match on (d-ii) or on rule 4 finds nothing even before the edit and could never fail.
+  **After** the edit, the six **removed** strings — (d)'s five, plus (g)'s scope-transfer clause — must not
+  match, while (g)'s **retained** disclosure string must still match (§ 3.2, *Matching discipline*).
 - **Exit condition:** the clause is present verbatim at `## 8.`, `## 1.`–`## 7.` are unrenumbered, the
   categorical gate language no longer transfers decisions on consequence alone, **core § 6 rule 4 no
   longer transfers a scope change on categorical grounds while still forbidding a quiet one**, and no

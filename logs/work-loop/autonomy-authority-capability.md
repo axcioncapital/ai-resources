@@ -53,69 +53,50 @@ Stop conditions: stop if the plan or core baseline identity differs, the conflic
 
 ## Latest result
 
-Inspected (2026-08-14):
+Bounded correction round (2026-08-14). The one frozen finding is **resolved in full**. Nothing else was corrected, and nothing newly noticed was implemented.
 
-- Claim (1): HOLDS — pre-edit plan `git hash-object` = `7b254fcbaeda669ecb8a300e72d9bb5203619505`, matching the brief. Core `git hash-object` = `82f119cd63c379b24f0bef8aab029ae04c165203` **before and after** this unit; `git status --porcelain` never listed the core.
-- Claim (2): HOLDS — approved proposal still resolves at `git rev-parse d8a89e0f…:plans/work-loop-v2-v0.2/…-proposal-v0.1.md` = `39c67196dcec35a1be8f4fcf8ea3ef6a50cfde0b`.
-- Claim (3): HOLDS — core § 6 rule 4 reads, at lines 449–450: "**Scope and success criteria do not change quietly.** A change to either is stated out loud, and / a change to scope goes to the operator." The sentence **wraps after "out loud, and"**, so a literal match of the transfer clause across the raw file behaves exactly like the d-ii gate string.
-- Claim (4): HOLDS — skill lines 469–474 are the four conditions under which Codex may reproduce a check Claude already ran; **line 473** is condition 3 ("A consequential or hard-to-reverse claim (core § 7), where a wrong acceptance would be expensive to undo") — proportional verification, transferring no decision. **Line 508** is the categorical bullet in "What you never do": "Decide anything hard to reverse — that is the operator's, via core § 7." The review's correction is confirmed by inspection.
-- Claim (5): HOLDS — the plan carried exactly two live status records: the opening `**Status:**` block and `## Plan-readiness statement`. Both claimed re-frozen, and **both were stale on T1a**: each said T1 was the only implemented tracer, though T1a landed at `6d530039…`.
+**Reproduced first, by inspection.** The contradiction was real and present in both mirrored places, at plan blob `25889efab1986d582f36407d1696f4b70a2258ac`:
 
-**Result:** the plan is amended and returned to draft. Resulting plan blob `25889efab1986d582f36407d1696f4b70a2258ac` (1226 lines). The amendment commit is the single commit carrying this handback — resolvable as `git log -1 --format=%H -- plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md`. **The core was not touched, no review was run, the plan was not re-frozen, and T2 has not begun.**
+- § 3.2 *Matching discipline*, old lines 487–488: "Every string in (d) and (g) is therefore matched … and **each check must be shown matching before and not matching after**."
+- T2 *Verification*, old line 869: "every string in (d) and (g) is matched … and **each is shown matching before and not matching after**."
+
+Both were blanket statements over (d) **and** (g). But (g), at § 3.2 lines 476–478 and T2 lines 866–868, requires the retained disclosure string "Scope and success criteria do not change quietly" to match **both before and after**. No compliant T2 implementation could satisfy the blanket sentence and (g) together. Confirmed by reading all four passages against each other, not by recall.
+
+**Result:** both mirrored instructions are narrowed to distinguish removed strings from the retained one. Resulting plan blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e`. The core was not touched, no review was run, the plan was not re-frozen, and T2 has not begun.
 
 ### Evidence
 
-**(1) Baselines.** Pre-edit plan `7b254fcb…` (matches brief); core `82f119cd…` unchanged before and after; `git status --porcelain` lists only the plan, this state file, and the hook-appended `logs/friction-log.md`, which this unit does not commit.
+**Zero-context diff — exactly 2 hunks, both inside the two contradictory statements.**
 
-**(2) Zero-context diff — 24 hunks, every one mapped to an authorized item.** No hunk is unmapped.
-
-| Hunk (`@@` old) | Location | Item |
+| Hunk | Location | What changed |
 |---|---|---|
-| `-3,8` | `**Status:**` block → draft, cause, prior identity, implementation state | 1 |
-| `-20,2` | re-freeze lineage closing sentence → points at *Prior re-freeze identity*, marked superseded | 1 |
-| `-35,3` | *Frozen content identity* closing sentence → records the second return to draft | 1 |
-| `-157` (+ new row) | Repository Delta: consequence-gate row disclaims completeness; **new** scope-change-gate row | 2 |
-| `-246,0` | risky assumption 5 extended (line 473 / T3a-508); **new** risky assumption 6 (five ≠ complete) | 2 |
-| `-331,9` | § 3.2 opening + Inputs → six surfaces, 588-byte clause named | 3 |
-| `-365,0` | § 3.2 **Outputs item 3** — the rule-4 reconciliation target semantics | 3 |
-| `-369` | § 3.2 Guaranteed behavior → one rule about scope; surfaces stay separate | 3 |
-| `-376,2` | § 3.2 Failure behavior + Side effects → both failure directions; no consumer edit | 3 |
-| `-379` | § 3.2 Fail-capable evidence header → "extended — Unit 15 review" | 3, 5 |
-| `-396` | § 3.2 evidence **(g)** + the **Matching discipline** bullet | 3, 5 |
-| `-398,2` | § 3.2 Review row → "all parts", not "both halves" | 3 |
-| `-731,4` | T2 Behaviour → six surfaces | 4 |
-| `-739` | T2 Starting evidence → the rule-4 conflict | 4 |
-| `-744` | T2 Intended change → "three changes" | 4 |
-| `-748,3` | T2 Intended change **(3)** — reword rule 4 | 4 |
-| `-757,3` | T2 Verification (d) → "match before and not match after" | 4, 5 |
-| `-761` | T2 Verification **(g)** + matching discipline | 4, 5 |
-| `-763,3` | T2 Exit condition → rule 4 narrowed, quiet change still forbidden | 4 |
-| `-767` | T2 Scope boundary + Review row → T3/T3a/473 limits; "all three parts" | 4, 6 |
-| `-1020` | §14 traceability, item-2 row → scope expanded again, sixth surface | 6 |
-| `-1043` | Internal consistency cross-check → T2↔3.2 expanded twice, no new surface | 6 |
-| `-1058,0` | Internal consistency → no renumbering, no resequencing; 508 and 465–475 limits | 6 |
-| `-1069,15` | `## Plan-readiness statement` → draft, cause, implementation state, two gates | 1, 7 |
+| `@@ -487,2 +487,8 @@` | § 3.2 *Matching discipline* | the blanket after-requirement replaced by a split one |
+| `@@ -869,3 +875,4 @@` | T2 *Verification*, matching-discipline sentence | the same split, mirrored |
 
-**(3) Both live status records agree.** Each says draft pending one fresh bounded review and content-bound reapproval (2 occurrences); each names the ESCALATE cause; each preserves `ccf134b8…` / `3fd5322f…` and the pre-edit status record `e45a581f…` / blob `7b254fcb…` as history (2 each); each states **T2 is blocked** (2); each states T1 **and T1a** are the only implemented tracers, with T1a at `6d530039…` (2). The old live authority sentence "This record grants implementation authority over the exact content frozen above" is gone.
+No other hunk exists. `git status --porcelain` lists only the plan, this state file, and the hook-appended `logs/friction-log.md`, which this unit does not commit.
 
-**(4) Five consequence gates plus one scope surface, distinguished everywhere.** "five consequence gates plus one scope-rule surface, six in total" appears in both § Repository Delta (risky assumption 6) and § 3.2. The phrase "sixth consequence gate" occurs twice and **both are prohibitions** ("never as a sixth consequence gate"; "Relabelling the scope rule as a sixth consequence gate would hide which reconciliation actually ran") — verified on the flattened file, 2 of 2. The consequence-gate delta row now says the five "are not the complete set of T2's reconciliation surfaces". Risky assumption 6 states that any claim five surfaces complete T2 is stale. No surviving claim asserts otherwise.
+**The requirements are now mutually satisfiable.** Both places state one before-rule and two after-rules:
 
-**(5) No-quiet-change preserved, classes covered, normalized check required.** § 3.2 Output 3 preserves "the disclosure obligation … in full"; the guarantee states rule 4 "still forbids a quiet change to scope or to success criteria"; the failure behavior fails a commit in **both** directions (transfer left standing, or disclosure weakened). Both § 3.2 and T2 name exactly the three proposal-§6 classes — intended outcome or priority change, **material** scope expansion, exclusion removal. Evidence **(g)** pairs "a change to scope goes to the operator" (matches before, not after) with "Scope and success criteria do not change quietly" (matches **both** before and after), so neither half can pass alone. The **Matching discipline** bullet requires normalization to a single logical line for every string in (d) and (g), and requires each to be shown **matching before** — which is what makes it fail-capable. Checks (a)–(f) are all still present and unchanged in substance.
+| String | Before | After |
+|---|---|---|
+| (d) five categorical consequence gates | must match | must **not** match |
+| (g) scope-transfer clause `a change to scope goes to the operator` | must match | must **not** match |
+| (g) retained disclosure `Scope and success criteria do not change quietly` | must match | must **still** match |
 
-**(6) Skill boundaries held.** Line 473 is expressly named valid proportional-verification policy that "transfers no decision to the operator"; lines 465–475 are "expressly unaffected by every tracer in this plan". T3a is limited to line 508 in three places (Repository Delta, T2's scope boundary, the internal consistency check). "No new skill edit is scheduled" appears twice (flattened count = 2). T3a's tracer heading is unchanged.
+Six removed strings, one retained string, seven before-matches. § 3.2 now says so explicitly and adds why: "A uniform 'must not match after' would make (g) unsatisfiable, because its two halves are deliberately opposite." T2 mirrors it in one sentence. Verified on the normalized file: `every string must be shown matching before the edit` (§ 3.2) and `**every** string is shown matching **before** the edit` (T2) both present; the two old blanket sentences are both absent; (g)'s "must match **both** before and after" (§ 3.2) and "which must match both before and after" (T2) both survive untouched.
 
-**(7) Everything else preserved.** `## 1. Fixed Point` intact. Tracer headings, in file order: **T1 T1a T2 T3 T3a T4 T5 T6 T7 T8 T9** — unchanged, none renumbered, none resequenced. §14 traceability table still holds 16 rows. The T8 S4/S8 accepted limitation is retained verbatim. The *Deferred, not scheduled in this plan* list and the §14 item-6 wording deferral are retained. Historical identities preserved: `fe2c62fd…`, `cab3b7a2…`, `1cbcbf4e…`, `ccf134b8…`, `3fd5322f…`, `e45a581f…`, `7b254fcb…`, proposal `d8a89e0f…` / `39c67196…`.
+**Preserved, as the correction required.** The normalization requirement survives in both places (`normalized to a single logical line`, 2 occurrences on the normalized file). Every string still carries a before-state proof — that requirement was strengthened from "each check" to "every string", never weakened, and it is still what makes the checks fail-capable.
 
-**(8) Commit and blob.** Resulting plan blob `25889efab1986d582f36407d1696f4b70a2258ac`; amendment commit = the commit carrying this handback (see Result above).
+**Nothing else changed.** T2 semantics untouched; the six-surface count intact (`six in total` ×2, `five consequence gates plus one scope-rule surface` present); both live status records still read draft pending one fresh bounded review and content-bound reapproval (×2); `T2 is blocked` still stated twice; tracer order unchanged — **T1 T1a T2 T3 T3a T4 T5 T6 T7 T8 T9**; the T8 S4/S8 accepted limitation retained; core blob still `82f119cd63c379b24f0bef8aab029ae04c165203`. No implementation target was touched.
 
 ### Noted, not acted on
 
-Two of this unit's own verification greps first reported FAIL for the wrong reason — they matched line-by-line against a hard-wrapped file and missed text spanning a newline, exactly the defect this amendment corrects in T2's evidence design. Both passed when re-run on the normalized file. That is independent confirmation that the normalization correction is the right one, and it is **not** a change to the plan.
+A deferral, recorded and not implemented: one of this unit's own closure checks reported FAIL for the wrong reason — `grep -c` counts matching *lines*, so it returned 1 against a file flattened to a single line. Recounting with `grep -o | wc -l` gave the true answer, 2. Nothing in the plan is wrong because of it; the plan's own instruction already says "normalized to a single logical line" without prescribing a counting method. It is worth a one-line note in whatever harness later automates these checks, and it is **not** corrected here — this round is frozen to the one finding.
 
 Deferrals carried forward, unchanged and non-blocking: the proportionality/continuity-plan follow-on; the stale row in the unapproved resource-capability development plan; the autonomy plan's §14 item-6 wording inconsistency.
 
 ## Blocker
-None for drafting. T2 implementation remains blocked until this amended plan receives one fresh bounded review and the operator's content-bound reapproval.
+None. T2 implementation remains blocked until the operator gives content-bound reapproval of the corrected plan.
 
 ## Next action
-Codex: run one fresh bounded review of the amended plan at blob `25889efab1986d582f36407d1696f4b70a2258ac` — confirm the seven amendment items landed within boundary, that the 24 mapped hunks introduce nothing unauthorized, and that T2's contract is now internally coherent across six surfaces. Then route to the operator for content-bound reapproval. Do not authorise T2 implementation before both gates land.
+Codex: run the closure check on the one frozen finding only — is the (d)/(g) after-requirement contradiction resolved in both § 3.2 and T2, and did the correction break anything? The corrected plan is blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e`. Then close or use the § 3 menu. Do not open a second correction round, and do not authorise T2 before the operator's content-bound reapproval.
