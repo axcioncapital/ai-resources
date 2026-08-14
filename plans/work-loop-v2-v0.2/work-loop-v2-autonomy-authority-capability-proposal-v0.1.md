@@ -1,6 +1,6 @@
 # Work Loop v2 Autonomy, Authority, and Capability Proposal v0.1
 
-**Status:** The operator approved the seven-part direction in §15 on 2026-08-14, subject to findings F1–F5 being corrected (Work Loop discovery unit 1, commit `0367759a8fa0a9cac737911a4ccf4b4bd6e3276c`); that approval authorized this revision and further planning, not implementation. This revision resolves F1–F5 and now awaits its own fresh content-bound approval decision — the 2026-08-14 direction approval does not carry over automatically to this revised text. No implementation is authorized by this document.
+**Status:** The operator approved this proposal's exact content at commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67` (blob `39c67196dcec35a1be8f4fcf8ea3ef6a50cfde0b`) on 2026-08-14 as the governing implementation direction. That approval follows the seven-part direction approved in §15 on 2026-08-14, subject to findings F1–F5 being corrected (Work Loop discovery unit 1, commit `0367759a8fa0a9cac737911a4ccf4b4bd6e3276c`) — F1–F5 are resolved in this revision. This approval authorizes implementation planning, not implementation itself.
 
 **Purpose:** Refine Work Loop v2 so coding agents can operate for long periods with high but bounded autonomy: investigating, deciding, implementing, testing, correcting, and verifying without unnecessary operator interruption, while stopping reliably at undelegated intent, material solution-boundary changes, unauthorized capabilities, or unresolved load-bearing evidence.
 
