@@ -67,6 +67,7 @@ Result: the stale carrier oracle is deleted rather than re-pointed. Both transpo
 
 Evidence:
 
+- Committed at `33d90df9`, exactly two paths: `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` and this state file.
 - `bash -n plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` — clean. `grep -c carrier_lock_for` — 0.
 - Isolated slice: preamble (lines 1-252) + the 12e block (537-731) + a pass/fail footer, run with the fixture preamble `REPO_ROOT`/`DISPATCH_BIN`/`OWNER_BIN`/`LEASE_BIN`/`CARRY_BIN` exported. **pass=21 fail=0, exit 0.** Coverage: 12e-1 checkout-lease setup, dispatcher exit 17, no actor, no commit, plus the control that the holding carrier did launch (5); 12e-2 dispatcher-checkout setup, carrier exit 17, no actor, no commit (4); 12e-3 ownership claim, worktree replication, task-lease setup, dispatcher exit 17, no actor, no commit, holding-carrier control (7); 12e-4 ownership claim, dispatcher task-lease setup, carrier exit 17, no actor, no commit in the worktree (5).
 - The fixture distinguishes the two resources: for this checkout the oracles return `.../task-a962de0d108a7487.lock` and `.../checkout-0d1f538516e4119f.lock` — different names under one root, and that root resolves to the MAIN checkout's `.git`, which is the property that lets a lease taken in a linked worktree be seen from another.
