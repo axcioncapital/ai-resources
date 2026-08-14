@@ -1,6 +1,6 @@
 # Work Loop v2 Autonomy, Authority, and Capability Proposal v0.1
 
-**Status:** Proposal for operator approval. No implementation is authorized by this document.
+**Status:** The operator approved the seven-part direction in §15 on 2026-08-14, subject to findings F1–F5 being corrected (Work Loop discovery unit 1, commit `0367759a8fa0a9cac737911a4ccf4b4bd6e3276c`); that approval authorized this revision and further planning, not implementation. This revision resolves F1–F5 and now awaits its own fresh content-bound approval decision — the 2026-08-14 direction approval does not carry over automatically to this revised text. No implementation is authorized by this document.
 
 **Purpose:** Refine Work Loop v2 so coding agents can operate for long periods with high but bounded autonomy: investigating, deciding, implementing, testing, correcting, and verifying without unnecessary operator interruption, while stopping reliably at undelegated intent, material solution-boundary changes, unauthorized capabilities, or unresolved load-bearing evidence.
 
@@ -36,7 +36,7 @@ The repository already contains most of the required model:
 - [Autonomy rules](../../docs/autonomy-rules.md) default to proceeding and reserve interruption for genuinely operator-owned or consequential boundaries.
 - [QC independence](../../docs/qc-independence.md) scales review to consequence without stacking review layers.
 - The [harness MVP plan](../axcion-harness-v0.2/mvp-plan.md) already separates semantic Work Loop policy, transport containment, and evidence.
-- The [evaluation proposal](eval-mvp-proposal-v0.2.md) already provides the intended runner and evidence-bundle direction.
+- The [evaluation proposal](eval-mvp-proposal-v0.2.md) states the intended evidence-bundle direction; no runner implementing it exists yet. What exists today is a deterministic textual/controller check for that layer (`logs/scripts/work-loop-v2-slice-1.test.sh`) and hand-run paired live behavioural trials for semantic behavior (the `eval-v0-3-restart` shape).
 
 The current gap is a missing relationship between these pieces. Consequentiality is sometimes described close to an operator gate, while the strategic goal requires consequential technical work to remain autonomous when the operator has already delegated the relevant outcome and capability.
 
@@ -207,7 +207,7 @@ No numeric confidence threshold is required.
 - task-scoped repository files inside the authorized paths;
 - tests and implementation needed by the approved outcome;
 - local branches and commits where the role contract permits them;
-- CI, dependency, or configuration files when both the solution and capability envelopes cover the change;
+- CI, dependency, or configuration files when both the solution and capability envelopes cover the change, and the change is not an audit-derived harness-configuration change or another structural change class under `docs/audit-discipline.md` — those remain gated by the retained no-self-waiver rule regardless of envelope coverage;
 - bounded corrections after evidence fails.
 
 In Work Loop v2, Claude implements and commits. Codex frames, challenges, and assesses; it does not acquire implementation or Git authority through this proposal.
@@ -307,7 +307,12 @@ Attendance is a release property of the harness, not an authority principle.
 
 ### Current release posture
 
-The existing [one-hop carrier](../../scripts/axcion-harness-v0.2/carry-turn.sh) is attended because process-lifetime containment and descendant observation are not yet sufficient for a safe unattended claim. That limitation should remain explicit and mechanically enforced.
+Two enforcement surfaces exist today, and each can host only part of §11's requirements:
+
+- The existing [one-hop carrier](../../scripts/axcion-harness-v0.2/carry-turn.sh) is attended and refuses `--unattended`, `--contained`, and `--sandbox` by design. It is the release surface for constrained Standard turns and hosts task/turn/state-file identity, task-scoped write-path evidence, one-hop and timeout limits, and terminal before/after classification.
+- The dispatcher's contained profile (`dispatch.sh --unattended`, from the handoff-automation spike) applies an OS-backed Bash sandbox and a strict, empty network allowlist, and fails closed (`exit 31 UNATTENDED_UNAVAILABLE`) rather than running uncontained. It is the surface that can host §11's per-invocation sandbox and network/tool restriction — but its descendant containment is not yet complete (a fully detached daemon can survive a stop command), so it may not be claimed as a safe unattended release surface.
+
+That limitation — descendant containment remaining insufficient for a safe unattended claim — should remain explicit and mechanically enforced regardless of which surface is used.
 
 ### Strategic target
 
@@ -364,16 +369,18 @@ Codex containment should use its native sandbox, network controls, approval poli
 
 ### MVP enforcement
 
-- exact task, checkout, state file, actor, and turn;
-- task-scoped write paths;
-- explicit sandbox and permission mode per invocation;
-- network and external tools disabled unless selected by an approved profile;
+These are allocated across the two enforcement surfaces named in §9: the carrier hosts identity, path, one-hop/timeout limits, and terminal evidence for every constrained Standard turn; the dispatcher's contained profile hosts the per-invocation sandbox and network/tool restriction where that profile is selected, and remains unclaimed as a safe unattended surface until descendant containment is complete.
+
+- exact task, checkout, state file, actor, and turn (carrier);
+- task-scoped write paths (carrier);
+- explicit sandbox and permission mode per invocation (dispatcher's contained profile, where selected);
+- network and external tools disabled unless selected by an approved profile (dispatcher's contained profile);
 - no raw bypass mode;
-- no nested Claude or Codex actor;
+- no nested Claude or Codex actor (carrier refuses symmetrically today; full descendant containment remains a dispatcher/Phase 2 blocker);
 - no push, merge, deploy, credential access, or destructive shared-state operation in the baseline profile;
-- timeout, deadline, and one-hop limits;
+- timeout, deadline, and one-hop limits (carrier);
 - before/after repository evidence;
-- terminal classification that cannot turn missing evidence into success.
+- terminal classification that cannot turn missing evidence into success (carrier).
 
 The MVP should also exercise one narrow, plan-authorized connected-development profile assembled from independently granted capabilities. It should include only capabilities required by the selected trial—such as an approved documentation domain, approved package registry, branch namespace, draft PR creation, or remote CI—and must not imply merge, deployment, credentials, or general external-write authority.
 
@@ -402,7 +409,7 @@ Allowed-path diff checking remains a useful evidence backstop, but preventative 
 
 ## 12. Evaluation proposal
 
-Extend the existing [evaluation proposal](eval-mvp-proposal-v0.2.md) rather than creating a second runner.
+Extend the [evaluation proposal](eval-mvp-proposal-v0.2.md)'s direction rather than creating a second runner — no runner exists yet to extend. The two mechanisms that exist today are a deterministic textual/controller check for its layer (`logs/scripts/work-loop-v2-slice-1.test.sh`) and hand-run paired live behavioural trials for semantic behavior (the `eval-v0-3-restart` shape). Until a runner exists, each of the twelve scenarios below resolves to one such paired trial, so exercising the full table costs roughly twelve paired live trials — a cost this proposal states rather than assumes away. Implementing and authorizing a runner remains future work, not an accomplished prerequisite.
 
 ### Required autonomy scenarios
 
@@ -476,14 +483,14 @@ The main adversarial protections are:
 
 ### MVP
 
-1. Resolve and approve the executable core's formal authority at an identifiable commit.
-2. Add the governing autonomy clause from §1 to that core.
-3. Reconcile the Codex skill, Claude command, autonomy rules, and session-plan language to reference the same rule; remove conflicting implications rather than adding another policy layer.
+1. Revise the executable core so it is no longer subordinate: replace its `:9-10` "Where this file and the Proposal disagree, the Proposal wins" line, and record `work-loop-v2-mvp-proposal-v0.4.md` as historical rationale for the core rather than a live overriding authority. Obtain operator approval of that revision at an identifiable commit — that approval is what makes the core canonical; it has not happened yet.
+2. Add the governing autonomy clause from §1 to the now-canonical core.
+3. Reconcile the Codex skill, Claude command, autonomy rules, and session-plan language to reference the same §1 rule. This may remove merely inconsistent phrasing; it may not remove or weaken `docs/autonomy-rules.md`'s audit-derived harness-configuration confirmation (`:18`) or `docs/audit-discipline.md`'s no-self-waiver rule for structural change classes — both are retained for the MVP per operator decision. The already-compatible item is the structural-class risk-aware review at `docs/autonomy-rules.md:19`, which already scales review to consequence; reconciling its wording to §1 is in scope. Any future removal or weakening of the retained rules requires new evidence and separate operator authority.
 4. Define the baseline workspace capability envelope and one narrow, plan-authorized connected-development profile for the MVP trial.
 5. Record the unit subset in the existing Work Loop brief and the effective profile in existing execution evidence.
-6. Keep the carrier attended-first and make it the enforcement surface for constrained Standard turns.
+6. Keep the carrier attended-first as the release surface for constrained Standard turns, hosting the identity, path, and evidence items §11 assigns it; use the dispatcher's contained `--unattended` profile only for the sandbox/network items the carrier cannot host, and do not claim unattended release safety while descendant containment blockers remain open.
 7. Add symmetric nested-actor prevention and verify the carrier on a host where process observation is available.
-8. Add the autonomy scenarios to the existing evaluation path.
+8. Add the autonomy scenarios as paired live behavioural trials — the only mechanism that can exercise semantic scenarios today. Implementing and authorizing a runner that automates them is separate future work, not a prerequisite this step assumes.
 
 ### Evidence-gathering period
 
@@ -512,7 +519,7 @@ Approval of this proposal would establish the following direction:
 6. **Pre-authorized capability profiles are part of the strategic model.** The MVP implements only the smallest baseline needed for evidence.
 7. **Unattended execution is the target once containment and evaluation earn it.** It is not enabled by semantic policy alone.
 
-Approval would authorize implementation planning, not implementation itself. Changes to the executable core, permissions, hooks, or carrier remain a separate high-consequence implementation unit under the repository's existing risk-aware review rule.
+Approval would authorize implementation planning, not implementation itself. Changes to the executable core, permissions, hooks, carrier, `docs/autonomy-rules.md`, or workspace `CLAUDE.md` remain a separate high-consequence implementation unit under the repository's existing risk-aware review rule, reviewed proportionally to its blast radius before implementation — `docs/autonomy-rules.md` and workspace `CLAUDE.md` are cross-cutting across every project and session in the workspace, and their review must reflect that reach.
 
 ---
 
