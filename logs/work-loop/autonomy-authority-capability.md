@@ -11,132 +11,73 @@ The operator wants the proposal implemented after readiness/QC. `/implementation
 Operator process decision, 2026-08-14: implementation follows the Axcíon Standard Implementation Workflow in compact form. After the approval record is current, one consolidated planning unit must establish the Fixed Point, Repository Delta, Implementation Specification, and ordered vertical tracer bullets; one fresh implementation-plan review then freezes that plan before target implementation begins. The existing Work Loop remains the sole runtime state and supplies per-slice implementation, evidence, independent assessment, bounded correction, demonstration, and progression. Do not create parallel state or review systems.
 
 ## Lane and unit
-Standard. Discovery mode. Unit 4 — establish the compact implementation Fixed Point, Repository Delta, Implementation Specification, and ordered vertical tracer-bullet plan in one consolidated planning artifact.
+Standard. Discovery mode. Unit 5 — fresh bounded implementation-plan review before plan freeze.
 
 Named reason for the loop: the task remains a multi-unit, cross-cutting governance implementation whose consequential changes need independent assessment and must survive session boundaries.
 
 ## Brief
-The proposal is now content-bound approved and truthfully recorded at commit `5b0d5fd857a2d663dfc298071faf2033f884b0eb`; the active Axcíon workflow position is **freeze → investigate → specify → slice**, before plan review or target implementation. This unit converts the accepted direction into one repository-grounded plan artifact so a fresh reviewer can judge and freeze a concrete path. It advances the approved implementation direction while preserving the proposal's explicit `implementation planning, not implementation itself` gate.
+Unit 4's repository-grounded plan and its one correction are accepted; the active Axcíon workflow position is **review**, immediately before plan freeze and before any target implementation. The named unknown is whether the exact corrected plan provides a safe, efficient, and faithful path from repository reality to the approved outcome. This review must run in a genuinely fresh Codex context because the current thread watched the artifact being produced and corrected.
 
-Governing authority and disposition:
+Review payload and authority:
 
-- Current operator decision, 2026-08-14: the exact proposal at commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67`, blob `39c67196dcec35a1be8f4fcf8ea3ef6a50cfde0b`, is the governing implementation direction. Use its current status-only successor at commit `5b0d5fd857a2d663dfc298071faf2033f884b0eb`; no substantive approved content changed.
-- Current operator process decision, 2026-08-14, recorded under `## Objective and scope`: use the Axcíon Standard Implementation Workflow in compact form, with this Work Loop as the sole runtime state. The operator-provided workflow source is `/Users/patrik.lindeberg/.codex/attachments/18e3181b-5534-4b7c-9fc2-fb520c455b97/pasted-text.txt`.
-- The proposal's §14 sequence, §15 decisions and review gates, and §16 success standard govern the target. Proposal v0.4 is historical rationale once an approved executable-core revision becomes canonical; it is not silently discarded before that gate is completed.
-- Live repository evidence governs the Repository Delta. Drafts, exploratory proposals, comments, and historical descriptions do not override the approved proposal or current operator decisions.
+- Artifact under review: `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md` at commit `f5011ff9b22210954bddff464122369edbc029aa`, blob `5baf430c9275698a334e43aeb10784b77ec8572a`. The current working file was verified to match that blob exactly before this unit opened. The artifact is draft and grants no implementation authority.
+- Governing approved direction: `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-proposal-v0.1.md`, exact approved content at commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67`, blob `39c67196dcec35a1be8f4fcf8ea3ef6a50cfde0b`; its status-only successor at commit `5b0d5fd857a2d663dfc298071faf2033f884b0eb` changed no substantive content.
+- Review criteria: the operator-approved Axcíon Standard Implementation Workflow at `/Users/patrik.lindeberg/.codex/attachments/18e3181b-5534-4b7c-9fc2-fb520c455b97/pasted-text.txt`, especially §6 Plan Review, §14 Standard Artifact Set, and §15 scaling. `docs/qc-independence.md` governs fresh-context independence, materiality, and risk-aware dimensions.
+- Unit 4 already performed the premise-verification payload work: bounded consumer/current-behavior inventory, exact source reads, safe deterministic suites, §14 traceability, and plan consistency checks. Treat those declared primitives as the review payload; reproduce a claim only if the artifact is internally inconsistent, its evidence cannot fail, it is consequential and hard to reverse, or it is a repository fact readable directly.
 
-Required outcome: create one concise consolidated artifact at `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md` containing all four sections below. This single-file choice is Codex's framing decision to honor the operator's compact-workflow decision and avoid three overlapping planning documents.
+Review question: **Does this exact plan provide a safe, efficient, and faithful path from the current repository to the accepted outcome?** Assess only the artifact against its approved purpose and criteria—do not replay its creation process or restart the proposal from first principles.
 
-1. **Fixed Point** — state the approved outcome, exact authoritative content identity, fixed decisions, explicit boundaries, and observable success condition. Preserve at minimum: the dual-key authority model; consequence scaling safeguards rather than automatically changing ownership; agent-delegated implementation judgment inside the solution envelope; attended carrier as the sole current Standard enforcement surface; the carrier's present lack of per-invocation sandbox/network enforcement; deferral of that enforcement, the connected-development trial, and unattended release beyond MVP; retention of the audit-derived harness-configuration confirmation and no-self-waiver rules; no new autonomy framework, state system, approval ledger, routine checklist, or assumed evaluation runner.
-2. **Repository Delta** — inspect the actual relevant files, interfaces, runtime paths, tests, commands/scripts, dependencies, current behaviors, and only load-bearing history. Classify relevant components as Keep, Modify, Add, Remove, or Uncertain/requires proof. Identify ordering constraints and the few risky assumptions that could invalidate the plan. Explicitly resolve or surface the location/checkout boundary for workspace-level `CLAUDE.md` and any other target outside this bound repository; do not silently omit or absorb an external surface.
-3. **Implementation Specification** — for each meaningful capability the approved MVP requires, define inputs, outputs, guaranteed behavior, failure behavior, side effects, public seam, and fail-capable evidence. Use the proposal's existing language. Distinguish semantic Work Loop behavior from capability enforcement, and distinguish the attended carrier from the separate unattended dispatcher.
-4. **Execution Plan** — order small vertical tracer bullets, each with Behaviour, Starting evidence, Intended change, Verification, Exit condition, and Scope boundary. Target risky assumptions and real seams early. Map every proposal §14 item 1–15 exactly once to an implementation tracer, an operational-evidence unit, an operator/review gate, or an explicit deferral; do not turn horizontal file layers into units or promote later-release work into the MVP.
+Review dimensions:
 
-Plan-readiness requirements:
+1. Fidelity to the proposal's §14 sequence, §15 decisions/gates, §16 success standard, and explicit MVP deferrals.
+2. Completeness of the Fixed Point, Repository Delta, Implementation Specification, §14 traceability, and T1–T8 vertical behavior contracts.
+3. Plan efficiency: unnecessary abstraction, duplicated capability, horizontal phases disguised as units, oversized units, or avoidable ceremony.
+4. Safety and ordering: weak test seams, destructive/irreversible work before replacement proof, hidden dependencies, invalid checkout/repository assumptions, or premature implementation authority.
+5. Review calibration for each high-consequence surface, including the seven risk-aware dimensions where applicable: usage cost, permissions surface, blast radius, reversibility, hidden coupling, principle alignment, and problem reality.
+6. Evidence honesty: requested versus observed/enforced capability, scenario trials versus organic real-use tasks, and claims that could pass without the planned behavior becoming true.
+7. Freeze readiness: no unresolved decision or uncertainty that would force an implementing unit to redesign the plan silently.
 
-- Separate planning from authority: the artifact remains draft until a fresh bounded implementation-plan review accepts it and the plan is frozen. It grants no target-edit authority.
-- Identify each high-consequence target named by proposal §15 and the proportional pre-implementation review/premise evidence it needs. Do not merge all high-consequence surfaces into one implementation unit merely because one plan describes them.
-- Preserve the current Work Loop state file as the only runtime state. Do not create progress trackers, review ledgers, risk documents, test-strategy documents, or parallel handoffs.
-- Keep mechanisms as repository-derived technical design, not invented requirements. Where the approved proposal deliberately leaves a mechanism open, record the evidence/behavior that must govern the later choice.
-- Record genuine unknowns as Uncertain/requires proof or as a tracer's starting evidence. Do not resolve them from documentation alone when current executable behavior can be inspected safely.
+Scope: review the exact implementation-plan artifact only. No edits to the plan, proposal, executable core, adapters, governance rules, permissions/hooks, workspace `CLAUDE.md`, carrier/dispatcher, evaluation assets, or any target implementation surface. The Work Loop state file remains the sole runtime interface.
 
-Check against the repository before writing:
+Required output: classify the review as **Pass**, **Correct**, or **Escalate**, with only material findings and the concrete consequence of leaving each unfixed. If Pass, record a content-bound acceptance of the reviewed commit/blob and open a status-only Claude unit that records the plan as reviewed and frozen without changing its substantive content; do not begin T1. If Correct, use the Work Loop's one bounded correction for Unit 5. If Escalate, name the exact operator-owned decision. A review that cannot run in fresh context is `unassessed`, not Pass.
 
-1. Verify the approved proposal identity and Unit 3's status-only successor relationship.
-2. Inventory tracked consumers of the executable core, its v0.4 authority language, the governing autonomy rule, capability-selection context in briefs/evidence, nested-actor prevention, carrier enforcement, and the evaluation surfaces. Bound every absence claim to named tracked paths and patterns; use tracked-source searches rather than an unbounded repository crawl.
-3. Inspect the current tests and safe deterministic checks for those seams. Do not launch Claude/Codex, the carrier, the dispatcher, a live external trial, or any external effect in this planning unit. If a cited check would do so, inspect it and mark it for a later controlled tracer instead of running it.
-4. Reconcile proposal §14 against repository reality and the compact workflow. If an item is already implemented, prove it and classify it Keep rather than planning duplicate work.
+Completion condition: deliver the independent verdict and evidence disposition through this state file. No target implementation is authorized by this unit.
 
-Required fail-capable evidence:
-
-- Report the exact tracked surfaces and search patterns used for the consumer/current-behavior inventory, including bounded negative results.
-- Report the safe deterministic checks actually run and their outcomes; identify relevant checks deliberately not run because they launch actors or cause external effects.
-- Include a §14 traceability table whose failure condition is any omitted, duplicated, silently promoted, or silently dropped item.
-- Include an internal consistency check showing every tracer bullet has all six required contract fields and that every proposed implementation surface appears in the Repository Delta and Implementation Specification before it appears in a tracer.
-- Run `git diff --check` and report it. Report `git diff --name-only`, distinguishing pre-existing unrelated changes.
-
-Scope: the one new implementation-plan artifact and this state file only. Excluded: edits to the approved proposal; executable core; proposal v0.4; Codex or Claude adapters; autonomy/QC/audit rules; permissions or hooks; workspace `CLAUDE.md`; carrier/dispatcher code; evaluation code, fixtures, or trial records; and every target implementation change. The exclusions are Codex's framing decision because this is a Discovery unit whose evidence must resolve the implementation path before any high-consequence edit begins.
-
-Completion condition: produce the consolidated planning artifact and evidence, record the result here, set `turn: codex`, commit only the artifact and state-file handback, and stop. Do not review/freeze the plan yourself and do not begin any target implementation.
-
-Stop conditions: hand back without target edits if the approved content identity fails, repository reality materially contradicts a fixed decision, the plan cannot cover the approved MVP without expanding scope or authority, a required external repository/checkout cannot be inspected, or meaningful plan evidence would require launching an actor or causing an external effect. Challenge a false premise rather than hiding it in the plan.
+Stop conditions: stop if the plan identity differs from the commit/blob above, the fresh-context requirement cannot be met, the governing proposal identity is contradictory, or a material issue requires changing the approved outcome or scope.
 
 ## Latest result
-Correction round on Unit 4's consolidated implementation plan. All five frozen findings reproduced by
-inspection first (none was stale), then corrected in
-`plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md`. No
-target-implementation surface changed — same exclusion list as Unit 4.
+Bounded correction round complete (2026-08-14). All five frozen findings were reproduced by inspection against the reviewed artifact — plan commit `f5011ff9b22210954bddff464122369edbc029aa` / blob `5baf430c9275698a334e43aeb10784b77ec8572a`, confirmed byte-identical to the working file before editing — and all five were corrected in `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md`. No target implementation surface was touched; the plan remains draft and unfrozen.
 
-**Finding 1 (false capability-concept absence claim) — corrected.** Reproduced first:
-`git grep -ln "capability envelope\|capability subset\|capability profile\|runtime profile"` with no
-path restriction returns exactly two files — the approved proposal (§3.2's "Plan capability envelope" /
-"Runtime profile", §7) and the plan itself. The finding was real. Correction: the plan's Repository Delta
-now states the search accurately — the concept is *described* in the governing proposal, and separately
-confirmed **absent from all eight live implementation surfaces** (skill, command, executable core,
-`docs/autonomy-rules.md`, `docs/qc-independence.md`, `docs/audit-discipline.md`, `carry-turn.sh`,
-`dispatch.sh` — reproduced zero-hit on that bounded set). Every downstream `greenfield`/`zero-hit`
-conclusion (Components table row, § 3.3 Inputs, T5 Starting evidence) was rewritten to the corrected,
-narrower claim.
+Result, per finding:
 
-**Finding 2 (unsupported workspace `CLAUDE.md` requirement) — corrected.** Reproduced first: proposal
-§14 item 3 (line 487) names only "the Codex skill, Claude command, autonomy rules, and session-plan
-language" — not workspace `CLAUDE.md`. §15's closing paragraph (line 521) is conditional ("changes to
-... remain a separate high-consequence unit"), not a mandate that a change occurs. A bounded read of
-workspace `CLAUDE.md` lines 129–133 (`## Autonomy Rules`) found only a pointer to
-`ai-resources/docs/autonomy-rules.md` (already reconciled at T3) and no competing or conflicting
-statement. The finding was real. Correction: the Components table row, both ordering-constraint entries,
-and the "Deferred" section's first bullet now classify the file **Keep — repository-boundary finding
-retained, no required edit proven**; no tracer touches it; the separate-git-repository fact is kept as a
-standing constraint for *if* future evidence proves otherwise, not as a scheduled deferral.
+1. **Split the core authority gate from policy insertion.** T1 now performs §14 item 1 only (authority-line rewrite) and *ends at operator approval*; new T2 performs item 2 (the §1 clause) and is gated on that approval. Tracers renumbered T1–T9 (old T2–T8 became T3–T9). Ordering constraint 1, § 3.1/§ 3.2, the traceability table and the internal-consistency check were all updated; T3–T6 now depend on T2, not T1.
+2. **MVP baseline capability envelope stated and proved.** § 3.4 now fixes the envelope in three sets — granted-by-default (§7 baseline), operator-reserved, and pre-authorizable **whose current membership is empty** — and adds a ten-row table mapping every non-deferred §11 control to its enforcement surface, its true strength, and a failing-evidence field. Strengths were read from `carry-turn.sh`, not assumed: task-scoped write paths are **detected, not prevented**, and the push/merge/deploy restriction is **requested per invocation, not a default** (`CLAUDE_DENY` is empty at `:201`; the mandatory list carries nested-actor rules only). Only sandbox and network/tool restriction are labelled deferred. T6 carries the required baseline deny set as convention, visible in `denials=`.
+3. **`session-plan.md` resolved before freeze.** T5's reviewer-time `change / no change` choice is removed. The change is now required and bounded: one citation sentence in Step 5 stating that session-level pause granularity does not decide per-action authority, with a failing-before/passing-after grep, a byte-unchanged diff on the three postures, and a normal/consequential review tier.
+4. **Horizontal trial phase replaced by twelve bounded contracts.** T8 is now a twelve-row matrix (S1–S12), each row carrying setup, paired legs, authorized surface, expected terminal behavior, fail-capable evidence and bounded exit. Every row runs on the attended carrier only; the dispatcher is named as out-of-boundary and unusable. S4 and S8 are pre-identified as *blocked* because the pre-authorized capability set is empty — stated up front rather than discovered late.
+5. **Evidence exits made strict.** T8 passes only when all twelve rows carry a verdict; a subset requires an operator-owned Fixed Point change, not an assessment judgment. T9 passes only at 3–5 organic tasks across ≥2 real capability shapes — a shortfall is now a blocker and operator decision, explicitly not dischargeable by recording a limitation. Item 11's measures are recorded across T8 and T9 and tallied at T9.
 
-**Finding 3 (review-row accuracy) — corrected.** Reproduced first: §15's closing paragraph names
-`docs/autonomy-rules.md` and "the executable core" both explicitly, with no size exception — the plan's
-T3 had proposed "normal/consequential, confirm at review" and T5 had permitted core placement under a
-normal review. Both were real gaps. Correction: T3's review row is now risk-aware Codex review (matching
-T1's tier), citing §15 directly. T5 is redesigned to place its content in the Codex skill only (not the
-executable core) — a placement decision marked as Claude's own framing choice with its reason (§5 Step 2,
-smallest sufficient option) — so its normal-review tier is now actually correct rather than assumed; § 3.3
-and T5 both carry the placement decision explicitly.
+**Evidence (fail-capable, paired before/after).** Twelve greps run against the reviewed blob `5baf430c` (extracted via `git show f5011ff9:<path>`, hash re-verified as `5baf430c`) and against the corrected file, newline-flattened so wrapped clauses match. All twelve flip in the intended direction — six additions `none → MATCH`, six removals `MATCH → none`:
 
-**Finding 4 (scenario suite vs. real-task evidence conflated) — corrected.** Reproduced first: proposal
-§14 items 8–9 (scenario suite) and item 10 (`3–5 real Standard tasks across at least two capability
-shapes`) are separate numbered steps under "Evidence-gathering period," and item 10's "real" tasks are
-categorically different from item 8's "paired live behavioural trials." T7 had folded item 10 into the
-same twelve constructed trials. The finding was real. Correction: T7 is now scoped to items 8–9 only; a
-new T8 covers items 10–11 (3–5 organic Standard-lane tasks across ≥2 capability shapes, with the item-11
-measures tallied against them); § 3.5 is corrected and a new § 3.6 added; the §14 traceability table and
-internal consistency check are updated for items 9–12 and T8.
+- added: T2 tracer heading; "Granted to a Standard unit by default"; the non-deferred §11 control-map heading; the T5 session-plan heading; row `| S12 |`; "Surface for every row: the attended carrier"; T8's all-twelve exit.
+- removed: `| 2 (add §1 clause) | T1 (same tracer`; "disposition recorded (change / no change)"; "phase ends when the scenario table is exercised"; "operator accepts a bounded subset as sufficient"; "or an explicit limitation recorded if fewer".
 
-**Finding 5 (fail-capable specificity) — corrected.** Reproduced first: T1's cited resolver-suite check
-proves consumer path resolution, not that the old subordination line is gone or the new clause is
-present; T2 cited pre-existing CE-9/orientation assertions that do not exercise a new citation; T5's
-five-heading count and sample text do not distinguish a *requested* capability from one the carrier has
-actually *enforced/observed* — and the carrier's own confirmed MVP list (proposal §11, verified live by
-this plan's test runs) does not include sandbox/network enforcement. All three gaps were real. Correction:
-T1 now specifies three independent checks (subordination-line absence, clause-text presence, resolver
-suite for drift); T2 now specifies a new targeted before/after grep instead of relying on unrelated
-existing assertions; T5/§3.3 now require any recorded "effective profile" to state sandbox/network
-capabilities as "requested, not carrier-verified" rather than "effective," mirroring the carrier's own
-`nested=unobserved` vs `nested=0` honesty convention.
+Structural counts: `grep -cE '^\| S[0-9]+ \|'` returns **12**; the §11 control table holds **10** control rows plus header; tracer headings are exactly T1–T9, sequential, no duplicates. The checks are genuinely failable — each reads the opposite way on the reviewed blob, and a no-op edit would leave the removal checks matching.
 
-### Verification that the corrections themselves are consistent
+**No automated suite binds to this artifact.** It is a plan document; no test asserts its content, so the paired greps above are the regression protection, and inventing a suite that greps for text this correction just wrote would not be evidence. The repository's deterministic suites were not re-run because no executable surface was edited — `git status` confirms the only files changed are the plan and this state file.
 
-- `git diff --check` on the corrected plan: clean.
-- `git diff --name-only`: `logs/friction-log.md` (same pre-existing unrelated change, still untouched),
-  this state file, and the plan artifact — no target-implementation file touched by this correction round
-  either.
-- Swept the corrected file for stale references: no bare `T1–T7` remains; every `T7` reference now reads
-  either the corrected scope-8–9 tracer or a `T7 and T8` pairing; the internal consistency check and
-  traceability table both cite `T1–T8`.
+**One in-scope contradiction fixed beyond the literal finding text.** The deferred-items list named §14 item 11 as out of MVP while the traceability table assigned it to the evidence tracers. Finding 5 requires item 11's measures recorded across both, so the stale line would have defeated the fix — an implementing unit could cite it to skip the measures. Item 11 is removed from that list, with the reason stated in place. The connected-development profile remains deferred.
+
+**Candidate deferrals — noticed, not implemented:**
+
+- The same deferred-items line still names §14 item 6 as out of MVP, while the traceability table maps item 6 to the Fixed Point as a *Keep* (the carrier stays attended-first — a retained fact, not a deferral; what is deferred is the sandbox/network enforcement inside it). This is a pre-existing miscount outside the five frozen findings, so it was left in place.
+- Two correction rounds had each numbered findings from 1, so "Finding 3" meant different things in different paragraphs. Because this round added more such labels, the ambiguity became load-bearing; all 38 references are now qualified as **Unit 4 Finding N** or **Unit 5 Finding N**, with the convention recorded in the status header. This was collateral of this round's own edits, not new scope.
 
 ## Blocker
 None.
 
 ## Next action
-Codex: run the closure check on findings 1–5 only — are they resolved, and did the correction break
-anything? One item noticed while correcting Finding 2 is a candidate deferral, not implemented: the
-"Deferred, not scheduled" section's second bullet still lists proposal item **11** among the
-out-of-MVP-deferred items (`§14 items 6, 11, 13–15`); that citation predates this correction round, item
-11 is actually covered by T7/T8 rather than deferred, and it was left untouched because it falls outside
-the five frozen findings. Close the task, or use the §3 "if the correction was not enough" menu if a
-finding did not resolve cleanly.
+Codex: run the closure check on the frozen findings only — are Unit 5 findings 1–5 resolved, and did the correction break anything? The correction scope is closed; anything newly noticed is a deferral, not a second round.
+
+Two items are placed for your closure decision rather than fixed: the §14 item 6 miscount in the deferred-items list, and whether the Unit 4 / Unit 5 finding-label convention should persist into the frozen plan. Both are recorded above as candidate deferrals.
+
+Do not treat this hand-back as a freeze. The plan is corrected, still draft, and still grants no implementation authority; freezing it and authorizing T1 remain your verdict to make.
