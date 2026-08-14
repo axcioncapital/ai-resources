@@ -71,7 +71,7 @@ Limitation, stated rather than papered over: the one branch this recovery added 
 
 Deferral noticed and not done: the second call site, `terminate_actor_group "$pid"` at the timeout path, passes the actor's pid as the pgid. That is pre-existing and correct only because the actor is launched into its own process group; it is not this recovery's business and needs no change now, but it is worth a naming pass in a later unit.
 
-Committed by explicit pathspec: `scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, and this state file. Final diffstat over the two harness files: 184 insertions, 5 deletions. Nothing else was staged — `logs/friction-log.md` and the untracked `logs/harness-runs/` were left alone.
+Committed by explicit pathspec at `2bef1acf`: `scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, and this state file. Final diffstat over the two harness files: 184 insertions, 5 deletions. Nothing else was staged — `logs/friction-log.md` and the untracked `logs/harness-runs/` were left alone.
 
 ## Blocker
 
