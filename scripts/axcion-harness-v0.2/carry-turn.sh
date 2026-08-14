@@ -787,10 +787,59 @@ acquire_lock() {
 # handler by way of die().
 release_lock() { wl_lease_release; }
 
+# THE PIN. When a run cannot prove the actor tree it started has stopped, the
+# process that knows about the survivors is about to exit, so the only thing that
+# can carry that knowledge forward is the lease it leaves behind. BOTH leases are
+# pinned, because a survivor holds both resources: it belongs to this task, and it
+# is still running inside this checkout's working tree.
+#
+# The pin FILE — its line formats, the both-leases rule, and the guards that stop
+# a pin claiming a lease this run never acquired — is the library's. What stays
+# here is the OPERATOR-FACING line, which is this surface's wording and names this
+# surface's exit 17.
+#
+# Return 1 from the library is its "nothing was owned, so nothing was pinned": the
+# ordinary state of a run that was refused, or that never reached acquire_lock. It
+# is the no-owned-lease condition, not a failure, and there is nothing to report.
+pin_leases() { # survivor-pids, unknown-reason
+  wl_lease_pin "${1:-}" "${2:-}" "$TASK" || return 0
+  say "  BOTH leases are now PINNED and deliberately NOT released — the TASK lease for '$TASK' ($TASK_LOCK_DIR) and this CHECKOUT's lease ($LOCK_DIR)."
+  say "  The next Work Loop run on this task, or in this checkout, is refused with exit 17 until you confirm the pids above are gone and remove those two directories by hand."
+  return 0
+}
+
 # ------------------------------------------------------- interruption
 
+# WHAT IS STILL IN THE ACTOR'S PROCESS GROUP, BY NAME. `kill -0` on a group
+# answers one bit, and it answers it wrong in the one direction that matters: a
+# survivor this uid may not signal returns EPERM, which is indistinguishable from
+# an empty group. A census names the pids instead — which is what the operator
+# needs, and what the pin file has to record for `--status` and the next run to be
+# about anything.
+#
+# THE CONTROL IS WHAT MAKES AN EMPTY ANSWER MEAN SOMETHING. `ps` over an empty
+# group and a `ps` that cannot run both print nothing, so this first asks about a
+# pid it knows exists — this shell. Without that, a broken `ps` would read as a
+# confirmed-clean shutdown, and missing evidence would have become a clean bill of
+# health. Same rule the nested-actor census already follows.
+#
+# Prints the surviving pids on stdout. Returns 1 when the census could not run.
+actor_group_census() { # pgid
+  local pgid="$1" out
+  ps -o pid= -p $$ >/dev/null 2>&1 || return 1
+  out="$(ps -o pid=,pgid= -g "$pgid" 2>/dev/null)"
+  printf '%s\n' "$out" \
+    | awk -v g="$pgid" '$1 != "" && $2 == g { printf "%s%s", sep, $1; sep = " " }'
+  return 0
+}
+
+# Returns 0 only when the actor's tree is PROVEN stopped. Anything else — a named
+# survivor, a census that could not run, or a group that still answers — is
+# unproven, and unproven pins both leases (proposal § 4.1 property 4). Ordinary
+# cleanup must not release them, and it cannot: the library checks PINNED before
+# OWNED inside wl_lease_release.
 terminate_actor_group() { # pgid
-  local pgid="$1" waited=0
+  local pgid="$1" waited=0 survivors='' unknown='' census_rc=0
   [ -n "$pgid" ] || return 0
   kill -TERM "-$pgid" 2>/dev/null
   while [ "$waited" -lt "$TERM_GRACE_SECS" ]; do
@@ -799,11 +848,34 @@ terminate_actor_group() { # pgid
   done
   kill -KILL "-$pgid" 2>/dev/null
   sleep "$KILL_SETTLE_SECS"
-  if kill -0 "-$pgid" 2>/dev/null; then
-    say "WARNING: process group $pgid could not be confirmed gone after SIGKILL — inspect before re-running."
-    return 1
+
+  # Split from the declaration on purpose: `local x="$(cmd)"` reports `local`'s
+  # status, not the command's, so the census failure would be invisible.
+  survivors="$(actor_group_census "$pgid")"; census_rc=$?
+  if [ "$census_rc" -ne 0 ]; then
+    survivors=''
+    unknown="the process-group census could not run on this host, so no survivor was ruled out"
   fi
-  return 0
+
+  # PROVEN GONE IS THE ONLY WAY OUT. The census named nobody AND the group no
+  # longer answers, so the tree is gone and the leases release normally.
+  #
+  # The `else` is the case that is easy to miss: the census ran, named nobody,
+  # and the group still answers. That is unproven, so it pins — and the reason
+  # has to be SAID, or the pin file would carry neither a survivor line nor a
+  # sweep line and the operator would be told to inspect nothing.
+  if [ -z "$survivors" ] && [ -z "$unknown" ]; then
+    if ! kill -0 "-$pgid" 2>/dev/null; then
+      return 0
+    fi
+    unknown="process group $pgid still answers to signals, but the census named no member of it"
+  fi
+
+  say "WARNING: process group $pgid could not be confirmed gone after SIGKILL — inspect before re-running."
+  [ -n "$survivors" ] && say "  still running in the actor's process group: $survivors"
+  [ -n "$unknown" ] && say "  sweep incomplete: $unknown"
+  pin_leases "$survivors" "$unknown"
+  return 1
 }
 
 on_signal() { # signal name

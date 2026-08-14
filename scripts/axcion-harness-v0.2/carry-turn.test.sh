@@ -92,6 +92,35 @@ mkdir -p "$NOPSDIR"
 printf '#!/bin/bash\nexit 1\n' >"$NOPSDIR/ps"
 chmod +x "$NOPSDIR/ps"
 
+# A `ps` that answers normally AND reports one extra member of whatever process
+# group it is asked about. Same device as the stubbed `lsof` the dispatcher's
+# suite uses to inject a survivor into its census, and for the same reason: a
+# process that genuinely outlives SIGKILL cannot be manufactured — a same-uid
+# process group is always cleared — so the survivor is injected at the point the
+# launcher LOOKS rather than by defeating the kernel.
+#
+# The injected pid is this suite's own shell, so "still running" is a claim about
+# something that really is running. It is never signalled: the launcher signals
+# the process GROUP and never an individual pid, which is what makes the
+# injection safe as well as deterministic.
+#
+# Only the `-g` form is touched. The launcher's readability control (`ps -p $$`)
+# passes straight through, so a stub that broke it could not masquerade as an
+# empty group.
+SURVPSDIR="$TMPROOT/survivor-ps"
+mkdir -p "$SURVPSDIR"
+cat >"$SURVPSDIR/ps" <<PSSTUB
+#!/bin/bash
+out="\$(/bin/ps "\$@" 2>/dev/null)"; rc=\$?
+[ -n "\$out" ] && printf '%s\n' "\$out"
+prev=""; g=""
+for a in "\$@"; do [ "\$prev" = "-g" ] && g="\$a"; prev="\$a"; done
+if [ -n "\$g" ]; then printf '%s %s\n' "$$" "\$g"; rc=0; fi
+exit "\$rc"
+PSSTUB
+chmod +x "$SURVPSDIR/ps"
+SURVPID="$$"
+
 # A fake actor binary. It answers --version, records its argv and its invocation
 # count, and then performs one scripted action on the state file.
 #
@@ -104,6 +133,8 @@ chmod +x "$NOPSDIR/ps"
 #   commit-foreign     create AND commit an out-of-allowlist file, plus transition
 #   fail:<code>        exit <code>, touching nothing
 #   sleep:<secs>       sleep, then exit 0
+#   ignore-term:<secs> IGNORE SIGTERM and sleep, so the launcher's TERM grace
+#                      expires and it reaches the SIGKILL-and-verify branch
 #
 # The actions below emit a Claude-shaped result object on STDOUT, which is where
 # the launcher's capture file gets it from. The permission_denials element shape
@@ -167,6 +198,15 @@ case "$act" in
     git -C "$REPO" commit -q -m "actor: foreign commit" >/dev/null 2>&1 ;;
   fail:*) exit "${act#fail:}" ;;
   sleep:*) sleep "${act#sleep:}"; exit 0 ;;
+  ignore-term:*)
+    # SIGTERM is IGNORED here, and an ignored disposition is inherited across
+    # fork and exec, so the sleep below ignores it too. That is what carries the
+    # launcher past its TERM grace and into the SIGKILL-and-verify branch — the
+    # only path that can pin a lease. Nothing here survives SIGKILL and nothing
+    # is meant to: the survivor is injected at the census, not at the kernel.
+    trap '' TERM
+    sleep "${act#ignore-term:}"
+    exit 0 ;;
   denied)
     emit_json '[{"tool_name":"Bash","tool_use_id":"toolu_probe1","tool_input":{"command":"git commit -m handback","description":"commit"}}]' ;;
   denied-partial)
@@ -929,6 +969,73 @@ section "12c. The shared lease library must be present"
   run_sut --checkout "$REPO" --task task-bd --claude-bin "$FAKEBIN" --log-dir "$LOGD"
   assert_eq "control — with the library present the same run carries" "0" "$RC"
   assert_eq "  and its actor ran" "1" "$(invocations)"
+
+section "12d. An unprovable shutdown pins both leases"
+  # Property 4 of the shared live-lease contract: when a run cannot prove the
+  # actor tree it started has stopped, BOTH leases are pinned and no ordinary
+  # exit path releases them. The launcher used to warn and release, which left
+  # the next run — attended or dispatched — free to start beside a survivor.
+  #
+  # Reaching the branch: the actor IGNORES SIGTERM, so the TERM grace expires and
+  # the launcher goes on to SIGKILL and then verify. Verification is a census of
+  # the actor's process group, and the survivor is injected there (see SURVPSDIR)
+  # because a same-uid process group is always cleared by SIGKILL — the condition
+  # is real in production (a process that has not finished dying, or one this uid
+  # may not signal) and cannot be manufactured hermetically at the kernel.
+
+  # The control first, with a real `ps`: the tree IS proven gone, so nothing is
+  # pinned and both leases are released. Without it, a launcher that pinned on
+  # every timeout would pass every assertion below.
+  mkfix pinctl task-be claude
+  printf 'ignore-term:30' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-be --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD"
+  assert_eq "control — a timed-out actor whose tree IS gone is ACTOR_TIMEOUT" "21" "$RC"
+  assert_absent "  and nothing is pinned" "PINNED" "$o"
+  assert_eq "  and both leases were released" "0" \
+    "$([ -d "$(task_lease_for "$REPO" task-be)" ] || [ -d "$(checkout_lease_for "$REPO")" ] && echo 1 || echo 0)"
+
+  # A survivor the census CAN see. The launcher must say so and pin.
+  mkfix pinsurv task-bf claude
+  printf 'ignore-term:30' >"$ACTION"
+  o="$(PATH="$SURVPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bf \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  stl="$(task_lease_for "$REPO" task-bf)"; scl="$(checkout_lease_for "$REPO")"
+  assert_eq "an unprovable shutdown is still ACTOR_TIMEOUT (the pin does not change the code)" "21" "$RC"
+  assert_contains "  and warns that the group could not be confirmed gone" \
+    "could not be confirmed gone" "$o"
+  assert_contains "  and NAMES the surviving pid" \
+    "still running in the actor's process group: $SURVPID" "$o"
+  assert_contains "  and says both leases are pinned" "BOTH leases are now PINNED" "$o"
+  assert_eq "  the TASK lease is PINNED, not released" "1" "$([ -f "$stl/survivors" ] && echo 1 || echo 0)"
+  assert_eq "  the CHECKOUT lease is PINNED, not released" "1" "$([ -f "$scl/survivors" ] && echo 1 || echo 0)"
+  assert_contains "  and the pin file records the pid, so the operator can find it" \
+    "descendants still running: $SURVPID" "$(cat "$stl/survivors" 2>/dev/null)"
+
+  # The invariant as the NEXT run experiences it. This is the whole point of the
+  # pin: a second carrier is refused rather than started beside the survivor.
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-bf --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a SECOND carry is REFUSED while the lease is pinned (17)" "17" "$RC"
+  assert_contains "  and says PINNED rather than merely held" "is PINNED" "$o"
+  assert_contains "  and refuses to advise deleting anything it cannot show is dead" \
+    "Nothing was deleted here" "$o"
+  assert_eq "  and launched nothing further" "$n_before" "$(invocations)"
+  rm -rf "$stl" "$scl"
+
+  # The sweep that could not LOOK. A census that cannot run is UNKNOWN, not a
+  # clean bill of health — the same rule the nested-actor observation follows,
+  # and the same one the dispatcher applies to its own incomplete sweep.
+  mkfix pinblind task-bg claude
+  printf 'ignore-term:30' >"$ACTION"
+  o="$(PATH="$NOPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bg \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  btl="$(task_lease_for "$REPO" task-bg)"; bcl="$(checkout_lease_for "$REPO")"
+  assert_eq "a census that cannot run is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_contains "  and is reported as an incomplete sweep, not as success" \
+    "sweep incomplete" "$o"
+  assert_eq "  and the TASK lease is PINNED" "1" "$([ -f "$btl/survivors" ] && echo 1 || echo 0)"
+  assert_eq "  and the CHECKOUT lease is PINNED" "1" "$([ -f "$bcl/survivors" ] && echo 1 || echo 0)"
+  rm -rf "$btl" "$bcl"
 
 section "13. Dry run and the Codex direction"
   mkfix dry task-z claude

@@ -15,80 +15,63 @@ Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; chan
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 3a1 — wire the attended carrier to the accepted shared live-lease helper while preserving its attended-surface boundaries.
+Standard. Implementation mode. Unit 3a1 recovery — finish and validate only the preserved pin-on-unproven-shutdown carrier correction (executed; awaiting assessment).
 
 Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
 
 ## Brief
 
-Dispatcher wiring and regression verification are accepted through commit `5255628a`: the complete dispatcher suite produced `pass=471 fail=11`, with all 11 failures confined to the unchanged carrier-dependent 12e cases. This unit now gives the carrier one dominant change—consume the same accepted live-lease helper. Repository-depth ownership admission, broad carrier verification and cross-transport suite closure remain separate units.
+The carrier's shared-lease integration is committed at `04de80a7`, but its shutdown path still violated proposal § 4.1 property 4 by releasing both leases when the actor tree could not be proven stopped. The first correction carry stopped at the 900-second boundary with exit `21`; it made no commit or state transition but left attributable edits in `scripts/axcion-harness-v0.2/carry-turn.sh` and `scripts/axcion-harness-v0.2/carry-turn.test.sh`. The operator approved this smaller recovery on 2026-08-14. Preserve and assess those edits rather than restarting or discarding them.
 
-Governing sources and authority:
+Governing authority: the approved Phase 1 decision and `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-and-task-aware-worktrees-implementation-proposal-2026-08-13.md`, especially § 4.1 property 4. The recorded pre-correction failure is durable in the preceding Unit 3a1 result: `terminate_actor_group` warned and ordinary cleanup released the leases because the carrier had no pin call site. That is the failing baseline; do not spend this recovery reconstructing a historical red run or fabricating evidence.
 
-- Current operator decision: Phase 1 and its two bounded live validations are approved; D4 is retained; Phase 2 is deferred.
-- Approved implementation basis: `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-and-task-aware-worktrees-implementation-proposal-2026-08-13.md`, especially §§ 4.1–4.5, § 5.2 case 6, § 5.5 case 21 and § 7 step 3.
-- Accepted shared helper: `logs/scripts/work-loop-lease.sh` at `c409c12a1a298f5163685677de8da158ee33e5f1`; its contract and helper evidence are unchanged.
-- Accepted migration decision: during the changeover the carrier must read its legacy `${TMPDIR:-/tmp}/axcion-harness-v0.2.<checkout-key>.lock` path read-only and refuse a live or unreadable legacy holder rather than create a two-root admission window.
+Required outcome: finish the preserved correction so an actor shutdown that cannot be proven complete visibly pins every lease this run owns, and ordinary cleanup cannot release those pinned leases. A subsequent carrier on the task or checkout must refuse before launch with exit `17`. A shutdown proven complete must retain ordinary release behavior.
 
-Required outcome: replace the carrier's checkout-only temporary-directory lock with the accepted shared task-plus-checkout lease helper. Preserve exit `17`, three-state holder handling, pin/release behavior, actor-lifecycle cleanup, refusal detail, one-hop semantics, no status surface, no worktree creation, no simulated-actor seam and all other attended boundaries. Add the one-release read-only legacy-lock refusal. Do not add ownership admission in this unit.
+Check before editing:
 
-Check before editing, narrowly:
+1. Inspect the two preserved diffs for correctness and unnecessary mechanism. Simplify where an equivalent, easier-to-audit implementation preserves the safety property; do not redesign actor lifecycle handling broadly.
+2. Verify `wl_lease_pin`'s actual return contract in `logs/scripts/work-loop-lease.sh`. The carrier may treat the documented no-owned-lease result as non-fatal, but must not silently swallow any distinct infrastructure failure if the helper exposes one. Do not change the helper.
+3. Verify the proposed process-group census works on this host and that an unavailable census cannot silently mean a clean shutdown. Keep survivor evidence visible to the operator.
 
-1. Map the carrier's current lock functions, state and call sites to the helper contract; identify caller-owned refusal and pin messages.
-2. Identify the existing compatible carrier infrastructure outcome for a missing or unreadable helper. Stop rather than inventing a new exit code or changing the helper.
-3. Confirm how existing carrier tests exercise stub binaries and linked worktrees, and record ambient `git status --short --untracked-files=all`.
+Evidence for this recovery:
 
-Implementation and targeted evidence for this hop:
+- Run `bash -n` on `carry-turn.sh`, `carry-turn.test.sh`, and the unchanged lease helper.
+- Run only the smallest isolated carrier slice containing the new pin-on-unproven-shutdown case and its clean-shutdown control. Wait for it to complete and report its exact pass/fail output.
+- The slice must prove: clean shutdown releases both leases; visible or unprovable survivor state pins both owned leases; pinned lease evidence names the survivor or unknown census condition; and a second carrier is refused with exit `17` before another actor starts.
+- Report the final focused diff, any simplification made, the helper return-contract finding, and the committed paths.
+- Commit only `scripts/axcion-harness-v0.2/carry-turn.sh`, narrowly required `scripts/axcion-harness-v0.2/carry-turn.test.sh`, and this state file by explicit pathspec. Hand back at `turn: codex` with the commit hash.
 
-- Update the existing same-task/different-linked-worktree carrier case that currently asserts admission so it fails first under the new required refusal, then passes after wiring. The second carrier must exit `17` before launching.
-- Add or adapt one narrow missing-helper assertion proving fail-closed refusal before the stub actor launches, using an existing compatible infrastructure outcome.
-- Source and use the accepted helper for initialization, task-then-checkout acquisition, pinning and release. Delete the carrier's duplicate live-lock implementation; keep only caller-owned reporting and the temporary legacy-path compatibility read.
-- Implement the legacy-lock compatibility read without writing, migrating or deleting a live or unreadable legacy lock. A provably dead legacy pid may follow the existing carrier policy; report the exact behavior.
-- Preserve helper pin return-1 semantics and the carrier's operator-facing pin/refusal reporting at its call sites.
-- Run `bash -n` on changed shell files and the accepted helper.
-- Run only the narrow red/green carrier slice needed for the same-task/different-worktree and missing-helper cases, plus one focused ordinary acquire/refuse/release carrier smoke if those controls do not already prove release.
-- Do not run the full carrier suite or dispatcher 12e in this hop; those are the next verification unit.
-- Report removed duplicate machinery, targeted outputs, final diff and scope. Stage only `scripts/axcion-harness-v0.2/carry-turn.sh`, narrowly required `carry-turn.test.sh`, and this state file by explicit pathspec; report staged paths and commit hash.
+Explicitly excluded from this recovery: broad carrier or dispatcher suites; dispatcher 12e; `--prove-failure` M6; ownership admission; instruction edits; helper changes; controller-wide acceptance; live validations; and every other deferral. These remain later units because this recovery must fit inside one bounded hop.
 
-Explicitly deferred: repository-depth ownership admission and ownership codes `33`/`34`/`35`; full carrier regression; dispatcher 12e closure; instruction changes; controller acceptance; and both live validations.
+Stop and hand back without broadening if the preserved approach needs new architecture, a helper change, a new exit code, or cannot be validated by the isolated pin slice. Challenge any false premise rather than improvising.
 
-Stop and hand back if helper integration changes carrier boundaries, requires the helper contract or a new exit code to change, cannot preserve legacy-lock safety, needs ownership work in this unit, or the targeted fixture cannot remain bounded. Challenge a false premise rather than improvise.
-
-Completion condition: the carrier is committed using the accepted task-plus-checkout lease helper; duplicate live-lock machinery is removed; the same task in another linked worktree is refused with exit 17; a missing helper fails closed before launch; legacy in-flight lock compatibility is preserved; syntax and focused lease evidence pass; only carrier, narrowly required carrier test and state file are committed; and the state hands back at `turn: codex`.
+Completion condition: the preserved carrier correction is reduced to a correct and auditable implementation, syntax and the isolated pin slice pass, both owned leases stay pinned when shutdown is unproven while clean shutdown still releases them, a second launch refuses at exit `17`, only the carrier, its narrow test and this state file are committed, and the state hands back at `turn: codex`.
 
 ## Latest result
 
 Inspected (2026-08-14):
 
-- Claim (1) — carrier lock functions, state and call sites map to the helper contract: HOLDS. Read `scripts/axcion-harness-v0.2/carry-turn.sh`; `acquire_lock` at 636–659 and `release_lock` at 661–665, state `LOCK_DIR` at 259, call sites at 285 (`die`), 1205 (the carry), 1194, 1256, 1269. Caller-owned refusal wording is the three exit-17 `die` messages at 647, 651 and 655.
-- Claim (1a) — the carrier has operator-facing PIN reporting at its call sites: FALSE. Searched `carry-turn.sh` for `pin` and `survivors`; zero occurrences of either. The carrier has never pinned: `terminate_actor_group` (669–684) prints a WARNING when a process group cannot be confirmed gone and the run then releases normally. Not treated as a blocking premise — no work rested on it, and the determinate answer is to add nothing. Recorded as a deferral below.
-- Claim (2) — an existing compatible carrier infrastructure outcome exists for a missing or unreadable helper: HOLDS. Read the exit table at 116–153: `11 BAD_CHECKOUT`, already used for an uncanonicalizable checkout (389), a non-git checkout (391), an uncreatable log directory and an unwritable run log (1207, 1210). Same number the dispatcher uses for its lease-infrastructure failures. No new code invented, helper unchanged.
-- Claim (3) — carrier tests exercise stub binaries and linked worktrees: HOLDS. Read `carry-turn.test.sh`; fake actor via `--claude-bin` (`make_fake_actor`, 120–225), linked worktree via `git worktree add` at 801. Ambient `git status --short --untracked-files=all` at start: `logs/friction-log.md` and this state file modified, plus 22 untracked files under `logs/harness-runs/`. None staged by this unit.
-- Claim (4) — the accepted helper is unchanged since `c409c12a`: HOLDS. `git diff --stat c409c12a1a298f5163685677de8da158ee33e5f1 HEAD -- logs/scripts/work-loop-lease.sh` and the working-tree diff both return empty.
-- Claim (5) — the two transports were jointly blind: HOLDS. Searched `carry-turn.sh` for `work-loop-dispatch-locks` and for `work-loop-lease`; no match for either before this unit.
-- Claim (6) — `carry-turn.test.sh` line 811 asserts admission for the same task in a separate linked worktree: HOLDS. Read at 810–814: `assert_eq "the same task in a separate linked worktree IS admitted" "0" "$RC"`.
+- Claim (1) — the carrier's shared-lease integration is committed at `04de80a7`: HOLDS — `git log --oneline -1 04de80a7` returns `batch: work-loop-v2-cross-transport-concurrency-phase-1 — unit 3a1, carrier wired to the shared live lease`.
+- Claim (2) — the preserved edits are attributable and unrestarted at 174 insertions / 5 deletions across the two named files: HOLDS — `git diff --stat` over `scripts/axcion-harness-v0.2/carry-turn.sh` and `carry-turn.test.sh` returned exactly `174 insertions(+), 5 deletions(-)` before this recovery edited anything.
+- Claim (3) — the preserved diff contains a pin call site, a process-group census and a targeted test section: HOLDS — read the full diff: `pin_leases()` plus its call inside `terminate_actor_group`, `actor_group_census()`, and test section `12d. An unprovable shutdown pins both leases`.
+- Claim (4) — `wl_lease_pin` exposes no distinct infrastructure failure the carrier could silently swallow: HOLDS — read `logs/scripts/work-loop-lease.sh` lines 217–241. The only non-zero return is `1`, guarded solely on `[ "$WL_LEASE_TASK_OWNED" -eq 1 ]`, i.e. the documented no-owned-lease case. The pin-file write and the checkout-lease copy are both `2>/dev/null` and cannot change the return, and `WL_LEASE_PINNED=1` is set *before* the write, so a failed write still blocks release. The carrier's `|| return 0` is therefore correct and hides nothing. Helper unchanged.
+- Claim (5) — the process-group census works on this host: HOLDS — ran the census body directly: `ps -o pid= -p $$` succeeds (the readability control), and `ps -o pid=,pgid= -g <pgid>` returned three group members, which the `awk` filter reduced to a pid list.
+- Claim (6) — an unavailable census cannot silently mean a clean shutdown: HOLDS — the readability control fails first when `ps` is broken, `actor_group_census` returns 1, and `terminate_actor_group` converts that to the `unknown` reason rather than to an empty survivor list. Proven by the `NOPSDIR` case in the slice below.
+- Claim (7) — a killed-but-unreaped actor does not appear in the census as a false survivor (checked because the census runs before `wait` reaps the actor): HOLDS — probed on this host: a child in its own process group, SIGKILLed and deliberately not reaped, returned an empty census both before and after `wait`.
 
-Result: the attended carrier now takes both leases through the shared helper. Its duplicate live-lock implementation is deleted — the `$TMPDIR` key derivation, the `mkdir` acquisition, the holder writes, the stale-clear-and-retake, and the `release_lock` body. What remains on the carrier's side is its own contract: exit `17`, the refusal wording, and the exit-`11` infrastructure outcome. Refusals now say WHICH resource refused and which program holds it. A missing or unreadable helper fails closed at `11` before any lease path is computed. The legacy `${TMPDIR}` lock is read for one release: a live or unreadable legacy holder is refused with the unchanged wording and nothing is deleted; a provably dead pid follows the existing carrier stale policy — the lock is removed and announced. No lock is ever migrated into a lease. No ownership admission was added.
+Result: the preserved pin-on-unproven-shutdown correction is finished, with one correctness fix and no redesign. Reviewing the preserved diff found one real gap: when the census ran, named nobody, and `kill -0` on the group still succeeded, the code fell through to the pin with **both** `survivors` and `unknown` empty, so the pin file would have carried neither a `descendants still running:` line nor a `sweep incomplete:` line and the operator would have been told to inspect nothing. That branch now sets an explicit unknown reason (`process group <pgid> still answers to signals, but the census named no member of it`), so every pinning path names either the survivor or the unknown condition. Behaviour is otherwise identical: the branch already pinned, it just pinned mutely. Nothing else was simplified — the census and the thin `pin_leases` wrapper each carry weight the other cannot (named pids for the operator, and this surface's exit-17 wording), and no helper, exit code or architecture changed.
 
-Evidence — narrow red/green slice, sections 12, 12b and 12c of `carry-turn.test.sh`, assembled by cutting the suite's other sections out of a throwaway copy under `/tmp` (deleted after the run; no case-selection feature was added, per the Unit 2b2a decision). The number below is that slice's, not the carrier suite's.
+Evidence:
 
-- Red, test edits applied and `carry-turn.sh` untouched: `passed: 29 failed: 8`. The 8 are exactly the new behaviours — same task in a linked worktree returned `0` and launched its actor where `17` and no launch are required; the absent-library case returned `0`, launched, and moved HEAD where `11` and no launch are required.
-- Green, after wiring: `passed: 37 failed: 0`. Same slice, same fixtures.
-- The slice's controls are what stop this being an exit-code assertion: the worktree run with the task lease freed still carries (`RESULT outcome=CARRIED code=0`, actor ran once), the absent-library control with the library present carries, and the ordinary carry at the end of 12b leaves both lease directories gone — so acquire, refuse and release are each proven and no separate smoke was needed.
-- Legacy compatibility is proven by section 12 and the first half of 12b passing unchanged: a live legacy holder refuses with `task 'task-y'`, an uninspectable one refuses and says `Nothing was deleted`, a provably stale one is cleared with `removing a stale lock`, and the different-task-same-checkout refusal still says `whether or not it is the same task`.
-- `bash -n` clean on `carry-turn.sh`, `carry-turn.test.sh` and `logs/scripts/work-loop-lease.sh`.
+- `bash -n` passes on `scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh` and the unchanged `logs/scripts/work-loop-lease.sh`.
+- The isolated pin slice — test section `12d` plus its clean-shutdown control, extracted with the suite preamble and run from the harness directory so `SUT`/`LEASE_BIN` resolve identically — returns **passed: 18, failed: 0**. It proves all four required properties: a proven-clean shutdown is `21` with nothing pinned and both leases released; an injected visible survivor pins both leases and the run *names the pid*; the pin file records `descendants still running: <pid>`; a broken `ps` is reported as `sweep incomplete` and still pins both leases; and a second carrier on the same task is refused with exit **17**, says `is PINNED`, refuses to advise deleting anything, and launches nothing further.
+- The slice can fail. With the single line `pin_leases "$survivors" "$unknown"` replaced by a no-op, the same slice returns **passed: 8, failed: 10** — the second carrier drops from `17` to `22` and *starts a second actor* (`launched nothing further` expected 1, got 2), which is exactly the pre-correction defect. `carry-turn.sh` was restored byte-identical afterwards (`cmp` clean) and the slice re-run green at 18/18 on the committed content.
 
-Test-file changes, all narrowly required: fixtures now copy the lease library into every checkout and commit it (without it every carrier case fails closed at 11); `lock_path_for` is renamed in comment only, as the LEGACY path; `lease_root_for`, `task_lease_for`, `checkout_lease_for` and `plant_lease` are added once, mirrored from the library; 12b's worktree assertion is inverted with an over-refusal control; 12c is new.
+Limitation, stated rather than papered over: the one branch this recovery added — census ran, named nobody, group still answers — has no automated case. Exercising it needs a `ps` that reports an empty group while `kill -0` on that same group succeeds, and since the actor is SIGKILLed before the census, a hermetic stub that empties `ps` makes `kill -0` fail too and the run correctly returns clean. Rather than invent a check that cannot fail, the branch is covered by inspection only. Its cost is one assignment and it strictly improves evidence.
 
-Deferrals recorded, not done:
+Deferral noticed and not done: the second call site, `terminate_actor_group "$pid"` at the timeout path, passes the actor's pid as the pgid. That is pre-existing and correct only because the actor is launched into its own process group; it is not this recovery's business and needs no change now, but it is worth a naming pass in a later unit.
 
-1. The carrier never pins. If it cannot confirm its actor tree stopped it warns and releases both leases, so a survivor process no longer blocks the next run — and under the shared lease that now also fails to block the dispatcher. The helper's `wl_lease_pin` is available and uncalled. Adding a pin call site is new carrier behaviour, outside this unit's one dominant change.
-2. `--prove-failure` mutant M6 was not run. It rewrites the carrier's `key=` line, which now belongs to the legacy compatibility read rather than to the live lease, so what it proves has narrowed. Belongs to the broad carrier verification unit.
-3. `dispatch.test.sh` helper `carrier_lock_for` still points at the legacy `${TMPDIR}` path, so cases 12e-1 and 12e-3 assert their setup against a directory the wired carrier no longer creates. That is dispatcher 12e closure, already the next unit.
-
-Staged by explicit pathspec: `scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, this state file. `logs/friction-log.md` and the untracked `logs/harness-runs/` files were left alone.
-
-Commit: `04de80a7` — 3 files, 341 insertions, 110 deletions.
+Committed by explicit pathspec: `scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, and this state file. Final diffstat over the two harness files: 184 insertions, 5 deletions. Nothing else was staged — `logs/friction-log.md` and the untracked `logs/harness-runs/` were left alone.
 
 ## Blocker
 
@@ -96,4 +79,4 @@ None.
 
 ## Next action
 
-Codex: assess unit 3a1 — the carrier's shared-lease wiring, the legacy read-only compatibility, the resource-naming refusals, and whether the three recorded deferrals belong where they were put.
+Codex: assess the Unit 3a1 recovery only. Judge whether the finished pin correction satisfies proposal § 4.1 property 4 — pinned on unproven shutdown, released on proven shutdown, second launch refused at exit `17` — whether the added unknown-reason branch and its stated inspection-only coverage are acceptable, and whether the recorded deferral is rightly held back. Then close this unit or open the next Phase 1 unit from the excluded list (broad carrier and dispatcher suites, dispatcher 12e, `--prove-failure` M6, ownership admission, instruction edits, controller-wide acceptance, live validations).
