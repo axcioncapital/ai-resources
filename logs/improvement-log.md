@@ -3818,3 +3818,51 @@ non-symlink copy — verify whether it carries the same literal.
 
 **Target files:** `.claude/commands/wrap-session.md` (~L190); workspace-root
 `/.claude/commands/wrap-session.md` if it mirrors the defect.
+
+---
+
+### 2026-08-14 — Work Loop v2 SKILL.md is 580 lines against a 500-line budget, and the breach predates the packaging fix
+
+- **Status:** logged (pending)
+- **Category:** resource-standards compliance — skill body size budget vs. progressive disclosure
+- **Severity:** low — the resource works correctly and no behaviour is wrong; the cost is maintenance
+  and read-time on a file two actors load often. Severity is the item's true severity and is
+  deliberately independent of the park below (schema, `Severity:`): it is `low` because the consequence
+  is slow drift, not incorrect work. Bump it if the body passes ~650 lines or a session reports the
+  skill's length as a cause of missed instruction.
+- **Operator acceptance:** the operator accepted this overrun explicitly as a temporary exception on
+  2026-08-14, at the point of shipping the packaging fix. The exception is the deferral recorded below,
+  not a waiver of the budget.
+- **Review-cycle:** reviewed 2026-08-14, deferred to **the next change that adds body lines to
+  `.agents/skills/work-loop-v2/SKILL.md`** — a concrete, self-firing trigger: the next author to grow
+  this file is the one who must split it. Backstop if no such change lands: 2026 Q4.
+
+**What.** `.agents/skills/work-loop-v2/SKILL.md` is 580 lines. `skills/ai-resource-builder/SKILL.md:200`
+sets a 500-line body budget (restated at `skills/ai-resource-builder/SKILL.md:436` and
+`skills/ai-resource-builder/SKILL.md:444`) and requires identifying content to split into reference
+files once the body exceeds it.
+
+**The breach is pre-existing.** At `HEAD` before the 2026-08-14 packaging fix the file was already
+**552 lines** — 52 over. The packaging fix added 28 across three review rounds and one bounded cleanup. An external review reported the file as "now 569,
+exceeding the budget", which reads as though this change caused the breach; it did not. Recording the
+correction here so the next reader is not misled by that framing.
+
+**Why parked rather than fixed in the packaging session.** Splitting a 580-line SKILL.md into
+`references/` is a structural change to a live instruction file that both a Codex skill session and
+the dispatcher read on every invocation. It needs its own progressive-disclosure design — which
+sections are load-bearing on every run versus reachable on demand — and its own review. Folding it
+into an incident fix would have been exactly the scope creep that same review confirmed was otherwise
+absent. Per the workspace rule, "too expensive to do structurally" means park for a dedicated session,
+never patch.
+
+- **Proposal.** Structural fix — split the body into `references/` siblings under three-level
+  progressive disclosure, rather than trimming prose to squeeze under the number (trimming would cost
+  load-bearing rules to satisfy a count, which is the wrong trade on a file whose whole failure mode is
+  guidance being forgotten). Candidate split lines, for the dedicated session and **not decided here**:
+  § *Courier mode* with the exit-code table (~90 lines) and the routing/intake sections (~60 lines) are
+  the two largest blocks a given run does not always need, and the routing index is already an external
+  reference so the pattern is established. § *The seam*, § *Size the unit against the clock* and
+  § *What you never do* are load-bearing on every run and stay in the body. Two existing siblings
+  (`references/routing-index.md`, `references/repository-problem-resolution-sop.md`) show the shape.
+- **Target files:** `.agents/skills/work-loop-v2/SKILL.md`; new siblings under
+  `.agents/skills/work-loop-v2/references/`.

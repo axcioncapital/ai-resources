@@ -124,7 +124,7 @@ Where this resource and the core disagree, the core wins; report the disagreemen
 
 This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or `/session-plan`.
 
-**Scope of this version — Slices 1–3, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below), and admission discipline: the admission test (Admission below), de-escalation (De-escalating below), and mid-unit deferrals (Step 4). Plus the unit's mode (2026-08-06 — The unit's mode below), which Codex classifies and you execute against.
+**Scope of this version — Slices 1–3, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below), and admission discipline: the admission test (Admission below), de-escalation (De-escalating below), and mid-unit deferrals (Step 4). Plus the unit's mode (2026-08-06 — The unit's mode below), which Codex classifies and you execute against. Plus the hop-termination contract (2026-08-14 — Ending the hop below) and the `Dominant deliverable` check, which answer a hop that ended on a progress note and a unit packaged too large for one hop.
 
 Context Engineering is live on the Codex side. This command **consumes** the engineered brief — checking its claims against the repository and acting on it — and never performs Codex's preparation, authority or selection judgments itself.
 
@@ -236,6 +236,40 @@ Core § 3 *The unit's mode* owns the three modes and what each requires. `## Lan
 
 **A mode that disagrees with the brief's own completion condition is a false premise** — hand back under Step 3. A unit recorded as Implementation whose completion condition asks only for evidence and a hand-back has not been classified; it has been mislabelled, and building from it is the error the check exists to prevent.
 
+### The brief's packaging lines
+
+Every brief carries packaging lines, which the Codex skill's § *Size the unit against the clock* owns and writes. **How many depends on the mode recorded in `## Lane and unit`.**
+
+Three lines on every unit, in every mode:
+
+```
+Dominant deliverable:
+Evidence required in this hop:
+Evidence explicitly deferred:
+```
+
+One more in **Implementation** mode only:
+
+```
+Primary edit begins after:
+```
+
+A unit in Discovery or Adoption mode makes no primary edit — it inspects and hands back (core § 3 *The unit's mode*) — so that line does not apply to it and its absence is correct, not missing.
+
+Two values satisfy that line. A **targeted failing case** is the ordinary one. A **quoted before-state** is valid where no meaningful failing test exists — the prose, documentation and instruction-file case § The unit's mode already names, where the evidence is the changed text quoted against what it replaced. Where the artifact is executable, only the failing case will do.
+
+`Evidence explicitly deferred:` carries `None.` when nothing was held back. `None.` is a completed line, not an empty one — treat it as satisfied.
+
+Check them at Step 2, alongside the brief's claims. **Three shapes are a false premise — hand back under Step 3:**
+
+- **A line its mode requires is missing or empty.** Name which. The packaging decision was not made, and a unit whose size nobody decided is the one that spends the hop and returns nothing.
+- **`Dominant deliverable:` names more than one deliverable.** Name both. That line admits exactly one entry, and two is how an oversized unit announces itself before the clock finds it.
+- **`Primary edit begins after:` appears on a unit in Discovery or Adoption mode.** It names an edit the recorded mode forbids, so either the line or the mode is wrong — which is the misclassification § The unit's mode already hands back.
+
+**Hand the brief back; do not fill the lines in yourself.** Sizing the unit is Codex's judgment, and supplying it here is the silent-repair failure Step 3 already forbids. Repackaging is one cheap Codex move — far cheaper than the 902-second timeout that produced this rule.
+
+A brief written before this contract existed carries none of the four lines and is handed back on its next invocation. That is the intended behaviour, not a regression: it is one bounce, and it converts the backlog to the new shape at the moment each unit is next touched.
+
 ## De-escalating — when the work turns out smaller
 
 Core § 2 *De-escalating* decides when this applies — inspection or implementation is where Claude notices it. When it does apply:
@@ -259,6 +293,24 @@ Evidence: <the check, what it returns now, and what it returned before>
 The state file is current truth, not a diary (core § 4): replace the previous result rather than appending to it.
 
 Then set `turn: codex`, set `## Next action` to what Codex assesses, `git add` by explicit pathspec — the state file and the files the unit changed — and commit.
+
+## Ending the hop
+
+**Every invocation ends in an explicit outcome. Once an invocation passes the refusal gates, that outcome is written into the state file and committed before you stop.**
+
+The refusal gates are Admission, Step 1's turn and identity checks, and Step 1.5's ownership check. They come first and they decide whether a written outcome is owed at all — a refusal is *required* to leave the file untouched, so a rule demanding a write from every invocation would break exactly the paths that work.
+
+- **Whichever step you are in, it names the write.** Step 5 writes the result and evidence; Step 3 writes the failed premise; Correction rounds writes the corrected result; De-escalating and Closing the task each write the closing record; core § 7 writes a blocker or an operator question. This is deliberately not an exhaustive list to match against — the step you are in owns its own write, and the invariant is that one of them happened.
+- **An invocation stopped at a refusal gate writes nothing and commits nothing** — a turn that is not yours, a file-identity mismatch, an ownership REFUSE or AMBIGUOUS. You will have *read* the file to establish those; the invariant is no state-file **write**, not no read. Say which refusal applied. That silence in the file is the recorded outcome, not a missing one.
+- **Work that admission sent to Direct Work opens no state file at all.** It is done and committed in the ordinary way — the absent file is the evidence admission was refused, and says nothing about whether the repository changed.
+
+**A hop that announces what it is waiting for has produced none of these.** "Waiting for the baseline run to finish before editing" is a progress note; the state file is unchanged, the dispatcher reads exit `22` — no transition — and the hop is spent. Where you are waiting on something, finish waiting inside the hop and act on the answer, or stop waiting and record the blocker.
+
+**Own every command you start.** A command you launched in the background is awaited to completion or terminated within this same hop, and its result — or the fact that you stopped it — reaches the state file before you stop. Leaving one running hands the next hop a process it did not start and cannot account for.
+
+**Evidence the brief requires cannot be deferred by you.** Where a required check will not finish inside the hop, that is a **blocker** — record it in `## Blocker` and hand back. Only what the brief already lists under `Evidence explicitly deferred:` stays deferred, because Codex decided that when it sized the unit. Downgrading required evidence to a deferral because the clock ran out is how a hop reports success it did not earn, and core § 6 rule 5 is what it breaks.
+
+Running the focused case the brief's `Primary edit begins after:` line names is the right move when a broad run will not fit — it is what that line is for. It does not discharge the required evidence; an unfinished broad run evidences nothing, and the hand-back says so.
 
 ## Correction rounds
 

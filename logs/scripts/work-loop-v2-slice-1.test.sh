@@ -1561,6 +1561,107 @@ check "ce9   the one-line operator shape is unchanged" \
 check "ce9   orientation still writes nothing and adds no stage" \
   "grep -qi 'Orientation writes nothing' '$SKILL_F' && grep -qi 'it is not a stage, a gate or a checklist the operator sees' '$SKILL_F'"
 
+# === pack: unit packaging and hop termination (2026-08-14 incident) =========
+# Answers the recurrence of the 2026-08-11 sizing failure: a 902s timeout on a
+# helper-plus-first-consumer unit, and a 593s hop that ended on a progress note.
+# These are TEXT-PROPERTY checks: they prove the rule is present and worded as
+# intended, and they fail if it is silently reworded or dropped. They do NOT
+# prove Claude obeys it at runtime — only a dispatched hop evidences that.
+
+# The two split triggers the old five-trigger list did not catch.
+check "pack  the shared-component-plus-first-consumer split trigger exists" \
+  "grep -qi 'builds a shared component' '$SKILL_F' && grep -qi 'integrates its first consumer' '$SKILL_F'"
+check "pack  the integrate-plus-full-regression split trigger exists" \
+  "grep -qi 'runs the full regression matrix for that integration' '$SKILL_F'"
+
+# Front-loaded evidence: the 593s failure. The primary edit must not wait on a broad baseline.
+check "pack  the primary edit begins after one targeted failing case" \
+  "grep -qi 'primary edit begins after one targeted failing case, not after a broad baseline' '$SKILL_F'"
+check "pack  accepted evidence is cited, not re-derived before editing" \
+  "grep -qi 'do not ask Claude to re-derive it before editing' '$SKILL_F'"
+
+# The packaging lines — producer side.
+for pack_line in 'Dominant deliverable:' 'Evidence required in this hop:' \
+                 'Evidence explicitly deferred:' 'Primary edit begins after:'; do
+  check "pack  the skill writes the packaging line \"$pack_line\"" \
+    "grep -qF '$pack_line' '$SKILL_F'"
+done
+check "pack  Dominant deliverable admits exactly one entry" \
+  "grep -qi 'Dominant deliverable\` admits exactly one entry' '$SKILL_F'"
+
+# Mode-awareness. The fourth line is Implementation-shaped: core § 3 gives Discovery
+# and Adoption no primary edit, so requiring it on every mode would make every
+# Discovery and Adoption brief a false premise and bounce it forever.
+check "pack  the skill scopes the fourth line to Implementation only" \
+  "grep -qi 'the fourth belongs to Implementation alone' '$SKILL_F'"
+check "pack  the skill states three lines for Discovery and Adoption" \
+  "grep -qi 'Write three lines in Discovery or Adoption mode, four in Implementation mode' '$SKILL_F'"
+check "pack  the skill keeps the first three mode-neutral and still packaging-bearing" \
+  "grep -qi 'A Discovery unit can be overpacked exactly as an Implementation unit can' '$SKILL_F'"
+check "pack  the command scopes the fourth line to Implementation only" \
+  "grep -qi 'One more in \*\*Implementation\*\* mode only' '$CMD_F'"
+check "pack  the command treats the fourth line's absence off-Implementation as correct" \
+  "grep -qi 'its absence is correct, not missing' '$CMD_F'"
+check "pack  the fourth line in Discovery or Adoption mode is a false premise" \
+  "grep -qi 'appears on a unit in Discovery or Adoption mode' '$CMD_F'"
+
+# The packaging lines — consumer side. This is the half that makes them
+# enforceable rather than optional; without it the contract decays silently.
+for pack_line in 'Dominant deliverable:' 'Evidence required in this hop:' \
+                 'Evidence explicitly deferred:' 'Primary edit begins after:'; do
+  check "pack  the command checks the packaging line \"$pack_line\"" \
+    "grep -qF '$pack_line' '$CMD_F'"
+done
+check "pack  a missing packaging line is a false premise, scoped to the mode" \
+  "grep -qi 'A line its mode requires is missing or empty' '$CMD_F'"
+check "pack  two dominant deliverables is a false premise" \
+  "grep -qi 'names more than one deliverable' '$CMD_F'"
+check "pack  Claude hands the brief back rather than filling the lines in" \
+  "grep -qi 'do not fill the lines in yourself' '$CMD_F'"
+
+# Required evidence may not be downgraded to a deferral when the clock runs out.
+check "pack  required evidence cannot be deferred by Claude" \
+  "grep -qi 'Evidence the brief requires cannot be deferred by you' '$CMD_F'"
+check "pack  an unfinishable required check is a blocker" \
+  "grep -qi 'will not finish inside the hop, that is a \*\*blocker\*\*' '$CMD_F'"
+check "pack  only pre-declared deferred evidence stays deferred" \
+  "grep -qi 'Only what the brief already lists under \`Evidence explicitly deferred' '$CMD_F'"
+check "pack  the focused case does not discharge required evidence" \
+  "grep -qi 'It does not discharge the required evidence' '$CMD_F'"
+
+# Hop termination: the 593s hop ended on "waiting for the baseline run".
+check "pack  the hop-termination contract exists" \
+  "grep -q '## Ending the hop' '$CMD_F'"
+check "pack  a progress note is named as producing no outcome" \
+  "grep -qi 'a hop that announces what it is waiting for has produced none of these' '$CMD_F'"
+check "pack  background commands are awaited or terminated in the same hop" \
+  "grep -qi 'awaited to completion or terminated within this same hop' '$CMD_F'"
+
+# Over-correction guards. The contradiction a review caught: a refusal MUST leave
+# the file untouched, so the written-state rule may not demand a write from it.
+check "pack  refusal and the written outcome are separated, not collapsed" \
+  "grep -qi 'passes the refusal gates, that outcome is written into the state file' '$CMD_F'"
+# The invariant is no WRITE, not no read: Step 1 and Step 1.5 must read the file to
+# establish identity and ownership before refusing on them.
+check "pack  the refusal invariant is no write, not no read" \
+  "grep -qi 'the invariant is no state-file \*\*write\*\*, not no read' '$CMD_F'"
+# The outcome set is stated generically. An exhaustive-looking list is what omitted
+# closing, correction and de-escalation the first time.
+check "pack  the outcome set is generic, not an exhaustive list" \
+  "grep -qi 'deliberately not an exhaustive list' '$CMD_F'"
+check "pack  closing, correction and de-escalation are named as writing steps" \
+  "grep -qi 'Correction rounds writes the corrected result' '$CMD_F' && grep -qi 'De-escalating and Closing the task each write the closing record' '$CMD_F'"
+check "pack  Direct Work is not described as changing nothing" \
+  "grep -qi 'says nothing about whether the repository changed' '$CMD_F'"
+# No new state field: core § 4's five-field ceiling is the thing most at risk here.
+check "pack  the packaging lines add no state field" \
+  "grep -qi \"five-field ceiling is unchanged and no new field, artifact or stage is created\" '$SKILL_F'"
+check "pack  core § 4 still lists exactly five active content fields" \
+  "[ \"\$(grep -c '^| \`## ' '$CORE_F')\" = '5' ]"
+# The timeout remains refused as a sizing remedy — the fix must not reopen it.
+check "pack  a longer timeout is still refused as the remedy" \
+  "grep -qi 'A longer timeout is not the remedy for an oversized unit' '$SKILL_F'"
+
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \
   "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|fixture-slice2|fixture-slice3|fixture-target|$CODEX_TASK'"
