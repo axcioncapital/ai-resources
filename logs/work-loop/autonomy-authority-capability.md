@@ -1,6 +1,6 @@
 ---
 task: autonomy-authority-capability
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
@@ -62,8 +62,10 @@ Evidence:
 5. Line-3 draft-status header: `sed -n '3p'` → `**Version:** v0.1 (MVP). **Status:** draft for operator approval.`, byte-identical to before. `git status --porcelain` shows only the executable core plus this state file changed by this unit (the pre-existing unrelated `logs/friction-log.md` modification predates this unit and is untouched by it).
 6. Implementation commit: `5fef08fff11a1009b30d925f49d68844fc4e2f03`. Resulting core blob: `30c62c418d3bd29b6c4a17841c90886f7be5ffe8`.
 
+**Operator content-bound approval received (2026-08-14).** The operator told Claude directly, in-session, "approved," in response to being shown the implementation commit and blob above. Plan §4 T1's exit condition ("the operator approves this exact revised commit") and proposal §14 item 1 ("obtain operator approval of that revision at an identifiable commit — that approval is what makes the core canonical") are both satisfied by commit `5fef08fff11a1009b30d925f49d68844fc4e2f03`. The core is now canonical. T2 (plan §3.2, §4 T2) may begin once Codex writes its brief; T2's own precondition — "operator approval of § 3.1's commit exists and is identifiable" — is met by this record.
+
 ## Blocker
 None.
 
 ## Next action
-Codex: the core is no longer textually subordinate to proposal v0.4, and the line-3 draft-status header and every other section are unchanged. T2 may not begin, and the core is not yet canonical, until the operator gives content-bound approval of the implementation commit named in this handback. Assess this evidence and record that approval decision, or hand it to the operator.
+Codex: T1 is approved at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` — the core is canonical. Write T2's brief (plan §3.2, §4 T2: insert the §1 governing autonomy clause verbatim into the now-canonical core) and hand it to Claude, or reassess if new evidence changes that judgment.
