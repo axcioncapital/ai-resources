@@ -739,6 +739,55 @@ holder_label() { # -> a phrase naming who holds the lease
   esac
 }
 
+# EXIT 17 IS THE ONE REFUSAL THAT USED TO LEAVE NOTHING BEHIND.
+#
+# It is taken before this run owns anything, and — until the run-evidence block
+# was moved above acquire_lock — it was also taken before the run log existed.
+# So the refusal reached stderr and nowhere else. That is invisible to an
+# unattended dispatcher whose terminal nobody is watching, which is exactly what
+# the live cross-transport hop of 2026-08-14 met: the dispatcher refused
+# correctly at 17 while the attended carrier held the lease, and the requested
+# --log-dir was never even created, so the losing transport left no evidence at
+# all. The refusal was right and unprovable, which for this spike is the same as
+# missing.
+#
+# Two functions carry the fix. r17() writes one already-formatted line to BOTH
+# operator channels — the stderr wording below is unchanged, and what is new is
+# that the same bytes also reach the run log. refuse_17() writes the
+# machine-readable end of the record and exits.
+r17() { # one already-formatted line or block
+  printf '%s\n' "$1" >&2
+  [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$1" >>"$RUN_LOG"
+  return 0
+}
+
+# The machine-readable half. The lines above are what an operator reads; this one
+# is what a later reader — a harness, a grep, the next unit's evidence — can match
+# without parsing prose. Written LAST, so its presence also says the refusal ran
+# to the end rather than dying halfway through reporting itself.
+#
+# `actor_launched=no` is STATED, not left to be inferred. The value of this record
+# is that it is written on a path which provably never reaches launch_actor(), and
+# a reader should not have to know where it came from to know that. Nothing else
+# in this script writes the `terminal-record` prefix, so a match is unambiguous.
+#
+# Empty holder fields render as "unrecorded", never as a free lease — the same
+# rule holder_label() follows, for the same reason.
+refuse_17() { # -> never returns
+  if [ -n "${RUN_LOG:-}" ]; then
+    printf 'terminal-record outcome=refused code=17 task=%s resource=%s refusal=%s holder_program=%s holder_pid=%s holder_task=%s holder_checkout=%s actor_launched=no\n' \
+      "$TASK" \
+      "${WL_LEASE_RESOURCE:-unrecorded}" \
+      "${WL_LEASE_REFUSAL:-unrecorded}" \
+      "${WL_LEASE_HOLDER_PROGRAM:-unrecorded}" \
+      "${WL_LEASE_HOLDER_PID:-unrecorded}" \
+      "${WL_LEASE_HOLDER_TASK:-unrecorded}" \
+      "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}" \
+      >>"$RUN_LOG"
+  fi
+  exit 17
+}
+
 acquire_lock() {
   wl_lease_acquire dispatch "$$"
   case "$?" in
@@ -746,35 +795,37 @@ acquire_lock() {
     1) printf 'STOP [11] cannot create the lock root %s\n' "$LOCK_ROOT" >&2; exit 11 ;;
   esac
 
-  local who; who="$(holder_label)"
+  local who surv; who="$(holder_label)"
 
   if [ "$WL_LEASE_RESOURCE" = task ]; then
     # The PINNED lines are left program-agnostic on purpose. "the previous run"
     # is true whichever transport pinned it, so there is nothing false to fix
     # here, and the survivor pids inside the lease are what the operator acts on.
     if [ "$WL_LEASE_REFUSAL" = pinned ]; then
-      printf 'STOP [17] the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)\n' "$TASK" "$LOCK_DIR" >&2
-      sed 's/^/  /' "$WL_LEASE_SURVIVORS" >&2
-      exit 17
+      r17 "$(printf 'STOP [17] the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)' "$TASK" "$LOCK_DIR")"
+      surv="$(sed 's/^/  /' "$WL_LEASE_SURVIVORS" 2>/dev/null)"
+      [ -n "$surv" ] && r17 "$surv"
+      refuse_17
     fi
-    printf 'STOP [17] %s holds task %s (%s)\n' "$who" "$TASK" "$LOCK_DIR" >&2
-    printf '  it is running in checkout: %s\n' "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}" >&2
-    exit 17
+    r17 "$(printf 'STOP [17] %s holds task %s (%s)' "$who" "$TASK" "$LOCK_DIR")"
+    r17 "$(printf '  it is running in checkout: %s' "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}")"
+    refuse_17
   fi
 
   if [ "$WL_LEASE_REFUSAL" = pinned ]; then
-    printf 'STOP [17] a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)\n' "$CHECKOUT_LOCK_DIR" >&2
-    sed 's/^/  /' "$WL_LEASE_SURVIVORS" >&2
-    exit 17
+    r17 "$(printf 'STOP [17] a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)' "$CHECKOUT_LOCK_DIR")"
+    surv="$(sed 's/^/  /' "$WL_LEASE_SURVIVORS" 2>/dev/null)"
+    [ -n "$surv" ] && r17 "$surv"
+    refuse_17
   fi
-  printf 'STOP [17] %s is already running in this checkout (%s)\n' "$who" "$CHECKOUT" >&2
-  printf '  it is running task: %s\n' "${WL_LEASE_HOLDER_TASK:-an unrecorded task}" >&2
+  r17 "$(printf 'STOP [17] %s is already running in this checkout (%s)' "$who" "$CHECKOUT")"
+  r17 "$(printf '  it is running task: %s' "${WL_LEASE_HOLDER_TASK:-an unrecorded task}")"
   # "two Work Loop runs", not "two dispatchers": the hazard is one working tree
   # and one index with two live writers in it, and that is the same hazard
   # whichever transport the other writer arrived by.
-  printf '  two Work Loop runs in one checkout share a working tree and index, so either could\n' >&2
-  printf '  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.\n' >&2
-  exit 17
+  r17 '  two Work Loop runs in one checkout share a working tree and index, so either could'
+  r17 '  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.'
+  refuse_17
 }
 
 # A pinned lock is NOT released, by anything, including the EXIT trap. It is the
@@ -1283,6 +1334,56 @@ trap 'release_lock' EXIT
 trap 'on_signal INT'  INT
 trap 'on_signal TERM' TERM
 
+# ------------------------------------------------------------ run evidence
+#
+# OPENED BEFORE THE LEASE IS ASKED FOR, and the order is the whole point. This
+# block used to sit below the lock, which meant the one stop taken before the
+# lock — exit 17, a lease held by the other transport or by another run — had no
+# file to write into and no directory to write it in. The operator was left with
+# a requested --log-dir that did not exist. See the comment above acquire_lock.
+#
+# Nothing else moves with it: every later stop already had a run log and still
+# does, and the only exits newly covered are acquire_lock's own.
+#
+# `--status` IS EXCLUDED, and that exclusion is its read-only contract, not a
+# convenience. It must create no directory and no log — case 30 asserts exactly
+# that — so the guard is on STATUS_MODE and nothing else. `--dry-run` is NOT
+# excluded: it takes the lock, so it can be refused at 17, so it needs the record.
+if [ "$STATUS_MODE" -eq 0 ]; then
+  [ -n "$LOG_DIR" ] || LOG_DIR="$DEFAULT_LOG_DIR"
+  mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
+  # The dispatcher's own evidence directory is not "foreign work". When --log-dir
+  # points inside the checkout, the run log this process is about to write would
+  # otherwise register as an out-of-allowlist change made by the dispatcher itself,
+  # and the pre-hop gate below would stop on it.
+  LOG_DIR_ABS="$(cd "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canonicalize log dir\n' >&2; exit 10; }
+  if [ "$LOG_DIR_ABS" != "$CHECKOUT" ] && [ "${LOG_DIR_ABS#"$CHECKOUT"/}" != "$LOG_DIR_ABS" ]; then
+    # Assigns the global declared near LAST_CAPTURE — allowlisted_dirty() reads it
+    # to keep this directory out of the partial-effect report (O2).
+    LOG_REL="${LOG_DIR_ABS#"$CHECKOUT"/}"
+    ALLOW_PATHS+=("^$(printf '%s' "$LOG_REL" | sed 's|[][\.*^$]|\\&|g')/")
+  fi
+
+  # The run id has to survive two runs of the SAME task, started in the SAME
+  # second, from DIFFERENT checkouts, writing into ONE shared --log-dir. A
+  # second-resolution timestamp plus the task id does not: both runs computed the
+  # same id and silently overwrote each other's run log, hop captures and
+  # unattended profile. The same-checkout case is not the concern — the lock
+  # refuses that at exit 17, and this change does not touch the lock.
+  #
+  # The discriminator is the one already computed: LOCK_KEY is sha256(checkout|task),
+  # so within a single task it varies exactly when the checkout does. The pid
+  # separates two runs that somehow share both. No new concept is introduced.
+  #
+  # Field order is load-bearing, both ends:
+  #   timestamp FIRST — the directory still sorts chronologically by name;
+  #   task id LAST    — --status globs "*-$TASK.log", which stays an exact match
+  #                     and keeps matching run logs written before this change.
+  RUN_ID="$(date '+%Y%m%dT%H%M%S')-${LOCK_KEY:0:8}-$$-$TASK"
+  RUN_LOG="$LOG_DIR/$RUN_ID.log"
+  : >"$RUN_LOG"
+fi
+
 # --status is read-only by contract: it must not take the lock, because its whole
 # purpose is to be safe to run while another dispatcher holds it.
 [ "$STATUS_MODE" -eq 1 ] || acquire_lock
@@ -1420,39 +1521,8 @@ EOF
   exit 0
 fi
 
-# ------------------------------------------------------------ run evidence
-[ -n "$LOG_DIR" ] || LOG_DIR="$DEFAULT_LOG_DIR"
-mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
-# The dispatcher's own evidence directory is not "foreign work". When --log-dir
-# points inside the checkout, the run log this process is about to write would
-# otherwise register as an out-of-allowlist change made by the dispatcher itself,
-# and the pre-hop gate below would stop on it.
-LOG_DIR_ABS="$(cd "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canonicalize log dir\n' >&2; exit 10; }
-if [ "$LOG_DIR_ABS" != "$CHECKOUT" ] && [ "${LOG_DIR_ABS#"$CHECKOUT"/}" != "$LOG_DIR_ABS" ]; then
-  # Assigns the global declared near LAST_CAPTURE — allowlisted_dirty() reads it
-  # to keep this directory out of the partial-effect report (O2).
-  LOG_REL="${LOG_DIR_ABS#"$CHECKOUT"/}"
-  ALLOW_PATHS+=("^$(printf '%s' "$LOG_REL" | sed 's|[][\.*^$]|\\&|g')/")
-fi
-
-# The run id has to survive two runs of the SAME task, started in the SAME
-# second, from DIFFERENT checkouts, writing into ONE shared --log-dir. A
-# second-resolution timestamp plus the task id does not: both runs computed the
-# same id and silently overwrote each other's run log, hop captures and
-# unattended profile. The same-checkout case is not the concern — the lock
-# refuses that at exit 17, and this change does not touch the lock.
-#
-# The discriminator is the one already computed: LOCK_KEY is sha256(checkout|task),
-# so within a single task it varies exactly when the checkout does. The pid
-# separates two runs that somehow share both. No new concept is introduced.
-#
-# Field order is load-bearing, both ends:
-#   timestamp FIRST — the directory still sorts chronologically by name;
-#   task id LAST    — --status globs "*-$TASK.log", which stays an exact match
-#                     and keeps matching run logs written before this change.
-RUN_ID="$(date '+%Y%m%dT%H%M%S')-${LOCK_KEY:0:8}-$$-$TASK"
-RUN_LOG="$LOG_DIR/$RUN_ID.log"
-: >"$RUN_LOG"
+# The run evidence is opened ABOVE acquire_lock — see the block there. RUN_LOG
+# already exists by the time execution reaches this line on every non-status run.
 
 # RUN_START is captured at the top of the script (see there). DEADLINE_AT empty
 # means no deadline was asked for.

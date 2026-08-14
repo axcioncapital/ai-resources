@@ -15,46 +15,58 @@ Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; chan
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 8r2 — foreground validation and commit of the preserved Unit 8 holder-label correction.
+Standard. Implementation mode. Unit 9r2 — finish and focused-validate the preserved dispatcher logging fix.
 
 Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
 
 ## Brief
 
-The original Unit 8 hop stopped at the fixed 900-second boundary after completing the two bounded file edits and failing-first proof. Recovery 8r1 then started the suite asynchronously and returned before it finished; the carrier correctly stopped at exit 22 and terminated the unfinished suite. The operator approved this second, narrower recovery. Preserve the partial edits; do not reimplement them.
+Case 23 exposed an observability defect rather than a concurrency failure: the real dispatcher correctly refused at exit 17, but the refusal happened before its requested log directory and run log existed. Unit 9r1 timed out after preserving changes to the dispatcher and its test; the operator approved this narrower recovery and explicitly asked to avoid ceremony.
 
-Governing authority remains the approved Phase 1 proposal bound at `10d2eeb6f8868b2f073e11150dc1a50a95ea760a`, §4.1 property 5, §5 cross-transport expectations, and §7 revise/adopt criteria. The recovery is bounded to validating the already-present edits in `dispatch.sh` and `dispatch.test.sh`, recording the result, and committing them with this state file.
+Governing authority: the operator-approved Phase 1 proposal bound at `10d2eeb6f8868b2f073e11150dc1a50a95ea760a`, especially §5 case 23 and §7 step 5; the operator's current approval authorizes this bounded recovery. The autonomy-improvement report at `plans/work-loop-v2-v0.2/dispatcher-work-loop-harness-autonomy-improvement-report-2026-08-14.md` is non-governing background describing the observed defect.
 
-Required outcome:
+Required outcome: a dispatcher invocation that stops during shared-lease acquisition must still leave a durable, machine-readable run record in its requested log directory, including the stop code and reason, without launching an actor. `--status` must remain read-only and create no log.
 
-1. Inspect the preserved diff and confirm it is internally complete: task and checkout held-lease messages map `carry`, `dispatch`, empty, and unknown holder-program metadata truthfully; acquisition, exit 17, pin behavior, and the shared helper are unchanged.
-2. Treat `logs/harness-runs/20260814-unit8-holder-label-red.out` and the completed `20260814-unit8-dispatcher-red.out` result (510/7) as the failing evidence. Confirm the seven failures are exactly the new holder-label assertions against the pre-correction dispatcher, not unrelated regressions.
-3. Treat `20260814-unit8-holder-label-green.out` as the focused green proof. The existing `20260814-unit8-dispatcher-green.out` is incomplete because the carrier killed the hop mid-suite; do not report it as a complete pass.
-4. Run the complete dispatcher suite once against the preserved corrected files **in the foreground**. The Bash tool call must not use `run_in_background`, shell `&`, detached execution, or a timeout shorter than the suite; wait for the command's terminal exit before doing anything else. Capture it to a new raw output under `logs/harness-runs/`, require exit 0 with explicit counts, then run `git diff --check`.
+Check against the repository before acting:
 
-Do not edit the dispatcher files further unless the preserved diff is mechanically incomplete or the suite identifies a failure caused by these edits; if so, stop and hand back rather than broadening. Do not rerun helper, owner, carrier, red, or focused proofs.
+1. Verify in `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` whether shared-lease acquisition currently precedes requested log-directory and run-log initialization, and whether that ordering explains why the observed exit 17 produced no file. If not, stop and hand back the actual cause.
+2. Search `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` for existing coverage proving that an explicit `--log-dir` receives a durable record when acquisition exits 17 before actor launch. If equivalent coverage already exists, stop and explain why it did not protect the live run.
 
-Commit only `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, its `dispatch.test.sh`, and this state file with explicit pathspecs. Completion condition: the foreground suite reaches its final summary and exits 0, the preserved correction is validated, the bounded files are committed, and the task hands back at `turn: codex`. If the suite has not printed its final summary, do not return or hand back.
+Scope: `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, its controller test, this state file, and raw evidence under `logs/harness-runs/`. Codex's framing decision: one representative pre-actor exit-17 case is sufficient; do not build an exhaustive early-exit matrix. Excluded: the carrier, shared lease helper, owner helper, Work Loop instructions or core, live case 23 itself, case 24, Phase 2, main checkout, landing, push, cleanup, and unrelated report recommendations.
+
+Required evidence:
+
+1. Inspect the preserved two-file diff for completeness and proportionality. The observed live absence of `logs/harness-runs/case23-live-dispatcher/` is the failing case; do not manufacture a second red replay.
+2. Finish the minimum correction and run the new controller case in isolation. Show it green, including a stable terminal record carrying at least outcome, code 17, task, and reason or holder context; prove no actor was launched.
+3. Prove `--status` still creates no log and remains read-only.
+4. Run the shell syntax check and `git diff --check`. The complete dispatcher suite is deliberately held for the next validation unit because it could not fit with implementation inside the fixed hop timeout.
+5. Commit the implementation, test, and state handoff together with explicit pathspec. Raw harness outputs remain uncommitted evidence.
+
+Stop if the preserved diff is incomplete or over-broad, the focused case fails, durable logging cannot be initialized before acquisition without changing `--status`, or the fix requires another transport or the shared lease contract. Do not launch a live model, rerun case 23, run the complete suite, or increase timeouts.
+
+Completion condition: the preserved fix is proportionate, its focused controller case passes with a durable pre-actor exit-17 record, `--status` remains no-write, syntax and diff checks pass, the bounded files are committed, and the task hands back at `turn: codex`.
 
 ## Latest result
 
-Inspected (2026-08-14):
+Inspected (2026-08-14) — both claims checked against HEAD `5d38c76f`, before any edit:
 
-- Claim (1) — the preserved diff is internally complete: HOLDS — read `git diff` for both bounded files. `dispatch.sh` adds one `holder_label()` helper mapping `carry` → "an attended carry", `dispatch` → "another dispatcher", empty → "another Work Loop run (program unrecorded)", and any other value → "another Work Loop run (%s)" verbatim; the task and checkout refusals substitute it, and the shared-tree hazard line reads "two Work Loop runs". The acquisition call `wl_lease_acquire dispatch "$$"` is a context line, both `WL_LEASE_REFUSAL = pinned` branches are context lines, and every refusal still exits 17.
-- Claim (1a) — the shared helper is unchanged: HOLDS — `git status --short` lists four modified files and `logs/scripts/work-loop-lease.sh` is not among them; that file defines `WL_LEASE_HOLDER_PROGRAM` at lines 117, 152 and 180, which is the field the new label reads.
-- Claim (2) — the completed full red is 510/7 and the seven failures are exactly the new holder-label assertions: HOLDS — `20260814-unit8-dispatcher-red.out` ends `pass=510 fail=7`; searched it for `^FAIL` and found exactly seven, at lines 84, 89, 109, 112, 137, 140, 146, all of them the new 12e/12g holder-identity assertions. No unrelated regression appears in that list.
-- Claim (3) — `20260814-unit8-holder-label-green.out` is the focused green proof and `20260814-unit8-dispatcher-green.out` is incomplete: HOLDS — the focused red prints `STOP [17] another dispatcher holds task xt-shared` against a lease whose `program` file reads `carry`; the focused green prints `an attended carry holds task xt-shared` for the same case. The full green output ends mid-Case-27c with no summary line, so it is not a complete pass and is not reported as one.
+- Claim (1): HOLDS — searched `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` at HEAD for the acquisition call and the run-evidence block. `[ "$STATUS_MODE" -eq 1 ] || acquire_lock` is line 1288; `mkdir -p "$LOG_DIR"` is line 1425 and `: >"$RUN_LOG"` line 1455. Searched `acquire_lock`'s body for `RUN_LOG`: no match — all four exit-17 paths write to `>&2` only. Acquisition therefore precedes both the requested log directory and the run log, and that ordering does explain why the observed exit 17 produced no file and no directory.
+- Claim (2): HOLDS — searched `dispatch.test.sh` at HEAD for `expect_rc 17`: 12 occurrences (lines 447, 465, 473, 617, 662, 728, 784, 891, 908, 1885, 1982, 2186), each asserting exit code and stderr only. Searched the same file for `terminal-record`: no match. Searched for run-log reads: two, lines 1877 and 1970, and both read the *winning* rc=0 dispatcher's log, not a refused run's. No case gives a refused run its own `--log-dir`. No equivalent coverage exists, which is why nothing protected the live run.
 
-Result: the preserved Unit 8 holder-label correction is validated and committed. No further edit to the dispatcher files was needed — the preserved diff was mechanically complete and the suite found no failure caused by it.
+Result: the preserved two-file diff is complete and proportionate, and Unit 9r2 finished it. In `dispatch.sh` the run-evidence block moved above `acquire_lock` under an `if [ "$STATUS_MODE" -eq 0 ]` guard, and two small functions were added — `r17()`, which sends each already-formatted refusal line to stderr *and* `RUN_LOG` with the stderr wording unchanged, and `refuse_17()`, which appends one machine-readable `terminal-record` line and exits 17. The existing dual-channel helper `die()` could not be reused: it calls `release_lock`, which a refused run must never do. Every dependency of the moved block (`CHECKOUT` line 506, `DEFAULT_LOG_DIR` line 524, `STATUS_MODE`, `LOG_DIR`, `ALLOW_PATHS`) is set well above the new position. `dispatch.test.sh` gained one case, 12h, which refuses a second real dispatcher against a genuinely held lease and asserts the *file* rather than the message.
 
-Evidence: the complete dispatcher suite was run once in the foreground against the preserved files and reached its final summary — `logs/harness-runs/20260814-unit8r2-dispatcher-green.out`, exit 0, `pass=517 fail=0`. That is the same suite whose pre-correction run was `pass=510 fail=7`; 510 + 7 = 517 accounts for every assertion, so no case was skipped to reach green. All nine holder-label assertions pass by name in the green output (lines 62, 66, 84, 85, 101, 102, 125, 126, 130), including the two `out_lacks` negatives that fail if the refusal calls a carrier a dispatcher and the dispatcher-held controls at 12/12b that fail if reading the holder lost the case already correct. `git diff --check` exits 0.
+Evidence: case 12h extracted with the harness fixtures into `/tmp/case12h-isolated.sh` and run against the fixed dispatcher — **20 PASS, 0 FAIL, exit 0**. The refused run's own `--log-dir` received a run log carrying the human refusal plus `terminal-record outcome=refused code=17 task=record-task resource=task refusal=held holder_program=dispatch holder_pid=54751 holder_task=record-task holder_checkout=/private/var/folders/.../co.nq8ymy actor_launched=no`. No actor launched (empty `.calls`), no hop capture, no `hop=` line, HEAD unmoved. `--status` over the same held lease exits 0, adds no file to an existing log directory and creates no directory that did not exist. The check is falsifiable and was observed failing: the first isolated run resolved `DISPATCH_BIN` to an absent path and returned 14 FAIL / 6 PASS, with every record assertion reporting `<no record>` — the same shape the live case-23 absence had. Saved output: `logs/harness-runs/unit9r2-case12h/isolated-case12h.out`, with the extracted harness beside it (uncommitted raw evidence). `bash -n` clean on both files; `git diff --check` clean.
 
-Deferral, not done here: `logs/harness-runs/` is untracked in this worktree, so the green output above lives on disk but is not in any commit. The brief bounds this commit to the two dispatcher files and this state file, so the pointer is recorded rather than committed. Whether these raw run outputs should be tracked is a Codex decision, not a widening of this unit.
+Held back, per the brief: the complete dispatcher suite is deliberately not run in this unit and belongs to the next validation unit.
+
+Deferral, recorded and not done: `LOCK_KEY` is never assigned anywhere in `dispatch.sh` — searched the whole file at HEAD and in the working tree, and the only occurrences are the explanatory comment and the use itself in `RUN_ID`. Under `set -uo pipefail`, `${LOCK_KEY:0:8}` expands to empty rather than erroring, so `RUN_ID` carries an empty key segment and the comment's claim that the checkout hash separates two same-second runs of one task from different checkouts is not true today; only `$$` separates them. This is pre-existing at HEAD, was moved verbatim by this unit rather than introduced by it, and sits outside this unit's bounded outcome, so it was left alone.
+
+Superseded context, kept because it is still the failing case: Unit 9's live hop refused correctly at exit 17 while the attended carrier held the shared lease, but `logs/harness-runs/case23-live-dispatcher/` was never created — that observed absence is this fix's failing case, and no second red replay was manufactured. Case 23 is not accepted and the same hop must not be rerun. Unit 9r1 timed out at the 900-second guard with no transition or commit, preserving only the two files this unit finished.
 
 ## Blocker
 
-None. Live cases 23 and 24 remain closed until this unit is accepted.
+None.
 
 ## Next action
 
-Codex: assess Unit 8r2 — the preserved holder-label correction validated by a complete foreground suite at 517/0 against a 510/7 red, committed with this state file. Decide close, continue, correct once, or stop, and rule on the untracked-harness-output deferral.
+Codex: assess Unit 9r2 against its completion condition — whether the preserved fix is proportionate as finished, whether the durable pre-actor exit-17 record and the `--status` no-write proof are sufficient, and whether the deliberately held full dispatcher suite plus the recorded `LOCK_KEY` deferral are acceptable to carry into the next validation unit.
