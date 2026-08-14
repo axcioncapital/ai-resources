@@ -3468,10 +3468,10 @@ Proposal: author `AGENTS.md` **for Codex** rather than deriving it. It needs onl
 
 ---
 
-## `/run-execution` Step 2.4 delegates to `qc-gate`, which cannot run the skill that step invokes
+## 2026-08-10 — `/run-execution` Step 2.4 delegates to `qc-gate`, which cannot run the skill that step invokes
 
-- **Status:** logged (pending)
-- **Severity:** medium — the step as written is unexecutable as specified; every session running it must either deviate or silently under-run the QC.
+- **Status:** logged (pending) — **re-fired 2026-08-14, third unit. See § Re-fire record.**
+- **Severity:** medium → **raised to high 2026-08-14.** Not on impact-per-instance, which is unchanged, but on recurrence: the defect has now fired on every Step-2.4 run in the batch, and the "worth checking" question below has been answered — it is three defects in three commands, spanning three of the five stages, not one.
 - **Category:** workflow template (`ai-resources/workflows/research-workflow/`) — command body, not the skill
 - **Source:** `axcion-sector-intelligence` / `architecture-engineering-services` worktree, 2026-08-10, hit while running Stage-2 Step 2.4 for unit F6.
 
@@ -3483,9 +3483,53 @@ Proposal: author `AGENTS.md` **for Codex** rather than deriving it. It needs onl
 
 **Scope caution.** Both `qc-gate.md` and `run-execution.md` exist as per-worktree copies mirrored across roughly ten sibling unit worktrees. Fixing either locally creates template drift. The fix belongs upstream in `ai-resources/workflows/research-workflow/` and should then propagate.
 
-**Worth checking while there:** whether any *other* `delegate-qc` step in the workflow names a skill whose declared `allowed-tools` exceed `qc-gate`'s. This is unlikely to be the only instance.
+**~~Worth checking while there:~~ ANSWERED 2026-08-14 — it was not the only instance. There are three.** The audit invited above was run across every `delegate-qc` step in the workflow. Three commands instruct the Read-only `qc-gate` to write a file; the rest correctly use the return-then-orchestrator-writes pattern.
 
-**Target files:** `ai-resources/workflows/research-workflow/.claude/commands/run-execution.md` (Step 2.4 — line 122 on origin/main as of 2026-08-11), and an audit of the other `delegate-qc` steps in the same workflow (lines 15, 56, 123 and 171 also name `qc-gate`).
+| # | Site (canonical, verified 2026-08-14) | Exact defect | Stage |
+|---|---|---|---|
+| 1 | `run-execution.md:122` + `:124` | Line 122 delegates to `qc-gate` and never says the agent *returns* anything; line 124 then says "Write verification report to …" **with no assignee**. The write silently lands on whoever is reading. | 2 · Step 2.4 |
+| 2 | `run-preparation.md:97` | Worse — the write instruction is **inside the delegation sentence**: "delegate to a qc-gate sub-agent, passing: … **Write verdicts to** `/preparation/answer-specs/{section}/answer-specs-qc.md`." Reads unambiguously as the agent's job. | 1 · Step 5 |
+| 3 | `run-analysis.md:87` | Worst — instructs the Read-only agent to "**Write to** …" *and* to "**Return: output file path**", a path it cannot have created. The return contract is unsatisfiable, not merely the write. | 3 · Step 5c |
+
+**The one-line fix, and it needs no invention — the correct pattern is already in the same file.** `run-execution.md:15` (the answer-spec-qc prerequisite) reads: *"Launch a qc-gate sub-agent. Pass it: … Task: apply the QC checks and **return** per-spec verdicts."* — followed by a **separate numbered step**, line 18, where the orchestrator writes. Lines 56 and 171 use the same shape. Apply that shape to the three sites above:
+
+- **`run-execution.md:122`** — append to the sentence: *"… and **return** one verification report per extract, in the skill's Output Format. The agent has no Write access; step 4 is the orchestrator's."*
+- **`run-preparation.md:97`** — split the sentence in two: delegation + *"Task: … and return per-spec verdicts."*, then renumber so the write to `answer-specs-qc.md` is the orchestrator's own step.
+- **`run-analysis.md:87`** — delete `"Write to …"`, drop `"output file path"` from the Return contract, and move the write into step 3 alongside the checkpoint.
+
+**Two further defects found at the same lines, neither previously logged:**
+
+1. **`run-execution.md:122` says "the skill's *five* verification checks." The skill has *seven*.** `research-extract-verifier` SKILL.md line 54: *"Run seven checks per extract, in order. Checks 1–6 always run; Check 7 fires only on a scarcity verdict."* Checks 6 (stop-condition / S-13 reciprocal rule) and 7 (source-surface coverage) were added after the command text was written and the count was never updated. **Both are FLAG-triggering checks** — Check 6 returns `INCOMPLETE-RESEARCH`, Check 7 returns `false-scarcity-flagged`. An agent briefed on "the skill's five checks" that stops at five skips exactly the two checks that catch unearned scarcity verdicts. This is not hypothetical: unit B3's Q1-A04 FLAG was an `INCOMPLETE-RESEARCH` finding — a Check 6 result.
+2. **The Opus/Sonnet tier mismatch is universal, not Step-2.4-specific.** The entry above framed it as a Step 2.4 problem. In fact **all three** QC skills routed through `qc-gate` declare `model: opus` / `effort: high` — `answer-spec-qc`, `editorial-recommendations-qc` and `research-extract-verifier` — while `qc-gate.md` declares `model: sonnet`. The agent's frontmatter wins. So *every* `delegate-qc` step in the pipeline runs its skill a tier below what the skill declares, unless the caller overrides per-call. The "do not re-tier `qc-gate` itself" caution below still stands, but its premise — that only one step is affected — was wrong.
+
+**Target files:** `ai-resources/workflows/research-workflow/.claude/commands/run-execution.md` (lines 122, 124), `…/run-preparation.md` (line 97), `…/run-analysis.md` (line 87). Line numbers verified against canonical at `11e4fb4`, which is level with `origin/main` (0 ahead / 0 behind, no fetch), 2026-08-14. Lines 15, 56 and 171 of `run-execution.md` also name `qc-gate` and are **correct as written** — they are the fix precedent, not defect sites.
+
+### Re-fire record
+
+The entry has existed since 2026-08-10 and the defect has fired on every Step-2.4 run since, because a backlog entry is not read by a session executing the step.
+
+**Measured across all eleven sector-unit worktrees, 2026-08-14 — the recurrence is an order of magnitude larger than this entry recorded.** Every verification report in the batch was written by an orchestrating session, because no `qc-gate` reviewer has ever been able to write one:
+
+Counts below are **own-unit reports only** — each worktree also carries the pilot unit's single `precision-components` report, which is tracked in git and therefore mirrored into all eleven checkouts; it is one report, counted once, not eleven.
+
+| Unit | Own-unit verification reports | Own checkpoints documenting the read-only defect |
+|---|---|---|
+| `architecture-engineering-services` | 18 | 1 |
+| `building-services-install` | 12 | 2 |
+| `technical-industrial-distribution` | 12 | 0 |
+| `vertical-market-saas` | 12 | 1 |
+| `industrial-software` | 10 | 1 |
+| `custom-dev-data-ai` | 8 | 2 |
+| `finance-accounting-bpo` | 7 | 1 |
+| `mobility-forestry-agri-mfg` | 6 | 1 |
+| `managed-it-cloud` | 3 | 0 |
+| `cleantech-equipment` | 2 | 0 |
+| `risk-security-compliance-services` | 0 — has not reached Step 2.4 | 1 (forward-looking) |
+| **Total** | **90** (+1 pilot = **91**) | **10, in 8 of 11 units** |
+
+**The correction that matters for prioritisation.** This is not a defect that fires occasionally and gets rediscovered by an unlucky session. **It has fired 91 times across 10 units that have reached Step 2.4, and eight of eleven units independently diagnosed it and wrote it down.** Three units (`technical-industrial-distribution`, `managed-it-cloud`, `cleantech-equipment`) absorbed 17 reports between them without recording why the write landed on the orchestrator — the deviation there is undocumented, which is the quieter half of the cost. `risk-security-compliance-services` has not yet run Step 2.4 and is the one unit that could still be spared.
+
+**The lesson, beyond the fix.** Sessions that had *already been told* still paid the tax: B3's 2026-08-14 session read the warning in its own Step-2.3b checkpoint before starting and still had to route around it by hand. Eight independent diagnoses did not prevent the ninth. Logging demonstrably does not stop this defect — only correcting the three command bodies does, and the correction is the three one-line rewrites specified above. It is a ~15-minute fix that 91 report-writes have now been spent avoiding.
 
 **Verified against current canonical, 2026-08-11** — not merely against the local checkout, which is 512 commits behind origin. On `origin/main`: `workflows/research-workflow/.claude/commands/run-execution.md` still delegates Step 2.4 to `qc-gate`; `workflows/research-workflow/.claude/agents/qc-gate.md` is still `tools: Read` / `model: sonnet`; `skills/research-extract-verifier/SKILL.md` still declares `model: opus` / `allowed-tools: Read, Write`. The defect is live on canonical, not an artifact of a stale local copy. The same check confirms the ladder-depth finding above: `origin/main:skills/research-extract-creator/SKILL.md` still has zero occurrences of "ladder" or "depth".
 
@@ -3862,3 +3906,25 @@ non-symlink copy — verify whether it carries the same literal.
 **Related but distinct, and deliberately not folded in:** `building-services-install`'s own `preparation/answer-specs/.../chapter-02-specs.md` § Q4-A07 still says "Tag BASELINE explicitly", contradicting both its own A03 rule and that unit's Decision G1-3 compound `STRUCTURAL-to-BASELINE` label. That is a unit-local approved Stage-1 artifact and an operator call for that unit, not a shared-resource item — recorded in the unit's Step-2.4 pass-2 checkpoint.
 
 **Target files:** `ai-resources/workflows/research-workflow/reference/source-class-hierarchy.template.md` (verified clean — for reference only); the unit-deployment step that instantiates it; and `reference/source-class-hierarchy.md` in each unit worktree.
+
+---
+
+## 2026-08-14 — Forked 33-line `prime.md` in unit worktrees never allocates a session marker (PENDING)
+
+**Status:** PENDING — logged for the Friday cadence, deliberately not fixed at source this session.
+
+**Symptom.** In `projects/axcion-si-worktrees/architecture-engineering-services`, `/prime` writes no session marker, no `logs/.prime-mtime` and no today-dated `## {date} — Session S{N}` header. `/session-start` Step 3 therefore hits its hard-fail on an unresolved marker, and `/session-plan` Step 0 would hit the same. Observed on 2026-08-13 (S1-e76, worked around by hand-seeding) and 2026-08-14 (S2-dc4, worked around by invoking the canonical allocator directly).
+
+**Verified cause.** `.claude/commands/prime.md` in that worktree is a **33-line regular file dated 2026-07-30 15:06** (the worktree's creation timestamp) with no reference to `prime-session-entry.sh`, `.session-marker*` or `.prime-mtime`. Canonical `ai-resources/.claude/commands/prime.md` is **264 lines** and calls the allocator at **line 159**. The fork predates the marker system and was never updated. It is one of **32 regular files** among 109 entries in that worktree's `.claude/commands/` (the other 77 are symlinks to canonical) — the SessionStart symlink hook does not clobber an existing regular file, so the stale fork is invisible to the drift warning that covers `consult.md` / `note.md` / `session-plan.md`.
+
+**Why this is a guard failure, not an inconvenience.** `S{N}` is allocated from a namespace shared by every worktree of the repo — `prime-session-entry.sh`'s `allocate_marker` unions four sources precisely to see sibling checkouts (committed headers on other refs via (c), in-flight claims in the shared git common dir via (d)). With no allocation:
+1. Two live worktree sessions can write the same `## {date} — Session S{N}` header, colliding on merge and breaking the `grep -Fxq` header-existence test that `/prime`, `/session-start` and `/session-plan` all depend on. This is the 2026-07-13 S6/S11 incident class, which (c) and (d) were added to close.
+2. **The workaround is the sharper risk.** Hand-seeding can produce the partial state — shared `logs/.session-marker` written, per-id `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}` not — that `docs/session-marker.md` documents as yielding a silent `FOREIGN=0` false negative in `/wrap-session` Step 3.5's foreign-write detection. The guard then reports clean while disarmed. This is a **both-or-neither invariant violation**, and the doc is explicit that it is not closable reader-side.
+
+**Scope — asserted only as far as verified.** Confirmed in `architecture-engineering-services` only. A memory note dated 2026-08-13 states the same fork is present in all eleven unit checkouts; **that is unverified here** and should be checked per-worktree before any propagation, not assumed.
+
+**Proposed fix (two parts, different tiers).**
+- *Per-worktree, trivial:* replace the forked `prime.md` with a symlink to canonical, as the other 77 commands already are. Seconds per checkout; removes the manual workaround permanently.
+- *Systemic, Friday-cadence:* (a) decide whether the SessionStart symlink hook should report — not silently skip — a shared command shadowed by a stale regular file, since that is exactly how this stayed invisible; (b) audit the other 31 regular files in that worktree's `.claude/commands/` for the same shadowing; (c) fold into the standing propagation guidance that `CLAUDE.md` and forked command files are the two things a narrow copy gets wrong in opposite directions (see the 2026-08-13 `CLAUDE.md` identity-overwrite incident).
+
+**Source:** `projects/axcion-si-worktrees/architecture-engineering-services/logs/session-notes.md`, sessions S1-e76 (2026-08-13) and S2-dc4 (2026-08-14).
