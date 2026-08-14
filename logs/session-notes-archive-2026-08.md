@@ -3760,3 +3760,77 @@ None — the single finding this session produced was queued.
 
 ### Next Steps
 P0-F needs no follow-up; the next Harness v0.2 work is whichever Phase 0 item Codex frames next. Two things are worth doing before the next direct-route session: fix the staging-tripwire misfire (queued as a `high` finding — it blocks commits, and this is its third occurrence as a class), and consider a live attended dispatcher hop under the new flag, which would convert the current *requested*-policy evidence into *effective*-policy evidence.
+## 2026-08-09 — Closed work-loop-v2-production-readiness-policy; operator bypassed Codex assessment
+
+### Summary
+The work-loop-v2-production-readiness-policy task (a discovery unit at `turn: codex`) was closed
+without Codex. The operator directed that Codex not be used for this assessment; a `/research`
+subagent independently re-verified all eight of the discovery's findings against the live repository
+and found one had been overtaken by a commit made one day after the discovery was written. Acting on
+that research verdict, four of the five planned implementation units were built and committed
+(session-identity init in the dispatcher, the playbook's dispatched-entry documentation, a stale
+header line, and a one-line correction to the closed parallel-worktree proof record); the fifth
+(a hook edit) was dropped as superseded. A second pass then found and fixed two live documents whose
+worktree-availability language had gone stale as a direct result of closing the first state file.
+
+### Decisions Made
+- **Operator decision: do not route this task's assessment through Codex.** A `/research` subagent
+  replaced the Codex assessment step the state file was waiting on. Recorded in the closed state
+  file's Accepted limitations as an operator-directed departure from the normal close path, not as a
+  protocol change.
+- **D1 (shared writer) amended, not adopted as recommended.** The discovery recommended editing
+  `.claude/hooks/log-write-activity.sh` to suppress telemetry for dispatched actors — the plan's only
+  structural-change class and only risk-aware-review requirement. The research found commit `9c66f26`
+  (2026-08-07, one day after the discovery) had already added `dispatch.sh --unattended`, which
+  disables the child's hooks entirely. The ambient writer cannot fire in a contained hop, so the hook
+  edit would have bought nothing. Replaced with a launch precondition: dispatched runs use
+  `--unattended`. Unit U2 dropped as a result — the only structural-class step in the plan is gone.
+- **D2–D5 approved as the discovery recommended:** fan-out capped at 2 (the only number ever
+  measured); the dispatcher stays under `plans/`, invoked by explicit path, not installed as a
+  command; the operator creates every worktree, never the dispatcher; the closed proof record's
+  claim-3 mechanism is corrected rather than left wrong.
+- **U1's first implementation was corrected mid-build.** The initial `init_session_identity()` hard-
+  failed (exit 32) whenever the checkout lacked `logs/scripts/prime-session-entry.sh`, which is every
+  fixture in the dispatcher's own test suite — the edit dropped the harness from `pass=368 fail=0` to
+  `pass=177 fail=138`, self-caused, not environmental. Changed to a visible skip for a checkout
+  without the allocator; exit 32 is now reserved for a checkout that has the allocator and still
+  cannot complete the init.
+- **Stale-reference cleanup (second pass, this session).** Closing the readiness-policy state file to
+  its four-heading record broke two live documents' line-number citations into it
+  (`unattended-operation-plan-v0.2.md`, `handoff-automation-spike/README.md`), and both still
+  described the worktree path as gated behind a hook fix that was just dropped. Both corrected to cite
+  the closing record by section and to state the real clearance condition: worktrees are available for
+  **contained** (`--unattended`) runs only, because an attended session's hooks stay live and the
+  ambient writer still fires there. `unattended-operation-plan-v0.1.md` was left untouched — it carries
+  a SUPERSEDED banner and is retained as history, not corrected to match the present.
+
+### Risky actions
+None. No live model was launched through the dispatcher; every check used `--actor-cmd true` against
+throwaway clones under the scratchpad, never the operator's real checkouts or worktrees.
+
+### Findings Declined
+- `run-manifest.sh close` hard-errored (exit 2) again: this session ran no `/prime`, so it wrote no
+  per-id marker and the shared `logs/.session-marker` held no today-dated entry either. Declined as a
+  new finding — reproduction, not new information, of the already-logged open finding at
+  `## 2026-08-07 — run-manifest.sh close hard-errors on a genuinely markerless session instead of the
+  documented stub-and-continue`. Per the wrap's own ADVISORY RULE, surfaced and the wrap continued
+  without a manifest for this session.
+- **My own U1 mistake — the exit-32 regression across every fixture in `dispatch.test.sh`.** Declined
+  as a queueable finding: self-corrected within this session, the fix is committed, and the harness
+  delta against a fresh control run is zero (`pass=368 fail=0` both before and after). No residual
+  defect to track.
+
+### Next Steps
+The capability this task authorized is still unproven in real use — no dispatched run has ever
+launched a live Claude or Codex child, and no two Work Loops have run in parallel in a real checkout.
+The first live `--unattended` run against a real worktree is separately authorized work, not implied
+by this close. Two other Work Loop v2 threads remain open at `turn: codex`, untouched by this session:
+`work-loop-v2-intake-router` and `work-loop-v2-phase1a-full-descendant-termination`.
+
+### Open Questions
+None.
+
+## 2026-08-11 — Session S1
+
+**Work:** Work Loop v2 dispatcher run — task axcion-harness-v0-2-phase0-p0-d-monday-prep (headless)
+- Files in scope: logs/work-loop/, plans/work-loop-v2-v0.2/handoff-automation-spike/, logs/friction-log.md, logs/session-notes.md, plans/work-loop-v2-v0.2/handoff-automation-spike/runs/, logs/work-loop/axcion-harness-v0-2-phase0-p0-d-monday-prep.md

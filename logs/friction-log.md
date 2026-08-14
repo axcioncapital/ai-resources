@@ -353,6 +353,25 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 11:16 — logs/work-loop/eval-v0-3-restart.md
+- 10:27 — logs/work-loop/eval-v0-3-restart.md
+- 10:26 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:24 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:24 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:24 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:24 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:24 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:24 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:23 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:23 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:23 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:23 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:23 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
+- 10:21 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-eval-v0-3/82a928d1-cfb7-4da5-9cbc-c849e9fa7fdd/scratchpad/u7/minimal/config.toml
+- 10:20 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-eval-v0-3/82a928d1-cfb7-4da5-9cbc-c849e9fa7fdd/scratchpad/u7/mutant/config.toml
+- 10:20 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-eval-v0-3/82a928d1-cfb7-4da5-9cbc-c849e9fa7fdd/scratchpad/u7/old/config.toml
+- 10:14 — logs/work-loop/eval-v0-3-restart.md
+- 10:14 — logs/work-loop/eval-v0-3-restart.md
 - 09:42 — logs/work-loop/eval-v0-3-restart.md
 - 09:42 — logs/work-loop/eval-v0-3-restart.md
 - 09:40 — plans/work-loop-v2-v0.2/context-engineering/trials/ev-3-ce-9-run-sheet.md
