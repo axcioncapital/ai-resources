@@ -1662,6 +1662,55 @@ check "pack  core § 4 still lists exactly five active content fields" \
 check "pack  a longer timeout is still refused as the remedy" \
   "grep -qi 'A longer timeout is not the remedy for an oversized unit' '$SKILL_F'"
 
+# --- readiness race: a claimed hand-off is reconciled before absence is claimed --
+# The incident: Codex read `turn: claude` once, concluded Claude had not completed the
+# hand-off, and the hand-off commit became visible immediately afterwards. Commit
+# 4800329c defined the shorthand but added no recheck, so one stale read still
+# licensed a claim about Claude's activity.
+CORE_F="plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md"
+SKILL_F=".agents/skills/work-loop-v2/SKILL.md"
+
+# Core owns the semantic rule: one bounded reconciliation before a mismatch is reported.
+check "race  core requires one reconciliation before reporting a mismatch" \
+  "command grep -qi 'reconciles once' '$CORE_F'"
+check "race  the recheck names the latest commit affecting that exact task file" \
+  "command grep -qi 'latest commit affecting that exact task file' '$CORE_F'"
+check "race  the recheck rereads the file once immediately" \
+  "command grep -qi 'rereads the file once immediately' '$CORE_F'"
+# Three assertions below match a PHRASE that legitimately wraps across lines in the
+# prose. Normalize whitespace first: reflowing the source to suit a line-based grep
+# would be shaping the artifact to the test rather than testing the artifact.
+flat(){ tr -s '[:space:]' ' ' < "$1"; }
+
+# Bounded: the fix must not become polling, waiting, or a retry loop.
+check "race  the reconciliation is bounded, not polling or waiting or retrying" \
+  "flat '$CORE_F' | command grep -qi 'not polling, not waiting, not retrying the other actor'"
+# The response is constrained to the discrepancy, not to a claim about the other actor.
+check "race  a persistent conflict reports the discrepancy and the inability to assess" \
+  "command grep -qi 'report the discrepancy and the resulting inability to assess' '$CORE_F'"
+check "race  no actor may claim the other did not complete without process evidence" \
+  "flat '$CORE_F' | command grep -qi 'unless specific process evidence establishes that separate claim'"
+
+# Codex side owns the concrete procedure, and defers to core rather than competing with it.
+check "race  the Codex skill reconciles before reporting" \
+  "command grep -qi 'reconcile once before reporting anything' '$SKILL_F'"
+# Deference must key on text unique to THIS rule: an earlier dispatcher paragraph
+# already carries a generic "exactly as core § 4 requires", which would pass blind.
+check "race  the Codex skill defers to core for the rule" \
+  "command grep -qi 'owns the rule; this is the procedure' '$SKILL_F'"
+check "race  the evidence-limited response is stated verbatim" \
+  "flat '$SKILL_F' | command grep -qi 'I cannot assess it until those sources converge'"
+check "race  visibility evidence is distinguished from evidence about Claude" \
+  "command grep -qi 'evidence about visibility, not about Claude' '$SKILL_F'"
+
+# Preserved boundaries: this unit may not weaken what already held.
+check "race  shorthand still never overrides the state file" \
+  "command grep -qi 'never overrides the state file' '$SKILL_F'"
+check "race  several matching tasks still require disambiguation" \
+  "command grep -qi 'brief names and task ids and ask which one' '$SKILL_F'"
+check "race  no new frontmatter key was introduced" \
+  "[ \"\$(command grep -c '^turn: ' '$TRUE_F')\" = '1' ]"
+
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \
   "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|fixture-slice2|fixture-slice3|fixture-target|$CODEX_TASK'"

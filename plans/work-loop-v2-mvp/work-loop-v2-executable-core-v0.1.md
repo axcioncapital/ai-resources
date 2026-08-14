@@ -291,6 +291,24 @@ request, scope authority or permission to override `turn:`. The receiving actor 
 file and proceeds only when the recorded turn names it; if several state files name it, the actor
 asks which brief the operator means.
 
+**When the shorthand conflicts with what the receiving actor can see.** The operator's claim and the
+visible repository can disagree for a moment: the hand-off is committed, but is not yet visible in
+the checkout being read. Before reporting a mismatch, the receiving actor **reconciles once** — it
+checks the latest commit affecting that exact task file, and rereads the file once immediately. That
+is one bounded reconciliation, and it is deliberately narrow: not polling, not waiting, not retrying
+the other actor, and never permission to override `turn:`.
+
+If those sources converge on the turn the shorthand claims, proceed normally. If they still do not
+converge, **report the discrepancy and the resulting inability to assess** — and nothing beyond it. A
+momentary disagreement about what is visible is not evidence about what the other actor did: the
+durable sources prove what is visible and whose turn is recorded, and no actor may infer or state
+that the other has not completed its work unless specific process evidence establishes that separate
+claim.
+
+> *Added 2026-08-14. This clause was approved on its own; the document's header still reads
+> **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
+> approval of the rest of the file.*
+
 ### An approved courier may carry the turn
 
 Carrying the turn is transport, not judgment. The operator may approve a **courier** — any mechanism

@@ -167,8 +167,20 @@ Sending the operator to Claude when the turn is theirs stalls the loop as surely
 *"The other AI has finished its part; now it is your turn to review or act."* Treat it as the
 operator carrying the already-recorded turn, not as yes/no approval, a task id, a new request, or
 permission to change scope. Read the state file and confirm `turn: codex` before acting. With exactly
-one matching open task, take that turn; with none, report the mismatch; with more than one, list the
+one matching open task, take that turn; with more than one, list the
 brief names and task ids and ask which one. The shorthand never overrides the state file.
+
+**Where what you read conflicts with the operator's claim, reconcile once before reporting anything.**
+Core § 4 owns the rule; this is the procedure. Check the latest commit affecting that exact task file,
+then reread the file once immediately. If they converge on `turn: codex`, proceed. If they still do
+not, report only the discrepancy and what it prevents — for example:
+
+> Your message says Claude completed the handoff, but it is not yet visible in this checkout.
+> I cannot assess it until those sources converge.
+
+Do not say that Claude has not done the work, has stalled, or is still running. One snapshot is
+evidence about visibility, not about Claude's activity, and the two are separate claims. This is one
+recheck, not polling, waiting or retrying Claude.
 
 **The folder is core § 4's, not a choice.** Create `logs/work-loop/` if it does not exist. There is no fallback path — if you cannot write there, say so and stop.
 
