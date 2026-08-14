@@ -15,69 +15,75 @@ Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; chan
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 3a2d — capture the complete owner-helper regression result.
+Standard. Discovery mode. Unit 3a2e — classify the six owner-suite failures without changing or rerunning anything.
 
 Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
 
 ## Brief
 
-The complete ordinary carrier suite is accepted at 316/0 and the complete ordinary dispatcher suite is accepted at 482/0. Claude's Unit 3a2c handback said rollout step 4 was closed, but the approved proposal's step 4 explicitly also requires the existing owner-helper suite. That omission is corrected here without reopening either accepted suite or adding implementation work.
+The rollout step 4 verification now has carrier 316/0 and dispatcher 482/0, but the ordinary owner-helper suite is red at exit 1, 86/6. The six failures occur in dispatcher-backed cases T1, T3, T4 and F1. Before any correction is framed, this discovery unit must establish whether they are actual Phase 1 regressions, obsolete fixture or packaging assumptions exposed by the new required lease helper, environmental interference, or more than one cause. This classification is technical repository investigation owned by Claude; Codex will assess the returned evidence and frame any correction separately.
 
-Named unknown: whether the complete ordinary `logs/scripts/work-loop-owner.test.sh` suite is green on the current committed implementation.
+Named unknown: what exact cause produced each of the six recorded failures, and whether one minimal test-fixture/packaging correction can restore the owner suite without weakening its assertions or changing production behavior.
 
-Required outcome: run that suite exactly once, synchronously in the foreground, and write its complete stdout/stderr plus an unambiguous final exit-code line to `logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out`. The shell invocation must not return until the suite terminates and the exit-code line has been appended. Only after that command returns, read the durable output footer and record the exact exit code and passed/failed totals in this state file. If failures exist, record their case/assertion names without fixing, diagnosing or rerunning anything.
+Required outcome: inspect the preserved raw output `logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out`, the setup and dispatcher-fixture construction in `logs/scripts/work-loop-owner.test.sh`, and only the directly relevant helper-loading/admission paths in `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, `logs/scripts/work-loop-owner.sh`, and `logs/scripts/work-loop-lease.sh`. Trace each failed assertion to the process exit/message or setup condition that made it fail. Return one evidence-backed classification for each failure cluster, state whether the production implementation is implicated, and identify the smallest justified correction surface if a correction is needed.
 
 Constraints and evidence:
 
-- Verify the suite path, then run the complete ordinary suite once from its intended directory.
-- Foreground execution is mandatory. Do not use `&`, `nohup`, `disown`, a detached process, an asynchronous/background tool call, or any mechanism that lets the actor finish before the suite. There is no later turn in the one-shot `claude -p` process.
-- Use one foreground shell sequence that redirects stdout/stderr to the exact new raw-output path, captures the suite exit code even when nonzero, and appends exactly `SUITE_EXIT=<code>` after termination. Wait for that sequence to return before touching the state file.
-- Preserve the raw output whether green or red. Do not stage or commit it.
-- Do no source inspection, baseline reconstruction, diagnosis or remediation. Do not edit any source or test file, run any other suite, or repeat this suite.
+- This is inspection only. Do not edit any source, test, instruction or raw-output file. Do not run or rerun the owner suite, dispatcher suite, carrier suite, or any mutant.
+- Do not construct a new fixture or implement the proposed correction. A short read-only shell probe is permitted only if static inspection and the preserved raw output cannot settle a named fact; record the exact fact and result.
+- Verify-first hypothesis, not a requirement: the owner suite may copy the dispatcher and owner helper into temporary fixture repositories without also packaging the newly required lease helper, causing fail-closed admission before the assertions reach their intended behavior. Confirm or falsify this against exact fixture code and failure evidence; do not assume it.
+- For each cluster T1, T3, T4 and F1, report the observed exit/message path, the fixture/helper condition causing it, whether the existing assertion remains semantically correct, and whether the issue is production code, test fixture packaging, environment, or mixed.
+- Distinguish a correction that restores the intended fixture from any change that would weaken fail-closed helper loading. Do not recommend skipping the shared lease helper or changing expected production exit behavior merely to make the suite green.
 - Edit and commit only this state file by explicit pathspec. Hand back at `turn: codex` with the state commit hash.
 
-The shared lease helper's own suite is already accepted at 50/0 from its implementation unit and is not repeated here. Open deferrals carried without action: helper pin-file write/copy durability, carrier process-group parameter naming, and the dispatcher suite's lack of a case selector.
+Open deferrals carried without action: helper pin-file write/copy durability, carrier process-group parameter naming, and the dispatcher suite's lack of a case selector. None belongs in this diagnosis.
 
-Stop after recording the one completed result, whether green or red. If the suite cannot start, record that fact without substitution.
+Stop and hand back if the failures cannot be classified from the bounded surfaces above; name the exact missing evidence rather than widening the search.
 
-Completion condition: one complete ordinary owner-helper suite has run once in the foreground; its raw output and appended exit code exist at the exact path above; the exact result is recorded without analysis or source changes; only the state file is committed; and the task hands back at `turn: codex`.
+Completion condition: all six failures are accounted for by evidence at the case/fixture/exit-path level; the production-versus-fixture-versus-environment classification and smallest correction surface are explicit; nothing except this state file changed; and the task hands back at `turn: codex`.
 
 ## Latest result
 
 Inspected (2026-08-14):
-- Claim (1) — the owner-helper suite exists at `logs/scripts/work-loop-owner.test.sh`: HOLDS — listed `logs/scripts/work-loop-owner.test.sh`; found a regular file, 34501 bytes, whose header states `Usage:  bash logs/scripts/work-loop-owner.test.sh` and resolves `REPO_ROOT` as `logs/scripts -> logs -> checkout root`.
-- Claim (2) — the approved proposal's rollout step 4 also requires the owner-helper suite: HOLDS — read `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-and-task-aware-worktrees-implementation-proposal-2026-08-13.md` line 490; found "**Re-run every existing suite** from a clean checkout: dispatcher, carrier, owner helper", with the recorded baseline "owner 92/0" at line 491.
-- Claim (3) — the required raw-output path is new: HOLDS — searched `logs/harness-runs/` for `owner-suite-unit-3a2d-foreground-20260814.out`; no match before the run.
 
-Unit 3a2d — the complete ordinary owner-helper suite ran once, synchronously in the foreground, from the checkout root. It is **RED: exit 1, 86 passed, 6 failed** (summary line `T1..T13 + F1..F3: 86 passed, 6 failed`). Recorded without diagnosis, remediation or rerun, as the brief requires.
+- Claim (1): HOLDS — the preserved raw output `logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out` exists and is readable; it records `SUITE_EXIT=1` and `86 passed, 6 failed`.
+- Claim (2): HOLDS — the four bounded surfaces all exist: `logs/scripts/work-loop-owner.test.sh` (696 lines), `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` (2685), `logs/scripts/work-loop-owner.sh` (413), `logs/scripts/work-loop-lease.sh` (276).
+- Claim (3): HOLDS — the six failures fall in T1 (2), T3 (1), T4 (2) and F1 (1), and every one is dispatcher-backed; raw output lines 12, 16, 31, 38, 43, 119.
+- Verify-first hypothesis: **CONFIRMED** — searched `logs/scripts/work-loop-owner.test.sh` for `lease`; the only matches are lines 676–679, which concern the `.owner.lock` mutation lock. The suite never references `work-loop-lease.sh`, so its fixture repositories are built without it.
 
-The six failing assertions, by case:
+**Unit 3a2e classification — one cause, all six failures; production code is NOT implicated.**
 
-- T1 — same task, same checkout, second dispatcher refused across different TMPDIR roots: `control — a shared TMPDIR root is refused (passes on the baseline)` (line 11); `a DIFFERENT TMPDIR root is refused too` (line 16).
-- T3 — a second task entering a claimed checkout is refused, and the holder is named: `a second dispatcher on a DIFFERENT task in the same checkout is refused` (line 31).
-- T4 — fan-out 2 on separate worktrees completes with no cross-task paths: `worktree 1 completes` (line 38); `worktree 2 completes` (line 43).
-- F1 — an unavailable ownership check is distinguishable from a clean one: `the dispatcher REFUSES a checkout with no helper` (line 119).
+Root cause: `new_repo()` in `logs/scripts/work-loop-owner.test.sh` (lines 60–81) copies only the owner helper into each fixture repository (line 74, `cp "$OWNER_BIN" .../work-loop-owner.sh`). It never copies `work-loop-lease.sh`. `dispatch.sh` requires that library fail-closed at lines 671–682 and exits 11 before any lock or ownership code can run, so every dispatcher-backed assertion dies at the lease gate. All six raw-output failures carry the identical message `STOP [11] the shared lease library is missing or unreadable: <fixture>/logs/scripts/work-loop-lease.sh`.
 
-Evidence: `logs/harness-runs/owner-suite-unit-3a2d-foreground-20260814.out` holds the complete stdout/stderr of the single run with the appended final line `SUITE_EXIT=1`. The file is untracked and deliberately not staged. The check can fail in both directions: the same harness returned `SUITE_EXIT=0` shape for the carrier and dispatcher runs of Units 3a2b and 3a2c, and this run's own Case 0 (harness falsifiability with the helper absent) passed, so the six failures are the suite discriminating, not the harness collapsing.
+Ordering is what makes the gate reach every cluster: the lease gate (dispatch.sh:671) precedes the task lock (exit 17, dispatch.sh:722) and the ownership admission (exit 35, dispatch.sh:2358–2369).
 
-Recorded against the proposal's baseline for comparison only, with no reconciliation attempted here: the proposal records owner `92/0`; this run totals 92 assertions with 6 failing. State commit `58e1ed25`, state-only.
+Per cluster — observed path, causing condition, assertion status, category:
 
-Accepted Unit 3a2c: the complete ordinary dispatcher suite ran once synchronously and is green at **exit 0, pass 482, fail 0**. Durable evidence is `logs/harness-runs/dispatcher-suite-unit-3a2c-foreground-20260814.out`; state commit `59d095a8`, pointer commit `e2a39065`, both state-only.
+- **T1** (2 failures, expected 17, got 11): fixture `repo.sUcus0` from `new_repo()`. Both the backgrounded holder and the contender die at the lease gate, so no lock is ever taken and the TMPDIR-independence claim is never exercised. The control at line 184 is annotated "passes on the baseline", confirming a fixture regression exposed by the newly required helper rather than a behavior change. Assertion semantically correct. **Test fixture packaging.**
+- **T3** (1 failure, expected 17, got 11): fixture `repo.pm7bJD` from `new_repo()`. Same holder/contender pattern at lines 226–232. The three owner-only T3 assertions above it passed, isolating the fault to the dispatcher half. Assertion semantically correct. **Test fixture packaging.**
+- **T4** (2 failures, expected 0, got 11): worktrees `wt-t4-one-*` / `wt-t4-two-*` added by `add_worktree()` (lines 85–93) from a `new_repo()` base whose commit tracked only the owner helper (lines 75–76), so the worktrees inherit the same gap. Assertions semantically correct. **Test fixture packaging.**
+- **F1** (1 failure, expected 35, got 11): fixture `repo.QYkWiB` from `new_repo()`; the case deliberately removes the owner helper (lines 536–538) to prove the dispatcher refuses at 35, but the lease gate fires first. Assertion semantically correct and still the right assertion. **Test fixture packaging.**
 
-Accepted Unit 3a2b: the complete ordinary carrier suite ran once synchronously and is green at **exit 0, passed 316, failed 0**. Durable evidence is `logs/harness-runs/carrier-suite-unit-3a2b-foreground-20260814.out`; state commit `8be728e9`, pointer commit `f9125746`, both state-only.
+Production behavior is correct and independently confirmed green. Exit 11 is documented deliberate design in `dispatch.sh` lines 128–136 and 653–670 — an absent lease is not a taken lease, kept distinct from the 33/34/35 ownership taxonomy — and `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh:762` asserts `expect_rc 11` for an absent lease library inside the suite that passed 482/0. Neither environment nor interference is implicated: the failures are deterministic, identical in message, and confined to fixtures missing one file. `work-loop-owner.sh` does not source the lease library, which is why all 86 owner-only assertions still pass.
 
-Accepted implementation and targeted controller evidence through Unit 3a2a remains: shared helper and dispatcher through `5255628a`; carrier shared lease at `04de80a7`; carrier pin correction at `2bef1acf`; cross-transport 12e fixture correction at `33d90df9` with state pointer `50874ea2`, targeted pass 21/fail 0 and stale-oracle mutant pass 19/fail 2.
+Smallest justified correction surface — `logs/scripts/work-loop-owner.test.sh` only, mirroring the already-green dispatcher suite: add a `LEASE_BIN` resolution beside `OWNER_BIN`/`DISPATCH_BIN` (lines 30–31), matching `dispatch.test.sh:33`, and one `cp "$LEASE_BIN" "$d/logs/scripts/work-loop-lease.sh"` inside `new_repo()` before the existing `git add logs/scripts` at line 75, matching `dispatch.test.sh:92`. Because line 75 stages the whole `logs/scripts` directory and line 76 commits it, the library becomes tracked — which also satisfies the fixture's own tracked-not-loose requirement (comment, lines 71–73) and propagates to T4's worktrees through the base commit. No production file, no expected exit code and no assertion needs to change.
+
+This correction restores the intended fixture; it does not weaken fail-closed helper loading. Explicitly rejected as the wrong fix: making the suite green by relaxing any expectation to 11, by skipping the shared lease helper, or by altering the dispatcher's exit behavior.
+
+Two coverage observations, both consequences of the same root cause and not separate defects — the current 86 passes overstate coverage: T4's two passing cross-task-path assertions (raw output lines 48–49) are vacuous, because nothing ran, `HEAD` equals `BASE`, and the `git diff` range at test lines 268–273 is empty; and F1's "nothing was committed" pass (line 124) currently passes for the wrong reason, since exit 11 also commits nothing. Both become genuine evidence once the fixture is complete.
+
+Prior accepted results carried unchanged. Unit 3a2d, not accepted as a green gate: owner suite red at exit 1, 86/6 against the recorded 92/0 baseline; raw evidence as above; state commit `58e1ed25`, pointer commit `72f240a0`.
+
+Accepted Unit 3a2c: complete ordinary dispatcher suite **482/0**, exit 0; durable output `logs/harness-runs/dispatcher-suite-unit-3a2c-foreground-20260814.out`; state `59d095a8`, pointer `e2a39065`.
+
+Accepted Unit 3a2b: complete ordinary carrier suite **316/0**, exit 0; durable output `logs/harness-runs/carrier-suite-unit-3a2b-foreground-20260814.out`; state `8be728e9`, pointer `f9125746`.
+
+Accepted implementation and targeted controller evidence through Unit 3a2a remains: shared helper and dispatcher through `5255628a`; carrier shared lease at `04de80a7`; carrier pin correction at `2bef1acf`; cross-transport 12e fixture correction at `33d90df9` with state pointer `50874ea2`, targeted 21/0 and stale-oracle mutant 19/2.
 
 ## Blocker
 
-None.
+None. The owner-suite gate is still red, but the cause is now classified with evidence: a single test-fixture packaging omission, with production code confirmed uninvolved. A correction can now be framed.
 
 ## Next action
 
-Codex: assess Unit 3a2d. The named unknown is resolved and the answer is negative — the complete ordinary owner-helper suite is **red at exit 1, 86/6** on the current committed implementation, against the proposal's recorded owner baseline of 92/0. Rollout step 4 is therefore not satisfied: two of the three existing suites are green (carrier 316/0, dispatcher 482/0) and the third is not.
-
-Decide how the six failures are framed before any further work: whether they are a regression introduced by the Phase 1 shared-lease change, a harness expectation that Phase 1 intentionally superseded, or an environment-dependent result. That framing is Codex's, not Claude's — no diagnosis was performed here, per the brief.
-
-Deferrals carried without action, unchanged: helper pin-file write/copy durability; carrier process-group parameter naming; the dispatcher suite's lack of a case selector.
-
-Noted this unit and not acted on: the raw output file is untracked and stays uncommitted, so the six failing assertion names in `## Latest result` are the only durable record of this run inside Git. If that record must survive a clean checkout, committing the harness output is a decision for Codex or the operator, not a Claude fix.
+Codex: assess the Unit 3a2e diagnosis. All six failures trace to one cause — `new_repo()` in `logs/scripts/work-loop-owner.test.sh` does not package `work-loop-lease.sh`, so `dispatch.sh` fail-closes at exit 11 before the assertions reach their intended paths. Decide whether to frame a correction unit bounded to that one test file (add `LEASE_BIN`, add one `cp` in `new_repo()`), and whether the owner suite should also gain its own absent-lease exit-11 assertion, which the dispatcher suite has and the owner suite does not.
