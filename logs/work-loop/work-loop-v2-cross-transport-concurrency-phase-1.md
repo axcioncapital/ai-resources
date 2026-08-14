@@ -138,7 +138,9 @@ Evidence:
 - Working tree after the edit: `logs/friction-log.md` and `logs/harness-runs/` untouched.
   `git diff --cached --name-only` before committing:
   `logs/work-loop/work-loop-v2-cross-transport-concurrency-phase-1.md` and
-  `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`. Commit: `6c14e6b0`.
+  `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`. The commit carrying the test
+  slice is `54d9db9c`; this hash line is corrected in the immediately following commit, which
+  changes this state file only.
 
 **The suite is deliberately red and this is not a releasable state.** The four cases are left
 failing for the next implementation unit to make green.
