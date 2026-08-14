@@ -23,6 +23,11 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 SUT="$HERE/carry-turn.sh"
+# The shared live-lease library. carry-turn.sh sources it out of the CHECKOUT it
+# drives — the same resolution the ownership helper uses — so every fixture has to
+# carry it or the fixture is not modelling a real checkout. Section 12c removes it
+# deliberately, and that must stay the only case without it.
+LEASE_BIN="${LEASE_BIN:-$(cd "$HERE/../.." && pwd -P)/logs/scripts/work-loop-lease.sh}"
 
 PASS=0
 FAIL=0
@@ -235,22 +240,61 @@ mkstate_in() { # checkout, task-id, turn
   } >"$1/logs/work-loop/$2.md"
 }
 
-# The launcher's lock path for a checkout. Mirrors acquire_lock: the CANONICAL
-# checkout path and nothing else. If this and the launcher ever disagree, every
-# lock assertion silently passes against a directory the launcher never looks at
-# — which is exactly what happened once before, when this hashed the raw fixture
-# path while the launcher hashed the /private/var canonicalization of it.
-lock_path_for() { # checkout -> lock dir path
+# The LEGACY lock path for a checkout: the CANONICAL checkout path under
+# ${TMPDIR}, and nothing else. This is where the launcher kept its single lock
+# before the shared lease, and it still READS it for one release so that a carry
+# already in flight when the change landed is not invisible to the new code. If
+# this and the launcher ever disagree, every lock assertion silently passes
+# against a directory the launcher never looks at — which is exactly what
+# happened once before, when this hashed the raw fixture path while the launcher
+# hashed the /private/var canonicalization of it.
+lock_path_for() { # checkout -> legacy lock dir path
   local rp key
   rp="$(cd "$1" && pwd -P)"
   key="$(printf '%s' "$rp" | shasum -a 256 | cut -c1-16)"
   printf '%s\n' "${TMPDIR:-/tmp}/axcion-harness-v0.2.$key.lock"
 }
 
-plant_lock() { # lock-dir, pid, task-id
+plant_lock() { # legacy lock-dir, pid, task-id
   rm -rf "$1"; mkdir -p "$1"
   printf '%s\n' "$2" >"$1/pid"
   printf '%s\n' "$3" >"$1/task"
+}
+
+# The SHARED lease locations, mirrored from logs/scripts/work-loop-lease.sh. They
+# are rooted in the repository's Git common directory rather than in ${TMPDIR},
+# which is what makes them visible to every linked worktree of one repository and
+# to the other transport. Two resources, not one composite key: a task lease and
+# a checkout lease. Defined once here, above every user, for the same reason the
+# dispatcher's suite defines its own once — a second copy is a place this change
+# could be missed.
+lease_root_for() { # checkout -> lease root dir
+  local c g
+  c="$(cd "$1" && pwd -P)"
+  g="$(git -C "$c" rev-parse --git-common-dir 2>/dev/null)"
+  case "$g" in /*) ;; *) g="$c/$g" ;; esac
+  printf '%s/work-loop-dispatch-locks' "$(cd "$g" && pwd -P)"
+}
+
+task_lease_for() { # checkout, task -> task lease dir
+  printf '%s/task-%s.lock' "$(lease_root_for "$1")" \
+    "$(printf '%s' "$2" | shasum -a 256 | cut -c1-16)"
+}
+
+checkout_lease_for() { # checkout -> checkout lease dir
+  local c; c="$(cd "$1" && pwd -P)"
+  printf '%s/checkout-%s.lock' "$(lease_root_for "$1")" \
+    "$(printf '%s' "$c" | shasum -a 256 | cut -c1-16)"
+}
+
+# A lease as a live holder leaves it: the four metadata files the library writes,
+# including the program name a refusal renders.
+plant_lease() { # lease-dir, pid, task-id, checkout, program
+  rm -rf "$1"; mkdir -p "$1"
+  printf '%s\n' "$2" >"$1/pid"
+  printf '%s\n' "$3" >"$1/task"
+  printf '%s\n' "$4" >"$1/checkout"
+  printf '%s\n' "$5" >"$1/program"
 }
 
 # Build a fixture. Sets: REPO STATE ACTION ARGVLOG COUNTF FAKEBIN LOGD
@@ -264,6 +308,10 @@ mkfix() { # name, task-id, turn
   git -C "$REPO" config commit.gpgsign false
   STATE="$REPO/logs/work-loop/$task.md"
   mkstate_in "$REPO" "$task" "$turn"
+  # Tracked, not dropped in loose: an untracked helper is an out-of-allowlist
+  # working-tree change and the launcher would correctly stop on it (exit 18).
+  mkdir -p "$REPO/logs/scripts"
+  cp "$LEASE_BIN" "$REPO/logs/scripts/work-loop-lease.sh" 2>/dev/null || true
   printf 'seed\n' >"$REPO/seed.txt"
   git -C "$REPO" add -A >/dev/null 2>&1
   git -C "$REPO" commit -q -m init >/dev/null 2>&1
@@ -795,25 +843,47 @@ section "12b. The live lock is checkout-wide, not per task"
   assert_eq "  and stopped BEFORE actor launch" "0" "$(wc -c <"$BB_COUNT" | tr -d ' ')"
   assert_eq "  and the holder's lock survives" "1" "$([ -d "$xld" ] && echo 1 || echo 0)"
 
-  # A separate linked worktree canonicalizes to a different path, so it is a
-  # different checkout and stays independently admissible while X is locked.
+  # A separate linked worktree canonicalizes to a different path, so it takes a
+  # different CHECKOUT lease. It does NOT get a second run of the same task: one
+  # task is one live run anywhere in the repository, and the task lease is what
+  # says so. This block asserted the opposite before the shared lease landed — a
+  # second worktree was independently admissible for the same task — and that
+  # admission is the cross-transport hole the shared lease closes.
   WT="$TMPROOT/xwide-wt"
   git -C "$XREPO" worktree add -q -b wt-lane "$WT" >/dev/null 2>&1
   assert_eq "linked worktree was created" "1" "$([ -d "$WT/logs/work-loop" ] && echo 1 || echo 0)"
-  assert_absent "  worktree takes a different lock path" "$xld" "$(lock_path_for "$WT")"
+  assert_absent "  worktree takes a different legacy lock path" "$xld" "$(lock_path_for "$WT")"
+  assert_absent "  and a different checkout lease" "$(checkout_lease_for "$XREPO")" "$(checkout_lease_for "$WT")"
   WT_ARGV="$TMPROOT/xwide-wt.argv"; : >"$WT_ARGV"
   WT_COUNT="$TMPROOT/xwide-wt.count"; : >"$WT_COUNT"
   WT_ACTION="$TMPROOT/xwide-wt.action"; printf 'transition:codex' >"$WT_ACTION"
   WT_FAKE="$TMPROOT/xwide-wt.actor"
   make_fake_actor "$WT_FAKE" "$WT_ARGV" "$WT_COUNT" "$WT_ACTION" \
                   "$WT/logs/work-loop/task-bb.md"
+  # A live holder of the TASK lease, in checkout X, recorded the way the shared
+  # library records one — pid, task, checkout and the program that holds it.
+  xtl="$(task_lease_for "$XREPO" task-bb)"
+  plant_lease "$xtl" "$$" task-bb "$XREPO" carry
   run_sut --checkout "$WT" --task task-bb --claude-bin "$WT_FAKE" --log-dir "$TMPROOT/xwide-wt.runs"
-  assert_eq "the same task in a separate linked worktree IS admitted" "0" "$RC"
+  assert_eq "the same task in a separate linked worktree is REFUSED (17)" "17" "$RC"
+  assert_contains "  and names the TASK lease as the resource" "TASK lease for 'task-bb'" "$o"
+  assert_contains "  and says another checkout does not make it another task" \
+    "including in another linked worktree" "$o"
+  assert_eq "  and stopped BEFORE actor launch" "0" "$(wc -c <"$WT_COUNT" | tr -d ' ')"
+  assert_eq "  and the holder's task lease survives" "1" "$([ -d "$xtl" ] && echo 1 || echo 0)"
+
+  # The over-refusal control. With the task lease free, the worktree carries —
+  # a different checkout is still legitimate concurrency, and the change must not
+  # have turned every worktree into a refusal.
+  rm -rf "$xtl"
+  run_sut --checkout "$WT" --task task-bb --claude-bin "$WT_FAKE" --log-dir "$TMPROOT/xwide-wt.runs"
+  assert_eq "with the task lease free the worktree IS admitted" "0" "$RC"
   assert_contains "  and carried" "RESULT outcome=CARRIED code=0" "$o"
   assert_eq "  and its actor ran" "1" "$(wc -c <"$WT_COUNT" | tr -d ' ')"
-  assert_eq "  while checkout X's lock is still held" "1" "$([ -d "$xld" ] && echo 1 || echo 0)"
+  assert_eq "  while checkout X's legacy lock is still held" "1" "$([ -d "$xld" ] && echo 1 || echo 0)"
 
-  # X is still locked after the worktree carry — the two locks are independent.
+  # X is still refused after the worktree carry — the two checkouts are
+  # independent, and the legacy in-flight lock in X is still read.
   run_sut --checkout "$XREPO" --task task-bb --claude-bin "$BB_FAKE" --log-dir "$XLOGD"
   assert_eq "checkout X is still refused after the worktree carry (17)" "17" "$RC"
   rm -rf "$xld"
@@ -822,8 +892,43 @@ section "12b. The live lock is checkout-wide, not per task"
   # the refusal is about concurrency, not a permanent binding to one task.
   run_sut --checkout "$XREPO" --task task-bb --claude-bin "$BB_FAKE" --log-dir "$XLOGD"
   assert_eq "with no live holder the second task carries normally" "0" "$RC"
-  assert_eq "  and its lock was released" "0" "$([ -d "$xld" ] && echo 1 || echo 0)"
+  assert_eq "  and both of its leases were released" "0" \
+    "$([ -d "$(task_lease_for "$XREPO" task-bb)" ] || [ -d "$(checkout_lease_for "$XREPO")" ] && echo 1 || echo 0)"
   git -C "$XREPO" worktree remove --force "$WT" >/dev/null 2>&1
+
+section "12c. The shared lease library must be present"
+  # An absent lease library means the live lease cannot be taken, and an absent
+  # check is not a passed check. The checkouts most likely to lack it — older
+  # siblings, partial copies — are exactly the ones most likely to hold a
+  # conflicting writer, so this fails closed and launches nothing.
+  #
+  # The code is 11, this launcher's existing BAD_CHECKOUT outcome. It is not a
+  # new number: a checkout that cannot produce the library is a checkout whose
+  # lease cannot be established.
+  mkfix nolease task-bc claude
+  printf 'transition:codex' >"$ACTION"
+  git -C "$REPO" rm -q --cached logs/scripts/work-loop-lease.sh >/dev/null 2>&1
+  rm -f "$REPO/logs/scripts/work-loop-lease.sh"
+  git -C "$REPO" commit -q -m "remove the lease library" >/dev/null 2>&1
+  before_head="$(git -C "$REPO" rev-parse HEAD)"
+  run_sut --checkout "$REPO" --task task-bc --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "an absent lease library refuses (11)" "11" "$RC"
+  assert_contains "  and names the missing library" "missing or unreadable" "$o"
+  assert_eq "  and launched nothing" "0" "$(invocations)"
+  assert_eq "  and committed nothing" "$before_head" "$(git -C "$REPO" rev-parse HEAD)"
+  # A refusal must not leave a lease behind: it never took one, so both lease
+  # directories must be absent. A half-acquiring refusal would refuse the NEXT
+  # run for a reason that never existed.
+  assert_eq "  and left no lease directory behind" "0" \
+    "$([ -d "$(task_lease_for "$REPO" task-bc)" ] || [ -d "$(checkout_lease_for "$REPO")" ] && echo 1 || echo 0)"
+
+  # The control. Same recipe, library present — the same run proceeds and does
+  # launch. Without it, a launcher that refused everything would pass above.
+  mkfix yeslease task-bd claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-bd --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "control — with the library present the same run carries" "0" "$RC"
+  assert_eq "  and its actor ran" "1" "$(invocations)"
 
 section "13. Dry run and the Codex direction"
   mkfix dry task-z claude

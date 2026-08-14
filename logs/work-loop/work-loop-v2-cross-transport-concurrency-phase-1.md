@@ -15,70 +15,80 @@ Excluded: Phase 2 task-aware automatic worktrees; changing or replacing D4; chan
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 2b2a — run and classify the dispatcher regression suite after shared-helper wiring.
+Standard. Implementation mode. Unit 3a1 — wire the attended carrier to the accepted shared live-lease helper while preserving its attended-surface boundaries.
 
 Named reason for the loop: the accepted repair spans shared process leasing, two transports, durable ownership, controller tests and authorized live validations; it requires multiple bounded units and independent assessment before it can support an integration decision.
 
 ## Brief
 
-Unit 2b1 is accepted at commit `1f0938a7bc0e680583e7abe1ecc933ebe5b5b902`: the dispatcher consumes the accepted helper, duplicate inline leasing is removed, targeted case 12f went red then green, syntax passed and focused case 12 passed 7/0. This verification unit now answers one named question only: did that wiring preserve the dispatcher regression surface outside the intentionally carrier-dependent 12e failures?
+Dispatcher wiring and regression verification are accepted through commit `5255628a`: the complete dispatcher suite produced `pass=471 fail=11`, with all 11 failures confined to the unchanged carrier-dependent 12e cases. This unit now gives the carrier one dominant change—consume the same accepted live-lease helper. Repository-depth ownership admission, broad carrier verification and cross-transport suite closure remain separate units.
 
 Governing sources and authority:
 
 - Current operator decision: Phase 1 and its two bounded live validations are approved; D4 is retained; Phase 2 is deferred.
-- Approved implementation basis: `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-and-task-aware-worktrees-implementation-proposal-2026-08-13.md`, especially § 5 and § 7 steps 2–4.
-- Accepted failing-first boundary: Unit 1 cases 12e-1 through 12e-4 at commits `54d9db9c` and `b67f88d9` remain intentionally red until carrier integration. Their last accepted isolated signature was `pass=25 fail=11`; surrounding cases 12 and 12d were 15/15 green.
-- Accepted dispatcher wiring: Unit 2b1 at `1f0938a7bc0e680583e7abe1ecc933ebe5b5b902`.
+- Approved implementation basis: `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-and-task-aware-worktrees-implementation-proposal-2026-08-13.md`, especially §§ 4.1–4.5, § 5.2 case 6, § 5.5 case 21 and § 7 step 3.
+- Accepted shared helper: `logs/scripts/work-loop-lease.sh` at `c409c12a1a298f5163685677de8da158ee33e5f1`; its contract and helper evidence are unchanged.
+- Accepted migration decision: during the changeover the carrier must read its legacy `${TMPDIR:-/tmp}/axcion-harness-v0.2.<checkout-key>.lock` path read-only and refuse a live or unreadable legacy holder rather than create a two-root admission window.
 
-Required outcome: execute the existing dispatcher regression surface once and classify every failure. Establish whether all failures are confined to the already accepted 12e cross-transport cases and whether all other dispatcher cases, including new case 12f, pass through the shared helper.
+Required outcome: replace the carrier's checkout-only temporary-directory lock with the accepted shared task-plus-checkout lease helper. Preserve exit `17`, three-state holder handling, pin/release behavior, actor-lifecycle cleanup, refusal detail, one-hop semantics, no status surface, no worktree creation, no simulated-actor seam and all other attended boundaries. Add the one-release read-only legacy-lock refusal. Do not add ownership admission in this unit.
 
-Execution and evidence:
+Check before editing, narrowly:
 
-- Inspect only enough of `dispatch.test.sh` to identify its supported whole-suite or case-selection command. Do not edit production or test files.
-- Run the dispatcher suite once. If the harness supports excluding 12e, run the complete non-12e surface and separately use the accepted 12e result already recorded; if it does not, run the whole suite and classify its output by case.
-- Remain active until the foreground test command completes or the courier stops. Do not end the turn with a progress-only message such as “waiting for the run.”
-- Report the exact command, exit code, pass/fail counts, elapsed time if available, and every failing case identifier.
-- Confirm whether case 12f is green and whether any failure exists outside 12e.
-- Compare the observed 12e failure signature with the accepted `pass=25 fail=11` signature if 12e ran. Do not rewrite or weaken 12e.
-- Record final `git status --short --untracked-files=all`. Preserve ambient `logs/friction-log.md` and harness captures.
-- Change only this state file, set `turn: codex`, and commit it by explicit pathspec. Report the commit hash.
+1. Map the carrier's current lock functions, state and call sites to the helper contract; identify caller-owned refusal and pin messages.
+2. Identify the existing compatible carrier infrastructure outcome for a missing or unreadable helper. Stop rather than inventing a new exit code or changing the helper.
+3. Confirm how existing carrier tests exercise stub binaries and linked worktrees, and record ambient `git status --short --untracked-files=all`.
 
-Explicitly deferred: the helper's own full suite and focused helper matrix; carrier integration; carrier verification; instruction changes; controller acceptance across both transports; and both live validations. This unit is evidence-only and must not fix a failure it discovers.
+Implementation and targeted evidence for this hop:
 
-Stop and hand back with the evidence if any non-12e failure appears, the suite cannot be run within the safety boundary, or the expected 12e signature changes. Do not edit implementation or tests in this unit.
+- Update the existing same-task/different-linked-worktree carrier case that currently asserts admission so it fails first under the new required refusal, then passes after wiring. The second carrier must exit `17` before launching.
+- Add or adapt one narrow missing-helper assertion proving fail-closed refusal before the stub actor launches, using an existing compatible infrastructure outcome.
+- Source and use the accepted helper for initialization, task-then-checkout acquisition, pinning and release. Delete the carrier's duplicate live-lock implementation; keep only caller-owned reporting and the temporary legacy-path compatibility read.
+- Implement the legacy-lock compatibility read without writing, migrating or deleting a live or unreadable legacy lock. A provably dead legacy pid may follow the existing carrier policy; report the exact behavior.
+- Preserve helper pin return-1 semantics and the carrier's operator-facing pin/refusal reporting at its call sites.
+- Run `bash -n` on changed shell files and the accepted helper.
+- Run only the narrow red/green carrier slice needed for the same-task/different-worktree and missing-helper cases, plus one focused ordinary acquire/refuse/release carrier smoke if those controls do not already prove release.
+- Do not run the full carrier suite or dispatcher 12e in this hop; those are the next verification unit.
+- Report removed duplicate machinery, targeted outputs, final diff and scope. Stage only `scripts/axcion-harness-v0.2/carry-turn.sh`, narrowly required `carry-turn.test.sh`, and this state file by explicit pathspec; report staged paths and commit hash.
 
-Completion condition: one completed dispatcher regression run is classified; case 12f is accounted for; every failure is identified as either an unchanged intentional 12e failure or an unexpected regression; no production/test file changed; and the committed state hands back at `turn: codex`.
+Explicitly deferred: repository-depth ownership admission and ownership codes `33`/`34`/`35`; full carrier regression; dispatcher 12e closure; instruction changes; controller acceptance; and both live validations.
+
+Stop and hand back if helper integration changes carrier boundaries, requires the helper contract or a new exit code to change, cannot preserve legacy-lock safety, needs ownership work in this unit, or the targeted fixture cannot remain bounded. Challenge a false premise rather than improvise.
+
+Completion condition: the carrier is committed using the accepted task-plus-checkout lease helper; duplicate live-lock machinery is removed; the same task in another linked worktree is refused with exit 17; a missing helper fails closed before launch; legacy in-flight lock compatibility is preserved; syntax and focused lease evidence pass; only carrier, narrowly required carrier test and state file are committed; and the state hands back at `turn: codex`.
 
 ## Latest result
 
 Inspected (2026-08-14):
 
-- Claim (1) — Unit 2b1 is at commit `1f0938a7bc0e680583e7abe1ecc933ebe5b5b902` and wired the dispatcher to the shared helper: HOLDS. `git log -1` resolves that full hash to `batch: … unit 2b1, dispatcher wired to the shared live lease`; `git show --stat` on it lists exactly three files — this state file, `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` (+188/−…) and `dispatch.test.sh` (+68).
-- Claim (2) — case 12f exists in the dispatcher suite: HOLDS. Searched `dispatch.test.sh` for `^echo "Case 12`; found `Case 12f — an ABSENT lease library refuses before launch and takes no lease` at line 728.
-- Claim (3) — cases 12e-1 through 12e-4 exist and are still the cross-transport cases: HOLDS. Same search found them at lines 551, 588, 617 and 664, under their Unit 1 titles, unedited by this unit.
-- Claim (4) — `dispatch.test.sh` supports a whole-suite or case-selection command: HOLDS, and it is whole-suite only. Read the harness header (lines 1–40) and searched the whole file for `CASE_FILTER|_ONLY|--case|getopts|"$@"` at top level; the documented usage block (lines 20–21) offers `bash dispatch.test.sh` and the `DISPATCH_BIN` override and nothing else, and no top-level argument parsing exists. There is no 12e exclusion switch. The brief's fallback therefore applies: run the whole suite and classify by case.
-- Claim (5) — the accepted 12e signature is `pass=25 fail=11`, with surrounding cases 12 and 12d 15/15 green: HOLDS, with one qualification the comparison depends on. Read the Unit 1 record at `git show b67f88d9:logs/work-loop/…phase-1.md` lines 106–117: that figure is labelled there as `SLICE pass=25 fail=11`, taken from a temporary assembled slice of the suite preamble plus cases 12, 12d and 12e — not from a whole-suite run. So the `fail=11` half is directly comparable to today's whole-suite run and the `pass=25` half is not; the comparison below is made on the failure set, not on the pass total.
+- Claim (1) — carrier lock functions, state and call sites map to the helper contract: HOLDS. Read `scripts/axcion-harness-v0.2/carry-turn.sh`; `acquire_lock` at 636–659 and `release_lock` at 661–665, state `LOCK_DIR` at 259, call sites at 285 (`die`), 1205 (the carry), 1194, 1256, 1269. Caller-owned refusal wording is the three exit-17 `die` messages at 647, 651 and 655.
+- Claim (1a) — the carrier has operator-facing PIN reporting at its call sites: FALSE. Searched `carry-turn.sh` for `pin` and `survivors`; zero occurrences of either. The carrier has never pinned: `terminate_actor_group` (669–684) prints a WARNING when a process group cannot be confirmed gone and the run then releases normally. Not treated as a blocking premise — no work rested on it, and the determinate answer is to add nothing. Recorded as a deferral below.
+- Claim (2) — an existing compatible carrier infrastructure outcome exists for a missing or unreadable helper: HOLDS. Read the exit table at 116–153: `11 BAD_CHECKOUT`, already used for an uncanonicalizable checkout (389), a non-git checkout (391), an uncreatable log directory and an unwritable run log (1207, 1210). Same number the dispatcher uses for its lease-infrastructure failures. No new code invented, helper unchanged.
+- Claim (3) — carrier tests exercise stub binaries and linked worktrees: HOLDS. Read `carry-turn.test.sh`; fake actor via `--claude-bin` (`make_fake_actor`, 120–225), linked worktree via `git worktree add` at 801. Ambient `git status --short --untracked-files=all` at start: `logs/friction-log.md` and this state file modified, plus 22 untracked files under `logs/harness-runs/`. None staged by this unit.
+- Claim (4) — the accepted helper is unchanged since `c409c12a`: HOLDS. `git diff --stat c409c12a1a298f5163685677de8da158ee33e5f1 HEAD -- logs/scripts/work-loop-lease.sh` and the working-tree diff both return empty.
+- Claim (5) — the two transports were jointly blind: HOLDS. Searched `carry-turn.sh` for `work-loop-dispatch-locks` and for `work-loop-lease`; no match for either before this unit.
+- Claim (6) — `carry-turn.test.sh` line 811 asserts admission for the same task in a separate linked worktree: HOLDS. Read at 810–814: `assert_eq "the same task in a separate linked worktree IS admitted" "0" "$RC"`.
 
-Result: the dispatcher regression suite was run once, complete, after the Unit 2b1 shared-helper wiring. It ends `pass=471 fail=11`, exit 1. Every one of the 11 failures falls inside cases 12e-1 through 12e-4 — the Unit 1 cross-transport cases that are intentionally red until carrier integration. No failure exists anywhere else in the 98-case surface, and case 12f is green. Nothing was fixed, edited or re-run; this unit is evidence only.
+Result: the attended carrier now takes both leases through the shared helper. Its duplicate live-lock implementation is deleted — the `$TMPDIR` key derivation, the `mkdir` acquisition, the holder writes, the stale-clear-and-retake, and the `release_lock` body. What remains on the carrier's side is its own contract: exit `17`, the refusal wording, and the exit-`11` infrastructure outcome. Refusals now say WHICH resource refused and which program holds it. A missing or unreadable helper fails closed at `11` before any lease path is computed. The legacy `${TMPDIR}` lock is read for one release: a live or unreadable legacy holder is refused with the unchanged wording and nothing is deleted; a provably dead pid follows the existing carrier stale policy — the lock is removed and announced. No lock is ever migrated into a lease. No ownership admission was added.
 
-Evidence:
+Evidence — narrow red/green slice, sections 12, 12b and 12c of `carry-turn.test.sh`, assembled by cutting the suite's other sections out of a throwaway copy under `/tmp` (deleted after the run; no case-selection feature was added, per the Unit 2b2a decision). The number below is that slice's, not the carrier suite's.
 
-- Command, run from `plans/work-loop-v2-v0.2/handoff-automation-spike/`: `bash dispatch.test.sh`. Exit code `1`. Elapsed 380 s. Final line: `pass=471 fail=11  (all cases SIMULATED — no live product transport)`. Exit 1 is the harness's own `[ "$FAIL" -eq 0 ] || exit 1`, so it reports the 12e failures and not a harness fault.
-- Failure classification — all 11 `FAIL` lines, attributed to the case header each sits under:
-  - 12e-1 (2 failures): `a dispatcher is refused while a CARRIER holds the checkout` — `expected exit 17, got 0`; `and the dispatcher launched no actor` — `actors ran: xt-dispatched`.
-  - 12e-2 (3): `a carrier is refused while a DISPATCHER holds the checkout` — `expected exit 17, got 0`; `and the carrier launched no actor` — `launches: 1`; `and committed nothing` — `HEAD moved`.
-  - 12e-3 (3): `a dispatcher is refused while a CARRIER holds the same task elsewhere` — `expected exit 17, got 0`; `and the dispatcher launched no actor` — `actors ran: xt-shared`; `and committed nothing` — `HEAD moved`.
-  - 12e-4 (3): `a carrier is refused while a DISPATCHER holds the same task elsewhere (lease refusal precedes ownership admission)` — `expected exit 17, got 0`; `and the carrier launched no actor` — `launches: 1`; `and committed nothing in the worktree` — `HEAD moved`.
-  - 2 + 3 + 3 + 3 = 11. `grep -c '^  FAIL '` over the captured run returns 11, so the attribution is exhaustive and nothing was missed outside the four case blocks.
-- 12e signature unchanged. The failure set matches the Unit 1 record case for case: the same four cases, the same primary assertion `expected exit 17, got 0` in each, and the same asymmetry — 12e-1's third assertion `and committed nothing` PASSES today, exactly as the Unit 1 record noted at its line 150, while the equivalent assertion fails in 12e-2, 12e-3 and 12e-4. No 12e case moved in either direction, and nothing in 12e was rewritten or weakened.
-- Case 12f green: `pass=7 fail=0` within the case — the exit-11 refusal, the message naming the missing lease library, no actor launched, no commit made, no lease directory left behind, plus both controls (with the library present the same run proceeds, and the actor does run). The controls passing is what stops 12f being satisfied by a dispatcher that refuses everything.
-- Cases 12 and 12d: 15 PASS, 0 FAIL across the two — the same `15/15 green` the Unit 1 record accepted. The shared helper did not disturb the ordinary same-transport refusal surface.
-- The evidence can fail. This run had 11 red assertions and exit 1, so the harness was demonstrably capable of reporting failure on this invocation; the claim being made is about *where* the failures are, and a regression outside 12e would have appeared in the same `FAIL` grep that produced the list above. Case 0 is the harness's own falsifiability proof — it points the suite at an absent dispatcher and asserts the suite fails — and it passed in this run.
-- No production or test file changed. Final `git status --short --untracked-files=all`: ` M logs/friction-log.md`, ` M logs/work-loop/work-loop-v2-cross-transport-concurrency-phase-1.md`, and 22 untracked `logs/harness-runs/` captures. The friction log and the harness captures are the pre-existing ambient state and were left alone; the suite output was captured outside the repository, under `$TMPDIR`, so it added nothing to the working tree.
+- Red, test edits applied and `carry-turn.sh` untouched: `passed: 29 failed: 8`. The 8 are exactly the new behaviours — same task in a linked worktree returned `0` and launched its actor where `17` and no launch are required; the absent-library case returned `0`, launched, and moved HEAD where `11` and no launch are required.
+- Green, after wiring: `passed: 37 failed: 0`. Same slice, same fixtures.
+- The slice's controls are what stop this being an exit-code assertion: the worktree run with the task lease freed still carries (`RESULT outcome=CARRIED code=0`, actor ran once), the absent-library control with the library present carries, and the ordinary carry at the end of 12b leaves both lease directories gone — so acquire, refuse and release are each proven and no separate smoke was needed.
+- Legacy compatibility is proven by section 12 and the first half of 12b passing unchanged: a live legacy holder refuses with `task 'task-y'`, an uninspectable one refuses and says `Nothing was deleted`, a provably stale one is cleared with `removing a stale lock`, and the different-task-same-checkout refusal still says `whether or not it is the same task`.
+- `bash -n` clean on `carry-turn.sh`, `carry-turn.test.sh` and `logs/scripts/work-loop-lease.sh`.
 
-Prior accepted units, unchanged: Unit 1 at `54d9db9c` and `b67f88d9`; Unit 2a at `c409c12a` and pointer correction `1b736816`; Unit 2b1 at `1f0938a7`.
+Test-file changes, all narrowly required: fixtures now copy the lease library into every checkout and commit it (without it every carrier case fails closed at 11); `lock_path_for` is renamed in comment only, as the LEGACY path; `lease_root_for`, `task_lease_for`, `checkout_lease_for` and `plant_lease` are added once, mirrored from the library; 12b's worktree assertion is inverted with an over-refusal control; 12c is new.
 
-Deferral noticed during this unit, recorded and not done: the suite has no case-selection switch, so any future unit that needs a subset pays the full 380 s or hand-assembles a slice as Unit 1 did. Adding a filter would touch the test harness, which this evidence-only unit must not do. Worth deciding deliberately if verification units recur.
+Deferrals recorded, not done:
+
+1. The carrier never pins. If it cannot confirm its actor tree stopped it warns and releases both leases, so a survivor process no longer blocks the next run — and under the shared lease that now also fails to block the dispatcher. The helper's `wl_lease_pin` is available and uncalled. Adding a pin call site is new carrier behaviour, outside this unit's one dominant change.
+2. `--prove-failure` mutant M6 was not run. It rewrites the carrier's `key=` line, which now belongs to the legacy compatibility read rather than to the live lease, so what it proves has narrowed. Belongs to the broad carrier verification unit.
+3. `dispatch.test.sh` helper `carrier_lock_for` still points at the legacy `${TMPDIR}` path, so cases 12e-1 and 12e-3 assert their setup against a directory the wired carrier no longer creates. That is dispatcher 12e closure, already the next unit.
+
+Staged by explicit pathspec: `scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, this state file. `logs/friction-log.md` and the untracked `logs/harness-runs/` files were left alone.
+
+Commit: see `## Next action` — recorded on the next write; the commit for this unit is the one whose message names unit 3a1.
 
 ## Blocker
 
@@ -86,11 +96,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 2b2a against its completion condition — one complete dispatcher regression run classified, case 12f accounted for, every failure identified as either an unchanged intentional 12e failure or an unexpected regression, and no production or test file changed.
-
-Two things this unit deliberately left to you rather than settling on its own:
-
-1. The accepted `pass=25 fail=11` figure is recorded in the Unit 1 record as a `SLICE` result from a hand-assembled subset, not a whole-suite total. The comparison above is therefore made on the failure set — same four cases, same assertions, same 12e-1 asymmetry — and not on the pass count. Confirm that is the intended reading of "unchanged 12e signature".
-2. Whether the deferral above (the suite has no case-selection switch) belongs to a later unit or is dropped.
-
-Then decide what follows: the deferred helper suite and focused helper matrix, or carrier integration.
+Codex: assess unit 3a1 — the carrier's shared-lease wiring, the legacy read-only compatibility, the resource-naming refusals, and whether the three recorded deferrals belong where they were put.
