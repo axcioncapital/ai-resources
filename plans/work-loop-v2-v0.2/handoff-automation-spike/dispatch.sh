@@ -748,12 +748,47 @@ acquire_lock() {
 # guards that stop a pin claiming a lease this run never acquired — is the
 # library's. What stays here is the OPERATOR-FACING line, which is this
 # dispatcher's wording and names this dispatcher's exit 17.
+#
+# THE LIBRARY ANSWERS WITH THREE OUTCOMES AND THEY NEED THREE ANSWERS. This used
+# to read `wl_lease_pin ... || return 0`, which merged every one of them into
+# silence:
+#
+#   0  pinned, and every owned lock carries durable evidence a later run reads.
+#   1  nothing was owned, so nothing was pinned — the same condition the guard on
+#      LOCK_OWNED used to express here, and the same answer: nothing to report.
+#   2  owned and pinned, but at least one lock has NO durable record. The
+#      DIRECTORIES are still there and still refuse a second dispatcher; what is
+#      missing is the written reason inside them.
+#
+# rc=2 is why the merge mattered. This transport walks away unattended, so a
+# silence here leaves the operator in front of a held lock with nothing inside
+# explaining it, and the obvious reading — a stale lock, safe to delete — is the
+# unsafe one. It is said out loud, on BOTH channels, and the rc=0 line is
+# withheld: announcing a pin that recorded nothing is the same false claim in the
+# opposite direction.
+#
+# An unrecognised code is reported as unrecognised rather than assumed benign:
+# the library may grow a fourth outcome, and inheriting silence by default is
+# exactly how this defect arrived the first time.
 pin_lock() { # survivor-pids, unknown-reason
-  # Return 1 is the library's "nothing was owned, so nothing was pinned" — the
-  # same condition the guard on LOCK_OWNED used to express here, and the same
-  # answer: there is nothing to report.
-  wl_lease_pin "${1:-}" "${2:-}" "$TASK" || return 0
-  local msg="  the task lock is PINNED at $LOCK_DIR (and this checkout's lock at $CHECKOUT_LOCK_DIR) — a second dispatcher is refused (exit 17) until you clear them by hand."
+  local rc=0 msg
+  # Split from any `local` declaration on purpose: `local x="$(cmd)"` reports
+  # `local`'s status and not the command's, and the whole function now turns on
+  # the code captured here.
+  wl_lease_pin "${1:-}" "${2:-}" "$TASK"; rc=$?
+  case "$rc" in
+    0)
+      msg="  the task lock is PINNED at $LOCK_DIR (and this checkout's lock at $CHECKOUT_LOCK_DIR) — a second dispatcher is refused (exit 17) until you clear them by hand." ;;
+    1)
+      return 0 ;;
+    2)
+      msg="  WARNING: the pin RECORD could not be persisted for: ${WL_LEASE_PIN_FAILED:-an unnamed lock}.
+  Those lock directories are deliberately RETAINED and were NOT released ($LOCK_DIR, and this checkout's lock at $CHECKOUT_LOCK_DIR), so a second dispatcher is still refused (exit 17).
+  What is missing is the written reason inside them, so a later run and --status cannot say why they are held. Do NOT read them as a removable stale lock: clear them by hand only after confirming the processes named above are gone." ;;
+    *)
+      msg="  WARNING: the lease library returned an UNRECOGNISED pin result ($rc), so this dispatcher cannot tell what was recorded.
+  Treat the lock directories as retained ($LOCK_DIR, and this checkout's lock at $CHECKOUT_LOCK_DIR): they were NOT released, and a second dispatcher is still refused (exit 17). Clear them by hand only after confirming the processes named above are gone." ;;
+  esac
   printf '%s\n' "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
   return 0

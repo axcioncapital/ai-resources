@@ -1740,6 +1740,24 @@ kill -TERM "$DPID" 2>/dev/null
 sleep 11
 wait "$DPID" 2>/dev/null; SRC=$?
 expect_rc 28 "$SRC" "the interrupted run still exits 28 (the pin does not change the exit code)" "$(cat "$SR/out")"
+# THE rc=0 CONTROL for cases 27ka and 27kb below. Those two only ever assert the
+# durable-pin line is ABSENT, so a dispatcher that had stopped printing it at all
+# would satisfy both of them and still be wrong. Here it must be PRESENT, on both
+# operator channels, and the record it announces must genuinely be on disk —
+# otherwise this is rc=2 wearing rc=0's message.
+KTL="$(task_lock_for "$d" pinned-task)"
+[ -f "$KTL/survivors" ] \
+  && ok "27k control: the pin record really WAS written (this is rc=0, not rc=2)" \
+  || bad "27k control: the pin record really WAS written (this is rc=0, not rc=2)" "no survivors file at $KTL"
+grep -q "the task lock is PINNED at" "$SR/out" \
+  && ok "a DURABLE pin announces itself on the terminal" \
+  || bad "a DURABLE pin announces itself on the terminal" "$(cat "$SR/out")"
+RL="$(ls -t "$d"/runs/*.log 2>/dev/null | head -1)"
+if [ -n "$RL" ] && grep -q "the task lock is PINNED at" "$RL"; then
+  ok "and the same line reaches the run log"
+else
+  bad "and the same line reaches the run log" "run log: ${RL:-none found}"
+fi
 # The invariant, as the next dispatcher experiences it.
 run_dispatch "$d" pinned-task --actor-cmd "$NOOP"
 expect_rc 17 "$RC" "a SECOND dispatcher is REFUSED while the tree is unaccounted for" "$OUT"
@@ -1756,6 +1774,154 @@ else
 fi
 reap "$EPID" "$APID" "$DPID"
 drop_lock "$d" pinned-task
+
+# ================================================================ case 27ka
+# EVERY PIN RESULT REPORTED AS ITSELF.
+#
+# The lease library answers a pin with three distinct outcomes — 0 durably
+# pinned, 1 nothing owned, 2 owned and pinned but with NO durable record. This
+# dispatcher wrote `wl_lease_pin ... || return 0`, which merged 1, 2 and any
+# future code into the silent no-owned path. Case 27k above is the rc=0 control.
+#
+# rc=2 is the outcome that matters. The lock DIRECTORIES are retained and still
+# refuse a second dispatcher, but the written reason inside them is gone — so the
+# operator meets an unexplained held lock, and the obvious reading (a stale lock,
+# safe to delete) is the unsafe one.
+#
+# FORCED FROM INSIDE THE RUN, not by a seam. The actor command runs after the
+# locks are acquired and before teardown pins them, so it puts a DIRECTORY where
+# each `survivors` FILE has to go. `>` then cannot create the file for any user,
+# root included — no privilege, nothing destructive — and `[ -f ]`, the same test
+# acquire and --status recognise a pin by, is false afterwards. Same device the
+# library's own suite uses.
+echo
+echo "Case 27ka — a pin whose RECORD did not persist is reported, not silently swallowed"
+d="$(new_sandbox)"; state_file "$d" "norecord-task" "claude"
+SR="$SANDBOX_ROOT/sig27ka"; mkdir -p "$SR"
+KTL="$(task_lock_for "$d" norecord-task)"; KCL="$(checkout_lock_for "$d")"
+ACT="$(mk_stubborn "$SR/escapee.pid")
+    mkdir -p \"$KTL/survivors\" \"$KCL/survivors\"
+    echo \$\$ > \"$SR/actor.pid\"; sleep 300"
+PATH="$NOLSOF_PATH" bash "$DISPATCH_BIN" --checkout "$d" --task norecord-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$ACT" >"$SR/out" 2>&1 &
+DPID=$!
+wait_for "$SR/escapee.pid" "$SR/actor.pid"
+sleep 1
+EPID="$(cat "$SR/escapee.pid" 2>/dev/null)"; APID="$(cat "$SR/actor.pid" 2>/dev/null)"
+kill -TERM "$DPID" 2>/dev/null
+sleep 11
+wait "$DPID" 2>/dev/null; SRC=$?
+OUT="$(cat "$SR/out")"
+# The forcing control. If the blocking directories were not in place the pin
+# would have persisted normally and every assertion below would be about nothing.
+if [ -d "$KTL/survivors" ] && [ ! -f "$KTL/survivors" ]; then
+  ok "27ka control: the pin record really could not be written"
+else
+  bad "27ka control: the pin record really could not be written" "at $KTL"
+fi
+expect_rc 28 "$SRC" "the interrupted run still exits 28 (an unpersisted record does not change it)" "$OUT"
+printf '%s' "$OUT" | grep -q "teardown UNVERIFIED" \
+  && ok "the teardown warning still stands" || bad "the teardown warning still stands" "$OUT"
+printf '%s' "$OUT" | grep -q "pin RECORD could not be persisted" \
+  && ok "the dispatcher says the pin RECORD could not be persisted" \
+  || bad "the dispatcher says the pin RECORD could not be persisted" "$OUT"
+printf '%s' "$OUT" | grep -q "task checkout" \
+  && ok "and NAMES the resources whose evidence is missing" \
+  || bad "and NAMES the resources whose evidence is missing" "$OUT"
+printf '%s' "$OUT" | grep -q "deliberately RETAINED" \
+  && ok "and says the lock directories were RETAINED, not released" \
+  || bad "and says the lock directories were RETAINED, not released" "$OUT"
+printf '%s' "$OUT" | grep -q "second dispatcher is still refused (exit 17)" \
+  && ok "and says a second dispatcher is still refused" \
+  || bad "and says a second dispatcher is still refused" "$OUT"
+printf '%s' "$OUT" | grep -q "removable stale lock" \
+  && ok "and warns against reading them as a removable stale lock" \
+  || bad "and warns against reading them as a removable stale lock" "$OUT"
+# The false success line is the whole failure this case exists to prevent.
+if printf '%s' "$OUT" | grep -q "the task lock is PINNED at"; then
+  bad "a pin that recorded nothing must NOT print the durable-pin line" "$OUT"
+else
+  ok "a pin that recorded nothing does NOT print the durable-pin line"
+fi
+# The run log is this transport's second operator channel, and a warning that
+# reaches only the terminal is lost the moment the walk-away run is unattended.
+RL="$(ls -t "$d"/runs/*.log 2>/dev/null | head -1)"
+if [ -n "$RL" ] && grep -q "pin RECORD could not be persisted" "$RL"; then
+  ok "the same warning reaches the run log"
+else
+  bad "the same warning reaches the run log" "run log: ${RL:-none found}"
+fi
+[ -d "$KTL" ] && [ -d "$KCL" ] \
+  && ok "both lock directories are retained" \
+  || bad "both lock directories are retained" "$KTL / $KCL"
+# What the operator meets next. The refusal is the reason the directories are
+# kept, so it has to survive the missing record.
+run_dispatch "$d" norecord-task --actor-cmd "$NOOP"
+expect_rc 17 "$RC" "a SECOND dispatcher is still REFUSED with the record missing" "$OUT"
+reap "$EPID" "$APID" "$DPID"
+rm -rf "$KTL/survivors" "$KCL/survivors"
+drop_lock "$d" norecord-task
+
+# ================================================================ case 27kb
+# rc=1 stays SILENT, and an unrecognised code is reported as unrecognised.
+#
+# Neither has a route through the real library from a run that owns its locks, so
+# the library's pin is overridden in the SANDBOX copy — the real file everywhere
+# else. Committed, because a modified tracked helper is an out-of-allowlist
+# working-tree change and the dispatcher would correctly stop on that instead.
+stub_pin_rc() { # sandbox, rc, pinned-flag
+  printf '\nwl_lease_pin() { WL_LEASE_PINNED=%s; return %s; }\n' "$3" "$2" \
+    >>"$1/logs/scripts/work-loop-lease.sh"
+  git -C "$1" add -- logs/scripts/work-loop-lease.sh >/dev/null 2>&1
+  git -C "$1" commit -qm "stub the pin result" >/dev/null 2>&1
+}
+
+pin_result_run() { # sandbox, task, sig-dir -> sets SRC and OUT
+  local sd="$1" tk="$2" sr="$3" act dp
+  mkdir -p "$sr"
+  act="$(mk_stubborn "$sr/escapee.pid")
+    echo \$\$ > \"$sr/actor.pid\"; sleep 300"
+  PATH="$NOLSOF_PATH" bash "$DISPATCH_BIN" --checkout "$sd" --task "$tk" --log-dir "$sd/runs" \
+    --timeout 300 --actor-cmd "$act" >"$sr/out" 2>&1 &
+  dp=$!
+  wait_for "$sr/escapee.pid" "$sr/actor.pid"
+  sleep 1
+  kill -TERM "$dp" 2>/dev/null
+  sleep 11
+  wait "$dp" 2>/dev/null; SRC=$?
+  OUT="$(cat "$sr/out")"
+  reap "$(cat "$sr/escapee.pid" 2>/dev/null)" "$(cat "$sr/actor.pid" 2>/dev/null)" "$dp"
+}
+
+echo
+echo "Case 27kb — rc=1 says nothing; an unrecognised pin result says it is unrecognised"
+d="$(new_sandbox)"; state_file "$d" "nolock-task" "claude"
+stub_pin_rc "$d" 1 0
+pin_result_run "$d" nolock-task "$SANDBOX_ROOT/sig27kb1"
+expect_rc 28 "$SRC" "rc=1 still exits 28" "$OUT"
+if printf '%s' "$OUT" | grep -qE "PINNED|could not be persisted|UNRECOGNISED"; then
+  bad "rc=1 says nothing about a lock at all" "$OUT"
+else
+  ok "rc=1 says nothing about a lock at all"
+fi
+drop_lock "$d" nolock-task
+
+d="$(new_sandbox)"; state_file "$d" "oddrc-task" "claude"
+stub_pin_rc "$d" 3 1
+pin_result_run "$d" oddrc-task "$SANDBOX_ROOT/sig27kb2"
+expect_rc 28 "$SRC" "an unrecognised pin result still exits 28" "$OUT"
+printf '%s' "$OUT" | grep -q "UNRECOGNISED pin result (3)" \
+  && ok "the unrecognised code is reported, with the code" \
+  || bad "the unrecognised code is reported, with the code" "$OUT"
+printf '%s' "$OUT" | grep -q "second dispatcher is still refused (exit 17)" \
+  && ok "and says a second dispatcher is still refused" \
+  || bad "and says a second dispatcher is still refused" "$OUT"
+if printf '%s' "$OUT" | grep -q "the task lock is PINNED at"; then
+  bad "an unrecognised result must NOT print the durable-pin line" "$OUT"
+else
+  ok "an unrecognised result does NOT print the durable-pin line"
+fi
+drop_lock "$d" oddrc-task
 
 # ==================================================== cases 27L .. 27q
 # DISCOVERY FAILURE, ROUTE BY ROUTE.
