@@ -959,16 +959,18 @@ fi
 
 # ================================================================= case 21
 echo
-echo "Case 21 — an OLD-FORMAT reclaim marker fails closed, across all three owner states"
-# The transition case. An earlier build of the helper excluded reclaimers with
-# an exclusive `<lease>.reclaiming` marker; the current one uses the witness set
-# inside the lease. Nothing writes a marker any more, so a repository upgraded
-# mid-flight can carry one that the new code would otherwise walk straight past.
+echo "Case 21 — a reclaim claim left by ANOTHER run fails closed, across all three owner states"
+# A `<lease>.reclaiming` directory says a reclaimer is part-way through this
+# lease. Two things write one — the current helper, before its own destructive
+# section, and an older build that used it as its only exclusion — so a
+# repository upgraded mid-flight is covered by the same sub-cases as a live
+# reclaim. Nothing here is fabricated by the helper: the marker is planted, so
+# what is under test is the READING of it.
 #
 # The lease is left FREE in all three sub-cases on purpose. That is the exact
-# window the old mechanism opened — the reclaimer has renamed the stale lease
-# away and not yet recreated it — and it is where ignoring the marker costs two
-# winners rather than merely some residue. It is also what makes the sub-cases
+# window a reclaim opens — the reclaimer has renamed the stale lease away and
+# not yet recreated it — and it is where ignoring the marker costs two winners
+# rather than merely some residue. It is also what makes the sub-cases
 # falsifying: against a build that ignores the marker, (a) and (b) acquire.
 d="$(new_checkout)"
 LP3="$(live_pid)"
@@ -1070,6 +1072,177 @@ if [ -n "$AP6" ]; then
       && ok "(d) and none ended in a state that is neither" \
       || bad "(d) and none ended in a state that is neither" "other=$other"
   fi
+fi
+
+# ================================================================= case 22
+echo
+echo "Case 22 — a LOWER-pid reclaimer that publishes AFTER a higher-pid scan still leaves one winner"
+# Case 17 starts its contenders together and reports the winner count it happens
+# to observe. That is a real race, and it is worth having — but it does not
+# FORCE the one interleaving that breaks a scan-based arbitration, so a green
+# case 17 says nothing about it. This case schedules that interleaving exactly:
+#
+#   H (higher pid) publishes its witness and scans — it is alone, so it proceeds
+#   only THEN does L (lower pid) publish, scan, see only H, and proceed too,
+#     because H does not outrank it
+#   both re-read the same stale holder while neither has renamed
+#   H renames, recreates, and records itself as the live holder
+#   L renames H's LIVE lease away and records itself
+#
+# Two winners, from two individually correct decisions. Against the helper that
+# scanned the witness set once and treated the result as permission that
+# survived to its `mv`, BOTH processes return 0 here.
+#
+# HOW THE SCHEDULE IS FORCED. Each process shadows `mkdir` and `mv` with shell
+# functions, which bash resolves before any PATH lookup, and the two rendezvous
+# through files. The library under test is not modified, not copied and not
+# read for its text — it is the shipped file, sourced, doing its real work with
+# its real syscalls, paused at two named points. Nothing here sleeps and hopes.
+RACER="$SANDBOX_ROOT/racer.sh"
+cat >"$RACER" <<'RCR'
+#!/bin/bash
+set -uo pipefail
+LIB="$1"; CO="$2"; TK="$3"; SYNC="$4"; OUT="$5"; SLOT="$6"
+[ -r "$LIB" ] || { printf 'LIB-UNREADABLE %s\n' "$LIB" >"$OUT"; exit 70; }
+# shellcheck disable=SC1090
+. "$LIB" || { printf 'LIB-SOURCE-FAILED\n' >"$OUT"; exit 70; }
+wl_lease_init "$CO" "$TK" || { printf 'INIT-FAIL\n' >"$OUT"; exit 71; }
+command -v wl_lease__acquire_one >/dev/null 2>&1 \
+  || { printf 'NO-ACQUIRE-ONE\n' >"$OUT"; exit 72; }
+LEASE="$WL_LEASE_TASK_DIR"
+WITPFX="${WL_LEASE_WITNESS_PREFIX-wl-reclaim-}"
+
+# The roles are decided from the two REAL pids, once both are known. The
+# schedule under test is defined by which reclaimer has the LOWER pid, and that
+# is not something the harness can choose by starting one process first.
+printf '%s\n' "$$" >"$SYNC/pid.$SLOT"
+while [ ! -f "$SYNC/roles" ]; do sleep 0.01; done
+if [ "$$" = "$(cat "$SYNC/roles")" ]; then ROLE=L; else ROLE=H; fi
+
+# Bounded, so no interleaving can hang this harness. A wait that ends in a
+# timeout is not a hidden pass: every outcome below is asserted from the two
+# return codes and the surviving lease, never from whether a signal arrived.
+await() { # timeout-tenths file...
+  local n="$1" i=0 f; shift
+  while :; do
+    for f in "$@"; do [ -e "$f" ] && return 0; done
+    i=$((i+1)); [ "$i" -gt "$n" ] && return 1
+    sleep 0.1
+  done
+}
+
+mkdir() {
+  case "$*" in
+    *"$WITPFX"*)
+      # L publishes only after H has scanned. This one line IS the interleaving:
+      # a set that is read by scanning cannot see a witness written after it.
+      [ "$ROLE" = L ] && await 100 "$SYNC/H-at-rename"
+      ;;
+  esac
+  command mkdir "$@"
+}
+
+mv() {
+  case "${2:-}" in
+    *.stale.*)
+      if [ "$ROLE" = H ]; then
+        # Hold the rename until L has either reached its own rename (the race is
+        # open) or finished (the race is closed — L never gets a rename).
+        : >"$SYNC/H-at-rename"
+        await 100 "$SYNC/L-at-rename" "$SYNC/L-done"
+      else
+        : >"$SYNC/L-at-rename"
+        await 100 "$SYNC/H-done"
+      fi ;;
+  esac
+  command mv "$@"
+}
+
+wl_lease__acquire_one "$LEASE" "prog-$ROLE" "$$"; rc=$?
+: >"$SYNC/$ROLE-done"
+printf 'ROLE=%s pid=%s rc=%s holder=%s state=%s\n' \
+  "$ROLE" "$$" "$rc" "$(cat "$LEASE/pid" 2>/dev/null)" \
+  "${WL_LEASE_HOLDER_STATE-<unset>}" >"$OUT"
+exit "$rc"
+RCR
+chmod +x "$RACER"
+
+d="$(new_checkout)"
+AP9="$(absent_pid)"
+if [ -z "$AP9" ]; then
+  bad "setup — a positively absent pid could be established" "kill -0 did not report 'no such process'"
+else
+  TD22="$(task_dir "$d" late-witness-race)"
+  fabricate_lease "$TD22" "$AP9" dispatch late-witness-race "$d" \
+    && ok "setup — one stale lease, pid $AP9, and two reclaimers on a forced schedule" \
+    || bad "setup — one stale lease" "could not create $TD22"
+  SYNC22="$SANDBOX_ROOT/sync-22"; rm -rf "$SYNC22"; mkdir -p "$SYNC22"
+  O22A="$SANDBOX_ROOT/late-race-A.out"; : >"$O22A"
+  O22B="$SANDBOX_ROOT/late-race-B.out"; : >"$O22B"
+  bash "$RACER" "$LEASE_LIB" "$d" late-witness-race "$SYNC22" "$O22A" A >/dev/null 2>&1 &
+  P22A=$!
+  bash "$RACER" "$LEASE_LIB" "$d" late-witness-race "$SYNC22" "$O22B" B >/dev/null 2>&1 &
+  P22B=$!
+  W=0
+  while { [ ! -f "$SYNC22/pid.A" ] || [ ! -f "$SYNC22/pid.B" ]; } && [ "$W" -lt 500 ]; do
+    W=$((W+1)); sleep 0.02
+  done
+  PIDA="$(cat "$SYNC22/pid.A" 2>/dev/null)"; PIDB="$(cat "$SYNC22/pid.B" 2>/dev/null)"
+  if [ -z "$PIDA" ] || [ -z "$PIDB" ]; then
+    bad "setup — both reclaimers announced their pids" "A='$PIDA' B='$PIDB'"
+    kill "$P22A" "$P22B" 2>/dev/null
+  else
+    if [ "$PIDA" -lt "$PIDB" ]; then printf '%s\n' "$PIDA" >"$SYNC22/roles"
+    else printf '%s\n' "$PIDB" >"$SYNC22/roles"; fi
+    ok "setup — roles fixed from the real pids (A=$PIDA B=$PIDB, lower goes second)"
+  fi
+  wait "$P22A" 2>/dev/null; R22A=$?
+  wait "$P22B" 2>/dev/null; R22B=$?
+
+  won=0
+  [ "$R22A" -eq 0 ] && won=$((won+1))
+  [ "$R22B" -eq 0 ] && won=$((won+1))
+  [ "$won" -eq 1 ] \
+    && ok "exactly one reclaimer succeeded on the forced late-witness schedule (rc A=$R22A B=$R22B)" \
+    || bad "exactly one reclaimer succeeded on the forced late-witness schedule" \
+        "rc A=$R22A B=$R22B | $(cat "$O22A") | $(cat "$O22B")"
+
+  # The loser must be REFUSED, not merely non-zero: an infrastructure failure or
+  # a crash would also read as "not two winners" and would prove nothing.
+  loser_rc=2; [ "$R22A" -eq 0 ] && loser_rc="$R22B" || loser_rc="$R22A"
+  [ "$loser_rc" -eq 2 ] \
+    && ok "and the loser was REFUSED (rc=2), not failed some other way" \
+    || bad "and the loser was refused (rc=2)" "loser rc=$loser_rc | $(cat "$O22A") | $(cat "$O22B")"
+  { grep -q 'state=CONTENDED' "$O22A" || grep -q 'state=CONTENDED' "$O22B"; } \
+    && ok "and its refusal reads CONTENDED — a reclaim in progress, not a dead holder" \
+    || bad "and its refusal reads CONTENDED" "$(cat "$O22A") | $(cat "$O22B")"
+
+  # The winner's lease must be the one that survives, intact. Two winners can
+  # also leave exactly one directory standing — the second one's — so the pid
+  # inside it is what separates "one winner" from "the last writer won".
+  WINPID=''
+  [ "$R22A" -eq 0 ] && WINPID="$PIDA"
+  [ "$R22B" -eq 0 ] && WINPID="$PIDB"
+  [ -d "$TD22" ] && [ "$(cat "$TD22/pid" 2>/dev/null)" = "$WINPID" ] \
+    && ok "and the surviving lease records the winner's pid ($WINPID)" \
+    || bad "and the surviving lease records the winner's pid" \
+        "expected=$WINPID found=$(cat "$TD22/pid" 2>/dev/null) present=$([ -d "$TD22" ] && printf yes || printf no)"
+  [ "$(cat "$TD22/task" 2>/dev/null)" = late-witness-race ] \
+    && [ "$(cat "$TD22/checkout" 2>/dev/null)" = "$d" ] \
+    && [ -n "$(cat "$TD22/program" 2>/dev/null)" ] \
+    && ok "and the winner's lease carries complete holder metadata" \
+    || bad "and the winner's lease carries complete holder metadata" \
+        "task=$(cat "$TD22/task" 2>/dev/null) checkout=$(cat "$TD22/checkout" 2>/dev/null) program=$(cat "$TD22/program" 2>/dev/null)"
+
+  ROOT22="$(dirname "$TD22")"
+  LEFT22="$(find "$ROOT22" -mindepth 1 -maxdepth 1 ! -name '*.lock' 2>/dev/null)"
+  [ -z "$LEFT22" ] \
+    && ok "and the forced schedule left no tombstone, claim or other residue" \
+    || bad "and the forced schedule left no residue" "$LEFT22"
+  WIT22="$(find "$ROOT22" -mindepth 2 -maxdepth 2 -name 'wl-reclaim-*' 2>/dev/null)"
+  [ -z "$WIT22" ] \
+    && ok "and no reclaim witness survived inside the winner's lease" \
+    || bad "and no reclaim witness survived inside the lease" "$WIT22"
 fi
 
 # ==================================================================== done

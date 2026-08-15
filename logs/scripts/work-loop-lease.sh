@@ -269,23 +269,52 @@ wl_lease__pid_state() { # pid -> "LIVE|reason" / "ABSENT|reason" / "UNKNOWN|reas
 # ordinary contender never takes part: its `mkdir` on the lease directory
 # already fails against A's fresh lease.
 #
-# HOW RECLAIMERS EXCLUDE EACH OTHER — AND WHY IT IS NOT ANOTHER LOCK. An
-# exclusive marker directory would work until its owner died holding it, and
-# then it would strand the lease exactly as the dead holder did, one level up.
-# Recovering THAT would need arbitration of its own, and so on. So the exclusion
-# is a SET rather than a lock: each reclaimer creates its own witness
-# directory INSIDE the lease it means to reclaim, then reads the set back.
+# HOW RECLAIMERS EXCLUDE EACH OTHER. Two mechanisms do it together, and neither
+# is sufficient on its own.
+#
+# THE WITNESS SET orders the reclaimers that can see each other. Each reclaimer
+# creates its own witness directory INSIDE the lease it means to reclaim, then
+# reads the set back.
 #
 #   - The witness is named for its owner's pid, so a later run can ask the same
 #     three-state question about a reclaimer that it asks about a holder.
 #   - A witness whose owner is POSITIVELY ABSENT is IGNORED — never removed.
 #     Ignoring is a read-only decision that needs no arbitration, which is what
-#     stops the recursion. The witness disappears with the stale lease it sits
-#     inside, when whoever wins the reclaim renames that lease away.
+#     stops a recovery recursion. The witness disappears with the stale lease it
+#     sits inside, when whoever wins the reclaim renames that lease away.
 #   - A witness whose owner is UNINSPECTABLE stands the reader down. Unknown is
 #     held here too.
 #   - Between two LIVE reclaimers the lower pid proceeds. A total order is what
 #     stops both from standing down and neither making progress.
+#
+# THE RECLAIM CLAIM makes the destructive section itself exclusive, and it is
+# there because the witness set ALONE admits two winners. A set is read by
+# scanning it, and a scan cannot see a witness that has not been published yet:
+#
+#   H (higher pid) publishes its witness and scans — it is alone, so it proceeds
+#   L (lower pid) publishes AFTER that scan, scans, sees only H, and proceeds
+#     too, because H does not outrank it
+#   both re-read the same stale holder and both are still correct
+#   H renames the stale lease away, recreates it, writes its own pid
+#   L — whose verdict is now about a directory that no longer exists — renames
+#     H's LIVE lease away and takes the resource as well
+#
+# Two winners, and no amount of re-reading closes it: every check-then-act
+# sequence leaves a window between the last check and the `mv`. So the rename,
+# the recreate and the holder write happen while this run holds an EXCLUSIVE
+# claim directory on the lease, taken with the same atomic `mkdir` the lease
+# itself uses. An ordinary contender never takes part: its `mkdir` on the lease
+# directory already fails against the fresh lease, and the claim is read at the
+# top of the loop below, which is what covers the one window where the lease has
+# been renamed away and not yet recreated.
+#
+# WHY THE CLAIM DOES NOT STRAND THE LEASE. A lock whose owner died holding it
+# would refuse the lease permanently, one level up — the failure the witness set
+# was shaped to avoid. It does not, because the claim carries its owner's pid
+# and gets the same three-state question a holder gets: it is cleared only on
+# POSITIVE absence, and clearing it GRANTS NOTHING, because the `mkdir` that
+# follows still decides the single winner. Two runs clearing the same dead claim
+# is therefore harmless, and the recursion stops at a read-only probe.
 #
 # So a reclaimer that dies mid-reclaim costs the next run one extra probe, not a
 # stranded lease and not a directory the operator has to delete by hand.
@@ -314,15 +343,15 @@ wl_lease__acquire_one() { # lease-dir program pid -> 0 acquired | 2 refused
   wl_mark="$wl_d.reclaiming"
 
   while :; do
-    # TRANSITION ONLY. An earlier build of this helper excluded reclaimers with
-    # an exclusive sibling marker directory instead of the witness set above.
-    # Nothing writes one any more, but a repository upgraded mid-flight can
-    # still be carrying one, and it means the same thing it always did: a
-    # reclaimer was part-way through this lease. It is read BEFORE the `mkdir`
-    # below, because the window the old mechanism left open is exactly the one
-    # where the lease has been renamed away and not yet recreated — a run that
-    # went straight to `mkdir` there would take a lease a live reclaimer is
-    # still working on. Delete this block once no checkout can still hold one.
+    # THE RECLAIM CLAIM, read before anything else. It means what it has always
+    # meant — a reclaimer is part-way through this lease — and one may be here
+    # for either of two reasons: this build takes it before its own destructive
+    # section, and an older build of this helper wrote the same directory for
+    # the same purpose, so a repository upgraded mid-flight is handled by the
+    # same code rather than by a second rule. It is read BEFORE the `mkdir`
+    # below, because a reclaim has a window where the lease has been renamed
+    # away and not yet recreated — a run that went straight to `mkdir` there
+    # would take a lease a live reclaimer is still working on.
     if [ -d "$wl_mark" ]; then
       wl_verdict="$(wl_lease__pid_state "$(cat "$wl_mark/pid" 2>/dev/null)")"
       if [ "${wl_verdict%%|*}" = ABSENT ]; then
@@ -342,7 +371,7 @@ wl_lease__acquire_one() { # lease-dir program pid -> 0 acquired | 2 refused
         [ -d "$wl_d" ] && wl_lease__read_holder "$wl_d"
         WL_LEASE_REFUSAL='held'
         WL_LEASE_HOLDER_STATE='CONTENDED'
-        WL_LEASE_HOLDER_REASON="a reclaim marker from an earlier build of this helper is present at $wl_mark and was not cleared: ${wl_verdict#*|}"
+        WL_LEASE_HOLDER_REASON="another run holds the reclaim claim at $wl_mark and it was not cleared: ${wl_verdict#*|}"
         return 2
       fi
     fi
@@ -408,18 +437,40 @@ wl_lease__acquire_one() { # lease-dir program pid -> 0 acquired | 2 refused
       continue
     fi
 
-    # Everything decided before the witness went in is re-decided now, because
+    # THE EXCLUSIVE CLAIM over the destructive section. The witness set has said
+    # this run may reclaim; it cannot say that no OTHER run was told the same
+    # thing by a scan that ran before this one's witness existed. `mkdir` can,
+    # because exactly one of two simultaneous callers creates the directory.
+    # Refused it, this run has decided nothing destructive and simply goes
+    # round: the block at the top of the loop is where a claim it cannot take
+    # turns into a CONTENDED refusal rather than a spin.
+    if ! mkdir "$wl_mark" 2>/dev/null; then
+      rm -rf "$wl_d/$wl_wit" 2>/dev/null
+      sleep 0.02 2>/dev/null   # another reclaimer is inside; let it finish
+      continue
+    fi
+    # The pid is what a later run probes if THIS one dies holding the claim. A
+    # write that failed leaves it empty, which reads as UNKNOWN and is held —
+    # the safe direction, and the reason nothing here checks the write.
+    printf '%s\n' "$wl_pid" >"$wl_mark/pid" 2>/dev/null
+
+    # Everything decided before the claim was taken is re-decided now, because
     # the lease may have been reclaimed, released or pinned in between. Without
     # this, a witness placed in a lease that has since become LIVE would license
-    # renaming a live holder's lease away.
+    # renaming a live holder's lease away. Re-deciding INSIDE the claim is what
+    # makes the verdict survive to the `mv`: no other reclaimer can rename or
+    # recreate this lease while the claim is held, so nothing can change between
+    # the check below and the rename that follows it.
     if [ ! -d "$wl_d" ] || [ -e "$wl_d/survivors" ]; then
       rm -rf "$wl_d/$wl_wit" 2>/dev/null
+      rm -rf "$wl_mark" 2>/dev/null
       continue
     fi
     wl_lease__read_holder "$wl_d"
     wl_verdict="$(wl_lease__pid_state "$WL_LEASE_HOLDER_PID")"
     if [ "${wl_verdict%%|*}" != ABSENT ]; then
       rm -rf "$wl_d/$wl_wit" 2>/dev/null
+      rm -rf "$wl_mark" 2>/dev/null
       continue
     fi
 
@@ -427,15 +478,23 @@ wl_lease__acquire_one() { # lease-dir program pid -> 0 acquired | 2 refused
     # lease path itself: a delete that raced a fresh holder would take the new
     # lease with it, and the rename is what makes the target this run's own. The
     # tombstone carries every witness away with it, this run's included.
+    #
+    # The claim is dropped LAST, after the fresh lease exists and carries this
+    # run's pid, so no reader ever sees the lease free and the claim gone at the
+    # same moment. `rm -rf` is safe on it: this run created it and only positive
+    # absence lets another run clear it, which cannot be true while this run is
+    # the one running.
     wl_tomb="$wl_d.stale.$wl_pid.$wl_round"
     rm -rf "$wl_tomb" 2>/dev/null
     if mv "$wl_d" "$wl_tomb" 2>/dev/null && mkdir "$wl_d" 2>/dev/null; then
       wl_lease__write_holder "$wl_d" "$wl_prog" "$wl_pid"
       rm -rf "$wl_tomb" 2>/dev/null
+      rm -rf "$wl_mark" 2>/dev/null
       return 0
     fi
     rm -rf "$wl_tomb" 2>/dev/null
     rm -rf "$wl_d/$wl_wit" 2>/dev/null
+    rm -rf "$wl_mark" 2>/dev/null
   done
 }
 
