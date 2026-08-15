@@ -1,0 +1,6 @@
+interface:
+  display_name: "Realign"
+  short_description: "Correct Work Loop drift with minimal intervention"
+  default_prompt: "Use $realign to check the active Work Loop for material drift and restore the smallest justified next move."
+policy:
+  allow_implicit_invocation: false

@@ -396,3 +396,41 @@ dedicated session, not patch around it by trimming prose that would cost load-be
 
 **Confirmed by.** Operator, explicitly, in the round-3 wrap-up instruction: "Accept the temporary
 575-line exception explicitly" (later 580 after the bounded cleanup pass).
+
+## 2026-08-15 — Add `$realign` as an explicit Work Loop corrective, separate from `$reorient`
+
+**Context.** The operator asked for an invocable Codex skill that can interrupt a Work Loop course
+when it starts drifting into excess governance, over-gating, ceremony, or overengineering. The
+failure class is documented rather than hypothetical: `logs/friction-log.md:4040` records a bounded
+four-file edit paying four setup gates before any edit, and `logs/friction-log.md:4096` records an AI
+promoting its own inference into an operator decision. `logs/coaching-log.md:120` and `:136` record the
+same over-gating pattern across several cycles: a bright-line review was confirming 79–83% of the
+time and should proceed immediately when no material bright line can be named.
+
+**Decision.** Add `.agents/skills/realign` as a manually invoked, instruction-only Codex skill. It
+reads the existing Work Loop state and governing authority, judges only the proposed move at risk,
+and either continues unchanged or applies the smallest correction through Work Loop v2's existing
+protocol. It adds no hook, script, state, log, score, registry, review stage, or automatic trigger.
+
+**Complexity-budget answers.** (1) It prevents a live course from silently turning an approved
+objective into wider scope or self-maintaining process. (2) The failure is recurrent: the evidence
+above covers authority drift and disproportionate gate cost, and the operator supplied a broader
+historical checklist from repeated sessions. (3) The cost is one 198-line skill plus UI metadata and
+one deliberate invocation; `policy.allow_implicit_invocation: false` makes its routine-session cost
+zero. (4) It fires conditionally only when the operator invokes `$realign`; it is not a standing
+gate. (5) `$reorient` overlaps on durable-source reading but owns a different failure boundary:
+recovering authoritative state after compaction or context degradation. Broadening it into a live
+course correction would mix recovery with governance judgment and weaken its deliberately narrow
+task-identification contract.
+
+**Closure channel.** The skill is not a detector that emits a backlog. `ALIGNED` resumes immediately;
+`REALIGNED` removes, narrows, simplifies, verifies, or escalates the current move in the same pass;
+`OPERATOR DECISION NEEDED` names the one decision required; `STOPPED` names the unsafe or unresolved
+condition. Nothing persists beyond the existing Work Loop task state.
+
+**Alternatives considered.** Extend `$reorient` (rejected — different trigger and job); add the
+failure checklist to `work-loop-v2` itself (rejected — it would load on every turn and enlarge an
+already over-budget skill); add an automatic hook or mandatory alignment gate (rejected — it would
+recreate the ceremony the capability exists to remove); keep the attachment as an ad hoc prompt
+(rejected — the operator explicitly needs a reusable invocation, and a prompt has no durable Work
+Loop turn/state boundary).
