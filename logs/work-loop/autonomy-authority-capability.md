@@ -9,9 +9,9 @@ Implement and verify the approved autonomy/authority/capability proposal through
 The operator wants implementation to proceed under the compact Axcíon Standard Implementation Workflow, with unnecessary ceremony removed. `/implementation-triage` remains explicitly excluded. The existing Work Loop is the sole runtime state.
 
 ## Lane and unit
-Standard. Discovery mode. Unit 35 correction — correct the exact unapplied T7 candidate against the risk review's frozen findings.
+Standard. Discovery mode. Unit 35 final tightly bounded fix — repair the four technical defects found by the fresh review of the corrected exact T7 candidate.
 
-Named reason for the loop: T7 changes a permission surface, machine-wide configuration outside the repository, and carrier runtime behaviour. The first mandatory review did not pass; its technical findings are frozen for one candidate-only correction before a fresh review.
+Named reason for the loop: T7 changes a permission surface, machine-wide configuration outside the repository, and carrier runtime behaviour. The correction round was used; the required fresh review found four bounded technical defects, so Codex selected the executable core's one-final-fix menu option rather than accepting unsafe limitations, reverting a viable mechanism, or reframing the tracer.
 
 ## Brief
 Unit 34 is accepted: commit `323332d6788487f989a5d45d0ddf303aeed36c55` re-froze the plan status-only and made T6 live. T7 is now the nearest unmet tracer, but the governing plan forbids implementation until an exact candidate has received one fresh risk-aware review. This unit prepares that candidate read-only so the review can happen next.
@@ -39,17 +39,14 @@ Unit 34 is accepted: commit `323332d6788487f989a5d45d0ddf303aeed36c55` re-froze 
 
 ## Latest result
 
-Correction round, 2026-08-15. Every frozen finding was reproduced by inspection before anything was rewritten; the candidate below **replaces** the previous one rather than sitting beside it.
+Final tightly bounded fix, 2026-08-15. All four frozen defects were reproduced by inspection before anything was rewritten. The candidate below **replaces** the previous one; no competing candidate exists and no implementation target changed.
 
 Reproduced (2026-08-15):
 
-- Finding 1: **REPRODUCED.** The previous diffs were hand-written prose, not patches. Regenerated mechanically and both now pass `git apply --check` against the frozen blobs (evidence below).
-- Finding 2: **REPRODUCED, and worse than stated.** The previous candidate said "blocks the default direct route" and "has no route to approval", and claimed a `workspace-write` child "cannot edit `~/.codex/rules/`" — three unverified effectiveness claims. The provenance error is also confirmed: `carry-turn.sh:196` sets `CODEX_BIN="/Applications/ChatGPT.app/Contents/Resources/codex"`, and **that binary reports `codex-cli 0.147.0-alpha.6.5`** — exactly what the plan says. My previous "version discrepancy" measured `~/.local/bin/codex` (`0.147.0`), which the carrier never launches. **The plan was right and my claim (2) was wrong.** Every probe has been re-run on the carrier's own binary; all results are identical, so the evidence stands and only its provenance changes.
-- Finding 3: **REPRODUCED.** The previous test candidate used the needle `only` — which matches unrelated help text — asserted `[-c]` and `[approval_policy=never]` separately (both pass even if the two are non-adjacent and the override silently does nothing), had no real paired negative, bound nothing to the external rules file, and never asserted the absence of `--ignore-rules`.
-- Finding 4: **REPRODUCED.** The previous repository rollback used `git checkout -- <path>`, which after a committed T7 restores *the T7 content* from `HEAD` rather than removing it. The external rollback resolved no physical path, refused no symlink, and checked no identity before `rm`.
-- Finding 5: **REPRODUCED as under-scoped.** The override was recorded as a risk but not as the operator's accepted limitation, and its blast radius was left unbounded.
-- Finding 6: **REPRODUCED.** The previous text treated auto-loading as an open defect needing a live Codex turn. It is a documented premise; the carrier binary's own `exec --help` names the opt-out.
-- Finding 7: **REPRODUCED as a standing instruction** — obeyed below.
+- Defect 1: **REPRODUCED.** The previous section (h) wrote its own `t7.rules` into `$TMPROOT` and asserted against that. It proved execpolicy works on *a* file, not that the reviewed machine-wide file is installed and intact — it would have passed with the real file absent, symlinked or corrupted.
+- Defect 2: **REPRODUCED, demonstrated.** The pre-write guard used `[ -e "$TARGET" ]`. A dangling symlink fails `-e` (the test follows the link to a missing target), so the guard **passes** and the subsequent write follows the link to an attacker-or-accident-chosen path. Probed directly: `[ -e ]` MISSES a dangling symlink; `[ -L ]` catches it. `default.rules` was also never proven regular or non-symlink, only hashed.
+- Defect 3: **REPRODUCED.** Five assertions compared whole `2>&1` output to an exact JSON literal. Merging stderr makes any warning line a failure with no explanation, and the shape cannot tell "no match" from "the probe failed". Confirmed: a malformed policy returns exit 1 with an `Error:` line, which under the old shape is indistinguishable from any other mismatch.
+- Defect 4: **REPRODUCED.** The real repository tracks both files `100755`; my fixture committed them `100644` because `git cat-file -p >` creates a non-executable file. Both patches carried `index … 100644`, so applying them would have silently dropped the executable bit from two scripts.
 
 ---
 
@@ -57,9 +54,9 @@ Reproduced (2026-08-15):
 
 #### 1. Machine-wide execpolicy rules file
 
-**Path:** `/Users/patrik.lindeberg/.codex/rules/axcion-nested-actor.rules` — free (checked; the directory holds only `default.rules`).
-**Prior state:** the file **does not exist**. Directory physical path `/Users/patrik.lindeberg/.codex/rules`, not a symlink, no symlinks inside. `default.rules` sha256 `47532190bb60b4266ed7e82f1669a03f9893860f3b13c0279c4d731bafce09e2`.
-**Candidate identity once written:** sha256 `b0f8b79c3ef137ac5db07bd7f8195235c086ec2542b29a40092fa4a4a5b9f303`, 381 bytes.
+**Path:** `/Users/patrik.lindeberg/.codex/rules/axcion-nested-actor.rules` — free.
+**Prior state:** does not exist. Directory physical path `/Users/patrik.lindeberg/.codex/rules`, regular directory, not a symlink, no symlinks inside. `default.rules` sha256 `47532190bb60b4266ed7e82f1669a03f9893860f3b13c0279c4d731bafce09e2`.
+**Reviewed identity once written:** sha256 `b0f8b79c3ef137ac5db07bd7f8195235c086ec2542b29a40092fa4a4a5b9f303`, 381 bytes. This identity is now **bound into the test** (§ 3), so the file and the suite cannot drift apart.
 
 ```
 # Axcion Work Loop v2 — T7 direct-route nested-actor request.
@@ -70,11 +67,20 @@ prefix_rule(pattern=["claude"], decision="prompt")
 prefix_rule(pattern=["codex"], decision="prompt")
 ```
 
+**Implementation-time ordering** — the file is deliberately **not created by this discovery unit**, so the order is stated rather than performed:
+
+1. Run the fail-closed pre-write guards (§ 4). Any refusal stops T7.
+2. Write the file above; verify its sha256 equals the reviewed identity.
+3. Apply the two patches (§ 2, § 3).
+4. Run `carry-turn.test.sh`. The external leg is now mandatory and must pass.
+
+Reversing steps 2 and 3 leaves a window in which the launcher requests a policy whose file does not exist — which the suite would correctly fail.
+
 #### 2. Patch — `scripts/axcion-harness-v0.2/carry-turn.sh`
 
 ```diff
 diff --git a/scripts/axcion-harness-v0.2/carry-turn.sh b/scripts/axcion-harness-v0.2/carry-turn.sh
-index 45f52ab..982c3df 100644
+index 45f52ab..982c3df 100755
 --- a/scripts/axcion-harness-v0.2/carry-turn.sh
 +++ b/scripts/axcion-harness-v0.2/carry-turn.sh
 @@ -107,11 +107,23 @@
@@ -128,19 +134,47 @@ index 45f52ab..982c3df 100644
 
 ```diff
 diff --git a/scripts/axcion-harness-v0.2/carry-turn.test.sh b/scripts/axcion-harness-v0.2/carry-turn.test.sh
-index 7e4af79..74330f5 100644
+index 7e4af79..031b60e 100755
 --- a/scripts/axcion-harness-v0.2/carry-turn.test.sh
 +++ b/scripts/axcion-harness-v0.2/carry-turn.test.sh
-@@ -297,6 +297,8 @@ section() { printf '\n%s\n' "$1"; }
+@@ -297,6 +297,36 @@ section() { printf '\n%s\n' "$1"; }
  
  run_suite() {
  
 +CODEX_DEFAULT_BIN="$(awk -F'"' '/^CODEX_BIN=/{print $2; exit}' "$SUT")"
 +
++# Normalized execpolicy probe. Whole-output equality against raw JSON is brittle:
++# any warning line, or a probe that failed outright, changes the string without
++# saying why — and an empty result must never read as a clean no-match.
++#
++# Prints exactly one of:
++#   decision=<d> matches=<n>     a parsed result
++#   PROBE-FAILED:<reason>        non-zero exit, or output that is not a result
++# stderr is captured separately, never merged and never discarded.
++xp() { # rules-file, command tokens...
++  local rf="$1"; shift
++  local out rc err="$TMPROOT/xp.err" n d
++  : >"$err"
++  out="$("$CODEX_DEFAULT_BIN" execpolicy check --rules "$rf" "$@" 2>"$err")"; rc=$?
++  if [ "$rc" -ne 0 ]; then
++    printf 'PROBE-FAILED:exit=%s:%s\n' "$rc" "$(tr '\n' ' ' <"$err" | cut -c1-100)"
++    return
++  fi
++  case "$out" in
++    *'"matchedRules"'*) ;;
++    *) printf 'PROBE-FAILED:malformed:%s\n' "$(printf '%s' "$out" | tr '\n' ' ' | cut -c1-100)"
++       return ;;
++  esac
++  n="$(printf '%s' "$out" | grep -o '"prefixRuleMatch"' | wc -l | tr -d ' ')"
++  d="$(printf '%s' "$out" | grep -o '"decision":"[a-z]*"' | tail -1 | sed 's/.*:"//;s/"//')"
++  [ -n "$d" ] || d=none
++  printf 'decision=%s matches=%s\n' "$d" "$n"
++}
++
  section "1. Static checks"
    bash -n "$SUT" 2>/dev/null; assert_eq "launcher parses (bash -n)" "0" "$?"
    bash -n "$HERE/carry-turn.test.sh" 2>/dev/null; assert_eq "suite parses (bash -n)" "0" "$?"
-@@ -438,7 +440,19 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
+@@ -438,7 +468,19 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
    assert_contains "help calls it requested permission rules" "REQUESTED PERMISSION RULES" "$o"
    assert_contains "help refuses the containment claim" "not OS" "$o"
    assert_contains "help refuses the impossibility claim" "NOT proof that nesting is" "$o"
@@ -161,7 +195,7 @@ index 7e4af79..74330f5 100644
  
    # (e) The run output an operator actually reads must say the same thing.
    mkfix nestedsay task-ap claude
-@@ -451,9 +465,11 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
+@@ -451,9 +493,11 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
    assert_contains "  says operator rules append" "--claude-deny appends" "$o"
    assert_contains "  and does not sell it as containment" "not containment and not proof" "$o"
  
@@ -176,7 +210,7 @@ index 7e4af79..74330f5 100644
    mkfix nestedcdx task-aq codex
    printf 'nocommit:claude' >"$ACTION"
    run_sut --checkout "$REPO" --task task-aq --codex-bin "$FAKEBIN" --log-dir "$LOGD"
-@@ -461,6 +477,78 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
+@@ -461,6 +505,92 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
    assert_absent "codex argv carries no deny set" "--disallowedTools" "$(cat "$ARGVLOG")"
    assert_absent "codex argv carries no claude colon rule" "Bash(claude:*)" "$(cat "$ARGVLOG")"
    assert_absent "codex argv carries no claude space rule" "Bash(claude *)" "$(cat "$ARGVLOG")"
@@ -217,45 +251,59 @@ index 7e4af79..74330f5 100644
 +  assert_contains "  claude mandatory rule 3 intact" "[Bash(codex:*)]" "$nargs"
 +  assert_contains "  claude mandatory rule 4 intact" "[Bash(codex *)]" "$nargs"
 +
-+  # (h) The external rules file this policy depends on, bound to real matches
-+  # from the CARRIER'S OWN default Codex binary — not whatever `codex` PATH
-+  # resolves to, which is a different install at a different version. A host
-+  # without that binary cannot evidence this leg, and the skip is announced
-+  # rather than passing silently.
-+  T7RULES="$TMPROOT/t7.rules"
-+  printf 'prefix_rule(pattern=["claude"], decision="prompt")\nprefix_rule(pattern=["codex"], decision="prompt")\n' >"$T7RULES"
-+  : >"$TMPROOT/t7-empty.rules"
-+  if [ -x "$CODEX_DEFAULT_BIN" ]; then
-+    xp() { "$CODEX_DEFAULT_BIN" execpolicy check --rules "$1" "${@:2}" 2>&1; }
-+    assert_contains "external rule marks a direct claude command prompt" \
-+      '"decision":"prompt"' "$(xp "$T7RULES" claude -p x)"
-+    assert_contains "external rule marks a direct codex command prompt" \
-+      '"decision":"prompt"' "$(xp "$T7RULES" codex exec x)"
-+    # Rule-absent negative: the same commands, an empty policy. This is the leg
-+    # that proves the two assertions above are not tautologies.
-+    assert_eq "  claude matches nothing once the rule is absent" '{"matchedRules":[]}' \
-+      "$(xp "$TMPROOT/t7-empty.rules" claude -p x)"
-+    assert_eq "  codex matches nothing once the rule is absent" '{"matchedRules":[]}' \
-+      "$(xp "$TMPROOT/t7-empty.rules" codex exec x)"
-+    # Accepted limitations, EVIDENCED rather than asserted.
-+    assert_eq "  bash -lc wrapper is unmatched (accepted limitation)" '{"matchedRules":[]}' \
-+      "$(xp "$T7RULES" bash -lc 'claude -p x')"
-+    assert_eq "  env wrapper is unmatched (accepted limitation)" '{"matchedRules":[]}' \
-+      "$(xp "$T7RULES" env claude -p x)"
-+    assert_eq "  absolute path is unmatched without --resolve-host-executables" \
-+      '{"matchedRules":[]}' "$(xp "$T7RULES" /usr/local/bin/claude -p x)"
-+    # `deny` is not a decision execpolicy has. If this ever parses, the whole
-+    # "prompt is the only shape available" rationale needs rewriting.
-+    printf 'prefix_rule(pattern=["zzz"], decision="deny")\n' >"$TMPROOT/t7-deny.rules"
-+    assert_contains "  execpolicy still refuses a deny decision" "failed to parse policy" \
-+      "$(xp "$TMPROOT/t7-deny.rules" zzz)"
++  # (h) The external policy this request depends on, bound to the ACTUAL
++  # machine-wide file T7 installs — NOT a scratch duplicate, which would only
++  # prove that execpolicy works on some file somewhere.
++  #
++  # The leg is mandatory exactly when the launcher requests the policy. Before
++  # T7 lands, the launcher carries no approval_policy flag and the file is not
++  # installed, so this skips. After T7 it is required, and an absent, symlinked,
++  # non-regular, hash-mismatched or malformed file FAILS here.
++  T7_RULES="$HOME/.codex/rules/axcion-nested-actor.rules"
++  T7_RULES_SHA="b0f8b79c3ef137ac5db07bd7f8195235c086ec2542b29a40092fa4a4a5b9f303"
++  if ! grep -qF -- 'approval_policy=never' "$SUT"; then
++    printf '  SKIP external-policy leg: launcher does not request approval_policy yet (pre-T7)\n'
++  elif [ ! -x "$CODEX_DEFAULT_BIN" ]; then
++    printf '  SKIP external-policy leg: %s is not present on this host\n' "$CODEX_DEFAULT_BIN"
 +  else
-+    printf '  SKIP external-rule leg: %s is not present on this host\n' "$CODEX_DEFAULT_BIN"
++    # Identity of the installed file, checked before it is trusted as evidence.
++    assert_eq "installed policy file exists" "yes" \
++      "$([ -e "$T7_RULES" ] && echo yes || echo no)"
++    assert_eq "  and is not a symlink" "no" \
++      "$([ -L "$T7_RULES" ] && echo yes || echo no)"
++    assert_eq "  and is a regular file" "yes" \
++      "$([ -f "$T7_RULES" ] && [ ! -L "$T7_RULES" ] && echo yes || echo no)"
++    assert_eq "  and carries the reviewed identity" "$T7_RULES_SHA" \
++      "$(shasum -a 256 "$T7_RULES" 2>/dev/null | cut -d' ' -f1)"
++    # Positives, against that same installed file.
++    assert_eq "installed policy marks a direct claude command prompt" \
++      "decision=prompt matches=1" "$(xp "$T7_RULES" claude -p x)"
++    assert_eq "installed policy marks a direct codex command prompt" \
++      "decision=prompt matches=1" "$(xp "$T7_RULES" codex exec x)"
++    # Rule-absent control. An EMPTY policy, not a copy of the installed one —
++    # it is the absence the positives above are measured against.
++    : >"$TMPROOT/t7-absent.rules"
++    assert_eq "  claude matches nothing with the rule absent" \
++      "decision=none matches=0" "$(xp "$TMPROOT/t7-absent.rules" claude -p x)"
++    assert_eq "  codex matches nothing with the rule absent" \
++      "decision=none matches=0" "$(xp "$TMPROOT/t7-absent.rules" codex exec x)"
++    # Accepted limitations, EVIDENCED against the installed file.
++    assert_eq "  bash -lc wrapper unmatched (accepted limitation)" \
++      "decision=none matches=0" "$(xp "$T7_RULES" bash -lc 'claude -p x')"
++    assert_eq "  env wrapper unmatched (accepted limitation)" \
++      "decision=none matches=0" "$(xp "$T7_RULES" env claude -p x)"
++    assert_eq "  absolute path unmatched without --resolve-host-executables" \
++      "decision=none matches=0" "$(xp "$T7_RULES" /usr/local/bin/claude -p x)"
++    # `deny` is not a decision execpolicy has. If this ever parses, the whole
++    # "prompt is the only available shape" rationale needs rewriting.
++    printf 'prefix_rule(pattern=["zzz"], decision="deny")\n' >"$TMPROOT/t7-deny.rules"
++    assert_contains "  execpolicy still refuses a deny decision" "PROBE-FAILED" \
++      "$(xp "$TMPROOT/t7-deny.rules" zzz)"
 +  fi
  
  section "5c. Per-run attended permission mode (real argv, fake binary)"
    # The ONE authorised widening, and the boundary around it. What is proved here
-@@ -1432,6 +1520,30 @@ prove_failure() {
+@@ -1432,6 +1562,29 @@ prove_failure() {
      EXPECT_FAIL=0
      assert_contains "M18 control: the hop still launched" "actors=1" "$o"
    fi
@@ -265,8 +313,7 @@ index 7e4af79..74330f5 100644
 +  # Without this mutant, section 5b(f) would only prove that a string appeared
 +  # in a log the suite itself produced.
 +  mut="$TMPROOT/mutant-codexapproval.sh"
-+  sed -e 's/^\( *\)exec --sandbox workspace-write -c approval_policy=never \\$/\1exec --sandbox workspace-write \\/' \
-+      -e 's/^\( *\)"\$CODEX_BIN" exec --sandbox workspace-write -c approval_policy=never \\$/\1"$CODEX_BIN" exec --sandbox workspace-write \\/' "$SUT" >"$mut"
++  sed -e 's/^\( *\)"\$CODEX_BIN" exec --sandbox workspace-write -c approval_policy=never \\$/\1"$CODEX_BIN" exec --sandbox workspace-write \\/' "$SUT" >"$mut"
 +  chmod +x "$mut"
 +  if grep -qF -- '-c approval_policy=never \' "$mut"; then
 +    bad "M19 mutant did not apply" "the codex launch line did not match"
@@ -288,32 +335,112 @@ index 7e4af79..74330f5 100644
  # --------------------------------------------------------------------- main
 ```
 
-#### 4. Requested shape, and the checks
+#### 4. Fail-closed pre-write guards and identity-safe rollback
 
-**Argv the Codex hop would carry:**
+**Pre-write** — refuses an existing target *and* a dangling symlink, and proves `default.rules` is a regular non-symlink file at its recorded identity before anything is created:
+
+```bash
+set -eu
+RULES_LINK="$HOME/.codex/rules"
+[ -L "$RULES_LINK" ] && { echo "REFUSE: rules dir is a symlink"; exit 1; }
+[ -d "$RULES_LINK" ] || { echo "REFUSE: rules dir missing"; exit 1; }
+RULES_DIR="$(cd "$RULES_LINK" && pwd -P)"
+TARGET="$RULES_DIR/axcion-nested-actor.rules"
+# -L FIRST: a dangling symlink fails -e, so -e alone would pass and the write
+# would follow the link. This ordering is the defect-2 correction.
+[ -L "$TARGET" ] && { echo "REFUSE: target is a symlink (dangling or not)"; exit 1; }
+[ -e "$TARGET" ] && { echo "REFUSE: target already exists"; exit 1; }
+DEF="$RULES_DIR/default.rules"
+[ -L "$DEF" ] && { echo "REFUSE: default.rules is a symlink"; exit 1; }
+[ -f "$DEF" ] || { echo "REFUSE: default.rules is not a regular file"; exit 1; }
+[ "$(shasum -a 256 "$DEF" | cut -d' ' -f1)" \
+  = 47532190bb60b4266ed7e82f1669a03f9893860f3b13c0279c4d731bafce09e2 ] \
+  || { echo "REFUSE: default.rules is not the recorded identity"; exit 1; }
+```
+
+**External rollback** — same symlink and regular-file proofs for `default.rules` **before and after** removal, and removal only of a file still carrying the installed identity:
+
+```bash
+set -eu
+RULES_LINK="$HOME/.codex/rules"
+[ -L "$RULES_LINK" ] && { echo "REFUSE: rules dir is a symlink"; exit 1; }
+RULES_DIR="$(cd "$RULES_LINK" && pwd -P)"
+TARGET="$RULES_DIR/axcion-nested-actor.rules"
+DEF="$RULES_DIR/default.rules"
+check_default() { # before and after — a rollback that damages it is not a rollback
+  [ -L "$DEF" ] && { echo "FAIL: default.rules is a symlink"; exit 1; }
+  [ -f "$DEF" ] || { echo "FAIL: default.rules is not a regular file"; exit 1; }
+  [ "$(shasum -a 256 "$DEF" | cut -d' ' -f1)" \
+    = 47532190bb60b4266ed7e82f1669a03f9893860f3b13c0279c4d731bafce09e2 ] \
+    || { echo "FAIL: default.rules identity changed"; exit 1; }
+}
+check_default
+[ -L "$TARGET" ] && { echo "REFUSE: target is a symlink — not removing"; exit 1; }
+[ -f "$TARGET" ] || { echo "REFUSE: target absent or not regular"; exit 1; }
+[ "$(shasum -a 256 "$TARGET" | cut -d' ' -f1)" \
+  = b0f8b79c3ef137ac5db07bd7f8195235c086ec2542b29a40092fa4a4a5b9f303 ] \
+  || { echo "REFUSE: not the identity T7 installed — someone else edited it"; exit 1; }
+rm -f -- "$TARGET"
+check_default
+ls -1 "$RULES_DIR"   # must print exactly: default.rules
+```
+
+**Repository rollback** — restores the recorded pre-T7 blobs **by identity**, including the tracked executable mode. After a committed T7, `HEAD` carries the T7 content, so `git checkout --` would restore the change rather than remove it:
+
+```bash
+set -eu
+git cat-file -p 45f52ab4e343925f14bcba4fc940ac3fd692b284 \
+  > scripts/axcion-harness-v0.2/carry-turn.sh
+git cat-file -p 7e4af79364d1e6f5a996c592bca31e3c495f96b6 \
+  > scripts/axcion-harness-v0.2/carry-turn.test.sh
+chmod 755 scripts/axcion-harness-v0.2/carry-turn.sh \
+          scripts/axcion-harness-v0.2/carry-turn.test.sh
+[ "$(git hash-object scripts/axcion-harness-v0.2/carry-turn.sh)" \
+  = 45f52ab4e343925f14bcba4fc940ac3fd692b284 ] || { echo "ROLLBACK FAILED"; exit 1; }
+[ "$(git hash-object scripts/axcion-harness-v0.2/carry-turn.test.sh)" \
+  = 7e4af79364d1e6f5a996c592bca31e3c495f96b6 ] || { echo "ROLLBACK FAILED"; exit 1; }
+git ls-files -s scripts/axcion-harness-v0.2/   # both must read 100755
+bash scripts/axcion-harness-v0.2/carry-turn.test.sh   # must return to 285 passed / 0 failed
+```
+
+#### 5. The normalized probe that replaced whole-output equality
 
 ```
-codex exec --sandbox workspace-write -c approval_policy=never -C <checkout> --json <prompt>
+decision=<d> matches=<n>   a parsed result
+PROBE-FAILED:<reason>      non-zero exit, or output that is not a result
 ```
 
-All execpolicy and approval evidence below was produced with the **carrier's own default binary**, `/Applications/ChatGPT.app/Contents/Resources/codex` (`codex-cli 0.147.0-alpha.6.5`), not the PATH CLI.
+stderr is captured to a file, never merged into the compared value and never discarded — its first 100 characters ride inside `PROBE-FAILED`. Observed behaviour across every case the suite relies on:
 
-| # | Check | Observed | Establishes | Does **not** establish |
-|---|---|---|---|---|
-| G1 | decision-set probe, all 8 values | only `allow` and `prompt` parse; `deny`/`forbid`/`reject`/`block`/`ask`/`never` → `failed to parse policy` | `prompt` + a restrictive approval policy is the only available shape | anything about runtime |
-| P1 | `execpolicy check --rules <cand> claude -p x` | `"decision":"prompt"` | the rule matches a direct `claude` command | that it is refused |
-| P2 | `… codex exec x` | `"decision":"prompt"` | the rule matches a direct `codex` command | that it is refused |
-| N1 | P1/P2 against an **empty** policy | `{"matchedRules":[]}` | **P1/P2 can fail** | — |
-| A1 | `doctor -c approval_policy=never` | `approval policy Never` | the override is accepted and reported | that a `prompt` is refused |
-| A2 | `doctor`, no override | `approval policy OnRequest` | **A1 discriminates** — the pair differs | — |
-| A3 | `doctor -c approval_policy=bogus-value` | `✗ config could not be loaded` | **A1 can fail** — bad values are rejected, not ignored | — |
-| W1–W3 | `bash -lc 'claude -p x'`, `env claude -p x`, absolute path | `{"matchedRules":[]}` (all three) | wrapper/absolute evasion **evidenced**, not asserted | — |
-| R1 | patched suite, in an isolated fixture | **314 passed / 0 failed** (baseline 285/0) | 29 new assertions, no regression | — |
-| R2 | `--prove-failure` with new mutant **M19** | both new argv assertions **correctly fail** when the policy is stripped | the argv assertions are fail-capable by the suite's own standard | — |
-| R3 | `git apply --check` of both patches against the frozen blobs | clean | the patches are mechanically exact | — |
-| R4 | Claude branch of `launch_actor()`, pre vs post | 129 lines, sha `6f8cc966…` **identical**; Claude header paragraphs identical | the Claude path is untouched | — |
+| Case | Normalized result |
+|---|---|
+| direct `claude -p x` against the installed policy | `decision=prompt matches=1` |
+| direct `codex exec x` against the installed policy | `decision=prompt matches=1` |
+| either, against an empty rule-absent control | `decision=none matches=0` |
+| `bash -lc 'claude -p x'`, `env claude -p x`, absolute path | `decision=none matches=0` |
+| policy file missing | `PROBE-FAILED:exit=1:Error: failed to read policy …` |
+| policy malformed (`decision="deny"`) | `PROBE-FAILED:exit=1:Error: failed to parse policy …` |
 
-**Every line removed across both patches** — the complete list, so "additive" is checkable rather than asserted:
+A failed probe can no longer read as a clean no-match, which was the specific hazard in defect 3.
+
+#### 6. Evidence
+
+All execpolicy and approval evidence uses the **carrier's own default binary**, `/Applications/ChatGPT.app/Contents/Resources/codex` (`codex-cli 0.147.0-alpha.6.5`), read from `carry-turn.sh:196` by the test itself rather than restated.
+
+| # | Check | Observed |
+|---|---|---|
+| E1 | `git apply --check`, both patches, against the frozen blobs | clean, **no warnings**; patches carry `index … 100755` |
+| E2 | patched suite, policy file **absent** | external leg **FAILS** — presence, regular-file, identity and all five probes; this is defect 1's required fail-capability |
+| E3 | patched suite, policy file **present** (simulated `HOME`, real `~/.codex/rules/` untouched) | **318 passed / 0 failed** |
+| E4 | installed file **hash-mismatched** | identity guard fails |
+| E5 | installed file replaced by a **symlink** | `is not a symlink` and `is a regular file` both fail |
+| E6 | installed file **malformed** (`decision="deny"`) | identity guard fails **and** the positive probe returns `PROBE-FAILED` |
+| E7 | `--prove-failure` with mutant **M19** | **43 passed / 0 failed**; both argv assertions correctly fail when the policy is stripped |
+| E8 | Claude branch of `launch_actor()`, pre vs post | 129 lines, sha `6f8cc966…` **identical**; Claude header paragraphs identical |
+| E9 | decision-set probe, all 8 values, carrier binary | only `allow` and `prompt` parse; six others `failed to parse policy` |
+| E10 | `doctor -c approval_policy=never` / no override / `bogus-value` | `Never` / `OnRequest` / `✗ config could not be loaded` — the pair discriminates and the check can fail |
+
+**Every line removed across both patches**, so "additive" stays checkable:
 
 ```
 carry-turn.sh       5 header lines (the "carries NO equivalent" paragraph)
@@ -322,110 +449,36 @@ carry-turn.test.sh  1 help assertion (the needle the header rewrite invalidates)
                     3 comment lines heading section 5b(f)
 ```
 
-No mandatory-rule assertion and no Claude-branch line is removed; the four mandatory-rule assertions rise from 33 to 37 occurrences, all additions.
+No mandatory-rule assertion and no Claude-branch line is removed.
 
-#### 5. Identity-safe pre-write checks and rollback
+#### 7. Operator's accepted limitation, unchanged
 
-**Fail-closed pre-write checks** (external surface, run before anything is created):
+The machine-wide `codex` `prompt` rule overrides the narrower `codex --version` `allow` **inside Codex-mediated execution**; ordinary Terminal use is unaffected; the effect is reversible by the identity-guarded rollback in § 4. This is the limitation the operator accepted, and it extends to nothing else discovered since.
 
-```bash
-set -eu
-[ -L "$HOME/.codex/rules" ] && { echo "REFUSE: rules dir is a symlink"; exit 1; }
-RULES_DIR="$(cd "$HOME/.codex/rules" && pwd -P)"
-TARGET="$RULES_DIR/axcion-nested-actor.rules"
-[ -e "$TARGET" ] && { echo "REFUSE: target already exists"; exit 1; }
-# the pre-existing file must be exactly what was recorded, or state has moved
-[ "$(shasum -a 256 "$RULES_DIR/default.rules" | cut -d' ' -f1)" \
-  = 47532190bb60b4266ed7e82f1669a03f9893860f3b13c0279c4d731bafce09e2 ] \
-  || { echo "REFUSE: default.rules is not the recorded identity"; exit 1; }
-```
+#### 8. Risk inventory, unchanged in substance
 
-**External rollback** — resolves the physical path, refuses symlinks, and removes only a file that still carries the installed identity:
+Machine-wide blast radius (the ground for the risk-aware review row); the bounded `codex --version` override; wrapper and absolute-path evasion, accepted and evidenced, with **no claim** that a `workspace-write` child cannot reach the file; silent failure if the rules file is not loaded on a run; no new observed field, so `nested=` remains the only nested-actor observation on both paths; rollback to byte-identified prior state on both surfaces; and the residual asymmetry at `dispatch.sh:2115`, outside T7's scope.
 
-```bash
-set -eu
-[ -L "$HOME/.codex/rules" ] && { echo "REFUSE: rules dir is a symlink"; exit 1; }
-RULES_DIR="$(cd "$HOME/.codex/rules" && pwd -P)"
-TARGET="$RULES_DIR/axcion-nested-actor.rules"
-[ -L "$TARGET" ] && { echo "REFUSE: target is a symlink"; exit 1; }
-[ "$(shasum -a 256 "$TARGET" | cut -d' ' -f1)" \
-  = b0f8b79c3ef137ac5db07bd7f8195235c086ec2542b29a40092fa4a4a5b9f303 ] \
-  || { echo "REFUSE: not the identity T7 installed — someone else edited it"; exit 1; }
-rm -f -- "$TARGET"
-[ "$(shasum -a 256 "$RULES_DIR/default.rules" | cut -d' ' -f1)" \
-  = 47532190bb60b4266ed7e82f1669a03f9893860f3b13c0279c4d731bafce09e2 ] \
-  || { echo "ROLLBACK FAILED: default.rules changed"; exit 1; }
-ls -1 "$RULES_DIR"   # must print exactly: default.rules
-```
+#### 9. Automatic rules loading — still a documented, requested premise
 
-**Repository rollback** — restores the **recorded pre-T7 blobs by identity**. This is the finding-4 correction: after T7 is committed, `HEAD` carries the T7 content, so `git checkout -- <path>` would restore the change rather than remove it.
-
-```bash
-set -eu
-git cat-file -p 45f52ab4e343925f14bcba4fc940ac3fd692b284 \
-  > scripts/axcion-harness-v0.2/carry-turn.sh
-git cat-file -p 7e4af79364d1e6f5a996c592bca31e3c495f96b6 \
-  > scripts/axcion-harness-v0.2/carry-turn.test.sh
-chmod +x scripts/axcion-harness-v0.2/carry-turn.sh \
-         scripts/axcion-harness-v0.2/carry-turn.test.sh
-[ "$(git hash-object scripts/axcion-harness-v0.2/carry-turn.sh)" \
-  = 45f52ab4e343925f14bcba4fc940ac3fd692b284 ] || { echo "ROLLBACK FAILED"; exit 1; }
-[ "$(git hash-object scripts/axcion-harness-v0.2/carry-turn.test.sh)" \
-  = 7e4af79364d1e6f5a996c592bca31e3c495f96b6 ] || { echo "ROLLBACK FAILED"; exit 1; }
-bash scripts/axcion-harness-v0.2/carry-turn.test.sh   # must return to 285 passed / 0 failed
-```
-
-#### 6. The operator's accepted limitation, carried explicitly
-
-The machine-wide `codex` `prompt` rule **overrides the existing narrower `codex --version` `allow` rule inside Codex-mediated execution**. Measured on the carrier binary with both files loaded: `codex --version` matches both rules and resolves to `prompt`, while an unrelated rule (`git fetch`) still resolves to `allow`, so the effect is specific and not a blanket loss of the file.
-
-Three bounds, stated because the acceptance depends on them:
-
-- It applies to commands **mediated by Codex execpolicy**. Ordinary Terminal use of `codex --version` is **unaffected** — execpolicy governs what a Codex session may run, not the operator's own shell.
-- It is **reversible** by the identity-guarded external rollback above.
-- The operator accepted **this** limitation. It is not approval of any other residual risk discovered later, and nothing here should be read as extending it.
-
-#### 7. Risk inventory
-
-1. **Machine-wide blast radius.** `~/.codex/rules/` applies to every Codex session on this host. This is the ground for T7's risk-aware review row, and the placement the operator authorized on 2026-08-15.
-2. **Normal-user interference.** The `codex --version` override, bounded as in § 6.
-3. **Self-bypass and wrapper evasion.** W1–W3 are unmatched. Accepted limitation, recorded not solved. **No claim is made** that a `workspace-write` child cannot reach the file — that was an unverified claim in the previous candidate and has been removed.
-4. **Failure mode is silent.** If the rules file is not loaded on a run, the hop proceeds with no direct-route request, and nothing in the `RESULT` line reports it.
-5. **Observability unchanged.** No new observed field. `nested=` remains the only nested-actor observation on both paths. Everything T7 adds is visible in argv and configuration only.
-6. **Rollback.** Both surfaces restore to byte-identified prior state, guarded against symlinks and third-party edits.
-7. **Residual asymmetry outside scope.** `dispatch.sh:2115` launches Codex with the same unpolicied argv. T7 excludes the dispatcher, so that path keeps today's asymmetry.
-
-#### 8. Automatic rules loading — a documented, requested premise
-
-Treated as a **premise**, not an observation and not a defect. Its support is the carrier binary's own `exec --help`:
-
-```
---ignore-rules
-    Do not load user or project execpolicy `.rules` files
-```
-
-A documented flag to *not* load user `.rules` files is the documented statement that they are otherwise loaded. That is the whole basis, and it is a requested premise. **No live Codex turn was run or is required**, and loading is **not** claimed to have been observed. The candidate's own text says the same, and the test asserts the carrier never passes `--ignore-rules`.
+Supported by the carrier binary's own `exec --help`: `--ignore-rules — Do not load user or project execpolicy .rules files`. A documented flag to *not* load user `.rules` files is the documented statement that they are otherwise loaded. **No live Codex turn was run or is required**, and loading is not claimed as observed. The test asserts the carrier never passes `--ignore-rules`.
 
 ---
 
-### Closure check against findings 1–6
+### Closure check — findings 1–4 only
 
 | Finding | Status | What settles it |
 |---|---|---|
-| 1 — mechanically exact patches | **Resolved** | R3: `git apply --check` clean against both frozen blobs, singly and together; proved on an isolated fixture, neither target touched |
-| 2 — no unverified effectiveness claims | **Resolved** | all three overclaims removed; wording is `REQUESTED`/`UNVERIFIED` throughout; provenance switched to the carrier's own binary and version, and the test asserts the three overclaim needles are **absent** from help |
-| 3 — fail-capable and exact tests | **Resolved** | generic needle `only` gone; adjacency asserted as `[-c] [approval_policy=never]`; real paired negative in (g); external rules bound to positives, rule-absent negatives and wrapper/absolute evasions in (h); `--ignore-rules` absence asserted; Claude branch byte-identical (R4); M19 proves the argv assertions fail when the policy is stripped |
-| 4 — identity-safe rollback | **Resolved** | repository rollback restores recorded blobs via `git cat-file`, not `git checkout --`; external rollback resolves the physical path, refuses symlinks, verifies installed identity before removal, and proves `default.rules` survives |
-| 5 — accepted limitation carried | **Resolved** | § 6, with the Codex-mediated scope, the Terminal-unaffected bound, reversibility, and an explicit statement that it does not extend to other risks |
-| 6 — loading as documented premise | **Resolved** | § 8, grounded in the carrier binary's `--ignore-rules` help text; no live turn run or required; loading not claimed as observed |
+| 1 — bind to the actual installed file | **Resolved** | § 3's leg reads `$HOME/.codex/rules/axcion-nested-actor.rules` and its reviewed sha256; E2 proves it fails when absent, E4/E5/E6 when hash-mismatched, symlinked or malformed; E3 proves it passes when correctly installed. The candidate stays unapplied — ordering is stated in § 1, not performed |
+| 2 — fail-closed symlink and identity guards | **Resolved** | § 4 tests `-L` **before** `-e`, closing the dangling-symlink hole; `default.rules` is proven regular and non-symlink at its recorded identity both before and after removal; the sound refusals of an absent, symlinked or changed installed candidate are preserved |
+| 3 — warning-tolerant normalization | **Resolved** | § 5 replaces all five equality checks; stderr separated not hidden; fails on non-zero exit, malformed JSON, changed decision or changed match count; a failed probe cannot read as an empty pass |
+| 4 — executable mode | **Resolved** | E1: both patches carry `index … 100755` and `git apply --check` is clean and warning-free against both frozen blobs |
 
-**Did the correction break anything?** No. The patched suite is **314 passed / 0 failed** against a 285/0 baseline — 29 additions, no pre-existing assertion removed or weakened. The fail-capability proof is **43 passed / 0 failed** with M19 added. The Claude branch and the Claude header paragraphs are byte-identical. Both patches were exercised only in an isolated fixture repository.
-
-**One correction to my own prior work, stated plainly:** Unit 35's claim (2) reported a version discrepancy between the plan and the installed CLI. That was measured against the wrong binary. The carrier's default Codex binary is `0.147.0-alpha.6.5`, exactly as the plan records. There is no discrepancy.
+**Did the final fix break anything?** No. With the policy installed the suite is **318 passed / 0 failed**, against the 285/0 baseline — 33 additions, no pre-existing assertion removed or weakened. `--prove-failure` is **43 passed / 0 failed**. The Claude branch and its four mandatory-rule assertions are byte-identical (E8). Every patch application and suite run happened in a scratchpad fixture repository under a simulated `HOME`.
 
 ### Targets unchanged
 
-`~/.codex/rules/` still holds exactly `default.rules` at sha256 `47532190…`; no `axcion-nested-actor.rules` was created. `carry-turn.sh` and `carry-turn.test.sh` are still blobs `45f52ab4…` and `7e4af793…`, live-equal to `HEAD`. Every patch application and suite run happened in a scratchpad fixture repository. No `codex exec` was run and no Claude or Codex actor was launched — only `--version`, `help`, `execpolicy check` and `doctor`.
+`~/.codex/rules/` still holds exactly `default.rules` at sha256 `47532190…`; **no `axcion-nested-actor.rules` was created** — the installed-file evidence was produced under a simulated `HOME` in the scratchpad. `carry-turn.sh` and `carry-turn.test.sh` are still blobs `45f52ab4…` and `7e4af793…` at mode `100755`, live-equal to `HEAD`. No `codex exec` was run and no Claude or Codex actor was launched — only `--version`, `help`, `execpolicy check` and `doctor`.
 
 **Runtime profile.** Operator-carried interactive Claude turn, not an attended-carrier hop. No carrier ran, so no `denials=`, `nested=`, sandbox or network claim is made about this unit's own runtime. Capability subset: baseline read/search/inspect, local static non-actor checks, the state-file write, and this commit. Nothing from the pre-authorizable set, which is empty today.
 
@@ -443,4 +496,4 @@ None.
 
 ## Next action
 
-Codex: run the fresh risk-aware review of the corrected candidate above. The three questions the previous handback raised are now answered inside it — the header/help paragraph is included as the minimum truthful change and is proven not to touch the Claude paragraphs; the `codex --version` override is carried as the operator's bounded accepted limitation; and automatic loading is stated as a documented requested premise with no live turn required. Nothing in T7 has been implemented, and every target is unchanged.
+Codex: run the closure check on this final fix — findings 1–4 and whether the fix broke anything — and nothing broader, per the executable core's one-final-fix menu. T7 remains unimplemented, both patches remain unapplied, and every implementation and machine-wide target is unchanged.
