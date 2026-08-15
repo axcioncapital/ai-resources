@@ -81,8 +81,9 @@ are exactly the ones most likely to hold a conflicting writer. This is deliberat
 session-identity init, which does skip when its allocator is absent: that one arms a tripwire, while
 this one is the only thing standing between two writers and one checkout.
 
-`--status` reports both: the checkout's declaration and whether the checkout lock is held, alongside
-the existing three-valued task-lock verdict. It still takes no lock and writes nothing.
+`--status` reports both: the checkout's declaration and whether the checkout lock is held — and, when
+it is held, which program holds it and the task it is running — alongside the existing three-valued
+task-lock verdict. It still takes no lock and writes nothing.
 
 ### The four modes
 
@@ -90,7 +91,8 @@ the existing three-valued task-lock verdict. It still takes no lock and writes n
 - **`--status`** (`mode=status`) — reports whether a run is in flight for this checkout + task, what
   the state file says, which branch `HEAD` is on, and where the run log is. It takes **no lock**,
   creates **no log directory**, and writes nothing at all, so it is safe to run against a live run —
-  which is the whole point of it. Returns `0` even while another dispatcher holds the lock.
+  which is the whole point of it. Returns `0` even while another Work Loop run holds the lock — and
+  that holder is not necessarily a dispatcher, because the lease is shared with the attended carrier.
   It answers about the lock in **three states, never two** — see below.
 
 #### The three lock states
@@ -101,9 +103,30 @@ caller is merely not allowed to look (`EPERM`).
 
 | `run:` line | What it means | What the operator should do |
 |---|---|---|
-| `IN FLIGHT — dispatcher pid N` | The pid is visibly alive and signallable | Leave the state file alone. `kill -TERM N` to stop it |
+| `IN FLIGHT — <holder> at pid N` | The pid is visibly alive and signallable | Leave the state file alone. `kill -TERM N` to stop it |
 | `STALE LOCK` | The pid is **positively** absent — `kill -0` said *no such process* | Clear it: the command prints the exact `rm -rf` |
 | `UNKNOWN — CANNOT INSPECT` | The pid could **not be inspected** — permission denied, no pid file, an unrecognised error, or a pid that is not a usable process id (see below) | **Nothing destructive.** Assume the run may be live. Re-run `--status` from somewhere permitted to inspect processes |
+
+**`<holder>` is read from the lease, never assumed.** Both the `run:` line and the `checkout-lock:`
+line name their holder from the lease's own recorded `program`, through the same formatter the exit
+`17` refusals use — one formatter for both surfaces, so the two vocabularies cannot drift apart.
+There are four renderings, and they are the whole set:
+
+| Recorded `program` | Rendered as |
+|---|---|
+| `carry` | `an attended carry` |
+| `dispatch` | `a dispatcher` |
+| missing | `a Work Loop run (program unrecorded)` |
+| anything else | `a Work Loop run (<recorded value>)` |
+
+The lease is shared with the attended carrier, so a dispatcher is no longer the only thing that can
+hold one. Until this was corrected, `--status` said `dispatcher pid N` whoever held the lock, which
+against a carrier-held lease sent the operator looking for a process that does not exist.
+`UNKNOWN — CANNOT INSPECT` names the recorded holder too, on its own line, rather than asserting a
+live dispatcher: the pid is the part that could not be inspected, and the lease's record of who took
+it is exactly the part that still can be. Metadata that is missing is reported as unrecorded and
+never guessed in either direction. Cases `30g`/`30h` pin all four renderings on both lines, `30g`
+against a **real** carrier holding both leases while `--status` stays read-only throughout.
 
 **A valid lock pid matches `[1-9][0-9]*`, and "numeric" is not that test.** `0` and `00` are numeric
 but must never reach `kill(2)`: pid `0` means *every process in the caller's own process group*, so
