@@ -20,6 +20,8 @@ This proposal adds six target-alignment capabilities:
 5. **Evidence-rendered completion and decision reports** for Patrik.
 6. **A minimal append-only event journal** for operating analysis and later policy improvement.
 
+These six capabilities operate under three cross-cutting safety contracts: non-negotiable execution invariants, explicit replay safety, and a narrowly bounded reconciliation transition. They are constraints on the six additions, not new agents or subsystems.
+
 The additions preserve the governing operating rule:
 
 > **Continue automatically while task identity, durable state, evidence, authority, runtime and budgets agree. Resolve ordinary implementation uncertainty inside the approved envelope. Ask Patrik only when continuing requires a genuinely operator-owned decision or a capability grant that does not already exist.**
@@ -122,6 +124,14 @@ executor: inspect -> implement -> prove
         v
 validate structured handback
         |
+        +-- operational inconsistency -----> canonical reconciliation
+        |                                           |
+        |                         +-----------------+----------------+
+        |                         |                                  |
+        |                 RECONCILED_SAFE                   RECONCILE_BLOCKED
+        |                         |                                  |
+        |                 resume validated phase              blocked/operator
+        |
         v
 independent assessment
         |
@@ -144,6 +154,19 @@ validate closure -> completion report -> done
 ```
 
 The router advances only from validated durable state plus validated run evidence. A process exit code, prose claim, or file appearance alone never determines the next phase.
+
+### 4.1 Non-negotiable execution invariants
+
+The dispatcher, every actor and the Decision Resolver must never:
+
+1. weaken, remove or reinterpret acceptance criteria to obtain a pass;
+2. silently change the intended outcome, materially broaden scope or remove an exclusion;
+3. override failed or unavailable load-bearing proof;
+4. continue while canonical state, required evidence, Git facts, ownership or lease facts materially disagree;
+5. widen semantic authority, capability authority or the control system from inside the executing task; or
+6. infer completion from an artifact when the required producer handback or terminal result is missing.
+
+These rules sit above agent judgment. The Decision Resolver cannot reinterpret or waive them. A material disagreement must be reconciled through the canonical validator or must stop; it is never converted into permission to continue.
 
 ---
 
@@ -247,8 +270,8 @@ task_id: exact task
 run_id: exact dispatcher run
 actor: executor | reviewer | resolver | closer
 phase: admitted phase
-outcome: pass | repair_needed | decision_needed | blocked
-classification: implementation | intent | capability | permission | evidence | runtime | control
+outcome: pass | repair_needed | decision_needed | reconcile_needed | blocked
+classification: implementation | intent | capability | permission | evidence | runtime | control | reconciliation
 state_transition: exact expected durable transition or none
 proposed_next_action: bounded next action
 new_evidence: evidence paths or identifiers
@@ -283,10 +306,11 @@ A rejected handback becomes an evidence blocker. It is never converted into succ
 | Reviewer `pass`, no unresolved material finding | Launch or validate closure. |
 | `repair_needed`, implementation-class, inside both envelopes, budget available | Enter the authorized repair path. |
 | `decision_needed`, boundary-adjacent, evidence sufficient for resolution | Invoke the Decision Resolver or consume the resolver classification already produced by the reviewer. |
+| `reconcile_needed`, or a dispatcher-observed operational inconsistency | Invoke the canonical reconciliation transition; continue only on `RECONCILED_SAFE`. |
 | Resolver `ALLOW` | Record the resolution and continue from the approved next action. |
 | Resolver `DENY_AND_REPAIR` | Record the denial and return to a bounded repair path without expanding scope. |
 | Resolver `OPERATOR` | Enter legal `blocked/operator` state and render the decision packet. |
-| Capability absent, permission expansion required, load-bearing proof unavailable, contradictory state or unsafe runtime | Enter operator takeover or mandatory technical handback according to canonical authority policy. |
+| Capability absent, permission expansion required, load-bearing proof unavailable, unreconciled contradictory state or unsafe runtime | Enter operator takeover or mandatory technical handback according to canonical authority policy. |
 | Any invalid or missing handback | Stop as an evidence blocker. |
 
 The table is exhaustive for the supported protocol. An unknown combination fails closed.
@@ -297,8 +321,50 @@ The table is exhaustive for the supported protocol. An unknown combination fails
 - every invalid combination fails closed;
 - free-form prose cannot override the structured result;
 - actor exit zero without the required handback and state transition blocks;
-- the dispatcher cannot launch while canonical state is `blocked/operator`; and
-- replaying an old handback under a new run identity is refused.
+- the dispatcher cannot launch while canonical state is `blocked/operator`;
+- replaying an old handback under a new run identity is refused;
+- a known deterministic operational inconsistency can become `RECONCILED_SAFE`; and
+- missing terminal evidence, partial effects and ambiguous repository drift become `RECONCILE_BLOCKED`, never reconstructed success.
+
+### 6.6 Reconciliation transition
+
+Operational inconsistency is neither implementation failure nor an operator decision. The dispatcher therefore exposes one first-class transition:
+
+```text
+RECONCILE_NEEDED
+        |
+        v
+canonical validator/reconciler compares durable state
+with Git, ownership, leases, processes and run evidence
+        |
+        +-- RECONCILED_SAFE ----> continue from validated durable next action
+        |
+        +-- RECONCILE_BLOCKED --> durable blocker and actionable recovery packet
+```
+
+An actor may report an observed inconsistency, but it cannot authorize or perform the reconciliation. The dispatcher invokes the canonical validator and recovery capability; it must not gain a second lifecycle parser or dispatcher-local state-repair rules.
+
+Automatic continuation after reconciliation is permitted only when all are true:
+
+- the reconciliation belongs to a named deterministic class;
+- the correction is fully owned by the canonical validator/recovery capability;
+- no model request started after the last stable checkpoint;
+- task meaning, capability envelope, HEAD, index and working tree are unchanged;
+- no persistent, external or partial effect is present;
+- the required producer handback and terminal result exist and validate;
+- ownership and lease facts prove continuation is safe; and
+- the original whole-run budgets remain valid.
+
+The following cannot become automatic `RECONCILED_SAFE` in the initial release:
+
+- a proof artifact whose promised producer handback is missing;
+- a missing final result or completion marker;
+- HEAD, index or working-tree drift after interruption;
+- a started model request with an unknown final outcome;
+- a lease whose former holder or descendant teardown is uncertain; or
+- an external or persistent effect whose completion cannot be proven.
+
+Those conditions become `RECONCILE_BLOCKED`. Reconciliation may classify and preserve their facts, but it may not infer completion, replay the request or authorize continuation.
 
 ---
 
@@ -571,6 +637,9 @@ STATE_TRANSITION
 PROOF_RESULT
 REPAIR_STARTED
 REPAIR_FINISHED
+RECONCILIATION_STARTED
+RECONCILIATION_FINISHED
+REPLAY_REFUSED
 RESOLVER_DECISION
 OPERATOR_REQUIRED
 OPERATOR_DECISION_RECORDED
@@ -611,6 +680,7 @@ No automated learning is introduced. Periodic operating review may calculate:
 - resolver `ALLOW`, `DENY_AND_REPAIR` and `OPERATOR` rates;
 - repeated permission or capability blockers;
 - internal repair success and oscillation rates;
+- reconciliation-safe, reconciliation-blocked and replay-refusal rates;
 - false completion count;
 - invalid or missing handback count; and
 - completion rate by admitted route.
@@ -694,6 +764,7 @@ Additional initial ceilings are:
 |---|---|
 | Executor-internal repair | Two iterations inside one actor launch |
 | Dedicated resolver invocation | One per run |
+| Automatic safe reconciliation | One per run |
 | Reviewer correction | One correction and one reassessment, inherited from the closure package |
 | Nested actor | Zero by default |
 | Automatic policy change | Zero |
@@ -705,6 +776,7 @@ The dispatcher stops before another actor launch when:
 
 - the next launch exceeds the whole-run hop, time or usage budget;
 - the same failure recurs without new evidence;
+- the same operational inconsistency recurs after one automatic reconciliation;
 - the run oscillates between `ALLOW` and the same failed repair;
 - a resolver question is materially unchanged from an earlier question in the same run;
 - active state exceeds the launch ceiling; or
@@ -743,10 +815,12 @@ This sequence assumes the dispatcher reliability closure package is the active f
 
 1. Extend the closure package's universal result and evidence handshake with the actor handback schema.
 2. Implement schema validation and the exhaustive next-action transition table.
-3. Add the task-contract admission check.
-4. Add deterministic selection for the three supported route classes.
-5. Extend read-only status with admitted route, current phase, last outcome and next action.
-6. Prove zero-model refusal for incomplete, contradictory and unsupported admission cases.
+3. Add `RECONCILE_NEEDED`, `RECONCILED_SAFE` and `RECONCILE_BLOCKED` by invoking the canonical validator/recovery capability.
+4. Enforce replay classification and refusal before any repeated operation.
+5. Add the task-contract admission check.
+6. Add deterministic selection for the three supported route classes.
+7. Extend read-only status with admitted route, current phase, last outcome and next action.
+8. Prove zero-model refusal for incomplete, contradictory and unsupported admission cases.
 
 ### Change set TA-B — Keep ordinary repair inside execution
 
@@ -795,6 +869,13 @@ All live trials use exact task and run identities, clean dedicated worktrees, fi
 | Route selection | Repair, bounded implementation and plan-backed fixtures select the intended installed route. |
 | Ordinary proof failure | Executor diagnoses, repairs and re-proves within one actor launch. |
 | Repeated failure | Same failure without new evidence stops; no automatic relaunch occurs. |
+| Safe zero-model replay | A named deterministic preflight operation with `actor_started=false` and unchanged facts may repeat. |
+| Persistent-action replay | A commit, ownership mutation, state transition or external effect is reconciled before continuation and is never blindly repeated. |
+| Deterministic stale-state reconciliation | The canonical validator repairs a named safe inconsistency and returns `RECONCILED_SAFE`. |
+| Repeated reconciliation condition | A recurrence after one automatic reconciliation returns `RECONCILE_BLOCKED`; it cannot loop. |
+| Missing result during reconciliation | An artifact without its required handback/result returns `RECONCILE_BLOCKED`; completion is not reconstructed. |
+| Git drift during reconciliation | Changed HEAD, index or working tree returns `RECONCILE_BLOCKED`. |
+| Uncertain lease holder | The lease remains conservatively pinned and reconciliation blocks reuse. |
 | Boundary-adjacent fixture edit | Resolver returns `ALLOW`; execution continues inside unchanged envelopes. |
 | Unsafe validation removal | Resolver returns `DENY_AND_REPAIR`; executor finds a compliant route or blocks. |
 | Genuine material scope decision | Resolver returns `OPERATOR`; packet presents options, consequences and recommendation. |
@@ -823,6 +904,12 @@ Gate SA must pass first. Then every statement below must be proven:
 - The dispatcher selects only one of the supported Work Loop routes through deterministic rules.
 - Every actor handback is machine-validated and every supported outcome maps to one exhaustive next action.
 - Free-form prose, process exit zero or file appearance cannot independently advance the run.
+- The six non-negotiable execution invariants are enforced above executor and resolver judgment.
+- A repeated operation is permitted only when its replay-safe classification and unchanged preconditions are mechanically proven.
+- `RECONCILE_NEEDED` invokes the canonical validator/recovery capability rather than dispatcher-local lifecycle logic.
+- Only a named deterministic zero-model reconciliation with unchanged repository and authority facts may return `RECONCILED_SAFE` and continue automatically.
+- At most one automatic safe reconciliation occurs per run; recurrence returns `RECONCILE_BLOCKED`.
+- Missing terminal evidence, partial effects, Git drift, started requests with unknown outcomes and uncertain lease teardown return `RECONCILE_BLOCKED`.
 - An executor can diagnose, repair and re-prove representative ordinary technical failures without Patrik.
 - Internal repair stops on repeated/no-new-evidence failure and cannot weaken proof, expand scope or grant capability.
 - Boundary-adjacent actions already authorized by intent and capability continue without Patrik.
@@ -844,6 +931,25 @@ Passing Gate ST does not justify unattended or walk-away reliability. That claim
 
 ## 17. Failure and recovery behavior
 
+### 17.1 Replay-safety invariant
+
+The dispatcher may repeat an operation only when all are true:
+
+- it is a named deterministic zero-model operation classified as replay-safe;
+- `actor_started=false` for the attempt being recovered;
+- canonical state, task meaning, capability envelope, HEAD, index and working tree are unchanged;
+- no ownership, lease, commit, persistent-state or external effect may already have occurred;
+- the repeat cannot create a duplicate effect; and
+- the original deadline, usage and operation budgets remain valid.
+
+Reads, repository inspection and local proof commands may be classified as replay-safe when they have no persistent or external effect. Commit creation, canonical-state mutation, ownership or lease mutation, external writes and any model request are not replay-safe by default.
+
+When replay safety cannot be proven, the dispatcher starts no repeated operation. It classifies actual effects through the reconciliation transition, creates a new run identity when resumption is later authorized, and resumes from the canonical durable next action rather than replaying the previous request.
+
+Replay safety is declared by trusted dispatcher/runtime code. An actor or Decision Resolver may not label its own proposed action replay-safe.
+
+### 17.2 Failure table and resume
+
 | Failure class | Required behavior |
 |---|---|
 | Admission incomplete | Zero-model `PREPARATION_REQUIRED`; no lease-dependent or paid work beyond necessary preflight. |
@@ -855,6 +961,9 @@ Passing Gate ST does not justify unattended or walk-away reliability. That claim
 | Operator decision required | Atomic terminal result, legal `blocked/operator` state, decision packet and exact resume action. |
 | Renderer failure | Canonical state and terminal result remain authoritative; report path records failure and status exposes it. |
 | Event journal failure | Observability limitation is recorded; state and result remain authoritative; continuation depends on whether the loss violates the declared evidence requirement. |
+| Named safe operational inconsistency | Canonical reconciliation returns `RECONCILED_SAFE`, records the correction and continues from the validated durable next action. |
+| Ambiguous operational inconsistency | `RECONCILE_BLOCKED`; preserve facts and render the exact recovery requirement. |
+| Unsafe or unclassified replay | Emit `REPLAY_REFUSED`; reconcile effects and do not repeat the action. |
 | Interruption or timeout | Existing closure-package teardown, partial-effect classification, conservative lease and operator-takeover rules apply. |
 
 Recovery never blindly repeats the previous request. It resumes from the canonical next action under a new run identity after complete revalidation.
@@ -902,6 +1011,7 @@ Use the dispatcher for 5–10 representative tasks across the three admitted rou
 - operator decisions that added genuinely new information;
 - permission and capability blockers;
 - invalid/missing handbacks;
+- reconciliation-safe, reconciliation-blocked and replay-refusal outcomes;
 - completion-report accuracy; and
 - time, usage and hop consumption.
 
@@ -927,12 +1037,15 @@ Approval of this proposal would establish the following direction:
 1. **Gate SA remains the reliability foundation; Gate ST becomes the target-alignment gate.**
 2. **The dispatcher admits only tasks with complete executable contracts and one supported route.**
 3. **Structured handbacks and an exhaustive transition table govern continuation.** Free-form prose never does.
-4. **Ordinary executor proof failures may receive up to two internal repairs when each produces new evidence and remains inside both authority envelopes.**
-5. **The existing one-reviewer-correction ceiling remains separate and unchanged.**
-6. **A narrow Decision Resolver may allow already-authorized action, deny unsafe action, or identify one genuine operator decision.** It may not grant capability or change policy.
-7. **Completion and decision reports are rendered from validated state and evidence without another model call.**
-8. **A run-local event journal supports analysis but never becomes task or transport authority.**
-9. **The release remains supervised.** Unattended reliability continues to require the separate Gate U programme.
+4. **The six non-negotiable execution invariants sit above executor and resolver judgment.** Neither actor may waive them.
+5. **Only a mechanically proven replay-safe zero-model operation may repeat.** Persistent effects and model requests are reconciled and resumed, never blindly replayed.
+6. **Operational inconsistency uses a first-class reconciliation transition owned by the canonical validator/recovery capability.** Only named deterministic unchanged-state cases may continue automatically.
+7. **Ordinary executor proof failures may receive up to two internal repairs when each produces new evidence and remains inside both authority envelopes.**
+8. **The existing one-reviewer-correction ceiling remains separate and unchanged.**
+9. **A narrow Decision Resolver may allow already-authorized action, deny unsafe action, or identify one genuine operator decision.** It may not grant capability or change policy.
+10. **Completion and decision reports are rendered from validated state and evidence without another model call.**
+11. **A run-local event journal supports analysis but never becomes task or transport authority.**
+12. **The release remains supervised.** Unattended reliability continues to require the separate Gate U programme.
 
 Approval authorizes detailed implementation planning against the integrated dispatcher baseline. It does not authorize code changes, capability expansion, unattended release, push, merge or deployment.
 
@@ -952,8 +1065,10 @@ The proposed additions are intentionally small:
 - two deterministic human report templates; and
 - one run-local event journal.
 
+They operate under six non-negotiable execution invariants, an explicit replay-safety rule and one canonical reconciliation transition. These are control contracts around the additions, not additional agents or state systems.
+
 Together they supply the missing controlled reasoning layer between “something unexpected happened” and “ask Patrik,” while preserving the dispatcher as a thin, deterministic control plane.
 
 The target operating behavior is:
 
-> **Admit only executable intent. Let specialists resolve ordinary implementation uncertainty inside bounded authority. Advance only on validated evidence. Deny unsafe proposals. Escalate only genuine operator decisions. Complete with a report that can be trusted without reading the transcript.**
+> **Admit only executable intent. Let specialists resolve ordinary implementation uncertainty inside bounded authority. Reconcile operational truth without inventing success. Replay only what is proven safe to repeat. Advance only on validated evidence. Deny unsafe proposals. Escalate only genuine operator decisions. Complete with a report that can be trusted without reading the transcript.**
