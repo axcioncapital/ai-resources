@@ -23,11 +23,16 @@ intake-result contract stay in `SKILL.md` and are not repeated here.
 - `/implementation-triage` — is this proposed implementation worth doing.
 - `/reconcile` — did the output actually fulfil its mandate.
 
-### The index — Axcíon Codex specialist skills (1)
+### The index — Axcíon Codex specialist skills (2)
 
 - `$diagnose-and-fix` — one specific repository fault to diagnose, repair when bounded,
   and prove end to end. This is the canonical Axcíon owner; do not route the same fault to generic
   `diagnosing-bugs`.
+- `$realign` — an already-active Work Loop course is itself materially drifting into unauthorised
+  scope, excess governance, over-gating, ceremony or overengineering. Route here when the operator
+  invokes it or explicitly asks to correct that course, or when Work Loop identifies a credible
+  material signal in its own proposed next move. Reuse the active task; open no new task and do not
+  substitute it for Work Loop's ordinary assessment or correction round.
 
 ### The index — Axcíon narrow specialist destinations (10)
 
@@ -87,7 +92,7 @@ Discoverable, never a first route.
 
 ### The index — names that are not routes
 
-Named by class, not enumerated. The Axcíon surface is 95 commands and this index carries 24 of them plus one Codex specialist on purpose; the rest are reachable, just not as first owners.
+Named by class, not enumerated. The Axcíon surface is 95 commands and this index carries 24 of them plus two Codex specialists on purpose; the rest are reachable, just not as first owners.
 
 - **Lifecycle phases** — `/create-skill`, `/improve-skill`, `/request-skill`, `/migrate-skill`, `/graduate-resource`: build phases under durable-resource work, reached by its owner.
 - **Conversational controls** — operator controls and duplicate entry points, not capability owners.
