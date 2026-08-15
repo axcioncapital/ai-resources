@@ -809,6 +809,259 @@ expect_rc 17 "$RC" "a carrier is refused while a DISPATCHER holds the same task 
 wait "$dispatcher" 2>/dev/null
 git -C "$d" worktree remove --force "$WT" >/dev/null 2>&1
 
+# --------------------------------------------------- cases 12e-5 .. 12e-7
+# THE PROPOSAL'S CASES 3, 4 AND 12 — the three rows of the acceptance matrix
+# that had no case of their own.
+#
+# WHY 12e-1..4 DID NOT ALREADY COVER THEM, which is the whole reason these
+# exist. The four above are cross-transport, but each is a DIFFERENT row of the
+# proposal's matrix, and the difference is the axis being isolated:
+#
+#   12e-1 / 12e-2  one checkout, DIFFERENT tasks  -> the proposal's case 11
+#   12e-3 / 12e-4  one task, DIFFERENT checkouts  -> the proposal's cases 7 / 8
+#
+# The proposal's cases 3 and 4 are the plain collision neither pair states: the
+# SAME task in the SAME checkout, one transport against the other. Both leases
+# refuse it, which is exactly why an indirect argument from the four above is
+# not evidence — a suite can be green on every neighbouring row while the
+# straightforward one is untested, and "it must be covered, look at 12e" is the
+# reasoning the correction plan's finding 6 names.
+#
+# Case 12 is the other direction, and it is the one a refusal-shaped change
+# breaks silently: two DIFFERENT tasks in two DIFFERENT worktrees must BOTH be
+# admitted. Nothing here asserted that two runs ever hold leases at the same
+# moment. carry-turn.test.sh 12b has an over-refusal control, but it is carrier
+# against a planted lease, sequential, and single-transport — it cannot show
+# two live programs concurrent in one repository.
+#
+# Numbered in this suite's own 12e series, with the proposal's number in the
+# header, for the reason case 30g gives: "case 3", "case 4" and "case 12" are
+# all already taken here by unrelated local cases, and renumbering those would
+# break every reference to them.
+echo
+echo "Case 12e-5 — proposal case 3: a CARRIER holds this task in THIS checkout; a DISPATCHER starts on it"
+d="$(new_sandbox)"
+state_file "$d" "xt-same" "claude"
+CCOUNT="$SANDBOX_ROOT/xt5.count"; : >"$CCOUNT"
+CSTUB="$SANDBOX_ROOT/xt5.stub"
+make_carry_stub "$CSTUB" "$CCOUNT" "$d/logs/work-loop/xt-same.md" 8
+( bash "$CARRY_BIN" --checkout "$d" --task xt-same --claude-bin "$CSTUB" \
+    --timeout 60 "${CARRY_ALLOW[@]}" --log-dir "$SANDBOX_ROOT/xt5-carry-runs" \
+    >/dev/null 2>&1 ) &
+carrier=$!
+sleep 3
+CK5="$(checkout_lock_for "$d")"; TK5="$(task_lock_for "$d" xt-same)"
+# BOTH leases, and both are asserted rather than one: this is the row where the
+# task lease and the checkout lease would each refuse on their own, so a setup
+# that established only one would leave which lease did the work unsettled.
+{ [ -d "$CK5" ] && [ -d "$TK5" ]; } \
+  && ok "12e-5 setup — the carrier holds BOTH the task and the checkout lease" \
+  || bad "12e-5 setup — the carrier holds BOTH the task and the checkout lease" \
+         "checkout=$([ -d "$CK5" ] && echo held || echo absent) task=$([ -d "$TK5" ] && echo held || echo absent)"
+[ "$(cat "$TK5/program" 2>/dev/null)" = carry ] \
+  && ok "12e-5 setup — and the task lease records a CARRIER as its holder" \
+  || bad "12e-5 setup — and the task lease records a CARRIER as its holder" \
+         "program=$(cat "$TK5/program" 2>/dev/null)"
+rm -f "$d.calls"
+BEFORE="$(git -C "$d" rev-parse HEAD)"
+run_dispatch "$d" xt-same --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 17 "$RC" "a dispatcher is refused on the SAME task in the SAME checkout as a live carrier" "$OUT"
+# The proposal's case 3 requires the refusal to NAME the attended holder, not
+# merely to happen. The acquisition order is task lease first (work-loop-lease.sh
+# 457), so this is the task-lease refusal.
+out_has 'an attended carry holds task xt-same' "$OUT" \
+  "  and the refusal names the ATTENDED CARRIER as the holder"
+out_lacks 'a dispatcher' "$OUT" \
+  "  and does not call the carrier a dispatcher"
+[ -s "$d.calls" ] && bad "  and the dispatcher launched no actor" \
+                         "actors ran: $(tr '\n' ';' <"$d.calls")" \
+                  || ok "  and the dispatcher launched no actor"
+[ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "  and committed nothing" \
+  || bad "  and committed nothing" "HEAD moved from $BEFORE"
+wait "$carrier" 2>/dev/null
+# The control. Without it every assertion above would pass just as well against
+# a carrier that took a lease and never launched anything, and against a
+# dispatcher that refuses unconditionally.
+[ "$(carry_calls "$CCOUNT")" = "1" ] \
+  && ok "  control — the carrier that HELD the leases did launch its own actor" \
+  || bad "  control — the carrier that HELD the leases did launch its own actor" \
+         "launches: $(carry_calls "$CCOUNT")"
+
+echo
+echo "Case 12e-6 — proposal case 4: a DISPATCHER holds this task in THIS checkout; a CARRIER starts on it"
+d="$(new_sandbox)"
+state_file "$d" "xt-same2" "claude"
+rm -f "$d.calls"
+# The actor RECORDS itself before it sleeps. 12e-2's dispatcher used a bare
+# `sleep`, which cannot answer "did the holder actually launch?" — the control
+# the proposal requires on this row.
+( bash "$DISPATCH_BIN" --checkout "$d" --task xt-same2 --log-dir "$d/runs" \
+    --timeout 40 --actor-cmd 'printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls"; sleep 8; exit 0' \
+    >/dev/null 2>&1 ) &
+dispatcher=$!
+sleep 3
+CK6="$(checkout_lock_for "$d")"; TK6="$(task_lock_for "$d" xt-same2)"
+{ [ -d "$CK6" ] && [ -d "$TK6" ]; } \
+  && ok "12e-6 setup — the dispatcher holds BOTH the task and the checkout lease" \
+  || bad "12e-6 setup — the dispatcher holds BOTH the task and the checkout lease" \
+         "checkout=$([ -d "$CK6" ] && echo held || echo absent) task=$([ -d "$TK6" ] && echo held || echo absent)"
+[ "$(cat "$TK6/program" 2>/dev/null)" = dispatch ] \
+  && ok "12e-6 setup — and the task lease records a DISPATCHER as its holder" \
+  || bad "12e-6 setup — and the task lease records a DISPATCHER as its holder" \
+         "program=$(cat "$TK6/program" 2>/dev/null)"
+CCOUNT="$SANDBOX_ROOT/xt6.count"; : >"$CCOUNT"
+CSTUB="$SANDBOX_ROOT/xt6.stub"
+make_carry_stub "$CSTUB" "$CCOUNT" "$d/logs/work-loop/xt-same2.md" 0
+BEFORE="$(git -C "$d" rev-parse HEAD)"
+OUT="$(bash "$CARRY_BIN" --checkout "$d" --task xt-same2 --claude-bin "$CSTUB" \
+        --timeout 60 "${CARRY_ALLOW[@]}" --log-dir "$SANDBOX_ROOT/xt6-carry-runs" 2>&1)"; RC=$?
+expect_rc 17 "$RC" "a carrier is refused on the SAME task in the SAME checkout as a live dispatcher" "$OUT"
+# The mirror image of 12e-5, on the carrier's own wording (carry-turn.sh 831).
+# The negative half is the load-bearing one: a launcher that named the holder
+# after the program doing the looking would say "an attended carry" here.
+out_has "an unattended dispatched run already holds the TASK lease for 'xt-same2'" "$OUT" \
+  "  and the refusal names the DISPATCHED RUN as the holder"
+out_lacks 'an attended carry' "$OUT" \
+  "  and does not call the dispatcher an attended carry"
+[ "$(carry_calls "$CCOUNT")" = "0" ] \
+  && ok "  and the carrier launched no actor" \
+  || bad "  and the carrier launched no actor" "launches: $(carry_calls "$CCOUNT")"
+[ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "  and committed nothing" \
+  || bad "  and committed nothing" "HEAD moved from $BEFORE"
+wait "$dispatcher" 2>/dev/null
+[ "$(calls "$d")" = "1" ] \
+  && ok "  control — the dispatcher that HELD the leases did launch its own actor" \
+  || bad "  control — the dispatcher that HELD the leases did launch its own actor" \
+         "actor launches: $(calls "$d")"
+
+echo
+echo "Case 12e-7 — proposal case 12: DIFFERENT tasks in DIFFERENT worktrees are BOTH admitted, concurrently"
+# The over-refusal row. Everything else in this section proves a refusal, and a
+# lease that refused everything would satisfy all of it. This is the row that
+# fails against such a lease, so it is where the section's own falsifiability
+# sits — and it is proven CONCURRENTLY, because "both were admitted at different
+# times" is not the claim: legitimate parallel work needs both leases held at
+# one moment.
+d="$(new_sandbox)"
+state_file "$d" "iso-here"  "claude"
+state_file "$d" "iso-there" "claude"
+WT="$SANDBOX_ROOT/iso-wt"
+git -C "$d" worktree add -q -b iso-lane "$WT" >/dev/null 2>&1
+[ -f "$WT/logs/work-loop/iso-here.md" ] && [ -f "$WT/logs/work-loop/iso-there.md" ] \
+  && ok "12e-7 setup — both state files replicate into the linked worktree" \
+  || bad "12e-7 setup — both state files replicate into the linked worktree" "absent"
+# THE SHARED LEASE ROOT IS THE POINT. Two worktrees of one repository resolve to
+# ONE lease root, so these two runs are visible to each other and are admitted
+# anyway. If the root were per-worktree, this case would pass by never having
+# been a contention at all.
+[ "$(lock_root_for "$d")" = "$(lock_root_for "$WT")" ] \
+  && ok "12e-7 setup — both checkouts resolve the SAME lease root, so each could see the other" \
+  || bad "12e-7 setup — both checkouts resolve the same lease root" \
+         "$(lock_root_for "$d") vs $(lock_root_for "$WT")"
+# Ownership has to be SETTLED in both, for the reason 12b and 12e-3 give: the
+# worktree add replicated BOTH state files, and repository-depth ownership reads
+# an undeclared replicated task as AMBIGUOUS. Each checkout declares the ONE
+# task it runs — a second declaration in either would make that task claimed
+# twice and refuse it by another route. --depth local, because a repo-depth
+# claim runs the same replicated-state read and writes nothing.
+bash "$d/logs/scripts/work-loop-owner.sh"  claim --checkout "$d"  --task iso-here \
+     --depth local >/dev/null 2>&1 \
+  && ok "12e-7 setup — this checkout declares iso-here" \
+  || bad "12e-7 setup — this checkout declares iso-here" "claim did not succeed"
+bash "$WT/logs/scripts/work-loop-owner.sh" claim --checkout "$WT" --task iso-there \
+     --depth local >/dev/null 2>&1 \
+  && ok "12e-7 setup — the worktree declares iso-there" \
+  || bad "12e-7 setup — the worktree declares iso-there" "claim did not succeed"
+ICOUNT="$SANDBOX_ROOT/iso.count"; : >"$ICOUNT"
+ISTUB="$SANDBOX_ROOT/iso.stub"
+make_carry_stub "$ISTUB" "$ICOUNT" "$d/logs/work-loop/iso-here.md" 8
+rm -f "$d.calls" "$WT.calls"
+ICRC="$SANDBOX_ROOT/iso-carry.rc"; IDRC="$SANDBOX_ROOT/iso-disp.rc"
+ICOUT="$SANDBOX_ROOT/iso-carry.out"; IDOUT="$SANDBOX_ROOT/iso-disp.out"
+( bash "$CARRY_BIN" --checkout "$d" --task iso-here --claude-bin "$ISTUB" \
+    --timeout 60 "${CARRY_ALLOW[@]}" --log-dir "$SANDBOX_ROOT/iso-carry-runs" \
+    >"$ICOUT" 2>&1; printf '%s' "$?" >"$ICRC" ) &
+carrier=$!
+( bash "$DISPATCH_BIN" --checkout "$WT" --task iso-there --log-dir "$WT/runs" \
+    --timeout 40 --actor-cmd "sleep 6; $FLIP_TO_OPERATOR" \
+    >"$IDOUT" 2>&1; printf '%s' "$?" >"$IDRC" ) &
+dispatcher=$!
+sleep 3
+# THE CONCURRENCY ASSERTION, and it is read while both are still running. After
+# they exit, four absent directories look exactly like two runs that never
+# started, so this cannot be checked at the end.
+CKh="$(checkout_lock_for "$d")";  TKh="$(task_lock_for "$d" iso-here)"
+CKt="$(checkout_lock_for "$WT")"; TKt="$(task_lock_for "$WT" iso-there)"
+{ [ -d "$CKh" ] && [ -d "$TKh" ] && [ -d "$CKt" ] && [ -d "$TKt" ]; } \
+  && ok "  BOTH runs hold BOTH of their leases AT THE SAME MOMENT" \
+  || bad "  BOTH runs hold BOTH of their leases AT THE SAME MOMENT" \
+         "here: checkout=$([ -d "$CKh" ] && echo held || echo absent) task=$([ -d "$TKh" ] && echo held || echo absent); there: checkout=$([ -d "$CKt" ] && echo held || echo absent) task=$([ -d "$TKt" ] && echo held || echo absent)"
+# MIXED PATHS would produce the same four `-d` results above while the two runs
+# shared a resource, so the distinctness is asserted rather than assumed.
+[ "$CKh" != "$CKt" ] \
+  && ok "  and the two checkout leases are distinct paths" \
+  || bad "  and the two checkout leases are distinct paths" "both resolve to $CKh"
+[ "$TKh" != "$TKt" ] \
+  && ok "  and the two task leases are distinct paths" \
+  || bad "  and the two task leases are distinct paths" "both resolve to $TKh"
+[ "$(cat "$CKh/program" 2>/dev/null)" = carry ] && [ "$(cat "$CKt/program" 2>/dev/null)" = dispatch ] \
+  && ok "  and each lease records the program that actually took it" \
+  || bad "  and each lease records the program that actually took it" \
+         "here=$(cat "$CKh/program" 2>/dev/null) there=$(cat "$CKt/program" 2>/dev/null)"
+wait "$carrier" 2>/dev/null
+wait "$dispatcher" 2>/dev/null
+# NEITHER WAS REFUSED. 17 is the code under test; the exit codes are asserted as
+# "not 17" rather than as 0 because what follows admission — the carrier's
+# post-hop verdict, the dispatcher's turn: operator stop — is other cases' subject
+# and would couple this row to verdicts it is not about.
+#
+# The recorded code has to EXIST for that comparison to mean anything: a run
+# that died without writing its rc file leaves an empty string, which is also
+# "not 17". Read once into a variable so the emptiness and the value are the
+# same reading.
+irc="$(cat "$ICRC" 2>/dev/null)"; idrc="$(cat "$IDRC" 2>/dev/null)"
+{ [ -n "$irc" ] && [ "$irc" != "17" ]; } \
+  && ok "  and the carrier was NOT refused (exit $irc)" \
+  || bad "  and the carrier was NOT refused" \
+         "rc=[$irc] ${ICOUT}: $(head -5 "$ICOUT" 2>/dev/null | tr '\n' ' ')"
+{ [ -n "$idrc" ] && [ "$idrc" != "17" ]; } \
+  && ok "  and the dispatcher was NOT refused (exit $idrc)" \
+  || bad "  and the dispatcher was NOT refused" \
+         "rc=[$idrc] ${IDOUT}: $(head -5 "$IDOUT" 2>/dev/null | tr '\n' ' ')"
+# The controls. Both of them: a lease that admitted both runs and neither of
+# which launched would satisfy every assertion above.
+[ "$(carry_calls "$ICOUNT")" = "1" ] \
+  && ok "  control — the carrier launched its own actor" \
+  || bad "  control — the carrier launched its own actor" "launches: $(carry_calls "$ICOUNT")"
+[ "$(calls "$WT")" = "1" ] \
+  && ok "  control — the dispatcher launched its own actor" \
+  || bad "  control — the dispatcher launched its own actor" "launches: $(calls "$WT")"
+[ "$(calls "$d")" = "0" ] \
+  && ok "  and no actor ran against the OTHER checkout" \
+  || bad "  and no actor ran against the OTHER checkout" "$(tr '\n' ';' <"$d.calls" 2>/dev/null)"
+# ISOLATION, on the working trees rather than on the leases. The carrier's hop
+# rewrote iso-here in ITS checkout; the worktree's replica of the same file must
+# be untouched, or the two runs were never separated in the way this row claims.
+grep -q 'carrier stub ran' "$d/logs/work-loop/iso-here.md" 2>/dev/null \
+  && ok "  and the carrier's hop landed in ITS OWN checkout's state file" \
+  || bad "  and the carrier's hop landed in ITS OWN checkout's state file" "no hop recorded"
+grep -q 'carrier stub ran' "$WT/logs/work-loop/iso-here.md" 2>/dev/null \
+  && bad "  and the worktree's replica of that file is untouched" "the hop reached the other checkout" \
+  || ok "  and the worktree's replica of that file is untouched"
+[ -d "$WT/runs" ] && [ ! -e "$d/runs" ] \
+  && ok "  and the dispatcher's run log exists only in the worktree it ran in" \
+  || bad "  and the dispatcher's run log exists only in the worktree it ran in" \
+         "worktree=$([ -d "$WT/runs" ] && echo present || echo absent) other=$([ -e "$d/runs" ] && echo present || echo absent)"
+# No leak: two admitted runs that exit normally leave nothing behind, so the
+# next pair is admitted for the same reason this one was.
+{ [ ! -d "$CKh" ] && [ ! -d "$TKh" ] && [ ! -d "$CKt" ] && [ ! -d "$TKt" ]; } \
+  && ok "  and all four leases were released when the two runs ended" \
+  || bad "  and all four leases were released when the two runs ended" \
+         "here: checkout=$([ -d "$CKh" ] && echo held || echo gone) task=$([ -d "$TKh" ] && echo held || echo gone); there: checkout=$([ -d "$CKt" ] && echo held || echo gone) task=$([ -d "$TKt" ] && echo held || echo gone)"
+git -C "$d" worktree remove --force "$WT" >/dev/null 2>&1
+
 # ---------------------------------------------------------------- case 12f
 # THE LEASE ITSELF FAILS CLOSED when its shared library cannot be sourced.
 #
@@ -3073,6 +3326,161 @@ else
     || ok "  and still never recommends removing a lock it could not inspect"
   rm -rf "$TKp"
 fi
+
+# ================================================================ case 30i
+# THE PROPOSAL'S CASE 16 — a pin claims only what the run actually acquired, and
+# --status reports exactly that state.
+#
+# NUMBERED 30i for case 30g's reason: "case 16" is already taken in this file by
+# the foreign-unstaged-work case, and the number in the correction plan is the
+# PROPOSAL's acceptance-matrix number, not this suite's.
+#
+# WHAT WAS MISSING, and it is a seam rather than a behaviour. The library's own
+# suite proves the pin GUARD (work-loop-lease.test.sh case 6), driving the
+# library directly. Nothing proved what the DISPATCHER shows an operator
+# standing in front of the resulting half-pinned repository, and that is the
+# surface the operator actually reads. A guard nobody can observe is a guard
+# whose regression is silent.
+#
+# WHY THE LIBRARY IS DRIVEN DIRECTLY HERE TOO. wl_lease_acquire rolls the task
+# lease back when the checkout lease is refused (work-loop-lease.sh 470-473), so
+# "owns the task lease and not the checkout lease" is unreachable through
+# acquire alone. The state is real — a run reaches it whenever a resource is
+# lost between acquisition and teardown — but the route into it is not, and what
+# is under test is the guard and the report, not the route. The library that is
+# driven is the SANDBOX's own copy, the same file the dispatcher sources.
+#
+# THE DISCRIMINATOR IS THE CHECKOUT LEASE, and it is behavioural rather than a
+# string. An unowned lease that was wrongly pinned would refuse every later run
+# in that checkout permanently; an unowned lease that was correctly left alone
+# is an ordinary dead lease the next run reclaims. Part A runs an unrelated task
+# and requires it to be ADMITTED; part B pins a genuinely owned checkout lease
+# and requires the same run to be REFUSED. Neither half means anything without
+# the other: A alone passes against a pin that never writes the checkout lease
+# at all, and B alone passes against a pin that writes it unconditionally.
+PARTIAL_DRV="$SANDBOX_ROOT/partial-pin.sh"
+cat >"$PARTIAL_DRV" <<'DRV'
+#!/bin/bash
+# Drives the shared lease library to the state proposal case 16 names, then pins.
+# A separate process because a lease is held by a PROCESS: this one exits without
+# releasing, which is what a stopped run leaves behind.
+set -uo pipefail
+LIB="$1"; CO="$2"; TK="$3"; MODE="${4:-partial}"; SURV="$5"
+# CANONICALIZE FIRST, exactly as the real callers do (dispatch.sh, carry-turn.sh)
+# before they reach wl_lease_init. The library hashes the checkout string it is
+# GIVEN (work-loop-lease.sh 167) rather than a resolved path, so a driver that
+# passed the raw sandbox path would take its checkout lease under a second key —
+# on macOS ${TMPDIR} is /var/... and its resolved form is /private/var/... — and
+# every assertion here would then be about a directory the dispatcher never
+# looks at. The task lease would still line up, because its key is the task id,
+# which is what makes this failure quiet.
+CO="$(cd "$CO" && pwd -P)" || { printf 'CHECKOUT-UNRESOLVABLE\n'; exit 72; }
+. "$LIB" || { printf 'LIB-SOURCE-FAILED\n'; exit 70; }
+wl_lease_init "$CO" "$TK" || { printf 'INIT-FAILED\n'; exit 71; }
+wl_lease_acquire dispatch "$$" || { printf 'ACQUIRE-REFUSED\n'; exit 17; }
+# The disowning IS the case: the run no longer holds the checkout lease when it
+# comes to pin. In `both` mode nothing is disowned, which is the control.
+[ "$MODE" = partial ] && WL_LEASE_CHECKOUT_OWNED=0
+wl_lease_pin "$SURV" "" "$TK"; prc=$?
+printf 'PIN rc=%s pinned=%s task_survivors=%s checkout_survivors=%s\n' \
+  "$prc" "$WL_LEASE_PINNED" \
+  "$([ -f "$WL_LEASE_TASK_DIR/survivors" ] && printf yes || printf no)" \
+  "$([ -f "$WL_LEASE_CHECKOUT_DIR/survivors" ] && printf yes || printf no)"
+exit 0
+DRV
+
+echo
+echo "Case 30i — proposal case 16: a PARTIAL acquisition pins only the lease it held, and --status says so"
+d="$(new_sandbox)"
+state_file "$d" "pin-partial" "claude"
+state_file "$d" "pin-other"   "claude"
+CKi="$(checkout_lock_for "$d")"; TKi="$(task_lock_for "$d" pin-partial)"
+DRVOUT="$(bash "$PARTIAL_DRV" "$d/logs/scripts/work-loop-lease.sh" "$d" pin-partial partial 4242 2>&1)"; RC=$?
+expect_rc 0 "$RC" "30i setup — the run acquired both leases, disowned the checkout, then pinned" "$DRVOUT"
+out_has 'PIN rc=0 pinned=1' "$DRVOUT" "30i setup — and the pin reports success"
+# THE MIRROR CHECK, and it is the one this case was first written without. Both
+# lease directories must be where THIS suite derives them, or every assertion
+# below is a statement about a path nothing wrote. The task lease alone would
+# not catch it: its key is the task id, so it lines up under any checkout
+# string, while the checkout lease's key is the checkout path itself.
+{ [ -d "$TKi" ] && [ -d "$CKi" ]; } \
+  && ok "30i setup — both leases are where this suite derives them, so the case observes the run's own state" \
+  || bad "30i setup — both leases are where this suite derives them" \
+         "task=$([ -d "$TKi" ] && echo present || echo absent) checkout=$([ -d "$CKi" ] && echo present || echo absent)"
+# THE GUARD, on disk. `survivors` is the exact file wl_lease_acquire and
+# wl_lease_status recognise a pin by, so this is the state a later process sees.
+[ -f "$TKi/survivors" ] \
+  && ok "  the OWNED task lease carries the pin evidence" \
+  || bad "  the OWNED task lease carries the pin evidence" "no survivors file at $TKi"
+[ -f "$CKi/survivors" ] \
+  && bad "  and the UNOWNED checkout lease was NOT pinned" "the pin claimed a lease this run did not hold" \
+  || ok "  and the UNOWNED checkout lease was NOT pinned"
+# --status, read-only, over exactly that half-pinned state.
+TREE_BEFORE="$(tree_manifest "$d")"
+STATUS_BEFORE="$(git -C "$d" status --porcelain)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task pin-partial \
+        --log-dir "$d/pin-runs" --status 2>&1)"; RC=$?
+TREE_AFTER="$(tree_manifest "$d")"
+STATUS_AFTER="$(git -C "$d" status --porcelain)"
+expect_rc 0 "$RC" "--status over a partially pinned repository exits 0" "$OUT"
+out_has 'run: PINNED LOCK' "$OUT" \
+  "  and --status reports the TASK lease as PINNED"
+out_has 'descendants still running: 4242' "$OUT" \
+  "  and reads back the pin evidence the operator has to act on"
+# The checkout lease is HELD and not pinned, and --status must describe it as
+# what it is. A report that promoted it to pinned would tell the operator to go
+# and clear two things by hand where one is the answer.
+out_has 'checkout-lock: HELD by a dispatcher running task pin-partial' "$OUT" \
+  "  and describes the checkout lease as HELD, not as a second pin"
+[ ! -e "$d/pin-runs" ] \
+  && ok "  and created no run-log directory in the checkout" \
+  || bad "  and created no run-log directory in the checkout" "$(ls -a "$d/pin-runs" 2>&1 | tr '\n' ' ')"
+[ "$TREE_BEFORE" = "$TREE_AFTER" ] && [ "$STATUS_BEFORE" = "$STATUS_AFTER" ] \
+  && ok "  and the working tree and git status are unchanged" \
+  || bad "  and the working tree and git status are unchanged" \
+         "$(diff <(printf '%s\n' "$TREE_BEFORE") <(printf '%s\n' "$TREE_AFTER") | head -5 | tr '\n' ' ')"
+# THE BEHAVIOURAL HALF. An unrelated task in this checkout meets the task lease
+# it does not want and the checkout lease that was left unpinned — a dead,
+# unpinned lease, which is the one state a later run may reclaim. It must be
+# ADMITTED, or the pin silently took the whole checkout with it.
+rm -f "$d.calls"
+run_dispatch "$d" pin-other --actor-cmd "$FLIP_TO_OPERATOR"
+[ "$RC" != "17" ] \
+  && ok "  and an UNRELATED task in this checkout is still admitted" \
+  || bad "  and an UNRELATED task in this checkout is still admitted" "refused: $OUT"
+out_lacks 'its checkout lock is PINNED' "$OUT" \
+  "  and is not turned away by a pin on a lease the stopped run never held"
+[ "$(calls "$d")" = "1" ] \
+  && ok "  control — that unrelated run really launched its actor" \
+  || bad "  control — that unrelated run really launched its actor" "launches: $(calls "$d")"
+[ -f "$TKi/survivors" ] \
+  && ok "  and the genuine pin on the task lease survived all of it" \
+  || bad "  and the genuine pin on the task lease survived all of it" "the pin is gone"
+
+echo
+echo "Case 30i-b — POSITIVE CONTROL: a FULL acquisition does pin the checkout lease, and it does refuse"
+# Without this, every assertion in 30i above is satisfied by a pin that never
+# writes a checkout lease under any circumstances.
+d="$(new_sandbox)"
+state_file "$d" "pin-both"  "claude"
+state_file "$d" "pin-other" "claude"
+CKb="$(checkout_lock_for "$d")"; TKb="$(task_lock_for "$d" pin-both)"
+DRVOUT="$(bash "$PARTIAL_DRV" "$d/logs/scripts/work-loop-lease.sh" "$d" pin-both both 5353 2>&1)"; RC=$?
+expect_rc 0 "$RC" "30i-b setup — the run acquired both leases and pinned while holding both" "$DRVOUT"
+out_has 'task_survivors=yes checkout_survivors=yes' "$DRVOUT" \
+  "  a run that OWNED both leases pins BOTH of them"
+[ -f "$CKb/survivors" ] \
+  && ok "  and the checkout lease carries pin evidence when the run held it" \
+  || bad "  and the checkout lease carries pin evidence when the run held it" "no survivors file at $CKb"
+rm -f "$d.calls"
+run_dispatch "$d" pin-other --actor-cmd "$FLIP_TO_OPERATOR"
+expect_rc 17 "$RC" "  and an unrelated task in this checkout IS refused by that checkout pin" "$OUT"
+out_has 'its checkout lock is PINNED' "$OUT" \
+  "  and the refusal names the CHECKOUT lock as the pinned resource"
+[ "$(calls "$d")" = "0" ] \
+  && ok "  and it launched no actor" \
+  || bad "  and it launched no actor" "actors ran: $(tr '\n' ';' <"$d.calls" 2>/dev/null)"
+rm -rf "$CKb" "$TKb"
 
 # ================================================================= case 31
 # --claude-deny had NO dispatcher-level coverage when it was added (caught in
