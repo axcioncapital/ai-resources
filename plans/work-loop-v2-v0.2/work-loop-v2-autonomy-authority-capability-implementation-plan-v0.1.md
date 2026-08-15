@@ -1,13 +1,33 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** **Re-frozen for implementation — 2026-08-15.** The operator gave explicit content-bound
+**Status:** **Amended and returned to draft — 2026-08-15 (operator scope decision).** Implementation is
+**complete through T7**. The operator decided on 2026-08-15 to finish at the implemented T7 boundary and
+**removed T8 and T9 from this task's required completion bar**. That is an operator-owned change to the
+Fixed Point — the only route this plan ever allowed past T8's and T9's exits — and it is recorded
+authoritatively at **§ 1 Fixed Point, *Scope decision — 2026-08-15***. Every other live statement in this
+file points there rather than restating it. **T8's twelve scenarios and T9's 3–5 organic tasks were not
+run and carry no PASS, completion or validation claim**; proposal §16's observable-success standard is
+therefore not established by this project, and that is the accepted limitation of finishing here.
+
+**Why this amendment returns the plan to draft, and what that does not mean.** Changing the Fixed Point
+and two tracer contracts is substantive, and this plan's standing rule is that a substantive change to a
+tracer's contract cannot be an edit under a freeze — so the plan returns to draft on its own rule.
+**Nothing already landed is affected:** T1, T1a, T2, T3, T3a, T4, T5, T6 and T7 all landed under the
+re-freeze recorded immediately below and are untouched. **This amendment implements, applies and
+authorizes nothing** — it changes this plan's own status, completion bar and disposition language only,
+and no implementation surface. The one gate it leaves open is the operator's content-bound approval of
+this amended content, if the project is to close on it.
+
+**The re-freeze this amendment supersedes — preserved as history.** The plan was **re-frozen for
+implementation on 2026-08-15**. The operator gave explicit content-bound
 approval of the reviewed-and-corrected T6/T7 evidence-and-control amendment content at commit
 `74e91209b31b0cf32aa1b0a27cc3b5ccbe2da115`, blob `0fabe8601871c5f7c49ff1e8628d4922c4422ba2`. That blob is
-the approved substantive content, and the re-freeze is bound to it rather than to this filename.
-**This status record announces that approval and implements nothing.** It edits only this Status block and
-§ Plan-readiness statement; every other byte of the approved blob is unchanged by it.
+the approved substantive content, and that re-freeze was bound to it rather than to this filename.
+**That status record announced that approval and implemented nothing.** It edited only this Status block and
+§ Plan-readiness statement; every other byte of the approved blob was unchanged by it. T6 and T7 both
+landed under it.
 
-**The gates this re-freeze rests on, completed in order.** (1) The plan returned to draft when Units 31 and
+**The gates that superseded re-freeze rested on, completed in order.** (1) The plan returned to draft when Units 31 and
 32 falsified two control premises — that `denials=` evidences a requested deny rule, and that the carrier
 refuses nested actors symmetrically. (2) The operator approved the bounded amendment direction on
 2026-08-15: machine-wide Codex execpolicy placement authorized for T7, symmetric direct-route request plus
@@ -31,10 +51,12 @@ content at commit `ff1827b4fcf30597d1e448bbce49f43a6001b85f`, blob
 `6cda14629bd3e26be3810443e260d466555967d7`. T3a, T4 and T5 all landed under that re-freeze and are
 unaffected by the T6/T7 amendment.
 
-**What this re-freeze authorizes, and what it does not.** T6 may begin. **T7 may not begin on this
-re-freeze alone** — its corrected review row requires one fresh risk-aware review of its exact candidate
+**What that superseded re-freeze authorized, and what it did not — history; both tracers have since
+landed.** T6 might begin. **T7 might not begin on that re-freeze alone** — its corrected review row
+required one fresh risk-aware review of its exact candidate
 before any implementation, because it changes a permission surface, machine-wide configuration outside this
-repository, and carrier runtime behaviour.
+repository, and carrier runtime behaviour. That review ran, the correction and closure check passed, and
+T6 and T7 landed; see § Plan-readiness statement, *Implementation state*.
 
 **The verified cause — two falsified control premises, found during T6's own execution.** (1) Unit 31
 proved that the `RESULT` line's `denials=` field reports the count of permission denials the **child**
@@ -176,8 +198,11 @@ corrected plan content at commit `ccf134b860b057de56c8da5452ce43ab36e4bf66`, blo
 is the prior amendment's pre-edit identity. That re-freeze is superseded and is recorded here
 as historical provenance, not as a live authority this revision can be read against.
 
-**Implementation state — accurate as of this re-freeze.** **T1, T1a, T2 and T3 are implemented, and they
-are the only implemented tracers. T3a is the nearest unmet tracer, and T4–T9 remain unimplemented.** T1
+**Implementation state — historical; accurate only as of the `ccf134b8` re-freeze above, and superseded.**
+*(The live implementation state is § Plan-readiness statement, *Implementation state*: T1 through T7 are
+landed and there is no unmet tracer. The paragraph below is retained as provenance of that superseded
+re-freeze and is not a live status record.)* **T1, T1a, T2 and T3 were implemented, and they
+were then the only implemented tracers. T3a was the nearest unmet tracer, and T4–T9 were unimplemented.** T1
 landed at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved; § Fixed Point below,
 unchanged); T1a at commit `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`; T2 at commit
 `17e03c3dc0e3e2b4f6db5d4a8ee052d84749a71b`, applying the accepted candidate core edit byte-for-byte; and
@@ -223,12 +248,14 @@ and blob recorded under *Earlier re-freeze identity (`ccf134b8`)* above. Each la
 the plan to draft again, on the same principle — including the present one, which has since been
 reviewed, corrected, and content-bound reapproved at the identity recorded in the Status block above.
 
-**Accepted limitation carried forward from the superseded freeze — unchanged by this amendment.** T8 may
+**Accepted limitation carried forward from the superseded freeze — now moot, retained as history.** T8 may
 count S4 and S8 as `blocked` verdicts while the MVP pre-authorized capability set remains empty (§ 3.4),
 so the twelve-row evidence period can finish without those two capability-dependent scenarios actually
 executing. Consequence: this weakens evidence completeness for dependency-registry behavior (S4) and
 authorized push / draft-PR behavior (S8). It does **not** authorize either capability, expand the
-capability envelope, or enable unattended execution.
+capability envelope, or enable unattended execution. *(Moot after the 2026-08-15 scope decision — T8 is
+no longer part of the completion bar and no row of it ran, so no S4/S8 `blocked` verdict was recorded
+either. This limitation would apply again only if T8 were re-opened as separately approved work.)*
 
 **Deferral carried forward from the superseded freeze — unchanged by this amendment.** The *Deferred,
 not scheduled in this plan* list names §14 item 6 alongside items 13–15, while the §14 traceability
@@ -293,13 +320,51 @@ license to reinterpret the proposal.
 - No new autonomy framework, state system, approval ledger, routine checklist, confidence engine, or
   assumed evaluation runner is created (proposal Design constraint; §12; §13).
 
-**Observable success condition (proposal §16, unchanged):** the Work Loop produces both (1) agents
+**Observable success condition (proposal §16, unchanged as a standard — but not established by this
+project; see the scope decision below):** the Work Loop produces both (1) agents
 investigating, choosing, implementing, testing, correcting, and executing pre-authorized technical
 actions without unnecessary operator interruption, and (2) agents stopping reliably before inventing
 operator intent, exceeding the solution envelope, using an unauthorized capability, accepting undelegated
 risk, bypassing containment, or claiming unverified load-bearing results. The evaluation proposal's twelve
 scenarios (§12) are the acceptance instrument; each currently resolves to one paired live trial because
-no automated runner exists yet (confirmed below).
+no automated runner exists yet (confirmed below). **That instrument was not run.** Proposal §16's standard
+is therefore **not established by this project**, and nothing in this plan may be read as establishing it.
+
+### Scope decision — 2026-08-15: the completion bar is reduced to T7 (operator-owned)
+
+**This is the authoritative record of the change. Every other live statement in this plan points here
+rather than restating it.**
+
+The operator decided on 2026-08-15 to stop spending effort on the T8/T9 evidence program and to finish
+the implementation at the already-implemented T7 boundary. **T8 and T9 are removed from this task's
+required completion bar.** This is the operator-owned change to the Fixed Point that T8's and T9's own
+exit conditions named as the only route past their bars; it is taken here, once, and recorded here.
+
+What that does and does not mean, exactly:
+
+- **Implementation is complete through T7.** T1, T1a, T2, T3, T3a, T4, T5, T6 and T7 are landed. There is
+  no nearest unmet tracer, and no tracer in this plan remains scheduled.
+- **T8's twelve constructed §12 scenarios and T9's 3–5 organic Standard tasks were not run.** They carry
+  **no PASS, no PARTIAL, no completion claim and no validation claim** — not for any row, not for any
+  task, and not in aggregate. They were not bypassed, simulated, waived on evidence, or satisfied by a
+  substitute; they were removed from the bar before being attempted.
+- **Proposal §16's observable-success standard and §14 item 10–11's operational-evidence standard are not
+  established by this project.** This is the accepted, explicit limitation of finishing here, and it is
+  the substantive cost of the decision. The mechanism is implemented; its behaviour under the approved
+  acceptance instrument is unmeasured.
+- **§ 3.6, § 3.7, T8 and T9 are retained as specifications for optional future validation.** They remain
+  accurate descriptions of what such validation would require. They are **no longer live gates, scheduled
+  tracers, strict exits, or commitments of this task.** Anyone resuming them re-opens them as new,
+  separately approved work.
+- **Nothing already landed is rewritten.** No implementation surface, no accepted limitation, no
+  historical approval or freeze record, and no proposal blob is changed by this decision. The approved
+  proposal's §14 items 8–12 remain what the proposal says; what changed is this plan's required
+  completion bar, not the proposal's text.
+
+**Status consequence.** Changing the Fixed Point and two tracer contracts is substantive, and this plan's
+standing rule is that such a change cannot be an edit under a freeze. The plan therefore returns to draft
+(Status block above). That is a record-keeping consequence only: it authorizes no new work, and it undoes
+nothing that landed under the superseded re-freeze.
 
 ---
 
@@ -424,7 +489,10 @@ authorized to touch (this artifact, the state file); no test suite left residue 
    roughly twelve paired live trials until a runner exists — that is T8 below. Separately, §14 item 10
    requires 3–5 **real** Standard-lane tasks across at least two capability shapes — organic operational
    use, not constructed scenarios — recorded at T9. Folding item 10 into the scenario-suite trials was a
-   correction-round finding (Unit 4 Finding 4); the two are scheduled as distinct units for that reason.
+   correction-round finding (Unit 4 Finding 4); the two are kept as distinct specifications for that
+   reason. **No longer a scheduling constraint (2026-08-15 scope decision, § 1):** neither T8 nor T9 is
+   scheduled by this plan any more. The distinction below survives as a description of what optional
+   future validation would have to keep separate, not as sequencing this plan still owns.
 4. **Descendant containment is an accepted open limitation, not a blocker for this MVP.** The proposal
    already scopes unattended release and the connected-development trial out of MVP (§9, §11, §14 items 4,
    6, 14). This plan does not schedule new work to close the descendant-containment gap; doing so would
@@ -951,7 +1019,9 @@ is pre-authorized today:** read-only network to approved domains; dependency res
 registries; approved MCP or remote test services; branch push to an approved remote/namespace; draft PR
 creation; remote CI; bounded reversible external development-system writes. The MVP therefore runs with
 **an empty pre-authorized set** — that is the honest current baseline, and it is why T9's "at least two
-capability shapes" is a real constraint rather than a formality (§ 3.7).
+capability shapes" was a real constraint rather than a formality (§ 3.7). *(T9 is no longer part of the
+completion bar — § 1, Scope decision. The empty pre-authorized set is unchanged and remains the live
+baseline; what lapsed is the requirement that T9 clear it.)*
 
 #### Every non-deferred §11 control mapped to its enforcement surface (corrected — Unit 5 Finding 2)
 
@@ -1085,6 +1155,11 @@ because there is nothing on the Codex launch line to test. The carrier's own hea
 
 ### 3.6 Autonomy scenario paired live trials (proposal §14 items 8–9 only)
 
+> **Not part of the completion bar (2026-08-15 operator scope decision — § 1 Fixed Point).** This
+> specification is retained as an accurate description of what optional future validation would require.
+> **It was not run**, it claims no PASS or completion for any scenario, and it is not a live gate or a
+> commitment of this task. Re-opening it is separately approved new work.
+
 **Corrected scope (Unit 4 Finding 4):** this item covers §14 items 8–9 — the twelve constructed §12 scenarios —
 only. It is a distinct evidence type from §14 item 10's real-task operational evidence, specified
 separately at § 3.7 below; the two must not be reported as the same evidence.
@@ -1114,6 +1189,12 @@ unreleased surface.
   unaccompanied by that field is not evidence the scenario passed.
 
 ### 3.7 Real-task operational evidence (proposal §14 item 10, added — Unit 4 Finding 4)
+
+> **Not part of the completion bar (2026-08-15 operator scope decision — § 1 Fixed Point).** This
+> specification is retained as an accurate description of what optional future validation would require.
+> **No organic task was recorded under it**, it claims no completion, and its *Failure behavior* clause
+> below — which makes a shortfall a blocker and an operator decision — is no longer a live gate, because
+> the operator has already taken that decision at § 1 by removing the item from the bar.
 
 - **Inputs:** proposal §14 item 10 ("Use the attended carrier for 3–5 real Standard tasks across at least
   two capability shapes") and item 11 (the measures to record across both this and § 3.6).
@@ -1551,6 +1632,13 @@ what changed is the discovery that it was never built.
 
 ### T8 — Autonomy scenario contracts (§14 items 8–9 only; corrected — Unit 5 Finding 4)
 
+> **Removed from the required completion bar — 2026-08-15 operator scope decision (§ 1 Fixed Point).**
+> **No row S1–S12 was run.** No row carries a PASS, PARTIAL, FAIL or `blocked` verdict, and nothing in
+> this plan may report otherwise. The twelve contracts below are retained as an accurate specification of
+> optional future validation; they are **not scheduled**, and the exit condition below is **no longer a
+> live exit** — it describes what the tracer would have required. Re-opening T8 is separately approved
+> new work, taken as a fresh scope decision.
+
 **This is not a phase (corrected — Unit 5 Finding 4).** The previous draft scheduled "the scenario suite" as one
 horizontal block that ended when the table was "exercised" — a shape that hides which scenarios ran and
 lets a partial sweep read as complete. It is replaced by twelve bounded unit contracts, one per proposal
@@ -1584,16 +1672,19 @@ item 11, tallied with T9).
 
 - **Starting evidence:** zero trials of these twelve scenarios exist (CE-9's one executed trial is a
   different, Context-Engineering-specific scenario). S4 and S8 are pre-identified as blocked by the empty
-  pre-authorized capability set — stated here rather than discovered late.
+  pre-authorized capability set — stated here rather than discovered late. **This remains true at the
+  2026-08-15 close: zero trials of the twelve scenarios exist.**
 - **Intended change:** none to the repository's mechanism; each row *uses* the existing `eval-v0-3-restart`
   paired-trial instrument.
 - **Verification:** each row's own PASS / PARTIAL / FAIL verdict, thread IDs, run-sheet commit, and the
   evidence column's named field.
-- **Exit condition (corrected — Unit 5 Finding 5):** T8 passes only when **all twelve rows have run and carry a
+- **Exit condition (corrected — Unit 5 Finding 5; no longer live — see the notice above):** T8 passes only when **all twelve rows have run and carry a
   verdict**, with S4 and S8 permitted to close as `blocked` on the stated capability ground. A subset is
   not an alternate exit: accepting fewer rows requires a separately approved change to the Fixed Point,
   taken by the operator as a scope decision, and recorded there — not a value/risk judgment available to a
-  later assessment. This item alone does **not** satisfy §14 item 10 — see T9.
+  later assessment. This item alone does **not** satisfy §14 item 10 — see T9. **That named route is
+  exactly the one taken:** the operator's 2026-08-15 scope decision changed the Fixed Point and is
+  recorded at § 1. T8 did not pass, and is not claimed to have passed; it was removed from the bar.
 - **Scope boundary:** each row is its own bounded unit; none may fold into T1–T7 or into T9's real-task
   count. No row invokes the dispatcher.
 - **Review row:** each row is a live Standard-lane exercise, individually assessed by Codex per the
@@ -1602,6 +1693,11 @@ item 11, tallied with T9).
   stated cost (~twelve paired live trials) is carried here rather than compressed.
 
 ### T9 — Real-task operational evidence (§14 items 10–11; added — Unit 4 Finding 4)
+
+> **Removed from the required completion bar — 2026-08-15 operator scope decision (§ 1 Fixed Point).**
+> **No organic task was run or recorded under T9, and no item-11 tally exists.** The contract below is
+> retained as an accurate specification of optional future validation; it is **not scheduled**, and its
+> exit condition is **no longer a live exit**. Re-opening T9 is separately approved new work.
 
 - **Behaviour:** 3–5 **organic** Standard-lane Work Loop tasks, spanning at least two distinct capability
   shapes, are run through the attended carrier as part of this task family's ordinary work, and the item
@@ -1615,12 +1711,15 @@ item 11, tallied with T9).
 - **Verification:** each task's own Work Loop state-file closing record; a consolidated tally against the
   item-11 measures, cross-referenced to the individual task evidence it was drawn from. The tally must
   also carry the measures recorded across T8's twelve rows (§14 item 11 spans both).
-- **Exit condition (corrected — Unit 5 Finding 5):** **3–5 organic Standard tasks across at least two actual
+- **Exit condition (corrected — Unit 5 Finding 5; no longer live — see the notice above):** **3–5 organic Standard tasks across at least two actual
   capability shapes, all recorded.** Fewer tasks, or fewer than two genuinely distinct shapes, is a
   blocker and an operator decision — not an alternate exit discharged by recording a limitation. The unit
   hands back with the exact operator question (extend the pre-authorized set, accept a narrower evidence
   base as a scope change, or wait for organic tasks). §14 item 10 states the quantity and shape count as
-  the requirement, so writing the shortfall down does not satisfy it.
+  the requirement, so writing the shortfall down does not satisfy it. **The operator took that decision
+  on 2026-08-15** — the third option, as a scope change removing the item from the bar, recorded at § 1.
+  T9 did not pass and is not claimed to have passed; zero organic tasks were recorded, and this plan
+  states that shortfall as an unmet standard rather than a discharged one.
 - **Scope boundary:** does not fold into T8's constructed-trial count; each task is independently a real
   unit of this task family's other work, not manufactured for this item.
 - **Review row:** each task is reviewed at its own normal Work Loop review tier; this item adds only the
@@ -1637,12 +1736,21 @@ item 11, tallied with T9).
   pre-authorized-profile generalization, production/communication/credential profiles** (§14 items 6,
   13–15) — explicitly out of MVP scope per the proposal itself; not scheduled by this plan (ordering
   constraint 4).
-- **§14 item 11 is *not* deferred (corrected — Unit 5 Finding 5).** The previous draft listed item 11 in
+- **§14 item 11 is *not* deferred (corrected — Unit 5 Finding 5) — superseded by the bullet below; its
+  "recorded across T8 and T9" clause describes an intent that the 2026-08-15 scope decision ended, and no
+  measure was ever recorded.** The previous draft listed item 11 in
   the line above while the traceability table assigned it to the evidence-gathering tracers — a
   contradiction that would have let an implementing unit cite the deferral and skip the measures
   entirely, defeating the strict exits this round installed. Item 11's measures are recorded across T8
   and T9 and tallied at T9; only the *connected-development profile* named alongside it in proposal §11
   is deferred, and that deferral is carried at § 3.4 and the Fixed Point, not here.
+- **§14 items 8–12 after the 2026-08-15 scope decision (§ 1).** Items 8, 9, 10 and 11 are **not deferred
+  and not satisfied** — they are **removed from this task's completion bar with no evidence produced**.
+  That is a third disposition, and it is stated as such rather than folded into either of the other two:
+  a deferral implies an intent to return, and satisfaction implies evidence; neither is claimed here.
+  Item 11's measures were never recorded, because the tracers that would have recorded them did not run.
+  Item 12 ("correct only demonstrated failures") is vacuous for the same reason: no failure was
+  demonstrated, because nothing was measured.
 
 ### §14 traceability table
 
@@ -1660,11 +1768,11 @@ promoted into MVP, or silently dropped.
 | 5 (record subset in brief, profile in evidence) | T6 |
 | 6 (carrier attended-first; defer sandbox/network enforcement) | Fixed Point (Keep — no tracer; already true, stated as a retained fact). **Scoped — Unit 32:** "defer sandbox/network enforcement" is exact for the attended Claude hop. The Codex hop is launched with `--sandbox workspace-write`, which is requested and neither carrier-selected nor carrier-verified — see § 3.4's per-path rows. The deferral is unchanged; what changed is that it is no longer stated as though it covered both paths |
 | 7 (symmetric nested-actor prevention; verify on host) | **T7 — corrected, Unit 32.** Previously mapped to an evidence-recording tracer on the falsified premise that the carrier already refused symmetrically. T7 is now an implementation tracer at the high-consequence/risk-aware review row. The item is **unmet until T7 lands**, and the operator's 2026-08-15 decision interprets "prevention" for this MVP as symmetric direct-route **request** plus observation, with wrapper evasion accepted as a recorded limitation |
-| 8 (scenarios as paired live trials) | **T8 rows S1–S12 (corrected — Unit 5 Finding 4; twelve bounded contracts, not one phase)** |
-| 9 (run the scenario suite) | T8 — all twelve rows, strict exit (Unit 5 Finding 5) |
-| 10 (3–5 real Standard tasks, ≥2 capability shapes) | **T9 (corrected — Unit 5 Finding 4; was wrongly folded into the constructed trials, now its own item with its own real-task evidence and a strict exit per Unit 5 Finding 5)** |
-| 11 (record escalations/errors/blocks/false-completion) | T8 and T9 together — each records its own measures; T9 tallies them across both |
-| 12 (correct only demonstrated failures) | Contingent follow-up after T8 and T9's results — not a fixed tracer, per the proposal's own "correct only demonstrated failures" instruction (nothing to correct until both produce evidence) |
+| 8 (scenarios as paired live trials) | **Removed from the completion bar — 2026-08-15 operator scope decision (§ 1). Not run, no evidence, no PASS.** Specified at T8 rows S1–S12 (corrected — Unit 5 Finding 4; twelve bounded contracts, not one phase), retained as optional future validation only |
+| 9 (run the scenario suite) | **Removed from the completion bar — 2026-08-15 (§ 1). The suite was not run; zero of the twelve rows carry a verdict.** T8's all-twelve-rows exit is no longer live |
+| 10 (3–5 real Standard tasks, ≥2 capability shapes) | **Removed from the completion bar — 2026-08-15 (§ 1). Zero organic tasks recorded; the quantity and shape count are unmet, and are stated as unmet rather than discharged.** Specified at T9 (corrected — Unit 5 Finding 4; its own item with its own real-task evidence), retained as optional future validation only |
+| 11 (record escalations/errors/blocks/false-completion) | **Removed from the completion bar — 2026-08-15 (§ 1). No measure was recorded and no tally exists**, because T8 and T9 — the only tracers that would have recorded them — did not run |
+| 12 (correct only demonstrated failures) | **Vacuous after the 2026-08-15 scope decision (§ 1):** no failure was demonstrated because nothing was measured. It was never a fixed tracer — a contingent follow-up on T8 and T9's results, which do not exist |
 | 13 (generalize profiles only where trials show value) | Deferred — later release, out of MVP |
 | 14 (unattended release after full-lifetime containment) | Deferred — out of MVP; blocked on the open descendant-containment limitation (Repository Delta, "Uncertain / requires proof" row) |
 | 15 (production/communication/credential profiles later) | Deferred — out of MVP |
@@ -1748,7 +1856,8 @@ surface; the count moved from one to two and no further. The proposal boundary, 
 the Fixed Point, the accepted T8 S4/S8 limitation and every existing deferral are unchanged by both
 amendments.
 
-**The present amendment's own count and boundary — T6/T7 evidence and control correction.** It changes
+**The T6/T7 amendment's own count and boundary — evidence and control correction. History: it is no
+longer "the present amendment"; the 2026-08-15 scope amendment below is.** It changed
 **thirteen surfaces**: § Repository Delta's carrier nested-actor row; § 3.4's two sandbox rows, two
 network rows, two nested rows, baseline-deny row, enforced/requested clause and failure-behavior clause;
 § 3.5 in full; T6's baseline-deny paragraph, verification (e) and exit condition; T7 in full; T8 rows S5
@@ -1764,7 +1873,52 @@ documentation-only shape, its skill-only scope and its normal/consequential revi
 strict exits and the accepted S4/S8 blocked limitation are retained; the capability envelope's three sets
 and its empty pre-authorized set are unchanged; the Fixed Point is unchanged; and full descendant
 containment plus the connected-development profile remain deferred. **T7's review row and T7's shape are
-the only tracer-contract changes.**
+the only tracer-contract changes.** *(All of that describes the T6/T7 amendment only. T8's and T9's strict
+exits were retained by it and were removed later, by the 2026-08-15 operator scope decision at § 1 — see
+the next paragraph.)*
+
+**The 2026-08-15 scope amendment's own count and boundary — the present amendment.** It changes
+**twenty-six regions of this file, every one of them disposition or status language and not one of them
+an implementation surface.** *Counting rule, stated so the count is checkable: one region per **named
+passage of this document** — a titled paragraph, a subsection, a tracer field, a notice, or one table —
+not per diff hunk. Adjacent regions can share a hunk, so `git diff -U3` on this amendment shows
+**22 hunks** for these 26 regions; `-U0` shows 36. The five §14 traceability rows are one table and count
+as one.* The twenty-six, in file order:
+
+1. Status block — the status line and the scope-decision record.
+2. Status block — the superseded re-freeze's "what it authorized" paragraph, relabelled history.
+3. § 1 — the observable-success paragraph.
+4. § 1 — the new *Scope decision — 2026-08-15* subsection (the authoritative record).
+5. § Repository Delta preamble — the superseded `ccf134b8` implementation-state paragraph.
+6. § Repository Delta preamble — the S4/S8 accepted-limitation paragraph, marked moot.
+7. § Repository Delta — ordering constraint 3.
+8. § 3.4 — the empty-pre-authorized-set sentence.
+9. § 3.6 — the opening notice.
+10. § 3.7 — the opening notice.
+11. T8 — the opening notice.
+12. T8 — *Starting evidence*.
+13. T8 — *Exit condition*.
+14. T9 — the opening notice.
+15. T9 — *Exit condition*.
+16. *Deferred* — the §14 item 11 bullet's supersession marker.
+17. *Deferred* — the new §14 items 8–12 entry.
+18. §14 traceability — the rows for items 8, 9, 10, 11 and 12.
+19. § Internal consistency check — the exit-condition-strictness paragraph.
+20. § Internal consistency check — the T6/T7 count paragraph, relabelled history.
+21. § Internal consistency check — this paragraph.
+22. § Plan-readiness — the opening readiness record.
+23. § Plan-readiness — the T7-gate paragraph, relabelled history.
+24. § Plan-readiness — the Unit 33 implementation-state paragraph, relabelled history.
+25. § Plan-readiness — the new live implementation-state paragraph.
+26. § Plan-readiness — the "what the present amendment changes" paragraph, relabelled history.
+
+**What it does not change:** no tracer is renumbered, resequenced, added or removed from the document; no
+landed tracer's contract, exit condition or evidence is relaxed or rewritten; no implementation surface,
+test, carrier, skill, command, core, dispatcher or external policy file is touched; the approved proposal
+blob is not edited; the capability envelope's three sets and its empty pre-authorized set are unchanged;
+every existing deferral, accepted limitation and historical freeze identity is preserved. **The completion
+bar itself is the only thing that changed** — from "T1 through T9" to "T1 through T7" — and it changed by
+the operator's own decision, on the exact route T8 and T9 named.
 
 **Proposal `:378` — dispositioned, not edited (added — Unit 32).** The approved proposal states, at line
 378, "no nested Claude or Codex actor (carrier refuses symmetrically today; full descendant containment
@@ -1778,22 +1932,47 @@ it look already met. The operator's 2026-08-15 decision interprets that outcome 
 direct-route **request** plus symmetric observation, with wrapper evasion accepted as a recorded
 limitation; T7 implements it on that reading.
 
-Exit-condition strictness, after Unit 5 Finding 5: T1 ends at an operator approval; T1a ends at the
+Exit-condition strictness, after Unit 5 Finding 5 — **as installed by that round; read the paragraph
+immediately after it for T8's and T9's current disposition**: T1 ends at an operator approval; T1a ends at the
 status reconciliation landing (no operator gate of its own beyond its risk-aware review); T8 ends only
 with all twelve rows carrying a verdict; T9 ends only at 3–5 organic tasks across ≥2 real capability
 shapes. None of the T8/T9 pair has an alternate exit reachable by recording a limitation — the only route
 past T8's or T9's bar is an operator-owned change to the Fixed Point.
 
+**That route was taken, and T8/T9's strictness is therefore spent rather than met (2026-08-15 — § 1
+Fixed Point).** The operator changed the Fixed Point and removed both tracers from the completion bar.
+This is the one exit those conditions themselves named, so nothing here was bypassed or weakened by
+argument — but it is emphatically **not** a pass: neither tracer ran, neither produced evidence, and the
+plan records the standard as unmet. T1–T7's exit conditions are unaffected and were each met on their own
+terms. **No exit condition of any landed tracer is relaxed by this amendment.**
+
 ---
 
 ## Plan-readiness statement
 
-This artifact is **re-frozen for implementation**. It was re-frozen on 2026-08-15, on the operator's
-explicit content-bound approval of the reviewed-and-corrected T6/T7 evidence-and-control amendment content
-at commit `74e91209b31b0cf32aa1b0a27cc3b5ccbe2da115`, blob
-`0fabe8601871c5f7c49ff1e8628d4922c4422ba2`. It agrees with the Status block at the head of this file; there
-is no third status record. **This readiness record itself edits, corrects and applies nothing**: it and the
-Status block are the only regions this status update changed.
+This artifact is **amended and returned to draft — 2026-08-15 (operator scope decision)**, and it agrees
+with the Status block at the head of this file; there is no third status record.
+
+**Readiness, stated plainly.** **Implementation is complete through T7, and no tracer remains scheduled.**
+The operator's 2026-08-15 decision removed T8 and T9 from this task's required completion bar; the
+authoritative record is § 1 Fixed Point, *Scope decision — 2026-08-15*. **T8's twelve scenarios and T9's
+3–5 organic tasks were not run** and carry no PASS, no completion and no validation claim, so **proposal
+§16's observable-success standard and §14 items 10–11's operational-evidence standard are not established
+by this project.** That is the accepted, explicit limitation of finishing here, and it is the honest state
+of the evidence: the mechanism is implemented and its behaviour under the approved acceptance instrument
+is unmeasured.
+
+**What still stands between this draft and a close.** One thing only: the operator's content-bound
+approval of this amended content. The plan returned to draft because changing the Fixed Point and two
+tracer contracts is substantive and cannot be an edit under a freeze — this plan's own standing rule.
+Nothing landed is affected by that return, and **this amendment authorizes, applies and implements
+nothing.**
+
+**The superseded re-freeze — history.** The plan was re-frozen for implementation on 2026-08-15, on the
+operator's explicit content-bound approval of the reviewed-and-corrected T6/T7 evidence-and-control
+amendment content at commit `74e91209b31b0cf32aa1b0a27cc3b5ccbe2da115`, blob
+`0fabe8601871c5f7c49ff1e8628d4922c4422ba2`. **That readiness record itself edited, corrected and applied nothing**: it and the
+Status block were the only regions that status update changed. T6 and T7 both landed under it.
 
 **The prior approved content identity, preserved as history.** The preceding re-freeze was 2026-08-15, on
 the operator's explicit content-bound approval of the reviewed-and-corrected T3a two-surface amendment
@@ -1827,11 +2006,15 @@ under `docs/qc-independence.md`. (4) The operator's explicit content-bound appro
 and blob, 2026-08-15. The review notes are preserved at
 `plans/work-loop-v2-v0.2/working/t6-t7-amendment-review-2026-08-15.md`.
 
-**The gate that still stands between this re-freeze and T7 landing.** One fresh **risk-aware** review of
+**The gate that stood between that re-freeze and T7 landing — completed, recorded as history.** One fresh
+**risk-aware** review of
 T7's exact candidate, before any implementation — it changes a permission surface, machine-wide
-configuration outside this repository, and carrier runtime behaviour. T6 carries no such gate and may begin.
+configuration outside this repository, and carrier runtime behaviour. T6 carried no such gate. *(That
+review ran on the exact candidate, returned findings, one bounded correction round resolved them, the
+final tightly-bounded fix's closure check returned PASS, and T7 then landed — see *Implementation state*
+below. This paragraph is provenance, not a live gate.)*
 
-**This readiness record itself edits, corrects and applies nothing**: it applies no candidate and authorizes
+**That readiness record itself edited, corrected and applied nothing**: it applied no candidate and authorized
 no carrier, test or configuration edit.
 
 **Why it had returned to draft — the false premise, now corrected.** T3a's earlier frozen contract limited
@@ -1911,8 +2094,10 @@ fresh isolated risk-aware review, verdict **ESCALATE**): it reconciled the five 
 gates but left core § 6 rule 4's categorical scope transfer standing. The plan returned to draft on the
 same principle, was reviewed and corrected, and was re-frozen at `74c33a28`.
 
-**Implementation state (currency-corrected — Unit 33).** **T1, T1a, T2, T3, T3a, T4 and T5 are implemented,
-and they are the only implemented tracers** — T1 at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03`
+**Implementation state (currency-corrected — Unit 33) — superseded, retained for its landing identities.**
+*(The live record is the next paragraph. This one stopped at T5 and is kept because it carries the seven
+landing commits and the four consumer blobs, which the live record does not restate.)* **T1, T1a, T2, T3, T3a, T4 and T5 were implemented,
+and were then the only implemented tracers** — T1 at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03`
 (operator-approved), T1a at `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, T2 at
 `17e03c3dc0e3e2b4f6db5d4a8ee052d84749a71b`, T3 at `7e347de4db5396c1707e6b181c3884ac12dbdfd1`, T3a at
 `7e037662395446c7748f92ca62d7692705b075b1`, T4 at `b5d79aa1a173de525165d7ae9572e5e3a32c5386` and T5 at
@@ -1920,13 +2105,29 @@ and they are the only implemented tracers** — T1 at commit `5fef08fff11a1009b3
 `fb0ba8b6bddbf27dac971ec1c2458c6e5be32136`, the Codex skill at blob
 `b21cf35002b7f6ac90b7189258a2af0240a6e662`, `docs/autonomy-rules.md` at blob
 `cd74f214b8a0f3606388788bc01ab57b072f9303` and `.claude/commands/session-plan.md` at blob
-`bfca768a1d2b4100ab714b88cd7d15f761359d77`. **T6 is the nearest unmet tracer, and this re-freeze unblocks
-it** — the unit that carries this status announcement also implements T6 in the Codex skill, and its commit
-and resulting skill blob are recorded in the Work Loop state file for task `autonomy-authority-capability`
-rather than restated here. T7–T9 remain unimplemented, and T7 stays gated on its own risk-aware review. This
-status record undoes none of the seven landed tracers, and it lands nothing itself. *(The superseded reading
+`bfca768a1d2b4100ab714b88cd7d15f761359d77`. *(The superseded reading
 of this paragraph named T3a as the nearest unmet tracer and the skill at blob `965583db…`; both predate T3a,
-T4 and T5 landing.)*
+T4 and T5 landing. A later superseded reading named T6 as the nearest unmet tracer, with T7–T9
+unimplemented and T7 gated on its own risk-aware review; that predates T6 and T7 landing.)*
+
+**Implementation state (currency-corrected — 2026-08-15, this amendment). This is the live status record.**
+**T1, T1a, T2, T3, T3a, T4, T5, T6 and T7 are implemented, and implementation is complete through T7.**
+T6 landed at commit `323332d6788487f989a5d45d0ddf303aeed36c55`, carrying the capability-envelope
+convention into the Codex skill. T7 landed at commit `48cca1c01adbeb07470e480d74d427ae5de3331c`: the
+reviewed exact candidate was applied unchanged to its three approved surfaces — the operator-authorized
+machine-wide execpolicy rules file outside this repository, the Codex branch of `carry-turn.sh`, and
+`carry-turn.test.sh` — with the carrier suite at 318 passed / 0 failed against a 285/0 pre-change
+baseline, `--prove-failure` at 43/0 including the mutant that strips the approval policy, the Claude
+branch byte-identical, and both rollback procedures demonstrated in isolation. The per-unit evidence is
+recorded in the Work Loop state file for task `autonomy-authority-capability` rather than restated here.
+
+**There is no nearest unmet tracer.** T8 and T9 were **removed from the completion bar** by the operator's
+2026-08-15 scope decision (§ 1) — they are neither implemented nor pending nor deferred, and neither ran.
+**T7's own evidence boundary is retained unchanged:** the execpolicy rules and `approval_policy=never` are
+**requested**, not enforced; automatic rules loading is a documented premise rather than an observation;
+and a matched command's live disposition, effective containment, wrapper-proof prevention and descendant
+containment remain unverified or deferred. This amendment undoes none of the nine landed tracers, relaxes
+none of their exit conditions, and lands nothing itself.
 
 **T3a's review state, recorded exactly.** The high-consequence risk-aware review T3a's review row requires
 has already run once, in isolation, against the **unapplied one-bullet** candidate skill edit returned at
@@ -1939,7 +2140,11 @@ was drafted; it passed its own fresh risk-aware review; and it was applied byte-
 `7e037662395446c7748f92ca62d7692705b075b1`. This paragraph is provenance only: it neither implemented nor
 reviewed anything.
 
-**What the present amendment changes, exactly.** Thirteen surfaces, enumerated in § Internal consistency
+**What the T6/T7 amendment changed, exactly — history.** *(It is no longer "the present amendment"; the
+2026-08-15 scope amendment is, and its own count and boundary are stated in § Internal consistency check.
+The retention claims below describe that earlier amendment's boundary — in particular, T8's and T9's
+strict exits were retained **by it**, and were removed later by the operator's 2026-08-15 scope decision
+at § 1.)* Thirteen surfaces, enumerated in § Internal consistency
 check: § Repository Delta's carrier nested-actor row; § 3.4's per-path sandbox, network and nested rows,
 its baseline-deny row, its enforced/requested clause and its failure-behavior clause; § 3.5 in full; T6's
 baseline-deny paragraph, verification (e) and exit condition; T7 in full; T8 rows S5 and S9; the §14
