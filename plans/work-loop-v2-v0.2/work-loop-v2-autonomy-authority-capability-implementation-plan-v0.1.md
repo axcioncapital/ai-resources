@@ -1,15 +1,26 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** **Draft**, 2026-08-15. This revision amends T2's contract again, so it is a substantive change
-that cannot be an edit under the prior re-freeze: the plan has returned to draft. It becomes implementable
-again only on two gates, in order — one fresh isolated bounded review of **this** amendment, and the
-operator's explicit content-bound reapproval of the reviewed commit and blob. Neither has run.
-**No core edit is authorized by this revision.** The matching readiness record is § Plan-readiness
-statement; there is no third status record.
+**Status:** **Re-frozen for implementation**, 2026-08-15, on the operator's explicit content-bound
+approval of the reviewed-and-corrected plan content at commit
+`c99e6b415a911866518111d1944c0e61dc72fbf8`, blob `f80dc9d9dff8a6f13f66549f717d49a9db2efdfe`. That is the
+approved content identity; the present record is a status-only announcement written over it and alters no
+substantive plan content. This revision amended T2's contract again, so it could not be an edit under the
+prior re-freeze and the plan had returned to draft; the two gates that stood between that draft and
+implementation have now both run, in order. (1) One fresh, isolated bounded review of **this** amendment
+at commit `504814cf422a4a29acb80d9066714be22e5f7a31`, blob `4141d5cb966f744957d7d63794b3d8a9adbc3a9f` —
+verdict **CORRECT**, with one material frozen finding on the authoritative Unit 18 finding-number mapping;
+one bounded correction round resolved that single frozen finding, landing at the approved identity above,
+and the Codex closure check on it returned **PASS** with no newly noticed issue. That correction was
+attribution-label-only and not a redesign, so `docs/qc-independence.md` required no second broad review.
+(2) The operator's explicit content-bound reapproval of that corrected commit and blob, 2026-08-15.
+**This status record edits, corrects and applies nothing on its own, and authorizes no core edit by
+itself.** The matching readiness record is § Plan-readiness statement; there is no third status record.
 
-**Implementation state under this draft.** **T1 and T1a remain implemented, and they are still the only
-implemented tracers.** **T2 remains unimplemented**, and no core edit exists for it. Returning the plan to
-draft does not undo T1 or T1a and does not open T2.
+**Implementation state under this re-freeze.** **T1 and T1a remain implemented, and they are still the
+only implemented tracers.** **T2 remains unimplemented**, and no core edit exists for it. Re-freezing the
+plan does not undo T1 or T1a, and it does not by itself land T2: the already-reviewed candidate core edit
+must first be corrected to this amended contract and pass its bounded closure check on the Unit 18
+candidate review's three frozen findings.
 
 **Prior re-freeze identity — superseded by this amendment, preserved as history.** The plan was
 **re-frozen for implementation**, 2026-08-14, on the operator's explicit content-bound approval of the
@@ -69,10 +80,12 @@ command, autonomy rules, session-plan, carrier, dispatcher, or tests — has bee
 `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved; § Fixed Point below, unchanged), and T1a
 at commit `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, resulting core blob
 `82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 remains unimplemented**, and no core edit exists for it.
-Under this draft T2 may not be opened at all: it is blocked on this amendment's own fresh isolated review
-and the operator's content-bound reapproval, and only after those land may it be opened through its own
-bounded implementation unit, with the high-consequence risk-aware Codex review its review row requires
-landing before implementation.
+Both blocking gates — this amendment's own fresh isolated review and the operator's content-bound
+reapproval — have now landed, so T2 may be opened through its own bounded implementation unit, and only
+that way. The high-consequence risk-aware Codex review its review row requires has already run in
+isolation against the unapplied candidate core edit; the candidate must still be corrected to this
+amended contract and pass its bounded closure check on the Unit 18 candidate review's three frozen
+findings before implementation may land (§ Plan-readiness statement).
 
 **Lineage of the prior re-freeze — research, review, correction.** The prior freeze was reopened on operator
 decision (2026-08-14) after primary-source research
@@ -101,8 +114,8 @@ status record was the only part of the file the superseded freeze changed; no su
 altered by it. The reopening amendment was a substantive change to that content, so it could not be an
 edit under the old freeze; it returned to draft and was then re-frozen in its own right, at the commit
 and blob recorded under *Earlier re-freeze identity (`ccf134b8`)* above. Each later amendment has returned
-the plan to draft again, on the same principle — including the present one, which is unreviewed and
-unapproved.
+the plan to draft again, on the same principle — including the present one, which has since been
+reviewed, corrected, and content-bound reapproved at the identity recorded in the Status block above.
 
 **Accepted limitation carried forward from the superseded freeze — unchanged by this amendment.** T8 may
 count S4 and S8 as `blocked` verdicts while the MVP pre-authorized capability set remains empty (§ 3.4),
@@ -1396,15 +1409,23 @@ past T8's or T9's bar is an operator-owned change to the Fixed Point.
 
 ## Plan-readiness statement
 
-This artifact is **draft**, 2026-08-15. It is **not** frozen and **not** implementable. It agrees with the
-Status block at the head of this file; there is no third status record.
+This artifact is **re-frozen for implementation**, 2026-08-15, on the operator's explicit content-bound
+approval of the reviewed-and-corrected plan content at commit
+`c99e6b415a911866518111d1944c0e61dc72fbf8`, blob `f80dc9d9dff8a6f13f66549f717d49a9db2efdfe`. It agrees
+with the Status block at the head of this file; there is no third status record.
 
-**Two gates stand between this draft and implementation, in this order, and neither has run.** (1) One
+**Both gates that stood between this draft and implementation have run, in this order.** (1) One
 fresh, isolated bounded review of **this** amendment's content, against the approved proposal and the
-Unit 18 candidate review's three frozen findings. (2) The operator's explicit content-bound reapproval of
-the reviewed commit and blob. **No core edit is authorized until both land.**
+Unit 18 candidate review's three frozen findings, at commit `504814cf422a4a29acb80d9066714be22e5f7a31`,
+blob `4141d5cb966f744957d7d63794b3d8a9adbc3a9f` — verdict **CORRECT**, with one material frozen finding on
+the authoritative Unit 18 finding-number mapping. One bounded correction round resolved that single frozen
+finding at the approved identity above, and the Codex closure check returned **PASS** with no newly
+noticed issue; being attribution-label-only rather than a redesign, it required no second broad review
+under `docs/qc-independence.md`. (2) The operator's explicit content-bound reapproval of that corrected
+commit and blob, 2026-08-15. **This status record itself edits, corrects and applies nothing: it
+authorizes no core edit on its own, and T2's candidate core edit remains unapplied and uncorrected.**
 
-**Why it returned to draft.** The plan had been **re-frozen for implementation**, 2026-08-14, on the
+**Why it had returned to draft — history.** The plan had been **re-frozen for implementation**, 2026-08-14, on the
 operator's explicit content-bound approval of the corrected plan content at commit
 `74c33a28d4cd18be376ab40127af0af303fd1d59`, blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e` — this
 amendment's pre-edit identity, preserved as historical provenance in the Status block above. Drafting T2's
@@ -1437,14 +1458,14 @@ same principle, was reviewed and corrected, and was re-frozen at `74c33a28`.
 at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved), T1a at commit
 `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, resulting core blob
 `82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 remains unimplemented**, and no core edit exists for it.
-Returning to draft does not undo T1 or T1a.
+Neither returning to draft nor this re-freeze undoes T1 or T1a, and neither lands T2.
 
 **T2's review state, recorded exactly.** The high-consequence risk-aware review T2's review row requires
 has already run once, in isolation, against the **unapplied** candidate core edit returned at commit
 `6ab0633f17935f0b845a77568d9007a0e844226b`; its verdict was **CORRECT**, with the three frozen findings
-this amendment carries. That candidate **did not pass and has not been applied**. After this amendment is
-reviewed and content-bound reapproved, the candidate is corrected to the amended contract and must pass a
-**bounded closure check on those three frozen findings** before implementation may land. No unrelated
+this amendment carries. That candidate **did not pass and has not been applied**. Now that this amendment
+is reviewed and content-bound reapproved, the candidate is corrected to the amended contract and must pass
+a **bounded closure check on those three frozen findings** before implementation may land. No unrelated
 second broad candidate review is required unless the plan review demonstrates a redesign rather than a
 bounded correction. This readiness statement is provenance only: it neither implemented nor reviewed T2.
 
