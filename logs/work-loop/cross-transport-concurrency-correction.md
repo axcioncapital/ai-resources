@@ -99,4 +99,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 3 against correction-plan step 3 and its four acceptance conditions. Implementation commit: `2d1e9adf` (`scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, this state file). Decide in particular whether the retained one-way `kill -0` veto is accepted as written or must be removed, and whether the three recorded candidate deferrals are accepted as deferrals.
+Codex: assess Unit 3 against correction-plan step 3 and its four acceptance conditions. Implementation commit: `cda44c50` (`scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, this state file). Decide in particular whether the retained one-way `kill -0` veto is accepted as written or must be removed, and whether the three recorded candidate deferrals are accepted as deferrals.
