@@ -732,25 +732,76 @@ TASK_LOCK_DIR="$WL_LEASE_TASK_DIR"
 # Nothing is migrated. An old lock is never turned into a new lease: a lease
 # belongs to a live process, and that process is not this one. The only write on
 # this path is the one this surface could already justify — removing a lock whose
-# pid is provably not running, which is the existing stale-lock policy, unchanged
+# pid is PROVABLY not running, which is the existing stale-lock policy, unchanged
 # and still announced. A LIVE holder and an UNINSPECTABLE one are refused and
 # nothing is deleted.
+#
+# THREE STATES, NOT TWO — AND THE VERDICT IS NOT THIS FILE'S TO MAKE. This used
+# to ask `kill -0` and treat every failure as death. `kill -0` fails for two
+# unrelated reasons:
+#
+#   ESRCH  "no such process"          -> the pid really is absent
+#   EPERM  "operation not permitted"  -> the pid may well be ALIVE; this caller
+#                                        is simply not allowed to look at it
+#
+# Conflated, an uninspectable holder read as stale — so this path DELETED a lock
+# that was doing its job and admitted a second writer into the working tree,
+# inside the one changeover window the legacy read exists to protect. The
+# asymmetry only points one way: a false UNKNOWN costs one more look, a false
+# ABSENT costs two live runs in one checkout.
+#
+# So the classification is DELEGATED to wl_lease__pid_state, the shared probe
+# that already admits every live lease. Deliberately the library's function and
+# not a copy: a second classifier behind lease admission is the exact defect this
+# correction closes, and a copy here would be that defect wearing a legacy label.
+# The library is sourced, and wl_lease_init has already run, well before
+# acquire_lock reaches this function — so the probe is in scope, called read-only,
+# and the library's public contract is untouched.
 legacy_lock_check() {
-  local key holder holder_task lock_path
+  local key holder holder_task lock_path verdict state reason claimed
   key="$(printf '%s' "$CHECKOUT" | shasum -a 256 | cut -c1-16)"
   lock_path="${TMPDIR:-/tmp}/axcion-harness-v0.2.$key.lock"
   [ -d "$lock_path" ] || return 0
 
   holder="$(cat "$lock_path/pid" 2>/dev/null)"
   holder_task="$(cat "$lock_path/task" 2>/dev/null)"
-  if [ -n "$holder" ] && kill -0 "$holder" 2>/dev/null; then
+
+  verdict="$(wl_lease__pid_state "$holder")"
+  state="${verdict%%|*}"
+  reason="${verdict#*|}"
+
+  if [ "$state" = LIVE ]; then
     die 17 "another carry is in flight for this CHECKOUT (pid $holder, task '${holder_task:-unrecorded}', holds $lock_path). One checkout is one working tree, so it carries one task at a time — this is refused whether or not it is the same task. Wait for it, or stop it, then re-run. To run '$TASK' concurrently, give it its own linked worktree and pass that with --checkout."
   fi
-  if [ -z "$holder" ]; then
-    die 17 "a lock directory exists for this checkout but carries no readable pid, so it cannot be shown stale ($lock_path, task '${holder_task:-unrecorded}'). Nothing was deleted. Inspect it and remove it by hand if no carry is running."
+
+  # UNKNOWN IS HELD. Everything that is not positively absent lands here: an
+  # uninspectable pid, a pid file that is missing, empty, non-numeric, or zero /
+  # zero-prefixed. The reason comes from the probe rather than being re-derived,
+  # so the operator is told which of those it was — the remedy differs, and a
+  # generic "cannot be shown stale" sent them to delete it either way.
+  if [ "$state" != ABSENT ]; then
+    die 17 "a lock directory exists for this checkout and its holder CANNOT BE SHOWN GONE, so it is treated as held ($lock_path, pid '${holder:-unrecorded}', task '${holder_task:-unrecorded}'): $reason. Not being able to inspect a process is not evidence that it stopped. Nothing was deleted. Confirm no carry is running in this checkout, then remove that directory by hand, and re-run."
+  fi
+
+  # POSITIVE ABSENCE IS THE ONLY STATE THAT WRITES — and the write is a RENAME
+  # first, not an `rm -rf` in place. Two runs can both probe ABSENT on the same
+  # lock; only one can win the rename, and the loser then finds the directory
+  # gone rather than deleting a path a third run has since recreated. The target
+  # is a sibling in the same directory, so the rename is atomic on one
+  # filesystem, and the removal afterwards operates on a name nothing else holds.
+  claimed="$lock_path.stale.$$"
+  rm -rf "$claimed"
+  if ! mv "$lock_path" "$claimed" 2>/dev/null; then
+    # Lost the race, or could not write here at all. Those need different
+    # answers, and the directory itself says which: gone means another run
+    # cleared it and the resource is free — the new leases arbitrate what
+    # happens next. Still there means this run cannot clean it, and guessing is
+    # the failure mode this whole function exists to remove.
+    [ -d "$lock_path" ] || return 0
+    die 17 "a stale lock for this checkout could not be cleared ($lock_path, pid '${holder:-unrecorded}', task '${holder_task:-unrecorded}'). Its holder is not running, but the directory could not be renamed away, so nothing was deleted and nothing was launched. Check the permissions on ${TMPDIR:-/tmp}, or remove that directory by hand, then re-run."
   fi
   say "note: removing a stale lock — pid $holder (task '${holder_task:-unrecorded}') is not running."
-  rm -rf "$lock_path"
+  rm -rf "$claimed"
   return 0
 }
 

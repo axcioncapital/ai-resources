@@ -307,6 +307,23 @@ plant_lock() { # legacy lock-dir, pid, task-id
   printf '%s\n' "$3" >"$1/task"
 }
 
+# Plant a legacy lock whose pid file holds EXACTLY the given text, including text
+# that is not a pid at all. plant_lock takes a real pid and is the right helper
+# for the live and the provably-dead cases; this one is for the corruptions,
+# because the whole question this section asks is what the launcher concludes
+# from a pid it cannot turn into a verdict.
+#
+# The literal NONE means NO pid file at all, which is a DIFFERENT corruption from
+# a pid file that exists and is empty: one is a lock written by something that
+# never got as far as recording itself, the other is a lock whose record was
+# truncated. They must reach the same refusal, and asserting that separately is
+# the only way to know they do.
+plant_lock_raw() { # legacy lock-dir, raw-pid-text | NONE, task-id
+  rm -rf "$1"; mkdir -p "$1"
+  [ "$2" = NONE ] || printf '%s\n' "$2" >"$1/pid"
+  printf '%s\n' "$3" >"$1/task"
+}
+
 # The SHARED lease locations, mirrored from logs/scripts/work-loop-lease.sh. They
 # are rooted in the repository's Git common directory rather than in ${TMPDIR},
 # which is what makes them visible to every linked worktree of one repository and
@@ -884,6 +901,123 @@ section "12. Lock — one actor at a time"
   assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
   assert_eq "  and launched nothing further" "$n_before" "$(invocations)"
   rm -rf "$ld"
+
+section "12a. The legacy lock has THREE states, and only one of them is stale"
+  # `kill -0` failing is not proof that a process is gone. It fails for two
+  # different reasons — ESRCH, the pid really is absent, and EPERM, the pid may
+  # well be ALIVE and this caller is simply not allowed to look at it — and the
+  # one-release compatibility path used to conflate them. Conflated, an
+  # uninspectable holder read as stale, so its lock was DELETED and this carry
+  # was admitted alongside a live one, in the very changeover window the legacy
+  # read exists to protect.
+  #
+  # So the five cases below are the whole state space of that pid file, and each
+  # one names which of LIVE / UNKNOWN / ABSENT it is. The dead-pid case at the
+  # end is the POSITIVE CONTROL: without it, a launcher that refused everything
+  # unconditionally would pass every other assertion here.
+  #
+  # The verdict is the shared library's, not a second classifier: the launcher
+  # sources logs/scripts/work-loop-lease.sh before this path runs, and the same
+  # probe that admits a live lease is the one that reads this legacy pid.
+  mkfix leg3 task-lg claude
+  lgld="$(lock_path_for "$REPO")"
+
+  # --- UNKNOWN (1): uninspectable. kill -0 fails with "operation not permitted"
+  # rather than "no such process". pid 1 is init/launchd and root-owned, so an
+  # ordinary user cannot signal it and cannot conclude anything about it either.
+  # This is the case that costs two live writers in one working tree when it is
+  # read as stale. Skipped when the suite runs as root, where pid 1 is genuinely
+  # LIVE and the case would silently be testing a state it does not name.
+  if kill -0 1 2>/dev/null; then
+    printf '  SKIP an uninspectable (EPERM) holder — this shell can signal pid 1\n'
+  else
+    plant_lock_raw "$lgld" 1 task-lg-live
+    n_before="$(invocations)"
+    run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+    assert_eq "an UNINSPECTABLE holder (EPERM) is held, not cleared (17)" "17" "$RC"
+    assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+    assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+    assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+    assert_contains "  and says why inspection did not justify deletion" \
+                    "WITHOUT proving absence" "$o"
+    assert_absent "  and never calls an uninspectable holder stale" "removing a stale lock" "$o"
+  fi
+
+  # --- UNKNOWN (2): malformed, zero-prefixed. `007` reaches kill(2) as pid 7, so
+  # a conflating launcher returns a true statement about an unrelated process
+  # presented as a statement about this lock — and on this host pid 7 is
+  # root-owned, so that statement is "not running", i.e. delete it.
+  plant_lock_raw "$lgld" 007 task-lg-zero
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a ZERO-PREFIXED pid is held, not cleared (17)" "17" "$RC"
+  assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+  assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+  assert_contains "  and names it as not a usable process id" "not a usable process id" "$o"
+
+  # --- UNKNOWN (3): malformed, `0`. The quiet catastrophe in the other
+  # direction: `kill -0 0` SUCCEEDS, because pid 0 means the CALLER'S OWN process
+  # group, so a conflating launcher reads a corrupt lock as a live holder. Both
+  # readings are wrong for the same reason — a corrupt lock is not evidence — and
+  # the refusal has to say so rather than name a holder that does not exist.
+  plant_lock_raw "$lgld" 0 task-lg-zero0
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "pid 0 is held as UNKNOWN, not read as a live holder (17)" "17" "$RC"
+  assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+  assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+  assert_absent "  and does NOT claim another carry is in flight" \
+                "another carry is in flight" "$o"
+
+  # --- UNKNOWN (4): malformed, not a number at all.
+  plant_lock_raw "$lgld" not-a-pid task-lg-junk
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a NON-NUMERIC pid is held, not cleared (17)" "17" "$RC"
+  assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+  assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+  assert_contains "  and quotes the unusable value" "not-a-pid" "$o"
+
+  # --- UNKNOWN (5): no pid file at all. Distinct from the present-but-empty file
+  # section 12 already covers, and it must reach the same refusal.
+  plant_lock_raw "$lgld" NONE task-lg-nopid
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a MISSING pid file is held, not cleared (17)" "17" "$RC"
+  assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+  assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+
+  # --- LIVE: the holder is visible and signallable. Refused, and preserved.
+  plant_lock_raw "$lgld" "$$" task-lg-alive
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a LIVE holder is refused (17)" "17" "$RC"
+  assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+  assert_contains "  and names it as a carry in flight" "another carry is in flight" "$o"
+
+  # --- ABSENT: the POSITIVE CONTROL. `kill -0` reported "no such process", which
+  # is the only evidence that permits a write on this path. The lock must be
+  # cleared and the carry admitted — and cleared ATOMICALLY, so the rename target
+  # must not be left behind either. Run last, because it is the only case here
+  # that consumes the fixture's turn.
+  ( exit 0 ) & lgdead=$!; wait "$lgdead" 2>/dev/null
+  plant_lock_raw "$lgld" "$lgdead" task-lg-dead
+  printf 'transition:codex' >"$ACTION"
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a POSITIVELY ABSENT holder is the one state that clears (0)" "0" "$RC"
+  assert_contains "  and says so" "removing a stale lock" "$o"
+  assert_eq "  and the stale lock is GONE" "0" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and no rename target is left behind" "0" \
+            "$(find "$(dirname "$lgld")" -maxdepth 1 -name "$(basename "$lgld").stale.*" 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$(invocations)" != "$n_before" ]; then ok "  and the carry was admitted"
+  else bad "  and the carry was admitted" "the actor never launched"; fi
+  rm -rf "$lgld"
 
 section "12b. The live lock is checkout-wide, not per task"
   # One checkout is one working tree with one index and one HEAD. Two carries in

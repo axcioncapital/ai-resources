@@ -11,84 +11,79 @@ Scope is exactly that correction plan as committed at `f2b19b5d80a061111c39cc744
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 1 — make the shared lease distinguish live, absent, and unknown holders and reclaim only positively absent unpinned leases without permitting two winners.
+Standard. Implementation mode. Unit 2 — make the attended carrier's legacy-lock migration check distinguish live, absent, and unknown holders and remove only positively absent legacy locks.
 
 Named reason for the loop: the correction spans several independently assessable units and must survive session boundaries; the result also needs assessment by someone other than its implementer before it can progress. The operator explicitly chose Work Loop v2 for this task on 2026-08-15, overriding the normal specialist route to Matt `implement`.
 
 ## Brief
 
-This unit closes the shared safety gap first because every later carrier and dispatcher correction depends on the lease helper's liveness verdict. It implements only correction-plan step 1; the other six findings remain outside this unit so the evidence stays attributable and the correction remains reviewable.
+Unit 1 established the shared three-state PID verdict and is accepted. This unit applies that verdict to the carrier's one-release legacy-lock compatibility path, closing correction-plan step 2 without touching carrier shutdown, dispatcher behavior, or the later acceptance matrix.
 
-Required outcome: add failing-first behavioral coverage and the smallest helper change that establishes `LIVE`, `ABSENT`, and `UNKNOWN`; refuses and preserves `LIVE` and `UNKNOWN`; reclaims only `ABSENT`; never auto-reclaims a pinned lease; and allows exactly one winner when contenders race to reclaim the same stale lease.
+Required outcome: a live legacy-lock holder refuses admission and survives; an uninspectable, missing, or malformed holder is `UNKNOWN`, refuses admission with an explanation, and survives; a positively absent holder is the only state that permits atomic stale-lock cleanup and continued admission.
 
 Governing sources:
 
-- Current operator direction on 2026-08-15 governs the choice to use Work Loop v2.
-- `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-correction-plan-2026-08-14.md` at `f2b19b5d80a061111c39cc7444f90f6374f19d38` governs the correction scope and acceptance conditions.
-- Its named governing proposal, `plans/work-loop-v2-v0.2/work-loop-v2-cross-transport-concurrency-and-task-aware-worktrees-implementation-proposal-2026-08-13.md`, governs Phase 1's two-resource lease contract and the rule that a lease not shown free is held.
-- `.agents/skills/work-loop-v2/references/repository-problem-resolution-sop.md` was routing context only. It is not approved implementation authority and adds no artifacts or gates to this unit.
+- The operator-approved correction plan at `f2b19b5d80a061111c39cc7444f90f6374f19d38`, especially implementation sequence step 2 and the safety rules `Unknown is held` and `Only positive absence is stale`, governs this unit.
+- The governing Phase 1 proposal named by that plan governs the changeover requirement: a live old lock must remain visible to the new lease path, and an old holder is never migrated into a new lease.
+- Unit 1's accepted shared liveness implementation is commits `fee4fe49`, `ca35371c`, and `57f3b25b`. Consume its three-state verdict; do not add a second PID classifier.
 
 Check these claims against the live repository before changing anything:
 
-1. In `logs/scripts/work-loop-lease.sh`, inspect `wl_lease_acquire` and establish whether every existing unpinned lease is currently refused without a three-state PID probe, including positively absent holders.
-2. In `logs/scripts/work-loop-lease.test.sh`, search the executed cases for explicit behavioral coverage of a live holder, an uninspectable holder, missing/empty/malformed/zero/zero-prefixed PIDs, positively absent recovery, two stale-recovery contenders, and pinned non-recovery. State exactly which are absent or only indirectly covered.
-3. In `logs/scripts/work-loop-lease.sh`, confirm how `survivors` is recognized and preserve the invariant that pin evidence is checked before PID liveness.
-4. Inspect the `wl_lease_acquire` call sites in `scripts/axcion-harness-v0.2/carry-turn.sh` and `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`. Preserve their public return-code and metadata contract; neither caller may reimplement PID classification in this unit.
-5. Report the current branch, checkout, Git status, and unrelated existing changes before editing. Treat all pre-existing modifications and untracked evidence as operator-owned; do not stage or commit them.
+1. In `scripts/axcion-harness-v0.2/carry-turn.sh`, inspect `legacy_lock_check` and verify whether a nonempty PID for which `kill -0` fails is currently treated as stale without distinguishing positive absence from inspection failure.
+2. In `scripts/axcion-harness-v0.2/carry-turn.test.sh`, inspect the executed legacy-lock cases and report the exact existing coverage for live, positively absent, uninspectable, missing, and malformed PIDs, including whether each asserts admission/refusal, actor launch, message, and lock preservation/removal.
+3. Verify how `carry-turn.sh` sources `logs/scripts/work-loop-lease.sh` and whether the accepted shared three-state probe is available to the compatibility path without changing the helper's public contract.
+4. Report the current branch, checkout, Git status, and pre-existing operator-owned changes before editing. Do not stage or commit `logs/friction-log.md` or `logs/harness-runs/`.
 
-Authorized changes for this unit:
+Authorized changes:
 
-- `logs/scripts/work-loop-lease.sh`
-- `logs/scripts/work-loop-lease.test.sh`
+- `scripts/axcion-harness-v0.2/carry-turn.sh`
+- `scripts/axcion-harness-v0.2/carry-turn.test.sh`
 - this state file
-- `logs/friction-log.md` only if an existing hook updates it; do not stage or commit that unrelated hook output
+- `logs/friction-log.md` only if an existing hook updates it; never stage or commit it
 
-Codex framing decision: carrier legacy-lock handling, carrier process-group shutdown, dispatcher refusal logging, dispatcher status wording, the full controller matrix, live cases 23/24, and the closing record are held for later units because each has a separate dominant behavior and evidence set.
+Codex framing decision: carrier process-group shutdown, dispatcher refusal logging, dispatcher status wording, the full controller matrix, live cases 23/24, and the closing record remain outside this unit because each has a separate dominant behavior and evidence set.
 
 Required evidence:
 
-- Add the exact cases listed in correction-plan step 1, with positive controls that distinguish safe admission from blanket refusal.
-- Before the production fix, run the new targeted cases against the pre-fix helper and record output proving they fail for the intended reason. Do not manufacture red evidence after implementation.
-- After the fix, run `bash -n logs/scripts/work-loop-lease.sh logs/scripts/work-loop-lease.test.sh` and `bash logs/scripts/work-loop-lease.test.sh`; report commands, exit codes, pass/fail totals, and the relevant output.
-- Demonstrate from the race case that exactly one contender acquires after stale recovery and from filesystem assertions that live, unknown, malformed, and pinned lease directories survive.
-- Report changed files, the implementation commit, any deviations, remaining limitations, and rollback instructions.
+- Add exact cases for live, positively absent, uninspectable, missing, and malformed legacy-lock PIDs. Include the stale positive control so blanket refusal cannot pass.
+- Before the production fix, run the new targeted assertions against the pre-fix carrier and record output showing the unsafe cases fail for the intended reason.
+- After the fix, run `bash -n scripts/axcion-harness-v0.2/carry-turn.sh scripts/axcion-harness-v0.2/carry-turn.test.sh` and the full `bash scripts/axcion-harness-v0.2/carry-turn.test.sh`; report commands, exit codes, and current totals.
+- Prove from both output and filesystem state that `LIVE` and `UNKNOWN` exit 17 before actor launch, state why inspection did not justify deletion, and preserve the legacy directory; prove `ABSENT` atomically renames and removes only the stale directory, then admits the carrier.
+- Report changed files, implementation commit, deviations, remaining limitations, and rollback instructions.
 
-Completion condition: the shared helper and its suite satisfy correction-plan step 1, the authorized tests pass, no caller duplicates PID classification, only authorized files are committed, and Claude updates this state file with the result and evidence, sets `turn: codex`, commits, and stops for assessment.
+Completion condition: correction-plan step 2 is satisfied; the exact new cases and full carrier suite pass; the compatibility path consumes the shared three-state verdict rather than duplicating it; only authorized files are committed; and Claude updates this file, sets `turn: codex`, commits, and stops.
 
-Stop and hand back without improvising if a premise is false, the supported host cannot distinguish positive absence from unknown, safe stale recovery would require deleting the active lease path directly, the public helper contract must materially change, or the work needs files outside the authorized boundary. Challenge stale instructions or a false premise explicitly rather than building around them.
+Stop and hand back without improvising if the shared verdict is unavailable at the compatibility path, safe stale cleanup needs a new command surface or files outside the authorized boundary, or any premise is false. Challenge a false premise explicitly rather than building around it.
 
 ## Latest result
 
-The one permitted final tightly-bounded fix, confined to correction-closure finding 1. Finding 2 was not reopened, the witness-set design is unchanged, the lease was not redesigned, and neither recorded deferral was addressed.
+Inspected (2026-08-15):
 
-**The gap, reproduced by inspection.** Codex was right on both halves. The witness-set implementation constructed no `.reclaiming` path at all — `grep -n reclaiming logs/scripts/work-loop-lease.sh` at `ca35371c` returned only prose comments and the `WL_LEASE_RECLAIM_ROUNDS` text, no code — so an old-format marker was walked straight past. Case 19 fabricated a dead marker but asserted nothing about it, and case 20 asserted only the in-lease witness. Confirmed behaviourally against `ca35371c`'s helper: with a live marker owner and a free lease, a contender returned `rc=0 ACQUIRED task_owned=1 checkout_owned=1`.
+- Claim (1): HOLDS — read `legacy_lock_check` at `scripts/axcion-harness-v0.2/carry-turn.sh:738-755` (pre-fix). It branched on `[ -n "$holder" ] && kill -0 "$holder" 2>/dev/null` only. A nonempty PID whose `kill -0` failed fell straight through to `say "note: removing a stale lock..."` and `rm -rf "$lock_path"`, with no test of *why* it failed. `ESRCH` and `EPERM` were the same branch, so an uninspectable holder was deleted and the carry admitted.
+- Claim (2): HOLDS — read the executed legacy-lock cases in `scripts/axcion-harness-v0.2/carry-turn.test.sh`, section 12 (`grep -n 'plant_lock\|lock_path_for'` returned uses at lines 860-869, 906-907, 924, 1686-1687 only). Exact pre-existing coverage: **live** (pid `$$`) asserts rc 17, no launch, lock survives, names the holding task; **positively absent** (reaped subshell pid) asserts rc 0 and the message `removing a stale lock`, but asserts *nothing* about the directory actually being gone and nothing about the actor launching; **empty pid file** asserts rc 17, `NOT deleted`, message `Nothing was deleted`, no further launch. **Uninspectable (EPERM) had no case at all. Malformed (`0`, `007`, non-numeric) had no case at all. A wholly missing pid file had no case at all** — only the present-but-empty file was covered. Section 12b and case M6 plant locks but assert checkout-wide keying, not the pid verdict.
+- Claim (3): HOLDS — `carry-turn.sh:704` sources `$CHECKOUT/logs/scripts/work-loop-lease.sh` at top level and `:710` runs `wl_lease_init`, both before `acquire_lock` is called at `:1456`, which is what calls `legacy_lock_check`. The shared three-state probe is `wl_lease__pid_state` (`logs/scripts/work-loop-lease.sh:218`), returning `LIVE|reason` / `ABSENT|reason` / `UNKNOWN|reason` on stdout. It is therefore in scope at the compatibility path and callable read-only with no change to the library. One qualification: `grep -n "wl_lease__" carry-turn.sh dispatch.sh` returned no matches, so no transport consumed a library-internal name before this unit — consuming it adds no public-contract change but is new coupling to a private name (recorded as a limitation below).
+- Claim (4): HOLDS — checkout `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-concurrency-fix-2`, branch `session/2026-08-14-concurrency-fix-2`. Pre-existing operator-owned changes before editing: ` M logs/friction-log.md` and `?? logs/harness-runs/`. Neither was staged or committed. Ownership check ran first and returned `PROCEED` (this checkout already declares this task).
 
-**The fix.** One additive block at the top of `wl_lease__acquire_one`, before the `mkdir`. If `<lease>.reclaiming` exists, its recorded pid goes through the same three-state probe used everywhere else:
-
-- **LIVE or UNINSPECTABLE** — the marker is preserved untouched and admission is refused with `CONTENDED`.
-- **ABSENT** — the marker is cleared by rename-to-tombstone then delete, the same discipline the stale lease gets, so `rm -rf` is never aimed at a path another run might recreate. Recovery then proceeds normally.
-- **Absent but unclearable** — refused, preserved. Failing closed rather than spinning against something this run cannot remove, which also bounds the loop.
-
-It is read *before* the `mkdir` deliberately. The window the old mechanism left open is exactly the one where the reclaimer has renamed the lease away and not yet recreated it, so the lease path is free; a run that went straight to `mkdir` there would take a lease a live reclaimer is still working on. That is why sub-cases (a) and (b) below fabricate a **free** lease — it is the placement, not just the check, that is under test.
-
-Clearing a dead marker cannot produce two winners because clearing grants nothing: both runs then go through the unchanged witness set, which decides the single winner. Sub-case (d) exercises that directly.
-
-Result: finding 1 is resolved for both representations. A live or uninspectable reclaimer — old-format marker or new-format witness — is preserved and refuses admission; a positively absent one permits recovery and is cleaned up, with exactly one winner.
+Result: correction-plan step 2 is satisfied. `legacy_lock_check` now delegates classification to the shared `wl_lease__pid_state` rather than reading `kill -0` itself, and acts on three states: `LIVE` refuses (17) with the in-flight wording; anything that is **not positively absent** refuses (17) carrying the probe's own reason, deleting nothing; only `ABSENT` writes, and that write is now an atomic sibling rename (`$lock_path.stale.$$`) followed by removal of the renamed name, so two runs that both probe `ABSENT` cannot both delete. A rename that fails re-tests the directory: gone means another run cleared it and this run proceeds to the new leases; still present means this run refuses (17) rather than guessing. No second PID classifier was added.
 
 Evidence:
 
-- **Failing first, against the pre-fix helper** (`git show ca35371c:logs/scripts/work-loop-lease.sh` via `WL_LEASE_LIB`): `bash logs/scripts/work-loop-lease.test.sh` → `pass=122 fail=5`, exit 1. Case 21(a) and 21(b) both returned `rc=0 ACQUIRED task_owned=1 checkout_owned=1` over a live and an uninspectable marker owner. Case 21(c) recovered but left `...task-9dcf021a45ce8584.lock.reclaiming survives` as residue. Case 19's new assertion failed the same way. Sub-case (d) already passed at `acquired=1`, which is the point of including it: it is the regression guard on the witness race, not a new claim.
-- **After the fix:** `bash -n logs/scripts/work-loop-lease.sh logs/scripts/work-loop-lease.test.sh` → exit 0. `bash logs/scripts/work-loop-lease.test.sh` → `pass=127 fail=0`, exit 0, reproduced on four consecutive runs.
-- **All three marker-owner states, asserted directly** — each on both admission and the filesystem. (a) LIVE: `rc=17`, `state=CONTENDED`, marker byte-identical afterwards, and no lease created behind the reclaimer's back. (b) UNINSPECTABLE (pid 1): `rc=17`, marker preserved, no lease created. (c) ABSENT: `rc=0`, both resources owned, marker gone, no tombstone left.
-- **No two winners with a dead marker in the way** — sub-case (d) fabricates a stale lease *and* a dead old-format marker, releases 6 barrier-synchronised contenders, and asserts `acquired=1`, `other=0`.
-- **Existing protection retained.** Case 17's witness race still reports `acquired=1 refused=5 other=0`; cases 19 and 20 still pass, including the newly added assertion that the dead old-format marker is cleaned up; the rollback, partial-pin, durable-pin and read-only-status cases are untouched and green.
-- **Neither caller regressed.** `bash scripts/axcion-harness-v0.2/carry-turn.test.sh` → `passed: 371 failed: 0`, exit 0. `bash plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` → `pass=537 fail=0`, exit 0. Both unmodified.
-- **Changed:** `logs/scripts/work-loop-lease.sh` (+36 lines, one self-contained block; no existing logic altered), `logs/scripts/work-loop-lease.test.sh` (+121 lines), and this state file. `logs/friction-log.md` and `logs/harness-runs/` remain pre-existing operator-owned and unstaged.
-- **Rollback:** `git revert` the final-fix commit restores `ca35371c`'s behaviour; `git checkout c6f758fe -- logs/scripts/work-loop-lease.sh logs/scripts/work-loop-lease.test.sh` returns the state before Unit 1.
+- **Failing-first, against the pre-fix launcher.** Added 34 assertions as section `12a. The legacy lock has THREE states, and only one of them is stale` — uninspectable (pid 1, EPERM), zero-prefixed (`007`), `0`, non-numeric (`not-a-pid`), missing pid file, live, and the positively-absent **positive control**. Run against the unmodified `carry-turn.sh`: `passed: 388  failed: 17`, exit 1, every one of the 17 inside 12a. They failed for the intended reason, not a wording mismatch — the uninspectable holder produced `note: removing a stale lock — pid 1 (task 'task-lg-live') is not running.`, `rc=22` instead of 17, `and the lock survives  expected '1', got '0'`, and `and launched nothing  expected '0', got '1'`. Same shape for `007` and `not-a-pid`. Pid `0` failed differently and as predicted: pre-fix `kill -0 0` *succeeds* (own process group), so a corrupt lock was reported as `another carry is in flight for this CHECKOUT (pid 0, ...)`.
+- **Blanket refusal cannot pass.** The `ABSENT` positive control asserts rc 0, the `removing a stale lock` line, the directory GONE by filesystem test, no `.stale.*` rename target left behind (`find` count 0), and the actor actually launched (invocation count increased). A launcher that simply refused everything fails four of those.
+- **Filesystem state, not just output.** Every `LIVE`/`UNKNOWN` case asserts exit 17, `[ -d "$lock_path" ]` still true, and an unchanged invocation count — so the refusal happens before actor launch and the directory survives. The `UNKNOWN` cases additionally assert the message carries `Nothing was deleted` and the probe's reason (`WITHOUT proving absence` for EPERM; `not a usable process id` for `007`), which is the launcher stating why inspection did not justify deletion. The pid-`0` case asserts the output does **not** contain `another carry is in flight`.
+- **After the fix.** `bash -n scripts/axcion-harness-v0.2/carry-turn.sh scripts/axcion-harness-v0.2/carry-turn.test.sh` → exit 0. `bash scripts/axcion-harness-v0.2/carry-turn.test.sh` → exit 0, `passed: 405  failed: 0` (baseline 371 + 34 new). `bash scripts/axcion-harness-v0.2/carry-turn.test.sh --prove-failure` → exit 0, `passed: 40  failed: 0`; mutant M6, which rewrites the lock-key line inside the function edited here, still applies and still forces its assertions to fail.
+- **Changed files:** `scripts/axcion-harness-v0.2/carry-turn.sh` (+63/-6 region), `scripts/axcion-harness-v0.2/carry-turn.test.sh` (+134), and this state file. `logs/friction-log.md` and `logs/harness-runs/` were left untouched and unstaged.
+- **Rollback:** `git revert` the implementation commit named below, or `git checkout <parent> -- scripts/axcion-harness-v0.2/carry-turn.sh scripts/axcion-harness-v0.2/carry-turn.test.sh`. The change is confined to those two files; no lease, dispatcher, or state format changed, so reverting restores the prior behaviour with no migration.
 
-Deferral, recorded and not done: the transition block is dead weight once no checkout can still hold an old-format marker. The comment says so in place and names the condition for removing it. Removing it now would defeat the fix.
+Deviations: none from the brief's authorized boundary.
 
-The two deferrals recorded at the correction round stand unchanged and were not addressed here: mutually uninspectable live reclaimers both stand down, and `wl_lease_status` still reports `HELD` for a provably dead holder.
+Candidate deferrals noticed during this unit, not implemented:
+
+- The uninspectable case pins the EPERM state to **pid 1**, and skips loudly (`SKIP`) if the suite runs as root, where pid 1 is genuinely `LIVE`. It ran here. A root CI runner would lose that assertion rather than fail it.
+- Consuming `wl_lease__pid_state` couples the carrier to a library-internal name. A public `wl_lease_pid_state` wrapper would settle it, but `logs/scripts/work-loop-lease.sh` is outside this unit's authorized changes, so it was not added.
+- Section 12's original `positively absent` case still asserts only rc and message; 12a's control now asserts the filesystem. The older weaker case was left in place rather than edited, to keep this unit's diff to additions.
+
+Held from Unit 1 for closure, unchanged: mutually uninspectable live reclaimers both fail closed; `wl_lease_status` still describes a provably dead holder as `HELD`; the old-marker transition block can be removed only after no checkout can carry that format.
 
 ## Blocker
 
@@ -96,4 +91,4 @@ None.
 
 ## Next action
 
-Codex: the final closure check — does the transition fix resolve correction-closure finding 1, and did it break the shared lease or either caller? This fix and regressions only; anything else is a deferral.
+Codex: assess Unit 2 against correction-plan step 2 — the three-state legacy verdict, the atomic `ABSENT`-only cleanup, the failing-first evidence, and the four candidate deferrals above — then continue to the next correction-plan step, correct once, or close.
