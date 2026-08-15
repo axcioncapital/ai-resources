@@ -1,7 +1,12 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** **Amended and returned to draft — 2026-08-15 (operator scope decision).** Implementation is
-**complete through T7**. The operator decided on 2026-08-15 to finish at the implemented T7 boundary and
+**Status:** **Approved and final for this task — 2026-08-15.** The operator gave explicit content-bound
+approval of the scope amendment's exact content at commit `ff3175cd5123dd2195cc7e80b2487ba3849e57a1`,
+plan blob `ad97ded715e80fd1370b27e79437c4880c8416d4`. That blob is the approved substantive content, and
+the approval is bound to it rather than to this filename. **No gate remains before this task closes.**
+
+**The approved outcome, exactly.** Implementation is **complete through T7**. The operator decided on
+2026-08-15 to finish at the implemented T7 boundary and
 **removed T8 and T9 from this task's required completion bar**. That is an operator-owned change to the
 Fixed Point — the only route this plan ever allowed past T8's and T9's exits — and it is recorded
 authoritatively at **§ 1 Fixed Point, *Scope decision — 2026-08-15***. Every other live statement in this
@@ -9,14 +14,21 @@ file points there rather than restating it. **T8's twelve scenarios and T9's 3�
 run and carry no PASS, completion or validation claim**; proposal §16's observable-success standard is
 therefore not established by this project, and that is the accepted limitation of finishing here.
 
-**Why this amendment returns the plan to draft, and what that does not mean.** Changing the Fixed Point
+**Why the amendment passed through draft, and what that did not mean — completed.** Changing the Fixed Point
 and two tracer contracts is substantive, and this plan's standing rule is that a substantive change to a
-tracer's contract cannot be an edit under a freeze — so the plan returns to draft on its own rule.
-**Nothing already landed is affected:** T1, T1a, T2, T3, T3a, T4, T5, T6 and T7 all landed under the
-re-freeze recorded immediately below and are untouched. **This amendment implements, applies and
-authorizes nothing** — it changes this plan's own status, completion bar and disposition language only,
-and no implementation surface. The one gate it leaves open is the operator's content-bound approval of
-this amended content, if the project is to close on it.
+tracer's contract cannot be an edit under a freeze — so the plan returned to draft on its own rule, and
+the operator's content-bound approval above is what closed that state. **Nothing already landed was
+affected:** T1, T1a, T2, T3, T3a, T4, T5, T6 and T7 all landed under the
+re-freeze recorded immediately below and are untouched. **That amendment implemented, applied and
+authorized nothing** — it changed this plan's own status, completion bar and disposition language only,
+and no implementation surface.
+
+**This status record is an announcement over the approved blob, and implements nothing.** It edits four
+status and provenance passages only — this Status block, the T6/T7 gate paragraph below, § 1's *Status
+consequence* paragraph, and the § Plan-readiness opening — so that no live statement contradicts the
+approved/final status. It changes no scope, disposition, traceability, limitation, historical decision or
+implementation content. **Its own resulting blob is not a replacement approval target:** the approved
+substantive content remains `ad97ded715e80fd1370b27e79437c4880c8416d4`.
 
 **The re-freeze this amendment supersedes — preserved as history.** The plan was **re-frozen for
 implementation on 2026-08-15**. The operator gave explicit content-bound
@@ -76,10 +88,11 @@ as an accepted limitation rather than an open defect; keep full descendant conta
 approval settles direction and residual-risk authority. It is not content-bound approval of this amended
 prose.**
 
-**The gates that still stand between this draft and a re-freeze, in order.** (1) One fresh, isolated
-bounded review of this amendment's content. (2) One bounded correction round if that review returns
+**The gates that stood between the T6/T7 draft and its re-freeze, in order — history; all completed, and
+T6 and T7 have both since landed.** (1) One fresh, isolated
+bounded review of that amendment's content. (2) One bounded correction round if that review returned
 material findings, with the Codex closure check on those findings only. (3) The operator's explicit
-content-bound approval of the corrected commit and blob. Only then may T6 begin; T7 additionally takes its
+content-bound approval of the corrected commit and blob. Only then might T6 begin; T7 additionally took its
 own fresh **risk-aware** review before any implementation, per its corrected review row.
 
 **This status record implements nothing.** This amendment edits only the thirteen surfaces listed in
@@ -361,10 +374,14 @@ What that does and does not mean, exactly:
   proposal's §14 items 8–12 remain what the proposal says; what changed is this plan's required
   completion bar, not the proposal's text.
 
-**Status consequence.** Changing the Fixed Point and two tracer contracts is substantive, and this plan's
-standing rule is that such a change cannot be an edit under a freeze. The plan therefore returns to draft
-(Status block above). That is a record-keeping consequence only: it authorizes no new work, and it undoes
-nothing that landed under the superseded re-freeze.
+**Status consequence — and its completion.** Changing the Fixed Point and two tracer contracts is substantive, and this plan's
+standing rule is that such a change cannot be an edit under a freeze. The plan therefore returned to draft
+(Status block above). That was a record-keeping consequence only: it authorized no new work, and it undid
+nothing that landed under the superseded re-freeze. **That state is closed.** The operator gave explicit
+content-bound approval of the exact amended content at commit `ff3175cd5123dd2195cc7e80b2487ba3849e57a1`,
+plan blob `ad97ded715e80fd1370b27e79437c4880c8416d4`, on 2026-08-15; **the plan is no longer draft, and no
+gate remains before closure.** That approval records the completion of the gate this paragraph named — it
+changes nothing in the scope decision above it, which stands exactly as approved.
 
 ---
 
@@ -1950,7 +1967,10 @@ terms. **No exit condition of any landed tracer is relaxed by this amendment.**
 
 ## Plan-readiness statement
 
-This artifact is **amended and returned to draft — 2026-08-15 (operator scope decision)**, and it agrees
+This artifact is **approved and final for this task — 2026-08-15**, on the operator's explicit
+content-bound approval of the scope amendment's exact content at commit
+`ff3175cd5123dd2195cc7e80b2487ba3849e57a1`, plan blob
+`ad97ded715e80fd1370b27e79437c4880c8416d4`. It agrees
 with the Status block at the head of this file; there is no third status record.
 
 **Readiness, stated plainly.** **Implementation is complete through T7, and no tracer remains scheduled.**
@@ -1962,11 +1982,13 @@ by this project.** That is the accepted, explicit limitation of finishing here, 
 of the evidence: the mechanism is implemented and its behaviour under the approved acceptance instrument
 is unmeasured.
 
-**What still stands between this draft and a close.** One thing only: the operator's content-bound
-approval of this amended content. The plan returned to draft because changing the Fixed Point and two
+**What stands between this plan and a close: nothing.** The one gate the amendment named — the operator's
+content-bound approval of its exact content — was completed on 2026-08-15 at the commit and blob above.
+The plan had returned to draft because changing the Fixed Point and two
 tracer contracts is substantive and cannot be an edit under a freeze — this plan's own standing rule.
-Nothing landed is affected by that return, and **this amendment authorizes, applies and implements
-nothing.**
+Nothing landed was affected by that return, and **that amendment authorized, applied and implemented
+nothing.** This readiness record likewise implements nothing: it is a status announcement over the
+approved blob, and its own resulting blob is not a replacement approval target.
 
 **The superseded re-freeze — history.** The plan was re-frozen for implementation on 2026-08-15, on the
 operator's explicit content-bound approval of the reviewed-and-corrected T6/T7 evidence-and-control
