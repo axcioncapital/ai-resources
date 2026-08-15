@@ -806,11 +806,20 @@ both explicitly **non-blocking** — so this amendment expands the surface, not 
     "core § 7 reserves hard-to-reverse decisions for the operator" must match before and **not** match
     after. Each is a cheap regression guard, not proof of the semantic fix, and each is fail-capable
     because it matches exactly once on the pre-edit file.
-  - **(b) structural deferral proof, one per surface.** The replacement bullet must match
-    `grep -q "core § 7"`; the replacement introductory sentence must likewise name core § 7 as the place
-    the boundary is stated. This is the proof each surface defers to the reconciled boundary rather than
-    standing alone; a rewrite that drops the reference while merely changing the trigger word fails (b)
-    even though it would pass (a).
+  - **(b) structural deferral proof, one per surface — necessary, and not sufficient on its own.** The
+    replacement bullet must match `grep -q "core § 7"`; the replacement introductory sentence must
+    likewise name core § 7 as the place the boundary is stated. That grep proves only that the citation is
+    **present**: a replacement can cite core § 7 and still add a freestanding categorical trigger beside
+    the citation ("Decide anything irreversible — see core § 7 for the classes"), which passes the grep
+    while reintroducing the defect this tracer exists to remove. **The grep is therefore paired with a
+    judgment the exact-candidate risk-aware review must make and record, separately for each surface:**
+    that the line-502 introduction, and the line-508 bullet, each (i) cites the canonical core § 7
+    boundary as the place the reserved classes are stated, and (ii) states **no independent
+    consequence-based operator trigger of its own** — no rule keyed to how consequential, dangerous,
+    expensive or hard to reverse a decision is, under any wording. A surface that fails either half fails
+    (b) even where the grep matches, and a rewrite that drops the reference while merely changing the
+    trigger word fails (b) even though it would pass (a). This does not relax (c): the no-class-list-copy
+    requirement stands unchanged, and neither replacement may enumerate the classes it points at.
   - **(c) no class list copied, checked on both replacements.** Neither replacement itself enumerates
     proposal §6's or core § 7's operator-reserved-decision or mandatory-stop-or-handback class list,
     verbatim or paraphrased — read and confirmed against proposal §6's exact list, a narrow two-line
@@ -1215,8 +1224,13 @@ Gated on T2. See § 3.3a for the full specification; this tracer entry is the bo
   "core § 7 reserves hard-to-reverse decisions for the operator" must each match before the edit and not
   match after it — regression guards, not proof of the fix; (b) each replacement must defer to core § 7 by
   reference — `grep -q "core § 7"` on the replacement bullet, and the replacement introduction naming
-  core § 7 as where the boundary is stated — structural proof neither stands alone; a differently-worded
-  but still freestanding categorical rule passes (a) and fails (b); (c) neither replacement itself
+  core § 7 as where the boundary is stated — which is **necessary but not sufficient**, because a
+  replacement can carry the citation and a freestanding categorical trigger at once and still pass the
+  grep; the exact-candidate risk-aware review must therefore affirm and record, **separately for the
+  line-502 introduction and the line-508 bullet**, that each cites the canonical core § 7 boundary and
+  states no independent consequence-based operator trigger of its own, under any wording; a
+  differently-worded but still freestanding categorical rule passes (a) and fails (b); (c) neither
+  replacement itself
   enumerates proposal §6's or core § 7's operator-reserved-decision or mandatory-stop-or-handback class
   list, verbatim or paraphrased (read and confirmed against proposal §6's exact list); (d) the list's six
   other bullets and skill lines 465–475 are byte-unchanged, and the whole-file diff reaches exactly these
@@ -1484,8 +1498,10 @@ wrongly: **T3a touches exactly two skill lines — the "What you never do" intro
 line 502 and the bullet currently at line 508 — and nothing else**, and **skill lines 465–475 — including
 line 473's "consequential or hard-to-reverse claim" re-check condition — are expressly unaffected by every
 tracer in this plan**, because that condition scales verification to consequence (proposal § 4) rather than
-transferring a decision. This amendment schedules no *additional* skill edit: it corrects the boundary of
-the one T3a already owned, and it authorizes no edit at all until its own two gates pass.
+transferring a decision. **This amendment adds exactly one operator-authorized surface — skill line 502 —
+inside the file and the section T3a already owned.** It adds no new file, no new tracer and no third
+surface, it schedules no separate skill edit for that surface (line 502 and line 508 are corrected as one
+change under the one tracer), and it authorizes no edit at all until its own two gates pass.
 
 **Counts this check confirms — T2's, unchanged by the present amendment, kept distinct on purpose.** T2's core surface is
 **seven reconciliation surfaces** — five consequence gates, one scope rule, one settled-decision gate —
@@ -1509,10 +1525,12 @@ assumption 5), § 3.3a (*Inputs*, *Outputs*, *Failure behavior*, *Fail-capable e
 T3a (*Behaviour*, *Verification*, *Exit condition*, *Scope boundary*), the §14 traceability row for item 3,
 and the two boundary statements above. **No live statement in this plan claims T3a is limited to line 508
 or to one bullet**; where "one bullet" or "line 508 and nothing else" appears, it names a superseded
-boundary inside a historical or cause record and says so. This amendment adds no new implementation
-surface: line 502 sits in the same file and the same section T3a already owned. The proposal boundary, the
-capability envelope, the Fixed Point, the accepted T8 S4/S8 limitation and every existing deferral are
-unchanged by both amendments.
+boundary inside a historical or cause record and says so. **This amendment adds exactly one
+operator-authorized surface — line 502 — taking T3a from one surface to two.** That surface sits inside the
+file and the section T3a already owned, so the amendment adds no new file, no new tracer and no third
+surface; the count moved from one to two and no further. The proposal boundary, the capability envelope,
+the Fixed Point, the accepted T8 S4/S8 limitation and every existing deferral are unchanged by both
+amendments.
 
 Exit-condition strictness, after Unit 5 Finding 5: T1 ends at an operator approval; T1a ends at the
 status reconciliation landing (no operator gate of its own beyond its risk-aware review); T8 ends only
