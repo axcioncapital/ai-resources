@@ -1,26 +1,44 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** **Re-frozen for implementation**, 2026-08-15, on the operator's explicit content-bound
-approval of the reviewed-and-corrected plan content at commit
-`c99e6b415a911866518111d1944c0e61dc72fbf8`, blob `f80dc9d9dff8a6f13f66549f717d49a9db2efdfe`. That is the
-approved content identity; the present record is a status-only announcement written over it and alters no
-substantive plan content. This revision amended T2's contract again, so it could not be an edit under the
-prior re-freeze and the plan had returned to draft; the two gates that stood between that draft and
-implementation have now both run, in order. (1) One fresh, isolated bounded review of **this** amendment
-at commit `504814cf422a4a29acb80d9066714be22e5f7a31`, blob `4141d5cb966f744957d7d63794b3d8a9adbc3a9f` —
-verdict **CORRECT**, with one material frozen finding on the authoritative Unit 18 finding-number mapping;
-one bounded correction round resolved that single frozen finding, landing at the approved identity above,
-and the Codex closure check on it returned **PASS** with no newly noticed issue. That correction was
-attribution-label-only and not a redesign, so `docs/qc-independence.md` required no second broad review.
-(2) The operator's explicit content-bound reapproval of that corrected commit and blob, 2026-08-15.
-**This status record edits, corrects and applies nothing on its own, and authorizes no core edit by
-itself.** The matching readiness record is § Plan-readiness statement; there is no third status record.
+**Status:** **Draft — returned to draft on 2026-08-15 by the T3a two-surface scope amendment.** The plan
+had been **re-frozen for implementation** on 2026-08-15, on the operator's explicit content-bound approval
+of the reviewed-and-corrected plan content at commit `c99e6b415a911866518111d1944c0e61dc72fbf8`, blob
+`f80dc9d9dff8a6f13f66549f717d49a9db2efdfe`; that re-freeze's own two gates — one fresh isolated bounded
+review of the amendment content at commit `504814cf422a4a29acb80d9066714be22e5f7a31`, blob
+`4141d5cb966f744957d7d63794b3d8a9adbc3a9f`, verdict **CORRECT** with one material frozen finding on the
+authoritative Unit 18 finding-number mapping, one bounded correction round resolving it with the Codex
+closure check returning **PASS**, and then the operator's content-bound reapproval — are preserved below as
+historical provenance. **The present revision changes T3a's scope boundary, which is a material change to a
+tracer's contract, so it cannot be an edit under that re-freeze and the plan has returned to draft.**
 
-**Implementation state under this re-freeze.** **T1 and T1a remain implemented, and they are still the
-only implemented tracers.** **T2 remains unimplemented**, and no core edit exists for it. Re-freezing the
-plan does not undo T1 or T1a, and it does not by itself land T2: the already-reviewed candidate core edit
-must first be corrected to this amended contract and pass its bounded closure check on the Unit 18
-candidate review's three frozen findings.
+**The false premise this amendment corrects — T3a's one-bullet boundary is incomplete.** T3a's frozen
+contract limited its edit to skill line 508 and nothing else. The exact unapplied T3a candidate drafted at
+Unit 24 (commit `f522e3e8428c94f6ecda857aacd104fa024698e3`) was given the fresh isolated risk-aware review
+its review row requires, and that review returned **OPERATOR ESCALATION REQUIRED**. The candidate bullet
+itself was found sound: its optional core § 8 pointer and its length were both explicitly recorded as
+**non-blocking**. The blocker is a second surface the one-bullet boundary excluded — the `What you never do`
+introductory sentence four lines above the bullet, currently at skill line 502, which still reads that
+core § 7 "reserves hard-to-reverse decisions for the operator." That is the same categorical
+transfer-on-consequence rule T3a removes at line 508. Applying the candidate under the one-bullet scope
+would leave the skill's own section internally contradictory, so the frozen boundary cannot be executed as
+written.
+
+**The operator-approved amendment direction.** The operator approved this bounded direction on 2026-08-15,
+recorded in the Work Loop state file at commit `733a17fdf75ae29cdf2c55e37b528e7fa4dca895`: T3a's scope
+expands from line 508 alone to **exactly two existing surfaces in the same skill section** — the
+introductory sentence currently at line 502 together with the bullet currently at line 508 — with no other
+plan or implementation scope change. That approval authorizes **drafting and reviewing this amendment
+only**. It is not approval of amended plan content, and it authorizes no skill edit.
+
+**The two gates that stand between this draft and implementation, in order.** (1) One fresh, isolated
+bounded review of **this** amendment's content. (2) The operator's explicit content-bound approval of the
+reviewed — and, if the review returns findings, corrected — content. **No skill edit is authorized by this
+record, and the Unit 24 one-bullet candidate remains unapplied and is now known to be incomplete**: it
+addresses one of the two surfaces. Once both gates pass, the sequence is fixed — draft an exact corrected
+**two-surface** candidate; obtain one fresh risk-aware review of **that exact candidate**; apply it only if
+that review passes. The Unit 24 review is the evidence that forced this amendment, not approval of
+replacement prose it has never seen. The matching readiness record is § Plan-readiness statement; there is
+no third status record.
 
 **Prior re-freeze identity — superseded by this amendment, preserved as history.** The plan was
 **re-frozen for implementation**, 2026-08-14, on the operator's explicit content-bound approval of the
@@ -35,7 +53,8 @@ no second broad review; and the operator's explicit content-bound approval of th
 blob. That re-freeze is superseded by the present amendment and is recorded here as historical
 provenance, not as a live authority this revision can be read against.
 
-**Cause of this amendment — a seventh categorical authority-transfer surface, proven and unreconciled.**
+**Cause of the immediately preceding amendment — a seventh categorical authority-transfer surface,
+preserved as history.**
 T2's premise verification for the amended contract (Unit 18) drafted the candidate core edit, and one
 fresh isolated risk-aware review of that candidate returned verdict **CORRECT** with three material
 findings. The first is the ground of this amendment: core § 7 carries a third kind of categorical
@@ -74,18 +93,22 @@ corrected plan content at commit `ccf134b860b057de56c8da5452ce43ab36e4bf66`, blo
 is the prior amendment's pre-edit identity. That re-freeze is superseded and is recorded here
 as historical provenance, not as a live authority this revision can be read against.
 
-**Implementation state — accurate as of this amendment.** No target implementation surface — skill,
-command, autonomy rules, session-plan, carrier, dispatcher, or tests — has been edited under any freeze.
-**T1 and T1a are both implemented, and they are the only implemented tracers:** T1 at commit
-`5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved; § Fixed Point below, unchanged), and T1a
-at commit `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, resulting core blob
-`82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 remains unimplemented**, and no core edit exists for it.
-Both blocking gates — this amendment's own fresh isolated review and the operator's content-bound
-reapproval — have now landed, so T2 may be opened through its own bounded implementation unit, and only
-that way. The high-consequence risk-aware Codex review its review row requires has already run in
-isolation against the unapplied candidate core edit; the candidate must still be corrected to this
-amended contract and pass its bounded closure check on the Unit 18 candidate review's three frozen
-findings before implementation may land (§ Plan-readiness statement).
+**Implementation state — accurate as of this amendment.** **T1, T1a, T2 and T3 are implemented, and they
+are the only implemented tracers. T3a is the nearest unmet tracer, and T4–T9 remain unimplemented.** T1
+landed at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved; § Fixed Point below,
+unchanged); T1a at commit `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`; T2 at commit
+`17e03c3dc0e3e2b4f6db5d4a8ee052d84749a71b`, applying the accepted candidate core edit byte-for-byte; and
+T3 at commit `7e347de4db5396c1707e6b181c3884ac12dbdfd1`, whose two consumer anchors are citation-only
+edits. The canonical core now stands at blob `fb0ba8b6bddbf27dac971ec1c2458c6e5be32136`, carrying § 8 and
+the reconciled §§ 6–7, and the Codex skill at blob `965583dbc0e58626436b1deb5a5cbf885ebc6bf3`. **No skill
+edit for T3a exists**, and returning this plan to draft undoes none of T1, T1a, T2 or T3.
+
+> **Currency correction, disclosed (Unit 25).** The superseded status records still stated that T2 was
+> unimplemented and that T1/T1a were the only implemented tracers. That was true when written and was
+> overtaken by T2's and T3's landing commits above. Rewriting the two status regions for this amendment
+> required them to be true, so the fact is restated accurately here and in § Plan-readiness statement. This
+> corrects a status fact only: no tracer contract, sequence, numbering, exit condition or evidence contract
+> changed with it.
 
 **Lineage of the prior re-freeze — research, review, correction.** The prior freeze was reopened on operator
 decision (2026-08-14) after primary-source research
@@ -138,8 +161,10 @@ report section that raised it — e.g. "primary-source finding 1" cites report �
 for the fresh isolated review that preceded the `ccf134b8` re-freeze, **Unit 15 review** for T2's premise
 verification and its isolated risk-aware verdict **ESCALATE**, and **Unit 18 candidate-review finding N**
 for the three frozen findings of the fresh isolated risk-aware review (verdict **CORRECT**) of T2's
-unapplied candidate core edit, which are the ground of the present amendment. An unqualified "Finding N"
-appears nowhere; where rounds touched the same text, every applicable label appears.
+unapplied candidate core edit, which were the ground of the immediately preceding amendment, and **Unit 24
+candidate review** for the fresh isolated risk-aware review (verdict **OPERATOR ESCALATION REQUIRED**) of
+T3a's unapplied one-bullet candidate, which is the ground of the present amendment. An unqualified
+"Finding N" appears nowhere; where rounds touched the same text, every applicable label appears.
 
 **Governs:** [`work-loop-v2-autonomy-authority-capability-proposal-v0.1.md`](work-loop-v2-autonomy-authority-capability-proposal-v0.1.md),
 content-bound approved at commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67` (blob
@@ -242,7 +267,7 @@ none), run and reported in § Safe deterministic checks run below.
 | Executable core, categorical **scope-change** gate (§ 6 rule 4) | same file, lines 449–450 | **Modify — sixth reconciliation surface, added by the prior amendment (Unit 15 review, verdict ESCALATE)** | Core § 6 rule 4 reads, unqualified: "**Scope and success criteria do not change quietly.** A change to either is stated out loud, and a change to scope goes to the operator." The first half is a **disclosure** rule the proposal does not touch and this plan preserves. The second half is a categorical **authority-transfer** rule: *any* scope change goes to the operator. Proposal § 6 reserves a narrower set — changing the intended outcome or priority, **material** scope expansion, and exclusion removal — so a core that carries the new § 8 rule plus a reconciled § 7 while retaining this sentence still states two contradictory current rules about when the operator must be involved. This surface was **not** in the frozen contract's five enumerated gates: it is a scope gate, not a consequence/hard-to-reverse gate, and it was located by whole-file inspection during T2's premise verification (bounded by `grep -n -i 'operator'` over the whole core, 21 hits, all read). It is carried here as a **separate sixth surface**, never as a sixth consequence gate — the five keep their own independently checked strings. See revised T2 (§ 3.2). |
 | Executable core, categorical **settled-decision** gate (§ 7) | same file, line 470 | **Modify — seventh reconciliation surface, added by this amendment (Unit 18 candidate-review finding 3, verdict CORRECT)** | Core § 7's *Stop for the operator* list carries, unqualified: "Proceeding would need a settled decision to be reopened." This is a third kind of categorical authority-transfer rule — neither a consequence/hard-to-reverse gate nor a scope gate — and it was therefore outside both the five enumerated consequence gates and the § 6 rule 4 scope surface. Read literally, it routes **any** reopening of **any** settled decision to the operator, including the *settled implementation decisions* proposal §3.1's authority hierarchy places inside the delegated envelope (proposal line 60) and the *settled constraints* at line 70. Proposal § 6 reserves a narrower class: changing the intended outcome or priority, material scope expansion, exclusion removal, operating-model/architecture/cost/risk/governance change, undelegated material residual risk, capability-envelope expansion, the named production/communication/credential/destructive-shared-state actions, resolving genuinely tied operator intentions, and a material change to the authority policy itself. A core that appended § 8 and reconciled the six earlier surfaces while retaining this sentence would still state two contradictory current rules about when the operator must be involved. It is carried here as a **separate seventh surface**, never folded into the five consequence gates or the one scope rule — each keeps its own independently checked string. See revised T2 (§ 3.2). |
 | Codex skill authority hierarchy | `.agents/skills/work-loop-v2/SKILL.md:429` | **Keep, reconcile wording only** | The skill already states: "current operator decision → canonical operator-approved project plan → applicable approved workflow or SOP → authoritative current state → verified repository reality → settled implementation decision → operator source material or exploratory context → Codex proposal or preference" — near-identical to proposal §3.1's eight-level hierarchy. No semantic change needed; only a pointer to the now-canonical §8 rule, if the plan reviewer judges one is needed. |
-| Codex skill categorical hard-to-reverse gate | `.agents/skills/work-loop-v2/SKILL.md:508` (within "What you never do") | **Modify — semantic, not citation-only (primary-source finding 6, report § 3 item 6)** | The live skill states, categorically: "Decide anything hard to reverse — that is the operator's, via core § 7." This is the same unqualified transfer-on-consequence rule the core carries, restated for Codex, and it conflicts with proposal §4/§15 item 1 on the same ground. The frozen plan's T3 treated this file as citation-only; that premise is false for this line and must be corrected as its own semantic reconciliation, gated on T2's revised core language (§ 3.3, new tracer T3a). Skill lines 465–475's four-condition re-check trigger ("a consequential or hard-to-reverse claim") is a different, narrower, proportional re-check condition on Codex's own review-reproduction discipline, not a categorical operator-authority transfer, and needs no semantic change (report § 3 item 6). |
+| Codex skill categorical hard-to-reverse gate — **two surfaces in one section (scope amended — Unit 24 candidate review)** | `.agents/skills/work-loop-v2/SKILL.md:502` (the "What you never do" introductory sentence) **and** `:508` (the bullet in that same list) | **Modify — semantic, not citation-only (primary-source finding 6, report § 3 item 6; extended to line 502 — Unit 24 candidate review)** | The live skill states the same unqualified transfer-on-consequence rule twice in one section, and it conflicts with proposal §4/§15 item 1 on the same ground both times. Line 508 states it as a bullet: "Decide anything hard to reverse — that is the operator's, via core § 7." Line 502 states it as the list's own introduction: "Core § 1 sets the limits on your role and core § 7 reserves hard-to-reverse decisions for the operator." The frozen plan's T3 treated this file as citation-only; that premise is false for both lines. The frozen T3a then bounded the correction to line 508 alone; the fresh isolated risk-aware review of T3a's exact unapplied candidate proved that boundary incomplete, because correcting the bullet while the introduction four lines above still asserts the categorical rule leaves the section contradicting itself. Both lines are therefore one coherent same-file semantic reconciliation, gated on T2's revised core language (§ 3.3a, tracer T3a). Skill lines 465–475's four-condition re-check trigger ("a consequential or hard-to-reverse claim") is a different, narrower, proportional re-check condition on Codex's own review-reproduction discipline, not a categorical operator-authority transfer, and needs no semantic change (report § 3 item 6). |
 | Claude command | `.claude/commands/work-loop-v2.md` | **Keep, reconcile wording only** | One hit at line 126, framing-only ("never performs Codex's preparation, authority or selection judgments itself"); already consistent with the dual-key model. No contradiction found — confirmed still true; this file carries no categorical consequence/hard-to-reverse language for the same reason the skill's line 429 hierarchy does not, and is not part of the semantic-conflict inventory. |
 | `docs/autonomy-rules.md` | whole file (51 lines, read in full) | **Keep, reconcile wording only** | Trigger 8 (audit-derived harness-configuration confirmation) and trigger 9 (structural-class risk-aware review, pointing at `qc-independence.md` and `audit-discipline.md`) already implement the retained rules proposal §14 item 3 names as "already-compatible." No content change is authorized by the proposal; only referencing §8 is in scope, and the proposal explicitly forbids weakening triggers 8–9. The primary-source report's semantic-conflict inventory (report § 3 items 5–6) is scoped to the executable core and the Codex skill only and does not name this file; this plan does not extend the conflict finding here without its own evidence. |
 | `.claude/commands/session-plan.md` Step 5 "Autonomy posture" | lines ~132–150 | **Uncertain — likely no change, confirm at review** | This step classifies **session-level pause granularity** (Full autonomy / Gated / Operator-in-the-loop) for planning a session's wrap behavior — a different axis from the governing autonomy rule's (core §8) per-action semantic/capability authority test. It is not contradictory. Whether "reconcile ... to reference the same rule" requires even a cross-reference here, or nothing, is a plan-review judgment, not resolved by this document. |
@@ -328,15 +353,23 @@ authorized to touch (this artifact, the state file); no test suite left residue 
    categorical "Decide anything hard to reverse" gate at line 508: that clause restates the same
    consequence-as-automatic-gate rule the core carries and conflicts with proposal §4/§15 item 1 on the
    same ground. T3 keeps the citation-only scope for line 429 and the Claude command; the semantic
-   reconciliation for line 508 is re-split into its own tracer, **T3a** (§ 3.3a, Execution Plan), rather
+   reconciliation for that gate is re-split into its own tracer, **T3a** (§ 3.3a, Execution Plan), rather
    than absorbed silently into T3.
-   **Confirmed and bounded by the Unit 15 review (2026-08-14).** Skill **line 473** — "A consequential or
+   **Narrowed further, then corrected — the gate occupies two lines, not one (Unit 24 candidate review,
+   2026-08-15).** T3a was frozen at line 508 alone. The fresh isolated risk-aware review of T3a's exact
+   unapplied candidate proved that boundary incomplete: the same categorical rule is also stated by the
+   `What you never do` introductory sentence at **line 502** — "core § 7 reserves hard-to-reverse decisions
+   for the operator" — so correcting only the bullet would leave the section contradicting itself.
+   **T3a's scope is therefore exactly two surfaces in that one section: the introductory sentence currently
+   at line 502 and the bullet currently at line 508.** No further skill surface is added, and no new tracer
+   is created.
+   **Confirmed and bounded by the Unit 15 review (2026-08-14), and unchanged by the correction above.**
+   Skill **line 473** — "A consequential or
    hard-to-reverse claim (core § 7), where a wrong acceptance would be expensive to undo" — is condition 3
    of the four conditions at lines 469–474 under which Codex may **reproduce a check Claude already ran**.
    That is valid proportional-verification policy: it scales evidence to consequence, which is exactly what
    proposal § 4 requires, and it transfers no decision to the operator. It is **expressly unaffected** by
-   this plan, and no tracer edits it. **T3a's scope stays limited to line 508** — the categorical
-   authority-transfer bullet in "What you never do" — and this amendment schedules no new skill edit.
+   this plan, and no tracer edits it.
 6. **Risky assumption — the core's categorical language was assumed fully enumerated by five strings; it
    was not (Unit 15 review, verdict ESCALATE).** The frozen contract enumerated five categorical
    consequence/hard-to-reverse gates and treated that list as complete for the core. Whole-file inspection
@@ -583,9 +616,10 @@ different kind of gate and each is checked on its own terms. Relabelling either 
   2(ii) exist to prevent.
 - **Side effects:** none outside the one file. The rule-4 reconciliation adds no surface — it is one more
   clause inside the same core blob — and it schedules no consumer edit. It does **not** reopen T3's
-  citation-only scope, does **not** extend T3a beyond skill line 508, and does **not** touch skill lines
-  465–475, whose condition 3 at line 473 is valid proportional-verification policy and is expressly
-  unaffected (§ Repository Delta, risky assumption 5).
+  citation-only scope, does **not** extend T3a beyond the two skill surfaces § 3.3a names (the
+  introductory sentence currently at line 502 and the bullet currently at line 508), and does **not** touch
+  skill lines 465–475, whose condition 3 at line 473 is valid proportional-verification policy and is
+  expressly unaffected (§ Repository Delta, risky assumption 5).
 - **Public seam:** the core file's own text, as in § 3.1.
 - **Fail-capable evidence (corrected — Unit 11 finding 3; extended — Unit 15 review; extended again —
   Unit 18 candidate-review findings 1–3):** (a)
@@ -660,8 +694,10 @@ different kind of gate and each is checked on its own terms. Relabelling either 
 **Scope narrowed from the frozen plan (primary-source finding 6, report § 3 item 6).** This
 specification now covers exactly the citation-shaped reconciliation confirmed to need no semantic
 change: the Codex skill's existing authority hierarchy (line 429) and the Claude command's framing note
-(line 126). The skill's categorical hard-to-reverse gate (line 508) is **not** in this specification's
-scope — it needs a semantic rewrite, not a citation, and is specified separately at § 3.3a. `docs/
+(line 126). The skill's categorical hard-to-reverse gate — **both of its surfaces, the "What you never do"
+introductory sentence at line 502 and the bullet at line 508 (scope amended — Unit 24 candidate review)** —
+is **not** in this specification's
+scope: it needs a semantic rewrite, not a citation, and is specified separately at § 3.3a. `docs/
 autonomy-rules.md` and `session-plan.md` retain their own specifications below (§ 3.3, continued, and
 this section's original scope for those two files is otherwise unchanged).
 
@@ -700,54 +736,100 @@ this section's original scope for those two files is otherwise unchanged).
   suite is reported separately, as a regression check that nothing else moved — not as proof the new
   citation exists.
 
-### 3.3a Codex skill: reconcile the categorical hard-to-reverse gate (new — primary-source finding 6, report § 3 item 6)
+### 3.3a Codex skill: reconcile the categorical hard-to-reverse gate — two surfaces in one section (new — primary-source finding 6, report § 3 item 6; scope amended — Unit 24 candidate review)
 
 **Claude's framing decision, marked as such:** this item is re-split out of the frozen plan's T3 because
-the skill's line-508 gate is a genuine semantic conflict, not a missing citation — treating it as
-citation-only would leave Codex's own operating instructions stating the categorical rule proposal §4/§15
-item 1 rejects, even after the core itself is reconciled at § 3.2.
+the skill's categorical hard-to-reverse gate is a genuine semantic conflict, not a missing citation —
+treating it as citation-only would leave Codex's own operating instructions stating the categorical rule
+proposal §4/§15 item 1 rejects, even after the core itself is reconciled at § 3.2.
 
-- **Inputs:** the skill's current line-508 text, "Decide anything hard to reverse — that is the
-  operator's, via core § 7," inside the "What you never do" list; the reconciled core § 7 language from
-  § 3.2, once it lands; proposal §4, §6.
+**Scope amended on proven evidence (Unit 24 candidate review, 2026-08-15).** This item was frozen at skill
+line 508 alone. The fresh isolated risk-aware review of T3a's exact unapplied one-bullet candidate returned
+**OPERATOR ESCALATION REQUIRED** and proved that boundary incomplete: the section's own introductory
+sentence at **line 502** asserts the same categorical rule the bullet at line 508 does, so correcting the
+bullet alone would ship a `What you never do` section whose introduction contradicts its own bullet. The
+two lines are therefore **one coherent same-file change**, and this specification covers exactly both. The
+review recorded the candidate bullet itself as sound — its optional core § 8 pointer and its length were
+both explicitly **non-blocking** — so this amendment expands the surface, not the required prose.
+
+- **Inputs:** both current surfaces inside the skill's "What you never do" section — the introductory
+  sentence at line 502, "Core § 1 sets the limits on your role and core § 7 reserves hard-to-reverse
+  decisions for the operator. In this file's terms:", and the bullet at line 508, "Decide anything hard to
+  reverse — that is the operator's, via core § 7."; the reconciled core § 7 language from § 3.2, as
+  landed; proposal §4, §6; the Unit 24 candidate review's finding and its two non-blocking notes.
 - **Precondition:** § 3.2's reconciled core exists and is committed — this item cites the corrected
   boundary, so it cannot state it accurately before that boundary is settled.
-- **Outputs (corrected — Unit 11 finding 4):** the skill's line-508 bullet no longer states a
-  freestanding categorical "anything hard to reverse" transfer. It must **cite** the reconciled core § 7
-  boundary by reference — the same "cite, don't restate" discipline this plan already applies at § 3.2
-  and § 3.3 to prevent a second, driftable copy of the governing rule — rather than enumerate proposal
-  §6's operator-reserved-decision and mandatory-stop-or-handback classes inside the skill itself. A bare
-  wording substitution ("anything irreversible," "anything with major consequence," or similar) that
-  still stands alone as its own categorical rule, without deferring to core § 7, does not satisfy this
-  Output — it would leave the same semantic defect under new words.
-- **Guaranteed behavior:** the skill's "What you never do" list keeps its other items unchanged
+- **Outputs (corrected — Unit 11 finding 4; extended to line 502 — Unit 24 candidate review):** after this
+  item, **neither surface states that a decision's hard-to-reverse or consequential character is itself
+  what reserves it to the operator.**
+  - **Line 502, the introduction.** It must stop saying that core § 7 reserves hard-to-reverse decisions
+    to the operator. Its replacement keeps the section's framing role — pointing at core § 1's limits on
+    Codex's role and core § 7's operator boundary — while describing that boundary as the reserved classes
+    core § 7 states, not as a consequence test. It is a framing sentence, so it stays framing: it neither
+    becomes a rule of its own nor acquires a second categorical trigger.
+  - **Line 508, the bullet.** It must **cite** the reconciled core § 7 boundary by reference — the same
+    "cite, don't restate" discipline this plan already applies at § 3.2 and § 3.3 to prevent a second,
+    driftable copy of the governing rule — while **preserving Codex's duty to stop for the operator** when
+    one of core § 7's reserved classes applies. It must not enumerate proposal §6's or core § 7's
+    operator-reserved-decision and mandatory-stop-or-handback classes inside the skill itself.
+  - **Neither replacement may introduce a synonym trigger.** A bare wording substitution ("anything
+    irreversible," "anything with major consequence," or similar) that still stands alone as its own
+    categorical rule, without deferring to core § 7, does not satisfy this Output on either surface — it
+    would leave the same semantic defect under new words.
+  - **A citation to core § 8 is permitted, optional, and must stay citation-shaped.** The Unit 24 review
+    recorded the candidate's core § 8 pointer as non-blocking; it is useful where it stops a reader
+    inferring that removing the categorical trigger left consequence unhandled. It is a pointer, never a
+    restatement of the governing rule, and this specification neither requires nor forbids it.
+- **Guaranteed behavior:** the skill's "What you never do" list keeps its **six other bullets** unchanged
   (committing or mutating Git state, silently repairing a bad brief, reopening strategy after every
   result, adding a second review/state system, answering a nonzero dispatcher exit by leaving it,
-  authorizing nested-actor invocation) — this item touches only the one bullet. Skill lines 465–475's
-  four-condition re-check trigger is unaffected (report § 3 item 6: a different, narrower, proportional
-  condition, not part of this conflict).
+  authorizing nested-actor invocation) — this item touches the introductory sentence and one bullet, and
+  nothing else in the file. Skill lines 465–475's four-condition re-check trigger, including line 473, is
+  unaffected (report § 3 item 6: a different, narrower, proportional condition, not part of this
+  conflict).
 - **Failure behavior:** a diff that removes the bullet outright (silently dropping Codex's operator-stop
-  duty rather than correcting its scope) fails this specification, as does a diff that leaves the bare
-  "anything hard to reverse" phrase in place, **and so does a diff that replaces it with a differently-
-  worded but still freestanding categorical rule that does not cite core § 7** (Unit 11 finding 4) — an
-  exact-phrase check alone cannot catch this, which is why the fail-capable evidence below adds a
-  structural check rather than a wider synonym scan.
-- **Side effects:** none outside the one file.
+  duty rather than correcting its scope) fails this specification, as does a diff that leaves either bare
+  categorical string in place, **and so does a diff that replaces either surface with a differently-
+  worded but still freestanding categorical rule that does not defer to core § 7** (Unit 11 finding 4) —
+  an exact-phrase check alone cannot catch this, which is why the fail-capable evidence below adds a
+  structural check per surface rather than a wider synonym scan. **A diff that corrects only one of the
+  two surfaces fails this specification** (Unit 24 candidate review) — that is the partial reconciliation
+  this amendment exists to prevent, and it is not acceptable as a variant. A diff that reaches any third
+  skill surface fails it in the opposite direction.
+- **Side effects:** none outside the one file, and none outside these two lines within it.
 - **Public seam:** the skill's own text, read by Codex per its own "when to read" convention.
-- **Fail-capable evidence (corrected — Unit 11 finding 4):** (a) the bare string "Decide anything hard to
-  reverse" must **not** match verbatim in the skill after the edit — a cheap regression guard, not proof
-  of the semantic fix; (b) `grep -q "core § 7"` on the replacement bullet must match — this is the
-  structural proof the bullet defers to the reconciled boundary rather than standing alone; a rewrite
-  that drops the citation while merely changing the trigger word fails (b) even though it would pass (a);
-  (c) the replacement bullet does **not** itself enumerate proposal §6's operator-reserved-decision or
-  mandatory-stop-or-handback class list verbatim — read and confirmed against proposal §6's exact list,
-  a narrow one-bullet comparison, not a broad text scan; duplicating the list here would create the same
-  second-copy drift risk this plan bars everywhere else the governing rule is cited; (d) the skill's
-  other "What you never do" bullets are byte-unchanged (diff); (e) `work-loop-v2-slice-1.test.sh` stays
-  green as a regression check.
-- **Scope boundary:** this file, this one bullet only; depends on § 3.2 landing first.
-- **Review row:** high-consequence — this bullet defines Codex's own operator-escalation duty, the same
-  authority-boundary class § 3.2 and T4 sit in; one risk-aware Codex review before implementation.
+- **Fail-capable evidence (corrected — Unit 11 finding 4; extended to both surfaces — Unit 24 candidate
+  review). Checks (a)–(d) are run per surface and reported separately, so a partial reconciliation is
+  visible rather than hidden behind an aggregate pass:**
+  - **(a) exact-phrase regression guards, one per surface.** The bare string "Decide anything hard to
+    reverse" must match in the skill before the edit and **not** match after it; the bare string
+    "core § 7 reserves hard-to-reverse decisions for the operator" must match before and **not** match
+    after. Each is a cheap regression guard, not proof of the semantic fix, and each is fail-capable
+    because it matches exactly once on the pre-edit file.
+  - **(b) structural deferral proof, one per surface.** The replacement bullet must match
+    `grep -q "core § 7"`; the replacement introductory sentence must likewise name core § 7 as the place
+    the boundary is stated. This is the proof each surface defers to the reconciled boundary rather than
+    standing alone; a rewrite that drops the reference while merely changing the trigger word fails (b)
+    even though it would pass (a).
+  - **(c) no class list copied, checked on both replacements.** Neither replacement itself enumerates
+    proposal §6's or core § 7's operator-reserved-decision or mandatory-stop-or-handback class list,
+    verbatim or paraphrased — read and confirmed against proposal §6's exact list, a narrow two-line
+    comparison, not a broad text scan. Duplicating the list here would create the same second-copy drift
+    risk this plan bars everywhere else the governing rule is cited.
+  - **(d) nothing else moved.** The skill's **six other** "What you never do" bullets are byte-unchanged,
+    and skill lines 465–475 are byte-unchanged, both shown by diff. The whole-file diff must reach exactly
+    these two lines.
+  - **(e) regression check.** `work-loop-v2-slice-1.test.sh` adds **no failure beyond the known local
+    `ridx` installation deferral** — the pre-edit baseline is 307 passing with the single failure
+    `ridx  the marked set matches the live installations, not just the brief`, which depends on locally
+    installed skills rather than on this repository. Reported as a regression check only; it is not proof
+    the semantic fix exists.
+- **Scope boundary:** this file, and within it exactly the introductory sentence currently at line 502 and
+  the bullet currently at line 508; depends on § 3.2 landing first.
+- **Review row:** high-consequence — these two lines define Codex's own operator-escalation duty, the same
+  authority-boundary class § 3.2 and T4 sit in; one risk-aware Codex review before implementation, of the
+  **exact two-surface candidate**. The Unit 24 review saw only the one-bullet candidate and does not
+  discharge this requirement for a candidate it has not read.
 
 ### 3.4 Capability envelope and subset (documentation-only for MVP)
 
@@ -1067,7 +1149,9 @@ unit contract.
 - **Scope boundary:** this file only — the clause, the five consequence gates, the § 6 rule 4 scope
   sentence and the § 7 settled-decision sentence, and nothing else in it. No consumer file is touched: T3
   keeps its citation-only scope, T3a
-  stays limited to skill line 508, and skill lines 465–475 (including line 473) are expressly unaffected.
+  stays limited to the two skill surfaces § 3.3a names — the introductory sentence currently at line 502
+  and the bullet currently at line 508 — and skill lines 465–475 (including line 473) are expressly
+  unaffected.
 - **Review row:** high-consequence — same surface and reach as T1 and T1a; one risk-aware Codex review
   before implementation, covering all four parts of this one coherent change together.
 - **T2 review state as of this amendment — recorded exactly, neither over- nor under-claimed.** The
@@ -1087,8 +1171,9 @@ unit contract.
 
 - **Behaviour:** the skill's line-429 authority hierarchy and the command's line-126 framing note cite
   the now-canonical core § 8 rule where they state or imply an equivalent principle; no duplicate
-  statement of the rule is introduced. The skill's separate categorical hard-to-reverse gate (line 508)
-  is **not** in this tracer's scope — see T3a.
+  statement of the rule is introduced. The skill's separate categorical hard-to-reverse gate — **both of
+  its surfaces, the "What you never do" introductory sentence at line 502 and the bullet at line 508** —
+  is **not** in this tracer's scope; see T3a.
 - **Starting evidence:** skill line 429's existing hierarchy; command line 126's framing note (§ Repository
   Delta table); both confirmed to need only a citation, not a semantic rewrite.
 - **Intended change:** small, citation-shaped edits only, to these two locations.
@@ -1097,40 +1182,56 @@ unit contract.
   genuinely failable evidence is a new, targeted grep for the core-§8-citation text in both files: must
   not match before the edit, must match after.
 - **Exit condition:** both files cite core § 8 where relevant; no semantic hierarchy content changed; the
-  skill's line 508 is untouched by this tracer.
+  skill's lines 502 and 508 are both untouched by this tracer.
 - **Scope boundary:** these two files, these two locations only; depends on **T2** landing first
   (ordering constraint 1) — core § 8 does not exist to cite until T2 lands.
 - **Review row:** normal/consequential — one Codex review (not risk-aware; no hook, permission,
   cross-cutting-CLAUDE.md, new-command/skill, symlink, or shared-state-automation class is touched).
 
-### T3a — Codex skill: reconcile the categorical hard-to-reverse gate (new — primary-source finding 6, report § 3 item 6)
+### T3a — Codex skill: reconcile the categorical hard-to-reverse gate — two surfaces in one section (new — primary-source finding 6, report § 3 item 6; scope amended — Unit 24 candidate review)
 
 Gated on T2. See § 3.3a for the full specification; this tracer entry is the bounded unit contract.
 
-- **Behaviour:** the skill's line-508 bullet, "Decide anything hard to reverse — that is the operator's,
-  via core § 7," no longer states an unqualified categorical transfer; it names or cites the reconciled
-  core § 7's actual operator-reserved and mandatory-stop-or-handback boundary.
-- **Starting evidence:** the bullet's current text (confirmed present verbatim, "What you never do"
-  list); it restates the same categorical rule T2 reconciles in the core, and conflicts with proposal
-  §4/§15 item 1 on the same ground (§ Repository Delta, "Codex skill categorical hard-to-reverse gate"
-  row).
-- **Intended change (corrected — Unit 11 finding 4):** reword the one bullet so it **cites** the
-  reconciled core § 7 boundary rather than restating a freestanding categorical rule under new words — a
-  synonym substitution for "hard to reverse" that still stands alone as its own trigger is not this
-  tracer's target shape. No other bullet in "What you never do" changes.
-- **Verification (corrected — Unit 11 finding 4):** (a) the bare string "Decide anything hard to
-  reverse" must not match verbatim after the edit — a regression guard, not proof of the fix; (b)
-  `grep -q "core § 7"` on the replacement bullet must match — structural proof it defers to the
-  reconciled boundary rather than standing alone; a differently-worded but still freestanding categorical
-  rule passes (a) and fails (b); (c) the replacement bullet does not itself enumerate proposal §6's
-  operator-reserved-decision or mandatory-stop-or-handback class list verbatim (read and confirmed
-  against proposal §6's exact list); (d) the list's other bullets are byte-unchanged (diff); (e)
-  `work-loop-v2-slice-1.test.sh` stays green.
-- **Exit condition:** the bullet cites the reconciled boundary; no other "What you never do" content
-  changed.
-- **Scope boundary:** this file, this one bullet only; depends on T2.
-- **Review row:** high-consequence — this bullet defines Codex's own operator-escalation duty, the same
-  authority-boundary class T2 and T4 sit in; one risk-aware Codex review before implementation.
+- **Behaviour:** neither of the skill's two categorical hard-to-reverse surfaces states an unqualified
+  transfer any more. The bullet currently at line 508, "Decide anything hard to reverse — that is the
+  operator's, via core § 7," cites the reconciled core § 7's actual operator-reserved and
+  mandatory-stop-or-handback boundary while keeping Codex's duty to stop for the operator; the "What you
+  never do" introductory sentence currently at line 502 stops saying that core § 7 reserves hard-to-reverse
+  decisions to the operator, and frames that boundary as the classes core § 7 states.
+- **Starting evidence:** both surfaces' current text, confirmed present verbatim in the "What you never
+  do" section; each restates the same categorical rule T2 reconciled in the core, and conflicts with
+  proposal §4/§15 item 1 on the same ground (§ Repository Delta, "Codex skill categorical hard-to-reverse
+  gate" row). The one-bullet boundary was proven incomplete by the fresh isolated risk-aware review of
+  T3a's exact unapplied candidate (Unit 24 candidate review, verdict **OPERATOR ESCALATION REQUIRED**);
+  that candidate remains unapplied.
+- **Intended change (corrected — Unit 11 finding 4; extended to line 502 — Unit 24 candidate review):**
+  reword these two lines, as one coherent same-file change, so each **defers to** the reconciled core § 7
+  boundary rather than restating a freestanding categorical rule under new words — a synonym substitution
+  for "hard to reverse" that still stands alone as its own trigger is not this tracer's target shape on
+  either surface. A citation to core § 8 is permitted and optional, and must stay citation-shaped. No other
+  bullet in "What you never do" changes, and no third skill surface is touched.
+- **Verification (corrected — Unit 11 finding 4; extended to both surfaces — Unit 24 candidate review;
+  run and reported per surface):** (a) the bare strings "Decide anything hard to reverse" **and**
+  "core § 7 reserves hard-to-reverse decisions for the operator" must each match before the edit and not
+  match after it — regression guards, not proof of the fix; (b) each replacement must defer to core § 7 by
+  reference — `grep -q "core § 7"` on the replacement bullet, and the replacement introduction naming
+  core § 7 as where the boundary is stated — structural proof neither stands alone; a differently-worded
+  but still freestanding categorical rule passes (a) and fails (b); (c) neither replacement itself
+  enumerates proposal §6's or core § 7's operator-reserved-decision or mandatory-stop-or-handback class
+  list, verbatim or paraphrased (read and confirmed against proposal §6's exact list); (d) the list's six
+  other bullets and skill lines 465–475 are byte-unchanged, and the whole-file diff reaches exactly these
+  two lines; (e) `work-loop-v2-slice-1.test.sh` adds no failure beyond the known local `ridx` installation
+  deferral (baseline: 307 passing, one failure, `ridx  the marked set matches the live installations, not
+  just the brief`).
+- **Exit condition:** both surfaces defer to the reconciled boundary, Codex's operator-stop duty survives
+  on the bullet, and no other "What you never do" content changed. A commit that corrects one surface and
+  leaves the other is a partial reconciliation and does not satisfy this tracer.
+- **Scope boundary:** this file, and within it exactly the introductory sentence currently at line 502 and
+  the bullet currently at line 508; depends on T2.
+- **Review row:** high-consequence — these two lines define Codex's own operator-escalation duty, the same
+  authority-boundary class T2 and T4 sit in; one risk-aware Codex review of the **exact two-surface
+  candidate** before implementation. The Unit 24 review read only the one-bullet candidate and does not
+  discharge this requirement.
 
 ### T4 — Reconcile `docs/autonomy-rules.md` wording
 
@@ -1335,7 +1436,7 @@ promoted into MVP, or silently dropped.
 | 1 (revise core, obtain approval) | **T1 (corrected — Unit 5 Finding 1; split from item 2, ends at operator approval)** |
 | — (not a §14 item) | **T1a (added — primary-source finding 7, report § 4; reconciles the core's stale status header before T2 may begin; gated on T1, gates T2)** |
 | 2 (add §1 clause) | **T2 (corrected — Unit 5 Finding 1; own tracer, gated on T1's approval and T1a's reconciliation, so policy cannot enter a not-yet-canonical or self-contradictory core; scope expanded — primary-source finding 1, 5, report §§ 1–3 — to append the clause at core § 8, not §1, and reconcile the core's own categorical consequence/hard-to-reverse language against it; scope expanded again — Unit 15 review, verdict ESCALATE — to reconcile core § 6 rule 4's categorical scope gate as a separate sixth surface; scope expanded a third time — Unit 18 candidate review, verdict CORRECT, findings 1–3 — to reconcile core § 7's categorical settled-decision gate as a separate seventh surface and to state the capability and control-system routing corrections, so T2's core surface is five consequence gates plus one scope rule plus one settled-decision gate, seven in total)** |
-| 3 (reconcile skill/command/autonomy-rules/session-plan) | T3 (skill line 429, command — citation-only, scope narrowed by primary-source finding 6), **T3a (added — primary-source finding 6, report § 3 item 6; the skill's line-508 categorical hard-to-reverse gate is a semantic conflict, not a citation)**, T4 (autonomy-rules), **T5 (session-plan — corrected, Unit 5 Finding 3: a required bounded citation change, no longer a reviewer-time change/no-change choice)** |
+| 3 (reconcile skill/command/autonomy-rules/session-plan) | T3 (skill line 429, command — citation-only, scope narrowed by primary-source finding 6), **T3a (added — primary-source finding 6, report § 3 item 6; the skill's categorical hard-to-reverse gate is a semantic conflict, not a citation — scope amended by the Unit 24 candidate review to both of its surfaces, the "What you never do" introduction at line 502 and the bullet at line 508)**, T4 (autonomy-rules), **T5 (session-plan — corrected, Unit 5 Finding 3: a required bounded citation change, no longer a reviewer-time change/no-change choice)** |
 | 4 (define baseline envelope; defer connected-development profile) | **T6 (corrected — Unit 5 Finding 2; the envelope is stated, and every non-deferred §11 control is mapped to a surface and fail-capable evidence)** |
 | 5 (record subset in brief, profile in evidence) | T6 |
 | 6 (carrier attended-first; defer sandbox/network enforcement) | Fixed Point (Keep — no tracer; already true, stated as a retained fact) |
@@ -1372,18 +1473,21 @@ contradict them); **T3, T4, T5 and T6 all depend on T2, and T3a also depends on 
 depends on T2's reconciled §7 boundary specifically, not merely its existence), because each cites core
 §8 or the reconciled §7 language, neither of which exists until T2 lands; and T6 and T3 both touch the
 Codex skill — T6 is sequenced after T3 in the same file for that reason, though neither tracer's own
-scope depends on the other's content. T3a also touches the Codex skill but a different bullet (line 508
-vs. line 429/T6's brief-preparation section), so it does not conflict with either.
+scope depends on the other's content. T3a also touches the Codex skill but a different, non-overlapping
+region — the "What you never do" introduction at line 502 and the bullet at line 508, versus line 429 and
+T6's brief-preparation section — so it does not conflict with either.
 
-This amendment changes none of that. **No tracer is renumbered and no sequencing changes:** T2's scope
-grows inside the file it already owns, T3/T3a/T4 keep their order and their dependency on T2, and no new
-tracer is created. Two boundaries are made explicit so a later reader cannot re-derive them wrongly:
-**T3a touches skill line 508 and nothing else**, and **skill lines 465–475 — including line 473's
-"consequential or hard-to-reverse claim" re-check condition — are expressly unaffected by every tracer in
-this plan**, because that condition scales verification to consequence (proposal § 4) rather than
-transferring a decision. No new skill edit is scheduled by this amendment.
+This amendment changes none of that. **No tracer is renumbered and no sequencing changes:** T3a's surface
+grows inside the file and the section it already owns, T3/T3a/T4 keep their order and their dependency on
+T2, and no new tracer is created. Two boundaries are made explicit so a later reader cannot re-derive them
+wrongly: **T3a touches exactly two skill lines — the "What you never do" introductory sentence currently at
+line 502 and the bullet currently at line 508 — and nothing else**, and **skill lines 465–475 — including
+line 473's "consequential or hard-to-reverse claim" re-check condition — are expressly unaffected by every
+tracer in this plan**, because that condition scales verification to consequence (proposal § 4) rather than
+transferring a decision. This amendment schedules no *additional* skill edit: it corrects the boundary of
+the one T3a already owned, and it authorizes no edit at all until its own two gates pass.
 
-**Counts this check confirms after the present amendment, kept distinct on purpose.** T2's core surface is
+**Counts this check confirms — T2's, unchanged by the present amendment, kept distinct on purpose.** T2's core surface is
 **seven reconciliation surfaces** — five consequence gates, one scope rule, one settled-decision gate —
 and its normalized logical-string evidence is **eight strings** — seven removed, one retained. The two
 numbers are not the same number and must never be reconciled into one: the seven surfaces are what must be
@@ -1393,11 +1497,22 @@ counts is § 3.2 (*The three kinds of surface*, *Fail-capable evidence*, *Matchi
 (*Behaviour*, *Verification*), § Repository Delta (the three gate rows, ordering constraints 6 and 6a) and
 the §14 traceability row for item 2. No live statement in this plan claims that five or six surfaces
 complete T2's reconciliation; where "five" or "six" appears, it names a superseded enumeration inside a
-historical or cause record and says so. The present amendment also adds no new implementation surface: the
-settled-decision gate is a third clause inside the core blob T2 already owns, and the two routing
-corrections state where classes the approved proposal already names are routed. The proposal boundary, the
+historical or cause record and says so. The immediately preceding amendment added no new implementation
+surface either: the settled-decision gate is a third clause inside the core blob T2 already owns, and the
+two routing corrections state where classes the approved proposal already names are routed.
+
+**T3a's count, after the present amendment.** T3a's skill surface is **two lines in one section** — the
+"What you never do" introductory sentence currently at line 502 and the bullet currently at line 508 — and
+its per-surface exact-phrase evidence is **two strings**, one per line, both removed. Every live statement
+of that count is § Repository Delta (the "Codex skill categorical hard-to-reverse gate" row and risky
+assumption 5), § 3.3a (*Inputs*, *Outputs*, *Failure behavior*, *Fail-capable evidence*, *Scope boundary*),
+T3a (*Behaviour*, *Verification*, *Exit condition*, *Scope boundary*), the §14 traceability row for item 3,
+and the two boundary statements above. **No live statement in this plan claims T3a is limited to line 508
+or to one bullet**; where "one bullet" or "line 508 and nothing else" appears, it names a superseded
+boundary inside a historical or cause record and says so. This amendment adds no new implementation
+surface: line 502 sits in the same file and the same section T3a already owned. The proposal boundary, the
 capability envelope, the Fixed Point, the accepted T8 S4/S8 limitation and every existing deferral are
-unchanged by it.
+unchanged by both amendments.
 
 Exit-condition strictness, after Unit 5 Finding 5: T1 ends at an operator approval; T1a ends at the
 status reconciliation landing (no operator gate of its own beyond its risk-aware review); T8 ends only
@@ -1409,26 +1524,53 @@ past T8's or T9's bar is an operator-owned change to the Fixed Point.
 
 ## Plan-readiness statement
 
-This artifact is **re-frozen for implementation**, 2026-08-15, on the operator's explicit content-bound
-approval of the reviewed-and-corrected plan content at commit
-`c99e6b415a911866518111d1944c0e61dc72fbf8`, blob `f80dc9d9dff8a6f13f66549f717d49a9db2efdfe`. It agrees
-with the Status block at the head of this file; there is no third status record.
+This artifact is **a draft**. It was returned to draft on 2026-08-15 by the T3a two-surface scope
+amendment, and it agrees with the Status block at the head of this file; there is no third status record.
 
-**Both gates that stood between this draft and implementation have run, in this order.** (1) One
-fresh, isolated bounded review of **this** amendment's content, against the approved proposal and the
-Unit 18 candidate review's three frozen findings, at commit `504814cf422a4a29acb80d9066714be22e5f7a31`,
-blob `4141d5cb966f744957d7d63794b3d8a9adbc3a9f` — verdict **CORRECT**, with one material frozen finding on
-the authoritative Unit 18 finding-number mapping. One bounded correction round resolved that single frozen
-finding at the approved identity above, and the Codex closure check returned **PASS** with no newly
-noticed issue; being attribution-label-only rather than a redesign, it required no second broad review
-under `docs/qc-independence.md`. (2) The operator's explicit content-bound reapproval of that corrected
-commit and blob, 2026-08-15. **This status record itself edits, corrects and applies nothing: it
-authorizes no core edit on its own, and T2's candidate core edit remains unapplied and uncorrected.**
+**Why it has returned to draft — the false premise.** T3a's frozen contract limited its edit to skill line
+508 and nothing else. The exact unapplied T3a candidate drafted at Unit 24 (commit
+`f522e3e8428c94f6ecda857aacd104fa024698e3`) was given the fresh isolated risk-aware review its review row
+requires, and that review returned **OPERATOR ESCALATION REQUIRED**. The candidate bullet was found sound,
+its optional core § 8 pointer and its length both explicitly **non-blocking**; the blocker is the "What you
+never do" introductory sentence currently at skill line 502, which still asserts that core § 7 reserves
+hard-to-reverse decisions to the operator — the same categorical rule T3a removes at line 508. Correcting
+one surface while the other stands would ship a self-contradicting section, so the one-bullet boundary is
+incomplete and cannot be executed as frozen. A substantive change to a tracer's contract cannot be an edit
+under a freeze, so the plan returned to draft.
 
-**Why it had returned to draft — history.** The plan had been **re-frozen for implementation**, 2026-08-14, on the
+**The operator-approved amendment direction.** The operator approved this bounded direction on 2026-08-15,
+recorded in the Work Loop state file at commit `733a17fdf75ae29cdf2c55e37b528e7fa4dca895`: T3a's scope
+expands to exactly the introductory sentence currently at line 502 together with the bullet currently at
+line 508, in the same skill section, with no other plan or implementation scope change. That approval is
+authority to **draft and review** this amendment only — it is not approval of amended plan content.
+
+**The two gates that stand between this draft and implementation, in order.** (1) One fresh, isolated
+bounded review of **this** amendment's content, against the approved proposal, the reconciled canonical
+core, and the Unit 24 candidate review's finding. (2) The operator's explicit content-bound approval of the
+reviewed — and, if the review returns findings, corrected — content. **This readiness record itself edits,
+corrects and applies nothing: it authorizes no skill edit, and the Unit 24 one-bullet candidate remains
+unapplied and is now known to be incomplete.** Once both gates pass, the sequence is fixed — draft an exact
+corrected **two-surface** candidate; obtain one fresh risk-aware review of **that exact candidate**; apply
+it only if that review passes. The Unit 24 review is the evidence that forced this amendment, not approval
+of replacement prose it has never seen.
+
+**The re-freeze this amendment supersedes — history.** The plan had been **re-frozen for implementation**,
+2026-08-15, on the operator's explicit content-bound approval of the reviewed-and-corrected plan content at
+commit `c99e6b415a911866518111d1944c0e61dc72fbf8`, blob `f80dc9d9dff8a6f13f66549f717d49a9db2efdfe`. Its two
+gates ran in this order: (1) one fresh, isolated bounded review of that amendment's content, against the
+approved proposal and the Unit 18 candidate review's three frozen findings, at commit
+`504814cf422a4a29acb80d9066714be22e5f7a31`, blob `4141d5cb966f744957d7d63794b3d8a9adbc3a9f` — verdict
+**CORRECT**, with one material frozen finding on the authoritative Unit 18 finding-number mapping; one
+bounded correction round resolved that single frozen finding at the approved identity, and the Codex
+closure check returned **PASS** with no newly noticed issue, being attribution-label-only rather than a
+redesign and so requiring no second broad review under `docs/qc-independence.md`; and (2) the operator's
+explicit content-bound reapproval of that corrected commit and blob, 2026-08-15.
+
+**Why it had returned to draft the time before that — history.** The plan had been **re-frozen for implementation**, 2026-08-14, on the
 operator's explicit content-bound approval of the corrected plan content at commit
-`74c33a28d4cd18be376ab40127af0af303fd1d59`, blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e` — this
-amendment's pre-edit identity, preserved as historical provenance in the Status block above. Drafting T2's
+`74c33a28d4cd18be376ab40127af0af303fd1d59`, blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e` — the
+immediately preceding amendment's pre-edit identity, preserved as historical provenance in the Status block
+above. Drafting T2's
 candidate core edit under that re-freeze, and reviewing the candidate in isolation, proved the re-frozen
 T2 contract **still incomplete** (Unit 18 candidate review, verdict **CORRECT**, three material findings):
 core § 7's categorical clause "Proceeding would need a settled decision to be reopened." is a **third
@@ -1437,9 +1579,10 @@ covered, and two of proposal §6's classes — capability, and control-system by
 Executing the contract as re-frozen would have produced a canonical core that still transfers every
 reopening of every settled decision to the operator, including decisions proposal §3.1 delegates. A
 substantive change to a tracer's contract cannot be an edit under a freeze, so the plan returned to draft.
-The operator approved this bounded amendment direction on 2026-08-15, recorded at commit
-`25d93aff817caaa80081bc2db3b99f3e73b1ff99` — authority to draft and review the amendment only, and not
-approval of amended content.
+The operator approved that bounded amendment direction on 2026-08-15, recorded at commit
+`25d93aff817caaa80081bc2db3b99f3e73b1ff99` — authority to draft and review that amendment only, and not
+approval of amended content. That amendment was then reviewed, corrected and content-bound reapproved at
+the identity recorded above, and T2 landed under it.
 
 **Why it returned to draft the time before.** The `74c33a28` re-freeze had itself replaced a re-freeze at
 commit `ccf134b860b057de56c8da5452ce43ab36e4bf66`, blob `3fd5322fc3d499de01661dfb5d645def482b6168`, on the
@@ -1454,24 +1597,30 @@ fresh isolated risk-aware review, verdict **ESCALATE**): it reconciled the five 
 gates but left core § 6 rule 4's categorical scope transfer standing. The plan returned to draft on the
 same principle, was reviewed and corrected, and was re-frozen at `74c33a28`.
 
-**Implementation state.** **T1 and T1a are implemented, and they are the only implemented tracers** — T1
-at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved), T1a at commit
-`6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, resulting core blob
-`82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 remains unimplemented**, and no core edit exists for it.
-Neither returning to draft nor this re-freeze undoes T1 or T1a, and neither lands T2.
+**Implementation state.** **T1, T1a, T2 and T3 are implemented, and they are the only implemented
+tracers** — T1 at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved), T1a at commit
+`6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, T2 at commit `17e03c3dc0e3e2b4f6db5d4a8ee052d84749a71b`, and
+T3 at commit `7e347de4db5396c1707e6b181c3884ac12dbdfd1`. The canonical core stands at blob
+`fb0ba8b6bddbf27dac971ec1c2458c6e5be32136` and the Codex skill at blob
+`965583dbc0e58626436b1deb5a5cbf885ebc6bf3`. **T3a is the nearest unmet tracer and no skill edit exists for
+it**; T4–T9 remain unimplemented. Returning this plan to draft undoes none of the four landed tracers, and
+it lands nothing. *(Currency correction, disclosed at Unit 25 — see the Status block's matching note.)*
 
-**T2's review state, recorded exactly.** The high-consequence risk-aware review T2's review row requires
-has already run once, in isolation, against the **unapplied** candidate core edit returned at commit
-`6ab0633f17935f0b845a77568d9007a0e844226b`; its verdict was **CORRECT**, with the three frozen findings
-this amendment carries. That candidate **did not pass and has not been applied**. Now that this amendment
-is reviewed and content-bound reapproved, the candidate is corrected to the amended contract and must pass
-a **bounded closure check on those three frozen findings** before implementation may land. No unrelated
-second broad candidate review is required unless the plan review demonstrates a redesign rather than a
-bounded correction. This readiness statement is provenance only: it neither implemented nor reviewed T2.
+**T3a's review state, recorded exactly.** The high-consequence risk-aware review T3a's review row requires
+has already run once, in isolation, against the **unapplied one-bullet** candidate skill edit returned at
+commit `f522e3e8428c94f6ecda857aacd104fa024698e3`; its verdict was **OPERATOR ESCALATION REQUIRED**, on the
+surviving line-502 contradiction that is the ground of this amendment, with the candidate's core § 8 pointer
+and its length both recorded non-blocking. That candidate **did not pass and has not been applied**, and its
+one-bullet scope is now known to be incomplete. Once this amendment is reviewed and content-bound approved,
+an exact **two-surface** candidate is drafted and must pass **its own** fresh risk-aware review before
+implementation may land — the Unit 24 review does not carry over to prose it has not read. This readiness
+statement is provenance only: it neither implemented nor reviewed T3a.
 
-This amendment changes T2's contract and the two status records, and nothing else it was not authorized
-to touch: no tracer is renumbered, no sequencing changes, the Fixed Point is unchanged, the capability
-envelope is unchanged, the accepted T8 S4/S8 limitation is retained, and every historical freeze and
-amendment identity is preserved above. The Work Loop state file for task `autonomy-authority-capability`
-remains the only runtime state; no progress tracker, review ledger, risk document, test-strategy document,
-or parallel handoff was created by this unit.
+This amendment changes T3a's scope boundary, the live references that stated the superseded one-bullet
+boundary, and the two status records, and nothing else it was not authorized to touch: no tracer is
+renumbered or resequenced, no tracer is added, T1–T3 and T4–T9 keep their contracts, the Fixed Point is
+unchanged, the capability envelope is unchanged, the accepted T8 S4/S8 limitation is retained, every
+existing deferral is retained, and every historical freeze and amendment identity is preserved above. The
+Work Loop state file for task `autonomy-authority-capability` remains the only runtime state; no progress
+tracker, review ledger, risk document, test-strategy document, or parallel handoff was created by this
+unit.
