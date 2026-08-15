@@ -362,3 +362,43 @@ verifiable, and it is an in-place edit to a file with a live concurrent writer).
 
 **Confirmed by.** The concurrent session re-verified the measurement independently and withdrew its
 recommendation, noting it had "reasoned about the risk instead of measuring it."
+
+## 2026-08-15 — Scope reduction: close autonomy-authority-capability at T7, drop T8/T9
+
+**Context.** The implementation plan's exit conditions made T8 (twelve constructed autonomy scenarios)
+and T9 (3–5 organic Standard-lane tasks across ≥2 capability shapes) strict, non-negotiable requirements
+for closing the task — proposal §16's observable-success standard depended on running them. By 2026-08-15,
+T1 through T7 had all landed (the governing autonomy rule, its reconciliation across the core/skill/
+command/docs surfaces, the MVP capability envelope, and symmetric nested-actor request handling on the
+Codex path). T8/T9 remained entirely unstarted: zero of twelve scenario rows, zero organic tasks.
+
+**Decision.** The operator elected to stop spending further effort on the T8/T9 evidence program and
+close the task at the completed T7 boundary. T8 and T9 are removed from the task's required completion
+bar — explicitly **not** treated as passed, bypassed, waived on partial evidence, or satisfied by a
+substitute. Both remain accurate specifications for optional future validation, re-openable only as
+separately approved new work. Proposal §16's observable-success standard is recorded as **not
+established by this project** — an accepted, explicit limitation of closing here, not a discharged one.
+
+**Rationale.** All nine implementation tracers (T1–T7 plus T1a/T3a) were complete and independently
+reviewed; the twelve-scenario trial program and the 3–5-task organic-evidence program represented a large
+further time cost (proposal §12 itself estimates ~twelve paired live trials) for evidence that validates
+the *already-built* mechanism's behaviour rather than building anything new. The mechanism's construction
+was the higher-value, harder-to-defer work; live-validation evidence can be gathered later, incrementally,
+without blocking closure or re-litigating the implementation.
+
+**Alternatives considered.**
+- **Run T8/T9 to their strict exits before closing** — rejected as the status quo the operator explicitly
+  decided against on 2026-08-15; would have required roughly twelve additional paired live trials plus
+  3–5 organic tasks before any closure.
+- **Extend the pre-authorized capability set so T9's two-capability-shape requirement could be met, then
+  run a narrower T9** — one of three options T9's own exit condition offered; not selected.
+- **Wait for organic tasks to arrive naturally and count them toward T9 retroactively** — the other T9
+  option; not selected, since it would leave the task open indefinitely with no target date.
+- **Mark T8/T9 as accepted limitations without formally amending the Fixed Point** — rejected because the
+  plan's own exit conditions state explicitly that "recording a limitation" is *not* an alternate exit for
+  either tracer; only an operator-owned change to the Fixed Point is. Doing anything less would have left
+  the plan's authoritative status Loop-v2 record misrepresenting what actually happened.
+
+**Confirmed by.** The operator gave explicit content-bound approval of the exact amended plan content
+(implementation plan blob `ad97ded715e80fd1370b27e79437c4880c8416d4`, commit `ff3175cd`) recording this
+scope decision, and Codex then issued the Work Loop v2 close verdict on that basis.

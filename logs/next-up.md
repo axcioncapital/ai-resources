@@ -86,3 +86,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] Harness case 31b greps only the `claude_deny=none` prefix, so the honest wording is unpinned — `logs/improvement-log.md` <!-- promote:bc5b4c8e7b42 -->
 - [ ] Project checkouts install the Work Loop v2 Claude command with no owner helper, so it cannot complete Step 1.5 — `logs/improvement-log.md` <!-- promote:86cc1872e327 -->
 - [ ] `axcion-systems-builder`'s `.codex/hooks.json` points both SessionStart hooks at a directory that does not exist, so auto-sync and permission-sanity have not run — `logs/improvement-log.md` <!-- promote:9c4bbfbda9d6 -->
+
+- [ ] `split-log.sh`'s archive step silently drops entries on a false idempotency match — `logs/improvement-log.md` <!-- promote:c782bdd9c104 -->

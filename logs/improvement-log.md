@@ -3818,3 +3818,69 @@ non-symlink copy — verify whether it carries the same literal.
 
 **Target files:** `.claude/commands/wrap-session.md` (~L190); workspace-root
 `/.claude/commands/wrap-session.md` if it mirrors the defect.
+
+### 2026-08-15 — `split-log.sh`'s archive step silently drops entries on a false idempotency match
+
+- **Status:** logged (pending)
+- **Severity:** high — a core-path, un-skippable wrap step (`/wrap-session` Step 3) can lose committed
+  log content while printing a success line, with no signal anywhere that anything went wrong.
+- **Category:** `logs/scripts/split-log.sh` — log archiving.
+- **Source:** `/wrap-session`, 2026-08-15, `autonomy-authority-capability` wrap (this session).
+
+**What happened.** `check-archive.sh` ran (`session-notes.md` was 524 lines, over the 500 threshold, 13
+entries, KEEP=10) and reported `Auto-archived session-notes.md → session-notes-archive-2026-08.md
+(archived 3 entries, kept 10)`. `git diff --stat` afterward showed `session-notes.md` losing 125 lines
+across 3 entries, but `session-notes-archive-2026-08.md` was **byte-identical to `HEAD`** — `git hash-object`
+matched `git rev-parse HEAD:…` exactly. Two of the three archived entries ("Bounded-execution fix plan
+v0.2, three revision rounds" and "Work Loop v2 Unit 10: landed the concurrent-task-isolation mechanism on
+canonical main") existed nowhere: not in the rewritten source file, not in the archive file, not in any
+other archive file (`grep`-searched all five). Only the working tree held the loss — nothing was
+committed, so nothing was actually lost, but the failure mode would have shipped under a routine wrap.
+
+**Root cause, read from `split-log.sh` directly (lines ~91–110).** The idempotency guard is:
+
+```bash
+if [ -f "$ARCHIVE_FILE" ]; then
+    LAST_ARCHIVE_HEADER=$(headers_only < "$ARCHIVE_FILE" | tail -1 || true)
+    FIRST_BLOCK_HEADER=$(echo "$ARCHIVE_BLOCK" | headers_only | head -1 || true)
+    if [ -n "$LAST_ARCHIVE_HEADER" ] && [ "$LAST_ARCHIVE_HEADER" = "$FIRST_BLOCK_HEADER" ]; then
+        SKIP_APPEND=1
+    fi
+fi
+...
+if [ "$SKIP_APPEND" -eq 0 ]; then
+    printf '%s\n' "$ARCHIVE_BLOCK" >> "$ARCHIVE_FILE"
+fi
+# Rewrite active file — UNCONDITIONAL, runs regardless of SKIP_APPEND:
+{ printf '%s\n\n' "$PREAMBLE"; printf '> Archive: …'; printf '%s\n' "$KEEP_BLOCK"; } > "$TMP"
+mv "$TMP" "$FILE"
+```
+
+The guard compares only the **first** header of this run's archive block against the **last** header
+already in the archive file. On 2026-08-14's wrap, exactly one entry ("Work Loop v2 bounded-execution fix
+plan, full task lifecycle") had been archived, becoming the archive file's last header. By 2026-08-15,
+three more entries had accumulated ahead of the KEEP window, and — because log growth pushed the *same*
+oldest entry back to the front of a new, larger archive block — that block's first header matched the
+archive file's last header exactly. The guard read this as "this whole block was already archived" and
+set `SKIP_APPEND=1`, skipping the append **entirely**, including the two entries that were never
+previously archived. The source-file rewrite that follows is unconditional — it always drops
+`ARCHIVE_BLOCK` from the active file, whether or not the append happened. The success message is also
+unconditional; nothing distinguishes a full skip from a real append. **A single-header match is not
+proof the whole block already landed — it only proves the block's oldest entry did.**
+
+**Consequence for this repository, right now.** `session-notes.md` was restored to `HEAD` for this wrap
+(session note appended on top of the clean, unarchived file) rather than re-running the archive step, so
+nothing is lost in this repository as of this entry. But `session-notes.md` is back over the 500-line
+threshold and will attempt to archive again on the next `/wrap-session` — reproducing the identical false
+match (the archive file's last header is unchanged, and the same oldest entries are still queued to
+archive) unless this is fixed first.
+
+**Shape of the fix (not built).** The guard needs to prove the **whole block** already landed, not just
+its first header — e.g., compare the full archive block's header list (or a hash of it) against the tail
+of the archive file, or drop the idempotency shortcut and make the append itself idempotent (e.g., an
+append-only-if-header-absent per entry, or a content-addressed marker). Whatever the mechanism, the
+source-file rewrite must never proceed past a skipped-append without independent proof the content is
+durably recorded somewhere.
+
+**Target files:** `logs/scripts/split-log.sh` (~L91–110, the `SKIP_APPEND` block and the unconditional
+rewrite immediately after it).
