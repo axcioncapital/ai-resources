@@ -9,82 +9,67 @@ Implement and verify the approved autonomy/authority/capability proposal through
 The operator wants implementation to proceed under the compact Axcíon Standard Implementation Workflow, with unnecessary ceremony removed. `/implementation-triage` remains explicitly excluded. The existing Work Loop is the sole runtime state.
 
 ## Lane and unit
-Standard. Implementation mode. Unit 33 correction — resolve the one frozen review finding in the draft T6/T7 plan amendment.
+Standard. Implementation mode. Unit 34 — record the corrected plan's re-freeze and implement T6's documentation-only capability convention in the Codex Work Loop skill.
 
-Named reason for the loop: verified repository evidence falsified several approved-plan control and acceptance premises, and the operator has now settled the two risk/authority choices needed to draft one exact replacement before implementation resumes.
+Named reason for the loop: the exact corrected amendment is now content-bound approved, and T6 remains a consequential cross-cutting documentation change requiring independent assessment after implementation. The status announcement is bundled with T6 to avoid a separate administrative unit.
 
 ## Brief
-The operator approved the recommended direction on 2026-08-15: authorize a machine-wide Codex execpolicy rules placement, accept symmetric direct-route refusal-request plus process observation as satisfying proposal § 14 item 7 for this MVP, record shell-wrapper evasion as an accepted limitation, and keep full descendant containment deferred. This approval settles direction and residual-risk authority; it is not yet content-bound approval of amended plan prose.
+The operator explicitly approved the exact corrected implementation-plan content at commit `74e91209b31b0cf32aa1b0a27cc3b5ccbe2da115`, plan blob `0fabe8601871c5f7c49ff1e8628d4922c4422ba2`, on 2026-08-15. That content is now governing. Its operator decisions remain: machine-wide Codex execpolicy placement authorized for T7; symmetric direct-route request plus observation accepted for this MVP; shell-wrapper evasion accepted as a limitation; full descendant containment deferred. T7 is not part of this unit.
 
-Unit 31 proved `RESULT denials=` measures child-reported permission denials, not requested rules. Unit 32 proved the actor paths differ: Claude receives mandatory `--disallowedTools` nested-actor rules but no sandbox; Codex receives `--sandbox workspace-write` but no deny request; observation is symmetric; execpolicy supports `prompt` but not `deny`; a non-self-bypassable rules file must be machine-wide; direct commands match while wrapper routes such as `bash -lc` evade static matching. Preserve these distinctions exactly and do not round a requested or observed control up to prevented.
+This unit has one implementation outcome with an attached status announcement: make T6's approved documentation convention live in `.agents/skills/work-loop-v2/SKILL.md`, while changing only the plan's Status block and § Plan-readiness statement from Draft to re-frozen and binding them to the approved commit/blob above. The plan status edit must announce approval only; every substantive byte outside those two status regions remains identical to approved blob `0fabe860…`.
 
-Required outcome: amend only the implementation plan so it becomes one coherent draft reflecting the verified facts and the operator's decision. Do not implement T6/T7, edit the proposal, or touch runtime/config/test/skill targets. The amendment must cover all of these surfaces in one pass:
+T6 required content, drawn from approved § 3.4/T6:
 
-1. Change the plan status/readiness to **Draft — bounded T6/T7 evidence-and-control amendment**, recording the prior approved content identity, the operator's approved direction, the verified cause, and the remaining gates: fresh bounded review, correction if needed, then content-bound operator approval.
-2. In § 3.4, split sandbox/network truth by actor: attended Claude hops have no sandbox/network containment; Codex hops request `workspace-write` with restricted network; neither is a carrier-selected or carrier-verified capability profile, and connected-development/full descendant containment remain deferred.
-3. In § 3.4's nested-actor row, state Claude gets mandatory direct-route refusal requests plus observation; Codex currently gets observation only. Replace the false symmetric-prevention claim with the operator-approved target: machine-wide `prompt` rules plus a Codex-hop approval policy that cannot grant them, symmetric direct-route request/observation, and the explicit wrapper-evasion limitation.
-4. In § 3.4's baseline-deny row, scope `--claude-deny` to Claude hops. Make recorded per-argument argv the fail-capable evidence that rules were requested. State `denials=` only for its true meaning: whether child permission-denial evidence was readable and what it contained.
-5. In § 3.4's enforced/requested and failure language, remove every actor-generic overclaim while keeping the envelope's three sets and current empty pre-authorized set unchanged.
-6. In T6, make the documented baseline map actor-specific; replace verification (e) with safe non-nested paired argv evidence; keep `denials=` only as runtime observation; scope deferred profile language correctly; retain documentation-only scope and its normal/consequential Codex review.
-7. Convert T7 from evidence-recording to implementation. Its bounded outcome is the operator-approved machine-wide execpolicy `prompt` rules for direct `claude`/`codex` commands, a Codex carrier launch policy that cannot approve them, symmetric observation retained, exact tests/evidence for requested policy, and the wrapper/descendant-containment limitation recorded. Its review row becomes high-consequence/risk-aware because it changes a permission surface, machine-wide configuration and carrier runtime behavior.
-8. Specify T7 honestly: static direct-match evidence plus carrier argv/config evidence may prove policy was requested; they do not prove wrapper-proof prevention. Any live-runtime behavior not yet observed is labelled unverified rather than claimed. Scope must identify the repository targets and the operator-authorized external `~/.codex/rules/` surface, with rollback evidence.
-9. Correct T8 S5 so success is the exact capability named, withheld subset visible, no bypass/effect, and correct handback — not `denials=` claiming a restriction was in force. Name the actor path for each leg.
-10. Correct T8 S9 so recorded argv/config proves the rule/request was present, child denial evidence proves only an attempted action was refused when such an attempt occurs, no-forbidden-effect evidence remains mandatory, and the semantic leg remains separately required. Name the actor path for each leg.
-11. Update traceability/internal-consistency/status statements affected by T7's new shape and review tier, without renumbering tracers or changing T1–T5, the T6 shape, T8/T9 strict exits, the envelope, or deferred descendant containment.
-12. Explicitly disposition proposal line 378 as a verified false factual premise superseded by repository evidence while preserving proposal § 14 item 7 as the governing outcome interpreted by the operator's current decision. Do not edit or silently rewrite the approved proposal blob.
+- State the three capability sets completely: baseline-granted; operator-reserved/not baseline; separately pre-authorizable with current membership empty.
+- Map every § 11 control to its actual surface, strength and fail-capable evidence, naming Claude versus Codex wherever paths differ. Preserve exact verbs: prevented, detected, observed, requested, deferred, and neither carrier-selected nor carrier-verified.
+- State that attended Claude hops have no sandbox/network containment; Codex hops request `--sandbox workspace-write` and have host-reported restricted network, but neither is a carrier-selected/verified capability profile.
+- State that direct nested-actor refusal is requested plus observed on Claude today, observed-only on Codex today; do not implement or claim T7's future symmetric request.
+- Document the exact baseline `--claude-deny` rules for Claude hops only. Recorded per-argument argv proves rules were requested; `denials=` reports child permission-denial evidence only.
+- Show the selected capability subset inside the existing `## Brief` and the actor-specific requested/observed runtime profile inside `## Latest result
 
-Scope: `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md` and this state handback only. Excluded: proposal, core, skills, commands, carrier, tests, user Codex configuration, T6/T7 implementation, scenarios, and unrelated `logs/friction-log.md` changes.
+Inspected (2026-08-15):
+- Claim (1): HOLDS on the repository half — the plan is blob `0fabe8601871c5f7c49ff1e8628d4922c4422ba2` live and at `HEAD`, its Status block opened `**Draft — bounded T6/T7 evidence-and-control amendment**`, and `git log -1` on the file returns `74e91209b31b0cf32aa1b0a27cc3b5ccbe2da115`. The commit and blob the brief names therefore exist and match. **The operator's approval itself is Codex's assertion carried in this brief; it has no repository surface to check against**, so it is recorded as relied on rather than inspected. Nothing found contradicts it.
+- Claim (2): HOLDS — `git hash-object .agents/skills/work-loop-v2/SKILL.md` returned `b21cf35002b7f6ac90b7189258a2af0240a6e662`. Searched it for `capability envelope|Operator-reserved|pre-authorizable|Runtime profile|Capability subset` — 0 matches for every term. The only prior hit for `claude-deny` anywhere in the file is line 266, which describes the dispatcher's `--unattended` flag and is not a T6 convention.
+- Claim (3): HOLDS — the carrier is blob `45f52ab4…`, unchanged, and `carry-turn.test.sh` runs **285 passed / 0 failed**. The exact baseline deny rules are derivable and passable with no runtime edit, proved live below: ten rules reached argv unchanged and the four mandatory nested-actor rules survived alongside them, so operator rules append rather than displace.
+- Claim (4): HOLDS — core blob `fb0ba8b6bddbf27dac971ec1c2458c6e5be32136`; its § 4 field table still carries exactly 5 rows. The core was read and not edited.
 
-Claims to verify before editing:
+Result: both outcomes landed. The plan re-freeze is status-only — blob `0fabe8601871c5f7c49ff1e8628d4922c4422ba2` -> **`e27dbda980962610a924a220296961d1cb902b09`**. The T6 convention is live in the Codex skill — blob `b21cf35002b7f6ac90b7189258a2af0240a6e662` -> **`e4a8d44a120c76212dd868e5b26ff7eb6cef77b3`**, a single 66-line pure addition. T7 was not begun.
 
-- The live plan still has the eleven invalid surfaces inventoried by Unit 32 and no later commit has corrected them.
-- The operator-approved direction above is sufficient to resolve every material choice in the amendment without inventing further intent.
-- No plan occurrence inside the named § 3.4/T6/T7/T8/status/traceability boundary would remain contradictory after the amendment.
+### Evidence
 
-Required evidence: show a bounded diff inventory mapping each of the twelve amendment requirements to exact changed plan text; prove no implementation target changed; prove T1–T5 identities/contracts, the three envelope sets, empty pre-authorized set, tracer numbering, T8/T9 strict exits and deferred descendant containment are semantically unchanged; report resulting plan blob/commit. Run deterministic text/consistency checks that fail on the old false `denials=`/symmetric claims and pass on the draft.
+**The plan edit is status-only, proved positionally rather than asserted.** In the approved blob the Status block spans lines 3–232 and § Plan-readiness statement spans 1763–1915. The diff changes **24 old lines, all 24 inside those two regions, 0 outside**. Stronger: the entire substantive body from `## 1. Fixed Point` to just before `## Plan-readiness statement` — **158,636 bytes**, containing § 3.4, § 3.5, T6, T7, T8's rows, the traceability table and the internal consistency check — is **byte-identical** before and after, same length both sides. No tracer contract moved. The re-freeze binds to commit `74e91209…` / blob `0fabe860…` and records the seven gates in order, including the REVISE verdict, the single frozen finding, the 13-line correction and the closure PASS, and it points at the preserved review notes.
 
-Completion condition: the complete amended plan is committed in Draft status, only the plan plus this state handback are committed, `turn: codex`, and Claude stops before any implementation or review. The returned exact content must be ready for one fresh independent bounded review.
+**The skill diff is one pure addition.** 66 insertions, **0 deletions**, one hunk at line 457, inside `## Opening a unit and writing the brief` — the brief-preparation guidance § 3.4's placement decision names. Nothing existing was reworded or moved.
 
-Stop conditions: challenge and hand back if another operator decision is needed, a named contradiction cannot be removed without changing the approved direction, runtime design must be invented beyond what Unit 32 established, a target outside scope must change, or any accepted T1–T5 outcome/boundary would move.
+**T6 concepts absent before, present after.** `capability envelope` 0 -> 1, `Operator-reserved` 0 -> 2, `pre-authorizable` 0 -> 2, `Runtime profile` 0 -> 2, `Capability subset` 0 -> 1.
 
-## Latest result
+**Coverage, checked mechanically — 17 checks, and it fails on the pre-edit skill.** Against the pre-edit file 15 of 17 fail; against the new file all 17 pass. What they establish: all three envelope sets present with **7 / 9 / 7 members, each exactly once** inside the envelope block; the pre-authorizable set explicitly declared empty; **13 control rows, each present once with four cells**; every exact strength verb present (`Prevented`, `Detected, not prevented`, `Deferred`, `Requested`, `neither carrier-selected nor carrier-verified`, `Observed only, today`); all **10 baseline deny rules** present and scoped to the Claude path alone; `denials=` stated only as child evidence; the subset shown inside `## Brief` and the profile inside `## Latest result`; **no new state heading added** (regex over `^## `); the five-field ceiling explicitly named as untouched; the requested-never-effective rule stated; connected-development and full descendant containment named deferred; core § 8 cited without any of its prose copied; and T7's future symmetric request **not** claimed as present. *(One check was corrected mid-run: it counted envelope members across the whole file and flagged "irreversible deletion", which legitimately appears twice — once as a set member, once as the category comment on the `rm -rf` deny rule. The count is now scoped to the envelope block, which is what the check meant.)*
 
-Correction round. Frozen finding 1 only. No new work was opened and no other plan semantics were touched.
+**The baseline deny set proved in argv, paired and non-nested.** Two real `carry-turn.sh` runs, identical except for the deny set, with the actor supplied through `--claude-bin` as a fixture binary. **No `claude` or `codex` process was launched**, and both runs happened in throwaway repositories outside this checkout.
 
-**Reproduced first, by inspection.** All three overclaims the review named were present in the reviewed blob `51ab5d8899b379b0cc08eadcc83d7c12cbbeb51f`:
-- § 3.4 line 964 — "so a matched command **is refused rather than approved**."
-- § 3.4 line 968 — "It **blocks** the ordinary direct route on the Codex path."
-- T7 *Behaviour* line 1479 — "so a matched command **is refused rather than approved**."
+```
+A (ten baseline rules passed): baseline rules in argv = 10/10   mandatory nested-actor rules = 4/4
+B (no baseline rules passed):  baseline rules in argv =  0/10   mandatory nested-actor rules = 4/4
 
-Each asserts the live disposition of a prompt-matched command as fact, while § 3.5 and T7's *What the evidence may and may not claim* bullet both record that same disposition as unverified. The contradiction is real and reproduces exactly where the review placed it.
+A: RESULT ... denials=0 partial=0 actors=1 nested=0
+B: RESULT ... denials=0 partial=0 actors=1 nested=0
+```
 
-**Corrected.** Plan blob `51ab5d8899b379b0cc08eadcc83d7c12cbbeb51f` -> **`0fabe8601871c5f7c49ff1e8628d4922c4422ba2`**. All three now state the requested configuration and record the live disposition as unverified. § 3.4's target paragraph and T7's *Behaviour* both say the configuration is the target and that a matched command's live disposition has not been observed; § 3.4's first property now says the mechanism asks of the Codex path what the Claude path already asks of its child, and that what then happens to the direct route is the child's to decide and is not something the carrier observes.
+The argv discriminates 10 versus 0 and can fail; `denials=` is identical across the pair, which is the third independent confirmation that it does not report the requested rules. The mandatory four survive in both legs, so operator rules append rather than displace.
 
-**No live-turn prerequisite was added.** T7's exit condition is unchanged, and T7's *Behaviour* now points at the existing bullet that already states confirming the disposition is *not* a precondition of the tracer. The operator-approved direction, the three envelope sets, T7's scope and review row, and every passed review dimension were left alone.
+**Regression: no new failure.** `work-loop-v2-slice-1.test.sh` -> **307 passed / 1 failed**, the known baseline, the single failure being the pre-existing `ridx` routing-index/live-installation drift, which remains deferred. `carry-turn.test.sh` -> **285 passed / 0 failed**. **Neither suite binds to the new convention** — `capability envelope`, `Capability subset`, `Runtime profile` and `pre-authoriz` all return 0 matches in both suites — so they are breakage evidence only, not evidence T6 landed. The coverage check above carries that.
 
-### Closure check — the two questions, and nothing else
+**Excluded targets unchanged.** Core, autonomy-rules, session-plan, carrier, carrier tests, the slice-1 suite and the approved proposal all compare byte-for-byte equal to `HEAD`. `git status --porcelain` shows the skill, the plan, this state file, and the pre-existing untouched `logs/friction-log.md`.
 
-**(1) Are the three overclaims gone?** Yes, by exact string count against the reviewed blob and the corrected file:
+### An incident during this unit, reported rather than buried
 
-| String | Reviewed blob | Corrected |
-|---|---|---|
-| `is refused rather than approved` | 2 | **0** |
-| `It blocks the ordinary direct route on the Codex path` | 1 | **0** |
+**I wrote the T6 section into the wrong file first.** I addressed `.agents/skills/work-loop-v2/SKILL.md` from the **workspace root** rather than from this checkout. That path is a symlink — `<workspace>/.agents/skills/work-loop-v2 -> ../../ai-resources/.agents/skills/work-loop-v2` — so the write landed in the **canonical `ai-resources` checkout, which is on `main`**, not in this worktree and not on this branch.
 
-The replacement language is present at all three sites (`grep -n 'live disposition'` returns 965 and 1482, and the third site is the reworded property bullet at 970-972). The check can fail: restoring any of the three original sentences puts its count back above zero.
+I caught it on the next command, confirmed the change was a pure 66-line addition with **0 deletions** so nothing of anyone else's was at risk, copied the modified file to the scratchpad as a backup, and restored it with `git checkout --` against that one path. The canonical checkout is now back at blob `e8fbbe65b577149a665d6e8a9cbb5b0668a0e34d`, matching its own `HEAD`, and `git status` there is clean apart from a pre-existing untracked `logs/harness-runs/` directory dated 2026-08-13 that predates this session and was not touched. Nothing was committed there at any point.
 
-**(2) Did the correction break anything that passed?** No.
+Two things worth Codex's attention. **The symlink defeats path-based scope discipline**: an absolute path that looks like it is inside the correct repository can resolve into a different checkout on a different branch, and no ownership check fires, because `work-loop-owner.sh` checks task ownership of a checkout rather than the destination of a write. **The habit that caught it was verifying the target before continuing, not before starting** — I checked whether the *second* path was a symlink only because the first had just failed. A pre-write resolution check on any file a unit intends to edit would have caught it at the first attempt. Both are recorded as candidate deferrals, not implemented, and neither is in this unit's scope.
 
-- **The diff is exactly the three sites.** `diff` against the reviewed blob yields 13 changed-line markers in three hunks, at lines 964, 968-969 and 1479. Nothing else in the file moved.
-- **Eleven structural invariants: 11 passed / 0 failed**, unchanged from the reviewed draft — the two per-actor splits, T7's risk-aware review row, the absence of T7's old small/mechanical row, the Draft status line, the intact tracer enumeration, the empty pre-authorized set, the three envelope sets, T8/T9's strict exits, deferred descendant containment, and T6 still documentation-only at its normal/consequential row.
-- **The paragraph-scoped claim check is still clean** — 8 paragraphs mention `denials=` and 15 mention symmetry, all corrective, 0 violations. It fails on the pre-amendment blob, so it remains fail-capable.
-- **No implementation target moved.** All seven compared byte-for-byte against `HEAD` and matched: core `fb0ba8b6`, skill `b21cf350`, autonomy-rules `cd74f214`, session-plan `bfca768a`, carrier `45f52ab4`, carrier tests `7e4af793`, approved proposal `e2a50c5e`.
-
-### Noticed during the closure check — recorded as a candidate deferral, not corrected
-
-§ 3.4's **Claude-hop** nested row still says the mandatory rules "block the ordinary direct route". That is the same claim shape as frozen finding 1, but about the already-shipped Claude path, and it quotes the carrier's own wording at `carry-turn.sh:102-108` ("They block the DEFAULT DIRECT ROUTE"). The review named three sites and this was not among them, so it stays unchanged. Whether the plan should mirror the carrier's phrasing here or hold the stricter requested-only line everywhere is a judgment for Codex; it does not affect the Codex path, T7's outcome, or the evidence contract.
-
-Also carried forward, still not done: `logs/friction-log.md`'s uncommitted insertions, untouched by this unit, and the routing-index/live-installation suite failure.
+Also carried forward, still not done: `logs/friction-log.md`'s uncommitted insertions, untouched; the `ridx` suite failure; and the § 3.4 Claude-hop wording note deferred at the Unit 33 correction.
 
 ## Blocker
 
@@ -92,4 +77,4 @@ None.
 
 ## Next action
 
-Codex: run the closure check on frozen finding 1 only — are the three overclaims resolved, and did the correction break anything. The corrected plan is blob `0fabe8601871c5f7c49ff1e8628d4922c4422ba2`; the review notes are committed at `plans/work-loop-v2-v0.2/working/t6-t7-amendment-review-2026-08-15.md`. One item is recorded above as a candidate deferral and was deliberately not corrected: § 3.4's Claude-hop row still says the mandatory rules "block the ordinary direct route", quoting the carrier's own wording, and the review did not name it. Per the review's own check 10, this correction was narrow and changed neither T7's outcome nor its evidence contract, so it should need no second broad review. After closure, the amended content needs the operator's content-bound approval before T6 may begin. T6 and T7 remain unimplemented.
+Codex: assess Unit 34. Both outcomes landed — the plan is re-frozen status-only at blob `e27dbda980962610a924a220296961d1cb902b09` with its 158,636-byte substantive body proven byte-identical, and the T6 convention is live in the skill at blob `e4a8d44a120c76212dd868e5b26ff7eb6cef77b3` as a 66-line pure addition passing all 17 coverage checks. Three things to weigh. **First**, claim (1)'s approval half was Codex's own assertion and could not be checked against the repository. **Second**, the misdirected write to the canonical `ai-resources` checkout is reported above — it was reverted and nothing was committed there, but the symlink hazard and the missing pre-write path-resolution check are recorded as candidate deferrals for a decision. **Third**, the baseline deny set's exact five categories and ten rule strings were stated by this unit as the convention T6 fixes; if Codex wants a different set, that is a content decision on the skill text, not a defect in the evidence. Decide close, continue to T7, or correct once. **T7 was not begun, and it remains gated on its own fresh risk-aware review.**

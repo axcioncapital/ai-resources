@@ -1,14 +1,40 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** **Draft — bounded T6/T7 evidence-and-control amendment, 2026-08-15.** The plan has returned to
-draft. **It authorizes no implementation while it is in this state**, and T6 and T7 in particular may not
-begin.
+**Status:** **Re-frozen for implementation — 2026-08-15.** The operator gave explicit content-bound
+approval of the reviewed-and-corrected T6/T7 evidence-and-control amendment content at commit
+`74e91209b31b0cf32aa1b0a27cc3b5ccbe2da115`, blob `0fabe8601871c5f7c49ff1e8628d4922c4422ba2`. That blob is
+the approved substantive content, and the re-freeze is bound to it rather than to this filename.
+**This status record announces that approval and implements nothing.** It edits only this Status block and
+§ Plan-readiness statement; every other byte of the approved blob is unchanged by it.
 
-**The approved content identity this amendment starts from.** The immediately preceding re-freeze was
-2026-08-15, on the operator's explicit content-bound approval of the reviewed-and-corrected T3a two-surface
-amendment content at commit `ff1827b4fcf30597d1e448bbce49f43a6001b85f`, blob
+**The gates this re-freeze rests on, completed in order.** (1) The plan returned to draft when Units 31 and
+32 falsified two control premises — that `denials=` evidences a requested deny rule, and that the carrier
+refuses nested actors symmetrically. (2) The operator approved the bounded amendment direction on
+2026-08-15: machine-wide Codex execpolicy placement authorized for T7, symmetric direct-route request plus
+observation accepted for this MVP, shell-wrapper evasion accepted as a limitation, full descendant
+containment deferred. That approval was direction and residual-risk authority only. (3) The amendment was
+drafted, in draft, at commit `18b6aae1aa79fe50f47d9e2d6284051c386d652c`, plan blob
+`51ab5d8899b379b0cc08eadcc83d7c12cbbeb51f`, covering thirteen surfaces. (4) One fresh, isolated bounded
+review of that content returned verdict **REVISE** with exactly one material frozen finding: three
+statements claimed a live Codex refusal disposition the plan simultaneously and correctly labelled
+unverified. (5) One bounded correction round resolved that single finding at the approved commit and blob
+above, changing 13 lines in three hunks and opening no second finding; the § 3.4 Claude-hop wording noticed
+during it was recorded as a deferral and left unchanged. (6) The Codex closure check on that frozen finding
+returned **PASS**; being a bounded correction rather than a redesign, it required no second broad review
+under `docs/qc-independence.md`. (7) The operator's explicit content-bound approval of that corrected commit
+and blob, 2026-08-15. The review notes are preserved at
+`plans/work-loop-v2-v0.2/working/t6-t7-amendment-review-2026-08-15.md`.
+
+**The prior approved content identity, preserved as history.** The preceding re-freeze was 2026-08-15, on
+the operator's explicit content-bound approval of the reviewed-and-corrected T3a two-surface amendment
+content at commit `ff1827b4fcf30597d1e448bbce49f43a6001b85f`, blob
 `6cda14629bd3e26be3810443e260d466555967d7`. T3a, T4 and T5 all landed under that re-freeze and are
-unaffected by this amendment.
+unaffected by the T6/T7 amendment.
+
+**What this re-freeze authorizes, and what it does not.** T6 may begin. **T7 may not begin on this
+re-freeze alone** — its corrected review row requires one fresh risk-aware review of its exact candidate
+before any implementation, because it changes a permission surface, machine-wide configuration outside this
+repository, and carrier runtime behaviour.
 
 **The verified cause — two falsified control premises, found during T6's own execution.** (1) Unit 31
 proved that the `RESULT` line's `denials=` field reports the count of permission denials the **child**
@@ -1762,16 +1788,19 @@ past T8's or T9's bar is an operator-owned change to the Fixed Point.
 
 ## Plan-readiness statement
 
-This artifact is **in draft — bounded T6/T7 evidence-and-control amendment, 2026-08-15**. It agrees with the
-Status block at the head of this file; there is no third status record. **While it is in draft it
-authorizes no implementation**, and T6 and T7 in particular may not begin.
+This artifact is **re-frozen for implementation**. It was re-frozen on 2026-08-15, on the operator's
+explicit content-bound approval of the reviewed-and-corrected T6/T7 evidence-and-control amendment content
+at commit `74e91209b31b0cf32aa1b0a27cc3b5ccbe2da115`, blob
+`0fabe8601871c5f7c49ff1e8628d4922c4422ba2`. It agrees with the Status block at the head of this file; there
+is no third status record. **This readiness record itself edits, corrects and applies nothing**: it and the
+Status block are the only regions this status update changed.
 
-**The approved content identity this amendment starts from.** The preceding re-freeze was 2026-08-15, on
+**The prior approved content identity, preserved as history.** The preceding re-freeze was 2026-08-15, on
 the operator's explicit content-bound approval of the reviewed-and-corrected T3a two-surface amendment
 content at commit `ff1827b4fcf30597d1e448bbce49f43a6001b85f`, blob
 `6cda14629bd3e26be3810443e260d466555967d7`. T3a, T4 and T5 landed under it and are unaffected here.
 
-**Why it returned to draft — two falsified control premises, found while executing T6.** Unit 31 proved
+**Why it had returned to draft — two falsified control premises, found while executing T6.** Unit 31 proved
 `denials=` reports the child's own recorded permission denials rather than which deny rules were requested:
 two real carrier runs differing only in their deny set both returned `denials=0` while their argv differed,
 so T6's verification (e) and § 3.4's baseline-deny row rested on a check that could not fail. Unit 32 then
@@ -1786,14 +1815,24 @@ direct-route **request** plus symmetric observation accepted as satisfying §14 
 shell-wrapper evasion accepted as a recorded limitation; full descendant containment left deferred. That
 approval is direction and residual-risk authority, **not** content-bound approval of this amended prose.
 
-**The gates that still stand, in order.** (1) One fresh, isolated bounded review of this amendment's
-content. (2) One bounded correction round if it returns material findings, with the Codex closure check on
-those findings only. (3) The operator's explicit content-bound approval of the corrected commit and blob.
-T6 may begin only after (3); T7 additionally takes its own fresh **risk-aware** review before any
-implementation, per its corrected review row.
+**The gates this re-freeze rests on, completed in order.** (1) One fresh, isolated bounded review of the
+amendment content at commit `18b6aae1aa79fe50f47d9e2d6284051c386d652c`, blob
+`51ab5d8899b379b0cc08eadcc83d7c12cbbeb51f` — verdict **REVISE**, with exactly one material frozen finding:
+three statements asserted a live Codex refusal disposition that the same amendment correctly recorded as
+unverified. (2) One bounded correction round resolved that single finding at the approved commit and blob,
+changing 13 lines in three hunks and opening no second finding; the § 3.4 Claude-hop wording noticed during
+it was recorded as a deferral and left unchanged. (3) The Codex closure check on that frozen finding
+returned **PASS**, being a bounded correction rather than a redesign and so requiring no second broad review
+under `docs/qc-independence.md`. (4) The operator's explicit content-bound approval of that corrected commit
+and blob, 2026-08-15. The review notes are preserved at
+`plans/work-loop-v2-v0.2/working/t6-t7-amendment-review-2026-08-15.md`.
 
-**This readiness record itself edits, corrects and applies nothing** beyond the amendment's thirteen listed
-surfaces: it applies no candidate and authorizes no skill, carrier, test or configuration edit.
+**The gate that still stands between this re-freeze and T7 landing.** One fresh **risk-aware** review of
+T7's exact candidate, before any implementation — it changes a permission surface, machine-wide
+configuration outside this repository, and carrier runtime behaviour. T6 carries no such gate and may begin.
+
+**This readiness record itself edits, corrects and applies nothing**: it applies no candidate and authorizes
+no carrier, test or configuration edit.
 
 **Why it had returned to draft — the false premise, now corrected.** T3a's earlier frozen contract limited
 its edit to skill line 508 and nothing else. The exact unapplied T3a candidate drafted at Unit 24 (commit
@@ -1881,10 +1920,13 @@ and they are the only implemented tracers** — T1 at commit `5fef08fff11a1009b3
 `fb0ba8b6bddbf27dac971ec1c2458c6e5be32136`, the Codex skill at blob
 `b21cf35002b7f6ac90b7189258a2af0240a6e662`, `docs/autonomy-rules.md` at blob
 `cd74f214b8a0f3606388788bc01ab57b072f9303` and `.claude/commands/session-plan.md` at blob
-`bfca768a1d2b4100ab714b88cd7d15f761359d77`. **T6 is the nearest unmet tracer**, and it is blocked by this
-amendment's own gates; T7–T9 remain unimplemented. This amendment undoes none of the seven landed tracers,
-and it lands nothing. *(The superseded reading of this paragraph named T3a as the nearest unmet tracer and
-the skill at blob `965583db…`; both predate T3a, T4 and T5 landing.)*
+`bfca768a1d2b4100ab714b88cd7d15f761359d77`. **T6 is the nearest unmet tracer, and this re-freeze unblocks
+it** — the unit that carries this status announcement also implements T6 in the Codex skill, and its commit
+and resulting skill blob are recorded in the Work Loop state file for task `autonomy-authority-capability`
+rather than restated here. T7–T9 remain unimplemented, and T7 stays gated on its own risk-aware review. This
+status record undoes none of the seven landed tracers, and it lands nothing itself. *(The superseded reading
+of this paragraph named T3a as the nearest unmet tracer and the skill at blob `965583db…`; both predate T3a,
+T4 and T5 landing.)*
 
 **T3a's review state, recorded exactly.** The high-consequence risk-aware review T3a's review row requires
 has already run once, in isolation, against the **unapplied one-bullet** candidate skill edit returned at

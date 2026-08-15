@@ -454,6 +454,72 @@ Gate material on relevance as well as authority, in three classes rather than tw
 
 Disclose material reclassifications, and only those. Four kinds qualify: a proposal that resembled a requirement, a source that lost an authority conflict, a repository claim demoted to unverified, and a material item deliberately held outside the unit. Staying silent about one of those fails. So does the opposite error — do not build a discard ledger or a complete production trace, and do not disclose routine compression.
 
+### The capability envelope, the unit's selected subset, and the runtime profile
+
+A brief says what a unit may *do*, not only what it must achieve. This is the MVP envelope it selects from, what the carrier actually enforces, and where the selection and the resulting profile sit in the state file. **No new state field is created by any of this** — the subset goes inside `## Brief`, the profile inside `## Latest result`, and core § 4's five-field ceiling is untouched.
+
+**The three sets.** Every capability falls in exactly one.
+
+**Granted to a Standard unit by default:** read, search, inspect history, diagnose; run local tests, linting and builds; edit within task-scoped paths; create local branches; make local commits through the role that owns Git (Claude, core § 4); perform reversible local refactoring; write evidence to the existing task state and approved repository paths.
+
+**Operator-reserved — not in the baseline and not selectable without a separate operator decision:** production deployment or release; public, customer, employee or partner communication; credential or secret access; destructive changes to shared or production state; force-push or shared-history rewriting; merge to a protected branch; irreversible deletion; permission, sandbox or policy changes whose purpose is to authorize the current action; disabling logging, containment or verification.
+
+**Separately pre-authorizable, selectable per unit only once pre-authorized:** read-only network to approved domains; dependency resolution from approved registries; approved MCP or remote test services; branch push to an approved remote or namespace; draft PR creation; remote CI; bounded reversible external development-system writes. **The current membership of this set is empty.** Nothing in it is pre-authorized today, so a brief that selects from it is selecting something that does not yet exist — say so and escalate rather than assuming it.
+
+**What the carrier actually does, per control and per actor path.** The carrier launches two different actors with two different argv shapes, and several controls reach only one of them. An actor-generic claim is therefore false, not merely imprecise. The verbs below are exact and are not interchangeable: **prevented** (fails closed before anything runs), **detected** (reported after the fact), **observed** (sampled and reported, proving nothing about what was possible), **requested** (asked of the child, which evaluates it), **deferred** (not attempted), and **neither carrier-selected nor carrier-verified** (fixed on the launch line, not chosen per unit, and confirmed by nothing).
+
+| Control | Surface | Strength | Evidence that can fail |
+|---|---|---|---|
+| Exact task, checkout, state file, actor, turn | carrier identity checks; `work-loop-owner.sh --depth repo` | **Prevented** | the `RESULT` line's `task=`/`actor=`/`turn_before=`/`turn_after=`; a mismatched fixture must exit non-zero |
+| Task-scoped write paths | the carrier's `--allow-path` allowlist, compared after the hop | **Detected, not prevented** — exit 24, or 30 once committed | a fixture writing a foreign path must produce the foreign classification and a non-zero exit, not a clean pass |
+| Explicit sandbox per invocation — **Claude hop** | — | **Deferred.** The permission mode is a permission policy, not containment, and the attended surface refuses `--unattended`, `--contained` and `--sandbox` outright | n/a — report as deferred, never as met |
+| Explicit sandbox per invocation — **Codex hop** | `--sandbox workspace-write`, fixed on the launch line | **Requested, and neither carrier-selected nor carrier-verified** | the recorded launch argv shows the flag. No `RESULT` field reports enforcement, so it is never "effective" |
+| Network and external tools — **Claude hop** | — | **Deferred** | n/a — report as deferred, never as met |
+| Network and external tools — **Codex hop** | a property of the Codex child's own sandbox, not a carrier control | **Neither carrier-selected nor carrier-verified** | the host's own sandbox report. The `RESULT` line has no network field |
+| No raw bypass mode | the carrier refuses `--dangerously-skip-permissions`, `--bypass-permissions` and a raw `--permission-mode`, and allows exactly `default` and `acceptEdits` | **Prevented** — fails closed before the lock, the run log and any actor | each refused flag must exit non-zero. Load-bearing: this repository's own `defaultMode` is `bypassPermissions`, so the refusal is what stops inherited bypass |
+| No nested Claude or Codex actor — **Claude hop** | the mandatory `--disallowedTools` set — `Bash(claude:*)`, `Bash(claude *)`, `Bash(codex:*)`, `Bash(codex *)` — plus the process-group census | **Requested (direct route) + observed.** Not prevented: the child evaluates the rules, and they block the ordinary direct route only | the per-argument launch argv must carry all four rules; the `RESULT` line's `nested=`, where `unobserved` and `0` are distinct states |
+| No nested Claude or Codex actor — **Codex hop** | the census only. **The Codex launch line requests nothing** — no deny list, no rules path, no approval policy | **Observed only, today.** `codex exec` offers sandbox modes and config overrides, not a per-command deny list, so the carrier has no already-used mechanism to request the same of a Codex hop | the `RESULT` line's `nested=`, which is actor-agnostic and does cover this path. There is no argv evidence, because nothing is requested — and that absence is the finding |
+| No push, merge, deploy, credential access or destructive shared-state operation — **Claude hop only** | `--claude-deny` rules, appended to the mandatory set and passed as `--disallowedTools`. **This surface exists on the Claude path alone**; a Codex-actor invocation has nothing to pass them to | **Requested per invocation, not a default.** Nothing denies these unless the invocation supplies the rules | **the recorded per-argument launch argv, and only that.** A paired run — rules passed versus omitted — differs in argv and can fail |
+| Timeout, deadline, one-hop limits | the carrier's own bounds and one-hop structure | **Prevented** | a fixture exceeding the deadline must terminate and classify, not run on |
+| Before/after repository evidence | `git` head before and after, plus the working-tree and staged-path splits | **Enforced** — captured on every hop | the `RESULT` line's `partial=`/`turn_*`; a hop leaving uncommitted work must be visible, not silently clean |
+| Terminal classification that cannot turn missing evidence into success | the carrier's single-order classification, with `unavailable` distinct from `0` | **Prevented** | a fixture with unreadable evidence must classify `unavailable`, never success |
+
+**`denials=` is not evidence that a deny rule was requested.** It reports whether the child's own `permission_denials` evidence was readable and what it contained. Two hops identical but for their deny set both return `denials=0` while their argv differs — so citing it to show a restriction was in force asserts something it cannot show. Cite argv for what was requested, and `denials=` only for what the child reported.
+
+**The baseline deny set a Claude hop must pass.** The control above has no default, so this convention fixes it. Both match shapes per rule, for the same reason the mandatory nested-actor set carries both — which form an installed build honours is not established, and listing one would rest the policy on that guess.
+
+```
+Bash(git push:*)     Bash(git push *)        # push, including force-push
+Bash(git merge:*)    Bash(git merge *)       # merge to a shared or protected branch
+Bash(gh:*)           Bash(gh *)              # remote platform action: release, deploy, PR
+Bash(security:*)     Bash(security *)        # credential and keychain access
+Bash(rm -rf:*)       Bash(rm -rf *)          # irreversible deletion
+```
+
+That is a floor, not a ceiling: a unit may add rules, never drop one. And read it honestly — these are requested permission rules the child evaluates, blocking the ordinary direct route. They are not containment, and an alternate spelling is not covered.
+
+**Where the selection goes.** Inside `## Brief`, as prose, naming what is selected and what is deliberately not:
+
+```
+Capability subset: baseline only — read, local tests, edits inside `logs/` and `docs/`,
+local commits. Baseline deny set passed in full. Nothing selected from the
+pre-authorizable set, which is empty today. No operator-reserved capability is needed.
+```
+
+**Where the profile goes.** Inside `## Latest result`, alongside the evidence, naming the actor path and separating what was observed from what was only asked for:
+
+```
+Runtime profile (Claude hop): the five baseline deny rules and the four mandatory
+nested-actor rules were requested — all nine present in the recorded per-argument argv.
+`nested=0` — observed, in that process group, during that window; not proof none existed.
+Sandbox and network: deferred on this path, not applied and not claimed.
+`denials=0` — the child's permission-denial evidence was readable and empty.
+```
+
+The one thing that must never appear is a requested-but-unverified property written as effective. "Sandbox `workspace-write` was effective" is a failure of this convention; "sandbox `workspace-write` was requested, and the carrier verifies nothing about it" is the same fact stated honestly. The carrier's own `nested=unobserved` versus `nested=0` distinction is the convention to copy.
+
+**Still deferred, and named rather than omitted:** the connected-development profile, and full descendant containment. Neither is addressed by anything above, which restricts what a hop may *launch* and not what a launched descendant may then do.
+
 ### Keep every duty inside the four, and let no routine run leave a trace
 
 Discharge every duty inside prepare, brief, assess and escalate, and add no machinery or new artifact kind beyond them. A routine invocation — one where no new operator input, no operator approval and no verified evidence has materially changed durable project understanding — reads the durable sources and produces only the brief: it writes no context file, no discovery log, no run record and no session note, and nothing accumulates from one run to the next. Durable maintenance is limited to the optional operator source material, the one canonical plan and the existing current-state interface, and you update those only when material understanding actually changes — keeping them current is maintenance, not an addition.
