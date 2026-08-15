@@ -1,44 +1,71 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** **Draft — returned to draft on 2026-08-15 by the T3a two-surface scope amendment.** The plan
-had been **re-frozen for implementation** on 2026-08-15, on the operator's explicit content-bound approval
-of the reviewed-and-corrected plan content at commit `c99e6b415a911866518111d1944c0e61dc72fbf8`, blob
+**Status:** **Re-frozen for implementation — 2026-08-15.** The operator gave explicit content-bound
+approval of the reviewed-and-corrected T3a two-surface amendment content at commit
+`ff1827b4fcf30597d1e448bbce49f43a6001b85f`, blob `6cda14629bd3e26be3810443e260d466555967d7`. That blob is
+the approved substantive content, and the re-freeze is bound to it rather than to this filename.
+**This status record announces that approval and implements nothing.** It edits only this Status block and
+§ Plan-readiness statement; every other byte of the approved blob is unchanged by it, it applies no
+candidate, and it authorizes no skill edit.
+
+**The gates this re-freeze rests on, completed in order.** (1) The operator approved the bounded amendment
+direction on 2026-08-15 — T3a's scope expanding from skill line 508 alone to **exactly two existing
+surfaces in the same skill section**, the introductory sentence currently at line 502 together with the
+bullet currently at line 508, with no other plan or implementation scope change — recorded in the Work Loop
+state file at commit `733a17fdf75ae29cdf2c55e37b528e7fa4dca895`. That approval was authority to draft and
+review the amendment only. (2) The amendment was drafted, in draft, at commit
+`d6d0e436f78638bae1867b637c6dba91a2b8c104`, plan blob `8f66a2ac4f36adbc6fbd24750307d668f35cd182`. (3) One
+fresh, isolated bounded review of that amendment content returned verdict **CORRECT** with exactly two
+material frozen findings: the § 3.3a / T3a check-(b) overclaim that a `core § 7` grep proves deferral, and
+two internal-consistency statements that denied the surface the amendment adds. (4) One bounded correction
+round resolved both frozen findings, landing at the approved commit and blob above; no third finding was
+opened, and the § Repository Delta risky-assumption-5 wording noticed during that round was recorded as a
+deferral and left unchanged. (5) The Codex closure check on those two frozen findings returned **PASS**;
+being a bounded correction rather than a redesign, it required no second broad review under
+`docs/qc-independence.md`. (6) The operator's explicit content-bound approval of that corrected commit and
+blob, 2026-08-15.
+
+**What T3a's scope now is.** T3a covers **exactly two existing surfaces in one section** of
+`.agents/skills/work-loop-v2/SKILL.md`: the `What you never do` introductory sentence currently at line
+502, which still reads that core § 7 "reserves hard-to-reverse decisions for the operator", and the bullet
+currently at line 508, "Decide anything hard to reverse — that is the operator's, via core § 7." Both state
+the same categorical transfer-on-consequence rule proposal §4/§15 item 1 rejects, so correcting one while
+the other stands would ship a section that contradicts itself. The full specification is § 3.3a; the
+bounded unit contract is tracer T3a.
+
+**The gate that still stands between this re-freeze and T3a landing.** One fresh risk-aware Codex review of
+the **exact two-surface candidate**, before any skill edit. **The Unit 24 one-bullet candidate returned at
+commit `f522e3e8428c94f6ecda857aacd104fa024698e3` remains unapplied and is known to be incomplete** — it
+addresses one of the two surfaces — and the Unit 24 review that escalated it read only that candidate, so
+it does not carry over to replacement prose it has never seen. The sequence from here is fixed: draft an
+exact **two-surface** candidate; obtain one fresh risk-aware review of **that exact candidate**; apply it
+only if that review passes. The matching readiness record is § Plan-readiness statement; there is no third
+status record.
+
+**The false premise this amendment corrected — T3a's one-bullet boundary was incomplete.** T3a's earlier
+frozen contract limited its edit to skill line 508 and nothing else. The exact unapplied T3a candidate
+drafted at Unit 24 (commit `f522e3e8428c94f6ecda857aacd104fa024698e3`) was given the fresh isolated
+risk-aware review its review row requires, and that review returned **OPERATOR ESCALATION REQUIRED**. The
+candidate bullet itself was found sound: its optional core § 8 pointer and its length were both explicitly
+recorded as **non-blocking**. The blocker was a second surface the one-bullet boundary excluded — the
+`What you never do` introductory sentence four lines above the bullet, currently at skill line 502, which
+still reads that core § 7 "reserves hard-to-reverse decisions for the operator." That is the same
+categorical transfer-on-consequence rule T3a removes at line 508. Applying the candidate under the
+one-bullet scope would have left the skill's own section internally contradictory, so the frozen boundary
+could not be executed as written. Changing a tracer's scope boundary is a material change to its contract
+and could not be an edit under the preceding re-freeze, so the plan returned to draft before being
+reviewed, corrected and content-bound reapproved as recorded above.
+
+**Immediately preceding re-freeze identity (`c99e6b41`) — superseded, preserved as history.** The plan had
+been **re-frozen for implementation** on 2026-08-15, on the operator's explicit content-bound approval of
+the reviewed-and-corrected plan content at commit `c99e6b415a911866518111d1944c0e61dc72fbf8`, blob
 `f80dc9d9dff8a6f13f66549f717d49a9db2efdfe`; that re-freeze's own two gates — one fresh isolated bounded
 review of the amendment content at commit `504814cf422a4a29acb80d9066714be22e5f7a31`, blob
 `4141d5cb966f744957d7d63794b3d8a9adbc3a9f`, verdict **CORRECT** with one material frozen finding on the
 authoritative Unit 18 finding-number mapping, one bounded correction round resolving it with the Codex
-closure check returning **PASS**, and then the operator's content-bound reapproval — are preserved below as
-historical provenance. **The present revision changes T3a's scope boundary, which is a material change to a
-tracer's contract, so it cannot be an edit under that re-freeze and the plan has returned to draft.**
-
-**The false premise this amendment corrects — T3a's one-bullet boundary is incomplete.** T3a's frozen
-contract limited its edit to skill line 508 and nothing else. The exact unapplied T3a candidate drafted at
-Unit 24 (commit `f522e3e8428c94f6ecda857aacd104fa024698e3`) was given the fresh isolated risk-aware review
-its review row requires, and that review returned **OPERATOR ESCALATION REQUIRED**. The candidate bullet
-itself was found sound: its optional core § 8 pointer and its length were both explicitly recorded as
-**non-blocking**. The blocker is a second surface the one-bullet boundary excluded — the `What you never do`
-introductory sentence four lines above the bullet, currently at skill line 502, which still reads that
-core § 7 "reserves hard-to-reverse decisions for the operator." That is the same categorical
-transfer-on-consequence rule T3a removes at line 508. Applying the candidate under the one-bullet scope
-would leave the skill's own section internally contradictory, so the frozen boundary cannot be executed as
-written.
-
-**The operator-approved amendment direction.** The operator approved this bounded direction on 2026-08-15,
-recorded in the Work Loop state file at commit `733a17fdf75ae29cdf2c55e37b528e7fa4dca895`: T3a's scope
-expands from line 508 alone to **exactly two existing surfaces in the same skill section** — the
-introductory sentence currently at line 502 together with the bullet currently at line 508 — with no other
-plan or implementation scope change. That approval authorizes **drafting and reviewing this amendment
-only**. It is not approval of amended plan content, and it authorizes no skill edit.
-
-**The two gates that stand between this draft and implementation, in order.** (1) One fresh, isolated
-bounded review of **this** amendment's content. (2) The operator's explicit content-bound approval of the
-reviewed — and, if the review returns findings, corrected — content. **No skill edit is authorized by this
-record, and the Unit 24 one-bullet candidate remains unapplied and is now known to be incomplete**: it
-addresses one of the two surfaces. Once both gates pass, the sequence is fixed — draft an exact corrected
-**two-surface** candidate; obtain one fresh risk-aware review of **that exact candidate**; apply it only if
-that review passes. The Unit 24 review is the evidence that forced this amendment, not approval of
-replacement prose it has never seen. The matching readiness record is § Plan-readiness statement; there is
-no third status record.
+closure check returning **PASS**, and then the operator's content-bound reapproval — are recorded here as
+historical provenance, not as a live authority this revision can be read against. It is superseded by the
+present re-freeze.
 
 **Prior re-freeze identity — superseded by this amendment, preserved as history.** The plan was
 **re-frozen for implementation**, 2026-08-14, on the operator's explicit content-bound approval of the
@@ -93,7 +120,7 @@ corrected plan content at commit `ccf134b860b057de56c8da5452ce43ab36e4bf66`, blo
 is the prior amendment's pre-edit identity. That re-freeze is superseded and is recorded here
 as historical provenance, not as a live authority this revision can be read against.
 
-**Implementation state — accurate as of this amendment.** **T1, T1a, T2 and T3 are implemented, and they
+**Implementation state — accurate as of this re-freeze.** **T1, T1a, T2 and T3 are implemented, and they
 are the only implemented tracers. T3a is the nearest unmet tracer, and T4–T9 remain unimplemented.** T1
 landed at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved; § Fixed Point below,
 unchanged); T1a at commit `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`; T2 at commit
@@ -101,7 +128,7 @@ unchanged); T1a at commit `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`; T2 at comm
 T3 at commit `7e347de4db5396c1707e6b181c3884ac12dbdfd1`, whose two consumer anchors are citation-only
 edits. The canonical core now stands at blob `fb0ba8b6bddbf27dac971ec1c2458c6e5be32136`, carrying § 8 and
 the reconciled §§ 6–7, and the Codex skill at blob `965583dbc0e58626436b1deb5a5cbf885ebc6bf3`. **No skill
-edit for T3a exists**, and returning this plan to draft undoes none of T1, T1a, T2 or T3.
+edit for T3a exists**, and this re-freeze lands nothing and undoes none of T1, T1a, T2 or T3.
 
 > **Currency correction, disclosed (Unit 25).** The superseded status records still stated that T2 was
 > unimplemented and that T1/T1a were the only implemented tracers. That was true when written and was
@@ -1542,35 +1569,47 @@ past T8's or T9's bar is an operator-owned change to the Fixed Point.
 
 ## Plan-readiness statement
 
-This artifact is **a draft**. It was returned to draft on 2026-08-15 by the T3a two-surface scope
-amendment, and it agrees with the Status block at the head of this file; there is no third status record.
+This artifact is **re-frozen for implementation**. It was re-frozen on 2026-08-15, on the operator's
+explicit content-bound approval of the reviewed-and-corrected T3a two-surface amendment content at commit
+`ff1827b4fcf30597d1e448bbce49f43a6001b85f`, blob `6cda14629bd3e26be3810443e260d466555967d7`. It agrees with
+the Status block at the head of this file; there is no third status record. **This readiness record itself
+edits, corrects and applies nothing**: it and the Status block are the only regions this status update
+changed, it applies no candidate, and it authorizes no skill edit.
 
-**Why it has returned to draft — the false premise.** T3a's frozen contract limited its edit to skill line
-508 and nothing else. The exact unapplied T3a candidate drafted at Unit 24 (commit
+**Why it had returned to draft — the false premise, now corrected.** T3a's earlier frozen contract limited
+its edit to skill line 508 and nothing else. The exact unapplied T3a candidate drafted at Unit 24 (commit
 `f522e3e8428c94f6ecda857aacd104fa024698e3`) was given the fresh isolated risk-aware review its review row
 requires, and that review returned **OPERATOR ESCALATION REQUIRED**. The candidate bullet was found sound,
-its optional core § 8 pointer and its length both explicitly **non-blocking**; the blocker is the "What you
+its optional core § 8 pointer and its length both explicitly **non-blocking**; the blocker was the "What you
 never do" introductory sentence currently at skill line 502, which still asserts that core § 7 reserves
 hard-to-reverse decisions to the operator — the same categorical rule T3a removes at line 508. Correcting
-one surface while the other stands would ship a self-contradicting section, so the one-bullet boundary is
-incomplete and cannot be executed as frozen. A substantive change to a tracer's contract cannot be an edit
-under a freeze, so the plan returned to draft.
+one surface while the other stands would ship a self-contradicting section, so the one-bullet boundary was
+incomplete and could not be executed as frozen. A substantive change to a tracer's contract cannot be an
+edit under a freeze, so the plan returned to draft, was amended, reviewed, corrected and reapproved.
 
-**The operator-approved amendment direction.** The operator approved this bounded direction on 2026-08-15,
-recorded in the Work Loop state file at commit `733a17fdf75ae29cdf2c55e37b528e7fa4dca895`: T3a's scope
-expands to exactly the introductory sentence currently at line 502 together with the bullet currently at
-line 508, in the same skill section, with no other plan or implementation scope change. That approval is
-authority to **draft and review** this amendment only — it is not approval of amended plan content.
+**The gates this re-freeze rests on, completed in order.** (1) The operator approved the bounded amendment
+direction on 2026-08-15, recorded in the Work Loop state file at commit
+`733a17fdf75ae29cdf2c55e37b528e7fa4dca895`: T3a's scope expands to exactly the introductory sentence
+currently at line 502 together with the bullet currently at line 508, in the same skill section, with no
+other plan or implementation scope change. That approval was authority to **draft and review** the
+amendment only. (2) The amendment landed in draft at commit
+`d6d0e436f78638bae1867b637c6dba91a2b8c104`, plan blob `8f66a2ac4f36adbc6fbd24750307d668f35cd182`. (3) One
+fresh, isolated bounded review of that content, against the approved proposal, the reconciled canonical
+core and the Unit 24 candidate review's finding, returned verdict **CORRECT** with exactly two material
+frozen findings — the check-(b) grep overclaim at § 3.3a and T3a, and two internal-consistency statements
+denying the surface the amendment adds. (4) One bounded correction round resolved both at the approved
+commit and blob above, opening no third finding; the risky-assumption-5 wording noticed during it was
+recorded as a deferral and left unchanged. (5) The Codex closure check on those two frozen findings
+returned **PASS**, being a bounded correction rather than a redesign and so requiring no second broad
+review under `docs/qc-independence.md`. (6) The operator's explicit content-bound approval of that
+corrected commit and blob, 2026-08-15.
 
-**The two gates that stand between this draft and implementation, in order.** (1) One fresh, isolated
-bounded review of **this** amendment's content, against the approved proposal, the reconciled canonical
-core, and the Unit 24 candidate review's finding. (2) The operator's explicit content-bound approval of the
-reviewed — and, if the review returns findings, corrected — content. **This readiness record itself edits,
-corrects and applies nothing: it authorizes no skill edit, and the Unit 24 one-bullet candidate remains
-unapplied and is now known to be incomplete.** Once both gates pass, the sequence is fixed — draft an exact
-corrected **two-surface** candidate; obtain one fresh risk-aware review of **that exact candidate**; apply
-it only if that review passes. The Unit 24 review is the evidence that forced this amendment, not approval
-of replacement prose it has never seen.
+**The gate that still stands between this re-freeze and T3a landing.** One fresh risk-aware Codex review of
+the **exact two-surface candidate**, before any skill edit. **The Unit 24 one-bullet candidate remains
+unapplied and is now known to be incomplete.** The sequence from here is fixed — draft an exact
+**two-surface** candidate; obtain one fresh risk-aware review of **that exact candidate**; apply it only if
+that review passes. The Unit 24 review is the evidence that forced this amendment, not approval of
+replacement prose it has never seen.
 
 **The re-freeze this amendment supersedes — history.** The plan had been **re-frozen for implementation**,
 2026-08-15, on the operator's explicit content-bound approval of the reviewed-and-corrected plan content at
@@ -1621,18 +1660,18 @@ tracers** — T1 at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-
 T3 at commit `7e347de4db5396c1707e6b181c3884ac12dbdfd1`. The canonical core stands at blob
 `fb0ba8b6bddbf27dac971ec1c2458c6e5be32136` and the Codex skill at blob
 `965583dbc0e58626436b1deb5a5cbf885ebc6bf3`. **T3a is the nearest unmet tracer and no skill edit exists for
-it**; T4–T9 remain unimplemented. Returning this plan to draft undoes none of the four landed tracers, and
-it lands nothing. *(Currency correction, disclosed at Unit 25 — see the Status block's matching note.)*
+it**; T4–T9 remain unimplemented. This re-freeze undoes none of the four landed tracers, and it lands
+nothing. *(Currency correction, disclosed at Unit 25 — see the Status block's matching note.)*
 
 **T3a's review state, recorded exactly.** The high-consequence risk-aware review T3a's review row requires
 has already run once, in isolation, against the **unapplied one-bullet** candidate skill edit returned at
 commit `f522e3e8428c94f6ecda857aacd104fa024698e3`; its verdict was **OPERATOR ESCALATION REQUIRED**, on the
 surviving line-502 contradiction that is the ground of this amendment, with the candidate's core § 8 pointer
 and its length both recorded non-blocking. That candidate **did not pass and has not been applied**, and its
-one-bullet scope is now known to be incomplete. Once this amendment is reviewed and content-bound approved,
-an exact **two-surface** candidate is drafted and must pass **its own** fresh risk-aware review before
-implementation may land — the Unit 24 review does not carry over to prose it has not read. This readiness
-statement is provenance only: it neither implemented nor reviewed T3a.
+one-bullet scope is now known to be incomplete. This amendment has since been reviewed, corrected and
+content-bound approved, so an exact **two-surface** candidate is now drafted and must pass **its own** fresh
+risk-aware review before implementation may land — the Unit 24 review does not carry over to prose it has
+not read. This readiness statement is provenance only: it neither implemented nor reviewed T3a.
 
 This amendment changes T3a's scope boundary, the live references that stated the superseded one-bullet
 boundary, and the two status records, and nothing else it was not authorized to touch: no tracer is
