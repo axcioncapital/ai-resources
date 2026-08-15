@@ -23,6 +23,17 @@ set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
 SUT="$HERE/carry-turn.sh"
+# The shared live-lease library. carry-turn.sh sources it out of the CHECKOUT it
+# drives — the same resolution the ownership helper uses — so every fixture has to
+# carry it or the fixture is not modelling a real checkout. Section 12c removes it
+# deliberately, and that must stay the only case without it.
+LEASE_BIN="${LEASE_BIN:-$(cd "$HERE/../.." && pwd -P)/logs/scripts/work-loop-lease.sh}"
+# The durable ownership helper. It answers a different question from the lease —
+# "does this task belong to this checkout?" rather than "is another run live?" —
+# and the launcher resolves it out of the CHECKOUT too. Only section 12e carries
+# it, because only 12e is about ownership; every other fixture is deliberately
+# untouched by this unit.
+OWNER_BIN="${OWNER_BIN:-$(cd "$HERE/../.." && pwd -P)/logs/scripts/work-loop-owner.sh}"
 
 PASS=0
 FAIL=0
@@ -87,6 +98,56 @@ mkdir -p "$NOPSDIR"
 printf '#!/bin/bash\nexit 1\n' >"$NOPSDIR/ps"
 chmod +x "$NOPSDIR/ps"
 
+# A `ps` that answers normally AND reports one extra member of whatever process
+# group it is asked about. Same device as the stubbed `lsof` the dispatcher's
+# suite uses to inject a survivor into its census, and for the same reason: a
+# process that genuinely outlives SIGKILL cannot be manufactured — a same-uid
+# process group is always cleared — so the survivor is injected at the point the
+# launcher LOOKS rather than by defeating the kernel.
+#
+# The injected pid is this suite's own shell, so "still running" is a claim about
+# something that really is running. It is never signalled: the launcher signals
+# the process GROUP and never an individual pid, which is what makes the
+# injection safe as well as deterministic.
+#
+# Only the `-g` form is touched. The launcher's readability control (`ps -p $$`)
+# passes straight through, so a stub that broke it could not masquerade as an
+# empty group.
+SURVPSDIR="$TMPROOT/survivor-ps"
+mkdir -p "$SURVPSDIR"
+cat >"$SURVPSDIR/ps" <<PSSTUB
+#!/bin/bash
+out="\$(/bin/ps "\$@" 2>/dev/null)"; rc=\$?
+[ -n "\$out" ] && printf '%s\n' "\$out"
+prev=""; g=""
+for a in "\$@"; do [ "\$prev" = "-g" ] && g="\$a"; prev="\$a"; done
+if [ -n "\$g" ]; then printf '%s %s\n' "$$" "\$g"; rc=0; fi
+exit "\$rc"
+PSSTUB
+chmod +x "$SURVPSDIR/ps"
+SURVPID="$$"
+
+# A `ps` whose `-p` form works and whose `-g` form CANNOT RUN. This is the host
+# condition the whole-`ps` stub above cannot express, and it is the one that
+# matters: the launcher asks about a process group with `-g`, so a readability
+# control that only exercises `-p` proves the wrong thing. Under this stub a
+# broken group query returns no rows and a genuinely empty group returns no rows,
+# and only a control on the SAME form can tell them apart.
+#
+# On this platform `ps -g` exits non-zero for an empty group as well as for a
+# failure (checked 2026-08-15: an unused in-range pgid gives rc=1 with no
+# output), so propagating that exit status directly would make every clean
+# shutdown read as unknown. The exit status is not the discriminator; the
+# positive control is.
+NOGPSDIR="$TMPROOT/no-ps-g"
+mkdir -p "$NOGPSDIR"
+cat >"$NOGPSDIR/ps" <<'PSGSTUB'
+#!/bin/bash
+for a in "$@"; do [ "$a" = "-g" ] && exit 1; done
+exec /bin/ps "$@"
+PSGSTUB
+chmod +x "$NOGPSDIR/ps"
+
 # A fake actor binary. It answers --version, records its argv and its invocation
 # count, and then performs one scripted action on the state file.
 #
@@ -99,6 +160,8 @@ chmod +x "$NOPSDIR/ps"
 #   commit-foreign     create AND commit an out-of-allowlist file, plus transition
 #   fail:<code>        exit <code>, touching nothing
 #   sleep:<secs>       sleep, then exit 0
+#   ignore-term:<secs> IGNORE SIGTERM and sleep, so the launcher's TERM grace
+#                      expires and it reaches the SIGKILL-and-verify branch
 #
 # The actions below emit a Claude-shaped result object on STDOUT, which is where
 # the launcher's capture file gets it from. The permission_denials element shape
@@ -162,6 +225,15 @@ case "$act" in
     git -C "$REPO" commit -q -m "actor: foreign commit" >/dev/null 2>&1 ;;
   fail:*) exit "${act#fail:}" ;;
   sleep:*) sleep "${act#sleep:}"; exit 0 ;;
+  ignore-term:*)
+    # SIGTERM is IGNORED here, and an ignored disposition is inherited across
+    # fork and exec, so the sleep below ignores it too. That is what carries the
+    # launcher past its TERM grace and into the SIGKILL-and-verify branch — the
+    # only path that can pin a lease. Nothing here survives SIGKILL and nothing
+    # is meant to: the survivor is injected at the census, not at the kernel.
+    trap '' TERM
+    sleep "${act#ignore-term:}"
+    exit 0 ;;
   denied)
     emit_json '[{"tool_name":"Bash","tool_use_id":"toolu_probe1","tool_input":{"command":"git commit -m handback","description":"commit"}}]' ;;
   denied-partial)
@@ -235,22 +307,91 @@ mkstate_in() { # checkout, task-id, turn
   } >"$1/logs/work-loop/$2.md"
 }
 
-# The launcher's lock path for a checkout. Mirrors acquire_lock: the CANONICAL
-# checkout path and nothing else. If this and the launcher ever disagree, every
-# lock assertion silently passes against a directory the launcher never looks at
-# — which is exactly what happened once before, when this hashed the raw fixture
-# path while the launcher hashed the /private/var canonicalization of it.
-lock_path_for() { # checkout -> lock dir path
+# The LEGACY lock path for a checkout: the CANONICAL checkout path under
+# ${TMPDIR}, and nothing else. This is where the launcher kept its single lock
+# before the shared lease, and it still READS it for one release so that a carry
+# already in flight when the change landed is not invisible to the new code. If
+# this and the launcher ever disagree, every lock assertion silently passes
+# against a directory the launcher never looks at — which is exactly what
+# happened once before, when this hashed the raw fixture path while the launcher
+# hashed the /private/var canonicalization of it.
+lock_path_for() { # checkout -> legacy lock dir path
   local rp key
   rp="$(cd "$1" && pwd -P)"
   key="$(printf '%s' "$rp" | shasum -a 256 | cut -c1-16)"
   printf '%s\n' "${TMPDIR:-/tmp}/axcion-harness-v0.2.$key.lock"
 }
 
-plant_lock() { # lock-dir, pid, task-id
+plant_lock() { # legacy lock-dir, pid, task-id
   rm -rf "$1"; mkdir -p "$1"
   printf '%s\n' "$2" >"$1/pid"
   printf '%s\n' "$3" >"$1/task"
+}
+
+# Plant a legacy lock whose pid file holds EXACTLY the given text, including text
+# that is not a pid at all. plant_lock takes a real pid and is the right helper
+# for the live and the provably-dead cases; this one is for the corruptions,
+# because the whole question this section asks is what the launcher concludes
+# from a pid it cannot turn into a verdict.
+#
+# The literal NONE means NO pid file at all, which is a DIFFERENT corruption from
+# a pid file that exists and is empty: one is a lock written by something that
+# never got as far as recording itself, the other is a lock whose record was
+# truncated. They must reach the same refusal, and asserting that separately is
+# the only way to know they do.
+plant_lock_raw() { # legacy lock-dir, raw-pid-text | NONE, task-id
+  rm -rf "$1"; mkdir -p "$1"
+  [ "$2" = NONE ] || printf '%s\n' "$2" >"$1/pid"
+  printf '%s\n' "$3" >"$1/task"
+}
+
+# The SHARED lease locations, mirrored from logs/scripts/work-loop-lease.sh. They
+# are rooted in the repository's Git common directory rather than in ${TMPDIR},
+# which is what makes them visible to every linked worktree of one repository and
+# to the other transport. Two resources, not one composite key: a task lease and
+# a checkout lease. Defined once here, above every user, for the same reason the
+# dispatcher's suite defines its own once — a second copy is a place this change
+# could be missed.
+lease_root_for() { # checkout -> lease root dir
+  local c g
+  c="$(cd "$1" && pwd -P)"
+  g="$(git -C "$c" rev-parse --git-common-dir 2>/dev/null)"
+  case "$g" in /*) ;; *) g="$c/$g" ;; esac
+  printf '%s/work-loop-dispatch-locks' "$(cd "$g" && pwd -P)"
+}
+
+task_lease_for() { # checkout, task -> task lease dir
+  printf '%s/task-%s.lock' "$(lease_root_for "$1")" \
+    "$(printf '%s' "$2" | shasum -a 256 | cut -c1-16)"
+}
+
+checkout_lease_for() { # checkout -> checkout lease dir
+  local c; c="$(cd "$1" && pwd -P)"
+  printf '%s/checkout-%s.lock' "$(lease_root_for "$1")" \
+    "$(printf '%s' "$c" | shasum -a 256 | cut -c1-16)"
+}
+
+# A lease as a live holder leaves it: the four metadata files the library writes,
+# including the program name a refusal renders.
+plant_lease() { # lease-dir, pid, task-id, checkout, program
+  rm -rf "$1"; mkdir -p "$1"
+  printf '%s\n' "$2" >"$1/pid"
+  printf '%s\n' "$3" >"$1/task"
+  printf '%s\n' "$4" >"$1/checkout"
+  printf '%s\n' "$5" >"$1/program"
+}
+
+# Package the ownership helper into an existing fixture, TRACKED and committed.
+# Tracked for the same reason mkfix tracks the lease library: `logs/scripts/` is
+# outside the launcher's default allow-path set, so an untracked helper is an
+# out-of-allowlist working-tree change and the launcher would correctly stop at
+# exit 18 before it ever reached ownership admission — the case would then pass
+# or fail for a reason that has nothing to do with ownership.
+add_owner_helper() { # checkout
+  mkdir -p "$1/logs/scripts"
+  cp "$OWNER_BIN" "$1/logs/scripts/work-loop-owner.sh" 2>/dev/null || return 1
+  git -C "$1" add -- logs/scripts/work-loop-owner.sh >/dev/null 2>&1
+  git -C "$1" commit -q -m "package the ownership helper" >/dev/null 2>&1
 }
 
 # Build a fixture. Sets: REPO STATE ACTION ARGVLOG COUNTF FAKEBIN LOGD
@@ -264,6 +405,20 @@ mkfix() { # name, task-id, turn
   git -C "$REPO" config commit.gpgsign false
   STATE="$REPO/logs/work-loop/$task.md"
   mkstate_in "$REPO" "$task" "$turn"
+  # Tracked, not dropped in loose: an untracked helper is an out-of-allowlist
+  # working-tree change and the launcher would correctly stop on it (exit 18).
+  #
+  # BOTH helpers, because the launcher now runs BOTH checks on every carry: the
+  # shared lease, then repository-depth ownership admission. A fixture carrying
+  # only the lease library would reach ownership with no helper and stop at 35,
+  # so every ordinary case in this suite would be testing the fail-closed path
+  # instead of the behaviour it names. The cases that need one of them ABSENT
+  # remove it explicitly (12c for the lease library, 12e for the owner helper),
+  # which is also the only way an absence stays visible in the case that asserts
+  # it rather than being an accident of what mkfix happens not to copy.
+  mkdir -p "$REPO/logs/scripts"
+  cp "$LEASE_BIN" "$REPO/logs/scripts/work-loop-lease.sh" 2>/dev/null || true
+  cp "$OWNER_BIN" "$REPO/logs/scripts/work-loop-owner.sh" 2>/dev/null || true
   printf 'seed\n' >"$REPO/seed.txt"
   git -C "$REPO" add -A >/dev/null 2>&1
   git -C "$REPO" commit -q -m init >/dev/null 2>&1
@@ -768,6 +923,123 @@ section "12. Lock — one actor at a time"
   assert_eq "  and launched nothing further" "$n_before" "$(invocations)"
   rm -rf "$ld"
 
+section "12a. The legacy lock has THREE states, and only one of them is stale"
+  # `kill -0` failing is not proof that a process is gone. It fails for two
+  # different reasons — ESRCH, the pid really is absent, and EPERM, the pid may
+  # well be ALIVE and this caller is simply not allowed to look at it — and the
+  # one-release compatibility path used to conflate them. Conflated, an
+  # uninspectable holder read as stale, so its lock was DELETED and this carry
+  # was admitted alongside a live one, in the very changeover window the legacy
+  # read exists to protect.
+  #
+  # So the five cases below are the whole state space of that pid file, and each
+  # one names which of LIVE / UNKNOWN / ABSENT it is. The dead-pid case at the
+  # end is the POSITIVE CONTROL: without it, a launcher that refused everything
+  # unconditionally would pass every other assertion here.
+  #
+  # The verdict is the shared library's, not a second classifier: the launcher
+  # sources logs/scripts/work-loop-lease.sh before this path runs, and the same
+  # probe that admits a live lease is the one that reads this legacy pid.
+  mkfix leg3 task-lg claude
+  lgld="$(lock_path_for "$REPO")"
+
+  # --- UNKNOWN (1): uninspectable. kill -0 fails with "operation not permitted"
+  # rather than "no such process". pid 1 is init/launchd and root-owned, so an
+  # ordinary user cannot signal it and cannot conclude anything about it either.
+  # This is the case that costs two live writers in one working tree when it is
+  # read as stale. Skipped when the suite runs as root, where pid 1 is genuinely
+  # LIVE and the case would silently be testing a state it does not name.
+  if kill -0 1 2>/dev/null; then
+    printf '  SKIP an uninspectable (EPERM) holder — this shell can signal pid 1\n'
+  else
+    plant_lock_raw "$lgld" 1 task-lg-live
+    n_before="$(invocations)"
+    run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+    assert_eq "an UNINSPECTABLE holder (EPERM) is held, not cleared (17)" "17" "$RC"
+    assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+    assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+    assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+    assert_contains "  and says why inspection did not justify deletion" \
+                    "WITHOUT proving absence" "$o"
+    assert_absent "  and never calls an uninspectable holder stale" "removing a stale lock" "$o"
+  fi
+
+  # --- UNKNOWN (2): malformed, zero-prefixed. `007` reaches kill(2) as pid 7, so
+  # a conflating launcher returns a true statement about an unrelated process
+  # presented as a statement about this lock — and on this host pid 7 is
+  # root-owned, so that statement is "not running", i.e. delete it.
+  plant_lock_raw "$lgld" 007 task-lg-zero
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a ZERO-PREFIXED pid is held, not cleared (17)" "17" "$RC"
+  assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+  assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+  assert_contains "  and names it as not a usable process id" "not a usable process id" "$o"
+
+  # --- UNKNOWN (3): malformed, `0`. The quiet catastrophe in the other
+  # direction: `kill -0 0` SUCCEEDS, because pid 0 means the CALLER'S OWN process
+  # group, so a conflating launcher reads a corrupt lock as a live holder. Both
+  # readings are wrong for the same reason — a corrupt lock is not evidence — and
+  # the refusal has to say so rather than name a holder that does not exist.
+  plant_lock_raw "$lgld" 0 task-lg-zero0
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "pid 0 is held as UNKNOWN, not read as a live holder (17)" "17" "$RC"
+  assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+  assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+  assert_absent "  and does NOT claim another carry is in flight" \
+                "another carry is in flight" "$o"
+
+  # --- UNKNOWN (4): malformed, not a number at all.
+  plant_lock_raw "$lgld" not-a-pid task-lg-junk
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a NON-NUMERIC pid is held, not cleared (17)" "17" "$RC"
+  assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+  assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+  assert_contains "  and quotes the unusable value" "not-a-pid" "$o"
+
+  # --- UNKNOWN (5): no pid file at all. Distinct from the present-but-empty file
+  # section 12 already covers, and it must reach the same refusal.
+  plant_lock_raw "$lgld" NONE task-lg-nopid
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a MISSING pid file is held, not cleared (17)" "17" "$RC"
+  assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+  assert_contains "  and says nothing was deleted" "Nothing was deleted" "$o"
+
+  # --- LIVE: the holder is visible and signallable. Refused, and preserved.
+  plant_lock_raw "$lgld" "$$" task-lg-alive
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a LIVE holder is refused (17)" "17" "$RC"
+  assert_eq "  and the lock survives" "1" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and launched nothing" "$n_before" "$(invocations)"
+  assert_contains "  and names it as a carry in flight" "another carry is in flight" "$o"
+
+  # --- ABSENT: the POSITIVE CONTROL. `kill -0` reported "no such process", which
+  # is the only evidence that permits a write on this path. The lock must be
+  # cleared and the carry admitted — and cleared ATOMICALLY, so the rename target
+  # must not be left behind either. Run last, because it is the only case here
+  # that consumes the fixture's turn.
+  ( exit 0 ) & lgdead=$!; wait "$lgdead" 2>/dev/null
+  plant_lock_raw "$lgld" "$lgdead" task-lg-dead
+  printf 'transition:codex' >"$ACTION"
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-lg --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a POSITIVELY ABSENT holder is the one state that clears (0)" "0" "$RC"
+  assert_contains "  and says so" "removing a stale lock" "$o"
+  assert_eq "  and the stale lock is GONE" "0" "$([ -d "$lgld" ] && echo 1 || echo 0)"
+  assert_eq "  and no rename target is left behind" "0" \
+            "$(find "$(dirname "$lgld")" -maxdepth 1 -name "$(basename "$lgld").stale.*" 2>/dev/null | wc -l | tr -d ' ')"
+  if [ "$(invocations)" != "$n_before" ]; then ok "  and the carry was admitted"
+  else bad "  and the carry was admitted" "the actor never launched"; fi
+  rm -rf "$lgld"
+
 section "12b. The live lock is checkout-wide, not per task"
   # One checkout is one working tree with one index and one HEAD. Two carries in
   # it are two writers to one surface whatever tasks they name, so the ownership
@@ -795,35 +1067,522 @@ section "12b. The live lock is checkout-wide, not per task"
   assert_eq "  and stopped BEFORE actor launch" "0" "$(wc -c <"$BB_COUNT" | tr -d ' ')"
   assert_eq "  and the holder's lock survives" "1" "$([ -d "$xld" ] && echo 1 || echo 0)"
 
-  # A separate linked worktree canonicalizes to a different path, so it is a
-  # different checkout and stays independently admissible while X is locked.
+  # A separate linked worktree canonicalizes to a different path, so it takes a
+  # different CHECKOUT lease. It does NOT get a second run of the same task: one
+  # task is one live run anywhere in the repository, and the task lease is what
+  # says so. This block asserted the opposite before the shared lease landed — a
+  # second worktree was independently admissible for the same task — and that
+  # admission is the cross-transport hole the shared lease closes.
   WT="$TMPROOT/xwide-wt"
   git -C "$XREPO" worktree add -q -b wt-lane "$WT" >/dev/null 2>&1
   assert_eq "linked worktree was created" "1" "$([ -d "$WT/logs/work-loop" ] && echo 1 || echo 0)"
-  assert_absent "  worktree takes a different lock path" "$xld" "$(lock_path_for "$WT")"
+  assert_absent "  worktree takes a different legacy lock path" "$xld" "$(lock_path_for "$WT")"
+  assert_absent "  and a different checkout lease" "$(checkout_lease_for "$XREPO")" "$(checkout_lease_for "$WT")"
   WT_ARGV="$TMPROOT/xwide-wt.argv"; : >"$WT_ARGV"
   WT_COUNT="$TMPROOT/xwide-wt.count"; : >"$WT_COUNT"
   WT_ACTION="$TMPROOT/xwide-wt.action"; printf 'transition:codex' >"$WT_ACTION"
   WT_FAKE="$TMPROOT/xwide-wt.actor"
   make_fake_actor "$WT_FAKE" "$WT_ARGV" "$WT_COUNT" "$WT_ACTION" \
                   "$WT/logs/work-loop/task-bb.md"
+  # A live holder of the TASK lease, in checkout X, recorded the way the shared
+  # library records one — pid, task, checkout and the program that holds it.
+  xtl="$(task_lease_for "$XREPO" task-bb)"
+  plant_lease "$xtl" "$$" task-bb "$XREPO" carry
   run_sut --checkout "$WT" --task task-bb --claude-bin "$WT_FAKE" --log-dir "$TMPROOT/xwide-wt.runs"
-  assert_eq "the same task in a separate linked worktree IS admitted" "0" "$RC"
+  assert_eq "the same task in a separate linked worktree is REFUSED (17)" "17" "$RC"
+  assert_contains "  and names the TASK lease as the resource" "TASK lease for 'task-bb'" "$o"
+  assert_contains "  and says another checkout does not make it another task" \
+    "including in another linked worktree" "$o"
+  assert_eq "  and stopped BEFORE actor launch" "0" "$(wc -c <"$WT_COUNT" | tr -d ' ')"
+  assert_eq "  and the holder's task lease survives" "1" "$([ -d "$xtl" ] && echo 1 || echo 0)"
+
+  # The over-refusal control. With the task lease free, the worktree carries —
+  # a different checkout is still legitimate concurrency, and the change must not
+  # have turned every worktree into a refusal.
+  #
+  # Ownership has to be SETTLED for that to be what this control measures. The
+  # worktree add above replicated task-bb's state file into a second checkout with
+  # neither one declaring it, and repository-depth ownership reads exactly that as
+  # AMBIGUOUS — the approved refusal for replicated state, proved on its own in
+  # 12e case 20b. Left unsettled, this control would stop at 34 and the lease
+  # would never be reached, so it would no longer be testing the lease at all.
+  #
+  # The declaration is made with the helper's own LOCAL claim, not a hand-written
+  # marker and not a repo-depth one. Local is the depth that can still write here:
+  # at repo depth `claim` runs the same replicated-state read and refuses, writing
+  # nothing — which is 12e case 20a's warning, and the reason claiming is never
+  # the way out of an ambiguity.
+  rm -rf "$xtl"
+  bash "$WT/logs/scripts/work-loop-owner.sh" claim --checkout "$WT" \
+       --task task-bb --depth local >/dev/null 2>&1
+  run_sut --checkout "$WT" --task task-bb --claude-bin "$WT_FAKE" --log-dir "$TMPROOT/xwide-wt.runs"
+  assert_eq "with the task lease free and ownership settled the worktree IS admitted" "0" "$RC"
   assert_contains "  and carried" "RESULT outcome=CARRIED code=0" "$o"
   assert_eq "  and its actor ran" "1" "$(wc -c <"$WT_COUNT" | tr -d ' ')"
-  assert_eq "  while checkout X's lock is still held" "1" "$([ -d "$xld" ] && echo 1 || echo 0)"
+  assert_eq "  while checkout X's legacy lock is still held" "1" "$([ -d "$xld" ] && echo 1 || echo 0)"
 
-  # X is still locked after the worktree carry — the two locks are independent.
+  # X is still refused after the worktree carry — the two checkouts are
+  # independent, and the legacy in-flight lock in X is still read.
   run_sut --checkout "$XREPO" --task task-bb --claude-bin "$BB_FAKE" --log-dir "$XLOGD"
   assert_eq "checkout X is still refused after the worktree carry (17)" "17" "$RC"
   rm -rf "$xld"
+
+  # The worktree goes NOW, before the last control, and the ordering is
+  # load-bearing rather than tidy. While it exists it both declares task-bb and
+  # holds a copy of its state file, so repository-depth ownership would refuse
+  # checkout X (33) and the control below would never reach the lease it is about.
+  # Removing it takes the declaration with it — the marker is untracked, so it
+  # lives only in that working tree — and leaves X holding the task's one and only
+  # state file, which is the unique-copy condition ownership admits.
+  git -C "$XREPO" worktree remove --force "$WT" >/dev/null 2>&1
 
   # With the holder gone, the same checkout admits the second task normally —
   # the refusal is about concurrency, not a permanent binding to one task.
   run_sut --checkout "$XREPO" --task task-bb --claude-bin "$BB_FAKE" --log-dir "$XLOGD"
   assert_eq "with no live holder the second task carries normally" "0" "$RC"
-  assert_eq "  and its lock was released" "0" "$([ -d "$xld" ] && echo 1 || echo 0)"
-  git -C "$XREPO" worktree remove --force "$WT" >/dev/null 2>&1
+  assert_eq "  and both of its leases were released" "0" \
+    "$([ -d "$(task_lease_for "$XREPO" task-bb)" ] || [ -d "$(checkout_lease_for "$XREPO")" ] && echo 1 || echo 0)"
+
+section "12c. The shared lease library must be present"
+  # An absent lease library means the live lease cannot be taken, and an absent
+  # check is not a passed check. The checkouts most likely to lack it — older
+  # siblings, partial copies — are exactly the ones most likely to hold a
+  # conflicting writer, so this fails closed and launches nothing.
+  #
+  # The code is 11, this launcher's existing BAD_CHECKOUT outcome. It is not a
+  # new number: a checkout that cannot produce the library is a checkout whose
+  # lease cannot be established.
+  mkfix nolease task-bc claude
+  printf 'transition:codex' >"$ACTION"
+  git -C "$REPO" rm -q --cached logs/scripts/work-loop-lease.sh >/dev/null 2>&1
+  rm -f "$REPO/logs/scripts/work-loop-lease.sh"
+  git -C "$REPO" commit -q -m "remove the lease library" >/dev/null 2>&1
+  before_head="$(git -C "$REPO" rev-parse HEAD)"
+  run_sut --checkout "$REPO" --task task-bc --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "an absent lease library refuses (11)" "11" "$RC"
+  assert_contains "  and names the missing library" "missing or unreadable" "$o"
+  assert_eq "  and launched nothing" "0" "$(invocations)"
+  assert_eq "  and committed nothing" "$before_head" "$(git -C "$REPO" rev-parse HEAD)"
+  # A refusal must not leave a lease behind: it never took one, so both lease
+  # directories must be absent. A half-acquiring refusal would refuse the NEXT
+  # run for a reason that never existed.
+  assert_eq "  and left no lease directory behind" "0" \
+    "$([ -d "$(task_lease_for "$REPO" task-bc)" ] || [ -d "$(checkout_lease_for "$REPO")" ] && echo 1 || echo 0)"
+
+  # The control. Same recipe, library present — the same run proceeds and does
+  # launch. Without it, a launcher that refused everything would pass above.
+  mkfix yeslease task-bd claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-bd --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "control — with the library present the same run carries" "0" "$RC"
+  assert_eq "  and its actor ran" "1" "$(invocations)"
+
+section "12d. An unprovable shutdown pins both leases"
+  # Property 4 of the shared live-lease contract: when a run cannot prove the
+  # actor tree it started has stopped, BOTH leases are pinned and no ordinary
+  # exit path releases them. The launcher used to warn and release, which left
+  # the next run — attended or dispatched — free to start beside a survivor.
+  #
+  # Reaching the branch: the actor IGNORES SIGTERM, so the TERM grace expires and
+  # the launcher goes on to SIGKILL and then verify. Verification is a census of
+  # the actor's process group, and the survivor is injected there (see SURVPSDIR)
+  # because a same-uid process group is always cleared by SIGKILL — the condition
+  # is real in production (a process that has not finished dying, or one this uid
+  # may not signal) and cannot be manufactured hermetically at the kernel.
+
+  # The control first, with a real `ps`: the tree IS proven gone, so nothing is
+  # pinned and both leases are released. Without it, a launcher that pinned on
+  # every timeout would pass every assertion below.
+  mkfix pinctl task-be claude
+  printf 'ignore-term:30' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-be --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD"
+  assert_eq "control — a timed-out actor whose tree IS gone is ACTOR_TIMEOUT" "21" "$RC"
+  assert_absent "  and nothing is pinned" "PINNED" "$o"
+  assert_eq "  and both leases were released" "0" \
+    "$([ -d "$(task_lease_for "$REPO" task-be)" ] || [ -d "$(checkout_lease_for "$REPO")" ] && echo 1 || echo 0)"
+
+  # A survivor the census CAN see. The launcher must say so and pin.
+  mkfix pinsurv task-bf claude
+  printf 'ignore-term:30' >"$ACTION"
+  o="$(PATH="$SURVPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bf \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  stl="$(task_lease_for "$REPO" task-bf)"; scl="$(checkout_lease_for "$REPO")"
+  assert_eq "an unprovable shutdown is still ACTOR_TIMEOUT (the pin does not change the code)" "21" "$RC"
+  assert_contains "  and warns that the group could not be confirmed gone" \
+    "could not be confirmed gone" "$o"
+  assert_contains "  and NAMES the surviving pid" \
+    "still running in the actor's process group: $SURVPID" "$o"
+  assert_contains "  and says both leases are pinned" "BOTH leases are now PINNED" "$o"
+  assert_eq "  the TASK lease is PINNED, not released" "1" "$([ -f "$stl/survivors" ] && echo 1 || echo 0)"
+  assert_eq "  the CHECKOUT lease is PINNED, not released" "1" "$([ -f "$scl/survivors" ] && echo 1 || echo 0)"
+  assert_contains "  and the pin file records the pid, so the operator can find it" \
+    "descendants still running: $SURVPID" "$(cat "$stl/survivors" 2>/dev/null)"
+
+  # The invariant as the NEXT run experiences it. This is the whole point of the
+  # pin: a second carrier is refused rather than started beside the survivor.
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-bf --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a SECOND carry is REFUSED while the lease is pinned (17)" "17" "$RC"
+  assert_contains "  and says PINNED rather than merely held" "is PINNED" "$o"
+  assert_contains "  and refuses to advise deleting anything it cannot show is dead" \
+    "Nothing was deleted here" "$o"
+  assert_eq "  and launched nothing further" "$n_before" "$(invocations)"
+  rm -rf "$stl" "$scl"
+
+  # The sweep that could not LOOK. A census that cannot run is UNKNOWN, not a
+  # clean bill of health — the same rule the nested-actor observation follows,
+  # and the same one the dispatcher applies to its own incomplete sweep.
+  mkfix pinblind task-bg claude
+  printf 'ignore-term:30' >"$ACTION"
+  o="$(PATH="$NOPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bg \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  btl="$(task_lease_for "$REPO" task-bg)"; bcl="$(checkout_lease_for "$REPO")"
+  assert_eq "a census that cannot run is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_contains "  and is reported as an incomplete sweep, not as success" \
+    "sweep incomplete" "$o"
+  assert_eq "  and the TASK lease is PINNED" "1" "$([ -f "$btl/survivors" ] && echo 1 || echo 0)"
+  assert_eq "  and the CHECKOUT lease is PINNED" "1" "$([ -f "$bcl/survivors" ] && echo 1 || echo 0)"
+  rm -rf "$btl" "$bcl"
+
+  # ---- The TERM grace period is a proof step too, not a signal probe ----
+  #
+  # The cases above all reach the SIGKILL-and-verify branch, because the actor
+  # ignores SIGTERM. An actor that DIES on SIGTERM leaves through the grace loop
+  # instead, and that loop used to decide the whole question with `kill -0` on
+  # the group: one failed signal probe returned a clean shutdown and released
+  # both leases without ever looking at what was in the group. `kill -0` answers
+  # one bit and answers it wrong in the direction that matters — a survivor this
+  # uid may not signal is indistinguishable from an empty group — so the grace
+  # loop needs the same census the post-SIGKILL branch uses.
+  #
+  # The positive control first. Without it, a launcher that simply never left
+  # the grace loop early would pass both assertions below.
+  mkfix graceok task-bh claude
+  printf 'sleep:30' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-bh --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD"
+  assert_eq "control — an actor that DIES on SIGTERM is ACTOR_TIMEOUT" "21" "$RC"
+  assert_absent "  and a census that proved the group empty pins nothing" "PINNED" "$o"
+  assert_eq "  and both leases were released" "0" \
+    "$([ -d "$(task_lease_for "$REPO" task-bh)" ] || [ -d "$(checkout_lease_for "$REPO")" ] && echo 1 || echo 0)"
+
+  # Inspection becomes unavailable DURING the grace period. The actor really did
+  # die, but nothing here can show that, and an unprovable shutdown pins.
+  mkfix graceblind task-bi claude
+  printf 'sleep:30' >"$ACTION"
+  o="$(PATH="$NOGPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bi \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  gtl="$(task_lease_for "$REPO" task-bi)"; gcl="$(checkout_lease_for "$REPO")"
+  assert_eq "a grace period that cannot inspect is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_contains "  and does NOT report a clean shutdown it could not see" \
+    "could not be confirmed gone" "$o"
+  assert_contains "  and names the inspection failure as the reason" "sweep incomplete" "$o"
+  assert_eq "  and the TASK lease is PINNED" "1" "$([ -f "$gtl/survivors" ] && echo 1 || echo 0)"
+  assert_eq "  and the CHECKOUT lease is PINNED" "1" "$([ -f "$gcl/survivors" ] && echo 1 || echo 0)"
+  rm -rf "$gtl" "$gcl"
+
+  # A survivor visible during the grace period. The top-level actor is gone, so
+  # the group stops answering `kill -0` — which is exactly the shortcut that used
+  # to release both leases beside a process the census can still see.
+  mkfix gracesurv task-bj claude
+  printf 'sleep:30' >"$ACTION"
+  o="$(PATH="$SURVPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bj \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  vtl="$(task_lease_for "$REPO" task-bj)"; vcl="$(checkout_lease_for "$REPO")"
+  assert_eq "a survivor seen during the grace period is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_contains "  and the launcher NAMES it rather than releasing" \
+    "still running in the actor's process group: $SURVPID" "$o"
+  assert_eq "  the TASK lease is PINNED" "1" "$([ -f "$vtl/survivors" ] && echo 1 || echo 0)"
+  assert_eq "  the CHECKOUT lease is PINNED" "1" "$([ -f "$vcl/survivors" ] && echo 1 || echo 0)"
+  assert_contains "  and the pin file records the pid" \
+    "descendants still running: $SURVPID" "$(cat "$vtl/survivors" 2>/dev/null)"
+  rm -rf "$vtl" "$vcl"
+
+  # ---- The census must prove ITS OWN query form, not a neighbouring one ----
+  #
+  # `ps` runs here; `ps -g` does not. The readability control used to ask `ps -p
+  # $$`, which passes straight through this stub, so the group query's own
+  # failure produced an empty answer that read as a confirmed-empty group — and
+  # after SIGKILL the group really has stopped answering, so the signal probe
+  # agreed and both leases were released. Missing evidence became a clean bill of
+  # health. Distinct from the whole-`ps` case above, which the `-p` control
+  # already catches.
+  mkfix pinnogps task-bk claude
+  printf 'ignore-term:30' >"$ACTION"
+  o="$(PATH="$NOGPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bk \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  ntl="$(task_lease_for "$REPO" task-bk)"; ncl="$(checkout_lease_for "$REPO")"
+  assert_eq "a group query that cannot run is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_contains "  and is an incomplete sweep, not a confirmed-empty group" \
+    "sweep incomplete" "$o"
+  assert_eq "  and the TASK lease is PINNED" "1" "$([ -f "$ntl/survivors" ] && echo 1 || echo 0)"
+  assert_eq "  and the CHECKOUT lease is PINNED" "1" "$([ -f "$ncl/survivors" ] && echo 1 || echo 0)"
+  assert_contains "  and the pin file records WHY, so the operator is not told to inspect nothing" \
+    "sweep incomplete" "$(cat "$ntl/survivors" 2>/dev/null)"
+  rm -rf "$ntl" "$ncl"
+
+section "12e. Repository-depth ownership admission before actor launch"
+  # The leases above answer "is another run live?". They cannot answer "does this
+  # task belong to this checkout?", because a lease dies with its process and a
+  # task outlives one. That second question is the durable declaration's, and the
+  # launcher must ask it at REPO depth — it may run git, so unlike interactive
+  # Codex it can see the other worktrees of the repository.
+  #
+  # Proposal §4.4 binds the three stops to 33, 34 and 35, which are free in this
+  # launcher's taxonomy and already mean ownership across the Work Loop. §5.5
+  # cases 19 and 20 are the two rows these assertions come from. The admission
+  # mirrors dispatch.sh 2336-2367, so the messages asserted here are that block's
+  # own wording rather than a second vocabulary invented for the carrier.
+  #
+  # THE CHECK FAILS CLOSED. A checkout without the helper gets 35 and launches
+  # NOTHING. An absent check is not a passed check, and the checkouts most likely
+  # to lack the helper — older siblings, partial copies — are exactly the ones
+  # most likely to hold a conflicting writer.
+  #
+  # Every case here asserts the exit code AND a launch count of zero. The count is
+  # what makes it more than an exit-code assertion: a launcher that stopped after
+  # starting an actor would satisfy the code and still have admitted the second
+  # writer this admission exists to refuse.
+
+  # --- Case 19: the helper is missing, so the check cannot run at all.
+  mkfix noowner task-bh claude
+  printf 'transition:codex' >"$ACTION"
+  # mkfix packages the helper into every fixture, so this case has to REMOVE it —
+  # from the index and from disk, the same way 12c removes the lease library. A
+  # `rm` alone would leave a tracked deletion in the working tree, which is an
+  # out-of-allowlist change and would stop the launcher at 18 before ownership was
+  # ever reached: the case would then pass for a reason that has nothing to do
+  # with an absent helper.
+  git -C "$REPO" rm -q --cached logs/scripts/work-loop-owner.sh >/dev/null 2>&1
+  rm -f "$REPO/logs/scripts/work-loop-owner.sh"
+  git -C "$REPO" commit -q -m "remove the ownership helper" >/dev/null 2>&1
+  # Asserted rather than assumed: if the removal above ever stopped working, this
+  # case would silently stop testing an absent helper.
+  assert_eq "12e setup — the fixture carries no ownership helper" "0" \
+    "$([ -f "$REPO/logs/scripts/work-loop-owner.sh" ] && echo 1 || echo 0)"
+  assert_eq "12e setup — but it does carry the lease library, so the lease is not the stop" "1" \
+    "$([ -f "$REPO/logs/scripts/work-loop-lease.sh" ] && echo 1 || echo 0)"
+  before_head="$(git -C "$REPO" rev-parse HEAD)"
+  run_sut --checkout "$REPO" --task task-bh --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "an absent ownership helper refuses (35)" "35" "$RC"
+  assert_contains "  and says the check could not run" "ownership check is unavailable" "$o"
+  assert_eq "  and launched nothing" "0" "$(invocations)"
+  assert_eq "  and committed nothing" "$before_head" "$(git -C "$REPO" rev-parse HEAD)"
+  # The discriminators. Without these the case would be satisfied by a launcher
+  # that refused for a lease reason, or that carried and reported success.
+  assert_absent "  and it is not the lease refusal" "code=17" "$o"
+  assert_absent "  and it did not carry" "outcome=CARRIED" "$o"
+  # A refusal before any lease is taken must leave no lease behind, or it refuses
+  # the NEXT run for a reason that never existed.
+  assert_eq "  and left no lease directory behind" "0" \
+    "$([ -d "$(task_lease_for "$REPO" task-bh)" ] || [ -d "$(checkout_lease_for "$REPO")" ] && echo 1 || echo 0)"
+
+  # The control. Same recipe, helper PRESENT and ownership settled — the run must
+  # proceed and must launch. Without it, every assertion above would be satisfied
+  # by a launcher that refuses everything, which is not the behaviour claimed.
+  mkfix yesowner task-bk claude
+  add_owner_helper "$REPO"
+  printf 'transition:codex' >"$ACTION"
+  assert_eq "control setup — the helper is packaged and committed" "1" \
+    "$([ -f "$REPO/logs/scripts/work-loop-owner.sh" ] && echo 1 || echo 0)"
+  bash "$REPO/logs/scripts/work-loop-owner.sh" check --checkout "$REPO" \
+       --task task-bk --depth repo >/dev/null 2>&1
+  assert_eq "control setup — repo-depth ownership says PROCEED (0)" "0" "$?"
+  run_sut --checkout "$REPO" --task task-bk --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "control — with the helper present and ownership clear the run carries" "0" "$RC"
+  assert_eq "  and its actor ran" "1" "$(invocations)"
+
+  # --- Case 20a: repo-depth ownership REFUSE.
+  # The task is declared by the MAIN checkout; the launcher is pointed at a linked
+  # worktree of the same repository. Repo depth sees one claimant and it is not
+  # this checkout, so the verdict is REFUSE.
+  #
+  # The declaration is made BEFORE the worktree exists, and that ordering is
+  # load-bearing rather than tidy: once the state file has replicated into a
+  # second checkout with nothing declaring it, `claim` itself reads AMBIGUOUS and
+  # writes nothing — so claiming afterwards would produce case 20b's condition
+  # instead of this one, and the case would assert 33 against an ambiguity.
+  mkfix ownref task-bi claude
+  OREPO="$REPO"
+  add_owner_helper "$OREPO"
+  bash "$OREPO/logs/scripts/work-loop-owner.sh" claim --checkout "$OREPO" \
+       --task task-bi --depth repo >/dev/null 2>&1
+  assert_eq "12e-20a setup — the main checkout declares the task" "0" "$?"
+  RWT="$TMPROOT/ownref-wt"
+  git -C "$OREPO" worktree add -q -b ownref-lane "$RWT" >/dev/null 2>&1
+  assert_eq "12e-20a setup — the state file replicates into the linked worktree" "1" \
+    "$([ -f "$RWT/logs/work-loop/task-bi.md" ] && echo 1 || echo 0)"
+  # The fixture's own condition, proven directly against the helper. This
+  # separates "the fixture reaches the intended ownership verdict" from "the
+  # launcher acts on it" — so a red assertion below cannot be blamed on a fixture
+  # that never produced a REFUSE in the first place.
+  bash "$RWT/logs/scripts/work-loop-owner.sh" check --checkout "$RWT" \
+       --task task-bi --depth repo >/dev/null 2>&1
+  assert_eq "12e-20a setup — repo-depth ownership says REFUSE (3) from the worktree" "3" "$?"
+  RWT_ARGV="$TMPROOT/ownref-wt.argv"; : >"$RWT_ARGV"
+  RWT_COUNT="$TMPROOT/ownref-wt.count"; : >"$RWT_COUNT"
+  RWT_ACTION="$TMPROOT/ownref-wt.action"; printf 'transition:codex' >"$RWT_ACTION"
+  RWT_FAKE="$TMPROOT/ownref-wt.actor"
+  make_fake_actor "$RWT_FAKE" "$RWT_ARGV" "$RWT_COUNT" "$RWT_ACTION" \
+                  "$RWT/logs/work-loop/task-bi.md"
+  before_head="$(git -C "$RWT" rev-parse HEAD)"
+  run_sut --checkout "$RWT" --task task-bi --claude-bin "$RWT_FAKE" \
+          --log-dir "$TMPROOT/ownref-wt.runs"
+  assert_eq "a REFUSE ownership verdict stops the carry (33)" "33" "$RC"
+  assert_contains "  and names the stop as an ownership refusal" "ownership refused for task" "$o"
+  assert_contains "  and carries the helper's own reason" "already claimed by checkout" "$o"
+  assert_eq "  and launched nothing" "0" "$(wc -c <"$RWT_COUNT" | tr -d ' ')"
+  assert_eq "  and committed nothing in the worktree" "$before_head" "$(git -C "$RWT" rev-parse HEAD)"
+  assert_absent "  and it is not the lease refusal" "code=17" "$o"
+  assert_absent "  and it did not carry" "outcome=CARRIED" "$o"
+  git -C "$OREPO" worktree remove --force "$RWT" >/dev/null 2>&1
+
+  # --- Case 20b: repo-depth ownership AMBIGUOUS.
+  # No checkout declares the task and its state file exists in two of them.
+  # Replicated copies authorise nobody, so neither checkout may proceed — and
+  # this is the condition that must NOT be resolved by claiming.
+  mkfix ownamb task-bj claude
+  AREPO="$REPO"
+  add_owner_helper "$AREPO"
+  AWT="$TMPROOT/ownamb-wt"
+  git -C "$AREPO" worktree add -q -b ownamb-lane "$AWT" >/dev/null 2>&1
+  assert_eq "12e-20b setup — the state file replicates into the linked worktree" "1" \
+    "$([ -f "$AWT/logs/work-loop/task-bj.md" ] && echo 1 || echo 0)"
+  assert_eq "12e-20b setup — and no checkout declares the task" "0" \
+    "$([ -f "$AREPO/logs/work-loop/.owner" ] || [ -f "$AWT/logs/work-loop/.owner" ] && echo 1 || echo 0)"
+  bash "$AWT/logs/scripts/work-loop-owner.sh" check --checkout "$AWT" \
+       --task task-bj --depth repo >/dev/null 2>&1
+  assert_eq "12e-20b setup — repo-depth ownership says AMBIGUOUS (4)" "4" "$?"
+  AWT_ARGV="$TMPROOT/ownamb-wt.argv"; : >"$AWT_ARGV"
+  AWT_COUNT="$TMPROOT/ownamb-wt.count"; : >"$AWT_COUNT"
+  AWT_ACTION="$TMPROOT/ownamb-wt.action"; printf 'transition:codex' >"$AWT_ACTION"
+  AWT_FAKE="$TMPROOT/ownamb-wt.actor"
+  make_fake_actor "$AWT_FAKE" "$AWT_ARGV" "$AWT_COUNT" "$AWT_ACTION" \
+                  "$AWT/logs/work-loop/task-bj.md"
+  before_head="$(git -C "$AWT" rev-parse HEAD)"
+  run_sut --checkout "$AWT" --task task-bj --claude-bin "$AWT_FAKE" \
+          --log-dir "$TMPROOT/ownamb-wt.runs"
+  assert_eq "an AMBIGUOUS ownership verdict stops the carry (34)" "34" "$RC"
+  assert_contains "  and names the stop as ownership ambiguity" "ownership is AMBIGUOUS for task" "$o"
+  assert_contains "  and carries the helper's own reason" "replicated copies authorise nobody" "$o"
+  assert_eq "  and launched nothing" "0" "$(wc -c <"$AWT_COUNT" | tr -d ' ')"
+  assert_eq "  and committed nothing in the worktree" "$before_head" "$(git -C "$AWT" rev-parse HEAD)"
+  assert_absent "  and it is not the lease refusal" "code=17" "$o"
+  assert_absent "  and it did not carry" "outcome=CARRIED" "$o"
+  # An ambiguity is the operator's to resolve, so the launcher must not have
+  # written a declaration of its own on the way past.
+  assert_eq "  and declared nothing on its own account" "0" \
+    "$([ -f "$AREPO/logs/work-loop/.owner" ] || [ -f "$AWT/logs/work-loop/.owner" ] && echo 1 || echo 0)"
+  git -C "$AREPO" worktree remove --force "$AWT" >/dev/null 2>&1
+
+section "12f. Every pin result is reported as itself"
+  # The lease library answers a pin with THREE distinct outcomes — 0 durably
+  # pinned, 1 nothing owned, 2 owned and pinned but with no durable record. This
+  # launcher used to write `wl_lease_pin ... || return 0`, which merged 1, 2 and
+  # any future code into the silent no-owned path. rc=2 is the one that matters:
+  # the lease DIRECTORIES are retained and still refuse the next run, but the
+  # written reason inside them is missing, so the operator meets an unexplained
+  # held lease and the obvious reading — a removable stale lock — is the unsafe
+  # one. 12d's success case is the rc=0 control for this section.
+
+  # A `ps` that injects a survivor exactly as SURVPSDIR does, and ALSO makes the
+  # pin record unpersistable. The block is a DIRECTORY where the `survivors` file
+  # has to go: `>` then cannot create the file for any user, root included, so
+  # the forcing needs no privilege and nothing destructive, and `[ -f ]` — the
+  # same test the library, acquire and `--status` recognise a pin by — is false
+  # afterwards. Same device the library's own suite uses.
+  #
+  # It blocks at the point the launcher LOOKS, which is after the leases are
+  # acquired and before the pin is written. Earlier invocations, before the lease
+  # directories exist, simply fail to mkdir and leave nothing behind.
+  PINBLOCKPSDIR="$TMPROOT/pinblock-ps"
+  mkdir -p "$PINBLOCKPSDIR"
+  cat >"$PINBLOCKPSDIR/ps" <<'PSBLOCK'
+#!/bin/bash
+for d in ${WL_TEST_PIN_BLOCK:-}; do mkdir -p "$d/survivors" 2>/dev/null; done
+out="$(/bin/ps "$@" 2>/dev/null)"; rc=$?
+[ -n "$out" ] && printf '%s\n' "$out"
+prev=""; g=""
+for a in "$@"; do [ "$prev" = "-g" ] && g="$a"; prev="$a"; done
+if [ -n "$g" ]; then printf '%s %s\n' "$PPID" "$g"; rc=0; fi
+exit "$rc"
+PSBLOCK
+  chmod +x "$PINBLOCKPSDIR/ps"
+
+  # Replace the library's pin with one that returns a chosen code, and commit it
+  # so the working tree stays clean — an untracked or modified helper is an
+  # out-of-allowlist change and the launcher would stop on that instead. rc=1 and
+  # an unrecognised code have no route through the real library from here, so the
+  # override is the only way to reach them; rc=2 above is forced for real.
+  stub_pin_rc() { # repo, rc, pinned-flag
+    printf '\nwl_lease_pin() { WL_LEASE_PINNED=%s; return %s; }\n' "$3" "$2" \
+      >>"$1/logs/scripts/work-loop-lease.sh"
+    git -C "$1" add -- logs/scripts/work-loop-lease.sh >/dev/null 2>&1
+    git -C "$1" commit -q -m "stub the pin result" >/dev/null 2>&1
+  }
+
+  # rc=2 — owned, pinned, and the record did NOT persist.
+  mkfix pinnorec task-bk claude
+  printf 'ignore-term:30' >"$ACTION"
+  ktl="$(task_lease_for "$REPO" task-bk)"; kcl="$(checkout_lease_for "$REPO")"
+  o="$(WL_TEST_PIN_BLOCK="$ktl $kcl" PATH="$PINBLOCKPSDIR:$PATH" "$SUT" \
+        --checkout "$REPO" --task task-bk --claude-bin "$FAKEBIN" \
+        --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  assert_eq "an unpersisted pin record is still ACTOR_TIMEOUT (the outer outcome is unchanged)" "21" "$RC"
+  assert_contains "  and the teardown warning still stands" "could not be confirmed gone" "$o"
+  assert_contains "  and says the pin RECORD could not be persisted" \
+    "pin RECORD could not be persisted" "$o"
+  assert_contains "  and NAMES the resources whose evidence is missing" \
+    "task checkout" "$o"
+  assert_contains "  and says the lease directories were RETAINED, not released" \
+    "deliberately RETAINED" "$o"
+  assert_contains "  and says the next run is still refused" "still refused with exit 17" "$o"
+  assert_contains "  and warns against reading them as a removable stale lease" \
+    "removable stale lease" "$o"
+  # The false success line is the whole failure this case exists to prevent: a
+  # pin that recorded nothing must never be announced as one that did.
+  assert_absent "  and does NOT claim the durable pin succeeded" \
+    "BOTH leases are now PINNED" "$o"
+  assert_eq "  the TASK lease directory is retained" "1" "$([ -d "$ktl" ] && echo 1 || echo 0)"
+  assert_eq "  the CHECKOUT lease directory is retained" "1" "$([ -d "$kcl" ] && echo 1 || echo 0)"
+  assert_eq "  and the evidence really is absent, not merely unmentioned" "0" \
+    "$([ -f "$ktl/survivors" ] && echo 1 || echo 0)"
+  # What the operator meets next. The refusal is the reason the directories are
+  # kept, so it has to survive the missing record.
+  n_before="$(invocations)"
+  run_sut --checkout "$REPO" --task task-bk --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "a SECOND carry is still REFUSED (17) with the record missing" "17" "$RC"
+  assert_eq "  and launched nothing further" "$n_before" "$(invocations)"
+  rm -rf "$ktl/survivors" "$kcl/survivors" "$ktl" "$kcl"
+
+  # rc=1 — nothing was owned, so nothing was pinned. The ordinary state of a run
+  # that never acquired a lease, and it stays SILENT: reporting it would tell the
+  # operator about a lease that does not exist.
+  mkfix pinnone task-bl claude
+  printf 'ignore-term:30' >"$ACTION"
+  stub_pin_rc "$REPO" 1 0
+  o="$(PATH="$SURVPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bl \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  assert_eq "rc=1 is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_absent "  and says nothing about a pin at all" "PINNED" "$o"
+  assert_absent "  and raises no persistence warning" "could not be persisted" "$o"
+  assert_absent "  and reports no unrecognised result" "UNRECOGNISED" "$o"
+
+  # An unrecognised code. The library has three today; a fourth added later must
+  # not silently arrive as "nothing owned". Unknown is reported as unknown.
+  mkfix pinodd task-bm claude
+  printf 'ignore-term:30' >"$ACTION"
+  stub_pin_rc "$REPO" 3 1
+  mtl="$(task_lease_for "$REPO" task-bm)"; mcl="$(checkout_lease_for "$REPO")"
+  o="$(PATH="$SURVPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bm \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  assert_eq "an unrecognised pin result is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_contains "  and is reported as unrecognised, with the code" \
+    "UNRECOGNISED pin result (3)" "$o"
+  assert_contains "  and says the leases are retained and the next run refused" \
+    "still refused with exit 17" "$o"
+  assert_absent "  and does NOT claim the durable pin succeeded" \
+    "BOTH leases are now PINNED" "$o"
+  rm -rf "$mtl" "$mcl"
 
 section "13. Dry run and the Codex direction"
   mkfix dry task-z claude

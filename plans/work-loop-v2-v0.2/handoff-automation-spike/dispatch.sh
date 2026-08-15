@@ -125,18 +125,30 @@
 # this script; the four meanings are spelled out under the table.
 #   0   SUCCESS                see the four meanings below — it is not one thing
 #   10  BAD_USAGE
-#   11  BAD_CHECKOUT
+#   11  BAD_CHECKOUT           also the LEASE-INFRASTRUCTURE outcome: an
+#                              unresolvable or unreadable Git common directory,
+#                              an uncreatable lease root, and a checkout whose
+#                              shared lease library (logs/scripts/work-loop-lease.sh)
+#                              is missing or unreadable. That last one FAILS
+#                              CLOSED and launches nothing — an absent lease is
+#                              not a taken lease. It is 11 and not 33/34/35
+#                              because those three are the OWNERSHIP taxonomy and
+#                              a lease is not an ownership fact; the two are kept
+#                              apart deliberately.
 #   12  BAD_TASK_ID            traversal or illegal characters
 #   13  STATE_MISSING
 #   14  IDENTITY_MISMATCH      filename stem != frontmatter task:
 #   15  BAD_TURN               turn: not in {codex, claude, operator}
 #   16  FOREIGN_STAGED         something already staged; refuse to sweep it in
-#   17  LOCK_HELD              another dispatcher holds this task, or is already
-#                              running in this checkout. TWO locks are checked,
-#                              both under the repository's Git common directory:
-#                              one keyed by task, one keyed by checkout. Either
-#                              one being held refuses the run, and the message
-#                              names the conflicting task or checkout.
+#   17  LOCK_HELD              another Work Loop run holds this task, or is
+#                              already running in this checkout. TWO locks are
+#                              checked, both under the repository's Git common
+#                              directory: one keyed by task, one keyed by
+#                              checkout. Either one being held refuses the run,
+#                              and the message names the conflicting task or
+#                              checkout AND which program holds it — the lease is
+#                              shared with the attended carrier, so the holder is
+#                              not necessarily another dispatcher.
 #   18  FOREIGN_UNSTAGED       out-of-allowlist working-tree changes already present
 #   19  GIT_HAZARD             index.lock held, or a merge/rebase/cherry-pick in progress
 #   20  ACTOR_FAILED           non-zero exit (retried once when nothing changed)
@@ -636,66 +648,253 @@ pid_state() { # pid -> "LIVE|reason" / "ABSENT|reason" / "UNKNOWN|reason"
 # These govern LIVE PROCESS exclusivity only. Open-task exclusivity is the
 # declaration's job (logs/work-loop/.owner, logs/scripts/work-loop-owner.sh):
 # a lock cannot outlive its process, and continuity between handoffs must.
-LOCK_ROOT="$(git -C "$CHECKOUT" rev-parse --git-common-dir 2>/dev/null)" \
-  || { printf 'STOP [11] cannot resolve the Git common directory for %s\n' "$CHECKOUT" >&2; exit 11; }
-case "$LOCK_ROOT" in /*) ;; *) LOCK_ROOT="$CHECKOUT/$LOCK_ROOT" ;; esac
-LOCK_ROOT="$(cd "$LOCK_ROOT" 2>/dev/null && pwd -P)" \
-  || { printf 'STOP [11] the Git common directory for %s is not readable\n' "$CHECKOUT" >&2; exit 11; }
-LOCK_ROOT="$LOCK_ROOT/work-loop-dispatch-locks"
+#
+# THE MECHANISM NOW LIVES IN ONE PLACE, NOT TWO. Everything above was
+# implemented here and, separately, in the attended carrier — two programs
+# holding one invariant, which is exactly the shape that let the original
+# composite key be wrong in both at once. The implementation moved to
+# logs/scripts/work-loop-lease.sh and BOTH transports source it, so a lease this
+# dispatcher takes is a lease the carrier observes and vice versa. What is left
+# below is this program's own half: its wording, its exit codes, its call sites.
+#
+# THE LIBRARY IS SOURCED, NOT RUN, and it has to be. The lease must be held by
+# THIS process for the whole of its life — the pid it records is what --status
+# inspects, and the release runs from this script's own EXIT trap. A subprocess
+# could not hold either.
+#
+# RESOLVED FROM THE CHECKOUT BEING DRIVEN, like the ownership helper below and
+# for the same reason: the lease is a fact about that checkout's repository, and
+# a checkout that cannot produce the library is a checkout whose lease cannot be
+# established. Migration constraint 2 of the accepted proposal says such a
+# checkout fails closed rather than skipping with a visible line, so that is what
+# happens here — before any lease path is computed and long before an actor is
+# launched. The code is 11, the outcome this dispatcher already uses for every
+# other lease-infrastructure failure; 33/34/35 are the ownership taxonomy and a
+# lease is not an ownership fact.
+LEASE_LIB="$CHECKOUT/logs/scripts/work-loop-lease.sh"
+if [ ! -f "$LEASE_LIB" ] || [ ! -r "$LEASE_LIB" ]; then
+  printf 'STOP [11] the shared lease library is missing or unreadable: %s\n' "$LEASE_LIB" >&2
+  printf '  Recoverable next action: the live lease cannot be taken without it, so nothing was\n' >&2
+  printf '  launched and nothing was committed. Copy the library into this checkout — or run the\n' >&2
+  printf '  task in a checkout that carries it — then re-run.\n' >&2
+  exit 11
+fi
+# shellcheck source=../../../logs/scripts/work-loop-lease.sh
+. "$LEASE_LIB" || {
+  printf 'STOP [11] the shared lease library could not be sourced: %s\n' "$LEASE_LIB" >&2
+  exit 11
+}
 
-# LOCK_DIR is the TASK lock. The name is kept because the pin/survivors
-# machinery, the EXIT trap and --status all key on it, and the thing being
-# pinned — an actor tree that belongs to a task — is the task's.
-LOCK_DIR="$LOCK_ROOT/task-$(printf '%s' "$TASK" | shasum -a 256 | cut -c1-16).lock"
-CHECKOUT_LOCK_DIR="$LOCK_ROOT/checkout-$(printf '%s' "$CHECKOUT" | shasum -a 256 | cut -c1-16).lock"
-LOCK_OWNED=0
-CHECKOUT_LOCK_OWNED=0
+wl_lease_init "$CHECKOUT" "$TASK"
+case "$?" in
+  0) ;;
+  1) printf 'STOP [11] cannot resolve the Git common directory for %s\n' "$CHECKOUT" >&2; exit 11 ;;
+  *) printf 'STOP [11] the Git common directory for %s is not readable\n' "$CHECKOUT" >&2; exit 11 ;;
+esac
 
-# Each lock directory records who holds it in plain text, so a refusal can NAME
-# the conflict instead of printing a hash. A refusal nobody can act on is the
-# failure mode this whole change exists to remove.
+# Read-only views of the paths the library resolved. They are NOT a second
+# derivation — nothing here recomputes a root, a hash or a name — they are the
+# library's own values under the names this script's --status branch and its pin
+# reporting already use. LOCK_DIR is the TASK lease: the name is kept because the
+# thing being pinned, an actor tree that belongs to a task, is the task's.
+LOCK_ROOT="$WL_LEASE_ROOT"
+LOCK_DIR="$WL_LEASE_TASK_DIR"
+CHECKOUT_LOCK_DIR="$WL_LEASE_CHECKOUT_DIR"
+
+# The library takes both leases in the task-then-checkout order, records who
+# holds each in plain text, and rolls the task lease back if the checkout lease
+# is refused. What stays here is the REFUSAL WORDING and the exit code — the
+# library prints nothing and standardises neither, because this dispatcher's
+# refusals and the carrier's are each their own program's contract.
+#
+# A refusal must NAME the conflict rather than print a hash: a refusal nobody can
+# act on is the failure mode this whole change exists to remove. Holder fields
+# come back empty when the metadata is unreadable, and empty renders as
+# "unrecorded" — never as a free lease.
+#
+# IT MUST ALSO NAME THE RIGHT PROGRAM. The lease became shared, so the holder of
+# a lease this dispatcher is refused is no longer necessarily a dispatcher: an
+# attended carry takes the same two leases through the same library. These lines
+# said "another dispatcher" unconditionally, and against a carrier-held lease
+# that is a false statement pointing the operator at the wrong process to look
+# for. The library already records which program holds each lease
+# (WL_LEASE_HOLDER_PROGRAM); this reads it.
+#
+# The vocabulary is the CARRIER'S, deliberately (carry-turn.sh 778-783): the two
+# transports refuse each other, so an operator reading one refusal has to
+# recognise the program named in the other. What is NOT shared is the message
+# structure — this dispatcher keeps its own STOP-code shape, its own detail
+# lines and its own remedy sentence, and the library still prints nothing. The
+# holder label is the only thing held in common.
+#
+# THE LABEL DROPPED "another". It read "another dispatcher" and "another Work
+# Loop run", which is true from inside a refused dispatcher and false everywhere
+# else: --status now renders through this same function, and a status report is
+# not a second run competing with the holder — it is a reader asking who is
+# there. "another" would have made every status line quietly claim a contention
+# that is not happening. The correction plan's step 5 fixes the vocabulary at
+# this one point for exactly that reason, and the four renderings below are its
+# wording verbatim. The refusal sites lose nothing: "STOP [17] a dispatcher
+# holds task X" already says a competing run was refused, in the STOP code.
+holder_label() { # -> a phrase naming who holds the lease
+  case "${WL_LEASE_HOLDER_PROGRAM:-}" in
+    carry)    printf 'an attended carry' ;;
+    dispatch) printf 'a dispatcher' ;;
+    "")       printf 'a Work Loop run (program unrecorded)' ;;
+    *)        printf 'a Work Loop run (%s)' "$WL_LEASE_HOLDER_PROGRAM" ;;
+  esac
+}
+
+# EXIT 17 IS THE ONE REFUSAL THAT USED TO LEAVE NOTHING BEHIND.
+#
+# It is taken before this run owns anything, so the refusal reached stderr and
+# nowhere else. That is invisible to an unattended dispatcher whose terminal
+# nobody is watching, which is exactly what the live cross-transport hop of
+# 2026-08-14 met: the dispatcher refused correctly at 17 while the attended
+# carrier held the lease, and the requested --log-dir was never even created, so
+# the losing transport left no evidence at all. The refusal was right and
+# unprovable, which for this spike is the same as missing.
+#
+# THE FIRST FIX PUT THE RECORD IN THE WRONG PLACE. It moved the run-evidence
+# block above acquire_lock, so the refusal had a run log to write into — inside
+# the checkout the operator had pointed --log-dir at. But a dispatcher that has
+# LOST admission owns neither lease, and a run that owns neither lease is not
+# entitled to a single byte of that working tree. Two runs racing for one
+# checkout would each leave marks in the other's tree, and the whole meaning of
+# losing admission is that the loser changes nothing. It also broke the next run
+# for real: an unstaged `refused-runs/` is an out-of-allowlist change, so the
+# following admitted dispatcher stopped at 18 over litter the refusal left.
+#
+# SO THE RECORD LIVES UNDER THE SHARED LEASE ROOT, in the Git common directory.
+# That location is not a convenience — it is the only one this process is already
+# entitled to write to before it owns anything, because taking a lease means
+# creating a directory there, and it is the one place EVERY linked worktree of
+# the repository can read. No new state store and no new command surface: this is
+# a `refusals/` sibling of the lease directories the same run would have created
+# had it won.
+#
+# Nothing globs the lease root expecting only `*.lock`, so a sibling is additive
+# (logs/scripts/work-loop-lease.sh addresses its two lease directories by exact
+# path; --status does the same).
+REFUSAL_DIR="$WL_LEASE_ROOT/refusals"
+REFUSAL_LOG=""
+REFUSAL_UNAVAILABLE=0
+
+# OPENED LAZILY, on the first line that needs it. An admitted run must file no
+# refusal record at all — a `refusals/` entry from a run that was never refused
+# is a false one, and the harness reads the absence as part of the contract.
+#
+# The name carries timestamp, pid and task, and DELIBERATELY NOT the lock key:
+# LOCK_KEY is unassigned on this path since the lease moved into the shared
+# library, and a name built from it would silently collapse to an empty field.
+# The pid is the discriminator that actually varies, and it is the one a refused
+# run can state about itself without asking the lease for anything.
+#
+# A FAILURE HERE IS ANNOUNCED, never swallowed. Silence would leave the operator
+# reading a refusal that names no record, with no way to tell "no record was
+# written" from "the record is somewhere I did not look".
+open_refusal_record() { # -> 0 with REFUSAL_LOG set, 1 otherwise
+  [ -n "$REFUSAL_LOG" ] && return 0
+  [ "$REFUSAL_UNAVAILABLE" -eq 1 ] && return 1
+  local cand
+  if ! mkdir -p "$REFUSAL_DIR" 2>/dev/null; then
+    REFUSAL_UNAVAILABLE=1
+    printf 'WARNING: cannot create the refusal-record directory %s — this refusal reaches the terminal only.\n' \
+      "$REFUSAL_DIR" >&2
+    return 1
+  fi
+  cand="$REFUSAL_DIR/$(date '+%Y%m%dT%H%M%S')-$$-$TASK.refusal"
+  if ! : >"$cand" 2>/dev/null; then
+    REFUSAL_UNAVAILABLE=1
+    printf 'WARNING: cannot open a refusal record at %s — this refusal reaches the terminal only.\n' \
+      "$cand" >&2
+    return 1
+  fi
+  REFUSAL_LOG="$cand"
+  return 0
+}
+
+# Two functions carry the fix. r17() writes one already-formatted line to BOTH
+# operator channels — the stderr wording below is unchanged, and what is new is
+# that the same bytes also reach the refusal record. refuse_17() writes the
+# machine-readable end of the record, names its path, and exits.
+r17() { # one already-formatted line or block
+  printf '%s\n' "$1" >&2
+  open_refusal_record && printf '%s\n' "$1" >>"$REFUSAL_LOG"
+  return 0
+}
+
+# The machine-readable half. The lines above are what an operator reads; this one
+# is what a later reader — a harness, a grep, the next unit's evidence — can match
+# without parsing prose. Written LAST, so its presence also says the refusal ran
+# to the end rather than dying halfway through reporting itself.
+#
+# `actor_launched=no` is STATED, not left to be inferred. The value of this record
+# is that it is written on a path which provably never reaches launch_actor(), and
+# a reader should not have to know where it came from to know that. Nothing else
+# in this script writes the `terminal-record` prefix, so a match is unambiguous.
+#
+# Empty holder fields render as "unrecorded", never as a free lease — the same
+# rule holder_label() follows, for the same reason.
+#
+# THE PATH IS PRINTED. The record no longer sits where the operator asked for
+# their logs, so a refusal that did not say where it went would be evidence
+# nobody can find — the same defect one directory over.
+refuse_17() { # -> never returns
+  if [ -n "$REFUSAL_LOG" ]; then
+    printf 'terminal-record outcome=refused code=17 task=%s resource=%s refusal=%s holder_program=%s holder_pid=%s holder_task=%s holder_checkout=%s actor_launched=no\n' \
+      "$TASK" \
+      "${WL_LEASE_RESOURCE:-unrecorded}" \
+      "${WL_LEASE_REFUSAL:-unrecorded}" \
+      "${WL_LEASE_HOLDER_PROGRAM:-unrecorded}" \
+      "${WL_LEASE_HOLDER_PID:-unrecorded}" \
+      "${WL_LEASE_HOLDER_TASK:-unrecorded}" \
+      "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}" \
+      >>"$REFUSAL_LOG"
+    printf '  refusal record: %s\n' "$REFUSAL_LOG" >&2
+    printf '  the requested --log-dir was NOT created: this run lost admission and wrote nothing into the checkout.\n' >&2
+  fi
+  exit 17
+}
+
 acquire_lock() {
-  mkdir -p "$LOCK_ROOT" 2>/dev/null \
-    || { printf 'STOP [11] cannot create the lock root %s\n' "$LOCK_ROOT" >&2; exit 11; }
+  wl_lease_acquire dispatch "$$"
+  case "$?" in
+    0) return 0 ;;
+    1) printf 'STOP [11] cannot create the lock root %s\n' "$LOCK_ROOT" >&2; exit 11 ;;
+  esac
 
-  if mkdir "$LOCK_DIR" 2>/dev/null; then
-    LOCK_OWNED=1
-    printf '%s\n' "$$" >"$LOCK_DIR/pid"
-    printf '%s\n' "$TASK" >"$LOCK_DIR/task"
-    printf '%s\n' "$CHECKOUT" >"$LOCK_DIR/checkout"
-  else
-    if [ -f "$LOCK_DIR/survivors" ]; then
-      printf 'STOP [17] the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)\n' "$TASK" "$LOCK_DIR" >&2
-      sed 's/^/  /' "$LOCK_DIR/survivors" >&2
-      exit 17
+  local who surv; who="$(holder_label)"
+
+  if [ "$WL_LEASE_RESOURCE" = task ]; then
+    # The PINNED lines are left program-agnostic on purpose. "the previous run"
+    # is true whichever transport pinned it, so there is nothing false to fix
+    # here, and the survivor pids inside the lease are what the operator acts on.
+    if [ "$WL_LEASE_REFUSAL" = pinned ]; then
+      r17 "$(printf 'STOP [17] the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)' "$TASK" "$LOCK_DIR")"
+      surv="$(sed 's/^/  /' "$WL_LEASE_SURVIVORS" 2>/dev/null)"
+      [ -n "$surv" ] && r17 "$surv"
+      refuse_17
     fi
-    printf 'STOP [17] another dispatcher holds task %s (%s)\n' "$TASK" "$LOCK_DIR" >&2
-    printf '  it is running in checkout: %s\n' "$(cat "$LOCK_DIR/checkout" 2>/dev/null || printf 'unrecorded')" >&2
-    exit 17
+    r17 "$(printf 'STOP [17] %s holds task %s (%s)' "$who" "$TASK" "$LOCK_DIR")"
+    r17 "$(printf '  it is running in checkout: %s' "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}")"
+    refuse_17
   fi
 
-  # Second resource. Taken AFTER the task lock, and the task lock is released if
-  # this one is refused — holding a lock we are not going to use would refuse the
-  # next run for a reason that no longer exists.
-  if mkdir "$CHECKOUT_LOCK_DIR" 2>/dev/null; then
-    CHECKOUT_LOCK_OWNED=1
-    printf '%s\n' "$$" >"$CHECKOUT_LOCK_DIR/pid"
-    printf '%s\n' "$TASK" >"$CHECKOUT_LOCK_DIR/task"
-    printf '%s\n' "$CHECKOUT" >"$CHECKOUT_LOCK_DIR/checkout"
-  else
-    local holder; holder="$(cat "$CHECKOUT_LOCK_DIR/task" 2>/dev/null || printf 'an unrecorded task')"
-    rm -rf "$LOCK_DIR" 2>/dev/null; LOCK_OWNED=0
-    if [ -f "$CHECKOUT_LOCK_DIR/survivors" ]; then
-      printf 'STOP [17] a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)\n' "$CHECKOUT_LOCK_DIR" >&2
-      sed 's/^/  /' "$CHECKOUT_LOCK_DIR/survivors" >&2
-      exit 17
-    fi
-    printf 'STOP [17] another dispatcher is already running in this checkout (%s)\n' "$CHECKOUT" >&2
-    printf '  it is running task: %s\n' "$holder" >&2
-    printf '  two dispatchers in one checkout share a working tree and index, so either could\n' >&2
-    printf '  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.\n' >&2
-    exit 17
+  if [ "$WL_LEASE_REFUSAL" = pinned ]; then
+    r17 "$(printf 'STOP [17] a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)' "$CHECKOUT_LOCK_DIR")"
+    surv="$(sed 's/^/  /' "$WL_LEASE_SURVIVORS" 2>/dev/null)"
+    [ -n "$surv" ] && r17 "$surv"
+    refuse_17
   fi
+  r17 "$(printf 'STOP [17] %s is already running in this checkout (%s)' "$who" "$CHECKOUT")"
+  r17 "$(printf '  it is running task: %s' "${WL_LEASE_HOLDER_TASK:-an unrecorded task}")"
+  # "two Work Loop runs", not "two dispatchers": the hazard is one working tree
+  # and one index with two live writers in it, and that is the same hazard
+  # whichever transport the other writer arrived by.
+  r17 '  two Work Loop runs in one checkout share a working tree and index, so either could'
+  r17 '  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.'
+  refuse_17
 }
 
 # A pinned lock is NOT released, by anything, including the EXIT trap. It is the
@@ -703,44 +902,61 @@ acquire_lock() {
 # while a descendant of the stopped actor may still be alive: the process that
 # knows about the survivors is about to exit, so the only thing that can carry
 # that knowledge forward is the lock it leaves behind.
-LOCK_PINNED=0
+#
+# The pin FILE — its two machine-read line formats, the both-leases rule, and the
+# guards that stop a pin claiming a lease this run never acquired — is the
+# library's. What stays here is the OPERATOR-FACING line, which is this
+# dispatcher's wording and names this dispatcher's exit 17.
+#
+# THE LIBRARY ANSWERS WITH THREE OUTCOMES AND THEY NEED THREE ANSWERS. This used
+# to read `wl_lease_pin ... || return 0`, which merged every one of them into
+# silence:
+#
+#   0  pinned, and every owned lock carries durable evidence a later run reads.
+#   1  nothing was owned, so nothing was pinned — the same condition the guard on
+#      LOCK_OWNED used to express here, and the same answer: nothing to report.
+#   2  owned and pinned, but at least one lock has NO durable record. The
+#      DIRECTORIES are still there and still refuse a second dispatcher; what is
+#      missing is the written reason inside them.
+#
+# rc=2 is why the merge mattered. This transport walks away unattended, so a
+# silence here leaves the operator in front of a held lock with nothing inside
+# explaining it, and the obvious reading — a stale lock, safe to delete — is the
+# unsafe one. It is said out loud, on BOTH channels, and the rc=0 line is
+# withheld: announcing a pin that recorded nothing is the same false claim in the
+# opposite direction.
+#
+# An unrecognised code is reported as unrecognised rather than assumed benign:
+# the library may grow a fourth outcome, and inheriting silence by default is
+# exactly how this defect arrived the first time.
 pin_lock() { # survivor-pids, unknown-reason
-  local survivors="${1:-}" unknown="${2:-}"
-  [ "$LOCK_OWNED" -eq 1 ] || return 0
-  LOCK_PINNED=1
-  {
-    printf 'PINNED by dispatcher pid %s at %s\n' "$$" "$(date '+%Y-%m-%dT%H:%M:%S')"
-    printf 'task: %s\n' "$TASK"
-    [ -n "$survivors" ] && printf 'descendants still running: %s\n' "$survivors"
-    [ -n "$unknown" ]   && printf 'sweep incomplete: %s\n' "$unknown"
-    printf '\n'
-    printf 'This lock is deliberately NOT released. A second dispatcher must not run on this\n'
-    printf 'task while a descendant of the stopped actor may still be alive.\n'
-    printf 'To clear it: confirm the pids above are gone (`ps -o pid,ppid,pgid,command -p <pid>`),\n'
-    printf 'kill any that remain, then `rm -rf %s`.\n' "$LOCK_DIR"
-  } >"$LOCK_DIR/survivors" 2>/dev/null
-  # BOTH locks are pinned, because a survivor holds both resources. It belongs to
-  # this task, so a second dispatcher on the same task must be refused; and it is
-  # still running inside this checkout's working tree, so a second dispatcher on
-  # a DIFFERENT task in that checkout must be refused too. Pinning only the task
-  # lock would leave the checkout open to exactly the contamination the survivor
-  # makes possible.
-  [ "$CHECKOUT_LOCK_OWNED" -eq 1 ] && cp "$LOCK_DIR/survivors" "$CHECKOUT_LOCK_DIR/survivors" 2>/dev/null
-  local msg="  the task lock is PINNED at $LOCK_DIR (and this checkout's lock at $CHECKOUT_LOCK_DIR) — a second dispatcher is refused (exit 17) until you clear them by hand."
+  local rc=0 msg
+  # Split from any `local` declaration on purpose: `local x="$(cmd)"` reports
+  # `local`'s status and not the command's, and the whole function now turns on
+  # the code captured here.
+  wl_lease_pin "${1:-}" "${2:-}" "$TASK"; rc=$?
+  case "$rc" in
+    0)
+      msg="  the task lock is PINNED at $LOCK_DIR (and this checkout's lock at $CHECKOUT_LOCK_DIR) — a second dispatcher is refused (exit 17) until you clear them by hand." ;;
+    1)
+      return 0 ;;
+    2)
+      msg="  WARNING: the pin RECORD could not be persisted for: ${WL_LEASE_PIN_FAILED:-an unnamed lock}.
+  Those lock directories are deliberately RETAINED and were NOT released ($LOCK_DIR, and this checkout's lock at $CHECKOUT_LOCK_DIR), so a second dispatcher is still refused (exit 17).
+  What is missing is the written reason inside them, so a later run and --status cannot say why they are held. Do NOT read them as a removable stale lock: clear them by hand only after confirming the processes named above are gone." ;;
+    *)
+      msg="  WARNING: the lease library returned an UNRECOGNISED pin result ($rc), so this dispatcher cannot tell what was recorded.
+  Treat the lock directories as retained ($LOCK_DIR, and this checkout's lock at $CHECKOUT_LOCK_DIR): they were NOT released, and a second dispatcher is still refused (exit 17). Clear them by hand only after confirming the processes named above are gone." ;;
+  esac
   printf '%s\n' "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
+  return 0
 }
 
-release_lock() {
-  # Pinned beats owned. Every exit path calls this — die(), the EXIT trap, the
-  # signal handler — so the check belongs here rather than at each call site,
-  # where one missed caller would silently undo the invariant.
-  [ "$LOCK_PINNED" -eq 1 ] && return 0
-  [ "$LOCK_OWNED" -eq 1 ] && rm -rf "$LOCK_DIR" 2>/dev/null
-  [ "$CHECKOUT_LOCK_OWNED" -eq 1 ] && rm -rf "$CHECKOUT_LOCK_DIR" 2>/dev/null
-  LOCK_OWNED=0
-  CHECKOUT_LOCK_OWNED=0
-}
+# Pinned beats owned, and that check lives inside the library rather than at each
+# call site — one missed caller would silently undo the invariant. Every exit
+# path of this script reaches here: die(), the EXIT trap, the signal handler.
+release_lock() { wl_lease_release; }
 
 # ------------------------------------------------- descendant identification
 #
@@ -1189,6 +1405,13 @@ trap 'on_signal TERM' TERM
 
 # --status is read-only by contract: it must not take the lock, because its whole
 # purpose is to be safe to run while another dispatcher holds it.
+#
+# EVERY WRITE THIS RUN MAKES INTO THE CHECKOUT IS BELOW THIS LINE. The run
+# evidence used to be opened above it, so that a refusal at 17 had somewhere to
+# write; that record now goes under the shared lease root instead (see
+# open_refusal_record above), which frees this ordering to say the thing it
+# should always have said — a dispatcher that has not won BOTH leases writes
+# nothing into the working tree it did not win.
 [ "$STATUS_MODE" -eq 1 ] || acquire_lock
 
 # ----------------------------------------------------------------- --status
@@ -1214,9 +1437,20 @@ if [ "$STATUS_MODE" -eq 1 ]; then
   else
     printf 'owner: this checkout declares no writer (no logs/work-loop/.owner)\n'
   fi
+  # WHO holds it, not only WHICH TASK. This line named a task and left the
+  # holder to be assumed, and the assumption an operator makes from a dispatcher's
+  # own output is "a dispatcher" — wrong whenever an attended carry holds the
+  # lease, which is the case the shared lease exists to make possible.
+  #
+  # It renders through holder_label(), the same formatter the acquisition
+  # refusals use, so the two surfaces cannot drift apart again. That function
+  # reads WL_LEASE_HOLDER_*, so the lease's own metadata is loaded first —
+  # wl_lease__read_holder only `cat`s the four files, which keeps this branch as
+  # read-only as the rest of --status.
   if [ -d "$CHECKOUT_LOCK_DIR" ]; then
-    printf 'checkout-lock: HELD by task %s (%s)\n' \
-      "$(cat "$CHECKOUT_LOCK_DIR/task" 2>/dev/null || printf 'unrecorded')" "$CHECKOUT_LOCK_DIR"
+    wl_lease__read_holder "$CHECKOUT_LOCK_DIR"
+    printf 'checkout-lock: HELD by %s running task %s (%s)\n' \
+      "$(holder_label)" "${WL_LEASE_HOLDER_TASK:-an unrecorded task}" "$CHECKOUT_LOCK_DIR"
   else
     printf 'checkout-lock: free (%s)\n' "$CHECKOUT_LOCK_DIR"
   fi
@@ -1259,6 +1493,12 @@ EOF
     fi
   elif [ -d "$LOCK_DIR" ]; then
     st_pid="$(cat "$LOCK_DIR/pid" 2>/dev/null)"
+    # The task lease's own holder metadata, for the two branches below that say
+    # something about WHO is there. Read after the checkout branch above, which
+    # loaded the OTHER lease into the same variables — each site re-reads the
+    # lease it is about rather than inheriting the previous one.
+    wl_lease__read_holder "$LOCK_DIR"
+    st_who="$(holder_label)"
     # Three states, not two. See pid_state() above for why "kill -0 failed" is
     # not the same question as "the process is gone".
     st_probe="$(pid_state "$st_pid")"
@@ -1266,9 +1506,15 @@ EOF
     st_pid_why="${st_probe#*|}"       # the evidence behind that verdict
     case "$st_pid_state" in
       LIVE)
-        printf 'run: IN FLIGHT — dispatcher pid %s holds %s\n' "$st_pid" "$LOCK_DIR"
+        printf 'run: IN FLIGHT — %s at pid %s holds %s\n' "$st_who" "$st_pid" "$LOCK_DIR"
         printf '     do not edit the state file by hand until it exits.\n'
-        printf '     to stop it: kill -TERM %s   (it terminates the actor and exits 28)\n' "$st_pid"
+        printf '     to stop it: kill -TERM %s\n' "$st_pid"
+        # The exit code belongs to THIS program, so it is claimed only when this
+        # program is the holder. Printed unconditionally it told the operator
+        # what to expect from a carrier's SIGTERM handling, which this script
+        # does not define and cannot promise.
+        [ "${WL_LEASE_HOLDER_PROGRAM:-}" = dispatch ] &&
+          printf '     (a dispatcher terminates its actor and exits 28.)\n'
         ;;
       ABSENT)
         printf 'run: STALE LOCK — %s exists but pid %s is not running.\n' "$LOCK_DIR" "$st_pid"
@@ -1279,7 +1525,13 @@ EOF
         # not know — and the only honest instruction is to go and look properly.
         printf 'run: UNKNOWN — CANNOT INSPECT pid %s holding %s\n' "${st_pid:-<unreadable>}" "$LOCK_DIR"
         printf '     why: %s\n' "$st_pid_why"
-        printf '     THIS LOCK MAY BELONG TO A LIVE DISPATCHER. Treat the run as possibly in flight:\n'
+        # WHAT THE LEASE SAYS, stated separately from what this branch could not
+        # establish. The pid is uninspectable; the recorded holder is not, and it
+        # is the one thing that tells the operator which process to go and look
+        # for. The old line asserted a dispatcher here — the least safe place to
+        # guess, because the whole verdict is that nothing could be confirmed.
+        printf '     the lease records its holder as %s.\n' "$st_who"
+        printf '     THE HOLDER MAY STILL BE LIVE. Treat the run as possibly in flight:\n'
         printf '     do not remove the lock, and do not edit the state file by hand on this answer.\n'
         printf '     The usual cause is that this caller cannot see the PID (sandbox policy or a\n'
         printf '     different owner), not that the run has ended. Re-run --status from somewhere\n'
@@ -1325,6 +1577,20 @@ EOF
 fi
 
 # ------------------------------------------------------------ run evidence
+#
+# OPENED ONLY ONCE BOTH LEASES ARE HELD, and the position is the whole point.
+# Everything above this line is admission: argument parsing, the lease library,
+# acquire_lock and the read-only --status branch. Not one of them creates,
+# truncates, allowlists or writes a path inside the requested --log-dir, so a run
+# that is refused at 17 leaves the checkout byte-identical. Its evidence goes to
+# the shared lease root instead (open_refusal_record, above acquire_lock).
+#
+# `--status` NEEDS NO GUARD HERE, and its absence is stronger than the flag it
+# replaces. The branch above exits 0 on every path, so this block is structurally
+# unreachable in status mode rather than conditionally skipped — the read-only
+# contract case 30 and case 12h assert is now a property of the control flow.
+# `--dry-run` is NOT excluded: it takes both leases, so it is an admitted run and
+# its evidence belongs where every admitted run's does.
 [ -n "$LOG_DIR" ] || LOG_DIR="$DEFAULT_LOG_DIR"
 mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
 # The dispatcher's own evidence directory is not "foreign work". When --log-dir

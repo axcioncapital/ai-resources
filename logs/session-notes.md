@@ -2,50 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-11 — Work Loop v2 bounded-execution fix plan, full task lifecycle
-
-### Summary
-Ran Claude's side of the `work-loop-v2-bounded-execution-fix-plan` Work Loop v2 task end to end:
-Unit 1 (premise-checked plan write), one correction round on five frozen findings, one final bounded
-fix (state-file cleanup), and the closing record. The task produced an operator-reviewable plan for
-the 2026-08-10 bounded-execution incident and implemented no dispatcher or operating-contract fix, as
-scoped. Task is closed.
-
-### Decisions Made
-- Codex's correction findings were reproduced by inspection before being corrected (not accepted on
-  narrative). Most consequential: dropped the plan's own leading proposal, `--allow-nested-actors N`,
-  for want of any verified authorised use case, and recast the P0 boundary from four constructions to
-  four outcomes with construction left to a design gate.
-- Operator directed a tailored structural-resolution route (Repository Problem Resolution SOP applied
-  as non-governing methodology, subordinate to the Work Loop executable core) — logged separately in
-  `decisions.md`.
-- Closure: confirmed Codex's `Close the task:` verdict (which a prior invocation had left uncommitted)
-  and reduced the state file to core § 4's four-section closing record.
-
-### Outcome
-Outcome check skipped (not requested).
-
-### Risky actions
-None — every commit stayed inside the state file's declared scope; no dispatcher, harness, or nested
-model invocation ran at any point in this task.
-
-### Findings Declined
-- The SOP's own unconfirmed gate/verdict vocabulary and its three missing sibling documents
-  (`repository-problem-resolution-sop.md:37,59`) — already recorded as a named deferral in the
-  accepted plan and the task's closing record; not queued separately, no new information to add.
-- The observation that this task's state file sat uncommitted between a Codex write and the next
-  Claude pickup twice — the operator explicitly declined to address it inside this closed task and
-  routed it through the accepted plan's own process instead; not a standalone open item.
-
-### Next Steps
-Implementation of the accepted plan's P0 outcomes has not started. The plan's own § 6.4/§ 11
-recommend opening a **new** Work Loop v2 task (not reopening this closed one) for the first outcome,
-starting with a discovery unit that establishes the incident's failure from preserved run evidence.
-That is Codex's move to frame.
-
-### Open Questions
-None.
-
 ## 2026-08-11 — Bounded-execution fix plan v0.2, three revision rounds
 
 ### Summary
@@ -651,3 +607,51 @@ decision grounded in the recorded PARTIAL evidence — not something this correc
 
 ### Open Questions
 None.
+
+## 2026-08-15 — Work Loop v2 Unit 11: closed the double-winner stale-reclaim race, task closed
+
+### Summary
+
+Ran Claude's half of Work Loop v2 Unit 11 on task `cross-transport-concurrency-correction`: the final independent Spec review had reproduced a high-severity race where the shared live-lease helper's stale-reclaim arbitration could return success to two reclaimers. Verified all three of the review's claims by inspection, then closed the race with an exclusive reclaim claim over the destructive rename/recreate section, added a deterministic regression (case 22) that forces the exact interleaving instead of racing and hoping, and proved red-then-green against the pre-fix and post-fix helper. Codex's re-review passed and recommended merge; this session then wrote the closing hop, updating the durable Phase 1 record and reducing the task file to its § 4 closing record. The task is now closed (`turn: operator`); nothing has merged or been pushed.
+
+### Decisions Made
+
+- **Unit 11 mechanism: an exclusive reclaim claim, not more re-checking.** No check-then-act sequence closes a scan-then-rename race — there is always a window between the last check and the `mv`. The destructive section of a reclaim now runs while the reclaimer holds an exclusive claim directory (`<lease>.reclaiming`, taken with the same atomic `mkdir` the lease itself uses), reusing the dead-claim-owner recovery already in the acquire loop rather than adding a second mechanism.
+- **Ran the full carrier and dispatcher suites rather than a "narrow slice."** The brief asked for narrow test slices; neither suite supports selecting individual cases (checked for a filter flag in each — none exists). Ran both suites unchanged instead of writing throwaway harness code, and recorded the deviation in the state file.
+- **The closing hop updated two files, not the state file alone.** Codex's close verdict named both the task file and the durable Phase 1 record. Followed the verdict — the task's own objective includes keeping the Phase 1 record accurate — and flagged the tension with the general "closing changes no other file" rule in chat rather than silently picking a side.
+
+### Outcome
+
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+
+Skipped (not requested).
+
+### Risky actions
+
+None — the fix, its regression test, and the closing record update were all bounded by an authorized-changes list in the brief, and every claim was verified by inspection before any code changed.
+
+### Review status
+
+The lease library change is a shared-state concurrency primitive, arguably borderline for `docs/audit-discipline.md` § Structural change classes, but not a clean match for any listed bullet (no hook, permission, CLAUDE.md, new command/skill, symlink, or auto-write/auto-commit automation). Regardless of classification, it received exactly the review a match would require: Codex's Spec-axis review reproduced the defect independently before this fix existed, and Codex's narrow re-review independently confirmed the fix afterward and recommended merge. Not `unassessed`.
+
+### Session Assessment
+
+Feedback collection skipped (not requested).
+
+### Findings Declined
+
+- **Stale test comment in `work-loop-lease.test.sh` case 19** (describes the `.reclaiming` marker as a shape "the correction changed", now only half true after Unit 11 made it the current build's own mechanism). Already recorded with reason as accepted limitation #19 in the Phase 1 durable record; cosmetic, and fixing it would widen the safety commit past the defect it addressed. Not queued separately.
+
+### Next Steps
+
+1. Operator merge decision on `session/2026-08-14-concurrency-fix-2` — read `logs/work-loop/work-loop-v2-cross-transport-concurrency-phase-1.md` in full first (19 accepted limitations, both review-axis outcomes).
+2. No pending Work Loop v2 hop remains open on this task.
+3. `logs/improvement-log.md`, 2026-08-15 entry — reconcile `/work-loop-v2`'s "a closing invocation changes no other file" rule against a close verdict that legitimately names a second durable-record file to update.
+
+### Open Questions
+
+None.
+
+Findings: 2 — queued 1 (severity: medium), declined 1. 1 + 1 = 2.
