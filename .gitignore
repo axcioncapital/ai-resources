@@ -113,4 +113,4 @@ AGENTS.md
 !.agents/skills/work-loop-v2/
 !.agents/skills/handoff-thread/
 !.agents/skills/reorient/
-!.agents/skills/resolve-repository-problem/
+!.agents/skills/diagnose-and-fix/

@@ -360,7 +360,7 @@ Mode belongs to an admitted Work Loop unit and to nothing else: a request routed
 ### Repository problems
 
 When one specific repository behavior, state, command, workflow, configuration or measurable
-performance characteristic is broken, `$resolve-repository-problem` owns the whole diagnosis and
+performance characteristic is broken, `$diagnose-and-fix` owns the whole diagnosis and
 bounded-repair path. Route to it as a Codex specialist: open no Work Loop unit, resolve no executable
 core, and add no parallel state. Audits, backlog batches, feature work and already-approved
 implementation keep their own owners; they are not repository-problem invocations merely because

@@ -87,7 +87,7 @@ LOCAL_AGENTS=$(jq -r '.agents.local[]?' "$MANIFEST" 2>/dev/null)
 
 # Keep this static and one-line: it is the explicit, reviewable exception to
 # manifest opt-in for skills that must be reachable wherever shared commands are.
-CORE_SHARED_SKILLS="resolve-repository-problem"
+CORE_SHARED_SKILLS="diagnose-and-fix"
 
 # Agent skills are core + opt-in — see the header. skills.shared is the only
 # used `shared` array in the manifest; commands/agents.shared are documentation.

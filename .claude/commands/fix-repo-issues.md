@@ -14,7 +14,7 @@ Scan accumulated friction-log, improvement-log, innovation-registry, and similar
 
 Sessions B and C may be the same calendar moment but are separate Claude Code sessions. This mirrors `/friday-act`'s plan-then-execute split.
 
-**Boundary vs `$resolve-repository-problem`.** The Codex skill is reactive end-to-end resolution of one specific fault (something broke now → reproduce → diagnose → bounded repair or capability handoff → prove). `/fix-repo-issues` is proactive batch-planning from the persistent backlog (drain accumulated items → ordered multi-item plan). No overlap in trigger, scope, or input source.
+**Boundary vs `$diagnose-and-fix`.** The Codex skill is reactive end-to-end resolution of one specific fault (something broke now → reproduce → diagnose → bounded repair or capability handoff → prove). `/fix-repo-issues` is proactive batch-planning from the persistent backlog (drain accumulated items → ordered multi-item plan). No overlap in trigger, scope, or input source.
 
 **Boundary vs `/fix-project-issues`.** `/fix-project-issues` operates on exactly one scope (the project at hand), reads its dated diagnostic *reports* plus its logs, and **executes** the do-now fixes in the same session. This command is multi-scope (operator-selected across the workspace), logs-only, and **plan-only** (execution happens in a separate session). Use `/fix-project-issues` to clean up one project now; use this to drain the accumulated backlog across scopes for a later fix session.
 
@@ -286,7 +286,7 @@ Do NOT execute any fixes in this session. Do NOT auto-spawn the execution sessio
 - **Boundary recap.** Sibling commands and their distinct triggers:
   - `/open-items` — read-only inline backlog report (no plan file).
   - `/fix-repo-issues` — proactive batch-plan from the persistent backlog (this command).
-  - Codex `$resolve-repository-problem` — reactive end-to-end resolution of one specific fault.
+  - Codex `$diagnose-and-fix` — reactive end-to-end resolution of one specific fault.
   - `/friday-act` — Friday-cadence orchestrator (audit-driven, tier-aware).
   - `/innovation-sweep` — innovation-registry triage (untriaged detected entries).
   - `/develop-ai-resource` — inbox brief fulfillment (build-shaped items). It qualifies the need, then hands a qualified brief to `/create-skill`.

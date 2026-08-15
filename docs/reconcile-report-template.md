@@ -50,7 +50,7 @@
 **Output-level fix** → applied directly by the operator
 {Specific, actionable change to the current artifact. Omit this subsection if no output-level fix applies.}
 
-**Workflow-level fix** → routes to Codex `$resolve-repository-problem` (observed repo-level fault) or a direct project CLAUDE.md/skill edit (settled local correction)
+**Workflow-level fix** → routes to Codex `$diagnose-and-fix` (observed repo-level fault) or a direct project CLAUDE.md/skill edit (settled local correction)
 {Specific step to add/remove/reorder. Name which. Omit if no workflow-level fix applies.}
 
 **Repo-level fix** → routes to `logs/improvement-log.md` (cross-session pattern) or a direct rubric/resource-map edit (single obvious gap)

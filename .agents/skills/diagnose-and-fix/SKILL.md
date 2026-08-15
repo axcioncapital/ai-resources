@@ -1,9 +1,9 @@
 ---
-name: resolve-repository-problem
-description: Resolves one specific repository fault through executable reproduction, hypothesis testing, bounded repair, and proof. Use when repo behavior, state, commands, workflows, configuration, or performance are broken. Do not use for audits, backlog batches, or feature work.
+name: diagnose-and-fix
+description: Diagnoses and fixes one specific repository fault through executable reproduction, hypothesis testing, bounded repair, and proof. Use when repo behavior, state, commands, workflows, configuration, or performance are broken. Do not use for audits, backlog batches, or feature work.
 ---
 
-# Resolve Repository Problem
+# Diagnose and Fix
 
 Diagnose and, where justified, repair one observed repository problem. The center
 of the method is a named executable feedback loop that goes red on the reported

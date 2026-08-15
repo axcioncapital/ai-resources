@@ -1,4 +1,0 @@
-interface:
-  display_name: "Resolve Repository Problem"
-  short_description: "Diagnose and prove a bounded repository repair"
-  default_prompt: "Use $resolve-repository-problem to diagnose and resolve this specific repository failure with executable evidence."

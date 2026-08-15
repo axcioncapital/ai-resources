@@ -162,7 +162,7 @@ The shared status logs — `logs/improvement-log.md` and `logs/friction-log.md` 
 
 ## Foreign-files diagnostic shortcut
 
-When `git status` flags many `?? .claude/commands/*.md` files at workspace-root, check symlinks first — most are symlinks to canonical bodies in `ai-resources/`, not real new files from a runaway session. Run this before escalating to Codex `$resolve-repository-problem`:
+When `git status` flags many `?? .claude/commands/*.md` files at workspace-root, check symlinks first — most are symlinks to canonical bodies in `ai-resources/`, not real new files from a runaway session. Run this before escalating to Codex `$diagnose-and-fix`:
 
 ```bash
 find .claude/commands -type l | wc -l

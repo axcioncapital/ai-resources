@@ -156,7 +156,7 @@ The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`
    - Both `EXCLUDE_*` lists must stay static, single-line, start-of-line literal assignments. `/fix-symlinks` re-reads them from the hook with `sed` to keep one source of truth; a computed or reflowed value parses to empty and silently disables its drift scan. Gate where the lists are *applied*, never how they are *assigned*.
 4. The hook walks upward from `$CLAUDE_PROJECT_DIR` to find the nearest `ai-resources/`, so it works for any project under the workspace root.
 5. Symlinks are relative (`../../../../ai-resources/.claude/...`).
-6. Agent skills remain manifest-opt-in except for the hook's static, one-line `CORE_SHARED_SKILLS` set. That exception is reserved for workspace-wide capabilities replacing globally distributed commands; as of 2026-08-15 it contains only `resolve-repository-problem`.
+6. Agent skills remain manifest-opt-in except for the hook's static, one-line `CORE_SHARED_SKILLS` set. That exception is reserved for workspace-wide capabilities replacing globally distributed commands; as of 2026-08-15 it contains only `diagnose-and-fix`.
 
 **Effect:** When you add a new command or agent to ai-resources, every project picks it up automatically on the next session start. Core skills do too. Other shared skills require an explicit `skills.shared[]` entry; commands and agents need no manifest edit unless the project needs to opt out.
 

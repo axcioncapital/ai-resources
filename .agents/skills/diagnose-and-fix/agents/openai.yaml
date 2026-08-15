@@ -1,0 +1,4 @@
+interface:
+  display_name: "Diagnose and Fix"
+  short_description: "Diagnose and prove a bounded repository repair"
+  default_prompt: "Use $diagnose-and-fix to diagnose and resolve this specific repository failure with executable evidence."

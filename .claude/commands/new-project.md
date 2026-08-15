@@ -403,9 +403,9 @@ All steps are idempotent — re-running `/new-project` on an existing direct pro
      [ -e "$LNK" ] || ln -s "$SRCCMD" "$LNK"
    done
    mkdir -p "projects/{project-name}/.agents/skills"
-   SKILL_SRC="$AI_RES/.agents/skills/resolve-repository-problem"
-   SKILL_LNK="projects/{project-name}/.agents/skills/resolve-repository-problem"
-   [ -d "$SKILL_SRC" ] || { echo "ERROR: core skill missing: resolve-repository-problem"; exit 1; }
+   SKILL_SRC="$AI_RES/.agents/skills/diagnose-and-fix"
+   SKILL_LNK="projects/{project-name}/.agents/skills/diagnose-and-fix"
+   [ -d "$SKILL_SRC" ] || { echo "ERROR: core skill missing: diagnose-and-fix"; exit 1; }
    REL_SKILL_SRC=$(python3 -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$SKILL_SRC" "$(dirname "$SKILL_LNK")")
    [ -e "$SKILL_LNK" ] || [ -L "$SKILL_LNK" ] || ln -s "$REL_SKILL_SRC" "$SKILL_LNK"
    echo "Core command set and repository-problem skill symlinked (no auto-sync hook installed — direct project)."
@@ -417,7 +417,7 @@ All steps are idempotent — re-running `/new-project` on an existing direct pro
 
    **But when `logs/` is created — lazily or otherwise — provision `logs/scripts/` with it**, using the same copy block as engineered step 4a. `/wrap-session` Step 3 calls `logs/scripts/check-archive.sh` on a plain relative path with no walk-up, so a direct project that grows a `logs/` directory without `scripts/` fails that step at every wrap and never archives. Deferring the *register* is deliberate; deferring the *archiver* just reproduces the gap this rule exists to close.
 
-9. **Report and hand off.** Report: route = direct; project directory created (no `pipeline/`); lean `CLAUDE.md` written with the route line; `settings.json` (permissions + sanity hook, no auto-sync); `settings.local.json` grant; core command set symlinked (N of 10); `resolve-repository-problem` skill symlinked; git initialized, initial commit left unpushed. Skipped by design: pipeline, Stages 3a–5, Architecture Gate, the `/reconcile` pointer, and the `/repo-dd` / `/analyze-workflow` reminder. Then **author the requested deliverables directly** — research, drafting, and review still happen; they produce deliverables, not governance artifacts.
+9. **Report and hand off.** Report: route = direct; project directory created (no `pipeline/`); lean `CLAUDE.md` written with the route line; `settings.json` (permissions + sanity hook, no auto-sync); `settings.local.json` grant; core command set symlinked (N of 10); `diagnose-and-fix` skill symlinked; git initialized, initial commit left unpushed. Skipped by design: pipeline, Stages 3a–5, Architecture Gate, the `/reconcile` pointer, and the `/repo-dd` / `/analyze-workflow` reminder. Then **author the requested deliverables directly** — research, drafting, and review still happen; they produce deliverables, not governance artifacts.
 
 ## Gate Protocol
 

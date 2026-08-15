@@ -1,6 +1,6 @@
 # Protected Zones
 
-> **When to read this file:** Codex `$resolve-repository-problem` reads it before a bounded repair in this repository; other change workflows read it when classifying a proposed shared-resource edit. Maintainer: operator. Update condition: a new shared asset class appears in the repo, or a `/friday-checkup` round flags a missing zone.
+> **When to read this file:** Codex `$diagnose-and-fix` reads it before a bounded repair in this repository; other change workflows read it when classifying a proposed shared-resource edit. Maintainer: operator. Update condition: a new shared asset class appears in the repo, or a `/friday-checkup` round flags a missing zone.
 >
 > **Owner:** operator (Patrik). **Purpose:** pre-classification lookup for repository changes — answers "is this path protected?" with a yes/no + required review path. **Update condition:** add a row when a real incident exposes a missing zone; do not add rows speculatively.
 
@@ -34,7 +34,7 @@
 
 ## How to use this file during a repository repair
 
-Before `$resolve-repository-problem` applies a Route B correction in this repo:
+Before `$diagnose-and-fix` applies a Route B correction in this repo:
 
 1. Read this file.
 2. For each file or directory the proposed fix would touch, check whether it matches any row above (exact match or glob match).

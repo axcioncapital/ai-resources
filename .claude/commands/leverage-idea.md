@@ -18,7 +18,7 @@ Take a messy idea dump and land it with **the command that owns its next step**.
 - `/develop-ai-resource` — any new or materially expanded durable AI resource, of **every** class.
 - `/implementation-triage` — judges an *already-proposed* implementation; `/leverage-idea` *produces* the proposal, and the operator may chain triage for an independent ROI read.
 - `/request-skill` — intake-only, no investigation. Use it to capture a brief when no investigation is wanted.
-- Codex `$resolve-repository-problem` — specific repository faults, not ideas.
+- Codex `$diagnose-and-fix` — specific repository faults, not ideas.
 
 Input: `$ARGUMENTS` — the idea dump itself (pasted notes, a ChatGPT export), or a path to a notes file. If empty, use the most recent pasted block in the conversation. If nothing is present, ask the operator for the notes and stop.
 

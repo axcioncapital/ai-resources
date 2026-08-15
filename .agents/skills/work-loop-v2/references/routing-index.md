@@ -25,7 +25,7 @@ intake-result contract stay in `SKILL.md` and are not repeated here.
 
 ### The index — Axcíon Codex specialist skills (1)
 
-- `$resolve-repository-problem` — one specific repository fault to diagnose, repair when bounded,
+- `$diagnose-and-fix` — one specific repository fault to diagnose, repair when bounded,
   and prove end to end. This is the canonical Axcíon owner; do not route the same fault to generic
   `diagnosing-bugs`.
 
@@ -42,7 +42,7 @@ Selected only where the request names their purpose. Never a generic fallback.
 - `/blindspot-scan` — an adversarial blind-spot scan; operator-invoked only.
 - `/contract-check` — has the artifact drifted from its original mandate.
 - `/expert-check` — a draft against reference principles.
-- `/memory-search` — has this been seen before; the recorded history in `logs/` and `audits/`. Returns historical evidence, never current state, so it never owns a live fault — `$resolve-repository-problem` keeps that.
+- `/memory-search` — has this been seen before; the recorded history in `logs/` and `audits/`. Returns historical evidence, never current state, so it never owns a live fault — `$diagnose-and-fix` keeps that.
 
 ### The index — Matt skills that may own a request (13)
 
@@ -52,7 +52,7 @@ Selected only where the request names their purpose. Never a generic fallback.
 - `grill-me` (Matt — stateless interview, saves nothing) — an idea to sharpen with no repo under it.
 - `wayfinder` — an effort too foggy for one session; it produces decisions, not deliverables.
 - `diagnosing-bugs` `[Claude-side only]` — generic debugging outside the Axcíon workspace. Inside
-  Axcíon, `$resolve-repository-problem` has precedence for every specific repository fault.
+  Axcíon, `$diagnose-and-fix` has precedence for every specific repository fault.
 - `triage` (Matt — incoming issues and PRs) `[Claude-side only]` — requests you did not create, piling up.
 - `implement` — build from a spec or a ticket.
 - `prototype` — a design question needing a runnable answer.
