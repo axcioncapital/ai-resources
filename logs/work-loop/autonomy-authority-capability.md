@@ -9,86 +9,144 @@ Implement and verify the approved autonomy/authority/capability proposal through
 The operator wants implementation to proceed under the compact Axcíon Standard Implementation Workflow, with unnecessary ceremony removed. `/implementation-triage` remains explicitly excluded. The existing Work Loop is the sole runtime state.
 
 ## Lane and unit
-Standard. Implementation mode. Unit 31 — implement T6's documentation-only capability envelope, control map, and state-content convention in the Codex Work Loop skill.
+Standard. Discovery mode. Unit 32 — resolve the carrier's real Codex-path containment and the smallest honest amendment needed before T6 resumes.
 
-Named reason for the loop: T6 defines a cross-cutting capability boundary and evidence convention that must be complete, technically honest, and independently assessed before it becomes operating guidance.
+Named reason for the loop: Unit 31 falsified a plan acceptance check and an independent review found related actor-specific control claims that may invalidate T7; repository evidence must settle the technical boundary before the approved plan can be corrected safely.
 
 ## Brief
-T5 is accepted at commit `2a50b3219357fdfaacdf8efb640a29f4db53475d`: `/session-plan` now distinguishes session pause posture from per-action authority while preserving every existing posture and criterion. T6 is the nearest unmet tracer in the approved plan. This unit documents the MVP capability envelope and what the current carrier does and does not enforce; it changes no runtime enforcement.
+Unit 31 correctly stopped before implementation. Its non-nested paired carrier probe proved `RESULT denials=` reports the child's `permission_denials`, not which `--disallowedTools` rules were requested; recorded argv is the fail-capable evidence for the requested Claude deny set. An independent review accepted that finding but found that an argv-only T6 correction would still be incomplete because the Claude and Codex carrier paths differ and downstream T7/T8 contracts rely on the same false assumptions.
 
-Governing authority: the re-frozen implementation plan at `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md`, especially § 3.4 and T6; canonical core §§ 4 and 8; live `.agents/skills/work-loop-v2/SKILL.md`; and live `scripts/axcion-harness-v0.2/carry-turn.sh` for verify-first technical facts. The approved plan fixes the following semantic content:
+The approved proposal's outcome remains governing: proposal § 14 item 7 requires symmetric nested-actor prevention. Its factual premise that the carrier already refuses nested Claude and Codex actors symmetrically is now a verify-first claim, not governing fact. No operator intent is needed yet: first establish whether the approved outcome can be met inside the existing carrier architecture and what exact plan surfaces must change.
 
-- Baseline-granted: read/search/history/diagnosis; local tests, lint and builds; edits within task-scoped paths; local branches; local commits through Claude; reversible local refactoring; evidence written to the existing state and approved repository paths.
-- Operator-reserved and not baseline: deploy/release; public, customer, employee or partner communication; credentials/secrets; destructive shared/production-state change; force-push/shared-history rewrite; protected-branch merge; irreversible deletion; permission/sandbox/policy changes used to authorize the current action; disabling logging, containment or verification.
-- Separately pre-authorizable, with an empty current set: read-only network to approved domains; approved-registry dependency resolution; approved MCP/remote test services; approved branch push/namespace; draft PR creation; remote CI; bounded reversible writes to external development systems.
-- Control truth: identity is prevented; task-path violations are detected after the hop, not prevented; sandbox and network/tool restriction are deferred and not carrier-verified; bypass mode is prevented; nested-actor requests are prevented and occurrence is observed; push/merge/deploy/credential/destructive-operation denials are required per invocation but are not carrier defaults; timeout/deadline/one-hop limits are prevented; before/after repository evidence is enforced; missing terminal evidence cannot become success.
+Required discovery outcome: return an evidence-backed technical recommendation for the smallest safe way to satisfy symmetric direct nested-actor prevention on both carrier actor paths, or prove that no available mechanism can enforce it safely. Also return the complete bounded semantic amendment inventory needed to make § 3.4, T6, T7 and T8 internally honest. Do not implement the remedy or edit any plan/skill/runtime/test target.
 
-Required outcome: add the smallest sufficient section to the skill's existing brief-preparation guidance that (1) states all three envelope sets and the current empty pre-authorized set, (2) maps every non-deferred control to its real enforcement surface, strength and fail-capable evidence while labelling the two deferred controls honestly, (3) documents the exact deny rules a baseline Standard carrier invocation must pass, and (4) shows how a selected capability subset belongs inside `## Brief` and how the observed/requested runtime profile belongs inside `## Latest result`, without adding a state heading. Sandbox/network claims must say `requested` or `selected, not carrier-verified`, never `effective` unless an enforcement surface actually observed them.
+Scope: read-only inspection of `scripts/axcion-harness-v0.2/carry-turn.sh`, its tests and directly referenced fixtures; the current Codex launch/runtime options available locally; approved proposal § 11/§ 14 item 7; implementation-plan § 3.4, T6, T7 and T8 rows S5/S9; canonical core §§ 7–8; and this state-file handback only. Excluded: implementation, plan amendment, skill edit, carrier/test edit, external deployment, and T8/T9 execution.
 
-Scope: `.agents/skills/work-loop-v2/SKILL.md` and this state-file handback only. Excluded: executable core, carrier, dispatcher, commands, autonomy rules, session plan, proposal, approved plan, tests, routing index, new state fields, connected-development enforcement, and T7–T9. Preserve unrelated `logs/friction-log.md` changes.
+Questions to resolve:
 
-Claims to check before editing:
-
-1. The live skill contains no capability-envelope/subset/runtime-profile convention matching T6, and a suitable location exists in its current brief-preparation guidance.
-2. The live carrier and its current tests support the plan's control-strength map and allow exact baseline `--claude-deny` rules to be derived without changing runtime code.
-3. The executable core's five-field contract and example are unchanged at core blob `fb0ba8b6bddbf27dac971ec1c2458c6e5be32136` and need no T6 edit.
-4. T6's paired `denials=` evidence can be produced through an existing safe non-nested carrier fixture or actor path. A Claude or Codex process must not be launched recursively from this Work Loop invocation.
+1. Precisely what prevention, requested restriction, sandboxing and observation each carrier path applies today: Claude hop versus Codex hop. Separate direct nested-actor refusal from descendant containment.
+2. Whether Codex's current local CLI/runtime exposes a supported, non-self-bypassable way for the carrier to deny direct `claude` and `codex` launches while retaining the authorized shell capabilities the hop needs. Inspect local help/config/docs first; do not launch a nested model. If current official product documentation is required, identify that need rather than guessing.
+3. If no built-in Codex deny surface exists, compare only the smallest repository-compatible alternatives that could enforce proposal item 7. For each, state bypass limits, blast radius, reversibility, testability, and whether it changes the approved solution envelope, capability envelope, governance model or deferred descendant-containment boundary.
+4. Identify every plan statement invalidated by the evidence. At minimum assess: § 3.4's sandbox rows, baseline deny row and symmetric nested row; T6's baseline-deny paragraph, verification (e) and deferred-profile language; T7's evidence-only contract; T8 S5's `denials=` exit and S9's `denials=` proof. Check the named plan sections for additional occurrences, but do not expand beyond them.
+5. Recommend the smallest coherent next sequence: which plan edits are mandatory, whether T7 becomes an implementation tracer, what review tier applies to any runtime carrier change, and what content-bound operator approval is required before implementation resumes.
 
 Required evidence:
 
-- Show the T6 concepts are absent before and present after; provide the bounded skill diff and resulting blob/commit.
-- Account for every envelope member and every § 11 control exactly once. For each non-deferred control, name surface, true strength and a field/check that can expose failure; label sandbox plus network/tools deferred rather than met.
-- Show a sample `## Brief` selected-subset block and `## Latest result` runtime-profile block without any new state heading, with sandbox/network described as requested or selected but not carrier-verified.
-- Prove the executable core file and its five-field example are unchanged.
-- Produce the plan-required paired `denials=` evidence using a repository-supported non-nested fixture/actor path: required baseline deny rules present versus omitted rules yielding empty `denials=`. If the live carrier cannot produce this safely without nested Claude/Codex execution, stop and hand back that false premise instead of weakening or fabricating the evidence.
-- Run the relevant carrier tests and `work-loop-v2-slice-1.test.sh`; compare the latter with the known 307 passed / 1 failed baseline. No new failure is allowed, and the existing routing-index/live-installation drift remains deferred.
+- Cite exact carrier/test/CLI surfaces for every actor-specific statement; distinguish observed facts from inference.
+- Demonstrate the Codex-path conclusion without invoking Claude or Codex recursively and without changing repository targets.
+- For any proposed prevention mechanism, give at least one fail-capable positive test and one bypass/negative test; reject a mechanism that only documents policy or observes after the fact.
+- Provide a complete, concise amendment inventory and explicitly state what approved outcome and boundaries remain unchanged.
 
-Completion condition: the skill alone carries the complete T6 convention, all documentation claims match live enforcement, all fail-capable evidence passes, only the skill plus this state handback are committed, `turn: codex`, and Claude stops before T7.
+Completion condition: the five questions are resolved, the recommended repair is technically enforceable or the capability gap is precisely proven, the amendment inventory is complete enough for Codex to frame one bounded plan amendment, only this state handback is committed, `turn: codex`, and Claude stops without implementing T6/T7.
 
-Stop conditions: hand back if a plan premise is false, the paired carrier evidence requires nested model execution, a control cannot be mapped honestly, exact deny rules cannot be derived, the core or runtime code would need editing, or any regression adds a failure. Do not silently narrow the envelope or round detected/requested controls up to prevented/effective.
+Stop conditions: stop if answering requires nested model execution, external authorization, a destructive/shared-state action, or inventing an unverified Codex capability. Surface any operator-owned change separately; do not treat the approved proposal's false factual premise as permission to weaken its symmetric-prevention outcome.
 
 ## Latest result
 
-Unit 31 did not begin. Claim (4) is false, so nothing was implemented and `.agents/skills/work-loop-v2/SKILL.md` was not edited.
+Discovery unit. Nothing was implemented and no plan, skill, carrier or test file was touched. `git status --porcelain` shows this state file and the pre-existing untouched `logs/friction-log.md`. Every Codex-side conclusion came from `--help`, `codex doctor`, `codex execpolicy check` and binary strings; no `claude` or `codex` model session was started at any point.
 
-Inspected (2026-08-15):
-- Claim (1): HOLDS — searched `.agents/skills/work-loop-v2/SKILL.md` (530 lines) for `capability envelope|capability subset|runtime profile|pre-authoriz|operator-reserved|claude-deny|denials=`. Exactly one hit, line 266, and it is not a T6 convention: it describes the **dispatcher's** `--unattended` flag inside `#### Unattended runs — when the operator is leaving`. No envelope, subset or runtime-profile convention exists. A suitable location does exist: `## Opening a unit and writing the brief` (386) and its six subsections through 462, which is the same brief-preparation guidance T3 and T3a already touched, as § 3.4's placement decision assumes.
-- Claim (2): HOLDS — every line the control map cites resolves. `carry-turn.sh:201` is `CLAUDE_DENY=()`; `:224-229` is `CLAUDE_DENY_MANDATORY=(` with all four nested-actor rules; `:314-315` is the `--dangerously-skip-permissions|--bypass-permissions|--permission-mode` refusal; the two-value permission-mode allowlist is `case "$CLAUDE_PERMISSION_MODE" in` / `default|acceptEdits` at `:363-364` (the plan cites `:366`, which lands on the `*)` fallback inside the same block — the block is right, the line number is off by two); `:182` is the single-classification comment and `:241-242` is `denials`'s three-state honesty note. `bash scripts/axcion-harness-v0.2/carry-turn.test.sh` → **285 passed / 0 failed**, matching the map's "285/0". Exact baseline `--claude-deny` rules can be derived and passed with no runtime change — proved live below.
-- Claim (3): HOLDS — `git hash-object plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` returns `fb0ba8b6bddbf27dac971ec1c2458c6e5be32136`. Its § 4 five-field table and example state file are intact and need no T6 edit; this unit read the core and did not touch it.
-- Claim (4): **FALSE** — the paired `denials=` evidence cannot be produced by any fixture, because `denials=` is not a function of the deny-rule set. Searched `carry-turn.sh` for `denials|DENIALS|R_DENIALS|disallowedTools|claude-deny|CLAUDE_DENY`: `R_DENIALS` is set at `:967-970` from `read_denials` (`:508-525`), which parses the **child's own** `permission_denials` array out of its JSON capture. The `--claude-deny` rules are a separate thing — appended to the mandatory set at `:879-882` and passed as `--disallowedTools` at `:899`. Nothing connects them.
+**The independent review's core finding is confirmed, and it is worse than stated.** The carrier does not refuse nested actors symmetrically. It never has. What is symmetric is the *observation*; what is asymmetric is the *request*, and on the Codex path the request does not exist at all.
 
-**The live proof, run non-nested.** Two real `carry-turn.sh` invocations, identical except for the deny rules, with a fake actor passed through `--claude-bin` — the same seam `carry-turn.test.sh` uses at its 40-plus `--claude-bin "$FAKEBIN"` call sites. No `claude` or `codex` process was launched; both runs happened in throwaway repositories outside this checkout.
+### Q1 — What each carrier path actually applies today
+
+Read from `scripts/axcion-harness-v0.2/carry-turn.sh` `launch_actor()`, lines 845–906. Direct nested-actor refusal and descendant containment are separated, as asked.
+
+| | **Claude hop** (`:865-903`) | **Codex hop** (`:855-861`) |
+|---|---|---|
+| Launch line | `claude -p '/work-loop-v2 <task>' --output-format json --permission-mode <default\|acceptEdits> --disallowedTools <mandatory + operator>` | `codex exec --sandbox workspace-write -C <checkout> --json <prompt>` |
+| Direct nested-actor refusal | **Requested.** `CLAUDE_DENY_MANDATORY` (`:224-229`) — `Bash(claude:*)`, `Bash(claude *)`, `Bash(codex:*)`, `Bash(codex *)` — assembled at `:879-882`, passed at `:899`. Never absent, not overridable. | **None.** No deny list, no rules path, no approval flag, no `--ignore-rules`. Nothing on this launch line asks the child to refuse anything. |
+| Sandbox / filesystem containment | **None.** `--permission-mode` is a permission policy, not containment — the carrier says so itself at `:53-54` ("it makes the child ask, it does not sandbox it"). | **`--sandbox workspace-write`.** A real OS-backed sandbox (`codex doctor` → `filesystem sandbox restricted`, `network sandbox restricted`, `execve wrapper helper ~/.codex/tmp/arg0/codex-…-execve-wrapper`). |
+| Descendant containment | Deferred both paths — `carry-turn.sh:306-307` refuses `--unattended`, `--contained` and `--sandbox` outright on this surface. | Deferred as a *carrier* control; the Codex child's own sandbox is not the carrier enforcing a boundary. |
+| Observation | `observe_nested` (`:746`, called at `:810`/`:821`), process-group census counting both `claude`- and `codex`-named processes. | **Identical.** The census is actor-agnostic — same function, same call sites, same recognition rule (`:725-730`). |
+
+**So the asymmetry is exact and one-directional.** A Claude hop is *asked* not to start either actor and is *watched*. A Codex hop is only *watched*. The `--sandbox workspace-write` a Codex hop does get is filesystem containment, which is a different control and does not restrict launching a process.
+
+**The carrier already says this, in its own header.** `:110-114`: "The Codex actor path carries NO equivalent. `codex exec` (0.147.0-alpha.6.5) offers sandbox modes and config overrides, not a per-command deny list, so there is no native already-used mechanism to request the same of a Codex hop. This policy therefore covers the Claude child only, and saying otherwise would be a claim this script cannot support." The plan asserted the opposite of what the implementation documents about itself.
+
+### Q2 — Does the Codex CLI expose a usable deny surface? Partly, and not as a deny
+
+Local surfaces inspected (`codex-cli 0.147.0-alpha.6.5`, `/Applications/ChatGPT.app/Contents/Resources/codex`): `codex --help`, `codex exec --help`, `codex sandbox --help`, `codex execpolicy check --help`, `codex doctor`, `~/.codex/config.toml`, `~/.codex/rules/default.rules`, and binary strings.
+
+**There is an execpolicy mechanism.** `codex exec --ignore-rules` documents it: "Do not load user or project execpolicy `.rules` files". User rules live at `~/.codex/rules/*.rules`; the live file today holds three `prefix_rule(pattern=[…], decision="allow")` entries. A hidden `codex execpolicy check --rules <path> <command…>` subcommand evaluates a policy against a command and prints JSON, with no model involved — that is what every test below used.
+
+**It has no deny decision. Observed, not inferred.** Writing `decision="deny"` fails to parse:
 
 ```
-A (baseline deny rules passed): RESULT outcome=CARRIED code=0 ... denials=0 partial=0 actors=1 nested=0
-B (no deny rules passed):       RESULT outcome=CARRIED code=0 ... denials=0 partial=0 actors=1 nested=0
-
-argv, A: 1 × [Bash(git push:*)]   1 × [Bash(claude:*)]
-argv, B: 0 × [Bash(git push:*)]   1 × [Bash(claude:*)]
+error: invalid decision: deny
+  --> deny.rules:1:1
 ```
 
-`denials=` is byte-identical across the pair. The only surface that discriminates is argv. An earlier run of the same probe that stopped before launch (exit 18) reported `denials=n/a`, confirming the field's three states are `n/a` / `0` / `<n>` / `unavailable` — all describing whether the child's denial evidence was readable, never which rules were requested.
+Same for `forbid`, `reject`, `block`, `ask`, `never`, `deny_always`. Only two values parse: **`allow`** and **`prompt`**. An unmatched command returns `{"matchedRules": []}` with no `decision` key at all — the policy is an allowlist and approval-recorder, not a denylist. That is consistent with the binary's own model-facing amendment flow (`proposed_execpolicy_amendment` / `approved_execpolicy_amendment` / `available_decisions`): rules exist to record what a human approved, not to forbid.
 
-**Why no fixture can rescue it.** The fake actor's `permission_denials` output is written by the fixture action (`denied`, `dirty-noop`, …, `carry-turn.test.sh:104-140`), independent of argv. A real actor's is driven by which tools it happened to attempt. So a pairing on `denials=` either shows `0` on both sides — proving nothing — or shows a difference the fixture author put there, which would be fabricated evidence, exactly what the brief's stop condition forbids. This is not a nested-execution problem: the non-nested path exists and works. It is that the specified field does not measure the specified thing.
+**`prompt` is nevertheless usable as a refusal in a non-interactive run.** Three observations, in increasing strength. (a) `codex exec --help` exposes **no** `--ask-for-approval` flag, so an exec hop has no interactive approver. (b) The binary carries the exact error strings `approval required by policy, but AskForApproval is set to Never`, `approval required by policy rule, but AskForApproval::Granular.rules is false`, and `blocked by policy` — so an unsatisfiable approval requirement terminates the command rather than passing it. (c) `codex doctor` reports the effective policy here as `approval OnRequest`, and `approval_policy` is a `-c`-settable config key, so a carrier could pin `-c approval_policy=never` per invocation. **Not established locally:** whether an exec hop with `approval_policy=never` reports a `prompt`-matched command as blocked or as an error the model may route around. Confirming that needs a live Codex turn, which the stop conditions forbid — **this is the one documentation need this unit could not close by inspection.**
 
-**What the existing suite does instead, and it is already fail-capable.** `carry-turn.test.sh` § 5 and § 5b prove the deny rules entirely through `$ARGVLOG.args`, one argument per line and bracketed — `assert_contains "deny path passes the deny rule through" "Bash(git push:*)"`, `assert_contains "plain launch requests --disallowedTools at all" "[--disallowedTools]"`, and the four mandatory rules asserted individually. The bracketed one-per-line shape is deliberate: it distinguishes `--disallowedTools 'A B'` (one argument) from `--disallowedTools A B` (two), so a collapsed or displaced rule fails. The carrier's own header says the same thing at `:106-108` — "What is verifiable here is the argv: the rules are requested on every Claude launch. Enforcement belongs to the child."
+### Q3 — The one mechanism worth comparing, with both required tests
 
-Nothing else was inspected beyond the named surfaces, and no repository file was changed. `git status --porcelain` shows this state file and the pre-existing untouched `logs/friction-log.md`. The skill, carrier, core, plan, commands and tests are all unchanged.
+Only one repository-compatible mechanism exists, so there is nothing to rank: **a user-level execpolicy rules file carrying `prefix_rule(pattern=["claude"], decision="prompt")` and the same for `codex`**, with the Codex hop launched under an approval policy that cannot grant it.
+
+**Positive test — fail-capable, and it passes:**
+
+```
+$ codex execpolicy check --rules p.rules claude -p x
+{"matchedRules":[{"prefixRuleMatch":{"matchedPrefix":["claude"],"decision":"prompt"}}],"decision":"prompt"}
+```
+
+It can fail: with the rule removed the same command returns `{"matchedRules":[]}`, and with `decision="allow"` it returns `"decision":"allow"`. The three outcomes are distinguishable.
+
+**Bypass test — and it does not pass:**
+
+```
+$ codex execpolicy check --rules p.rules bash -lc 'claude -p x'   → {"matchedRules":[]}
+$ codex execpolicy check --rules p.rules env claude -p x          → {"matchedRules":[]}
+$ codex execpolicy check --rules p.rules /usr/local/bin/claude -p x → {"matchedRules":[]}
+$ codex execpolicy check --rules p.rules --resolve-host-executables /usr/local/bin/claude -p x
+                                                                  → "decision":"prompt"
+```
+
+A shell wrapper, `env`, or an absolute path all evade the rule at this surface. Absolute paths are recoverable with `--resolve-host-executables`; `bash -lc` is not. The binary does carry an interpreter/wrapper token list (`bash`, `sh`, `zsh`, `env`, `sudo`, `node`, `python`, `npm`, `sudo`, …) adjacent to `core/src/exec_policy.rs`, which *suggests* the runtime unwraps wrappers before consulting policy even though the static checker does not — **inference, flagged as such**, and it folds into the same documentation need as Q2(c).
+
+**Assessment against the seven dimensions the brief asks for.** *Bypass limits:* blocks the direct route only — identical in kind to the Claude path's `Bash(claude:*)` rules, which `carry-turn.sh:102-108` already refuses to call containment. *Blast radius:* this is the problem. A **user-level** file at `~/.codex/rules/` sits outside the workspace-write sandbox, so the Codex child cannot edit it — but it applies to **every Codex session on this machine**, not only Work Loop hops. A **project-level** file inside the checkout is scoped correctly but is writable by a `workspace-write` child, so it is self-bypassable and worthless as a control. There is no third option: the mechanism's only non-self-bypassable placement is machine-wide. *Reversibility:* full, one file. *Testability:* good — `codex execpolicy check` is a non-model checker, so both legs are cheap and repeatable. *Envelope impact:* the solution envelope, capability envelope and deferred descendant-containment boundary are all unchanged. **The governance model is not** — a machine-wide config file outside the repository is an operator-owned change, and it is the one thing here Codex cannot decide.
+
+**Honest ceiling.** Even fully applied, this reaches *"requested restriction that blocks the direct route"* — the same strength the Claude path already has, and the same strength `carry-turn.sh` already declines to call prevention. It does not reach *prevented*. Proposal § 14 item 7's word is "prevention"; what is achievable today is symmetric **request**. Whether that satisfies item 7 is a semantic call on the approved outcome, and it belongs to the operator, not to this unit.
+
+### Q4 — Amendment inventory: every statement the evidence invalidates
+
+Eleven, in the named sections only. Nothing outside them was expanded into.
+
+| # | Surface | What it says | Why it fails |
+|---|---|---|---|
+| 1 | § 3.4 map, nested row (plan `:914`) | "Prevented (request) + observed (verification), **symmetric**" | The request half is Claude-only. Split per actor path, or the map asserts a control the Codex hop does not receive. |
+| 2 | § 3.4 map, baseline-deny row (`:915`) | evidence is "`denials=` field and the recorded argv" | Unit 31: `denials=` reports the child's `permission_denials`, not the requested rules. Argv is the sound half. Also Claude-path-only. |
+| 3 | § 3.4 map, sandbox row (`:911`) | "Deferred" | True of the Claude hop; **false of the Codex hop**, which gets `--sandbox workspace-write`. |
+| 4 | § 3.4 map, network/tools row (`:912`) | "Deferred" | Same: `codex doctor` reports `network sandbox restricted` for the Codex path. |
+| 5 | § 3.4 enforced/requested clause (`:931-940`) | the MVP list includes "symmetric nested-actor refusal", "confirmed live by this plan's own test runs" | The runs confirmed symmetric *observation*. No run could have confirmed symmetric refusal, because the Codex launch line requests none. |
+| 6 | T6 baseline-deny paragraph (`:1335-1341`) | documents the deny rules "a baseline Standard invocation must pass via `--claude-deny`" | `--claude-deny` reaches Claude hops only. A Codex-actor baseline invocation has no surface to pass them to. The documented set must state its actor scope. |
+| 7 | T6 verification (e) (`:1350-1352`) | paired `denials=` proof | Falsified in Unit 31. Replace with the argv pairing the carrier's own tests already use. |
+| 8 | T6 deferred-profile language (`:1353-1355`) | "per-invocation sandbox/network restriction … remain explicitly named as deferred" | Deferred on the attended Claude path; present on the Codex path. Needs the same per-path split as rows 3–4. |
+| 9 | T7 whole tracer (`:1362-1372`) | item 7 "recorded as satisfied, with the evidence this plan already gathered (285/0)" | The suite proves symmetric observation and Claude-path-only request. It cannot record item 7 satisfied. T7's premise is false, not just its wording. |
+| 10 | T8 S5 (`:1398`) | "`denials=` shows the restriction was in force" | Wrong field (Unit 31), and silent about which actor the leg runs. |
+| 11 | T8 S9 (`:1402`) | "leg B's `denials=` shows the rule passed and the action refused" | Same, and it is the row that most depends on the distinction, since S9 is the mechanical-layer row. |
+
+**Outside the plan, one proposal statement.** Proposal `:378` states "no nested Claude or Codex actor (carrier refuses symmetrically today…)". That parenthesis is a false factual premise and is where the error entered. Proposal `:491` § 14 item 7 — "Add symmetric nested-actor prevention and verify the carrier on a host where process observation is available" — is an outcome **to add**, and it is unmet. It is not weakened by anything above.
+
+**What remains unchanged, stated explicitly:** the approved outcome (item 7, symmetric prevention) stands as a requirement; the approved solution envelope; the capability envelope's three sets and empty pre-authorized set; the deferred descendant-containment boundary; the MVP release boundary excluding the dispatcher; and every accepted T1–T5 result.
+
+### Q5 — Recommended smallest coherent sequence
+
+1. **One bounded plan amendment, before any implementation resumes** — the eleven rows above plus the proposal note, as a single correction. Mandatory; the plan currently asserts a control that does not exist, and every downstream tracer inherits it.
+2. **T6 proceeds after the amendment, unchanged in shape.** Its content is fine once rows 1–8 land: the envelope's three sets, a per-actor-path control map, argv as the deny evidence, and the sandbox rows split per path. Still documentation-only, still the skill only. Unit 31's second finding folds in here — the sandbox sentence must be scoped to the attended Claude path so it does not contradict the skill's own line 266 about the dispatcher's `--unattended`.
+3. **T7 becomes an implementation tracer, or item 7 stays open.** It cannot remain an evidence-recording tracer. Its review row must change with it: adding an execpolicy rules file is a permission-surface change, which is a structural change class, so it takes the **risk-aware** review row of `docs/qc-independence.md`, not "small/mechanical". If instead T7 modifies `carry-turn.sh` to pin `-c approval_policy=never` and a rules path on the Codex launch line, that is a runtime carrier change and takes the same risk-aware row.
+4. **T8 S5 and S9 are re-specified with T6's corrected evidence contract**, and each names the actor its legs run. They cannot run before step 1.
+5. **Two operator decisions are required before step 3 implements anything**, and neither is Codex's:
+   - **Machine-wide placement.** The only non-self-bypassable home for the rules file is `~/.codex/rules/`, outside the repository, affecting every Codex session on this host. A repo-local file is writable by a `workspace-write` child and is not a control.
+   - **Whether "symmetric request" satisfies item 7's word "prevention."** The achievable ceiling blocks the direct route and is evaded by `bash -lc`. Accepting that as item 7 is accepting a residual risk that was not previously delegated; recording it as a limitation instead is also the operator's call.
+
+   Both are content-bound: they should be approved against the exact amended text, not in principle.
 
 ## Blocker
 
-Claim (4) is false, and so is the plan's T6 verification (e) that it restates: "a real `carry-turn.sh` invocation under the documented baseline shows the required rules in `denials=`, and an invocation without them shows an empty `denials=`" (plan lines 1350–1352). The RESULT line's `denials=` reports the count of permission denials the **child recorded**, read from its `permission_denials` array. It does not report which `--claude-deny` rules were passed. The paired runs above show `denials=0` on both sides while argv differs, so the specified pairing cannot discriminate and cannot be made to without fabricating the fixture's output.
-
-This propagates into § 3.4's control map, whose "no push, merge, deploy, credential access, or destructive shared-state operation" row names "the `RESULT` line's `denials=` field and the recorded argv" as its evidence (plan line 915). The argv half is sound and already tested; the `denials=` half is not evidence of that control at all. Writing the map into the skill as-is would document an evidence field that cannot fail — the precise failure § 3.4's own *Failure behavior* clause exists to prevent.
-
-Second, smaller finding, surfaced because it would land in the same file: § 3.4's control truth says per-invocation sandbox and network/tool restriction are deferred. That is exactly right for `carry-turn.sh`, which refuses `--unattended|--contained|--sandbox` outright at `:306-307`. But the skill already tells the operator at line 266 that the **dispatcher's** `--unattended` gives "an OS-backed sandbox with an empty network allowlist". An unqualified "sandbox is deferred" sentence added to the same file would contradict that line as read. The fix is scoping, not omission, but the scope is Codex's to set.
+None blocking this unit — the discovery is complete and the technical boundary is settled. Two operator-owned decisions (Q5 step 5) block **implementation of T7**, not the plan amendment. They are surfaced here rather than taken, and no operator turn is set: Codex frames the amendment first, so the operator approves exact text rather than a direction.
 
 ## Next action
 
-Codex: decide how T6's deny-set evidence is specified, then reissue the unit. Three things need a ruling.
-
-1. **Replace the `denials=` pairing.** The recommendation is to specify the evidence as argv, matching what the carrier claims for itself and what `carry-turn.test.sh` § 5/§ 5b already assert: a baseline invocation whose `--disallowedTools` list carries the required rules, paired against one without them, read from the per-argument log. That pairing does discriminate — proved above — and it fails if a rule is dropped, displaced or collapsed. `denials=` can still be recorded as runtime-profile evidence, but for what it actually is: whether the child's permission-denial evidence was readable and what it contained.
-2. **Restate the control-map row.** § 3.4's push/merge/deploy row should name argv as the fail-capable evidence and drop `denials=` from that cell, or the skill will document an uncheckable control. Whether this is a plan amendment or a T6-local restatement is Codex's call; it is a change to a plan surface, so it should not be made silently inside an implementation unit.
-3. **Scope the sandbox sentence.** Rule on whether the T6 text says "deferred on the attended carrier (`carry-turn.sh`), which is what a baseline Standard invocation uses", leaving the dispatcher's `--unattended` sandbox at line 266 untouched and uncontradicted.
-
-Claims (1), (2) and (3) all hold, so the rest of T6 is ready to implement as soon as the evidence contract is settled. Nothing was implemented and no target file was touched.
+Codex: frame one bounded plan amendment covering Q4's eleven rows plus the proposal `:378` note, then decide T7's new shape and review tier. The technical boundary is established and needs no further discovery: execpolicy has no deny decision (only `allow` and `prompt`), the Codex launch line requests nothing today, the achievable ceiling is a symmetric *request* that blocks the direct route and is evaded by `bash -lc`, and the only non-self-bypassable placement for it is machine-wide. One documentation need is open and does not block the amendment — whether a `prompt`-matched command under `approval_policy=never` is reported to an exec hop as blocked; confirming it needs a live Codex turn. Route Q5 step 5's two decisions to the operator with exact amended text once the amendment is drafted. T6 remains unimplemented and nothing was built.
