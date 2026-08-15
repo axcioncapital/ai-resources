@@ -1365,12 +1365,20 @@ check "mode  every mode fixture states a named reason at all" \
 check "mode  no mode fixture's named reason defeats its own admission" \
   "( for f in '$MODE_D' '$MODE_I' '$MODE_A'; do \
        printf '%s' \"\$(reason_of \"\$f\")\" | grep -qiE '$SELF_DEFEATING' && exit 1; done; exit 0 )"
+# The live-task pointer sits in ONE place. Both assertions below read the current
+# open Standard record, which only carries a mode and a named reason while the task
+# is open — a closed record is reduced to the four closing headings and has no
+# `## Lane and unit` at all. When this task closes, repoint this single line at the
+# next open Standard record; leaving it on a closed one makes both checks read an
+# empty string and go red, which is exactly what happened to the retired
+# work-loop-v2-intake-router.md.
+LIVE_TASK_F="logs/work-loop/work-loop-v2-durable-state-system.md"
 check "mode  the live task's named reason does not defeat its own admission either" \
-  "[ -n \"\$(reason_of 'logs/work-loop/work-loop-v2-intake-router.md')\" ] && \
-   ! printf '%s' \"\$(reason_of 'logs/work-loop/work-loop-v2-intake-router.md')\" | grep -qiE '$SELF_DEFEATING'"
+  "[ -n \"\$(reason_of '$LIVE_TASK_F')\" ] && \
+   ! printf '%s' \"\$(reason_of '$LIVE_TASK_F')\" | grep -qiE '$SELF_DEFEATING'"
 
 check "mode  the live task's own state file records exactly one legal mode" \
-  "[ \"\$(mode_of 'logs/work-loop/work-loop-v2-intake-router.md')\" = Implementation ]"
+  "[ \"\$(mode_of '$LIVE_TASK_F')\" = Implementation ]"
 
 # The four state-file failing cases, DERIVED from the valid fixture so they
 # cannot drift away from it and the live fixtures are never doctored.
