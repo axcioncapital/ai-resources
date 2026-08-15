@@ -1,9 +1,16 @@
 # Work Loop V2 Dispatcher — Pre-Launch Implementation Roadmap
 
 **Date:** 2026-08-11  
-**Status:** Proposed implementation roadmap. Creating this document does not by itself authorise implementation.  
+**Status:** Historical precursor roadmap. It is not sufficient current implementation authority and does not by itself authorise implementation.  
 **Target release:** Ready for supervised semi-agentic repository work.  
 **Governing assessment:** `dispatcher-semi-agentic-readiness-fixes-2026-08-11.md`
+
+**2026-08-15 planning update:** This roadmap established the original supervised-controller direction, but its four fix phases and three live trial shapes do not contain the complete current reliability or target-alignment contract. Current dispatcher implementation planning must consume both:
+
+- `plans/work-loop-v2-v0.2/dispatcher-reliability-closure-report-2026-08-15.md` — Gate SA foundation, including universal results, exact evidence handshakes, no retry after model start, complete runtime preflight, trusted control-field ownership, durable write/crash ordering, hostile input/path parsing, and the expanded live trial matrix;
+- `plans/work-loop-v2-v0.2/work-loop-v2-dispatcher-target-alignment-proposal-v0.1.md` — Gate ST extension, including task admission, structured routing, bounded self-repair, Decision Resolver, reconciliation/replay safety, contract freshness, environment/non-Git-effect declarations, reserved closure capacity, outcome rendering and events.
+
+Do not implement this roadmap alone, mechanically append the newer requirements to its phase numbers, or use it to reopen the frozen concurrency, durable-state or autonomy-authority implementations. A current implementation specification must reconcile the two 2026-08-15 documents against the integrated baseline and preserve their separate Gate SA, Gate ST and Gate U claims. The detailed phases below remain useful historical rationale for the earlier single-writer, deterministic-outcome, bounded-expansion, session-decoupling and supervised-proof decisions.
 
 ## Purpose
 

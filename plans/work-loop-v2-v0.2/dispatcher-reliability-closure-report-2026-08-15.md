@@ -321,7 +321,7 @@ Primary evidence:
 
 The dispatcher controller suite is extensive but uses simulated actors. Durable-state operational proofs and autonomy-authority trials prove their own surfaces. The autonomy plan explicitly runs its trials through the attended carrier, so those results cannot establish multi-hop dispatcher reliability.
 
-After R1–R8, run the following in clean dedicated worktrees through the actual dispatcher:
+After R1–R8 and the control-integrity requirements in R10–R12, run the following in clean dedicated worktrees through the actual dispatcher:
 
 1. A normal bounded implementation repeated at least three times.
 2. A deliberate permission denial, honest classification, explicit operator-approved `acceptEdits`, and successful resume inside the dispatcher.
@@ -331,6 +331,9 @@ After R1–R8, run the following in clean dedicated worktrees through the actual
 6. A missing-final-result scenario that becomes a durable blocker rather than false success.
 7. An arbitrarily named linked-worktree run proving complete local runtime and Git identity.
 8. Regression of the shared lease and durable-state seams after all dispatcher changes.
+9. Crash injection after each durable boundary named in R11, proving one deterministic recovery classification and no duplicated effect.
+10. Hostile task ID, run ID, path, protocol, handback and fake-result inputs proving the parser and shell boundary in R12 fail closed without command execution or path escape.
+11. An actor attempt to alter a control field it does not own, proving the field-ownership boundary in R10 rejects continuation.
 
 Each trial must record exact task/checkout, permission mode, actor/session identifiers, hop and deadline data, state and HEAD before/after, changed paths, usage, terminal result, capture path and operator intervention. One success is not repeat reliability.
 
@@ -338,6 +341,71 @@ Primary evidence:
 
 - `main/plans/work-loop-v2-v0.2/pre-launch-preparations/dispatcher-semi-agentic-readiness-fixes-2026-08-11.md:196-228`
 - `autonomy/plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md:1374-1420`
+
+### R10 — Partition actor-writable semantic state from trusted control facts
+
+The durable-state contract deliberately allows Codex and Claude to update the tracked task record within their role contracts. That does not make every control-plane fact actor-writable or make a syntactically valid actor claim sufficient evidence for continuation.
+
+Required change:
+
+- Define one field-ownership matrix for the task record, owner file, shared leases, runtime profile, permission approval, budgets, run identity, terminal result and event/report artifacts.
+- Preserve the frozen durable-state allocation: Codex and Claude may update only the semantic task fields and commits their existing role contract assigns to them.
+- Keep `.owner` mutation behind the existing ownership guard and shared-lease mutation inside trusted transport code.
+- Keep permission approval, capability selection, run identity, budgets, observed process/Git facts and universal terminal results outside actor-authored task content.
+- Treat an actor's requested state transition as a claim to validate, not sufficient evidence that the transition occurred correctly. Before another launch, independently validate exact identity, legal lifecycle shape, role, Git facts, required proof, changed paths, ownership, leases and transport evidence.
+- Reject an actor attempt to change an unowned control field, create authority through prose, mark unverified work complete, or make the event/report layer override canonical state or transport truth.
+- Do not create a second state writer, lifecycle parser or dispatcher-private semantic state. This requirement narrows mutation authority around the accepted durable-state design; it does not replace it.
+
+Fail-capable evidence:
+
+- each actor role can perform every legal task-record transition it owns;
+- each actor role is refused when it attempts an unowned owner, lease, permission, budget, runtime, authority or terminal-result mutation;
+- a legal-looking task record with contradictory Git, proof or transport facts cannot advance the dispatcher; and
+- the same field-ownership matrix is consumed by controller tests and the final implementation specification rather than duplicated in prompt prose.
+
+### R11 — Define crash ordering across every durable dispatcher boundary
+
+Atomic individual files do not create an atomic run. A successful or blocked transition may touch actor capture, Git, canonical task state, terminal result, owner state, shared leases, report and event evidence. The durable-state plan already fixes close-write → commit → owner-clear ordering; the dispatcher must extend that guarantee across its additional artifacts without changing the canonical lifecycle contract.
+
+Required change:
+
+- Define the exact durable write order for normal handback, blocked/operator, clean failure, partial effect, correction, reconciliation and closure paths.
+- Initialize run identity and external evidence before any model request or mutation.
+- Preserve the accepted closure invariant: valid `CLOSED` state is committed before owner clear.
+- Finalize the universal terminal result only after the dispatcher has captured and validated the post-action state, Git, proof, process and changed-path facts needed by that result.
+- Release the applicable shared lease only after the terminal result exists and teardown is proven safe; uncertain teardown keeps it pinned.
+- Render reports and append observational events from validated state/result facts. A renderer or event failure may not roll back, replace or contradict canonical state or the terminal result.
+- Specify recovery after a crash immediately before and after every durable step. Each point must resolve to exactly one of: continue from a proven durable next action, recognize already-completed work without replay, or enter a durable blocker.
+- Never reconstruct a missing producer handback or terminal result from a commit, artifact, event or report.
+
+Fail-capable evidence:
+
+- deterministic crash injection at every named boundary for success, blocked and partial-effect paths;
+- no injected crash produces duplicate model work, duplicate commit, false completion, unsafe owner clear or premature lease release;
+- fresh-process recovery reaches the same classification without conversation history; and
+- the implementation specification contains one transition-by-transition write-order and recovery matrix.
+
+### R12 — Treat identifiers, paths and actor handbacks as hostile input
+
+The dispatcher is implemented in shell and consumes model-produced content, repository paths and operator-supplied identifiers. Schema validation is insufficient if values can change shell parsing, escape an allowed path or manufacture a control record.
+
+Required change:
+
+- Define strict length and character grammars for task IDs, run IDs, outcome names, reason codes, protocol versions and other control tokens.
+- Parse actor handbacks as data through one bounded parser. Never `eval`, `source` or execute actor-produced content.
+- Pass commands as argument arrays with explicit option termination where supported; never rebuild a command line from untrusted strings.
+- Canonicalize and bound every checkout, evidence, state and changed-path value before use; reject traversal, newline injection, control characters, unsafe symlinks and paths outside the admitted roots.
+- Separate trusted result framing from raw actor output so an actor cannot inject a fake `RESULT`, event, state transition or report field through narrative text.
+- Bound handback, field and capture sizes before parsing or rendering.
+- Fail closed on unknown protocol versions, fields, enum values, duplicate singleton fields and malformed encodings.
+- Preserve raw captures as evidence under the retention policy, but never interpret them as shell programs or transport authority.
+
+Fail-capable evidence:
+
+- adversarial fixtures cover shell metacharacters, whitespace/newlines, leading options, traversal, symlink escape, duplicate keys, oversized fields, unknown versions and fake control lines;
+- no fixture executes a command, writes outside admitted roots, changes routing, or produces a valid terminal result;
+- valid Claude and Codex handbacks continue to parse identically; and
+- fuzz or generated malformed-input coverage can run without actor or network access.
 
 ## 5. Deferred work for possible unattended or walk-away reliability
 
@@ -412,7 +480,10 @@ Primary evidence:
 1. Add the universal atomic result schema.
 2. Add the exact external-evidence handshake.
 3. Make missing evidence a blocker handback.
-4. Expand read-only status and interruption classification.
+4. Define and enforce the R10 field-ownership matrix.
+5. Define the R11 transition write-order and crash-recovery matrix.
+6. Add the R12 bounded hostile-input parser and path/identifier guards.
+7. Expand read-only status and interruption classification.
 
 ### Change set B — Remove execution multipliers
 
@@ -432,9 +503,10 @@ Primary evidence:
 ### Change set D — Prove supervised reliability
 
 1. Run the live dispatcher trial matrix in Section 4 R9.
-2. Correct only demonstrated material failures.
-3. Run the final controller, shared-lease, validator and owner gates synchronously.
-4. Obtain an independent review and make an explicit supervised adopt/shrink/stop decision.
+2. Run the control-field mutation, crash-boundary and hostile-input suites from R10–R12.
+3. Correct only demonstrated material failures.
+4. Run the final controller, shared-lease, validator and owner gates synchronously.
+5. Obtain an independent review and make an explicit supervised adopt/shrink/stop decision.
 
 ### Change set E — Freeze the unattended boundary
 
@@ -450,6 +522,10 @@ All statements must be proven:
 
 - Every exit produces one durable, atomic terminal result with truthful `actor_started` and before/after facts.
 - Missing evidence and zero-without-transition stop as blockers, never as completion.
+- Actor-writable semantic state and trusted owner, lease, runtime, approval, budget, run and terminal-result facts obey one mechanically enforced field-ownership matrix.
+- An actor-authored transition cannot advance the dispatcher until lifecycle, role, Git, proof, changed-path, owner, lease and transport facts independently validate it.
+- Every success, blocked, failure, partial-effect, correction, reconciliation and closure path follows one defined durable write order with deterministic recovery before and after each boundary.
+- Hostile identifiers, paths, protocols and handbacks cannot execute shell content, escape admitted roots, inject control records or change routing.
 - The normal implementation-assessment-closure path completes without Patrik manually carrying turns between Claude and Codex.
 - An operator-approved permission change resumes inside the dispatcher without `bypassPermissions`.
 - No started model request is automatically retried.
@@ -502,9 +578,12 @@ Assuming concurrency Phase 1, durable state and autonomy authority are all compl
 3. retry, hop, deadline, usage and context controls;
 4. complete headless runtime preflight;
 5. truthful nested-actor controls, actionable operator takeover and safe resume;
-6. live dispatcher-specific semi-autonomous adoption proof.
+6. trusted field ownership around actor-writable semantic state;
+7. end-to-end durable write ordering and crash recovery;
+8. hostile-input, parser and path safety; and
+9. live dispatcher-specific semi-autonomous adoption proof.
 
-These six items are a moderate, bounded reliability implementation. Completing and proving them is enough to call the dispatcher reliable for the intended supervised semi-autonomous role: Claude and Codex continue together while the task stays inside its approved corridor, then stop safely and return control to Patrik when it does not.
+These nine items are a moderate, bounded reliability implementation. Completing and proving them is enough to call the dispatcher reliable for the intended supervised semi-autonomous role: Claude and Codex continue together while the task stays inside its approved corridor, then stop safely and return control to Patrik when it does not.
 
 Full-lifetime containment and walk-away proof remain the genuinely hard architectural problem. They are explicitly deferred, do not block the target release, and should be opened only as a separate future programme if unattended operation later becomes valuable enough to justify them.
 

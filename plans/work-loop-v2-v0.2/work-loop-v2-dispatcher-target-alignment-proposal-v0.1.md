@@ -92,6 +92,8 @@ Where this proposal overlaps the closure package, implementation must extend the
 | Read-only status | Shows admitted route, current phase, last structured outcome and next required action. |
 | Run evidence directory | Holds the observational event journal and rendered reports; no separate observability store. |
 
+The reliability foundation also owns three implementation-safety contracts that this proposal consumes rather than duplicates: actor-writable semantic state versus trusted control-field ownership, transition-by-transition durable write/crash ordering, and hostile identifier/path/handback parsing. Gate ST cannot pass unless those Gate SA requirements remain green through the target-alignment changes.
+
 ### 3.3 Boundary with unattended operation
 
 This proposal supports supervised semi-autonomous execution on a supported awake host. It does not claim that every descendant is contained for its full lifetime, that closed-lid operation is reliable, or that the release host's effective isolation has passed Gate U. Unknown teardown continues to pin the applicable lease and block automatic reuse.
@@ -191,6 +193,9 @@ scope:
 authority:
   delegated_decisions: implementation judgment the actors may exercise
   operator_reserved: decisions that must return to Patrik
+  bindings:
+    plan_or_spec: exact path and approved content fingerprint
+    operator_decisions: exact load-bearing decision fingerprints
 capabilities:
   write_paths: approved write boundary
   permission_mode: requested dispatcher permission profile
@@ -200,6 +205,14 @@ capabilities:
 workspace:
   checkout: exact checkout
   branch: exact branch when applicable
+  base_head: approved starting HEAD
+environment:
+  shared_resources: none or exact declared ports, services, databases or caches
+  non_git_effects: none or exact approved hook, global-config or external-effect profile
+budgets:
+  run: hop, deadline and usage limits
+  closure_reserve: required closing actor and finalization capacity
+  recovery_reserve: required teardown and evidence-finalization time
 route: explicit route or enough facts for deterministic selection
 proof: exact command, scenario or assessment method
 ```
@@ -222,7 +235,9 @@ Selection rules:
 2. An approved active plan selects `plan_backed_implementation`.
 3. A reproducible fault with settled intended behavior selects `repair`.
 4. A complete concise task contract selects `bounded_implementation`.
-5. Material ambiguity between routes is an admission blocker; the dispatcher does not invent planning authority.
+5. `base_head` and every load-bearing authority fingerprint must match current repository reality; drift requires explicit task revalidation before admission.
+6. Undeclared shared resources or non-Git effects refuse admission. The initial release accepts `none` or an exact supported profile; it does not infer environmental isolation from a clean Git status.
+7. Material ambiguity between routes is an admission blocker; the dispatcher does not invent planning authority.
 
 No automatic architecture planning, task decomposition, project prioritization or task creation is introduced.
 
@@ -248,6 +263,8 @@ ownership, state, runtime, policy or workspace cannot safely admit the run
 - a complete contract selects the expected route without a model request;
 - each missing load-bearing field names the exact preparation requirement;
 - contradictory checkout, owner, state or capability facts refuse before actor launch;
+- stale base HEAD or load-bearing authority fingerprints refuse until the task contract is explicitly revalidated;
+- undeclared ports, services, databases, caches, hooks, global configuration or other non-Git effects refuse before actor launch;
 - an explicit approved route is never silently replaced;
 - the admission check cannot alter semantic authority or widen the runtime profile; and
 - an arbitrarily named supported worktree admits only from its complete local runtime.
@@ -462,6 +479,8 @@ Obvious cases are handled without a resolver model call:
 
 The initial semantic resolver role should reuse the existing independent Codex capability where practical. It is selected per invocation; this proposal creates no repository-wide model default and no permanent new agent.
 
+A dedicated resolver invocation starts with a fresh, minimal context assembled from the admitted contract, governing authority and exact evidence references. It does not inherit the executor transcript, a prior resolver chain of thought, or unsupported persuasive narrative. A reviewer resolving the same question inside its existing assessment must produce the identical structured authority/evidence fields and may not cite its own earlier recommendation as evidence.
+
 ### 8.3 Resolver input
 
 The resolver receives the minimum sufficient context:
@@ -525,6 +544,8 @@ next_action: exact durable next action
 | Business behavior has two materially different valid outcomes | `OPERATOR` |
 | Evidence that would settle the question is available but was not inspected | Resolver requests bounded evidence; it does not escalate yet |
 | Resolver cannot establish a load-bearing premise | Evidence blocker or `OPERATOR` only when operator intent can actually settle it |
+| Executor strongly recommends an attractive but unauthorized action | `DENY_AND_REPAIR` or `OPERATOR` from governing authority, not agreement with the recommendation |
+| Same question presented with persuasive versus neutral narrative | Identical resolver classification from the same contract and evidence |
 
 The false-positive acceptance criterion is explicit: asking Patrik to approve an action already authorized by settled intent and capability is a failed resolver scenario.
 
@@ -748,6 +769,7 @@ These never become resolver approvals:
 - unsupported runtime or authentication loss;
 - unproducible load-bearing proof;
 - changed paths outside the admitted envelope;
+- undeclared shared-resource, hook, global-configuration, ignored-file or other non-Git effect;
 - capability authorized semantically but unenforceable technically;
 - attempted control-system bypass or self-expansion; and
 - exhausted run budget.
@@ -772,9 +794,12 @@ Additional initial ceilings are:
 
 Continuation requires both remaining budget and a legal semantic transition. Remaining budget never creates authority.
 
+Before every actor launch, the dispatcher subtracts the declared closure and recovery reserves from the remaining whole-run budget. The closure reserve includes any required closing actor hop plus deterministic postcheck, terminal-result and report-finalization capacity. The recovery reserve protects teardown, partial-effect capture and actionable blocker finalization. Optional correction, reassessment or resolver continuation may launch only from the remainder; it cannot consume either reserve.
+
 The dispatcher stops before another actor launch when:
 
 - the next launch exceeds the whole-run hop, time or usage budget;
+- the next launch would consume declared closure or recovery reserve;
 - the same failure recurs without new evidence;
 - the same operational inconsistency recurs after one automatic reconciliation;
 - the run oscillates between `ALLOW` and the same failed repair;
@@ -792,6 +817,8 @@ The initial release does not optimize for maximum autonomous completion. It opti
 |---|---|
 | Outcome, acceptance, boundaries and operator-reserved decisions | Approved task/plan and canonical Work Loop authority |
 | Task lifecycle and next semantic action | Canonical durable task state |
+| Role-owned task-record mutation | Codex or Claude only within the frozen durable-state role contract; independently validated before continuation |
+| Owner, lease, permission, runtime, budget, run and terminal-result mutation | Trusted helpers and dispatcher transport defined by the reliability closure field-ownership matrix |
 | Admission, phase routing, budgets and transport | Dispatcher |
 | Technical implementation and internal repair | Executor |
 | Independent assessment | Reviewer |
@@ -801,6 +828,7 @@ The initial release does not optimize for maximum autonomous completion. It opti
 | Transport truth | Universal terminal result |
 | Operating observations | Run event journal |
 | Human completion and decision view | Deterministic report renderer |
+| Declared ports, services, databases, caches, hooks, global configuration and non-Git effects | Admitted environment profile plus preventative runtime controls |
 | Merge, push, deployment and release | Existing repository integration controls; unchanged here |
 
 No executing actor may write dispatcher policy, alter its admitted contract, widen its runtime profile, edit another task's state, or mark its own unverified work complete.
@@ -811,6 +839,12 @@ No executing actor may write dispatcher policy, alter its admitted contract, wid
 
 This sequence assumes the dispatcher reliability closure package is the active foundation. Where implementation occurs in the same programme, shared seams are designed once rather than landed twice.
 
+### Shell-complexity guardrail
+
+The initial implementation remains in the current dispatcher language, but it must not distribute control parsing across the script. There is one owner for each of: actor-handback parsing, path canonicalization, task/authority freshness validation, transition evaluation, durable-result finalization and report rendering. Transition selection remains table-driven and each pure decision seam has focused tests that run without a live actor.
+
+If a pure validation or transition behavior cannot be tested without executing the full dispatcher, or a second production parser for the same contract would otherwise be introduced, extract that behavior behind one narrow helper interface. Extraction may use the existing language or the smallest already-supported runtime; it is not permission for a dispatcher rewrite or implementation-language migration. The final review must explicitly assess duplicated parsers, duplicated lifecycle semantics and unreachable transition branches.
+
 ### Change set TA-A — Admit and route structured work
 
 1. Extend the closure package's universal result and evidence handshake with the actor handback schema.
@@ -818,9 +852,11 @@ This sequence assumes the dispatcher reliability closure package is the active f
 3. Add `RECONCILE_NEEDED`, `RECONCILED_SAFE` and `RECONCILE_BLOCKED` by invoking the canonical validator/recovery capability.
 4. Enforce replay classification and refusal before any repeated operation.
 5. Add the task-contract admission check.
-6. Add deterministic selection for the three supported route classes.
-7. Extend read-only status with admitted route, current phase, last outcome and next action.
-8. Prove zero-model refusal for incomplete, contradictory and unsupported admission cases.
+6. Bind admission to base HEAD, approved authority fingerprints and an exact supported environment/non-Git-effect profile.
+7. Enforce closure and recovery budget reserves before every launch.
+8. Add deterministic selection for the three supported route classes.
+9. Extend read-only status with admitted route, current phase, last outcome and next action.
+10. Prove zero-model refusal for incomplete, stale, environmentally undeclared, contradictory and unsupported admission cases.
 
 ### Change set TA-B — Keep ordinary repair inside execution
 
@@ -837,7 +873,8 @@ This sequence assumes the dispatcher reliability closure package is the active f
 3. Validate and persist resolver outputs without creating a second authority record.
 4. Route `ALLOW`, `DENY_AND_REPAIR` and `OPERATOR` through the transition table.
 5. Add one-invocation, no-capability-expansion and no-policy-mutation enforcement.
-6. Run allow, deny, investigate and genuine-escalation trials.
+6. Enforce fresh minimal resolver context and authority/evidence-only equivalence for inline reviewer resolution.
+7. Run allow, deny, investigate, narrative-bias and genuine-escalation trials.
 
 ### Change set TA-D — Make outcomes legible and measurable
 
@@ -866,6 +903,9 @@ All live trials use exact task and run identities, clean dedicated worktrees, fi
 |---|---|
 | Complete bounded implementation | Admission, implementation, proof, review, closure and completion report succeed without manual turn transport. |
 | Incomplete contract | Refuses before actor launch and names the exact missing field. |
+| Stale contract | Base HEAD or a load-bearing authority fingerprint drifts; admission refuses until explicit revalidation. |
+| Undeclared shared resource | A task requiring a port, service, database or cache outside an admitted profile refuses before actor launch. |
+| Undeclared non-Git effect | A hook, ignored-file, global-config or external effect outside the admitted profile stops and reports the exact effect. |
 | Route selection | Repair, bounded implementation and plan-backed fixtures select the intended installed route. |
 | Ordinary proof failure | Executor diagnoses, repairs and re-proves within one actor launch. |
 | Repeated failure | Same failure without new evidence stops; no automatic relaunch occurs. |
@@ -879,12 +919,17 @@ All live trials use exact task and run identities, clean dedicated worktrees, fi
 | Boundary-adjacent fixture edit | Resolver returns `ALLOW`; execution continues inside unchanged envelopes. |
 | Unsafe validation removal | Resolver returns `DENY_AND_REPAIR`; executor finds a compliant route or blocks. |
 | Genuine material scope decision | Resolver returns `OPERATOR`; packet presents options, consequences and recommendation. |
+| Resolver narrative-bias pair | Persuasive and neutral descriptions with identical authority/evidence produce the same classification. |
 | Operator decision and resume | Decision is recorded, new run identity starts, all facts are revalidated and execution resumes from durable next action. |
 | Reviewer correction | One correction and reassessment complete inside the inherited correction ceiling. |
 | Second material non-pass | Stops for Patrik; no additional correction runs. |
 | Capability already authorized but unenforceable | Technical handback; no operator waiver is suggested. |
 | Missing handback | Durable evidence blocker; never false success. |
 | Partial effects and interruption | Status and packet identify effects, process/lease condition and safe recovery; no automatic retry. |
+| Closure reserve | Optional correction/resolution is refused when it would consume reserved closure or recovery capacity; the current run still finalizes honestly. |
+| Control-surface mutation | Actor attempts an unowned owner, lease, permission, budget, runtime or terminal-result mutation; continuation is refused. |
+| Crash-boundary matrix | Every reliability-foundation durable boundary recovers to one proven next action, already-completed classification or blocker without duplicate effect. |
+| Hostile protocol input | Metacharacters, newlines, traversal, symlinks, duplicate fields, oversize values, unknown versions and fake control lines fail closed. |
 | Completion rendering | Report traces every claim to state/evidence and names autonomous repairs. |
 | Event degradation | Missing/truncated journal does not alter state, result or report truth. |
 | Arbitrarily named linked worktree | Complete local runtime, identity, admission, execution and reporting all pass. |
@@ -901,6 +946,8 @@ Gate SA must pass first. Then every statement below must be proven:
 
 - The dispatcher refuses an unexecutable task before actor launch and names the exact preparation need.
 - Every admitted run has a complete outcome, acceptance, boundary, authority, capability, workspace and proof contract.
+- Admission is bound to the approved base HEAD and fingerprints of every load-bearing plan/specification and operator decision.
+- Undeclared shared resources and non-Git effects refuse admission or stop; a clean Git status is never treated as proof that no other effect occurred.
 - The dispatcher selects only one of the supported Work Loop routes through deterministic rules.
 - Every actor handback is machine-validated and every supported outcome maps to one exhaustive next action.
 - Free-form prose, process exit zero or file appearance cannot independently advance the run.
@@ -916,10 +963,13 @@ Gate SA must pass first. Then every statement below must be proven:
 - Unsafe proposed actions are denied and returned for repair.
 - Genuine operator-owned decisions produce legal `blocked/operator` state and a decision packet with options, consequences, recommendation, current safety and exact response.
 - A resolver decision never expands capability, changes policy or creates intent.
+- Dedicated resolver decisions use fresh minimal context, and equivalent authority/evidence produces the same classification despite persuasive narrative differences.
+- Optional work cannot consume the declared closing-hop, postcheck, teardown or evidence-finalization reserves.
 - Operator resume records the decision, starts a new run identity and revalidates state, evidence, leases, Git facts, runtime and budgets.
 - Successful completion produces a concise report covering outcome, changes, proof, review, repairs, assumptions, repository state and remaining action.
 - The event journal makes repairs, decisions, escalations and completion measurable without becoming semantic authority.
 - The complete live trial matrix passes and Gate SA, concurrency, durable-state and autonomy-authority invariants do not regress.
+- Final review confirms one production owner for each control parser/validator seam, no duplicate lifecycle semantics and no unreachable transition branch hidden by shell control flow.
 
 Passing Gate ST justifies this claim:
 
@@ -953,6 +1003,8 @@ Replay safety is declared by trusted dispatcher/runtime code. An actor or Decisi
 | Failure class | Required behavior |
 |---|---|
 | Admission incomplete | Zero-model `PREPARATION_REQUIRED`; no lease-dependent or paid work beyond necessary preflight. |
+| Admission authority stale | Zero-model `PREPARATION_REQUIRED`; identify the drifted HEAD or authority fingerprint and require explicit task revalidation. |
+| Shared resource or non-Git effect undeclared | Refuse before launch when known; otherwise block at detection, preserve exact facts and do not infer isolation from Git. |
 | Admission unsafe | Zero-model `REFUSED` with exact state, owner, lease, runtime or capability reason. |
 | Invalid actor handback | Evidence blocker; preserve raw capture and before/after facts; no retry. |
 | Internal repair exhausted | Structured `repair_needed`, `decision_needed` or `blocked` according to evidence; never ordinary success. |
@@ -964,6 +1016,7 @@ Replay safety is declared by trusted dispatcher/runtime code. An actor or Decisi
 | Named safe operational inconsistency | Canonical reconciliation returns `RECONCILED_SAFE`, records the correction and continues from the validated durable next action. |
 | Ambiguous operational inconsistency | `RECONCILE_BLOCKED`; preserve facts and render the exact recovery requirement. |
 | Unsafe or unclassified replay | Emit `REPLAY_REFUSED`; reconcile effects and do not repeat the action. |
+| Closure/recovery reserve would be consumed | Do not launch optional work; finalize the current validated state or blocker using the reserve. |
 | Interruption or timeout | Existing closure-package teardown, partial-effect classification, conservative lease and operator-takeover rules apply. |
 
 Recovery never blindly repeats the previous request. It resumes from the canonical next action under a new run identity after complete revalidation.
@@ -978,6 +1031,7 @@ Do not implement this proposal by adding:
 - a general planner or architecture agent inside the dispatcher;
 - a second task state, approval ledger or policy database;
 - a general-purpose capability-policy language;
+- a general shared-resource lease manager for the initial release; unsupported environmental dependencies are refused instead;
 - automatic precedent promotion or self-modifying authority;
 - a permanent dedicated resolver service or always-on model;
 - unlimited evidence-based retries;
@@ -1006,12 +1060,16 @@ The dispatcher remains one bounded-task controller using one canonical state rec
 Use the dispatcher for 5–10 representative tasks across the three admitted route classes. Review:
 
 - which tasks failed admission and why;
+- which contracts drifted from their admitted HEAD or authority fingerprints;
+- which tasks required unsupported shared resources or produced non-Git effects;
 - internal repair success and repeated-failure rates;
 - resolver allow, deny and operator rates;
 - operator decisions that added genuinely new information;
 - permission and capability blockers;
 - invalid/missing handbacks;
 - reconciliation-safe, reconciliation-blocked and replay-refusal outcomes;
+- closure/recovery reserve refusals and whether the reserve was sufficient;
+- resolver narrative-bias or correlated-review findings;
 - completion-report accuracy; and
 - time, usage and hop consumption.
 
@@ -1040,12 +1098,15 @@ Approval of this proposal would establish the following direction:
 4. **The six non-negotiable execution invariants sit above executor and resolver judgment.** Neither actor may waive them.
 5. **Only a mechanically proven replay-safe zero-model operation may repeat.** Persistent effects and model requests are reconciled and resumed, never blindly replayed.
 6. **Operational inconsistency uses a first-class reconciliation transition owned by the canonical validator/recovery capability.** Only named deterministic unchanged-state cases may continue automatically.
-7. **Ordinary executor proof failures may receive up to two internal repairs when each produces new evidence and remains inside both authority envelopes.**
-8. **The existing one-reviewer-correction ceiling remains separate and unchanged.**
-9. **A narrow Decision Resolver may allow already-authorized action, deny unsafe action, or identify one genuine operator decision.** It may not grant capability or change policy.
-10. **Completion and decision reports are rendered from validated state and evidence without another model call.**
-11. **A run-local event journal supports analysis but never becomes task or transport authority.**
-12. **The release remains supervised.** Unattended reliability continues to require the separate Gate U programme.
+7. **Admission binds the task to base HEAD, load-bearing authority fingerprints and an exact supported shared-resource/non-Git-effect profile.** Drift or undeclared effects refuse rather than infer safety.
+8. **Closure and recovery capacity is reserved before optional actor launches.** Optional autonomy may not consume the ability to stop or finish honestly.
+9. **Ordinary executor proof failures may receive up to two internal repairs when each produces new evidence and remains inside both authority envelopes.**
+10. **The existing one-reviewer-correction ceiling remains separate and unchanged.**
+11. **A narrow Decision Resolver may allow already-authorized action, deny unsafe action, or identify one genuine operator decision.** It may not grant capability or change policy, and dedicated resolution uses fresh minimal context.
+12. **Completion and decision reports are rendered from validated state and evidence without another model call.**
+13. **A run-local event journal supports analysis but never becomes task or transport authority.**
+14. **Dispatcher control parsing remains single-owner and testable behind narrow seams.** Extraction is allowed only to prevent duplicate or untestable logic, not to authorize a rewrite.
+15. **The release remains supervised.** Unattended reliability continues to require the separate Gate U programme.
 
 Approval authorizes detailed implementation planning against the integrated dispatcher baseline. It does not authorize code changes, capability expansion, unattended release, push, merge or deployment.
 
