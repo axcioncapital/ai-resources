@@ -745,13 +745,23 @@ else
   grep -q 'RELEASED task=absent checkout=absent' "$C16" \
     && ok "and its ordinary exit releases both, leaving the task clean" \
     || bad "and its ordinary exit releases both" "$(cat "$C16")"
-  # Reclaim must not litter: a tombstone left in the lease root is a directory
-  # the operator has to reason about later.
+  # Reclaim must not litter. Named artifacts are asserted by NAME first, and
+  # then the whole lease root is asserted to hold nothing but lease directories
+  # — because a name-matched assertion can only ever catch the residue whose
+  # name it was told, and the residue that matters is the kind nobody predicted.
   ROOT16="$(dirname "$TD16")"
-  LEFT="$(find "$ROOT16" -maxdepth 1 -name '*.stale.*' -o -maxdepth 1 -name '*.reclaim' 2>/dev/null)"
+  LEFT="$(find "$ROOT16" -maxdepth 1 \( -name '*.stale.*' -o -name '*.reclaiming' \) 2>/dev/null)"
   [ -z "$LEFT" ] \
-    && ok "and reclaim left no tombstone or reclaim marker behind" \
-    || bad "and reclaim left nothing behind" "$LEFT"
+    && ok "and reclaim left no tombstone and no reclaim marker behind" \
+    || bad "and reclaim left no tombstone or reclaim marker behind" "$LEFT"
+  STRAY="$(find "$ROOT16" -mindepth 1 -maxdepth 1 ! -name '*.lock' 2>/dev/null)"
+  [ -z "$STRAY" ] \
+    && ok "and the lease root holds nothing but lease directories" \
+    || bad "and the lease root holds nothing but lease directories" "$STRAY"
+  WITNESS="$(find "$ROOT16" -mindepth 2 -maxdepth 2 -name 'wl-reclaim-*' 2>/dev/null)"
+  [ -z "$WITNESS" ] \
+    && ok "and no reclaim witness survived inside the acquired lease" \
+    || bad "and no reclaim witness survived inside the lease" "$WITNESS"
 fi
 
 # ================================================================= case 17
@@ -830,6 +840,115 @@ else
   [ -d "$TD18" ] && [ -f "$TD18/survivors" ] \
     && ok "and the survivors record the operator has to read was not deleted" \
     || bad "and the survivors record was not deleted" "$TD18/survivors is gone"
+fi
+
+# ================================================================= case 19
+echo
+echo "Case 19 — a reclaimer that DIED mid-reclaim does not strand the lease it was reclaiming"
+# The stranding this case exists to catch is second-order and easy to create by
+# accident: the mechanism that stops two reclaimers colliding becomes, when its
+# owner dies holding it, exactly the permanent refusal that liveness recovery
+# was added to remove. The dead holder no longer strands the task — the dead
+# RECLAIMER does.
+#
+# Both representations of the interrupted state are fabricated, because the
+# correction changed which one exists: a `<lease>.reclaiming` marker directory
+# owned by a dead pid, which is what the exclusive-marker mechanism left behind,
+# and a `wl-reclaim-<deadpid>-N` witness inside the stale lease, which is what
+# the witness-set mechanism leaves behind. Whichever the implementation under
+# test uses, the interrupted state is present, so the case is a real test of
+# both rather than a description of one.
+d="$(new_checkout)"
+AP4="$(absent_pid)"
+DEAD_RECLAIMER="$(absent_pid)"
+if [ -z "$AP4" ] || [ -z "$DEAD_RECLAIMER" ]; then
+  bad "setup — two positively absent pids could be established" "kill -0 did not report 'no such process'"
+else
+  TD19="$(task_dir "$d" interrupted-reclaim)"
+  fabricate_lease "$TD19" "$AP4" dispatch interrupted-reclaim "$d" \
+    && ok "setup — a stale lease (holder pid $AP4, gone)" \
+    || bad "setup — a stale lease" "could not create $TD19"
+  mkdir -p "$TD19.reclaiming" && printf '%s\n' "$DEAD_RECLAIMER" >"$TD19.reclaiming/pid"
+  mkdir -p "$TD19/wl-reclaim-$DEAD_RECLAIMER-1"
+  ok "setup — and a reclaimer (pid $DEAD_RECLAIMER, also gone) interrupted part-way through it"
+  C19="$SANDBOX_ROOT/c19.out"
+  contend "$LEASE_LIB" "$d" interrupted-reclaim recoverer 0 "$C19" >/dev/null 2>&1; RC=$?
+  [ "$RC" -eq 0 ] \
+    && ok "the next run still acquires — a dead reclaimer does not strand the task" \
+    || bad "the next run still acquires over a dead reclaimer" "rc=$RC $(cat "$C19")"
+  grep -q 'task_owned=1 checkout_owned=1' "$C19" \
+    && ok "and it owns both resources, so recovery is not a half-admission" \
+    || bad "and it owns both resources" "$(cat "$C19")"
+  grep -q 'RELEASED task=absent checkout=absent' "$C19" \
+    && ok "and its ordinary exit releases both, leaving the task clean" \
+    || bad "and its ordinary exit releases both" "$(cat "$C19")"
+  [ -z "$(find "$(dirname "$TD19")" -mindepth 2 -maxdepth 2 -name 'wl-reclaim-*' 2>/dev/null)" ] \
+    && ok "and the dead reclaimer's witness went with the lease it was reclaiming" \
+    || bad "and the dead reclaimer's witness was cleaned up" \
+        "$(find "$(dirname "$TD19")" -mindepth 2 -maxdepth 2 -name 'wl-reclaim-*' 2>/dev/null)"
+  [ -z "$(find "$(dirname "$TD19")" -maxdepth 1 -name '*.stale.*' 2>/dev/null)" ] \
+    && ok "and no tombstone was left behind" \
+    || bad "and no tombstone was left behind" \
+        "$(find "$(dirname "$TD19")" -maxdepth 1 -name '*.stale.*' 2>/dev/null)"
+fi
+
+# ================================================================= case 20
+echo
+echo "Case 20 — a reclaimer that is STILL WORKING is preserved and keeps the next run out"
+# The other half of case 19, and the one that stops the fix from being "delete
+# whatever is in the way". Recovering a dead reclaimer's witness must not become
+# a licence to overrun a live one. Both sub-cases fabricate a stale lease — so
+# the reclaim path is genuinely entered — and then a witness whose owner this
+# process must not step over.
+d="$(new_checkout)"
+AP5="$(absent_pid)"
+UP2="$(uninspectable_pid)"
+if [ -z "$AP5" ]; then
+  bad "setup — a positively absent pid could be established" "kill -0 did not report 'no such process'"
+else
+  # (a) UNINSPECTABLE reclaimer. pid 1 is deterministic here: it is lower than
+  #     every contender pid and it answers `kill -0` with a refusal rather than
+  #     with absence, so the verdict cannot come out ABSENT by accident.
+  if [ -z "$UP2" ]; then
+    ok "SKIPPED (a) — this user cannot produce an uninspectable pid"
+  else
+    TD20a="$(task_dir "$d" reclaimer-unknown)"
+    fabricate_lease "$TD20a" "$AP5" dispatch reclaimer-unknown "$d" >/dev/null
+    mkdir -p "$TD20a/wl-reclaim-$UP2-1"
+    C20a="$SANDBOX_ROOT/c20a.out"
+    contend "$LEASE_LIB" "$d" reclaimer-unknown probe 0 "$C20a" >/dev/null 2>&1; RC=$?
+    [ "$RC" -eq 17 ] \
+      && ok "an UNINSPECTABLE reclaimer keeps the next run out (rc=17)" \
+      || bad "an uninspectable reclaimer keeps the next run out" "rc=$RC $(cat "$C20a")"
+    grep -q 'REFUSED-STATE state=CONTENDED ' "$C20a" \
+      && ok "and the refusal says CONTENDED — a reclaim in progress, not a dead holder" \
+      || bad "and the refusal says CONTENDED" "$(cat "$C20a")"
+    [ -d "$TD20a/wl-reclaim-$UP2-1" ] \
+      && ok "and that reclaimer's witness was PRESERVED, not cleared out of the way" \
+      || bad "and that reclaimer's witness was preserved" "$TD20a/wl-reclaim-$UP2-1 is gone"
+    [ -d "$TD20a" ] && [ "$(cat "$TD20a/pid")" = "$AP5" ] \
+      && ok "and the lease it was reclaiming survived untouched" \
+      || bad "and the lease survived untouched" "$TD20a changed or is gone"
+  fi
+
+  # (b) LIVE reclaimer, started BEFORE the contender so its pid is the lower of
+  #     the two — which is the order that decides between two live reclaimers.
+  LP2="$(live_pid)"
+  TD20b="$(task_dir "$d" reclaimer-live)"
+  fabricate_lease "$TD20b" "$AP5" dispatch reclaimer-live "$d" >/dev/null
+  mkdir -p "$TD20b/wl-reclaim-$LP2-1"
+  C20b="$SANDBOX_ROOT/c20b.out"
+  contend "$LEASE_LIB" "$d" reclaimer-live probe 0 "$C20b" >/dev/null 2>&1; RC=$?
+  [ "$RC" -eq 17 ] \
+    && ok "a LIVE reclaimer that went first keeps the next run out (rc=17)" \
+    || bad "a live reclaimer that went first keeps the next run out" "rc=$RC $(cat "$C20b")"
+  [ -d "$TD20b/wl-reclaim-$LP2-1" ] \
+    && ok "and its witness was preserved too" \
+    || bad "and its witness was preserved" "$TD20b/wl-reclaim-$LP2-1 is gone"
+  [ -d "$TD20b" ] \
+    && ok "and the lease it was reclaiming was not renamed away underneath it" \
+    || bad "and the lease was not renamed away underneath it" "$TD20b is gone"
+  kill "$LP2" 2>/dev/null; wait "$LP2" 2>/dev/null
 fi
 
 # ==================================================================== done
