@@ -84,7 +84,9 @@ Candidate deferral noticed mid-unit, not implemented: `LOCK_KEY` is unassigned s
 
 Remaining limitations: a Git common directory that cannot be written leaves the refusal record unwritten — the run warns on the terminal and still refuses correctly, so the evidence gap is announced rather than silent. Refusal records accumulate under `refusals/` with no pruning.
 
-Rollback: `git revert` the implementation commit, or `git checkout <parent> -- plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`. No state store, command surface or file layout changed, so nothing outside those two files has to be undone.
+Implementation commit: `8e4261f0`.
+
+Rollback: `git revert 8e4261f0`, or `git checkout 8e4261f0~1 -- plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`. No state store, command surface or file layout changed, so nothing outside those two files has to be undone.
 
 Units 1–3 accepted: Unit 1 (`fee4fe49`, `ca35371c`, `57f3b25b`), Unit 2 (`2d58991d`, record update `bc979e8d`), Unit 3 (`cda44c50`).
 
