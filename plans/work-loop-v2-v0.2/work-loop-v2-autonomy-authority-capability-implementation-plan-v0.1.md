@@ -961,12 +961,15 @@ directions.
 2026-08-15).** The two nested rows above describe today. The approved target is symmetry at the
 **direct-route request** level, reached like this: a machine-wide Codex execpolicy rules file carrying
 `prefix_rule(pattern=["claude"], decision="prompt")` and the same for `codex`, together with a Codex-hop
-launch policy that cannot grant such a prompt, so a matched command is refused rather than approved.
+launch policy that cannot grant such a prompt. **That configuration is the target. What a matched command's
+live disposition then is has not been observed on this host and is recorded as unverified** — the target is
+what is requested, not an outcome anyone here has seen.
 Observation stays as it is on both paths. Four properties of that target are stated here so no later unit
 can round them up:
 
-- **It reaches *requested*, not *prevented*.** It blocks the ordinary direct route on the Codex path, which
-  is exactly the strength the Claude path already has. Neither path is containment.
+- **It reaches *requested*, not *prevented*.** It asks of the Codex path what the Claude path already asks
+  of its child, and on both paths what then happens to the ordinary direct route is the child's to decide
+  and is not something the carrier observes. Neither path is containment.
 - **Wrapper evasion is an accepted limitation, not an open defect.** `codex execpolicy check` matches
   `claude -p x` but returns no match for `bash -lc 'claude -p x'` or `env claude -p x` (Unit 32, observed).
   Absolute-path invocations match only with `--resolve-host-executables`. The operator accepted this
@@ -1476,7 +1479,9 @@ what changed is the discovery that it was never built.
   path alone. The Claude path keeps its four mandatory `--disallowedTools` rules exactly as they are. The
   Codex path gains the operator-approved mechanism of § 3.4: machine-wide execpolicy `prompt` rules for
   direct `claude` and `codex` commands, plus a Codex-hop launch policy under which such a prompt cannot be
-  granted, so a matched command is refused rather than approved. Observation stays symmetric and unchanged
+  granted. **That configuration is what this tracer delivers. A matched command's live disposition is
+  unverified** and is recorded as such — see *What the evidence may and may not claim* below, which also
+  states that confirming it is not a precondition of this tracer. Observation stays symmetric and unchanged
   on both paths.
 - **Starting evidence:** Unit 32, recorded in the task state file — the per-path launch inspection
   (`carry-turn.sh:845-906`), the execpolicy decision-set probe (`allow` and `prompt` parse; `deny`,
