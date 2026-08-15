@@ -1,9 +1,19 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** **Draft — pending one fresh bounded review and the operator's content-bound reapproval**,
-2026-08-14. This amendment is a substantive change to T2's contract, so it could not be an edit under the
-prior re-freeze: the plan returns to draft, and it grants no implementation authority until reapproved.
-**T2 is blocked** until both gates land. The matching readiness record is § Plan-readiness statement.
+**Status:** **Re-frozen for implementation**, 2026-08-14, on the operator's explicit content-bound
+approval of the corrected plan content at commit `74c33a28d4cd18be376ab40127af0af303fd1d59`, blob
+`964068c627a92adf3aaadfb0d9c8e56ba0383e6e`. This amendment was a substantive change to T2's contract, so
+it could not be an edit under the prior re-freeze: the plan returned to draft and was then re-frozen in
+its own right at the identity above. The matching readiness record is § Plan-readiness statement.
+
+**Gates completed for this re-freeze, in order.** One fresh isolated bounded review of the amended plan
+content at commit `9a0053a089a966754f9728e6c8b913bc0731603b`, blob
+`25889efab1986d582f36407d1696f4b70a2258ac` — verdict **CORRECT**, with one material evidence-wording
+finding; one bounded correction round resolving that single frozen finding, landing at the approved
+identity above; the Codex closure check on that frozen finding, verdict **PASS**, a bounded correction
+and not a redesign, so `docs/qc-independence.md` requires no second broad review; and the operator's
+explicit content-bound approval of that corrected commit and blob. This status record is provenance only:
+it neither implemented nor reviewed T2.
 
 **Cause of this amendment — a proven contradiction in T2's frozen contract.** Unit 15's premise
 verification established, and the fresh isolated risk-aware review confirmed with verdict **ESCALATE**,
@@ -15,9 +25,10 @@ outside the frozen contract's five enumerated consequence gates. The resulting a
 still route **every** scope change to the operator, against proposal § 6's operator-reserved boundary,
 which reserves changing the intended outcome or priority, **material** scope expansion, and exclusion
 removal. Leaving that undone is the same failure § 3.2 already exists to prevent, on a surface the frozen
-contract did not enumerate. The operator approved this bounded amendment direction on 2026-08-14; that
-approval authorizes drafting and reviewing the amendment, and is **not** content-bound approval of the
-amended content, which does not yet exist at an identifiable blob.
+contract did not enumerate. The operator approved this bounded amendment direction on 2026-08-14 — that
+approval authorized drafting and reviewing the amendment only — and then gave explicit content-bound
+approval of the reviewed and corrected amended content at the commit and blob recorded in the Status
+block above.
 
 **Prior re-freeze identity — superseded by this amendment, preserved as history.** The plan was
 **re-frozen for implementation** on 2026-08-14 on the operator's explicit content-bound approval of the
@@ -32,9 +43,11 @@ command, autonomy rules, session-plan, carrier, dispatcher, or tests — has bee
 **T1 and T1a are both implemented, and they are the only implemented tracers:** T1 at commit
 `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved; § Fixed Point below, unchanged), and T1a
 at commit `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, resulting core blob
-`82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 has not begun**, and no core edit exists for it.
+`82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 has not begun**, and no core edit exists for it. Under
+this re-freeze T2 may be opened only through its own bounded implementation unit, with the
+high-consequence risk-aware Codex review its review row requires landing before implementation.
 
-**Lineage of this re-freeze — research, review, correction.** The prior freeze was reopened on operator
+**Lineage of the prior re-freeze — research, review, correction.** The prior freeze was reopened on operator
 decision (2026-08-14) after primary-source research
 ([`t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md`](t2-governing-autonomy-clause-primary-source-findings-2026-08-14.md),
 blob `16d5203bcfcdb3f6ddd19a1e4baf36612650efa6`, verdict REVISE) proved two of that freeze's premises
@@ -1196,11 +1209,12 @@ past T8's or T9's bar is an operator-owned change to the Fixed Point.
 
 ## Plan-readiness statement
 
-This artifact is **draft — pending one fresh bounded review and the operator's content-bound
-reapproval**, and it grants **no implementation authority** in this state. It agrees with the Status
-block at the head of this file; there is no third status record.
+This artifact is **re-frozen for implementation**, 2026-08-14, on the operator's explicit content-bound
+approval of the corrected plan content at commit `74c33a28d4cd18be376ab40127af0af303fd1d59`, blob
+`964068c627a92adf3aaadfb0d9c8e56ba0383e6e`. It agrees with the Status block at the head of this file;
+there is no third status record.
 
-**Why it returned to draft.** It was **re-frozen for implementation** at commit
+**Why it returned to draft first.** It had been **re-frozen for implementation** at commit
 `ccf134b860b057de56c8da5452ce43ab36e4bf66`, blob `3fd5322fc3d499de01661dfb5d645def482b6168`, on the
 operator's explicit content-bound approval of 2026-08-14, with the status record written at commit
 `e45a581f89291ff45ec263d35d9b38e65117b3e2` (plan blob `7b254fcbaeda669ecb8a300e72d9bb5203619505`) — this
@@ -1213,17 +1227,24 @@ fresh isolated risk-aware review, verdict **ESCALATE**): it reconciled the five 
 gates but left core § 6 rule 4's categorical scope transfer standing, so executing it as frozen would
 have produced a knowingly self-contradictory canonical core. A substantive change to a tracer's contract
 cannot be an edit under a freeze, so the plan returned to draft. The operator approved this bounded
-amendment direction on 2026-08-14 — authority to draft and review the amendment, **not** content-bound
-approval of it.
+amendment direction on 2026-08-14 — authority to draft and review the amendment only — and the amendment
+was then reviewed, corrected and re-frozen in its own right, as recorded below.
 
 **Implementation state.** **T1 and T1a are implemented, and they are the only implemented tracers** — T1
 at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved), T1a at commit
 `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, resulting core blob
 `82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 has not begun**, and no core edit exists for it.
 
-**What must happen before implementation resumes.** Two gates, in order: one fresh bounded review of the
-amended plan content, and the operator's explicit content-bound reapproval of the reviewed commit and
-blob. Until both land, **T2 is blocked** and no tracer downstream of it may start.
+**Gates completed for this re-freeze, in order.** One fresh isolated bounded review of the amended plan
+content at commit `9a0053a089a966754f9728e6c8b913bc0731603b`, blob
+`25889efab1986d582f36407d1696f4b70a2258ac` — verdict **CORRECT**, with one material evidence-wording
+finding; one bounded correction round resolving that single frozen finding; the Codex closure check on
+that frozen finding, verdict **PASS**, a bounded correction and not a redesign, so
+`docs/qc-independence.md` requires no second broad review; and the operator's explicit content-bound
+approval of that corrected commit and blob. Both gates have landed, so **T2 is no longer blocked by
+them** — it may now be opened only through its own bounded implementation unit, with the
+high-consequence risk-aware Codex review its review row requires landing before implementation. This
+readiness statement is provenance only: it neither implemented nor reviewed T2.
 
 This amendment changes T2's contract and the two status records, and nothing else it was not authorized
 to touch: no tracer is renumbered, no sequencing changes, the Fixed Point is unchanged, the capability

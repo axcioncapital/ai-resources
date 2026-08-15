@@ -9,94 +9,101 @@ Implement and verify the approved autonomy/authority/capability proposal through
 The operator wants implementation to proceed under the compact Axcíon Standard Implementation Workflow. `/implementation-triage` remains explicitly excluded. The existing Work Loop is the sole runtime state; the research report is evidence, not parallel runtime state.
 
 ## Lane and unit
-Standard. Implementation mode. Unit 16 — amend the plan's T2 contract for the newly proven scope-rule contradiction and return it to draft.
+Standard. Implementation mode. Unit 17 — record the operator's content-bound approval in both live plan status records and re-freeze the corrected plan.
 
-Named reason for the loop: the frozen T2 contract would knowingly produce contradictory canonical authority; repository evidence therefore requires one bounded substantive plan amendment and later content-bound reapproval before implementation.
+Named reason for the loop: implementation authority must remain content-bound and survive session boundaries; the corrected plan cannot govern T2 until its exact approved identity is recorded consistently.
 
 ## Brief
-The operator approved the bounded amendment direction on 2026-08-14 after Unit 15's fresh risk-aware review returned ESCALATE. Amend only the implementation plan so T2 also reconciles core § 6 rule 4 with the approved material-scope boundary, preserves the valid proportional-verification rule in the Codex skill, and keeps T3a limited to the actual categorical line-508 gate; do not edit or implement the core.
+The operator explicitly approved the exact corrected plan at commit `74c33a28d4cd18be376ab40127af0af303fd1d59`, blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e`, on 2026-08-14. Record that approval consistently in the plan's two existing live status regions so the corrected content becomes re-frozen for implementation; this is status/provenance work only and must not begin T2.
 
-Governing identities and decisions:
+Governing record: the fresh isolated review of amendment commit `9a0053a089a966754f9728e6c8b913bc0731603b`, blob `25889efab1986d582f36407d1696f4b70a2258ac`, returned CORRECT with one material evidence-wording contradiction. The bounded two-hunk correction landed at the approved identity above, and Codex's closure check passed without redesign; `docs/qc-independence.md` therefore requires no second broad review. T1 and T1a remain the only implemented tracers, and the core remains blob `82f119cd63c379b24f0bef8aab029ae04c165203`.
 
-- Current re-frozen plan status-record commit `e45a581f89291ff45ec263d35d9b38e65117b3e2`, plan blob `7b254fcbaeda669ecb8a300e72d9bb5203619505`.
-- Approved proposal commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67`, blob `39c67196dcec35a1be8f4fcf8ea3ef6a50cfde0b`.
-- Current core after T1a: commit `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, blob `82f119cd63c379b24f0bef8aab029ae04c165203`.
-- Operator-approved amendment direction: expand T2 to reconcile the unqualified core § 6 rule-4 sentence `a change to scope goes to the operator` with proposal § 6's operator-reserved boundary—changing intended outcome/priority, materially expanding scope, or removing an exclusion—while retaining the rule that scope and success criteria do not change quietly.
-- Settled review decisions: T2 appends only the 588-byte proposal § 1 blockquote clause; deleting the broad consequentiality catch-all is already approved; the newline-spanning d-ii check may normalize whitespace; `.agents/skills/work-loop-v2/SKILL.md` line 473 remains valid proportional evidence policy; T3a owns only the categorical line-508 gate.
+Required outcome:
 
-Required plan amendment:
+1. Update only the opening status/approval preamble before `## 1. Fixed Point` and the final `## Plan-readiness statement` so both say the plan is re-frozen for implementation on the operator's explicit content-bound approval of commit `74c33a28d4cd18be376ab40127af0af303fd1d59`, blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e`.
+2. In both regions, record the completed gate sequence accurately: fresh isolated review → one bounded correction → Codex closure PASS → operator content-bound approval. Preserve all earlier freeze/amendment identities as historical provenance.
+3. State consistently that T1 and T1a are implemented, T2 has not begun, and T2 may now be opened only through its own bounded implementation unit and required high-consequence risk-aware review. Do not imply that this status record itself implemented or reviewed T2.
+4. Remove or update stale live wording that says review or operator reapproval is still pending, while preserving the amendment cause, accepted T8 S4/S8 limitation, Fixed Point, deferrals, tracer sequence, and all substantive T2 contract text unchanged.
 
-1. Change both live plan status records—the opening status/approval preamble and final `## Plan-readiness statement`—from re-frozen to draft pending one fresh bounded review and operator content-bound reapproval. Preserve the prior re-freeze commit/blob as historical provenance, and state accurately that T1 and T1a are implemented while T2 has not begun.
-2. Update the Repository Delta/risky-assumption discussion only where needed to record the newly verified core § 6 rule-4 conflict and the corrected consumer disposition: skill line 473 remains aligned; line 508 is the T3a conflict.
-3. Expand § 3.2's inputs, outputs, guaranteed/failure behavior, side-effect boundary, and evidence so T2's one coherent core blob also reconciles rule 4. The target semantics must preserve explicit disclosure of scope/success-criteria changes while routing only proposal-authorized classes—intended outcome/priority changes, material scope expansion, or exclusion removal—to the operator.
-4. Expand the Execution Plan's T2 behavior, starting evidence, intended change, verification, exit condition and scope boundary consistently. Keep the original five categorical consequence/hard-to-reverse gates as five independently checked strings, and add the scope-rule conflict as a separate sixth reconciliation surface rather than relabelling it as a consequence gate.
-5. Make the newline-spanning d-ii evidence genuinely fail-capable by specifying normalized/flattened logical-string matching. Do not change the semantic evidence bar or use this mechanical correction to widen scope.
-6. Update any T2 traceability, ordering, risk, dependency, or plan-readiness wording that would otherwise become stale. Do not renumber tracers or change T3/T3a/T4 sequencing. Explicitly preserve the existing plan guarantee that the skill's lines 465–475 proportional re-check trigger—including line 473—remains unaffected, and that T3a touches only line 508.
-7. Retain the accepted T8 S4/S8 limitation, all historical freeze/amendment identities, and existing non-blocking deferrals.
-
-Scope: the implementation plan and this state-file handback only. No core, proposal, skill, command, autonomy-rules, session-plan, carrier, dispatcher, test, research-report, or consumer edit. This unit drafts governing plan content; it grants no T2 implementation authority.
+Scope: the implementation plan's two live status regions and this state-file handback only. No change from `## 1. Fixed Point` through the line before `## Plan-readiness statement`; no core, proposal, skill, command, autonomy-rules, session-plan, carrier, dispatcher, test, research-report, or consumer edit.
 
 Required evidence:
 
-1. Confirm the pre-edit plan is blob `7b254fcbaeda669ecb8a300e72d9bb5203619505` and the core remains blob `82f119cd63c379b24f0bef8aab029ae04c165203` before and after.
-2. Show a zero-context plan diff and map every hunk to one of the seven authorized amendment items above; any unmapped hunk fails the unit.
-3. Show both live status records agree that the plan is draft, name this amendment's cause, preserve the prior approved identity as history, and block T2 pending fresh review plus content-bound reapproval.
-4. Search the entire plan for T2's gate counts/surfaces and prove it consistently distinguishes five consequence/hard-to-reverse gates plus one scope-rule surface; no stale claim may say five surfaces are complete on their own.
-5. Prove the T2 specification and tracer both preserve the no-quiet-change behavior, cover the material-scope/operator classes, and require a fail-capable normalized check for the newline-spanning gate.
-6. Prove line 473's proportional condition remains expressly unaffected and T3a remains limited to line 508; no new skill edit is scheduled.
-7. Confirm the proposal Fixed Point, T1/T1a implementation records, tracer numbering/order, T8 limitation, and existing deferrals are otherwise preserved.
-8. Report the amendment commit and resulting plan blob.
+1. Confirm the pre-edit plan blob is exactly `964068c627a92adf3aaadfb0d9c8e56ba0383e6e` and the core blob remains `82f119cd63c379b24f0bef8aab029ae04c165203` before and after.
+2. Show the zero-context plan diff against commit `74c33a28d4cd18be376ab40127af0af303fd1d59`; every plan hunk must fall inside one of the two authorized status regions.
+3. Prove the full middle region from `## 1. Fixed Point` through the line before `## Plan-readiness statement` is byte-identical before and after.
+4. Read both status regions back and show they agree on re-frozen status, the approved commit/blob, the completed gate sequence, implementation state, and T2's next gate.
+5. Confirm no target file changed. Report the status-record commit and resulting plan blob.
 
-Completion condition: amend the plan exactly within this boundary, set `turn: codex`, commit only the plan plus state-file handback, and stop. Do not run a review, re-freeze the plan, or begin T2.
+Completion condition: make the two status-only updates, set `turn: codex`, commit only the plan plus state-file handback, and stop. Do not implement T2 or run another review.
 
-Stop conditions: stop if the plan or core baseline identity differs, the conflict cannot be resolved without changing the approved proposal boundary, another target surface becomes necessary, or any amendment would alter the Fixed Point, capability envelope, tracer ordering, or accepted limitation. Challenge a false premise rather than improvising.
+Stop conditions: stop if either baseline identity differs, any substantive plan content must change, the two status regions cannot be made consistent without altering the approved contract, or another file appears necessary. Challenge a false premise rather than improvising.
 
 ## Latest result
 
-Bounded correction round (2026-08-14). The one frozen finding is **resolved in full**. Nothing else was corrected, and nothing newly noticed was implemented.
+Inspected (2026-08-15):
 
-**Reproduced first, by inspection.** The contradiction was real and present in both mirrored places, at plan blob `25889efab1986d582f36407d1696f4b70a2258ac`:
+- Claim (1): HOLDS — `git hash-object` on the worktree plan `plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md` returned `964068c627a92adf3aaadfb0d9c8e56ba0383e6e`; `git rev-parse 74c33a28…:<plan>` returned the same blob.
+- Claim (2): HOLDS — `git hash-object` on `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` returned `82f119cd63c379b24f0bef8aab029ae04c165203`, matching the same blob at commit `74c33a28…`.
+- Claim (3): HOLDS — amendment commit `9a0053a089a966754f9728e6c8b913bc0731603b` carries plan blob `25889efab1986d582f36407d1696f4b70a2258ac` (`git rev-parse 9a0053a0…:<plan>`).
+- Claim (4): HOLDS — searched the plan for `^## 1\. Fixed Point` and `^## Plan-readiness statement`; found exactly one of each, at lines 95 and 1197 of a 1233-line file, so the two status regions are lines 1–94 and 1197–1233.
+- Claim (5): HOLDS — searched the plan for `pending one fresh bounded review`; found 2 matches (lines 3 and 1199), one in each status region. Searched for `T2 is blocked`; found 2 (lines 6 and 1226). Both stale statements were live in both regions.
+- Claim (6): HOLDS — searched the plan for `T2 has not begun`; found 2 (lines 35 and 1222), and both regions already named T1 and T1a as the only implemented tracers.
+- Claim (7): HOLDS — searched the plan for `risk-aware`; T2's own review row at line 594 reads "one risk-aware Codex review before implementation", so the T2 next-gate wording cites the plan's existing contract rather than inventing a gate.
 
-- § 3.2 *Matching discipline*, old lines 487–488: "Every string in (d) and (g) is therefore matched … and **each check must be shown matching before and not matching after**."
-- T2 *Verification*, old line 869: "every string in (d) and (g) is matched … and **each is shown matching before and not matching after**."
-
-Both were blanket statements over (d) **and** (g). But (g), at § 3.2 lines 476–478 and T2 lines 866–868, requires the retained disclosure string "Scope and success criteria do not change quietly" to match **both before and after**. No compliant T2 implementation could satisfy the blanket sentence and (g) together. Confirmed by reading all four passages against each other, not by recall.
-
-**Result:** both mirrored instructions are narrowed to distinguish removed strings from the retained one. Resulting plan blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e`. The core was not touched, no review was run, the plan was not re-frozen, and T2 has not begun.
+Result: the two status regions are updated and the plan is recorded as **re-frozen for implementation** on the operator's content-bound approval of commit `74c33a28d4cd18be376ab40127af0af303fd1d59`, blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e`. Resulting plan blob `c3fec34d9b43dfc7ddda2eb391d238cd032f6db9`. No target implementation surface was touched, no review was run, and T2 has not begun.
 
 ### Evidence
 
-**Zero-context diff — exactly 2 hunks, both inside the two contradictory statements.**
+**Zero-context diff against `74c33a28…` — 8 hunks, every one inside an authorized status region.** The regions are old lines 1–94 (preamble) and old lines 1197–1233 (readiness statement):
 
-| Hunk | Location | What changed |
+| Hunk | Old lines | Region |
 |---|---|---|
-| `@@ -487,2 +487,8 @@` | § 3.2 *Matching discipline* | the blanket after-requirement replaced by a split one |
-| `@@ -869,3 +875,4 @@` | T2 *Verification*, matching-discipline sentence | the same split, mirrored |
+| `@@ -3,4 +3,14 @@` | 3–6 | preamble — Status block |
+| `@@ -18,3 +28,4 @@` | 18–20 | preamble — amendment-cause closing sentence |
+| `@@ -35 +46,3 @@` | 35 | preamble — implementation state, T2 next gate added |
+| `@@ -37 +50 @@` | 37 | preamble — heading retitled *Lineage of the prior re-freeze* |
+| `@@ -1199,3 +1212,4 @@` | 1199–1201 | readiness — opening status sentence |
+| `@@ -1203 +1217 @@` | 1203 | readiness — heading retitled *Why it returned to draft first* |
+| `@@ -1216,2 +1230,2 @@` | 1216–1217 | readiness — amendment-direction closing sentence |
+| `@@ -1224,3 +1238,10 @@` | 1224–1226 | readiness — pending-gates paragraph replaced by completed-gates |
 
-No other hunk exists. `git status --porcelain` lists only the plan, this state file, and the hook-appended `logs/friction-log.md`, which this unit does not commit.
+No hunk falls in 95–1196. `git status --porcelain` lists the plan, this state file, and the hook-appended `logs/friction-log.md`, which this unit does not commit.
 
-**The requirements are now mutually satisfiable.** Both places state one before-rule and two after-rules:
+**The frozen middle region is byte-identical.** `sed -n '95,1196p'` before and `sed -n '108,1209p'` after — the same 1102 lines, shifted by the 13 lines the preamble gained — both hash to `fa4f5bb41dd0e575a7405565c39b259c18795feb22ec78a292edb2a9fdf47fe5` (sha256). This is the check that could have failed: any substantive edit anywhere between the two anchors changes the digest.
 
-| String | Before | After |
+**Core untouched.** `git hash-object` on the core returned `82f119cd63c379b24f0bef8aab029ae04c165203` both before and after the plan edits.
+
+**The two status regions agree.** Read back and counted on the edited file:
+
+| Fact | Occurrences | Where |
 |---|---|---|
-| (d) five categorical consequence gates | must match | must **not** match |
-| (g) scope-transfer clause `a change to scope goes to the operator` | must match | must **not** match |
-| (g) retained disclosure `Scope and success criteria do not change quietly` | must match | must **still** match |
+| approved commit `74c33a28d4cd18be376ab40127af0af303fd1d59` | 2 | lines 4 and 1213 |
+| approved blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e` | 2 | lines 5 and 1214 |
+| `Gates completed for this re-freeze, in order` | 2 | lines 9 and 1238 |
+| `T2 has not begun` | 2 | lines 46 and 1236 |
+| `high-consequence risk-aware Codex review its review row requires` | 2 | lines 48 and 1246 |
+| `neither implemented nor reviewed T2` | 2 | lines 16 and 1247 |
+| `pending one fresh bounded review` | **0** | removed from both |
+| `T2 is blocked` | **0** | replaced by "T2 is no longer blocked by them" (line 1244) |
 
-Six removed strings, one retained string, seven before-matches. § 3.2 now says so explicitly and adds why: "A uniform 'must not match after' would make (g) unsatisfiable, because its two halves are deliberately opposite." T2 mirrors it in one sentence. Verified on the normalized file: `every string must be shown matching before the edit` (§ 3.2) and `**every** string is shown matching **before** the edit` (T2) both present; the two old blanket sentences are both absent; (g)'s "must match **both** before and after" (§ 3.2) and "which must match both before and after" (T2) both survive untouched.
+Both regions state the same gate sequence in the same order: fresh isolated review of `9a0053a0…` / `25889efa…` (verdict CORRECT, one material evidence-wording finding) → one bounded correction resolving that single frozen finding → Codex closure check PASS, a bounded correction and not a redesign, so `docs/qc-independence.md` requires no second broad review → the operator's explicit content-bound approval. Line 1214 still asserts the readiness statement agrees with the Status block and that there is no third status record.
 
-**Preserved, as the correction required.** The normalization requirement survives in both places (`normalized to a single logical line`, 2 occurrences on the normalized file). Every string still carries a before-state proof — that requirement was strengthened from "each check" to "every string", never weakened, and it is still what makes the checks fail-capable.
+**Preserved provenance and carried-forward items, verified present after the edit:** the amendment cause paragraph (the (d)/(g) scope-transfer contradiction, verdict ESCALATE); prior re-freeze identity `ccf134b8…` / `3fd5322f…` with its status record `e45a581f…`; prior freeze identity `fe2c62fd…` / `d1a6162b…` over substantive content `cab3b7a2…` / `1cbcbf4e…`; the accepted T8 S4/S8 limitation; the §14 item-6 deferral; the *Governs* line binding proposal commit `d8a89e0f…`. All sit outside the two edited paragraphs or are quoted unchanged.
 
-**Nothing else changed.** T2 semantics untouched; the six-surface count intact (`six in total` ×2, `five consequence gates plus one scope-rule surface` present); both live status records still read draft pending one fresh bounded review and content-bound reapproval (×2); `T2 is blocked` still stated twice; tracer order unchanged — **T1 T1a T2 T3 T3a T4 T5 T6 T7 T8 T9**; the T8 S4/S8 accepted limitation retained; core blob still `82f119cd63c379b24f0bef8aab029ae04c165203`. No implementation target was touched.
+**No target file changed.** Only the plan and this state file are modified; no core, proposal, skill, command, `docs/autonomy-rules.md`, session-plan, carrier, dispatcher, test, research-report or consumer file appears in `git status`.
 
 ### Noted, not acted on
 
-A deferral, recorded and not implemented: one of this unit's own closure checks reported FAIL for the wrong reason — `grep -c` counts matching *lines*, so it returned 1 against a file flattened to a single line. Recounting with `grep -o | wc -l` gave the true answer, 2. Nothing in the plan is wrong because of it; the plan's own instruction already says "normalized to a single logical line" without prescribing a counting method. It is worth a one-line note in whatever harness later automates these checks, and it is **not** corrected here — this round is frozen to the one finding.
+Two deferrals recorded and not implemented here:
+
+- The `grep -c` counting trap carried from Unit 16 recurred in this unit's own readback: `grep -c` counts matching *lines*, so a multi-line string such as the approved blob split across a wrap would undercount. The counts in the table above were confirmed against explicit line numbers rather than trusting `grep -c` alone. Still worth a one-line note in whatever harness later automates these checks; not corrected here.
+- Two headings inside the authorized regions were retitled for provenance accuracy ("Lineage of **the prior** re-freeze", "Why it returned to draft **first**"), because after the re-freeze the old titles read as describing the current freeze rather than the superseded one. This was inside the authorized status regions and changed no identity, but it is flagged so the closure check can see it rather than discover it.
 
 Deferrals carried forward, unchanged and non-blocking: the proportionality/continuity-plan follow-on; the stale row in the unapproved resource-capability development plan; the autonomy plan's §14 item-6 wording inconsistency.
 
 ## Blocker
-None. T2 implementation remains blocked until the operator gives content-bound reapproval of the corrected plan.
+None. T2 did not begin in this unit.
 
 ## Next action
-Codex: run the closure check on the one frozen finding only — is the (d)/(g) after-requirement contradiction resolved in both § 3.2 and T2, and did the correction break anything? The corrected plan is blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e`. Then close or use the § 3 menu. Do not open a second correction round, and do not authorise T2 before the operator's content-bound reapproval.
+Codex: assess the status-only re-freeze — confirm both status regions agree on the approved identity and the completed gate sequence, that the frozen middle region is unchanged, and that nothing implied T2 was implemented or reviewed. Then decide whether to open T2 as its own bounded implementation unit with its required high-consequence risk-aware review, or to close.
