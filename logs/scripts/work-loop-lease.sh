@@ -310,9 +310,43 @@ wl_lease__witness_clear() { # lease-dir my-witness-name my-pid -> 0 proceed | 1 
 
 wl_lease__acquire_one() { # lease-dir program pid -> 0 acquired | 2 refused
   local wl_d="$1" wl_prog="$2" wl_pid="$3"
-  local wl_round=0 wl_verdict wl_wit wl_tomb
+  local wl_round=0 wl_verdict wl_wit wl_tomb wl_mark
+  wl_mark="$wl_d.reclaiming"
 
   while :; do
+    # TRANSITION ONLY. An earlier build of this helper excluded reclaimers with
+    # an exclusive sibling marker directory instead of the witness set above.
+    # Nothing writes one any more, but a repository upgraded mid-flight can
+    # still be carrying one, and it means the same thing it always did: a
+    # reclaimer was part-way through this lease. It is read BEFORE the `mkdir`
+    # below, because the window the old mechanism left open is exactly the one
+    # where the lease has been renamed away and not yet recreated — a run that
+    # went straight to `mkdir` there would take a lease a live reclaimer is
+    # still working on. Delete this block once no checkout can still hold one.
+    if [ -d "$wl_mark" ]; then
+      wl_verdict="$(wl_lease__pid_state "$(cat "$wl_mark/pid" 2>/dev/null)")"
+      if [ "${wl_verdict%%|*}" = ABSENT ]; then
+        # Renamed, then deleted — the same discipline the stale lease gets, so
+        # `rm -rf` is never aimed at a path another run might be recreating.
+        # Two runs both clearing a dead marker is harmless: clearing it grants
+        # nothing, and the witness set below still decides the single winner.
+        wl_tomb="$wl_mark.stale.$wl_pid.$wl_round"
+        rm -rf "$wl_tomb" 2>/dev/null
+        mv "$wl_mark" "$wl_tomb" 2>/dev/null && rm -rf "$wl_tomb" 2>/dev/null
+      fi
+      # Live, uninspectable, or absent-but-unclearable all end here. The marker
+      # is PRESERVED in every one of those cases and admission is refused —
+      # failing closed, rather than spinning against something this run cannot
+      # remove.
+      if [ -d "$wl_mark" ]; then
+        [ -d "$wl_d" ] && wl_lease__read_holder "$wl_d"
+        WL_LEASE_REFUSAL='held'
+        WL_LEASE_HOLDER_STATE='CONTENDED'
+        WL_LEASE_HOLDER_REASON="a reclaim marker from an earlier build of this helper is present at $wl_mark and was not cleared: ${wl_verdict#*|}"
+        return 2
+      fi
+    fi
+
     if mkdir "$wl_d" 2>/dev/null; then
       wl_lease__write_holder "$wl_d" "$wl_prog" "$wl_pid"
       return 0

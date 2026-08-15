@@ -890,6 +890,12 @@ else
     && ok "and no tombstone was left behind" \
     || bad "and no tombstone was left behind" \
         "$(find "$(dirname "$TD19")" -maxdepth 1 -name '*.stale.*' 2>/dev/null)"
+  # BOTH representations have to be cleaned up, not just the one the current
+  # build writes. A dead marker left sitting beside a recovered lease is
+  # unexplained residue: the next reader cannot tell it from a live reclaim.
+  [ ! -e "$TD19.reclaiming" ] \
+    && ok "and the dead reclaimer's old-format marker was cleaned up too" \
+    || bad "and the dead reclaimer's old-format marker was cleaned up" "$TD19.reclaiming survives"
 fi
 
 # ================================================================= case 20
@@ -949,6 +955,121 @@ else
     && ok "and the lease it was reclaiming was not renamed away underneath it" \
     || bad "and the lease was not renamed away underneath it" "$TD20b is gone"
   kill "$LP2" 2>/dev/null; wait "$LP2" 2>/dev/null
+fi
+
+# ================================================================= case 21
+echo
+echo "Case 21 — an OLD-FORMAT reclaim marker fails closed, across all three owner states"
+# The transition case. An earlier build of the helper excluded reclaimers with
+# an exclusive `<lease>.reclaiming` marker; the current one uses the witness set
+# inside the lease. Nothing writes a marker any more, so a repository upgraded
+# mid-flight can carry one that the new code would otherwise walk straight past.
+#
+# The lease is left FREE in all three sub-cases on purpose. That is the exact
+# window the old mechanism opened — the reclaimer has renamed the stale lease
+# away and not yet recreated it — and it is where ignoring the marker costs two
+# winners rather than merely some residue. It is also what makes the sub-cases
+# falsifying: against a build that ignores the marker, (a) and (b) acquire.
+d="$(new_checkout)"
+LP3="$(live_pid)"
+UP3="$(uninspectable_pid)"
+AP6="$(absent_pid)"
+
+# (a) LIVE marker owner
+TD21a="$(task_dir "$d" marker-live)"
+mkdir -p "$TD21a.reclaiming" && printf '%s\n' "$LP3" >"$TD21a.reclaiming/pid"
+C21a="$SANDBOX_ROOT/c21a.out"
+contend "$LEASE_LIB" "$d" marker-live probe 0 "$C21a" >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 17 ] \
+  && ok "(a) a LIVE marker owner refuses admission (rc=17), though the lease itself is free" \
+  || bad "(a) a live marker owner refuses admission" "rc=$RC $(cat "$C21a")"
+grep -q 'REFUSED-STATE state=CONTENDED ' "$C21a" \
+  && ok "(a) and the refusal reads CONTENDED, naming a reclaim in progress" \
+  || bad "(a) and the refusal reads CONTENDED" "$(cat "$C21a")"
+[ -d "$TD21a.reclaiming" ] && [ "$(cat "$TD21a.reclaiming/pid")" = "$LP3" ] \
+  && ok "(a) and the marker was PRESERVED byte-identical" \
+  || bad "(a) and the marker was preserved" "$TD21a.reclaiming changed or is gone"
+[ ! -d "$TD21a" ] \
+  && ok "(a) and no lease was created behind the live reclaimer's back" \
+  || bad "(a) and no lease was created" "$TD21a exists"
+kill "$LP3" 2>/dev/null; wait "$LP3" 2>/dev/null
+
+# (b) UNINSPECTABLE marker owner
+if [ -z "$UP3" ]; then
+  ok "SKIPPED (b) — this user cannot produce an uninspectable pid"
+else
+  TD21b="$(task_dir "$d" marker-unknown)"
+  mkdir -p "$TD21b.reclaiming" && printf '%s\n' "$UP3" >"$TD21b.reclaiming/pid"
+  C21b="$SANDBOX_ROOT/c21b.out"
+  contend "$LEASE_LIB" "$d" marker-unknown probe 0 "$C21b" >/dev/null 2>&1; RC=$?
+  [ "$RC" -eq 17 ] \
+    && ok "(b) an UNINSPECTABLE marker owner refuses admission (rc=17)" \
+    || bad "(b) an uninspectable marker owner refuses admission" "rc=$RC $(cat "$C21b")"
+  [ -d "$TD21b.reclaiming" ] \
+    && ok "(b) and the marker was preserved — unknown is held here too" \
+    || bad "(b) and the marker was preserved" "$TD21b.reclaiming is gone"
+  [ ! -d "$TD21b" ] \
+    && ok "(b) and no lease was created" || bad "(b) and no lease was created" "$TD21b exists"
+fi
+
+# (c) ABSENT marker owner
+if [ -z "$AP6" ]; then
+  bad "setup (c) — a positively absent pid could be established" "kill -0 did not report 'no such process'"
+else
+  TD21c="$(task_dir "$d" marker-dead)"
+  mkdir -p "$TD21c.reclaiming" && printf '%s\n' "$AP6" >"$TD21c.reclaiming/pid"
+  C21c="$SANDBOX_ROOT/c21c.out"
+  contend "$LEASE_LIB" "$d" marker-dead recoverer 0 "$C21c" >/dev/null 2>&1; RC=$?
+  [ "$RC" -eq 0 ] \
+    && ok "(c) an ABSENT marker owner permits recovery (rc=0) — it does not strand the task" \
+    || bad "(c) an absent marker owner permits recovery" "rc=$RC $(cat "$C21c")"
+  grep -q 'task_owned=1 checkout_owned=1' "$C21c" \
+    && ok "(c) and the recovering run owns both resources" \
+    || bad "(c) and the recovering run owns both resources" "$(cat "$C21c")"
+  [ ! -e "$TD21c.reclaiming" ] \
+    && ok "(c) and the dead marker was CLEANED UP, not left as residue" \
+    || bad "(c) and the dead marker was cleaned up" "$TD21c.reclaiming survives"
+  [ -z "$(find "$(dirname "$TD21c")" -maxdepth 1 -name '*.stale.*' 2>/dev/null)" ] \
+    && ok "(c) and clearing it left no tombstone behind" \
+    || bad "(c) and clearing it left no tombstone" \
+        "$(find "$(dirname "$TD21c")" -maxdepth 1 -name '*.stale.*' 2>/dev/null)"
+fi
+
+# (d) A dead marker must not become a way for two runs to both proceed. Same
+#     stale-lease race as case 17, with an old-format dead marker in the way.
+if [ -n "$AP6" ]; then
+  d="$(new_checkout)"
+  AP7="$(absent_pid)"
+  AP8="$(absent_pid)"
+  if [ -z "$AP7" ] || [ -z "$AP8" ]; then
+    bad "setup (d) — two positively absent pids" "kill -0 did not report 'no such process'"
+  else
+    TD21d="$(task_dir "$d" marker-dead-race)"
+    fabricate_lease "$TD21d" "$AP7" dispatch marker-dead-race "$d" >/dev/null
+    mkdir -p "$TD21d.reclaiming" && printf '%s\n' "$AP8" >"$TD21d.reclaiming/pid"
+    BARRIER21="$SANDBOX_ROOT/barrier-21"; rm -f "$BARRIER21"
+    pids=(); outs=()
+    for i in $(seq 1 "$N"); do
+      o="$SANDBOX_ROOT/marker-race-$i.out"; : >"$o"; outs+=("$o")
+      contend "$LEASE_LIB" "$d" marker-dead-race "prog$i" 2 "$o" run "$BARRIER21" >/dev/null 2>&1 &
+      pids+=($!)
+    done
+    sleep 1
+    : >"$BARRIER21"
+    for p in "${pids[@]}"; do wait "$p" 2>/dev/null; done
+    acq=0; ref=0; other=0
+    for o in "${outs[@]}"; do
+      if   grep -q '^ACQUIRED' "$o"; then acq=$((acq+1))
+      elif grep -q '^REFUSED'  "$o"; then ref=$((ref+1))
+      else other=$((other+1)); fi
+    done
+    [ "$acq" -eq 1 ] \
+      && ok "(d) with a dead marker AND a stale lease, exactly one of $N contenders proceeds (acquired=$acq)" \
+      || bad "(d) exactly one contender proceeds" "acquired=$acq refused=$ref other=$other"
+    [ "$other" -eq 0 ] \
+      && ok "(d) and none ended in a state that is neither" \
+      || bad "(d) and none ended in a state that is neither" "other=$other"
+  fi
 fi
 
 # ==================================================================== done
