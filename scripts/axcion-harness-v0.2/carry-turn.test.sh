@@ -127,6 +127,27 @@ PSSTUB
 chmod +x "$SURVPSDIR/ps"
 SURVPID="$$"
 
+# A `ps` whose `-p` form works and whose `-g` form CANNOT RUN. This is the host
+# condition the whole-`ps` stub above cannot express, and it is the one that
+# matters: the launcher asks about a process group with `-g`, so a readability
+# control that only exercises `-p` proves the wrong thing. Under this stub a
+# broken group query returns no rows and a genuinely empty group returns no rows,
+# and only a control on the SAME form can tell them apart.
+#
+# On this platform `ps -g` exits non-zero for an empty group as well as for a
+# failure (checked 2026-08-15: an unused in-range pgid gives rc=1 with no
+# output), so propagating that exit status directly would make every clean
+# shutdown read as unknown. The exit status is not the discriminator; the
+# positive control is.
+NOGPSDIR="$TMPROOT/no-ps-g"
+mkdir -p "$NOGPSDIR"
+cat >"$NOGPSDIR/ps" <<'PSGSTUB'
+#!/bin/bash
+for a in "$@"; do [ "$a" = "-g" ] && exit 1; done
+exec /bin/ps "$@"
+PSGSTUB
+chmod +x "$NOGPSDIR/ps"
+
 # A fake actor binary. It answers --version, records its argv and its invocation
 # count, and then performs one scripted action on the state file.
 #
@@ -1222,6 +1243,82 @@ section "12d. An unprovable shutdown pins both leases"
   assert_eq "  and the TASK lease is PINNED" "1" "$([ -f "$btl/survivors" ] && echo 1 || echo 0)"
   assert_eq "  and the CHECKOUT lease is PINNED" "1" "$([ -f "$bcl/survivors" ] && echo 1 || echo 0)"
   rm -rf "$btl" "$bcl"
+
+  # ---- The TERM grace period is a proof step too, not a signal probe ----
+  #
+  # The cases above all reach the SIGKILL-and-verify branch, because the actor
+  # ignores SIGTERM. An actor that DIES on SIGTERM leaves through the grace loop
+  # instead, and that loop used to decide the whole question with `kill -0` on
+  # the group: one failed signal probe returned a clean shutdown and released
+  # both leases without ever looking at what was in the group. `kill -0` answers
+  # one bit and answers it wrong in the direction that matters — a survivor this
+  # uid may not signal is indistinguishable from an empty group — so the grace
+  # loop needs the same census the post-SIGKILL branch uses.
+  #
+  # The positive control first. Without it, a launcher that simply never left
+  # the grace loop early would pass both assertions below.
+  mkfix graceok task-bh claude
+  printf 'sleep:30' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-bh --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD"
+  assert_eq "control — an actor that DIES on SIGTERM is ACTOR_TIMEOUT" "21" "$RC"
+  assert_absent "  and a census that proved the group empty pins nothing" "PINNED" "$o"
+  assert_eq "  and both leases were released" "0" \
+    "$([ -d "$(task_lease_for "$REPO" task-bh)" ] || [ -d "$(checkout_lease_for "$REPO")" ] && echo 1 || echo 0)"
+
+  # Inspection becomes unavailable DURING the grace period. The actor really did
+  # die, but nothing here can show that, and an unprovable shutdown pins.
+  mkfix graceblind task-bi claude
+  printf 'sleep:30' >"$ACTION"
+  o="$(PATH="$NOGPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bi \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  gtl="$(task_lease_for "$REPO" task-bi)"; gcl="$(checkout_lease_for "$REPO")"
+  assert_eq "a grace period that cannot inspect is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_contains "  and does NOT report a clean shutdown it could not see" \
+    "could not be confirmed gone" "$o"
+  assert_contains "  and names the inspection failure as the reason" "sweep incomplete" "$o"
+  assert_eq "  and the TASK lease is PINNED" "1" "$([ -f "$gtl/survivors" ] && echo 1 || echo 0)"
+  assert_eq "  and the CHECKOUT lease is PINNED" "1" "$([ -f "$gcl/survivors" ] && echo 1 || echo 0)"
+  rm -rf "$gtl" "$gcl"
+
+  # A survivor visible during the grace period. The top-level actor is gone, so
+  # the group stops answering `kill -0` — which is exactly the shortcut that used
+  # to release both leases beside a process the census can still see.
+  mkfix gracesurv task-bj claude
+  printf 'sleep:30' >"$ACTION"
+  o="$(PATH="$SURVPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bj \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  vtl="$(task_lease_for "$REPO" task-bj)"; vcl="$(checkout_lease_for "$REPO")"
+  assert_eq "a survivor seen during the grace period is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_contains "  and the launcher NAMES it rather than releasing" \
+    "still running in the actor's process group: $SURVPID" "$o"
+  assert_eq "  the TASK lease is PINNED" "1" "$([ -f "$vtl/survivors" ] && echo 1 || echo 0)"
+  assert_eq "  the CHECKOUT lease is PINNED" "1" "$([ -f "$vcl/survivors" ] && echo 1 || echo 0)"
+  assert_contains "  and the pin file records the pid" \
+    "descendants still running: $SURVPID" "$(cat "$vtl/survivors" 2>/dev/null)"
+  rm -rf "$vtl" "$vcl"
+
+  # ---- The census must prove ITS OWN query form, not a neighbouring one ----
+  #
+  # `ps` runs here; `ps -g` does not. The readability control used to ask `ps -p
+  # $$`, which passes straight through this stub, so the group query's own
+  # failure produced an empty answer that read as a confirmed-empty group — and
+  # after SIGKILL the group really has stopped answering, so the signal probe
+  # agreed and both leases were released. Missing evidence became a clean bill of
+  # health. Distinct from the whole-`ps` case above, which the `-p` control
+  # already catches.
+  mkfix pinnogps task-bk claude
+  printf 'ignore-term:30' >"$ACTION"
+  o="$(PATH="$NOGPSDIR:$PATH" "$SUT" --checkout "$REPO" --task task-bk \
+        --claude-bin "$FAKEBIN" --timeout 1 --log-dir "$LOGD" 2>&1)"; RC=$?
+  ntl="$(task_lease_for "$REPO" task-bk)"; ncl="$(checkout_lease_for "$REPO")"
+  assert_eq "a group query that cannot run is still ACTOR_TIMEOUT" "21" "$RC"
+  assert_contains "  and is an incomplete sweep, not a confirmed-empty group" \
+    "sweep incomplete" "$o"
+  assert_eq "  and the TASK lease is PINNED" "1" "$([ -f "$ntl/survivors" ] && echo 1 || echo 0)"
+  assert_eq "  and the CHECKOUT lease is PINNED" "1" "$([ -f "$ncl/survivors" ] && echo 1 || echo 0)"
+  assert_contains "  and the pin file records WHY, so the operator is not told to inspect nothing" \
+    "sweep incomplete" "$(cat "$ntl/survivors" 2>/dev/null)"
+  rm -rf "$ntl" "$ncl"
 
 section "12e. Repository-depth ownership admission before actor launch"
   # The leases above answer "is another run live?". They cannot answer "does this

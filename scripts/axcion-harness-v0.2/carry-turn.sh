@@ -925,15 +925,30 @@ pin_leases() { # survivor-pids, unknown-reason
 # about anything.
 #
 # THE CONTROL IS WHAT MAKES AN EMPTY ANSWER MEAN SOMETHING. `ps` over an empty
-# group and a `ps` that cannot run both print nothing, so this first asks about a
-# pid it knows exists — this shell. Without that, a broken `ps` would read as a
-# confirmed-clean shutdown, and missing evidence would have become a clean bill of
-# health. Same rule the nested-actor census already follows.
+# group and a `ps` that cannot run both print nothing, so an empty answer has to
+# be corroborated by a question whose answer is known in advance. Without that,
+# a broken `ps` would read as a confirmed-clean shutdown, and missing evidence
+# would have become a clean bill of health. Same rule the nested-actor census
+# already follows.
+#
+# THE CONTROL MUST EXERCISE THE QUERY FORM THIS FUNCTION ACTUALLY USES. It used
+# to ask `ps -p $$`, which proves that a DIFFERENT form works: a `ps` whose `-p`
+# answers and whose `-g` cannot run passed that control and then returned no
+# rows, which the caller read as a confirmed-empty group. Nor can the exit status
+# stand in — on this platform `ps -g` exits non-zero for an empty group as well
+# as for a failure (checked 2026-08-15: an unused in-range pgid gives rc=1 with
+# no output), so propagating it would make every clean shutdown read as unknown.
+# So the control asks the `-g` form about a group that cannot be empty: this
+# shell's own, which must contain this shell.
 #
 # Prints the surviving pids on stdout. Returns 1 when the census could not run.
 actor_group_census() { # pgid
-  local pgid="$1" out
-  ps -o pid= -p $$ >/dev/null 2>&1 || return 1
+  local pgid="$1" own out
+  own="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
+  [ -n "$own" ] || return 1
+  ps -o pid=,pgid= -g "$own" 2>/dev/null \
+    | awk -v g="$own" -v me="$$" '$1 == me && $2 == g { found = 1 } END { exit !found }' \
+    || return 1
   out="$(ps -o pid=,pgid= -g "$pgid" 2>/dev/null)"
   printf '%s\n' "$out" \
     | awk -v g="$pgid" '$1 != "" && $2 == g { printf "%s%s", sep, $1; sep = " " }'
@@ -949,10 +964,27 @@ terminate_actor_group() { # pgid
   local pgid="$1" waited=0 survivors='' unknown='' census_rc=0
   [ -n "$pgid" ] || return 0
   kill -TERM "-$pgid" 2>/dev/null
+
+  # THE GRACE PERIOD IS A PROOF STEP, NOT A SIGNAL PROBE. This loop used to end
+  # the whole function on `kill -0` failing, which answers one bit and answers it
+  # wrong in the direction that matters: a survivor this uid may not signal
+  # returns EPERM, and EPERM is indistinguishable from an empty group. A tree
+  # whose top-level actor exits on SIGTERM stops answering as a group while a
+  # descendant is still there, so that shortcut released both leases at exactly
+  # the moment a second writer could start beside the survivor.
+  #
+  # So the same census that decides after SIGKILL decides here, and only a census
+  # that RAN and named nobody ends the wait early. A census that could not run
+  # neither shortens the grace period nor releases anything: it proves nothing,
+  # and the SIGKILL branch below is then the one that has to answer.
   while [ "$waited" -lt "$TERM_GRACE_SECS" ]; do
-    kill -0 "-$pgid" 2>/dev/null || return 0
+    survivors="$(actor_group_census "$pgid")"; census_rc=$?
+    if [ "$census_rc" -eq 0 ] && [ -z "$survivors" ]; then
+      return 0
+    fi
     sleep 1; waited=$((waited + 1))
   done
+  survivors=''; census_rc=0
   kill -KILL "-$pgid" 2>/dev/null
   sleep "$KILL_SETTLE_SECS"
 
@@ -964,18 +996,26 @@ terminate_actor_group() { # pgid
     unknown="the process-group census could not run on this host, so no survivor was ruled out"
   fi
 
-  # PROVEN GONE IS THE ONLY WAY OUT. The census named nobody AND the group no
-  # longer answers, so the tree is gone and the leases release normally.
+  # RELEASE IS LICENSED BY THE CENSUS AND BY NOTHING ELSE. A census that ran and
+  # named nobody is the only clean answer here. A named survivor is unproven, and
+  # so is a census that could not run — both pin.
   #
-  # The `else` is the case that is easy to miss: the census ran, named nobody,
-  # and the group still answers. That is unproven, so it pins — and the reason
-  # has to be SAID, or the pin file would carry neither a survivor line nor a
-  # sweep line and the operator would be told to inspect nothing.
+  # There is ONE corroboration and it can only WITHHOLD. If the group still
+  # answers signals after all of that, the two inspections disagree, and a
+  # disagreement is not proof of death, so it is recorded as unknown. It never
+  # runs the other way: a failed signal probe cannot turn an absent or unusable
+  # census into a clean shutdown. That direction — `kill -0` deciding the
+  # question on its own — is the shortcut this branch used to take.
+  #
+  # The reason has to be SAID in that case, or the pin file would carry neither a
+  # survivor line nor a sweep line and the operator would be told to inspect
+  # nothing.
   if [ -z "$survivors" ] && [ -z "$unknown" ]; then
-    if ! kill -0 "-$pgid" 2>/dev/null; then
+    if kill -0 "-$pgid" 2>/dev/null; then
+      unknown="process group $pgid still answers to signals, but the census named no member of it"
+    else
       return 0
     fi
-    unknown="process group $pgid still answers to signals, but the census named no member of it"
   fi
 
   say "WARNING: process group $pgid could not be confirmed gone after SIGKILL — inspect before re-running."
