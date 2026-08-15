@@ -452,6 +452,36 @@ section() { printf '\n%s\n' "$1"; }
 
 run_suite() {
 
+CODEX_DEFAULT_BIN="$(awk -F'"' '/^CODEX_BIN=/{print $2; exit}' "$SUT")"
+
+# Normalized execpolicy probe. Whole-output equality against raw JSON is brittle:
+# any warning line, or a probe that failed outright, changes the string without
+# saying why — and an empty result must never read as a clean no-match.
+#
+# Prints exactly one of:
+#   decision=<d> matches=<n>     a parsed result
+#   PROBE-FAILED:<reason>        non-zero exit, or output that is not a result
+# stderr is captured separately, never merged and never discarded.
+xp() { # rules-file, command tokens...
+  local rf="$1"; shift
+  local out rc err="$TMPROOT/xp.err" n d
+  : >"$err"
+  out="$("$CODEX_DEFAULT_BIN" execpolicy check --rules "$rf" "$@" 2>"$err")"; rc=$?
+  if [ "$rc" -ne 0 ]; then
+    printf 'PROBE-FAILED:exit=%s:%s\n' "$rc" "$(tr '\n' ' ' <"$err" | cut -c1-100)"
+    return
+  fi
+  case "$out" in
+    *'"matchedRules"'*) ;;
+    *) printf 'PROBE-FAILED:malformed:%s\n' "$(printf '%s' "$out" | tr '\n' ' ' | cut -c1-100)"
+       return ;;
+  esac
+  n="$(printf '%s' "$out" | grep -o '"prefixRuleMatch"' | wc -l | tr -d ' ')"
+  d="$(printf '%s' "$out" | grep -o '"decision":"[a-z]*"' | tail -1 | sed 's/.*:"//;s/"//')"
+  [ -n "$d" ] || d=none
+  printf 'decision=%s matches=%s\n' "$d" "$n"
+}
+
 section "1. Static checks"
   bash -n "$SUT" 2>/dev/null; assert_eq "launcher parses (bash -n)" "0" "$?"
   bash -n "$HERE/carry-turn.test.sh" 2>/dev/null; assert_eq "suite parses (bash -n)" "0" "$?"
@@ -593,7 +623,19 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
   assert_contains "help calls it requested permission rules" "REQUESTED PERMISSION RULES" "$o"
   assert_contains "help refuses the containment claim" "not OS" "$o"
   assert_contains "help refuses the impossibility claim" "NOT proof that nesting is" "$o"
-  assert_contains "help states the Codex path is not covered" "Codex actor path carries NO equivalent" "$o"
+  assert_contains "help says the Codex path requests refusal by another mechanism" \
+    "REQUESTS direct-route refusal by a different mechanism" "$o"
+  assert_contains "help states the only decision pair execpolicy parses" \
+    "parses only \`allow\` and \`prompt\`" "$o"
+  assert_contains "help names the documented rules-loading opt-out" \
+    "(\`--ignore-rules\` is the documented opt-out)" "$o"
+  assert_contains "help keeps the wrapper routes unmatched" \
+    "are UNMATCHED" "$o"
+  # The Codex paragraph must claim no more than the Claude one. These three
+  # needles are the exact overclaims the risk review froze.
+  assert_absent "help claims no route-blocking for the Codex path" "no route to approval" "$o"
+  assert_absent "help claims no prevention for the Codex path" "prevents nesting" "$o"
+  assert_absent "help claims no observed loading" "rules file was loaded" "$o"
 
   # (e) The run output an operator actually reads must say the same thing.
   mkfix nestedsay task-ap claude
@@ -606,9 +648,11 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
   assert_contains "  says operator rules append" "--claude-deny appends" "$o"
   assert_contains "  and does not sell it as containment" "not containment and not proof" "$o"
 
-  # (f) A Codex hop is unaffected. This unit changes the Claude launch path only,
-  # and a deny set leaking onto the Codex argv would be a claim the launcher
-  # cannot support.
+  # (f) A Codex hop requests refusal by its own mechanism. The deny-set absences
+  # below STAY: T7 adds an approval policy, not a --disallowedTools list, so a
+  # deny set on the Codex argv would still be a claim the launcher cannot
+  # support. What is new is the positive leg, and the paired negative in (g) is
+  # what makes it able to fail.
   mkfix nestedcdx task-aq codex
   printf 'nocommit:claude' >"$ACTION"
   run_sut --checkout "$REPO" --task task-aq --codex-bin "$FAKEBIN" --log-dir "$LOGD"
@@ -616,6 +660,92 @@ section "5b. Mandatory nested-actor deny set (real argv, fake binary)"
   assert_absent "codex argv carries no deny set" "--disallowedTools" "$(cat "$ARGVLOG")"
   assert_absent "codex argv carries no claude colon rule" "Bash(claude:*)" "$(cat "$ARGVLOG")"
   assert_absent "codex argv carries no claude space rule" "Bash(claude *)" "$(cat "$ARGVLOG")"
+  cargs="$(cat "$ARGVLOG.args")"
+  assert_contains "codex argv requests an approval policy at all" "[-c]" "$cargs"
+  assert_eq "  exactly one -c flag" "1" \
+    "$(grep -cFx -- '[-c]' "$ARGVLOG.args" | tr -d ' ')"
+  # ADJACENCY, not mere presence. `-c` and its value must be consecutive
+  # arguments; separated, codex reads them as unrelated tokens and the override
+  # silently does nothing. Asserting each alone would pass on exactly that bug.
+  assert_eq "  -c is immediately followed by approval_policy=never" \
+    "[-c] [approval_policy=never]" \
+    "$(grep -A1 -Fx -- '[-c]' "$ARGVLOG.args" | tr '\n' ' ' | sed 's/ *$//')"
+  assert_contains "  the sandbox request is still made" "[--sandbox]" "$cargs"
+  assert_contains "  with its existing value" "[workspace-write]" "$cargs"
+  # The launcher must not opt out of the very rules file this policy needs.
+  assert_absent "  and the hop does not opt out of rules loading" "--ignore-rules" "$cargs"
+  assert_contains "run output refuses the containment claim on the Codex path" \
+    "not containment and NOT proof" "$o"
+  assert_contains "run output keeps the unverified premises visible" \
+    "Unverified, and not claimed" "$o"
+
+  # (g) PAIRED NEGATIVE, same launcher, other actor. If approval_policy leaked
+  # onto the Claude hop this fails; if it were absent from BOTH paths, (f) fails.
+  # The pair is what stops either assertion from being unfalsifiable.
+  mkfix nestedcdxneg task-ar claude
+  printf 'transition:codex' >"$ACTION"
+  run_sut --checkout "$REPO" --task task-ar --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  assert_eq "claude hop still carries" "0" "$RC"
+  assert_absent "claude argv carries no approval policy" \
+    "approval_policy=never" "$(cat "$ARGVLOG.args")"
+  assert_absent "claude argv carries no -c override" "[-c]" "$(cat "$ARGVLOG.args")"
+  # The Claude branch is byte-identical under T7: its four mandatory rules must
+  # still arrive exactly as section (a) proved them.
+  nargs="$(cat "$ARGVLOG.args")"
+  assert_contains "  claude mandatory rule 1 intact" "[Bash(claude:*)]" "$nargs"
+  assert_contains "  claude mandatory rule 2 intact" "[Bash(claude *)]" "$nargs"
+  assert_contains "  claude mandatory rule 3 intact" "[Bash(codex:*)]" "$nargs"
+  assert_contains "  claude mandatory rule 4 intact" "[Bash(codex *)]" "$nargs"
+
+  # (h) The external policy this request depends on, bound to the ACTUAL
+  # machine-wide file T7 installs — NOT a scratch duplicate, which would only
+  # prove that execpolicy works on some file somewhere.
+  #
+  # The leg is mandatory exactly when the launcher requests the policy. Before
+  # T7 lands, the launcher carries no approval_policy flag and the file is not
+  # installed, so this skips. After T7 it is required, and an absent, symlinked,
+  # non-regular, hash-mismatched or malformed file FAILS here.
+  T7_RULES="$HOME/.codex/rules/axcion-nested-actor.rules"
+  T7_RULES_SHA="b0f8b79c3ef137ac5db07bd7f8195235c086ec2542b29a40092fa4a4a5b9f303"
+  if ! grep -qF -- 'approval_policy=never' "$SUT"; then
+    printf '  SKIP external-policy leg: launcher does not request approval_policy yet (pre-T7)\n'
+  elif [ ! -x "$CODEX_DEFAULT_BIN" ]; then
+    printf '  SKIP external-policy leg: %s is not present on this host\n' "$CODEX_DEFAULT_BIN"
+  else
+    # Identity of the installed file, checked before it is trusted as evidence.
+    assert_eq "installed policy file exists" "yes" \
+      "$([ -e "$T7_RULES" ] && echo yes || echo no)"
+    assert_eq "  and is not a symlink" "no" \
+      "$([ -L "$T7_RULES" ] && echo yes || echo no)"
+    assert_eq "  and is a regular file" "yes" \
+      "$([ -f "$T7_RULES" ] && [ ! -L "$T7_RULES" ] && echo yes || echo no)"
+    assert_eq "  and carries the reviewed identity" "$T7_RULES_SHA" \
+      "$(shasum -a 256 "$T7_RULES" 2>/dev/null | cut -d' ' -f1)"
+    # Positives, against that same installed file.
+    assert_eq "installed policy marks a direct claude command prompt" \
+      "decision=prompt matches=1" "$(xp "$T7_RULES" claude -p x)"
+    assert_eq "installed policy marks a direct codex command prompt" \
+      "decision=prompt matches=1" "$(xp "$T7_RULES" codex exec x)"
+    # Rule-absent control. An EMPTY policy, not a copy of the installed one —
+    # it is the absence the positives above are measured against.
+    : >"$TMPROOT/t7-absent.rules"
+    assert_eq "  claude matches nothing with the rule absent" \
+      "decision=none matches=0" "$(xp "$TMPROOT/t7-absent.rules" claude -p x)"
+    assert_eq "  codex matches nothing with the rule absent" \
+      "decision=none matches=0" "$(xp "$TMPROOT/t7-absent.rules" codex exec x)"
+    # Accepted limitations, EVIDENCED against the installed file.
+    assert_eq "  bash -lc wrapper unmatched (accepted limitation)" \
+      "decision=none matches=0" "$(xp "$T7_RULES" bash -lc 'claude -p x')"
+    assert_eq "  env wrapper unmatched (accepted limitation)" \
+      "decision=none matches=0" "$(xp "$T7_RULES" env claude -p x)"
+    assert_eq "  absolute path unmatched without --resolve-host-executables" \
+      "decision=none matches=0" "$(xp "$T7_RULES" /usr/local/bin/claude -p x)"
+    # `deny` is not a decision execpolicy has. If this ever parses, the whole
+    # "prompt is the only available shape" rationale needs rewriting.
+    printf 'prefix_rule(pattern=["zzz"], decision="deny")\n' >"$TMPROOT/t7-deny.rules"
+    assert_contains "  execpolicy still refuses a deny decision" "PROBE-FAILED" \
+      "$(xp "$TMPROOT/t7-deny.rules" zzz)"
+  fi
 
 section "5c. Per-run attended permission mode (real argv, fake binary)"
   # The ONE authorised widening, and the boundary around it. What is proved here
@@ -2190,6 +2320,29 @@ prove_failure() {
     assert_contains "  and says so in words" "NO OBSERVATION" "$o"
     EXPECT_FAIL=0
     assert_contains "M18 control: the hop still launched" "actors=1" "$o"
+  fi
+
+  section "M19. Drop the approval policy from the Codex launch"
+  # The T7 request lives in argv and nowhere else — no RESULT field reports it.
+  # Without this mutant, section 5b(f) would only prove that a string appeared
+  # in a log the suite itself produced.
+  mut="$TMPROOT/mutant-codexapproval.sh"
+  sed -e 's/^\( *\)"\$CODEX_BIN" exec --sandbox workspace-write -c approval_policy=never \\$/\1"$CODEX_BIN" exec --sandbox workspace-write \\/' "$SUT" >"$mut"
+  chmod +x "$mut"
+  if grep -qF -- '-c approval_policy=never \' "$mut"; then
+    bad "M19 mutant did not apply" "the codex launch line did not match"
+  elif ! mutant_ok "$mut"; then bad "M19 mutant does not parse" "bad mutation"; else
+    mkfix m19 task-m19 codex
+    printf 'nocommit:claude' >"$ACTION"
+    run_bin "$mut" --checkout "$REPO" --task task-m19 --codex-bin "$FAKEBIN" --log-dir "$LOGD"
+    EXPECT_FAIL=1
+    assert_contains "codex argv requests an approval policy at all" "[-c]" \
+      "$(cat "$ARGVLOG.args")"
+    assert_eq "  -c is immediately followed by approval_policy=never" \
+      "[-c] [approval_policy=never]" \
+      "$(grep -A1 -Fx -- '[-c]' "$ARGVLOG.args" | tr '\n' ' ' | sed 's/ *$//')"
+    EXPECT_FAIL=0
+    assert_eq "M19 control: the hop still launched" "0" "$RC"
   fi
 }
 

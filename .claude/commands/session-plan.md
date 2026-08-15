@@ -150,6 +150,8 @@ Based on `INTENT` and the source material in Step 3, recommend one posture:
 
 Name specific stop points (or state "None").
 
+Posture is a planning classification: it sets where the session pauses, not what authority an individual action carries — the governing autonomy rule over that is core § 8 (`ai-resources/plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`); read it there rather than restating it here.
+
 **Compaction discipline:** for long-running sessions, see `ai-resources/docs/compaction-protocol.md` § Named checkpoints for the four state-saving points (post-inspection, post-implementation, post-review, pre-closeout) and what to write to disk at each.
 
 ---

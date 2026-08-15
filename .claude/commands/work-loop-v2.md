@@ -123,7 +123,7 @@ This command is not a session lifecycle command. It does not invoke `/prime`, `/
 
 **Scope of this version — Slices 1–3, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below), and admission discipline: the admission test (Admission below), de-escalation (De-escalating below), and mid-unit deferrals (Step 4). Plus the unit's mode (2026-08-06 — The unit's mode below), which Codex classifies and you execute against.
 
-Context Engineering is live on the Codex side. This command **consumes** the engineered brief — checking its claims against the repository and acting on it — and never performs Codex's preparation, authority or selection judgments itself.
+Context Engineering is live on the Codex side. This command **consumes** the engineered brief — checking its claims against the repository and acting on it — and never performs Codex's preparation, authority or selection judgments itself. The governing autonomy rule over that consumption is core § 8; read it there rather than restating it here.
 
 ---
 

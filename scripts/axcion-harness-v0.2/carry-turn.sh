@@ -107,11 +107,23 @@
 # the rules are requested on every Claude launch. Enforcement belongs to the
 # child, and only attended operation makes that trustworthy.
 #
-# The Codex actor path carries NO equivalent. `codex exec` (0.147.0-alpha.6.5)
-# offers sandbox modes and config overrides, not a per-command deny list, so
-# there is no native already-used mechanism to request the same of a Codex hop.
-# This policy therefore covers the Claude child only, and saying otherwise would
-# be a claim this script cannot support.
+# The Codex actor path REQUESTS direct-route refusal by a different mechanism,
+# because `codex exec` (0.147.0-alpha.6.5) offers sandbox modes and config
+# overrides, not a per-command deny list. A dedicated machine-wide execpolicy
+# rules file marks a direct `claude` or `codex` command `prompt`, and this
+# launcher requests approval_policy=never.
+# Execpolicy parses only `allow` and `prompt` — there is no `deny` — so that
+# pairing is the only shape this mechanism offers.
+#
+# READ IT AS REQUESTED, exactly like the Claude rules above: not OS containment,
+# not a sandbox, not a process limit, and NOT proof that nesting is impossible.
+# Three things are UNVERIFIED here, and this script claims none of them:
+#   1. that the rules file is loaded on any given run
+#      (`--ignore-rules` is the documented opt-out);
+#   2. that the requested policy is effective;
+#   3. what a matched command's runtime disposition then is.
+# Wrapper and absolute-path routes (`bash -lc 'claude -p x'`, `env claude -p x`)
+# are UNMATCHED — an accepted limitation this surface records rather than solves.
 #
 # Exit codes. 0 is the only success, and the RESULT line says which success it is
 # — read that line, not the code alone.
@@ -1197,9 +1209,13 @@ launch_actor() { # actor, timeout -> exit status of the launch
       [ -x "$CODEX_BIN" ] || die 20 "codex binary not executable: $CODEX_BIN"
       local cv; cv="$("$CODEX_BIN" --version 2>&1 | head -1)"
       say "  launch: actor=codex timeout=${limit}s bin=$CODEX_BIN version=$cv"
-      say "  cmd: codex exec --sandbox workspace-write -C <checkout> --json <prompt>"
+      say "  nested-actor policy: requesting approval_policy=never on every Codex hop, beside a dedicated machine-wide execpolicy rules file that marks a direct claude or codex command 'prompt'."
+      say "  This is REQUESTED policy only. It is not containment and NOT proof that nesting is impossible, and this launcher does not observe whether it took effect."
+      say "  Unverified, and not claimed: that the rules file was loaded on this run, that the requested policy is effective, and the runtime disposition of a matched command. Wrapper and absolute-path routes are unmatched — an accepted limitation."
+      say "  cmd: codex exec --sandbox workspace-write -c approval_policy=never -C <checkout> --json <prompt>"
       run_bounded "$limit" "$out" \
-        "$CODEX_BIN" exec --sandbox workspace-write -C "$CHECKOUT" --json "$(codex_prompt)"
+        "$CODEX_BIN" exec --sandbox workspace-write -c approval_policy=never \
+        -C "$CHECKOUT" --json "$(codex_prompt)"
       return $?
       ;;
     claude)
