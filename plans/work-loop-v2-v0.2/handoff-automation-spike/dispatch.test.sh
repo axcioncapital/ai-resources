@@ -234,6 +234,24 @@ calls() { # sandbox -> number of actor invocations
   [ -f "$1.calls" ] && wc -l <"$1.calls" | tr -d ' ' || printf '0'
 }
 
+# Every file in a checkout's WORKING TREE, with its hash. `.git` is pruned, and
+# that prune is the claim being made rather than a convenience: the shared lease
+# root lives inside the Git common directory, so a refusal that writes its
+# evidence there writes NOTHING a checkout's working tree can see. A manifest
+# that included `.git` could not tell that apart from a refusal scribbling in the
+# operator's files, which is the distinction case 12h exists to draw.
+#
+# Content, not mtime: a file rewritten with identical bytes is not a change the
+# operator would ever have to reconcile, and a timestamp comparison would report
+# one. Paths are included so the diff on failure names what moved.
+tree_manifest() { # checkout -> "<sha>  <relative path>" per line, sorted
+  ( cd "$1" 2>/dev/null || return 1
+    find . -path ./.git -prune -o -type f -print 2>/dev/null | LC_ALL=C sort |
+      while IFS= read -r f; do
+        printf '%s  %s\n' "$(shasum -a 256 "$f" 2>/dev/null | cut -d' ' -f1)" "$f"
+      done )
+}
+
 expect_rc() { # want got label [detail]
   if [ "$2" -eq "$1" ]; then ok "$3"; else bad "$3" "expected exit $1, got $2 — ${4:-}"; fi
 }
@@ -913,121 +931,210 @@ out_has 'another Work Loop run (some-future-runner) is already running in this c
 rm -rf "$(checkout_lock_for "$d")" "$(task_lock_for "$d" label-task)"
 
 # ---------------------------------------------------------------- case 12h
-# A PRE-ACTOR REFUSAL MUST LEAVE A DURABLE RECORD WHERE THE OPERATOR ASKED FOR ONE.
+# A PRE-ADMISSION REFUSAL LEAVES DURABLE EVIDENCE — AND LEAVES THE CHECKOUT ALONE.
 #
-# The live cross-transport hop of 2026-08-14 found this the hard way. The
-# dispatcher refused correctly at 17 while the attended carrier held the shared
-# lease — the concurrency control worked — but the lease was asked for BEFORE the
-# run log was opened, so the requested --log-dir was never created and the losing
-# transport left no evidence at all. Every case 12 assertion above passed
-# throughout, because they all read the exit code and stderr, and an unattended
-# dispatcher's stderr goes nowhere anybody is watching.
+# The live cross-transport hop of 2026-08-14 found the first half the hard way.
+# The dispatcher refused correctly at 17 while the attended carrier held the
+# shared lease — the concurrency control worked — but the refusal reached stderr
+# and nowhere else, and an unattended dispatcher's stderr goes nowhere anybody is
+# watching. Every case 12 assertion above passed throughout, because they all
+# read the exit code and the message.
 #
-# So this case asserts the FILE, not the message. Three properties together, and
-# each is load-bearing:
+# The FIRST fix opened the run log before the lease was asked for, which bought
+# the durable record at a price that is not payable: a dispatcher that has lost
+# admission would create a directory and a file inside a checkout it does not own
+# and is not entitled to touch. Two runs racing for one checkout would each leave
+# marks in the other's working tree, and the whole point of losing admission is
+# that the loser changes nothing.
 #
-#   1. the requested directory exists and holds this run's log;
-#   2. the log carries a stable, machine-readable terminal record — outcome,
-#      code 17, task and holder context — that a later reader can match without
-#      parsing prose;
-#   3. no actor started, so the record describes a refusal and not a run.
+# So the record moved, and this case asserts BOTH halves at once. Neither is
+# sufficient alone — a refusal that writes nothing is unprovable, and a refusal
+# that writes into the checkout is a trespass — and it is the pair that pins the
+# behaviour:
 #
-# THE REFUSED RUN GETS ITS OWN --log-dir. Sharing the holder's would let the
-# HOLDER's run log satisfy every assertion below while the refused run still
-# wrote nothing — the defect surviving its own regression test.
+#   1. the requested --log-dir, inside the checkout, is NEVER created;
+#   2. the checkout's working-tree bytes and `git status` are unchanged;
+#   3. a durable record still exists, under the shared lease root in the Git
+#      common directory, carrying the human refusal AND a stable machine-readable
+#      terminal record a later reader can match without parsing prose;
+#   4. the refusal names that record's path, so an operator can find it;
+#   5. no actor started, so the record describes a refusal and not a run.
+#
+# THE HOLDER'S OWN LOG DIRECTORY IS OUTSIDE THE CHECKOUT. It is admitted, so it
+# is entitled to write wherever it was asked to — but its writes would land in
+# the same working tree the loser is being measured against, and the manifest
+# could not say which run moved a byte.
 #
 # The lease is HELD BY A REAL SECOND DISPATCHER, not planted. What is under test
 # is a stop taken on the live acquisition path, and a planted directory would
 # reach the same branch without proving the ordering that caused the defect.
 echo
-echo "Case 12h — a pre-actor exit-17 refusal writes a durable record into the requested --log-dir"
+echo "Case 12h — a pre-admission exit-17 refusal writes durable evidence, and not into the checkout"
 d="$(new_sandbox)"; state_file "$d" "record-task" "codex"
-rm -f "$d.calls"
-REFUSED_LOGS="$d/refused-runs"
+rm -f "$d.calls" "$d.holder"
+LOSER_LOGS="$d/refused-runs"                    # INSIDE the checkout, and must stay absent
+HOLDER_LOGS="$SANDBOX_ROOT/12h-holder-runs"     # outside it, so only the loser can move the bytes
+REFUSALS="$(lock_root_for "$d")/refusals"
 BEFORE="$(git -C "$d" rev-parse HEAD)"
-( bash "$DISPATCH_BIN" --checkout "$d" --task record-task --log-dir "$d/runs" \
-    --timeout 40 --actor-cmd 'sleep 12; exit 0' >/dev/null 2>&1 ) &
+( bash "$DISPATCH_BIN" --checkout "$d" --task record-task --log-dir "$HOLDER_LOGS" \
+    --timeout 90 \
+    --actor-cmd 'printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.holder"; sleep 30; exit 0' \
+    >/dev/null 2>&1 ) &
 holder=$!
-# Waited for, not slept through: the assertion is about a lease that is genuinely
-# held at the moment the second dispatcher asks for it.
-for _ in $(seq 1 60); do [ -d "$(task_lock_for "$d" record-task)" ] && break; sleep 0.5; done
+# WAITED ON THE ACTOR, NOT ON THE LEASE, and the difference is load-bearing. The
+# holder writes its own ownership declaration into the checkout somewhere between
+# taking the lease and launching, so a manifest captured in that window would
+# move for the HOLDER's reasons and this case would fail for something it is not
+# testing. Once the actor is running, the holder touches the working tree no more.
+for _ in $(seq 1 120); do [ -f "$d.holder" ] && break; sleep 0.5; done
+[ -f "$d.holder" ] \
+  && ok "12h setup — the holding dispatcher is admitted and inside its actor" \
+  || bad "12h setup — the holding dispatcher is admitted and inside its actor" "no $d.holder marker"
+
+TREE_BEFORE="$(tree_manifest "$d")"
+STATUS_BEFORE="$(git -C "$d" status --porcelain)"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task record-task \
-        --log-dir "$REFUSED_LOGS" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+        --log-dir "$LOSER_LOGS" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+TREE_AFTER="$(tree_manifest "$d")"
+STATUS_AFTER="$(git -C "$d" status --porcelain)"
 expect_rc 17 "$RC" "the second dispatcher is refused at 17 by a REAL held lease" "$OUT"
 
-RL="$(ls -t "$REFUSED_LOGS"/*.log 2>/dev/null | head -1)"
-if [ -n "$RL" ]; then
-  ok "the requested --log-dir received a run log for the refused run"
+# THE CHECKOUT IS UNTOUCHED. This is the assertion the previous implementation
+# failed, and it fails LOUDLY rather than by absence: the diff names the file.
+[ ! -e "$LOSER_LOGS" ] \
+  && ok "  and the requested --log-dir inside the checkout was never created" \
+  || bad "  and the requested --log-dir inside the checkout was never created" \
+         "$(ls -a "$LOSER_LOGS" 2>&1 | tr '\n' ' ')"
+if [ "$TREE_BEFORE" = "$TREE_AFTER" ]; then
+  ok "  and every byte of the checkout's working tree is unchanged"
 else
-  bad "the requested --log-dir received a run log for the refused run" \
-      "nothing under $REFUSED_LOGS: $(ls -a "$REFUSED_LOGS" 2>&1)"
+  bad "  and every byte of the checkout's working tree is unchanged" \
+      "$(diff <(printf '%s\n' "$TREE_BEFORE") <(printf '%s\n' "$TREE_AFTER") | head -10 | tr '\n' ' ')"
 fi
-if [ -n "$RL" ] && grep -q '^STOP \[17\]' "$RL"; then
-  ok "  and the human refusal reached the run log, not only the terminal"
+[ "$STATUS_BEFORE" = "$STATUS_AFTER" ] \
+  && ok "  and git status is unchanged" \
+  || bad "  and git status is unchanged" "before [$STATUS_BEFORE] after [$STATUS_AFTER]"
+
+# THE RECORD STILL EXISTS, somewhere the loser is entitled to write.
+RR="$(ls -t "$REFUSALS"/*.refusal 2>/dev/null | head -1)"
+if [ -n "$RR" ]; then
+  ok "  and a durable refusal record was written under the shared lease root"
 else
-  bad "  and the human refusal reached the run log, not only the terminal" \
-      "run log: ${RL:-none}"
+  bad "  and a durable refusal record was written under the shared lease root" \
+      "nothing matching $REFUSALS/*.refusal: $(ls -a "$REFUSALS" 2>&1 | tr '\n' ' ')"
+fi
+# Named against the Git common directory rather than against "not $d": a record
+# under $d/.git would satisfy the negative and still be the wrong place, because
+# the point is that every linked worktree of this repository can read it.
+case "${RR:-<none>}" in
+  "$(lock_root_for "$d")"/refusals/*)
+    ok "    and it lives in the Git common directory, outside every worktree" ;;
+  *)
+    bad "    and it lives in the Git common directory, outside every worktree" \
+        "got: ${RR:-<none>}" ;;
+esac
+if [ -n "$RR" ] && grep -q '^STOP \[17\]' "$RR"; then
+  ok "    and it carries the human refusal, not only the terminal did"
+else
+  bad "    and it carries the human refusal, not only the terminal did" "record: ${RR:-none}"
 fi
 # The machine-readable half, field by field. A record that says "refused" without
 # the code, the task or the holder is not something a later reader can act on.
-TR="$(grep '^terminal-record ' "$RL" 2>/dev/null | tail -1)"
+TR="$(grep '^terminal-record ' "$RR" 2>/dev/null | tail -1)"
 if [ -n "$TR" ]; then
-  ok "  and a stable terminal record line is present"
+  ok "    and a stable terminal record line is present"
 else
-  bad "  and a stable terminal record line is present" "run log: ${RL:-none}"
+  bad "    and a stable terminal record line is present" "record: ${RR:-none}"
 fi
 for field in 'outcome=refused' 'code=17' 'task=record-task' 'holder_program=dispatch' \
              'resource=task' 'refusal=held' 'actor_launched=no'; do
   case "$TR" in
-    *"$field"*) ok "    the terminal record carries $field" ;;
-    *)          bad "    the terminal record carries $field" "got: ${TR:-<no record>}" ;;
+    *"$field"*) ok "      the terminal record carries $field" ;;
+    *)          bad "      the terminal record carries $field" "got: ${TR:-<no record>}" ;;
   esac
 done
 # The holder's checkout is named, so an operator reading the losing transport's
 # evidence alone can find the winning one.
 case "$TR" in
-  *"holder_checkout=$(cd "$d" && pwd -P)"*) ok "    and names the holder's checkout" ;;
-  *) bad "    and names the holder's checkout" "got: ${TR:-<no record>}" ;;
+  *"holder_checkout=$(cd "$d" && pwd -P)"*) ok "      and names the holder's checkout" ;;
+  *) bad "      and names the holder's checkout" "got: ${TR:-<no record>}" ;;
 esac
+# EVIDENCE NOBODY CAN FIND IS NOT EVIDENCE. The record now lives somewhere the
+# operator did not choose, so the refusal has to say where it went.
+if [ -n "$RR" ]; then
+  out_has "$RR" "$OUT" "  and the refusal prints the record's path on the terminal"
+else
+  bad "  and the refusal prints the record's path on the terminal" "no record to name"
+fi
 
 # NO ACTOR RAN. Three independent handles, because the record's whole value is
 # that it describes a refusal: an exit code alone cannot separate "refused before
 # launch" from "launched and then failed".
 [ -s "$d.calls" ] && bad "  and no actor was launched" "actors ran: $(tr '\n' ';' <"$d.calls")" \
                   || ok "  and no actor was launched"
-if ls "$REFUSED_LOGS"/*.out >/dev/null 2>&1; then
-  bad "  and wrote no hop capture" "$(ls "$REFUSED_LOGS"/*.out)"
+if [ -n "$RR" ] && grep -qE '^hop=[0-9]+ actor=' "$RR"; then
+  bad "  and the record shows no hop" "$(grep -E '^hop=' "$RR")"
 else
-  ok "  and wrote no hop capture"
-fi
-if [ -n "$RL" ] && grep -qE '^hop=[0-9]+ actor=' "$RL"; then
-  bad "  and the run log records no hop" "$(grep -E '^hop=' "$RL")"
-else
-  ok "  and the run log records no hop"
+  ok "  and the record shows no hop"
 fi
 [ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
   && ok "  and committed nothing" || bad "  and committed nothing" "HEAD moved from $BEFORE"
 
-# --status STAYS NO-WRITE. Opening the run log earlier is exactly the change that
-# could break the read-only contract, so it is checked here against the same held
-# lease, on both halves: an existing directory gains no file, and a directory that
-# does not exist is not created.
-n_before="$(ls -1 "$REFUSED_LOGS" 2>/dev/null | wc -l | tr -d ' ')"
+# --status STAYS NO-WRITE, on all three surfaces it could now touch: the
+# requested log directory, a log directory that does not exist, and the refusal
+# store. It takes no lease, so it can never be refused, so it must never file a
+# refusal — a record written by a read-only command would be a false one.
+n_ref_before="$(ls -1 "$REFUSALS" 2>/dev/null | wc -l | tr -d ' ')"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task record-task \
-        --log-dir "$REFUSED_LOGS" --status 2>&1)"; RC=$?
+        --log-dir "$LOSER_LOGS" --status 2>&1)"; RC=$?
 expect_rc 0 "$RC" "  --status still exits 0 over a held lease" "$OUT"
-n_after="$(ls -1 "$REFUSED_LOGS" 2>/dev/null | wc -l | tr -d ' ')"
-[ "$n_before" = "$n_after" ] \
-  && ok "  --status added no file to the requested log directory" \
-  || bad "  --status added no file to the requested log directory" "$n_before -> $n_after"
+[ ! -e "$LOSER_LOGS" ] \
+  && ok "  --status created no log directory it was pointed at" \
+  || bad "  --status created no log directory it was pointed at" "$(ls -a "$LOSER_LOGS" 2>&1 | tr '\n' ' ')"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task record-task \
         --log-dir "$d/status-only-runs" --status 2>&1)"; RC=$?
 expect_rc 0 "$RC" "  --status exits 0 for a log directory that does not exist" "$OUT"
 [ ! -d "$d/status-only-runs" ] \
   && ok "  --status created no log directory" \
   || bad "  --status created no log directory" "$d/status-only-runs exists"
+[ "$n_ref_before" = "$(ls -1 "$REFUSALS" 2>/dev/null | wc -l | tr -d ' ')" ] \
+  && ok "  --status filed no refusal record" \
+  || bad "  --status filed no refusal record" "refusal count moved from $n_ref_before"
 
 wait "$holder" 2>/dev/null
+rm -rf "$(task_lock_for "$d" record-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# ---------------------------------------------------------------- case 12h-ok
+# THE POSITIVE CONTROL, and without it 12h passes against a dispatcher that never
+# writes a run log at all. Everything above is an absence — no directory, no
+# bytes, no actor — and a program that had simply lost the ability to open its
+# run evidence would satisfy every one of those assertions. This is the run that
+# WINS admission, and it must produce exactly what the losing one must not.
+echo
+echo "Case 12h-ok — an ADMITTED run still creates and uses the requested run log"
+rm -f "$d.calls"
+n_ref_before="$(ls -1 "$REFUSALS" 2>/dev/null | wc -l | tr -d ' ')"
+run_dispatch "$d" record-task --max-hops 1 --actor-cmd "$FLIP"
+AL="$(ls -t "$d"/runs/*.log 2>/dev/null | head -1)"
+if [ -n "$AL" ]; then
+  ok "the requested --log-dir received a run log once both leases were held"
+else
+  bad "the requested --log-dir received a run log once both leases were held" \
+      "nothing under $d/runs: $(ls -a "$d/runs" 2>&1 | tr '\n' ' ')"
+fi
+# Created is not the same claim as used. The run header only exists because the
+# log was open when the run reported itself.
+if [ -n "$AL" ] && grep -q '^run=' "$AL"; then
+  ok "  and the run wrote its own header into it"
+else
+  bad "  and the run wrote its own header into it" "run log: ${AL:-none}"
+fi
+[ "$(calls "$d")" = "1" ] \
+  && ok "  and the actor really launched (this is an admitted run, not another refusal)" \
+  || bad "  and the actor really launched" "calls: $(calls "$d")"
+[ "$n_ref_before" = "$(ls -1 "$REFUSALS" 2>/dev/null | wc -l | tr -d ' ')" ] \
+  && ok "  and an admitted run files no refusal record" \
+  || bad "  and an admitted run files no refusal record" "refusal count moved from $n_ref_before"
 rm -rf "$(task_lock_for "$d" record-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
 # ================================================================= case 13

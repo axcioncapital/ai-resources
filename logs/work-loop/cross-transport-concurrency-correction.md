@@ -11,87 +11,84 @@ Scope is exactly that correction plan as committed at `f2b19b5d80a061111c39cc744
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 3 — make carrier shutdown release leases only after a controlled process-group census positively proves the actor group empty.
+Standard. Implementation mode. Unit 4 — make an early dispatcher refusal durable without writing to the checkout before admission.
 
 Named reason for the loop: the correction spans several independently assessable units and must survive session boundaries; the result also needs assessment by someone other than its implementer before it can progress. The operator explicitly chose Work Loop v2 for this task on 2026-08-15.
 
 ## Brief
 
-Units 1 and 2 are accepted. This unit closes correction-plan step 3: the carrier must not interpret a failed process-group signal probe as proof that the actor stopped, because releasing both leases on that guess can admit a second writer beside a survivor.
+Units 1–3 are accepted. This unit closes correction-plan step 4: a dispatcher that loses admission must leave durable refusal evidence, but must leave the requested checkout byte-identical because it does not yet own either lease.
 
-Required outcome: during the TERM grace period and after SIGKILL, only a controlled census that ran successfully and found the actor group empty may return clean and allow normal lease release. A visible survivor or any failed/inconclusive census is unknown, pins both leases, and records either the survivor PIDs or the inspection failure.
+Required outcome: separate pre-admission refusal evidence from the normal run log. Before both leases are acquired, the dispatcher may write its refusal record only under the shared lease root in the Git common directory. The requested normal run log may be created only after both leases are held.
 
 Governing sources:
 
-- The operator-approved correction plan at `f2b19b5d80a061111c39cc7444f90f6374f19d38`, especially implementation sequence step 3 and its four acceptance conditions, governs this unit.
-- The governing Phase 1 proposal named by that plan governs the invariant that any survivor or unprovable shutdown pins both task and checkout leases.
-- The accepted shared lease implementation and existing `pin_leases` behavior govern how the retained leases are recorded; do not redesign pinning in this unit.
+- The operator-approved correction plan at `f2b19b5d80a061111c39cc7444f90f6374f19d38`, especially implementation sequence step 4 and its acceptance conditions, governs this unit.
+- The governing Phase 1 proposal named by that plan governs cross-transport admission and the requirement that the losing transport launch no actor.
+- Existing shared lease-root resolution and dispatcher terminal-record vocabulary govern unless the plan explicitly changes them; do not add a new state store or command surface.
 
 Check these claims against the live repository before changing anything:
 
-1. Inspect `terminate_actor_group` in `scripts/axcion-harness-v0.2/carry-turn.sh` and verify whether the TERM-grace loop still returns clean directly from `kill -0` failure, before any census.
-2. Inspect `actor_group_census` and the final post-SIGKILL branch. Verify whether the group query's own failure is propagated, and whether a later `kill -0` failure can still turn an empty or inconclusive result into clean shutdown.
-3. Inspect the executed cases around section `12d` in `scripts/axcion-harness-v0.2/carry-turn.test.sh`. Report exact coverage for inspection becoming unavailable during TERM grace, group inspection failing after SIGKILL, a visible survivor, and a cleanly emptied group, including which current cases can fail against the two shortcuts above.
+1. Inspect `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` from argument parsing through both lease acquisitions. Identify every point that creates, truncates, allowlists, or writes `RUN_LOG` or its parent before both leases are owned.
+2. Inspect dispatcher case `12h` and adjacent controls in `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`. Report whether the current losing-dispatcher case proves checkout bytes and `git status` are unchanged, no actor launched, and durable evidence exists outside every worktree; identify the positive admitted-run control.
+3. Verify how `WL_LEASE_ROOT` resolves to the Git common directory and whether a `refusals/` child can be written before acquisition without touching the checkout. Verify that the proposed refusal filename can include timestamp, PID, and task without depending on the unassigned `LOCK_KEY`.
 4. Report branch, checkout, Git status, and pre-existing operator-owned changes before editing. Do not stage or commit `logs/friction-log.md` or `logs/harness-runs/`.
 
 Authorized changes:
 
-- `scripts/axcion-harness-v0.2/carry-turn.sh`
-- `scripts/axcion-harness-v0.2/carry-turn.test.sh`
+- `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`
+- `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`
 - this state file
 - `logs/friction-log.md` only if an existing hook updates it; never stage or commit it
 
-Codex framing decision: dispatcher refusal logging, dispatcher status wording, the remaining controller matrix, live cases 23/24, and the closing record remain outside this unit. Unit 3 changes shutdown proof only; signal delivery remains an action, not evidence.
+Codex framing decision: dispatcher status wording, the remaining controller matrix, live cases 23/24, and the closing record remain outside this unit. Unit 4 changes only where and when refusal/run evidence is written; it does not change admission policy.
 
 Required evidence:
 
-- Add or sharpen exact cases for: inspection becoming unavailable during TERM grace; a group census that cannot inspect after SIGKILL; a visible survivor; and a cleanly emptied group as the positive control. Each must assert the lease outcome and the recorded reason, not only the exit code.
-- Before the production fix, run the targeted new assertions against the pre-fix carrier and record output proving the TERM-grace and post-SIGKILL shortcuts fail for their intended reasons.
-- After the fix, run `bash -n scripts/axcion-harness-v0.2/carry-turn.sh scripts/axcion-harness-v0.2/carry-turn.test.sh` and the full `bash scripts/axcion-harness-v0.2/carry-turn.test.sh`; report commands, exit codes, and current totals.
-- Show that the clean control releases both leases, while a survivor or unknown result pins both and persists either PIDs or an inspection-failure reason. Confirm no `kill -0 ... || return 0` or equivalent two-state shortcut remains in `terminate_actor_group`.
+- Rewrite or sharpen case `12h` so a losing dispatcher is proven to leave checkout bytes and `git status` unchanged, launch no actor, exit 17, print the refusal-record path, and leave a durable refusal record under `$WL_LEASE_ROOT/refusals/` containing the human-readable refusal and a machine-readable terminal record with `actor_launched=no`.
+- Add or identify a positive admitted-run control proving the normal requested run log is still created and used after both leases are acquired.
+- Before the production fix, run the targeted new assertions and record output showing the losing dispatcher currently writes inside the checkout or otherwise fails the exact case for the intended reason.
+- After the fix, run `bash -n plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` and the full `bash plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`; report commands, exit codes, and current totals.
+- Show from the implemented control flow that no code before both lease acquisitions creates, truncates, writes, or allowlists a requested checkout log path, and that `--status` remains read-only.
 - Report changed files, implementation commit, deviations, remaining limitations, and rollback instructions.
 
-Completion condition: correction-plan step 3 is satisfied; the exact shutdown cases and full carrier suite pass; release is licensed only by a successful empty census; only authorized files are committed; and Claude updates this file, sets `turn: codex`, commits, and stops.
+Completion condition: correction-plan step 4 is satisfied; the exact losing and admitted controls and full dispatcher suite pass; a pre-admission refusal writes only under the Git common directory; only authorized files are committed; and Claude updates this file, sets `turn: codex`, commits, and stops.
 
-Stop and hand back without improvising if a controlled census cannot distinguish successful emptiness from inspection failure on the supported host, the required proof needs files outside the authorized boundary, or a premise is false.
+Stop and hand back without improvising if durable refusal evidence cannot be written outside the checkout, the exact no-write proof requires files outside the authorized boundary, or a premise is false.
 
 ## Latest result
 
 Inspected (2026-08-15):
 
-- Claim (1): HOLDS — read `terminate_actor_group` in `scripts/axcion-harness-v0.2/carry-turn.sh`. The TERM-grace loop was `kill -0 "-$pgid" 2>/dev/null || return 0`, returning clean directly from a failed signal probe, before any census.
-- Claim (2): HOLDS, and both shortcuts were present. (a) `actor_group_census` discarded the exit status of its own group query (`out="$(ps -o pid=,pgid= -g "$pgid" 2>/dev/null)"`); only the neighbouring `ps -o pid= -p $$` control could make it return 1, so a `ps` whose `-p` answers and whose `-g` cannot run produced no rows and read as a confirmed-empty group. (b) The post-SIGKILL branch was `if ! kill -0 "-$pgid"; then return 0; fi` — the signal probe, not the census, licensed release. Host fact that rules out the naive fix: on this Darwin host `ps -o pid=,pgid= -g <pgid>` exits 1 with empty output for an unused in-range pgid (checked 40001/41234/42222/43333 and a just-exited pgid), so propagating that exit status would make every clean shutdown read as unknown.
-- Claim (3): HOLDS — read section `12d` in `scripts/axcion-harness-v0.2/carry-turn.test.sh` (pre-fix lines 1159–1224). Coverage was: *a cleanly emptied group* — covered as the control (`task-be`); *a visible survivor* — covered (`task-bf`, plus the second-run refusal at exit 17); *group inspection failing after SIGKILL* — only partly (`task-bg` uses `NOPSDIR`, where **all** `ps` fails, which trips the `-p $$` control; the `-p`-works/`-g`-fails case was untested); *inspection becoming unavailable during TERM grace* — not covered at all, since every 12d case used `ignore-term:30` and so left through SIGKILL, never through the grace loop. **No pre-existing case could fail against either shortcut** — `task-be` and `task-bf` pass under both old and new code, and `task-bg` is caught by the older control.
-- Claim (4): HOLDS — checkout `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-concurrency-fix-2`, branch `session/2026-08-14-concurrency-fix-2`, HEAD `bc979e8d`. Pre-existing operator-owned changes: modified `logs/friction-log.md`, modified this state file, untracked `logs/harness-runs/`. Neither `logs/friction-log.md` nor `logs/harness-runs/` was staged or committed.
+- Claim (1): HOLDS — read `dispatch.sh` from argument parsing to `acquire_lock`. Four points wrote the requested checkout log path before either lease was owned, all inside one block guarded by `STATUS_MODE -eq 0` and placed immediately above the `acquire_lock` call: `LOG_DIR="$DEFAULT_LOG_DIR"` default, `mkdir -p "$LOG_DIR"`, `ALLOW_PATHS+=` of the log dir when it is inside the checkout, and `RUN_ID`/`RUN_LOG="$LOG_DIR/$RUN_ID.log"` followed by `: >"$RUN_LOG"`. Nothing else touched that path pre-admission: every other `>>"$RUN_LOG"` sits in `die`/`say`/`pin_lock`/`on_signal` bodies guarded by `[ -n "${RUN_LOG:-}" ]`, and the other two `ALLOW_PATHS+=` are the `--allow-path` argument and a fixed default.
+- Claim (2): HOLDS as stated — the pre-existing case `12h` proved the opposite of what Unit 4 requires. It passed `--log-dir "$d/refused-runs"` (inside the checkout) and asserted that directory **received** a run log. It proved no actor launched (three handles), no hop capture, no commit, and `--status` read-only; it did **not** prove checkout bytes or `git status` unchanged, and it asserted no evidence outside the worktree. Positive admitted-run control: none existed for this property — the nearest were case 14 (`runs/*.hop1.claude.out`) and cases 27k/27-norecord, which read an admitted run's log for pin reporting, not for the create-and-use claim. One was added (`12h-ok`).
+- Claim (3): HOLDS — `wl_lease_init` (`logs/scripts/work-loop-lease.sh:157-169`) sets `WL_LEASE_ROOT="<git-common-dir>/work-loop-dispatch-locks"`, and `dispatch.sh` calls it well above `acquire_lock`, so the root path is known pre-acquisition. A `refusals/` child is safe: searched `logs/scripts/`, `plans/work-loop-v2-v0.2/handoff-automation-spike/` and `scripts/` for `WL_LEASE_ROOT`/`work-loop-dispatch-locks`; every reader addresses the two lease directories by exact path and nothing globs the root. `LOCK_KEY` is **never assigned** in `dispatch.sh` — searched the whole file, two references only (a comment and `${LOCK_KEY:0:8}`), no assignment anywhere — so the refusal name uses `date`, `$$` and `$TASK`, all available at that point.
+- Claim (4): HOLDS — branch `session/2026-08-14-concurrency-fix-2`, checkout `ai-resources-concurrency-fix-2`, ownership `PROCEED` (this checkout already declares the task). Pre-existing operator-owned changes before editing: ` M logs/friction-log.md` and `?? logs/harness-runs/`, plus the ` M` state file carrying this brief. Neither was staged nor committed.
 
-Repository-depth ownership: PROCEED (this checkout already declares this task).
-
-Result: Unit 3 is implemented. Carrier shutdown now releases leases only on a controlled census that ran successfully and named nobody, in the TERM grace period as well as after SIGKILL.
-
-- `actor_group_census` proves its **own** query form. The readability control now asks `ps -o pid=,pgid= -g <this shell's pgid>` and requires this shell's pid back, instead of asking `ps -p $$`. A group query that cannot run is therefore unknown, not an empty group. The exit status is deliberately not the discriminator, for the Darwin reason recorded under claim (2).
-- The TERM-grace loop no longer decides anything with `kill -0`. Each second it runs the same census, and leaves early only when the census ran and named nobody. A census that cannot run neither shortens the grace period nor releases a lease.
-- The post-SIGKILL branch is inverted: a successful empty census is the licence to release, and the `kill -0` probe survives only as a one-way veto — if the group still answers while the census named nobody, the two inspections disagree and the result is recorded as unknown. No `kill -0 ... || return 0` or equivalent two-state shortcut remains in `terminate_actor_group`; the only remaining `return 0` on that path is guarded by `[ -z "$survivors" ] && [ -z "$unknown" ]`.
+Result: Unit 4 is implemented. A dispatcher that loses admission now writes nothing at all into the requested checkout — the run-evidence block moved from above `acquire_lock` (dispatch.sh:1409) to below the read-only `--status` branch (dispatch.sh:1543-1590), so `--status` read-only is now a property of the control flow rather than of a `STATUS_MODE` flag. Pre-admission refusal evidence moved to `$WL_LEASE_ROOT/refusals/<timestamp>-<pid>-<task>.refusal`, opened lazily on the first `r17` line, carrying the unchanged human `STOP [17]` wording plus the `terminal-record … actor_launched=no` line, with the record's path printed on stderr. An unwritable refusal store warns on the terminal instead of failing silently.
 
 Evidence:
 
-- **Failing first.** Four new cases were added to section `12d` (`task-bh` TERM-grace positive control; `task-bi` inspection unavailable during TERM grace; `task-bj` visible survivor during TERM grace; `task-bk` group query failing after SIGKILL) plus a new `NOGPSDIR` fixture — a `ps` whose `-p` works and whose `-g` exits 1. Run against the **pre-fix** carrier: `passed: 411  failed: 12`. The 12 failures were exactly the two shortcuts — `task-bi` and `task-bk` released both leases and printed no `sweep incomplete`; `task-bj` released both leases beside a survivor the census could still see and never printed `still running in the actor's process group`. Both positive controls (`task-be`, `task-bh`) passed pre-fix, so the new cases cannot be satisfied by a carrier that simply pins everything.
-- **After the fix.** `bash -n scripts/axcion-harness-v0.2/carry-turn.sh scripts/axcion-harness-v0.2/carry-turn.test.sh` → rc 0. `bash scripts/axcion-harness-v0.2/carry-turn.test.sh` → rc 0, `passed: 423  failed: 0` (was 405/0 before this unit; +18 assertions). `bash scripts/axcion-harness-v0.2/carry-turn.test.sh --prove-failure` → rc 0, `passed: 40  failed: 0`. `bash logs/scripts/work-loop-lease.test.sh` → `pass=127 fail=0`, unchanged.
-- **The clean control still releases.** `task-be` (post-SIGKILL) and `task-bh` (TERM grace) both assert ACTOR_TIMEOUT (21), `assert_absent PINNED`, and that neither lease directory survives. A survivor or an unknown result pins both and persists either the pids (`descendants still running: <pid>`) or the reason (`sweep incomplete: …`) into the pin file — asserted on the file contents, not only on stdout.
+- Failing-first, targeted `12h`/`12h-ok` against the unmodified dispatcher: `pass=12 fail=18`. The failures were the intended ones — `refused-runs/` was created inside the checkout (`20260815T125609--574-record-task.log`), the working-tree manifest gained that file, `git status` moved from `` to `?? refused-runs/`, and no record existed under the lease root. The admitted control also failed pre-fix, and for a consequence of the same defect: the litter left by the refusal was an out-of-allowlist change, so the next admitted dispatcher stopped at `STOP [18]` instead of launching.
+- Post-fix, same targeted cases: `pass=30 fail=0`.
+- `bash -n plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` → rc 0.
+- `bash plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` → rc 0, `pass=547 fail=0` (was 517 before the two cases were rewritten and added).
+- `bash logs/scripts/work-loop-lease.test.sh` → rc 0, `pass=127 fail=0` (unchanged; the library was not touched).
+- Control-flow proof, by line number in the implemented file: `acquire_lock` is called at 1409; every create/truncate/write/allowlist of the requested log path is at 1559 (`LOG_DIR` default), 1560 (`mkdir -p`), 1565 (`LOG_DIR_ABS`), 1570 (`ALLOW_PATHS+=`), 1589-1590 (`RUN_LOG=`, `: >`) — all below it. The `--status` branch runs 1419-1541 and ends in `exit 0`, so 1543-1590 is unreachable in status mode, and 1409 never calls `acquire_lock` in status mode. The eight other `>>"$RUN_LOG"` sites are function bodies guarded by `[ -n "${RUN_LOG:-}" ]`, and `RUN_LOG` is assigned only at 1589.
 
-Changed files: `scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, this state file. Implementation commit: see `## Next action`. Rollback: `git revert` that commit; it touches only the two harness files and this record, and the pre-fix behaviour is fully restored by it.
+Changed files: `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`, this state file. Nothing else was staged; `logs/friction-log.md` and `logs/harness-runs/` were left untouched and uncommitted.
 
-Deviations: one, stated rather than silent. The brief's required outcome reads as "successful empty census ⇒ clean". The implementation keeps the existing `kill -0` corroboration in a one-way form: it can only turn a successful empty census into *unknown*, never the reverse. That is strictly more conservative than the requirement, preserves the deliberate behaviour documented in the pre-fix comment block, and is consistent with "any inconclusive result is unknown and pins". If Codex reads the requirement as excluding the veto too, removing the `kill -0` call and returning 0 on `[ -z "$survivors" ] && [ -z "$unknown" ]` is a two-line change.
+Deviations: none from the brief. Case `12h` was rewritten rather than sharpened, because its central assertion had to be inverted; the new positive control is a separate case `12h-ok` so the negative and positive halves fail with distinguishable labels.
 
-Candidate deferrals, recorded and not done: (a) no M-series mutation case was added for the new `-g` control — the four new 12d cases already provide the failing-first proof, and an M-case would test the suite rather than the carrier; (b) `observe_nested` uses the same `-g` query and carries the older `ps`-output-nonempty control, which is adequate for a count but is not the same proof — outside this unit's authorized scope for behaviour change; (c) on a host where `ps -g` cannot run at all, every interrupted or timed-out hop now pins both leases where the TERM-grace path used to release them. That is the required invariant, not a defect, but it is a real operator-facing consequence and belongs in the accepted limitations at closure.
+Candidate deferral noticed mid-unit, not implemented: `LOCK_KEY` is unassigned since the lease moved into the shared library, so `RUN_ID` carries an empty discriminator (`20260815T125609--574-record-task.log`). The run id's defence against two same-task runs from different checkouts colliding in the same second is therefore inert — only the pid separates them now. Left alone because the brief excludes unrelated `LOCK_KEY` work.
 
-Units 1 and 2 accepted.
+Remaining limitations: a Git common directory that cannot be written leaves the refusal record unwritten — the run warns on the terminal and still refuses correctly, so the evidence gap is announced rather than silent. Refusal records accumulate under `refusals/` with no pruning.
 
-- Unit 1 (`fee4fe49`, `ca35371c`, `57f3b25b`): shared lease three-state liveness and safe stale recovery, including interrupted reclaimers and one-winner contention. Final reported suites: lease `127/0`, carrier `371/0`, dispatcher `537/0`.
-- Unit 2 (`2d58991d`, record update `bc979e8d`): carrier legacy-lock compatibility now delegates to the shared verdict, preserves every non-absent lock, atomically claims only positively absent locks, and retains a positive admission control. Reported carrier evidence: `405/0`; mutation proof: `40/0`.
+Rollback: `git revert` the implementation commit, or `git checkout <parent> -- plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`. No state store, command surface or file layout changed, so nothing outside those two files has to be undone.
 
-Unit 2 candidate deferrals were assessed and do not justify more work now: using the shared internal probe is the correction plan's intended single-classifier choice; the older weaker stale case is harmless beside the stronger control; and the EPERM case's root-only skip is explicit while the supported host ran it.
+Units 1–3 accepted: Unit 1 (`fee4fe49`, `ca35371c`, `57f3b25b`), Unit 2 (`2d58991d`, record update `bc979e8d`), Unit 3 (`cda44c50`).
 
-Held for closure from Unit 1: mutually uninspectable live reclaimers both fail closed; `wl_lease_status` describes a provably dead holder as `HELD`; the old-marker transition block can be removed only after no checkout can carry that format.
+Held for closure from Unit 1: mutually uninspectable live reclaimers both fail closed; `wl_lease_status` describes a provably dead holder as `HELD`; the old-marker transition block can be removed only after no checkout can carry that format. Held from Unit 3: a host unable to execute `ps -g` pins interrupted or timed-out runs rather than releasing leases, because shutdown cannot be proved.
 
 ## Blocker
 
@@ -99,4 +96,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 3 against correction-plan step 3 and its four acceptance conditions. Implementation commit: `cda44c50` (`scripts/axcion-harness-v0.2/carry-turn.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, this state file). Decide in particular whether the retained one-way `kill -0` veto is accepted as written or must be removed, and whether the three recorded candidate deferrals are accepted as deferrals.
+Codex: assess Unit 4 against correction-plan step 4 — the losing-dispatcher and admitted-run controls, the control-flow proof that nothing pre-admission touches the requested checkout log path, and whether the `LOCK_KEY` finding should be recorded as a deferral or opened as its own unit.
