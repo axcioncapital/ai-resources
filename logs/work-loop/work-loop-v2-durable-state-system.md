@@ -60,52 +60,53 @@ This unit may edit tracked `logs/work-loop/*.md` records and the minimum existin
 **Completion condition:** Commit the complete Tracer 2 migration and its minimum test updates, including this migrated task record. Replace `## Latest result` with the reconciled inventory, classification, ambiguity, validator, negative-fixture, old-runtime, scope, and commit evidence; retain `status: active`, set `turn: codex`, and hand back for assessment. State explicitly that `.owner` remains in old `{task-id} {date}` form, runtime consumers have not switched, admissions remain paused, and Tracer 3 has not started.
 
 **Stop conditions:** Stop without guessing if any tracked operator-turn record has ambiguous lifecycle meaning; a task record has multiple plausible authoritative copies; a live owner or lease conflicts with migration; preserving an intentional negative's reason requires weakening the validator; the old runtime does not tolerate the migrated valid records; the migration would require `.owner` or consumer changes; repository evidence materially invalidates the frozen contract; or completing the inventory would require interpreting legacy session history. Report the exact paths and evidence, set `turn: codex` for a technical/premise handback, and do not partially claim Tracer 2 complete.
+
 ## Latest result
 
-**Correction round on Tracer bullet 2. Finding 1 is corrected; finding 2 is partly resolved and handed back, because closing it would require a change the finding itself forbids.** Both findings were reproduced by inspection before either was touched. `.owner` remains in the old `{task-id} {date}` form, runtime consumers have not switched, admissions remain paused, and Tracer 3 has not started.
+**The final tightly-bounded fix is done and the old-runtime deterministic baseline is green.** The two-sided installation premise held, so the stale routing fact was corrected rather than accepted as a limitation. `.owner` remains in the old `{task-id} {date}` form, runtime consumers have not switched, admissions remain paused, and Tracer 3 has not started.
 
-**The frozen findings, carried into the record.** Codex's correction brief was never committed, so the two findings this round answers are preserved here verbatim rather than left only in an uncommitted working copy:
+**What this round was authorised to do,** carried into the record because Codex's instruction was never committed: reconfirm the two-sided installation, then "remove only its stale `[Claude-side only]` marker from `.agents/skills/work-loop-v2/references/routing-index.md` and update only the corresponding `CLAUDE_ONLY` expectation and human-readable count in `logs/scripts/work-loop-v2-slice-1.test.sh`", preserving `diagnosing-bugs` as the same routed capability, with the closure check covering this final fix only.
 
-> 1. The frozen Tracer bullet 2 verification says the original Work Loop acceptance harness remains green, and its exit condition says the old runtime completes its deterministic baseline. The reported `logs/scripts/work-loop-v2-slice-1.test.sh` result is 305 passed / 3 failed, exit 1, so unchanged red is not sufficient. Correct the two `mode` assertions that still hardcode the now-retired `work-loop-v2-intake-router.md` as the live task. Point them at this implementation task, or an equally durable current live record, while preserving their ability to fail on a missing/self-defeating named reason and on any mode other than exactly one legal `Implementation` record.
-> 2. Reconcile the remaining `ridx` live-installation failure and return the same deterministic harness green. First establish and report the exact set difference behind `the marked set matches the live installations, not just the brief`. Correct only a stale or overbroad test expectation/setup when repository authority already establishes the intended route set; do not edit the routing index, install or remove skills, expand the approved route inventory, or change runtime behaviour to manufacture green. If green would require any such authority or scope change, stop and hand back with the exact mismatch rather than proceeding.
+**Premise — the two-sided installation still holds.** Checked by inspection, not recall:
 
-**Reproduction, before any edit.** At HEAD `a1c81caf`, `logs/scripts/work-loop-v2-slice-1.test.sh` gave **305 passed, 3 failed, exit 1** — the same three failures the accepted Tracer 2 result recorded, and exactly the three the findings name.
+- `~/.claude/skills/diagnosing-bugs/SKILL.md` — present.
+- `~/.codex/skills/diagnosing-bugs/SKILL.md` — present.
 
-**Finding 1 — corrected.** The two `mode` assertions hardcoded `logs/work-loop/work-loop-v2-intake-router.md` as "the live task". Unit 3's authorized retirement reduced that record to the four closing headings, so it no longer has a `## Lane and unit`, and both `reason_of` and `mode_of` read the empty string against it — confirmed by direct inspection, both returning `[]`. Both assertions were repointed at this implementation task's own record, which is the current open Standard record: `mode_of` returns `Implementation`, and the named reason ("a high-risk, multi-unit lifecycle-state migration whose scope must remain bounded…") does not match the `SELF_DEFEATING` pattern. The pointer now sits in one variable, `LIVE_TASK_F`, with a comment stating that a closed record has no `## Lane and unit` and that the single line must be repointed when this task closes — the exact failure that produced this finding.
+Both sides carry the skill, so the index's `[Claude-side only]` marker on that one bullet was a false fact about the live environment. A second premise was checked before editing: the routing index states no numeric total of Claude-side-only skills anywhere, so removing one marker required no count edit inside the index. The only human-readable count lives in the harness.
 
-Both repaired assertions were proved fail-capable against mutated copies in a scratch directory; the real record was not touched by any probe:
+**The fix — three lines across two files.**
 
-| Probe | Assertion | Result |
+1. `routing-index.md` line 50: `` - `diagnosing-bugs` `[Claude-side only]` — something is broken… `` became `` - `diagnosing-bugs` — something is broken… ``. Only the marker was removed. The bullet, its name and its purpose text are unchanged.
+2. `work-loop-v2-slice-1.test.sh` `CLAUDE_ONLY`: `diagnosing-bugs` removed from the expectation list, 12 names to 11.
+3. The same file's human-readable check name: `exactly the 12 Claude-side-only skills carry the marker` became `exactly the 11 …`.
+
+**`diagnosing-bugs` is still the same routed capability.** It remains in `MATT_PRIMARY` in the harness and remains an indexed owner bullet with its original purpose. Route membership, routing behaviour, skill contents and both installations are untouched. What changed is one claim about where it is installed.
+
+**The two sets now agree at 11, and they agree by name, not by count:**
+
+```
+marked in index (11): ask-matt codebase-design grill-with-docs handoff improve-codebase-architecture
+                      resolving-merge-conflicts to-questionnaire triage wait-what wizard writing-for-agents
+live claude-only (11): (identical, in the same order)
+```
+
+**Fail-capable negative — the live-installation cross-check still rejects a mismatch, in both directions.** Each probe ran the real harness against a mutated copy of the index through the existing `WL2_ROUTER_FILE` override; the real index was never modified by a probe.
+
+| Probe | What it does | Harness result |
 |---|---|---|
-| named-reason line deleted | named reason | FAILS |
-| named reason replaced with "the change is small and reversible…" | named reason | FAILS |
-| `## Lane and unit` renamed away (closed-record shape) | both | FAILS |
-| mode changed to `Adoption mode` | one legal mode | FAILS |
-| `Implementation mode. Adoption mode.` — two modes | one legal mode | FAILS |
-| mode token removed entirely | one legal mode | FAILS |
-| target file absent | both | FAILS |
+| A | reintroduces the stale `[Claude-side only]` marker on `diagnosing-bugs` | 306 passed, **2 failed** — the live-installation check red again |
+| B | drops the marker from `wizard`, a genuinely Claude-only skill | 306 passed, **2 failed** — the live-installation check red again |
+| control | the real index | 308 passed, 0 failed |
 
-Both pass on the real record. The discrimination the finding required — failing on a missing or self-defeating named reason, and on any mode other than exactly one legal `Implementation` — is preserved in both directions.
+Probe B matters as much as A: it shows the check is not merely tolerant of a shorter list but rejects a marker that is missing where the live installation requires one. The sibling `exactly the 11 …` assertion goes red alongside it in both probes, which is the intended pairing — the brief-side and live-side checks are meant to fail together on a drifted index.
 
-**Finding 2 — the exact set difference, and why green is not available inside this scope.** The failing assertion compares the `[Claude-side only]` markers in the routing index against the live installation difference. The difference is exactly one name:
+**Old-runtime deterministic baseline.** `logs/scripts/work-loop-v2-slice-1.test.sh`: **308 passed, 0 failed, exit 0** — green, from 307 passed / 1 failed at the start of this round and 305 / 3 before the correction.
 
-- Marked in `.agents/skills/work-loop-v2/references/routing-index.md`, and listed in the harness's `CLAUDE_ONLY`: **12** names.
-- Live `~/.claude/skills` minus `~/.codex/skills`: **11** names.
-- The single extra is **`diagnosing-bugs`**. The other 11 match exactly.
+**Focused validator regression.** `logs/scripts/work-loop-state.test.sh`: **63 passed, 0 failed, exit 0** — unchanged. This record validates as `ACTIVE_CODEX` at hand-back.
 
-`diagnosing-bugs` is installed on **both** sides, so it is not Claude-side-only in the live environment. The Codex-side copy is dated **2026-08-15 11:14**, alongside `axcion-repository-development` at 10:59 the same morning — after the routing index was written (`a22b54b7`) and after `CLAUDE_ONLY` was written (`bd45bf01`). This is a live-environment change, not a stale or overbroad test expectation: the assertion's own comment says it exists so that "a renamed or retired skill breaks this rather than drifting silently", and that is exactly what it did. The stale artifact is the routing index's marker, not the check.
+**Scope.** Exactly the three allowed files changed: the routing index, the harness, and this record. No migrated record content, no `mode` assertion, no validator or its test, no `.owner`, no consumer, no core, no other skill, and no installation was touched. `logs/friction-log.md` remains a hook-owned modification, untouched and outside the commit.
 
-Every available route to green is a change the finding forbids. Removing the marker edits the routing index. Uninstalling the Codex-side copy removes a skill. Changing `CLAUDE_ONLY` alone would break the sibling assertion `exactly the 12 Claude-side-only skills carry the marker`, which reads the index and currently passes. Loosening the live cross-check would delete the discrimination the assertion exists for. Per the finding's own instruction, the mismatch is reported and handed back rather than manufactured green: the first half — establish and report the exact set difference — is discharged; the second half is not, and the harness is not returned fully green.
-
-**Harness result after the correction.** `logs/scripts/work-loop-v2-slice-1.test.sh`: **307 passed, 1 failed, exit 1** — up from 305 passed / 3 failed. The two `mode` failures are gone; the single remaining failure is the `ridx` one above, unchanged and untouched.
-
-**Focused validator regression.** `logs/scripts/work-loop-state.test.sh`: **63 passed, 0 failed, exit 0** — identical to the accepted Tracer 2 result. The correction broke nothing in the validator contract. This record validates as `ACTIVE_CODEX` at hand-back.
-
-**Did the correction break anything inside the frozen scope?** No. Only the two `mode` assertions changed. The harness gained two passes and lost none, and the `ridx` failure is the one that was already red. The migrated record contents, classifications, `context-engineering-implementation-plan.md` preservation, `.owner`, consumers, core, skills, routing index and installations were all left untouched — `git status` shows exactly two modified tracked files, `logs/scripts/work-loop-v2-slice-1.test.sh` and this record. `logs/friction-log.md` remains a hook-owned modification, untouched and outside the commit.
-
-**One note on this round's own execution, disclosed rather than hidden.** While rewriting this section, a `git show HEAD: > file` restore was run against the working copy, which still held Codex's uncommitted correction brief. That brief was reconstructed verbatim and verified: the working copy's only differences from HEAD were the `turn:` line and the `## Next action` block, exactly as Codex left them. Nothing was lost, and the findings above are quoted from that reconstruction. The lesson is the standing one — do not run a restore form against a dirty file.
-
-**Carried forward from the accepted Tracer 2 result** (Git holds the full text at `a1c81caf`): all **74** tracked `logs/work-loop/*.md` paths reconcile into five classes — 55 valid closed, 13 valid active, 0 valid blocked, 3 intentional negative fixtures, 3 non-state target fixtures. All 68 intended-valid records exit 0; the 3 intentional negatives still fail at exits 16, 14 and 16, each on its own invariant. The one disposition beyond mechanical normalization remains `context-engineering-implementation-plan.md`, whose fifth `## Next action` was carried into `## Accepted limitations` quoted in full.
+**Carried forward** (Git holds the full text at `a1c81caf` and `f3390f7b`): the Tracer 2 inventory reconciles all **74** tracked `logs/work-loop/*.md` paths into 55 valid closed, 13 valid active, 0 valid blocked, 3 intentional negative fixtures and 3 non-state target fixtures; all 68 intended-valid records exit 0 and the 3 negatives fail at exits 16, 14 and 16 on their own invariants. Finding 1 of the correction round — the two `mode` assertions repointed at this task's own open record through a single `LIVE_TASK_F` pointer — remains resolved and green.
 
 ## Blocker
 
@@ -113,9 +114,6 @@ None.
 
 ## Next action
 
-Codex: run the correction closure check on the two frozen findings only.
+Codex: run the closure check on this final fix only — is the stale routing fact corrected, and did the fix break anything?
 
-1. Finding 1 is resolved. Confirm the repointed assertions and their fail-capability evidence.
-2. Finding 2 is **partly resolved**. The exact set difference is established and reported — `diagnosing-bugs`, marked Claude-side-only in the routing index but live on both sides since 2026-08-15 11:14 — but the harness is not green. Closing it needs a decision outside this correction's frozen scope: correct the routing index marker, accept the divergence as a written limitation, or refer the installation question to the operator. Choose from the § 3 menu. This is not a request for a second correction round.
-
-The Tracer 2 deferral recorded at the previous hand-back is now discharged in part: the two `mode` assertions were repointed here. Nothing was implemented beyond the two frozen findings.
+The two questions the § 3 menu leaves: whether the index's factual currency now needs a standing check of its own, given that this marker went stale silently when a skill was installed on the Codex side, and whether Tracer 2 is now accepted. Both are yours. Tracer 3 has not started.

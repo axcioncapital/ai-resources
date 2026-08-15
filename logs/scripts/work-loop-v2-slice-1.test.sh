@@ -1064,7 +1064,7 @@ research resolving-merge-conflicts wizard to-questionnaire teach improve-codebas
 MATT_PHASE="to-spec to-tickets tdd code-review grilling handoff"
 MATT_HELPER="setup-matt-pocock-skills domain-modeling codebase-design writing-for-agents \
 wait-what ask-matt"
-CLAUDE_ONLY="ask-matt codebase-design diagnosing-bugs grill-with-docs handoff \
+CLAUDE_ONLY="ask-matt codebase-design grill-with-docs handoff \
 improve-codebase-architecture resolving-merge-conflicts to-questionnaire triage wait-what \
 wizard writing-for-agents"
 # Never a route: the router-within-router, the operator-excluded design/motion skills,
@@ -1123,7 +1123,7 @@ live_claude_only() {
   comm -23 <(for d in "$HOME"/.claude/skills/*/; do [ -f "$d/SKILL.md" ] && basename "$d"; done | sort) \
            <(for d in "$HOME"/.codex/skills/*/;  do [ -f "$d/SKILL.md" ] && basename "$d"; done | sort)
 }
-check "ridx  exactly the 12 Claude-side-only skills carry the marker" \
+check "ridx  exactly the 11 Claude-side-only skills carry the marker" \
   "same_set \"\$(marked_idx)\" \"\$CLAUDE_ONLY\""
 check "ridx  the marked set matches the live installations, not just the brief" \
   "[ \"\$(marked_idx | sort | tr '\n' ' ')\" = \"\$(live_claude_only | tr '\n' ' ')\" ]"

@@ -47,7 +47,7 @@ Selected only where the request names their purpose. Never a generic fallback.
 - `grill-with-docs` `[Claude-side only]` — an idea to sharpen, with a repo to leave the paper trail in.
 - `grill-me` (Matt — stateless interview, saves nothing) — an idea to sharpen with no repo under it.
 - `wayfinder` — an effort too foggy for one session; it produces decisions, not deliverables.
-- `diagnosing-bugs` `[Claude-side only]` — something is broken and resists a first glance.
+- `diagnosing-bugs` — something is broken and resists a first glance.
 - `triage` (Matt — incoming issues and PRs) `[Claude-side only]` — requests you did not create, piling up.
 - `implement` — build from a spec or a ticket.
 - `prototype` — a design question needing a runnable answer.
