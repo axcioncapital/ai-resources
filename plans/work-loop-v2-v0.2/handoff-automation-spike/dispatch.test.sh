@@ -261,7 +261,7 @@ expect_rc() { # want got label [detail]
 # parentheses, which grep would read as pattern syntax rather than as text.
 #
 # The NEGATIVE half is the load-bearing one. "an attended carry holds task X"
-# also contains no "another dispatcher", but a message that named both would
+# also contains no "a dispatcher", but a message that named both would
 # satisfy the positive assertion alone while still telling the operator to go
 # looking for the wrong process.
 out_has()   { # needle out label
@@ -468,7 +468,7 @@ expect_rc 17 "$RC" "exits 17 while another dispatcher holds the task" "$OUT"
 # the other direction, that reading the holder did not lose the case it was
 # already getting right. Without it, a refusal that said "an attended carry"
 # unconditionally would pass 12e and be just as wrong.
-out_has 'another dispatcher holds task lock-task' "$OUT" \
+out_has 'a dispatcher holds task lock-task' "$OUT" \
   "  and the TASK refusal names a dispatcher, because a dispatcher holds it"
 
 # Case 12b/12c — the two halves the composite ${TMPDIR} key could not enforce.
@@ -494,7 +494,7 @@ case "$OUT" in
   *)           bad "the checkout refusal names the task already running there" "$OUT" ;;
 esac
 # The CHECKOUT half of the same control.
-out_has 'another dispatcher is already running in this checkout' "$OUT" \
+out_has 'a dispatcher is already running in this checkout' "$OUT" \
   "the checkout refusal names a dispatcher, because a dispatcher holds it"
 
 wait "$outer" 2>/dev/null
@@ -641,7 +641,7 @@ expect_rc 17 "$RC" "a dispatcher is refused while a CARRIER holds the checkout" 
 # wrong, which is why the code alone could not catch it.
 out_has 'an attended carry is already running in this checkout' "$OUT" \
   "  and the refusal names the ATTENDED CARRIER as the holder"
-out_lacks 'another dispatcher' "$OUT" \
+out_lacks 'a dispatcher' "$OUT" \
   "  and does not call the carrier a dispatcher"
 [ -s "$d.calls" ] && bad "  and the dispatcher launched no actor" \
                          "actors ran: $(tr '\n' ';' <"$d.calls")" \
@@ -750,7 +750,7 @@ expect_rc 17 "$RC" "a dispatcher is refused while a CARRIER holds the same task 
 # named a real directory and the wrong kind of process holding it.
 out_has 'an attended carry holds task xt-shared' "$OUT" \
   "  and the refusal names the ATTENDED CARRIER as the task holder"
-out_lacks 'another dispatcher' "$OUT" \
+out_lacks 'a dispatcher' "$OUT" \
   "  and does not call the carrier a dispatcher"
 [ -s "$d.calls" ] && bad "  and the dispatcher launched no actor" \
                          "actors ran: $(tr '\n' ';' <"$d.calls")" \
@@ -907,9 +907,9 @@ BEFORE="$(git -C "$d" rev-parse HEAD)"
 plant_lease "$(task_lock_for "$d" label-task)" label-task "$d"
 run_dispatch "$d" label-task --actor-cmd "$FLIP_TO_OPERATOR"
 expect_rc 17 "$RC" "a lease with no recorded program still refuses with 17" "$OUT"
-out_has 'another Work Loop run (program unrecorded) holds task label-task' "$OUT" \
+out_has 'a Work Loop run (program unrecorded) holds task label-task' "$OUT" \
   "  and the refusal says the program is unrecorded rather than guessing"
-out_lacks 'another dispatcher' "$OUT" \
+out_lacks 'a dispatcher' "$OUT" \
   "  and does not guess a dispatcher"
 [ -s "$d.calls" ] && bad "  and launched no actor" "actors ran: $(tr '\n' ';' <"$d.calls")" \
                   || ok "  and launched no actor"
@@ -924,7 +924,7 @@ plant_lease "$(checkout_lock_for "$d")" other-task "$d" some-future-runner
 rm -f "$d.calls"
 run_dispatch "$d" label-task --actor-cmd "$FLIP_TO_OPERATOR"
 expect_rc 17 "$RC" "a lease held by an UNKNOWN program still refuses with 17" "$OUT"
-out_has 'another Work Loop run (some-future-runner) is already running in this checkout' "$OUT" \
+out_has 'a Work Loop run (some-future-runner) is already running in this checkout' "$OUT" \
   "  and the refusal reports the unknown program name verbatim"
 [ -s "$d.calls" ] && bad "  and launched no actor" "actors ran: $(tr '\n' ';' <"$d.calls")" \
                   || ok "  and launched no actor"
@@ -2767,9 +2767,16 @@ else
   printf '%s' "$OUT" | grep -q "rm -rf" \
     && bad "never recommends removing the lock when it cannot inspect the pid" "$OUT" \
     || ok "never recommends removing the lock when it cannot inspect the pid"
-  printf '%s' "$OUT" | grep -qi "MAY BELONG TO A LIVE DISPATCHER" \
-    && ok "says the lock may belong to a live dispatcher" \
-    || bad "says the lock may belong to a live dispatcher" "$OUT"
+  # The caution this case exists for, now stated about the HOLDER rather than
+  # about a dispatcher: this lock is planted with no `program` file, so naming a
+  # dispatcher here would be the same guess correction-plan step 5 removed. The
+  # caution itself is unchanged and still asserted; 30h(4) covers the holder line.
+  printf '%s' "$OUT" | grep -qi "THE HOLDER MAY STILL BE LIVE" \
+    && ok "says the holder may still be live" \
+    || bad "says the holder may still be live" "$OUT"
+  printf '%s' "$OUT" | grep -qi "LIVE DISPATCHER" \
+    && bad "does not guess a dispatcher for a lease that records no program" "$OUT" \
+    || ok "does not guess a dispatcher for a lease that records no program"
   # UNKNOWN must show its evidence. The first cut of this fix printed an empty
   # reason line: pid_state() set a global, but the caller read it through $( ),
   # which is a subshell, so the assignment was discarded. A blank "why:" would
@@ -2888,6 +2895,184 @@ printf '%s' "$OUT" | grep -qi "not a usable process id" \
   && bad "a pid containing a zero (10) is not rejected" "$OUT" \
   || ok "a pid containing a zero (10) is not rejected"
 rm -rf "$LK"
+
+# ============================================================ case 30g/30h
+# THE PROPOSAL'S CASE 22, and the controls that keep it honest.
+#
+# NUMBERED 30g/30h ON PURPOSE. "Case 22" is already taken in this file by the
+# malformed-close case, and the number in the correction plan is the PROPOSAL's
+# acceptance-matrix number, not this suite's. Renumbering the local case would
+# break every reference to it; naming the proposal's case in the header is the
+# cheaper half of the same fix.
+#
+# WHAT WAS WRONG. `--status` described whoever held a lease as a dispatcher,
+# because a dispatcher is the program doing the looking. The lease has recorded
+# `program` since it became shared, and the acquisition refusals already read it
+# (holder_label, dispatch.sh) — status did not. Against a carrier-held lease it
+# therefore printed "IN FLIGHT — dispatcher pid N", which sends an operator
+# looking for a process that does not exist, and the checkout-lease line named a
+# task while naming no holder at all.
+#
+# ONE FORMATTER, both surfaces. The correction plan's step 5 fixes the drift at
+# its source: refusals and status render the holder through the same function,
+# so the two vocabularies cannot separate again. That is why the acquisition
+# assertions in cases 12, 12e and 12g moved to the plan's exact wording in the
+# same change — they are reading the same formatter these cases read.
+#
+# 30g uses a REAL carrier holding both leases, because what is under test is
+# whether status reads a lease another program actually took. 30h plants its
+# leases: it asks what the message SAYS about each recorded-program class, and
+# two of those classes (absent, unrecognised) cannot be produced by any program
+# that is working correctly.
+echo
+echo "Case 30g — proposal case 22: --status over a CARRIER-HELD lease names the attended holder"
+d="$(new_sandbox)"; state_file "$d" "st-carried" "claude"
+CCOUNT="$SANDBOX_ROOT/st22.count"; : >"$CCOUNT"
+CSTUB="$SANDBOX_ROOT/st22.stub"
+# A long hold: the stub commits to the state file when it finishes, and the
+# no-write assertions below must run inside the window where the carrier is
+# holding and not yet writing.
+make_carry_stub "$CSTUB" "$CCOUNT" "$d/logs/work-loop/st-carried.md" 14
+( bash "$CARRY_BIN" --checkout "$d" --task st-carried --claude-bin "$CSTUB" \
+    --timeout 60 "${CARRY_ALLOW[@]}" --log-dir "$SANDBOX_ROOT/st22-carry-runs" \
+    >/dev/null 2>&1 ) &
+carrier=$!
+sleep 3
+CK22="$(checkout_lock_for "$d")"; TK22="$(task_lock_for "$d" st-carried)"
+# Without this the case could pass against a carrier that never took a lease,
+# which would make every assertion below a statement about an empty directory.
+{ [ -d "$CK22" ] && [ -d "$TK22" ]; } \
+  && ok "30g setup — the carrier holds BOTH the task and the checkout lease" \
+  || bad "30g setup — the carrier holds BOTH the task and the checkout lease" \
+         "checkout=$([ -d "$CK22" ] && echo held || echo absent) task=$([ -d "$TK22" ] && echo held || echo absent)"
+REF22="$(lock_root_for "$d")/refusals"
+n_ref22="$(ls -1 "$REF22" 2>/dev/null | wc -l | tr -d ' ')"
+TREE_BEFORE="$(tree_manifest "$d")"
+STATUS_BEFORE="$(git -C "$d" status --porcelain)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task st-carried \
+        --log-dir "$d/st22-runs" --status 2>&1)"; RC=$?
+TREE_AFTER="$(tree_manifest "$d")"
+STATUS_AFTER="$(git -C "$d" status --porcelain)"
+expect_rc 0 "$RC" "--status over a carrier-held lease exits 0" "$OUT"
+out_has 'checkout-lock: HELD by an attended carry' "$OUT" \
+  "  and the CHECKOUT-lease line names the attended carrier"
+out_has 'IN FLIGHT — an attended carry' "$OUT" \
+  "  and the TASK-lease LIVE line names the attended carrier"
+out_lacks 'a dispatcher' "$OUT" \
+  "  and calls the carrier a dispatcher nowhere in the report"
+# The exact string the old code printed. "a dispatcher" alone would have passed
+# against it — it said "dispatcher pid N" — so the negative half needs the
+# wording that was actually wrong, or it asserts nothing about this defect.
+out_lacks 'dispatcher pid' "$OUT" \
+  "  and does not fall back to the old unconditional \"dispatcher pid\" wording"
+# READ-ONLY, on every surface it could have touched.
+[ ! -e "$d/st22-runs" ] \
+  && ok "  and created no run-log directory in the checkout" \
+  || bad "  and created no run-log directory in the checkout" "$(ls -a "$d/st22-runs" 2>&1 | tr '\n' ' ')"
+[ "$n_ref22" = "$(ls -1 "$REF22" 2>/dev/null | wc -l | tr -d ' ')" ] \
+  && ok "  and filed no refusal record" \
+  || bad "  and filed no refusal record" "refusal count moved from $n_ref22"
+if [ "$TREE_BEFORE" = "$TREE_AFTER" ]; then
+  ok "  and every byte of the checkout's working tree is unchanged"
+else
+  bad "  and every byte of the checkout's working tree is unchanged" \
+      "$(diff <(printf '%s\n' "$TREE_BEFORE") <(printf '%s\n' "$TREE_AFTER") | head -10 | tr '\n' ' ')"
+fi
+[ "$STATUS_BEFORE" = "$STATUS_AFTER" ] \
+  && ok "  and git status is unchanged" \
+  || bad "  and git status is unchanged" "before [$STATUS_BEFORE] after [$STATUS_AFTER]"
+# "Took no lease" is not the same as "created no directory": both lease
+# directories already existed. What must hold is that they are still the
+# CARRIER'S — a status run that had acquired anything would have rewritten them.
+{ [ "$(cat "$CK22/program" 2>/dev/null)" = carry ] && [ "$(cat "$TK22/program" 2>/dev/null)" = carry ]; } \
+  && ok "  and both leases still record the carrier as holder, so status took neither" \
+  || bad "  and both leases still record the carrier as holder, so status took neither" \
+         "checkout=$(cat "$CK22/program" 2>/dev/null) task=$(cat "$TK22/program" 2>/dev/null)"
+kill -0 "$carrier" 2>/dev/null \
+  && ok "  and the carrier is undisturbed by the status run" \
+  || bad "  and the carrier is undisturbed by the status run" "the carrier is gone"
+wait "$carrier" 2>/dev/null
+# The control. Without it every assertion above would pass just as well against
+# a carrier that took its leases and never ran anything.
+[ "$(carry_calls "$CCOUNT")" = "1" ] \
+  && ok "  control — the carrier that HELD both leases did launch its own actor" \
+  || bad "  control — the carrier that HELD both leases did launch its own actor" \
+         "launches: $(carry_calls "$CCOUNT")"
+
+echo
+echo "Case 30h — --status reports the RECORDED program: a dispatcher, an absent one, an unknown one"
+d="$(new_sandbox)"; state_file "$d" "prog-task" "claude"
+CKp="$(checkout_lock_for "$d")"; TKp="$(task_lock_for "$d" prog-task)"
+# plant_lease records the TEST'S OWN pid, which is alive, so these all reach the
+# LIVE branch. The pid states themselves are 30b/30d/30e/30f's subject; what is
+# under test here is only which program the LIVE line names.
+
+# (1) THE POSITIVE CONTROL, and it is the load-bearing one. A "fix" that printed
+# "an attended carry" unconditionally would satisfy 30g completely and be just
+# as wrong as the hard-coded dispatcher it replaced.
+plant_lease "$TKp" prog-task "$d" dispatch
+plant_lease "$CKp" prog-task "$d" dispatch
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task prog-task --status 2>&1)"; RC=$?
+expect_rc 0 "$RC" "a dispatcher-held lease: --status exits 0" "$OUT"
+out_has 'checkout-lock: HELD by a dispatcher' "$OUT" \
+  "  and the checkout-lease line still names a dispatcher when a dispatcher holds it"
+out_has 'IN FLIGHT — a dispatcher' "$OUT" \
+  "  and the LIVE line still names a dispatcher when a dispatcher holds it"
+out_lacks 'an attended carry' "$OUT" \
+  "  control — it does not call a dispatcher an attended carry"
+rm -rf "$CKp" "$TKp"
+
+# (2) NO `program` FILE — an older lease, or one caught part-written. Held, and
+# reported as unrecorded rather than guessed in either direction.
+plant_lease "$TKp" prog-task "$d"
+plant_lease "$CKp" prog-task "$d"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task prog-task --status 2>&1)"; RC=$?
+expect_rc 0 "$RC" "a lease with no recorded program: --status exits 0" "$OUT"
+out_has 'checkout-lock: HELD by a Work Loop run (program unrecorded)' "$OUT" \
+  "  and the checkout-lease line says the program is unrecorded"
+out_has 'IN FLIGHT — a Work Loop run (program unrecorded)' "$OUT" \
+  "  and the LIVE line says the program is unrecorded"
+out_lacks 'a dispatcher' "$OUT" "  and does not guess a dispatcher"
+out_lacks 'an attended carry' "$OUT" "  and does not guess a carrier either"
+rm -rf "$CKp" "$TKp"
+
+# (3) A PROGRAM THIS DISPATCHER DOES NOT KNOW is reported verbatim: a name the
+# operator can search for is worth more than "some other run".
+plant_lease "$TKp" prog-task "$d" some-future-runner
+plant_lease "$CKp" prog-task "$d" some-future-runner
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task prog-task --status 2>&1)"; RC=$?
+expect_rc 0 "$RC" "a lease held by an UNKNOWN program: --status exits 0" "$OUT"
+out_has 'checkout-lock: HELD by a Work Loop run (some-future-runner)' "$OUT" \
+  "  and the checkout-lease line reports the unknown program verbatim"
+out_has 'IN FLIGHT — a Work Loop run (some-future-runner)' "$OUT" \
+  "  and the LIVE line reports the unknown program verbatim"
+rm -rf "$CKp" "$TKp"
+
+# (4) THE UNKNOWN PID PATH, the other half of the plan's "LIVE/UNKNOWN" pair.
+# The verdict there is that nothing could be inspected — which is exactly when
+# an operator most needs to be told who the lease SAYS holds it. Same real
+# permission denial 30d uses: pid 1 is root-owned, so `kill -0 1` returns EPERM
+# for any non-root caller.
+if [ "$(id -u)" -eq 0 ]; then
+  bad "case 30h(4) can run (needs a non-root uid so kill -0 1 is refused)" \
+      "running as root: pid 1 is inspectable, so the UNKNOWN state cannot be forced"
+else
+  plant_lease "$TKp" prog-task "$d" carry
+  printf '1\n' >"$TKp/pid"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task prog-task --status 2>&1)"; RC=$?
+  expect_rc 0 "$RC" "an UNINSPECTABLE carrier-held lease: --status exits 0" "$OUT"
+  printf '%s' "$OUT" | grep -q "CANNOT INSPECT" \
+    && ok "  and the verdict is still UNKNOWN — CANNOT INSPECT" \
+    || bad "  and the verdict is still UNKNOWN — CANNOT INSPECT" "$OUT"
+  out_has 'the lease records its holder as an attended carry' "$OUT" \
+    "  and the UNKNOWN branch names the recorded holder rather than assuming a dispatcher"
+  out_lacks 'LIVE DISPATCHER' "$OUT" \
+    "  and no longer calls an uninspectable carrier a live dispatcher"
+  printf '%s' "$OUT" | grep -q "rm -rf" \
+    && bad "  and still never recommends removing a lock it could not inspect" "$OUT" \
+    || ok "  and still never recommends removing a lock it could not inspect"
+  rm -rf "$TKp"
+fi
 
 # ================================================================= case 31
 # --claude-deny had NO dispatcher-level coverage when it was added (caught in

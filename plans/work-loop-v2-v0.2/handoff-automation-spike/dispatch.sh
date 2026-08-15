@@ -727,15 +727,21 @@ CHECKOUT_LOCK_DIR="$WL_LEASE_CHECKOUT_DIR"
 # lines and its own remedy sentence, and the library still prints nothing. The
 # holder label is the only thing held in common.
 #
-# `dispatch` renders as "another dispatcher", not the carrier's "an unattended
-# dispatched run": from inside the dispatcher that IS another dispatcher, and it
-# is the wording the existing suite and exit-code table already carry.
+# THE LABEL DROPPED "another". It read "another dispatcher" and "another Work
+# Loop run", which is true from inside a refused dispatcher and false everywhere
+# else: --status now renders through this same function, and a status report is
+# not a second run competing with the holder — it is a reader asking who is
+# there. "another" would have made every status line quietly claim a contention
+# that is not happening. The correction plan's step 5 fixes the vocabulary at
+# this one point for exactly that reason, and the four renderings below are its
+# wording verbatim. The refusal sites lose nothing: "STOP [17] a dispatcher
+# holds task X" already says a competing run was refused, in the STOP code.
 holder_label() { # -> a phrase naming who holds the lease
   case "${WL_LEASE_HOLDER_PROGRAM:-}" in
     carry)    printf 'an attended carry' ;;
-    dispatch) printf 'another dispatcher' ;;
-    "")       printf 'another Work Loop run (program unrecorded)' ;;
-    *)        printf 'another Work Loop run (%s)' "$WL_LEASE_HOLDER_PROGRAM" ;;
+    dispatch) printf 'a dispatcher' ;;
+    "")       printf 'a Work Loop run (program unrecorded)' ;;
+    *)        printf 'a Work Loop run (%s)' "$WL_LEASE_HOLDER_PROGRAM" ;;
   esac
 }
 
@@ -1431,9 +1437,20 @@ if [ "$STATUS_MODE" -eq 1 ]; then
   else
     printf 'owner: this checkout declares no writer (no logs/work-loop/.owner)\n'
   fi
+  # WHO holds it, not only WHICH TASK. This line named a task and left the
+  # holder to be assumed, and the assumption an operator makes from a dispatcher's
+  # own output is "a dispatcher" — wrong whenever an attended carry holds the
+  # lease, which is the case the shared lease exists to make possible.
+  #
+  # It renders through holder_label(), the same formatter the acquisition
+  # refusals use, so the two surfaces cannot drift apart again. That function
+  # reads WL_LEASE_HOLDER_*, so the lease's own metadata is loaded first —
+  # wl_lease__read_holder only `cat`s the four files, which keeps this branch as
+  # read-only as the rest of --status.
   if [ -d "$CHECKOUT_LOCK_DIR" ]; then
-    printf 'checkout-lock: HELD by task %s (%s)\n' \
-      "$(cat "$CHECKOUT_LOCK_DIR/task" 2>/dev/null || printf 'unrecorded')" "$CHECKOUT_LOCK_DIR"
+    wl_lease__read_holder "$CHECKOUT_LOCK_DIR"
+    printf 'checkout-lock: HELD by %s running task %s (%s)\n' \
+      "$(holder_label)" "${WL_LEASE_HOLDER_TASK:-an unrecorded task}" "$CHECKOUT_LOCK_DIR"
   else
     printf 'checkout-lock: free (%s)\n' "$CHECKOUT_LOCK_DIR"
   fi
@@ -1476,6 +1493,12 @@ EOF
     fi
   elif [ -d "$LOCK_DIR" ]; then
     st_pid="$(cat "$LOCK_DIR/pid" 2>/dev/null)"
+    # The task lease's own holder metadata, for the two branches below that say
+    # something about WHO is there. Read after the checkout branch above, which
+    # loaded the OTHER lease into the same variables — each site re-reads the
+    # lease it is about rather than inheriting the previous one.
+    wl_lease__read_holder "$LOCK_DIR"
+    st_who="$(holder_label)"
     # Three states, not two. See pid_state() above for why "kill -0 failed" is
     # not the same question as "the process is gone".
     st_probe="$(pid_state "$st_pid")"
@@ -1483,9 +1506,15 @@ EOF
     st_pid_why="${st_probe#*|}"       # the evidence behind that verdict
     case "$st_pid_state" in
       LIVE)
-        printf 'run: IN FLIGHT — dispatcher pid %s holds %s\n' "$st_pid" "$LOCK_DIR"
+        printf 'run: IN FLIGHT — %s at pid %s holds %s\n' "$st_who" "$st_pid" "$LOCK_DIR"
         printf '     do not edit the state file by hand until it exits.\n'
-        printf '     to stop it: kill -TERM %s   (it terminates the actor and exits 28)\n' "$st_pid"
+        printf '     to stop it: kill -TERM %s\n' "$st_pid"
+        # The exit code belongs to THIS program, so it is claimed only when this
+        # program is the holder. Printed unconditionally it told the operator
+        # what to expect from a carrier's SIGTERM handling, which this script
+        # does not define and cannot promise.
+        [ "${WL_LEASE_HOLDER_PROGRAM:-}" = dispatch ] &&
+          printf '     (a dispatcher terminates its actor and exits 28.)\n'
         ;;
       ABSENT)
         printf 'run: STALE LOCK — %s exists but pid %s is not running.\n' "$LOCK_DIR" "$st_pid"
@@ -1496,7 +1525,13 @@ EOF
         # not know — and the only honest instruction is to go and look properly.
         printf 'run: UNKNOWN — CANNOT INSPECT pid %s holding %s\n' "${st_pid:-<unreadable>}" "$LOCK_DIR"
         printf '     why: %s\n' "$st_pid_why"
-        printf '     THIS LOCK MAY BELONG TO A LIVE DISPATCHER. Treat the run as possibly in flight:\n'
+        # WHAT THE LEASE SAYS, stated separately from what this branch could not
+        # establish. The pid is uninspectable; the recorded holder is not, and it
+        # is the one thing that tells the operator which process to go and look
+        # for. The old line asserted a dispatcher here — the least safe place to
+        # guess, because the whole verdict is that nothing could be confirmed.
+        printf '     the lease records its holder as %s.\n' "$st_who"
+        printf '     THE HOLDER MAY STILL BE LIVE. Treat the run as possibly in flight:\n'
         printf '     do not remove the lock, and do not edit the state file by hand on this answer.\n'
         printf '     The usual cause is that this caller cannot see the PID (sandbox policy or a\n'
         printf '     different owner), not that the run has ended. Re-run --status from somewhere\n'
