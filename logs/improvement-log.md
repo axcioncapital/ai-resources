@@ -3818,3 +3818,36 @@ non-symlink copy — verify whether it carries the same literal.
 
 **Target files:** `.claude/commands/wrap-session.md` (~L190); workspace-root
 `/.claude/commands/wrap-session.md` if it mirrors the defect.
+
+### 2026-08-15 — `/work-loop-v2`'s "a closing invocation changes no other file" rule conflicts with Codex closing verdicts that require updating a separate durable record
+
+- **Severity:** medium — no incorrect commit resulted this time, because the operator's own task objective made updating the second file clearly right; a stricter reading in a future task could make Claude either violate the letter of the command or under-serve a close verdict that names a second file.
+- **Category:** shared command (`.agents/skills/work-loop-v2/SKILL.md` § Closing the task, or the executable core it links to)
+- **Source:** ai-resources-concurrency-fix-2, 2026-08-15, hit while closing task `cross-transport-concurrency-correction`.
+
+**The finding.** `/work-loop-v2`'s "Closing the task" section states, both in its numbered steps and again
+at the end of step 3: "A closing invocation changes no other file." In this session, Codex's close
+verdict for `cross-transport-concurrency-correction` explicitly directed updating a second file —
+the durable Phase 1 record `logs/work-loop/work-loop-v2-cross-transport-concurrency-phase-1.md` — before
+reducing the task file to its closing record, because the task's own `## Objective and scope` names
+"maintain an accurate closing record" as part of the objective. Following the verdict (which is Codex's
+to make, per core § 3) meant committing a second file in the closing hop, which the command's own text
+says not to do.
+
+**Why it matters.** The rule reads as a hard invariant Claude checks, not something a close verdict can
+override — there is no stated exception for "unless the verdict names another file" or "unless the
+task's own objective requires it." A future Claude reading the rule literally, with a less clearly
+task-scoped second file, could either refuse a legitimate verdict instruction or silently violate the
+rule without flagging the conflict. This session did the latter's opposite — flagged the tension to the
+operator rather than picking silently — but the command should not depend on that judgment call being
+made correctly every time.
+
+**Proposal.** Either (a) narrow the rule to something like "a closing invocation changes no file the
+verdict does not name," or (b) keep the rule strict and require Codex's close verdict to fold any
+durable-record update into the task file's own closing record content rather than naming a second file,
+so the two documents' relationship is unambiguous. Either fix should be made in the executable core
+(`plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` § 3 "Closing — the verdict and the record
+are two moves"), not just in the Claude-side command text, since the core is authoritative over both
+sides.
+
+**Target files:** `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` § 3; `.agents/skills/work-loop-v2/SKILL.md` § Closing the task.
