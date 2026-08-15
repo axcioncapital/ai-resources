@@ -1,21 +1,46 @@
 # Work Loop v2 Autonomy, Authority, and Capability — Implementation Plan v0.1
 
-**Status:** **Re-frozen for implementation**, 2026-08-14, on the operator's explicit content-bound
-approval of the corrected plan content at commit `74c33a28d4cd18be376ab40127af0af303fd1d59`, blob
-`964068c627a92adf3aaadfb0d9c8e56ba0383e6e`. This amendment was a substantive change to T2's contract, so
-it could not be an edit under the prior re-freeze: the plan returned to draft and was then re-frozen in
-its own right at the identity above. The matching readiness record is § Plan-readiness statement.
+**Status:** **Draft**, 2026-08-15. This revision amends T2's contract again, so it is a substantive change
+that cannot be an edit under the prior re-freeze: the plan has returned to draft. It becomes implementable
+again only on two gates, in order — one fresh isolated bounded review of **this** amendment, and the
+operator's explicit content-bound reapproval of the reviewed commit and blob. Neither has run.
+**No core edit is authorized by this revision.** The matching readiness record is § Plan-readiness
+statement; there is no third status record.
 
-**Gates completed for this re-freeze, in order.** One fresh isolated bounded review of the amended plan
-content at commit `9a0053a089a966754f9728e6c8b913bc0731603b`, blob
-`25889efab1986d582f36407d1696f4b70a2258ac` — verdict **CORRECT**, with one material evidence-wording
-finding; one bounded correction round resolving that single frozen finding, landing at the approved
-identity above; the Codex closure check on that frozen finding, verdict **PASS**, a bounded correction
-and not a redesign, so `docs/qc-independence.md` requires no second broad review; and the operator's
-explicit content-bound approval of that corrected commit and blob. This status record is provenance only:
-it neither implemented nor reviewed T2.
+**Implementation state under this draft.** **T1 and T1a remain implemented, and they are still the only
+implemented tracers.** **T2 remains unimplemented**, and no core edit exists for it. Returning the plan to
+draft does not undo T1 or T1a and does not open T2.
 
-**Cause of this amendment — a proven contradiction in T2's frozen contract.** Unit 15's premise
+**Prior re-freeze identity — superseded by this amendment, preserved as history.** The plan was
+**re-frozen for implementation**, 2026-08-14, on the operator's explicit content-bound approval of the
+corrected plan content at commit `74c33a28d4cd18be376ab40127af0af303fd1d59`, blob
+`964068c627a92adf3aaadfb0d9c8e56ba0383e6e`. The gates completed for that re-freeze, in order, were: one
+fresh isolated bounded review of the amended plan content at commit
+`9a0053a089a966754f9728e6c8b913bc0731603b`, blob `25889efab1986d582f36407d1696f4b70a2258ac` — verdict
+**CORRECT**, with one material evidence-wording finding; one bounded correction round resolving that
+single frozen finding, landing at the approved identity above; the Codex closure check on that frozen
+finding, verdict **PASS**, a bounded correction and not a redesign, so `docs/qc-independence.md` required
+no second broad review; and the operator's explicit content-bound approval of that corrected commit and
+blob. That re-freeze is superseded by the present amendment and is recorded here as historical
+provenance, not as a live authority this revision can be read against.
+
+**Cause of this amendment — a seventh categorical authority-transfer surface, proven and unreconciled.**
+T2's premise verification for the amended contract (Unit 18) drafted the candidate core edit, and one
+fresh isolated risk-aware review of that candidate returned verdict **CORRECT** with three material
+findings. The first is the ground of this amendment: core § 7 carries a third kind of categorical
+operator-transfer clause the enumeration never covered — `Proceeding would need a settled decision to be
+reopened.` (core line 470) — which is neither a consequence/hard-to-reverse gate nor the § 6 rule 4 scope
+gate. Left standing, it routes **every** reopening of **any** settled decision to the operator, including
+the settled implementation and technical decisions proposal §3.1 places inside the delegated envelope. A
+core carrying the new § 8 rule plus a reconciled §§ 6–7 while retaining that sentence would still state
+two contradictory current rules about when the operator must be involved — the same failure § 3.2 exists
+to prevent, on a surface the frozen contract did not enumerate. The review's other two findings are
+routing corrections carried at items below. The operator approved this bounded amendment direction on
+2026-08-15, recorded at commit `25d93aff817caaa80081bc2db3b99f3e73b1ff99`; that approval authorized
+drafting and reviewing this amendment only, and is not approval of amended content.
+
+**Cause of the prior amendment — a proven contradiction in T2's frozen contract, preserved as history.**
+Unit 15's premise
 verification established, and the fresh isolated risk-aware review confirmed with verdict **ESCALATE**,
 that T2 as frozen would knowingly produce a self-contradictory canonical core. The predicted core
 reconciled the five categorical consequence/hard-to-reverse gates while leaving core § 6 rule 4's
@@ -25,17 +50,17 @@ outside the frozen contract's five enumerated consequence gates. The resulting a
 still route **every** scope change to the operator, against proposal § 6's operator-reserved boundary,
 which reserves changing the intended outcome or priority, **material** scope expansion, and exclusion
 removal. Leaving that undone is the same failure § 3.2 already exists to prevent, on a surface the frozen
-contract did not enumerate. The operator approved this bounded amendment direction on 2026-08-14 — that
-approval authorized drafting and reviewing the amendment only — and then gave explicit content-bound
-approval of the reviewed and corrected amended content at the commit and blob recorded in the Status
-block above.
+contract did not enumerate. The operator approved that bounded amendment direction on 2026-08-14 — that
+approval authorized drafting and reviewing that amendment only — and then gave explicit content-bound
+approval of the reviewed and corrected amended content at the commit and blob recorded under *Prior
+re-freeze identity* above.
 
-**Prior re-freeze identity — superseded by this amendment, preserved as history.** The plan was
+**Earlier re-freeze identity (`ccf134b8`) — superseded, preserved as history.** The plan was
 **re-frozen for implementation** on 2026-08-14 on the operator's explicit content-bound approval of the
 corrected plan content at commit `ccf134b860b057de56c8da5452ce43ab36e4bf66`, blob
 `3fd5322fc3d499de01661dfb5d645def482b6168`, with the matching status record written at commit
 `e45a581f89291ff45ec263d35d9b38e65117b3e2` (plan blob `7b254fcbaeda669ecb8a300e72d9bb5203619505`), which
-is this amendment's pre-edit identity. That re-freeze is superseded by this amendment and is recorded here
+is the prior amendment's pre-edit identity. That re-freeze is superseded and is recorded here
 as historical provenance, not as a live authority this revision can be read against.
 
 **Implementation state — accurate as of this amendment.** No target implementation surface — skill,
@@ -43,9 +68,11 @@ command, autonomy rules, session-plan, carrier, dispatcher, or tests — has bee
 **T1 and T1a are both implemented, and they are the only implemented tracers:** T1 at commit
 `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved; § Fixed Point below, unchanged), and T1a
 at commit `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, resulting core blob
-`82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 has not begun**, and no core edit exists for it. Under
-this re-freeze T2 may be opened only through its own bounded implementation unit, with the
-high-consequence risk-aware Codex review its review row requires landing before implementation.
+`82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 remains unimplemented**, and no core edit exists for it.
+Under this draft T2 may not be opened at all: it is blocked on this amendment's own fresh isolated review
+and the operator's content-bound reapproval, and only after those land may it be opened through its own
+bounded implementation unit, with the high-consequence risk-aware Codex review its review row requires
+landing before implementation.
 
 **Lineage of the prior re-freeze — research, review, correction.** The prior freeze was reopened on operator
 decision (2026-08-14) after primary-source research
@@ -56,8 +83,8 @@ of citation-only treatment for the core's and the Codex skill's existing categor
 consequence/hard-to-reverse operator-gate language. The plan was amended on that evidence, then given one
 fresh, isolated bounded implementation-plan review (verdict CORRECT), then one bounded correction
 resolving all four of that review's findings, with the closure check passing. That approval was bound to
-the content that correction produced, and is recorded under *Prior re-freeze identity* above; this
-amendment supersedes it.
+the content that correction produced, and is recorded under *Earlier re-freeze identity (`ccf134b8`)*
+above; the prior amendment superseded it, and this amendment supersedes that in turn.
 
 **Prior freeze identity — superseded, preserved as history.** This plan was previously frozen at
 commit `fe2c62fddf8124caf44836b8237e44e06041db6f`, blob `d1a6162b8e92c9689f261b85607dfcdb89105c6d`,
@@ -73,8 +100,9 @@ plan content — every section from `## 1. Fixed Point` onward — at commit
 status record was the only part of the file the superseded freeze changed; no substantive content was
 altered by it. The reopening amendment was a substantive change to that content, so it could not be an
 edit under the old freeze; it returned to draft and was then re-frozen in its own right, at the commit
-and blob recorded under *Prior re-freeze identity* above. The present amendment has returned the plan to
-draft again, on the same principle.
+and blob recorded under *Earlier re-freeze identity (`ccf134b8`)* above. Each later amendment has returned
+the plan to draft again, on the same principle — including the present one, which is unreviewed and
+unapproved.
 
 **Accepted limitation carried forward from the superseded freeze — unchanged by this amendment.** T8 may
 count S4 and S8 as `blocked` verdicts while the MVP pre-authorized capability set remains empty (§ 3.4),
@@ -89,13 +117,16 @@ table correctly classifies item 6 as a retained Fixed Point fact with no tracer.
 retained as it stands and is not a re-freeze blocker: it was noticed outside the review findings this
 amendment addresses, and it alters neither the tracer sequence nor implementation authority.
 
-**Correction history.** Four correction rounds have now run, and each numbered its own findings from 1.
-They are therefore labelled by round throughout this document — **Unit 4 Finding N** for the planning
-unit's own correction, **Unit 5 Finding N** for the fresh implementation-plan review's frozen findings,
-**primary-source finding N** for this reopening's evidence-driven amendment (numbered per the report
-section that raised it — e.g. "primary-source finding 1" cites report § 1), and **Unit 11 finding N** for
-the fresh isolated review that preceded this re-freeze. An unqualified "Finding N" appears nowhere; where
-rounds touched the same text, every applicable label appears.
+**Correction history.** Several review and correction rounds have now run, and each numbered its own
+findings from 1. They are therefore labelled by round throughout this document — **Unit 4 Finding N** for
+the planning unit's own correction, **Unit 5 Finding N** for the fresh implementation-plan review's frozen
+findings, **primary-source finding N** for the reopening's evidence-driven amendment (numbered per the
+report section that raised it — e.g. "primary-source finding 1" cites report § 1), **Unit 11 finding N**
+for the fresh isolated review that preceded the `ccf134b8` re-freeze, **Unit 15 review** for T2's premise
+verification and its isolated risk-aware verdict **ESCALATE**, and **Unit 18 candidate-review finding N**
+for the three frozen findings of the fresh isolated risk-aware review (verdict **CORRECT**) of T2's
+unapplied candidate core edit, which are the ground of the present amendment. An unqualified "Finding N"
+appears nowhere; where rounds touched the same text, every applicable label appears.
 
 **Governs:** [`work-loop-v2-autonomy-authority-capability-proposal-v0.1.md`](work-loop-v2-autonomy-authority-capability-proposal-v0.1.md),
 content-bound approved at commit `d8a89e0f7d4444bc1d3cabb963a6f49cdfc1ce67` (blob
@@ -194,8 +225,9 @@ none), run and reported in § Safe deterministic checks run below.
 |---|---|---|---|
 | Executable core, authority line | `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md:9-10` | **Modify — implemented and operator-approved at T1** | Confirmed present verbatim before T1: "Built from the Proposal (`work-loop-v2-mvp-proposal-v0.4.md`), which stays authoritative. Where this file and the Proposal disagree, the Proposal wins." Proposal §14 item 1 targeted exactly this line; T1's revision is implemented and operator-approved (Fixed Point, T1). |
 | Executable core, governing rule | same file, **§ 8 (new, appended)** | **Add — corrected destination (primary-source finding 1, report § 1–2)** | The core already has seven real numbered sections, §§1–7 (`## 1. Who does what` through `## 7. When to stop and ask`); it lacks only the governing-autonomy clause, not a numbered section generally. Placing the clause at "§1 (new)" — the frozen plan's original instruction — would collide with the existing §1 and force renumbering §§1–7 to §§2–8, silently invalidating at least 25 internal core self-references and roughly 198 explicit `core §N` references across the 15-file live/operational set (report § 2), with no proposal requirement supporting it. Appending as new `## 8.` requires zero renumbering and satisfies both the proposal's "add … to the now-canonical core" (§14 item 2) and the plan's own "new numbered section" contract (§3.2). |
-| Executable core, categorical consequence/hard-to-reverse gate | same file, lines 26, 59–60, 469, 475, 477 | **Modify — semantic, not citation-only (primary-source finding 5, report § 3 item 5)** | The core currently states unqualified categorical rules — "any decision that is hard to reverse" is operator-owned (line 26); "genuinely consequential work stops and goes to the operator instead" (lines 59–60); "the change would be hard to reverse" and "anything else that is genuinely consequential" as unconditional Stop-for-operator triggers (lines 469, 475); "stop … is the answer for consequential situations" (line 477). The approved proposal states the opposite governing principle at §4 and §15 item 1: "Consequence is not an automatic operator gate. It scales evidence and containment," transferring the decision only for a missing operator-owned decision, an unaccepted risk, a material solution-envelope change, or capability-envelope expansion (§4, §6 "Operator-reserved decisions" and "Mandatory stop or handback"). Pasting the §1 clause into the core without reconciling these clauses would leave the canonical authority document making two contradictory current-status claims about when the operator must be involved. **These five are the complete set of *consequence* gates — confirmed by whole-file inspection at Unit 15 — and they are not the complete set of T2's reconciliation surfaces: the § 6 rule 4 scope gate is a sixth, carried in its own row below.** See revised T2 (§ 3.2). |
-| Executable core, categorical **scope-change** gate (§ 6 rule 4) | same file, lines 449–450 | **Modify — sixth reconciliation surface, added by this amendment (Unit 15 review, verdict ESCALATE)** | Core § 6 rule 4 reads, unqualified: "**Scope and success criteria do not change quietly.** A change to either is stated out loud, and a change to scope goes to the operator." The first half is a **disclosure** rule the proposal does not touch and this plan preserves. The second half is a categorical **authority-transfer** rule: *any* scope change goes to the operator. Proposal § 6 reserves a narrower set — changing the intended outcome or priority, **material** scope expansion, and exclusion removal — so a core that carries the new § 8 rule plus a reconciled § 7 while retaining this sentence still states two contradictory current rules about when the operator must be involved. This surface was **not** in the frozen contract's five enumerated gates: it is a scope gate, not a consequence/hard-to-reverse gate, and it was located by whole-file inspection during T2's premise verification (bounded by `grep -n -i 'operator'` over the whole core, 21 hits, all read). It is carried here as a **separate sixth surface**, never as a sixth consequence gate — the five keep their own independently checked strings. See revised T2 (§ 3.2). |
+| Executable core, categorical consequence/hard-to-reverse gate | same file, lines 26, 59–60, 469, 475, 477 | **Modify — semantic, not citation-only (primary-source finding 5, report § 3 item 5)** | The core currently states unqualified categorical rules — "any decision that is hard to reverse" is operator-owned (line 26); "genuinely consequential work stops and goes to the operator instead" (lines 59–60); "the change would be hard to reverse" and "anything else that is genuinely consequential" as unconditional Stop-for-operator triggers (lines 469, 475); "stop … is the answer for consequential situations" (line 477). The approved proposal states the opposite governing principle at §4 and §15 item 1: "Consequence is not an automatic operator gate. It scales evidence and containment," transferring the decision only for a missing operator-owned decision, an unaccepted risk, a material solution-envelope change, or capability-envelope expansion (§4, §6 "Operator-reserved decisions" and "Mandatory stop or handback"). Pasting the §1 clause into the core without reconciling these clauses would leave the canonical authority document making two contradictory current-status claims about when the operator must be involved. **These five are the complete set of *consequence* gates — confirmed by whole-file inspection at Unit 15 — and they are not the complete set of T2's reconciliation surfaces: the § 6 rule 4 scope gate is a sixth and the § 7 settled-decision gate is a seventh, each carried in its own row below.** See revised T2 (§ 3.2). |
+| Executable core, categorical **scope-change** gate (§ 6 rule 4) | same file, lines 449–450 | **Modify — sixth reconciliation surface, added by the prior amendment (Unit 15 review, verdict ESCALATE)** | Core § 6 rule 4 reads, unqualified: "**Scope and success criteria do not change quietly.** A change to either is stated out loud, and a change to scope goes to the operator." The first half is a **disclosure** rule the proposal does not touch and this plan preserves. The second half is a categorical **authority-transfer** rule: *any* scope change goes to the operator. Proposal § 6 reserves a narrower set — changing the intended outcome or priority, **material** scope expansion, and exclusion removal — so a core that carries the new § 8 rule plus a reconciled § 7 while retaining this sentence still states two contradictory current rules about when the operator must be involved. This surface was **not** in the frozen contract's five enumerated gates: it is a scope gate, not a consequence/hard-to-reverse gate, and it was located by whole-file inspection during T2's premise verification (bounded by `grep -n -i 'operator'` over the whole core, 21 hits, all read). It is carried here as a **separate sixth surface**, never as a sixth consequence gate — the five keep their own independently checked strings. See revised T2 (§ 3.2). |
+| Executable core, categorical **settled-decision** gate (§ 7) | same file, line 470 | **Modify — seventh reconciliation surface, added by this amendment (Unit 18 candidate-review finding 1, verdict CORRECT)** | Core § 7's *Stop for the operator* list carries, unqualified: "Proceeding would need a settled decision to be reopened." This is a third kind of categorical authority-transfer rule — neither a consequence/hard-to-reverse gate nor a scope gate — and it was therefore outside both the five enumerated consequence gates and the § 6 rule 4 scope surface. Read literally, it routes **any** reopening of **any** settled decision to the operator, including the *settled implementation decisions* proposal §3.1's authority hierarchy places inside the delegated envelope (proposal line 60) and the *settled constraints* at line 70. Proposal § 6 reserves a narrower class: changing the intended outcome or priority, material scope expansion, exclusion removal, operating-model/architecture/cost/risk/governance change, undelegated material residual risk, capability-envelope expansion, the named production/communication/credential/destructive-shared-state actions, resolving genuinely tied operator intentions, and a material change to the authority policy itself. A core that appended § 8 and reconciled the six earlier surfaces while retaining this sentence would still state two contradictory current rules about when the operator must be involved. It is carried here as a **separate seventh surface**, never folded into the five consequence gates or the one scope rule — each keeps its own independently checked string. See revised T2 (§ 3.2). |
 | Codex skill authority hierarchy | `.agents/skills/work-loop-v2/SKILL.md:429` | **Keep, reconcile wording only** | The skill already states: "current operator decision → canonical operator-approved project plan → applicable approved workflow or SOP → authoritative current state → verified repository reality → settled implementation decision → operator source material or exploratory context → Codex proposal or preference" — near-identical to proposal §3.1's eight-level hierarchy. No semantic change needed; only a pointer to the now-canonical §8 rule, if the plan reviewer judges one is needed. |
 | Codex skill categorical hard-to-reverse gate | `.agents/skills/work-loop-v2/SKILL.md:508` (within "What you never do") | **Modify — semantic, not citation-only (primary-source finding 6, report § 3 item 6)** | The live skill states, categorically: "Decide anything hard to reverse — that is the operator's, via core § 7." This is the same unqualified transfer-on-consequence rule the core carries, restated for Codex, and it conflicts with proposal §4/§15 item 1 on the same ground. The frozen plan's T3 treated this file as citation-only; that premise is false for this line and must be corrected as its own semantic reconciliation, gated on T2's revised core language (§ 3.3, new tracer T3a). Skill lines 465–475's four-condition re-check trigger ("a consequential or hard-to-reverse claim") is a different, narrower, proportional re-check condition on Codex's own review-reproduction discipline, not a categorical operator-authority transfer, and needs no semantic change (report § 3 item 6). |
 | Claude command | `.claude/commands/work-loop-v2.md` | **Keep, reconcile wording only** | One hit at line 126, framing-only ("never performs Codex's preparation, authority or selection judgments itself"); already consistent with the dual-key model. No contradiction found — confirmed still true; this file carries no categorical consequence/hard-to-reverse language for the same reason the skill's line 429 hierarchy does not, and is not part of the semantic-conflict inventory. |
@@ -298,10 +330,33 @@ authorized to touch (this artifact, the state file); no test suite left residue 
    during T2's premise verification confirmed the five are the complete set of *consequence* gates — no
    sixth exists — but found a distinct categorical **scope**-change transfer at § 6 rule 4 (core lines
    449–450) that the enumeration never covered, because it is a different kind of gate. The corrected
-   assumption is therefore narrower and explicit: **T2's core surface is five consequence gates plus one
-   scope-rule surface, six in total**, and any claim in this plan that five surfaces complete T2's
-   reconciliation is stale. The two counts are never merged: the five keep their five independent string
-   checks, and the scope rule is checked on its own terms.
+   assumption was therefore narrower and explicit: T2's core surface is five consequence gates plus one
+   scope-rule surface. That correction was itself incomplete — see constraint 6a. The counts are never
+   merged: the five keep their five independent string checks, and the scope rule is checked on its own
+   terms.
+6a. **Risky assumption — six surfaces were assumed to complete T2; they did not (Unit 18
+   candidate-review finding 1, verdict CORRECT).** Drafting T2's candidate core edit and reviewing it in
+   isolation found a **third kind** of categorical authority-transfer clause at core § 7 line 470 —
+   "Proceeding would need a settled decision to be reopened." — which is neither a consequence gate nor a
+   scope gate, and which the six-surface enumeration therefore never covered. The corrected assumption is:
+   **T2's core surface is five consequence gates, plus one scope rule, plus one settled-decision gate —
+   seven surfaces in total**, and any claim in this plan that five or six surfaces complete T2's
+   reconciliation is stale. The three counts are never merged. The general lesson this round makes
+   explicit, and which the next enumeration must carry: the core's categorical transfers are grouped by
+   *kind of trigger*, so an enumeration built by searching one trigger's vocabulary cannot prove itself
+   complete. Completeness for T2 is established by whole-file inspection of every operator-transfer clause
+   in the core, not by extending the previous string list.
+7. **Risky assumption — two routing questions were left implicit and are now stated (Unit 18
+   candidate-review findings 2 and 3, verdict CORRECT).** The frozen contract named capability and
+   control-system classes without saying **who** each one routes to, which left an implementing unit free
+   to route a technical failure to the operator or a policy question to Codex. Both are now fixed at
+   § 3.2 and T2: a **missing capability grant or capability-envelope expansion goes to the operator**,
+   while a **capability already authorized but technically unenforceable is a mandatory technical /
+   infrastructure handback to Codex and is not operator-waivable**; and an action that would **bypass,
+   weaken, or self-expand the control system is a mandatory Codex handback**, with the operator involved
+   only where the proposed remedy would require the separately reserved material change to the authority
+   policy itself (proposal § 6, *Operator-reserved decisions*, final bullet). These are routing
+   statements about classes the approved proposal already names; they add no class and remove none.
 
 ---
 
@@ -387,23 +442,28 @@ reject").
 ### 3.2 Governing autonomy clause, appended as new core § 8, and categorical-gate reconciliation (proposal §14 item 2; scope expanded — primary-source finding 1, 5, report §§ 1–3)
 
 **One coherent resulting core blob**, not independently justifiable edits bundled together: this
-specification appends the verbatim clause **and** reconciles both kinds of categorical operator-transfer
-language the core carries — the five consequence/hard-to-reverse gates **and** the § 6 rule 4 scope gate —
+specification appends the verbatim clause **and** reconciles all three kinds of categorical
+operator-transfer language the core carries — the five consequence/hard-to-reverse gates, the § 6 rule 4
+scope gate, **and** the § 7 settled-decision gate —
 because leaving any of it undone would produce a canonical authority document that states contradictory
 current rules about when the operator must be involved (§ Repository Delta, the "categorical
-consequence/hard-to-reverse gate" and "categorical **scope-change** gate" rows).
+consequence/hard-to-reverse gate", "categorical **scope-change** gate" and "categorical
+**settled-decision** gate" rows).
 
-**The two surfaces are counted separately and never merged.** T2's core surface is **five consequence
-gates plus one scope-rule surface, six in total**. The five keep five independent string checks; the
-scope rule is a different kind of gate and is checked on its own terms. Relabelling the scope rule as a
-sixth consequence gate would hide which reconciliation actually ran.
+**The three kinds of surface are counted separately and never merged.** T2's core surface is **five
+consequence gates, plus one scope rule, plus one settled-decision gate — seven surfaces in total**. The
+five keep five independent string checks; the scope rule and the settled-decision gate are each a
+different kind of gate and each is checked on its own terms. Relabelling either as a sixth or seventh
+*consequence* gate would hide which reconciliation actually ran.
 
 - **Inputs:** the approved proposal §1 clause text, verbatim — specifically the **588-byte governing-rule
   blockquote** (proposal §1's `> **Within the approved solution envelope … bypass the control system.**`),
   which is the settled reading of "the §1 clause" and the only place `pre-authorized capabilities` occurs;
   the core **as approved at § 3.1's identifiable commit and as reconciled at § 3.1a**; the core's current
   categorical-gate clauses at lines 26, 59–60, 469, 475, 477; **the core's § 6 rule 4 scope-gate sentence
-  at lines 449–450**; proposal §4 ("Consequence changes safeguards, not ownership") and §6
+  at lines 449–450**; **the core's § 7 settled-decision sentence at line 470**; proposal §3.1's authority
+  hierarchy (settled implementation decisions and settled constraints sit inside the delegated envelope);
+  proposal §4 ("Consequence changes safeguards, not ownership") and §6
   ("Operator-reserved decisions", "Mandatory stop or handback").
 - **Precondition (load-bearing):** operator approval of § 3.1's commit exists and is identifiable, and
   § 3.1a's status reconciliation has landed. Absent either, this specification does not execute — it is
@@ -430,6 +490,22 @@ sixth consequence gate would hide which reconciliation actually ran.
      sources). This is the exact target semantic content, not the final prose — the implementing unit
      drafts the literal replacement text for its own risk-aware review, bounded by this specification's
      inputs, outputs, and failure behavior below.
+
+     **Two routing corrections are binding on this output (Unit 18 candidate-review findings 2 and 3).**
+     The classes above are proposal §6's; these state where each of two of them goes, which the frozen
+     contract left implicit. **(i) Capability.** A capability that is **not granted**, and any
+     **expansion of the capability envelope**, is **operator-reserved** — it goes to the operator. A
+     capability that **is already authorized but cannot be enforced safely by the available technical
+     means** is a **mandatory handback to Codex** as a technical or infrastructure problem, and it is
+     **not operator-waivable**: the operator cannot approve past an enforcement gap, because the gap is
+     an absence of containment rather than an absence of permission. The reconciled core must keep these
+     two halves distinguishable; collapsing proposal §6's "the needed capability is not granted or cannot
+     be enforced safely" into one operator route is a failure of this output. **(ii) Control system.** An
+     action that would **bypass, weaken, or self-expand the control system** is a **mandatory handback to
+     Codex**, not an operator question. The operator enters only where the proposed remedy would itself
+     require a **material change to the policy governing agent authority** — proposal §6's final
+     operator-reserved bullet — which is a separate decision reached through that bullet, never through
+     the bypass clause itself.
   3. **Scope-rule reconciliation (§ 6 rule 4, core lines 449–450) — the sixth surface.** The sentence
      currently reads: "**Scope and success criteria do not change quietly.** A change to either is stated
      out loud, and a change to scope goes to the operator." It is rewritten so that **the disclosure
@@ -441,14 +517,38 @@ sixth consequence gate would hide which reconciliation actually ran.
      independently load-bearing and must be treated as such: narrowing the transfer must not weaken the
      disclosure, and preserving the disclosure must not preserve the categorical transfer. This is the
      target semantics, not the final prose.
+  4. **Settled-decision reconciliation (§ 7, core line 470) — the seventh surface.** The clause currently
+     reads, unqualified: "Proceeding would need a settled decision to be reopened." It is rewritten so
+     that **only reopening an *operator-owned* settled decision transfers the decision to the operator**.
+     An operator-owned settled decision is one the operator themselves settled, or one falling in a class
+     proposal § 6 reserves to them — the intended outcome or priority, material scope or exclusion, the
+     operating model, material architecture commitment, cost/risk profile or governance model, accepted
+     material residual risk, the capability envelope, the named production/communication/credential/
+     destructive-shared-state authorizations, and the authority policy itself. A **settled implementation
+     or technical decision delegated inside the approved solution envelope does not transfer merely
+     because it is settled** — proposal §3.1's authority hierarchy places settled implementation decisions
+     and settled constraints inside that envelope precisely so they can be reopened on evidence without an
+     operator round-trip. Reopening one is still disclosed and still subject to every other gate; it is
+     simply not routed to the operator by the *settled* character alone. **`inventing operator intent` is
+     preserved as its own separate mandatory-stop clause and is not merged into this rule.** The two are
+     different failures: inventing intent is proceeding without an operator decision that is needed,
+     whereas reopening a delegated technical decision is exercising delegated judgment that already
+     exists. Merging them would re-create the categorical transfer under a different name. This is the
+     target semantics, not the final prose.
 - **Guaranteed behavior:** one copy of the governing rule, in the canonical core; no consumer gains a
   second competing statement of it. Every class proposal §6 lists as operator-reserved or a mandatory
   stop/handback trigger remains represented somewhere in the reconciled core §7 — reconciliation narrows
   the *categorical* language, it does not silently drop a real operator protection. **The core states one
   rule about scope, not two:** after this change, no clause anywhere in the core transfers a scope change
   to the operator on categorical grounds, and core § 6 rule 4 still forbids a quiet change to scope or to
-  success criteria. **The five consequence gates and the one scope surface stay separately identified**
-  throughout the resulting evidence, so a partial reconciliation of either is visible.
+  success criteria. **The core states one rule about settled decisions, not two:** after this change, no
+  clause anywhere in the core transfers the reopening of a delegated implementation or technical decision
+  to the operator on the ground that it was settled, while an operator-owned settled decision still goes
+  to the operator and `inventing operator intent` still stands as its own mandatory-stop clause. **Where
+  each of proposal §6's capability and control-system classes routes is stated, not left to the reader**
+  (Outputs 2(i) and 2(ii)). **The five consequence gates, the one scope surface and the one
+  settled-decision surface stay separately identified** throughout the resulting evidence, so a partial
+  reconciliation of any of them is visible.
 - **Failure behavior:** if the clause is paraphrased rather than carried verbatim, or duplicated into any
   consumer file by this item, the specification fails and the change is reverted, not accepted as a
   variant. If the reconciliation removes, narrows, or fails to represent any class proposal §6 names as
@@ -460,13 +560,22 @@ sixth consequence gate would hide which reconciliation actually ran.
   the Unit 15 review escalated, and it is not acceptable as a variant. **A commit that narrows rule 4's
   transfer by weakening or deleting its disclosure obligation fails on the same terms**, in the opposite
   direction: "scope and success criteria do not change quietly" is retained behavior, not collateral.
+  **A commit that leaves core § 7's categorical settled-decision transfer standing fails this
+  specification** — that is the partial reconciliation the Unit 18 candidate review found, and it is not
+  acceptable as a variant. **A commit that narrows the settled-decision rule by deleting or absorbing
+  `inventing operator intent` fails on the same terms**, in the opposite direction: that clause is
+  retained behavior and must remain separately identifiable. **A commit that routes an unenforceable but
+  already-authorized capability to the operator, or that routes a control-system bypass to the operator
+  rather than to Codex, fails this specification** — those are the two routing errors Outputs 2(i) and
+  2(ii) exist to prevent.
 - **Side effects:** none outside the one file. The rule-4 reconciliation adds no surface — it is one more
   clause inside the same core blob — and it schedules no consumer edit. It does **not** reopen T3's
   citation-only scope, does **not** extend T3a beyond skill line 508, and does **not** touch skill lines
   465–475, whose condition 3 at line 473 is valid proportional-verification policy and is expressly
   unaffected (§ Repository Delta, risky assumption 5).
 - **Public seam:** the core file's own text, as in § 3.1.
-- **Fail-capable evidence (corrected — Unit 11 finding 3; extended — Unit 15 review):** (a)
+- **Fail-capable evidence (corrected — Unit 11 finding 3; extended — Unit 15 review; extended again —
+  Unit 18 candidate-review findings 1–3):** (a)
   `grep -q "pre-authorized capabilities"`
   on the core must go from not matching (before) to matching (after) — forgetting the clause fails it;
   (b) a diff confirming the authority line approved at § 3.1 and the header reconciled at § 3.1a are
@@ -489,28 +598,49 @@ sixth consequence gate would hide which reconciliation actually ran.
   clause "a change to scope goes to the operator" must match **before** and **not** match **after**, and,
   paired with it in the same check so neither can pass alone, the retained disclosure obligation "Scope and
   success criteria do not change quietly" must match **both** before and after. A commit that clears the
-  transfer by deleting the disclosure fails (g) on its second half.
-- **Matching discipline for (d) and (g) — normalized logical strings, because the core hard-wraps its
-  prose (added — Unit 15 review).** Several of these strings span a newline in the live core: (d-ii)
+  transfer by deleting the disclosure fails (g) on its second half. **(h) The seventh surface, checked
+  separately from both (d) and (g) and never folded into either count** — core § 7's categorical clause
+  "Proceeding would need a settled decision to be reopened." must match **before** and **not** match
+  **after**. (h) is paired with a reviewer-read check, not a second string: the reconciled text must be
+  read and confirmed to (h-i) still transfer an **operator-owned** settled decision to the operator,
+  (h-ii) no longer transfer a settled implementation or technical decision delegated inside the approved
+  solution envelope, and (h-iii) still carry `inventing operator intent` as its own separately
+  identifiable mandatory-stop clause, not absorbed into the settled-decision rule. A grep is not used for
+  (h-i)–(h-iii) because the replacement prose is drafted by the implementing unit and no fixed string can
+  be specified in advance without dictating it. **(i) The two routing corrections, reviewer-read** — the
+  reconciled core must be read and confirmed to route a **missing capability grant or capability-envelope
+  expansion to the operator**, an **already-authorized but unenforceable capability to Codex as a
+  mandatory, non-operator-waivable technical handback**, and a **bypass, weakening or self-expansion of
+  the control system to Codex**, with the operator reached only through proposal §6's separate
+  authority-policy-change bullet.
+- **Matching discipline for (d), (g) and (h) — normalized logical strings, because the core hard-wraps its
+  prose (added — Unit 15 review; extended — Unit 18 candidate-review finding 1).** Several of these
+  strings span a newline in the live core: (d-ii)
   breaks after "Genuinely", and rule 4's sentence breaks after "out loud, and". Matched literally against
   the raw file, (d-ii) returns **zero hits before any edit**, so "must not match after" would pass whatever
   T2 does — a check that cannot fail, which core § 6 rule 5 forbids and which this plan's own § 3.2
-  failure behavior would otherwise never catch. Every string in (d) and (g) is therefore matched against
+  failure behavior would otherwise never catch. Every string in (d), (g) and (h) is therefore matched
+  against
   the file **normalized to a single logical line** (newlines and runs of whitespace collapsed to one
   space), on both the before run and the after run, and **every string must be shown matching before the
-  edit** — the before-run is what proves the check reads real text and can fail. **What the after-run must
-  show depends on which kind of string it is.** The **six removed strings** — (d)'s five categorical
-  consequence gates, and (g)'s scope-transfer clause "a change to scope goes to the operator" — must
+  edit** — the before-run is what proves the check reads real text and can fail. (h)'s sentence does not
+  currently wrap, but it is normalized with the others so one discipline covers the whole set and no
+  string is exempt. **The evidence comprises exactly eight normalized logical strings, and what the
+  after-run must show depends on which kind each one is.** The **seven removed strings** — (d)'s five
+  categorical consequence gates, (g)'s scope-transfer clause "a change to scope goes to the operator", and
+  (h)'s settled-decision clause "Proceeding would need a settled decision to be reopened." — must
   **not** match after. The **one retained string** — (g)'s disclosure obligation "Scope and success
   criteria do not change quietly" — must **still** match after; that is the whole point of pairing it into
   (g). A uniform "must not match after" would make (g) unsatisfiable, because its two halves are
-  deliberately opposite. This is a mechanical correction to
+  deliberately opposite. Seven removed plus one retained is the whole set: a run reporting any other total
+  has either dropped a surface or merged two. This is a mechanical correction to
   how the strings are matched. It does **not** change the semantic evidence bar, does not remove or merge
   any check, and does not widen T2's scope; the repository's own suites already normalize the same way for
   the same reason (`logs/scripts/work-loop-v2-slice-1.test.sh`, `core_flat()` and `flat_of()`).
 - **Review row:** high-consequence — same surface and reach as T1 and § 3.1a; one risk-aware Codex review
   before implementation, covering **all** parts of this one coherent change together — the clause, the five
-  consequence gates and the scope rule — not as separate reviews.
+  consequence gates, the scope rule, the settled-decision gate and the two routing corrections — not as
+  separate reviews.
 
 ### 3.3 Wording reconciliation — citation-only scope (skill authority hierarchy, Claude command)
 
@@ -842,34 +972,51 @@ unit contract.
 ### T2 — Executable core: append the governing autonomy clause as § 8, and reconcile categorical consequence/hard-to-reverse gates (§14 item 2; split — Unit 5 Finding 1; scope expanded — primary-source finding 1, 5, report §§ 1–3)
 
 - **Behaviour:** the now-canonical, status-reconciled core carries the approved proposal §1 governing
-  autonomy rule verbatim, appended as new `## 8.`, **and** both kinds of categorical operator-transfer
+  autonomy rule verbatim, appended as new `## 8.`, **and** all three kinds of categorical
+  operator-transfer
   language it currently carries are reconciled so the core does not state contradictory rules about when
   the operator must be involved: its five consequence/hard-to-reverse gates (lines 26, 59–60, 469, 475,
-  477) **and** its § 6 rule 4 scope gate (lines 449–450). **Six surfaces in total — five consequence
-  gates plus one scope rule, counted separately and never merged.** See § 3.2 for the exact target
+  477), its § 6 rule 4 scope gate (lines 449–450), **and** its § 7 settled-decision gate (line 470).
+  **Seven surfaces in total — five consequence gates, plus one scope rule, plus one settled-decision
+  gate, counted separately and never merged.** The reconciled text also states where two of proposal §6's
+  classes route — capability, and control-system bypass — which the earlier contract left implicit. See
+  § 3.2 for the exact target
   clauses, the required semantic change, and the boundaries the reconciliation must not cross.
 - **Starting evidence:** T1's operator-approved commit and T1a's status reconciliation both exist and are
   identifiable; the core has `## 1.` through `## 7.` and no governing-autonomy clause; its current §7
   states unqualified "hard to reverse" / "genuinely consequential" as automatic operator-transfer
   triggers, which conflicts with proposal §4 and §15 item 1's "consequence is not an automatic operator
-  gate" (confirmed by reading both texts — § Repository Delta); and its § 6 rule 4 states, unqualified,
+  gate" (confirmed by reading both texts — § Repository Delta); its § 6 rule 4 states, unqualified,
   that "a change to scope goes to the operator", which conflicts with proposal §6's narrower reserved set
   — changing the intended outcome or priority, **material** scope expansion, exclusion removal (confirmed
-  by whole-file inspection at Unit 15, and the ground of that unit's ESCALATE verdict).
+  by whole-file inspection at Unit 15, and the ground of that unit's ESCALATE verdict); and its § 7 states,
+  unqualified, that "Proceeding would need a settled decision to be reopened." routes to the operator,
+  which conflicts with proposal §3.1's placement of settled implementation decisions and settled
+  constraints inside the delegated envelope (confirmed by the Unit 18 candidate review, verdict CORRECT,
+  finding 1).
 - **Precondition:** T1's approval and T1a's reconciliation. Without both, this tracer does not start —
   it is a gate, not a judgment call for the implementing unit. Proposal §14 item 2 says the clause is
   added "to the now-canonical core," and a core whose own status is still contradictory is not a coherent
   target to add governing policy to.
-- **Intended change:** three changes landing as one coherent commit — (1) append the proposal §1 clause,
+- **Intended change:** four changes landing as one coherent commit — (1) append the proposal §1 clause,
   verbatim, as new `## 8.`, with existing `## 1.`–`## 7.` untouched and unrenumbered; (2) reword lines
   26, 59–60, 469, 475 and 477 so consequence/hard-to-reverse character alone no longer transfers a
   decision to the operator, while every class proposal §6 names as operator-reserved or a mandatory
-  stop/handback trigger remains represented in the reconciled text; **(3) reword § 6 rule 4 (lines
+  stop/handback trigger remains represented in the reconciled text, **and the two routing corrections
+  hold: a missing capability grant or capability-envelope expansion goes to the operator, an
+  already-authorized but unenforceable capability is a mandatory non-operator-waivable handback to Codex,
+  and a control-system bypass is a mandatory Codex handback reaching the operator only through proposal
+  §6's separate authority-policy-change bullet**; **(3) reword § 6 rule 4 (lines
   449–450) so a scope change is still stated out loud but only the proposal-§6 classes — intended
   outcome or priority change, material scope expansion, exclusion removal — transfer the decision to the
-  operator.** § 3.2's Outputs give the exact target semantics for all three; the implementing unit drafts
+  operator**; **(4) reword § 7's settled-decision clause (line 470) so only reopening an *operator-owned*
+  settled decision transfers the decision to the operator, while a settled implementation or technical
+  decision delegated inside the approved solution envelope does not transfer merely because it is settled,
+  and `inventing operator intent` remains its own separate mandatory-stop clause.** § 3.2's Outputs give
+  the exact target semantics for all four; the implementing unit drafts
   the literal replacement prose for its own risk-aware review.
-- **Verification (corrected — Unit 11 finding 3; extended — Unit 15 review):** (a)
+- **Verification (corrected — Unit 11 finding 3; extended — Unit 15 review; extended again — Unit 18
+  candidate-review findings 1–3):** (a)
   `grep -q "pre-authorized capabilities"` on the
   core: must not match before, must match after; (b) a diff proving T1's authority paragraph and T1a's
   reconciled header are unchanged by this commit; (c) `grep -n '^## [0-9]'` on the core returns exactly
@@ -884,20 +1031,44 @@ unit contract.
   `work-loop-v2-core-resolver.test.sh` stays green; **(g) the sixth surface, checked separately and never
   counted inside (d)** — "a change to scope goes to the operator" matches before and not after, paired in
   the same check with "Scope and success criteria do not change quietly", which must match both before and
-  after. **Matching discipline:** every string in (d) and (g) is matched against the file normalized to a
+  after; **(h) the seventh surface, checked separately and never counted inside (d) or (g)** —
+  "Proceeding would need a settled decision to be reopened." matches before and not after, paired with a
+  reviewer-read confirmation that the replacement still transfers an operator-owned settled decision,
+  no longer transfers a delegated implementation or technical one, and keeps `inventing operator intent`
+  as its own clause; **(i)** a reviewer-read confirmation of the two routing corrections — capability
+  grant/envelope expansion to the operator, unenforceable-but-authorized capability to Codex as a
+  non-operator-waivable technical handback, control-system bypass to Codex.
+  **Matching discipline:** every string in (d), (g) and (h) is matched against the file normalized to a
   single logical line, and **every** string is shown matching **before** the edit — the core hard-wraps its
   prose, so a literal match on (d-ii) or on rule 4 finds nothing even before the edit and could never fail.
-  **After** the edit, the six **removed** strings — (d)'s five, plus (g)'s scope-transfer clause — must not
+  The set is exactly **eight** normalized logical strings. **After** the edit, the seven **removed**
+  strings — (d)'s five, plus (g)'s scope-transfer clause, plus (h)'s settled-decision clause — must not
   match, while (g)'s **retained** disclosure string must still match (§ 3.2, *Matching discipline*).
 - **Exit condition:** the clause is present verbatim at `## 8.`, `## 1.`–`## 7.` are unrenumbered, the
   categorical gate language no longer transfers decisions on consequence alone, **core § 6 rule 4 no
-  longer transfers a scope change on categorical grounds while still forbidding a quiet one**, and no
+  longer transfers a scope change on categorical grounds while still forbidding a quiet one**, **core § 7
+  no longer transfers a delegated settled implementation or technical decision on the ground that it was
+  settled, while an operator-owned settled decision still goes to the operator and `inventing operator
+  intent` still stands separately**, the two routing corrections hold, and no
   proposal §6 operator-reserved or mandatory-stop class was dropped.
-- **Scope boundary:** this file only — the clause, the five consequence gates and the § 6 rule 4 scope
-  sentence, and nothing else in it. No consumer file is touched: T3 keeps its citation-only scope, T3a
+- **Scope boundary:** this file only — the clause, the five consequence gates, the § 6 rule 4 scope
+  sentence and the § 7 settled-decision sentence, and nothing else in it. No consumer file is touched: T3
+  keeps its citation-only scope, T3a
   stays limited to skill line 508, and skill lines 465–475 (including line 473) are expressly unaffected.
 - **Review row:** high-consequence — same surface and reach as T1 and T1a; one risk-aware Codex review
-  before implementation, covering all three parts of this one coherent change together.
+  before implementation, covering all four parts of this one coherent change together.
+- **T2 review state as of this amendment — recorded exactly, neither over- nor under-claimed.** The
+  risk-aware review this row requires has **already run once**, in isolation, against the unapplied
+  candidate core edit drafted at Unit 18 and returned at commit
+  `6ab0633f17935f0b845a77568d9007a0e844226b`. Its verdict was **CORRECT**, with the three material
+  findings this amendment carries: the seventh settled-decision surface, and the two routing corrections.
+  **That candidate did not pass and has not been applied** — no core edit exists. The sequence from here
+  is fixed: this plan amendment is reviewed afresh in isolation and content-bound reapproved by the
+  operator; then the candidate is corrected to the amended contract; then it passes a **bounded closure
+  check on those three frozen findings** — are they resolved, and did the correction break anything —
+  after which implementation may land. **No unrelated second broad review of the candidate is required**
+  unless the plan review demonstrates that the amendment is a redesign rather than a bounded correction,
+  which is the same standard `docs/qc-independence.md` applied at the prior re-freeze.
 
 ### T3 — Reconcile Codex skill and Claude command wording — citation-only scope (scope narrowed — primary-source finding 6, report § 3 item 6)
 
@@ -1150,7 +1321,7 @@ promoted into MVP, or silently dropped.
 |---|---|
 | 1 (revise core, obtain approval) | **T1 (corrected — Unit 5 Finding 1; split from item 2, ends at operator approval)** |
 | — (not a §14 item) | **T1a (added — primary-source finding 7, report § 4; reconciles the core's stale status header before T2 may begin; gated on T1, gates T2)** |
-| 2 (add §1 clause) | **T2 (corrected — Unit 5 Finding 1; own tracer, gated on T1's approval and T1a's reconciliation, so policy cannot enter a not-yet-canonical or self-contradictory core; scope expanded — primary-source finding 1, 5, report §§ 1–3 — to append the clause at core § 8, not §1, and reconcile the core's own categorical consequence/hard-to-reverse language against it; scope expanded again — Unit 15 review, verdict ESCALATE — to reconcile core § 6 rule 4's categorical scope gate as a separate sixth surface, so T2's core surface is five consequence gates plus one scope rule)** |
+| 2 (add §1 clause) | **T2 (corrected — Unit 5 Finding 1; own tracer, gated on T1's approval and T1a's reconciliation, so policy cannot enter a not-yet-canonical or self-contradictory core; scope expanded — primary-source finding 1, 5, report §§ 1–3 — to append the clause at core § 8, not §1, and reconcile the core's own categorical consequence/hard-to-reverse language against it; scope expanded again — Unit 15 review, verdict ESCALATE — to reconcile core § 6 rule 4's categorical scope gate as a separate sixth surface; scope expanded a third time — Unit 18 candidate review, verdict CORRECT, findings 1–3 — to reconcile core § 7's categorical settled-decision gate as a separate seventh surface and to state the capability and control-system routing corrections, so T2's core surface is five consequence gates plus one scope rule plus one settled-decision gate, seven in total)** |
 | 3 (reconcile skill/command/autonomy-rules/session-plan) | T3 (skill line 429, command — citation-only, scope narrowed by primary-source finding 6), **T3a (added — primary-source finding 6, report § 3 item 6; the skill's line-508 categorical hard-to-reverse gate is a semantic conflict, not a citation)**, T4 (autonomy-rules), **T5 (session-plan — corrected, Unit 5 Finding 3: a required bounded citation change, no longer a reviewer-time change/no-change choice)** |
 | 4 (define baseline envelope; defer connected-development profile) | **T6 (corrected — Unit 5 Finding 2; the envelope is stated, and every non-deferred §11 control is mapped to a surface and fail-capable evidence)** |
 | 5 (record subset in brief, profile in evidence) | T6 |
@@ -1173,9 +1344,9 @@ row — confirmed by the table structure above; none is missing a field. Every p
 surface named in a tracer (executable core, skill, command, autonomy-rules, session-plan, state-file
 field contract, carrier test suite, evaluation instrument) appears first in § Repository Delta's
 classification table and § Implementation Specification's per-capability entry before it appears in a
-tracer — cross-checked by section: T1↔3.1, T1a↔3.1a (added), T2↔3.2 (scope expanded twice — the second time by
-this amendment, to the § 6 rule 4 surface, which is the same file T2 already owns and therefore introduces
-no new surface), T3↔3.3 (scope
+tracer — cross-checked by section: T1↔3.1, T1a↔3.1a (added), T2↔3.2 (scope expanded three times — the third time
+by this amendment, to the § 7 settled-decision surface plus two routing statements, all inside the same
+file T2 already owns and therefore introducing no new surface), T3↔3.3 (scope
 narrowed), T3a↔3.3a (added), T4↔3.3, T5↔3.3 (session-plan, corrected — its required change is now
 specified there, not left to the reviewer), T6↔3.4 (skill placement; envelope and control map,
 corrected), T7↔3.5 (nested-actor evidence), T8↔3.6 (twelve scenario contracts, corrected), T9↔3.7
@@ -1199,6 +1370,22 @@ tracer is created. Two boundaries are made explicit so a later reader cannot re-
 this plan**, because that condition scales verification to consequence (proposal § 4) rather than
 transferring a decision. No new skill edit is scheduled by this amendment.
 
+**Counts this check confirms after the present amendment, kept distinct on purpose.** T2's core surface is
+**seven reconciliation surfaces** — five consequence gates, one scope rule, one settled-decision gate —
+and its normalized logical-string evidence is **eight strings** — seven removed, one retained. The two
+numbers are not the same number and must never be reconciled into one: the seven surfaces are what must be
+changed, the eight strings are how the change is checked, and the scope rule contributes two strings (one
+removed, one retained) because its disclosure half is deliberately preserved. Every live statement of these
+counts is § 3.2 (*The three kinds of surface*, *Fail-capable evidence*, *Matching discipline*), T2
+(*Behaviour*, *Verification*), § Repository Delta (the three gate rows, ordering constraints 6 and 6a) and
+the §14 traceability row for item 2. No live statement in this plan claims that five or six surfaces
+complete T2's reconciliation; where "five" or "six" appears, it names a superseded enumeration inside a
+historical or cause record and says so. The present amendment also adds no new implementation surface: the
+settled-decision gate is a third clause inside the core blob T2 already owns, and the two routing
+corrections state where classes the approved proposal already names are routed. The proposal boundary, the
+capability envelope, the Fixed Point, the accepted T8 S4/S8 limitation and every existing deferral are
+unchanged by it.
+
 Exit-condition strictness, after Unit 5 Finding 5: T1 ends at an operator approval; T1a ends at the
 status reconciliation landing (no operator gate of its own beyond its risk-aware review); T8 ends only
 with all twelve rows carrying a verdict; T9 ends only at 3–5 organic tasks across ≥2 real capability
@@ -1209,42 +1396,57 @@ past T8's or T9's bar is an operator-owned change to the Fixed Point.
 
 ## Plan-readiness statement
 
-This artifact is **re-frozen for implementation**, 2026-08-14, on the operator's explicit content-bound
-approval of the corrected plan content at commit `74c33a28d4cd18be376ab40127af0af303fd1d59`, blob
-`964068c627a92adf3aaadfb0d9c8e56ba0383e6e`. It agrees with the Status block at the head of this file;
-there is no third status record.
+This artifact is **draft**, 2026-08-15. It is **not** frozen and **not** implementable. It agrees with the
+Status block at the head of this file; there is no third status record.
 
-**Why it returned to draft first.** It had been **re-frozen for implementation** at commit
-`ccf134b860b057de56c8da5452ce43ab36e4bf66`, blob `3fd5322fc3d499de01661dfb5d645def482b6168`, on the
+**Two gates stand between this draft and implementation, in this order, and neither has run.** (1) One
+fresh, isolated bounded review of **this** amendment's content, against the approved proposal and the
+Unit 18 candidate review's three frozen findings. (2) The operator's explicit content-bound reapproval of
+the reviewed commit and blob. **No core edit is authorized until both land.**
+
+**Why it returned to draft.** The plan had been **re-frozen for implementation**, 2026-08-14, on the
+operator's explicit content-bound approval of the corrected plan content at commit
+`74c33a28d4cd18be376ab40127af0af303fd1d59`, blob `964068c627a92adf3aaadfb0d9c8e56ba0383e6e` — this
+amendment's pre-edit identity, preserved as historical provenance in the Status block above. Drafting T2's
+candidate core edit under that re-freeze, and reviewing the candidate in isolation, proved the re-frozen
+T2 contract **still incomplete** (Unit 18 candidate review, verdict **CORRECT**, three material findings):
+core § 7's categorical clause "Proceeding would need a settled decision to be reopened." is a **third
+kind** of authority-transfer gate that neither the five consequence gates nor the § 6 rule 4 scope gate
+covered, and two of proposal §6's classes — capability, and control-system bypass — had no stated routing.
+Executing the contract as re-frozen would have produced a canonical core that still transfers every
+reopening of every settled decision to the operator, including decisions proposal §3.1 delegates. A
+substantive change to a tracer's contract cannot be an edit under a freeze, so the plan returned to draft.
+The operator approved this bounded amendment direction on 2026-08-15, recorded at commit
+`25d93aff817caaa80081bc2db3b99f3e73b1ff99` — authority to draft and review the amendment only, and not
+approval of amended content.
+
+**Why it returned to draft the time before.** The `74c33a28` re-freeze had itself replaced a re-freeze at
+commit `ccf134b860b057de56c8da5452ce43ab36e4bf66`, blob `3fd5322fc3d499de01661dfb5d645def482b6168`, on the
 operator's explicit content-bound approval of 2026-08-14, with the status record written at commit
-`e45a581f89291ff45ec263d35d9b38e65117b3e2` (plan blob `7b254fcbaeda669ecb8a300e72d9bb5203619505`) — this
-amendment's pre-edit identity, preserved as historical provenance. That re-freeze rested on two satisfied
+`e45a581f89291ff45ec263d35d9b38e65117b3e2` (plan blob `7b254fcbaeda669ecb8a300e72d9bb5203619505`). That
+re-freeze rested on two satisfied
 gates: one fresh, isolated bounded implementation-plan review against the approved proposal and the
 primary-source report's evidence (verdict CORRECT, its four findings corrected in one bounded round,
 closure check passed), and the operator's content-bound approval of that reviewed and corrected
-commit/blob. **T2's premise verification then proved the re-frozen T2 contract incomplete** (Unit 15;
+commit/blob. **T2's premise verification then proved that contract incomplete** (Unit 15;
 fresh isolated risk-aware review, verdict **ESCALATE**): it reconciled the five categorical consequence
-gates but left core § 6 rule 4's categorical scope transfer standing, so executing it as frozen would
-have produced a knowingly self-contradictory canonical core. A substantive change to a tracer's contract
-cannot be an edit under a freeze, so the plan returned to draft. The operator approved this bounded
-amendment direction on 2026-08-14 — authority to draft and review the amendment only — and the amendment
-was then reviewed, corrected and re-frozen in its own right, as recorded below.
+gates but left core § 6 rule 4's categorical scope transfer standing. The plan returned to draft on the
+same principle, was reviewed and corrected, and was re-frozen at `74c33a28`.
 
 **Implementation state.** **T1 and T1a are implemented, and they are the only implemented tracers** — T1
 at commit `5fef08fff11a1009b30d925f49d68844fc4e2f03` (operator-approved), T1a at commit
 `6d530039657b8b6ee1a49c8ab3d2f25173140e4c`, resulting core blob
-`82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 has not begun**, and no core edit exists for it.
+`82f119cd63c379b24f0bef8aab029ae04c165203`. **T2 remains unimplemented**, and no core edit exists for it.
+Returning to draft does not undo T1 or T1a.
 
-**Gates completed for this re-freeze, in order.** One fresh isolated bounded review of the amended plan
-content at commit `9a0053a089a966754f9728e6c8b913bc0731603b`, blob
-`25889efab1986d582f36407d1696f4b70a2258ac` — verdict **CORRECT**, with one material evidence-wording
-finding; one bounded correction round resolving that single frozen finding; the Codex closure check on
-that frozen finding, verdict **PASS**, a bounded correction and not a redesign, so
-`docs/qc-independence.md` requires no second broad review; and the operator's explicit content-bound
-approval of that corrected commit and blob. Both gates have landed, so **T2 is no longer blocked by
-them** — it may now be opened only through its own bounded implementation unit, with the
-high-consequence risk-aware Codex review its review row requires landing before implementation. This
-readiness statement is provenance only: it neither implemented nor reviewed T2.
+**T2's review state, recorded exactly.** The high-consequence risk-aware review T2's review row requires
+has already run once, in isolation, against the **unapplied** candidate core edit returned at commit
+`6ab0633f17935f0b845a77568d9007a0e844226b`; its verdict was **CORRECT**, with the three frozen findings
+this amendment carries. That candidate **did not pass and has not been applied**. After this amendment is
+reviewed and content-bound reapproved, the candidate is corrected to the amended contract and must pass a
+**bounded closure check on those three frozen findings** before implementation may land. No unrelated
+second broad candidate review is required unless the plan review demonstrates a redesign rather than a
+bounded correction. This readiness statement is provenance only: it neither implemented nor reviewed T2.
 
 This amendment changes T2's contract and the two status records, and nothing else it was not authorized
 to touch: no tracer is renumbered, no sequencing changes, the Fixed Point is unchanged, the capability
