@@ -1,5 +1,6 @@
 ---
 task: fixture-mode-discovery
+status: active
 turn: claude
 ---
 

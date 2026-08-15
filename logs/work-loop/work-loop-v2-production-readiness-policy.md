@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-production-readiness-policy
+status: closed
 turn: operator
 ---
 

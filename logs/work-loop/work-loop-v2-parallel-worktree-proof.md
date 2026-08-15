@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-parallel-worktree-proof
+status: closed
 turn: operator
 ---
 

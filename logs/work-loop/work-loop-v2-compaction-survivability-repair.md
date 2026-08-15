@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-compaction-survivability-repair
+status: closed
 turn: operator
 ---
 

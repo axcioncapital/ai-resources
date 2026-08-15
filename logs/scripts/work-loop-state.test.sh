@@ -422,6 +422,11 @@ new_git_checkout() { # -> path on stdout
   cp "$REPO_ROOT/.gitignore" "$d/.gitignore" 2>/dev/null || true
   printf 'sandbox\n' >"$d/README.md"
   cp "$OWNER_BIN" "$d/logs/scripts/work-loop-owner.sh" 2>/dev/null || true
+  # dispatch.sh resolves the shared lease library as $CHECKOUT/logs/scripts/
+  # work-loop-lease.sh and dies at exit 11 without it — BEFORE it ever parses a
+  # state file. P5 therefore reported a lease-library error rather than a verdict
+  # on status-augmented parsing, so it could not discriminate at all.
+  cp "$REPO_ROOT/logs/scripts/work-loop-lease.sh" "$d/logs/scripts/work-loop-lease.sh" 2>/dev/null || true
   git -C "$d" add -A >/dev/null 2>&1
   git -C "$d" commit -qm "sandbox base" >/dev/null 2>&1
   (cd "$d" && pwd -P)

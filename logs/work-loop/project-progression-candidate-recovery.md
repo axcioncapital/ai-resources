@@ -1,5 +1,6 @@
 ---
 task: project-progression-candidate-recovery
+status: closed
 turn: operator
 ---
 

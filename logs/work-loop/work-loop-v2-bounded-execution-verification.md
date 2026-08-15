@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-bounded-execution-verification
+status: closed
 turn: operator
 ---
 

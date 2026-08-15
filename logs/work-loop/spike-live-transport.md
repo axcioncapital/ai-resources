@@ -1,5 +1,6 @@
 ---
 task: spike-live-transport
+status: closed
 turn: operator
 ---
 

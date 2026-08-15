@@ -1344,10 +1344,10 @@ check "mode  the Adoption fixture records exactly Adoption" \
   "[ \"\$(mode_of '$MODE_A')\" = Adoption ]"
 # Subshell: `check` evals in the current shell, so a bare `exit` here would kill
 # the harness mid-run — it did, twice, before this was caught.
-check "mode  every mode fixture carries task and turn frontmatter and nothing else" \
+check "mode  every mode fixture carries task, status and turn frontmatter and nothing else" \
   "( for f in '$MODE_D' '$MODE_I' '$MODE_A'; do \
-       [ \"\$(grep -cE '^(task|turn):' \"\$f\")\" = 2 ] || exit 1; \
-       [ \"\$(grep -cE '^[a-z-]+:' \"\$f\")\" = 2 ] || exit 1; done )"
+       [ \"\$(grep -cE '^(task|status|turn):' \"\$f\")\" = 3 ] || exit 1; \
+       [ \"\$(grep -cE '^[a-z-]+:' \"\$f\")\" = 3 ] || exit 1; done )"
 # A Standard unit's named reason may not defeat its own admission. Core § 2: "If the
 # work is small and reversible, it is Direct Work even when one of those is tempting."
 # fixture-mode-implementation opened with "the change is small but ... it needs

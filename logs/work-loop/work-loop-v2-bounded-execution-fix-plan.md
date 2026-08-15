@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-bounded-execution-fix-plan
+status: closed
 turn: operator
 ---
 

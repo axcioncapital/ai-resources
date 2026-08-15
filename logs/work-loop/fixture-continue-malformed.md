@@ -1,5 +1,6 @@
 ---
 task: fixture-continue-malformed
+status: active
 turn: claude
 ---
 

@@ -1,5 +1,6 @@
 ---
 task: project-progression-classifier-turn-correction
+status: closed
 turn: operator
 ---
 

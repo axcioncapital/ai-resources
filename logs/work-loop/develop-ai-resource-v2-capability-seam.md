@@ -1,5 +1,6 @@
 ---
 task: develop-ai-resource-v2-capability-seam
+status: closed
 turn: operator
 ---
 

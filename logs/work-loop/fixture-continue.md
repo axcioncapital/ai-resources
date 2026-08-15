@@ -1,5 +1,6 @@
 ---
 task: fixture-continue
+status: active
 turn: claude
 ---
 

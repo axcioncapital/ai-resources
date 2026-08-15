@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-proportionality-continuity-implementation
+status: closed
 turn: operator
 ---
 

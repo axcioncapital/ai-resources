@@ -1,5 +1,6 @@
 ---
 task: context-engineering-implementation-plan
+status: closed
 turn: operator
 ---
 
@@ -31,7 +32,7 @@ check on the one-file-candidate fix **did not run** — the approval overtook it
   row; a later runtime design that wants indirection must prove it then.
 - **O-3 (is Work Loop v1 in scope) remains an operator decision** and is needed before S8a, not before S1.
 
-## Evidence pointer
+## Evidence
 Git, this repository. `ab28c66` (draft v0.1) → `a5628a9` → `1238ef1` → `cf52736` (six frozen findings
 corrected) → `cc635d4` (final bounded fix — the approved content) → this closing commit, which records the
 approval in the plan header. Each round's before/after greps are in that round's commit of this file.
@@ -45,9 +46,11 @@ approval in the plan header. Each round's before/after greps are in that round's
   stale `KNOWN_WORKLOOP_FILES` allowlist, general non-repository CE deferred, v0.2 rework may reshape the
   wired files, CE-9 may prove unmeasurable, the grouped regression is five cases rather than seventeen).
   They travel with the plan, not with this record.
-
-## Next action
-Operator: answer **O-1** in the specification before the implementation session opens. If O-1 is yes, the
-next session is **S1 — build the CE-9 measurement instrument**, which also opens the implementation task's
-own state file at `logs/work-loop/context-engineering-implementation.md`. This file is closed and is not
-that one.
+- **The outstanding operator step this record carried, preserved verbatim in substance.** The record's
+  own former `## Next action` read: "Operator: answer **O-1** in the specification before the
+  implementation session opens. If O-1 is yes, the next session is **S1 — build the CE-9 measurement
+  instrument**, which also opens the implementation task's own state file at
+  `logs/work-loop/context-engineering-implementation.md`. This file is closed and is not that one."
+  It is carried here unchanged by the Tracer 2 heading normalization, because a closed record holds no
+  `## Next action` and the step it names belongs to a different task's file. Nothing about it is
+  withdrawn or reinterpreted: O-1 remains unanswered and remains the gate on S1.

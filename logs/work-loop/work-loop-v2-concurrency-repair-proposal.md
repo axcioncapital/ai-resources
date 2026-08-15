@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-concurrency-repair-proposal
+status: closed
 turn: operator
 ---
 

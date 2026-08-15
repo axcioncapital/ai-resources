@@ -1,5 +1,6 @@
 ---
 task: axcion-harness-v0-2-go-live
+status: closed
 turn: operator
 ---
 

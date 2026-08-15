@@ -1,5 +1,6 @@
 ---
 task: fixture-mode-implementation
+status: active
 turn: claude
 ---
 

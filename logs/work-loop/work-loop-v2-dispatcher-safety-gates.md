@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-dispatcher-safety-gates
+status: closed
 turn: operator
 ---
 

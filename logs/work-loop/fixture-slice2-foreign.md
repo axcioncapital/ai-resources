@@ -1,5 +1,6 @@
 ---
 task: fixture-slice2-other
+status: active
 turn: claude
 ---
 

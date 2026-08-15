@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-descendant-supervision-discovery
+status: closed
 turn: operator
 ---
 

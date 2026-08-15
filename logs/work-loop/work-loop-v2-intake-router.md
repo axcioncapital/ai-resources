@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-intake-router
+status: closed
 turn: operator
 ---
 

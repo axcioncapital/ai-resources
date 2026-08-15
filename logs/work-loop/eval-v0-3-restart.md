@@ -1,5 +1,6 @@
 ---
 task: eval-v0-3-restart
+status: closed
 turn: operator
 ---
 

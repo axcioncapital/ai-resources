@@ -1,5 +1,6 @@
 ---
 task: foreign-staging-target-repo
+status: closed
 turn: operator
 ---
 
@@ -35,7 +36,7 @@ explicitly: *"Codex reads the result and decides one of three things: close, cor
 - **The live-file falsification is accepted as one-off evidence after verified restoration, and
   explicitly NOT as a reusable harness pattern** (Codex, closing assessment).
 
-## Final commit and evidence
+## Evidence
 - `ai-resources`: `af4abba`, `3e2b404`, `4785ceb` (hook + two correction rounds), `630ec7f` (copies
   dispositioned), `0bfdf82` (assessment verified, scope widened), `f041fda` (closure edits).
 - `axcion-sector-intelligence`: `563e3fe` (fork backported).

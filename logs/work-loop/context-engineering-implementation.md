@@ -1,5 +1,6 @@
 ---
 task: context-engineering-implementation
+status: closed
 turn: operator
 ---
 

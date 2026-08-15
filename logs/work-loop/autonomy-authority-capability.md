@@ -1,5 +1,6 @@
 ---
 task: autonomy-authority-capability
+status: closed
 turn: operator
 ---
 

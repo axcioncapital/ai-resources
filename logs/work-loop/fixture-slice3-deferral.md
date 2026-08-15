@@ -1,5 +1,6 @@
 ---
 task: fixture-slice3-deferral
+status: closed
 turn: operator
 ---
 

@@ -1,5 +1,6 @@
 ---
 task: project-progression-live-continue-proof
+status: closed
 turn: operator
 ---
 

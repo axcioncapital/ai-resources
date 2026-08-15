@@ -1,5 +1,6 @@
 ---
 task: axcion-harness-v0-2-p0-f-attended-policy
+status: closed
 turn: operator
 ---
 

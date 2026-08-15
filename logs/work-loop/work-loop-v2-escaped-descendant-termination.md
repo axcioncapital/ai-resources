@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-escaped-descendant-termination
+status: closed
 turn: operator
 ---
 

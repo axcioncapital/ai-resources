@@ -1,5 +1,6 @@
 ---
 task: axcion-harness-v0-2-phase0-p0-d-monday-prep
+status: closed
 turn: operator
 ---
 

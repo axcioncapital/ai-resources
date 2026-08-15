@@ -1,5 +1,6 @@
 ---
 task: leverage-idea-v2-routing-seam
+status: closed
 turn: operator
 ---
 

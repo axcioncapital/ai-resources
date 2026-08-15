@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-concurrent-task-isolation
+status: closed
 turn: operator
 ---
 

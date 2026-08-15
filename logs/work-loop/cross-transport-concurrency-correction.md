@@ -1,5 +1,6 @@
 ---
 task: cross-transport-concurrency-correction
+status: closed
 turn: operator
 ---
 

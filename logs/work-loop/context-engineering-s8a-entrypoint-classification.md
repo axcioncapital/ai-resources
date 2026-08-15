@@ -1,5 +1,6 @@
 ---
 task: context-engineering-s8a-entrypoint-classification
+status: closed
 turn: operator
 ---
 

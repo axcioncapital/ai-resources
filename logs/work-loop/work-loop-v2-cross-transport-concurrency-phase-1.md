@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-cross-transport-concurrency-phase-1
+status: closed
 turn: operator
 ---
 

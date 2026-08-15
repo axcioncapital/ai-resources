@@ -1,5 +1,6 @@
 ---
 task: axcion-harness-v0-2-attended-release
+status: closed
 turn: operator
 ---
 

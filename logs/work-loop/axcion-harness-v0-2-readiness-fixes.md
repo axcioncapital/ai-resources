@@ -1,5 +1,6 @@
 ---
 task: axcion-harness-v0-2-readiness-fixes
+status: closed
 turn: operator
 ---
 
