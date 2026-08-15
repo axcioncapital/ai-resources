@@ -96,4 +96,4 @@ Examples:
 
 ### Step 7 — No commit, no execution
 
-19. `/reconcile` is a diagnostic gate. It does not rewrite the target output, does not apply any recommended fix, and does not commit the report. The operator (or a follow-up `/triage` / `/resolve-repo-problem` / `improvement-log.md` entry, per the fix's named channel) decides the next action.
+19. `/reconcile` is a diagnostic gate. It does not rewrite the target output, does not apply any recommended fix, and does not commit the report. The operator (or a follow-up `/triage` / Codex `$resolve-repository-problem` / `improvement-log.md` entry, per the fix's named channel) decides the next action.

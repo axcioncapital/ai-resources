@@ -5,9 +5,9 @@ argument-hint: "<question or situation>"
 ---
 
 <!-- DO NOT add `disable-model-invocation: true` here. /consult is auto-invoked by name from
-     resolve-incident.md and pm.md (Fallback 5d) as a designed
-     second-opinion step; the flag removes /consult from the model-invocable set and silently
-     breaks both. (risk-check.md was listed here until 2026-07-05 and the command was retired
+     pm.md (Fallback 5d) as a designed second-opinion step; the flag removes /consult from the
+     model-invocable set and silently breaks it. (risk-check.md was listed here until 2026-07-05
+     and resolve-incident.md until its retirement on 2026-08-15; neither remains a consumer.
      entirely on 2026-07-30, so it is no longer a consumer either way.) The spontaneous-firing
      concern the flag was meant to address is already
      covered by Step 0's read-first gate + the preamble line below. (Regression: added
@@ -78,7 +78,7 @@ If `QUESTION` names an **input corpus** — a directory or document set the Syst
 
 1. Find every existing directory whose basename matches the named corpus (e.g., `strategic-os` matches both `projects/strategic-os/` and `knowledge-bases/strategic-os/`).
 2. **Exactly one match** → record its absolute path.
-3. **More than one match** → do NOT silently pick one. Resolve from the question's own context if it names the layer (a project vs. a knowledge base vs. a vault). If still ambiguous: operator-invoked → ask the operator in one line; auto-invoked (e.g., the `resolve-incident.md` or `pm.md` second-opinion path) → list ALL candidate paths in the Step 4 brief under an explicit `AMBIGUOUS CORPUS` note requiring the agent to state which path it grades and to flag the ambiguity in its advisory.
+3. **More than one match** → do NOT silently pick one. Resolve from the question's own context if it names the layer (a project vs. a knowledge base vs. a vault). If still ambiguous: operator-invoked → ask the operator in one line; auto-invoked (the `pm.md` second-opinion path) → list ALL candidate paths in the Step 4 brief under an explicit `AMBIGUOUS CORPUS` note requiring the agent to state which path it grades and to flag the ambiguity in its advisory.
 4. Append the confirmation to the Step 4 brief: `Input corpus (path-confirmed by /consult Step 3.5): {absolute path}`.
 
 No corpus named → skip silently. Defect this prevents: 2026-06-29 — the SO graded `knowledge-bases/strategic-os/` when the plan's named corpus was `projects/strategic-os/` (basename collision) and returned two BLOCKING findings grounded in the wrong corpus, caught only by manual filesystem verification.
@@ -128,4 +128,3 @@ Wait for the agent's response.
 **5b — Return the response.** Output the agent's response verbatim to the operator. Do NOT add a preamble, do NOT summarize, do NOT add an "I hope this helps" closing. The agent's voice is the System Owner voice; wrapping it in command-shell prose dilutes it.
 
 ---
-

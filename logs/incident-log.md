@@ -1,12 +1,12 @@
 # Incident Log
 
-> **What this is:** One-line-per-incident index, appended by `/resolve-incident` on every resolved, escalated, or deferred incident. Full per-incident records live in `audits/incidents/`. Pattern detection across this log is deferred to v1.1.
+> **What this is:** Historical one-line-per-incident index written by the retired `/resolve-incident` command. It has no live writer as of 2026-08-15. Full historical records live in `audits/incidents/`.
 >
 > **Owner:** `ai-resources` repo. **Maintenance:** append-only; do not edit or delete prior entries. Archive at the quarterly `/friday-checkup` tier once ≥30 entries exist (mirror `improvement-log.md` archival pattern).
 >
 > **Rollback procedure (per incident):** To unwind a specific incident's records after the fact: (1) remove `audits/incidents/{DATE}-{SLUG}.md`; (2) delete the one-line entry block for that incident in this file; (3) if a paired `improvement-log.md` entry was written in Step 8c, delete that entry too. Each of these is a separate file edit — `git revert` of the introduction commit does not undo entries appended by later runs.
 >
-> **Related files:** `audits/incidents/` (full records) · `logs/improvement-log.md` (structural follow-ups) · `templates/incident-log-template.md` (per-incident record shape) · `.claude/commands/resolve-incident.md` (the command that writes here)
+> **Related files:** `audits/incidents/` (full historical records) · `logs/improvement-log.md` (historical structural follow-ups) · `templates/incident-log-template.md` (retired record shape)
 >
 > **[PHASE-2-FILL]:** When W2.2 enforcement automation ships in Phase 2, decide whether this log is in-scope (event-log documenting incidents that happened) or out-of-scope (not a principles-tracking log). Deferred to Phase 2 design per system-doc.md § 6.3 Open Decisions.
 
@@ -14,7 +14,7 @@
 
 ## Schema
 
-Each entry is appended by `/resolve-incident` Step 8. Copy this shape exactly — do not add fields or change field names without updating the command body in lockstep.
+Entries below were appended by the retired `/resolve-incident` Step 8. Preserve the historical shape; there is no live command contract to update.
 
 ```markdown
 ### YYYY-MM-DD — {short title}
@@ -33,7 +33,7 @@ Each entry is appended by `/resolve-incident` Step 8. Copy this shape exactly �
 
 ## Entries
 
-<!-- /resolve-incident appends entries below this line -->
+<!-- Historical entries from retired /resolve-incident below this line -->
 
 ### 2026-07-07 — strategic-os `main` diverged from origin (local 3 / origin 20)
 

@@ -340,4 +340,4 @@ Listed so this file does not duplicate them. You should not need these to unbloc
 | Session-marker contract and resolution order | `ai-resources/docs/session-marker.md` |
 | Non-negotiable rules for harness sessions | `<workspace root>/.claude/references/harness-rules.md` |
 
-**Commands:** `/permission-sweep` (structural drift across all layers) · `/fewer-permission-prompts` (empirical gaps from your transcripts) · `/resolve-incident` (classify, fix, verify and log a fault end-to-end) · `/resolve-repo-problem` (investigate only, no fix applied).
+**Commands:** `/permission-sweep` (structural drift across all layers) · `/fewer-permission-prompts` (empirical gaps from your transcripts) · Codex `$resolve-repository-problem` (reproduce, diagnose, apply a bounded repair, and prove one specific fault end to end).

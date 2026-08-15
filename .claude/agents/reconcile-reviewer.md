@@ -63,7 +63,7 @@ Select the verdict using `reconcile-verdict-definitions.md` § Selection order �
 
 ### Step 6: Recommended Fixes (Report §7)
 
-For each fix you recommend, name its level (output/workflow/repo) and its closure channel per `reconcile-failure-taxonomy.md` § Fix levels — `/triage`, `/resolve-repo-problem` or a direct project edit, or `logs/improvement-log.md` or a direct rubric/map edit. A fix with no named channel is an incomplete finding — either name the channel or do not list the fix.
+For each fix you recommend, name its level (output/workflow/repo) and its closure channel per `reconcile-failure-taxonomy.md` § Fix levels — `/triage`, Codex `$resolve-repository-problem` or a direct project edit, or `logs/improvement-log.md` or a direct rubric/map edit. A fix with no named channel is an incomplete finding — either name the channel or do not list the fix.
 
 ### Step 7: Write Report
 

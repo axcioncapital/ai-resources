@@ -69,7 +69,7 @@ It does **not** own several adjacent things, and this boundary is load-bearing:
 
 - **Authoring a new durable AI resource** — a new skill, command, agent or hook, or a material expansion of an existing one. That is `/develop-ai-resource`. If a live stream needs such an artifact as one component, the loop hands the artifact out and keeps the operating outcome.
 - **A new enduring programme with no existing owner** — that is `/scope-project` → `/new-project`.
-- **Investigation with no decided change** — diagnosis, triage and open-ended "what is wrong here" work belongs to `/resolve-repo-problem`, `/audit-repo`, `/repo-dd` or `/consult`. `/work-loop` runs a need someone has already framed; it is not a discovery instrument.
+- **A specific observed repository fault** — diagnosis and bounded repair belong to Codex `$resolve-repository-problem`. Open-ended "what is wrong here" work belongs to `/audit-repo`, `/repo-dd` or `/consult`. `/work-loop` runs a need someone has already framed; it is not a discovery instrument.
 - **Trivial edits.** A one-line typo fix, a cosmetic tweak or a single-file wording change does not need a unit, a stream, an evidence file and a commit boundary. `/tweak` or a direct edit is correct. The loop's ceremony must be earned by consequence.
 - **Session orientation, planning or wrap.** `/prime`, `/session-plan`, `/wrap-session` own those.
 - **Anything requiring a mission file to be written.** `/mission` is the sole writer.
@@ -259,7 +259,7 @@ Executing and proving one bounded unit of repository work: ingesting the brief, 
 - Independent judgement of Claude's own work (Codex).
 - Session lifecycle — orientation, planning, wrap, telemetry, push.
 - Multi-session goal tracking (`/mission`, `/drift-check`).
-- Open-ended diagnosis and triage (`/resolve-repo-problem`, the audit family).
+- Specific fault resolution (Codex `$resolve-repository-problem`) and open-ended diagnosis (the audit family).
 
 ### Non-Goals
 

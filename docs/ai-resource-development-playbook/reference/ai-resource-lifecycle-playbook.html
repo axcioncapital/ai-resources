@@ -85,7 +85,7 @@
           <tr>
             <td>A symptom whose root cause is unknown</td>
             <td>Investigation</td>
-            <td><code>/resolve-repo-problem</code></td>
+            <td><code>$resolve-repository-problem</code> in Codex</td>
           </tr>
           <tr>
             <td>A one-line cosmetic edit</td>
@@ -213,13 +213,13 @@
           </tr>
           <tr>
             <td>Only a symptom is known</td>
-            <td><code>/resolve-repo-problem "symptom"</code></td>
-            <td>Root cause and ranked fix plan exist; implementation remains separate.</td>
+            <td><code>$resolve-repository-problem</code> in Codex</td>
+            <td>Executable reproduction, supported cause, bounded repair or capability handoff, and proof.</td>
           </tr>
           <tr>
             <td>A mid-session fault must be diagnosed and fixed now</td>
-            <td><code>/resolve-incident "fault"</code></td>
-            <td>Diagnosis, bounded fix, verification receipt and incident record exist.</td>
+            <td><code>$resolve-repository-problem</code> in Codex</td>
+            <td>The same end-to-end resolver owns diagnosis, bounded repair, and proof.</td>
           </tr>
         </tbody>
       </table>

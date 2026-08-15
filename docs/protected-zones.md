@@ -1,8 +1,8 @@
 # Protected Zones
 
-> **When to read this file:** `/resolve-incident` Step 2 reads it to classify whether a proposed fix touches a protected zone. Maintainer: operator. Update condition: a new shared asset class appears in the repo, or a `/friday-checkup` round flags a missing zone.
+> **When to read this file:** Codex `$resolve-repository-problem` reads it before a bounded repair in this repository; other change workflows read it when classifying a proposed shared-resource edit. Maintainer: operator. Update condition: a new shared asset class appears in the repo, or a `/friday-checkup` round flags a missing zone.
 >
-> **Owner:** operator (Patrik). **Purpose:** pre-classification lookup for the incident pipeline — answers "is this path protected?" with a yes/no + required review path. **Update condition:** add a row when a real incident exposes a missing zone; do not add rows speculatively.
+> **Owner:** operator (Patrik). **Purpose:** pre-classification lookup for repository changes — answers "is this path protected?" with a yes/no + required review path. **Update condition:** add a row when a real incident exposes a missing zone; do not add rows speculatively.
 
 ---
 
@@ -20,7 +20,7 @@
 | `docs/audit-discipline.md` | Defines the structural change classes; editing it redefines which changes count as high-consequence | Risk-aware review required |
 | `docs/autonomy-rules.md` | Defines the operator-confirmation gates (Autonomy Rules #1–#10); editing it changes when Claude stops | Risk-aware review required |
 | `docs/qc-independence.md` | Defines the independent-review rule — which changes get reviewed, by whom, and how findings close | Risk-aware review if changing the rule; cosmetic edits may skip |
-| `logs/improvement-log.md` (schema block only) | Two-end contract between `/friday-act`, `/resolve-repo-problem`, and `/resolve-incident`; schema changes break consumers | Read schema block before any schema change; align all consumers in the same commit |
+| `logs/improvement-log.md` (schema block only) | Shared contract for `/friday-act`, `/resolve-improvement-log`, `/prime`, and remaining live appenders; schema changes break consumers | Read schema block before any schema change; align all live readers and writers in the same commit |
 
 ---
 
@@ -32,9 +32,9 @@
 
 ---
 
-## How to use this file mid-incident
+## How to use this file during a repository repair
 
-In `/resolve-incident` Step 2:
+Before `$resolve-repository-problem` applies a Route B correction in this repo:
 
 1. Read this file.
 2. For each file or directory the proposed fix would touch, check whether it matches any row above (exact match or glob match).

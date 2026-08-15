@@ -6,6 +6,10 @@ risk: {Low | Medium | High | Critical}
 protected-zone-touched: {yes | no}
 ---
 
+> **RETIRED 2026-08-15:** Historical shape from the retired `/resolve-incident`
+> command. No live workflow writes this template. Codex
+> `$resolve-repository-problem` does not create a replacement incident lifecycle.
+
 # Incident — {short title}
 
 ## Intake

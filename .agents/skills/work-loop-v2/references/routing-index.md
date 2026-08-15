@@ -6,7 +6,7 @@ content: the five route classes, the names that are not routes, the collision ta
 Claude-side-only owner changes. Routing behavior, admission, mode classification and the
 intake-result contract stay in `SKILL.md` and are not repeated here.
 
-### The index — Axcíon commands that may own a request (16)
+### The index — Axcíon commands that may own a request (14)
 
 - `/work-loop-v2` — bounded repository work no specialist owner covers.
 - `/develop-ai-resource` — a durable skill, command or agent may need to exist.
@@ -17,13 +17,17 @@ intake-result contract stay in `SKILL.md` and are not repeated here.
 - `/pm` — a question about an active project's own content.
 - `/tech-consult` — a business need with no technical plan yet.
 - `/open-items` — what is still unresolved in a project.
-- `/resolve-repo-problem` — something is wrong and the cause is not yet established.
-- `/resolve-incident` — a fault to classify, fix, verify and log end to end.
 - `/repo-dd` — due diligence on a repository's actual state.
 - `/analyze-workflow` — a deployed workflow's infrastructure end to end.
 - `/lean-repo` — accumulated operational complexity to diagnose.
 - `/implementation-triage` — is this proposed implementation worth doing.
 - `/reconcile` — did the output actually fulfil its mandate.
+
+### The index — Axcíon Codex specialist skills (1)
+
+- `$resolve-repository-problem` — one specific repository fault to diagnose, repair when bounded,
+  and prove end to end. This is the canonical Axcíon owner; do not route the same fault to generic
+  `diagnosing-bugs`.
 
 ### The index — Axcíon narrow specialist destinations (10)
 
@@ -38,7 +42,7 @@ Selected only where the request names their purpose. Never a generic fallback.
 - `/blindspot-scan` — an adversarial blind-spot scan; operator-invoked only.
 - `/contract-check` — has the artifact drifted from its original mandate.
 - `/expert-check` — a draft against reference principles.
-- `/memory-search` — has this been seen before; the recorded history in `logs/` and `audits/`. Returns historical evidence, never current state, so it never owns a live fault — `/resolve-repo-problem` and `/resolve-incident` keep that.
+- `/memory-search` — has this been seen before; the recorded history in `logs/` and `audits/`. Returns historical evidence, never current state, so it never owns a live fault — `$resolve-repository-problem` keeps that.
 
 ### The index — Matt skills that may own a request (13)
 
@@ -47,7 +51,8 @@ Selected only where the request names their purpose. Never a generic fallback.
 - `grill-with-docs` `[Claude-side only]` — an idea to sharpen, with a repo to leave the paper trail in.
 - `grill-me` (Matt — stateless interview, saves nothing) — an idea to sharpen with no repo under it.
 - `wayfinder` — an effort too foggy for one session; it produces decisions, not deliverables.
-- `diagnosing-bugs` `[Claude-side only]` — something is broken and resists a first glance.
+- `diagnosing-bugs` `[Claude-side only]` — generic debugging outside the Axcíon workspace. Inside
+  Axcíon, `$resolve-repository-problem` has precedence for every specific repository fault.
 - `triage` (Matt — incoming issues and PRs) `[Claude-side only]` — requests you did not create, piling up.
 - `implement` — build from a spec or a ticket.
 - `prototype` — a design question needing a runnable answer.
@@ -82,7 +87,7 @@ Discoverable, never a first route.
 
 ### The index — names that are not routes
 
-Named by class, not enumerated. The Axcíon surface is 95 commands and this index carries 26 of them on purpose; the rest are reachable, just not as first owners.
+Named by class, not enumerated. The Axcíon surface is 95 commands and this index carries 24 of them plus one Codex specialist on purpose; the rest are reachable, just not as first owners.
 
 - **Lifecycle phases** — `/create-skill`, `/improve-skill`, `/request-skill`, `/migrate-skill`, `/graduate-resource`: build phases under durable-resource work, reached by its owner.
 - **Conversational controls** — operator controls and duplicate entry points, not capability owners.

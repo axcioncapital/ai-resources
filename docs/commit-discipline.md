@@ -151,7 +151,7 @@ The shared status logs — `logs/improvement-log.md` and `logs/friction-log.md` 
 
 | Operation | Who performs it | Cross-session safety |
 |-----------|-----------------|----------------------|
-| **Atomic append** — add one new entry at end-of-file | `/improve`, `/resolve-incident`, `/resolve-repo-problem`, `session-feedback-collector` — all **mid-session** | **Benign.** git unions concurrent appends (worst case a data-safe keep-both append conflict). This is the operation the foreign-staging tripwire exempts. |
+| **Atomic append** — add one new entry at end-of-file | `/improve`, `session-feedback-collector` — both **mid-session** | **Benign.** git unions concurrent appends (worst case a data-safe keep-both append conflict). This is the operation the foreign-staging tripwire exempts. |
 | **In-place mutation** — flip an entry's `**Status:**` (`logged`→`applied`/`verified`), or archive an entry out to `*-archive.md` | `/friday-act` (status flips) and `/resolve-improvement-log` (archiving) in the maintenance cadence; `/fix-repo-issues` plan execution (a per-item "improvement-log status flip") — all in **dedicated, single-purpose sessions** | **Lost-update surface.** Rewrites existing lines; "keep both" is semantically wrong. Two sessions mutating overlapping lines collide at pull (Failure B) or clobber in a shared index (Failure A). |
 
 **The rule — in-place mutations belong to dedicated single-purpose sessions, never to ordinary work.** Status flips and archiving of these logs happen **only inside a dedicated, single-purpose session** — the maintenance cadence (`/friday-act`, `/resolve-improvement-log`, invoked from `/friday-checkup`) and `/fix-repo-issues` plan execution (which already mandates a *fresh* session and explicitly forbids running in the planning session). These sessions are operator-initiated one-at-a-time and do no ordinary work alongside the mutation. An **ordinary work session appends only**; it never reaches into an existing entry to change its status or move it out. Because every in-place mutator today is one of these dedicated-session paths, this rule **codifies an invariant that already holds** — it is a guardrail against future drift (a new command that "helpfully" flips a status as a side-effect of ordinary mid-session work would violate it), not a change to current behavior.
@@ -162,7 +162,7 @@ The shared status logs — `logs/improvement-log.md` and `logs/friction-log.md` 
 
 ## Foreign-files diagnostic shortcut
 
-When `git status` flags many `?? .claude/commands/*.md` files at workspace-root, check symlinks first — most are symlinks to canonical bodies in `ai-resources/`, not real new files from a runaway session. Run this before escalating to `/resolve-repo-problem`:
+When `git status` flags many `?? .claude/commands/*.md` files at workspace-root, check symlinks first — most are symlinks to canonical bodies in `ai-resources/`, not real new files from a runaway session. Run this before escalating to Codex `$resolve-repository-problem`:
 
 ```bash
 find .claude/commands -type l | wc -l

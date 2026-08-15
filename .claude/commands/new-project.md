@@ -386,7 +386,7 @@ All steps are idempotent — re-running `/new-project` on an existing direct pro
 
 5. **`settings.local.json`** — write the `additionalDirectories` grant exactly as enrichment step 3 (per-machine, gitignored, absolute path).
 
-6. **Fixed core symlink set (no auto-sync).** Symlink only the minimum core commands directly from ai-resources into the project. Do not install `shared-manifest.json` and do not run `auto-sync-shared.sh`. Specialists remain reachable on demand via the `additionalDirectories` grant; to opt into full sync later, add the auto-sync hook (enrichment step 2) and re-run `/new-project`.
+6. **Fixed core symlink set (no auto-sync).** Symlink the minimum core commands and the workspace-wide repository-problem skill directly from ai-resources into the project. Do not install `shared-manifest.json` and do not run `auto-sync-shared.sh`. Other specialists remain reachable on demand via the `additionalDirectories` grant; to opt into full sync later, add the auto-sync hook (enrichment step 2) and re-run `/new-project`.
 
    ```bash
    # Recompute AI_RES here — each Bash block is a fresh shell, so a value from step 4 does not persist.
@@ -402,7 +402,13 @@ All steps are idempotent — re-running `/new-project` on an existing direct pro
      [ -f "$SRCCMD" ] || { echo "WARN: core command missing in ai-resources: ${c}.md"; continue; }
      [ -e "$LNK" ] || ln -s "$SRCCMD" "$LNK"
    done
-   echo "Core command set symlinked (no auto-sync hook installed — direct project)."
+   mkdir -p "projects/{project-name}/.agents/skills"
+   SKILL_SRC="$AI_RES/.agents/skills/resolve-repository-problem"
+   SKILL_LNK="projects/{project-name}/.agents/skills/resolve-repository-problem"
+   [ -d "$SKILL_SRC" ] || { echo "ERROR: core skill missing: resolve-repository-problem"; exit 1; }
+   REL_SKILL_SRC=$(python3 -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$SKILL_SRC" "$(dirname "$SKILL_LNK")")
+   [ -e "$SKILL_LNK" ] || [ -L "$SKILL_LNK" ] || ln -s "$REL_SKILL_SRC" "$SKILL_LNK"
+   echo "Core command set and repository-problem skill symlinked (no auto-sync hook installed — direct project)."
    ```
 
 7. **Git repository setup** — exactly as engineered step 5b (init the project's own repo, untrack from workspace root, add to root `.gitignore`, initial commit, **no push**), using the GitHub URL from step 1 (direct projects have no `pipeline-state.md` to read it from).
@@ -411,7 +417,7 @@ All steps are idempotent — re-running `/new-project` on an existing direct pro
 
    **But when `logs/` is created — lazily or otherwise — provision `logs/scripts/` with it**, using the same copy block as engineered step 4a. `/wrap-session` Step 3 calls `logs/scripts/check-archive.sh` on a plain relative path with no walk-up, so a direct project that grows a `logs/` directory without `scripts/` fails that step at every wrap and never archives. Deferring the *register* is deliberate; deferring the *archiver* just reproduces the gap this rule exists to close.
 
-9. **Report and hand off.** Report: route = direct; project directory created (no `pipeline/`); lean `CLAUDE.md` written with the route line; `settings.json` (permissions + sanity hook, no auto-sync); `settings.local.json` grant; core command set symlinked (N of 10); git initialized, initial commit left unpushed. Skipped by design: pipeline, Stages 3a–5, Architecture Gate, the `/reconcile` pointer, and the `/repo-dd` / `/analyze-workflow` reminder. Then **author the requested deliverables directly** — research, drafting, and review still happen; they produce deliverables, not governance artifacts.
+9. **Report and hand off.** Report: route = direct; project directory created (no `pipeline/`); lean `CLAUDE.md` written with the route line; `settings.json` (permissions + sanity hook, no auto-sync); `settings.local.json` grant; core command set symlinked (N of 10); `resolve-repository-problem` skill symlinked; git initialized, initial commit left unpushed. Skipped by design: pipeline, Stages 3a–5, Architecture Gate, the `/reconcile` pointer, and the `/repo-dd` / `/analyze-workflow` reminder. Then **author the requested deliverables directly** — research, drafting, and review still happen; they produce deliverables, not governance artifacts.
 
 ## Gate Protocol
 
@@ -476,7 +482,8 @@ Otherwise, install the three pieces:
    {
      "_doc": "Lists project-owned files under .local. The auto-sync hook symlinks every other file from ai-resources/.claude/{commands,agents}/ on session start.",
      "commands": { "local": [ ... ] },
-     "agents": { "local": [ ... ] }
+     "agents": { "local": [ ... ] },
+     "skills": { "local": [], "shared": [] }
    }
    ```
 

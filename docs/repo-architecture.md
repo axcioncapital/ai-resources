@@ -42,7 +42,7 @@
 │   └── hooks/                                   # ai-resources hooks
 ├── audits/                                      # audit artifacts
 │   ├── risk-checks/                             # historical risk-review reports (command retired 2026-07-30)
-│   ├── incidents/                               # `/resolve-incident` per-incident full records
+│   ├── incidents/                               # historical records from retired `/resolve-incident`
 │   ├── pipeline-review-registry.md              # registry for `/pipeline-review` (subsumed `/audit-critical-resources` on 2026-05-29)
 │   ├── friday-checkup-YYYY-MM-DD.md             # weekly/monthly/quarterly checkup reports
 │   ├── permission-sweep-YYYY-MM-DD.md
@@ -58,7 +58,7 @@
 │   ├── coaching-log.md
 │   ├── coaching-data.md
 │   ├── improvement-log.md
-│   ├── incident-log.md                          # `/resolve-incident` per-incident index (append-only)
+│   ├── incident-log.md                          # historical retired-incident index (append-only)
 │   ├── innovation-registry.md
 │   ├── maintenance-observations.md
 │   ├── tweak-log.md                             # `/tweak` per-invocation audit record
@@ -146,7 +146,7 @@ Two obligations come with the rule, and both have already failed once in practic
 
 ## Symlink topology
 
-The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`, registered as a SessionStart hook) walks every project that has a `.claude/shared-manifest.json` and symlinks all `ai-resources/.claude/{commands,agents}/*.md` files into the project's `.claude/{commands,agents}/`.
+The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`, registered as a SessionStart hook) walks every project that has a `.claude/shared-manifest.json`. It symlinks all `ai-resources/.claude/{commands,agents}/*.md` files into the project's `.claude/{commands,agents}/`, the static `CORE_SHARED_SKILLS` set into `.agents/skills/`, and any additional skills named in the project's `skills.shared[]` manifest array.
 
 **Sync rules:**
 1. Existing files at the target are never overwritten (any kind: file, symlink, broken symlink).
@@ -156,8 +156,9 @@ The workspace's auto-sync hook (`ai-resources/.claude/hooks/auto-sync-shared.sh`
    - Both `EXCLUDE_*` lists must stay static, single-line, start-of-line literal assignments. `/fix-symlinks` re-reads them from the hook with `sed` to keep one source of truth; a computed or reflowed value parses to empty and silently disables its drift scan. Gate where the lists are *applied*, never how they are *assigned*.
 4. The hook walks upward from `$CLAUDE_PROJECT_DIR` to find the nearest `ai-resources/`, so it works for any project under the workspace root.
 5. Symlinks are relative (`../../../../ai-resources/.claude/...`).
+6. Agent skills remain manifest-opt-in except for the hook's static, one-line `CORE_SHARED_SKILLS` set. That exception is reserved for workspace-wide capabilities replacing globally distributed commands; as of 2026-08-15 it contains only `resolve-repository-problem`.
 
-**Effect:** When you add a new command or agent to ai-resources, every project picks it up automatically on the next session start. No manifest edits required unless the project needs to opt out.
+**Effect:** When you add a new command or agent to ai-resources, every project picks it up automatically on the next session start. Core skills do too. Other shared skills require an explicit `skills.shared[]` entry; commands and agents need no manifest edit unless the project needs to opt out.
 
 **Hooks are NOT auto-distributed** — they remain in their declared `.claude/hooks/` directory and are referenced explicitly from the corresponding `settings.json`.
 
@@ -236,7 +237,7 @@ Change classes (per `audit-discipline.md`):
 | `logs/friction-log.md` | Operator-observed friction events | `/friction-log` |
 | `logs/coaching-log.md` | Backward-looking session pattern ratings (5 dims) | `/coach` |
 | `logs/improvement-log.md` | Proposed improvements (Pending → Applied/Resolved) | `/improve`, `/resolve-improvement-log` |
-| `logs/incident-log.md` | Per-incident one-line index (resolved/escalated/deferred); full records in `audits/incidents/` | `/resolve-incident` |
+| `logs/incident-log.md` | Historical one-line index from the retired incident command; full records in `audits/incidents/` | No live writer; retain append-only history |
 | `logs/innovation-registry.md` | Auto-detected new resources / patterns | `detect-innovation.sh` hook |
 | `logs/maintenance-observations.md` | Repo-health observations from `/friday-act` | `/friday-act` |
 | `logs/tweak-log.md` | Per-invocation audit record of cosmetic edits applied via `/tweak` | `/tweak` |

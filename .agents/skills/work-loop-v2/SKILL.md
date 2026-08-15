@@ -1,6 +1,6 @@
 ---
 name: "work-loop-v2"
-description: "Use only when the request (1) names the Work Loop, (2) points at an existing logs/work-loop/{task-id}.md task, hand-off or assessment to act on, (3) says 'continue this project' or 'what is next on this project', (4) asks Codex to frame a bounded unit for another actor to execute, or (5) says 'y' or 'ur turn' in an active Work Loop hand-off. Then route it to the one capability that owns it — the operator, an Axcíon command, a Matt skill, or the Work Loop itself — and, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Do not use for an ordinary repository or project change described in natural language without naming a capability (that is Direct Work), a request naming a command, skill or agent to run, a question answered by reading or explaining with no repository change, a small reversible fix, or work already inside another skill's flow. Claude executes and makes every commit; you do neither."
+description: "Use only when the request (1) names the Work Loop, (2) points at an existing logs/work-loop/{task-id}.md task, hand-off or assessment to act on, (3) says 'continue this project' or 'what is next on this project', (4) asks Codex to frame a bounded unit for another actor to execute, or (5) says 'y' or 'ur turn' in an active Work Loop hand-off. Then route it to the one capability that owns it — the operator, an Axcíon command, a Codex specialist skill, a Matt skill, or the Work Loop itself — and, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Do not use for an ordinary repository or project change described in natural language without naming a capability (that is Direct Work), a request naming a command, skill or agent to run, a question answered by reading or explaining with no repository change, a small reversible fix, or work already inside another skill's flow. Inside admitted Work Loop units Claude executes and commits; specialist skills govern their own execution."
 ---
 
 # work-loop-v2 — Codex side
@@ -352,20 +352,19 @@ Mode belongs to an admitted Work Loop unit and to nothing else: a request routed
 **Who owns the next move** has three kinds of answer:
 
 - **The operator** — the next move is a decision only they can make: intent, priority, authority, or risk. Open nothing. End with the Next line naming the decision you need.
-- **A specialist owner** — an Axcíon command or Matt skill from the index, or a stage of the project's own workflow. Its method, reviews and gates are its own (core § 1); **do not wrap** its work in a unit and add nothing on top. Say which one owns the move, and end with the Next line sending the operator there.
+- **A specialist owner** — an Axcíon command, Codex skill or Matt skill from the index, or a stage of the project's own workflow. Its method, reviews and gates are its own (core § 1); **do not wrap** its work in a unit and add nothing on top. Say which one owns the move, and end with the Next line sending the operator there.
 - **The Work Loop** — bounded repository work no specialist owns. Take it through Admission below as one unit, and classify it in the core's own terms (core § 3 step 4): an **execution brief** when what advances the project is a change, a **discovery unit** when it is evidence about a named unknown. Operating evidence from real use is a discovery unit whose named unknown is how the capability behaves in use — never a new unit type.
 
 **"Continue this project" is one intake case, not a second router.** Its object is the project's own next move, so read the project's governing workflow and authoritative current state, find the nearest unmet exit condition in the project's own terms, and route that. Map the project's position using its own phase model and vocabulary. Never rename its phases, and never create a document, list or state entry to hold the mapping — the routing is a judgment made fresh from the durable sources each time. Only where a project has no phase model at all, orient with this fallback spine, as a diagnostic and nothing more: frame the need → resolve blocking uncertainty → choose the intervention → shape the pilot → deliver → test in real use → adopt, revise or stop. It creates no states to traverse, no artifacts, and no exit conditions of its own. Orientation is that judgment made explicit, inside the same single preparation pass and from durable sources only. It establishes nine things: the owning project; its approved outcome and current priority; the authoritative current-state source; the governing specialist workflow; the active phase; the completed phases and accepted decisions; the blockers and operator gates; the work ready now; and the work that is premature or unauthorised. Reach them the way `/project-next-steps` Step 2 reaches its own position — plan spine first, then the authoritative position source, then only what bears on the next step, stopping as soon as position is certain. Borrow that read cascade *approach* and nothing else: `/project-next-steps` remains a separate Claude-side operator-facing briefing with its own report, and neither capability calls or merges into the other. Return one line to the operator, in exactly this shape — `Current position → governing workflow and phase → what is ready → what is blocked → recommended next unit → why it matters.` — written in the project's own phase vocabulary, never renamed. **Establishing the nine is not carrying them.** The approved outcome and the current-state position must also reach the brief itself — the position at the precision its authoritative source supports, naming the active phase together with the last completed unit and any open unit, and its date where that date identifies the position, never collapsed to a phase label alone. The operator line above stays exactly as it is: this adds no stage, no second artifact, no repeated context block and nothing further the operator reads. Orient at four boundaries and no others: a Continue acceptance opening the next unit (core § 3 *Continuing*); a fresh task picking up existing work (§ The seam); a post-compaction reorientation; and a material context change — a new operator decision, an operator approval, or verified evidence that has changed the durable understanding of the project. A routine invocation is precisely one where none of those changed, and a routine invocation does not re-orient. Orientation writes nothing: it is not a stage, a gate or a checklist the operator sees, and it creates no orientation file, no phase copy and no state entry — the prohibition above covers the nine determinations too.
 
-### Repository-problem reference
+### Repository problems
 
-When intake concerns a repository problem, read
-[Repository Problem Resolution SOP](references/repository-problem-resolution-sop.md) before
-choosing the owner. Use it to qualify the observed problem, distinguish normal repair from
-structural resolution, select proportionate evidence, and understand the closure vocabulary.
-It is context rather than routing authority: this section still chooses the owner, and the
-executable core still governs any admitted Work Loop unit. Unless an approval record binds the
-SOP's exact content, carry it as non-governing operator source material.
+When one specific repository behavior, state, command, workflow, configuration or measurable
+performance characteristic is broken, `$resolve-repository-problem` owns the whole diagnosis and
+bounded-repair path. Route to it as a Codex specialist: open no Work Loop unit, resolve no executable
+core, and add no parallel state. Audits, backlog batches, feature work and already-approved
+implementation keep their own owners; they are not repository-problem invocations merely because
+they may change repository files.
 
 ### Classifying the mode
 
@@ -579,7 +578,7 @@ Context Engineering is live in the sections above, and governs how you prepare t
 
 The project-progression change (2026-08-06) adds the Routing section above and the core's fourth assessment outcome, Continue.
 
-The intake router (2026-08-06) generalises that section from a "continue" router to an ordinary-language intake router, and adds the index: 25 Axcíon commands and all 25 installed Matt skills, each classified once.
+The intake router (2026-08-06) generalises that section from a "continue" router to an ordinary-language intake router. The 2026-08-15 repository-problem migration adds the canonical Codex resolver and retires the former two-command triage/fix split; the routing index owns the current counts.
 
 `/memory-search` (2026-08-09) joins the index as a narrow specialist, taking the Axcíon side to 26. It adds no routing rule: a request naming past precedent has an owner it did not have before.
 

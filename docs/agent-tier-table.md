@@ -123,7 +123,7 @@ These agents exist as regular-file copies (not symlinks) in `projects/strategic-
 
 | State | Commands |
 |---|---|
-| Pins the tier (9) | `/refinement-pass`, `/friday-journal`, `/drift-check`, `/contract-check`, `/resolve-repo-problem`, `/leverage-idea`, `/cleanup-worktree`, plus skill-pipeline evaluators — all `opus`. (Count was 12 until 2026-07-30, when `/qc-pass`, `/risk-check` and `/refinement-deep` were retired.) |
+| Pins the tier (8) | `/refinement-pass`, `/friday-journal`, `/drift-check`, `/contract-check`, `/leverage-idea`, `/cleanup-worktree`, plus skill-pipeline evaluators — all `opus`. (`/resolve-repo-problem` left this Claude-command roster when retired on 2026-08-15; the replacement is a Codex skill and follows Codex skill metadata rather than Claude model-tier frontmatter.) |
 | Spawns `general-purpose` unpinned, not yet retrofitted (≥5) | `tweak`, `decide`, `graduate-resource`, `promote-workflow`, `wrap-session` |
 
 Tracked in `logs/improvement-log.md` 2026-07-12. Do not read the gap as tolerance for new unpinned spawns — **new commands pin from creation.**

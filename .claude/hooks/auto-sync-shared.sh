@@ -4,14 +4,11 @@
 # Walks ai-resources/.claude/{commands,agents}/ and symlinks every file into
 # the project, EXCEPT:
 #
-# Agent skills (ai-resources/.agents/skills/) work the OPPOSITE way: opt-in, not
-# sync-everything. A project gets a shared skill only by naming it in its
-# .claude/shared-manifest.json under skills.shared. Rationale: .agents/skills/ is
-# a curated per-project set, not a common toolbox — axcion-website holds 7
-# site-specific skills of its own, axcion-systems-builder wants exactly one
-# shared skill, and ai-resources holds migration leftovers (source-command-*)
-# plus probes (wl2-probe) that belong in no downstream project. An unconditional
-# sync would push all of those into all 28 projects.
+# Agent skills (ai-resources/.agents/skills/) are opt-in except for the small
+# CORE_SHARED_SKILLS set below. A project gets other shared skills only by naming
+# them in .claude/shared-manifest.json under skills.shared. The core exception is
+# reserved for workspace-wide capabilities that replace globally distributed
+# commands; everything else remains curated per project.
 #
 # Why this exists at all: a git worktree inherits the tracked manifest but NOT
 # the untracked symlinks, so before this a worktree got the Claude-side
@@ -88,11 +85,14 @@ EXCLUDE_AGENT_GLOBS="pipeline-stage-* session-guide-generator pipeline-review-* 
 LOCAL_COMMANDS=$(jq -r '.commands.local[]?' "$MANIFEST" 2>/dev/null)
 LOCAL_AGENTS=$(jq -r '.agents.local[]?' "$MANIFEST" 2>/dev/null)
 
-# Agent skills are OPT-IN — see the "Agent skills" note in the header. skills.shared
-# is the only *used* `shared` array in the manifest; commands/agents.shared are
-# documentation and the hook ignores them.
+# Keep this static and one-line: it is the explicit, reviewable exception to
+# manifest opt-in for skills that must be reachable wherever shared commands are.
+CORE_SHARED_SKILLS="resolve-repository-problem"
+
+# Agent skills are core + opt-in — see the header. skills.shared is the only
+# used `shared` array in the manifest; commands/agents.shared are documentation.
 LOCAL_SKILLS=$(jq -r '.skills.local[]?' "$MANIFEST" 2>/dev/null)
-SHARED_SKILLS=$(jq -r '.skills.shared[]?' "$MANIFEST" 2>/dev/null)
+SHARED_SKILLS="$CORE_SHARED_SKILLS $(jq -r '.skills.shared[]?' "$MANIFEST" 2>/dev/null)"
 
 in_list() {
   local needle="$1"; shift
@@ -157,10 +157,9 @@ for src in "$AI_RESOURCES"/.claude/agents/*.md; do
   synced="$synced ${name}.md"
 done
 
-# Sync agent skills — OPT-IN via skills.shared, and each source is a DIRECTORY
-# (holding SKILL.md), so the symlink target is a dir, not a file. A name listed in
-# skills.shared but absent from ai-resources is a manifest error, reported through
-# its own "$unknown" list rather than "$failed" (whose message is python3-specific).
+# Sync agent skills — core + OPT-IN via skills.shared. Each source is a DIRECTORY
+# holding SKILL.md, so the symlink target is a dir, not a file. A named source
+# absent from ai-resources is a manifest error, reported through "$unknown".
 for name in $SHARED_SKILLS; do
   in_list "$name" "$LOCAL_SKILLS" && continue
   src="$AI_RESOURCES/.agents/skills/$name"
