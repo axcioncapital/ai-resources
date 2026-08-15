@@ -1,14 +1,14 @@
 # Work Loop v2 dispatcher reliability closure report
 
 **Date:** 2026-08-15  
-**Purpose:** Define everything that still needs to be fixed in the dispatcher after the concurrency Phase 1, durable-state system, and autonomy-authority capability are finished and integrated.  
-**Decision:** Completing those three implementations makes the dispatcher materially safer, but does not by itself prove reliable dispatcher operation. A bounded transport-reliability package remains for supervised use. Safe unattended or walk-away operation additionally requires full-lifetime process containment and its own release proof.
+**Purpose:** Define everything that still needs to be fixed after the concurrency Phase 1, durable-state system, and autonomy-authority capability are integrated so the dispatcher can become a reliable supervised semi-autonomous controller.  
+**Decision:** The target is not full autonomy. The dispatcher should carry Claude and Codex through the normal implementation path without operator transport, continue only while state, evidence, authority and execution remain valid, and stop with an actionable durable handoff whenever a problem or operator-owned decision appears. Full unattended or walk-away operation is explicitly deferred and must not block this target.
 
 This report is self-contained and is intended to become the planning input for the next dispatcher-focused implementation. It does not authorize changes, reopen the three existing plans, or treat their current unfinished worktree state as completed evidence.
 
 Source citations use four checkout prefixes: `main/` is `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/`; `concurrency/` is `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-concurrency-fix-2/`; `durable-state/` is `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-durable-state/`; and `autonomy/` is `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-autonomy-authority/`. Line citations identify the inspected 2026-08-15 versions. Active worktree records support present-state observations only; the completed outcomes in Section 1 remain explicit assumptions.
 
-## 1. Assumptions and reliability definitions
+## 1. Assumptions and target definition
 
 This report deliberately assumes all of the following future conditions are true:
 
@@ -18,10 +18,11 @@ This report deliberately assumes all of the following future conditions are true
 
 The terms used below are intentionally separate:
 
-- **Reliable supervised dispatcher:** a human may launch and monitor the dispatcher, but does not need to reconstruct state, switch to an interactive bypass, or guess what happened. The dispatcher stops only for a genuine decision, permission, risk, partial effect or integration gate.
-- **Reliable unattended dispatcher:** the operator may walk away. The dispatcher must also contain the full lifetime of everything its actors create, survive interruption safely, prove its effective isolation on the release host, and return one durable, trustworthy result.
+- **Reliable supervised semi-autonomous dispatcher — the target:** Patrik launches a bounded task and Claude and Codex carry the normal implementation, assessment, correction and closure path without manual turn transport. The dispatcher stops only for a genuine decision, permission, risk, unexpected effect, failed proof or integration gate, then hands control to Patrik with enough durable evidence to choose and resume safely.
+- **Operator takeover:** a deliberate durable state in which no further actor is launched until Patrik selects an explicit recovery option. It is successful fail-closed behavior, not a dispatcher failure.
+- **Reliable unattended dispatcher — deferred:** the operator may walk away. The dispatcher must additionally contain the full lifetime of everything its actors create, survive interruption safely, prove its effective isolation on the release host, and return one durable, trustworthy result.
 
-Passing the supervised bar does not imply the unattended bar.
+Passing the supervised semi-autonomous bar is the release objective of this report. It does not imply the unattended bar, and the unattended bar is not required for adoption of the target system.
 
 ## 2. What the assumed implementations already solve
 
@@ -69,7 +70,93 @@ Primary evidence:
 
 These closures are dependencies. The next implementation should verify that it preserves them, not redesign them.
 
-## 3. Remaining blockers for reliable supervised dispatcher operation
+## 3. Target operating model
+
+### 3.1 Normal automatic path
+
+The dispatcher owns routine turn transport inside one approved bounded task:
+
+1. Patrik launches a prepared task with its checkout, intended outcome, success criteria, exclusions and capability envelope already settled.
+2. The dispatcher preflights the complete runtime, validates durable state and ownership, and acquires the shared task and checkout leases.
+3. Claude performs the bounded implementation and makes one valid durable handback.
+4. The dispatcher validates the result, state transition, Git facts, changed paths, budgets and process observations.
+5. Codex assesses the implementation against the frozen brief and evidence.
+6. On `Pass`, Claude performs the bounded closure and the dispatcher verifies clean completion.
+7. On an explicitly pre-authorized, bounded correction, Claude may perform one correction and Codex reassesses it; successful reassessment proceeds through the defined closure path.
+8. On any other outcome, or on a second non-pass assessment, the dispatcher enters operator takeover.
+
+The initial release should permit at most one correction cycle. Increasing that budget is a later evidence-based decision, not a default.
+
+### 3.2 Automatic continuation corridor
+
+The dispatcher may continue without asking Patrik only while all of these remain true:
+
+- the task identity, checkout, objective, success criteria and exclusions are unchanged;
+- the next action is inside the approved capability and write-path envelope;
+- durable state, ownership, leases and Git facts agree;
+- the preceding actor produced its required result and state transition;
+- no unapproved permission, external action or consequential decision is required;
+- no unexpected repository effect, process, evidence gap or budget breach exists;
+- the next launch remains inside the approved hop, deadline, usage and correction budgets.
+
+If any condition is false or cannot be proven, continuation is forbidden and operator takeover begins.
+
+### 3.3 Operator takeover contract
+
+“Stop and ask Patrik” must be a first-class protocol, not merely a non-zero exit. The dispatcher atomically writes the terminal transport result, updates the canonical task record to the legal blocked state, and emits one compact operator handoff packet containing:
+
+- what the dispatcher was attempting and which actor/stage failed;
+- the exact stop classification and why automatic continuation is forbidden;
+- whether a model request started, its run/session identifier, duration and recorded usage;
+- state hash, HEAD, index/working-tree condition and changed paths before and after;
+- whether partial implementation exists and whether it is committed;
+- top-level actor and observed descendant status;
+- whether leases were released or conservatively retained, and why;
+- exact result, log and raw-capture paths;
+- two or three safe recovery choices when more than one exists;
+- the recommended choice when repository evidence makes one clearly safer;
+- the exact resume command or action after Patrik decides.
+
+The canonical task state becomes:
+
+```yaml
+status: blocked
+turn: operator
+```
+
+Its blocker and next action must agree with the terminal result. The transport result records execution facts; the durable task record remains semantic authority. No dashboard, notification service or second state system is required for the initial release—the terminal summary plus canonical blocked record is the authoritative request for Patrik.
+
+### 3.4 Mandatory operator-stop classes
+
+The dispatcher stops for Patrik when any of the following occurs:
+
+- a permission denial requires a different permission mode;
+- Codex reports a material defect outside the one pre-authorized correction cycle;
+- scope, architecture, priority, success criteria or operator intent becomes unclear;
+- a model-started actor fails, times out or returns without its required final result;
+- partial effects exist without a valid handback;
+- state, ownership, lease or Git facts are invalid, ambiguous or contradictory;
+- an unexpected nested process or uncertain teardown is observed;
+- hop, deadline, correction or usage budget is exhausted;
+- authentication or runtime capability becomes unavailable after preflight;
+- the work would require push, merge, deployment, credentials, destructive shared-state action or another external consequence not explicitly delegated;
+- evidence is missing or insufficient to distinguish safe continuation from a repeated or conflicting action.
+
+Only named zero-model preflight failures may recover automatically, and only when state, HEAD, index and working tree are unchanged and the correction is deterministic.
+
+### 3.5 Resume contract
+
+Operator takeover never resumes by blindly retrying the failed actor. Resume follows this sequence:
+
+1. Patrik selects or supplies one explicit recovery instruction.
+2. The decision and any newly approved permission, scope or correction authority are recorded in canonical state/run evidence.
+3. The dispatcher starts a new run identity and revalidates task state, ownership, leases, HEAD, working tree, partial effects, runtime and budgets.
+4. It resumes from the durable next action rather than replaying the previous request.
+5. If repository facts drifted while waiting for Patrik, it stops again with an updated handoff instead of applying a stale decision.
+
+A lease is released only when the dispatcher can prove release is safe. Uncertain process teardown pins the applicable lease and makes that uncertainty part of the operator handoff.
+
+## 4. Remaining blockers for reliable supervised semi-autonomous dispatcher operation
 
 ### R1 — Carry operator-approved permissions through the dispatcher
 
@@ -157,11 +244,12 @@ The dispatcher currently defaults to four hops and permits an unset whole-run de
 Required change:
 
 - Change the normal prepared-brief maximum from four hops to three: implement, assess, then close or perform the authorized correction/closure.
-- Require a finite whole-run deadline for unattended use; choose and record an explicit deadline for supervised multi-hop use.
+- Give the optional correction path its own explicit ceiling of one correction and one reassessment rather than silently inheriting a larger general hop limit.
+- Choose and record a finite whole-run deadline for every supervised multi-hop run.
 - Parse and record per-hop and cumulative input, cached-input, output and reasoning usage where the actor exposes it.
 - Stop before another launch when the hop, deadline or approved usage budget is exhausted.
 - Give correction work a smaller execution budget and no nested AI allowance by default.
-- Warn when active task state exceeds approximately 12 KB and refuse unattended continuation above approximately 16 KB until compacted.
+- Warn when active task state exceeds approximately 12 KB and refuse another automatic actor launch above approximately 16 KB until compacted.
 - Enforce a compact Work Loop hot path and a dispatcher-specific noninteractive route that loads exact state/evidence rather than the full interactive orientation path.
 - Select model and reasoning tier only per invocation; never introduce a repository-wide model default.
 
@@ -204,7 +292,7 @@ Required change for supervised reliability:
 - If symmetric prevention cannot be enforced, expose that as an explicit accepted limitation; never report `nested=0` when the result is only unobserved.
 - Keep approved nested work at zero by default. Any future exception needs an invocation count and the same whole-run deadline.
 
-This closes misleading supervised claims. It does not solve full-lifetime containment; that is the unattended-only blocker in Section 4.
+This closes misleading supervised claims. It does not solve full-lifetime containment; that deferred problem is recorded in Section 5.
 
 Primary evidence:
 
@@ -237,10 +325,12 @@ After R1–R8, run the following in clean dedicated worktrees through the actual
 
 1. A normal bounded implementation repeated at least three times.
 2. A deliberate permission denial, honest classification, explicit operator-approved `acceptEdits`, and successful resume inside the dispatcher.
-3. A controlled actor timeout or termination after partial effects, followed by deterministic status and recovery with no automatic retry.
-4. A missing-final-result scenario that becomes a durable blocker rather than false success.
-5. An arbitrarily named linked-worktree run proving complete local runtime and Git identity.
-6. Regression of the shared lease and durable-state seams after all dispatcher changes.
+3. A Codex non-pass outside the correction envelope that produces `blocked/operator`, an actionable handoff packet, an explicit Patrik decision, full revalidation and successful resume.
+4. One pre-authorized correction cycle followed by Codex reassessment; a second non-pass must stop for Patrik.
+5. A controlled actor timeout or termination after partial effects, followed by deterministic status and recovery with no automatic retry.
+6. A missing-final-result scenario that becomes a durable blocker rather than false success.
+7. An arbitrarily named linked-worktree run proving complete local runtime and Git identity.
+8. Regression of the shared lease and durable-state seams after all dispatcher changes.
 
 Each trial must record exact task/checkout, permission mode, actor/session identifiers, hop and deadline data, state and HEAD before/after, changed paths, usage, terminal result, capture path and operator intervention. One success is not repeat reliability.
 
@@ -249,9 +339,9 @@ Primary evidence:
 - `main/plans/work-loop-v2-v0.2/pre-launch-preparations/dispatcher-semi-agentic-readiness-fixes-2026-08-11.md:196-228`
 - `autonomy/plans/work-loop-v2-v0.2/work-loop-v2-autonomy-authority-capability-implementation-plan-v0.1.md:1374-1420`
 
-## 4. Additional blockers for unattended or walk-away reliability
+## 5. Deferred work for possible unattended or walk-away reliability
 
-The supervised package above is not enough for unattended release.
+The supervised semi-autonomous target does not require the work in this section. Unattended mode should remain disabled or explicitly experimental. These items are retained only to prevent the supervised release from being misrepresented as walk-away autonomy and to define the entry conditions for any future unattended programme.
 
 ### U1 — Full-lifetime descendant containment
 
@@ -298,7 +388,7 @@ Primary evidence:
 - `main/plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md:120-140`
 - `main/plans/work-loop-v2-v0.2/unattended-operation-plan-v0.2.md:567-580`
 
-## 5. Implementation-efficiency fixes that should travel with the package
+## 6. Implementation-efficiency fixes that should travel with the package
 
 These do not independently create safety, but leaving them open recreates the slow and failure-prone implementation pattern that produced the August 14 report:
 
@@ -315,7 +405,7 @@ Primary evidence:
 - `concurrency/plans/work-loop-v2-v0.2/dispatcher-work-loop-harness-autonomy-improvement-report-2026-08-14.md:223-291`
 - `concurrency/plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh:788-791`
 
-## 6. Recommended implementation order
+## 7. Recommended implementation order
 
 ### Change set A — Close deterministic transport truth
 
@@ -341,41 +431,44 @@ Primary evidence:
 
 ### Change set D — Prove supervised reliability
 
-1. Run the live dispatcher trial matrix in Section 3 R9.
+1. Run the live dispatcher trial matrix in Section 4 R9.
 2. Correct only demonstrated material failures.
 3. Run the final controller, shared-lease, validator and owner gates synchronously.
 4. Obtain an independent review and make an explicit supervised adopt/shrink/stop decision.
 
-### Change set E — Decide unattended architecture separately
+### Change set E — Freeze the unattended boundary
 
-1. Select or reject a full-lifetime containment mechanism.
-2. Prove effective isolation on the release host.
-3. Run the bounded walk-away proof.
-4. Make a separate unattended release decision.
+1. Keep unattended mode disabled or explicitly experimental after the supervised release.
+2. Document that Gate SA does not satisfy full-lifetime containment or walk-away proof.
+3. Open a separate architecture task only if Patrik later decides unattended operation has enough value to justify U1–U3.
 
-## 7. Acceptance gates
+## 8. Acceptance gates
 
-### Gate S — Reliable supervised dispatcher
+### Gate SA — Reliable supervised semi-autonomous dispatcher
 
 All statements must be proven:
 
 - Every exit produces one durable, atomic terminal result with truthful `actor_started` and before/after facts.
 - Missing evidence and zero-without-transition stop as blockers, never as completion.
+- The normal implementation-assessment-closure path completes without Patrik manually carrying turns between Claude and Codex.
 - An operator-approved permission change resumes inside the dispatcher without `bypassPermissions`.
 - No started model request is automatically retried.
-- A normal prepared task completes within three hops or stops honestly.
+- A normal no-correction prepared task completes within three hops or stops honestly; the optional correction path stays within its separately declared one-correction/one-reassessment ceiling.
+- At most one explicitly pre-authorized correction cycle runs automatically; a second non-pass stops for Patrik.
 - Deadline, hop, usage, correction and state-size controls prevent another disproportionate run.
 - An arbitrary supported worktree passes only with its complete local runtime and Git identity.
 - Status explains liveness, partial effects, last result and safe recovery without raw-log reconstruction.
+- Every non-routine stop creates one legal `blocked/operator` record and one actionable handoff packet; no actor launches while that state remains blocked.
+- Resume requires Patrik's explicit decision, a new run identity and revalidation of state, ownership, leases, Git facts, partial effects, runtime and budgets.
 - Claude and Codex nested-actor claims match their actual enforcement and observation.
-- Three repeated normal live dispatcher runs plus permission, interruption, missing-result and linked-worktree trials pass.
+- Three repeated normal live dispatcher runs plus permission, operator-takeover/resume, one-correction, interruption, missing-result and linked-worktree trials pass.
 - The full regression suite remains green and no concurrency, durable-state or autonomy-authority invariant regresses.
 
-Passing Gate S justifies **Reliable for supervised semi-agentic use**.
+Passing Gate SA justifies **Reliable supervised semi-autonomous dispatcher**.
 
-### Gate U — Reliable unattended dispatcher
+### Gate U — Optional future unattended release
 
-Gate S must pass, plus:
+Gate SA must pass, plus:
 
 - No actor descendant can escape the run's accounting and stop boundary.
 - Unknown teardown pins the lease and blocks checkout reuse.
@@ -384,14 +477,15 @@ Gate S must pass, plus:
 - A bounded walk-away pilot and later representative runs end predictably with durable evidence and no push.
 - An independent review approves the exact unattended operating envelope.
 
-Passing Gate U justifies **Reliable for the approved unattended envelope**. It does not justify autonomous project prioritization or unrestricted external action.
+Gate U is not part of the current implementation target. If Patrik later chooses to pursue it, passing Gate U would justify **Reliable for the specifically approved unattended envelope**. It would not justify autonomous project prioritization or unrestricted external action.
 
-## 8. Non-goals
+## 9. Non-goals
 
 Do not solve this closure package by adding:
 
 - a scheduler, queue, registry, database, agent manager, heartbeat service or second state system;
 - automatic task selection, project prioritization or strategic routing;
+- full unattended or walk-away release as part of the supervised semi-autonomous implementation;
 - automatic worktree creation, merge, push, deployment, branch deletion or destructive cleanup;
 - broader permissions, longer timeouts or model farms as substitutes for deterministic evidence;
 - a merged attended-carrier/unattended-dispatcher command surface;
@@ -407,8 +501,13 @@ Assuming concurrency Phase 1, durable state and autonomy authority are all compl
 2. universal results and evidence handshakes;
 3. retry, hop, deadline, usage and context controls;
 4. complete headless runtime preflight;
-5. truthful nested-actor controls and status/recovery;
-6. live dispatcher-specific adoption proof;
-7. full-lifetime containment and walk-away proof if unattended release is desired.
+5. truthful nested-actor controls, actionable operator takeover and safe resume;
+6. live dispatcher-specific semi-autonomous adoption proof.
 
-Items 1–6 are a moderate, bounded reliability implementation. Completing and proving them is enough to call the dispatcher reliable for supervised work. Item 7 is the genuinely hard architectural problem and should remain a separate unattended-release programme.
+These six items are a moderate, bounded reliability implementation. Completing and proving them is enough to call the dispatcher reliable for the intended supervised semi-autonomous role: Claude and Codex continue together while the task stays inside its approved corridor, then stop safely and return control to Patrik when it does not.
+
+Full-lifetime containment and walk-away proof remain the genuinely hard architectural problem. They are explicitly deferred, do not block the target release, and should be opened only as a separate future programme if unattended operation later becomes valuable enough to justify them.
+
+The governing operational rule is:
+
+> Continue automatically while state, evidence, authority and execution remain valid. On any ambiguity, unexpected effect or unapproved decision, preserve the evidence, enter `blocked/operator`, stop safely and hand control to Patrik.
