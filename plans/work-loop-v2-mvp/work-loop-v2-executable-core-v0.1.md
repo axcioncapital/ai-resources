@@ -23,7 +23,9 @@ with the approved objective, and judges whether the evidence supports moving on.
 **Claude** owns repository reality. It checks claims against the live repository, implements, tests,
 and produces evidence.
 
-**The operator** owns priorities, scope, and any decision that is hard to reverse.
+**The operator** owns intent and priorities, the approved solution envelope, and the decisions § 7
+reserves to them. Consequence alone does not move a decision to the operator; it raises containment,
+evidence and review (§ 8).
 
 Four limits on those roles:
 
@@ -56,8 +58,9 @@ If the work is small and reversible, it is Direct Work even when one of those is
 what was learned, close the task, and finish the work directly. Do not keep a task in the loop only
 because it started there.
 
-Two lanes exist in this version: **Direct** and **Standard**. There is no third lane. Genuinely
-consequential work stops and goes to the operator instead (§ 7).
+Two lanes exist in this version: **Direct** and **Standard**. There is no third lane. Consequential
+work runs in Standard with stronger containment, evidence and review; it goes to the operator only
+when § 7 reserves the decision to them.
 
 ---
 
@@ -446,8 +449,10 @@ These five apply to every unit, in every lane, always.
    malformed, stale, or belongs to a different task, report it and change nothing.
 3. **An absence claim must say what was searched.** "There is no such field" is not a finding.
    "There is no such field — searched the model, the view and their tests" is.
-4. **Scope and success criteria do not change quietly.** A change to either is stated out loud, and
-   a change to scope goes to the operator.
+4. **Scope and success criteria do not change quietly.** A change to either is stated out loud, never
+   made silently. The decision is the operator's when the change is one they reserve — the intended
+   outcome or the priority, a material expansion of scope, or the removal of an exclusion (§ 7). A
+   change that is none of those is disclosed and proceeds.
 5. **Evidence must be able to fail.** If the check would pass whatever happened, it is not evidence.
    Build the failing case first, then show it passing.
 
@@ -457,21 +462,61 @@ These five apply to every unit, in every lane, always.
 
 Stopping is a normal outcome. Each trigger below names who to stop for.
 
+**Consequence is not itself a trigger.** Higher consequence means stronger containment, stronger
+evidence and a proportional review — not that the decision moves to someone else (§ 8). A
+consequential change whose outcome, envelope and capabilities are already delegated stays with the
+agent and is done more carefully. What moves a decision is the class it falls in, and the classes are
+listed here.
+
 **Hand back to Codex** — write the finding into the state file, set `turn: codex`, commit, and stop:
 
-- A claim the brief rests on is false (rule 1).
+- A claim the brief rests on is false (rule 1), or a load-bearing premise is still unsupported after
+  bounded investigation.
 - The work would go outside the approved scope, or touch something the brief excluded.
 - The required evidence cannot be produced.
+- The approved plan is materially invalid, and repairing it would go outside the solution envelope.
+- A capability the work needs is already authorized, but the available technical means cannot enforce
+  it safely. That is a technical or infrastructure problem, and the operator cannot waive it: what is
+  missing is containment, not permission.
+- The action would bypass, weaken, or self-expand the control system. The operator is reached only
+  where the remedy would itself materially change the policy governing agent authority, and then
+  through that separate class below — never through this clause.
 
 **Stop for the operator** — write the question into the state file, set `turn: operator`, commit, and
 stop:
 
-- The change would be hard to reverse.
-- Proceeding would need a settled decision to be reopened.
+- The intended outcome or the priority would change.
+- Scope would expand materially, or an exclusion would be removed.
+- Product or business behaviour must be chosen and existing authority does not determine it.
+- The approved operating model, a material architecture commitment, the cost or risk profile, or the
+  governance model would change.
+- Material residual risk would be accepted that was not already delegated — including the case where
+  the correction was not enough and the choice among the options in § 3 is really about accepting
+  risk.
+- The authorized capability envelope would expand, or a capability the work needs has not been
+  granted.
+- Production deployment, public or customer communication, credential use, or destructive action on
+  shared state would be authorized, and no separate explicit delegation already covers it.
+- Operator intentions are genuinely tied or in conflict, or governing sources stay materially tied
+  after the authority hierarchy has been applied.
+- The policy governing agent authority would materially change.
+- An **operator-owned** settled decision would have to be reopened — one the operator settled
+  themselves, or one falling in a class this list reserves to them. A settled implementation or
+  technical decision delegated inside the approved solution envelope does **not** transfer merely
+  because it is settled: reopening it is disclosed, stays subject to every other trigger here, and
+  remains the agent's to make on the evidence.
+- Continuing would require inventing operator intent.
 - The state file is stale or belongs to another task, and it is not obvious which is correct
   (rule 2).
-- The correction was not enough, and the choice among the options in § 3 is really about accepting
-  risk.
-- Anything else that is genuinely consequential.
 
-In this version, "stop and bring this to the operator" is the answer for consequential situations.
+These classes are what stop the work. Everything outside them proceeds under § 8, with containment,
+evidence and review scaled to what is at stake.
+
+---
+
+## 8. The governing autonomy rule
+
+> **Within the approved solution envelope, resolve what evidence can resolve, exercise professional technical judgment, and use only pre-authorized capabilities. Consequence increases containment and verification; it does not by itself transfer the decision to the operator. Escalate only when continuing requires operator-owned intent, accepted risk, a material change outside the solution envelope, or expansion of the authorized capability envelope. Stop when a load-bearing premise or required verification cannot be established, or when continuing would bypass the control system.**
+
+This rule governs §§ 1–7 above wherever they touch autonomy: § 7 lists the classes that escalate it,
+and § 6 rule 4 states how it applies to a change of scope.
