@@ -51,7 +51,8 @@
 #   Sets: WL_LEASE_ROOT, WL_LEASE_TASK_DIR, WL_LEASE_CHECKOUT_DIR
 #
 # wl_lease_acquire <program> <pid>
-#     0  both leases acquired
+#     0  both leases acquired — including over a lease whose recorded holder is
+#        POSITIVELY absent and which carries no pin evidence (see the probe below)
 #     1  the lease root could not be created  (infrastructure, not contention)
 #     2  refused — see WL_LEASE_RESOURCE / WL_LEASE_REFUSAL
 #   On 2, sets: WL_LEASE_RESOURCE   task | checkout
@@ -61,6 +62,17 @@
 #                 — empty when the holder's metadata is unreadable. Empty is a
 #                   value the caller renders in its own words; it is never a
 #                   reason to treat the lease as free.
+#               WL_LEASE_HOLDER_STATE   why this lease refused, in one word:
+#                 LIVE       the recorded holder is visible and signallable
+#                 UNKNOWN    inspection was inconclusive — missing, empty,
+#                            malformed, zero or zero-prefixed pid, or a `kill -0`
+#                            failure that did not prove absence
+#                 PINNED     pin evidence, which outranks any liveness question
+#                 CONTENDED  the holder is absent, but another run was reclaiming
+#                            the lease and this one did not win the reclaim
+#               WL_LEASE_HOLDER_REASON  the sentence behind that word, for the
+#                 caller's own message. Additive: every existing reader of the
+#                 four fields above is unaffected, and no return code changed.
 #
 # wl_lease_pin <survivors> <unknown> [task-label]
 #     0  pinned, and EVERY lease this run owns carries durable evidence that a
@@ -115,8 +127,16 @@ WL_LEASE_HOLDER_PID=''
 WL_LEASE_HOLDER_TASK=''
 WL_LEASE_HOLDER_CHECKOUT=''
 WL_LEASE_HOLDER_PROGRAM=''
+WL_LEASE_HOLDER_STATE=''
+WL_LEASE_HOLDER_REASON=''
 WL_LEASE_CHECKOUT=''
 WL_LEASE_TASK=''
+
+# How many times acquisition will re-read a lease whose holder is absent before
+# it gives up and refuses. Each round is a handful of syscalls, and the only
+# thing that costs rounds is another run reclaiming the SAME stale lease at the
+# same moment. Exhausting them refuses; it never admits.
+WL_LEASE_RECLAIM_ROUNDS=25
 
 wl_lease__key() { # string -> the 16-char name fragment
   printf '%s' "$1" | shasum -a 256 | cut -c1-16
@@ -165,6 +185,181 @@ wl_lease__write_holder() { # lease-dir program pid
   return 0
 }
 
+# -------------------------------------------------- PID inspection (3 states)
+# Reproduced from the dispatcher's proven probe (dispatch.sh, pid_state) so that
+# both transports reach the same verdict through this one helper rather than
+# each classifying pids for itself. The dispatcher keeps its own copy for the
+# paths that do not go through a lease; what must never exist again is a SECOND
+# classification behind lease admission.
+#
+# `kill -0` failing is NOT proof that a process is gone. It fails for two very
+# different reasons, and telling them apart is the whole of this function:
+#
+#   ESRCH  "no such process"          -> the pid really is absent
+#   EPERM  "operation not permitted"  -> the pid may well be ALIVE; this caller
+#                                        is simply not allowed to look at it
+#
+# Phase 0 measured the cost of conflating the two: `--status` run inside an
+# ordinary sandbox reported a genuinely live dispatcher as a stale lock and told
+# the operator to delete a lock that was doing its job. So only a message that
+# positively says "no such process" may conclude ABSENT. Everything else is
+# UNKNOWN. The asymmetry points one way on purpose — a false UNKNOWN costs one
+# more look, a false ABSENT costs two live runs in one working tree.
+#
+# Emits ONE line, "STATE|reason", rather than setting a global beside its return
+# value: callers read it through $( ), which is a subshell, so a global assigned
+# in here would be discarded on the way out.
+wl_lease__pid_state() { # pid -> "LIVE|reason" / "ABSENT|reason" / "UNKNOWN|reason"
+  local wl_pid="${1:-}" wl_err wl_rc
+  # A usable pid matches [1-9][0-9]* — and "numeric" is NOT the same test. `0`
+  # and `00` are numeric, and both are catastrophic at kill(2), because pid 0
+  # means "every process in the CALLER'S OWN process group": `kill -0 0`
+  # SUCCEEDS, so a corrupt lease would read as a live holder. A zero-PREFIXED
+  # value is the quiet version — `007` reaches kill(2) as pid 7, so the verdict
+  # is a true statement about an unrelated process presented as a statement
+  # about this lease. None of these is evidence: they are a corrupt lease, and a
+  # corrupt lease is something this function cannot inspect.
+  case "$wl_pid" in
+    '')       printf 'UNKNOWN|the lease directory holds no readable pid file\n'; return 0 ;;
+    *[!0-9]*) printf "UNKNOWN|the lease's pid is not a number: '%s'\\n" "$wl_pid"; return 0 ;;
+    0*)       printf "UNKNOWN|the lease's pid is not a usable process id: '%s' — a real pid matches [1-9][0-9]*, and 0 would mean this caller's own process group\\n" "$wl_pid"; return 0 ;;
+  esac
+
+  # LC_ALL=C so the matched text is the C-locale wording rather than whatever the
+  # ambient locale renders. Matched case-insensitively because the shells that
+  # run this differ: bash says "No such process", zsh "no such process".
+  wl_err="$(LC_ALL=C kill -0 "$wl_pid" 2>&1)"; wl_rc=$?
+  if [ "$wl_rc" -eq 0 ]; then
+    printf 'LIVE|kill -0 succeeded — the process is visible and signallable\n'; return 0
+  fi
+  # CAPTURED above and matched here, never `kill ... | grep`: a caller running
+  # under `pipefail` would have the failing kill — the very outcome being tested
+  # for — set the pipeline's status and turn a match into a miss.
+  case "$wl_err" in
+    *[Nn]o\ such\ process*)
+      printf 'ABSENT|kill -0 reported: no such process\n'; return 0 ;;
+  esac
+
+  printf 'UNKNOWN|kill -0 failed WITHOUT proving absence: %s\n' \
+    "$(printf '%s' "${wl_err:-<no error text>}" | tr '|\n' '  ')"
+  return 0
+}
+
+# Acquire ONE resource, reclaiming it first if — and only if — its recorded
+# holder is positively absent and it carries no pin evidence.
+#
+# WHY A RECLAIM MARKER AND NOT A BARE RENAME. Renaming the stale directory away
+# is atomic, so it looks like enough arbitration on its own. It is not, and the
+# hole is only visible in the sequence:
+#
+#   A probes ABSENT ... B probes ABSENT
+#   A renames the stale lease away, deletes it, recreates it, writes its own pid
+#   B — still acting on a verdict about a directory that no longer exists —
+#     renames A's LIVE lease away and takes the task as well
+#
+# Two winners, out of two individually correct decisions. So the rename, the
+# recreate and the holder write happen INSIDE a marker that only one reclaimer
+# holds at a time, which closes the window between A's delete and A's recreate.
+# An ordinary contender never touches the marker: its `mkdir` on the lease
+# directory already fails against A's fresh lease.
+#
+# THE MARKER IS A REFUSAL RISK, NEVER AN ADMISSION RISK. A run killed inside
+# that window — a few syscalls wide — leaves the marker behind, and later runs
+# then refuse with CONTENDED naming the path to remove. That is the safe
+# direction, and it is stated in the refusal rather than left for the operator
+# to work out.
+wl_lease__acquire_one() { # lease-dir program pid -> 0 acquired | 2 refused
+  local wl_d="$1" wl_prog="$2" wl_pid="$3"
+  local wl_round=0 wl_verdict wl_mark wl_tomb
+  wl_mark="$wl_d.reclaiming"
+
+  while :; do
+    if mkdir "$wl_d" 2>/dev/null; then
+      wl_lease__write_holder "$wl_d" "$wl_prog" "$wl_pid"
+      return 0
+    fi
+
+    wl_lease__read_holder "$wl_d"
+
+    # PIN EVIDENCE IS CHECKED BEFORE LIVENESS, always. A pinned lease is manual
+    # by contract, and its launcher is USUALLY dead — that is what pinning is
+    # for. Probing first would reclaim exactly the leases whose survivors the
+    # operator was told to inspect, deleting the reason they exist.
+    if [ -f "$wl_d/survivors" ]; then
+      WL_LEASE_REFUSAL='pinned'
+      WL_LEASE_SURVIVORS="$wl_d/survivors"
+      WL_LEASE_HOLDER_STATE='PINNED'
+      WL_LEASE_HOLDER_REASON='the lease carries durable pin evidence, and a pinned lease is never reclaimed automatically'
+      return 2
+    fi
+
+    wl_verdict="$(wl_lease__pid_state "$WL_LEASE_HOLDER_PID")"
+    WL_LEASE_HOLDER_STATE="${wl_verdict%%|*}"
+    WL_LEASE_HOLDER_REASON="${wl_verdict#*|}"
+
+    # LIVE and UNKNOWN are both held. Only positive absence is stale.
+    if [ "$WL_LEASE_HOLDER_STATE" != ABSENT ]; then
+      WL_LEASE_REFUSAL='held'
+      return 2
+    fi
+
+    # A `survivors` entry that is NOT a readable pin record — a directory where
+    # the file belongs, which is precisely what a lost pin write leaves behind.
+    # `-f` above decides the refusal WORDING and stays exactly the test
+    # wl_lease_status uses; `-e` here decides whether reclaim may run at all,
+    # and it has to be the wider test. A pin whose evidence failed to persist is
+    # still a pin, its launcher is usually dead by then, and reclaiming on that
+    # dead pid would delete the one directory still refusing the next run.
+    if [ -e "$wl_d/survivors" ]; then
+      WL_LEASE_REFUSAL='held'
+      WL_LEASE_HOLDER_STATE='UNKNOWN'
+      WL_LEASE_HOLDER_REASON="the recorded holder is absent, but $wl_d/survivors exists and is not a readable pin record, so whether this lease is pinned could not be established — unknown is held"
+      return 2
+    fi
+
+    wl_round=$((wl_round + 1))
+    if [ "$wl_round" -gt "$WL_LEASE_RECLAIM_ROUNDS" ]; then
+      WL_LEASE_REFUSAL='held'
+      WL_LEASE_HOLDER_STATE='CONTENDED'
+      WL_LEASE_HOLDER_REASON="the recorded holder is absent, but the lease could not be reclaimed in $WL_LEASE_RECLAIM_ROUNDS rounds — either another run is reclaiming it right now, or $wl_mark was left behind by a run that died mid-reclaim and has to be removed by hand"
+      return 2
+    fi
+
+    if ! mkdir "$wl_mark" 2>/dev/null; then
+      sleep 0.02 2>/dev/null   # another reclaimer is inside the window; let it finish
+      continue
+    fi
+    printf '%s\n' "$wl_pid" >"$wl_mark/pid" 2>/dev/null
+
+    # Everything decided outside the marker is re-decided inside it, because the
+    # lease may have been reclaimed, released or pinned in between.
+    if [ ! -d "$wl_d" ] || [ -e "$wl_d/survivors" ]; then
+      rm -rf "$wl_mark" 2>/dev/null
+      continue
+    fi
+    wl_lease__read_holder "$wl_d"
+    wl_verdict="$(wl_lease__pid_state "$WL_LEASE_HOLDER_PID")"
+    if [ "${wl_verdict%%|*}" != ABSENT ]; then
+      rm -rf "$wl_mark" 2>/dev/null
+      continue
+    fi
+
+    # Rename, then delete the tombstone. `rm -rf` is never aimed at the live
+    # lease path itself: a delete that raced a fresh holder would take the new
+    # lease with it, and the rename is what makes the target this run's own.
+    wl_tomb="$wl_d.stale.$wl_pid.$wl_round"
+    rm -rf "$wl_tomb" 2>/dev/null
+    if mv "$wl_d" "$wl_tomb" 2>/dev/null && mkdir "$wl_d" 2>/dev/null; then
+      wl_lease__write_holder "$wl_d" "$wl_prog" "$wl_pid"
+      rm -rf "$wl_tomb" 2>/dev/null
+      rm -rf "$wl_mark" 2>/dev/null
+      return 0
+    fi
+    rm -rf "$wl_tomb" 2>/dev/null
+    rm -rf "$wl_mark" 2>/dev/null
+  done
+}
+
 # `mkdir` is the atomic primitive: it either creates the directory or fails, and
 # it cannot half-succeed. Ordered — task lease first, checkout lease second —
 # and a refused second lease releases the first before returning, because
@@ -178,39 +373,24 @@ wl_lease_acquire() { # program pid
   WL_LEASE_RESOURCE=''; WL_LEASE_REFUSAL=''; WL_LEASE_SURVIVORS=''
   WL_LEASE_HOLDER_PID=''; WL_LEASE_HOLDER_TASK=''
   WL_LEASE_HOLDER_CHECKOUT=''; WL_LEASE_HOLDER_PROGRAM=''
+  WL_LEASE_HOLDER_STATE=''; WL_LEASE_HOLDER_REASON=''
 
-  if mkdir "$WL_LEASE_TASK_DIR" 2>/dev/null; then
+  if wl_lease__acquire_one "$WL_LEASE_TASK_DIR" "$wl_prog" "$wl_pid"; then
     WL_LEASE_TASK_OWNED=1
-    wl_lease__write_holder "$WL_LEASE_TASK_DIR" "$wl_prog" "$wl_pid"
   else
     WL_LEASE_RESOURCE='task'
-    wl_lease__read_holder "$WL_LEASE_TASK_DIR"
-    if [ -f "$WL_LEASE_TASK_DIR/survivors" ]; then
-      WL_LEASE_REFUSAL='pinned'
-      WL_LEASE_SURVIVORS="$WL_LEASE_TASK_DIR/survivors"
-    else
-      WL_LEASE_REFUSAL='held'
-    fi
     return 2
   fi
 
-  if mkdir "$WL_LEASE_CHECKOUT_DIR" 2>/dev/null; then
+  if wl_lease__acquire_one "$WL_LEASE_CHECKOUT_DIR" "$wl_prog" "$wl_pid"; then
     WL_LEASE_CHECKOUT_OWNED=1
-    wl_lease__write_holder "$WL_LEASE_CHECKOUT_DIR" "$wl_prog" "$wl_pid"
   else
     WL_LEASE_RESOURCE='checkout'
-    wl_lease__read_holder "$WL_LEASE_CHECKOUT_DIR"
     # Roll back. Guarded on OWNED so this can only ever remove the lease this
-    # run created a few lines above — never a concurrent holder's.
+    # run took a few lines above — never a concurrent holder's.
     if [ "$WL_LEASE_TASK_OWNED" -eq 1 ]; then
       rm -rf "$WL_LEASE_TASK_DIR" 2>/dev/null
       WL_LEASE_TASK_OWNED=0
-    fi
-    if [ -f "$WL_LEASE_CHECKOUT_DIR/survivors" ]; then
-      WL_LEASE_REFUSAL='pinned'
-      WL_LEASE_SURVIVORS="$WL_LEASE_CHECKOUT_DIR/survivors"
-    else
-      WL_LEASE_REFUSAL='held'
     fi
     return 2
   fi

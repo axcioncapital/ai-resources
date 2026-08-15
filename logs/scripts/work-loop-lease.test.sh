@@ -80,6 +80,13 @@ if [ "$arc" -ne 0 ]; then
     "$arc" "$WL_LEASE_RESOURCE" "$WL_LEASE_REFUSAL" "$WL_LEASE_HOLDER_PID" \
     "$WL_LEASE_HOLDER_PROGRAM" "$WL_LEASE_HOLDER_TASK" "$WL_LEASE_HOLDER_CHECKOUT" \
     "$WL_LEASE_SURVIVORS" >"$OUT"
+  # The liveness verdict, on its OWN line. Appending rather than widening the
+  # line above keeps every existing case's grep intact. `${...-}` and not
+  # `${...}`: under a helper that has no three-state probe these variables do
+  # not exist, and `set -u` would kill the driver before it could report the
+  # missing verdict the new cases exist to show.
+  printf 'REFUSED-STATE state=%s reason=%s\n' \
+    "${WL_LEASE_HOLDER_STATE-<unset>}" "${WL_LEASE_HOLDER_REASON-<unset>}" >>"$OUT"
   # A refused run owns nothing, so its teardown pin must claim nothing. This is
   # the reachable half of the partial-acquisition guard.
   if [ "$MODE" = "pin-after-refusal" ]; then
@@ -171,6 +178,67 @@ lease_dirs() { # checkout task -> "taskdir|checkoutdir"
 }
 task_dir()     { local p; p="$(lease_dirs "$1" "$2")"; printf '%s' "${p%%|*}"; }
 checkout_dir() { local p; p="$(lease_dirs "$1" "$2")"; printf '%s' "${p##*|}"; }
+
+# ------------------------------------------------- liveness fixtures (13–18)
+#
+# A stale lease is not something a contender can be asked to produce, because a
+# contender that could still write its own lease is by definition not dead. So
+# the lease directory is FABRICATED here, with a pid whose state this harness
+# has established independently, and the library is then asked what it makes of
+# it. That is the only way to hold the pid's state fixed while the verdict
+# varies.
+fabricate_lease() { # dir pid|__none__ [program] [task] [checkout]
+  mkdir -p "$1" || return 1
+  [ "$2" = "__none__" ] || printf '%s\n' "$2" >"$1/pid"
+  printf '%s\n' "${4:-fabricated-task}"  >"$1/task"
+  printf '%s\n' "${5:-/nowhere}"         >"$1/checkout"
+  printf '%s\n' "${3:-fabricated}"       >"$1/program"
+  return 0
+}
+
+# A pid that is POSITIVELY gone: started, reaped, and then confirmed by the same
+# `kill -0` wording the library has to rely on. Confirming it here is what stops
+# a green case 16 from resting on the harness's assumption rather than on fact.
+#
+# The message is CAPTURED and then matched, never piped straight out of `kill`.
+# This harness runs under `pipefail`, and in `kill -0 $p 2>&1 | grep -q ...` the
+# failing `kill` — which is the very outcome being looked for — sets the whole
+# pipeline's status, so the match reads as a failure.
+absent_pid() { # -> pid on stdout, or empty if absence could not be established
+  local p err
+  bash -c 'exit 0' & p=$!
+  wait "$p" 2>/dev/null
+  err="$(LC_ALL=C kill -0 "$p" 2>&1)"
+  case "$err" in
+    *[Nn]o\ such\ process*) printf '%s' "$p" ;;
+    *) return 1 ;;
+  esac
+}
+
+# A pid that is certainly alive for the length of a case. The caller kills it.
+#
+# The redirections are load-bearing, not tidiness. This runs inside `$( )`, so
+# the background job inherits the command substitution's PIPE: left attached, it
+# holds that pipe open and `$( )` blocks for the full sleep — after which the
+# pid handed back is of a process that has just EXITED, and the "live holder"
+# case silently becomes a stale-holder case that the library correctly reclaims.
+live_pid() { # -> pid on stdout
+  sleep 30 >/dev/null 2>&1 </dev/null &
+  printf '%s' $!
+}
+
+# Is an uninspectable pid reachable for this test user at all? pid 1 answers
+# `kill -0` with EPERM for an ordinary user and with success for root, so the
+# case adapts rather than asserting something the environment cannot produce.
+uninspectable_pid() { # -> pid on stdout, or empty
+  local err
+  LC_ALL=C kill -0 1 >/dev/null 2>&1 && return 1   # running privileged: pid 1 reads LIVE
+  err="$(LC_ALL=C kill -0 1 2>&1)"
+  case "$err" in
+    *[Nn]o\ such\ process*) return 1 ;;
+    *) printf '1' ;;
+  esac
+}
 
 # ================================================================== case 0
 echo
@@ -567,6 +635,202 @@ contend "$LEASE_LIB" "$d" block-checkout-other later 0 "$L12b" >/dev/null 2>&1; 
 [ "$RC" -eq 17 ] \
   && ok "and a different task in the same checkout is still refused by the checkout lease" \
   || bad "a different task in the same checkout is refused" "rc=$RC $(cat "$L12b")"
+
+# ================================================================= case 13
+echo
+echo "Case 13 — a LIVE holder refuses, and its lease directory survives untouched"
+# The positive control for every reclaim case below. If the helper could not
+# tell a live holder from a dead one, case 16 would be indistinguishable from
+# a lease that deletes whatever it finds.
+d="$(new_checkout)"
+LP="$(live_pid)"
+TD13="$(task_dir "$d" live-holder)"
+fabricate_lease "$TD13" "$LP" carry live-holder "$d" \
+  && ok "setup — a lease fabricated with a live pid ($LP)" \
+  || bad "setup — a lease fabricated with a live pid" "could not create $TD13"
+C13="$SANDBOX_ROOT/c13.out"
+contend "$LEASE_LIB" "$d" live-holder probe 0 "$C13" >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 17 ] \
+  && ok "a live holder refuses the next run" \
+  || bad "a live holder refuses the next run" "rc=$RC $(cat "$C13")"
+grep -q 'refusal=held' "$C13" \
+  && ok "and the refusal reads HELD" || bad "and the refusal reads held" "$(cat "$C13")"
+grep -q 'REFUSED-STATE state=LIVE ' "$C13" \
+  && ok "and the liveness verdict is LIVE, not merely 'a directory exists'" \
+  || bad "and the liveness verdict is LIVE" "$(cat "$C13")"
+[ -d "$TD13" ] && [ "$(cat "$TD13/pid")" = "$LP" ] \
+  && ok "and the live holder's lease survived byte-identical" \
+  || bad "and the live holder's lease survived" "$TD13 changed or is gone"
+kill "$LP" 2>/dev/null; wait "$LP" 2>/dev/null
+
+# ================================================================= case 14
+echo
+echo "Case 14 — an UNINSPECTABLE holder refuses, and its lease directory survives"
+# The Phase 0 failure in one case: a live process the caller is not permitted to
+# signal. Reading that refusal as a death certificate is what told an operator to
+# delete a lock that was doing its job.
+UP="$(uninspectable_pid)"
+if [ -z "$UP" ]; then
+  ok "SKIPPED — this user cannot produce an uninspectable pid (running privileged, or pid 1 absent)"
+else
+  d="$(new_checkout)"
+  TD14="$(task_dir "$d" unknown-holder)"
+  fabricate_lease "$TD14" "$UP" dispatch unknown-holder "$d" \
+    && ok "setup — a lease fabricated with an uninspectable pid ($UP)" \
+    || bad "setup — a lease fabricated with an uninspectable pid" "could not create $TD14"
+  C14="$SANDBOX_ROOT/c14.out"
+  contend "$LEASE_LIB" "$d" unknown-holder probe 0 "$C14" >/dev/null 2>&1; RC=$?
+  [ "$RC" -eq 17 ] \
+    && ok "an uninspectable holder refuses the next run" \
+    || bad "an uninspectable holder refuses" "rc=$RC $(cat "$C14")"
+  grep -q 'REFUSED-STATE state=UNKNOWN ' "$C14" \
+    && ok "and the verdict is UNKNOWN — not ABSENT, which is the dangerous misread" \
+    || bad "and the verdict is UNKNOWN" "$(cat "$C14")"
+  grep -q 'REFUSED-STATE .*reason=.*kill -0 failed WITHOUT proving absence' "$C14" \
+    && ok "and it says WHY inspection was inconclusive" \
+    || bad "and it says why inspection was inconclusive" "$(cat "$C14")"
+  [ -d "$TD14" ] && [ "$(cat "$TD14/pid")" = "$UP" ] \
+    && ok "and the uninspectable holder's lease survived untouched" \
+    || bad "and the uninspectable lease survived" "$TD14 changed or is gone"
+fi
+
+# ================================================================= case 15
+echo
+echo "Case 15 — missing, empty, malformed, zero and zero-prefixed pids are UNKNOWN, refuse, and survive"
+# `0` is the one that is not merely useless but dangerous: kill(2) reads it as
+# the CALLER'S OWN process group, so `kill -0 0` succeeds and a corrupt lease
+# would read as a live holder — or, reclaimed, as a signal aimed at the operator.
+# `007` is the quiet version: it reaches kill(2) as pid 7.
+d="$(new_checkout)"
+for spec in "__none__:missing pid file" ":empty pid file" "abc:non-numeric pid" \
+            "0:pid zero" "007:zero-prefixed pid"; do
+  raw="${spec%%:*}"; label="${spec#*:}"
+  tk="corrupt-$(printf '%s' "$label" | tr -c 'a-z0-9' '-')"
+  TD15="$(task_dir "$d" "$tk")"
+  fabricate_lease "$TD15" "$raw" carry "$tk" "$d" || { bad "setup — $label" "$TD15"; continue; }
+  C15="$SANDBOX_ROOT/c15-$RANDOM.out"
+  contend "$LEASE_LIB" "$d" "$tk" probe 0 "$C15" >/dev/null 2>&1; RC=$?
+  if [ "$RC" -eq 17 ] && grep -q 'REFUSED-STATE state=UNKNOWN ' "$C15" && [ -d "$TD15" ]; then
+    ok "$label — UNKNOWN, refused (rc=17), and the lease survived"
+  else
+    bad "$label — UNKNOWN, refused, and the lease survived" \
+        "rc=$RC present=$([ -d "$TD15" ] && printf yes || printf no) $(cat "$C15")"
+  fi
+done
+
+# ================================================================= case 16
+echo
+echo "Case 16 — a POSITIVELY ABSENT unpinned holder is reclaimed, and the next run acquires both"
+# The half that the "unknown is held" rule must not swallow: a lease whose
+# holder is provably gone has to stop refusing, or a crashed run strands its
+# task for good and the only remedy is a hand-edited lock directory.
+d="$(new_checkout)"
+AP="$(absent_pid)"
+if [ -z "$AP" ]; then
+  bad "setup — a positively absent pid could be established" "kill -0 did not report 'no such process'"
+else
+  ok "setup — pid $AP is positively absent, confirmed by kill -0 wording"
+  TD16="$(task_dir "$d" stale-holder)"
+  fabricate_lease "$TD16" "$AP" dispatch stale-holder "$d" \
+    && ok "setup — a stale lease fabricated with that dead pid" \
+    || bad "setup — a stale lease fabricated" "could not create $TD16"
+  C16="$SANDBOX_ROOT/c16.out"
+  contend "$LEASE_LIB" "$d" stale-holder recoverer 0 "$C16" >/dev/null 2>&1; RC=$?
+  [ "$RC" -eq 0 ] \
+    && ok "the new run is ADMITTED over the dead holder (rc=0)" \
+    || bad "the new run is admitted over the dead holder" "rc=$RC $(cat "$C16")"
+  grep -q 'task_owned=1 checkout_owned=1' "$C16" \
+    && ok "and it owns BOTH resources, so recovery is not a half-admission" \
+    || bad "and it owns both resources" "$(cat "$C16")"
+  grep -q 'RELEASED task=absent checkout=absent' "$C16" \
+    && ok "and its ordinary exit releases both, leaving the task clean" \
+    || bad "and its ordinary exit releases both" "$(cat "$C16")"
+  # Reclaim must not litter: a tombstone left in the lease root is a directory
+  # the operator has to reason about later.
+  ROOT16="$(dirname "$TD16")"
+  LEFT="$(find "$ROOT16" -maxdepth 1 -name '*.stale.*' -o -maxdepth 1 -name '*.reclaim' 2>/dev/null)"
+  [ -z "$LEFT" ] \
+    && ok "and reclaim left no tombstone or reclaim marker behind" \
+    || bad "and reclaim left nothing behind" "$LEFT"
+fi
+
+# ================================================================= case 17
+echo
+echo "Case 17 — two or more contenders reclaiming the SAME stale lease still produce exactly one winner"
+# The failure this case exists to catch is subtle and only appears under a
+# rename-and-recreate reclaim: A renames the stale lease away and recreates it,
+# and B — whose ABSENT verdict is now about a directory that no longer exists —
+# renames A's LIVE lease away and takes the task as well. Two winners, from two
+# individually correct decisions.
+d="$(new_checkout)"
+AP2="$(absent_pid)"
+if [ -z "$AP2" ]; then
+  bad "setup — a positively absent pid could be established" "kill -0 did not report 'no such process'"
+else
+  TD17="$(task_dir "$d" stale-race)"
+  fabricate_lease "$TD17" "$AP2" dispatch stale-race "$d" \
+    && ok "setup — one stale lease, pid $AP2, and $N contenders about to race for it" \
+    || bad "setup — one stale lease" "could not create $TD17"
+  BARRIER17="$SANDBOX_ROOT/barrier-17"; rm -f "$BARRIER17"
+  pids=(); outs=()
+  for i in $(seq 1 "$N"); do
+    o="$SANDBOX_ROOT/stale-race-$i.out"; : >"$o"; outs+=("$o")
+    contend "$LEASE_LIB" "$d" stale-race "prog$i" 2 "$o" run "$BARRIER17" >/dev/null 2>&1 &
+    pids+=($!)
+  done
+  sleep 1
+  : >"$BARRIER17"
+  for p in "${pids[@]}"; do wait "$p" 2>/dev/null; done
+  acq=0; ref=0; other=0
+  for o in "${outs[@]}"; do
+    if   grep -q '^ACQUIRED' "$o"; then acq=$((acq+1))
+    elif grep -q '^REFUSED'  "$o"; then ref=$((ref+1))
+    else other=$((other+1)); fi
+  done
+  [ "$acq" -eq 1 ] \
+    && ok "exactly one contender reclaimed the stale lease (acquired=$acq)" \
+    || bad "exactly one contender reclaimed the stale lease" "acquired=$acq refused=$ref other=$other"
+  [ "$ref" -eq $((N-1)) ] \
+    && ok "and the other $((N-1)) were refused, none silently" \
+    || bad "and the other $((N-1)) were refused" "acquired=$acq refused=$ref other=$other"
+  [ "$other" -eq 0 ] \
+    && ok "and no contender ended in a state that is neither" \
+    || bad "and no contender ended in a state that is neither" "other=$other"
+fi
+
+# ================================================================= case 18
+echo
+echo "Case 18 — a PINNED lease whose recorded holder is DEAD is still never reclaimed"
+# Pin evidence is checked BEFORE liveness, and this is the case that proves the
+# order rather than assuming it: the pid is provably gone, so a helper that
+# probed first would reclaim, and the survivors the operator was told to inspect
+# would be deleted along with the reason they existed.
+d="$(new_checkout)"
+AP3="$(absent_pid)"
+if [ -z "$AP3" ]; then
+  bad "setup — a positively absent pid could be established" "kill -0 did not report 'no such process'"
+else
+  TD18="$(task_dir "$d" pinned-dead)"
+  fabricate_lease "$TD18" "$AP3" dispatch pinned-dead "$d" \
+    && ok "setup — a lease fabricated with a dead pid ($AP3)" \
+    || bad "setup — a lease fabricated with a dead pid" "could not create $TD18"
+  printf 'PINNED by pid %s at 2026-08-15T00:00:00\ntask: pinned-dead\ndescendants still running: 9999\n' \
+    "$AP3" >"$TD18/survivors"
+  C18="$SANDBOX_ROOT/c18.out"
+  contend "$LEASE_LIB" "$d" pinned-dead later 0 "$C18" >/dev/null 2>&1; RC=$?
+  [ "$RC" -eq 17 ] \
+    && ok "the pinned lease still refuses, though its launcher is provably gone" \
+    || bad "the pinned lease still refuses" "rc=$RC $(cat "$C18")"
+  grep -q 'refusal=pinned' "$C18" \
+    && ok "and the refusal reads PINNED — the remedy is the operator's, not automatic" \
+    || bad "and the refusal reads pinned" "$(cat "$C18")"
+  grep -q 'REFUSED-STATE state=PINNED ' "$C18" \
+    && ok "and pin evidence outranked the liveness question rather than following it" \
+    || bad "and pin evidence outranked the liveness question" "$(cat "$C18")"
+  [ -d "$TD18" ] && [ -f "$TD18/survivors" ] \
+    && ok "and the survivors record the operator has to read was not deleted" \
+    || bad "and the survivors record was not deleted" "$TD18/survivors is gone"
+fi
 
 # ==================================================================== done
 echo
