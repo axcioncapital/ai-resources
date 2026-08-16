@@ -4130,3 +4130,27 @@ durably recorded somewhere.
 
 **Target files:** `logs/scripts/split-log.sh` (~L91–110, the `SKIP_APPEND` block and the unconditional
 rewrite immediately after it).
+
+## 2026-08-16 — `axcion-repository-development` is the only library skill with no `model:` tier, and the rule that requires one cannot be satisfied without breaking it (PENDING — operator decision)
+
+**Status:** PENDING — the deviation is deliberate and recorded, not ratified. No tier was invented to make the rule look satisfied.
+
+**What was done.** The Axcíon Repository Development router was deployed to the Claude surface, closing finding C1 of `strategy-os-repository-reconciliation` (the router governed material repository work but was installed only under `~/.codex/skills/`, so a Claude session was instructed to follow a workflow it could not load). Canonical source now lives at `skills/axcion-repository-development/`; `~/.claude/skills/axcion-repository-development` is a symlink to it; `~/.codex/skills/axcion-repository-development/` remains a real directory, verified byte-identical by `diff -r`.
+
+**The conflict.** Workspace `CLAUDE.md` § Model Tier: "skills bind their tier in SKILL.md frontmatter" and "New commands, agents, and skills declare an explicit tier — never inherit." Every other skill in this library complies — 82 of 82 before this one. This skill carries no `model:` key, and adding one would break the property the whole deployment rests on:
+
+1. **Byte-identity across two runtimes.** Three surfaces read the same bytes. A `model:` key is Claude-specific frontmatter with no meaning to Codex, so adding it either forks the file per runtime — reintroducing exactly the drift class this deployment was built to eliminate — or ships Claude-only metadata into a Codex skill.
+2. **A router is the wrong place to pin a tier.** This skill decides *what process the work needs* and then delegates to `implement`, `code-review`, `tdd`, `to-spec` and others, each of which binds its own tier. Pinning the router pins the session that selected it, which is the outcome § Model Tier's own rationale objects to — a declared default contesting the operator's `/model` choice.
+
+**Why it is logged rather than decided here.** `CLAUDE.md` § Design Judgment Principles requires a conflict between two inputs to be surfaced, not silently resolved. The rule is stated without an exception for vendored or cross-runtime skills, and writing that exception into `CLAUDE.md` is an operator call, not this session's.
+
+**The three resolutions, none applied.**
+- *Ratify the exception* — amend § Model Tier to exempt skills shared verbatim with a non-Claude runtime, and name this skill as the case. Preserves byte-identity. Recommended.
+- *Add the tier and accept a fork* — set `model:` on the Claude copy, drop byte-identity, and replace it with a diff-tolerant drift check that ignores frontmatter. Costs the `diff -r` guarantee.
+- *Reclassify* — treat it as a deployed external artifact rather than a library skill and move it out of `skills/`, where the tiering rule does not reach. Loses the canonical-library placement the rest of this fix depends on.
+
+**Until one is chosen,** the skill inherits the session model like any un-pinned resource. That is the pre-existing behaviour on the Codex side and is not a regression, but it is not what the rule asks for.
+
+**Also unassessed:** the Independent Review Rule sizes this change as consequential (a model-invocable governing router now reachable from every Claude session in the workspace). Codex is the reviewer and could not run in this session, so the change is recorded `unassessed` per `docs/qc-independence.md`.
+
+**Target files:** `skills/axcion-repository-development/SKILL.md`, `skills/CATALOG.md` (§ Project Infrastructure note), workspace `CLAUDE.md` § Model Tier.
