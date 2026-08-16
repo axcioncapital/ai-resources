@@ -68,49 +68,53 @@ Capability subset: baseline only — read and inspect repository state and histo
 
 ## Latest result
 
-Unit 8 / Tracer bullet 6 executed. Nine scenarios run at real seams with negative controls. **Eight pass; scenario 6 is red, and the red is a genuine runtime finding, not a fixture artifact.** No runtime file was changed — this is a proof unit and the defect is returned rather than repaired.
+Correction round complete. The one frozen finding is **resolved**, at commit `96ff6786`. Tracer 6 is **74 passed, 0 failed, exit 0** — all nine scenarios green, scenario 6 included. Two suites went red under the correction and both were fixed within it; nothing else broke.
 
-Inspected (2026-08-16):
+**Reproduced first, before anything changed** — and the finding is **wider than the handback recorded**. In a throwaway `git init` repository: committed record `status: active`, working tree a complete valid closing record, validator `CLOSED`, `.owner` = `t`. `claim --task next` returned `verdict: PROCEED`, exit **0**, and `.owner` became `next` at **both** `--depth local` *and* `--depth repo`. The handback named only local depth. Repo depth reached the identical stale row, because `check_local` decided it and `run_check` never revisited it.
 
-- Claim (1): HOLDS — checkout `ai-resources-durable-state`, branch `session/2026-08-14-durable-state`, HEAD `4f721055`; validator `ACTIVE_CLAUDE`; `work-loop-owner.sh check --depth repo` `PROCEED`. Shared leases free: the Git common directory's `work-loop-dispatch-locks` holds only `refusals/20260815T154142-30771-cross-transport-concurrency-correction.refusal` and no lock directory or pid file, so no automated actor is in flight.
-- Claim (2): HOLDS — every named surface exists and was read: `.claude/commands/work-loop-v2.md`, `.agents/skills/reorient/SKILL.md`, `logs/scripts/work-loop-{state,owner}.sh` and both tests, `logs/scripts/work-loop-v2-slice-1.test.sh`, `scripts/axcion-harness-v0.2/carry-turn.{sh,test.sh}`, and `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.{sh,test.sh}`. Existing coverage per scenario is in the table below under "existing seam".
-- Claim (3a): HOLDS — searched `logs/scripts/work-loop-owner.test.sh` for closure-interruption coverage; T14 cuts the closure at both points — (b) pre-commit and (c) post-commit/pre-clear — and T8 covers reuse after closure. **But T14(b)'s fixture is a *half-written* reduction (status flipped, active body still standing) which the validator refuses, so staleness is never reached.** The complete-but-uncommitted reduction, which core § 4 requires ("The reduction is one write"), is not covered anywhere. That gap is where S6's finding lives.
-- Claim (3b): HOLDS — searched `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` for termination and partial effects; Case 8b asserts `PARTIAL FILE EFFECTS`, Case 13b asserts no launch over a partial edit, Case 15 asserts a pre-edit crash is retried once and 15b that a post-edit crash is not. `scripts/axcion-harness-v0.2/carry-turn.test.sh` carries `ignore-term`, `denied-partial` and `allowed-partial` probes at the SIGTERM/SIGKILL seam.
-- Claim (4): HOLDS — all nine were demonstrated in throwaway `git init` repositories with narrow failpoints (a crashing `--actor-cmd`, a truncated file, a written-but-uncommitted reduction). No runtime behaviour was changed to make any scenario reachable; `git diff` over `logs/scripts/work-loop-{owner,state}.sh`, `dispatch.sh`, `carry-turn.sh`, `.claude/` and `.agents/` is empty.
+**The correction.** Staleness now needs positive evidence that HEAD carries the exact closing record. `closure_committed()` tests **whole-file equality with HEAD** — not a re-validation of HEAD's blob, so § 4's one-lifecycle-reader rule is untouched: the validator has already classified the working-tree record `CLOSED`, and byte-identity with HEAD makes that the committed record. Three states answer "not committed" and take the same remedy: no commits at all, HEAD not carrying the path, HEAD differing from the working tree (which covers staged-but-uncommitted, since `diff HEAD` spans index and tree). Anything git cannot answer is `unknown` and is never rounded down to committed.
 
-Result: one new composing harness, `logs/scripts/work-loop-v2-tracer-6.test.sh` (**68 passed, 2 failed, exit 1**). It composes the accepted component helpers and invokes the real dispatcher; it re-implements nothing and re-runs no component suite to collect a count.
+Git is the only reader with that fact, so **the stale row became a repo-depth act.** `check_local` no longer decides it — it hands the row on, and `resolve_stale()` settles it in `run_check`, which keeps `--depth local` literally git-free. Local depth therefore refuses instead of clearing, naming the depth limit and both remedies. Repo depth clears exactly as before when HEAD carries the record, so the accepted post-commit recovery is retained and stays automatic.
 
-| # | Scenario | Seam | Failpoint / negative control | Wrong behaviour distinguished | Observed | Verdict |
-|---|---|---|---|---|---|---|
-| 1 | fresh session reconstructs the record | Reorient route 2 + validator | control: the committed record is changed and re-read | a route that echoes remembered values | all five fields equal the committed record; `ACTIVE_CLAUDE`; control returns the changed value and the two reconstructions differ | PASS |
-| 2 | misleading summary cannot override state | same route + validator | none / empty / contradicting-summary variants; control proves the summary really contradicts | durable state bending to the summary | identical five fields and identical `ACTIVE_CODEX` in all three; a genuinely closed record does classify `CLOSED`, so the two are distinguishable | PASS |
-| 3 | termination preserves partial effects, no relaunch | dispatcher | crash after edit; control: crash before edit | discarding the partial edit, or blind relaunch | exit **20**, `PARTIAL FILE EFFECTS` naming the file, **1** launch, edit still on disk; control retried to **2** launches | PASS |
-| 4 | interrupted update rejected before launch | dispatcher pre-launch guard | truncated uncommitted record; control: uncommitted `turn: claude` handoff | launching over damage, or auto-repairing it | exit **26** naming `required heading '## Lane and unit' is missing` and "No actor was launched"; **0** launches; file byte-unchanged; `HEAD` copy intact and `git diff` shows exactly the damage; control runs (exit 23, 1 launch) | PASS |
-| 5 | blocked recovery retains owner, refuses new task | validator + owner helper | control: the same checkout over a `CLOSED` record | refusing everything, or resuming a blocked task | `BLOCKED_OPERATOR`; claim refused (exit 3) naming `blocked-task`; declaration byte-unchanged; Reorient stops at check 5; control claim succeeds | PASS |
-| 6 | closure interrupted before commit retains owner | owner helper + validator | **complete, valid** reduction written, commit not reached | the lease being released while the closure is uncommitted | declaration survives a passive read, nothing committed, `HEAD` still `active` — **but the next task start CLAIMS the checkout (exit 0) and clears the declaration** | **FAIL** |
-| 7 | closure interrupted after commit | owner helper + validator | control: the same start over an `ACTIVE` record | clearing live and stale declarations alike | `CLOSED`; stale declaration survives; next start clears it (exit 0); control refuses (exit 3) and leaves it | PASS |
-| 8 | state/Git disagreement stops without rewrite | dispatcher (a) + validator (b) | (a) uncommitted divergence, (b) identity mismatch; control: an agreeing checkout | silent reconciliation | (a) exit 25, file and `HEAD` byte-unchanged; (b) exit **14**, record byte-unchanged; control proceeds (exit 23, 1 launch) | PASS |
-| 9 | clean closure clears owner and permits reuse | owner helper + validator | control first: claim before closure | reuse while the task is open | control refused (exit 3); then `CLOSED` validated, cleared (exit 0), declaration gone, new task claims (exit 0) | PASS |
+No fallback parser, no second state store, no automatic repair, no broad Git policy, no runtime redesign, no Tracer 7 work. `check` and `claim` resolve through the same path, so the two cannot answer one record differently.
 
-**The finding — scenario 6.** Core § 4 requires the closing reduction to be one write, so the likely pre-commit interruption lands *after* a complete, valid closing record exists on disk and *before* the commit. In that state the validator correctly answers `CLOSED` for a closure Git has no record of, and `work-loop-owner.sh claim` treats the surviving declaration as stale and clears it. Reproduced independently of the harness, in a bare `git init` repository:
+**Failing-first, measured against the pre-fix helper.** The new T15 was run against a saved pre-correction copy via `OWNER_BIN=`: **112 passed, 10 failed** — every assertion that names the defect went red, and the negative controls stayed green. Against the corrected helper the same suite is **122 passed, 0 failed, exit 0**.
 
-- committed record `status: active`; working tree `status: closed`; validator `CLOSED`; `.owner` = `t`
-- `work-loop-owner.sh claim --task next --depth local` → `verdict: PROCEED`, exit **0**, reason "clearing a stale declaration ... which the validator classifies CLOSED"
-- after: `.owner` = `next`; committed record still `status: active`
+| Check | Pre-fix | Post-fix |
+|---|---|---|
+| uncommitted closure, `claim --depth repo` | PROCEED, exit 0, lease released | **REFUSE, exit 3**, declaration and record byte-unchanged, HEAD unchanged |
+| uncommitted closure, `claim --depth local` | PROCEED, exit 0, lease released | **REFUSE, exit 3**, declaration intact, and the git trap records **no git call** |
+| staged but not committed | PROCEED, exit 0 | **REFUSE, exit 3** |
+| closing record never committed | PROCEED, exit 0 | **REFUSE, exit 3** |
+| `check` agrees with `claim` | disagreed (0 vs 0 for different reasons) | **both exit 3** |
+| **control** — same closure, committed, `--depth repo` | PROCEED, exit 0 | **PROCEED, exit 0**, declaration names the new task |
 
-The end state is lease released plus closure uncommitted — the state core § *Closing the task* names as "the one state that cannot be recovered from", reached from the other direction. `work-loop-owner.test.sh` stays green because T14(b) uses a half-written reduction the validator refuses, so it never reaches the staleness path. Whether this is a defect to fix in Tracer 6's scope, an accepted limitation, or work for a later tracer is Codex's call; nothing was changed to make it pass.
+Tracer 6 scenario 6 now asserts **both depths** plus that committed control, so it cannot be satisfied by a helper that had simply stopped clearing stale declarations — which would break scenarios 5, 7 and 9.
+
+**Two suites broke under the correction, and both were fixed inside it.** Neither is residual.
+
+- `work-loop-state.test.sh` P4.d — the cross-consumer agreement row asserted `CLOSED → rc=0` at `--depth local`, which encoded the defect. P4 now asks at repo depth, and a **new P4L row** keeps the local-depth translation measured, so the depth split is visible rather than dropped. 96/0 → **100/0**.
+- `work-loop-capability.test.sh` B5 — the deployed template copy must be byte-identical to canonical. Resynced. 76/1 → **77/0**.
+
+**Deferral, recorded and not done.** `work-loop-owner.sh clear --task {holder}` releases the lease without testing committedness, so the same end state is reachable by running step 3 before step 2. Not corrected here: the frozen finding names the *claim* path, and the two differ in kind — the claim path is a latent trap that fires automatically with no deviation, while `clear` is a documented procedure run deliberately in an order core § 4 and the command file both fix as commit-then-clear. Guarding it would also need git inside a command that has no `--depth` and is reachable git-free, so a closure could become impossible where git is absent. Codex's call whether it is a separate unit, an accepted limitation, or nothing.
 
 Evidence and counts:
 
-- New: `logs/scripts/work-loop-v2-tracer-6.test.sh` — 70 assertions, **68 passed, 2 failed**, exit 1. All nine scenarios and Case 0 are newly added here.
-- Reused by invocation (not re-implemented): the real `logs/scripts/work-loop-state.sh`, `logs/scripts/work-loop-owner.sh` and `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`.
-- Imported by reference, not re-run: owner T8/T14(a)(b)(c); dispatcher cases 8b, 13b, 14, 15, 15b; carry-turn's `ignore-term` / `denied-partial` / `allowed-partial` probes.
-- Case 0 falsifiability — a stub validator that always prints `ACTIVE_CLAUDE` is substituted for the real one on a genuinely closed record; the real answer is `CLOSED`, the stub's is `ACTIVE_CLAUDE`, and the two differ, so scenarios 2, 5, 7 and 9 would go red under it.
-- Regression, all exit 0 and all unchanged from the Unit 7 baselines: state **96/0**, owner **103/0**, session preflight **60/0**, capability **77/0**, slice 1 **308/0**, core resolver **4/0**, lease **136/0**.
-- Runtime untouched: `git diff` over `logs/scripts/work-loop-owner.sh`, `logs/scripts/work-loop-state.sh`, `dispatch.sh`, `carry-turn.sh`, `.claude/` and `.agents/` is empty.
-- Commit `096b8985` (this handback commit adds only the pointer) — exact paths: `logs/scripts/work-loop-v2-tracer-6.test.sh`, `logs/work-loop/work-loop-v2-durable-state-system.md`. No runtime file, no Tracer 7 or 8 surface, no excluded machinery, and neither `logs/friction-log.md` nor `logs/innovation-registry.md` entered it; both remain uncommitted. This record validates `ACTIVE_CODEX`.
+- **Tracer 6:** `logs/scripts/work-loop-v2-tracer-6.test.sh` — **74 passed, 0 failed, exit 0**. S1–S9 all PASS. Case 0 falsifiability still discriminates: a stub validator that always prints `ACTIVE_CLAUDE` differs from the real `CLOSED`, so S2/S5/S7/S9 would go red under it.
+- **Owner:** `work-loop-owner.test.sh` **122/0, exit 0** (baseline 103/0; +19 from T15 and the two corrected fixtures). Failing-first against the pre-fix helper: 112/10.
+- **State:** `work-loop-state.test.sh` **100/0, exit 0** (baseline 96/0; +4 from P4L).
+- **Owner-consuming couriers:** dispatcher `dispatch.test.sh` **639/0, exit 0**; carrier `carry-turn.test.sh` **457/0, exit 0**. Both unchanged from their baselines and neither needed an edit.
+- **Other directly affected, all exit 0 and all unchanged:** capability **77/0**, slice 1 **308/0**, session preflight **60/0**, core resolver **4/0**, lease **136/0**.
+- **New breakage:** none beyond the two suites named above, both fixed in the same commit.
+- Deployment: `work-loop-capability.sh check` on this checkout returns `READY`.
 
-A runtime defect **was** exposed: scenario 6, above. Admissions remain paused. No live model trial and no cross-transport trial ran; nothing was merged, pushed or landed; Tracer bullet 7 has not started.
+Commit `96ff6786` — exact paths: `logs/scripts/work-loop-owner.sh`, `logs/scripts/work-loop-owner.test.sh`, `logs/scripts/work-loop-state.test.sh`, `logs/scripts/work-loop-v2-tracer-6.test.sh`, `workflows/research-workflow/logs/scripts/work-loop-owner.sh`, `.agents/skills/work-loop-v2/SKILL.md`. The skill edit is the instruction half of the same seam: its bullet told Codex to *replace* a `CLOSED` declaration, which the corrected runtime now refuses, so leaving it would put a live instruction in direct contradiction with the code it describes. `logs/scripts/work-loop-state.sh`, `dispatch.sh`, `carry-turn.sh` and `.claude/` are unchanged — `git diff` over them is empty. No Tracer 7 or 8 surface and no excluded machinery entered the commit, and neither `logs/friction-log.md` nor `logs/innovation-registry.md` did; both remain uncommitted. This handback commit adds only this record.
+
+Admissions remain paused. No live model trial and no cross-transport trial ran; nothing was merged, pushed or landed; Tracer bullet 7 has not started. This record validates `ACTIVE_CODEX`.
+
+### Superseded — Unit 8's proof run (kept for the finding's origin only)
+
+Nine scenarios were run at real seams with negative controls; eight passed and scenario 6 was red on the runtime finding corrected above. That proof is commit `096b8985`. Its full scenario table is in that commit's state-file revision.
 
 ## Blocker
 
@@ -118,4 +122,13 @@ None.
 
 ## Next action
 
-Codex: assess Unit 8. Eight scenarios are green with controls; scenario 6 is red on a reproduced runtime finding — a complete-but-uncommitted closing reduction lets the next task start release the lease. Decide whether that is fixed inside Tracer 6, accepted as a written limitation, or assigned to a later tracer, and whether the eight green verdicts and Case 0 are proportionate proof for this tracer's exit condition.
+Codex: run the closure check on the frozen finding only — is finding 1 resolved, and did the correction break something?
+
+Resolved is claimed on: the uncommitted complete-and-valid closing record now fails closed at both depths (exit 3, declaration and record byte-unchanged, HEAD unchanged), proved failing-first against the pre-fix helper at 112/10; the committed control still proceeds and clears; Tracer 6 is 74/0 with scenario 6 green and 1–5 and 7–9 unchanged.
+
+Broke something is answered on: two suites went red under the correction — `work-loop-state.test.sh` P4.d and `work-loop-capability.test.sh` B5 — and both were fixed inside the same commit (100/0 and 77/0). Every other directly affected suite is unchanged and exits 0, including the owner-consuming dispatcher (639/0) and carrier (457/0).
+
+Two things for the verdict to dispose of, both stated rather than decided here:
+
+1. The correction makes clearing a stale declaration a **repo-depth act**. `--depth local` now refuses that row instead of clearing it, because committedness needs git and local depth runs none. Post-commit recovery at repo depth is unchanged and automatic. This is a deliberate, measured behaviour change at the Codex-side entry, not a side effect — accept it, or say what should replace it.
+2. The recorded deferral: `work-loop-owner.sh clear --task {holder}` still releases the lease without testing committedness. Reasoning is in `## Latest result`. Separate unit, accepted limitation, or nothing.
