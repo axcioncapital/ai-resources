@@ -94,7 +94,7 @@ Newly noticed, recorded as deferrals and not implemented:
 2. Carried from Unit 9's first pass: when a task's record is replicated into a checkout already leased by a different task, the refusal names the occupying task rather than the checkout where the replicated task lives. Behaviour is right; only the message is less helpful.
 3. Carried from Unit 8, unchanged: `work-loop-owner.sh clear --task {holder}` still does not test whether the closing record is committed.
 
-Correction commit: recorded below once made, exactly two paths: `logs/scripts/work-loop-v2-tracer-7.test.sh` and `logs/work-loop/work-loop-v2-durable-state-system.md`. No runtime file, no Tracer 8 surface, no Phase 2 file, no excluded machinery, and neither hook-written log entered it. Admissions remain paused; nothing merged, pushed or landed; Tracer bullet 8 has not started.
+Correction commit `1223fda5`, exactly two paths: `logs/scripts/work-loop-v2-tracer-7.test.sh` and `logs/work-loop/work-loop-v2-durable-state-system.md`. No runtime file, no Tracer 8 surface, no Phase 2 file, no excluded machinery, and neither hook-written log entered it. Admissions remain paused; nothing merged, pushed or landed; Tracer bullet 8 has not started.
 
 ## Blocker
 
