@@ -34,6 +34,11 @@ LEASE_BIN="${LEASE_BIN:-$(cd "$HERE/../.." && pwd -P)/logs/scripts/work-loop-lea
 # it, because only 12e is about ownership; every other fixture is deliberately
 # untouched by this unit.
 OWNER_BIN="${OWNER_BIN:-$(cd "$HERE/../.." && pwd -P)/logs/scripts/work-loop-owner.sh}"
+# The canonical state validator. Since the Tracer 3 cutover the launcher asks it
+# for the state's classification instead of reading `turn:` itself, and stops at
+# exit 13 when it is absent. A fixture without it would put every case in this
+# suite on the fail-closed path rather than the behaviour it names.
+STATE_BIN="${STATE_BIN:-$(cd "$HERE/../.." && pwd -P)/logs/scripts/work-loop-state.sh}"
 
 PASS=0
 FAIL=0
@@ -201,14 +206,27 @@ stamp="$(date '+%s')-$RANDOM"
 # A Claude result object on stdout, which is exactly where the launcher's
 # capture file gets it. Everything but permission_denials is filler.
 emit_json() { printf '{"type":"result","subtype":"success","is_error":false,"result":"done","permission_denials":%s}\n' "$1"; }
+# Handing a record to the operator is a LIFECYCLE change, not just a turn change:
+# the canonical contract has no active/operator pair, so an actor that rewrote
+# only `turn:` would leave a record no consumer may act on. A real Claude closing
+# write reduces the file to the closing record, and so does this one.
+set_turn() { # target-turn
+  local t
+  if [ "$1" = operator ]; then
+    t="$(awk -F': ' '/^task: /{print $2; exit}' "$STATE")"
+    printf -- '---\ntask: %s\nstatus: closed\nturn: operator\n---\n\n## Outcome\nHanded to the operator by the fixture actor.\n\n## Decisions that matter\nNothing real depends on this file.\n\n## Evidence\nFixture — no commit.\n\n## Accepted limitations\nNone.\n' "$t" >"$STATE"
+  else
+    sed -i '' "s/^turn: .*/turn: $1/" "$STATE"
+  fi
+}
 case "$act" in
   transition:*)
-    sed -i '' "s/^turn: .*/turn: ${act#transition:}/" "$STATE"
+    set_turn "${act#transition:}"
     printf '\nactor ran %s\n' "$stamp" >>"$STATE"
     git -C "$REPO" add -- "$STATE_REL" >/dev/null 2>&1
     git -C "$REPO" commit -q -m "actor: handed on" >/dev/null 2>&1 ;;
   nocommit:*)
-    sed -i '' "s/^turn: .*/turn: ${act#nocommit:}/" "$STATE"
+    set_turn "${act#nocommit:}"
     printf '\nactor edited, did not commit %s\n' "$stamp" >>"$STATE" ;;
   noop) : ;;
   touch-only)
@@ -299,12 +317,36 @@ FAKE
 # Write one well-formed state file into an existing checkout. Split out of mkfix
 # so a fixture can carry a SECOND task in the SAME checkout — which is what the
 # checkout-wide lock has to be tested against.
-mkstate_in() { # checkout, task-id, turn
-  mkdir -p "$1/logs/work-loop"
+# Writes a record that satisfies the contract work-loop-state.sh enforces:
+# explicit `status`, one of the four legal status/turn pairs, and that pair's body
+# shape. Before the Tracer 3 cutover this wrote a status-free record with the OPEN
+# body for every turn — including `operator`, which is now either a closed record
+# (four closing headings) or a blocked one (five headings and a real blocker).
+# Status is derived from the turn unless the caller states it.
+mkstate_in() { # checkout, task-id, turn, [status]
+  local co="$1" task="$2" turn="$3" status="${4:-}" blocker
+  mkdir -p "$co/logs/work-loop"
+  if [ -z "$status" ]; then
+    case "$turn" in
+      codex|claude) status=active ;;
+      operator)     status=closed ;;
+    esac
+  fi
+
+  if [ "$status" = closed ]; then
+    {
+      printf -- '---\ntask: %s\nstatus: closed\nturn: operator\n---\n\n' "$task"
+      printf '## Outcome\nA fixture, closed.\n\n## Decisions that matter\nNothing real.\n\n## Evidence\nA fixture — no commit.\n\n## Accepted limitations\nNone.\n'
+    } >"$co/logs/work-loop/$task.md"
+    return 0
+  fi
+
+  blocker='None.'
+  [ "$status" = blocked ] && blocker='Waiting on the operator to decide the fixture question.'
   {
-    printf -- '---\ntask: %s\nturn: %s\n---\n\n' "$2" "$3"
-    printf '## Objective and scope\nA fixture.\n\n## Lane and unit\nStandard. Implementation mode. Unit 1 — fixture.\n\n## Latest result\nNothing yet.\n\n## Blocker\nNone.\n\n## Next action\nDo the thing.\n'
-  } >"$1/logs/work-loop/$2.md"
+    printf -- '---\ntask: %s\nstatus: %s\nturn: %s\n---\n\n' "$task" "$status" "$turn"
+    printf '## Objective and scope\nA fixture.\n\n## Lane and unit\nStandard. Implementation mode. Unit 1 — fixture.\n\n## Latest result\nNothing yet.\n\n## Blocker\n%s\n\n## Next action\nDo the thing.\n' "$blocker"
+  } >"$co/logs/work-loop/$task.md"
 }
 
 # The LEGACY lock path for a checkout: the CANONICAL checkout path under
@@ -395,8 +437,8 @@ add_owner_helper() { # checkout
 }
 
 # Build a fixture. Sets: REPO STATE ACTION ARGVLOG COUNTF FAKEBIN LOGD
-mkfix() { # name, task-id, turn
-  local name="$1" task="$2" turn="$3"
+mkfix() { # name, task-id, turn, [status]
+  local name="$1" task="$2" turn="$3" status="${4:-}"
   REPO="$TMPROOT/$name"
   mkdir -p "$REPO/logs/work-loop"
   git -C "$REPO" init -q 2>/dev/null
@@ -404,7 +446,7 @@ mkfix() { # name, task-id, turn
   git -C "$REPO" config user.name Test
   git -C "$REPO" config commit.gpgsign false
   STATE="$REPO/logs/work-loop/$task.md"
-  mkstate_in "$REPO" "$task" "$turn"
+  mkstate_in "$REPO" "$task" "$turn" "$status"
   # Tracked, not dropped in loose: an untracked helper is an out-of-allowlist
   # working-tree change and the launcher would correctly stop on it (exit 18).
   #
@@ -419,6 +461,7 @@ mkfix() { # name, task-id, turn
   mkdir -p "$REPO/logs/scripts"
   cp "$LEASE_BIN" "$REPO/logs/scripts/work-loop-lease.sh" 2>/dev/null || true
   cp "$OWNER_BIN" "$REPO/logs/scripts/work-loop-owner.sh" 2>/dev/null || true
+  cp "$STATE_BIN" "$REPO/logs/scripts/work-loop-state.sh" 2>/dev/null || true
   printf 'seed\n' >"$REPO/seed.txt"
   git -C "$REPO" add -A >/dev/null 2>&1
   git -C "$REPO" commit -q -m init >/dev/null 2>&1
@@ -511,10 +554,19 @@ section "3. Malformed and mismatched state"
   cp "$STATE" "$REPO/logs/work-loop/task-c.md"   # frontmatter still says task-b
   run_sut --checkout "$REPO" --task task-c --log-dir "$LOGD"
   assert_eq "identity mismatch rejected" "14" "$RC"
-  assert_contains "  names both sides" "frontmatter says task: 'task-b'" "$o"
+  # The wording is the validator's now, but the invariant is unchanged: the
+  # refusal must name BOTH the id asked for and the id the record carries, or the
+  # operator cannot tell which of the two is wrong.
+  assert_contains "  names both sides" "frontmatter task: says 'task-b'" "$o"
+  assert_contains "  names the asked-for id too" "task-c" "$o"
   printf 'no frontmatter here\n' >"$REPO/logs/work-loop/task-d.md"
   run_sut --checkout "$REPO" --task task-d --log-dir "$LOGD"
-  assert_eq "absent frontmatter rejected" "14" "$RC"
+  # DELIBERATE EXIT CHANGE AT THE CUTOVER, 14 -> 15. A file with no frontmatter
+  # has no identity to mismatch, so calling it an identity fault said something
+  # untrue about it. 15 is this surface's "the state file cannot be used", which
+  # is exactly what it is. The behaviour that matters is unchanged: it stops, and
+  # it launches nothing.
+  assert_eq "absent frontmatter rejected" "15" "$RC"
   assert_eq "  nothing was launched" "0" "$(invocations)"
 
 section "4. Wrong or absent turn"
@@ -919,7 +971,7 @@ section "7. Attended-boundary refusals fail closed"
   assert_contains "  and still prints a RESULT line" "RESULT outcome=STOPPED code=10" "$o"
 
 section "8. Operator-terminal stop"
-  mkfix opq task-j operator
+  mkfix opq task-j operator blocked
   run_sut --checkout "$REPO" --task task-j --claude-bin "$FAKEBIN" --log-dir "$LOGD"
   assert_eq "operator turn stops at 0" "0" "$RC"
   assert_contains "  reports OPERATOR_TERMINAL, not CARRIED" "RESULT outcome=OPERATOR_TERMINAL code=0" "$o"
@@ -927,7 +979,7 @@ section "8. Operator-terminal stop"
   assert_eq "  nothing was launched" "0" "$(invocations)"
 
   mkfix opclosed task-k operator
-  { printf -- '---\ntask: task-k\nturn: operator\n---\n\n'
+  { printf -- '---\ntask: task-k\nstatus: closed\nturn: operator\n---\n\n'
     printf '## Outcome\nDone.\n\n## Decisions that matter\nOne.\n\n## Evidence\nabc123\n\n## Accepted limitations\nNone.\n'
   } >"$STATE"
   # Committed, because Claude commits its own closing record. Left uncommitted
@@ -940,9 +992,13 @@ section "8. Operator-terminal stop"
   assert_absent "  asserts no question that does not exist" "UNANSWERED" "$o"
 
   mkfix opbad task-l operator
-  printf -- '---\ntask: task-l\nturn: operator\n---\n\n## Something Else\nhalf-written.\n' >"$STATE"
+  printf -- '---\ntask: task-l\nstatus: closed\nturn: operator\n---\n\n## Something Else\nhalf-written.\n' >"$STATE"
   git -C "$REPO" commit -qam "half-written" >/dev/null 2>&1
   run_sut --checkout "$REPO" --task task-l --claude-bin "$FAKEBIN" --log-dir "$LOGD"
+  # Exit 26 survives the cutover. It used to mean "this surface looked at the body
+  # and it was neither a question nor a closing record"; it now means "the
+  # validator rejected the body", which is the same fact established by the one
+  # authority instead of by a private heading comparison.
   assert_eq "neither shape is MALFORMED_TERMINAL" "26" "$RC"
   assert_eq "  and still launched nothing" "0" "$(invocations)"
 

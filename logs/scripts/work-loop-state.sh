@@ -13,12 +13,18 @@
 # tool exists to remove: a consumer that cannot classify state must stop, not
 # pick a representation and proceed.
 #
-# INACTIVE SEAM. At the commit that introduces this file, no runtime consumer
-# calls it. Claude's command, the Codex skill, Reorient, work-loop-owner.sh, the
-# attended carrier and the unattended dispatcher each still parse state their own
-# way. That is deliberate: the validator must be proven against adversarial
-# fixtures before anything stops understanding the old shape (plan § 2,
-# dependency 2).
+# THE ONE LIFECYCLE AUTHORITY, live since the Tracer 3 cutover. Claude's command,
+# the Codex skill, Reorient, work-loop-owner.sh, the attended carrier and the
+# unattended dispatcher all obtain their classification here. None of them parses
+# state itself, and none keeps a fallback reading — a validator that cannot run
+# means the lifecycle is UNESTABLISHED, which stops the caller rather than
+# resolving to "open" or "closed" by default.
+#
+# It was introduced inactive on purpose: the validator had to be proven against
+# adversarial fixtures before anything stopped understanding the old shape (plan
+# § 2, dependency 2). That preparation is spent, and work-loop-state.test.sh § R
+# now asserts the active direction — every named consumer delegates, and none of
+# them retains a private parser.
 #
 # THE CONTRACT IT ENFORCES, and nothing beyond it:
 #

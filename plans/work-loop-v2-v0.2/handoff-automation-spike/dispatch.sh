@@ -1877,22 +1877,42 @@ fi
 # fm_value() and file_hash() are defined above the lock section, because --status
 # needs them before a lock exists.
 
-validate_state() { # sets ST_TURN; dies on any failure. Never mutates.
+# THE VALIDATOR IS THE ONE LIFECYCLE AUTHORITY (Tracer 3). This dispatcher used
+# to read `task:` and `turn:` itself and infer closure from the body's headings.
+# It now asks logs/scripts/work-loop-state.sh and keeps only its own exit
+# meanings. There is no second parser here and no fallback: a validator that
+# cannot run means the state is unestablished, which stops the run before
+# anything launches or mutates.
+STATE_BIN_REL='logs/scripts/work-loop-state.sh'
+
+validate_state() { # sets ST_TURN and ST_CLASS; dies on any failure. Never mutates.
   [ -f "$STATE_FILE" ] || die 13 "state file missing: $STATE_FILE"
   [ -r "$STATE_FILE" ] || die 13 "state file unreadable: $STATE_FILE"
 
-  local declared
-  declared="$(fm_value "$STATE_FILE" task)"
-  [ -n "$declared" ] || die 14 "no readable 'task:' frontmatter in $STATE_FILE"
-  if [ "$declared" != "$TASK" ]; then
-    die 14 "identity mismatch — filename says '$TASK', frontmatter task: says '$declared'"
-  fi
+  local bin="$CHECKOUT/$STATE_BIN_REL" out rc
+  [ -f "$bin" ] && [ -r "$bin" ] \
+    || die 13 "the state validator is missing from this checkout: $bin
+Recoverable next action: this dispatcher no longer classifies state itself, so it cannot continue without it. Restore the file, then re-run. Nothing was launched."
 
-  ST_TURN="$(fm_value "$STATE_FILE" turn)"
-  case "$ST_TURN" in
-    codex|claude|operator) : ;;
-    "") die 15 "no readable 'turn:' frontmatter in $STATE_FILE" ;;
-    *)  die 15 "turn: '$ST_TURN' is not one of codex | claude | operator" ;;
+  out="$(bash "$bin" validate --checkout "$CHECKOUT" --task "$TASK" 2>&1)"; rc=$?
+  case "$rc" in
+    0) ;;
+    14) die 14 "identity mismatch — filename says '$TASK' and the record disagrees."$'\n'"$out" ;;
+    # The validator's BAD_BODY lands on this dispatcher's existing "neither shape"
+    # code, so the exit meaning an operator already knows survives the cutover
+    # rather than collapsing into a generic 15.
+    16) die 26 "$out"$'\n'"Recoverable next action: read the file. If a hop died mid-write, restore or complete it, then re-run this dispatcher. No actor was launched." ;;
+    10|11|12|13) die 13 "the state file cannot be used: $out" ;;
+    *)  die 15 "$out" ;;
+  esac
+
+  ST_CLASS="$out"
+  case "$ST_CLASS" in
+    ACTIVE_CLAUDE)    ST_TURN=claude ;;
+    ACTIVE_CODEX)     ST_TURN=codex ;;
+    BLOCKED_OPERATOR) ST_TURN=operator ;;
+    CLOSED)           ST_TURN=operator ;;
+    *) die 15 "the validator returned an unrecognised classification '$ST_CLASS' — this dispatcher does not guess at state" ;;
   esac
 }
 
@@ -2215,10 +2235,12 @@ git_hazards() {
 # business, not the dispatcher's, and validating prose is the general state
 # validation this must not become. Anything unrecognised stops for inspection
 # rather than being labelled either way.
+# Since the Tracer 3 cutover this is not a question the dispatcher answers for
+# itself. The heading comparison it used to run was an inference from body shape;
+# the validator now owns that check alongside the explicit `status:` the record
+# carries, and ST_CLASS was set by validate_state() before anything reached here.
 closing_record_ok() {
-  local heads
-  heads="$(grep -E '^## ' "$STATE_FILE" 2>/dev/null | sed 's/[[:space:]]*$//')"
-  [ "$heads" = "$(printf '## Outcome\n## Decisions that matter\n## Evidence\n## Accepted limitations')" ]
+  [ "${ST_CLASS:-}" = CLOSED ]
 }
 
 # The state file's operator-facing content, for the stop message. Read-only.
@@ -2658,29 +2680,27 @@ while :; do
 
   if [ "$ST_TURN" = "operator" ]; then
     say "hop=$hop turn=operator — stopping for the operator (core § 7). No further launches."
-    # turn: operator has two causes and they are not the same message. A core § 7
-    # question leaves `## Blocker` / `## Next action` in place; a core § 4 close
-    # deletes them, so operator_question() comes back empty. Announcing an
-    # UNANSWERED question above an empty block asserts a question that does not
-    # exist — measured on the 2026-08-05 parallel proof, where both tasks reached
-    # turn: operator by closing.
-    op_q="$(operator_question)"
-    if [ -n "$op_q" ]; then
+    # turn: operator has two causes and they are not the same message. Before the
+    # cutover the dispatcher told them apart by whether `## Blocker` / `## Next
+    # action` had survived — an inference from what happened to still be in the
+    # file, which is why announcing an UNANSWERED question above an empty block
+    # was possible at all (measured on the 2026-08-05 parallel proof, where both
+    # tasks reached turn: operator by closing). The two are now separate
+    # classifications and the record states which it is, so there is no third
+    # "neither shape" outcome left to guess at here: a record that is neither was
+    # already refused by validate_state above, before this loop began.
+    if closing_record_ok; then
+      say "The task is CLOSED: the state file carries the closing record and nothing"
+      say "else — ## Outcome, ## Decisions that matter, ## Evidence and"
+      say "## Accepted limitations. There is no unanswered question here."
+      say "The closing record is at $STATE_FILE."
+    else
+      op_q="$(operator_question)"
       say "The question below is UNANSWERED. Neither model nor this dispatcher answered it,"
       say "and nothing here is a decision — the operator owns it (core § 7)."
       say "--- state file, as the actors left it ---"
       say "$op_q"
       say "--- end ---"
-    elif closing_record_ok; then
-      say "The task is CLOSED: the state file carries the core § 4 closing record and"
-      say "nothing else — ## Outcome, ## Decisions that matter, ## Evidence and"
-      say "## Accepted limitations. There is no unanswered question here."
-      say "The closing record is at $STATE_FILE."
-    else
-      # Neither shape. Saying "closed" here would be a guess dressed as a verdict,
-      # so the run stops visibly instead — still with no further actor launch,
-      # because turn: operator is terminal for automation whatever the file says.
-      die 26 "turn: operator, but $STATE_FILE is neither a core § 7 question (no ## Blocker, no ## Next action) nor a core § 4 closing record (its headings are: $(grep -E '^## ' "$STATE_FILE" 2>/dev/null | tr '\n' ' ' | sed 's/ *$//'))."$'\n'"Recoverable next action: read the file. If a hop died mid-write, restore or complete it, then re-run this dispatcher. No actor was launched."
     fi
     release_lock
     exit 0

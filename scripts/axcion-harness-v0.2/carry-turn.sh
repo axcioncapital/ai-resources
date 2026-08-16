@@ -467,22 +467,45 @@ fm_value() { # file key -> value on stdout, empty if absent
 
 file_hash() { shasum -a 256 "$1" 2>/dev/null | cut -d' ' -f1; }
 
-validate_state() { # sets ST_TURN; dies on any failure. Never mutates.
+# THE VALIDATOR IS THE ONE LIFECYCLE AUTHORITY (Tracer 3). This surface used to
+# read `task:` and `turn:` itself and infer everything else from body shape. It
+# now asks logs/scripts/work-loop-state.sh and keeps only its own exit meanings.
+# There is no second parser here and no fallback: a validator that cannot run
+# means the state is unestablished, which stops the run before anything launches.
+STATE_BIN_REL='logs/scripts/work-loop-state.sh'
+
+# Maps the validator's exit code onto this surface's existing exit meanings, so
+# an operator reading a carry-turn failure sees the code they always saw.
+# 10 BAD_USAGE / 11 BAD_CHECKOUT / 12 BAD_TASK_ID -> 13, this surface's
+# "the state file cannot be used" code; 14 identity; everything else 15.
+validate_state() { # sets ST_TURN and ST_CLASS; dies on any failure. Never mutates.
   [ -f "$STATE_FILE" ] || die 13 "state file missing: $STATE_FILE"
   [ -r "$STATE_FILE" ] || die 13 "state file unreadable: $STATE_FILE"
 
-  local declared
-  declared="$(fm_value "$STATE_FILE" task)"
-  [ -n "$declared" ] || die 14 "no readable 'task:' frontmatter in $STATE_FILE"
-  if [ "$declared" != "$TASK" ]; then
-    die 14 "identity mismatch — you asked for task '$TASK', the file's frontmatter says task: '$declared'. Nothing was launched and nothing was changed."
-  fi
+  local bin="$CHECKOUT/$STATE_BIN_REL" out rc
+  [ -f "$bin" ] && [ -r "$bin" ] \
+    || die 13 "the state validator is missing from this checkout: $bin
+Recoverable next action: this surface no longer classifies state itself, so it cannot continue without it. Restore the file, then re-run. Nothing was launched."
 
-  ST_TURN="$(fm_value "$STATE_FILE" turn)"
-  case "$ST_TURN" in
-    codex|claude|operator) : ;;
-    "") die 15 "no readable 'turn:' frontmatter in $STATE_FILE" ;;
-    *)  die 15 "turn: '$ST_TURN' is not one of codex | claude | operator" ;;
+  out="$(bash "$bin" validate --checkout "$CHECKOUT" --task "$TASK" 2>&1)"; rc=$?
+  case "$rc" in
+    0) ;;
+    14) die 14 "identity mismatch — you asked for task '$TASK' and the record disagrees. Nothing was launched and nothing was changed."$'\n'"$out" ;;
+    # The validator's BAD_BODY lands on this surface's existing "the record is
+    # neither shape I may act on" code, so the exit meaning an operator already
+    # knows survives the cutover rather than collapsing into a generic 15.
+    16) die 26 "$out"$'\n'"Recoverable next action: read the file. If a hop died mid-write, restore or complete it, then re-run. Nothing was launched." ;;
+    10|11|12|13) die 13 "the state file cannot be used: $out" ;;
+    *)  die 15 "$out" ;;
+  esac
+
+  ST_CLASS="$out"
+  case "$ST_CLASS" in
+    ACTIVE_CLAUDE)    ST_TURN=claude ;;
+    ACTIVE_CODEX)     ST_TURN=codex ;;
+    BLOCKED_OPERATOR) ST_TURN=operator ;;
+    CLOSED)           ST_TURN=operator ;;
+    *) die 15 "the validator returned an unrecognised classification '$ST_CLASS' — this surface does not guess at state" ;;
   esac
 }
 
@@ -629,13 +652,13 @@ git_hazards() {
   return 0
 }
 
-# Is this file a core § 4 closing record? The heading sequence must be EXACTLY
-# the four, once each, in order, with nothing else surviving. Section contents
-# are deliberately not validated — those are the actors' business.
+# Is this file a closed record? Since the Tracer 3 cutover this is not a question
+# this surface answers for itself. It used to compare the heading sequence against
+# the four closing headings — an inference from body shape, and the validator now
+# owns exactly that check along with the explicit `status:` the record carries.
+# ST_CLASS was set by validate_state() before anything reached here.
 closing_record_ok() {
-  local heads
-  heads="$(grep -E '^## ' "$STATE_FILE" 2>/dev/null | sed 's/[[:space:]]*$//')"
-  [ "$heads" = "$(printf '## Outcome\n## Decisions that matter\n## Evidence\n## Accepted limitations')" ]
+  [ "${ST_CLASS:-}" = CLOSED ]
 }
 
 # The state file's operator-facing content, for the stop message. Bounded so a
@@ -1390,6 +1413,18 @@ classify_hop() {
       "Read the file. The actor rewrote its identity; restore the correct task: line before re-running."
     return
   fi
+  # The record the actor left must satisfy the same contract the record it was
+  # handed did. Reading `turn:` alone would accept a hop that dropped `status:`,
+  # broke the status/turn pair, or left the body half-rewritten — and the next
+  # run would then be the one to discover it, one actor too late.
+  local after_out after_rc
+  after_out="$(bash "$CHECKOUT/$STATE_BIN_REL" validate --checkout "$CHECKOUT" --task "$TASK" 2>&1)"
+  after_rc=$?
+  if [ "$after_rc" -ne 0 ]; then
+    verdict 15 BAD_TURN "the state file does not satisfy the state contract after the hop: $after_out" \
+      "Read the file. The actor left it in a shape no consumer may act on; restore or complete it before re-running."
+    return
+  fi
   case "$after_turn" in
     codex|claude|operator) : ;;
     "") verdict 15 BAD_TURN "no readable 'turn:' frontmatter in $STATE_FILE after the hop" \
@@ -1634,19 +1669,22 @@ fi
 if [ "$ST_TURN" = "operator" ]; then
   R_AFTER="operator"
   say "turn=operator — stopping for the operator (core § 7). Nothing launched."
-  op_q="$(operator_question)"
-  if [ -n "$op_q" ]; then
+  # WHICH KIND of operator turn this is comes from the validator, not from
+  # guessing at the body. Before the cutover this branch tried the question first
+  # and fell through to a heading comparison, so a blocked record and a closed one
+  # were told apart by what happened to still be in the file. The two are now
+  # different classifications, and the record's `status:` states which it is.
+  if closing_record_ok; then
+    say "The task is CLOSED: the state file carries the closing record and nothing"
+    say "else. There is no unanswered question here."
+    say "The closing record is at $STATE_FILE."
+  else
+    op_q="$(operator_question)"
     say "The question below is UNANSWERED. Neither model nor this script answered it,"
     say "and nothing here is a decision — the operator owns it (core § 7)."
     say "--- state file, as the actors left it ---"
     say "$op_q"
     say "--- end ---"
-  elif closing_record_ok; then
-    say "The task is CLOSED: the state file carries the core § 4 closing record and"
-    say "nothing else. There is no unanswered question here."
-    say "The closing record is at $STATE_FILE."
-  else
-    die 26 "turn: operator, but $STATE_FILE is neither a core § 7 question (no ## Blocker, no ## Next action) nor a core § 4 closing record (its headings are: $(grep -E '^## ' "$STATE_FILE" 2>/dev/null | tr '\n' ' ' | sed 's/ *$//'))."$'\n'"Recoverable next action: read the file. If a hop died mid-write, restore or complete it, then re-run. Nothing was launched."
   fi
   line="$(result_line OPERATOR_TERMINAL 0)"
   say "$line"

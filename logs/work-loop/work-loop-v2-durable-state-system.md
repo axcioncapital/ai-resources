@@ -1,7 +1,7 @@
 ---
 task: work-loop-v2-durable-state-system
 status: active
-turn: codex
+turn: claude
 ---
 
 ## Objective and scope
@@ -12,101 +12,64 @@ Scope is the capabilities, migration order, eight tracer bullets, assessment gat
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 4 — Tracer bullet 2: migrate every tracked Work Loop task record to an explicit, validator-classified lifecycle without switching runtime consumers.
+Standard. Implementation mode. Unit 5 — Tracer bullet 3: atomically switch every Work Loop lifecycle consumer to the canonical validator, then rewrite this checkout's owner and complete the first self-hosted handoff.
 
-Named reason for the loop: this is a high-risk, multi-unit lifecycle-state migration whose scope must remain bounded and whose implementation requires independent assessment before it can progress.
+Named reason for the loop: this is the high-risk atomic cutover in a multi-unit lifecycle-state migration; partial consumer migration would create contradictory runtime truth and the result requires independent assessment before progression.
 
 ## Brief
 
-Unit 3 established the plan's pre-migration baseline at commit `0a904934`: new admissions are paused, the three authorized old-semantics workflows are retired with their unfinished conditions preserved, and no other non-current live workflow remains. This unit now performs the frozen plan's one-time tracked-record migration while the old runtime is still deliberately in force; the next consumer cutover remains a separate tracer.
+Tracer bullet 2 is accepted at commit `596f733d`: every tracked state record is classified, all intended-valid records pass the inactive validator, the intentional negatives retain their intended failures, and both the validator and old-runtime deterministic baselines are green. The frozen plan now requires one coherent semantic cutover before any owner-format mutation, followed immediately by the implementation task's first real handoff under the new contract; legacy-session isolation remains the following tracer.
 
-**Required outcome:** Account for every tracked `logs/work-loop/*.md` file and leave each one in exactly one evidenced class: valid active, valid blocked, valid closed, intentional negative fixture, or non-state target fixture. Every record intended to be valid must use the accepted explicit lifecycle contract and pass `logs/scripts/work-loop-state.sh`; intentional negatives must remain invalid for their intended reason, and the old Work Loop deterministic baseline must still function with the migrated records. Migrate this implementation task's own record during the unit so that the committed handback is `status: active`, `turn: codex`, and classifies as `ACTIVE_CODEX`.
+**Required outcome:** In one coherent semantic cutover commit, make the accepted explicit lifecycle contract authoritative and ensure every production Work Loop state consumer obtains lifecycle meaning from `logs/scripts/work-loop-state.sh` rather than private parsing or turn/body inference. Preserve each consumer's program-specific transport and diagnostics while enforcing exact task identity, the four validator classifications, safe blocked behaviour, exact-path or exact-ID entry, and valid-state-first closure ordering. Only after that semantic commit succeeds, validate repository-depth ownership and rewrite this checkout's `.owner` once from `work-loop-v2-durable-state-system 2026-08-14` to exactly `work-loop-v2-durable-state-system`; then complete a separate state-only handback commit whose record validates as `ACTIVE_CODEX` under the new runtime.
 
 **Governing authority and source dispositions:**
 
-- Frozen plan `plans/work-loop-v2-v0.2/work-loop-v2-durable-state-system-implementation-plan-v0.1.md`, Fixed decisions 1–6, Safe ordering step 3, and Tracer bullet 2 govern the destination, verification, and boundary. Its content-bound status is `FROZEN — approved for sequential implementation`.
-- Accepted Unit 3 result and commit `0a904934d68ee4bcac0c199ae349c3d97e163e78` govern the starting position: the admission pause remains in force through operational proof and final landing; the three retirements are accepted; the pre-Tracer-2 inventory reported 46 canonical old-contract records, two noncanonical closed migration inputs, 25 fixtures, one current record, and zero other live workflows.
-- `logs/scripts/work-loop-state.sh` and its focused tests are the already-proven inactive implementation of the accepted final record contract. Use its exact validation result to establish lifecycle validity; do not duplicate or loosen the contract in migration-specific logic.
-- The currently canonical executable core and runtime consumers still describe/read the old state shape. They remain governing for this handoff and for old-runtime continuity only; this unit must not edit them or infer that their current no-`status` examples override the frozen plan's migration destination. Tracer 3 owns the coherent semantic cutover.
-- Current operator decision, 2026-08-15, keeps all new Work Loop admissions in this repository paused. It authorized the three completed retirements; progression into this tracer is authorized by the already frozen sequential implementation plan, not by expanding that retirement decision.
+- Frozen plan `plans/work-loop-v2-v0.2/work-loop-v2-durable-state-system-implementation-plan-v0.1.md`, Fixed decisions 1–15, Capabilities A–E, Safe ordering steps 4–6, and Tracer bullet 3 govern this cutover. Its content is bound to the operator-accepted architecture hash recorded in the plan and is approved for sequential implementation.
+- Accepted Tracer 2 commits `a1c81caf`, `f3390f7b`, and `596f733d` govern the preparation baseline. The last material result is: 74 tracked paths fully accounted for; 68 intended-valid records accepted; three intentional negatives fail on their own invariants; this task validates under the new validator; the old runtime remains green; and the stale `diagnosing-bugs` routing marker was corrected without changing route membership.
+- `logs/scripts/work-loop-state.sh` is the already-proven canonical classifier and must remain the single lifecycle authority. Consumer-specific adapters may translate its classifications into their own existing messages or exit contracts, but may not retain or introduce a fallback parser.
+- The currently canonical executable core at approved commit `5fef08ff` governs this incoming old-runtime handoff. The frozen plan expressly authorizes Tracer 3 to replace its lifecycle/state semantics and authority statement with the accepted explicit-status contract while preserving unrelated Work Loop behaviour; no separate unapproved proposal may override that scope.
+- The integrated shared-lease Phase 1 implementation governs live actor exclusion. Reuse it unchanged; this unit may adapt callers to new state classification but may not redesign lease behaviour.
+- Current operator decision, 2026-08-15, keeps all new Work Loop admissions paused through operational proof and final landing. This unit is continuation of the already admitted implementation task, not a new admission.
 
 **Check against the repository before editing:**
 
-1. Reconfirm the exact task/checkout, repository-depth ownership, shared-lease state, HEAD `0a904934`, and the pre-existing hook-owned `logs/friction-log.md` modification. Stop if another task or actor now owns or leases a record to be migrated, if HEAD moved unexpectedly, or if the only-authoritative-copy premise is ambiguous.
-2. Produce a complete tracked-file inventory from the tracked `logs/work-loop/*.md` surface. Verify the Unit 3 total and categories rather than trusting the reported counts; every path must have exactly one intended post-migration class, and the inventory must distinguish task records from intentional negative fixtures and non-state targets by repository evidence, not filename alone.
-3. Run the inactive validator against the intended-valid records before migration and retain fail-capable starting evidence showing the old records do not yet satisfy the explicit lifecycle contract. Establish the relevant failure distribution or representative failures without turning the state file into an exhaustive transcript.
-4. For every `turn: operator` record, decide from its own durable wording whether it is an unambiguous retrospective closure or an unresolved operator wait. Normalize the former to `status: closed` and the exact four closing headings; classify the latter as `status: blocked` with all five active/blocked headings and a real blocker. Stop rather than guess where the record is ambiguous.
-5. Reconfirm the two known noncanonical closed inputs: `context-engineering-implementation-plan.md` and `foreign-staging-target-repo.md`. If their own records still unambiguously establish retrospective closure, normalize their headings and lifecycle as planned while preserving their substantive outcome, decisions, evidence, and limitations; do not reinterpret their history.
-6. Determine each fixture's recorded intent from its tests and use. Preserve intentional negative fixtures as invalid by intent, update state-focused assertions where necessary so each fails for its intended invariant rather than an earlier accidental defect, and keep non-state target fixtures classified rather than forcing them into the state contract.
+1. Reconfirm the exact checkout/task, HEAD `596f733d`, this record as `ACTIVE_CLAUDE`, the old-format `.owner`, repository-depth unique ownership, and free shared leases. Reconfirm the preparation-baseline proof that the old runtime accepts this status-augmented task while the new validator classifies it. Stop on any ambiguity, live competing actor, changed HEAD, or another open old-shape owner.
+2. Inventory production lifecycle/closed-state parsing and mutation across the plan-named surfaces: the executable core, `.agents/skills/work-loop-v2/SKILL.md`, `.claude/commands/work-loop-v2.md`, `.agents/skills/reorient/SKILL.md`, `logs/scripts/work-loop-owner.sh`, `scripts/axcion-harness-v0.2/carry-turn.sh`, `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, and directly invoked proof helpers. Search those files and their owning tests for parsing of `turn:`, closing headings, candidate scans, owner dates, or independent open/closed inference. Treat any additional production semantic consumer found in that bounded surface as in scope and name it; stop if relevance is ambiguous rather than silently widening.
+3. Establish failing-first behaviour for the cutover: representative current consumers must demonstrably accept, infer, or select at least one state the final validator contract rejects or handles differently, and the consumer-consistency/closure-order assertions must fail before implementation. Use existing fixtures and focused test conventions; do not build a general framework.
+4. Reconfirm that all other registered checkout declarations are absent, task-only, or bound only to valid new-contract records as applicable. This checkout's old declaration is the only authorized owner mutation in this unit; any other open old-shape declaration stops the cutover.
 
-**Implementation boundary:** Add the explicit `status` lifecycle and mandatory body shape to all intended-valid tracked Work Loop records, performing only the lifecycle/body normalization required to make their already-recorded meaning valid. Preserve historical substance: do not upgrade an outcome, erase a limitation, invent an operator decision, resume a retired workflow, or reinterpret session history. Update existing state-focused fixture assertions only where required to preserve their stated discrimination under the new contract. A disposable migration operation may be used locally if useful, but do not add a permanent migration framework or runtime fallback.
+**Implementation boundary:**
 
-This unit may edit tracked `logs/work-loop/*.md` records and the minimum existing state-focused test/fixture assertions required by the migration. It must not edit `.owner`, the executable core, either Work Loop actor instruction, Reorient, the owner helper, carrier, dispatcher, legacy session records, the frozen plan, deployment assets, or runtime consumer semantics. Do not archive tasks, create a second inventory artifact, clean `logs/friction-log.md`, merge, push, or begin Tracer 3.
+- Update the executable core's lifecycle/state contract and content-bound authority as authorized by the frozen plan.
+- Update the Codex Work Loop skill, Claude command, Reorient, owner helper, attended carrier, unattended dispatcher, and directly affected proof helpers/tests so lifecycle classification comes only from the validator. Remove empty-invocation candidate selection and every private old-shape fallback.
+- Preserve each transport's existing program-specific exit meanings, allowlist behaviour, live-lease integration, process supervision, permission policy, and partial-effect reporting except where a minimal adapter change is required to consume validator output.
+- Enforce closed-state commit before owner clear in every closure/de-escalation path. `BLOCKED_OPERATOR` retains ownership and exposes its exact recorded condition. Missing, malformed, contradictory, identity-mismatched, unsupported, or unclassifiable state stops before actor launch or mutation.
+- Keep the complete semantic switch and its directly owning test updates in one cutover commit. The current task may remain `ACTIVE_CLAUDE` in that commit. After it succeeds, rewrite only this checkout's gitignored `.owner` under repository-depth validation, invoke no other Work Loop actor between commit and rewrite, then update only this task record to the final evidence/`ACTIVE_CODEX` handback and make a separate state-only handback commit.
 
-**Codex framing decisions:** Treat repository-wide coverage as one dominant migration deliverable because Tracer 2's exit condition explicitly requires no unclassified tracked record; the word “every” is consequence-driven here, not an invitation to adjacent cleanup. Hold consumer cutover, owner-format change, legacy isolation, operational proof, closure, and landing outside this unit because the frozen safe ordering assigns them to later tracers. Treat lifecycle/body normalization as preservation work: wording may be compressed only where the existing meaning remains provably unchanged.
+Excluded by the frozen plan and Codex framing: dispatcher legacy-session initialization or allowlist cleanup; legacy command preflights; `handoff-thread` changes; generic compaction-policy changes; lease redesign; actor supervision or permission changes; deployment/sync packaging; project deployment; broad documentation cleanup; historical-record changes; automatic migration/archival; merge, push, landing, or Tracer 4 work. Leave the hook-owned `logs/friction-log.md` modification untouched and outside every commit.
 
-**Capability subset:** Baseline only — read/search/history inspection, repository-depth ownership and lease checks, local tests, edits within the tracked Work Loop records and minimum existing state-focused test assertions, and local commits by Claude. Nothing is selected from the pre-authorizable set, which is empty today. No operator-reserved capability is needed; no merge, push, deployment, network, credential, destructive action, policy expansion, or runtime consumer switch is authorized. This is an operator-carried interactive turn, so no courier runtime profile is claimed.
+**Capability subset:** Baseline only — read/search/history inspection, repository-depth owner and shared-lease checks, local tests, edits to the inventoried semantic consumers and their directly owning tests, the one semantic commit, the authorized local `.owner` rewrite after that commit, and one state-only handback commit by Claude. Nothing is selected from the pre-authorizable set, which is empty today. No operator-reserved capability is needed; no merge, push, deployment, network, credential, destructive shared-state action, policy expansion, or installation change is authorized. This is an operator-carried interactive turn, so no courier runtime profile is claimed.
 
 **Required evidence:**
 
-- A before/after inventory accounting for every tracked `logs/work-loop/*.md` path in exactly one of the five permitted classes, with totals that reconcile and no unclassified record.
-- Failing-first validator evidence from old intended-valid records, followed by `logs/scripts/work-loop-state.sh validate` success for every intended-valid record and the exact classification totals after migration.
-- For every intentional negative fixture, an assertion or inventory mapping to its intended validator failure, plus evidence that it fails for that reason rather than an earlier unrelated defect; non-state targets must remain explicitly accounted for.
-- Evidence that no ambiguous operator-turn record was guessed. For each migrated operator-turn record, preserve a concise mapping from old recorded meaning to either blocked or closed; call out any record whose disposition required more than mechanical heading/lifecycle normalization.
-- Focused validator regression from `logs/scripts/work-loop-state.test.sh` and the original old-runtime deterministic baseline from `logs/scripts/work-loop-v2-slice-1.test.sh`, with exact pass/fail counts and exit status. If another existing state-focused assertion is changed, run its owning focused suite as well.
-- Direct validation of this task's committed handback shape as `ACTIVE_CODEX` while the old runtime still accepts it.
-- A scoped diff review showing no semantic history rewrite beyond explicit lifecycle/body normalization, no `.owner` or consumer change, and a commit/path summary that accounts for all changed tracked files. Keep the hook-owned `logs/friction-log.md` modification outside the commit and untouched.
+- A before/after source inventory that names every production lifecycle parser in the bounded consumer surface and shows that, afterward, no production consumer derives lifecycle/closure independently of `work-loop-state.sh`; test-only fixture construction must be distinguished from production parsing.
+- Failing-first and passing consumer-consistency evidence: all consumers return or correctly translate the same four classifications for the same legal fixtures, and malformed, contradictory, identity-mismatched, unsupported, and missing-status fixtures stop before launch or mutation.
+- Exact-ID/path evidence proving empty invocation cannot scan or select a candidate; negative fixtures must show the old selection behaviour is gone.
+- `BLOCKED_OPERATOR` evidence proving the owner is retained and the exact blocker is surfaced.
+- Fail-capable closure-order evidence: injected pre-commit failure leaves the owner intact; injected post-commit/pre-clear failure leaves valid `CLOSED` plus a stale owner that is safely clearable; clean closure commits valid closed state before clearing.
+- Green exact-count/exit evidence for `logs/scripts/work-loop-state.test.sh`, `logs/scripts/work-loop-owner.test.sh`, `logs/scripts/work-loop-v2-slice-1.test.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`, and `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`, plus any focused suite owning an additional consumer found by the inventory. Distinguish environmental limitations from accepted green; do not call a red or unavailable suite green.
+- Cutover sequencing evidence: the complete semantic switch is one commit; its path list contains every inventoried production consumer and no excluded subsystem; the old owner remains unchanged until that commit exists; repository-depth validation immediately precedes the one rewrite; the final owner contains exactly the task ID; and no actor invocation occurred between semantic commit and owner rewrite.
+- Self-hosting evidence after the rewrite: the new core/Claude entry accepts this exact task and task-only owner; the validator returns `ACTIVE_CLAUDE` before the handback flip and `ACTIVE_CODEX` afterward; the state-only handback commit contains only this task record; repository-depth ownership remains unique; and no private fallback was used.
 
-**Completion condition:** Commit the complete Tracer 2 migration and its minimum test updates, including this migrated task record. Replace `## Latest result` with the reconciled inventory, classification, ambiguity, validator, negative-fixture, old-runtime, scope, and commit evidence; retain `status: active`, set `turn: codex`, and hand back for assessment. State explicitly that `.owner` remains in old `{task-id} {date}` form, runtime consumers have not switched, admissions remain paused, and Tracer 3 has not started.
+**Completion condition:** Complete and commit the atomic semantic cutover, then rewrite the owner in the required order, then make the state-only handback commit. Replace `## Latest result` with the source inventory, failing/passing cases, suite counts, closure-order, commit/path, owner-rewrite, unique-binding, and self-hosted handoff evidence; set `turn: codex` while retaining `status: active`; and hand back for assessment under the new runtime. State explicitly that admissions remain paused, legacy-session isolation has not started, nothing was deployed or landed, and Tracer 4 has not started.
 
-**Stop conditions:** Stop without guessing if any tracked operator-turn record has ambiguous lifecycle meaning; a task record has multiple plausible authoritative copies; a live owner or lease conflicts with migration; preserving an intentional negative's reason requires weakening the validator; the old runtime does not tolerate the migrated valid records; the migration would require `.owner` or consumer changes; repository evidence materially invalidates the frozen contract; or completing the inventory would require interpreting legacy session history. Report the exact paths and evidence, set `turn: codex` for a technical/premise handback, and do not partially claim Tracer 2 complete.
+**Stop conditions:** Stop before the semantic commit if the complete consumer set cannot be bounded, any required consumer cannot safely delegate classification to the validator, a required suite is red/unavailable, another open old-shape owner exists, the core change would exceed the content-bound accepted architecture, or atomicity would be lost. If the semantic commit succeeds but owner validation/rewrite fails, do not invoke another actor or accept either owner format; preserve the fail-closed evidence and report the interruption through the safest existing channel without adding a fallback or second state store. Stop if the self-hosted handoff would require legacy session state, a permission/supervision change, deployment, or any excluded work.
 
 ## Latest result
 
-**The final tightly-bounded fix is done and the old-runtime deterministic baseline is green.** The two-sided installation premise held, so the stale routing fact was corrected rather than accepted as a limitation. `.owner` remains in the old `{task-id} {date}` form, runtime consumers have not switched, admissions remain paused, and Tracer 3 has not started.
+Unit 4 / Tracer bullet 2 accepted after its bounded correction and final fix. Commit `a1c81caf` migrated the complete tracked-record inventory: 55 valid closed, 13 valid active, zero valid blocked, three intentional negative fixtures, and three non-state target fixtures, with all 68 intended-valid records accepted and each negative failing on its intended invariant. Commit `f3390f7b` repaired the two old-runtime mode assertions made stale by Unit 3's authorized retirement. Commit `596f733d80fd79fd277b5253add3f46496c2c419` corrected the factual `diagnosing-bugs` installation marker and restored the required deterministic baseline while preserving its fail-capable live-installation cross-check.
 
-**What this round was authorised to do,** carried into the record because Codex's instruction was never committed: reconfirm the two-sided installation, then "remove only its stale `[Claude-side only]` marker from `.agents/skills/work-loop-v2/references/routing-index.md` and update only the corresponding `CLAUDE_ONLY` expectation and human-readable count in `logs/scripts/work-loop-v2-slice-1.test.sh`", preserving `diagnosing-bugs` as the same routed capability, with the closure check covering this final fix only.
-
-**Premise — the two-sided installation still holds.** Checked by inspection, not recall:
-
-- `~/.claude/skills/diagnosing-bugs/SKILL.md` — present.
-- `~/.codex/skills/diagnosing-bugs/SKILL.md` — present.
-
-Both sides carry the skill, so the index's `[Claude-side only]` marker on that one bullet was a false fact about the live environment. A second premise was checked before editing: the routing index states no numeric total of Claude-side-only skills anywhere, so removing one marker required no count edit inside the index. The only human-readable count lives in the harness.
-
-**The fix — three lines across two files.**
-
-1. `routing-index.md` line 50: `` - `diagnosing-bugs` `[Claude-side only]` — something is broken… `` became `` - `diagnosing-bugs` — something is broken… ``. Only the marker was removed. The bullet, its name and its purpose text are unchanged.
-2. `work-loop-v2-slice-1.test.sh` `CLAUDE_ONLY`: `diagnosing-bugs` removed from the expectation list, 12 names to 11.
-3. The same file's human-readable check name: `exactly the 12 Claude-side-only skills carry the marker` became `exactly the 11 …`.
-
-**`diagnosing-bugs` is still the same routed capability.** It remains in `MATT_PRIMARY` in the harness and remains an indexed owner bullet with its original purpose. Route membership, routing behaviour, skill contents and both installations are untouched. What changed is one claim about where it is installed.
-
-**The two sets now agree at 11, and they agree by name, not by count:**
-
-```
-marked in index (11): ask-matt codebase-design grill-with-docs handoff improve-codebase-architecture
-                      resolving-merge-conflicts to-questionnaire triage wait-what wizard writing-for-agents
-live claude-only (11): (identical, in the same order)
-```
-
-**Fail-capable negative — the live-installation cross-check still rejects a mismatch, in both directions.** Each probe ran the real harness against a mutated copy of the index through the existing `WL2_ROUTER_FILE` override; the real index was never modified by a probe.
-
-| Probe | What it does | Harness result |
-|---|---|---|
-| A | reintroduces the stale `[Claude-side only]` marker on `diagnosing-bugs` | 306 passed, **2 failed** — the live-installation check red again |
-| B | drops the marker from `wizard`, a genuinely Claude-only skill | 306 passed, **2 failed** — the live-installation check red again |
-| control | the real index | 308 passed, 0 failed |
-
-Probe B matters as much as A: it shows the check is not merely tolerant of a shorter list but rejects a marker that is missing where the live installation requires one. The sibling `exactly the 11 …` assertion goes red alongside it in both probes, which is the intended pairing — the brief-side and live-side checks are meant to fail together on a drifted index.
-
-**Old-runtime deterministic baseline.** `logs/scripts/work-loop-v2-slice-1.test.sh`: **308 passed, 0 failed, exit 0** — green, from 307 passed / 1 failed at the start of this round and 305 / 3 before the correction.
-
-**Focused validator regression.** `logs/scripts/work-loop-state.test.sh`: **63 passed, 0 failed, exit 0** — unchanged. This record validates as `ACTIVE_CODEX` at hand-back.
-
-**Scope.** Exactly the three allowed files changed: the routing index, the harness, and this record. No migrated record content, no `mode` assertion, no validator or its test, no `.owner`, no consumer, no core, no other skill, and no installation was touched. `logs/friction-log.md` remains a hook-owned modification, untouched and outside the commit.
-
-**Carried forward** (Git holds the full text at `a1c81caf` and `f3390f7b`): the Tracer 2 inventory reconciles all **74** tracked `logs/work-loop/*.md` paths into 55 valid closed, 13 valid active, 0 valid blocked, 3 intentional negative fixtures and 3 non-state target fixtures; all 68 intended-valid records exit 0 and the 3 negatives fail at exits 16, 14 and 16 on their own invariants. Finding 1 of the correction round — the two `mode` assertions repointed at this task's own open record through a single `LIVE_TASK_F` pointer — remains resolved and green.
+Accepted verification: `work-loop-state.test.sh` 63/0 and `work-loop-v2-slice-1.test.sh` 308/0, both exit 0; this record validates as `ACTIVE_CODEX`; the old runtime still reads the migrated state; no `.owner` or consumer changed; `.owner` remains `work-loop-v2-durable-state-system 2026-08-14`; admissions remain paused; and Tracer 3 had not started. No additional routing-currency mechanism is warranted: the existing live-installation assertion detected the stale marker and remains discriminating in both mismatch directions.
 
 ## Blocker
 
@@ -114,6 +77,4 @@ None.
 
 ## Next action
 
-Codex: run the closure check on this final fix only — is the stale routing fact corrected, and did the fix break anything?
-
-The two questions the § 3 menu leaves: whether the index's factual currency now needs a standing check of its own, given that this marker went stale silently when a skill was installed on the Codex side, and whether Tracer 2 is now accepted. Both are yours. Tracer 3 has not started.
+Claude: execute Unit 5. Verify the exact consumer inventory, dual-valid self-hosting premise, unique old-format ownership, and failing-first cases before editing; then make the complete semantic cutover commit, rewrite only this checkout's owner in the mandated post-commit order, complete the state-only `ACTIVE_CODEX` handback commit under the new runtime, and stop for Codex assessment. Do not begin legacy-session isolation or invoke another actor between the cutover commit and owner rewrite.

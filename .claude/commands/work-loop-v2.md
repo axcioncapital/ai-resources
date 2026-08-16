@@ -1,12 +1,12 @@
 ---
 model: opus
 effort: high
-argument-hint: "[the task id whose state file to act on, or nothing to use the only open one]"
+argument-hint: "[the task id whose state file to act on — required; this command selects no task for you]"
 ---
 
 Run Claude's half of one Work Loop v2 unit: read the task-state file, check the brief's premises against the live repository, then either hand back a false premise or implement the unit and hand back evidence. Codex frames and assesses; Claude owns repository reality and makes every commit. Not for small reversible fixes — those are Direct Work and open no state file (core § 2).
 
-Input: `$ARGUMENTS` — a task id, or empty to use the only state file whose `turn:` is `claude`.
+Input: `$ARGUMENTS` — **exactly one task id, and it is required.** An empty invocation selects nothing: this command does not scan `logs/work-loop/` for a candidate and does not pick a task on your behalf. If `$ARGUMENTS` is empty, say so, name that a task id is required, and stop without reading or changing any state file.
 
 This command requires the executable core on every invocation. Apply the resolver contract below,
 then read the one absolute path it prints **before any other Work Loop action**.
@@ -140,13 +140,25 @@ When invoked on an existing state file that carries its reason, admission was de
 
 ## Step 1 — Orient
 
-Read the state file at `logs/work-loop/{task-id}.md`. Resolve `{task-id}` from `$ARGUMENTS`, or — if empty — from the single file under `logs/work-loop/` whose frontmatter `turn:` is `claude`. If more than one qualifies, list them and ask which. Never guess.
+`{task-id}` comes from `$ARGUMENTS` and from nowhere else. **There is no candidate scan.** This step used to fall back to "the single file under `logs/work-loop/` whose `turn:` is `claude`", and that fallback is removed: selecting a task by reading turns is a lifecycle inference, it silently picks up a record the operator never named, and it made an empty invocation act on whatever happened to be open. An empty `$ARGUMENTS` stops here.
 
 Read the repository, not the conversation (core § 3 step 1).
 
-**Validate the file's identity read-only, before anything else is done with it** — core § 6 rule 2 states the conditions; this is what Claude does when one is met. If the frontmatter `task:` does not match the resolved `{task-id}`, report the mismatch — both values, in plain words — and **change nothing**. No inspection record, no turn flip, no commit; the rejection leaves no trace in the file, and that is the point. If it is not obvious which side is correct, the report ends with the question for the operator (core § 7). Then stop. The same applies to a file that is missing or has no readable `task:` / `turn:` frontmatter — report, change nothing, stop.
+**Classify the state file with the validator, read-only, before anything else is done with it.** This is the one lifecycle authority (core § 4); do not read `task:`, `status:`, `turn:` or the body shape to work it out yourself:
 
-If `turn:` is not `claude`, stop and say whose move it is. Change nothing.
+```bash
+bash logs/scripts/work-loop-state.sh validate --checkout "$(git rev-parse --show-toplevel)" --task {task-id}
+```
+
+It prints exactly one of `ACTIVE_CLAUDE`, `ACTIVE_CODEX`, `BLOCKED_OPERATOR`, `CLOSED` and exits `0`, or it exits non-zero naming the invariant the record violates. Act on that and nothing else:
+
+- **`ACTIVE_CLAUDE`** — your move. Continue.
+- **`ACTIVE_CODEX`** — Codex's move. Say so and change nothing.
+- **`BLOCKED_OPERATOR`** — the task waits on the operator. Report the condition recorded under `## Blocker` and change nothing. It is **not** finished, and it does not become your move because it is stopped.
+- **`CLOSED`** — terminal. Say so and change nothing.
+- **Non-zero** — the record is malformed, contradictory, or its identity disagrees with `{task-id}`. This is core § 6 rule 2's read-only rejection: report the validator's diagnostic in plain words and **change nothing**. No inspection record, no turn flip, no commit; the rejection leaves no trace in the file, and that is the point. If it is not obvious which side is correct, the report ends with the question for the operator (core § 7). Then stop.
+
+**If the validator cannot run, stop.** A missing, unreadable or failing validator does not mean "carry on and read the frontmatter yourself" — it means the lifecycle is unestablished, and there is no second reading to fall back on. Report that it could not run, name its path in this checkout, change nothing, and stop.
 
 If `## Next action` opens with core § 3's hand-off token, this invocation is the one bounded correction, not a new unit — go to **Correction rounds** below and skip Steps 2–5.
 
@@ -202,7 +214,7 @@ Core § 1 and core § 7 *Hand back to Codex* govern this step. Do all of this an
 
 1. Mark the claim in the inspection record: `- Claim (N): FALSE — searched <path> for <what>; not present.`
 2. Write the finding into `## Blocker`, replacing `None.`, naming the claim that failed and what was actually found.
-3. Set `turn: codex` in the frontmatter.
+3. Set `turn: codex` in the frontmatter and leave `status: active`. A hand-back is Codex's move on a task that is still running; it is not a stop for the operator, so it is neither `blocked` nor `closed`.
 4. Set `## Next action` to what Codex must decide.
 5. `git add` the state file **by explicit pathspec**, then commit.
 6. **Stop.**
@@ -234,9 +246,10 @@ Core § 3 *The unit's mode* owns the three modes and what each requires. `## Lan
 Core § 2 *De-escalating* decides when this applies — inspection or implementation is where Claude notices it. When it does apply:
 
 1. Say so, in plain words.
-2. Reduce the state file to the closing record (core § 4), recording under `## Decisions that matter` that the task de-escalated and what was learned. Set `turn: operator`. Clear the checkout's declaration in the same write, exactly as **Closing the task** step 2 below — a de-escalated task ends its lease like any other.
+2. Reduce the state file to the closing record (core § 4), recording under `## Decisions that matter` that the task de-escalated and what was learned. Set `status: closed` and `turn: operator`.
 3. Finish the work directly, as Direct Work.
 4. `git add` the state file and the changed files by explicit pathspec, commit once, stop.
+5. **Only after that commit exists, clear the checkout's declaration** — exactly as **Closing the task** step 3 below, and in that order for the same reason. A de-escalated task ends its lease like any other, but it ends it after the closed state is committed, never before.
 
 ## Step 5 — Write the result and the evidence
 
@@ -251,7 +264,7 @@ Evidence: <the check, what it returns now, and what it returned before>
 
 The state file is current truth, not a diary (core § 4): replace the previous result rather than appending to it.
 
-Then set `turn: codex`, set `## Next action` to what Codex assesses, `git add` by explicit pathspec — the state file and the files the unit changed — and commit.
+Then set `turn: codex` and leave `status: active`, set `## Next action` to what Codex assesses, `git add` by explicit pathspec — the state file and the files the unit changed — and commit.
 
 ## Correction rounds
 
@@ -260,21 +273,29 @@ Core § 3 *Correcting once* governs this round, including what may and may not e
 1. Reproduce each frozen finding by inspection first, the same way Step 2 checks claims. A finding that does not reproduce is handed back as exactly that — not silently dropped.
 2. Correct exactly the frozen findings. Anything newly noticed goes into the hand-back in plain words as a candidate deferral, and is not implemented.
 3. A finding you can only partly resolve is handed back as exactly that: what was resolved, what was not, and why. Do not stretch the evidence to cover the gap (core § 6 rule 5).
-4. Write the result and evidence into `## Latest result` per Step 5's shape. Set `turn: codex`. Set `## Next action` to the closure check on the frozen findings only. `git add` the state file and the corrected files by explicit pathspec, commit, stop.
+4. Write the result and evidence into `## Latest result` per Step 5's shape. Set `turn: codex` and leave `status: active`. Set `## Next action` to the closure check on the frozen findings only. `git add` the state file and the corrected files by explicit pathspec, commit, stop.
 
 ## Closing the task
 
 Core § 3's close token in `## Next action` is Codex's close verdict; core § 4 owns what a closed file holds. Claude writes and commits the record — the verdict is not re-judged here. The general turn guard and the identity check in Step 1 apply to this invocation like any other.
 
-1. Reduce the state file to core § 4's closing record — its exact four headings, nothing else surviving — carrying what the verdict names: the outcome, the decisions that matter (including any deferral the verdict records, with its reason), the final commit or evidence pointer, and the accepted limitations (or `None.`). Set `turn: operator`.
-2. **Clear the checkout's declaration in the same write.** An open task leases its checkout until closure, so the closing record is exactly the moment the lease ends:
+**The order of these three steps is the contract, not a suggestion.** Valid closed state is committed *before* the declaration is cleared, and the two are separate moves. Clearing first — which is what this section used to say — puts the checkout in the one state that cannot be recovered from: the lease is gone while the closure is still uncommitted, so a crash in between leaves a checkout that looks free and a task that is not closed, and the next task claims straight over it. The reverse order fails safe. A crash after the commit leaves valid `CLOSED` state plus a declaration the validator classifies stale, which the next task start in this checkout clears by itself.
+
+1. Reduce the state file to core § 4's closing record — its exact four headings, nothing else surviving — carrying what the verdict names: the outcome, the decisions that matter (including any deferral the verdict records, with its reason), the final commit or evidence pointer, and the accepted limitations (or `None.`). Set `status: closed` and `turn: operator` in that same write: a `closed` status over a surviving active body is malformed, and the validator rejects it.
+2. **Confirm the record is valid, then commit it.** `git add` the state file by explicit pathspec and commit. A closing invocation changes no other file.
+
+   ```bash
+   bash logs/scripts/work-loop-state.sh validate --checkout "$(git rev-parse --show-toplevel)" --task {task-id}   # must print CLOSED
+   ```
+
+   If it does not print `CLOSED`, the reduction is wrong. Fix the record and do not commit — and do not clear the declaration, which still correctly says this checkout is held by an unfinished task.
+3. **Only once that commit exists, clear the checkout's declaration.** An open task leases its checkout until closure, and the committed closing record is what ends the lease:
 
    ```bash
    bash logs/scripts/work-loop-owner.sh clear --checkout "$(git rev-parse --show-toplevel)" --task {task-id}
    ```
 
-   Leaving it in place is the failure this step exists to prevent: the next task in that checkout would be refused by a task that has already finished. `clear` refuses to remove another task's declaration, and a checkout that has none is a no-op, so running it is always safe. `logs/work-loop/.owner` is gitignored, so this changes nothing that gets committed.
-3. `git add` the state file by explicit pathspec, commit, stop. A closing invocation changes no other file.
+   Leaving it in place is the failure this step exists to prevent: the next task in that checkout would be refused by a task that has already finished. `clear` refuses to remove another task's declaration, and a checkout that has none is a no-op, so running it is always safe. `logs/work-loop/.owner` is gitignored, so this changes nothing that gets committed — which is also why it cannot be part of the commit in step 2.
 
 ## Step 6 — Report in one line
 

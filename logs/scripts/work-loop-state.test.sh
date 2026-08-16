@@ -344,7 +344,7 @@ expect_class ACTIVE_CLAUDE "$CO" b9-fenced "B9  headings quoted inside a fenced 
 
 # ============================================================ R — read-only
 echo
-echo "=== R — the validator writes nothing, and no consumer calls it yet ==="
+echo "=== R — the validator writes nothing, and every named consumer calls it ==="
 
 manifest() { # dir -> sorted "mode size sha path" for every entry
   ( cd "$1" && find . -print0 | LC_ALL=C sort -z | while IFS= read -r -d '' p; do
@@ -379,37 +379,102 @@ printf 'x\n' >>"$CO_RO/logs/work-loop/r1-active.md"
   && ok "R2  the byte-identical check can detect a change (R1 is fail-capable)" \
   || bad "R2  the byte-identical check can detect a change" "an appended byte went unnoticed"
 
-# The seam is inactive at this commit. If a consumer starts calling the validator,
-# this assertion is the one that must be updated deliberately — in Tracer 3.
+# THE SEAM IS ACTIVE FROM THE TRACER 3 CUTOVER, AND THIS IS THE ASSERTION THAT
+# SAYS SO. Until that commit this row read the other way — "no runtime consumer
+# calls the validator yet" — because the validator had to be proven against
+# adversarial fixtures before anything stopped understanding the old shape (plan
+# § 2, dependency 2). That preparation is spent: the inactive seam was the thing
+# Tracer 3 exists to close, so an inactive-seam assertion surviving the cutover
+# would assert the state the cutover removed.
 #
-# RUNTIME surfaces only: shell scripts, plus the instruction files that ARE the
-# Claude command, the Codex skill and the Codex hooks. Logs, reports and plans are
-# excluded on purpose — a report that discusses the validator is not a consumer,
-# and an earlier version that searched every .md failed on a hook-written write-
-# activity log and on a v1 file whose name merely ends in `work-loop-state.sh`.
-# `/work-loop-state.sh` is anchored for the same reason.
-runtime_mentions() {
-  grep -rl '/work-loop-state\.sh' "$REPO_ROOT" --include='*.sh' 2>/dev/null
-  for d in "$REPO_ROOT/.claude" "$REPO_ROOT/.agents" "$REPO_ROOT/.codex"; do
-    [ -d "$d" ] && grep -rl '/work-loop-state\.sh' "$d" 2>/dev/null
-  done
-}
-CALLERS="$(runtime_mentions \
-          | grep -v 'work-loop-state\.sh$' \
-          | grep -v 'work-loop-state\.test\.sh$' \
-          | LC_ALL=C sort -u || true)"
-[ -z "$CALLERS" ] \
-  && ok "R3  no runtime consumer calls the validator yet (the seam is inactive)" \
-  || bad "R3  no runtime consumer calls the validator yet" "callers: $(printf '%s' "$CALLERS" | tr '\n' ' ')"
+# Inverted rather than deleted, and the direction matters. A deleted row proves
+# nothing afterwards; this one now fails if any named consumer QUIETLY DROPS the
+# validator and goes back to reading state itself, which is the regression the
+# whole cutover is exposed to.
+#
+# THE LIST IS EXPLICIT, not discovered. A discovered list would pass the moment
+# every file that happens to mention the validator mentions it — including none
+# of the ones that matter. These are the plan-named production lifecycle
+# consumers, each of which must obtain classification from the validator.
+REQUIRED_CALLERS='
+logs/scripts/work-loop-owner.sh
+scripts/axcion-harness-v0.2/carry-turn.sh
+plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh
+.claude/commands/work-loop-v2.md
+.agents/skills/work-loop-v2/SKILL.md
+.agents/skills/reorient/SKILL.md
+plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md
+'
+MISSING=""
+while IFS= read -r rel; do
+  [ -n "$rel" ] || continue
+  if [ ! -f "$REPO_ROOT/$rel" ]; then
+    MISSING="$MISSING $rel(absent)"
+  elif ! grep -q 'work-loop-state\.sh' "$REPO_ROOT/$rel" 2>/dev/null; then
+    MISSING="$MISSING $rel"
+  fi
+done <<EOF
+$REQUIRED_CALLERS
+EOF
+[ -z "$MISSING" ] \
+  && ok "R3  every plan-named production consumer obtains lifecycle from the validator" \
+  || bad "R3  every plan-named production consumer obtains lifecycle from the validator" \
+         "not delegating:$MISSING"
 
-# ============================================================ P — preparation compatibility
+# Delegating is only half of it. A consumer can call the validator AND keep the
+# parser it used to decide with, and the fallback is what makes a cutover partial
+# — two readings of one record, disagreeing under exactly the conditions the
+# explicit contract was introduced to settle. These are the two private readings
+# Tracer 3 removed by name: work-loop-owner.sh's `turn: operator` closure test,
+# and both transports' closing-record test by heading sequence.
+retired_parsers() { # file -> prints each retired construct found
+  grep -nE 'task_is_closed|\$\(printf .## Outcome' "$1" 2>/dev/null
+}
+LEFTOVER=""
+for rel in logs/scripts/work-loop-owner.sh \
+           scripts/axcion-harness-v0.2/carry-turn.sh \
+           plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh; do
+  [ -f "$REPO_ROOT/$rel" ] || continue
+  hit="$(retired_parsers "$REPO_ROOT/$rel")"
+  [ -n "$hit" ] && LEFTOVER="$LEFTOVER $rel:$(printf '%s' "$hit" | head -1 | cut -d: -f1)"
+done
+[ -z "$LEFTOVER" ] \
+  && ok "R4  no production consumer retains a private lifecycle parser" \
+  || bad "R4  no production consumer retains a private lifecycle parser" "found:$LEFTOVER"
+
+# R4 is a positive-absence check, so its detector must be shown to detect. Without
+# this control R4 would pass just as happily against a broken pattern.
+CTRL="$SANDBOX_ROOT/retired-parser-control.sh"
+{
+  printf 'task_is_closed() { :; }\n'
+  printf 'heads_ok() { [ "$heads" = "$(printf %s)" ]; }\n' "'## Outcome\\n## Decisions that matter'"
+} >"$CTRL"
+[ -n "$(retired_parsers "$CTRL")" ] \
+  && ok "R5  the retired-parser detector detects them (R4 is fail-capable)" \
+  || bad "R5  the retired-parser detector detects them" "the control file went unnoticed"
+
+# ============================================================ P — consumer consistency
 echo
-echo "=== P — the still-live old consumers accept a status-augmented record ==="
+echo "=== P — every cut-over consumer agrees with the validator ==="
 #
-# The plan's riskiest early assumption (§ 2, risky assumption 1): records can gain
-# `status` BEFORE cutover without breaking the old runtime. If this is false,
-# Tracer 2 has no safe migration order, so it is proven here against the real
-# helpers rather than asserted.
+# WHAT THIS SECTION USED TO PROVE, AND WHY IT NO LONGER CAN. Before Tracer 3 this
+# was the plan's riskiest early assumption (§ 2, risky assumption 1): records
+# could gain `status` BEFORE cutover without breaking the old runtime. That
+# premise bought Tracer 2 its safe migration order, it was proven here against
+# the real helpers, and it is now spent — the old runtime it measured was
+# replaced by the cutover, so those rows would test consumers that no longer
+# exist.
+#
+# WHAT REPLACES IT is the risk the cutover actually carries. Four consumers now
+# read one classifier, each translating into its own vocabulary — the validator's
+# word, the dispatcher's `turn=`, the carrier's actor routing, the owner helper's
+# verdict. A translation is where two consumers can silently diverge, so the
+# agreement is measured on one record at a time rather than assumed from the fact
+# that they all call the same script.
+#
+# Real binaries throughout, on real git checkouts, through each consumer's own
+# READ-ONLY entry: the dispatcher's --status, the carrier's --dry-run, the owner
+# helper's check. Nothing here launches an actor and nothing here mutates.
 
 new_git_checkout() { # -> path on stdout
   local d
@@ -427,79 +492,136 @@ new_git_checkout() { # -> path on stdout
   # state file. P5 therefore reported a lease-library error rather than a verdict
   # on status-augmented parsing, so it could not discriminate at all.
   cp "$REPO_ROOT/logs/scripts/work-loop-lease.sh" "$d/logs/scripts/work-loop-lease.sh" 2>/dev/null || true
+  # Since the cutover every consumer resolves the validator out of the checkout it
+  # was pointed at. Without this copy each of them refuses for a missing file, and
+  # the section would measure the harness rather than the agreement.
+  cp "$STATE_BIN" "$d/logs/scripts/work-loop-state.sh" 2>/dev/null || true
   git -C "$d" add -A >/dev/null 2>&1
   git -C "$d" commit -qm "sandbox base" >/dev/null 2>&1
   (cd "$d" && pwd -P)
 }
 
-# OLD shape: task + turn only, no status. This is what every tracked record looks
-# like today.
-write_old_open() { # checkout task turn
-  local d="$1" t="$2" tu="$3"
-  {
-    printf -- '---\ntask: %s\nturn: %s\n---\n\n' "$t" "$tu"
-    printf -- '## Objective and scope\nA fixture objective.\n\n'
-    printf -- '## Lane and unit\nStandard. Unit 1.\n\n'
-    printf -- '## Latest result\nNot started.\n\n'
-    printf -- '## Blocker\nNone.\n\n'
-    printf -- '## Next action\nClaude: run the unit.\n'
-  } >"$d/logs/work-loop/$t.md"
+commit_gco() { # checkout task
+  git -C "$1" add -A >/dev/null 2>&1
+  git -C "$1" commit -qm "state $2" >/dev/null 2>&1
 }
 
-add_status() { # file value — inserts `status:` above the turn: line
-  local f="$1" v="$2"
-  awk -v v="$v" '!done && /^turn: / { print "status: " v; done=1 } { print }' "$f" >"$f.tmp" \
-    && mv "$f.tmp" "$f"
+# The consumers under test, each through its own read-only entry. Missing ones are
+# reported rather than skipped: a silently absent consumer is an unmeasured one.
+consumer_reads() { # checkout task -> "dispatch=<line> carry=<line>"
+  local co="$1" t="$2" d_out c_out
+  d_out="$(bash "$DISPATCH_BIN" --status --checkout "$co" --task "$t" 2>&1)"
+  c_out="$(bash "$CARRY_BIN" --checkout "$co" --task "$t" --dry-run 2>&1)"
+  printf 'DISPATCH<<%s>>CARRY<<%s>>' "$d_out" "$c_out"
 }
 
-GCO="$(new_git_checkout)"
-write_old_open "$GCO" p-open codex
-printf '%s %s\n' p-open 2026-08-14 >"$GCO/logs/work-loop/.owner"
+# ---- P1..P4: one row per classification, three consumers each ----------------
+#
+# EVERY ROW IS A DIFFERENT RECORD, not the same record re-labelled, so a consumer
+# that hardcodes one answer fails three of the four. The blocked/closed pair is
+# the one that matters most: both are `turn: operator`, they differ only by
+# `status:`, and before the cutover the consumers told them apart by whether the
+# body still had a `## Blocker` — the inference Tracer 3 removed.
+p_row() { # n class status turn dispatch-turn carry-marker owner-rc owner-marker
+  local n="$1" class="$2" st="$3" tu="$4" dturn="$5" cmark="$6" orc="$7" omark="$8"
+  local co reads o_out o_rc
+  co="$(new_git_checkout)"
+  if [ "$st" = closed ]; then write_closed "$co" p-rec; else write_open "$co" p-rec "$st" "$tu"; fi
+  printf 'p-rec\n' >"$co/logs/work-loop/.owner"
+  commit_gco "$co" p-rec
 
-P1_BEFORE="$(bash "$OWNER_BIN" check --checkout "$GCO" --task p-open --depth repo 2>&1)"; P1B_RC=$?
-add_status "$GCO/logs/work-loop/p-open.md" active
-P1_AFTER="$(bash "$OWNER_BIN" check --checkout "$GCO" --task p-open --depth repo 2>&1)"; P1A_RC=$?
+  expect_class "$class" "$co" p-rec "$n.a validator classifies the record $class"
 
-[ "$P1B_RC" -eq "$P1A_RC" ] && [ "$P1_BEFORE" = "$P1_AFTER" ] \
-  && ok "P1  work-loop-owner.sh gives an identical verdict with status: added (rc=$P1A_RC)" \
-  || bad "P1  work-loop-owner.sh gives an identical verdict with status: added" \
-         "before rc=$P1B_RC '$P1_BEFORE' / after rc=$P1A_RC '$P1_AFTER'"
-
-# The augmented record must ALSO be valid under the new contract — that is the
-# whole point of migrating before cutover rather than at it.
-expect_class ACTIVE_CODEX "$GCO" p-open "P2  the status-augmented record is already valid under the new validator"
-
-# The old closed-detection path: turn: operator means closed to the old helper.
-# Adding status: closed must not disturb that, or migration would silently turn
-# closed tasks back into open ones and lock their checkouts.
-write_old_open "$GCO" p-closed-old operator
-printf '%s %s\n' p-closed-old 2026-08-14 >"$GCO/logs/work-loop/.owner"
-P3_BEFORE="$(bash "$OWNER_BIN" check --checkout "$GCO" --task p-other --depth local 2>&1)"; P3B_RC=$?
-add_status "$GCO/logs/work-loop/p-closed-old.md" closed
-P3_AFTER="$(bash "$OWNER_BIN" check --checkout "$GCO" --task p-other --depth local 2>&1)"; P3A_RC=$?
-
-[ "$P3B_RC" -eq 0 ] && [ "$P3A_RC" -eq 0 ] && [ "$P3_BEFORE" = "$P3_AFTER" ] \
-  && ok "P3  the old helper still reads a status-augmented record as closed (stale, clearable)" \
-  || bad "P3  the old helper still reads a status-augmented record as closed" \
-         "before rc=$P3B_RC '$P3_BEFORE' / after rc=$P3A_RC '$P3_AFTER'"
-
-# P1 and P3 compare a before to an after, so they need the before to have been a
-# real reading rather than an error both times.
-case "$P1_BEFORE" in *PROCEED*) ok "P4  P1's baseline was a real verdict, not a failure on both sides" ;;
-  *) bad "P4  P1's baseline was a real verdict" "got: $P1_BEFORE" ;; esac
-
-# dispatch.sh --status is read-only and prints what it parsed. A second live
-# consumer, chosen because it has its OWN frontmatter reader rather than sharing
-# the owner helper's.
-if [ -f "$DISPATCH_BIN" ]; then
-  D_OUT="$(bash "$DISPATCH_BIN" --status --checkout "$GCO" --task p-open 2>&1)"
-  case "$D_OUT" in
-    *"turn=codex"*"task=p-open"*) ok "P5  dispatch.sh --status still parses the status-augmented record correctly" ;;
-    *) bad "P5  dispatch.sh --status still parses the status-augmented record" "got: $(printf '%s' "$D_OUT" | tr '\n' ' ' | cut -c1-220)" ;;
+  reads="$(consumer_reads "$co" p-rec)"
+  case "$reads" in
+    *"DISPATCH<<"*"turn=$dturn"*) ok "$n.b dispatch.sh --status translates $class to turn=$dturn" ;;
+    *) bad "$n.b dispatch.sh --status translates $class to turn=$dturn" \
+           "got: $(printf '%s' "$reads" | tr '\n' ' ' | cut -c1-200)" ;;
   esac
-else
-  bad "P5  dispatch.sh --status still parses the status-augmented record" "dispatcher not found at $DISPATCH_BIN"
-fi
+  case "$reads" in
+    *"CARRY<<"*"$cmark"*) ok "$n.c carry-turn.sh --dry-run translates $class to '$cmark'" ;;
+    *) bad "$n.c carry-turn.sh --dry-run translates $class to '$cmark'" \
+           "got: $(printf '%s' "$reads" | sed 's/.*CARRY<<//' | tr '\n' ' ' | cut -c1-200)" ;;
+  esac
+
+  # The owner helper is asked about a DIFFERENT task, which is the only question
+  # that makes it classify the declaring record rather than match on the id.
+  o_out="$(bash "$OWNER_BIN" check --checkout "$co" --task p-other --depth local 2>&1)"; o_rc=$?
+  if [ "$o_rc" -eq "$orc" ] && case "$o_out" in *"$omark"*) true ;; *) false ;; esac; then
+    ok "$n.d work-loop-owner.sh translates $class to rc=$orc ('$omark')"
+  else
+    bad "$n.d work-loop-owner.sh translates $class to rc=$orc ('$omark')" \
+        "rc=$o_rc out: $(printf '%s' "$o_out" | tr '\n' ' ' | cut -c1-200)"
+  fi
+}
+
+CARRY_BIN="${CARRY_BIN:-$REPO_ROOT/scripts/axcion-harness-v0.2/carry-turn.sh}"
+for b in "$DISPATCH_BIN" "$CARRY_BIN" "$OWNER_BIN"; do
+  [ -f "$b" ] || bad "P0  every consumer under test is present" "missing: $b"
+done
+
+p_row P1 ACTIVE_CLAUDE    active  claude   claude   "actor 'claude'"    3 "open task 'p-rec'"
+p_row P2 ACTIVE_CODEX     active  codex    codex    "actor 'codex'"     3 "open task 'p-rec'"
+p_row P3 BLOCKED_OPERATOR blocked operator operator "UNANSWERED"        3 "BLOCKED_OPERATOR"
+p_row P4 CLOSED           closed  operator operator "task is CLOSED"    0 "CLOSED"
+
+# ---- P5: the illegal records stop every consumer, and none of them writes -----
+#
+# Five shapes, each the plan's named refusal condition: missing status,
+# contradictory status/turn, identity mismatch, an unsupported status value, and
+# a body that does not match its status. A consumer that "helpfully" resolved any
+# of these would be reintroducing the inference the cutover removed, one record
+# at a time.
+p_neg() { # n label mutate-fn
+  local n="$1" label="$2" fn="$3" co before after d_rc c_rc o_rc
+  co="$(new_git_checkout)"
+  write_open "$co" p-bad active claude
+  "$fn" "$co/logs/work-loop/p-bad.md"
+  printf 'p-bad\n' >"$co/logs/work-loop/.owner"
+  commit_gco "$co" p-bad
+
+  bash "$STATE_BIN" validate --checkout "$co" --task p-bad >/dev/null 2>&1
+  [ $? -ne 0 ] || { bad "$n.a the validator refuses $label" "it returned 0"; return; }
+  ok "$n.a the validator refuses $label"
+
+  # Scoped to the STATE surface on purpose. A whole-checkout manifest would also
+  # capture the run log and the lease directory under .git, which a refusing run
+  # legitimately creates before it ever reads the record — so it would go red for
+  # the transports doing their job rather than for a mutation.
+  before="$(manifest "$co/logs/work-loop")"
+  bash "$DISPATCH_BIN" --checkout "$co" --task p-bad --log-dir "$co/runs" --dry-run >/dev/null 2>&1; d_rc=$?
+  bash "$CARRY_BIN" --checkout "$co" --task p-bad --dry-run >/dev/null 2>&1; c_rc=$?
+  bash "$OWNER_BIN" check --checkout "$co" --task p-other --depth local >/dev/null 2>&1; o_rc=$?
+  after="$(manifest "$co/logs/work-loop")"
+
+  [ "$d_rc" -ne 0 ] && [ "$c_rc" -ne 0 ] \
+    && ok "$n.b both transports stop before launch on $label (dispatch=$d_rc carry=$c_rc)" \
+    || bad "$n.b both transports stop before launch on $label" "dispatch=$d_rc carry=$c_rc"
+
+  # AMBIGUOUS, not REFUSE: an unclassifiable declaration is neither open enough to
+  # refuse on nor closed enough to clear, and the helper says so rather than
+  # picking one.
+  [ "$o_rc" -eq 4 ] \
+    && ok "$n.c work-loop-owner.sh is AMBIGUOUS on $label, so nothing is claimed or cleared" \
+    || bad "$n.c work-loop-owner.sh is AMBIGUOUS on $label" "rc=$o_rc"
+
+  [ "$before" = "$after" ] \
+    && ok "$n.d no consumer mutated the checkout while refusing $label" \
+    || bad "$n.d no consumer mutated the checkout while refusing $label" \
+           "$(diff <(printf '%s\n' "$before") <(printf '%s\n' "$after") | head -4 | tr '\n' ' ')"
+}
+
+drop_status()    { grep -v '^status: ' "$1" >"$1.t" && mv "$1.t" "$1"; }
+contradict()     { sed 's/^turn: claude$/turn: operator/' "$1" >"$1.t" && mv "$1.t" "$1"; }
+mismatch_id()    { sed 's/^task: p-bad$/task: p-somethingelse/' "$1" >"$1.t" && mv "$1.t" "$1"; }
+unsupported()    { sed 's/^status: active$/status: paused/' "$1" >"$1.t" && mv "$1.t" "$1"; }
+wrong_body()     { sed 's/^status: active$/status: closed/' "$1" >"$1.t" && mv "$1.t" "$1"; }
+
+p_neg P5 "a missing status: key"               drop_status
+p_neg P6 "a contradictory active/operator pair" contradict
+p_neg P7 "an identity mismatch"                 mismatch_id
+p_neg P8 "an unsupported status value"          unsupported
+p_neg P9 "a closed status over an active body"  wrong_body
 
 # ============================================================ X — execution surface
 echo

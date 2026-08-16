@@ -31,6 +31,11 @@ OWNER_BIN="${OWNER_BIN:-$REPO_ROOT/logs/scripts/work-loop-owner.sh}"
 # drives — the same resolution the ownership helper uses — so every sandbox has
 # to carry it for the same reason every sandbox carries the ownership helper.
 LEASE_BIN="${LEASE_BIN:-$REPO_ROOT/logs/scripts/work-loop-lease.sh}"
+# The canonical state validator. Since the Tracer 3 cutover the dispatcher asks it
+# for the state's classification instead of reading `turn:` and the body headings
+# itself, and fail-closes at exit 13 when it is absent. A sandbox without it is
+# not modelling a real checkout.
+STATE_BIN="${STATE_BIN:-$REPO_ROOT/logs/scripts/work-loop-state.sh}"
 
 PASS=0; FAIL=0
 SANDBOX_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/wl2-dispatch-test.XXXXXX")"
@@ -41,11 +46,52 @@ bad()  { FAIL=$((FAIL+1)); printf '  FAIL  %s\n' "$1"; [ -n "${2:-}" ] && printf
 
 # ---------------------------------------------------------------- fixtures
 
-state_file() { # dir task turn [declared-task]
-  local dir="$1" task="$2" turn="$3" declared="${4:-$2}"
+# Writes a record that satisfies the contract work-loop-state.sh enforces:
+# explicit `status`, one of the four legal status/turn pairs, and that pair's body
+# shape. Before the Tracer 3 cutover this wrote a status-free record with the OPEN
+# body for every turn, `operator` included — which the validator rejects, and
+# rightly: a closing record is not an open record with the turn changed. Status is
+# derived from the turn unless the caller states it.
+state_file() { # dir task turn [declared-task] [status]
+  local dir="$1" task="$2" turn="$3" declared="${4:-$2}" status="${5:-}" blocker
+  if [ -z "$status" ]; then
+    case "$turn" in
+      codex|claude) status=active ;;
+      operator)     status=closed ;;
+    esac
+  fi
+  if [ "$status" = closed ]; then
+    cat >"$dir/logs/work-loop/$task.md" <<EOF
+---
+task: $declared
+status: closed
+turn: operator
+---
+
+## Outcome
+Sandbox fixture for the dispatcher harness. Closed record.
+
+## Decisions that matter
+Nothing real depends on this file.
+
+## Evidence
+Harness fixture — no commit.
+
+## Accepted limitations
+None.
+EOF
+    if git -C "$dir" rev-parse --git-dir >/dev/null 2>&1; then
+      git -C "$dir" add "logs/work-loop/$task.md" >/dev/null 2>&1
+      git -C "$dir" commit -qm "fixture: $task" >/dev/null 2>&1
+    fi
+    return 0
+  fi
+  blocker='None.'
+  [ "$status" = blocked ] && blocker='Waiting on the operator to decide the fixture question.'
   cat >"$dir/logs/work-loop/$task.md" <<EOF
 ---
 task: $declared
+status: $status
 turn: $turn
 ---
 
@@ -59,7 +105,7 @@ Standard. Unit 1 — harness fixture.
 Not started.
 
 ## Blocker
-None.
+$blocker
 
 ## Next action
 Harness fixture. Nothing real depends on this file.
@@ -90,6 +136,8 @@ new_sandbox() { # -> path on stdout
   # Same argument for the lease library, and the same single exception: case 12f
   # removes it deliberately, and that must be the only case without it.
   cp "$LEASE_BIN" "$d/logs/scripts/work-loop-lease.sh" 2>/dev/null || true
+  # And the validator, for the same reason and with the same single-exception rule.
+  cp "$STATE_BIN" "$d/logs/scripts/work-loop-state.sh" 2>/dev/null || true
   git -C "$d" add README.md other.txt logs/scripts 2>/dev/null
   git -C "$d" commit -qm "sandbox base"
 
@@ -112,20 +160,31 @@ COMMIT_IF_CLAUDE='; if [ "$WL_ACTOR" = "claude" ]; then
         git -C "$WL_CHECKOUT" commit -qm "actor commit" >/dev/null 2>&1 || true; fi'
 
 # Records which task an actor was invoked for, then flips the turn.
+#
+# ADDRESSED BY PATTERN, NOT BY LINE NUMBER. These actors used to rewrite line 3,
+# which was `turn:` only because the frontmatter happened to be exactly two keys.
+# The canonical contract adds `status:`, so line 3 is now `status:` and a
+# position-addressed actor would corrupt the lifecycle instead of flipping the
+# turn — silently, and in every case at once.
 FLIP_BODY='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
-      t=$(awk "NR==3" "$WL_STATE_FILE");
+      t=$(sed -n "/^turn: /{p;q;}" "$WL_STATE_FILE");
       case "$t" in
         "turn: codex")  n="turn: claude" ;;
         "turn: claude") n="turn: codex"  ;;
         *) n="$t" ;;
       esac;
-      awk -v n="$n" "NR==3{print n; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
+      awk -v n="$n" "/^turn: /&&!done{print n; done=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
       mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'
 
 FLIP="$FLIP_BODY$COMMIT_IF_CLAUDE"
 
+# Handing a record to the operator is a LIFECYCLE change, not just a turn change:
+# the canonical contract has no active/operator pair, so an actor that rewrote
+# only `turn:` would leave a record no consumer may act on. A real Claude closing
+# write reduces the file to the closing record, and so does this one.
 FLIP_TO_OPERATOR='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
-      awk "NR==3{print \"turn: operator\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
+      d=$(sed -n "s/^task: //p" "$WL_STATE_FILE" | head -1);
+      printf -- "---\ntask: %s\nstatus: closed\nturn: operator\n---\n\n## Outcome\nHanded to the operator by the fixture actor.\n\n## Decisions that matter\nNothing real depends on this file.\n\n## Evidence\nHarness fixture.\n\n## Accepted limitations\nNone.\n" "$d" > "$WL_STATE_FILE.tmp";
       mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'"$COMMIT_IF_CLAUDE"
 
 NOOP='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls"; exit 0'
@@ -198,7 +257,7 @@ for a in "$@"; do [ "$a" = "--version" ] && { echo "carry-stub 0.0.1"; exit 0; }
 printf 'x' >>"$COUNT"
 [ "$HOLD" -gt 0 ] && sleep "$HOLD"
 REPO="$(cd "$(dirname "$STATE")/../.." && pwd -P)"
-awk 'NR==3{print "turn: codex"; next}{print}' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
+awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$STATE" >"$STATE.tmp" && mv "$STATE.tmp" "$STATE"
 printf '\ncarrier stub ran\n' >>"$STATE"
 git -C "$REPO" add -- "logs/work-loop/$(basename "$STATE")" >/dev/null 2>&1
 git -C "$REPO" commit -qm "carrier stub: handed on" >/dev/null 2>&1
@@ -439,9 +498,13 @@ echo
 echo "Case 11 — a simulated round trip runs unattended and ends at operator"
 d="$(new_sandbox)"; state_file "$d" "trip-task" "codex"
 TRIP='printf "%s:%s\n" "$WL_HOP" "$WL_ACTOR" >> "$WL_CHECKOUT.calls";
-      if [ "$WL_HOP" -ge 3 ]; then n="turn: operator";
-      elif [ "$WL_ACTOR" = "codex" ]; then n="turn: claude"; else n="turn: codex"; fi;
-      awk -v n="$n" "NR==3{print n; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
+      if [ "$WL_HOP" -ge 3 ]; then
+        d=$(sed -n "s/^task: //p" "$WL_STATE_FILE" | head -1);
+        printf -- "---\ntask: %s\nstatus: closed\nturn: operator\n---\n\n## Outcome\nRound trip finished.\n\n## Decisions that matter\nNothing real depends on this file.\n\n## Evidence\nHarness fixture.\n\n## Accepted limitations\nNone.\n" "$d" > "$WL_STATE_FILE.tmp";
+      else
+        if [ "$WL_ACTOR" = "codex" ]; then n="turn: claude"; else n="turn: codex"; fi;
+        awk -v n="$n" "/^turn: /&&!d{print n; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
+      fi;
       mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'"$COMMIT_IF_CLAUDE"
 run_dispatch "$d" trip-task --max-hops 6 --actor-cmd "$TRIP"
 expect_rc 0 "$RC" "codex -> claude -> codex -> operator completes and exits 0" "$OUT"
@@ -1566,8 +1629,10 @@ echo
 echo "Case 20 — a core § 7 operator question is preserved and left unanswered"
 d="$(new_sandbox)"; state_file "$d" "opq-task" "claude"
 ASK_OPERATOR='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
-      { printf -- "---\ntask: %s\nturn: operator\n---\n\n" "$WL_TASK";
+      { printf -- "---\ntask: %s\nstatus: blocked\nturn: operator\n---\n\n" "$WL_TASK";
         printf "## Objective and scope\nSandbox fixture.\n\n";
+        printf "## Lane and unit\nStandard. Implementation mode. Unit 1 — harness fixture.\n\n";
+        printf "## Latest result\nStopped to ask.\n\n";
         printf "## Blocker\nOPERATOR-Q7: this change is hard to reverse. Authorise it?\n\n";
         printf "## Next action\nOperator decides. Neither model may answer this.\n"; } > "$WL_STATE_FILE.tmp";
       mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'"$COMMIT_IF_CLAUDE"
@@ -1593,7 +1658,7 @@ echo
 echo "Case 21 — turn: operator reached by a close is announced as a close, not as a question"
 d="$(new_sandbox)"; state_file "$d" "closed-task" "claude"
 CLOSE_TASK='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
-      { printf -- "---\ntask: %s\nturn: operator\n---\n\n" "$WL_TASK";
+      { printf -- "---\ntask: %s\nstatus: closed\nturn: operator\n---\n\n" "$WL_TASK";
         printf "## Outcome\nUnit 1 done.\n\n";
         printf "## Decisions that matter\nNone.\n\n";
         printf "## Evidence\nCommit deadbeef.\n\n";
@@ -1621,6 +1686,7 @@ d="$(new_sandbox)"
 cat >"$d/logs/work-loop/partial-task.md" <<'EOF'
 ---
 task: partial-task
+status: closed
 turn: operator
 ---
 
@@ -1649,6 +1715,7 @@ d="$(new_sandbox)"
 cat >"$d/logs/work-loop/extra-task.md" <<'EOF'
 ---
 task: extra-task
+status: closed
 turn: operator
 ---
 
@@ -1679,6 +1746,7 @@ d="$(new_sandbox)"
 cat >"$d/logs/work-loop/shuffled-task.md" <<'EOF'
 ---
 task: shuffled-task
+status: closed
 turn: operator
 ---
 
@@ -1707,6 +1775,7 @@ d="$(new_sandbox)"
 cat >"$d/logs/work-loop/dup-task.md" <<'EOF'
 ---
 task: dup-task
+status: closed
 turn: operator
 ---
 
@@ -1792,6 +1861,7 @@ d="$(new_sandbox)"
 cat >"$d/logs/work-loop/closed-task.md" <<'EOF'
 ---
 task: closed-task
+status: closed
 turn: operator
 ---
 
@@ -2896,7 +2966,7 @@ echo
 echo "Case 29 — an actor that COMMITS outside the allowlist is stopped"
 d="$(new_sandbox)"; state_file "$d" "commit-task" "claude"
 COMMIT_FOREIGN='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
-  awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
+  awk "/^turn: /&&!d{print \"turn: codex\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
   mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE";
   printf "actor wrote this\n" > "$WL_CHECKOUT/outside.txt";
   git -C "$WL_CHECKOUT" add -A >/dev/null 2>&1;
@@ -3501,7 +3571,7 @@ cat >"$FAKE" <<'FAKEEOF'
 if [ "${1:-}" = "--version" ]; then echo "0.0.0-fake (test double)"; exit 0; fi
 printf '%s\n' "$@" > "$WL_ARGV_FILE"
 sf="$WL_SF"
-awk 'NR==3{print "turn: codex"; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
 git -C "$WL_CO" add "$sf" >/dev/null 2>&1
 git -C "$WL_CO" commit -qm "fake claude hop" >/dev/null 2>&1
 exit 0
@@ -3610,7 +3680,7 @@ if [ "${1:-}" = "--version" ]; then echo "${WL_FAKE_VERSION:-2.1.220 (Claude Cod
 printf '%s\n' "$@" > "$WL_ARGV_FILE"
 printf 'SCRUB=%s\n' "${CLAUDE_CODE_SUBPROCESS_ENV_SCRUB:-<unset>}" > "$WL_ENV_FILE"
 sf="$WL_SF"
-awk 'NR==3{print "turn: codex"; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
 git -C "$WL_CO" add "$sf" >/dev/null 2>&1
 git -C "$WL_CO" commit -qm "fake claude hop" >/dev/null 2>&1
 exit 0
@@ -4367,7 +4437,7 @@ echo "Case 42b — a REAL uncommitted Claude edit still exits 25"
 # split would have replaced one wrong classification with another.
 d="$(new_sandbox)"; state_file "$d" "realedit-task" "claude"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task realedit-task --log-dir "$d/runs" \
-      --carry-one --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+      --carry-one --actor-cmd 'awk "/^turn: /&&!d{print \"turn: codex\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
 expect_rc 25 "$RC" "an actual uncommitted Claude edit is still 25" "$OUT"
 printf '%s' "$OUT" | grep -q "CLAUDE DID NOT TOUCH IT" \
   && bad "25 does not borrow 36's wording" "$OUT" \
@@ -4401,7 +4471,7 @@ DENIAL_JSON='{"type":"result","subtype":"success","is_error":false,"permission_d
 printf '%s' "$DENIAL_JSON" > "$SANDBOX_ROOT/denial.json"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task denial-task --log-dir "$d/runs" \
       --carry-one \
-      --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial.json"' 2>&1)"; RC=$?
+      --actor-cmd 'awk "/^turn: /&&!d{print \"turn: codex\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial.json"' 2>&1)"; RC=$?
 expect_rc 37 "$RC" "a hop whose capture reports denials exits 37, not 25" "$OUT"
 printf '%s' "$OUT" | grep -q "DENIED PERMISSION" \
   && ok "the stop names permission denial as the cause" \
@@ -4437,7 +4507,7 @@ printf '{"type":"result","subtype":"success","is_error":false,"permission_denial
   "$LONGTGT" > "$SANDBOX_ROOT/denial-long.json"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task longdenial-task --log-dir "$d/runs" \
       --carry-one \
-      --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial-long.json"' 2>&1)"; RC=$?
+      --actor-cmd 'awk "/^turn: /&&!d{print \"turn: codex\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial-long.json"' 2>&1)"; RC=$?
 expect_rc 37 "$RC" "the long denial still reaches a permission stop" "$OUT"
 printf '%s' "$OUT" | grep -Fq "Bash :: $LONGTGT" \
   && ok "the >200-character target is carried WHOLE into the stop" \
@@ -4467,7 +4537,7 @@ if command -v python3 >/dev/null 2>&1; then
   d="$(new_sandbox)"; state_file "$d" "nojq-task" "claude"
   OUT="$(PATH="$NOJQ:$PATH" bash "$DISPATCH_BIN" --checkout "$d" --task nojq-task --log-dir "$d/runs" \
         --carry-one \
-        --actor-cmd 'awk "NR==3{print \"turn: codex\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial-long.json"' 2>&1)"; RC=$?
+        --actor-cmd 'awk "/^turn: /&&!d{print \"turn: codex\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial-long.json"' 2>&1)"; RC=$?
   expect_rc 37 "$RC" "an unusable jq still reaches a permission stop" "$OUT"
   printf '%s' "$OUT" | grep -Fq "Bash :: $LONGTGT" \
     && ok "the exact >200-character target survives without jq" \
@@ -4558,7 +4628,7 @@ d="$(new_sandbox)"; state_file "$d" "malformed-after-task" "claude"
 IMPL="$(seed_impl "$d")"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task malformed-after-task --log-dir "$d/runs" \
       --carry-one \
-      --actor-cmd 'printf "partial implementation\n" >> "$WL_CHECKOUT/'"$IMPL"'"; awk "NR==3{print \"turn: broken\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+      --actor-cmd 'printf "partial implementation\n" >> "$WL_CHECKOUT/'"$IMPL"'"; awk "/^turn: /&&!d{print \"turn: broken\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
 expect_rc 15 "$RC" "malformed post-hop state exits 15" "$OUT"
 partial_section "$OUT" | grep -Fq "$IMPL" \
   && ok "post-hop validate_state failure reports the allowed implementation edit" \

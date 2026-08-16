@@ -1,6 +1,6 @@
 # The Work Loop — executable core
 
-**Version:** v0.1 (MVP). **Status:** canonical — content at commit `5fef08ff` approved by the operator on 2026-08-14.
+**Version:** v0.1 (MVP). **Status:** canonical — content at commit `5fef08ff` approved by the operator on 2026-08-14, with § 4's lifecycle contract replaced at the Tracer 3 cutover under the frozen durable-state plan's standing authorisation (`plans/work-loop-v2-v0.2/work-loop-v2-durable-state-system-implementation-plan-v0.1.md`, Tracer bullet 3). Everything outside the state contract is unchanged from the approved content.
 
 **What this is.** The one document that says how the Work Loop runs. The Claude Code command and
 the Codex resource **link to this file** and never restate what is in it. One owner, no drift. The
@@ -205,7 +205,8 @@ Close the task:
 followed by what the closing record must carry beyond the repository facts: the outcome as Codex
 judges it, any deferral recorded at the closure check with its reason, the menu choice and its
 value-and-risk ground if one was used, and any accepted limitation. Codex sets `turn: claude`. Claude
-reads that line as the signal to reduce the file to § 4's closing record, set `turn: operator`, and
+reads that line as the signal to reduce the file to § 4's closing record, set `status: closed` and
+`turn: operator` in the same write, and
 commit. Like the hand-off token below, it is a protocol token shared by both sides: named here, once,
 so the producer and the consumer cannot drift apart. Change it here or nowhere.
 
@@ -273,7 +274,9 @@ A courier may carry a turn the state file **already states**. It may never:
 
 - change the task, the brief, the result, or any other content of the state file;
 - choose which actor moves next, or decide that a turn exists — it carries what `turn:` already says;
-- continue past `turn: operator`, which stays terminal for all automation (§ 7 is unchanged by this);
+- continue past a record the validator classifies `BLOCKED_OPERATOR` or `CLOSED`, both of which stay
+  terminal for all automation (§ 7 is unchanged by this). A courier reads that classification from
+  `logs/scripts/work-loop-state.sh`; it does not work it out from `turn:` or from the body;
 - stand in as evidence. A courier's screen, terminal, exit status or user interface is **never
   authoritative**. The state file and the repository are, and whoever reads a courier's result reads
   the file before acting on it.
@@ -305,9 +308,31 @@ the hand-off works, not what the task is about.
 ```yaml
 ---
 task: crm-follow-up-date   # the task id; also the file name
+status: active             # where the task is in its life: active | blocked | closed
 turn: claude               # whose move it is: claude | codex | operator
 ---
 ```
+
+**Lifecycle is stated, never inferred.** `status` says where the task is in its life and `turn` says
+only whose move it is. The two are different questions, and reading one off the other is the mistake
+this contract removes: `turn: operator` used to mean both "waiting on a decision" and "finished",
+which are opposite situations that happen to stop the same automation. Only four combinations are
+legal, and every other pairing is malformed:
+
+| `status` | `turn` | What it means |
+|---|---|---|
+| `active` | `claude` | Claude owes execution, correction, or the closing write |
+| `active` | `codex` | Codex owes assessment or progression |
+| `blocked` | `operator` | Work waits on the decision named in `## Blocker` |
+| `closed` | `operator` | Terminal |
+
+**One reader decides, and it is not you.** `logs/scripts/work-loop-state.sh` is the single authority
+that turns a state file into one of those four classifications. Every consumer — this document's two
+entry points, the ownership helper, and any approved courier — asks it and uses its answer. No
+consumer parses the record for lifecycle itself, and none keeps a fallback reading for when the
+validator is unavailable: a validator that cannot run means the lifecycle is **unestablished**, which
+stops the caller. It never resolves to "open" or "closed" by default. A second reader is how two
+consumers come to disagree about one record, which is the whole failure this seam exists to prevent.
 
 The body carries the **content fields**, and holds **at most** these five while the task is active.
 The heading strings in the left column are **normative and exact** — the producer writes them and the
@@ -328,21 +353,23 @@ Five is a **maximum, not a checklist**. A field with nothing real in it is left 
 The five fields cap what the file says about the task's **state**. Two other things live in the same
 file and are not state, so the ceiling does not cover them:
 
-- **`turn` and `task`** — protocol fields. They say whose move it is and which task this is. `task`
-  is what § 6 rule 2 checks a file's identity against.
+- **`turn`, `status` and `task`** — protocol fields. They say whose move it is, where the task is in
+  its life, and which task this is. `task` is what § 6 rule 2 checks a file's identity against.
 - **The brief** — a hand-off from Codex to Claude, required by § 3 step 3.
 
 **A deferral needs no field.** Record it at closure among the decisions that matter. If it changes
 what happens next, it belongs in Next action instead.
 
 **When the task closes**, everything above is replaced by the closing record — exactly these four
-sections, under these exact headings, ending at `turn: operator`. Claude writes and commits this
-reduction on Codex's close verdict (§ 3, The close token); the shape below is the closed file's
-contract for both sides:
+sections, under these exact headings, at `status: closed` and `turn: operator`. Claude writes and
+commits this reduction on Codex's close verdict (§ 3, The close token); the shape below is the closed
+file's contract for both sides. The reduction is one write: the status and the body change together,
+because a `closed` status over a surviving active body is malformed and the validator rejects it.
 
 ```markdown
 ---
 task: {task-id}
+status: closed
 turn: operator
 ---
 
@@ -364,6 +391,7 @@ turn: operator
 ```markdown
 ---
 task: crm-follow-up-date
+status: active
 turn: claude
 ---
 
@@ -468,7 +496,8 @@ consequential change whose outcome, envelope and capabilities are already delega
 agent and is done more carefully. What moves a decision is the class it falls in, and the classes are
 listed here.
 
-**Hand back to Codex** — write the finding into the state file, set `turn: codex`, commit, and stop:
+**Hand back to Codex** — write the finding into the state file, keep `status: active` and set
+`turn: codex`, commit, and stop:
 
 - A claim the brief rests on is false (rule 1), or a load-bearing premise is still unsupported after
   bounded investigation.
@@ -482,8 +511,9 @@ listed here.
   where the remedy would itself materially change the policy governing agent authority, and then
   through that separate class below — never through this clause.
 
-**Stop for the operator** — write the question into the state file, set `turn: operator`, commit, and
-stop:
+**Stop for the operator** — write the question into `## Blocker`, set `status: blocked` and
+`turn: operator`, commit, and stop. `blocked`, not `closed`: the task is waiting, not finished, and
+the two are different classifications precisely so this stop cannot be mistaken for a close:
 
 - The intended outcome or the priority would change.
 - Scope would expand materially, or an exclusion would be removed.

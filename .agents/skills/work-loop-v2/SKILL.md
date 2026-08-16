@@ -143,6 +143,8 @@ Core § 4 defines the interface between you and Claude, and places the operator 
 
 **Read-only Git is yours; writing is not.** The restriction is on `.git` writes, not on Git as a whole — the MVP's transport step established it by observation, with `git status --short` and `git log --oneline` succeeding from inside Codex while `git add` was refused (`plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md` § 2). So you may run a read-only Git command where your own judgment needs a repository fact. Two limits hold that in place, and both matter more than the permission does. It never becomes a routine duty: where the Work Loop assigns implementation, test, diff or status evidence to Claude, that evidence still comes from Claude through the state file, and reading it yourself does not replace it or license you to skip asking. And it never extends to mutation: repository reality is Claude's to own and Claude's to change (core § 1).
 
+**Every record you write states both fields.** `status:` says where the task is in its life — `active`, `blocked` or `closed` — and `turn:` says only whose move it is. Core § 4 fixes the four legal pairs; there is no fifth, and neither field is inferred from the other. Yours are `active`/`claude` when you hand to Claude, `active`/`codex` while the move is yours, and `blocked`/`operator` when you stop for a decision. You never write `closed` — Claude writes and commits the closing record on your close verdict.
+
 **Name the actor whose turn it actually is** — the one you just wrote into `turn:`. The three cases:
 
 | `turn:` you set | The Next line says |
@@ -179,7 +181,7 @@ Sending the operator to Claude when the turn is theirs stalls the loop as surely
 
 A worktree is a cost, not a default. The table is the policy — do not build a decision procedure on top of it.
 
-**The checkout declares its writer, and you write the declaration.** One gitignored file per checkout, `logs/work-loop/.owner`, holds one task id and the date it was claimed. **Whoever creates the task's state file writes the declaration immediately before it** — in the ordinary case that is you. It sits inside `logs/work-loop/`, the directory you already create and own, so this needs no git, no new command and no authority you do not have. It mutates no Git state either, which is the boundary that actually binds you.
+**The checkout declares its writer, and you write the declaration.** One gitignored file per checkout, `logs/work-loop/.owner`, holds **one task id on one line and nothing else**. The claim date it used to carry was dropped at the Tracer 3 cutover: nothing ever read it, and a second field is one more way for two readers to disagree about the same declaration. A declaration in any other shape — the old `{task-id} {YYYY-MM-DD}` form included — is unreadable, and unreadable is a refusal, never something to repair by guessing. **Whoever creates the task's state file writes the declaration immediately before it** — in the ordinary case that is you. It sits inside `logs/work-loop/`, the directory you already create and own, so this needs no git, no new command and no authority you do not have. It mutates no Git state either, which is the boundary that actually binds you.
 
 **One sequence, both lanes:**
 
@@ -187,10 +189,11 @@ A worktree is a cost, not a default. The table is the policy — do not build a 
 2. Apply the isolation table above. Where it says **Local**, go straight to step 4 in the current checkout. Where it says isolate, end your reply with the Next line you already write, naming `/new-worktree-session` in Claude — that command creates the worktree and opens the window. The operator then opens you on that checkout. **This is the one residual manual step, and only on the isolated path.**
 3. Verify the working directory you are actually in, as always.
 4. Read `logs/work-loop/.owner`:
-   - **absent, or it already names this task** — write it (`{task-id} {YYYY-MM-DD}`, one line), then write the first brief into `logs/work-loop/{task-id}.md`.
+   - **absent, or it already names this task** — write it (`{task-id}`, one line, nothing else), then write the first brief into `logs/work-loop/{task-id}.md`.
    - **it names a different open task** — **refuse and write nothing.** Say which task holds the checkout, and give the operator both remedies: close that task, or use another checkout.
-   - **it names a task whose state file in this checkout is closed (`turn: operator`)** — stale. Say so and replace it.
-   - **unreadable, or holding more than one id** — refuse and report. Do not guess.
+   - **it names a task the validator classifies `CLOSED`** — stale. Say so and replace it. Ask `logs/scripts/work-loop-state.sh`; do not decide it from `turn:` or from which headings survive. `turn: operator` used to be the test here, and it was wrong in the one case that matters: a `BLOCKED_OPERATOR` task is also `turn: operator`, it is **waiting rather than finished**, and it keeps its checkout until the operator decides.
+   - **it names a task the validator classifies `BLOCKED_OPERATOR`** — held, not stale. Refuse, and report the condition the record names under `## Blocker`.
+   - **unreadable, holding more than one id, carrying a second field, or naming a task the validator cannot classify** — refuse and report. Do not guess, and do not delete it.
 
 Where a checkout carries `logs/scripts/work-loop-owner.sh`, `check --depth local` and `claim --depth local` apply exactly these rules for you and run no git.
 
@@ -220,7 +223,7 @@ Core § 4 *An approved courier may carry the turn* permits this and sets its lim
 | Shape | Program | Use it when |
 |---|---|---|
 | **Attended carry** | `scripts/axcion-harness-v0.2/carry-turn.sh` — Axcíon Harness v0.2 | The operator is at the machine. You carry **one** hop, then read the file and assess. The loop does not run on without you. |
-| **Unattended run** | `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, loop mode | The operator is leaving. You frame the unit, launch, and get out of the way. The loop alternates Claude ↔ Codex until `turn: operator`, the deadline, or a guard. |
+| **Unattended run** | `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, loop mode | The operator is leaving. You frame the unit, launch, and get out of the way. The loop alternates Claude ↔ Codex until the validator classifies the record `BLOCKED_OPERATOR` or `CLOSED`, or until the deadline or a guard. |
 
 **These are two different programs, and neither does the other's job.** The attended carrier carries exactly one hop per invocation and has no loop mode, no unattended mode, no worktree automation and no flag to ask for one: `--carry-one`, `--unattended`, `--max-hops` and `--status` are all refused with exit `10` before anything launches. It reports no out-of-band status either — the state file is its status, and a carry already in flight exits `17` naming the holding pid. So do not carry an attended hop with the spike dispatcher, and never reach for the carrier when the operator is leaving.
 
@@ -228,7 +231,7 @@ Everything below applies to both unless it names one. The hard rules are written
 
 **What you drive is a terminal command, not Claude.** You never type into a Claude window, never read Claude's interface for progress, and never click through its prompts. You run one command and read its exit code. The courier program launches the actor, validates the state file before and after, and stops on anything unexpected — that instrumentation is the reason this is the approved courier and screen-driving Claude directly is not.
 
-**Neither shape is context-bounded, and it is worth being clear why.** Every hop is a **fresh process** (`claude -p`, `codex exec`). Nothing accumulates across hops; `logs/work-loop/{task-id}.md` is the entire shared memory. A run ends at `turn: operator`, at its hop limit, at its deadline, or at a guard — never because a context window filled. Do not plan around a context budget that does not exist.
+**Neither shape is context-bounded, and it is worth being clear why.** Every hop is a **fresh process** (`claude -p`, `codex exec`). Nothing accumulates across hops; `logs/work-loop/{task-id}.md` is the entire shared memory. A run ends when the record classifies `BLOCKED_OPERATOR` or `CLOSED`, at its hop limit, at its deadline, or at a guard — never because a context window filled. Do not plan around a context budget that does not exist.
 
 **The attended command, in full.** There is no hop flag — one hop is the surface, so adding `--carry-one` is an unknown argument and stops at exit `10`. All four `--allow-path` values are required, because supplying any one **replaces both built-in defaults** (`^logs/work-loop/` and `^logs/harness-runs/`): the carrier writes its own run log under `logs/harness-runs/`, which is not gitignored, and a `PostToolUse` hook keeps `logs/friction-log.md` modified in this repository — omit either and the carry stops at `18` on the courier's own output. The fourth line is **per-task**: derive it from what this unit may legitimately change when you write the brief. Too narrow gives a false stop; too wide makes the check mean nothing.
 
@@ -249,7 +252,7 @@ scripts/axcion-harness-v0.2/carry-turn.sh \
 3. **The exit code is the result.** `0` means the carry completed. Anything else stops this carry: report the code and its meaning to the operator, and do not repeat the same hop. A later operator-approved narrowed recovery unit is governed by § *Three outcomes*; it is a new unit, not a retry of this one.
 4. **Read the file before assessing.** Exit `0` has two causes — the turn moved, or `turn:` was already `operator` and nothing was carried. Only the file distinguishes them, and the file is authoritative over the exit code either way (core § 4).
 5. **Never re-run the same hop to "try again".** A second launch of that hop is only ever justified when the courier's own run log shows the first launch never started. A completed hop that did not produce what you expected is something to inspect, not to repeat. After its partial effects are inspected, the operator may instead approve the fresh, smaller recovery unit defined in § *Three outcomes*; that is explicitly not the same brief or hop.
-6. **`turn: operator`, a malformed state file, and a permission prompt are terminal.** Stop and tell the operator. You do not approve prompts and you do not work around them.
+6. **`BLOCKED_OPERATOR`, `CLOSED`, a state file the validator refuses, and a permission prompt are all terminal.** Stop and tell the operator. You do not approve prompts and you do not work around them. A record the validator cannot classify is terminal in the same way as the other three: it is not an invitation to read the frontmatter yourself and carry on.
 
 **An unchanged `turn: claude` does not mean the command failed to land.** Claude leaves the file *completely untouched* when it rejects one — an identity mismatch or unreadable frontmatter is a correct read-only refusal (core § 6 rule 2), not a lost message. There are three causes and both programs already separate them, under the same three codes: `14` identity mismatch (Claude was never launched), `22` no transition (Claude ran and changed nothing), `21` timeout (Claude was still working). Read the code. Do not infer the cause from the turn, and never treat an unchanged turn as permission to send again.
 
@@ -285,9 +288,11 @@ dispatch.sh --checkout <path> --task <task-id> --status
 
 | Outcome | Looks like |
 |---|---|
-| **Finished** | `0` — and `turn: operator` with a core § 4 closing record |
-| **A decision is theirs** | `0` — and `turn: operator` with `## Blocker` / `## Next action` still present |
+| **Finished** | `0` — and `logs/scripts/work-loop-state.sh` classifies the record `CLOSED` |
+| **A decision is theirs** | `0` — and the validator classifies the record `BLOCKED_OPERATOR` |
 | **Stopped** | any other code — a guard (`18`,`19`,`24`,`25`,`30`,`36`), a failure (`20`,`21`,`22`), a permission dead end (`37`), an ownership stop (`33`,`34`,`35`), the hop limit (`23`), an interruption (`28`), or the budget (`29`) |
+
+**The first two are told apart by the validator, not by reading the file.** Both stop at `turn: operator`, and the difference between "finished" and "waiting on you" is the whole of what the operator needs to hear. Deciding it from whether `## Blocker` happens to have survived is how a closed task got announced as an open question and an unanswered question got announced as done — the run classifies, and you report what it classified.
 
 **`29` is not completion.** A run that ran out of clock is unfinished and resumable. Never report it as done.
 
@@ -387,7 +392,7 @@ from memory of it, and do not copy an entry back into this file: one route entry
 
 ## Opening a unit and writing the brief
 
-One task, one file (core § 4), named for the task id. Set `turn: claude` when the brief is ready for Claude.
+One task, one file (core § 4), named for the task id. Set `status: active` and `turn: claude` when the brief is ready for Claude — both fields, in the same write, because a record missing either is malformed and every consumer refuses it.
 
 Before writing anything:
 
@@ -561,7 +566,7 @@ If Claude handed back a **false premise**, that is a correct outcome, not a fail
 
 The closing decision is yours (core § 3 step 5); the closed file is not. Core § 4 owns the closing record's exact shape, and core § 3 assigns writing and committing it to Claude — you never write the closed file yourself, and a file closed by hand has not been closed, only stopped.
 
-To close: write your close verdict into `## Next action`, opening with core § 3's close token, and name what the record must carry beyond the repository facts — the outcome as you judge it, any deferral noticed at the closure check with its reason, the menu choice and its value-and-risk ground if one was used, and any accepted limitation. Set `turn: claude`, and end your reply with the Next instruction: run `/work-loop-v2` in Claude. Claude reduces the file to core § 4's closing record — the active fields do not survive the reduction — sets `turn: operator`, and makes the commit.
+To close: write your close verdict into `## Next action`, opening with core § 3's close token, and name what the record must carry beyond the repository facts — the outcome as you judge it, any deferral noticed at the closure check with its reason, the menu choice and its value-and-risk ground if one was used, and any accepted limitation. Set `status: active` and `turn: claude`, and end your reply with the Next instruction: run `/work-loop-v2` in Claude. Claude reduces the file to core § 4's closing record — the active fields do not survive the reduction — sets `status: closed` and `turn: operator` in that same write, commits it, and only then clears the checkout's declaration.
 
 ---
 
