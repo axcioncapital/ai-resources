@@ -52,5 +52,11 @@
       "workflow-analysis-agent",
       "workflow-critique-agent"
     ]
+  },
+  "_skills_doc": "Agent skills are opt-in: only names listed under skills.shared are symlinked from ai-resources/.agents/skills/. reorient is one of the five components of the Work Loop v2 capability — the sweep symlinks /work-loop-v2 into every project, and without reorient a compacted Codex session cannot re-establish the active task from disk. Removing it here leaves projects INCOMPLETE at work-loop-capability.sh.",
+  "skills": {
+    "shared": [
+      "reorient"
+    ]
   }
 }

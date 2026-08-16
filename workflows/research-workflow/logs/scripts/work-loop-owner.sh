@@ -2,10 +2,12 @@
 # work-loop-owner.sh — the one shared ownership check for Work Loop v2.
 #
 # R2, "the checkout declares its writer". One gitignored file per checkout at
-# logs/work-loop/.owner holds ONE task id and the date it was claimed, in
-# exactly one shape — `{task-id} {YYYY-MM-DD}` on a single line. A declaration
-# in any other shape is unreadable: it refuses, it is never guessed at, and it
-# is never deleted by this tool. There is
+# logs/work-loop/.owner holds ONE task id, in exactly one shape — `{task-id}` on
+# a single line, and nothing else. A declaration in any other shape — including
+# the pre-Tracer-3 `{task-id} {YYYY-MM-DD}` form — is unreadable: it refuses, it
+# is never guessed at, and it is never deleted by this tool. The claim date was
+# dropped at the Tracer 3 cutover: nothing ever read it, and a second field is
+# one more way for two readers to disagree about the same declaration. There is
 # no file anywhere that maps tasks to checkouts: nothing is keyed by task id,
 # nothing is stored centrally, nothing is migrated. The declaration is only ever
 # used to REFUSE — a second task entering a claimed checkout, or a task whose id
@@ -115,54 +117,73 @@ MARKER="$CHECKOUT/$OWNER_REL"
 # runs git — that is what makes the whole of --depth local git-free.
 
 # THE DECLARATION HAS EXACTLY ONE LEGAL SHAPE: one non-empty line holding
-# `{task-id} {YYYY-MM-DD}` and nothing else. Anything else reads as "?" —
-# unreadable — and "?" is a verdict, not a repair instruction. It never resolves
-# to a task id, is never guessed at, and is never deleted. That is R2's
-# unreadable/multi-id row: a damaged declaration must refuse visibly and survive
-# for the operator to look at, because the tool that found it cannot know whether
-# it was half-written by a live claim or corrupted long ago.
+# `{task-id}` and nothing else. Anything else reads as "?" — unreadable — and "?"
+# is a verdict, not a repair instruction. It never resolves to a task id, is never
+# guessed at, and is never deleted. That is R2's unreadable/multi-id row: a damaged
+# declaration must refuse visibly and survive for the operator to look at, because
+# the tool that found it cannot know whether it was half-written by a live claim or
+# corrupted long ago.
 #
-# Two fields exactly, not "at least two". A third token is either a second task
-# id or trailing junk, and both are the shape this check exists to reject —
-# reading only $1 would have silently accepted `alpha beta gamma` as "alpha".
+# One field exactly, not "at least one". A second token is either a second task id,
+# the retired claim date, or trailing junk, and all three are the shape this check
+# exists to reject — reading only $1 would silently accept `alpha beta` as "alpha",
+# which is precisely how a legacy declaration would slip through unnoticed.
 marker_holder() { # marker-path -> task id | "" absent | "?" unreadable/ambiguous
-  local m="$1" lines fields holder stamp y mo dy
+  local m="$1" lines fields holder
   [ -e "$m" ] || { printf ''; return 0; }
   [ -f "$m" ] && [ -r "$m" ] || { printf '?'; return 0; }
   lines="$(grep -c '[^[:space:]]' "$m" 2>/dev/null || printf '0')"
   # More than one non-empty line is exactly the "holding more than one id" row.
   [ "$lines" = "1" ] || { printf '?'; return 0; }
   fields="$(awk 'NF {print NF; exit}' "$m" 2>/dev/null)"
-  [ "$fields" = "2" ] || { printf '?'; return 0; }
+  [ "$fields" = "1" ] || { printf '?'; return 0; }
   holder="$(awk 'NF {print $1; exit}' "$m" 2>/dev/null)"
-  stamp="$(awk 'NF {print $2; exit}' "$m" 2>/dev/null)"
   case "$holder" in
     ''|*/*|*'\'*) printf '?'; return 0 ;;
   esac
   printf '%s' "$holder" | grep -qE '^[A-Za-z0-9][A-Za-z0-9._-]*$' || { printf '?'; return 0; }
-  # Shape first, then range. Shape alone would admit 2026-99-99, which is not a
-  # date and so is not a claim date.
-  printf '%s' "$stamp" | grep -qE '^[0-9]{4}-[0-9]{2}-[0-9]{2}$' || { printf '?'; return 0; }
-  y="${stamp%%-*}"; mo="${stamp#*-}"; mo="${mo%%-*}"; dy="${stamp##*-}"
-  case "$y$mo$dy" in *[!0-9]*) printf '?'; return 0 ;; esac
-  [ "$((10#$mo))" -ge 1 ] && [ "$((10#$mo))" -le 12 ] || { printf '?'; return 0; }
-  [ "$((10#$dy))" -ge 1 ] && [ "$((10#$dy))" -le 31 ] || { printf '?'; return 0; }
   printf '%s' "$holder"
 }
 
-# A task whose local state file says turn: operator is closed (core § 4).
-task_is_closed() { # checkout task -> 0 when closed
-  local f="$1/logs/work-loop/$2.md"
-  [ -f "$f" ] && [ -r "$f" ] || return 1
-  # The verdict is carried in a variable and applied once in END. An `exit 0`
-  # inside a rule jumps to END, whose own exit status would then overwrite it —
-  # which silently made every task look open.
-  awk '
-    NR==1 { if ($0 != "---") exit 1; inb=1; next }
-    inb && $0 == "---" { exit closed ? 0 : 1 }
-    inb && $0 ~ /^turn:[[:space:]]*operator[[:space:]]*$/ { closed = 1 }
-    END { exit closed ? 0 : 1 }
-  ' "$f"
+# LIFECYCLE COMES FROM THE VALIDATOR, AND FROM NOWHERE ELSE (Tracer 3). This
+# helper used to decide closure itself, by looking for `turn: operator` in the
+# frontmatter. That was an inference — `turn` says whose move it is, not whether
+# the task is over — and it is exactly the private parser the cutover removes.
+#
+# A validator that is missing, unreadable or non-zero is NOT permission to fall
+# back to the old reading. It means the lifecycle is unestablished, and an
+# unestablished lifecycle stops the caller rather than resolving to "open" or
+# "closed" by default. There is no second parser here to fall back to.
+VALIDATOR_REL='logs/scripts/work-loop-state.sh'
+
+task_class() { # checkout task -> prints ACTIVE_CLAUDE|ACTIVE_CODEX|BLOCKED_OPERATOR|CLOSED, or returns 1
+  local v="$1/$VALIDATOR_REL" out
+  [ -f "$v" ] && [ -r "$v" ] || return 1
+  out="$(bash "$v" validate --checkout "$1" --task "$2" 2>/dev/null)" || return 1
+  case "$out" in
+    ACTIVE_CLAUDE|ACTIVE_CODEX|BLOCKED_OPERATOR|CLOSED) printf '%s' "$out" ;;
+    *) return 1 ;;
+  esac
+}
+
+# Reads the recorded text of one top-level section. This is NOT lifecycle
+# parsing — the lifecycle already came from task_class above — it exists only so
+# a BLOCKED_OPERATOR refusal can quote the condition the record actually names
+# instead of telling the operator to go and look.
+section_text() { # state-file heading -> the section body, blank-trimmed, one line
+  awk -v want="$2" '
+    NR == 1 { inb = 1; next }
+    inb && $0 == "---" { inb = 0; body = 1; next }
+    inb { next }
+    body {
+      if ($0 ~ /^[[:space:]]*```/) { fence = !fence; if (grab) print; next }
+      if (!fence && $0 ~ /^## /) {
+        h = $0; sub(/^## /, "", h); sub(/[[:space:]]+$/, "", h)
+        grab = (h == want); next
+      }
+      if (grab) print
+    }
+  ' "$1" 2>/dev/null | tr '\n' ' ' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'
 }
 
 state_here() { [ -f "$1/logs/work-loop/$2.md" ]; }
@@ -198,18 +219,39 @@ check_local() {
     LOCAL_VERDICT="PROCEED"; LOCAL_REASON="this checkout already declares task '$TASK'"; return 0
   fi
 
-  # Stale row: a CLOSED local task's declaration may be cleared by the next task
-  # start IN THIS SAME CHECKOUT — never by another checkout, which is why this
-  # test reads the local state file and nothing else.
-  if task_is_closed "$CHECKOUT" "$holder"; then
-    LOCAL_STALE=1
-    LOCAL_VERDICT="PROCEED"
-    LOCAL_REASON="this checkout declares task '$holder', which is closed (turn: operator) — a stale declaration, clearable by the next task start in this checkout"
+  # The declaring task's lifecycle decides what happens next, and the validator
+  # is what establishes it. An unclassifiable declaration stops here: it is
+  # neither open enough to refuse on nor closed enough to clear, and guessing
+  # either way is the failure this whole seam exists to remove.
+  local holder_class holder_blocker
+  holder_class="$(task_class "$CHECKOUT" "$holder")" || {
+    LOCAL_VERDICT="AMBIGUOUS"
+    LOCAL_REASON="this checkout declares task '$holder', but $CHECKOUT/logs/work-loop/$holder.md could not be classified by $VALIDATOR_REL — lifecycle is never inferred here, so nothing is claimed and nothing is cleared; the operator names the owner"
     return 0
-  fi
+  }
+
+  case "$holder_class" in
+    # Stale row: a CLOSED local task's declaration may be cleared by the next task
+    # start IN THIS SAME CHECKOUT — never by another checkout, which is why this
+    # test reads the local state file and nothing else.
+    CLOSED)
+      LOCAL_STALE=1
+      LOCAL_VERDICT="PROCEED"
+      LOCAL_REASON="this checkout declares task '$holder', which the validator classifies CLOSED — a stale declaration, clearable by the next task start in this checkout"
+      return 0 ;;
+    # A blocked task still owns its checkout. It is waiting on the operator, not
+    # finished, so its lease holds — and the refusal quotes the condition the
+    # record names, because "go and read the file" is the answer that made the
+    # operator do the tool's work.
+    BLOCKED_OPERATOR)
+      holder_blocker="$(section_text "$CHECKOUT/logs/work-loop/$holder.md" 'Blocker')"
+      LOCAL_VERDICT="REFUSE"
+      LOCAL_REASON="this checkout is claimed by task '$holder', which the validator classifies BLOCKED_OPERATOR — it waits on the operator and keeps its checkout until that decision is made. Its recorded blocker: $holder_blocker"
+      return 0 ;;
+  esac
 
   LOCAL_VERDICT="REFUSE"
-  LOCAL_REASON="this checkout is claimed by open task '$holder' — close it, or use another checkout. An open task leases its checkout until closure."
+  LOCAL_REASON="this checkout is claimed by open task '$holder' ($holder_class) — close it, or use another checkout. An open task leases its checkout until closure."
   return 0
 }
 
@@ -381,7 +423,7 @@ case "$CMD" in
     # Written whole, then moved into place, so a reader never sees half a
     # declaration. Same directory, so the move is a rename on one filesystem.
     tmp="$MARKER.tmp.$$"
-    printf '%s %s\n' "$TASK" "$(date '+%Y-%m-%d')" >"$tmp" \
+    printf '%s\n' "$TASK" >"$tmp" \
       || die 11 "cannot write $MARKER"
     mv -f "$tmp" "$MARKER" || { rm -f "$tmp"; die 11 "cannot install $MARKER"; }
     if [ "$LOCAL_STALE" -eq 1 ]; then

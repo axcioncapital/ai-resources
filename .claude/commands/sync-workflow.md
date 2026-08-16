@@ -49,7 +49,7 @@ List all files in these subdirectories for both locations:
 
 Exclude `settings.json` and `settings.local.json` from comparison — these are always project-specific.
 
-`logs/scripts/` is in scope because a command can depend on a helper the `.claude/` inventory cannot see. `/work-loop-v2` Step 1.5 is the case that put it here: the command is symlinked into every project by `auto-sync-shared.sh`, but its ownership helper is a template-deployed file, so a project could hold the command and fail closed on every invocation while a `.claude/`-only inventory reported the project fully in sync.
+`logs/scripts/` is in scope because a command can depend on a helper the `.claude/` inventory cannot see. `/work-loop-v2` is the case that put it here: the command is symlinked into every project by `auto-sync-shared.sh`, but its state validator and ownership helper are template-deployed files, so a project could hold the command and fail closed on every invocation while a `.claude/`-only inventory reported the project fully in sync. Two of that command's five prerequisites live outside both inventories entirely — under `.agents/skills/` and `.codex/` — which is why Step 4b checks the capability as a whole rather than relying on this comparison.
 
 Build two maps: `canonical_files` and `project_files`, keyed by relative path (e.g., `commands/run-analysis.md`, `logs/scripts/work-loop-owner.sh`).
 
@@ -101,25 +101,39 @@ If `{PROJECT_DIR}/reference/skills/` exists:
 
 If `{PROJECT_DIR}/reference/skills/` does not exist, skip this step silently.
 
-## Step 4b: Validate the Work Loop ownership prerequisite
+## Step 4b: Validate the Work Loop capability
 
-Two things must both hold before `/work-loop-v2` can run in a deployed project. Step 3's A–E classification covers the first but cannot cover the second: a project `.gitignore` legitimately carries project-specific rules, so a whole-file diff against the template's would be a permanent Category C conflict and the one rule that matters would be lost inside it. Check the **rule**, not the file.
+Work Loop v2 is not one file. Five things must all hold before `/work-loop-v2` can run in a deployed project, and they arrive by four different routes — two template-deployed helper copies, one manifest opt-in skill, one Codex hook plus its registration, and one ignore rule. Step 3's A–E classification covers none of them completely: it cannot see `.codex/`, it cannot tell a registered hook from an unregistered one, and it cannot check the ignore rule, because a project `.gitignore` legitimately carries project-specific rules and a whole-file diff against the template's would be a permanent Category C conflict with the one rule that matters lost inside it. Check the **rule**, not the file — and check all five together, because a project holding four of them is not four-fifths working, it is broken at whichever seam it reaches first.
+
+Do not re-derive the five checks here. One canonical helper owns them, and both this command and `/work-loop-v2`'s own entry preflight ask it, so the two cannot drift apart:
 
 ```bash
-# 1. The helper is present and executable.
-test -x "{PROJECT_DIR}/logs/scripts/work-loop-owner.sh"
-
-# 2. The ignore rule is live — check-ignore names the matching rule, and exits 1 when none matches.
-git -C "{PROJECT_DIR}" check-ignore -v logs/work-loop/.owner
+bash "{AI_RESOURCES}/logs/scripts/work-loop-capability.sh" check \
+  --checkout "{PROJECT_DIR}" \
+  --canonical "{TEMPLATE_DIR}"
 ```
 
-Report each as PRESENT or MISSING in the Step 5 report. Both are remediable in Step 7: copy the helper from `{TEMPLATE_DIR}/logs/scripts/work-loop-owner.sh` (verbatim — it is not parameterized), and append `logs/work-loop/.owner` with the template `.gitignore`'s explanatory comment.
+`--canonical` is what makes the check compare the copied components byte-for-byte as well as looking for them; omit it and drift goes unseen. It prints one of three verdicts:
 
-**Why a missing rule is not cosmetic.** The declaration is checkout-local by construction. A committed copy replicates across worktrees on merge and then declares *every* checkout the owner — the exact failure the declaration exists to refuse. A project with the helper but no rule is worse than one with neither, because the check runs and its answer is wrong.
+| Verdict | Exit | What it means |
+|---|---|---|
+| `READY` | 0 | All five present, and every copied component byte-identical to the template. |
+| `INCOMPLETE` | 3 | One `missing:` or `drifted:` line per component, each naming it. |
+| `NOT_APPLICABLE` | 2 | `{PROJECT_DIR}/.claude/commands/work-loop-v2.md` is absent — the project does not carry the command, so the bundle is not applicable. Report N/A and take no action. |
 
-**Why a missing helper is not cosmetic either.** `/work-loop-v2` Step 1.5 stops when the check cannot run: an unestablished ownership check is refused, not waived. A project missing the helper fails closed on every Work Loop invocation.
+Report the verdict and every named component in the Step 5 report. Each component is remediable in Step 7, and each has exactly one remedy:
 
-If `{PROJECT_DIR}/.claude/commands/work-loop-v2.md` is absent (the project does not carry the command), report both as N/A and take no action.
+| Component | Remedy |
+|---|---|
+| `state-validator` | Copy `{TEMPLATE_DIR}/logs/scripts/work-loop-state.sh` to `{PROJECT_DIR}/logs/scripts/`, verbatim — it is not parameterized. |
+| `owner-helper` | Copy `{TEMPLATE_DIR}/logs/scripts/work-loop-owner.sh` the same way. |
+| `reorient-skill` | Add `reorient` to `skills.shared` in `{PROJECT_DIR}/.claude/shared-manifest.json`. The SessionStart sweep creates the symlink on the next session start; create it by hand only if the operator wants it now. |
+| `compact-recovery-hook` | Copy `{TEMPLATE_DIR}/.codex/hooks/work-loop-reorient.sh` to `{PROJECT_DIR}/.codex/hooks/`, then register it in `{PROJECT_DIR}/.codex/hooks.json` as a `SessionStart` entry with matcher `compact` whose command runs that path. Both halves are required: an unregistered hook never fires. |
+| `owner-ignore-rule` | Append `logs/work-loop/.owner`, with the template `.gitignore`'s explanatory comment, to `{PROJECT_DIR}/.gitignore`. |
+
+**Append and add — never replace.** Every remedy above either drops in a new file or adds one entry to an existing one. `.gitignore`, `shared-manifest.json` and `.codex/hooks.json` all legitimately carry project-specific content, and overwriting any of them to fix a Work Loop gap would trade one failure for a worse one. Re-run the check after applying; it is read-only and repeats cheaply.
+
+**Why each of these is not cosmetic.** A missing **validator** leaves lifecycle unestablished, and there is no fallback reading — every invocation stops. A missing **owner helper** makes `/work-loop-v2` Step 1.5 refuse a check it cannot run, so the project fails closed on every invocation. A missing **Reorient skill** means a compacted Codex session cannot re-establish the task from disk and continues from its summary instead. An unregistered **compact hook** never fires, so a checkout that holds the script is exactly as unrecovered as one without it. And a missing **ignore rule** is the worst of the five: the declaration is checkout-local by construction, so a committed copy replicates across worktrees on merge and then declares *every* checkout the owner — the exact failure the declaration exists to refuse. A project with the helper but no rule is worse than one with neither, because the check runs and its answer is wrong.
 
 ## Step 5: Generate sync report
 
@@ -154,12 +168,17 @@ Present a structured report:
 |------|------|-------------|
 | commands/usage-analysis.md | command | Added to template after deployment |
 
-### Work Loop ownership prerequisite
-| Item | Status |
-|------|--------|
-| logs/scripts/work-loop-owner.sh | PRESENT / MISSING / N-A |
-| .gitignore rule `logs/work-loop/.owner` | PRESENT / MISSING / N-A |
+### Work Loop capability — {READY / INCOMPLETE / NOT-APPLICABLE}
+| Component | Status |
+|-----------|--------|
+| state-validator | PRESENT / MISSING / DRIFTED / N-A |
+| owner-helper | PRESENT / MISSING / DRIFTED / N-A |
+| reorient-skill | PRESENT / MISSING / N-A |
+| compact-recovery-hook | PRESENT / MISSING / DRIFTED / UNREGISTERED / N-A |
+| owner-ignore-rule | PRESENT / MISSING / N-A |
 ```
+
+The five report as one capability, not as five independent items. A project at four of five is INCOMPLETE, and the verdict line says so above the table — a reader who skims the rows must not come away with "mostly fine".
 
 ## Step 6: Operator decides [Operator]
 

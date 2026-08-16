@@ -208,7 +208,37 @@ done
 # `diff -q` file comparison above does not apply, and a real (non-symlink)
 # .agents/skills/<name>/ is a legitimate project-local skill rather than drift.
 
-if [ -n "$synced" ] || [ -n "$drifted" ] || [ -n "$failed" ] || [ -n "$unknown" ]; then
+# Work Loop capability: complete, or visibly unavailable.
+#
+# This sweep is the reason the problem exists. It symlinks EVERY shared command
+# into every project, work-loop-v2.md included, and then reports "Auto-synced N
+# new shared file(s)" — which reads as success. But running one Work Loop unit
+# needs four more things this sweep does not install: two template-deployed
+# helper copies, a skills.shared opt-in, a Codex hook plus its registration, and
+# a .gitignore rule. So the sweep's own success message is exactly what presents
+# a partial capability as ready. It cannot stop symlinking the command (the
+# command is genuinely shared, and withholding it would silently remove Work Loop
+# from projects that are complete), so it says out loud what is still missing.
+#
+# Fail open, always: no capability checker, no jq, an unreadable project — the
+# warning is skipped and the sweep behaves exactly as before. A SessionStart hook
+# that blocked a session over a deployment gap would be worse than the gap.
+wl2_warning=""
+CAP_BIN="$AI_RESOURCES/logs/scripts/work-loop-capability.sh"
+if [ -f "$CAP_BIN" ]; then
+  cap_out=$(bash "$CAP_BIN" check --checkout "$PROJECT_DIR" 2>/dev/null)
+  cap_rc=$?
+  # 3 is INCOMPLETE. 0 (READY) and 2 (NOT_APPLICABLE) are both silence: a project
+  # that does not carry the command has nothing to be incomplete about.
+  if [ "$cap_rc" -eq 3 ]; then
+    cap_names=$(printf '%s\n' "$cap_out" \
+      | awk -F'[:[:space:]]+' '/^(missing|drifted):/ {print $2}' \
+      | sort -u | tr '\n' ' ' | sed 's/ *$//')
+    wl2_warning="WORK LOOP INCOMPLETE: this project exposes /work-loop-v2 but the capability is missing or drifted on: $cap_names. Run /sync-workflow to complete it — Work Loop refuses to start at Step 0 until every component is present."
+  fi
+fi
+
+if [ -n "$synced" ] || [ -n "$drifted" ] || [ -n "$failed" ] || [ -n "$unknown" ] || [ -n "$wl2_warning" ]; then
   msg=""
   if [ -n "$synced" ]; then
     count=$(echo $synced | wc -w | tr -d ' ')
@@ -228,6 +258,9 @@ if [ -n "$synced" ] || [ -n "$drifted" ] || [ -n "$failed" ] || [ -n "$unknown" 
     unknown_count=$(echo $unknown | wc -w | tr -d ' ')
     unknown_msg="MANIFEST ERROR: $unknown_count skill(s) named in skills.shared do not exist under ai-resources/.agents/skills/:$unknown. Fix the name in .claude/shared-manifest.json or remove the entry."
     [ -n "$msg" ] && msg="$msg | $unknown_msg" || msg="$unknown_msg"
+  fi
+  if [ -n "$wl2_warning" ]; then
+    [ -n "$msg" ] && msg="$msg | $wl2_warning" || msg="$wl2_warning"
   fi
   echo "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"$msg\"}}"
 fi

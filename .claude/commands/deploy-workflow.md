@@ -182,6 +182,45 @@ if [ -f "$AI_SETTINGS" ]; then
 fi
 ```
 
+### Deploy the Work Loop capability as one thing
+
+The SessionStart sweep (`auto-sync-shared.sh`) will symlink `/work-loop-v2` into this project on its very first session, whether or not anything else it needs is here. Running one unit needs five components, and they arrive by four different routes — so a project can hold the command and be missing any of them, then fail at a different seam on every invocation. Deploy them together or the command is exposed and unusable.
+
+The template already carries three of the five as files (`logs/scripts/work-loop-state.sh`, `logs/scripts/work-loop-owner.sh`, `.codex/hooks/work-loop-reorient.sh`) and the `logs/work-loop/.owner` line in its `.gitignore`, so Step 3's copy brings those across. Two things remain, and neither can be a file copy:
+
+1. **The Reorient skill** is a manifest opt-in, not a copied file. Confirm `reorient` is listed under `skills.shared` in `{PROJECT_DIR}/.claude/shared-manifest.json`; the sweep creates the symlink at the next session start.
+2. **The compact hook's registration.** Hooks are inert until registered, and the registration needs a path that only exists once `{PROJECT_DIR}` does — which is why it is a deploy-time step rather than a template file. Add this to `{PROJECT_DIR}/.codex/hooks.json` (creating the file if the project has none), preserving any entries already there:
+
+   ```json
+   {
+     "hooks": {
+       "SessionStart": [
+         {
+           "matcher": "compact",
+           "hooks": [
+             {
+               "type": "command",
+               "command": "bash '{PROJECT_DIR}/.codex/hooks/work-loop-reorient.sh'",
+               "timeout": 5,
+               "statusMessage": "Work Loop reorientation..."
+             }
+           ]
+         }
+       ]
+     }
+   }
+   ```
+
+Then confirm the whole capability in one call rather than eyeballing five items:
+
+```bash
+bash "$AI_RESOURCES/logs/scripts/work-loop-capability.sh" check \
+  --checkout "{PROJECT_DIR}" \
+  --canonical "{TEMPLATE_PATH}"
+```
+
+`READY` (exit 0) is the target. `INCOMPLETE` (exit 3) names each missing or drifted component on its own line — report those lines verbatim and fix them here, because a project that ships INCOMPLETE will refuse Work Loop at Step 0 on first use. `NOT_APPLICABLE` (exit 2) means the project does not carry the command, which is a valid outcome and needs no action.
+
 ### Ensure permissions baseline in deployed settings.json
 
 **Scope note.** This sub-step only touches `.permissions` in the deployed `{PROJECT_DIR}/.claude/settings.json`. Hook registration remains a manual operator step per the paragraph above.
@@ -573,6 +612,7 @@ Run a quick validation:
 3. Confirm all symlinks in `reference/skills/` resolve (if the directory exists).
 4. Confirm `CLAUDE.md` exists and has at least one heading, **and that no `CLAUDE.md.template` remains** in the project — the Step 3a activation must have both renamed the file and left no inert copy behind.
 5. Confirm `.claude/settings.json` is valid JSON (if it exists).
+6. Re-run the Work Loop capability check from Step 4 and confirm it reports `READY` or `NOT_APPLICABLE`. `INCOMPLETE` is a validation failure: report every `missing:` / `drifted:` line it prints, because those are the exact components `/work-loop-v2` will refuse to start without.
 
 Report the validation results. If all pass:
 

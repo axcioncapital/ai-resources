@@ -127,6 +127,26 @@ Context Engineering is live on the Codex side. This command **consumes** the eng
 
 ---
 
+## Step 0 — Is Work Loop actually deployed here?
+
+Runs before anything else in this checkout — before admission, before the state file is opened, before the validator. Nothing below this line happens until it passes.
+
+Running one unit needs five separate things present in the same checkout, and they arrive by four different routes. A checkout can hold this command and be missing any of them: the command is symlinked into projects by the generic SessionStart sweep, while the two helpers are template-deployed copies, the Reorient skill is a manifest opt-in, and the compact hook needs a registration to fire at all. Discovering that halfway through a unit is the failure this step exists to prevent — by then the state file has been read, the turn is in play, and the missing piece is whichever seam happened to be reached first.
+
+```bash
+bash logs/scripts/work-loop-capability.sh check --checkout "$(git rev-parse --show-toplevel)"
+```
+
+It prints `verdict:` followed by exactly one of these, and acts on nothing else:
+
+- **`READY`** (exit 0) — all five components are present. Continue to Admission or Step 1.
+- **`INCOMPLETE`** (exit 3) — one or more are missing or drifted. Each is named on its own `missing:` or `drifted:` line. **Stop.** Report those lines to the operator in plain words, change nothing, open no state file, and make no commit. The fix is `/sync-workflow` in that checkout, not a workaround here: a partial checkout cannot finish the unit it would be starting, and beginning one leaves a task open in a checkout that cannot carry it.
+- **`NOT_APPLICABLE`** (exit 2) — the checkout does not carry `.claude/commands/work-loop-v2.md`. That cannot happen while this command is running, so treat it as a contradiction, report it, and stop.
+
+**If the check cannot run, stop.** A missing, unreadable or failing `logs/scripts/work-loop-capability.sh` means deployment completeness is unestablished, and there is no second reading to fall back on — exactly as with the validator in Step 1 and the ownership helper in Step 1.5. Report that it could not run, name its path in this checkout, change nothing, and stop.
+
+**This step checks deployment, not lifecycle and not ownership.** It never opens a task record and never reads `task:`, `status:` or `turn:`. Passing it says the tools are here; it says nothing whatever about whose move it is, which Step 1 settles, or whether this task belongs here, which Step 1.5 settles. Neither of those is skipped because this one passed.
+
 ## Admission — Direct Work or the loop
 
 Runs when the work arrives without a state file — the operator brings a request rather than a task id.
