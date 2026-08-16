@@ -963,9 +963,79 @@ LSEEN="$(git -C "$d" status --porcelain -uall -- logs/work-loop/ | grep -c 'owne
                    || bad "the empty lock directory is invisible to git status" "matched $LSEEN times"
 rmdir "$d/logs/work-loop/.owner.lock" 2>/dev/null
 
+# ================================================================== T16
+# A REGISTERED WORKTREE THAT CANNOT BE INSPECTED IS NOT AN ABSENT ONE.
+#
+# The repo half used to drop such a checkout with `[ -d "$wt" ] || continue` and
+# `cd ... || continue`, so a task already declared there was reported unclaimed
+# here and a SECOND checkout could declare it — a fail-open in the one function
+# whose whole job is to fail closed. These cases exist because the fix is
+# invisible in every other assertion in this file: the enumeration still returns
+# the same verdicts for every reachable worktree, which is exactly why the
+# regression could return unnoticed.
+#
+# WHY GIT'S OWN `prunable` IS NOT THE DISCRIMINATOR, measured rather than assumed:
+# git reports `prunable` for a deleted worktree AND for one it merely cannot
+# read, because both are the same failed stat of the gitdir target. Keying the
+# skip on it would skip the unreadable checkout — reinstating the bug. The
+# filesystem separates them, and that is what the helper now uses.
+echo
+echo "T16 — an uninspectable registered worktree makes ownership unestablished"
+d="$(new_repo)"
+w1="$(add_worktree "$d" t16-one)"
+w2="$(add_worktree "$d" t16-two)"
+state_file "$w1" t16-task claude
+owner claim --checkout "$w1" --task t16-task --depth repo
+expect_rc 0 "$RC" "worktree 1 holds the task" "$OUT"
+
+# The readable control FIRST, so an AMBIGUOUS-for-everything helper cannot pass
+# the case below: this proves the enumeration really does read w1's declaration.
+owner check --checkout "$w2" --task t16-task --depth repo
+expect_rc 3 "$RC" "readable competitor — REFUSE, the real owner is named" "$OUT"
+expect_names "$OUT" "$w1" "the refusal names the checkout that holds the task"
+
+# Present, registered, not gone — and unreadable. `chmod 000` is the cheapest
+# stand-in for an unmounted volume or a path this process cannot traverse.
+chmod 000 "$w1"
+owner check --checkout "$w2" --task t16-task --depth repo
+expect_rc 4 "$RC" "unreadable competitor — AMBIGUOUS, not free to claim" "$OUT"
+expect_names "$OUT" "$w1" "the unestablished verdict names the checkout it could not read"
+
+# And a contested claim must write nothing. There is no separate guard for this:
+# claim stops on any verdict that is not PROCEED, and that is what is asserted.
+BEFORE="$([ -e "$w2/$OWNER_REL" ] && cat "$w2/$OWNER_REL" || echo ABSENT)"
+owner claim --checkout "$w2" --task t16-task --depth repo
+expect_rc 4 "$RC" "a claim into an unestablished repository refuses" "$OUT"
+AFTER="$([ -e "$w2/$OWNER_REL" ] && cat "$w2/$OWNER_REL" || echo ABSENT)"
+[ "$BEFORE" = "$AFTER" ] \
+  && ok "the refused claim installed no declaration" \
+  || bad "the refused claim installed no declaration" "was '$BEFORE', now '$AFTER'"
+chmod u+rwx "$w1"
+[ "$(cat "$w1/$OWNER_REL" 2>/dev/null)" = "t16-task" ] \
+  && ok "the holder's own declaration was never touched" \
+  || bad "the holder's own declaration was never touched"
+
+# A worktree that is GENUINELY gone is still skipped — deliberately, not by
+# treating every listed path alike. Without this the fix would be over-refusal:
+# any repository with a deleted worktree would stop answering PROCEED at all.
+echo
+echo "T16b — a genuinely absent worktree is still skipped"
+d="$(new_repo)"
+w1="$(add_worktree "$d" t16b-one)"
+w2="$(add_worktree "$d" t16b-two)"
+state_file "$w2" t16b-task claude
+rm -rf "$w1"
+owner check --checkout "$w2" --task t16b-task --depth repo
+expect_rc 0 "$RC" "a deleted worktree does not block the claim" "$OUT"
+owner claim --checkout "$w2" --task t16b-task --depth repo
+expect_rc 0 "$RC" "and the claim goes through" "$OUT"
+[ "$(cat "$w2/$OWNER_REL" 2>/dev/null)" = "t16b-task" ] \
+  && ok "the declaration was installed" \
+  || bad "the declaration was installed"
+
 # ================================================================== summary
 echo
 echo "=============================================================="
-printf ' T1..T15 + F1..F3: %d passed, %d failed\n' "$PASS" "$FAIL"
+printf ' T1..T16 + F1..F3: %d passed, %d failed\n' "$PASS" "$FAIL"
 echo "=============================================================="
 [ "$FAIL" -eq 0 ] || exit 1

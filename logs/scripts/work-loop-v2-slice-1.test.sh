@@ -1377,8 +1377,17 @@ check "mode  the live task's named reason does not defeat its own admission eith
   "[ -n \"\$(reason_of '$LIVE_TASK_F')\" ] && \
    ! printf '%s' \"\$(reason_of '$LIVE_TASK_F')\" | grep -qiE '$SELF_DEFEATING'"
 
+# The CONTRACT, not one of its instances. This pinned the literal `Implementation`
+# and so went red the moment Unit 10 opened in the legal `Adoption` mode — red on
+# correct behaviour, pointing at nothing wrong. Core § 3 is explicit that the three
+# modes "are not a sequence" and that a later unit may return to a mode an earlier
+# one used, so the live record's mode is expected to CHANGE; what must hold is that
+# it names exactly one, and that the one it names is a member of ALLOWED_MODES.
+# Both halves are load-bearing: membership alone would accept a record naming two
+# legal modes, and exactly-one alone would accept a single invented mode.
 check "mode  the live task's own state file records exactly one legal mode" \
-  "[ \"\$(mode_of '$LIVE_TASK_F')\" = Implementation ]"
+  "[ \"\$(modes_in_lane '$LIVE_TASK_F' | wc -l | tr -d ' ')\" = 1 ] && \
+   printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of '$LIVE_TASK_F')\""
 
 # The four state-file failing cases, DERIVED from the valid fixture so they
 # cannot drift away from it and the live fixtures are never doctored.
@@ -1398,6 +1407,19 @@ check "mode  a state file with TWO modes is rejected" \
 check "mode  an unknown mode is rejected, not silently accepted" \
   "[ \"\$(mode_of \"\$T_UNKNOWN\")\" = Exploration ] && \
    ! printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of \"\$T_UNKNOWN\")\""
+
+# The live-task assertion above needs its OWN negative control, derived from the
+# live record rather than from a fixture: a membership check that never rejects
+# anything would pass whatever the live record said, which is how the literal it
+# replaced managed to be both wrong and green for nine units. Same predicate, one
+# word changed in the record, opposite answer.
+T_LIVE_UNKNOWN=$(mktemp) && \
+  awk '{ if (!d && sub(/[A-Za-z][A-Za-z-]* mode\./, "Exploration mode.")) d=1; print }' \
+    "$LIVE_TASK_F" > "$T_LIVE_UNKNOWN"
+check "mode  NEGATIVE: the live-task check rejects an unknown mode in that same record" \
+  "[ \"\$(modes_in_lane '$T_LIVE_UNKNOWN' | wc -l | tr -d ' ')\" = 1 ] && \
+   [ \"\$(mode_of '$T_LIVE_UNKNOWN')\" = Exploration ] && \
+   ! printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of '$T_LIVE_UNKNOWN')\""
 check "mode  the valid fixture is a legal mode — the control for the three above" \
   "printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of '$MODE_D')\""
 
