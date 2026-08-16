@@ -1,6 +1,6 @@
 ---
 name: "work-loop-v2"
-description: "Use only when the request (1) names the Work Loop, (2) points at an existing logs/work-loop/{task-id}.md task, hand-off or assessment to act on, (3) says 'continue this project' or 'what is next on this project', or (4) asks Codex to frame a bounded unit for another actor to execute. Then route it to the one capability that owns it — the operator, an Axcíon command, a Matt skill, or the Work Loop itself — and, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Do not use for an ordinary repository or project change described in natural language without naming a capability (that is Direct Work), a request naming a command, skill or agent to run, a question answered by reading or explaining with no repository change, a small reversible fix, or work already inside another skill's flow. Claude executes and makes every commit; you do neither."
+description: "Use only when the request (1) names the Work Loop, (2) points at an existing logs/work-loop/{task-id}.md task, hand-off or assessment to act on, (3) says 'continue this project' or 'what is next on this project', (4) asks Codex to frame a bounded unit for another actor to execute, or (5) says 'y' or 'ur turn' in an active Work Loop hand-off. Then route it to the one capability that owns it — the operator, an Axcíon command, a Matt skill, or the Work Loop itself — and, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Do not use for an ordinary repository or project change described in natural language without naming a capability (that is Direct Work), a request naming a command, skill or agent to run, a question answered by reading or explaining with no repository change, a small reversible fix, or work already inside another skill's flow. Claude executes and makes every commit; you do neither."
 ---
 
 # work-loop-v2 — Codex side
@@ -149,15 +149,40 @@ Core § 4 defines the interface between you and Claude, and places the operator 
 
 | `turn:` you set | The Next line says |
 |---|---|
-| `claude` | **Next:** run `/work-loop-v2` in Claude. |
+| `claude` | **Next:** for **{brief name}** (`{task-id}`), run `/work-loop-v2 {task-id}` in Claude. |
 | `operator` | **Next:** {the decision or information you need from them}. |
 | — (Direct Work, no file) | **Next:** have Claude do this directly — no loop task. |
 | — (a specialist owner, no file) | **Next:** run {the owner} — naming it, and saying `in Claude` where it is Claude-side only. |
 | `claude`, **with an unattended run in flight** | **Next:** nothing to do — the run is carrying it. Name the deadline and where the evidence will be. See *Unattended runs*. |
 
+For an open unit, **{brief name}** is the exact text after the dash in `## Lane and unit` (core
+§ 3). Carry it verbatim, together with the task id, every time the inline Claude instruction is
+written — opening, continuing, correcting or closing. An older state file with no usable brief name
+does not justify the bare instruction: use the task id as the temporary label and say that the brief
+name is missing.
+
 **The carve-out in the last row matters.** "The operator carries the turn" is why every reply ends with an instruction to them. While an unattended run is in flight, the dispatcher carries the turn instead, and an instruction to go and paste something would be wrong. The Next line then reports rather than directs.
 
 Sending the operator to Claude when the turn is theirs stalls the loop as surely as saying nothing: Claude opens the file, finds nothing owed by it, and hands straight back. Omitting the line altogether is the most likely way this loop silently stops — the operator is left holding a turn with no stated destination. Treat it as part of the output, not as courtesy.
+
+**Operator shorthand — `y` and `ur turn`.** In an active Work Loop hand-off, either message means:
+*"The other AI has finished its part; now it is your turn to review or act."* Treat it as the
+operator carrying the already-recorded turn, not as yes/no approval, a task id, a new request, or
+permission to change scope. Read the state file and confirm `turn: codex` before acting. With exactly
+one matching open task, take that turn; with more than one, list the
+brief names and task ids and ask which one. The shorthand never overrides the state file.
+
+**Where what you read conflicts with the operator's claim, reconcile once before reporting anything.**
+Core § 4 owns the rule; this is the procedure. Check the latest commit affecting that exact task file,
+then reread the file once immediately. If they converge on `turn: codex`, proceed. If they still do
+not, report only the discrepancy and what it prevents — for example:
+
+> Your message says Claude completed the handoff, but it is not yet visible in this checkout.
+> I cannot assess it until those sources converge.
+
+Do not say that Claude has not done the work, has stalled, or is still running. One snapshot is
+evidence about visibility, not about Claude's activity, and the two are separate claims. This is one
+recheck, not polling, waiting or retrying Claude.
 
 **The folder is core § 4's, not a choice.** Create `logs/work-loop/` if it does not exist. There is no fallback path — if you cannot write there, say so and stop.
 
@@ -414,12 +439,38 @@ The file's shape, its five-field ceiling and what sits outside that ceiling are 
 Split the unit before you dispatch it when the brief has any of these shapes:
 
 - It combines building something with remediating something else — a scenario redesign *and* a standards cleanup.
+- It builds a shared component **and** integrates its first consumer. Building the helper and wiring the first caller are two dominant deliverables; the helper's own suite is a third. This shape cost a 902-second timeout on 2026-08-14, and splitting it recovered in 328 seconds.
+- It integrates a consumer **and** runs the full regression matrix for that integration, where the regression set is substantial. Wiring and proving the wiring are separate units once proving it means more than one focused case.
 - It asks for a historical or negative control to be constructed alongside the primary edit.
 - It demands a full behavioural matrix for instruction files, rather than one targeted check.
 - It says "all", "every" or "exhaustive" without a stated consequence that requires exhaustiveness.
 - Its evidence set needs more than one fixture built from scratch before the primary work can start.
 
 Split by deliverable, not by file count. Two oversized halves are not a fix.
+
+**The primary edit begins after one targeted failing case, not after a broad baseline.** A full baseline suite precedes the primary edit only where establishing that baseline is the unit's *sole* deliverable — which makes it a discovery unit, assessed and accepted on its own. Evidence a previous unit already established and you already accepted is settled: cite it, and do not ask Claude to re-derive it before editing. On 2026-08-14 a correctly narrowed dispatcher unit still spent 593 seconds on baseline mapping it had accepted evidence for, and exited having changed nothing.
+
+**Write the packaging decision into the brief.** Mode-dependent packaging lines, inside `## Brief`. This is the brief's content, not the state file's: core § 4's five-field ceiling is unchanged and no new field, artifact or stage is created.
+
+```
+Dominant deliverable: {the one thing this unit delivers}
+Evidence required in this hop: {only what could read differently because of that deliverable}
+Evidence explicitly deferred: {what a later unit checks, named — or None.}
+Primary edit begins after: {Implementation mode only — the targeted failing case, or the quoted
+                           before-state where no meaningful failing test exists}
+```
+
+**`Evidence explicitly deferred:` takes `None.` when nothing is deferred.** Write it; do not drop the line. `None.` is a decision that nothing was held back, and it follows core § 4's own convention for `## Blocker`. A dropped line reads as a packaging decision never made, and Claude hands it back.
+
+**The fourth line accepts a quoted before-state where no meaningful failing test exists.** Core § 3 already refuses ceremonial tests, and a prose, documentation or instruction-file change is the ordinary case with no automated check that could distinguish success from failure. There the thing that must exist first is the **text being replaced, quoted** — that is what makes the change checkable afterwards. Where the artifact is executable, the targeted failing case is still required and a before-state does not substitute for it.
+
+**The first three lines are mode-neutral; the fourth belongs to Implementation alone.** A unit in Discovery or Adoption mode makes no primary edit — it inspects and hands back, changing nothing beyond the state file (core § 3 *The unit's mode*) — so writing that line on one would name an edit its own mode forbids. Write three lines in Discovery or Adoption mode, four in Implementation mode.
+
+The three that always apply still carry the packaging decision: a discovery unit can be overpacked exactly as an Implementation unit can, and *"establish six things about the dispatcher"* is the same failure as building two deliverables.
+
+**The lines are required, and Claude checks them against the recorded mode.** A brief missing a line its mode requires, naming two deliverables on the first, or carrying the fourth line in Discovery or Adoption mode, is handed back to you as a false premise before the unit begins — so writing them is what gets the unit dispatched at all, not a convention that decays when nobody looks.
+
+**`Dominant deliverable` admits exactly one entry.** A second entry is the split signal — it is how an oversized unit announces itself before it is dispatched, at the one moment splitting is still cheap. `Evidence explicitly deferred` makes the deferral a recorded decision rather than an omission, so the later unit that owns it can be written.
 
 **A longer timeout is not the remedy for an oversized unit.** The actor timeout is a safety boundary, and on 2026-08-11 it was the one control that worked. Raising it buys a larger oversized unit whose failure arrives later, costs more, and — if it now finishes inside the new limit — produces no stop and no evidence at all. Do not propose it as a fix for sizing, and do not treat a hop that timed out as a reason to relax the clock.
 
@@ -537,6 +588,15 @@ Discharge every duty inside prepare, brief, assess and escalate, and add no mach
 
 Claude hands back with `turn: codex`. Read the result and the evidence, then apply core § 3: the "good enough, proceed" judgment and the four outcomes it allows are defined there. Yours is the executive call, not a hunt for more to improve.
 
+**Make status unmistakable in every operator-facing assessment.** Immediately before the `Next`
+line, write the three lines core § 3 requires: `Progress`, `Implementation`, and `Merge readiness`.
+Do not collapse a completed unit into a completed implementation. Use an exact `X/Y` and percentage
+where the approved plan or state fixes the total; otherwise give a labelled percentage estimate and
+name the remaining scope instead of inventing a denominator. `Implementation: COMPLETE` means the
+entire `## Objective and scope` is accepted and no implementation unit remains. Until then it is
+`IN PROGRESS`. A close verdict still reports `Merge readiness: NOT READY — awaiting Claude's closing
+record and commit`; Claude reports the final merge state after that commit.
+
 **Claude runs the checks and reports the evidence. You assess that evidence.** Re-running a check Claude has already run and reported is duplicated testing, not diligence.
 
 You may reproduce a check only under one of these four conditions, and you say which one applies when you do:
@@ -566,7 +626,7 @@ If Claude handed back a **false premise**, that is a correct outcome, not a fail
 
 The closing decision is yours (core § 3 step 5); the closed file is not. Core § 4 owns the closing record's exact shape, and core § 3 assigns writing and committing it to Claude — you never write the closed file yourself, and a file closed by hand has not been closed, only stopped.
 
-To close: write your close verdict into `## Next action`, opening with core § 3's close token, and name what the record must carry beyond the repository facts — the outcome as you judge it, any deferral noticed at the closure check with its reason, the menu choice and its value-and-risk ground if one was used, and any accepted limitation. Set `status: active` and `turn: claude`, and end your reply with the Next instruction: run `/work-loop-v2` in Claude. Claude reduces the file to core § 4's closing record — the active fields do not survive the reduction — sets `status: closed` and `turn: operator` in that same write, commits it, and only then clears the checkout's declaration.
+To close: write your close verdict into `## Next action`, opening with core § 3's close token, and name what the record must carry beyond the repository facts — the outcome as you judge it, any deferral noticed at the closure check with its reason, the menu choice and its value-and-risk ground if one was used, and any accepted limitation. Set `status: active` and `turn: claude`, and end your reply with the named Next instruction from § *The seam*, including the brief name and task id. Claude reduces the file to core § 4's closing record — the active fields do not survive the reduction — sets `status: closed` and `turn: operator` in that same write, commits it, and only then clears the checkout's declaration.
 
 ---
 
@@ -599,5 +659,7 @@ The intake router (2026-08-06) generalises that section from a "continue" router
 The mode contract (2026-08-06) makes Discovery, Implementation and Adoption operational. Core § 3 *The unit's mode* owns the definitions; you classify at routing step 4 and record the mode inside `## Lane and unit`. No state field, lane, unit kind or project phase was added.
 
 The bounded-execution outcomes (2026-08-11) answer two failures on the same transport one day apart — a unit that left the bounded path, and a unit that could not fit inside it. They add § *Size the unit against the clock*, the five recovery clauses in § *Three outcomes*, and two entries in § *What you never do*. **No state field, artifact or stage was added**, and the dispatcher's side is a repair plus one deny set rather than a new mechanism. Both additions here are written guidance and carry that limit honestly: guidance depends on being remembered, and the only structural backstop remains the actor timeout — which is why raising it is refused above.
+
+The packaging outcomes (2026-08-14) answer a recurrence of the 2026-08-11 sizing failure after that fix was already in force — a shared-helper-plus-first-consumer unit that timed out at 902 seconds, and a correctly narrowed unit that spent 593 seconds re-establishing accepted baseline evidence and changed nothing. They add two split triggers, the primary-edit-begins-after rule, and the four packaging lines inside `## Brief`. **No state field, artifact or stage was added** — core § 4's ceiling is untouched, and core § 3 step 3 already permits the brief's content to grow. The four lines are the structural half of this fix: they make the packaging decision written rather than remembered, and Claude refuses a `Dominant deliverable` line naming two. The split triggers remain guidance and carry the same limit the 2026-08-11 entry states.
 
 Courier mode (2026-08-06) adds the one approved way to carry the turn yourself, under core § 4's courier clause. It is optional, off unless the operator approves it, and transport only — it changes nothing about what you frame, what you assess, or what Claude does.

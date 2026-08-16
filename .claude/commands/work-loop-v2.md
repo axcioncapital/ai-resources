@@ -6,7 +6,7 @@ argument-hint: "[the task id whose state file to act on — required; this comma
 
 Run Claude's half of one Work Loop v2 unit: read the task-state file, check the brief's premises against the live repository, then either hand back a false premise or implement the unit and hand back evidence. Codex frames and assesses; Claude owns repository reality and makes every commit. Not for small reversible fixes — those are Direct Work and open no state file (core § 2).
 
-Input: `$ARGUMENTS` — **exactly one task id, and it is required.** An empty invocation selects nothing: this command does not scan `logs/work-loop/` for a candidate and does not pick a task on your behalf. If `$ARGUMENTS` is empty, say so, name that a task id is required, and stop without reading or changing any state file.
+Input: `$ARGUMENTS` — **exactly one task id, and it is required.** An empty invocation selects nothing: this command does not scan `logs/work-loop/` for a candidate and does not pick a task on your behalf. If `$ARGUMENTS` is empty, say so, name that a task id is required, and stop without reading or changing any state file. The operator shorthands `y` and `ur turn` (core § 4) are not task ids and do not select one: they carry the turn the operator already holds, so an invocation that arrives with one of them and nothing else is an empty invocation and stops here.
 
 This command requires the executable core on every invocation. Apply the resolver contract below,
 then read the one absolute path it prints **before any other Work Loop action**.
@@ -121,7 +121,7 @@ Where this resource and the core disagree, the core wins; report the disagreemen
 
 This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or `/session-plan`.
 
-**Scope of this version — Slices 1–3, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below), and admission discipline: the admission test (Admission below), de-escalation (De-escalating below), and mid-unit deferrals (Step 4). Plus the unit's mode (2026-08-06 — The unit's mode below), which Codex classifies and you execute against.
+**Scope of this version — Slices 1–3, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below), and admission discipline: the admission test (Admission below), de-escalation (De-escalating below), and mid-unit deferrals (Step 4). Plus the unit's mode (2026-08-06 — The unit's mode below), which Codex classifies and you execute against. Plus the hop-termination contract (2026-08-14 — Ending the hop below) and the `Dominant deliverable` check, which answer a hop that ended on a progress note and a unit packaged too large for one hop.
 
 Context Engineering is live on the Codex side. This command **consumes** the engineered brief — checking its claims against the repository and acting on it — and never performs Codex's preparation, authority or selection judgments itself. The governing autonomy rule over that consumption is core § 8; read it there rather than restating it here.
 
@@ -261,6 +261,40 @@ Core § 3 *The unit's mode* owns the three modes and what each requires. `## Lan
 
 **A mode that disagrees with the brief's own completion condition is a false premise** — hand back under Step 3. A unit recorded as Implementation whose completion condition asks only for evidence and a hand-back has not been classified; it has been mislabelled, and building from it is the error the check exists to prevent.
 
+### The brief's packaging lines
+
+Every brief carries packaging lines, which the Codex skill's § *Size the unit against the clock* owns and writes. **How many depends on the mode recorded in `## Lane and unit`.**
+
+Three lines on every unit, in every mode:
+
+```
+Dominant deliverable:
+Evidence required in this hop:
+Evidence explicitly deferred:
+```
+
+One more in **Implementation** mode only:
+
+```
+Primary edit begins after:
+```
+
+A unit in Discovery or Adoption mode makes no primary edit — it inspects and hands back (core § 3 *The unit's mode*) — so that line does not apply to it and its absence is correct, not missing.
+
+Two values satisfy that line. A **targeted failing case** is the ordinary one. A **quoted before-state** is valid where no meaningful failing test exists — the prose, documentation and instruction-file case § The unit's mode already names, where the evidence is the changed text quoted against what it replaced. Where the artifact is executable, only the failing case will do.
+
+`Evidence explicitly deferred:` carries `None.` when nothing was held back. `None.` is a completed line, not an empty one — treat it as satisfied.
+
+Check them at Step 2, alongside the brief's claims. **Three shapes are a false premise — hand back under Step 3:**
+
+- **A line its mode requires is missing or empty.** Name which. The packaging decision was not made, and a unit whose size nobody decided is the one that spends the hop and returns nothing.
+- **`Dominant deliverable:` names more than one deliverable.** Name both. That line admits exactly one entry, and two is how an oversized unit announces itself before the clock finds it.
+- **`Primary edit begins after:` appears on a unit in Discovery or Adoption mode.** It names an edit the recorded mode forbids, so either the line or the mode is wrong — which is the misclassification § The unit's mode already hands back.
+
+**Hand the brief back; do not fill the lines in yourself.** Sizing the unit is Codex's judgment, and supplying it here is the silent-repair failure Step 3 already forbids. Repackaging is one cheap Codex move — far cheaper than the 902-second timeout that produced this rule.
+
+A brief written before this contract existed carries none of the four lines and is handed back on its next invocation. That is the intended behaviour, not a regression: it is one bounce, and it converts the backlog to the new shape at the moment each unit is next touched.
+
 ## De-escalating — when the work turns out smaller
 
 Core § 2 *De-escalating* decides when this applies — inspection or implementation is where Claude notices it. When it does apply:
@@ -285,6 +319,24 @@ Evidence: <the check, what it returns now, and what it returned before>
 The state file is current truth, not a diary (core § 4): replace the previous result rather than appending to it.
 
 Then set `turn: codex` and leave `status: active`, set `## Next action` to what Codex assesses, `git add` by explicit pathspec — the state file and the files the unit changed — and commit.
+
+## Ending the hop
+
+**Every invocation ends in an explicit outcome. Once an invocation passes the refusal gates, that outcome is written into the state file and committed before you stop.**
+
+The refusal gates are Admission, Step 1's turn and identity checks, and Step 1.5's ownership check. They come first and they decide whether a written outcome is owed at all — a refusal is *required* to leave the file untouched, so a rule demanding a write from every invocation would break exactly the paths that work.
+
+- **Whichever step you are in, it names the write.** Step 5 writes the result and evidence; Step 3 writes the failed premise; Correction rounds writes the corrected result; De-escalating and Closing the task each write the closing record; core § 7 writes a blocker or an operator question. This is deliberately not an exhaustive list to match against — the step you are in owns its own write, and the invariant is that one of them happened.
+- **An invocation stopped at a refusal gate writes nothing and commits nothing** — a turn that is not yours, a file-identity mismatch, an ownership REFUSE or AMBIGUOUS. You will have *read* the file to establish those; the invariant is no state-file **write**, not no read. Say which refusal applied. That silence in the file is the recorded outcome, not a missing one.
+- **Work that admission sent to Direct Work opens no state file at all.** It is done and committed in the ordinary way — the absent file is the evidence admission was refused, and says nothing about whether the repository changed.
+
+**A hop that announces what it is waiting for has produced none of these.** "Waiting for the baseline run to finish before editing" is a progress note; the state file is unchanged, the dispatcher reads exit `22` — no transition — and the hop is spent. Where you are waiting on something, finish waiting inside the hop and act on the answer, or stop waiting and record the blocker.
+
+**Own every command you start.** A command you launched in the background is awaited to completion or terminated within this same hop, and its result — or the fact that you stopped it — reaches the state file before you stop. Leaving one running hands the next hop a process it did not start and cannot account for.
+
+**Evidence the brief requires cannot be deferred by you.** Where a required check will not finish inside the hop, that is a **blocker** — record it in `## Blocker` and hand back. Only what the brief already lists under `Evidence explicitly deferred:` stays deferred, because Codex decided that when it sized the unit. Downgrading required evidence to a deferral because the clock ran out is how a hop reports success it did not earn, and core § 6 rule 5 is what it breaks.
+
+Running the focused case the brief's `Primary edit begins after:` line names is the right move when a broad run will not fit — it is what that line is for. It does not discharge the required evidence; an unfinished broad run evidences nothing, and the hand-back says so.
 
 ## Correction rounds
 
@@ -315,8 +367,16 @@ Core § 3's close token in `## Next action` is Codex's close verdict; core § 4 
    bash logs/scripts/work-loop-owner.sh clear --checkout "$(git rev-parse --show-toplevel)" --task {task-id}
    ```
 
-   Leaving it in place is the failure this step exists to prevent: the next task in that checkout would be refused by a task that has already finished. `clear` refuses to remove another task's declaration, and a checkout that has none is a no-op, so running it is always safe. `logs/work-loop/.owner` is gitignored, so this changes nothing that gets committed — which is also why it cannot be part of the commit in step 2.
+   Leaving it in place is the failure this step exists to prevent: the next task in that checkout would be refused by a task that has already finished. `clear` refuses to remove another task's declaration, and a checkout that has none is a no-op, so running it is always safe. `logs/work-loop/.owner` is gitignored, so this changes nothing that gets committed — which is also why it cannot be part of the commit in step 2. Then report the final repository state under Step 6 and stop.
 
-## Step 6 — Report in one line
+## Step 6 — Report clearly
 
-Say what happened, in plain words: which task, whether a premise failed, what was committed. Then stop. Assessment is Codex's move, not yours.
+For an ordinary hand-back, say in one plain-language line which brief and task ran, whether a premise
+failed, and what was committed. Then stop. Assessment is Codex's move, not yours.
+
+For a closing invocation, report the whole-task result after the closing commit in exactly these
+terms: `Implementation: COMPLETE`, followed by one merge state —
+`READY FOR OPERATOR-AUTHORIZED MERGE INTO MAIN` with the branch and closing commit;
+`ALREADY ON MAIN — NO MERGE REQUIRED` with the closing commit; or `NOT READY` with the specific
+repository blocker. Do not describe a completed unit or an uncommitted close verdict as a completed
+implementation, and do not merge or authorize the merge yourself.

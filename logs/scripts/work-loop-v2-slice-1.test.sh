@@ -1365,17 +1365,36 @@ check "mode  every mode fixture states a named reason at all" \
 check "mode  no mode fixture's named reason defeats its own admission" \
   "( for f in '$MODE_D' '$MODE_I' '$MODE_A'; do \
        printf '%s' \"\$(reason_of \"\$f\")\" | grep -qiE '$SELF_DEFEATING' && exit 1; done; exit 0 )"
-# The live-task pointer sits in ONE place. Both assertions below read the current
-# open Standard record, which only carries a mode and a named reason while the task
-# is open — a closed record is reduced to the four closing headings and has no
-# `## Lane and unit` at all. When this task closes, repoint this single line at the
-# next open Standard record; leaving it on a closed one makes both checks read an
-# empty string and go red, which is exactly what happened to the retired
-# work-loop-v2-intake-router.md.
-LIVE_TASK_F="logs/work-loop/work-loop-v2-durable-state-system.md"
-check "mode  the live task's named reason does not defeat its own admission either" \
-  "[ -n \"\$(reason_of '$LIVE_TASK_F')\" ] && \
-   ! printf '%s' \"\$(reason_of '$LIVE_TASK_F')\" | grep -qiE '$SELF_DEFEATING'"
+# The live records the contract must ALSO hold for, discovered rather than named.
+# This was one hard-coded path, and every task closure turned it red on correct
+# behaviour: a closed record is reduced to the four closing headings and has no
+# `## Lane and unit` at all, so both assertions read an empty string. Repointing it
+# at the next open task only moves the trap one task along — the retired
+# work-loop-v2-intake-router.md pointer failed that way first, and the durable-state
+# pointer that replaced it failed the same way nine units later. Discovery removes
+# the trap rather than relocating it: it names no task, so no closure can stale it.
+#
+# Selection is `status: active`, carries a `## Lane and unit`, and is not a fixture.
+# Excluding fixtures is load-bearing — they are asserted directly above, and letting
+# them satisfy this sweep would let a fixture stand in for real operational output,
+# which is the one thing these assertions exist to check. Requiring the heading
+# rather than a mode is also load-bearing: a live record that dropped its mode
+# entirely must fail the exactly-one check below, not vanish from the sweep.
+live_standard_records() {   # $1 = directory to sweep; defaults to the live folder
+  local d="${1:-logs/work-loop}" f
+  for f in "$d"/*.md; do
+    [ -f "$f" ] || continue
+    case "${f##*/}" in fixture-*) continue ;; esac
+    [ "$(awk -F': *' '/^status:/{print $2; exit}' "$f" | tr -d '[:space:]')" = active ] || continue
+    grep -q '^## Lane and unit' "$f" || continue
+    printf '%s\n' "$f"
+  done
+}
+check "mode  no live open record's named reason defeats its own admission either" \
+  "( for f in \$(live_standard_records); do \
+       [ -n \"\$(reason_of \"\$f\")\" ] || exit 1; \
+       printf '%s' \"\$(reason_of \"\$f\")\" | grep -qiE '$SELF_DEFEATING' && exit 1; \
+     done; exit 0 )"
 
 # The CONTRACT, not one of its instances. This pinned the literal `Implementation`
 # and so went red the moment Unit 10 opened in the legal `Adoption` mode — red on
@@ -1385,9 +1404,11 @@ check "mode  the live task's named reason does not defeat its own admission eith
 # it names exactly one, and that the one it names is a member of ALLOWED_MODES.
 # Both halves are load-bearing: membership alone would accept a record naming two
 # legal modes, and exactly-one alone would accept a single invented mode.
-check "mode  the live task's own state file records exactly one legal mode" \
-  "[ \"\$(modes_in_lane '$LIVE_TASK_F' | wc -l | tr -d ' ')\" = 1 ] && \
-   printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of '$LIVE_TASK_F')\""
+check "mode  every live open record states exactly one legal mode" \
+  "( for f in \$(live_standard_records); do \
+       [ \"\$(modes_in_lane \"\$f\" | wc -l | tr -d ' ')\" = 1 ] || exit 1; \
+       printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of \"\$f\")\" || exit 1; \
+     done; exit 0 )"
 
 # The four state-file failing cases, DERIVED from the valid fixture so they
 # cannot drift away from it and the live fixtures are never doctored.
@@ -1408,18 +1429,50 @@ check "mode  an unknown mode is rejected, not silently accepted" \
   "[ \"\$(mode_of \"\$T_UNKNOWN\")\" = Exploration ] && \
    ! printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of \"\$T_UNKNOWN\")\""
 
-# The live-task assertion above needs its OWN negative control, derived from the
-# live record rather than from a fixture: a membership check that never rejects
-# anything would pass whatever the live record said, which is how the literal it
-# replaced managed to be both wrong and green for nine units. Same predicate, one
-# word changed in the record, opposite answer.
-T_LIVE_UNKNOWN=$(mktemp) && \
-  awk '{ if (!d && sub(/[A-Za-z][A-Za-z-]* mode\./, "Exploration mode.")) d=1; print }' \
-    "$LIVE_TASK_F" > "$T_LIVE_UNKNOWN"
-check "mode  NEGATIVE: the live-task check rejects an unknown mode in that same record" \
-  "[ \"\$(modes_in_lane '$T_LIVE_UNKNOWN' | wc -l | tr -d ' ')\" = 1 ] && \
-   [ \"\$(mode_of '$T_LIVE_UNKNOWN')\" = Exploration ] && \
-   ! printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of '$T_LIVE_UNKNOWN')\""
+# The sweep above needs its OWN negative controls, and they must not depend on any
+# task being open: with nothing open the sweep is vacuously satisfied — honest, and
+# the state a clean repo reaches — so on its own it could pass without the predicate
+# ever rejecting anything. That vacuity is precisely how the hard-coded literal it
+# replaced stayed both wrong and green for nine units. These three pin the SAME
+# predicate to a constructed directory, so they keep failing when the contract
+# breaks however many tasks happen to be open.
+CTRL_D=$(mktemp -d)
+# (1) an OPEN Standard record — the valid fixture, renamed out of the `fixture-`
+#     namespace so the sweep is obliged to select it rather than skip it;
+cp "$MODE_D" "$CTRL_D/control-open.md"
+# (2) a CLOSED record — the durable-state task, which is the exact record the old
+#     pointer went stale on. It is closed and reduced, and a closed record is
+#     terminal (core § 4), so it cannot reopen: that is what makes it a durable
+#     negative fixture instead of another pointer waiting to rot;
+cp logs/work-loop/work-loop-v2-durable-state-system.md "$CTRL_D/control-closed.md"
+# (3) an OPEN record naming a mode that is not one of the three;
+sed -E 's/Discovery mode/Exploration mode/' "$MODE_D" > "$CTRL_D/control-unknown.md"
+# (4) a CLOSED record that was NOT reduced — `status: closed` over a surviving
+#     `## Lane and unit`. Core § 4 calls that malformed and the validator rejects
+#     it, which is exactly why the sweep must exclude it on the status alone. The
+#     reduced record at (2) is excluded by either filter, so without this one the
+#     status test is unfalsifiable: dropping it changes no verdict, and a filter
+#     nothing can break is not a filter that is being checked.
+sed -E 's/^status: active/status: closed/' "$MODE_D" > "$CTRL_D/control-closed-unreduced.md"
+# The sweep's output is captured BEFORE it is searched. `... | grep -q` closes the
+# pipe on its first match, the function dies of SIGPIPE, and `set -o pipefail` at the
+# top of this file turns that into a failed predicate — so a check would pass or fail
+# on where its match happened to sort rather than on whether the record was selected.
+ctrl_sweep() { printf '%s\n' "$(live_standard_records "$CTRL_D")"; }
+check "mode  the sweep selects an open Standard record that is not a fixture" \
+  "ctrl_sweep | grep -q 'control-open.md'"
+check "mode  NEGATIVE: the sweep excludes a closed record — what staled the old pointer" \
+  "grep -q '^status: closed' \"\$CTRL_D/control-closed.md\" && \
+   ! ctrl_sweep | grep -q 'control-closed.md'"
+check "mode  NEGATIVE: the sweep excludes a closed record on its status alone" \
+  "grep -q '^status: closed' \"\$CTRL_D/control-closed-unreduced.md\" && \
+   grep -q '^## Lane and unit' \"\$CTRL_D/control-closed-unreduced.md\" && \
+   ! ctrl_sweep | grep -q 'control-closed-unreduced.md'"
+check "mode  NEGATIVE: the sweep's predicate rejects an unknown mode in a selected record" \
+  "ctrl_sweep | grep -q 'control-unknown.md' && \
+   [ \"\$(modes_in_lane \"\$CTRL_D/control-unknown.md\" | wc -l | tr -d ' ')\" = 1 ] && \
+   [ \"\$(mode_of \"\$CTRL_D/control-unknown.md\")\" = Exploration ] && \
+   ! printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of \"\$CTRL_D/control-unknown.md\")\""
 check "mode  the valid fixture is a legal mode — the control for the three above" \
   "printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of '$MODE_D')\""
 

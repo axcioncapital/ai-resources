@@ -339,13 +339,81 @@ check_repo() {
     return 0
   }
 
-  local claimants="" copies="" n_claim=0 n_copy=0 wt real holder
-  while IFS= read -r line; do
-    case "$line" in worktree\ *) ;; *) continue ;; esac
-    wt="${line#worktree }"
-    # A prunable or moved worktree is still listed. It is not evidence.
-    [ -d "$wt" ] || continue
-    real="$(cd "$wt" 2>/dev/null && pwd -P)" || continue
+  # ONE LINE PER WORKTREE, as `<prunable-flag> <path>`. The porcelain groups each
+  # worktree into a RECORD — a `worktree <path>` line, then that worktree's
+  # attributes, then a blank line — so `prunable` can only be read by keeping the
+  # record together, which reading the `worktree` lines alone does not.
+  #
+  # `prunable` DOES NOT DECIDE ANYTHING HERE, and that is a measured result, not a
+  # preference. Git's prunable is the outcome of git stat-ing the worktree's gitdir
+  # target, and that stat fails for "gone" and for "cannot read" alike, so git
+  # reports both identically. Measured against git directly, five cases:
+  #
+  #   healthy                      enterable       prunable: no
+  #   present but unreadable       not enterable   prunable: YES   <- the defect
+  #   directory deleted            not enterable   prunable: yes
+  #   moved away                   not enterable   prunable: yes
+  #   locked, then deleted         not enterable   prunable: no
+  #
+  # Rows 2 and 3 are the two states this correction must separate and prunable
+  # gives them the same answer, so a rule keyed on it would skip the unreadable
+  # checkout — reinstating the exact fail-open being removed. The filesystem
+  # separates them: only row 2's path still exists. The flag is therefore carried
+  # for the operator-facing message, where git's own view of an unreadable entry
+  # is worth showing, and for nothing else.
+  local flat
+  flat="$(printf '%s\n' "$list" | awk '
+    /^worktree /            { if (p != "") print pr " " p; p = substr($0, 10); pr = 0; next }
+    /^prunable$/            { pr = 1; next }
+    /^prunable /            { pr = 1; next }
+    END                     { if (p != "") print pr " " p }
+  ')"
+
+  local claimants="" copies="" opaque="" n_claim=0 n_copy=0 n_opaque=0
+  local n_opaque_prunable=0
+  local rec wt wt_prunable wt_parent real holder
+  while IFS= read -r rec; do
+    [ -n "$rec" ] || continue
+    wt_prunable="${rec%% *}"; wt="${rec#* }"
+
+    # ENTERING IS THE TEST, and it is tried FIRST, because reading the declaration
+    # is what every verdict below depends on. A worktree that can be entered needs
+    # no further classification, whatever git thinks of its administrative link.
+    if ! real="$(cd "$wt" 2>/dev/null && pwd -P)"; then
+
+      # It could not be entered, and there are two very different reasons for
+      # that. Refusing to confuse them IS this correction.
+      #
+      # GENUINELY GONE — the path is not there AND we were able to look: its
+      # parent is readable and searchable, and the entry is not in it. Nothing
+      # holds a declaration at a path that does not exist, so this ESTABLISHES
+      # absence rather than assuming it, and the entry is skipped exactly as
+      # before. Deleted, moved-away and locked-then-deleted worktrees land here.
+      #
+      # The parent test is not ceremony. `[ -e ]` answers false both for "not
+      # there" and for "cannot tell", so without it a worktree whose PARENT is
+      # unreadable would be read as gone — the same fail-open, one directory up.
+      # Where the parent is unreachable this falls through to unestablished, which
+      # is over-refusal in the safe direction, and `git worktree prune` drops such
+      # an entry from the listing entirely and ends it.
+      wt_parent="$(dirname "$wt")"
+      if [ ! -e "$wt" ] && [ ! -L "$wt" ] && [ -r "$wt_parent" ] && [ -x "$wt_parent" ]; then
+        continue
+      fi
+
+      # UNESTABLISHED — the path is there, or its absence could not be
+      # established, and it cannot be entered: an unmounted volume, a permission
+      # change, a path this process cannot traverse. Its declaration cannot be
+      # read, so whether it claims this task is UNKNOWN, not absent. This is the
+      # fail-open that was here before: `[ -d "$wt" ] || continue` followed by
+      # `cd ... || continue` dropped such a checkout silently, so a task already
+      # declared there was reported unclaimed here and a second checkout could
+      # declare it. The enclosing function already treats an unenumerable LIST as
+      # unestablished a few lines above; this is that same rule, per record.
+      opaque="$opaque$wt"$'\n'; n_opaque=$((n_opaque+1))
+      [ "$wt_prunable" = 1 ] && n_opaque_prunable=$((n_opaque_prunable+1))
+      continue
+    fi
 
     # The SAME reader as the local half. This was a second, looser inline copy;
     # a format rule enforced in one of two readers is not enforced at all,
@@ -365,8 +433,21 @@ check_repo() {
       copies="$copies$real"$'\n'; n_copy=$((n_copy+1))
     fi
   done <<EOF
-$list
+$flat
 EOF
+
+  # UNESTABLISHED OUTRANKS EVERY ROW BELOW, and is settled first for that reason.
+  # If one registered worktree could not be read, none of the counts below is
+  # complete, so none of them is entitled to decide — including the ones that
+  # would answer PROCEED. Nothing is claimed and nothing is cleared: `claim` and
+  # `clear` both stop on any verdict that is not PROCEED, so this row writes
+  # nothing by construction rather than by a separate guard.
+  if [ "$n_opaque" -gt 0 ]; then
+    REPO_VERDICT="AMBIGUOUS"
+    REPO_REASON="registered worktrees exist that could not be inspected from $CHECKOUT: $(printf '%s' "$opaque" | tr '\n' ' ')— each is still registered and its absence could not be established, so whether one of them declares task '$TASK' is unknown; nothing is claimed and nothing is cleared. Make them reachable and re-run, run 'git worktree prune' if they are genuinely gone, or the operator names the owner"
+    [ "$n_opaque_prunable" -gt 0 ] && REPO_REASON="$REPO_REASON (git reports $n_opaque_prunable of them prunable, which it also does for a checkout it merely cannot read — that is not evidence of absence)"
+    return 0
+  fi
 
   if [ "$n_claim" -gt 1 ]; then
     REPO_VERDICT="AMBIGUOUS"

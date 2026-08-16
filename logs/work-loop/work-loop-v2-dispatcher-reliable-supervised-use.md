@@ -14,121 +14,113 @@ Task exit condition: one integrated candidate has passed Gate SA and the indepen
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 0 — bind and prove the activation baseline.
+Standard. Implementation mode. Unit 1 — restore the integrated activation baseline.
 
 Named reason for the loop: the objective spans multiple bounded implementation and proof units, must survive session boundaries, and requires independent Codex assessment before it can count as complete.
 
 ## Brief
 
-The target plan is still explicitly `PROVISIONAL` and forbids dispatcher implementation until its post-merge activation contract is satisfied. This unit exists now because the durable-state work appears to have landed, but the exact integrated base, regression proof, concurrency catch-up, and accepted T7 boundary must be verified and recorded before Patrik can approve the plan against identifiable content. Produce an activation-ready plan and no dispatcher change.
+Unit 0 proved that merge `00855ec6` landed the durable-state branch but regressed accepted Work Loop content and left two activation suites red at integrated base `698383207208dbfccf04672a8263bbc55d001abf`. This repair is required before the provisional target plan can truthfully bind an activation baseline. Repair forward on a new commit; do not redo or rewrite the landed integration, edit the target plan, or begin dispatcher Change set A.
 
-Required outcome: verify every activation prerequisite in plan § 3 against repository reality, run the required integrated-baseline evidence, and update only the plan's activation/status material so it records the exact integrated base and the truthful evidence disposition. The result must remain visibly awaiting Patrik's content-bound approval; do not claim that this unit or today's request approved the plan, and do not begin Change set A.
+Required outcome: produce one coherent activation-baseline repair that turns the two proven red suites green without weakening their assertions or losing accepted durable-state behavior.
 
-Authority and source disposition:
+The repair must cover all three evidenced causes:
 
-- The operator's current instruction authorizes starting this Work Loop task and preparing the activation gate. It does not, by itself, establish content-bound approval of the provisional plan.
-- `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md` is the canonical Work Loop contract.
-- `plans/work-loop-v2-v0.2/work-loop-v2-dispatcher-reliable-supervised-use-implementation-plan-v0.1.md` is the operator-designated target and the controlling object for this unit, but remains non-governing for dispatcher implementation until its own § 3 activation and approval conditions are satisfied.
-- `logs/work-loop/work-loop-v2-durable-state-system.md` and `logs/work-loop/autonomy-authority-capability.md` are authoritative closed-state evidence for the durable-state and accepted T7 boundaries. Their claims must still be checked against the integrated Git history before being recorded in the plan.
-- The two source documents named in plan § 2 remain historical rationale, not independent implementation authorities.
+1. Reconcile the accepted main-side Work Loop content discarded by merge `00855ec6` into `.agents/skills/work-loop-v2/SKILL.md`, `.agents/skills/work-loop-v2/references/routing-index.md`, and `.claude/commands/work-loop-v2.md`. Preserve the durable-state parent's accepted lifecycle, ownership, lease, validator, and courier changes while restoring the accepted packaging/hop-termination and bounded handoff-reconciliation contracts from the pre-merge main side. This is semantic reconciliation, not wholesale selection of either parent.
+2. Restore deployment parity by making `workflows/research-workflow/logs/scripts/work-loop-owner.sh` carry the accepted canonical owner-helper behavior, including the Tracer 8 uninspectable-worktree fail-safe. Do not change the canonical helper merely to match the stale template.
+3. Repair the stale `LIVE_TASK_F` regression in `logs/scripts/work-loop-v2-slice-1.test.sh`. Preserve the assertion's purpose, but do not create another pointer whose next task closure predictably makes the suite red again; the result must have durable regression value rather than only pass while this task remains open.
 
-Check against the repository before changing the plan:
+Authority and evidence disposition:
 
-1. Verify the exact current `HEAD`, prove the durable-state integration commit is its ancestor, and identify the exact commit that should bind activation. The currently observed values `HEAD=698383207208dbfccf04672a8263bbc55d001abf` and durable-state merge `00855ec6` are verify-first claims, not facts to copy blindly.
-2. Verify the durable-state task is validly closed and committed, and that the integrated checkout contains one canonical validator, owner helper, shared lease helper, Work Loop command/skill/core, and attended carrier at their accepted locations.
-3. Identify and run the integrated baseline's required state, owner, lease, capability, command, carrier, and dispatcher regression suites. Report exact commands, host context, exit status, and pass/fail counts; skipped or sandbox-distorted evidence must not be recorded as passed.
-4. Establish the baseline catch-up result for the genuine two-task/two-linked-worktree case. Cite the exact executable case and result if it is already part of a suite; otherwise run the smallest existing accepted case that settles the gap. Do not create a second concurrency harness.
-5. Re-derive the accepted autonomy-authority T7 boundary from the closed task and Git history: T7 implemented, T8/T9 removed from that task's completion bar and not run, with the recorded limitations preserved. Do not imply that the removed scenario or organic-task programmes passed.
-6. Verify that the target plan currently lacks an exact integrated-base record and remains provisional. After the edit, demonstrate from the plan file itself that it is bound to exact content and unmistakably awaiting operator approval rather than claiming activation.
+- Unit 0's committed handback at `f9145ef2fce3027b47cce2239667531d7805fe68` is accepted evidence that the integrated baseline is defective: command/skill/core `315/44` and capability `76/1`, while the other required suites are green.
+- Commits `16de1622` and `8a61a496` are verify-first pointers to accepted main-side behavior; durable-state parent `39b6e0a1` and merge `00855ec6` are verify-first pointers to the other side of the reconciliation. Inspect the actual blobs and history before editing.
+- The target dispatcher plan remains provisional and unchanged. This unit repairs its prerequisite baseline; it does not activate or approve the plan.
+- Codex chooses the forward-repair route because it is bounded, reversible, and preserves the already-landed public history. Re-performing the integration and any history rewrite are excluded.
 
-Codex framing decision: this unit is limited to activation evidence and the minimum plan update because dispatcher code would be unauthorized before the operator gate. Any baseline repair, plan scope change, Change set A implementation, new report, or convenience harness is deliberately held outside this unit.
+Required fail-capable evidence:
 
-Required evidence must be fail-capable and include:
+- cite Unit 0's committed red results as the failing case, then run the complete command/skill/core and capability suites after the repair with exact commands, exit codes, and pass/fail counts;
+- show that the restored instruction surfaces contain both the durable-state contract and the accepted packaging/handoff-reconciliation contracts, with no duplicate executable core or lifecycle parser introduced;
+- show canonical/template owner-helper parity and run the canonical owner suite or an equally direct behavior check capable of detecting the former fail-open;
+- demonstrate that the `LIVE_TASK_F` repair does not depend on this task or another named operational task remaining open, and that its negative controls still fail when the protected contract is broken;
+- report the pre-unit and final commits and exact committed path list; and
+- prove that no dispatcher file, target-plan file, canonical runtime helper, or unrelated file changed. `logs/friction-log.md` was already modified outside this unit and must remain untouched and uncommitted.
 
-- exact pre-unit and final commit identifiers and the committed path list;
-- the merge-ancestry and closed-state checks;
-- exact regression commands with exit codes and pass/fail counts;
-- the identified two-task/two-worktree case and its result;
-- the T7/T8/T9 evidence with cited commits or durable records;
-- a check of the committed plan showing the exact baseline binding and approval-waiting status; and
-- a committed-path comparison proving no dispatcher, helper, runtime, or unrelated plan file changed in this unit.
+Capability subset: baseline only — read, search, inspect Git history, run local tests, edit only the three Work Loop instruction surfaces, the research-workflow owner-helper template, the slice-1 test, and this task state file, then make the local handback commit. The baseline deny set is required in full. Nothing is selected from the pre-authorizable set, which is empty today. No operator-reserved capability is needed.
 
-Capability subset: baseline only — read, search, inspect Git history, run local tests, edit only this task state file and the target plan, and make the local handback commit. The baseline deny set is required in full. Nothing is selected from the pre-authorizable set, which is empty today. No operator-reserved capability is needed.
+Completion condition: both previously red activation suites are green on one forward-repair commit, the accepted contracts from both merge sides are preserved, the stale live-task assertion has durable coverage, no target-plan or dispatcher work has begun, and Claude commits the handback with `turn: codex`.
 
-Completion condition: the plan is activation-ready against a verified exact baseline, all § 3 prerequisite and catch-up evidence is truthfully recorded or cited, no dispatcher implementation has begun, and Claude commits the update and hands back to Codex for assessment.
-
-Stop and hand back without repairing or widening the unit if any prerequisite fails, the integrated baseline contradicts a load-bearing plan premise, a required suite or catch-up case cannot be established, the update would materially change scope or Gate SA, or any file beyond the task state and target plan would need a deliberate change. Challenge a false premise rather than improvising past it.
+Stop and hand back rather than weakening proof or widening the unit if the two accepted contract lines materially conflict, a durable `LIVE_TASK_F` repair requires changing the test's intended guarantee, template parity cannot be restored without changing canonical behavior, or any deliberate file beyond the named scope is required. Challenge a false premise rather than improvising past it.
 
 ## Latest result
 
 Inspected (2026-08-16):
 
-- Claim (1): HOLDS — `git rev-parse HEAD` returns `698383207208dbfccf04672a8263bbc55d001abf`, matching the brief's verify-first value. `git merge-base --is-ancestor 00855ec6 HEAD` exits 0, so the durable-state merge is a true ancestor. `git rev-parse main` and `git rev-parse origin/main` both return the same `69838320`, so the integrated base is on `main` and pushed; branch `session/2026-08-16-dispatcher-last-fixes` points at the identical commit.
-- Claim (2): HOLDS for presence and location — validator `logs/scripts/work-loop-state.sh`, owner helper `logs/scripts/work-loop-owner.sh`, shared lease helper `logs/scripts/work-loop-lease.sh`, capability helper `logs/scripts/work-loop-capability.sh`, command `.claude/commands/work-loop-v2.md`, skill `.agents/skills/work-loop-v2/SKILL.md`, core `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, carrier `scripts/axcion-harness-v0.2/carry-turn.sh`. Each is a regular file, not a symlink; `git ls-files` shows exactly one copy of each at its accepted location, the only second copies being the deliberate template copies under `workflows/research-workflow/`. `work-loop-state.sh validate --task work-loop-v2-durable-state-system` prints `CLOSED` (exit 0), and that record is committed at `a97624a8`, an ancestor of HEAD. **Read this as location and singularity only — claim (3) shows the command and skill are content-regressed at this same base.**
-- Claim (3): **FALSE** — two of the seven required suites are red at this baseline. Full run below.
-- Claim (4): HOLDS — the genuine two-task/two-linked-worktree case already exists as an accepted executable case and passes; no second harness was created. `logs/scripts/work-loop-v2-tracer-7.test.sh` scenario 2 ("two concurrent worktrees with different tasks proceed; non-owner replicas refuse", file lines 391–456) drives `work-loop-owner.sh --depth repo` over two real linked worktrees simultaneously through a rendezvous gate. All 8 assertions pass, including the simultaneity proof and both negative controls (an undeclared-worktree replica refuses naming the owning checkout; a replica in a beta-leased checkout refuses naming beta, not alpha).
-- Claim (5): HOLDS — searched `logs/work-loop/autonomy-authority-capability.md` (`status: closed`, validator-independent read) and confirmed each cited commit exists and is an ancestor of HEAD. T7 landed at `48cca1c01adbeb07470e480d74d427ae5de3331c`. T8/T9 were **removed from the completion bar, not met**: the record states zero of T8's twelve rows carry a verdict and zero organic tasks were recorded under T9, via the operator's 2026-08-15 scope decision at `ff3175cd5123dd2195cc7e80b2487ba3849e57a1`, with the status announcement at `7dceb727`. The four accepted limitations are preserved verbatim in that record, including "T7 requests; it does not enforce" and the open residual asymmetry at `dispatch.sh:2115`.
-- Claim (6): HOLDS (first half) — searched the target plan for any 7–40 character hex commit token: no match anywhere in the file, so it records no integrated base. Line 4 still reads `**Status:** PROVISIONAL — scoped plan for operator approval after the durable-state branch is accepted and merged.` The second half ("after the edit, demonstrate...") was **not reached**: claim (3) failed, so no edit was made.
+- Claim (1) — merge `00855ec6` discarded accepted main-side Work Loop content in the three named files: **HOLDS, with one correction inside it.** `git rev-list --parents -n 1 00855ec6` gives parents `4ba2ff0e` (main) and `39b6e0a1` (durable-state). For all three files the merge blob equals the parent-2 blob exactly and differs from parent 1: SKILL.md `c21ad238` = p2, ≠ p1 `e8fbbe65`; routing-index.md `e71fa141` = p2, ≠ p1 `f4286c85`; command `5df53e70` = p2, ≠ p1 `515c54d7`. HEAD carries the same three blobs. **The correction:** `routing-index.md` carries *neither* named contract. Its whole main-side delta from merge-base `814f305b` is the `$diagnose-and-fix` rename plus the `$realign` route (`5fd95efb`, `199227a9`, `9e653f8e`) — no packaging, hop-termination or handoff-reconciliation text anywhere in it. That content is also **not accepted by this baseline's own harness**: running the suite with `WL2_ROUTER_FILE` pointed at `4ba2ff0e`'s routing-index turns **7 currently-green `ridx` assertions red** (primary-command set, the 51-entry count, command resolution, the 11-marker set, the live-installation cross-check, the excluded-names count, and the 116-line ceiling), because the main side changed the index without updating `AX_PRIMARY` and the counts in the test. Restoring it would weaken the baseline, which this unit's required outcome forbids. So routing-index.md is correctly left on the durable-state content, and the rename migration is recorded as a deferral below.
+- Claim (2) — the deployed template owner helper is stale and lacks the Tracer 8 uninspectable-worktree fail-safe: **HOLDS.** `workflows/research-workflow/logs/scripts/work-loop-owner.sh` (531 lines, blob `fbc5a141`) is byte-identical to canonical frozen at `96ff6786`; canonical is now 612 lines, blob `8a4a0c46`, last changed at `b81a1b58`. The template still carries `[ -d "$wt" ] || continue` at line 347 and has no `AMBIGUOUS` branch for an uninspectable registered worktree. No template-specific edits exist, so this is pure drift, not a fork.
+- Claim (3) — the `LIVE_TASK_F` regression is stale: **HOLDS.** Line 1375 named `logs/work-loop/work-loop-v2-durable-state-system.md`, which is `status: closed` and reduced to the four closing headings — it has no `## Lane and unit`, so `reason_of` and `modes_in_lane` both read an empty string and the two assertions plus their derived negative control went red. The test's own comment at lines 1368–1374 predicted exactly this.
+- Claim (4) — Unit 0's committed handback is accepted evidence of the defect: **HOLDS, reproduced.** Before any edit in this unit: `work-loop-v2-slice-1.test.sh` exit 1, `315 passed / 44 failed`; `work-loop-capability.test.sh` exit 1, `pass=76 fail=1` on `B5 the template's logs/scripts/work-loop-owner.sh is byte-identical to canonical`. The 44 split exactly as Unit 0 recorded: 35 `pack`, 6 `race`, 3 `mode`.
+- Claim (5) — `16de1622` and `8a61a496` point at accepted main-side behaviour, `39b6e0a1` and `00855ec6` at the other side: **HOLDS.** `16de1622` is the packaging/hop-termination change (SKILL +28, command +54, test +101); `8a61a496` is the bounded handoff reconciliation (SKILL +14, test +49, core +18) and its message records the pre-merge green this baseline regressed from. **One thing the brief does not name and this unit found:** `4800329c` ("clarify Work Loop v2 handoffs and completion") is a third discarded main-side commit whose **core-side half survived the merge while its runtime half did not** — the canonical core at HEAD still requires the brief-name-plus-task-id `Next` line (§ 3 *Where the record sits*), the three `Progress`/`Implementation`/`Merge readiness` status lines (§ 3), and Claude's post-closing merge-state report (§ 3), and the merge left both runtimes no longer instructing any of them. Restored, because leaving it would keep a runtime contradicting the canonical core it consumes.
+- Claim (6) — the target plan remains provisional and unchanged: **HOLDS.** Line 4 still reads `**Status:** PROVISIONAL — scoped plan for operator approval after the durable-state branch is accepted and merged.` Its working-tree blob is identical to its HEAD blob.
+- Claim (7) — `logs/friction-log.md` was already modified outside this unit: **HOLDS.** Its last commit is the merge `00855ec6` itself; it is modified in the working tree, unstaged, and this unit did not open it. It is excluded from the commit below.
 
-Result: Unit 0 stopped at the premise check and made **no change to the target plan**. The activation gate cannot be bound to this baseline, because two plan § 3 prerequisites fail against it. The plan remains `PROVISIONAL`, records no integrated base, and is unmistakably still awaiting Patrik's content-bound approval — unchanged from its pre-unit state.
+Result: the activation baseline is repaired on one forward commit. Both previously red suites are green — command/skill/core `362/0` (was `315/44`) and capability `77/0` (was `76/1`) — and the other eight required suites stay green. The reconciliation was semantic, not a re-selection of either parent: both merge sides' contracts now coexist in the two runtimes. The `LIVE_TASK_F` pointer is gone rather than repointed. No dispatcher file, target-plan file, canonical runtime helper or unrelated file changed, and the target plan is still unmistakably awaiting Patrik's content-bound approval.
 
-Evidence — regression run, host and commands exact. Host: macOS 26.5.2 (Darwin 25.5.0, arm64), GNU bash 3.2.57(1)-release. All run from `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-dispatcher-last-fixes` at HEAD `69838320`, working tree otherwise clean. No sandbox distortion and no skipped suite: every command below ran to completion and returned its own counts.
+Evidence — host macOS 26.5.2 (Darwin 25.5.0, arm64), GNU bash 3.2.57(1)-release, all run from this checkout, pre-unit commit `f9145ef2fce3027b47cce2239667531d7805fe68`.
 
-| Required suite | Command | Exit | Result |
+**1. The two red suites, before and after.** Nothing else in either suite moved: the `315 → 356` step is exactly the 41 `pack` and `race` assertions, and `356 → 362` is the three stale `mode` assertions replaced by six.
+
+| Suite | Command | Before | After |
 |---|---|---|---|
-| state | `bash logs/scripts/work-loop-state.test.sh` | 0 | 100 passed / 0 failed |
-| owner | `bash logs/scripts/work-loop-owner.test.sh` | 0 | 133 / 0 |
-| lease | `bash logs/scripts/work-loop-lease.test.sh` | 0 | 136 / 0 |
-| capability | `bash logs/scripts/work-loop-capability.test.sh` | **1** | **76 / 1** |
-| command/skill/core | `bash logs/scripts/work-loop-v2-slice-1.test.sh` | **1** | **315 / 44** |
-| command/skill/core (resolver) | `bash logs/scripts/work-loop-v2-core-resolver.test.sh` | 0 | 4 / 0 |
-| carrier | `bash scripts/axcion-harness-v0.2/carry-turn.test.sh` | 0 | 457 / 0 |
-| dispatcher | `bash plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` | 0 | 639 / 0 |
-| durable-state tracer 6 | `bash logs/scripts/work-loop-v2-tracer-6.test.sh` | 0 | 74 / 0 |
-| durable-state tracer 7 | `bash logs/scripts/work-loop-v2-tracer-7.test.sh` | 0 | 120 / 0 |
+| command/skill/core | `bash logs/scripts/work-loop-v2-slice-1.test.sh` | exit 1, `315 / 44` | exit 0, `362 / 0` |
+| capability | `bash logs/scripts/work-loop-capability.test.sh` | exit 1, `76 / 1` | exit 0, `77 / 0` |
 
-The evidence is fail-capable: eight suites at this same baseline returned green with their own counts, and the two red suites name specific assertions that pass elsewhere, so the reds are discriminating rather than a blanket failure.
+The other eight required suites, re-run at the repaired tree: state `100/0`, owner `133/0`, lease `136/0`, core-resolver `4/0`, carrier `457/0`, tracer 6 `74/0`, tracer 7 `120/0`, dispatcher `639/0`. All exit 0.
 
-**Root cause of the 44 command/skill/core failures — the merge itself, established by blob identity rather than inference.** Merge `00855ec6` recorded conflicts in six files. For three of them the resolution took the durable-state parent's blob **verbatim and discarded the main side**:
+**2. Both contract families are present in the restored surfaces, and no duplicate core or second lifecycle parser was introduced.** Restored main-side: all four packaging lines and the reconcile-once procedure in `SKILL.md`; the packaging-line check, `## Ending the hop`, and the required-evidence-cannot-be-deferred rule in the command. Preserved durable-state: the validator as the single lifecycle authority, the `--depth repo` ownership check, the Tracer 5 capability check, `There is no candidate scan`, and clear-the-declaration-only-after-the-commit in the command; the `status`/`turn` split and courier mode in `SKILL.md`. `git ls-files | grep work-loop-v2-executable-core` returns exactly one path. Neither runtime greps or awks `^status:`/`^turn:` — the three core-only sentences (`There is no third lane`, `is not a third lane, a new unit type, or a project phase`, core § 8's rule) each return **0 hits** in both runtimes, so nothing was copied down from the core.
 
-- `.agents/skills/work-loop-v2/SKILL.md` — merge blob `c21ad238` is byte-identical to parent 2 `39b6e0a1` and differs from parent 1 `4ba2ff0e` (`e8fbbe65`).
-- `.agents/skills/work-loop-v2/references/routing-index.md` — same pattern.
-- `.claude/commands/work-loop-v2.md` — same pattern.
-- (`logs/session-notes-archive-2026-08.md` also took the durable-state side; `logs/friction-log.md` and `logs/improvement-log.md` genuinely blended.)
+**3. Owner-helper parity, proved behaviourally rather than by checksum alone.** `cmp` now reports the template byte-identical to canonical (31238 bytes each), which is what assertion `B5` reads. The behaviour behind it was proved separately, on a throwaway repository with a second registered worktree whose path was replaced by a regular file — registered, present, unenterable, and no permission change involved:
 
-`git diff --stat 4ba2ff0e 00855ec6` over those three files shows 165 insertions / 190 deletions. The discarded main-side commits include `16de1622` ("Work Loop v2 unit packaging and hop termination — 2026-08-14 incident") and `8a61a496` ("...unit 1 reconciles a claimed hand-off once before concluding absence, harness 345/0 to 358/0 green"). Those two map exactly onto the failing clusters:
+| Helper under test | `check --depth repo` verdict | Exit |
+|---|---|---|
+| template, before the resync | `PROCEED` — *"task is declared and stored nowhere — free to claim"* | 0 |
+| canonical | `AMBIGUOUS` — *"registered worktrees exist that could not be inspected … whether one of them declares task is unknown"* | 4 |
+| template, after the resync | `AMBIGUOUS` | 4 |
 
-- **`pack` — 35 failures.** The four packaging lines (`Dominant deliverable:`, `Evidence required in this hop:`, `Evidence explicitly deferred:`, `Primary edit begins after:`) and the hop-termination contract. Probe: each string returns 1 hit in `4ba2ff0e:SKILL.md` and 0 in HEAD.
-- **`race` — 6 failures.** The bounded reconciliation procedure (`reconcile once before reporting anything`, `owns the rule; this is the procedure`, `I cannot assess it until those sources converge`, `evidence about visibility, not about Claude`, `never overrides the state file`, `brief names and task ids and ask which one`). Every one returns 1 hit in `4ba2ff0e:SKILL.md` and 0 in HEAD.
+That is the former fail-open, caught and closed: the same input that made the deployed template hand out a claim now refuses it.
 
-The test file `logs/scripts/work-loop-v2-slice-1.test.sh` merged **cleanly** (blob `ee89d18f`, distinct from both parents), so it still asserts both contracts against instruction files that no longer carry them. The 358/0 figure in `8a61a496`'s own message is the pre-merge green this baseline regressed from.
+**4. The `LIVE_TASK_F` repair is durable, and its controls still fail.** The hard-coded path is replaced by `live_standard_records()`, which sweeps `logs/work-loop/` for records that are `status: active`, carry a `## Lane and unit`, and are not fixtures. It names no task, so no closure can stale it, and it is vacuously satisfied when nothing is open — which is the honest reading of a clean repo, not a weakened one. Its fail-capability therefore rests on controls pinned to a constructed directory rather than on liveness. Six mutations, each reverted, checksums confirmed identical to the pre-run bytes afterwards:
 
-- **`mode` — 3 failures, different cause, not merge damage.** `LIVE_TASK_F` at line 1375 still points at `logs/work-loop/work-loop-v2-durable-state-system.md`, which is now closed and reduced to its four closing headings, so `## Lane and unit` is absent and the assertions read an empty string. The test's own comment at lines 1368–1374 predicts this exact failure and names repointing as the fix. Honest red, stale pointer, no lost content.
+| Mutation | Result |
+|---|---|
+| **this task reduced to a closed record** (no open non-fixture record anywhere) | `362 / 0` — the durability claim: the suite does **not** depend on this or any named task staying open |
+| a live open record naming `Exploration mode` | `361 / 1` — *every live open record states exactly one legal mode* |
+| a live open record whose named reason reads *"small and reversible"* | `361 / 1` — *no live open record's named reason defeats its own admission either* |
+| the sweep's `status: active` filter deleted | `361 / 1` — *the sweep excludes a closed record on its status alone* |
+| the sweep's `fixture-` exclusion deleted | `360 / 2` — both live assertions, since fixtures would then stand in for real operational output |
+| baseline, unmutated | `362 / 0` |
 
-**Capability failure — 1 assertion, separate defect.** `B5 the template's logs/scripts/work-loop-owner.sh is byte-identical to canonical` fails. Canonical `logs/scripts/work-loop-owner.sh` (612 lines, last changed at `b81a1b58`, the Tracer 8 correction) carries the unestablished-worktree fail-safe: a registered worktree that cannot be entered yields `AMBIGUOUS` rather than being skipped. The template copy `workflows/research-workflow/logs/scripts/work-loop-owner.sh` (531 lines, last changed at `96ff6786`, Tracer 6) still carries the old fail-open `[ -d "$wt" ] || continue`. Consequence: a project deployed from this template gets the ownership fail-open that Tracer 8 removed. The template's `work-loop-state.sh` and `work-loop-reorient.sh` copies are byte-identical, so this is one drifted file, not a stale template generally.
+The fourth control needed adding during this unit and is the reason the count is six rather than five: the first draft's closed-record control used only the reduced durable-state record, which is excluded by *either* filter, so deleting the status filter changed no verdict and the filter was unfalsifiable. A second control record — `status: closed` over a surviving `## Lane and unit`, the malformed shape core § 4 names — makes the status filter load-bearing and testable.
 
-Committed in this unit: `logs/work-loop/work-loop-v2-dispatcher-reliable-supervised-use.md` only — previously untracked, now added. `git diff` against the target plan and against every dispatcher, helper and runtime file is empty; no Change set A work began.
+**5. Committed path list**, all by explicit pathspec, pre-unit commit `f9145ef2`:
 
-Deferrals noticed and deliberately not done (recorded, not implemented): repointing `LIVE_TASK_F` to the current open Standard record; resyncing the template owner helper; restoring the discarded main-side content. All three are repairs, which this unit's stop condition forbids.
+- `.agents/skills/work-loop-v2/SKILL.md`
+- `.claude/commands/work-loop-v2.md`
+- `logs/scripts/work-loop-v2-slice-1.test.sh`
+- `workflows/research-workflow/logs/scripts/work-loop-owner.sh`
+- `logs/work-loop/work-loop-v2-dispatcher-reliable-supervised-use.md`
+
+`git status --porcelain` shows exactly these five plus `logs/friction-log.md`, which is left modified and uncommitted as the brief requires. `.agents/skills/work-loop-v2/references/routing-index.md` is deliberately unchanged, for the reason under claim (1).
+
+Deferrals — noticed in this unit, deliberately not done:
+
+1. **The `$diagnose-and-fix` rename migration is half-landed across the repository, and this unit did not finish it.** `.agents/skills/diagnose-and-fix/` exists and every other consumer was renamed, but the merge reverted the two Work Loop surfaces: `routing-index.md` still indexes `/resolve-repo-problem` and `/resolve-incident` and does not carry `$diagnose-and-fix` or `$realign`, and `SKILL.md` § *Repository-problem reference* still points at `references/repository-problem-resolution-sop.md`, **which the merge deleted** — a live dangling reference in an instruction surface. Not repaired here because completing it means changing the harness's `ridx` expectations (`AX_PRIMARY`, the 51-entry and 26-command counts, the marker set), which is editing accepted assertions rather than restoring content, and is outside this unit's three evidenced causes. It is one coherent change and wants its own unit.
+2. **The harness's `ridx` block is the more general instance of the defect this unit fixed.** `AX_PRIMARY`, `CLAUDE_ONLY` and the entry counts are hard-coded inventories of a file that changes, so a legitimate routing change turns them red exactly the way `LIVE_TASK_F` did. The same discovery treatment would apply.
 
 ## Blocker
 
-Two plan § 3 activation prerequisites fail against the integrated baseline `69838320`, so the activation gate cannot be bound to it.
-
-1. **§ 3 item 4 — "The integrated baseline passes its required state, owner, lease, capability, command, carrier, and dispatcher regression suites."** It does not. The command/skill/core suite is 315/44 and the capability suite is 76/1. Plan § 3 forbids treating skipped or failing evidence as passed, so no truthful activation record can be written at this base.
-
-2. **§ 3 item 2's load-bearing premise is contradicted.** The premise is that the durable-state branch was "integrated with `main` through the repository's approved merge process." The integration completed, but its conflict resolution discarded accepted main-side Work Loop contract content in three files, verified by blob identity above. The Work Loop command and skill named in § 3 item 3 are present at their accepted locations but content-regressed relative to the pre-merge main side. This is a defect in the integrated base itself, not in the plan's design.
-
-Nothing was repaired and the plan was not edited, per the brief's stop condition. Dispatcher implementation remains gated.
+None. The activation baseline is green on this commit. Dispatcher implementation remains gated on Codex's assessment of this repair and, after it, Patrik's content-bound approval of the still-provisional target plan.
 
 ## Next action
 
-Codex: decide how the activation baseline is repaired before Unit 0 can be re-run. The three candidate routes, none of them chosen here:
-
-1. Restore the discarded main-side content into the three files on a new commit, re-run the command/skill/core suite to green, and bind activation to that new commit — leaving `69838320` recorded as the defective intermediate.
-2. Re-do the integration from `4ba2ff0e` and `39b6e0a1` with a correct conflict resolution, and bind activation to the result.
-3. Reframe: establish whether any discarded main-side content was superseded on purpose by the durable-state branch, in which case the slice-1 assertions — not the instruction files — are what must change.
-
-Also decide, as part of that scope: whether the template owner-helper resync and the `LIVE_TASK_F` repoint belong in the same repair unit or in their own. Both are one-file changes with named consequences.
-
-Whichever route is chosen, the operator's content-bound approval of the plan still has to follow the repair, against the exact commit that finally passes the § 3 suites.
+Codex: assess Unit 1's forward activation-baseline repair. Two things need your judgment beyond the ordinary check. First, whether leaving `routing-index.md` on the durable-state content is the right call — the evidence is that its main-side alternative fails 7 currently-green assertions, so restoring it was refused as weakening the baseline rather than accepted as reconciliation. Second, whether restoring `4800329c`'s runtime half (the brief-name `Next` line, the three status lines, Claude's merge-state report) was in scope: it is discarded main-side content whose core-side half survived, but the brief named only the packaging and handoff-reconciliation contracts. Then decide whether Unit 0 is re-run against this commit to bind the activation baseline, and whether either recorded deferral opens as its own unit.
