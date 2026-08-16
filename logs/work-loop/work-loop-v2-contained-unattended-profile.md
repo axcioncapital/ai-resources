@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-contained-unattended-profile
+status: closed
 turn: operator
 ---
 

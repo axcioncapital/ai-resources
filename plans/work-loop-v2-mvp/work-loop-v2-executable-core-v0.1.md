@@ -1,13 +1,15 @@
 # The Work Loop — executable core
 
-**Version:** v0.1 (MVP). **Status:** draft for operator approval.
+**Version:** v0.1 (MVP). **Status:** canonical — content at commit `5fef08ff` approved by the operator on 2026-08-14, with § 4's lifecycle contract replaced at the Tracer 3 cutover under the frozen durable-state plan's standing authorisation (`plans/work-loop-v2-v0.2/work-loop-v2-durable-state-system-implementation-plan-v0.1.md`, Tracer bullet 3). Everything outside the state contract is unchanged from the approved content.
 
 **What this is.** The one document that says how the Work Loop runs. The Claude Code command and
 the Codex resource **link to this file** and never restate what is in it. One owner, no drift. The
 reasoning behind the loop lives in a separate reference document and is not loaded during work.
 
-**Authority.** Built from the Proposal (`work-loop-v2-mvp-proposal-v0.4.md`), which stays
-authoritative. Where this file and the Proposal disagree, the Proposal wins.
+**Authority.** This file is the Work Loop's own statement of how the loop runs. It was built from
+`work-loop-v2-mvp-proposal-v0.4.md`, which is recorded here as historical rationale for the design
+rather than a live overriding authority. The operator's content-bound approval of the identifiable
+commit carrying this revision is what makes this file canonical.
 
 ---
 
@@ -21,7 +23,9 @@ with the approved objective, and judges whether the evidence supports moving on.
 **Claude** owns repository reality. It checks claims against the live repository, implements, tests,
 and produces evidence.
 
-**The operator** owns priorities, scope, and any decision that is hard to reverse.
+**The operator** owns intent and priorities, the approved solution envelope, and the decisions § 7
+reserves to them. Consequence alone does not move a decision to the operator; it raises containment,
+evidence and review (§ 8).
 
 Four limits on those roles:
 
@@ -54,8 +58,9 @@ If the work is small and reversible, it is Direct Work even when one of those is
 what was learned, close the task, and finish the work directly. Do not keep a task in the loop only
 because it started there.
 
-Two lanes exist in this version: **Direct** and **Standard**. There is no third lane. Genuinely
-consequential work stops and goes to the operator instead (§ 7).
+Two lanes exist in this version: **Direct** and **Standard**. There is no third lane. Consequential
+work runs in Standard with stronger containment, evidence and review; it goes to the operator only
+when § 7 reserves the decision to them.
 
 ---
 
@@ -165,9 +170,9 @@ Four statements make that bar checkable rather than a matter of taste:
 These four are owned here. The Codex skill and the Claude command cite this section; neither restates
 them.
 
-> *Added 2026-08-07. This clause was approved on its own; the document's header still reads
-> **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
-> approval of the rest of the file.*
+> *Added 2026-08-07. This clause was approved on its own, and the rest of the file was not
+> approved with it at that time. That limitation was superseded on 2026-08-14, when the
+> operator's content-bound approval of commit `5fef08ff` made the whole file canonical.*
 
 ### Operator-facing progress, completion and merge readiness
 
@@ -227,7 +232,8 @@ Close the task:
 followed by what the closing record must carry beyond the repository facts: the outcome as Codex
 judges it, any deferral recorded at the closure check with its reason, the menu choice and its
 value-and-risk ground if one was used, and any accepted limitation. Codex sets `turn: claude`. Claude
-reads that line as the signal to reduce the file to § 4's closing record, set `turn: operator`, and
+reads that line as the signal to reduce the file to § 4's closing record, set `status: closed` and
+`turn: operator` in the same write, and
 commit. Like the hand-off token below, it is a protocol token shared by both sides: named here, once,
 so the producer and the consumer cannot drift apart. Change it here or nowhere.
 
@@ -320,7 +326,9 @@ A courier may carry a turn the state file **already states**. It may never:
 
 - change the task, the brief, the result, or any other content of the state file;
 - choose which actor moves next, or decide that a turn exists — it carries what `turn:` already says;
-- continue past `turn: operator`, which stays terminal for all automation (§ 7 is unchanged by this);
+- continue past a record the validator classifies `BLOCKED_OPERATOR` or `CLOSED`, both of which stay
+  terminal for all automation (§ 7 is unchanged by this). A courier reads that classification from
+  `logs/scripts/work-loop-state.sh`; it does not work it out from `turn:` or from the body;
 - stand in as evidence. A courier's screen, terminal, exit status or user interface is **never
   authoritative**. The state file and the repository are, and whoever reads a courier's result reads
   the file before acting on it.
@@ -332,9 +340,9 @@ never transport.
 The operator carrying the turn themselves remains valid and is the default. A courier is an option
 they approve, not a stage the loop acquires.
 
-> *Added 2026-08-06. This clause was approved on its own; the document's header still reads
-> **draft for operator approval** and that is deliberately unchanged. Do not read this amendment as
-> approval of the rest of the file.*
+> *Added 2026-08-06. This clause was approved on its own, and the rest of the file was not
+> approved with it at that time. That limitation was superseded on 2026-08-14, when the
+> operator's content-bound approval of commit `5fef08ff` made the whole file canonical.*
 
 **A request that is refused admission opens no file** (§ 2). Direct Work leaves no state behind.
 
@@ -352,9 +360,31 @@ the hand-off works, not what the task is about.
 ```yaml
 ---
 task: crm-follow-up-date   # the task id; also the file name
+status: active             # where the task is in its life: active | blocked | closed
 turn: claude               # whose move it is: claude | codex | operator
 ---
 ```
+
+**Lifecycle is stated, never inferred.** `status` says where the task is in its life and `turn` says
+only whose move it is. The two are different questions, and reading one off the other is the mistake
+this contract removes: `turn: operator` used to mean both "waiting on a decision" and "finished",
+which are opposite situations that happen to stop the same automation. Only four combinations are
+legal, and every other pairing is malformed:
+
+| `status` | `turn` | What it means |
+|---|---|---|
+| `active` | `claude` | Claude owes execution, correction, or the closing write |
+| `active` | `codex` | Codex owes assessment or progression |
+| `blocked` | `operator` | Work waits on the decision named in `## Blocker` |
+| `closed` | `operator` | Terminal |
+
+**One reader decides, and it is not you.** `logs/scripts/work-loop-state.sh` is the single authority
+that turns a state file into one of those four classifications. Every consumer — this document's two
+entry points, the ownership helper, and any approved courier — asks it and uses its answer. No
+consumer parses the record for lifecycle itself, and none keeps a fallback reading for when the
+validator is unavailable: a validator that cannot run means the lifecycle is **unestablished**, which
+stops the caller. It never resolves to "open" or "closed" by default. A second reader is how two
+consumers come to disagree about one record, which is the whole failure this seam exists to prevent.
 
 The body carries the **content fields**, and holds **at most** these five while the task is active.
 The heading strings in the left column are **normative and exact** — the producer writes them and the
@@ -375,21 +405,23 @@ Five is a **maximum, not a checklist**. A field with nothing real in it is left 
 The five fields cap what the file says about the task's **state**. Two other things live in the same
 file and are not state, so the ceiling does not cover them:
 
-- **`turn` and `task`** — protocol fields. They say whose move it is and which task this is. `task`
-  is what § 6 rule 2 checks a file's identity against.
+- **`turn`, `status` and `task`** — protocol fields. They say whose move it is, where the task is in
+  its life, and which task this is. `task` is what § 6 rule 2 checks a file's identity against.
 - **The brief** — a hand-off from Codex to Claude, required by § 3 step 3.
 
 **A deferral needs no field.** Record it at closure among the decisions that matter. If it changes
 what happens next, it belongs in Next action instead.
 
 **When the task closes**, everything above is replaced by the closing record — exactly these four
-sections, under these exact headings, ending at `turn: operator`. Claude writes and commits this
-reduction on Codex's close verdict (§ 3, The close token); the shape below is the closed file's
-contract for both sides:
+sections, under these exact headings, at `status: closed` and `turn: operator`. Claude writes and
+commits this reduction on Codex's close verdict (§ 3, The close token); the shape below is the closed
+file's contract for both sides. The reduction is one write: the status and the body change together,
+because a `closed` status over a surviving active body is malformed and the validator rejects it.
 
 ```markdown
 ---
 task: {task-id}
+status: closed
 turn: operator
 ---
 
@@ -411,6 +443,7 @@ turn: operator
 ```markdown
 ---
 task: crm-follow-up-date
+status: active
 turn: claude
 ---
 
@@ -496,8 +529,10 @@ These five apply to every unit, in every lane, always.
    malformed, stale, or belongs to a different task, report it and change nothing.
 3. **An absence claim must say what was searched.** "There is no such field" is not a finding.
    "There is no such field — searched the model, the view and their tests" is.
-4. **Scope and success criteria do not change quietly.** A change to either is stated out loud, and
-   a change to scope goes to the operator.
+4. **Scope and success criteria do not change quietly.** A change to either is stated out loud, never
+   made silently. The decision is the operator's when the change is one they reserve — the intended
+   outcome or the priority, a material expansion of scope, or the removal of an exclusion (§ 7). A
+   change that is none of those is disclosed and proceeds.
 5. **Evidence must be able to fail.** If the check would pass whatever happened, it is not evidence.
    Build the failing case first, then show it passing.
 
@@ -507,21 +542,63 @@ These five apply to every unit, in every lane, always.
 
 Stopping is a normal outcome. Each trigger below names who to stop for.
 
-**Hand back to Codex** — write the finding into the state file, set `turn: codex`, commit, and stop:
+**Consequence is not itself a trigger.** Higher consequence means stronger containment, stronger
+evidence and a proportional review — not that the decision moves to someone else (§ 8). A
+consequential change whose outcome, envelope and capabilities are already delegated stays with the
+agent and is done more carefully. What moves a decision is the class it falls in, and the classes are
+listed here.
 
-- A claim the brief rests on is false (rule 1).
+**Hand back to Codex** — write the finding into the state file, keep `status: active` and set
+`turn: codex`, commit, and stop:
+
+- A claim the brief rests on is false (rule 1), or a load-bearing premise is still unsupported after
+  bounded investigation.
 - The work would go outside the approved scope, or touch something the brief excluded.
 - The required evidence cannot be produced.
+- The approved plan is materially invalid, and repairing it would go outside the solution envelope.
+- A capability the work needs is already authorized, but the available technical means cannot enforce
+  it safely. That is a technical or infrastructure problem, and the operator cannot waive it: what is
+  missing is containment, not permission.
+- The action would bypass, weaken, or self-expand the control system. The operator is reached only
+  where the remedy would itself materially change the policy governing agent authority, and then
+  through that separate class below — never through this clause.
 
-**Stop for the operator** — write the question into the state file, set `turn: operator`, commit, and
-stop:
+**Stop for the operator** — write the question into `## Blocker`, set `status: blocked` and
+`turn: operator`, commit, and stop. `blocked`, not `closed`: the task is waiting, not finished, and
+the two are different classifications precisely so this stop cannot be mistaken for a close:
 
-- The change would be hard to reverse.
-- Proceeding would need a settled decision to be reopened.
+- The intended outcome or the priority would change.
+- Scope would expand materially, or an exclusion would be removed.
+- Product or business behaviour must be chosen and existing authority does not determine it.
+- The approved operating model, a material architecture commitment, the cost or risk profile, or the
+  governance model would change.
+- Material residual risk would be accepted that was not already delegated — including the case where
+  the correction was not enough and the choice among the options in § 3 is really about accepting
+  risk.
+- The authorized capability envelope would expand, or a capability the work needs has not been
+  granted.
+- Production deployment, public or customer communication, credential use, or destructive action on
+  shared state would be authorized, and no separate explicit delegation already covers it.
+- Operator intentions are genuinely tied or in conflict, or governing sources stay materially tied
+  after the authority hierarchy has been applied.
+- The policy governing agent authority would materially change.
+- An **operator-owned** settled decision would have to be reopened — one the operator settled
+  themselves, or one falling in a class this list reserves to them. A settled implementation or
+  technical decision delegated inside the approved solution envelope does **not** transfer merely
+  because it is settled: reopening it is disclosed, stays subject to every other trigger here, and
+  remains the agent's to make on the evidence.
+- Continuing would require inventing operator intent.
 - The state file is stale or belongs to another task, and it is not obvious which is correct
   (rule 2).
-- The correction was not enough, and the choice among the options in § 3 is really about accepting
-  risk.
-- Anything else that is genuinely consequential.
 
-In this version, "stop and bring this to the operator" is the answer for consequential situations.
+These classes are what stop the work. Everything outside them proceeds under § 8, with containment,
+evidence and review scaled to what is at stake.
+
+---
+
+## 8. The governing autonomy rule
+
+> **Within the approved solution envelope, resolve what evidence can resolve, exercise professional technical judgment, and use only pre-authorized capabilities. Consequence increases containment and verification; it does not by itself transfer the decision to the operator. Escalate only when continuing requires operator-owned intent, accepted risk, a material change outside the solution envelope, or expansion of the authorized capability envelope. Stop when a load-bearing premise or required verification cannot be established, or when continuing would bypass the control system.**
+
+This rule governs §§ 1–7 above wherever they touch autonomy: § 7 lists the classes that escalate it,
+and § 6 rule 4 states how it applies to a change of scope.

@@ -10,6 +10,31 @@ Session orchestrator. Run after `/prime` to plan HOW the session will run before
 
 ---
 
+## Step W — Work Loop preflight (before Step 0, and before anything else)
+
+This checkout may be held by an open Work Loop v2 task, which keeps its own durable state in
+`logs/work-loop/{task-id}.md`. Writing a legacy session plan on top of that starts a **second state
+system** over the first — and a session plan is precisely a competing statement of what the work is
+and what happens next. This command's first state write is Step 7's plan file; this gate sits above
+every step, including Step 0's marker resolution and its re-invocation prompt.
+
+The check is **read-only**: it asks `work-loop-owner.sh` and `work-loop-state.sh` and mutates nothing.
+
+```bash
+bash "$(git rev-parse --show-toplevel)/logs/scripts/work-loop-session-preflight.sh" --command "/session-plan"
+```
+
+- `verdict: PROCEED` — no valid open Work Loop task owns this checkout (the ordinary case). Continue to
+  Step 0 with behaviour **unchanged**.
+- `verdict: STOP` — write nothing, run no later step. Give the operator the `route:` and `reason:` lines
+  as printed, then stop.
+
+**Never work around a STOP.** Do not edit, clear or re-claim `logs/work-loop/.owner`, and do not touch
+the task record — `/session-plan` owns neither. A stale declaration over a `CLOSED` task already returns
+`PROCEED` on its own; anything else is the operator's to decide.
+
+---
+
 ## Step 0 — Confirm `/prime` ran this session, resolve marker, check for same-session re-invocation
 
 **Leading-token normalization — run this FIRST, before anything reads `$ARGUMENTS`.** Callers may prefix the intent with zero or more literal `{key:value}` tokens. Strip leading tokens in a loop until the remaining text begins with something else, capturing each:
@@ -149,6 +174,8 @@ Based on `INTENT` and the source material in Step 3, recommend one posture:
 - Broad scope with high drift risk
 
 Name specific stop points (or state "None").
+
+Posture is a planning classification: it sets where the session pauses, not what authority an individual action carries — the governing autonomy rule over that is core § 8 (`ai-resources/plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`); read it there rather than restating it here.
 
 **Compaction discipline:** for long-running sessions, see `ai-resources/docs/compaction-protocol.md` § Named checkpoints for the four state-saving points (post-inspection, post-implementation, post-review, pre-closeout) and what to write to disk at each.
 

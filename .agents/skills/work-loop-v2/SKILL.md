@@ -1,6 +1,6 @@
 ---
 name: "work-loop-v2"
-description: "Use only when the request (1) names the Work Loop, (2) points at an existing logs/work-loop/{task-id}.md task, hand-off or assessment to act on, (3) says 'continue this project' or 'what is next on this project', (4) asks Codex to frame a bounded unit for another actor to execute, or (5) says 'y' or 'ur turn' in an active Work Loop hand-off. Then route it to the one capability that owns it — the operator, an Axcíon command, a Codex specialist skill, a Matt skill, or the Work Loop itself — and, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Do not use for an ordinary repository or project change described in natural language without naming a capability (that is Direct Work), a request naming a command, skill or agent to run, a question answered by reading or explaining with no repository change, a small reversible fix, or work already inside another skill's flow. Inside admitted Work Loop units Claude executes and commits; specialist skills govern their own execution."
+description: "Use only when the request (1) names the Work Loop, (2) points at an existing logs/work-loop/{task-id}.md task, hand-off or assessment to act on, (3) says 'continue this project' or 'what is next on this project', or (4) asks Codex to frame a bounded unit for another actor to execute. Then route it to the one capability that owns it — the operator, an Axcíon command, a Matt skill, or the Work Loop itself — and, where the Work Loop owns it, frame and assess one bounded unit: write the brief that opens it, and judge the evidence that comes back. Do not use for an ordinary repository or project change described in natural language without naming a capability (that is Direct Work), a request naming a command, skill or agent to run, a question answered by reading or explaining with no repository change, a small reversible fix, or work already inside another skill's flow. Claude executes and makes every commit; you do neither."
 ---
 
 # work-loop-v2 — Codex side
@@ -143,44 +143,21 @@ Core § 4 defines the interface between you and Claude, and places the operator 
 
 **Read-only Git is yours; writing is not.** The restriction is on `.git` writes, not on Git as a whole — the MVP's transport step established it by observation, with `git status --short` and `git log --oneline` succeeding from inside Codex while `git add` was refused (`plans/work-loop-v2-mvp/step-2-transport-seam-conclusions.md` § 2). So you may run a read-only Git command where your own judgment needs a repository fact. Two limits hold that in place, and both matter more than the permission does. It never becomes a routine duty: where the Work Loop assigns implementation, test, diff or status evidence to Claude, that evidence still comes from Claude through the state file, and reading it yourself does not replace it or license you to skip asking. And it never extends to mutation: repository reality is Claude's to own and Claude's to change (core § 1).
 
+**Every record you write states both fields.** `status:` says where the task is in its life — `active`, `blocked` or `closed` — and `turn:` says only whose move it is. Core § 4 fixes the four legal pairs; there is no fifth, and neither field is inferred from the other. Yours are `active`/`claude` when you hand to Claude, `active`/`codex` while the move is yours, and `blocked`/`operator` when you stop for a decision. You never write `closed` — Claude writes and commits the closing record on your close verdict.
+
 **Name the actor whose turn it actually is** — the one you just wrote into `turn:`. The three cases:
 
 | `turn:` you set | The Next line says |
 |---|---|
-| `claude` | **Next:** for **{brief name}** (`{task-id}`), run `/work-loop-v2 {task-id}` in Claude. |
+| `claude` | **Next:** run `/work-loop-v2` in Claude. |
 | `operator` | **Next:** {the decision or information you need from them}. |
 | — (Direct Work, no file) | **Next:** have Claude do this directly — no loop task. |
 | — (a specialist owner, no file) | **Next:** run {the owner} — naming it, and saying `in Claude` where it is Claude-side only. |
 | `claude`, **with an unattended run in flight** | **Next:** nothing to do — the run is carrying it. Name the deadline and where the evidence will be. See *Unattended runs*. |
 
-For an open unit, **{brief name}** is the exact text after the dash in `## Lane and unit` (core
-§ 3). Carry it verbatim, together with the task id, every time the inline Claude instruction is
-written — opening, continuing, correcting or closing. An older state file with no usable brief name
-does not justify the bare instruction: use the task id as the temporary label and say that the brief
-name is missing.
-
 **The carve-out in the last row matters.** "The operator carries the turn" is why every reply ends with an instruction to them. While an unattended run is in flight, the dispatcher carries the turn instead, and an instruction to go and paste something would be wrong. The Next line then reports rather than directs.
 
 Sending the operator to Claude when the turn is theirs stalls the loop as surely as saying nothing: Claude opens the file, finds nothing owed by it, and hands straight back. Omitting the line altogether is the most likely way this loop silently stops — the operator is left holding a turn with no stated destination. Treat it as part of the output, not as courtesy.
-
-**Operator shorthand — `y` and `ur turn`.** In an active Work Loop hand-off, either message means:
-*"The other AI has finished its part; now it is your turn to review or act."* Treat it as the
-operator carrying the already-recorded turn, not as yes/no approval, a task id, a new request, or
-permission to change scope. Read the state file and confirm `turn: codex` before acting. With exactly
-one matching open task, take that turn; with more than one, list the
-brief names and task ids and ask which one. The shorthand never overrides the state file.
-
-**Where what you read conflicts with the operator's claim, reconcile once before reporting anything.**
-Core § 4 owns the rule; this is the procedure. Check the latest commit affecting that exact task file,
-then reread the file once immediately. If they converge on `turn: codex`, proceed. If they still do
-not, report only the discrepancy and what it prevents — for example:
-
-> Your message says Claude completed the handoff, but it is not yet visible in this checkout.
-> I cannot assess it until those sources converge.
-
-Do not say that Claude has not done the work, has stalled, or is still running. One snapshot is
-evidence about visibility, not about Claude's activity, and the two are separate claims. This is one
-recheck, not polling, waiting or retrying Claude.
 
 **The folder is core § 4's, not a choice.** Create `logs/work-loop/` if it does not exist. There is no fallback path — if you cannot write there, say so and stop.
 
@@ -204,7 +181,7 @@ recheck, not polling, waiting or retrying Claude.
 
 A worktree is a cost, not a default. The table is the policy — do not build a decision procedure on top of it.
 
-**The checkout declares its writer, and you write the declaration.** One gitignored file per checkout, `logs/work-loop/.owner`, holds one task id and the date it was claimed. **Whoever creates the task's state file writes the declaration immediately before it** — in the ordinary case that is you. It sits inside `logs/work-loop/`, the directory you already create and own, so this needs no git, no new command and no authority you do not have. It mutates no Git state either, which is the boundary that actually binds you.
+**The checkout declares its writer, and you write the declaration.** One gitignored file per checkout, `logs/work-loop/.owner`, holds **one task id on one line and nothing else**. The claim date it used to carry was dropped at the Tracer 3 cutover: nothing ever read it, and a second field is one more way for two readers to disagree about the same declaration. A declaration in any other shape — the old `{task-id} {YYYY-MM-DD}` form included — is unreadable, and unreadable is a refusal, never something to repair by guessing. **Whoever creates the task's state file writes the declaration immediately before it** — in the ordinary case that is you. It sits inside `logs/work-loop/`, the directory you already create and own, so this needs no git, no new command and no authority you do not have. It mutates no Git state either, which is the boundary that actually binds you.
 
 **One sequence, both lanes:**
 
@@ -212,16 +189,17 @@ A worktree is a cost, not a default. The table is the policy — do not build a 
 2. Apply the isolation table above. Where it says **Local**, go straight to step 4 in the current checkout. Where it says isolate, end your reply with the Next line you already write, naming `/new-worktree-session` in Claude — that command creates the worktree and opens the window. The operator then opens you on that checkout. **This is the one residual manual step, and only on the isolated path.**
 3. Verify the working directory you are actually in, as always.
 4. Read `logs/work-loop/.owner`:
-   - **absent, or it already names this task** — write it (`{task-id} {YYYY-MM-DD}`, one line), then write the first brief into `logs/work-loop/{task-id}.md`.
+   - **absent, or it already names this task** — write it (`{task-id}`, one line, nothing else), then write the first brief into `logs/work-loop/{task-id}.md`.
    - **it names a different open task** — **refuse and write nothing.** Say which task holds the checkout, and give the operator both remedies: close that task, or use another checkout.
-   - **it names a task whose state file in this checkout is closed (`turn: operator`)** — stale. Say so and replace it.
-   - **unreadable, or holding more than one id** — refuse and report. Do not guess.
+   - **it names a task the validator classifies `CLOSED`** — stale, and stale is necessary but **not sufficient**. Ask `logs/scripts/work-loop-state.sh` for that classification; do not decide it from `turn:` or from which headings survive. `turn: operator` used to be the test here, and it was wrong in the one case that matters: a `BLOCKED_OPERATOR` task is also `turn: operator`, it is **waiting rather than finished**, and it keeps its checkout until the operator decides. What `CLOSED` still does not tell you is whether that closure was **committed**. A closure is two moves (core § 4): valid closed state committed, then the declaration cleared. Interrupted in between, the working tree holds a complete, valid closing record the validator answers `CLOSED` for, while Git still records the task as active — and replacing the declaration there releases the lease over a closure that has not happened. Establishing that HEAD carries the record needs git, and you run none. So **refuse and write nothing.** Say the checkout is held by a closure that may not be committed, and give the operator both remedies: commit the closing record and clear the declaration, or hand it to Claude, whose repository-depth entry establishes it and recovers the checkout by itself.
+   - **it names a task the validator classifies `BLOCKED_OPERATOR`** — held, not stale. Refuse, and report the condition the record names under `## Blocker`.
+   - **unreadable, holding more than one id, carrying a second field, or naming a task the validator cannot classify** — refuse and report. Do not guess, and do not delete it.
 
 Where a checkout carries `logs/scripts/work-loop-owner.sh`, `check --depth local` and `claim --depth local` apply exactly these rules for you and run no git.
 
-**What this guarantee does and does not cover — read this as a limit, not as coverage.** Your local read answers one question: *is this checkout claimed by a different task?* That is the half that matches your own failure mode, because the only thing you write is a brief into the checkout you are standing in. You **cannot** establish that your task is claimed in another checkout, or that its state file is replicated — both need `git worktree list` across the registered worktrees, and this loop assigns repository-depth checks to Claude at Step 1 and to the dispatcher at admission, not to you. Those are the actors that establish it, and a read-only look of your own does not stand in for their check. Because Claude makes every commit (core § 4), every unit crosses a Claude entry before anything is committed, so the exposure is one uncommitted brief in a checkout your local read had already cleared.
+**What this guarantee does and does not cover — read this as a limit, not as coverage.** Your local read answers one question: *is this checkout claimed by a different task?* That is the half that matches your own failure mode, because the only thing you write is a brief into the checkout you are standing in. You **cannot** establish that your task is claimed in another checkout, or that its state file is replicated — both need `git worktree list` across the registered worktrees, and this loop assigns repository-depth checks to Claude at Step 1, to the attended carrier before it launches an actor, and to the unattended dispatcher at admission — not to you. Those are the actors that establish it, and a read-only look of your own does not stand in for their check. Because Claude makes every commit (core § 4), every unit crosses a Claude entry before anything is committed, so the exposure is one uncommitted brief in a checkout your local read had already cleared.
 
-**Not prevented by any of this, and said plainly rather than covered by claim:** two interactive sessions opened on one checkout for the **same** task, and an operator who proceeds past a refusal. Your enforcement is instruction-borne; only the dispatcher's is exit-code-borne.
+**Not prevented by any of this, and said plainly rather than covered by claim:** two interactive sessions opened on one checkout for the **same** task, and an operator who proceeds past a refusal. Your enforcement is instruction-borne. Both courier programs are exit-code-borne: the attended carrier and the unattended dispatcher each take the shared lease and check repository-depth ownership before they launch an actor, and refuse rather than launch.
 
 **An open task leases its checkout until it closes.** That is the price of continuity between handoffs, and it is deliberate: a session-scoped lease cannot survive a session ending, and surviving one is the whole point. The cost is bounded and visible — starting a *different* task in that checkout is refused until this one closes. Ordinary serial reuse is unaffected, because closure clears the declaration.
 
@@ -245,7 +223,7 @@ Core § 4 *An approved courier may carry the turn* permits this and sets its lim
 | Shape | Program | Use it when |
 |---|---|---|
 | **Attended carry** | `scripts/axcion-harness-v0.2/carry-turn.sh` — Axcíon Harness v0.2 | The operator is at the machine. You carry **one** hop, then read the file and assess. The loop does not run on without you. |
-| **Unattended run** | `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, loop mode | The operator is leaving. You frame the unit, launch, and get out of the way. The loop alternates Claude ↔ Codex until `turn: operator`, the deadline, or a guard. |
+| **Unattended run** | `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, loop mode | The operator is leaving. You frame the unit, launch, and get out of the way. The loop alternates Claude ↔ Codex until the validator classifies the record `BLOCKED_OPERATOR` or `CLOSED`, or until the deadline or a guard. |
 
 **These are two different programs, and neither does the other's job.** The attended carrier carries exactly one hop per invocation and has no loop mode, no unattended mode, no worktree automation and no flag to ask for one: `--carry-one`, `--unattended`, `--max-hops` and `--status` are all refused with exit `10` before anything launches. It reports no out-of-band status either — the state file is its status, and a carry already in flight exits `17` naming the holding pid. So do not carry an attended hop with the spike dispatcher, and never reach for the carrier when the operator is leaving.
 
@@ -253,7 +231,7 @@ Everything below applies to both unless it names one. The hard rules are written
 
 **What you drive is a terminal command, not Claude.** You never type into a Claude window, never read Claude's interface for progress, and never click through its prompts. You run one command and read its exit code. The courier program launches the actor, validates the state file before and after, and stops on anything unexpected — that instrumentation is the reason this is the approved courier and screen-driving Claude directly is not.
 
-**Neither shape is context-bounded, and it is worth being clear why.** Every hop is a **fresh process** (`claude -p`, `codex exec`). Nothing accumulates across hops; `logs/work-loop/{task-id}.md` is the entire shared memory. A run ends at `turn: operator`, at its hop limit, at its deadline, or at a guard — never because a context window filled. Do not plan around a context budget that does not exist.
+**Neither shape is context-bounded, and it is worth being clear why.** Every hop is a **fresh process** (`claude -p`, `codex exec`). Nothing accumulates across hops; `logs/work-loop/{task-id}.md` is the entire shared memory. A run ends when the record classifies `BLOCKED_OPERATOR` or `CLOSED`, at its hop limit, at its deadline, or at a guard — never because a context window filled. Do not plan around a context budget that does not exist.
 
 **The attended command, in full.** There is no hop flag — one hop is the surface, so adding `--carry-one` is an unknown argument and stops at exit `10`. All four `--allow-path` values are required, because supplying any one **replaces both built-in defaults** (`^logs/work-loop/` and `^logs/harness-runs/`): the carrier writes its own run log under `logs/harness-runs/`, which is not gitignored, and a `PostToolUse` hook keeps `logs/friction-log.md` modified in this repository — omit either and the carry stops at `18` on the courier's own output. The fourth line is **per-task**: derive it from what this unit may legitimately change when you write the brief. Too narrow gives a false stop; too wide makes the check mean nothing.
 
@@ -274,7 +252,7 @@ scripts/axcion-harness-v0.2/carry-turn.sh \
 3. **The exit code is the result.** `0` means the carry completed. Anything else stops this carry: report the code and its meaning to the operator, and do not repeat the same hop. A later operator-approved narrowed recovery unit is governed by § *Three outcomes*; it is a new unit, not a retry of this one.
 4. **Read the file before assessing.** Exit `0` has two causes — the turn moved, or `turn:` was already `operator` and nothing was carried. Only the file distinguishes them, and the file is authoritative over the exit code either way (core § 4).
 5. **Never re-run the same hop to "try again".** A second launch of that hop is only ever justified when the courier's own run log shows the first launch never started. A completed hop that did not produce what you expected is something to inspect, not to repeat. After its partial effects are inspected, the operator may instead approve the fresh, smaller recovery unit defined in § *Three outcomes*; that is explicitly not the same brief or hop.
-6. **`turn: operator`, a malformed state file, and a permission prompt are terminal.** Stop and tell the operator. You do not approve prompts and you do not work around them.
+6. **`BLOCKED_OPERATOR`, `CLOSED`, a state file the validator refuses, and a permission prompt are all terminal.** Stop and tell the operator. You do not approve prompts and you do not work around them. A record the validator cannot classify is terminal in the same way as the other three: it is not an invitation to read the frontmatter yourself and carry on.
 
 **An unchanged `turn: claude` does not mean the command failed to land.** Claude leaves the file *completely untouched* when it rejects one — an identity mismatch or unreadable frontmatter is a correct read-only refusal (core § 6 rule 2), not a lost message. There are three causes and both programs already separate them, under the same three codes: `14` identity mismatch (Claude was never launched), `22` no transition (Claude ran and changed nothing), `21` timeout (Claude was still working). Read the code. Do not infer the cause from the turn, and never treat an unchanged turn as permission to send again.
 
@@ -310,9 +288,11 @@ dispatch.sh --checkout <path> --task <task-id> --status
 
 | Outcome | Looks like |
 |---|---|
-| **Finished** | `0` — and `turn: operator` with a core § 4 closing record |
-| **A decision is theirs** | `0` — and `turn: operator` with `## Blocker` / `## Next action` still present |
+| **Finished** | `0` — and `logs/scripts/work-loop-state.sh` classifies the record `CLOSED` |
+| **A decision is theirs** | `0` — and the validator classifies the record `BLOCKED_OPERATOR` |
 | **Stopped** | any other code — a guard (`18`,`19`,`24`,`25`,`30`,`36`), a failure (`20`,`21`,`22`), a permission dead end (`37`), an ownership stop (`33`,`34`,`35`), the hop limit (`23`), an interruption (`28`), or the budget (`29`) |
+
+**The first two are told apart by the validator, not by reading the file.** Both stop at `turn: operator`, and the difference between "finished" and "waiting on you" is the whole of what the operator needs to hear. Deciding it from whether `## Blocker` happens to have survived is how a closed task got announced as an open question and an unanswered question got announced as done — the run classifies, and you report what it classified.
 
 **`29` is not completion.** A run that ran out of clock is unfinished and resumable. Never report it as done.
 
@@ -325,6 +305,8 @@ dispatch.sh --checkout <path> --task <task-id> --status
 5. **A newly narrowed recovery unit is available, with operator approval.** Not a re-run of the same brief and not abandonment: a *fresh, smaller* unit that inherits the preserved partial work and carries one dominant deliverable (§ Size the unit against the clock). **Operator approval is the gate.** Ask for it; do not resolve it yourself.
 
 **`37` is a capability question, not a transport failure.** A permission dead end means the child was refused something it needed. Raising the timeout, re-running, or rewording the brief will not change it. Report what was denied and ask the operator whether to grant the capability or narrow the unit so it is not needed. **`35` is a different stop and takes a different remedy** — the ownership check could not be run at all (`logs/scripts/work-loop-owner.sh` missing, unreadable or failing), so nothing launched; install or repair the helper rather than treating it as a denial. Any record written before 2026-08-11 that names `35` for a permission stop predates the renumbering — read it as `37`.
+
+**The ownership stops `33`, `34` and `35` are cross-transport.** They carry the same meaning and stop before anything launches whichever program was run: the attended carrier checks repository-depth ownership before it launches an actor, exactly as the unattended dispatcher does at admission, and refuses with these same three codes. They are listed in this table because this is where exit codes are enumerated, not because they belong to the dispatcher alone. Nothing else is shared by this — the two programs' remaining surfaces stay distinct, and no new code exists.
 
 **`36` means Claude did not touch the already-uncommitted state file; it does not prove the hop changed nothing else.** It is most often a Codex handoff that was never committed. Do not read it as a partial edit by Claude — that is exactly the misreport `36` was split out of `25` to stop — and read any `PARTIAL FILE EFFECTS` block for other allowed work the hop left behind.
 
@@ -352,19 +334,20 @@ Mode belongs to an admitted Work Loop unit and to nothing else: a request routed
 **Who owns the next move** has three kinds of answer:
 
 - **The operator** — the next move is a decision only they can make: intent, priority, authority, or risk. Open nothing. End with the Next line naming the decision you need.
-- **A specialist owner** — an Axcíon command, Codex skill or Matt skill from the index, or a stage of the project's own workflow. Its method, reviews and gates are its own (core § 1); **do not wrap** its work in a unit and add nothing on top. Say which one owns the move, and end with the Next line sending the operator there.
+- **A specialist owner** — an Axcíon command or Matt skill from the index, or a stage of the project's own workflow. Its method, reviews and gates are its own (core § 1); **do not wrap** its work in a unit and add nothing on top. Say which one owns the move, and end with the Next line sending the operator there.
 - **The Work Loop** — bounded repository work no specialist owns. Take it through Admission below as one unit, and classify it in the core's own terms (core § 3 step 4): an **execution brief** when what advances the project is a change, a **discovery unit** when it is evidence about a named unknown. Operating evidence from real use is a discovery unit whose named unknown is how the capability behaves in use — never a new unit type.
 
 **"Continue this project" is one intake case, not a second router.** Its object is the project's own next move, so read the project's governing workflow and authoritative current state, find the nearest unmet exit condition in the project's own terms, and route that. Map the project's position using its own phase model and vocabulary. Never rename its phases, and never create a document, list or state entry to hold the mapping — the routing is a judgment made fresh from the durable sources each time. Only where a project has no phase model at all, orient with this fallback spine, as a diagnostic and nothing more: frame the need → resolve blocking uncertainty → choose the intervention → shape the pilot → deliver → test in real use → adopt, revise or stop. It creates no states to traverse, no artifacts, and no exit conditions of its own. Orientation is that judgment made explicit, inside the same single preparation pass and from durable sources only. It establishes nine things: the owning project; its approved outcome and current priority; the authoritative current-state source; the governing specialist workflow; the active phase; the completed phases and accepted decisions; the blockers and operator gates; the work ready now; and the work that is premature or unauthorised. Reach them the way `/project-next-steps` Step 2 reaches its own position — plan spine first, then the authoritative position source, then only what bears on the next step, stopping as soon as position is certain. Borrow that read cascade *approach* and nothing else: `/project-next-steps` remains a separate Claude-side operator-facing briefing with its own report, and neither capability calls or merges into the other. Return one line to the operator, in exactly this shape — `Current position → governing workflow and phase → what is ready → what is blocked → recommended next unit → why it matters.` — written in the project's own phase vocabulary, never renamed. **Establishing the nine is not carrying them.** The approved outcome and the current-state position must also reach the brief itself — the position at the precision its authoritative source supports, naming the active phase together with the last completed unit and any open unit, and its date where that date identifies the position, never collapsed to a phase label alone. The operator line above stays exactly as it is: this adds no stage, no second artifact, no repeated context block and nothing further the operator reads. Orient at four boundaries and no others: a Continue acceptance opening the next unit (core § 3 *Continuing*); a fresh task picking up existing work (§ The seam); a post-compaction reorientation; and a material context change — a new operator decision, an operator approval, or verified evidence that has changed the durable understanding of the project. A routine invocation is precisely one where none of those changed, and a routine invocation does not re-orient. Orientation writes nothing: it is not a stage, a gate or a checklist the operator sees, and it creates no orientation file, no phase copy and no state entry — the prohibition above covers the nine determinations too.
 
-### Repository problems
+### Repository-problem reference
 
-When one specific repository behavior, state, command, workflow, configuration or measurable
-performance characteristic is broken, `$diagnose-and-fix` owns the whole diagnosis and
-bounded-repair path. Route to it as a Codex specialist: open no Work Loop unit, resolve no executable
-core, and add no parallel state. Audits, backlog batches, feature work and already-approved
-implementation keep their own owners; they are not repository-problem invocations merely because
-they may change repository files.
+When intake concerns a repository problem, read
+[Repository Problem Resolution SOP](references/repository-problem-resolution-sop.md) before
+choosing the owner. Use it to qualify the observed problem, distinguish normal repair from
+structural resolution, select proportionate evidence, and understand the closure vocabulary.
+It is context rather than routing authority: this section still chooses the owner, and the
+executable core still governs any admitted Work Loop unit. Unless an approval record binds the
+SOP's exact content, carry it as non-governing operator source material.
 
 ### Classifying the mode
 
@@ -409,7 +392,7 @@ from memory of it, and do not copy an entry back into this file: one route entry
 
 ## Opening a unit and writing the brief
 
-One task, one file (core § 4), named for the task id. Set `turn: claude` when the brief is ready for Claude.
+One task, one file (core § 4), named for the task id. Set `status: active` and `turn: claude` when the brief is ready for Claude — both fields, in the same write, because a record missing either is malformed and every consumer refuses it.
 
 Before writing anything:
 
@@ -431,38 +414,12 @@ The file's shape, its five-field ceiling and what sits outside that ceiling are 
 Split the unit before you dispatch it when the brief has any of these shapes:
 
 - It combines building something with remediating something else — a scenario redesign *and* a standards cleanup.
-- It builds a shared component **and** integrates its first consumer. Building the helper and wiring the first caller are two dominant deliverables; the helper's own suite is a third. This shape cost a 902-second timeout on 2026-08-14, and splitting it recovered in 328 seconds.
-- It integrates a consumer **and** runs the full regression matrix for that integration, where the regression set is substantial. Wiring and proving the wiring are separate units once proving it means more than one focused case.
 - It asks for a historical or negative control to be constructed alongside the primary edit.
 - It demands a full behavioural matrix for instruction files, rather than one targeted check.
 - It says "all", "every" or "exhaustive" without a stated consequence that requires exhaustiveness.
 - Its evidence set needs more than one fixture built from scratch before the primary work can start.
 
 Split by deliverable, not by file count. Two oversized halves are not a fix.
-
-**The primary edit begins after one targeted failing case, not after a broad baseline.** A full baseline suite precedes the primary edit only where establishing that baseline is the unit's *sole* deliverable — which makes it a discovery unit, assessed and accepted on its own. Evidence a previous unit already established and you already accepted is settled: cite it, and do not ask Claude to re-derive it before editing. On 2026-08-14 a correctly narrowed dispatcher unit still spent 593 seconds on baseline mapping it had accepted evidence for, and exited having changed nothing.
-
-**Write the packaging decision into the brief.** Mode-dependent packaging lines, inside `## Brief`. This is the brief's content, not the state file's: core § 4's five-field ceiling is unchanged and no new field, artifact or stage is created.
-
-```
-Dominant deliverable: {the one thing this unit delivers}
-Evidence required in this hop: {only what could read differently because of that deliverable}
-Evidence explicitly deferred: {what a later unit checks, named — or None.}
-Primary edit begins after: {Implementation mode only — the targeted failing case, or the quoted
-                           before-state where no meaningful failing test exists}
-```
-
-**`Evidence explicitly deferred:` takes `None.` when nothing is deferred.** Write it; do not drop the line. `None.` is a decision that nothing was held back, and it follows core § 4's own convention for `## Blocker`. A dropped line reads as a packaging decision never made, and Claude hands it back.
-
-**The fourth line accepts a quoted before-state where no meaningful failing test exists.** Core § 3 already refuses ceremonial tests, and a prose, documentation or instruction-file change is the ordinary case with no automated check that could distinguish success from failure. There the thing that must exist first is the **text being replaced, quoted** — that is what makes the change checkable afterwards. Where the artifact is executable, the targeted failing case is still required and a before-state does not substitute for it.
-
-**The first three lines are mode-neutral; the fourth belongs to Implementation alone.** A unit in Discovery or Adoption mode makes no primary edit — it inspects and hands back, changing nothing beyond the state file (core § 3 *The unit's mode*) — so writing that line on one would name an edit its own mode forbids. Write three lines in Discovery or Adoption mode, four in Implementation mode.
-
-The three that always apply still carry the packaging decision: a discovery unit can be overpacked exactly as an Implementation unit can, and *"establish six things about the dispatcher"* is the same failure as building two deliverables.
-
-**The lines are required, and Claude checks them against the recorded mode.** A brief missing a line its mode requires, naming two deliverables on the first, or carrying the fourth line in Discovery or Adoption mode, is handed back to you as a false premise before the unit begins — so writing them is what gets the unit dispatched at all, not a convention that decays when nobody looks.
-
-**`Dominant deliverable` admits exactly one entry.** A second entry is the split signal — it is how an oversized unit announces itself before it is dispatched, at the one moment splitting is still cheap. `Evidence explicitly deferred` makes the deferral a recorded decision rather than an omission, so the later unit that owns it can be written.
 
 **A longer timeout is not the remedy for an oversized unit.** The actor timeout is a safety boundary, and on 2026-08-11 it was the one control that worked. Raising it buys a larger oversized unit whose failure arrives later, costs more, and — if it now finishes inside the new limit — produces no stop and no evidence at all. Do not propose it as a fix for sizing, and do not treat a hop that timed out as a reason to relax the clock.
 
@@ -476,7 +433,7 @@ Produce **one brief, for two audiences**, inside the one state file. Do not crea
 
 ### Keep authority semantic, content-bound, and explicit
 
-Classify each material claim cluster by its semantic role before it controls the brief: governing authority, verify-first repository claim, non-governing background, or unknown. Apply this hierarchy: current operator decision → canonical operator-approved project plan → applicable approved workflow or SOP → authoritative current state → verified repository reality → settled implementation decision → operator source material or exploratory context → Codex proposal or preference. A path, date, commanding filename, imperative wording, saved location, or operator authorship alone never grants authority; an unapproved draft stays a labelled proposal, and only a genuine explicit operator decision governs.
+Classify each material claim cluster by its semantic role before it controls the brief: governing authority, verify-first repository claim, non-governing background, or unknown. Apply this hierarchy: current operator decision → canonical operator-approved project plan → applicable approved workflow or SOP → authoritative current state → verified repository reality → settled implementation decision → operator source material or exploratory context → Codex proposal or preference. A path, date, commanding filename, imperative wording, saved location, or operator authorship alone never grants authority; an unapproved draft stays a labelled proposal, and only a genuine explicit operator decision governs. The governing autonomy rule over this classification is core § 8; read it there rather than restating it here.
 
 Treat plan approval as bound to identifiable content, never vaguely to a filename. Before describing a plan or its outcomes as approved, confirm the approval record identifies the content it attached to; an approval naming only a mutable file establishes no approved content, so surface that missing content identity and carry the source as non-governing or unknown rather than promoting the file's current contents to governing authority, inventing a binding, or resolving the gap silently. A draft does not govern. An editorial change that preserves meaning may retain approval; a material change to objective, scope, exclusions, settled decisions, intended sequence, acceptance conditions, or authority relationships returns the plan to draft and requires reapproval. If materiality is genuinely uncertain, escalate that question instead of resolving it toward continued approval.
 
@@ -504,6 +461,72 @@ Gate material on relevance as well as authority, in three classes rather than tw
 
 Disclose material reclassifications, and only those. Four kinds qualify: a proposal that resembled a requirement, a source that lost an authority conflict, a repository claim demoted to unverified, and a material item deliberately held outside the unit. Staying silent about one of those fails. So does the opposite error — do not build a discard ledger or a complete production trace, and do not disclose routine compression.
 
+### The capability envelope, the unit's selected subset, and the runtime profile
+
+A brief says what a unit may *do*, not only what it must achieve. This is the MVP envelope it selects from, what the carrier actually enforces, and where the selection and the resulting profile sit in the state file. **No new state field is created by any of this** — the subset goes inside `## Brief`, the profile inside `## Latest result`, and core § 4's five-field ceiling is untouched.
+
+**The three sets.** Every capability falls in exactly one.
+
+**Granted to a Standard unit by default:** read, search, inspect history, diagnose; run local tests, linting and builds; edit within task-scoped paths; create local branches; make local commits through the role that owns Git (Claude, core § 4); perform reversible local refactoring; write evidence to the existing task state and approved repository paths.
+
+**Operator-reserved — not in the baseline and not selectable without a separate operator decision:** production deployment or release; public, customer, employee or partner communication; credential or secret access; destructive changes to shared or production state; force-push or shared-history rewriting; merge to a protected branch; irreversible deletion; permission, sandbox or policy changes whose purpose is to authorize the current action; disabling logging, containment or verification.
+
+**Separately pre-authorizable, selectable per unit only once pre-authorized:** read-only network to approved domains; dependency resolution from approved registries; approved MCP or remote test services; branch push to an approved remote or namespace; draft PR creation; remote CI; bounded reversible external development-system writes. **The current membership of this set is empty.** Nothing in it is pre-authorized today, so a brief that selects from it is selecting something that does not yet exist — say so and escalate rather than assuming it.
+
+**What the carrier actually does, per control and per actor path.** The carrier launches two different actors with two different argv shapes, and several controls reach only one of them. An actor-generic claim is therefore false, not merely imprecise. The verbs below are exact and are not interchangeable: **prevented** (fails closed before anything runs), **detected** (reported after the fact), **observed** (sampled and reported, proving nothing about what was possible), **requested** (asked of the child, which evaluates it), **deferred** (not attempted), and **neither carrier-selected nor carrier-verified** (fixed on the launch line, not chosen per unit, and confirmed by nothing).
+
+| Control | Surface | Strength | Evidence that can fail |
+|---|---|---|---|
+| Exact task, checkout, state file, actor, turn | carrier identity checks; `work-loop-owner.sh --depth repo` | **Prevented** | the `RESULT` line's `task=`/`actor=`/`turn_before=`/`turn_after=`; a mismatched fixture must exit non-zero |
+| Task-scoped write paths | the carrier's `--allow-path` allowlist, compared after the hop | **Detected, not prevented** — exit 24, or 30 once committed | a fixture writing a foreign path must produce the foreign classification and a non-zero exit, not a clean pass |
+| Explicit sandbox per invocation — **Claude hop** | — | **Deferred.** The permission mode is a permission policy, not containment, and the attended surface refuses `--unattended`, `--contained` and `--sandbox` outright | n/a — report as deferred, never as met |
+| Explicit sandbox per invocation — **Codex hop** | `--sandbox workspace-write`, fixed on the launch line | **Requested, and neither carrier-selected nor carrier-verified** | the recorded launch argv shows the flag. No `RESULT` field reports enforcement, so it is never "effective" |
+| Network and external tools — **Claude hop** | — | **Deferred** | n/a — report as deferred, never as met |
+| Network and external tools — **Codex hop** | a property of the Codex child's own sandbox, not a carrier control | **Neither carrier-selected nor carrier-verified** | the host's own sandbox report. The `RESULT` line has no network field |
+| No raw bypass mode | the carrier refuses `--dangerously-skip-permissions`, `--bypass-permissions` and a raw `--permission-mode`, and allows exactly `default` and `acceptEdits` | **Prevented** — fails closed before the lock, the run log and any actor | each refused flag must exit non-zero. Load-bearing: this repository's own `defaultMode` is `bypassPermissions`, so the refusal is what stops inherited bypass |
+| No nested Claude or Codex actor — **Claude hop** | the mandatory `--disallowedTools` set — `Bash(claude:*)`, `Bash(claude *)`, `Bash(codex:*)`, `Bash(codex *)` — plus the process-group census | **Requested (direct route) + observed.** Not prevented: the child evaluates the rules, and they block the ordinary direct route only | the per-argument launch argv must carry all four rules; the `RESULT` line's `nested=`, where `unobserved` and `0` are distinct states |
+| No nested Claude or Codex actor — **Codex hop** | the census only. **The Codex launch line requests nothing** — no deny list, no rules path, no approval policy | **Observed only, today.** `codex exec` offers sandbox modes and config overrides, not a per-command deny list, so the carrier has no already-used mechanism to request the same of a Codex hop | the `RESULT` line's `nested=`, which is actor-agnostic and does cover this path. There is no argv evidence, because nothing is requested — and that absence is the finding |
+| No push, merge, deploy, credential access or destructive shared-state operation — **Claude hop only** | `--claude-deny` rules, appended to the mandatory set and passed as `--disallowedTools`. **This surface exists on the Claude path alone**; a Codex-actor invocation has nothing to pass them to | **Requested per invocation, not a default.** Nothing denies these unless the invocation supplies the rules | **the recorded per-argument launch argv, and only that.** A paired run — rules passed versus omitted — differs in argv and can fail |
+| Timeout, deadline, one-hop limits | the carrier's own bounds and one-hop structure | **Prevented** | a fixture exceeding the deadline must terminate and classify, not run on |
+| Before/after repository evidence | `git` head before and after, plus the working-tree and staged-path splits | **Enforced** — captured on every hop | the `RESULT` line's `partial=`/`turn_*`; a hop leaving uncommitted work must be visible, not silently clean |
+| Terminal classification that cannot turn missing evidence into success | the carrier's single-order classification, with `unavailable` distinct from `0` | **Prevented** | a fixture with unreadable evidence must classify `unavailable`, never success |
+
+**`denials=` is not evidence that a deny rule was requested.** It reports whether the child's own `permission_denials` evidence was readable and what it contained. Two hops identical but for their deny set both return `denials=0` while their argv differs — so citing it to show a restriction was in force asserts something it cannot show. Cite argv for what was requested, and `denials=` only for what the child reported.
+
+**The baseline deny set a Claude hop must pass.** The control above has no default, so this convention fixes it. Both match shapes per rule, for the same reason the mandatory nested-actor set carries both — which form an installed build honours is not established, and listing one would rest the policy on that guess.
+
+```
+Bash(git push:*)     Bash(git push *)        # push, including force-push
+Bash(git merge:*)    Bash(git merge *)       # merge to a shared or protected branch
+Bash(gh:*)           Bash(gh *)              # remote platform action: release, deploy, PR
+Bash(security:*)     Bash(security *)        # credential and keychain access
+Bash(rm -rf:*)       Bash(rm -rf *)          # irreversible deletion
+```
+
+That is a floor, not a ceiling: a unit may add rules, never drop one. And read it honestly — these are requested permission rules the child evaluates, blocking the ordinary direct route. They are not containment, and an alternate spelling is not covered.
+
+**Where the selection goes.** Inside `## Brief`, as prose, naming what is selected and what is deliberately not:
+
+```
+Capability subset: baseline only — read, local tests, edits inside `logs/` and `docs/`,
+local commits. Baseline deny set passed in full. Nothing selected from the
+pre-authorizable set, which is empty today. No operator-reserved capability is needed.
+```
+
+**Where the profile goes.** Inside `## Latest result`, alongside the evidence, naming the actor path and separating what was observed from what was only asked for:
+
+```
+Runtime profile (Claude hop): the five baseline deny rules and the four mandatory
+nested-actor rules were requested — all nine present in the recorded per-argument argv.
+`nested=0` — observed, in that process group, during that window; not proof none existed.
+Sandbox and network: deferred on this path, not applied and not claimed.
+`denials=0` — the child's permission-denial evidence was readable and empty.
+```
+
+The one thing that must never appear is a requested-but-unverified property written as effective. "Sandbox `workspace-write` was effective" is a failure of this convention; "sandbox `workspace-write` was requested, and the carrier verifies nothing about it" is the same fact stated honestly. The carrier's own `nested=unobserved` versus `nested=0` distinction is the convention to copy.
+
+**Still deferred, and named rather than omitted:** the connected-development profile, and full descendant containment. Neither is addressed by anything above, which restricts what a hop may *launch* and not what a launched descendant may then do.
+
 ### Keep every duty inside the four, and let no routine run leave a trace
 
 Discharge every duty inside prepare, brief, assess and escalate, and add no machinery or new artifact kind beyond them. A routine invocation — one where no new operator input, no operator approval and no verified evidence has materially changed durable project understanding — reads the durable sources and produces only the brief: it writes no context file, no discovery log, no run record and no session note, and nothing accumulates from one run to the next. Durable maintenance is limited to the optional operator source material, the one canonical plan and the existing current-state interface, and you update those only when material understanding actually changes — keeping them current is maintenance, not an addition.
@@ -513,15 +536,6 @@ Discharge every duty inside prepare, brief, assess and escalate, and add no mach
 ## Assessing the result
 
 Claude hands back with `turn: codex`. Read the result and the evidence, then apply core § 3: the "good enough, proceed" judgment and the four outcomes it allows are defined there. Yours is the executive call, not a hunt for more to improve.
-
-**Make status unmistakable in every operator-facing assessment.** Immediately before the `Next`
-line, write the three lines core § 3 requires: `Progress`, `Implementation`, and `Merge readiness`.
-Do not collapse a completed unit into a completed implementation. Use an exact `X/Y` and percentage
-where the approved plan or state fixes the total; otherwise give a labelled percentage estimate and
-name the remaining scope instead of inventing a denominator. `Implementation: COMPLETE` means the
-entire `## Objective and scope` is accepted and no implementation unit remains. Until then it is
-`IN PROGRESS`. A close verdict still reports `Merge readiness: NOT READY — awaiting Claude's closing
-record and commit`; Claude reports the final merge state after that commit.
 
 **Claude runs the checks and reports the evidence. You assess that evidence.** Re-running a check Claude has already run and reported is duplicated testing, not diligence.
 
@@ -552,19 +566,19 @@ If Claude handed back a **false premise**, that is a correct outcome, not a fail
 
 The closing decision is yours (core § 3 step 5); the closed file is not. Core § 4 owns the closing record's exact shape, and core § 3 assigns writing and committing it to Claude — you never write the closed file yourself, and a file closed by hand has not been closed, only stopped.
 
-To close: write your close verdict into `## Next action`, opening with core § 3's close token, and name what the record must carry beyond the repository facts — the outcome as you judge it, any deferral noticed at the closure check with its reason, the menu choice and its value-and-risk ground if one was used, and any accepted limitation. Set `turn: claude`, and end your reply with the named Next instruction from § *The seam*, including the brief name and task id. Claude reduces the file to core § 4's closing record — the active fields do not survive the reduction — sets `turn: operator`, and makes the commit.
+To close: write your close verdict into `## Next action`, opening with core § 3's close token, and name what the record must carry beyond the repository facts — the outcome as you judge it, any deferral noticed at the closure check with its reason, the menu choice and its value-and-risk ground if one was used, and any accepted limitation. Set `status: active` and `turn: claude`, and end your reply with the Next instruction: run `/work-loop-v2` in Claude. Claude reduces the file to core § 4's closing record — the active fields do not survive the reduction — sets `status: closed` and `turn: operator` in that same write, commits it, and only then clears the checkout's declaration.
 
 ---
 
 ## What you never do
 
-Core § 1 sets the limits on your role and core § 7 reserves hard-to-reverse decisions for the operator. In this file's terms:
+Core § 1 sets the limits on your role, and core § 7 states the classes of decision reserved to the operator. In this file's terms:
 
 - **Commit, or mutate Git state by any other means** — `add`, `checkout`, `reset`, `merge`, `rebase`, `push`. Claude does that — see core § 4 on who commits. Read-only inspection is deliberately not on this list; § The seam bounds when it is appropriate.
 - **Silently repair a bad brief on Claude's behalf**, or ask Claude to build past a premise it found false.
 - **Reopen the strategy after every result** (core § 1).
 - **Add a second review or a second state system** over a unit running under a specialist Axcíon workflow (core § 1).
-- **Decide anything hard to reverse** — that is the operator's, via core § 7.
+- **Decide anything core § 7 reserves to the operator** — read that boundary there rather than judging it by how consequential a decision looks, and stop for the operator whenever one of its reserved classes applies. Outside those classes, core § 8 governs.
 - **Answer a nonzero dispatcher exit by leaving the dispatcher.** No interactive Claude session, no hand-carried hop, no hand-edit of the state file. See § Three outcomes for the five clauses of what a stop *does* authorize.
 - **Write a brief that proposes invoking Claude or Codex inside a hop.** There is no supported way to run nested AI, and no flag enables it — the dispatcher denies the default direct route on every launch. A case that appears to need it goes to the operator as a capability question. Do not authorize it inside a brief, and do not design an evidence set that can only be satisfied by invoking a model.
 
@@ -578,14 +592,12 @@ Context Engineering is live in the sections above, and governs how you prepare t
 
 The project-progression change (2026-08-06) adds the Routing section above and the core's fourth assessment outcome, Continue.
 
-The intake router (2026-08-06) generalises that section from a "continue" router to an ordinary-language intake router. The 2026-08-15 repository-problem migration adds the canonical Codex resolver and retires the former two-command triage/fix split; the routing index owns the current counts.
+The intake router (2026-08-06) generalises that section from a "continue" router to an ordinary-language intake router, and adds the index: 25 Axcíon commands and all 25 installed Matt skills, each classified once.
 
 `/memory-search` (2026-08-09) joins the index as a narrow specialist, taking the Axcíon side to 26. It adds no routing rule: a request naming past precedent has an owner it did not have before.
 
 The mode contract (2026-08-06) makes Discovery, Implementation and Adoption operational. Core § 3 *The unit's mode* owns the definitions; you classify at routing step 4 and record the mode inside `## Lane and unit`. No state field, lane, unit kind or project phase was added.
 
 The bounded-execution outcomes (2026-08-11) answer two failures on the same transport one day apart — a unit that left the bounded path, and a unit that could not fit inside it. They add § *Size the unit against the clock*, the five recovery clauses in § *Three outcomes*, and two entries in § *What you never do*. **No state field, artifact or stage was added**, and the dispatcher's side is a repair plus one deny set rather than a new mechanism. Both additions here are written guidance and carry that limit honestly: guidance depends on being remembered, and the only structural backstop remains the actor timeout — which is why raising it is refused above.
-
-The packaging outcomes (2026-08-14) answer a recurrence of the 2026-08-11 sizing failure after that fix was already in force — a shared-helper-plus-first-consumer unit that timed out at 902 seconds, and a correctly narrowed unit that spent 593 seconds re-establishing accepted baseline evidence and changed nothing. They add two split triggers, the primary-edit-begins-after rule, and the four packaging lines inside `## Brief`. **No state field, artifact or stage was added** — core § 4's ceiling is untouched, and core § 3 step 3 already permits the brief's content to grow. The four lines are the structural half of this fix: they make the packaging decision written rather than remembered, and Claude refuses a `Dominant deliverable` line naming two. The split triggers remain guidance and carry the same limit the 2026-08-11 entry states.
 
 Courier mode (2026-08-06) adds the one approved way to carry the turn yourself, under core § 4's courier clause. It is optional, off unless the operator approves it, and transport only — it changes nothing about what you frame, what you assess, or what Claude does.

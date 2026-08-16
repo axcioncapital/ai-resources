@@ -550,6 +550,147 @@ None.
 
 ### Next Steps
 Operator decision pending: merge `session/2026-08-14-work-loop-v2-fixes` into `main` (23 unpushed commits, branch is READY FOR OPERATOR-AUTHORIZED MERGE per the closing report) — not something this command performs. Two residual items flagged in the closing record: (1) `logs/friction-log.md` carries an ambient hook-driven modification excluded from every commit in this task; (2) the negative-control scratch worktree at `.../scratchpad/nc-wt` is still registered — remove the directory and run `git worktree prune` when convenient.
+## 2026-08-15 — Work Loop v2 Unit 11: closed the double-winner stale-reclaim race, task closed
+
+### Summary
+
+Ran Claude's half of Work Loop v2 Unit 11 on task `cross-transport-concurrency-correction`: the final independent Spec review had reproduced a high-severity race where the shared live-lease helper's stale-reclaim arbitration could return success to two reclaimers. Verified all three of the review's claims by inspection, then closed the race with an exclusive reclaim claim over the destructive rename/recreate section, added a deterministic regression (case 22) that forces the exact interleaving instead of racing and hoping, and proved red-then-green against the pre-fix and post-fix helper. Codex's re-review passed and recommended merge; this session then wrote the closing hop, updating the durable Phase 1 record and reducing the task file to its § 4 closing record. The task is now closed (`turn: operator`); nothing has merged or been pushed.
+
+### Decisions Made
+
+- **Unit 11 mechanism: an exclusive reclaim claim, not more re-checking.** No check-then-act sequence closes a scan-then-rename race — there is always a window between the last check and the `mv`. The destructive section of a reclaim now runs while the reclaimer holds an exclusive claim directory (`<lease>.reclaiming`, taken with the same atomic `mkdir` the lease itself uses), reusing the dead-claim-owner recovery already in the acquire loop rather than adding a second mechanism.
+- **Ran the full carrier and dispatcher suites rather than a "narrow slice."** The brief asked for narrow test slices; neither suite supports selecting individual cases (checked for a filter flag in each — none exists). Ran both suites unchanged instead of writing throwaway harness code, and recorded the deviation in the state file.
+- **The closing hop updated two files, not the state file alone.** Codex's close verdict named both the task file and the durable Phase 1 record. Followed the verdict — the task's own objective includes keeping the Phase 1 record accurate — and flagged the tension with the general "closing changes no other file" rule in chat rather than silently picking a side.
+
+### Outcome
+
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+
+Skipped (not requested).
+
+### Risky actions
+
+None — the fix, its regression test, and the closing record update were all bounded by an authorized-changes list in the brief, and every claim was verified by inspection before any code changed.
+
+### Review status
+
+The lease library change is a shared-state concurrency primitive, arguably borderline for `docs/audit-discipline.md` § Structural change classes, but not a clean match for any listed bullet (no hook, permission, CLAUDE.md, new command/skill, symlink, or auto-write/auto-commit automation). Regardless of classification, it received exactly the review a match would require: Codex's Spec-axis review reproduced the defect independently before this fix existed, and Codex's narrow re-review independently confirmed the fix afterward and recommended merge. Not `unassessed`.
+
+### Session Assessment
+
+Feedback collection skipped (not requested).
+
+### Findings Declined
+
+- **Stale test comment in `work-loop-lease.test.sh` case 19** (describes the `.reclaiming` marker as a shape "the correction changed", now only half true after Unit 11 made it the current build's own mechanism). Already recorded with reason as accepted limitation #19 in the Phase 1 durable record; cosmetic, and fixing it would widen the safety commit past the defect it addressed. Not queued separately.
+
+### Next Steps
+
+1. Operator merge decision on `session/2026-08-14-concurrency-fix-2` — read `logs/work-loop/work-loop-v2-cross-transport-concurrency-phase-1.md` in full first (19 accepted limitations, both review-axis outcomes).
+2. No pending Work Loop v2 hop remains open on this task.
+3. `logs/improvement-log.md`, 2026-08-15 entry — reconcile `/work-loop-v2`'s "a closing invocation changes no other file" rule against a close verdict that legitimately names a second durable-record file to update.
+
+### Open Questions
+
+None.
+
+Findings: 2 — queued 1 (severity: medium), declined 1. 1 + 1 = 2.
+## 2026-08-15 — Work Loop v2: T7 landed, T8/T9 scope-reduced, task closed
+
+### Summary
+Ran Claude's half of `/work-loop-v2` across four units on task `autonomy-authority-capability`, ending
+in closure. Unit 36 installed and verified the exact reviewed T7 candidate (machine-wide Codex execpolicy
+rules file plus carrier patches). Unit 39 recorded the operator's scope decision removing T8/T9 from the
+completion bar. Unit 40 correctly rejected a false premise in its brief and handed back without changing
+anything. Unit 41 (on a corrected brief) recorded the operator's content-bound approval across all four
+live plan status surfaces. Codex then issued the close verdict; the state file was reduced to its
+four-section closing record and the checkout's Work Loop ownership lease was cleared.
+
+### Decisions Made
+- **Operator (recorded via Codex's brief, 2026-08-15):** stop the T8/T9 evidence program and finish the
+  implementation at the completed T7 boundary. T8's twelve constructed scenarios and T9's 3–5 organic
+  tasks are removed from the task's required completion bar — not treated as passed, bypassed, or
+  satisfied by substitute evidence. Recorded authoritatively at the implementation plan's § 1 Fixed Point,
+  *Scope decision — 2026-08-15*.
+- **Operator (2026-08-15):** content-bound approval of the exact amended plan content at commit `ff3175cd`
+  / blob `ad97ded715e80fd1370b27e79437c4880c8416d4`.
+- **Claude, disclosed (Unit 39):** applying the plan's own standing rule ("a substantive tracer-contract
+  change cannot be an edit under a freeze"), marked the plan returned to draft rather than inventing a
+  status. Flagged for Codex; Codex's Unit 41 brief resolved it by widening the status-only update to four
+  passages rather than two.
+- **Claude (Unit 40):** hand-back, not a judgment call — a brief premise ("only two live draft-status
+  regions exist") was false by inspection. No file changed.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Risky actions
+None. T7 changes a permission surface and machine-wide configuration outside the repository, so it took
+one fresh risk-aware review, one correction round, and a final-fix closure check (all prior to this
+session) before this session implemented the reviewed candidate exactly as approved. No live actor was
+launched at any point this session; no `codex exec` was run.
+
+**Wrap-time finding, not part of the task above:** `logs/scripts/check-archive.sh` → `split-log.sh`'s
+archive step (`/wrap-session` Step 3) fired mid-wrap, printed a success line ("archived 3 entries, kept
+10"), and silently dropped two of the three archived entries — they landed in neither the archive file
+nor the (rewritten) source file. Caught before commit by diffing the archive file against `HEAD` (byte-
+identical, despite the claimed append) and restoring `session-notes.md` from `HEAD`. See Findings Declined
+below for the root cause and the queued log entry.
+
+### Findings Declined
+- **`logs/harness-runs/` untracked with no disposition decided** — already logged 2026-08-13 ("Closed-task
+  live-trial evidence lives only in an untracked working-tree directory", severity medium, status logged
+  (pending)). This session's Unit 39 re-noticed the same gap from a different closed unit's evidence
+  (Units 37–38); declined as a duplicate rather than queued again.
+- **Unit 35 vs Unit 36 measured the carrier's Claude branch over different extraction ranges** (129 lines/
+  `6f8cc966…` vs 41 lines/`b0393ce2…`, both correct for their own window) — cosmetic inconsistency inside
+  one now-closed task's own historical evidence record; no live behavior affected, no named consequence
+  beyond a future reader of that closed record needing to reconcile two numbers. Recorded as a deferral in
+  the task's own closing record instead.
+- **`split-log.sh`'s archive step silently drops entries on a false idempotency match** — **QUEUED**, not
+  declined; see `logs/improvement-log.md`, 2026-08-15, severity high. This wrap did not re-run archiving
+  after the restore; `logs/session-notes.md` still exceeds its 500-line threshold and will archive again
+  on the next wrap unless the bug is fixed first.
+
+### Next Steps
+No open Work Loop v2 state file remains for `autonomy-authority-capability` — it is closed. Check
+`logs/work-loop/` for any other task with `turn: claude` before invoking `/work-loop-v2` again. The
+T8/T9 live-validation program (twelve scenario trials, 3–5 organic tasks) is available to re-open as
+separately approved new work if the operator wants it later; nothing is currently queued for it.
+**Before the next `/wrap-session`:** fix `logs/scripts/split-log.sh`'s idempotency check (queued finding
+above) — otherwise the next archive attempt on `session-notes.md` risks repeating the same silent drop.
+
+### Open Questions
+None.
+
+## 2026-08-16 — Work Loop v2 durable-state: Tracer bullet 8 readiness gate, correction, and closure
+
+### Summary
+Ran the Claude side of Work Loop v2 Units 10 and its correction round for task `work-loop-v2-durable-state-system` — Tracer bullet 8, the final readiness gate of the frozen durable-state implementation plan. Demonstrated the representative end-to-end lifecycle, obtained an independent assessment that returned `Correct` on two material findings, corrected both, and Codex then issued the close verdict. The task is now closed and the checkout's `.owner` declaration is cleared. The branch `session/2026-08-14-durable-state` is complete through all eight tracer bullets and ready for the operator's landing decision, but nothing was merged, pushed, or landed this session.
+
+### Decisions Made
+- **Rejected the independent finding's own prescribed fix mechanism.** Finding 1 (ownership fails open on an uninspectable registered worktree) told me to distinguish "gone" from "present but unreadable" using git's `prunable` marker. Measured directly: git sets `prunable` for both cases, so it cannot discriminate — confirmed by building the fix that way first and watching it still return `PROCEED` for an unreadable checkout. Rebuilt on a filesystem test (path absent AND parent readable = gone) instead, flagged the substitution explicitly in the handback, and Codex accepted it in the close verdict on the same measured evidence.
+- **Operator cut the correction re-check short.** A second independent-review subagent was dispatched to re-verify the correction and had not completed after ~10 minutes. Operator explicitly chose not to wait; the correction was committed with the re-check recorded as `unassessed` rather than claimed passed. Codex's own bounded closure check subsequently provided the independent acceptance instead.
+- **Added permanent regression tests beyond what either finding required** (T16/T16b in `work-loop-owner.test.sh`) because every pre-existing assertion in that suite returned the same verdict before and after the fix — the bug was otherwise invisible to the suite. Endorsed in Codex's close verdict as direct regression protection for the same defect.
+- Task closed on Codex's close verdict; two deferrals recorded (a prunable-but-enterable stale-owner over-refusal edge case, and no permanent representative-proof harness) plus six accepted limitations.
+
+### Outcome
+Skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None — all commits were local; nothing merged, pushed, or landed. The one irreversible-adjacent action (clearing `.owner`) was correctly sequenced after the closing commit landed, per the core § 4 crash-safety contract.
+
+### Findings Declined
+- **A worktree Git reports prunable but that is still enterable can have a stale `.owner` counted as a claimant, causing over-refusal.** Declined for the improvement queue — the behaviour is unchanged by this session's correction (the pre-correction code inspected such worktrees too), it fails safe (over-refuses rather than allows a double-claim), and it is already recorded as an accepted limitation in the closed task's own record.
+- **No permanent representative end-to-end proof harness was committed for Tracer 8.** Declined for the improvement queue — this is a deliberate scope exclusion stated in the frozen plan itself (Tracer 8 explicitly excludes convenience/proof tooling as a permanent artifact), not an unaddressed defect.
+
+### Next Steps
+Operator's landing decision on `session/2026-08-14-durable-state` is the next real action — not a Claude command. If a new Work Loop v2 task is wanted, confirm the admissions pause (standing for the whole durable-state effort) is lifted before running `/work-loop-v2 {new-task-id}`.
 
 ### Open Questions
 None.

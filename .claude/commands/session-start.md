@@ -17,6 +17,29 @@ Capture a lightweight session mandate for Phase 3 harness-style sessions. The op
 
 ## Instructions
 
+### Step W — Work Loop preflight (before Step 0, and before anything else)
+
+This checkout may be held by an open Work Loop v2 task, which keeps its own durable state in
+`logs/work-loop/{task-id}.md`. Capturing a legacy session mandate on top of that starts a **second
+state system** over the first. This command's first state write is Step 3's `**Mandate:**` line into
+`logs/session-notes.md`; this gate sits above every step, so no earlier read-and-branch can drift
+below it.
+
+The check is **read-only**: it asks `work-loop-owner.sh` and `work-loop-state.sh` and mutates nothing.
+
+```bash
+bash "$(git rev-parse --show-toplevel)/logs/scripts/work-loop-session-preflight.sh" --command "/session-start"
+```
+
+- `verdict: PROCEED` — no valid open Work Loop task owns this checkout (the ordinary case). Continue to
+  Step 0 with behaviour **unchanged**.
+- `verdict: STOP` — write nothing, run no later step. Give the operator the `route:` and `reason:` lines
+  as printed, then stop.
+
+**Never work around a STOP.** Do not edit, clear or re-claim `logs/work-loop/.owner`, and do not touch
+the task record — `/session-start` owns neither. A stale declaration over a `CLOSED` task already
+returns `PROCEED` on its own; anything else is the operator's to decide.
+
 ### Step 0 — Precondition check
 
 Read `logs/session-notes.md` (last 10 lines). Check for a today-dated header matching `## YYYY-MM-DD` (today's date).

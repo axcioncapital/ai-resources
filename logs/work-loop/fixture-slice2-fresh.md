@@ -1,5 +1,6 @@
 ---
 task: fixture-slice2-fresh
+status: active
 turn: codex
 ---
 

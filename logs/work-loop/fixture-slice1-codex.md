@@ -1,5 +1,6 @@
 ---
 task: fixture-slice1-codex
+status: closed
 turn: operator
 ---
 

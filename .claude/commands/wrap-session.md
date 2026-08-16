@@ -8,6 +8,29 @@ Wrap the current session. The operator's wrap-up context follows this prompt: $A
 
 **Do NOT run git commands or bash commands to discover files.** You already know what was produced from conversation context. Auto-commits track file changes separately.
 
+W. **Work Loop preflight — run this before Step 0, and before anything else.** This checkout may be
+   held by an open Work Loop v2 task, which keeps its own durable state in `logs/work-loop/{task-id}.md`.
+   Wrapping a legacy session on top of that starts a **second state system** over the first — and a wrap
+   is the most damaging place to do it, because it writes a session note, a decision entry and a
+   continuity scratchpad that all narrate work the task record already owns. This command's first state
+   write is Step 0.5's scratchpad; this gate sits above Step 0 too, so nothing at all happens first.
+
+   The check is **read-only**: it asks `work-loop-owner.sh` and `work-loop-state.sh` and mutates nothing.
+
+   ```bash
+   bash "$(git rev-parse --show-toplevel)/logs/scripts/work-loop-session-preflight.sh" --command "/wrap-session"
+   ```
+
+   - `verdict: PROCEED` — no valid open Work Loop task owns this checkout (the ordinary case). Continue
+     to Step 0 with behaviour **unchanged**.
+   - `verdict: STOP` — write nothing, run no later step. Give the operator the `route:` and `reason:`
+     lines as printed, then stop. A Work Loop task is closed through its own closing record, not by
+     wrapping the session around it.
+
+   **Never work around a STOP.** Do not edit, clear or re-claim `logs/work-loop/.owner`, and do not touch
+   the task record — `/wrap-session` owns neither. A stale declaration over a `CLOSED` task already
+   returns `PROCEED` on its own; anything else is the operator's to decide.
+
 0. As your first action, run `touch /tmp/claude-wrap-session-done` via Bash. This suppresses the session-end hook's "Session ended without /wrap-session" auto-append while this command runs, preventing a file-modification race on `logs/session-notes.md`. The hook deletes the lockfile after reading it, so no cleanup is needed.
 
 **Cost budget.** A core wrap is ~8–12 tool calls; each optional pass (`+audit` / `+feedback` / `+coaching` / `+telemetry`, or all via `full`) adds ~2–4 (each subagent absorbs its own reading). If you're past 25 tool calls with the wrap not yet committed, stop and ask the operator whether to abort the rest. This catches investigation rabbit-holes, redundant Reads, and ceremony-without-purpose firings before they compound. Self-check your running tool-call count at each step boundary; do not run a separate counter — just notice when you've crossed the threshold.

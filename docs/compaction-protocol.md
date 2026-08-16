@@ -18,6 +18,12 @@ Different kinds of authority are at work, and collapsing them into a single rank
 - **Verify factual claims** — repository and Git evidence. It settles what the repository actually contains, including where a task file's claim about the repository is wrong.
 - **Orient only** — the conversation or the compacted summary. Never authoritative for any of the three roles above.
 
+**"Validated" means one specific thing: `logs/scripts/work-loop-state.sh` classified it.** That single reader is the lifecycle authority (executable core § 4), and reading `status:` or `turn:` yourself after a compaction is exactly when a second reader gets invented — the summary supplies a remembered lifecycle, and hand-parsing the file appears to confirm it. Two sources, one guess. Ask the validator.
+
+**Two things establish the task, and nothing else does.** The exact `logs/work-loop/{task-id}.md` path preserved through the compaction, or — only if that did not survive — this checkout's `.owner` declaration under every check the `reorient` skill lists. **If neither establishes the task, stop and ask the operator.** Do not scan `logs/work-loop/`, take the newest file, infer the task from a branch name, or reconstruct a record. An absent or invalid pointer is a stop, not a prompt to search: the whole failure mode here is a plausible reconstruction of the wrong task.
+
+**No legacy session state is consulted or written to establish Work Loop state.** Session notes, markers, plans, scratchpads and run manifests answer a different question for a different system, and none of them is evidence about a Work Loop task. Nor does the unwired staging hook (`.claude/hooks/check-foreign-staging.sh`) supply any commit or state boundary here — it is registered in no settings layer and guards nothing. Work Loop's boundaries are the validator, the checkout declaration, the shared live leases and Git itself.
+
 Where the summary conflicts with any durable source, **follow the durable evidence and report the discrepancy** rather than resolving it silently. Where the task file conflicts with a governing source, the governing source settles it and the conflict is reported as a defect in the task file — not resolved quietly in either direction. Re-deriving state from durable sources is the expected cost here, not a violation of the cost test — the cost test governs the ordinary rule only. The `reorient` skill owns the recovery procedure; this section only settles which source carries which kind of authority.
 
 ## Named checkpoints

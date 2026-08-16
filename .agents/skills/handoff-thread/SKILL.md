@@ -22,7 +22,40 @@ memory.
    - Call `list_projects` before creating repository work. Match the current
      working directory to a returned saved project; copy its opaque
      `projectId` exactly.
-   - For a Git project, use a worktree with
+   - **First, check whether an open Work Loop v2 task holds this checkout.** Run
+     the read-only preflight; it mutates nothing and needs no git:
+
+     ```bash
+     bash "$(git rev-parse --show-toplevel)/logs/scripts/work-loop-session-preflight.sh" --command "handoff-thread"
+     ```
+
+     `verdict: STOP` with an `ACTIVE_CLAUDE`, `ACTIVE_CODEX` or `BLOCKED_OPERATOR`
+     reason means an open task is bound to **this** checkout. Take the Work Loop
+     branch below instead of the Git default. `verdict: PROCEED` means no open
+     task owns it — apply the ordinary defaults that follow, unchanged. A
+     `verdict: STOP` that reports ownership as unestablished stops the handoff:
+     say which check failed and create no task.
+   - **Work Loop branch — target the bound checkout as Local.** A Work Loop task
+     is bound to one physical checkout: its `.owner` declaration and its state
+     file live there, and the task continues there or not at all. A worktree
+     would hand the new thread a *different* checkout, where the ownership check
+     refuses the task on arrival — so this branch uses **Local**, on the checkout
+     already open, and never creates a worktree.
+
+     Its Brief carries **paths, not state**. Field 3 names the exact
+     `logs/work-loop/{task-id}.md`, the governing plan or workflow, and the
+     executable core. Field 5 is the task record's own `## Next action`,
+     identified as such and cited to that file. Field 4 carries only what is
+     genuinely unreconstructable from those sources — usually nothing, because
+     the task record is the state.
+
+     **Create and copy no second Work Loop record.** Do not write a new task file,
+     do not duplicate the existing one into the Brief, do not re-state its
+     `## Latest result` as settled fact, and do not claim, clear or edit
+     `.owner`. The receiving thread reads the record; the Brief only tells it
+     which record to read. A handoff that copies the state has produced the two
+     disagreeing records this branch exists to prevent.
+   - For a Git project **with no open Work Loop task**, use a worktree with
      `startingState: { type: "working-tree" }`. A handoff means the current
      repository state, including uncommitted work, must travel with the task.
    - For a saved non-Git project, use its local environment.

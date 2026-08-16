@@ -1,5 +1,6 @@
 ---
 task: fixture-noprem-prose
+status: active
 turn: codex
 ---
 

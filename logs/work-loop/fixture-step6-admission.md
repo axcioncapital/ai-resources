@@ -1,5 +1,6 @@
 ---
 task: fixture-step6-admission
+status: blocked
 turn: operator
 ---
 

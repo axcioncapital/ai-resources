@@ -1,5 +1,6 @@
 ---
 task: fixture-continue-unaccepted
+status: active
 turn: claude
 ---
 

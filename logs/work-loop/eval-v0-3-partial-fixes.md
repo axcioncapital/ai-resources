@@ -1,5 +1,6 @@
 ---
 task: eval-v0-3-partial-fixes
+status: closed
 turn: operator
 ---
 

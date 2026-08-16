@@ -1,5 +1,6 @@
 ---
 task: fixture-continue-correction
+status: active
 turn: claude
 ---
 

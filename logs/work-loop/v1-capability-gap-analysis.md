@@ -1,5 +1,6 @@
 ---
 task: v1-capability-gap-analysis
+status: closed
 turn: operator
 ---
 

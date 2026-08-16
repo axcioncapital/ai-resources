@@ -1,36 +1,68 @@
 ---
 task: work-loop-v2-concurrent-task-isolation
+status: closed
 turn: operator
 ---
 
-## Objective and scope
+## Outcome
 
-Make two concurrent Work Loop v2 tasks safe in one repository: separate writable checkouts, one visible task owner per checkout, no duplicate logical-task ownership, and reuse of the bound checkout on later handoffs.
+**Retired by the operator on 2026-08-15 to permit the Work Loop v2 durable-state migration.** The
+implementation is complete and landed; the task's own operational-validation condition was never
+satisfied, and this record does not claim it was.
 
-Human-controlled: final landing and cleanup. Excluded: push, automatic deletion, a scheduler, persistent registry, and a second state system. The operator declined a synthetic fan-out trial and chose immediate controlled landing; ordinary concurrent use supplies the remaining operational evidence.
+The objective was to make two concurrent Work Loop v2 tasks safe in one repository: separate writable
+checkouts, one visible task owner per checkout, no duplicate logical-task ownership, and reuse of the
+bound checkout on later handoffs. The mechanism was built, independently verified, and landed on
+canonical `main`. What remained was representative ordinary use by a genuine concurrent pair, which
+the record's own standard required before the case could be called Resolved. That use never happened
+under this task, so it is retired as **Integrated, awaiting operational validation** rather than
+resolved.
 
-## Lane and unit
+## Decisions that matter
 
-Standard. Unit 10 accepted. The case is **Integrated, awaiting operational validation**; no further Claude unit is open.
+**Accepted work, assessed and preserved.** Unit 10 was accepted. The concurrency mechanism is live on
+canonical `main` at `0d9e335`. The landing contains exactly the nine authorised implementation paths,
+is byte-identical to the independently verified task branch, and imported neither branch history nor
+this task's state file. Unrelated uncommitted work in the checkout remained intact, and nothing was
+pushed. No further Claude unit was open at retirement.
 
-Named reason for the loop: this cross-cutting concurrency fix needed bounded implementation and independent assessment across sessions.
+**The operator declined a synthetic trial.** Rather than manufacture a fan-out, the operator chose
+immediate controlled landing and designated ordinary concurrent use as the source of the remaining
+operational evidence. That is why the mechanism landed with its validation condition still open — a
+deliberate decision, not an oversight.
 
-## Latest result
+**Two undeclared state files were correctly left alone.** The `axcion-harness-v0-2-*-monday-prep`
+pair is another task's ambiguous state, not a defect in this landing; the new mechanism refuses to
+guess which copy is authoritative, which is the intended behaviour. They remain untouched for that
+task's owner to reconcile.
 
-Accepted: the concurrency mechanism is live on canonical `main` at `0d9e335`. The landing contains exactly the nine authorised implementation paths, is byte-identical to the independently verified task branch, and did not import branch history or this task's state file. From canonical main, the owner suite passed 92/0 and the dispatcher suite passed 389/0; unrelated uncommitted work remained intact. Nothing was pushed.
+**Superseded by this retirement:** the record's open `Next action` asked the operator to use the
+mechanism on the next genuine pair of concurrent Work Loop tasks and to return here once at least one
+task had completed a later Claude/Codex handoff in its originally bound checkout without mixed edits
+or state. That return never occurred under this task. The operator's 2026-08-15 decision supersedes
+the disposition, not the standard — the case is retired unvalidated, not validated.
 
-Rollback remains available as a normal inverse commit:
+## Evidence
 
-```
-git -C "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources" revert --no-edit 0d9e335
-```
+Durable evidence already present in this record, carried forward unchanged:
 
-The two undeclared `axcion-harness-v0-2-*-monday-prep` state files are a separate task's ambiguous state, not a defect in this landing; the new mechanism correctly refuses to guess. They remain untouched for that task's owner to reconcile.
+- Landing commit `0d9e335` on canonical `main` in `ai-resources`.
+- From canonical `main`: the owner suite passed **92/0** and the dispatcher suite passed **389/0**.
+- Rollback remains available as a normal inverse commit:
 
-## Blocker
+  ```
+  git -C "/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources" revert --no-edit 0d9e335
+  ```
 
-Representative ordinary use has not happened yet, so the repository-problem-resolution SOP does not permit the case to be called **Resolved**.
+## Accepted limitations
 
-## Next action
-
-Operator: use the mechanism on the next genuine pair of concurrent Work Loop tasks in this repository. Return here after the pair has received separate writable checkouts with the correct visible owners and at least one task has completed a later Claude/Codex handoff in its originally bound checkout without mixed edits or state. Do not manufacture a duplicate or ownership conflict; the automated suites already cover those refusals. Report any unexpected refusal, wrong checkout, duplicated task, or mixed state immediately; that reopens the causal model and makes the preserved revert relevant.
+1. **Representative ordinary use never happened.** The repository-problem-resolution SOP therefore
+   does not permit this case to be called **Resolved**, and it is not. This unresolved completion
+   condition stands unchanged at retirement.
+2. **No genuine concurrent pair was observed end to end** — no pair has been seen receiving separate
+   writable checkouts with correct visible owners and then completing a later handoff in its
+   originally bound checkout. The automated suites cover the refusal paths; they do not cover this.
+3. **Rollback stays relevant.** Any unexpected refusal, wrong checkout, duplicated task or mixed
+   state reopens the causal model and makes the preserved revert of `0d9e335` applicable.
+4. **The two undeclared `axcion-harness-v0-2-*-monday-prep` state files remain unreconciled**, owned
+   by another task and deliberately untouched here.

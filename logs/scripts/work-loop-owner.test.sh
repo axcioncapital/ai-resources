@@ -1,5 +1,9 @@
 #!/bin/bash
-# T1-T13 — the R2 acceptance matrix for concurrent task isolation.
+# T1-T15 — the R2 acceptance matrix for concurrent task isolation, plus T14, the
+#           Tracer 3 closure-order proof: valid closed state is committed before
+#           the declaration is cleared, measured at both cut points; and T15, the
+#           Tracer 6 correction: a complete, valid CLOSED record that exists only
+#           in the working tree keeps its lease instead of releasing it.
 # F1-F3   — the correction round's findings, kept as durable regression cover:
 #           F1 an ownership check that cannot run must refuse, not pass;
 #           F2 a malformed declaration is ambiguous, and survives;
@@ -29,6 +33,17 @@ HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$HERE/../.." && pwd)"   # logs/scripts -> logs -> checkout root
 OWNER_BIN="${OWNER_BIN:-$HERE/work-loop-owner.sh}"
 DISPATCH_BIN="${DISPATCH_BIN:-$REPO_ROOT/plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh}"
+# The dispatcher now sources the shared lease library from the checkout it is
+# pointed at, and fail-closes at exit 11 when it is absent. A fixture without it
+# is not a representative checkout, so new_repo() packages it beside the owner
+# helper. Resolved the same way OWNER_BIN is, and overridable for the same reason.
+LEASE_BIN="${LEASE_BIN:-$HERE/work-loop-lease.sh}"
+# The canonical state validator. Since the Tracer 3 cutover the owner helper asks
+# it for every lifecycle answer instead of reading `turn:` itself, so a sandbox
+# without it is a checkout where ownership cannot be established at all — the
+# helper correctly refuses, and every assertion here would fail for the harness's
+# missing file rather than for the behaviour under test.
+STATE_BIN="${STATE_BIN:-$HERE/work-loop-state.sh}"
 
 PASS=0; FAIL=0
 SANDBOX_ROOT="$(mktemp -d "${TMPDIR:-/tmp}/wl2-owner-test.XXXXXX")"
@@ -72,6 +87,8 @@ new_repo() { # -> path on stdout
   # tracked, not dropped in loose, or the dispatcher would correctly read it as
   # an out-of-allowlist foreign file.
   cp "$OWNER_BIN" "$d/logs/scripts/work-loop-owner.sh" 2>/dev/null || true
+  cp "$LEASE_BIN" "$d/logs/scripts/work-loop-lease.sh" 2>/dev/null || true
+  cp "$STATE_BIN" "$d/logs/scripts/work-loop-state.sh" 2>/dev/null || true
   git -C "$d" add .gitignore README.md logs/scripts 2>/dev/null
   git -C "$d" commit -qm "sandbox base" >/dev/null 2>&1
   # -P: on macOS $TMPDIR is a symlink, and the helper reports canonical paths.
@@ -92,11 +109,53 @@ add_worktree() { # repo name -> path on stdout
   (cd "$p" && pwd -P)
 }
 
-state_file() { # checkout task turn
-  cat >"$1/logs/work-loop/$2.md" <<EOF
+# Writes a record that satisfies the contract work-loop-state.sh enforces:
+# explicit `status`, one of the four legal status/turn pairs, and the body shape
+# that pair requires. Before the Tracer 3 cutover this wrote a status-free record
+# with the OPEN body for every turn, `operator` included — which the validator
+# rejects, and rightly: a closing record is not an open record with the turn
+# changed. Status is derived from the turn unless the caller states it, so the
+# blocked/operator pair has to be asked for explicitly.
+state_file() { # checkout task turn [status]
+  local co="$1" task="$2" turn="$3" status="${4:-}" blocker
+  if [ -z "$status" ]; then
+    case "$turn" in
+      claude|codex) status=active ;;
+      operator)     status=closed ;;
+    esac
+  fi
+
+  if [ "$status" = closed ]; then
+    cat >"$co/logs/work-loop/$task.md" <<EOF
 ---
-task: $2
-turn: $3
+task: $task
+status: closed
+turn: operator
+---
+
+## Outcome
+Harness fixture. Closed record.
+
+## Decisions that matter
+Nothing real depends on this file.
+
+## Evidence
+Harness fixture — no commit.
+
+## Accepted limitations
+None.
+EOF
+    return 0
+  fi
+
+  blocker='None.'
+  [ "$status" = blocked ] && blocker='Waiting on the operator to name the harness fixture owner.'
+
+  cat >"$co/logs/work-loop/$task.md" <<EOF
+---
+task: $task
+status: $status
+turn: $turn
 ---
 
 ## Objective and scope
@@ -109,7 +168,7 @@ Standard. Implementation mode. Unit 1 — harness fixture.
 Not started.
 
 ## Blocker
-None.
+$blocker
 
 ## Next action
 Harness fixture. Nothing real depends on this file.
@@ -146,7 +205,7 @@ EOF
 }
 
 echo "=============================================================="
-echo " R2 acceptance matrix — T1..T13"
+echo " R2 acceptance matrix — T1..T15"
 echo " helper:     $OWNER_BIN"
 echo " dispatcher: $DISPATCH_BIN"
 echo "=============================================================="
@@ -245,12 +304,24 @@ for w in "$w1" "$w2"; do
 done
 state_file "$w1" t4-alpha codex; commit_state "$w1" t4-alpha
 state_file "$w2" t4-beta  codex; commit_state "$w2" t4-beta
-printf 't4-alpha %s\n' "$(date '+%Y-%m-%d')" >"$w1/$OWNER_REL"
-printf 't4-beta %s\n'  "$(date '+%Y-%m-%d')" >"$w2/$OWNER_REL"
+printf 't4-alpha\n' >"$w1/$OWNER_REL"
+printf 't4-beta\n' >"$w2/$OWNER_REL"
 BASE1="$(git -C "$w1" rev-parse HEAD)"
 BASE2="$(git -C "$w2" rev-parse HEAD)"
 
-TO_OP='awk "NR==3{print \"turn: operator\"; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp";
+# CLOSING IS A WHOLE RECORD, NOT A LINE EDIT. This used to rewrite line 3 to
+# `turn: operator` and call the task closed. Two things made that work, and the
+# Tracer 3 cutover removed both: line 3 was the turn line, and `turn: operator`
+# was by itself enough to mean closed. A record now carries an explicit `status:`
+# — so line 3 is the status line, and the line edit would corrupt the very field
+# the dispatcher validates — and closure is `status: closed` with the four
+# closing headings and no active heading surviving. The fixture writes that
+# record, which is also what a real closing actor writes.
+TO_OP='{ printf "%s\n" "---" "task: $WL_TASK" "status: closed" "turn: operator" "---" "" \
+     "## Outcome" "Harness fixture. Closed by the simulated actor." "" \
+     "## Decisions that matter" "Nothing real depends on this file." "" \
+     "## Evidence" "Harness fixture — this dispatcher run." "" \
+     "## Accepted limitations" "None."; } > "$WL_STATE_FILE.tmp";
    mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE";
    if [ "$WL_ACTOR" = "claude" ]; then
      git -C "$WL_CHECKOUT" add "logs/work-loop/$WL_TASK.md" >/dev/null 2>&1;
@@ -329,7 +400,7 @@ state_file "$d2" t6-nodecl claude
 owner check --checkout "$d2" --task t6-other --depth local
 expect_rc 0 "$RC" "an unclaimed checkout does not block an unrelated first contact" "$OUT"
 rm -f "$d2/$OWNER_REL"
-printf 't6-ghost %s\n' "$(date '+%Y-%m-%d')" >"$d2/$OWNER_REL"
+printf 't6-ghost\n' >"$d2/$OWNER_REL"
 owner check --checkout "$d2" --task t6-ghost --depth local
 expect_rc 3 "$RC" "a declaration with no matching local state file is REFUSED as a contradiction" "$OUT"
 
@@ -384,12 +455,17 @@ owner claim --checkout "$d" --task t8-second --depth local
 expect_rc 0 "$RC" "the next serial task reuses the same checkout" "$OUT"
 
 # The stale-marker row of the safe state table: a marker naming a CLOSED local
-# task may be cleared by the next task start in that same checkout.
+# task may be cleared by the next task start in that same checkout — once that
+# closing record is COMMITTED, and asked at the depth that can see commits.
+# Before the T15 correction this fixture never committed the closing record and
+# still passed, which is precisely the hole T15 closes; committing it is what
+# makes this row assert the accepted post-commit behaviour rather than the defect.
 d2="$(new_repo)"
 state_file "$d2" t8-closed operator
-printf 't8-closed %s\n' "$(date '+%Y-%m-%d')" >"$d2/$OWNER_REL"
-owner claim --checkout "$d2" --task t8-next --depth local
-expect_rc 0 "$RC" "a stale declaration for a CLOSED local task is cleared by the next start" "$OUT"
+commit_state "$d2" t8-closed
+printf 't8-closed\n' >"$d2/$OWNER_REL"
+owner claim --checkout "$d2" --task t8-next --depth repo
+expect_rc 0 "$RC" "a stale declaration for a committed CLOSED task is cleared by the next start" "$OUT"
 case "$(marker "$d2")" in
   t8-next*) ok "the declaration now names the new task" ;;
   *)        bad "the declaration now names the new task" "got: $(marker "$d2")" ;;
@@ -446,7 +522,7 @@ echo
 echo "T11 — a second interactive task is refused by the local read alone, with no git"
 d="$(new_repo)"
 state_file "$d" t11-held claude
-printf 't11-held %s\n' "$(date '+%Y-%m-%d')" >"$d/$OWNER_REL"
+printf 't11-held\n' >"$d/$OWNER_REL"
 GT="$(git_trap_dir)"
 OUT="$(PATH="$GT:$PATH" bash "$OWNER_BIN" check --checkout "$d" --task t11-new --depth local 2>&1)"; RC=$?
 expect_rc 3 "$RC" "the second interactive task is REFUSED" "$OUT"
@@ -466,7 +542,7 @@ echo "T12 — the declaration is checkout-local: invisible to status and to comm
 # -uall, not the default: git collapses a wholly-untracked directory to
 # "logs/" and would hide the file behind its parent rather than behind the rule.
 d="$(new_repo)"
-printf 't12-task %s\n' "$(date '+%Y-%m-%d')" >"$d/$OWNER_REL"
+printf 't12-task\n' >"$d/$OWNER_REL"
 SEEN="$(git -C "$d" status --porcelain -uall -- logs/work-loop/ | grep -c '\.owner')"
 [ "$SEEN" = "0" ] && ok "git status does not list the declaration" \
                   || bad "git status does not list the declaration" "matched $SEEN times"
@@ -482,7 +558,7 @@ d2="$(new_repo)"
 : >"$d2/.gitignore"
 git -C "$d2" add .gitignore >/dev/null 2>&1
 git -C "$d2" commit -qm "control: no ignore rule" >/dev/null 2>&1
-printf 't12-task %s\n' "$(date '+%Y-%m-%d')" >"$d2/$OWNER_REL"
+printf 't12-task\n' >"$d2/$OWNER_REL"
 CSEEN="$(git -C "$d2" status --porcelain -uall -- logs/work-loop/ | grep -c '\.owner')"
 [ "$CSEEN" -ge 1 ] && ok "control — without the rule the declaration IS visible" \
                    || bad "control — without the rule the declaration IS visible" "matched $CSEEN times"
@@ -511,6 +587,201 @@ expect_names "$OUT" "$w1" "the refusal names the checkout that holds the task"
 [ "$(git -C "$w2" rev-parse HEAD)" = "$BEFORE_HEAD" ] \
   && ok "no commit was made in the refused checkout" \
   || bad "no commit was made in the refused checkout"
+
+# ================================================================== T14
+# CLOSURE ORDER — valid closed state is committed BEFORE the declaration is
+# cleared (Tracer 3). The order is the whole assertion, so it is measured by
+# cutting the same closure at each of the two points it can fail.
+#
+# WHY THE ORDER IS NOT ARBITRARY. Clearing first leaves the one combination
+# nothing recovers from: the lease is gone while the closure is still
+# uncommitted, so the checkout looks free and the task is not closed, and the
+# next task claims straight over it. The order below fails safe at both cuts.
+echo
+echo "T14 — closure commits valid closed state before it clears the declaration"
+
+# (a) CLEAN — the prescribed order, end to end.
+d="$(new_repo)"
+state_file "$d" t14-task claude
+commit_state "$d" t14-task
+printf 't14-task\n' >"$d/$OWNER_REL"
+state_file "$d" t14-task operator          # step 1: reduce to the closing record
+CLS="$(bash "$STATE_BIN" validate --checkout "$d" --task t14-task 2>&1)"
+[ "$CLS" = CLOSED ] && ok "the reduction validates as CLOSED before it is committed" \
+                    || bad "the reduction validates as CLOSED before it is committed" "got: $CLS"
+commit_state "$d" t14-task                 # step 2: commit the closed state
+owner clear --checkout "$d" --task t14-task  # step 3: only now, clear
+expect_rc 0 "$RC" "the declaration is cleared after the commit" "$OUT"
+[ -f "$d/$OWNER_REL" ] && bad "the declaration is gone after a clean closure" "still present" \
+                       || ok "the declaration is gone after a clean closure"
+git -C "$d" show "HEAD:logs/work-loop/t14-task.md" 2>/dev/null | grep -q '^status: closed$' \
+  && ok "the COMMITTED record carries status: closed" \
+  || bad "the COMMITTED record carries status: closed" "HEAD does not"
+
+# (b) PRE-COMMIT failure — the reduction is written but is not a valid closing
+# record, so step 2's guard stops. Nothing is committed and, decisively, the
+# declaration is untouched: the checkout is still held by a task that has not
+# finished, and saying otherwise would be the lie the order exists to prevent.
+d="$(new_repo)"
+state_file "$d" t14-pre claude
+commit_state "$d" t14-pre
+printf 't14-pre\n' >"$d/$OWNER_REL"
+HEAD_BEFORE="$(git -C "$d" rev-parse HEAD)"
+# The half-written reduction: status flipped, active body still standing.
+sed 's/^status: active$/status: closed/' "$d/logs/work-loop/t14-pre.md" >"$d/t.tmp"
+mv "$d/t.tmp" "$d/logs/work-loop/t14-pre.md"
+CLS="$(bash "$STATE_BIN" validate --checkout "$d" --task t14-pre 2>&1)"; CRC=$?
+[ "$CRC" -ne 0 ] && ok "the half-written reduction is REFUSED, so the commit never happens" \
+                 || bad "the half-written reduction is REFUSED" "it validated as $CLS"
+[ "$(git -C "$d" rev-parse HEAD)" = "$HEAD_BEFORE" ] \
+  && ok "no closure commit was made" || bad "no closure commit was made"
+case "$(marker "$d")" in
+  t14-pre) ok "the declaration is INTACT after a pre-commit failure" ;;
+  *)       bad "the declaration is INTACT after a pre-commit failure" "got: '$(marker "$d")'" ;;
+esac
+
+# (c) POST-COMMIT / PRE-CLEAR failure — the safe side of the cut. Valid CLOSED
+# state is committed and the declaration survives as a stale one, which is
+# recoverable precisely because the validator can now see the task is closed:
+# the next task start in this same checkout clears it without an operator.
+d="$(new_repo)"
+state_file "$d" t14-post claude
+commit_state "$d" t14-post
+printf 't14-post\n' >"$d/$OWNER_REL"
+state_file "$d" t14-post operator
+commit_state "$d" t14-post                 # step 2 done; step 3 never runs
+git -C "$d" show "HEAD:logs/work-loop/t14-post.md" 2>/dev/null | grep -q '^status: closed$' \
+  && ok "valid CLOSED state survives the interruption, committed" \
+  || bad "valid CLOSED state survives the interruption, committed" "HEAD does not carry it"
+case "$(marker "$d")" in
+  t14-post) ok "the stale declaration survives, rather than being silently dropped" ;;
+  *)        bad "the stale declaration survives" "got: '$(marker "$d")'" ;;
+esac
+state_file "$d" t14-next claude
+# --depth repo, because since T15 the stale row rests on HEAD carrying the
+# closing record, and only the git-capable depth can see that. The assertion is
+# unchanged: recovery from this cut is automatic and needs no operator.
+owner claim --checkout "$d" --task t14-next --depth repo
+expect_rc 0 "$RC" "the stale declaration is safely clearable by the next task start" "$OUT"
+case "$(marker "$d")" in
+  t14-next) ok "the checkout is recovered with no operator involved" ;;
+  *)        bad "the checkout is recovered with no operator involved" "got: '$(marker "$d")'" ;;
+esac
+
+# ================================================================== T15
+# CLOSURE-COMMIT PRECEDENCE — a CLOSED record that exists only in the working
+# tree does not release the lease.
+#
+# T14(b) cuts the closure with a HALF-WRITTEN reduction, which the validator
+# refuses outright, so it never reaches the staleness path at all. But core § 4
+# requires the reduction to be one write, so the likely pre-commit interruption
+# leaves a COMPLETE, VALID closing record on disk that the validator correctly
+# answers CLOSED for, while HEAD still records the task as active. Reading that
+# as staleness cleared the declaration and released the lease over a closure Git
+# has no record of — T14's own "one combination nothing recovers from", reached
+# from the other direction. This section is that state, measured.
+echo
+echo "T15 — a CLOSED record that is not committed keeps its lease"
+
+# (a) THE DEFECT, as a failing-first regression.
+d="$(new_repo)"
+state_file "$d" t15-task claude
+commit_state "$d" t15-task
+printf 't15-task\n' >"$d/$OWNER_REL"
+HEAD_BEFORE="$(git -C "$d" rev-parse HEAD)"
+state_file "$d" t15-task operator            # step 1 done; step 2 never runs
+cp "$d/logs/work-loop/t15-task.md" "$SANDBOX_ROOT/t15.before"
+CLS="$(bash "$STATE_BIN" validate --checkout "$d" --task t15-task 2>&1)"
+[ "$CLS" = CLOSED ] && ok "precondition — the uncommitted reduction validates as CLOSED" \
+                    || bad "precondition — the uncommitted reduction validates as CLOSED" "got: $CLS"
+git -C "$d" show "HEAD:logs/work-loop/t15-task.md" 2>/dev/null | grep -q '^status: active$' \
+  && ok "precondition — HEAD still records the task as active" \
+  || bad "precondition — HEAD still records the task as active"
+
+state_file "$d" t15-next claude
+owner claim --checkout "$d" --task t15-next --depth repo
+expect_rc 3 "$RC" "the next task is REFUSED while the closure is uncommitted" "$OUT"
+expect_names "$OUT" "t15-task" "the refusal names the task that still holds the checkout"
+case "$(marker "$d")" in
+  t15-task) ok "the declaration is intact — the lease was NOT released" ;;
+  *)        bad "the declaration is intact — the lease was NOT released" "got: '$(marker "$d")'" ;;
+esac
+cmp -s "$d/logs/work-loop/t15-task.md" "$SANDBOX_ROOT/t15.before" \
+  && ok "the closing record is byte-unchanged — nothing was repaired" \
+  || bad "the closing record is byte-unchanged — nothing was repaired"
+[ "$(git -C "$d" rev-parse HEAD)" = "$HEAD_BEFORE" ] \
+  && ok "nothing was committed by the refusal" || bad "nothing was committed by the refusal"
+
+# `check` must answer exactly as `claim` does, or two readers disagree about one
+# record — the failure the single-reader rule exists to prevent.
+owner check --checkout "$d" --task t15-next --depth repo
+expect_rc 3 "$RC" "the read-only check agrees with the claim" "$OUT"
+
+# (b) THE NEGATIVE CONTROL. Same checkout, same command, one difference: the
+# closing record is now committed. Without this, T15(a) would pass just as well
+# for a helper that had simply stopped clearing stale declarations at all.
+commit_state "$d" t15-task
+owner claim --checkout "$d" --task t15-next --depth repo
+expect_rc 0 "$RC" "control — once the closure is COMMITTED the same claim proceeds" "$OUT"
+case "$(marker "$d")" in
+  t15-next) ok "control — the declaration now names the new task" ;;
+  *)        bad "control — the declaration now names the new task" "got: '$(marker "$d")'" ;;
+esac
+
+# (c) STAGED IS NOT COMMITTED. `git add` without a commit is the same exposure,
+# and a check that compared the index rather than HEAD would pass it wrongly.
+d="$(new_repo)"
+state_file "$d" t15-staged claude
+commit_state "$d" t15-staged
+printf 't15-staged\n' >"$d/$OWNER_REL"
+state_file "$d" t15-staged operator
+git -C "$d" add logs/work-loop/t15-staged.md >/dev/null 2>&1
+owner claim --checkout "$d" --task t15-other --depth repo
+expect_rc 3 "$RC" "a STAGED but uncommitted closure is refused too" "$OUT"
+case "$(marker "$d")" in
+  t15-staged) ok "the staged case left the declaration intact" ;;
+  *)          bad "the staged case left the declaration intact" "got: '$(marker "$d")'" ;;
+esac
+
+# (d) NEVER COMMITTED AT ALL. HEAD carries no such path, which must read as "not
+# committed" rather than as "no difference from HEAD".
+d="$(new_repo)"
+state_file "$d" t15-untracked operator
+printf 't15-untracked\n' >"$d/$OWNER_REL"
+owner claim --checkout "$d" --task t15-fresh --depth repo
+expect_rc 3 "$RC" "a closing record HEAD has never carried is refused" "$OUT"
+case "$(marker "$d")" in
+  t15-untracked) ok "the never-committed case left the declaration intact" ;;
+  *)             bad "the never-committed case left the declaration intact" "got: '$(marker "$d")'" ;;
+esac
+
+# (e) THE DEPTH LIMIT, stated rather than smuggled. --depth local runs no git,
+# and without git the committed and uncommitted cases are the same bytes on
+# disk. So it can no longer settle this row and refuses instead of clearing —
+# the fail-closed side. The fixture below is the COMMITTED one, which repo depth
+# recovers automatically, so this measures the depth limit and not the defect.
+d="$(new_repo)"
+state_file "$d" t15-local claude
+commit_state "$d" t15-local
+printf 't15-local\n' >"$d/$OWNER_REL"
+state_file "$d" t15-local operator
+commit_state "$d" t15-local
+state_file "$d" t15-lnext claude
+GT="$(git_trap_dir)"
+OUT="$(PATH="$GT:$PATH" bash "$OWNER_BIN" claim --checkout "$d" --task t15-lnext --depth local 2>&1)"; RC=$?
+expect_rc 3 "$RC" "--depth local REFUSES the stale row instead of clearing it" "$OUT"
+[ -s "$GT/calls" ] && bad "--depth local still ran no git" "git calls: $(tr '\n' ';' <"$GT/calls")" \
+                   || ok "--depth local still ran no git"
+case "$(marker "$d")" in
+  t15-local) ok "--depth local left the declaration exactly as it was" ;;
+  *)         bad "--depth local left the declaration exactly as it was" "got: '$(marker "$d")'" ;;
+esac
+owner claim --checkout "$d" --task t15-lnext --depth repo
+expect_rc 0 "$RC" "the same committed fixture still recovers at --depth repo" "$OUT"
+case "$(marker "$d")" in
+  t15-lnext) ok "post-commit recovery is retained, and stays automatic" ;;
+  *)         bad "post-commit recovery is retained, and stays automatic" "got: '$(marker "$d")'" ;;
+esac
 
 # ================================================================== F1
 # Correction finding 1 — an ownership check that cannot run must refuse, not
@@ -565,18 +836,22 @@ malformed_is_ambiguous() { # content label
 }
 malformed_is_ambiguous 'f2-holder f2-second 2026-08-11
 '                                        "extra token / second id on the line"
-malformed_is_ambiguous 'f2-holder
-'                                        "a bare id with no date at all"
-malformed_is_ambiguous 'f2-holder not-a-date
-'                                        "a date that is not a date"
-malformed_is_ambiguous 'f2-holder 2026-99-99
-'                                        "a date-shaped value out of range"
+# THE RETIRED FORM. Tracer 3 dropped the claim date, so `{task-id} {date}` is no
+# longer a declaration at all. This row is the one that proves the legacy shape
+# is genuinely rejected rather than quietly tolerated by a reader that still
+# looks at field 1 — which is exactly how a fallback parser survives a cutover.
 malformed_is_ambiguous 'f2-holder 2026-08-11
-f2-other 2026-08-11
+'                                        "the retired {task-id} {date} form"
+malformed_is_ambiguous 'f2-holder not-a-date
+'                                        "a second token that is not a date either"
+malformed_is_ambiguous 'f2-holder 2026-99-99
+'                                        "a date-shaped second token, out of range"
+malformed_is_ambiguous 'f2-holder
+f2-other
 '                                        "two declaration lines"
 
 # clear must leave it exactly as it is. This is the R2 row that was inverted.
-printf 'f2-holder 2026-08-11\nf2-other 2026-08-11\n' >"$d/$OWNER_REL"
+printf 'f2-holder\nf2-other\n' >"$d/$OWNER_REL"
 BEFORE="$(cat "$d/$OWNER_REL")"
 owner clear --checkout "$d" --task f2-other
 expect_rc 4 "$RC" "clear REFUSES a malformed declaration as AMBIGUOUS" "$OUT"
@@ -596,7 +871,7 @@ expect_rc 4 "$RC" "claim REFUSES on a malformed declaration" "$OUT"
 
 # The control: the exact legal shape must still be read as a claim. Without it
 # this whole case would pass for a reader that called everything malformed.
-printf 'f2-holder 2026-08-11\n' >"$d/$OWNER_REL"
+printf 'f2-holder\n' >"$d/$OWNER_REL"
 owner check --checkout "$d" --task f2-other --depth local
 expect_rc 3 "$RC" "control — the exact legal shape IS read, and refuses by name" "$OUT"
 expect_names "$OUT" "f2-holder" "control — the legal declaration names its holder"
@@ -688,9 +963,79 @@ LSEEN="$(git -C "$d" status --porcelain -uall -- logs/work-loop/ | grep -c 'owne
                    || bad "the empty lock directory is invisible to git status" "matched $LSEEN times"
 rmdir "$d/logs/work-loop/.owner.lock" 2>/dev/null
 
+# ================================================================== T16
+# A REGISTERED WORKTREE THAT CANNOT BE INSPECTED IS NOT AN ABSENT ONE.
+#
+# The repo half used to drop such a checkout with `[ -d "$wt" ] || continue` and
+# `cd ... || continue`, so a task already declared there was reported unclaimed
+# here and a SECOND checkout could declare it — a fail-open in the one function
+# whose whole job is to fail closed. These cases exist because the fix is
+# invisible in every other assertion in this file: the enumeration still returns
+# the same verdicts for every reachable worktree, which is exactly why the
+# regression could return unnoticed.
+#
+# WHY GIT'S OWN `prunable` IS NOT THE DISCRIMINATOR, measured rather than assumed:
+# git reports `prunable` for a deleted worktree AND for one it merely cannot
+# read, because both are the same failed stat of the gitdir target. Keying the
+# skip on it would skip the unreadable checkout — reinstating the bug. The
+# filesystem separates them, and that is what the helper now uses.
+echo
+echo "T16 — an uninspectable registered worktree makes ownership unestablished"
+d="$(new_repo)"
+w1="$(add_worktree "$d" t16-one)"
+w2="$(add_worktree "$d" t16-two)"
+state_file "$w1" t16-task claude
+owner claim --checkout "$w1" --task t16-task --depth repo
+expect_rc 0 "$RC" "worktree 1 holds the task" "$OUT"
+
+# The readable control FIRST, so an AMBIGUOUS-for-everything helper cannot pass
+# the case below: this proves the enumeration really does read w1's declaration.
+owner check --checkout "$w2" --task t16-task --depth repo
+expect_rc 3 "$RC" "readable competitor — REFUSE, the real owner is named" "$OUT"
+expect_names "$OUT" "$w1" "the refusal names the checkout that holds the task"
+
+# Present, registered, not gone — and unreadable. `chmod 000` is the cheapest
+# stand-in for an unmounted volume or a path this process cannot traverse.
+chmod 000 "$w1"
+owner check --checkout "$w2" --task t16-task --depth repo
+expect_rc 4 "$RC" "unreadable competitor — AMBIGUOUS, not free to claim" "$OUT"
+expect_names "$OUT" "$w1" "the unestablished verdict names the checkout it could not read"
+
+# And a contested claim must write nothing. There is no separate guard for this:
+# claim stops on any verdict that is not PROCEED, and that is what is asserted.
+BEFORE="$([ -e "$w2/$OWNER_REL" ] && cat "$w2/$OWNER_REL" || echo ABSENT)"
+owner claim --checkout "$w2" --task t16-task --depth repo
+expect_rc 4 "$RC" "a claim into an unestablished repository refuses" "$OUT"
+AFTER="$([ -e "$w2/$OWNER_REL" ] && cat "$w2/$OWNER_REL" || echo ABSENT)"
+[ "$BEFORE" = "$AFTER" ] \
+  && ok "the refused claim installed no declaration" \
+  || bad "the refused claim installed no declaration" "was '$BEFORE', now '$AFTER'"
+chmod u+rwx "$w1"
+[ "$(cat "$w1/$OWNER_REL" 2>/dev/null)" = "t16-task" ] \
+  && ok "the holder's own declaration was never touched" \
+  || bad "the holder's own declaration was never touched"
+
+# A worktree that is GENUINELY gone is still skipped — deliberately, not by
+# treating every listed path alike. Without this the fix would be over-refusal:
+# any repository with a deleted worktree would stop answering PROCEED at all.
+echo
+echo "T16b — a genuinely absent worktree is still skipped"
+d="$(new_repo)"
+w1="$(add_worktree "$d" t16b-one)"
+w2="$(add_worktree "$d" t16b-two)"
+state_file "$w2" t16b-task claude
+rm -rf "$w1"
+owner check --checkout "$w2" --task t16b-task --depth repo
+expect_rc 0 "$RC" "a deleted worktree does not block the claim" "$OUT"
+owner claim --checkout "$w2" --task t16b-task --depth repo
+expect_rc 0 "$RC" "and the claim goes through" "$OUT"
+[ "$(cat "$w2/$OWNER_REL" 2>/dev/null)" = "t16b-task" ] \
+  && ok "the declaration was installed" \
+  || bad "the declaration was installed"
+
 # ================================================================== summary
 echo
 echo "=============================================================="
-printf ' T1..T13 + F1..F3: %d passed, %d failed\n' "$PASS" "$FAIL"
+printf ' T1..T16 + F1..F3: %d passed, %d failed\n' "$PASS" "$FAIL"
 echo "=============================================================="
 [ "$FAIL" -eq 0 ] || exit 1

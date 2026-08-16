@@ -1,5 +1,6 @@
 ---
 task: project-progression-candidate-review-correction
+status: closed
 turn: operator
 ---
 

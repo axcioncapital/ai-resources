@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-phase1a-full-descendant-termination
+status: closed
 turn: operator
 ---
 

@@ -1,5 +1,6 @@
 ---
 task: context-engineering-s7-regression
+status: closed
 turn: operator
 ---
 

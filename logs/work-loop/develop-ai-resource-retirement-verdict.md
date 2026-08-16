@@ -1,5 +1,6 @@
 ---
 task: develop-ai-resource-retirement-verdict
+status: closed
 turn: operator
 ---
 

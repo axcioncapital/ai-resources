@@ -107,25 +107,51 @@
 # the rules are requested on every Claude launch. Enforcement belongs to the
 # child, and only attended operation makes that trustworthy.
 #
-# The Codex actor path carries NO equivalent. `codex exec` (0.147.0-alpha.6.5)
-# offers sandbox modes and config overrides, not a per-command deny list, so
-# there is no native already-used mechanism to request the same of a Codex hop.
-# This policy therefore covers the Claude child only, and saying otherwise would
-# be a claim this script cannot support.
+# The Codex actor path REQUESTS direct-route refusal by a different mechanism,
+# because `codex exec` (0.147.0-alpha.6.5) offers sandbox modes and config
+# overrides, not a per-command deny list. A dedicated machine-wide execpolicy
+# rules file marks a direct `claude` or `codex` command `prompt`, and this
+# launcher requests approval_policy=never.
+# Execpolicy parses only `allow` and `prompt` — there is no `deny` — so that
+# pairing is the only shape this mechanism offers.
+#
+# READ IT AS REQUESTED, exactly like the Claude rules above: not OS containment,
+# not a sandbox, not a process limit, and NOT proof that nesting is impossible.
+# Three things are UNVERIFIED here, and this script claims none of them:
+#   1. that the rules file is loaded on any given run
+#      (`--ignore-rules` is the documented opt-out);
+#   2. that the requested policy is effective;
+#   3. what a matched command's runtime disposition then is.
+# Wrapper and absolute-path routes (`bash -lc 'claude -p x'`, `env claude -p x`)
+# are UNMATCHED — an accepted limitation this surface records rather than solves.
 #
 # Exit codes. 0 is the only success, and the RESULT line says which success it is
 # — read that line, not the code alone.
 #   0   see RESULT outcome=CARRIED or outcome=OPERATOR_TERMINAL
 #   10  BAD_USAGE              includes every attended-boundary refusal
-#   11  BAD_CHECKOUT
+#   11  BAD_CHECKOUT           also the LEASE-INFRASTRUCTURE outcome: an
+#                              unresolvable or unreadable Git common directory,
+#                              an uncreatable lease root, and a checkout whose
+#                              shared lease library (logs/scripts/work-loop-lease.sh)
+#                              is missing or unreadable. That last one FAILS
+#                              CLOSED and launches nothing — an absent lease is
+#                              not a taken lease.
 #   12  BAD_TASK_ID            traversal or illegal characters
 #   13  STATE_MISSING
 #   14  IDENTITY_MISMATCH      filename stem != frontmatter task:
 #   15  BAD_TURN               turn: not in {codex, claude, operator}
 #   16  FOREIGN_STAGED         something already staged; refuse to sweep it in
-#   17  LOCK_HELD              another carry owns this CHECKOUT — any task, not
-#                              just this one. Run a concurrent task in its own
-#                              linked worktree and pass that with --checkout.
+#   17  LOCK_HELD              a live lease is held, and the message says WHICH
+#                              of the two resources refused, because the remedy
+#                              differs. CHECKOUT: another run owns this working
+#                              tree — any task, not just this one; run a
+#                              concurrent task in its own linked worktree and
+#                              pass that with --checkout. TASK: the same logical
+#                              task is already live somewhere in this repository,
+#                              including in another linked worktree, and a second
+#                              checkout does not make it a second task. The
+#                              holder may be an attended carry or an unattended
+#                              dispatched run: both take the same shared lease.
 #   18  FOREIGN_UNSTAGED       out-of-allowlist working-tree changes already there
 #   19  GIT_HAZARD             index.lock, or merge/rebase/cherry-pick in progress
 #   20  ACTOR_FAILED           actor exited non-zero (never retried — see below)
@@ -140,6 +166,20 @@
 #                              terminated and the run stopped. Never retried.
 #   30  UNEXPECTED_COMMIT      the actor COMMITTED paths outside the allowlist.
 #                              Detection, not prevention.
+#   33  OWNERSHIP_REFUSED      repository-depth ownership says this task belongs
+#                              to a different checkout. Continue it there, or
+#                              close it there first. Nothing was launched.
+#   34  OWNERSHIP_AMBIGUOUS    ownership cannot be established — usually a state
+#                              file replicated across checkouts with none of them
+#                              declaring it. Not a condition to work around: the
+#                              operator names the owner. Nothing was launched.
+#   35  OWNERSHIP_UNAVAILABLE  the ownership check could not run at all — the
+#                              helper (logs/scripts/work-loop-owner.sh) is
+#                              missing, unreadable, or failed. FAILS CLOSED: an
+#                              absent check is not a passed check.
+#                              33, 34 and 35 are the Work Loop's ownership codes
+#                              and are shared with the unattended dispatcher, so
+#                              one condition reads the same on both transports.
 #   37  PERMISSION_DENIED      Claude recorded permission denials and the hop
 #                              produced no valid handback. The denied tool and
 #                              target are named, and the report says whether any
@@ -256,7 +296,11 @@ NESTED_SEEN=""
 
 ACTOR_CAPTURE=""
 
+# Read-only views of the two lease paths the shared library resolves, kept under
+# this script's own names for its refusal wording. Assigned in the lease block
+# below; nothing here derives a lease path a second time.
 LOCK_DIR=""
+TASK_LOCK_DIR=""
 RUN_LOG=""
 ACTOR_PGID=""
 SHUTDOWN=0
@@ -423,22 +467,45 @@ fm_value() { # file key -> value on stdout, empty if absent
 
 file_hash() { shasum -a 256 "$1" 2>/dev/null | cut -d' ' -f1; }
 
-validate_state() { # sets ST_TURN; dies on any failure. Never mutates.
+# THE VALIDATOR IS THE ONE LIFECYCLE AUTHORITY (Tracer 3). This surface used to
+# read `task:` and `turn:` itself and infer everything else from body shape. It
+# now asks logs/scripts/work-loop-state.sh and keeps only its own exit meanings.
+# There is no second parser here and no fallback: a validator that cannot run
+# means the state is unestablished, which stops the run before anything launches.
+STATE_BIN_REL='logs/scripts/work-loop-state.sh'
+
+# Maps the validator's exit code onto this surface's existing exit meanings, so
+# an operator reading a carry-turn failure sees the code they always saw.
+# 10 BAD_USAGE / 11 BAD_CHECKOUT / 12 BAD_TASK_ID -> 13, this surface's
+# "the state file cannot be used" code; 14 identity; everything else 15.
+validate_state() { # sets ST_TURN and ST_CLASS; dies on any failure. Never mutates.
   [ -f "$STATE_FILE" ] || die 13 "state file missing: $STATE_FILE"
   [ -r "$STATE_FILE" ] || die 13 "state file unreadable: $STATE_FILE"
 
-  local declared
-  declared="$(fm_value "$STATE_FILE" task)"
-  [ -n "$declared" ] || die 14 "no readable 'task:' frontmatter in $STATE_FILE"
-  if [ "$declared" != "$TASK" ]; then
-    die 14 "identity mismatch — you asked for task '$TASK', the file's frontmatter says task: '$declared'. Nothing was launched and nothing was changed."
-  fi
+  local bin="$CHECKOUT/$STATE_BIN_REL" out rc
+  [ -f "$bin" ] && [ -r "$bin" ] \
+    || die 13 "the state validator is missing from this checkout: $bin
+Recoverable next action: this surface no longer classifies state itself, so it cannot continue without it. Restore the file, then re-run. Nothing was launched."
 
-  ST_TURN="$(fm_value "$STATE_FILE" turn)"
-  case "$ST_TURN" in
-    codex|claude|operator) : ;;
-    "") die 15 "no readable 'turn:' frontmatter in $STATE_FILE" ;;
-    *)  die 15 "turn: '$ST_TURN' is not one of codex | claude | operator" ;;
+  out="$(bash "$bin" validate --checkout "$CHECKOUT" --task "$TASK" 2>&1)"; rc=$?
+  case "$rc" in
+    0) ;;
+    14) die 14 "identity mismatch — you asked for task '$TASK' and the record disagrees. Nothing was launched and nothing was changed."$'\n'"$out" ;;
+    # The validator's BAD_BODY lands on this surface's existing "the record is
+    # neither shape I may act on" code, so the exit meaning an operator already
+    # knows survives the cutover rather than collapsing into a generic 15.
+    16) die 26 "$out"$'\n'"Recoverable next action: read the file. If a hop died mid-write, restore or complete it, then re-run. Nothing was launched." ;;
+    10|11|12|13) die 13 "the state file cannot be used: $out" ;;
+    *)  die 15 "$out" ;;
+  esac
+
+  ST_CLASS="$out"
+  case "$ST_CLASS" in
+    ACTIVE_CLAUDE)    ST_TURN=claude ;;
+    ACTIVE_CODEX)     ST_TURN=codex ;;
+    BLOCKED_OPERATOR) ST_TURN=operator ;;
+    CLOSED)           ST_TURN=operator ;;
+    *) die 15 "the validator returned an unrecognised classification '$ST_CLASS' — this surface does not guess at state" ;;
   esac
 }
 
@@ -585,13 +652,13 @@ git_hazards() {
   return 0
 }
 
-# Is this file a core § 4 closing record? The heading sequence must be EXACTLY
-# the four, once each, in order, with nothing else surviving. Section contents
-# are deliberately not validated — those are the actors' business.
+# Is this file a closed record? Since the Tracer 3 cutover this is not a question
+# this surface answers for itself. It used to compare the heading sequence against
+# the four closing headings — an inference from body shape, and the validator now
+# owns exactly that check along with the explicit `status:` the record carries.
+# ST_CLASS was set by validate_state() before anything reached here.
 closing_record_ok() {
-  local heads
-  heads="$(grep -E '^## ' "$STATE_FILE" 2>/dev/null | sed 's/[[:space:]]*$//')"
-  [ "$heads" = "$(printf '## Outcome\n## Decisions that matter\n## Evidence\n## Accepted limitations')" ]
+  [ "${ST_CLASS:-}" = CLOSED ]
 }
 
 # The state file's operator-facing content, for the stop message. Bounded so a
@@ -604,83 +671,393 @@ operator_question() {
   ' "$STATE_FILE" 2>/dev/null
 }
 
-# ------------------------------------------------------------------- lock
-# One actor at a time, PER CHECKOUT. mkdir is the atomic primitive.
+# ------------------------------------------------------------------- lease
+# One live actor-launching run per TASK, and one per CHECKOUT. Both leases are
+# taken before anything launches, and the mechanism is a shared library rather
+# than a second implementation of it.
 #
-# The key is the canonical checkout path and nothing else. A checkout is a single
-# working tree with a single index and a single HEAD, so two actors in it are two
-# writers to one surface no matter which tasks they carry — keying the lock by
-# checkout+task made the id the isolation boundary, and two different task ids
-# were therefore admitted side by side in one checkout.
+# WHY IT MOVED. This surface used to key ONE lock, on the canonical checkout path,
+# under $TMPDIR. The unattended dispatcher keyed TWO, rooted in the repository's
+# Git common directory. Neither program read the other's path, so an attended
+# carry and a dispatched run could enter the same working tree each believing it
+# was the only writer, and both would report a clean single-writer run. Two
+# implementations of one invariant is also the shape that made the original
+# composite key wrong in two programs at once. There is now one implementation,
+# in logs/scripts/work-loop-lease.sh, and both transports source it.
 #
-# The task is still recorded, in the lock directory rather than in the key, so a
-# refusal names WHICH task holds the checkout. That keeps task identity in
-# validation and in the evidence while taking it out of the ownership decision.
-# Exact task/state identity remains a separate invariant (validate_state); this
-# is about write authority over a working tree, not about which file is correct.
+# THE TWO RESOURCES, and what each means here:
 #
-# A separate linked worktree canonicalizes to a different path, so it takes a
-# different lock and stays independently admissible. That is the intended unit of
-# isolation: give a concurrent task its own checkout.
+#   task lease      one live run per logical task, ANYWHERE in this repository,
+#                   including in another linked worktree. This is NEW on this
+#                   surface. A separate worktree used to be independently
+#                   admissible for the same task; it is not, because one task is
+#                   one line of work and a second checkout does not make it two.
+#   checkout lease  one live run per physical checkout, whatever task it names.
+#                   This is the rule this surface already had, unchanged: a
+#                   checkout is a single working tree with a single index and a
+#                   single HEAD, so two actors in it are two writers to one
+#                   surface no matter which tasks they carry.
+#
+# So two DIFFERENT tasks in two different worktrees stay admissible side by side.
+# That is still the intended unit of isolation, and the change must not be read as
+# refusing every worktree — only the same task twice.
+#
+# THE LIBRARY IS SOURCED, NOT RUN, and it has to be: the lease must be held by
+# THIS process for the whole of its life, because the pid it records is what a
+# refusal names and the release runs from this script's own exit paths.
+#
+# Exact task/state identity remains a separate invariant (validate_state); a lease
+# is about write authority over a working tree and over a task, not about which
+# file is correct.
 #
 # NOT the durable checkout declaration in logs/scripts/work-loop-owner.sh. That
 # one is a committed-repository record of which task owns a checkout across
-# sessions; this one is an ephemeral live-process lock under $TMPDIR that exists
-# only while an actor runs. The two are deliberately separate and neither is a
-# registry of the other.
+# sessions; a lease is an ephemeral live-process fact that dies with its process.
+# The two are deliberately separate and neither is a registry of the other.
 #
-# Three pid states, not two. A lock whose holder cannot be inspected is treated
-# as held: the failure mode of guessing "stale" is two live actors in one
-# checkout, which is the thing this exists to prevent.
-
-acquire_lock() {
-  local key holder holder_task lock_path
-  key="$(printf '%s' "$CHECKOUT" | shasum -a 256 | cut -c1-16)"
-  LOCK_DIR="${TMPDIR:-/tmp}/axcion-harness-v0.2.$key.lock"
-  lock_path="$LOCK_DIR"
-
-  if ! mkdir "$LOCK_DIR" 2>/dev/null; then
-    holder="$(cat "$LOCK_DIR/pid" 2>/dev/null)"
-    holder_task="$(cat "$LOCK_DIR/task" 2>/dev/null)"
-    if [ -n "$holder" ] && kill -0 "$holder" 2>/dev/null; then
-      LOCK_DIR=""   # not ours; must not be released on the way out
-      die 17 "another carry is in flight for this CHECKOUT (pid $holder, task '${holder_task:-unrecorded}', holds $lock_path). One checkout is one working tree, so it carries one task at a time — this is refused whether or not it is the same task. Wait for it, or stop it, then re-run. To run '$TASK' concurrently, give it its own linked worktree and pass that with --checkout."
-    fi
-    if [ -z "$holder" ]; then
-      LOCK_DIR=""
-      die 17 "a lock directory exists for this checkout but carries no readable pid, so it cannot be shown stale ($lock_path, task '${holder_task:-unrecorded}'). Nothing was deleted. Inspect it and remove it by hand if no carry is running."
-    fi
-    say "note: removing a stale lock — pid $holder (task '${holder_task:-unrecorded}') is not running."
-    rm -rf "$LOCK_DIR"
-    mkdir "$LOCK_DIR" 2>/dev/null || { LOCK_DIR=""; die 17 "could not take the lock after clearing a stale one"; }
-  fi
-  printf '%s\n' "$$" >"$LOCK_DIR/pid"
-  printf '%s\n' "$TASK" >"$LOCK_DIR/task"
+# Three pid states, not two, and the library keeps them: a lease whose holder
+# cannot be inspected is treated as held and nothing is deleted. The failure mode
+# of guessing "stale" is two live actors in one checkout, which is the thing this
+# exists to prevent.
+#
+# RESOLVED FROM THE CHECKOUT BEING DRIVEN, like the state file itself. A checkout
+# that cannot produce the library is a checkout whose lease cannot be established,
+# so it FAILS CLOSED here — before any lease path is computed and long before an
+# actor launches. The code is 11, the BAD_CHECKOUT outcome this script already
+# uses; an absent lease is not a taken lease.
+LEASE_LIB="$CHECKOUT/logs/scripts/work-loop-lease.sh"
+if [ ! -f "$LEASE_LIB" ] || [ ! -r "$LEASE_LIB" ]; then
+  printf 'STOP [11] the shared lease library is missing or unreadable: %s\n' "$LEASE_LIB" >&2
+  printf '  The live lease cannot be taken without it, so nothing was launched and nothing\n' >&2
+  printf '  was committed. Recoverable next action: restore logs/scripts/work-loop-lease.sh\n' >&2
+  printf '  in that checkout, or run the task in a checkout that carries it, then re-run.\n' >&2
+  result_line STOPPED 11
+  exit 11
+fi
+# shellcheck source=../../logs/scripts/work-loop-lease.sh
+# shellcheck disable=SC1090,SC1091
+. "$LEASE_LIB" || {
+  printf 'STOP [11] the shared lease library could not be sourced: %s\n' "$LEASE_LIB" >&2
+  result_line STOPPED 11
+  exit 11
 }
 
-release_lock() {
-  [ -n "$LOCK_DIR" ] && [ -d "$LOCK_DIR" ] && rm -rf "$LOCK_DIR"
-  LOCK_DIR=""
+wl_lease_init "$CHECKOUT" "$TASK"
+case "$?" in
+  0) ;;
+  1) printf 'STOP [11] cannot resolve the Git common directory for %s\n' "$CHECKOUT" >&2
+     result_line STOPPED 11; exit 11 ;;
+  *) printf 'STOP [11] the Git common directory for %s is not readable\n' "$CHECKOUT" >&2
+     result_line STOPPED 11; exit 11 ;;
+esac
+
+LOCK_DIR="$WL_LEASE_CHECKOUT_DIR"
+TASK_LOCK_DIR="$WL_LEASE_TASK_DIR"
+
+# THE LEGACY PATH, READ ONLY, FOR ONE RELEASE.
+#
+# The lease root moved out of $TMPDIR and into the repository. A carry that was
+# already in flight when that change landed holds a lock the new code does not
+# look at, so for one release this surface still READS the old location and
+# refuses a holder it finds there. Without this, the changeover itself would be
+# the one window in which two writers are both admitted — one holding the old
+# lock, one holding the new leases — which is precisely the failure the change
+# exists to close.
+#
+# Nothing is migrated. An old lock is never turned into a new lease: a lease
+# belongs to a live process, and that process is not this one. The only write on
+# this path is the one this surface could already justify — removing a lock whose
+# pid is PROVABLY not running, which is the existing stale-lock policy, unchanged
+# and still announced. A LIVE holder and an UNINSPECTABLE one are refused and
+# nothing is deleted.
+#
+# THREE STATES, NOT TWO — AND THE VERDICT IS NOT THIS FILE'S TO MAKE. This used
+# to ask `kill -0` and treat every failure as death. `kill -0` fails for two
+# unrelated reasons:
+#
+#   ESRCH  "no such process"          -> the pid really is absent
+#   EPERM  "operation not permitted"  -> the pid may well be ALIVE; this caller
+#                                        is simply not allowed to look at it
+#
+# Conflated, an uninspectable holder read as stale — so this path DELETED a lock
+# that was doing its job and admitted a second writer into the working tree,
+# inside the one changeover window the legacy read exists to protect. The
+# asymmetry only points one way: a false UNKNOWN costs one more look, a false
+# ABSENT costs two live runs in one checkout.
+#
+# So the classification is DELEGATED to wl_lease__pid_state, the shared probe
+# that already admits every live lease. Deliberately the library's function and
+# not a copy: a second classifier behind lease admission is the exact defect this
+# correction closes, and a copy here would be that defect wearing a legacy label.
+# The library is sourced, and wl_lease_init has already run, well before
+# acquire_lock reaches this function — so the probe is in scope, called read-only,
+# and the library's public contract is untouched.
+legacy_lock_check() {
+  local key holder holder_task lock_path verdict state reason claimed
+  key="$(printf '%s' "$CHECKOUT" | shasum -a 256 | cut -c1-16)"
+  lock_path="${TMPDIR:-/tmp}/axcion-harness-v0.2.$key.lock"
+  [ -d "$lock_path" ] || return 0
+
+  holder="$(cat "$lock_path/pid" 2>/dev/null)"
+  holder_task="$(cat "$lock_path/task" 2>/dev/null)"
+
+  verdict="$(wl_lease__pid_state "$holder")"
+  state="${verdict%%|*}"
+  reason="${verdict#*|}"
+
+  if [ "$state" = LIVE ]; then
+    die 17 "another carry is in flight for this CHECKOUT (pid $holder, task '${holder_task:-unrecorded}', holds $lock_path). One checkout is one working tree, so it carries one task at a time — this is refused whether or not it is the same task. Wait for it, or stop it, then re-run. To run '$TASK' concurrently, give it its own linked worktree and pass that with --checkout."
+  fi
+
+  # UNKNOWN IS HELD. Everything that is not positively absent lands here: an
+  # uninspectable pid, a pid file that is missing, empty, non-numeric, or zero /
+  # zero-prefixed. The reason comes from the probe rather than being re-derived,
+  # so the operator is told which of those it was — the remedy differs, and a
+  # generic "cannot be shown stale" sent them to delete it either way.
+  if [ "$state" != ABSENT ]; then
+    die 17 "a lock directory exists for this checkout and its holder CANNOT BE SHOWN GONE, so it is treated as held ($lock_path, pid '${holder:-unrecorded}', task '${holder_task:-unrecorded}'): $reason. Not being able to inspect a process is not evidence that it stopped. Nothing was deleted. Confirm no carry is running in this checkout, then remove that directory by hand, and re-run."
+  fi
+
+  # POSITIVE ABSENCE IS THE ONLY STATE THAT WRITES — and the write is a RENAME
+  # first, not an `rm -rf` in place. Two runs can both probe ABSENT on the same
+  # lock; only one can win the rename, and the loser then finds the directory
+  # gone rather than deleting a path a third run has since recreated. The target
+  # is a sibling in the same directory, so the rename is atomic on one
+  # filesystem, and the removal afterwards operates on a name nothing else holds.
+  claimed="$lock_path.stale.$$"
+  rm -rf "$claimed"
+  if ! mv "$lock_path" "$claimed" 2>/dev/null; then
+    # Lost the race, or could not write here at all. Those need different
+    # answers, and the directory itself says which: gone means another run
+    # cleared it and the resource is free — the new leases arbitrate what
+    # happens next. Still there means this run cannot clean it, and guessing is
+    # the failure mode this whole function exists to remove.
+    [ -d "$lock_path" ] || return 0
+    die 17 "a stale lock for this checkout could not be cleared ($lock_path, pid '${holder:-unrecorded}', task '${holder_task:-unrecorded}'). Its holder is not running, but the directory could not be renamed away, so nothing was deleted and nothing was launched. Check the permissions on ${TMPDIR:-/tmp}, or remove that directory by hand, then re-run."
+  fi
+  say "note: removing a stale lock — pid $holder (task '${holder_task:-unrecorded}') is not running."
+  rm -rf "$claimed"
+  return 0
+}
+
+# The library takes both leases in the task-then-checkout order, records who holds
+# each in plain text, and rolls the task lease back if the checkout lease is
+# refused. What stays here is the REFUSAL WORDING and the exit code — the library
+# prints nothing and standardises neither, because this surface's refusals and the
+# dispatcher's are each their own program's contract.
+#
+# A refusal must NAME the conflict rather than print a hash, and it must say which
+# of the two resources refused, because the operator's remedy differs: a checkout
+# refusal is answered by another worktree, a task refusal is not answered by
+# anything except waiting. Holder fields come back empty when the metadata is
+# unreadable, and empty renders as "unrecorded" — never as a free lease.
+acquire_lock() {
+  legacy_lock_check
+
+  wl_lease_acquire carry "$$"
+  case "$?" in
+    0) return 0 ;;
+    1) die 11 "cannot create the lease root $WL_LEASE_ROOT — the live lease cannot be taken, so nothing was launched."$'\n'"Recoverable next action: check that the repository's Git common directory is writable, then re-run." ;;
+  esac
+
+  local who
+  case "${WL_LEASE_HOLDER_PROGRAM:-}" in
+    carry)    who="an attended carry" ;;
+    dispatch) who="an unattended dispatched run" ;;
+    "")       who="another Work Loop run (program unrecorded)" ;;
+    *)        who="another Work Loop run (${WL_LEASE_HOLDER_PROGRAM})" ;;
+  esac
+
+  if [ "$WL_LEASE_RESOURCE" = task ]; then
+    if [ "$WL_LEASE_REFUSAL" = pinned ]; then
+      die 17 "the TASK lease for '$TASK' is PINNED ($TASK_LOCK_DIR) — a previous run could not confirm the actor tree it started had stopped:"$'\n'"$(sed 's/^/  /' "$WL_LEASE_SURVIVORS" 2>/dev/null)"$'\n'"Recoverable next action: confirm the pids above are gone, then remove that directory by hand. Nothing was deleted here."
+    fi
+    die 17 "$who already holds the TASK lease for '$TASK' (pid ${WL_LEASE_HOLDER_PID:-unrecorded}, in checkout ${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}, holds $TASK_LOCK_DIR). One task is one live run anywhere in this repository, including in another linked worktree — a second checkout does not make it a second task. Wait for it, or stop it, then re-run."
+  fi
+
+  if [ "$WL_LEASE_REFUSAL" = pinned ]; then
+    die 17 "this CHECKOUT's lease is PINNED ($LOCK_DIR) — a previous run in it could not confirm the actor tree it started had stopped:"$'\n'"$(sed 's/^/  /' "$WL_LEASE_SURVIVORS" 2>/dev/null)"$'\n'"Recoverable next action: confirm the pids above are gone, then remove that directory by hand. Nothing was deleted here."
+  fi
+  die 17 "$who is in flight for this CHECKOUT (pid ${WL_LEASE_HOLDER_PID:-unrecorded}, task '${WL_LEASE_HOLDER_TASK:-unrecorded}', holds $LOCK_DIR). One checkout is one working tree, so it carries one task at a time — this is refused whether or not it is the same task. Wait for it, or stop it, then re-run. To run '$TASK' concurrently, give it its own linked worktree and pass that with --checkout."
+}
+
+# Pinned beats owned, and that check lives inside the library rather than at each
+# call site — one missed caller would silently undo the invariant. Every exit path
+# of this script reaches here: die(), the terminal branches, and the signal
+# handler by way of die().
+release_lock() { wl_lease_release; }
+
+# THE PIN. When a run cannot prove the actor tree it started has stopped, the
+# process that knows about the survivors is about to exit, so the only thing that
+# can carry that knowledge forward is the lease it leaves behind. BOTH leases are
+# pinned, because a survivor holds both resources: it belongs to this task, and it
+# is still running inside this checkout's working tree.
+#
+# The pin FILE — its line formats, the both-leases rule, and the guards that stop
+# a pin claiming a lease this run never acquired — is the library's. What stays
+# here is the OPERATOR-FACING line, which is this surface's wording and names this
+# surface's exit 17.
+#
+# THE LIBRARY ANSWERS WITH THREE OUTCOMES AND THEY NEED THREE ANSWERS. This used
+# to read `wl_lease_pin ... || return 0`, which merged every one of them into
+# silence:
+#
+#   0  pinned, and every owned lease carries durable evidence a later run reads.
+#   1  nothing was owned, so nothing was pinned — the ordinary state of a run that
+#      was refused, or never reached acquire_lock. Not a failure, nothing to say.
+#   2  owned and pinned, but at least one lease has NO durable record. The
+#      DIRECTORIES are still there and still refuse the next run; what is missing
+#      is the written reason inside them.
+#
+# rc=2 is why the merge mattered. Silence there leaves the operator in front of a
+# held lease with nothing inside explaining it, and the obvious reading — a stale
+# lock, safe to delete — is the unsafe one. So it is said out loud, and the rc=0
+# success line is withheld, because announcing a pin that recorded nothing is the
+# same false claim in the opposite direction.
+#
+# An unrecognised code is reported as unrecognised rather than assumed benign: the
+# library may grow a fourth outcome, and inheriting silence by default is exactly
+# how this defect arrived the first time.
+#
+# The pin FILE — its line formats, the both-leases rule, and the guards that stop
+# a pin claiming a lease this run never acquired — is the library's. What stays
+# here is the OPERATOR-FACING wording, which is this surface's and names this
+# surface's exit 17.
+pin_leases() { # survivor-pids, unknown-reason
+  local rc=0
+  # Split from any `local` declaration on purpose: `local x="$(cmd)"` reports
+  # `local`'s status, not the command's, and the same trap applies to capturing a
+  # return code that this whole function now turns on.
+  wl_lease_pin "${1:-}" "${2:-}" "$TASK"; rc=$?
+  case "$rc" in
+    0)
+      say "  BOTH leases are now PINNED and deliberately NOT released — the TASK lease for '$TASK' ($TASK_LOCK_DIR) and this CHECKOUT's lease ($LOCK_DIR)."
+      say "  The next Work Loop run on this task, or in this checkout, is refused with exit 17 until you confirm the pids above are gone and remove those two directories by hand."
+      ;;
+    1)
+      : # nothing was owned, so nothing was pinned. There is no lease to describe.
+      ;;
+    2)
+      say "  WARNING: the pin RECORD could not be persisted for: ${WL_LEASE_PIN_FAILED:-an unnamed lease}."
+      say "  Those lease directories are deliberately RETAINED and were NOT released, so the next Work Loop run on this task, or in this checkout, is still refused with exit 17."
+      say "  What is missing is the written reason inside them, so a later run and --status cannot say why they are held. Do NOT read them as a removable stale lease: confirm the pids above are gone before removing anything by hand."
+      ;;
+    *)
+      say "  WARNING: the lease library returned an UNRECOGNISED pin result ($rc), so this launcher cannot tell what was recorded."
+      say "  Treat the lease directories as retained: they were NOT released, and the next Work Loop run on this task, or in this checkout, is still refused with exit 17. Confirm the pids above are gone before removing anything by hand."
+      ;;
+  esac
   return 0
 }
 
 # ------------------------------------------------------- interruption
 
+# WHAT IS STILL IN THE ACTOR'S PROCESS GROUP, BY NAME. `kill -0` on a group
+# answers one bit, and it answers it wrong in the one direction that matters: a
+# survivor this uid may not signal returns EPERM, which is indistinguishable from
+# an empty group. A census names the pids instead — which is what the operator
+# needs, and what the pin file has to record for `--status` and the next run to be
+# about anything.
+#
+# THE CONTROL IS WHAT MAKES AN EMPTY ANSWER MEAN SOMETHING. `ps` over an empty
+# group and a `ps` that cannot run both print nothing, so an empty answer has to
+# be corroborated by a question whose answer is known in advance. Without that,
+# a broken `ps` would read as a confirmed-clean shutdown, and missing evidence
+# would have become a clean bill of health. Same rule the nested-actor census
+# already follows.
+#
+# THE CONTROL MUST EXERCISE THE QUERY FORM THIS FUNCTION ACTUALLY USES. It used
+# to ask `ps -p $$`, which proves that a DIFFERENT form works: a `ps` whose `-p`
+# answers and whose `-g` cannot run passed that control and then returned no
+# rows, which the caller read as a confirmed-empty group. Nor can the exit status
+# stand in — on this platform `ps -g` exits non-zero for an empty group as well
+# as for a failure (checked 2026-08-15: an unused in-range pgid gives rc=1 with
+# no output), so propagating it would make every clean shutdown read as unknown.
+# So the control asks the `-g` form about a group that cannot be empty: this
+# shell's own, which must contain this shell.
+#
+# Prints the surviving pids on stdout. Returns 1 when the census could not run.
+actor_group_census() { # pgid
+  local pgid="$1" own out
+  own="$(ps -o pgid= -p $$ 2>/dev/null | tr -d ' ')"
+  [ -n "$own" ] || return 1
+  ps -o pid=,pgid= -g "$own" 2>/dev/null \
+    | awk -v g="$own" -v me="$$" '$1 == me && $2 == g { found = 1 } END { exit !found }' \
+    || return 1
+  out="$(ps -o pid=,pgid= -g "$pgid" 2>/dev/null)"
+  printf '%s\n' "$out" \
+    | awk -v g="$pgid" '$1 != "" && $2 == g { printf "%s%s", sep, $1; sep = " " }'
+  return 0
+}
+
+# Returns 0 only when the actor's tree is PROVEN stopped. Anything else — a named
+# survivor, a census that could not run, or a group that still answers — is
+# unproven, and unproven pins both leases (proposal § 4.1 property 4). Ordinary
+# cleanup must not release them, and it cannot: the library checks PINNED before
+# OWNED inside wl_lease_release.
 terminate_actor_group() { # pgid
-  local pgid="$1" waited=0
+  local pgid="$1" waited=0 survivors='' unknown='' census_rc=0
   [ -n "$pgid" ] || return 0
   kill -TERM "-$pgid" 2>/dev/null
+
+  # THE GRACE PERIOD IS A PROOF STEP, NOT A SIGNAL PROBE. This loop used to end
+  # the whole function on `kill -0` failing, which answers one bit and answers it
+  # wrong in the direction that matters: a survivor this uid may not signal
+  # returns EPERM, and EPERM is indistinguishable from an empty group. A tree
+  # whose top-level actor exits on SIGTERM stops answering as a group while a
+  # descendant is still there, so that shortcut released both leases at exactly
+  # the moment a second writer could start beside the survivor.
+  #
+  # So the same census that decides after SIGKILL decides here, and only a census
+  # that RAN and named nobody ends the wait early. A census that could not run
+  # neither shortens the grace period nor releases anything: it proves nothing,
+  # and the SIGKILL branch below is then the one that has to answer.
   while [ "$waited" -lt "$TERM_GRACE_SECS" ]; do
-    kill -0 "-$pgid" 2>/dev/null || return 0
+    survivors="$(actor_group_census "$pgid")"; census_rc=$?
+    if [ "$census_rc" -eq 0 ] && [ -z "$survivors" ]; then
+      return 0
+    fi
     sleep 1; waited=$((waited + 1))
   done
+  survivors=''; census_rc=0
   kill -KILL "-$pgid" 2>/dev/null
   sleep "$KILL_SETTLE_SECS"
-  if kill -0 "-$pgid" 2>/dev/null; then
-    say "WARNING: process group $pgid could not be confirmed gone after SIGKILL — inspect before re-running."
-    return 1
+
+  # Split from the declaration on purpose: `local x="$(cmd)"` reports `local`'s
+  # status, not the command's, so the census failure would be invisible.
+  survivors="$(actor_group_census "$pgid")"; census_rc=$?
+  if [ "$census_rc" -ne 0 ]; then
+    survivors=''
+    unknown="the process-group census could not run on this host, so no survivor was ruled out"
   fi
-  return 0
+
+  # RELEASE IS LICENSED BY THE CENSUS AND BY NOTHING ELSE. A census that ran and
+  # named nobody is the only clean answer here. A named survivor is unproven, and
+  # so is a census that could not run — both pin.
+  #
+  # There is ONE corroboration and it can only WITHHOLD. If the group still
+  # answers signals after all of that, the two inspections disagree, and a
+  # disagreement is not proof of death, so it is recorded as unknown. It never
+  # runs the other way: a failed signal probe cannot turn an absent or unusable
+  # census into a clean shutdown. That direction — `kill -0` deciding the
+  # question on its own — is the shortcut this branch used to take.
+  #
+  # The reason has to be SAID in that case, or the pin file would carry neither a
+  # survivor line nor a sweep line and the operator would be told to inspect
+  # nothing.
+  if [ -z "$survivors" ] && [ -z "$unknown" ]; then
+    if kill -0 "-$pgid" 2>/dev/null; then
+      unknown="process group $pgid still answers to signals, but the census named no member of it"
+    else
+      return 0
+    fi
+  fi
+
+  say "WARNING: process group $pgid could not be confirmed gone after SIGKILL — inspect before re-running."
+  [ -n "$survivors" ] && say "  still running in the actor's process group: $survivors"
+  [ -n "$unknown" ] && say "  sweep incomplete: $unknown"
+  pin_leases "$survivors" "$unknown"
+  return 1
 }
 
 on_signal() { # signal name
@@ -855,9 +1232,13 @@ launch_actor() { # actor, timeout -> exit status of the launch
       [ -x "$CODEX_BIN" ] || die 20 "codex binary not executable: $CODEX_BIN"
       local cv; cv="$("$CODEX_BIN" --version 2>&1 | head -1)"
       say "  launch: actor=codex timeout=${limit}s bin=$CODEX_BIN version=$cv"
-      say "  cmd: codex exec --sandbox workspace-write -C <checkout> --json <prompt>"
+      say "  nested-actor policy: requesting approval_policy=never on every Codex hop, beside a dedicated machine-wide execpolicy rules file that marks a direct claude or codex command 'prompt'."
+      say "  This is REQUESTED policy only. It is not containment and NOT proof that nesting is impossible, and this launcher does not observe whether it took effect."
+      say "  Unverified, and not claimed: that the rules file was loaded on this run, that the requested policy is effective, and the runtime disposition of a matched command. Wrapper and absolute-path routes are unmatched — an accepted limitation."
+      say "  cmd: codex exec --sandbox workspace-write -c approval_policy=never -C <checkout> --json <prompt>"
       run_bounded "$limit" "$out" \
-        "$CODEX_BIN" exec --sandbox workspace-write -C "$CHECKOUT" --json "$(codex_prompt)"
+        "$CODEX_BIN" exec --sandbox workspace-write -c approval_policy=never \
+        -C "$CHECKOUT" --json "$(codex_prompt)"
       return $?
       ;;
     claude)
@@ -1030,6 +1411,18 @@ classify_hop() {
     verdict 14 IDENTITY_MISMATCH \
       "identity mismatch after the hop — you asked for task '$TASK', the file's frontmatter now says task: '${after_task:-<absent>}'." \
       "Read the file. The actor rewrote its identity; restore the correct task: line before re-running."
+    return
+  fi
+  # The record the actor left must satisfy the same contract the record it was
+  # handed did. Reading `turn:` alone would accept a hop that dropped `status:`,
+  # broke the status/turn pair, or left the body half-rewritten — and the next
+  # run would then be the one to discover it, one actor too late.
+  local after_out after_rc
+  after_out="$(bash "$CHECKOUT/$STATE_BIN_REL" validate --checkout "$CHECKOUT" --task "$TASK" 2>&1)"
+  after_rc=$?
+  if [ "$after_rc" -ne 0 ]; then
+    verdict 15 BAD_TURN "the state file does not satisfy the state contract after the hop: $after_out" \
+      "Read the file. The actor left it in a shape no consumer may act on; restore or complete it before re-running."
     return
   fi
   case "$after_turn" in
@@ -1217,6 +1610,45 @@ validate_state
 R_BEFORE="$ST_TURN"
 say "initial: turn=$ST_TURN sha256=$(file_hash "$STATE_FILE") head=$(git_head)"
 
+# ------------------------------------------------------- ownership admission
+# The two leases taken above answer "is another run live?". They cannot answer
+# "does this task belong to this checkout?", because a lease dies with its
+# process and a task outlives one. That second question is the durable
+# declaration's, and this surface asks it at REPO depth — it may run git, so
+# unlike interactive Codex it can see the other worktrees of this repository.
+#
+# Two things it catches that nothing else does: the same task already claimed in
+# a DIFFERENT checkout, and a state file REPLICATED across checkouts with no
+# declaration deciding which copy is authoritative. Both are refused here, before
+# an actor is launched and therefore before anything is committed.
+#
+# THIS CHECK FAILS CLOSED. A checkout without the helper, or with one that cannot
+# be read or cannot run, gets exit 35 and launches NOTHING — it does not skip
+# with a visible line. The distinction that matters is between a check that ran
+# and found nothing wrong and a check that never ran: only the first is evidence.
+# The checkouts most likely to lack the helper — older siblings, partial copies —
+# are exactly the ones most likely to hold a conflicting writer.
+#
+# The wording is dispatch.sh's own (its ownership block), not a second vocabulary
+# invented here: one shared contract, one set of words, so an operator who has
+# read one transport's refusal can read the other's. Every stop below goes
+# through die(), which releases both leases on its way out — an ownership refusal
+# must not leave behind a lease that would refuse the next run for a reason that
+# never existed.
+OWNER_HELPER="$CHECKOUT/logs/scripts/work-loop-owner.sh"
+if [ -f "$OWNER_HELPER" ] && [ -r "$OWNER_HELPER" ]; then
+  OWNER_OUT="$(bash "$OWNER_HELPER" check --checkout "$CHECKOUT" --task "$TASK" --depth repo 2>&1)"
+  OWNER_RC=$?
+  case "$OWNER_RC" in
+    0) say "ownership: PROCEED — $(printf '%s' "$OWNER_OUT" | sed -n 's/^reason: //p')" ;;
+    3) die 33 "ownership refused for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: continue the task in the checkout named above, or close it there first. Nothing was launched." ;;
+    4) die 34 "ownership is AMBIGUOUS for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: this is not a failure to work around — decide which checkout owns the task, remove the copies that are not authoritative, and record the owner with \`work-loop-owner.sh claim\`. Nothing was launched." ;;
+    *) die 35 "the ownership check ran and failed (exit $OWNER_RC) in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: ownership is unestablished, so nothing was launched. Fix or replace $OWNER_HELPER, then re-run." ;;
+  esac
+else
+  die 35 "the ownership check is unavailable: $OWNER_HELPER is missing or unreadable in $CHECKOUT"$'\n'"Recoverable next action: ownership cannot be established without it, so nothing was launched and nothing was committed. Copy the helper into this checkout — or run the task in a checkout that carries it — then re-run."
+fi
+
 # Restart safety. Truth comes from the file and Git, never from an in-memory turn.
 if state_dirty; then
   case "$ST_TURN" in
@@ -1237,19 +1669,22 @@ fi
 if [ "$ST_TURN" = "operator" ]; then
   R_AFTER="operator"
   say "turn=operator — stopping for the operator (core § 7). Nothing launched."
-  op_q="$(operator_question)"
-  if [ -n "$op_q" ]; then
+  # WHICH KIND of operator turn this is comes from the validator, not from
+  # guessing at the body. Before the cutover this branch tried the question first
+  # and fell through to a heading comparison, so a blocked record and a closed one
+  # were told apart by what happened to still be in the file. The two are now
+  # different classifications, and the record's `status:` states which it is.
+  if closing_record_ok; then
+    say "The task is CLOSED: the state file carries the closing record and nothing"
+    say "else. There is no unanswered question here."
+    say "The closing record is at $STATE_FILE."
+  else
+    op_q="$(operator_question)"
     say "The question below is UNANSWERED. Neither model nor this script answered it,"
     say "and nothing here is a decision — the operator owns it (core § 7)."
     say "--- state file, as the actors left it ---"
     say "$op_q"
     say "--- end ---"
-  elif closing_record_ok; then
-    say "The task is CLOSED: the state file carries the core § 4 closing record and"
-    say "nothing else. There is no unanswered question here."
-    say "The closing record is at $STATE_FILE."
-  else
-    die 26 "turn: operator, but $STATE_FILE is neither a core § 7 question (no ## Blocker, no ## Next action) nor a core § 4 closing record (its headings are: $(grep -E '^## ' "$STATE_FILE" 2>/dev/null | tr '\n' ' ' | sed 's/ *$//'))."$'\n'"Recoverable next action: read the file. If a hop died mid-write, restore or complete it, then re-run. Nothing was launched."
   fi
   line="$(result_line OPERATOR_TERMINAL 0)"
   say "$line"

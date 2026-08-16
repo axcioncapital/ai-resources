@@ -1,5 +1,6 @@
 ---
 task: work-loop-v2-resource-capability-plan
+status: closed
 turn: operator
 ---
 

@@ -1064,7 +1064,7 @@ research resolving-merge-conflicts wizard to-questionnaire teach improve-codebas
 MATT_PHASE="to-spec to-tickets tdd code-review grilling handoff"
 MATT_HELPER="setup-matt-pocock-skills domain-modeling codebase-design writing-for-agents \
 wait-what ask-matt"
-CLAUDE_ONLY="ask-matt codebase-design diagnosing-bugs grill-with-docs handoff \
+CLAUDE_ONLY="ask-matt codebase-design grill-with-docs handoff \
 improve-codebase-architecture resolving-merge-conflicts to-questionnaire triage wait-what \
 wizard writing-for-agents"
 # Never a route: the router-within-router, the operator-excluded design/motion skills,
@@ -1123,7 +1123,7 @@ live_claude_only() {
   comm -23 <(for d in "$HOME"/.claude/skills/*/; do [ -f "$d/SKILL.md" ] && basename "$d"; done | sort) \
            <(for d in "$HOME"/.codex/skills/*/;  do [ -f "$d/SKILL.md" ] && basename "$d"; done | sort)
 }
-check "ridx  exactly the 12 Claude-side-only skills carry the marker" \
+check "ridx  exactly the 11 Claude-side-only skills carry the marker" \
   "same_set \"\$(marked_idx)\" \"\$CLAUDE_ONLY\""
 check "ridx  the marked set matches the live installations, not just the brief" \
   "[ \"\$(marked_idx | sort | tr '\n' ' ')\" = \"\$(live_claude_only | tr '\n' ' ')\" ]"
@@ -1344,10 +1344,10 @@ check "mode  the Adoption fixture records exactly Adoption" \
   "[ \"\$(mode_of '$MODE_A')\" = Adoption ]"
 # Subshell: `check` evals in the current shell, so a bare `exit` here would kill
 # the harness mid-run — it did, twice, before this was caught.
-check "mode  every mode fixture carries task and turn frontmatter and nothing else" \
+check "mode  every mode fixture carries task, status and turn frontmatter and nothing else" \
   "( for f in '$MODE_D' '$MODE_I' '$MODE_A'; do \
-       [ \"\$(grep -cE '^(task|turn):' \"\$f\")\" = 2 ] || exit 1; \
-       [ \"\$(grep -cE '^[a-z-]+:' \"\$f\")\" = 2 ] || exit 1; done )"
+       [ \"\$(grep -cE '^(task|status|turn):' \"\$f\")\" = 3 ] || exit 1; \
+       [ \"\$(grep -cE '^[a-z-]+:' \"\$f\")\" = 3 ] || exit 1; done )"
 # A Standard unit's named reason may not defeat its own admission. Core § 2: "If the
 # work is small and reversible, it is Direct Work even when one of those is tempting."
 # fixture-mode-implementation opened with "the change is small but ... it needs
@@ -1365,12 +1365,29 @@ check "mode  every mode fixture states a named reason at all" \
 check "mode  no mode fixture's named reason defeats its own admission" \
   "( for f in '$MODE_D' '$MODE_I' '$MODE_A'; do \
        printf '%s' \"\$(reason_of \"\$f\")\" | grep -qiE '$SELF_DEFEATING' && exit 1; done; exit 0 )"
+# The live-task pointer sits in ONE place. Both assertions below read the current
+# open Standard record, which only carries a mode and a named reason while the task
+# is open — a closed record is reduced to the four closing headings and has no
+# `## Lane and unit` at all. When this task closes, repoint this single line at the
+# next open Standard record; leaving it on a closed one makes both checks read an
+# empty string and go red, which is exactly what happened to the retired
+# work-loop-v2-intake-router.md.
+LIVE_TASK_F="logs/work-loop/work-loop-v2-durable-state-system.md"
 check "mode  the live task's named reason does not defeat its own admission either" \
-  "[ -n \"\$(reason_of 'logs/work-loop/work-loop-v2-intake-router.md')\" ] && \
-   ! printf '%s' \"\$(reason_of 'logs/work-loop/work-loop-v2-intake-router.md')\" | grep -qiE '$SELF_DEFEATING'"
+  "[ -n \"\$(reason_of '$LIVE_TASK_F')\" ] && \
+   ! printf '%s' \"\$(reason_of '$LIVE_TASK_F')\" | grep -qiE '$SELF_DEFEATING'"
 
+# The CONTRACT, not one of its instances. This pinned the literal `Implementation`
+# and so went red the moment Unit 10 opened in the legal `Adoption` mode — red on
+# correct behaviour, pointing at nothing wrong. Core § 3 is explicit that the three
+# modes "are not a sequence" and that a later unit may return to a mode an earlier
+# one used, so the live record's mode is expected to CHANGE; what must hold is that
+# it names exactly one, and that the one it names is a member of ALLOWED_MODES.
+# Both halves are load-bearing: membership alone would accept a record naming two
+# legal modes, and exactly-one alone would accept a single invented mode.
 check "mode  the live task's own state file records exactly one legal mode" \
-  "[ \"\$(mode_of 'logs/work-loop/work-loop-v2-intake-router.md')\" = Implementation ]"
+  "[ \"\$(modes_in_lane '$LIVE_TASK_F' | wc -l | tr -d ' ')\" = 1 ] && \
+   printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of '$LIVE_TASK_F')\""
 
 # The four state-file failing cases, DERIVED from the valid fixture so they
 # cannot drift away from it and the live fixtures are never doctored.
@@ -1390,6 +1407,19 @@ check "mode  a state file with TWO modes is rejected" \
 check "mode  an unknown mode is rejected, not silently accepted" \
   "[ \"\$(mode_of \"\$T_UNKNOWN\")\" = Exploration ] && \
    ! printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of \"\$T_UNKNOWN\")\""
+
+# The live-task assertion above needs its OWN negative control, derived from the
+# live record rather than from a fixture: a membership check that never rejects
+# anything would pass whatever the live record said, which is how the literal it
+# replaced managed to be both wrong and green for nine units. Same predicate, one
+# word changed in the record, opposite answer.
+T_LIVE_UNKNOWN=$(mktemp) && \
+  awk '{ if (!d && sub(/[A-Za-z][A-Za-z-]* mode\./, "Exploration mode.")) d=1; print }' \
+    "$LIVE_TASK_F" > "$T_LIVE_UNKNOWN"
+check "mode  NEGATIVE: the live-task check rejects an unknown mode in that same record" \
+  "[ \"\$(modes_in_lane '$T_LIVE_UNKNOWN' | wc -l | tr -d ' ')\" = 1 ] && \
+   [ \"\$(mode_of '$T_LIVE_UNKNOWN')\" = Exploration ] && \
+   ! printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of '$T_LIVE_UNKNOWN')\""
 check "mode  the valid fixture is a legal mode — the control for the three above" \
   "printf '%s\n' \$ALLOWED_MODES | grep -qx \"\$(mode_of '$MODE_D')\""
 

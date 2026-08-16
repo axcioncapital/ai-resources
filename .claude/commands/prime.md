@@ -8,6 +8,28 @@ Orient the session. Read state, brief the operator with a short task menu, wait 
 
 **Output + execution discipline:** The operator is a non-developer — the brief is short, scannable, plain English (short sentences, common words), and shows only what is needed to pick the next task; everything else stays silent unless it needs attention. Orientation's reads are now **two script calls** — Step 0's sync and Step 1's collector — plus Step 4's exception checks. **Batch Steps 0 and 1 into one message**; firing them serially is the main avoidable latency, and the collector resolves its own repo root, so it does not wait on the sync. **One ordering dependency must survive the batching:** Step 4's working-tree `git status` runs *after* Step 0's sync, so it sees post-pull state. Steps 1a–1d, 2 and 5 read `STATE` and issue no calls of their own — a step that finds itself running a `git log`, a `grep` over a log file or a directory listing has re-implemented the collector and should be corrected, not extended.
 
+W. **Work Loop preflight — run this before Step 0, and before anything else.** This checkout may be
+   held by an open Work Loop v2 task, which keeps its own durable state in `logs/work-loop/{task-id}.md`.
+   Orienting a legacy session on top of that starts a **second state system** over the first. Step 0
+   below is already a write — it pulls with `--rebase --autostash`, which moves HEAD and can stash an
+   uncommitted task record — so this gate sits above it, not after it.
+
+   The check is **read-only**: it asks `work-loop-owner.sh` and `work-loop-state.sh` and mutates nothing.
+
+   ```bash
+   bash "$(git rev-parse --show-toplevel)/logs/scripts/work-loop-session-preflight.sh" --command "/prime"
+   ```
+
+   - `verdict: PROCEED` — no valid open Work Loop task owns this checkout (the ordinary case, including
+     a checkout with no Work Loop at all). Continue to Step 0 with behaviour **unchanged**.
+   - `verdict: STOP` — write nothing, run no later step. Give the operator the `route:` and `reason:`
+     lines as printed, then stop.
+
+   **Never work around a STOP.** Do not edit, clear or re-claim `logs/work-loop/.owner`, and do not
+   touch the task record — `/prime` owns neither, and a legacy command repairing Work Loop ownership is
+   the exact confusion this gate exists to prevent. A stale declaration over a `CLOSED` task already
+   returns `PROCEED` on its own; anything else is the operator's to decide.
+
 0. **Sync.** Run the sync owner. It fetches, **skips the pull entirely when the repo is not behind**,
    pulls with `--rebase --autostash`, aborts and restores on a conflicted rebase, classifies the outcome
    and counts unpushed commits — for this repo and for `ai-resources`. The behind-check removes an

@@ -46,11 +46,12 @@ below applies only when it is unavailable.
 
 **Second — a strictly validated checkout declaration.** Only if the exact path
 did not survive, read this checkout's `logs/work-loop/.owner`. It is one
-gitignored line, `{task-id} {YYYY-MM-DD}`. Accept the task id it names **only
-when every one of these passes**:
+gitignored line holding `{task-id}` and nothing else — the claim date was dropped
+at the Tracer 3 cutover, so a two-field line is the retired shape and is not a
+declaration. Accept the task id it names **only when every one of these passes**:
 
-1. The file **exists** and holds exactly one task id and one claim date, in that
-   shape. If there is no declaration, the fallback does not apply — go to
+1. The file **exists** and holds exactly one task id, on one line, with no second
+   field. If there is no declaration, the fallback does not apply — go to
    *Third* and stop. There is no id to validate, and nothing downstream may
    stand in for one.
 2. `logs/scripts/work-loop-owner.sh check --depth local --checkout {pwd} --task {declared-id}`
@@ -61,10 +62,18 @@ when every one of these passes**:
    checkout that declares no writer at all, so a bare `PROCEED` is not evidence
    that a task exists.
 3. `logs/work-loop/{declared-id}.md` exists in this checkout.
-4. That file's frontmatter `task:` is identical to the declared id.
-5. Its `turn:` is present and is one of `claude`, `codex`, `operator`.
-6. `turn:` is not `operator`. A closed task's declaration is stale, not a
-   pointer to resume from.
+4. `logs/scripts/work-loop-state.sh validate --checkout {pwd} --task {declared-id}`
+   exits `0`. That single call establishes identity, the frontmatter, and the
+   body — checks 4 and 5 used to be a hand-rolled `task:`/`turn:` read here, and
+   a private reader that agrees with the validator today is one that can drift
+   from it tomorrow. A non-zero exit, or a validator this checkout does not
+   carry, ends reorientation: lifecycle is unestablished, and there is no second
+   reading to fall back on.
+5. Its classification is `ACTIVE_CLAUDE` or `ACTIVE_CODEX`. `CLOSED` is a stale
+   declaration, not a pointer to resume from — and `BLOCKED_OPERATOR` is not one
+   either: that task is waiting on a decision the operator has not made, so
+   resuming it would step over them. Report which of the two it was; they need
+   different things from the operator.
 
 Any failure stops reorientation with the specific check named. Every check above
 is local to this checkout, reads files only, and runs no git. What keeps the
@@ -185,10 +194,10 @@ the explicit `Next:` instruction for the actor whose turn it actually is.
 - Missing exact task path or checkout binding: try the validated `.owner`
   fallback in Step 2, and stop and ask the operator if any of its checks fails;
   do not search for a likely task either way.
-- A `.owner` declaration that is unreadable, holds more than one id, has no
-  matching state file, or names a closed task: stop and report which check
-  failed. Never repair or delete the declaration from here — this skill is
-  read-only.
+- A `.owner` declaration that is unreadable, holds more than one id, carries the
+  retired second field, has no matching state file, or names a task the validator
+  classifies `CLOSED` or `BLOCKED_OPERATOR`: stop and report which check failed.
+  Never repair or delete the declaration from here — this skill is read-only.
 - Missing or contradictory authority: identify the precise conflict and obtain
   repository evidence or Claude inspection before continuing.
 - Live unattended run: report its status and do not edit task state.

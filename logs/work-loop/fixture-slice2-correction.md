@@ -1,5 +1,6 @@
 ---
 task: fixture-slice2-correction
+status: closed
 turn: operator
 ---
 

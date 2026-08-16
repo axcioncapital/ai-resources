@@ -1,5 +1,6 @@
 ---
 task: fixture-slice3-deescalate
+status: closed
 turn: operator
 ---
 
