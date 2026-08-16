@@ -167,3 +167,5 @@
 | 2026-07-31 | command | /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-g1-reviewed-plan/.claude/commands/work-loop.md | n/a:existing-canonical-resource | — |
 | 2026-08-11 | command | .claude/commands/work-loop-v2.md | n/a:landed-canonical-this-session | — |
 | 2026-08-13 | command | .claude/commands/close-worktree-session.md | triaged:graduate | — |
+| 2026-08-16 | command | .claude/commands/session-start.md | n/a:already-canonical | modified in Tracer bullets 4/5 of the durable-state task (legacy isolation, deployment completeness); this checkout is a worktree of the canonical ai-resources repo, so the edit already lives in the canonical location — same disposition as the work-loop-v2.md entry above |
+| 2026-08-16 | hook | .claude/hooks/auto-sync-shared.sh | n/a:already-canonical | same — modified in Tracer bullet 4, already canonical via this checkout |

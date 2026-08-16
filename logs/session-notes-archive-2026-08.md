@@ -3877,3 +3877,207 @@ That is Codex's move to frame.
 
 ### Open Questions
 None.
+## 2026-08-11 — Bounded-execution fix plan v0.2, three revision rounds
+
+### Summary
+Took the accepted `bounded-execution-fix-plan-v0.1.md` through three operator-directed revision
+rounds into a new `bounded-execution-fix-plan-v0.2.md`: (1) applied six findings from an independent
+SOP-conformance review; (2) incorporated a second incident — a 2026-08-11 eval-repair dispatcher
+timeout — as a verify-first input, adding a new P0 outcome (brief sizing) while explicitly excluding
+the eval task's own content repairs; (3) applied four tightly bounded corrections the operator caught
+in the round-2 result. v0.1 was left unchanged throughout, since its approval is tied to committed
+content. Planning only — nothing implemented, nothing authorized.
+
+### Decisions Made
+- **Two bounded-execution failures, one plan, scope split by system-level vs. content-level.** The
+  operator directed that incident 2 (eval-repair timeout) belongs in the same plan as incident 1 only
+  for its system-level lessons — brief sizing, recovery semantics, evidence-loss pattern. The EV-1
+  through EV-6 content repairs, the staging-hook registry correction, the eval branch's merge
+  readiness, and its stale suite baselines stay out, as evidence of the sizing defect rather than
+  part of the dispatcher fix, and belong to the eval-repair task. Logged separately in
+  `decisions.md`.
+- Every causal claim from both incident reports (postmortem and eval-repair report) is treated as an
+  unverified hypothesis until checked against named run artifacts — carried through all three rounds,
+  not just asserted once.
+- Brief sizing promoted from P1 to P0 (new outcome O5, new unit U11) on the operator's judgment that
+  an oversized unit is the failure mode that makes the other four P0 outcomes unreachable, not a mere
+  refinement.
+- Four SOP-review findings and four round-3 corrections were operator-supplied, not self-identified;
+  applied as scoped, no broader rewrite.
+
+### Risky actions
+None — every change stayed inside the planning artifact; no dispatcher run, no live reproduction, no
+nested AI invocation, no write into either incident checkout (both are read-only evidence sources).
+
+### Next Steps
+The plan's own § 0.4 route step 1 is next: a discovery unit establishing both incidents from
+preserved evidence (read-only, no live reproduction), which is Codex's move to open as a new Work
+Loop v2 unit under the still-open planning task. This session did not open it.
+
+### Open Questions
+None.
+
+## 2026-08-11 — Work Loop v2 Unit 10: landed the concurrent-task-isolation mechanism on canonical main
+
+### Summary
+Ran Unit 10 of `work-loop-v2-concurrent-task-isolation` via `/work-loop-v2`. All four of the
+brief's premises held by inspection, so the nine verified implementation files (separate writable
+checkouts, one visible task owner per checkout, no duplicate logical-task ownership, later-handoff
+checkout reuse) were landed as one commit on canonical `main` (`323b57f` → `0d9e335`), byte-identical
+to the independently verified task branch, without importing branch history or the task state file.
+Both concurrency suites passed from canonical main (owner 92/0, dispatcher 389/0) and unrelated
+uncommitted operator work in canonical was left untouched. Between the hand-back and this wrap,
+Codex assessed and closed the task externally: the case is now **Integrated, awaiting operational
+validation**, with the operator asked to exercise the mechanism on the next genuine pair of
+concurrent Work Loop tasks and report back.
+
+### Decisions Made
+- Landed exactly the nine briefed paths as a single commit, staged by explicit pathspec, rather than
+  a directory-level add — kept canonical's unrelated dirty work untouched.
+- Dropped a self-authored revert-command test that used `git reset --hard`; the permission layer
+  correctly denied it because canonical held uncommitted operator work that command would have
+  destroyed. Used `git revert --no-edit` in the hand-back instead — the safe, non-destructive form.
+- Left the two undeclared `axcion-harness-v0-2-*-monday-prep` state files in canonical untouched and
+  recorded as a deferral — they are a different task's ambiguous ownership state, which the new
+  mechanism correctly refuses to guess at rather than a defect in this landing.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+One command in this session was denied by the permission layer before execution: a self-authored
+revert-command test containing `git reset --hard` against canonical, which held uncommitted operator
+work the command would have destroyed. The denial was correct and no destructive action occurred;
+the test was dropped rather than retried. No other risky action taken or nearly taken.
+
+### Next Steps
+Task `work-loop-v2-concurrent-task-isolation` is closed (Codex's verdict). No further Claude unit is
+open on it. The operator's follow-up is real-world usage: run the mechanism on the next genuine pair
+of concurrent Work Loop tasks in this repository and report whether checkouts, ownership, and
+handoff reuse behaved as intended.
+## 2026-08-11 — Took ownership of an unauthorized Codex commit, then fixed two more review findings
+
+### Summary
+Codex had committed `2511117` on top of `6ab33a2`, implementing review-corrections that were
+Claude's responsibility, without authorization and unpushed. The operator directed independent
+inspection and replacement rather than trusting it. Verified the four fixes were behaviourally
+correct, added one missing regression Codex's own suite never exercised, and replaced the commit
+as `570c4fb`. Two further requests in the same session fixed two remaining review findings
+one at a time — the unattended-profile widening (`7ee93d7`) and the O3 exact-target truncation /
+no-jq gap (`8b9a63d`) — each with a fail-capable regression proven against the pre-fix dispatcher
+and the full harness run green before commit. Nothing pushed.
+
+### Decisions Made
+- **Kept Codex's four fixes rather than reimplementing from scratch**, after independent inspection
+  (harness + hand-written probes targeting cases its own tests didn't cover) found them behaviourally
+  correct. Added the missing regression rather than rewriting working code.
+- **Judged the narrowed no-rerun wording as "sits beside" the existing hard rule, not "contradicts"
+  it** — per the plan's own stop condition, which required stopping if it read as a contradiction.
+  Logged as a decision below given the plan explicitly gated proceeding on this call.
+- **Preserved the malformed git identity (`patriklindeberg75@@gmail.com`) rather than fixing it**,
+  since it is the repo's configured identity and every recent commit already carries it; flagged
+  separately for the operator rather than corrected inline.
+- **Scoped each fix strictly to the named finding**, leaving the fabricated U3 fixture and all
+  remaining low findings untouched across all three requests, per explicit operator instruction each
+  time.
+- **Chose fall-through-on-failure over fall-through-on-absence for the O3 parser tiers** (jq → python3
+  → placeholder): a broken-but-present jq must not be read as "no denials", which was the original
+  defect recurring one layer down.
+- Routine: test-fixture corrections (probe defects, a non-discriminating tail assertion, a vacuous
+  placeholder-absence assertion) were fixed and re-verified rather than left in place, each documented
+  inline in the test file explaining why the first version didn't discriminate.
+
+### Risky actions
+None — every change was independently verified before commit (harness + fail-capable regression
+proof against the pre-fix dispatcher or hand-built mutants), all three commits stayed local per
+explicit operator instruction, and nothing outside the three named files plus README was touched.
+
+### Findings Declined
+- The remaining review findings (standards MEDIUM × 2, spec MEDIUM U3, 4 lows) — declined as new
+  queue items. Not a gap: they are already fully recorded in
+  `audits/working/code-review-6ab33a2-{spec,standards}.md`, and the operator is actively working
+  through them one at a time by explicit instruction each session. Queueing them separately would
+  duplicate a list the operator is already driving.
+
+### Next Steps
+No open task from this session. The plan's own next step is unchanged: a discovery unit for both
+incidents is Codex's move, not Claude's. Remaining review findings, explicitly left untouched:
+standards MEDIUM (contradictory `claude_deny=none` wording; untracked-file recovery instruction),
+spec MEDIUM (fabricated U3 fixture — explicitly off-limits per operator instruction), and four
+low findings (stale README deny-rule sentence, early P1 prohibition, duplicated allowlist logic,
+mislabeled case 31b).
+
+### Open Questions
+None.
+
+## 2026-08-12 — Work Loop v2 bounded-execution: correction round and task closure
+
+### Summary
+Ran Claude's half of Work Loop v2 twice against task `work-loop-v2-bounded-execution-verification`
+— first the one bounded correction round on Codex's three frozen findings, then the closing record
+after Codex returned its close verdict. Two of the three findings were real and are fixed (the exit
+taxonomy in the canonical Work Loop skill, and four statements that wrongly claimed nothing is
+denied without `--claude-deny`). The third did not reproduce: the 15 failing 27-series harness cases
+were control assertions probing whether the host permits process-group inspection, not a merged
+regression, and the full integrated harness is green at `pass=454 fail=0` in the normal supported
+environment. The task closed as technically verified and cleared for its separately authorised
+single attended pilot — which is explicitly not part of this task.
+
+### Decisions Made
+**Correction round (commit `07bcf96`)**
+- Corrected `SKILL.md:277` and `:289` to name exit `37` as the permission dead end, and added `35`
+  as the ownership stop with its own remedy plus a pre-2026-08-11 reading note. SKILL.md was the
+  only live instruction surface still carrying the wrong mapping — the other three
+  bounded-execution surfaces and `docs/parallel-sessions-playbook.md` were already correct.
+- Made no repair for finding 2. The reviewers' failures were control assertions, not dispatcher
+  behaviour, and every one passes here. Repairing a non-defect was rejected.
+- Corrected four deny-policy statements (`dispatch.sh:36`, `dispatch.sh:1382`, `README.md:183`,
+  `README.md:973`) to say that `none` means the operator supplied no extra rule. The default deny
+  set was neither widened nor removed and no containment claim was added.
+- Included the ownership codes `33`,`34`,`35` in SKILL.md's stop-code list rather than only removing
+  the wrong `35`. Naming `35` correctly prevents a future reader re-deriving the retired mapping;
+  the alternative (leave `35` unmentioned) would have been silent rather than wrong.
+
+**Closure (commit `86aace2`)**
+- Wrote Codex's close verdict into the core § 4 closing record without re-judging it, per the
+  command's closing rules. Cleared the checkout declaration in the same move, so the checkout is
+  free for the next task.
+
+**Process decisions**
+- Discarded two harness runs because `dispatch.sh` was edited while they were in flight; run 3 is
+  the only clean one. Reporting a green suite from a mixed run would not have been honest evidence.
+- Declined to add a harness assertion pinning the corrected `claude_deny=none` wording. The
+  correction boundary excluded case 31b and limited the method to static inspection plus one
+  integrated harness run; recorded as a deferral in the closing record instead.
+
+### Risky actions
+None. No destructive git operation, no push, no external write. The two commits are local. The
+`work-loop-owner.sh clear` at closure removes a gitignored declaration and is a no-op on a checkout
+that holds none.
+
+### Findings Declined
+- **Edited `dispatch.sh` while a ~1h harness run was in flight, twice** — cost two discarded runs.
+  Declined rather than queued: it is a session-craft lesson with no repo artifact to fix, and the
+  practice (freeze the files under test before starting a long suite) is recorded in the session
+  scratchpad where the next session will read it.
+- **Backgrounded `sleep N; check` returned its task id instantly**, so progress polling ran
+  immediately instead of waiting — I believed I was polling every 30 minutes while polling every few
+  seconds. Declined for the same reason: no artifact to fix, and the working idiom (a backgrounded
+  `until ! pgrep -f "<proc>"; do sleep 20; done`, which fires one notification on exit) is in the
+  scratchpad.
+
+Findings: 3 — queued 1 (severity: medium), declined 2. 1 + 2 = 3.
+
+### Next Steps
+The next operational step is the **single bounded attended pilot** defined by the governing plan.
+It is separately authorised and was explicitly excluded from this task — the task closed at
+*technically verified*, not *operationally resolved*. Do not read the closed state file as pilot
+authorization.
+
+Before the pilot: nothing outstanding from this session. Two commits await the wrap push gate.
+
+### Open Questions
+None.
