@@ -3468,10 +3468,10 @@ Proposal: author `AGENTS.md` **for Codex** rather than deriving it. It needs onl
 
 ---
 
-## `/run-execution` Step 2.4 delegates to `qc-gate`, which cannot run the skill that step invokes
+## 2026-08-10 — `/run-execution` Step 2.4 delegates to `qc-gate`, which cannot run the skill that step invokes
 
-- **Status:** logged (pending)
-- **Severity:** medium — the step as written is unexecutable as specified; every session running it must either deviate or silently under-run the QC.
+- **Status:** logged (pending) — **re-fired 2026-08-14, third unit. See § Re-fire record.**
+- **Severity:** medium → **raised to high 2026-08-14.** Not on impact-per-instance, which is unchanged, but on recurrence: the defect has now fired on every Step-2.4 run in the batch, and the "worth checking" question below has been answered — it is three defects in three commands, spanning three of the five stages, not one.
 - **Category:** workflow template (`ai-resources/workflows/research-workflow/`) — command body, not the skill
 - **Source:** `axcion-sector-intelligence` / `architecture-engineering-services` worktree, 2026-08-10, hit while running Stage-2 Step 2.4 for unit F6.
 
@@ -3483,9 +3483,53 @@ Proposal: author `AGENTS.md` **for Codex** rather than deriving it. It needs onl
 
 **Scope caution.** Both `qc-gate.md` and `run-execution.md` exist as per-worktree copies mirrored across roughly ten sibling unit worktrees. Fixing either locally creates template drift. The fix belongs upstream in `ai-resources/workflows/research-workflow/` and should then propagate.
 
-**Worth checking while there:** whether any *other* `delegate-qc` step in the workflow names a skill whose declared `allowed-tools` exceed `qc-gate`'s. This is unlikely to be the only instance.
+**~~Worth checking while there:~~ ANSWERED 2026-08-14 — it was not the only instance. There are three.** The audit invited above was run across every `delegate-qc` step in the workflow. Three commands instruct the Read-only `qc-gate` to write a file; the rest correctly use the return-then-orchestrator-writes pattern.
 
-**Target files:** `ai-resources/workflows/research-workflow/.claude/commands/run-execution.md` (Step 2.4 — line 122 on origin/main as of 2026-08-11), and an audit of the other `delegate-qc` steps in the same workflow (lines 15, 56, 123 and 171 also name `qc-gate`).
+| # | Site (canonical, verified 2026-08-14) | Exact defect | Stage |
+|---|---|---|---|
+| 1 | `run-execution.md:122` + `:124` | Line 122 delegates to `qc-gate` and never says the agent *returns* anything; line 124 then says "Write verification report to …" **with no assignee**. The write silently lands on whoever is reading. | 2 · Step 2.4 |
+| 2 | `run-preparation.md:97` | Worse — the write instruction is **inside the delegation sentence**: "delegate to a qc-gate sub-agent, passing: … **Write verdicts to** `/preparation/answer-specs/{section}/answer-specs-qc.md`." Reads unambiguously as the agent's job. | 1 · Step 5 |
+| 3 | `run-analysis.md:87` | Worst — instructs the Read-only agent to "**Write to** …" *and* to "**Return: output file path**", a path it cannot have created. The return contract is unsatisfiable, not merely the write. | 3 · Step 5c |
+
+**The one-line fix, and it needs no invention — the correct pattern is already in the same file.** `run-execution.md:15` (the answer-spec-qc prerequisite) reads: *"Launch a qc-gate sub-agent. Pass it: … Task: apply the QC checks and **return** per-spec verdicts."* — followed by a **separate numbered step**, line 18, where the orchestrator writes. Lines 56 and 171 use the same shape. Apply that shape to the three sites above:
+
+- **`run-execution.md:122`** — append to the sentence: *"… and **return** one verification report per extract, in the skill's Output Format. The agent has no Write access; step 4 is the orchestrator's."*
+- **`run-preparation.md:97`** — split the sentence in two: delegation + *"Task: … and return per-spec verdicts."*, then renumber so the write to `answer-specs-qc.md` is the orchestrator's own step.
+- **`run-analysis.md:87`** — delete `"Write to …"`, drop `"output file path"` from the Return contract, and move the write into step 3 alongside the checkpoint.
+
+**Two further defects found at the same lines, neither previously logged:**
+
+1. **`run-execution.md:122` says "the skill's *five* verification checks." The skill has *seven*.** `research-extract-verifier` SKILL.md line 54: *"Run seven checks per extract, in order. Checks 1–6 always run; Check 7 fires only on a scarcity verdict."* Checks 6 (stop-condition / S-13 reciprocal rule) and 7 (source-surface coverage) were added after the command text was written and the count was never updated. **Both are FLAG-triggering checks** — Check 6 returns `INCOMPLETE-RESEARCH`, Check 7 returns `false-scarcity-flagged`. An agent briefed on "the skill's five checks" that stops at five skips exactly the two checks that catch unearned scarcity verdicts. This is not hypothetical: unit B3's Q1-A04 FLAG was an `INCOMPLETE-RESEARCH` finding — a Check 6 result.
+2. **The Opus/Sonnet tier mismatch is universal, not Step-2.4-specific.** The entry above framed it as a Step 2.4 problem. In fact **all three** QC skills routed through `qc-gate` declare `model: opus` / `effort: high` — `answer-spec-qc`, `editorial-recommendations-qc` and `research-extract-verifier` — while `qc-gate.md` declares `model: sonnet`. The agent's frontmatter wins. So *every* `delegate-qc` step in the pipeline runs its skill a tier below what the skill declares, unless the caller overrides per-call. The "do not re-tier `qc-gate` itself" caution below still stands, but its premise — that only one step is affected — was wrong.
+
+**Target files:** `ai-resources/workflows/research-workflow/.claude/commands/run-execution.md` (lines 122, 124), `…/run-preparation.md` (line 97), `…/run-analysis.md` (line 87). Line numbers verified against canonical at `11e4fb4`, which is level with `origin/main` (0 ahead / 0 behind, no fetch), 2026-08-14. Lines 15, 56 and 171 of `run-execution.md` also name `qc-gate` and are **correct as written** — they are the fix precedent, not defect sites.
+
+### Re-fire record
+
+The entry has existed since 2026-08-10 and the defect has fired on every Step-2.4 run since, because a backlog entry is not read by a session executing the step.
+
+**Measured across all eleven sector-unit worktrees, 2026-08-14 — the recurrence is an order of magnitude larger than this entry recorded.** Every verification report in the batch was written by an orchestrating session, because no `qc-gate` reviewer has ever been able to write one:
+
+Counts below are **own-unit reports only** — each worktree also carries the pilot unit's single `precision-components` report, which is tracked in git and therefore mirrored into all eleven checkouts; it is one report, counted once, not eleven.
+
+| Unit | Own-unit verification reports | Own checkpoints documenting the read-only defect |
+|---|---|---|
+| `architecture-engineering-services` | 18 | 1 |
+| `building-services-install` | 12 | 2 |
+| `technical-industrial-distribution` | 12 | 0 |
+| `vertical-market-saas` | 12 | 1 |
+| `industrial-software` | 10 | 1 |
+| `custom-dev-data-ai` | 8 | 2 |
+| `finance-accounting-bpo` | 7 | 1 |
+| `mobility-forestry-agri-mfg` | 6 | 1 |
+| `managed-it-cloud` | 3 | 0 |
+| `cleantech-equipment` | 2 | 0 |
+| `risk-security-compliance-services` | 0 — has not reached Step 2.4 | 1 (forward-looking) |
+| **Total** | **90** (+1 pilot = **91**) | **10, in 8 of 11 units** |
+
+**The correction that matters for prioritisation.** This is not a defect that fires occasionally and gets rediscovered by an unlucky session. **It has fired 91 times across 10 units that have reached Step 2.4, and eight of eleven units independently diagnosed it and wrote it down.** Three units (`technical-industrial-distribution`, `managed-it-cloud`, `cleantech-equipment`) absorbed 17 reports between them without recording why the write landed on the orchestrator — the deviation there is undocumented, which is the quieter half of the cost. `risk-security-compliance-services` has not yet run Step 2.4 and is the one unit that could still be spared.
+
+**The lesson, beyond the fix.** Sessions that had *already been told* still paid the tax: B3's 2026-08-14 session read the warning in its own Step-2.3b checkpoint before starting and still had to route around it by hand. Eight independent diagnoses did not prevent the ninth. Logging demonstrably does not stop this defect — only correcting the three command bodies does, and the correction is the three one-line rewrites specified above. It is a ~15-minute fix that 91 report-writes have now been spent avoiding.
 
 **Verified against current canonical, 2026-08-11** — not merely against the local checkout, which is 512 commits behind origin. On `origin/main`: `workflows/research-workflow/.claude/commands/run-execution.md` still delegates Step 2.4 to `qc-gate`; `workflows/research-workflow/.claude/agents/qc-gate.md` is still `tools: Read` / `model: sonnet`; `skills/research-extract-verifier/SKILL.md` still declares `model: opus` / `allowed-tools: Read, Write`. The defect is live on canonical, not an artifact of a stale local copy. The same check confirms the ladder-depth finding above: `origin/main:skills/research-extract-creator/SKILL.md` still has zero occurrences of "ladder" or "depth".
 
@@ -3866,3 +3910,125 @@ never patch.
   (`references/routing-index.md`, `references/repository-problem-resolution-sop.md`) show the shape.
 - **Target files:** `.agents/skills/work-loop-v2/SKILL.md`; new siblings under
   `.agents/skills/work-loop-v2/references/`.
+
+---
+
+## `research-extract-verifier` enumerates four stop conditions; the chassis has carried five since 2026-07-14
+
+- **Status:** logged (pending)
+- **Severity:** medium — silent, and it misfires in exactly the direction that damages a thin-yield unit. No current unit is affected; the next one legitimately closing on Condition 5 is.
+- **Category:** shared skill (`ai-resources/skills/research-extract-verifier/`)
+- **Source:** `axcion-sector-intelligence` / `building-services-install` worktree, 2026-08-13, surfaced by the Step-2.4 pass-2 verification and confirmed at the residual-items sweep.
+
+**The finding.** `SKILL.md` Check 6 (Stop Condition Verification, S-13) opens: *"every research subtask must close on one of 4 conditions"*, and enumerates Conditions 1–4 only. The project chassis it cites — `reference/quality-standards.md § Research Stop Conditions` — carries **five**, and states at that section: *"Condition 5 was added 2026-07-14 to close a structural trap, and it is load-bearing. Conditions 1–4 alone are **not exhaustive**."* The skill was not updated when the chassis was re-cut.
+
+**Why it matters rather than just reads oddly.** Check 6 does not merely report the closing condition — it matches the subtask against the enumerated list. A subtask that closes legitimately on Condition 5 matches nothing in the skill's list, so the skill reads it as meeting **no** stop condition and flags `INCOMPLETE-RESEARCH`. That is a false failure on a correctly-executed subtask, and it lands on the thinnest evidence — precisely the case Condition 5 was added to protect. The failure is silent in both directions: a verifier following the skill has no way to see that a fifth condition exists, and the chassis has no way to know the skill is not reading it.
+
+**Not currently biting, which is why it needs logging rather than fixing under pressure.** Every one of `building-services-install`'s twelve extracts closed on Condition 1, so nothing in this unit turned on it. That makes this cheap to fix now and expensive to discover later.
+
+**Proposal.** Add Condition 5 to the Check 6 enumeration and to the candidate-matching steps beneath it, quoting the chassis text rather than paraphrasing. Then add the guard the chassis already uses elsewhere: have Check 6 assert the condition count it read against the chassis, and halt loudly on mismatch instead of flagging the extract — so the next re-cut surfaces as a skill error, not as a false `INCOMPLETE-RESEARCH` on someone's research.
+
+**Worth checking while there:** whether any other skill enumerates the stop conditions independently rather than reading them from the chassis. This is unlikely to be the only copy.
+
+**Target files:** `ai-resources/skills/research-extract-verifier/SKILL.md` (Check 6, ~L108–126).
+
+---
+
+## The deployed `source-class-hierarchy.md` carries the pilot unit's question numbers — the canonical template is clean, so this is a deployment defect
+
+- **Status:** logged (pending)
+- **Severity:** medium-high — it mis-maps nearly every scarce component in a unit that is not the pilot, and it silently affects roughly ten sibling worktrees.
+- **Category:** workflow deployment (`ai-resources/workflows/research-workflow/reference/`) — instantiation step, **not** the template
+- **Source:** `axcion-sector-intelligence` / `building-services-install` worktree, 2026-08-13. Surfaced by both Step-2.4 pass-2 verifiers, then re-diagnosed at the residual-items sweep.
+
+**The finding, and it is not the one first recorded.** The checkpoint logged this as a stale reference file. It is narrower and more actionable than that: **the canonical template `ai-resources/workflows/research-workflow/reference/source-class-hierarchy.template.md` is clean** — verified 2026-08-13, it carries no question numbers at all. The defect is in the *deployed* copy. Each unit worktree appears to have been seeded from the **precision-components pilot's already-instantiated file** rather than from the clean template re-instantiated against that unit's own research plan.
+
+**What it looks like in a non-pilot unit.** In `building-services-install`, the deployed table's "Source Class Hierarchy by Evidence Need" rows read: company existence and ownership → `(Q4)`; named transactions → `(Q5, Q7)`; valuation multiples → `(Q10)`; FDI-screening → `(Q11)`. **None of those match this unit.** Here Q4 is the named-transaction question, the valuation-multiple ceiling sits at Q8-A05, and FDI-screening is Q12. The same rows also read "Finnish **industrials** EV/EBITDA", while this unit's Q6 classified it as B2B technical services rather than industrials.
+
+**Why it matters.** `research-extract-verifier` Check 7 (source-surface coverage) maps a scarce component to its evidence-need row through this table. Fed the pilot's numbering, it mis-maps and produces false-scarcity FLAGs. In this unit every verifier across both passes had to be told explicitly to map by **semantic evidence-need identity** rather than by the printed question number — an instruction that happened to be given, and that nothing in the workflow requires. Unhandled, Check 7 would have mis-mapped nearly every scarce component.
+
+**Proposal.** Two parts, and the second is the one that lasts. **(a)** Re-instantiate the deployed file per unit from the clean template against that unit's own research plan — or, cheaper and probably better, **strip the question numbers from the deployed copies entirely** and let the rows key on evidence-need identity alone, which is how the verifiers were told to read them anyway. **(b)** Fix the instantiation step so a new unit is seeded from `*.template.md` and never from a sibling's instantiated file; a template that is clean at source and dirty at every deployment means the copy step, not the template, is the defect.
+
+**Scope caution.** Roughly ten sibling unit worktrees each hold their own copy. Fixing this one locally strands the correction on one branch — the pattern already on record for this repo. The instantiation fix belongs canonically; the per-unit strip needs a sweep across the worktrees, ideally at one moment when sessions are not live in them.
+
+**Related but distinct, and deliberately not folded in:** `building-services-install`'s own `preparation/answer-specs/.../chapter-02-specs.md` § Q4-A07 still says "Tag BASELINE explicitly", contradicting both its own A03 rule and that unit's Decision G1-3 compound `STRUCTURAL-to-BASELINE` label. That is a unit-local approved Stage-1 artifact and an operator call for that unit, not a shared-resource item — recorded in the unit's Step-2.4 pass-2 checkpoint.
+
+**Target files:** `ai-resources/workflows/research-workflow/reference/source-class-hierarchy.template.md` (verified clean — for reference only); the unit-deployment step that instantiates it; and `reference/source-class-hierarchy.md` in each unit worktree.
+
+---
+
+## 2026-08-14 — Forked 33-line `prime.md` in unit worktrees never allocates a session marker (PENDING)
+
+**Status:** PENDING — logged for the Friday cadence, deliberately not fixed at source this session.
+
+**Symptom.** In `projects/axcion-si-worktrees/architecture-engineering-services`, `/prime` writes no session marker, no `logs/.prime-mtime` and no today-dated `## {date} — Session S{N}` header. `/session-start` Step 3 therefore hits its hard-fail on an unresolved marker, and `/session-plan` Step 0 would hit the same. Observed on 2026-08-13 (S1-e76, worked around by hand-seeding) and 2026-08-14 (S2-dc4, worked around by invoking the canonical allocator directly).
+
+**Verified cause.** `.claude/commands/prime.md` in that worktree is a **33-line regular file dated 2026-07-30 15:06** (the worktree's creation timestamp) with no reference to `prime-session-entry.sh`, `.session-marker*` or `.prime-mtime`. Canonical `ai-resources/.claude/commands/prime.md` is **264 lines** and calls the allocator at **line 159**. The fork predates the marker system and was never updated. It is one of **32 regular files** among 109 entries in that worktree's `.claude/commands/` (the other 77 are symlinks to canonical) — the SessionStart symlink hook does not clobber an existing regular file, so the stale fork is invisible to the drift warning that covers `consult.md` / `note.md` / `session-plan.md`.
+
+**Why this is a guard failure, not an inconvenience.** `S{N}` is allocated from a namespace shared by every worktree of the repo — `prime-session-entry.sh`'s `allocate_marker` unions four sources precisely to see sibling checkouts (committed headers on other refs via (c), in-flight claims in the shared git common dir via (d)). With no allocation:
+1. Two live worktree sessions can write the same `## {date} — Session S{N}` header, colliding on merge and breaking the `grep -Fxq` header-existence test that `/prime`, `/session-start` and `/session-plan` all depend on. This is the 2026-07-13 S6/S11 incident class, which (c) and (d) were added to close.
+2. **The workaround is the sharper risk.** Hand-seeding can produce the partial state — shared `logs/.session-marker` written, per-id `logs/.session-marker-${CLAUDE_CODE_SESSION_ID}` not — that `docs/session-marker.md` documents as yielding a silent `FOREIGN=0` false negative in `/wrap-session` Step 3.5's foreign-write detection. The guard then reports clean while disarmed. This is a **both-or-neither invariant violation**, and the doc is explicit that it is not closable reader-side.
+
+**Scope — asserted only as far as verified.** Confirmed in `architecture-engineering-services` only. A memory note dated 2026-08-13 states the same fork is present in all eleven unit checkouts; **that is unverified here** and should be checked per-worktree before any propagation, not assumed.
+
+**Proposed fix (two parts, different tiers).**
+- *Per-worktree, trivial:* replace the forked `prime.md` with a symlink to canonical, as the other 77 commands already are. Seconds per checkout; removes the manual workaround permanently.
+- *Systemic, Friday-cadence:* (a) decide whether the SessionStart symlink hook should report — not silently skip — a shared command shadowed by a stale regular file, since that is exactly how this stayed invisible; (b) audit the other 31 regular files in that worktree's `.claude/commands/` for the same shadowing; (c) fold into the standing propagation guidance that `CLAUDE.md` and forked command files are the two things a narrow copy gets wrong in opposite directions (see the 2026-08-13 `CLAUDE.md` identity-overwrite incident).
+
+**Source:** `projects/axcion-si-worktrees/architecture-engineering-services/logs/session-notes.md`, sessions S1-e76 (2026-08-13) and S2-dc4 (2026-08-14).
+
+## 2026-08-14 — `executor-routing-guide.md` has no canonical copy anywhere, and one unit worktree does not hold it at all (PENDING)
+
+**Status:** PENDING — logged for the Friday cadence. The rule change itself is operator-ruled and applied in one worktree; the canonical propagation is gated by CLAUDE.md Autonomy Rules #8/#9 and deliberately not applied here.
+
+**Symptom.** Two current project reference documents in the sector-intelligence programme gave **opposite instructions** about what may be done with Perplexity output. `reference/executor-routing-guide.md` (v1.0, 2026-08-04): *"Perplexity citations have a known error rate; a Perplexity answer is a lead, not an accessed source. Every load-bearing claim still requires the executor to open the underlying source."* `reference/stage-instructions.md` Step 2.S4, *Merge Supplementary Evidence*: merges Perplexity output into APPROVED Research Extracts and lets it move coverage verdicts. Neither document cites the other; 2.S4 predates the guide.
+
+**Why it matters, with evidence.** The `finance-accounting-bpo` unit produced two first-hand cases in one week that Step 2.S4 as written would have installed as evidence on sources nobody opened:
+1. **An unreached domain.** The approved pass-1 query brief said `administergroup.fi`; the company's actual domain is `administergroup.com`. Administer's own filings were never reached — a retrieval gap that would have merged as a scarcity finding.
+2. **An unindexed repository.** Perplexity returned nothing from `tem.fi`, `toimialaraportit.fi` or `julkaisut.valtioneuvosto.fi` across two attempts, with and without a domain filter, while two ordinary web searches found `Taloushallintoalan toimialaraportti 2019` (TEM julkaisuja 2019:50) immediately. This is the dangerous direction — it runs toward a **confirmed scarcity** entry, which is harder to reverse than a missing claim and leaves no downstream trace.
+
+**Operator ruling, 2026-08-14: the guide governs.** Step 2.S4 gains a source-opening precondition — a MERGE/PARTIAL verdict authorises a merge only after an executor has opened the underlying source; unopened material merges as a `[SUPPLEMENTARY — LEAD]` pointer with no Claim ID, no Strength, no Evidence lens and no coverage-verdict movement. The guide gains the reciprocal statement plus a **Perplexity-negative-≠-absence** rule. Applied on `unit/finance-accounting-bpo` across three files (`stage-instructions.md`, `executor-routing-guide.md`, `quality-standards.md:96`).
+
+**The propagation problem — this is the part that needs the cadence.** The two files do not propagate the same way, and one cannot propagate at all.
+- `stage-instructions.md` **has an inheritance path.** Canonical template at `ai-resources/workflows/research-workflow/reference/stage-instructions.md`; ten of eleven unit worktrees hold byte-identical copies (md5 `3093da5e…`). Edit canonical once → `/sync-workflow`. **Caveats:** `risk-security-compliance-services` has diverged (md5 `1018b93f…`) and needs its 2.S block checked by hand; and the canonical template already differs from all eleven worktrees (SessionStart reports drift across 8 files), so the sync carries unrelated changes and must be reviewed, not applied blind.
+- `executor-routing-guide.md` **has no canonical copy.** It does not exist in `ai-resources/workflows/research-workflow/reference/`. Ten worktrees hold identical copies (md5 `642ec2c8…`) and **`industrial-software` does not hold the file at all** — that unit is running Stage-2 executor routing with no routing guide. **This is true independently of the ruling above and is the more urgent half.** Proposed: promote the guide into the workflow template first, edit it there, then sync all eleven — which closes the `industrial-software` gap as a side effect.
+- `quality-standards.md` is a per-worktree reference file with the same problem and should ride the same sync rather than be fixed eleven times.
+
+**Also found while the file was open.** `executor-routing-guide.md`'s routing table and routing-test question 3 both scoped their niche-surface rule to **German** official/legal sources — carried over from a German-market project, in a programme whose `Country set` is `[Finland]`. It had already been cited as generic authority for "official/legal surfaces → Research GPT," which is the right conclusion read through a row that names the wrong country. Generalised to the project's country set (plus government publication repositories) in the F2 copy; the same edit is owed wherever the guide lands canonically.
+
+**Ordering note.** This and the pending `stage-instructions.md` Evidence-Pack reconciliation (P4) both edit the same canonical file. Land them in one pass, not two.
+
+**Source:** `projects/axcion-si-worktrees/finance-accounting-bpo` — `reports/executor-routing-vs-2s4-conflict-v1.md` (full write-up with the drafted wording), `logs/decisions.md` F2-21/F2-22, `roadmap/pre-batch-propagation-checklist.md` **P10**.
+
+## 2026-08-14 — Measured: a third of one sector unit's deep citation permalinks are dead four days after delivery; the Evidence Pack lane has no Source Log (PENDING)
+
+**Status:** PENDING — logged for the Friday cadence and for the Phase-A re-evaluation gate. No repair applied anywhere; the disposition below is a standing operator decision, not a backlog item awaiting someone's time.
+
+**Symptom, measured.** The `cleantech-equipment` (C3) sector-intelligence unit ran a systematic resolve-only sweep across its Research Extract citations — 22 URLs drawn positionally (positions 5, 14, 23, 32, 41 of each pack's numbered source list) across the eight packs that had failed an earlier check. Split by URL depth before execution, because shallow addresses resolve almost regardless of whether anyone opened them:
+
+- **Deep permalinks — 4 of 12 dead (33%).** The headline.
+- Shallow (root or standing page) — 2 of 9 dead (22%), plus 1 WAF-blocked.
+- Overall — 6 of 21 dead (29%), excluding one host known to serve bot challenges.
+
+The packs were delivered **2026-08-10** and swept **2026-08-14**. A live citation set does not decay at 33% in four days. An earlier pass over 33 URLs had returned 4 hard 404s (~12% blended, all deep permalinks); the depth-corrected rate is near three times that.
+
+**Why it reads as "citations written without the page being opened" and not as link rot.** Three independent lines:
+1. The deep rate itself, four days after delivery.
+2. **Two of the nine shallow URLs are also dead** — `…/company/` and `…/references/`, exactly the paths a writer *constructs* by pattern rather than visits. The shallow set was the control group and should have been near-clean.
+3. **One row carries the signature outright.** A claim quotes Sulzer's 2025 provisions — CHF 92.5m warranties/liabilities, CHF 12.2m environmental. Both figures are **correct** and sit in the real Note 25. The URL actually cited resolves to a live page: "7 Employee benefit plans", an unrelated note carrying neither figure. The content was obtained; the address was not transcribed from what was opened. The earlier pass found the same shape twice more (Vahterus, Terex): right facts, dead address, correct content at a different official URL.
+
+**Root cause is a lane property, not a unit defect.** The Evidence Pack delivery lane ships **no Source Log** — flagged 2026-08-10 as the lane's highest-leverage gap and still open. Without one, nothing distinguishes an opened source from a constructed address. This sweep is the first instrument that has tested it directly.
+
+**Scale.** 13 confirmed defective citation instances on C3 (7 with a repair in hand, 6 never cured because the sweep was resolve-only). Indicated lane-wide load: **~29% of roughly 191 URLs — on the order of 50–55 dead citations** in that unit's failing packs. Stated as an indication, not a measurement.
+
+**Disposition — all 13 repairs WITHHELD, standing (Decision C3-10, operator, 2026-08-14).** Repairing the seven with cures would produce an extract set that *reads* as checked while most of it has never been pulled, with nothing on the page telling a later reader which is which. Cures are recorded durably, so deferral is cheap. **Not to be applied at Stage 3, Stage 4, or on a later checkpoint pass without a fresh operator decision at the gate.**
+
+**Why this is here and not only in the unit's worktree — this is the cadence-relevant half.** Every one of the eleven Phase-A sector units came through the **same Evidence Pack lane with the same missing Source Log**, and **nine of eleven have never had a single citation URL pulled**. The one partial comparison (`managed-it-cloud`, zero hard 404s across 26 URLs) was not drawn from its own source registers and is not a valid control. So the open questions are batch-level:
+1. **Is a citation-integrity check a precondition for any unit entering Stage 3, or does the programme accept the lane's citations as delivered?** A "no" is legitimate — every fact re-derived during the check came back correct — but it should be a decision on the record, not a default.
+2. **If yes, at what width?** Cheapest discriminator first: **one properly-drawn resolve-only sweep on a second unit**, reusing C3's draw rule verbatim. That settles lane-wide versus C3-specific for a fraction of the cost of the full ~191-URL sweep, which stays deferred.
+
+**What this does NOT claim** — stated because the headline number is easy to over-read: it is **not** a measured lane-wide rate (one unit, positional draw, ten units unmeasured); it does **not** say any fact is wrong (the failure is address integrity, not factual accuracy — every re-derived figure held); it moved **no** verdict (C3's extract-grade gate is separately MET at 11 of 11 APPROVED and untouched); and it says nothing about **claim over-reach**, a class no URL-resolution check can detect — three such findings are confirmed on C3 and a clean resolve rate would not have cleared them. That class remains uninstrumented programme-wide.
+
+**Filed on two surfaces, deliberately** — same pattern as P10 above. The full basis lives at `projects/axcion-si-worktrees/cleantech-equipment/roadmap/citation-integrity-read-cleantech-equipment-v1.md`, which is stranded on `unit/cleantech-equipment` until C3 merges. This entry is the copy that will actually be read.
+
+**Source:** `projects/axcion-si-worktrees/cleantech-equipment` — `roadmap/citation-integrity-read-cleantech-equipment-v1.md` (the gate-input read, full basis), `execution/extract-verification/cleantech-equipment/cleantech-equipment-codex-spotcheck-record-pass2.md` (raw record), `execution/checkpoints/cleantech-equipment/cleantech-equipment-codex-spotcheck-sampling-list-pass2.md` (reusable draw rule), `logs/decisions.md` C3-6/C3-9/**C3-10**.
