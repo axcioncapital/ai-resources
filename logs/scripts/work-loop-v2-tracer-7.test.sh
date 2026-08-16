@@ -218,7 +218,10 @@ EOF
 }
 
 classify()     { bash "$1/logs/scripts/work-loop-state.sh" validate --checkout "$1" --task "$2" 2>&1; }
-declare_owner(){ printf '%s\n' "$2" >"$1/logs/work-loop/.owner"; }
+# mkdir first: `git rm` of the last record in logs/work-loop removes the now-empty
+# directory, and a declaration is written into a checkout that may legitimately
+# store no record at all.
+declare_owner(){ mkdir -p "$1/logs/work-loop"; printf '%s\n' "$2" >"$1/logs/work-loop/.owner"; }
 owner_of()     { [ -f "$1/logs/work-loop/.owner" ] && tr -d '\n' <"$1/logs/work-loop/.owner" || printf '(none)'; }
 # Sets OWNV (verdict word) and OWNRC (exit). The verdict word is read off the
 # helper's own `verdict:` line rather than inferred from the exit code, so a
@@ -634,51 +637,118 @@ scenario 6 "explicit task migration ends with one owner; an interruption leaves 
 # ==========================================================================
 # The accepted migration sequence (frozen plan, exceptional-migration procedure):
 # commit and validate the source state, validate the target checkout and
-# repository-depth ownership, transfer the declaration, then verify exactly one
-# bound checkout. Both cut points are exercised.
+# repository-depth ownership, transfer the owner under the ownership mutation
+# guard, then verify exactly one bound checkout. An interruption must fail closed.
+#
+# THE RECORD IS NEVER COPIED, AND IT DOES NOT LIVE IN BOTH PLACES. The plan says
+# in one sentence that copying a live state file is not a repair, and the owner
+# helper says in another that replicated copies authorise nobody. Together those
+# settle what a migration actually is: the DURABLE RECORD MOVES THROUGH GIT —
+# committed onto the target's branch and removed from the source's — and the
+# declaration follows it through the helper. A migration that leaves the record
+# on both branches cannot complete, by design, and the interrupted half below is
+# exactly that state.
+#
+# An earlier draft got this wrong twice over: it wrote the record uncommitted and
+# `cp`-ed it into the target, and its "completed migration" then claimed from a
+# target that was already declaring the task, so it never exercised a real claim
+# at all. Both are fixed here.
 S6B="$(new_base)"
 S6W1="$(add_worktree "$S6B" s6src)"
 S6W2="$(add_worktree "$S6B" s6dst)"
-open_record "$S6W1" s6-task active claude nocommit
-cp "$S6W1/logs/work-loop/s6-task.md" "$S6W2/logs/work-loop/s6-task.md"
-declare_owner "$S6W1" s6-task
+open_record "$S6W1" s6-task active claude          # committed on the SOURCE branch only
+S6COMMIT="$(git -C "$S6W1" rev-parse HEAD)"
+S6BLOB="$(git -C "$S6W1" rev-parse "HEAD:logs/work-loop/s6-task.md")"
 S6_OWNERS() { printf 'src=%s dst=%s' "$(owner_of "$S6W1")" "$(owner_of "$S6W2")"; }
+
+# STEP 1 — COMMIT AND VALIDATE THE SOURCE STATE. Committed is asserted from Git
+# rather than assumed: the record must be reachable from the source's own HEAD,
+# and its working tree must carry no uncommitted edit to it. A live, half-written
+# record is precisely what may not be transferred.
+git -C "$S6W1" cat-file -e "HEAD:logs/work-loop/s6-task.md" 2>/dev/null \
+  && ok "S6    source: the record is reachable from the source HEAD" \
+  || bad "S6    source: the record is reachable from the source HEAD"
+expect_eq "" "$(git -C "$S6W1" status --porcelain -- logs/work-loop/s6-task.md)" \
+  "S6    source: no uncommitted edit to the record"
+expect_eq "ACTIVE_CLAUDE" "$(classify "$S6W1" s6-task)" "S6    source: the state validates"
+
+# STEP 2 — VALIDATE THE TARGET CHECKOUT AND REPOSITORY-DEPTH OWNERSHIP. Before
+# the move the target has no record at all — neither in its HEAD nor in its
+# working tree — and repository-depth ownership says so in as many words.
+git -C "$S6W2" cat-file -e "HEAD:logs/work-loop/s6-task.md" 2>/dev/null \
+  && bad "S6    target: the record is NOT in the target before the move" "it is in the target HEAD" \
+  || ok "S6    target: the record is NOT in the target before the move"
+[ -f "$S6W2/logs/work-loop/s6-task.md" ] \
+  && bad "S6    target: no live copy sits in the target working tree" "the file is there" \
+  || ok "S6    target: no live copy sits in the target working tree"
+declare_owner "$S6W1" s6-task
+own "$S6W2" s6-task repo
+expect_eq "REFUSE" "$OWNV" "S6    target: repository-depth ownership refuses the target before the move"
+expect_has "$OWNOUT" "$S6W1" "S6    target: and the refusal names the source as the owner"
 
 # BEFORE — one owner, the source.
 expect_eq "src=s6-task dst=(none)" "$(S6_OWNERS)" "S6    before: exactly one declaration, in the source"
-own "$S6W2" s6-task repo
-expect_eq "REFUSE" "$OWNV" "S6    before: the target may not act on the replica"
 
-# INTERRUPTION AT CUT POINT A — cleared in the source, not yet claimed in the
-# target. Two copies, no declaration: fail-closed and visible from both sides.
+# STEP 3 — TRANSFER, WITH AN INJECTED INTERRUPTION IN THE MIDDLE. The declaration
+# is released by the shipped helper (which takes the mutation lock internally),
+# then the record is committed onto the target branch by cherry-picking its own
+# commit. The interruption is a crash right here: the record is now on BOTH
+# branches and nothing declares it.
 own "$S6W1" s6-task repo clear
-expect_eq "src=(none) dst=(none)" "$(S6_OWNERS)" "S6    interrupted: the declaration is gone from both sides"
+expect_eq "PROCEED" "$OWNV" "S6    transfer: the source declaration is released by the helper"
+S6CP="$(git -C "$S6W2" cherry-pick "$S6COMMIT" 2>&1)"
+[ -f "$S6W2/logs/work-loop/s6-task.md" ] \
+  && ok "S6    transfer: the record's own commit lands on the target branch" \
+  || bad "S6    transfer: the record's own commit lands on the target branch" "$S6CP"
+
+# INTERRUPTED — visible, fail-closed ambiguity from both sides. This is the state
+# the plan requires to stop rather than resolve itself.
+expect_eq "src=(none) dst=(none)" "$(S6_OWNERS)" "S6    interrupted: no checkout declares the task"
 own "$S6W1" s6-task repo
-expect_eq "AMBIGUOUS" "$OWNV" "S6    interrupted: the source now reads AMBIGUOUS"
+expect_eq "AMBIGUOUS" "$OWNV" "S6    interrupted: the source reads AMBIGUOUS"
 own "$S6W2" s6-task repo
 expect_eq "AMBIGUOUS" "$OWNV" "S6    interrupted: the target reads AMBIGUOUS too"
 expect_rc 4 "$OWNRC" "S6    interrupted: exit 4, the operator names the owner" "$OWNOUT"
-
-# INTERRUPTION AT CUT POINT B — claimed in the target before the source was
-# cleared. Two declarations: also fail-closed, and distinguishable in its reason.
-declare_owner "$S6W1" s6-task
-declare_owner "$S6W2" s6-task
-own "$S6W2" s6-task repo
-expect_eq "AMBIGUOUS" "$OWNV" "S6    interrupted the other way: two declarations, ambiguous"
-expect_has "$OWNOUT" "more than one checkout" "S6    and the reason names the double claim"
-
-# COMPLETED MIGRATION — source cleared, target claimed, exactly one owner.
-own "$S6W1" s6-task repo clear
+expect_has "$OWNOUT" "replicated copies authorise nobody" "S6    interrupted: the reason names the two copies"
+# And neither side may resolve it by claiming — which is what makes it fail
+# closed rather than merely noisy.
 own "$S6W2" s6-task repo claim
+expect_eq "AMBIGUOUS" "$OWNV" "S6    interrupted: the target may not claim its way out"
+expect_eq "(none)" "$(owner_of "$S6W2")" "S6    interrupted: the refused claim wrote nothing"
+
+# COMPLETE THE MOVE — remove the record from the source branch, so exactly one
+# checkout stores it. Only now can the transfer finish.
+git -C "$S6W1" rm -q "logs/work-loop/s6-task.md" >/dev/null 2>&1
+git -C "$S6W1" commit -qm "migrate: the record moves to the target checkout" >/dev/null 2>&1
+own "$S6W2" s6-task repo claim
+expect_eq "PROCEED" "$OWNV" "S6    transfer: the target takes the declaration through the helper"
+
+# STEP 4 — VERIFY EXACTLY ONE BOUND CHECKOUT.
 expect_eq "src=(none) dst=s6-task" "$(S6_OWNERS)" "S6    after: exactly one declaration, in the target"
 own "$S6W2" s6-task repo
 expect_eq "PROCEED" "$OWNV" "S6    after: the target proceeds"
 own "$S6W1" s6-task repo
-expect_eq "REFUSE" "$OWNV" "S6    after: the source refuses and names the new owner"
-expect_has "$OWNOUT" "$S6W2" "S6    the refusal points at the migrated-to checkout"
+expect_eq "REFUSE" "$OWNV" "S6    after: the source refuses"
+# The durable record moved intact: the target's committed blob is byte-identical
+# to the one the source validated in step 1, and the source no longer stores it.
+expect_eq "$S6BLOB" "$(git -C "$S6W2" rev-parse "HEAD:logs/work-loop/s6-task.md")" \
+  "S6    after: the target carries the identical committed record"
+git -C "$S6W1" cat-file -e "HEAD:logs/work-loop/s6-task.md" 2>/dev/null \
+  && bad "S6    after: the source no longer stores the record" "it is still in the source HEAD" \
+  || ok "S6    after: the source no longer stores the record"
+expect_eq "ACTIVE_CLAUDE" "$(classify "$S6W2" s6-task)" "S6    after: the migrated record still validates"
 
-# CONTROL — the source may not take the task back by clearing the target's
-# declaration from a distance. `clear` refuses another checkout's declaration.
+# INTERRUPTION AT THE OTHER CUT POINT — claimed in the target before the source
+# was cleared. Two declarations: also fail-closed, and distinguishable by reason.
+declare_owner "$S6W1" s6-task
+own "$S6W2" s6-task repo
+expect_eq "AMBIGUOUS" "$OWNV" "S6    interrupted the other way: two declarations, ambiguous"
+expect_has "$OWNOUT" "more than one checkout" "S6    and the reason names the double claim"
+rm -f "$S6W1/logs/work-loop/.owner"
+
+# CONTROL — a checkout that declares nothing cannot clear the target's
+# declaration from a distance. Without this, "exactly one owner" could just mean
+# any caller can delete any declaration.
 own "$S6W1" s6-task repo clear
 expect_eq "s6-task" "$(owner_of "$S6W2")" "S6    control: the target's declaration survives a foreign clear"
 close_scenario
