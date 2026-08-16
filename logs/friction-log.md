@@ -353,6 +353,17 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 23:24 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/bb326ec5-d6b6-4037-b1d3-481283533af5/scratchpad/falsify.sh
+- 23:24 — logs/scripts/work-loop-capability.test.sh
+- 23:23 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/bb326ec5-d6b6-4037-b1d3-481283533af5/scratchpad/step0-proof.sh
+- 23:23 — .claude/commands/work-loop-v2.md
+- 23:17 — .agents/skills/work-loop-v2/SKILL.md
+- 23:17 — .agents/skills/work-loop-v2/SKILL.md
+- 23:17 — .agents/skills/work-loop-v2/SKILL.md
+- 22:53 — skills/CATALOG.md
+- 22:53 — skills/CATALOG.md
+- 22:53 — skills/CATALOG.md
+- 22:52 — /Users/patrik.lindeberg/.claude/skills/LOCAL-MODIFICATIONS.md
 - 10:42 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.gitignore
 - 10:41 — .gitignore
 - 10:41 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/.gitignore

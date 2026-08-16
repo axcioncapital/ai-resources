@@ -280,6 +280,38 @@ grep -qi 'NOT_APPLICABLE' "$CMD_F" \
   && ok "B1    the command distinguishes NOT_APPLICABLE from INCOMPLETE" \
   || bad "B1    the command distinguishes NOT_APPLICABLE from INCOMPLETE"
 
+# --- B1b Step 0 asks for drift, not just presence ---------------------------
+# A9 proves the script answers READY on a drifted checkout when --canonical is
+# withheld. That is correct script behaviour and a silent hole in the entry
+# command, which withheld it: the deployed helper copies are the components most
+# able to be present and wrong, and Step 0 is the only gate that sees them before
+# a unit opens. The two deployment commands already pass --canonical; the entry
+# command did not until 2026-08-16.
+grep -q -- '--canonical' "$CMD_F" \
+  && ok "B1b   Step 0 passes --canonical, so drift is compared and not assumed" \
+  || bad "B1b   Step 0 passes --canonical, so drift is compared and not assumed" \
+         "presence-only at Step 0 reports READY on a stale helper copy (see A9)"
+
+# Resolved, never hardcoded. An absolute path baked into the command breaks the
+# moment the workspace is moved, cloned or checked out elsewhere — and it would
+# break silently, degrading to the presence-only hole this assertion closes.
+if grep -q 'ai-resources/.claude/commands' "$CMD_F" && grep -q 'dirname' "$CMD_F"; then
+  ok "B1b   Step 0 resolves the canonical source by walking ancestors"
+else
+  bad "B1b   Step 0 resolves the canonical source by walking ancestors" \
+      "expected the same ancestor walk the SessionStart sweep uses"
+fi
+grep -qE '^\s*CANONICAL="?/Users|^\s*CANONICAL="?/home' "$CMD_F" \
+  && bad "B1b   Step 0 does not hardcode an absolute canonical path" \
+         "a machine-specific path was found in the Step 0 block" \
+  || ok "B1b   Step 0 does not hardcode an absolute canonical path"
+
+# An unresolved canonical must stay visible rather than silently becoming a
+# presence-only pass reported as an unqualified READY.
+grep -q 'UNRESOLVED' "$CMD_F" \
+  && ok "B1b   Step 0 names the unresolved-canonical case instead of hiding it" \
+  || bad "B1b   Step 0 names the unresolved-canonical case instead of hiding it"
+
 # --- B2 /sync-workflow checks the capability, not two of its five parts -----
 grep -q 'work-loop-capability.sh' "$SYNC_F" \
   && ok "B2    /sync-workflow calls work-loop-capability.sh" \
