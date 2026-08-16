@@ -4634,6 +4634,85 @@ partial_section "$OUT" | grep -Fq "$IMPL" \
   && ok "post-hop validate_state failure reports the allowed implementation edit" \
   || bad "post-hop validate_state failure reports the allowed implementation edit" "$OUT"
 
+# ============================================ Tracer 4 — legacy isolation
+#
+# These two cases are the ONLY thing standing behind "the dispatcher no longer
+# touches legacy session state". They are written to fail against the PRE-Tracer-4
+# dispatcher, which is what makes them evidence rather than description:
+#
+#   Case 48  pre-change, init_session_identity() ran prime-session-entry.sh and
+#            appended a `- Files in scope:` bullet to logs/session-notes.md
+#            before hop 1, so every one of its four assertions failed.
+#   Case 49  pre-change, allowlisted_dirty() carried a hardcoded
+#            `[ "$p" = "logs/session-notes.md" ] && continue`, so the path was
+#            filtered out of partial-effect accounting and the assertion failed.
+#
+# Both were confirmed failing against the pre-change dispatcher before the change
+# landed; see this task's record for the exact counts.
+
+echo
+echo "Case 48 — Tracer 4: a run in a checkout that CARRIES the legacy session infrastructure writes no legacy session state"
+d="$(new_sandbox)"; state_file "$d" "legacy-isolation-task" "claude"
+# The sandbox is deliberately the DANGEROUS shape: it carries an executable
+# allocator, exactly like a real checkout. The pre-change dispatcher skipped its
+# init only when the allocator was ABSENT, so a sandbox without one would have
+# passed this case for the wrong reason and proved nothing.
+ENTRY_CALLS="$d/entry-calls.txt"
+cat >"$d/logs/scripts/prime-session-entry.sh" <<EOF
+#!/bin/bash
+# Stub allocator. Records that it was called AT ALL, then behaves like the real
+# one so that a dispatcher which calls it succeeds rather than failing closed —
+# a stub that errored would let this case pass on the allocator's failure
+# instead of on the dispatcher's silence.
+#
+# It writes logs/.session-marker because the REAL allocator does
+# (logs/scripts/prime-session-entry.sh, writer invariant at its line 194). A
+# stub that skipped that write would make the ".session-marker was not created"
+# assertion below pass against the pre-change dispatcher too — i.e. not evidence.
+printf 'called\n' >>"$ENTRY_CALLS"
+printf '%s 1\n' "\$(date '+%Y-%m-%d')" | tee logs/.session-marker
+EOF
+chmod +x "$d/logs/scripts/prime-session-entry.sh"
+printf '# Session Notes\n\n## 2026-01-01 — Session 1\n**Work:** a stranger session.\n' >"$d/logs/session-notes.md"
+git -C "$d" add logs/scripts/prime-session-entry.sh logs/session-notes.md >/dev/null 2>&1
+git -C "$d" commit -qm "legacy session infrastructure" >/dev/null 2>&1
+NOTES_BEFORE="$(cat "$d/logs/session-notes.md")"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task legacy-isolation-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "48 — the hop completes" "$OUT"
+[ ! -f "$ENTRY_CALLS" ] \
+  && ok "48 — prime-session-entry.sh was never invoked" \
+  || bad "48 — prime-session-entry.sh was never invoked" "called $(wc -l <"$ENTRY_CALLS" 2>/dev/null) time(s)"
+[ "$(cat "$d/logs/session-notes.md")" = "$NOTES_BEFORE" ] \
+  && ok "48 — logs/session-notes.md is byte-identical after the run" \
+  || bad "48 — logs/session-notes.md is byte-identical after the run" "$(git -C "$d" diff -- logs/session-notes.md)"
+[ ! -e "$d/logs/.session-marker" ] \
+  && ok "48 — no logs/.session-marker was created" \
+  || bad "48 — no logs/.session-marker was created" "$(cat "$d/logs/.session-marker")"
+printf '%s' "$OUT" | grep -q 'identity:' \
+  && bad "48 — the run log carries no session-identity line" "$(printf '%s' "$OUT" | grep 'identity:')" \
+  || ok "48 — the run log carries no session-identity line"
+
+echo
+echo "Case 49 — Tracer 4: an uncommitted logs/session-notes.md inside the allowlist is REPORTED, not hidden"
+# The complement of case 48. Once the dispatcher stops writing session-notes.md,
+# any uncommitted edit to it is somebody else's work, and hiding it from
+# partial-effect accounting would be the false statement O2 exists to remove.
+# The path reaches the allowlist here only because this case passes it
+# explicitly — which is the whole point: the operator asked for it to be in scope.
+d="$(new_sandbox)"; state_file "$d" "notes-partial-task" "claude"
+printf '# Session Notes\n' >"$d/logs/session-notes.md"
+git -C "$d" add logs/session-notes.md >/dev/null 2>&1
+git -C "$d" commit -qm "seed session notes" >/dev/null 2>&1
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task notes-partial-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/session-notes\.md$' \
+      --actor-cmd 'printf "an uncommitted edit\n" >> "$WL_CHECKOUT/logs/session-notes.md"; awk "/^turn: /&&!d{print \"turn: broken\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+expect_rc 15 "$RC" "49 — malformed post-hop state exits 15" "$OUT"
+partial_section "$OUT" | grep -Fq "logs/session-notes.md" \
+  && ok "49 — the uncommitted session-notes.md edit is reported as a partial effect" \
+  || bad "49 — the uncommitted session-notes.md edit is reported as a partial effect" "$(partial_section "$OUT")"
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
