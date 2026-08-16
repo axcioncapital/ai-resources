@@ -410,11 +410,14 @@ printf '%s\n' "$(reorient_route2 "$CO")" | grep -q '^STOP:5' \
 
 # CONTROL — the same checkout with a CLOSED record lets the next task claim it.
 # Without this, "refuses a new task" could just mean "never lets anything claim".
+# --depth repo, because since the S6 correction the stale row also needs HEAD to
+# carry the closing record, and only the git-capable depth can see that. The
+# record here IS committed, so the control still measures what it always did.
 CO="$(new_checkout)"
 closed_record "$CO" done-task
 git -C "$CO" add -A >/dev/null 2>&1; git -C "$CO" commit -qm closed >/dev/null 2>&1
 declare_owner "$CO" done-task
-OUT="$(bash "$CO/logs/scripts/work-loop-owner.sh" claim --checkout "$CO" --task new-task --depth local 2>&1)"; RC=$?
+OUT="$(bash "$CO/logs/scripts/work-loop-owner.sh" claim --checkout "$CO" --task new-task --depth repo 2>&1)"; RC=$?
 expect_rc 0 "$RC" "S5    control: over a CLOSED task the new claim succeeds" "$OUT"
 expect_eq "new-task" "$(owner_of "$CO")" "S5    control: and the checkout now declares the new task"
 close_scenario
@@ -456,18 +459,34 @@ expect_eq "CLOSED" "$(classify "$CO" precommit-task)" \
 # against: "the lease is gone while the closure is still uncommitted", which it
 # calls the one state that cannot be recovered from. Retaining the declaration
 # against a passive read is not the property — surviving the next task start is.
-OUT="$(bash "$CO/logs/scripts/work-loop-owner.sh" claim --checkout "$CO" --task follow-on --depth local 2>&1)"; RC=$?
-[ "$RC" -ne 0 ] && ok "S6    a follow-on task cannot claim the checkout (exit $RC)" \
-                || bad "S6    a follow-on task cannot claim the checkout" "the claim SUCCEEDED over an uncommitted closure: $OUT"
-expect_eq "precommit-task" "$(owner_of "$CO")" "S6    and the declaration is still the interrupted task's"
-# If the claim did go through, record the resulting state exactly — this is the
-# evidence Codex assesses, not a hint that the harness should be relaxed.
-if [ "$RC" -eq 0 ]; then
-  printf '        FINDING: after the clear, HEAD still says status: %s while the working tree says status: %s,\n' \
-    "$(git -C "$CO" show HEAD:logs/work-loop/precommit-task.md | sed -n 's/^status: //p')" \
-    "$(sed -n 's/^status: //p' "$CO/logs/work-loop/precommit-task.md")"
-  printf '        and the checkout now declares %s. Lease released, closure uncommitted.\n' "$(owner_of "$CO")"
-fi
+# BOTH DEPTHS, because the defect this corrects reached both. --depth local
+# cannot establish committedness at all and refuses on that ground; --depth repo
+# can, finds HEAD does not carry the closing record, and refuses on that ground.
+# One depth alone would leave the other's path unmeasured.
+for D in local repo; do
+  OUT="$(bash "$CO/logs/scripts/work-loop-owner.sh" claim --checkout "$CO" --task follow-on --depth "$D" 2>&1)"; RC=$?
+  [ "$RC" -ne 0 ] && ok "S6    a follow-on task cannot claim the checkout at --depth $D (exit $RC)" \
+                  || bad "S6    a follow-on task cannot claim the checkout at --depth $D" "the claim SUCCEEDED over an uncommitted closure: $OUT"
+  expect_eq "precommit-task" "$(owner_of "$CO")" "S6    and at --depth $D the declaration is still the interrupted task's"
+  # If a claim did go through, record the resulting state exactly — this is the
+  # evidence Codex assesses, not a hint that the harness should be relaxed.
+  if [ "$RC" -eq 0 ]; then
+    printf '        FINDING: after the clear, HEAD still says status: %s while the working tree says status: %s,\n' \
+      "$(git -C "$CO" show HEAD:logs/work-loop/precommit-task.md | sed -n 's/^status: //p')" \
+      "$(sed -n 's/^status: //p' "$CO/logs/work-loop/precommit-task.md")"
+    printf '        and the checkout now declares %s. Lease released, closure uncommitted.\n' "$(owner_of "$CO")"
+    declare_owner "$CO" precommit-task   # restore, so the next depth measures the same state
+  fi
+done
+
+# NEGATIVE CONTROL — the ONE difference that should change the answer is the
+# commit. Without it, S6 would pass just as well for a helper that had stopped
+# clearing stale declarations altogether, which would break scenarios 5, 7 and 9.
+git -C "$CO" add logs/work-loop/precommit-task.md >/dev/null 2>&1
+git -C "$CO" commit -qm "the commit the interruption missed" >/dev/null 2>&1
+OUT="$(bash "$CO/logs/scripts/work-loop-owner.sh" claim --checkout "$CO" --task follow-on --depth repo 2>&1)"; RC=$?
+expect_rc 0 "$RC" "S6    control: once that same closure IS committed, the follow-on task claims it" "$OUT"
+expect_eq "follow-on" "$(owner_of "$CO")" "S6    control: and the checkout is now the follow-on task's"
 close_scenario
 
 # ==========================================================================
@@ -486,7 +505,10 @@ git -C "$CO" show "HEAD:logs/work-loop/postcommit-task.md" | grep -q '^status: c
   && ok "S7    valid closed state survived the interruption, committed" \
   || bad "S7    valid closed state survived the interruption, committed"
 expect_eq "postcommit-task" "$(owner_of "$CO")" "S7    the stale declaration survives rather than being dropped"
-OUT="$(bash "$CO/logs/scripts/work-loop-owner.sh" claim --checkout "$CO" --task next-task --depth local 2>&1)"; RC=$?
+# --depth repo: since the S6 correction, clearing a stale declaration needs HEAD
+# to carry the closing record, and only this depth can see that. Here it does, so
+# the accepted post-commit recovery is unchanged and still needs no operator.
+OUT="$(bash "$CO/logs/scripts/work-loop-owner.sh" claim --checkout "$CO" --task next-task --depth repo 2>&1)"; RC=$?
 expect_rc 0 "$RC" "S7    the next task start clears the stale declaration by itself" "$OUT"
 expect_eq "next-task" "$(owner_of "$CO")" "S7    and the checkout is now the next task's"
 

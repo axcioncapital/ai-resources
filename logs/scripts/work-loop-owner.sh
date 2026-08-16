@@ -27,7 +27,22 @@
 #                  worktrees, which answers the other half: is my task claimed
 #                  somewhere else, and is its state file replicated? Requires
 #                  git, so it is for interactive Claude (Step 1) and for
-#                  dispatch.sh (admission) only.
+#                  dispatch.sh (admission) only. It also owns the one other fact
+#                  only git knows — whether a CLOSED record is actually
+#                  COMMITTED — which is what the stale-declaration row rests on.
+#
+# CLEARING A STALE DECLARATION IS A REPO-DEPTH ACT, and only where HEAD carries
+# the closing record. A closure is two moves (core § 4, Closing the task): write
+# valid closed state and commit it, THEN clear the declaration. Interrupt it in
+# between and the working tree holds a complete, valid closing record that the
+# validator correctly answers CLOSED for, while HEAD still records the task as
+# active. Treating that as staleness released the lease over a closure Git has no
+# record of — "the one state that cannot be recovered from", reached from the
+# other direction. So staleness now needs positive evidence that HEAD carries the
+# exact record, git is the only reader that has it, and --depth local — which
+# runs no git and must keep running none — can no longer establish it and
+# therefore refuses instead of clearing. Post-commit recovery is unchanged at
+# repo depth: that is the accepted behaviour, and it stays automatic.
 #
 # THE NARROWING IS DELIBERATE AND IS A LIMIT, NOT COVERAGE. Codex cannot
 # establish the cross-checkout half. What keeps that sound rather than a gap is
@@ -56,7 +71,7 @@
 # `claim` and `clear` mutate, so they run inside a mkdir-based lock in the
 # checkout (no git). `check` is a pure read and takes no lock.
 #
-# Regression coverage: logs/scripts/work-loop-owner.test.sh (T1..T13, F1..F3).
+# Regression coverage: logs/scripts/work-loop-owner.test.sh (T1..T15, F1..F3).
 
 set -uo pipefail
 
@@ -83,7 +98,7 @@ die() { printf 'STOP [%s] %s\n' "$1" "$2" >&2; exit "$1"; }
 CMD="$1"; shift
 case "$CMD" in
   check|claim|clear) ;;
-  -h|--help) sed -n '2,50p' "$0"; exit 0 ;;
+  -h|--help) sed -n '2,74p' "$0"; exit 0 ;;
   *) die 10 "unknown command '$CMD' — expected check, claim or clear" ;;
 esac
 
@@ -188,11 +203,40 @@ section_text() { # state-file heading -> the section body, blank-trimmed, one li
 
 state_here() { [ -f "$1/logs/work-loop/$2.md" ]; }
 
+# ------------------------------------------- the one committedness fact (git)
+# WHOLE-FILE EQUALITY WITH HEAD, not a re-validation of HEAD's blob. The
+# validator has already classified the WORKING-TREE record CLOSED; if that record
+# is byte-identical to HEAD's, then the closed record is the committed one, and
+# no second lifecycle reading happens anywhere (§ 4's one-reader rule is intact).
+# Re-validating HEAD separately would be exactly the second reader this design
+# removes.
+#
+# The three "not committed" answers are deliberately one verdict, because the
+# remedy is the same for all of them: commit the closing record.
+#   - the repository has no commits at all;
+#   - HEAD does not carry this path (never committed, or committed and removed);
+#   - HEAD carries it, but it differs from the working tree — which covers the
+#     staged-but-uncommitted case too, since `diff HEAD` spans index and tree.
+# Anything git cannot answer is UNKNOWN and is never rounded down to committed.
+closure_committed() { # checkout task -> 0 committed | 1 not committed | 2 unknown
+  local co="$1" rel="logs/work-loop/$2.md" rc
+  git -C "$co" rev-parse --is-inside-work-tree >/dev/null 2>&1 || return 2
+  git -C "$co" rev-parse --verify -q HEAD >/dev/null 2>&1     || return 1
+  git -C "$co" cat-file -e "HEAD:$rel" 2>/dev/null            || return 1
+  git -C "$co" diff --quiet HEAD -- "$rel" 2>/dev/null
+  rc=$?
+  case "$rc" in
+    0) return 0 ;;
+    1) return 1 ;;
+    *) return 2 ;;
+  esac
+}
+
 # ------------------------------------------------------- the local half (no git)
 # Answers only: is THIS checkout claimed by a different task?
 # Sets LOCAL_VERDICT and LOCAL_REASON rather than exiting, so the repo depth can
 # run it first and then continue.
-LOCAL_VERDICT=""; LOCAL_REASON=""; LOCAL_STALE=0
+LOCAL_VERDICT=""; LOCAL_REASON=""; LOCAL_STALE=0; LOCAL_HOLDER=""
 check_local() {
   local holder; holder="$(marker_holder "$MARKER")"
 
@@ -234,10 +278,16 @@ check_local() {
     # Stale row: a CLOSED local task's declaration may be cleared by the next task
     # start IN THIS SAME CHECKOUT — never by another checkout, which is why this
     # test reads the local state file and nothing else.
+    #
+    # CLOSED is necessary here and no longer sufficient. The row now also needs
+    # HEAD to carry that closing record, and this half runs no git, so it does not
+    # decide: it hands the row on as pending and resolve_stale() settles it. That
+    # is what keeps --depth local literally git-free while the row itself becomes
+    # a repo-depth fact.
     CLOSED)
-      LOCAL_STALE=1
-      LOCAL_VERDICT="PROCEED"
-      LOCAL_REASON="this checkout declares task '$holder', which the validator classifies CLOSED — a stale declaration, clearable by the next task start in this checkout"
+      LOCAL_HOLDER="$holder"
+      LOCAL_VERDICT="STALE_PENDING"
+      LOCAL_REASON="this checkout declares task '$holder', which the validator classifies CLOSED"
       return 0 ;;
     # A blocked task still owns its checkout. It is waiting on the operator, not
     # finished, so its lease holds — and the refusal quotes the condition the
@@ -253,6 +303,29 @@ check_local() {
   LOCAL_VERDICT="REFUSE"
   LOCAL_REASON="this checkout is claimed by open task '$holder' ($holder_class) — close it, or use another checkout. An open task leases its checkout until closure."
   return 0
+}
+
+# --------------------------------------------- settling the stale row (git)
+# STALE_PENDING is internal and is never printed: every path below replaces it
+# with one of the three real verdicts. It exists so the git-free half can hand
+# the row on instead of deciding it.
+resolve_stale() {
+  local h="$LOCAL_HOLDER" rc
+  if [ "$DEPTH" != "repo" ]; then
+    LOCAL_VERDICT="REFUSE"
+    LOCAL_REASON="this checkout declares task '$h', which the validator classifies CLOSED — but whether that closing record is COMMITTED cannot be established at --depth local, which runs no git, and an uncommitted closure has not happened. The declaration is left exactly as it is. Re-enter at --depth repo, or once the closing record is committed clear it with: work-loop-owner.sh clear --checkout $CHECKOUT --task $h"
+    return 0
+  fi
+  closure_committed "$CHECKOUT" "$h"; rc=$?
+  case "$rc" in
+    0) LOCAL_STALE=1
+       LOCAL_VERDICT="PROCEED"
+       LOCAL_REASON="this checkout declares task '$h', which the validator classifies CLOSED and whose closing record HEAD carries — a stale declaration, clearable by the next task start in this checkout" ;;
+    1) LOCAL_VERDICT="REFUSE"
+       LOCAL_REASON="this checkout is claimed by task '$h': the validator classifies it CLOSED, but HEAD does not carry that closing record, so the closure is not committed and the task has not finished. Its lease holds and the declaration is left exactly as it is — commit the closing record first (core § 4: commit valid closed state, then clear), then start the next task here." ;;
+    *) LOCAL_VERDICT="AMBIGUOUS"
+       LOCAL_REASON="this checkout declares task '$h', which the validator classifies CLOSED, but whether that closing record is committed could not be established from $CHECKOUT — nothing is claimed and nothing is cleared; the operator names the owner" ;;
+  esac
 }
 
 # ------------------------------------------------------- the repo half (git)
@@ -342,6 +415,9 @@ EOF
 # already held by another task is refused whatever the task half would say.
 run_check() {
   check_local
+  # The stale row is settled before anything else looks at the verdict, so that
+  # `check` and `claim` can never answer it differently.
+  [ "$LOCAL_VERDICT" = "STALE_PENDING" ] && resolve_stale
   case "$LOCAL_VERDICT" in
     REFUSE|AMBIGUOUS) VERDICT="$LOCAL_VERDICT"; REASON="$LOCAL_REASON"; return 0 ;;
   esac

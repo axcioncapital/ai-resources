@@ -522,8 +522,14 @@ consumer_reads() { # checkout task -> "dispatch=<line> carry=<line>"
 # the one that matters most: both are `turn: operator`, they differ only by
 # `status:`, and before the cutover the consumers told them apart by whether the
 # body still had a `## Blocker` — the inference Tracer 3 removed.
-p_row() { # n class status turn dispatch-turn carry-marker owner-rc owner-marker
-  local n="$1" class="$2" st="$3" tu="$4" dturn="$5" cmark="$6" orc="$7" omark="$8"
+# The owner helper's depth is a per-row argument because CLOSED is the one
+# classification it cannot settle from the record alone: since the Tracer 6
+# correction, clearing a stale declaration also needs HEAD to carry that closing
+# record, and only --depth repo can see commits. The row still measures the same
+# translation — the helper reads CLOSED from the validator like every other
+# consumer — it just asks at the depth that can act on it.
+p_row() { # n class status turn dispatch-turn carry-marker owner-rc owner-marker owner-depth
+  local n="$1" class="$2" st="$3" tu="$4" dturn="$5" cmark="$6" orc="$7" omark="$8" odepth="${9:-local}"
   local co reads o_out o_rc
   co="$(new_git_checkout)"
   if [ "$st" = closed ]; then write_closed "$co" p-rec; else write_open "$co" p-rec "$st" "$tu"; fi
@@ -546,11 +552,11 @@ p_row() { # n class status turn dispatch-turn carry-marker owner-rc owner-marker
 
   # The owner helper is asked about a DIFFERENT task, which is the only question
   # that makes it classify the declaring record rather than match on the id.
-  o_out="$(bash "$OWNER_BIN" check --checkout "$co" --task p-other --depth local 2>&1)"; o_rc=$?
+  o_out="$(bash "$OWNER_BIN" check --checkout "$co" --task p-other --depth "$odepth" 2>&1)"; o_rc=$?
   if [ "$o_rc" -eq "$orc" ] && case "$o_out" in *"$omark"*) true ;; *) false ;; esac; then
-    ok "$n.d work-loop-owner.sh translates $class to rc=$orc ('$omark')"
+    ok "$n.d work-loop-owner.sh translates $class to rc=$orc ('$omark') at --depth $odepth"
   else
-    bad "$n.d work-loop-owner.sh translates $class to rc=$orc ('$omark')" \
+    bad "$n.d work-loop-owner.sh translates $class to rc=$orc ('$omark') at --depth $odepth" \
         "rc=$o_rc out: $(printf '%s' "$o_out" | tr '\n' ' ' | cut -c1-200)"
   fi
 }
@@ -563,7 +569,12 @@ done
 p_row P1 ACTIVE_CLAUDE    active  claude   claude   "actor 'claude'"    3 "open task 'p-rec'"
 p_row P2 ACTIVE_CODEX     active  codex    codex    "actor 'codex'"     3 "open task 'p-rec'"
 p_row P3 BLOCKED_OPERATOR blocked operator operator "UNANSWERED"        3 "BLOCKED_OPERATOR"
-p_row P4 CLOSED           closed  operator operator "task is CLOSED"    0 "CLOSED"
+p_row P4 CLOSED           closed  operator operator "task is CLOSED"    0 "CLOSED"      repo
+# CLOSED asked at --depth local: the helper still reads the same classification
+# from the validator, and refuses because it cannot establish that the closure is
+# committed. Without this the depth split would be invisible, and a helper that
+# had quietly stopped reading CLOSED at local depth would look identical.
+p_row P4L CLOSED          closed  operator operator "task is CLOSED"    3 "CLOSED"      local
 
 # ---- P5: the illegal records stop every consumer, and none of them writes -----
 #

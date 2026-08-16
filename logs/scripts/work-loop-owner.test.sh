@@ -1,7 +1,9 @@
 #!/bin/bash
-# T1-T14 — the R2 acceptance matrix for concurrent task isolation, plus T14, the
+# T1-T15 — the R2 acceptance matrix for concurrent task isolation, plus T14, the
 #           Tracer 3 closure-order proof: valid closed state is committed before
-#           the declaration is cleared, measured at both cut points.
+#           the declaration is cleared, measured at both cut points; and T15, the
+#           Tracer 6 correction: a complete, valid CLOSED record that exists only
+#           in the working tree keeps its lease instead of releasing it.
 # F1-F3   — the correction round's findings, kept as durable regression cover:
 #           F1 an ownership check that cannot run must refuse, not pass;
 #           F2 a malformed declaration is ambiguous, and survives;
@@ -203,7 +205,7 @@ EOF
 }
 
 echo "=============================================================="
-echo " R2 acceptance matrix — T1..T13"
+echo " R2 acceptance matrix — T1..T15"
 echo " helper:     $OWNER_BIN"
 echo " dispatcher: $DISPATCH_BIN"
 echo "=============================================================="
@@ -453,12 +455,17 @@ owner claim --checkout "$d" --task t8-second --depth local
 expect_rc 0 "$RC" "the next serial task reuses the same checkout" "$OUT"
 
 # The stale-marker row of the safe state table: a marker naming a CLOSED local
-# task may be cleared by the next task start in that same checkout.
+# task may be cleared by the next task start in that same checkout — once that
+# closing record is COMMITTED, and asked at the depth that can see commits.
+# Before the T15 correction this fixture never committed the closing record and
+# still passed, which is precisely the hole T15 closes; committing it is what
+# makes this row assert the accepted post-commit behaviour rather than the defect.
 d2="$(new_repo)"
 state_file "$d2" t8-closed operator
+commit_state "$d2" t8-closed
 printf 't8-closed\n' >"$d2/$OWNER_REL"
-owner claim --checkout "$d2" --task t8-next --depth local
-expect_rc 0 "$RC" "a stale declaration for a CLOSED local task is cleared by the next start" "$OUT"
+owner claim --checkout "$d2" --task t8-next --depth repo
+expect_rc 0 "$RC" "a stale declaration for a committed CLOSED task is cleared by the next start" "$OUT"
 case "$(marker "$d2")" in
   t8-next*) ok "the declaration now names the new task" ;;
   *)        bad "the declaration now names the new task" "got: $(marker "$d2")" ;;
@@ -651,11 +658,129 @@ case "$(marker "$d")" in
   *)        bad "the stale declaration survives" "got: '$(marker "$d")'" ;;
 esac
 state_file "$d" t14-next claude
-owner claim --checkout "$d" --task t14-next --depth local
+# --depth repo, because since T15 the stale row rests on HEAD carrying the
+# closing record, and only the git-capable depth can see that. The assertion is
+# unchanged: recovery from this cut is automatic and needs no operator.
+owner claim --checkout "$d" --task t14-next --depth repo
 expect_rc 0 "$RC" "the stale declaration is safely clearable by the next task start" "$OUT"
 case "$(marker "$d")" in
   t14-next) ok "the checkout is recovered with no operator involved" ;;
   *)        bad "the checkout is recovered with no operator involved" "got: '$(marker "$d")'" ;;
+esac
+
+# ================================================================== T15
+# CLOSURE-COMMIT PRECEDENCE — a CLOSED record that exists only in the working
+# tree does not release the lease.
+#
+# T14(b) cuts the closure with a HALF-WRITTEN reduction, which the validator
+# refuses outright, so it never reaches the staleness path at all. But core § 4
+# requires the reduction to be one write, so the likely pre-commit interruption
+# leaves a COMPLETE, VALID closing record on disk that the validator correctly
+# answers CLOSED for, while HEAD still records the task as active. Reading that
+# as staleness cleared the declaration and released the lease over a closure Git
+# has no record of — T14's own "one combination nothing recovers from", reached
+# from the other direction. This section is that state, measured.
+echo
+echo "T15 — a CLOSED record that is not committed keeps its lease"
+
+# (a) THE DEFECT, as a failing-first regression.
+d="$(new_repo)"
+state_file "$d" t15-task claude
+commit_state "$d" t15-task
+printf 't15-task\n' >"$d/$OWNER_REL"
+HEAD_BEFORE="$(git -C "$d" rev-parse HEAD)"
+state_file "$d" t15-task operator            # step 1 done; step 2 never runs
+cp "$d/logs/work-loop/t15-task.md" "$SANDBOX_ROOT/t15.before"
+CLS="$(bash "$STATE_BIN" validate --checkout "$d" --task t15-task 2>&1)"
+[ "$CLS" = CLOSED ] && ok "precondition — the uncommitted reduction validates as CLOSED" \
+                    || bad "precondition — the uncommitted reduction validates as CLOSED" "got: $CLS"
+git -C "$d" show "HEAD:logs/work-loop/t15-task.md" 2>/dev/null | grep -q '^status: active$' \
+  && ok "precondition — HEAD still records the task as active" \
+  || bad "precondition — HEAD still records the task as active"
+
+state_file "$d" t15-next claude
+owner claim --checkout "$d" --task t15-next --depth repo
+expect_rc 3 "$RC" "the next task is REFUSED while the closure is uncommitted" "$OUT"
+expect_names "$OUT" "t15-task" "the refusal names the task that still holds the checkout"
+case "$(marker "$d")" in
+  t15-task) ok "the declaration is intact — the lease was NOT released" ;;
+  *)        bad "the declaration is intact — the lease was NOT released" "got: '$(marker "$d")'" ;;
+esac
+cmp -s "$d/logs/work-loop/t15-task.md" "$SANDBOX_ROOT/t15.before" \
+  && ok "the closing record is byte-unchanged — nothing was repaired" \
+  || bad "the closing record is byte-unchanged — nothing was repaired"
+[ "$(git -C "$d" rev-parse HEAD)" = "$HEAD_BEFORE" ] \
+  && ok "nothing was committed by the refusal" || bad "nothing was committed by the refusal"
+
+# `check` must answer exactly as `claim` does, or two readers disagree about one
+# record — the failure the single-reader rule exists to prevent.
+owner check --checkout "$d" --task t15-next --depth repo
+expect_rc 3 "$RC" "the read-only check agrees with the claim" "$OUT"
+
+# (b) THE NEGATIVE CONTROL. Same checkout, same command, one difference: the
+# closing record is now committed. Without this, T15(a) would pass just as well
+# for a helper that had simply stopped clearing stale declarations at all.
+commit_state "$d" t15-task
+owner claim --checkout "$d" --task t15-next --depth repo
+expect_rc 0 "$RC" "control — once the closure is COMMITTED the same claim proceeds" "$OUT"
+case "$(marker "$d")" in
+  t15-next) ok "control — the declaration now names the new task" ;;
+  *)        bad "control — the declaration now names the new task" "got: '$(marker "$d")'" ;;
+esac
+
+# (c) STAGED IS NOT COMMITTED. `git add` without a commit is the same exposure,
+# and a check that compared the index rather than HEAD would pass it wrongly.
+d="$(new_repo)"
+state_file "$d" t15-staged claude
+commit_state "$d" t15-staged
+printf 't15-staged\n' >"$d/$OWNER_REL"
+state_file "$d" t15-staged operator
+git -C "$d" add logs/work-loop/t15-staged.md >/dev/null 2>&1
+owner claim --checkout "$d" --task t15-other --depth repo
+expect_rc 3 "$RC" "a STAGED but uncommitted closure is refused too" "$OUT"
+case "$(marker "$d")" in
+  t15-staged) ok "the staged case left the declaration intact" ;;
+  *)          bad "the staged case left the declaration intact" "got: '$(marker "$d")'" ;;
+esac
+
+# (d) NEVER COMMITTED AT ALL. HEAD carries no such path, which must read as "not
+# committed" rather than as "no difference from HEAD".
+d="$(new_repo)"
+state_file "$d" t15-untracked operator
+printf 't15-untracked\n' >"$d/$OWNER_REL"
+owner claim --checkout "$d" --task t15-fresh --depth repo
+expect_rc 3 "$RC" "a closing record HEAD has never carried is refused" "$OUT"
+case "$(marker "$d")" in
+  t15-untracked) ok "the never-committed case left the declaration intact" ;;
+  *)             bad "the never-committed case left the declaration intact" "got: '$(marker "$d")'" ;;
+esac
+
+# (e) THE DEPTH LIMIT, stated rather than smuggled. --depth local runs no git,
+# and without git the committed and uncommitted cases are the same bytes on
+# disk. So it can no longer settle this row and refuses instead of clearing —
+# the fail-closed side. The fixture below is the COMMITTED one, which repo depth
+# recovers automatically, so this measures the depth limit and not the defect.
+d="$(new_repo)"
+state_file "$d" t15-local claude
+commit_state "$d" t15-local
+printf 't15-local\n' >"$d/$OWNER_REL"
+state_file "$d" t15-local operator
+commit_state "$d" t15-local
+state_file "$d" t15-lnext claude
+GT="$(git_trap_dir)"
+OUT="$(PATH="$GT:$PATH" bash "$OWNER_BIN" claim --checkout "$d" --task t15-lnext --depth local 2>&1)"; RC=$?
+expect_rc 3 "$RC" "--depth local REFUSES the stale row instead of clearing it" "$OUT"
+[ -s "$GT/calls" ] && bad "--depth local still ran no git" "git calls: $(tr '\n' ';' <"$GT/calls")" \
+                   || ok "--depth local still ran no git"
+case "$(marker "$d")" in
+  t15-local) ok "--depth local left the declaration exactly as it was" ;;
+  *)         bad "--depth local left the declaration exactly as it was" "got: '$(marker "$d")'" ;;
+esac
+owner claim --checkout "$d" --task t15-lnext --depth repo
+expect_rc 0 "$RC" "the same committed fixture still recovers at --depth repo" "$OUT"
+case "$(marker "$d")" in
+  t15-lnext) ok "post-commit recovery is retained, and stays automatic" ;;
+  *)         bad "post-commit recovery is retained, and stays automatic" "got: '$(marker "$d")'" ;;
 esac
 
 # ================================================================== F1
@@ -841,6 +966,6 @@ rmdir "$d/logs/work-loop/.owner.lock" 2>/dev/null
 # ================================================================== summary
 echo
 echo "=============================================================="
-printf ' T1..T14 + F1..F3: %d passed, %d failed\n' "$PASS" "$FAIL"
+printf ' T1..T15 + F1..F3: %d passed, %d failed\n' "$PASS" "$FAIL"
 echo "=============================================================="
 [ "$FAIL" -eq 0 ] || exit 1
