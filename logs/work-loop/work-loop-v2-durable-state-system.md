@@ -108,7 +108,7 @@ Evidence and counts:
 - Case 0 falsifiability — a stub validator that always prints `ACTIVE_CLAUDE` is substituted for the real one on a genuinely closed record; the real answer is `CLOSED`, the stub's is `ACTIVE_CLAUDE`, and the two differ, so scenarios 2, 5, 7 and 9 would go red under it.
 - Regression, all exit 0 and all unchanged from the Unit 7 baselines: state **96/0**, owner **103/0**, session preflight **60/0**, capability **77/0**, slice 1 **308/0**, core resolver **4/0**, lease **136/0**.
 - Runtime untouched: `git diff` over `logs/scripts/work-loop-owner.sh`, `logs/scripts/work-loop-state.sh`, `dispatch.sh`, `carry-turn.sh`, `.claude/` and `.agents/` is empty.
-- Commit `{FINAL_COMMIT}` — exact paths: `logs/scripts/work-loop-v2-tracer-6.test.sh`, `logs/work-loop/work-loop-v2-durable-state-system.md`. No runtime file, no Tracer 7 or 8 surface, no excluded machinery, and neither `logs/friction-log.md` nor `logs/innovation-registry.md` entered it; both remain uncommitted. This record validates `ACTIVE_CODEX`.
+- Commit `096b8985` (this handback commit adds only the pointer) — exact paths: `logs/scripts/work-loop-v2-tracer-6.test.sh`, `logs/work-loop/work-loop-v2-durable-state-system.md`. No runtime file, no Tracer 7 or 8 surface, no excluded machinery, and neither `logs/friction-log.md` nor `logs/innovation-registry.md` entered it; both remain uncommitted. This record validates `ACTIVE_CODEX`.
 
 A runtime defect **was** exposed: scenario 6, above. Admissions remain paused. No live model trial and no cross-transport trial ran; nothing was merged, pushed or landed; Tracer bullet 7 has not started.
 
