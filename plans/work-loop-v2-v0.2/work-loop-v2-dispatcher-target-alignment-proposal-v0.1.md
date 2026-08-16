@@ -1,5 +1,7 @@
 # Work Loop v2 Dispatcher Target-Alignment Proposal v0.1
 
+> **2026-08-16 planning status:** Retained as future-option analysis. Its six Gate ST additions are explicitly held by `work-loop-v2-dispatcher-reliable-supervised-use-implementation-plan-v0.1.md` until Gate SA is implemented, proven, and adopted. This proposal remains non-authorizing.
+
 **Date:** 2026-08-15  
 **Status:** Proposal for operator approval. This document does not authorize implementation.  
 **Purpose:** Extend the reliable supervised dispatcher defined by the dispatcher reliability closure report into a thin semi-autonomous control plane that can admit an approved task, route structured outcomes, repair ordinary technical failures, resolve low-value boundary questions, and return either a trustworthy completion report or one genuine operator decision.  

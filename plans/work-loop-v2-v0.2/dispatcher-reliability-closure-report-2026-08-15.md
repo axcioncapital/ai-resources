@@ -1,5 +1,7 @@
 # Work Loop v2 dispatcher reliability closure report
 
+> **2026-08-16 planning status:** Retained as source analysis and Gate SA rationale. The consolidated implementation-facing plan for reliable supervised use is `work-loop-v2-dispatcher-reliable-supervised-use-implementation-plan-v0.1.md`. Once that plan is activated against the merged durable-state baseline, implement from the consolidated plan rather than this report independently.
+
 **Date:** 2026-08-15  
 **Purpose:** Define everything that still needs to be fixed after the concurrency Phase 1, durable-state system, and autonomy-authority capability are integrated so the dispatcher can become a reliable supervised semi-autonomous controller.  
 **Decision:** The target is not full autonomy. The dispatcher should carry Claude and Codex through the normal implementation path without operator transport, continue only while state, evidence, authority and execution remain valid, and stop with an actionable durable handoff whenever a problem or operator-owned decision appears. Full unattended or walk-away operation is explicitly deferred and must not block this target.
