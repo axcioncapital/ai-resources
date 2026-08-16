@@ -351,6 +351,188 @@ fi
 OUT="$(run_check "$REPO_ROOT")"; RC=$?
 expect_rc 0 "$RC" "B6    the canonical checkout is itself READY" "$OUT"
 
+# --- B7 both commands state the merge-only remedy ---------------------------
+# Step 7 of /sync-workflow applies approved changes by overwriting. Three of the
+# five remedies must never go through it, and both commands have to say so where
+# the remedy is written — a rule stated only in one is a rule one path can miss.
+grep -q 'merge-only' "$SYNC_F" \
+  && ok "B7    /sync-workflow carves the merge-only files out of Step 7" \
+  || bad "B7    /sync-workflow carves the merge-only files out of Step 7"
+for f in '.gitignore' 'shared-manifest.json' '.codex/hooks.json'; do
+  awk '/^### The three merge-only files/{f=1} f' "$SYNC_F" | grep -q "$f" \
+    && ok "B7    the carve-out names $f" \
+    || bad "B7    the carve-out names $f"
+done
+grep -qi 'does not prove\|is therefore not evidence' "$SYNC_F" \
+  && ok "B7    /sync-workflow says READY alone is not evidence of preservation" \
+  || bad "B7    /sync-workflow says READY alone is not evidence of preservation"
+grep -q 'does not prove the two additions above were applied correctly' "$DEPLOY_F" \
+  && ok "B7    /deploy-workflow says the same about its two additions" \
+  || bad "B7    /deploy-workflow says the same about its two additions"
+grep -q 'Do not write the manifest from the template' "$DEPLOY_F" \
+  && ok "B7    /deploy-workflow forbids replacing the project manifest" \
+  || bad "B7    /deploy-workflow forbids replacing the project manifest"
+
+# ============================================================================
+printf '\n--- Part C: the remedies preserve project content ---------------------\n'
+# ============================================================================
+#
+# Two of the five components are added to files the PROJECT owns, and one to its
+# .gitignore. Applying those three the way /sync-workflow Step 7 applies
+# everything else — copy the canonical file over — reaches the same READY
+# verdict while deleting whatever the project had in them.
+#
+# THAT IS WHY THIS SECTION EXISTS AND WHY IT IS BUILT THIS WAY. Case C7 applies
+# the destructive remedy and asserts it ALSO reports READY. So the capability
+# check cannot tell the two remediations apart, and an assertion that only
+# checked for READY would pass either way — it could not fail. The sentinel
+# assertions in C3–C6 are the ones that can, and C7 is what proves they are
+# load-bearing rather than decorative.
+#
+# No dry-run mode is invented here. The remedies are instructions; this applies
+# them exactly as Step 4b and the deploy step write them, to a fixture, and
+# looks at what is left.
+
+# A project that owns real content in all three merge-only files and has none of
+# the five Work Loop components.
+project_with_own_content() { # -> path
+  local d; d="$(mktemp -d "$SANDBOX_ROOT/proj.XXXXXX")"
+  mkdir -p "$d/.claude/commands" "$d/logs/scripts" "$d/logs/work-loop" "$d/.codex/hooks"
+  git -C "$d" init -q
+  git -C "$d" config user.email harness@example.invalid
+  git -C "$d" config user.name harness
+  printf 'Run Claude half of one Work Loop v2 unit.\n' >"$d/.claude/commands/work-loop-v2.md"
+  printf '# project rules\nexports/scratch/\n*.local.md\n' >"$d/.gitignore"
+  cat >"$d/.claude/shared-manifest.json" <<'EOF'
+{
+  "commands": { "local": ["run-analysis", "verify-chapter"] },
+  "agents": { "local": ["qc-gate"] },
+  "skills": { "shared": ["project-only-skill"] }
+}
+EOF
+  printf 'echo project own hook\n' >"$d/.codex/hooks/project-own.sh"
+  cat >"$d/.codex/hooks.json" <<'EOF'
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          { "type": "command", "command": "bash .codex/hooks/project-own.sh", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}
+EOF
+  printf '%s' "$d"
+}
+
+# The three components that ARE plain file copies. Correct for both remediations.
+copy_the_file_components() { # dir
+  cp "$TEMPLATE_DIR/logs/scripts/work-loop-state.sh" "$1/logs/scripts/"
+  cp "$TEMPLATE_DIR/logs/scripts/work-loop-owner.sh" "$1/logs/scripts/"
+  cp "$TEMPLATE_DIR/.codex/hooks/work-loop-reorient.sh" "$1/.codex/hooks/"
+  mkdir -p "$1/.agents/skills/reorient"
+  printf -- '---\nname: reorient\n---\n' >"$1/.agents/skills/reorient/SKILL.md"
+}
+
+# The documented remedy: append the ignore line, add ONE manifest array entry,
+# add ONE SessionStart entry. Exactly what Step 4b's table says.
+apply_documented_remedy() { # dir
+  local d="$1"
+  printf '\n# Work Loop v2 per-checkout ownership declaration — must stay checkout-local.\nlogs/work-loop/.owner\n' >>"$d/.gitignore"
+  jq '.skills.shared = ((.skills.shared // []) + ["reorient"] | unique)' \
+    "$d/.claude/shared-manifest.json" >"$d/.manifest.tmp" && mv "$d/.manifest.tmp" "$d/.claude/shared-manifest.json"
+  jq '.hooks.SessionStart += [{
+        "matcher": "compact",
+        "hooks": [ { "type": "command", "command": "bash .codex/hooks/work-loop-reorient.sh", "timeout": 5 } ]
+      }]' "$d/.codex/hooks.json" >"$d/.hooks.tmp" && mv "$d/.hooks.tmp" "$d/.codex/hooks.json"
+}
+
+# The Step 7 remedy applied without the carve-out: overwrite all three.
+apply_overwrite_remedy() { # dir
+  local d="$1"
+  cp "$TEMPLATE_DIR/.gitignore" "$d/.gitignore"
+  cp "$TEMPLATE_DIR/.claude/shared-manifest.json" "$d/.claude/shared-manifest.json"
+  cat >"$d/.codex/hooks.json" <<'EOF'
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          { "type": "command", "command": "bash .codex/hooks/work-loop-reorient.sh", "timeout": 5 }
+        ]
+      }
+    ]
+  }
+}
+EOF
+}
+
+sentinels_present() { # dir -> 0 if all three project-owned sentinels survive
+  grep -q 'exports/scratch/' "$1/.gitignore" || return 1
+  jq -e '[.commands.local[]?] | index("run-analysis")' "$1/.claude/shared-manifest.json" >/dev/null 2>&1 || return 1
+  jq -e '[.skills.shared[]?] | index("project-only-skill")' "$1/.claude/shared-manifest.json" >/dev/null 2>&1 || return 1
+  jq -e '[ (.hooks.SessionStart // [])[] | (.hooks // [])[] | (.command // "") | select(test("project-own"))] | length > 0' \
+    "$1/.codex/hooks.json" >/dev/null 2>&1 || return 1
+  return 0
+}
+
+# --- C1 the starting state --------------------------------------------------
+BASE="$(project_with_own_content)"
+OUT="$(run_check "$BASE")"; RC=$?
+expect_rc 3 "$RC" "C1    the fixture starts INCOMPLETE" "$OUT"
+[ "$(printf '%s' "$OUT" | grep -cE '^missing:')" = 5 ] \
+  && ok "C1    all five components are named as the proposed additions" \
+  || bad "C1    all five components are named as the proposed additions" "$OUT"
+sentinels_present "$BASE" && ok "C1    the project's own content is present to begin with" \
+  || bad "C1    the project's own content is present to begin with"
+GITIGNORE_BEFORE="$(cat "$BASE/.gitignore")"
+
+# --- C2..C6 the documented remedy -------------------------------------------
+MERGED="$SANDBOX_ROOT/merged"; cp -R "$BASE" "$MERGED"
+copy_the_file_components "$MERGED"
+apply_documented_remedy "$MERGED"
+OUT="$(run_check "$MERGED" "$TEMPLATE_DIR")"; RC=$?
+expect_rc 0 "$RC" "C2    the documented remedy reaches READY" "$OUT"
+
+sentinels_present "$MERGED" \
+  && ok "C3    every project-owned sentinel survived the documented remedy" \
+  || bad "C3    every project-owned sentinel survived the documented remedy"
+
+# The .gitignore change is additive: nothing that was there was removed.
+REMOVED="$(diff <(printf '%s\n' "$GITIGNORE_BEFORE") "$MERGED/.gitignore" | grep -c '^<')"
+[ "$REMOVED" = 0 ] && ok "C4    the .gitignore change removed no existing line" \
+  || bad "C4    the .gitignore change removed no existing line" "$REMOVED line(s) removed"
+grep -q '^logs/work-loop/.owner$' "$MERGED/.gitignore" \
+  && ok "C4    and it added exactly the .owner rule" \
+  || bad "C4    and it added exactly the .owner rule"
+
+jq -e '([.skills.shared[]?] | index("reorient")) and ([.commands.local[]?] | length == 2)' \
+  "$MERGED/.claude/shared-manifest.json" >/dev/null 2>&1 \
+  && ok "C5    the manifest gained reorient and kept both local commands" \
+  || bad "C5    the manifest gained reorient and kept both local commands"
+
+jq -e '[ (.hooks.SessionStart // [])[] ] | length == 2' "$MERGED/.codex/hooks.json" >/dev/null 2>&1 \
+  && ok "C6    hooks.json holds both the project's hook and the compact entry" \
+  || bad "C6    hooks.json holds both the project's hook and the compact entry"
+
+# --- C7 the discriminator ---------------------------------------------------
+# The destructive remedy reaches the SAME verdict. This is what makes C3-C6
+# capable of failing: without them, both remediations look identical.
+OVERWRITTEN="$SANDBOX_ROOT/overwritten"; cp -R "$BASE" "$OVERWRITTEN"
+copy_the_file_components "$OVERWRITTEN"
+apply_overwrite_remedy "$OVERWRITTEN"
+OUT="$(run_check "$OVERWRITTEN" "$TEMPLATE_DIR")"; RC=$?
+expect_rc 0 "$RC" "C7    the overwrite remedy ALSO reports READY" "$OUT"
+if sentinels_present "$OVERWRITTEN"; then
+  bad "C7    the overwrite remedy destroys project content (so C3-C6 can fail)" \
+      "sentinels survived an overwrite — C3-C6 would pass whatever the remedy did"
+else
+  ok "C7    the overwrite remedy destroys project content (so C3-C6 can fail)"
+fi
+
 printf '\n-----------------------------------------------\n'
 printf 'pass=%s fail=%s  (Part B is a mechanical instruction check — interactive enforcement is instruction-borne)\n' "$PASS" "$FAIL"
 [ "$FAIL" -eq 0 ] || exit 1

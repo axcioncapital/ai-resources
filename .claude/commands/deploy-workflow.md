@@ -188,7 +188,7 @@ The SessionStart sweep (`auto-sync-shared.sh`) will symlink `/work-loop-v2` into
 
 The template already carries three of the five as files (`logs/scripts/work-loop-state.sh`, `logs/scripts/work-loop-owner.sh`, `.codex/hooks/work-loop-reorient.sh`) and the `logs/work-loop/.owner` line in its `.gitignore`, so Step 3's copy brings those across. Two things remain, and neither can be a file copy:
 
-1. **The Reorient skill** is a manifest opt-in, not a copied file. Confirm `reorient` is listed under `skills.shared` in `{PROJECT_DIR}/.claude/shared-manifest.json`; the sweep creates the symlink at the next session start.
+1. **The Reorient skill** is a manifest opt-in, not a copied file. Confirm `reorient` is listed under `skills.shared` in `{PROJECT_DIR}/.claude/shared-manifest.json`; the sweep creates the symlink at the next session start. If it is absent, **add that one array entry** — creating `skills` and `skills.shared` only if they do not exist. Do not write the manifest from the template's: `commands.local` and `agents.local` are the project's declaration of what it owns, and replacing them would un-own every local file.
 2. **The compact hook's registration.** Hooks are inert until registered, and the registration needs a path that only exists once `{PROJECT_DIR}` does — which is why it is a deploy-time step rather than a template file. Add this to `{PROJECT_DIR}/.codex/hooks.json` (creating the file if the project has none), preserving any entries already there:
 
    ```json
@@ -220,6 +220,8 @@ bash "$AI_RESOURCES/logs/scripts/work-loop-capability.sh" check \
 ```
 
 `READY` (exit 0) is the target. `INCOMPLETE` (exit 3) names each missing or drifted component on its own line — report those lines verbatim and fix them here, because a project that ships INCOMPLETE will refuse Work Loop at Step 0 on first use. `NOT_APPLICABLE` (exit 2) means the project does not carry the command, which is a valid outcome and needs no action.
+
+**`READY` does not prove the two additions above were applied correctly.** The check looks at the Work Loop entries and cannot see what else was in `shared-manifest.json` or `hooks.json`, so a deploy that overwrote either file whole would also report `READY`. Both additions add one entry to a file the project owns. Confirm the project's own content survived — its `commands.local` list and any hook it already registered — rather than reading `READY` as confirmation.
 
 ### Ensure permissions baseline in deployed settings.json
 

@@ -194,6 +194,20 @@ For each approved update or addition:
 1. Copy the canonical file to the project location, overwriting if it exists.
 2. Log what was synced.
 
+### The three merge-only files — never through step 1 above
+
+Step 1 is a whole-file overwrite, and that is correct for everything Step 3 classifies: a command, an agent, a hook script and the two Work Loop helper copies are canonical files with no project-owned content in them. Three of Step 4b's remedies are **not** files of that kind, and sending them through step 1 would fix a Work Loop gap by destroying project content:
+
+| File | What overwriting it would destroy | Apply it as |
+|---|---|---|
+| `{PROJECT_DIR}/.gitignore` | every project-specific ignore rule | append the `logs/work-loop/.owner` line, with the template's explanatory comment, to the end of the existing file |
+| `{PROJECT_DIR}/.claude/shared-manifest.json` | `commands.local`, `agents.local`, and any other `skills.shared` entry — i.e. the project's entire declaration of what it owns | add `"reorient"` to the `skills.shared` array, creating `skills` and `skills.shared` only if absent; change no other key |
+| `{PROJECT_DIR}/.codex/hooks.json` | every other Codex hook the project registers | add one `SessionStart` entry with matcher `compact` to the existing `hooks.SessionStart` array; leave every other entry and every other event untouched |
+
+These three are project-owned files that Work Loop adds one entry to. They are not template files with a canonical version, which is why Step 3's A–E classification never offers them and why Step 4b checks a rule rather than a diff.
+
+**How to tell you got it right.** Re-running the Step 4b check after a correct remediation reports `READY` — but so does a remediation that overwrote all three, because the capability check looks at the Work Loop entries and cannot see what else was in the file. `READY` alone is therefore not evidence that the remedy was applied correctly. The evidence is that the project's own content is still there: before applying, note one project-specific line from each of the three files; after applying, confirm all three are still present and that the only change to each is the Work Loop entry.
+
 After applying:
 ```
 Sync complete:
