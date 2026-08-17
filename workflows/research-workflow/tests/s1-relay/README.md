@@ -58,7 +58,8 @@ holds. Two audit references did not survive re-enumeration and are corrected in 
 | W4-H3 | `run-report` St4.0 (six categories) + St4.1b re-read + the St4.2 per-chapter operands | `H3-01`–`H3-04` (St4.0), `H3-05` (St4.1), `H3-06`/`H3-07` (St4.1b), `H3-08`/`H3-09` (St4.2a operands), `H3-24` (St4.2c architecture operand — not audit-named; the relay repeats the same approved architecture to `report-compliance-qc` four times per section and carried no row until Unit 7 added one) |
 | W4-H3 | `run-analysis` St1 (all memos) | `H3-10`, plus the five content relays it feeds: `H3-11`, `H3-12`, `H3-13`, `H3-14` |
 | W4-H3 | `run-synthesis` St1 | `H3-15`, `H3-16` |
-| W4-H3 | `run-execution` St2.3 (all raw reports) | `H3-17`, `H3-18`, `H3-19` |
+| W4-H3 | `run-execution` St2.3 (all raw reports) | `H3-17`, `H3-18` |
+| W4-H3 | `run-execution` St2.1 (all approved Answer Specs) | `H3-19` — the St2.1.3 operand read and the onward relay to `research-prompt-creator` on the same directive. This table grouped it under St2.3 until Unit 8; the manifest has always located it at `2.1.3` |
 | W4-H3 | `produce-architecture` Ph2+Ph3 (drafts double-read) | `H3-20`/`H3-21` (Ph2), `H3-22`/`H3-23` (Ph3) |
 | W4-H4 | `run-cluster` St2.2 | `H4-01`, `H4-02` |
 | W4-H4 | `run-execution` St2.1 + St2.3 | `H4-03`/`H4-04` (St2.1), `H4-05`/`H4-06` (St2.3) |
@@ -129,13 +130,16 @@ current per-seam figures rather than quoting numbers from here.
 2. **Bulk operand reads and their onward relays.** All are `operand-path-ok`: the payload is already on
    disk and the consumer can read it. `produce-architecture` Ph2/Ph3 read the same drafts twice, so
    one conversion clears both.
-   - ~~Pending~~ **— LANDED in Units 3–7:** `H3-20`–`H3-23` (Unit 3, `produce-architecture` Ph2/Ph3
+   - ~~Pending~~ **— LANDED in Units 3–8:** `H3-20`–`H3-23` (Unit 3, `produce-architecture` Ph2/Ph3
      section drafts); `H3-01`, `H3-05`, `H3-06`, `H3-07` (Unit 4, the `run-report` chapter-draft set);
      `H3-17`, `H3-18` (Unit 5, `run-execution` St2.3 raw reports); `H3-08` (Unit 6, the St4.2a
      architecture operand); `H3-24` (Unit 7, the St4.2c architecture operand — the row itself did not
-     exist before that unit, so this seam was outside the measured denominator until Unit 7 added it).
-   - **Still pending: `H3-19`** — the `run-execution` St2.1 Answer Specs operand, the last measured
-     W4-H3 content relay in this group.
+     exist before that unit, so this seam was outside the measured denominator until Unit 7 added it);
+     `H3-19` (Unit 8, the `run-execution` St2.1 Answer Specs operand — St2.1.3 now resolves the
+     section's approved specs to paths only, and the St2.1.6 relay hands those paths to the
+     `research-prompt-creator` sub-agent, which reads every approved spec itself).
+   - **Nothing is pending in this group.** The one remaining W4-H3 measured violation is `H3-04`,
+     which sits under item 4 below as one of the ambiguous five rather than here.
 3. **W4-H1 and W4-H2 returns** (`H1-01`, `H2-01`). Bring 4.2a to the `run-synthesis` St2 pattern —
    the sibling writes the same artifact class to disk and returns "output file path, chapter structure
    summary, evidence coverage notes". For `execution-agent`, the response is *already* written to disk
