@@ -1,7 +1,7 @@
 ---
 task: work-loop-v2-dispatcher-reliable-supervised-use
 status: active
-turn: codex
+turn: claude
 ---
 
 ## Objective and scope
