@@ -62,6 +62,30 @@ Capability subset: baseline local repository work only—read/search/history ins
 
 ## Latest result
 
+Correction round on Unit 7's one frozen finding — reproduced first, then corrected. Committed at `05e4ccc7503a2ce5b817367c8aabe829f628e318` (read with `git rev-parse HEAD`).
+
+Reproduced by inspection (2026-08-17), both halves:
+
+- Finding, half (a): REPRODUCES — README line 58's W4-H3 `run-report` reconciliation row listed `H3-01`–`H3-04`, `H3-05`, `H3-06`/`H3-07`, `H3-08`/`H3-09` and stopped there; `H3-24` appeared nowhere in the table.
+- Finding, half (b): REPRODUCES — the bulk-operand edit map item 2 listed `H3-01`, `H3-05`, `H3-06`, `H3-07`, `H3-17`, `H3-18`, `H3-19`, `H3-20`–`H3-23`, `H3-08` as one undifferentiated pending group, so eleven seams landed across Units 3–7 were still presented as work to do, and `H3-24` was absent.
+
+Corrected, exactly and only those two:
+
+- The W4-H3 `run-report` row now carries `H3-24` labelled as the St4.2c architecture operand, with a one-clause note that it was not audit-named and carried no row until Unit 7. Its surface column gained "+ the St4.2 per-chapter operands" so the label matches the seams the row already listed.
+- Edit map item 2 keeps its rationale sentence verbatim and now splits into a LANDED line attributing each seam to its unit (`H3-20`–`H3-23` Unit 3; `H3-01`/`H3-05`/`H3-06`/`H3-07` Unit 4; `H3-17`/`H3-18` Unit 5; `H3-08` Unit 6; `H3-24` Unit 7, noting the row did not exist before it) and a **Still pending: `H3-19`** line.
+
+Evidence:
+
+- Checked against the live check rather than against the prose: `check-relay-payload.sh --format tsv` gives H3 landed = `H3-01 H3-05 H3-06 H3-07 H3-08 H3-24 H3-17 H3-18 H3-20 H3-21 H3-22 H3-23` and H3 violating = `H3-04 H3-19`. A script re-read the corrected README and reported `H3-24 present in the reconciliation table: PRESENT`, `pending line lists: ['H3-19']`, `landed-but-listed-as-pending: none`. So neither defect survives, and the assertions come from parsing the file against the measured state, not from restating the edit.
+- The remaining violator `H3-04` is deliberately *not* in item 2's pending line: it was never in item 2's group and is listed under item 4, the ambiguous five. The wording says "the last measured W4-H3 content relay **in this group**" to stay true rather than overclaim.
+- Scope: one file, 9 insertions / 3 deletions, all inside the two named blocks. `git diff --check` clean. No production command, no `seam-manifest.tsv`, no harness executable, no other file. The suite was re-run anyway and stays **17 passed, 0 failed**; `origin/main` remains an ancestor of `HEAD`; `logs/friction-log.md` left modified-but-uncommitted and unedited.
+
+Newly noticed during the correction and **not** implemented, recorded as a candidate deferral per the correction contract: the README's § Blast radius still says "None of the five received Unit 2's canonical change", which understates the position now that Units 3–7 also landed canonically only. It is outside the frozen findings, so it was left exactly as written.
+
+---
+
+Unit 7's record, retained (the correction changed nothing in it):
+
 Inspected (2026-08-17):
 
 - Claim (1): HOLDS — ran `git fetch origin`; `git merge-base --is-ancestor origin/main HEAD` succeeded; `git log --oneline -1 a95116da30d05b652d3e633dcf678be58f22119f` resolved to the Unit 6 architecture conversion. `git status --porcelain` showed only ` M logs/friction-log.md` (hook-maintained, untouched) and ` M logs/work-loop/canonical-rw-near-term-improvements.md` (Codex's uncommitted Unit 7 brief). No S1 premise changed.
@@ -100,4 +124,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 7 at `79eaf6e459be47e245552ef99848c0194f945b2b` — whether `H3-24` is the correct single coverage repair with the right schema, identifier and placement, whether the pre-production VIOLATION measurement plus the reverted-copy check make it genuinely falsifiable, whether complete-read-by-path preserves `report-compliance-qc` scope, heading and synthesis-flag semantics, and how to treat the corrected denominator — specifically whether the now-true 80.76% payload clearance should be recorded as S1's reduction target being met, given the deterministic verdict still fails on 9 violations, 2 cap violations and 5 ambiguous rows, and whether the stale harness README earns its own bounded unit.
+Codex: run the closure check on the frozen finding only, at `05e4ccc7503a2ce5b817367c8aabe829f628e318` — are both halves resolved (the reconciliation table now carries `H3-24`; the edit map no longer presents a landed operand seam as pending), and did the correction break anything (production, manifest and harness executable untouched, suite still 17/17, `git diff --check` clean)? The § Blast radius staleness noticed during the round is recorded above as a deferral, not a second correction.
