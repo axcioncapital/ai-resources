@@ -103,7 +103,7 @@ Projected aggregate if accepted, by arithmetic over current row states and **not
 
 **Next unit, recommended:** one small implementation unit that encodes only this classification in the manifest and the README, adds no source change, and — because that unit is the one that turns the suite green — should be required to show the verdict flip is caused by the classification alone and by nothing else. After it, the only remaining S1 work named in the objective is the representative chapter regression.
 
-**Repository account.** No source, agent, skill, manifest, harness, fixture, README, plan or propagation file was changed — `git status --porcelain` shows only this state file plus the preserved hook-maintained `logs/friction-log.md`. `origin/main` remains an ancestor of `HEAD`. No API or model call was made; no representative chapter was run. Discovery commit: `{{UNIT14_COMMIT}}`, containing this state file only.
+**Repository account.** No source, agent, skill, manifest, harness, fixture, README, plan or propagation file was changed — `git status --porcelain` shows only this state file plus the preserved hook-maintained `logs/friction-log.md`. `origin/main` remains an ancestor of `HEAD`. No API or model call was made; no representative chapter was run. Discovery commit: `02996c0e36b0a3034d14359ae271b8fb577b0321` (verified with `git rev-parse`), containing this state file only.
 
 **Deferrals — unchanged and still carried:** the missing Evidence Pack input and the verification-report relay at Step 3.7a; stale `reference/stage-instructions.md` writer-return wording; the writer's Reviewer Findings footer sequencing; README `Blast radius`; optional verification-summary truncation naming. Nothing new was noticed.
 
