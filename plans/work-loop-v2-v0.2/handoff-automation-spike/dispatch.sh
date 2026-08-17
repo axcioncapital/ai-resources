@@ -197,7 +197,10 @@
 #                              file is fine and the WRITE is what failed. A run that
 #                              cannot prove how it ended must not exit 0 saying it
 #                              ended well, which is the whole reason this code
-#                              exists rather than a silent success.
+#                              exists rather than a silent success. Both run leases
+#                              are RETAINED on this exit — pinned with the cause
+#                              recorded inside them — so a second dispatcher is
+#                              refused (exit 17) until the operator clears them.
 #   33  OWNERSHIP_REFUSED      logs/scripts/work-loop-owner.sh refused this task
 #                              in this checkout: either the checkout is claimed
 #                              by a different open task, or this task is claimed
@@ -1722,6 +1725,46 @@ pin_lock() { # survivor-pids, unknown-reason
   printf '%s\n' "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
   return 0
+}
+
+# The NON-TEARDOWN retention. The run reached a real operator terminal but could
+# not finalize its terminal result, so the leases must outlive this process for a
+# reason that has nothing to do with surviving descendants — pin_lock's evidence
+# would tell the teardown story, which is false here and sends the operator
+# hunting pids that do not exist. The library owns the durable cause text
+# (wl_lease_pin_terminal); what lives here is this dispatcher's wording and its
+# exit 17, exactly as with pin_lock above. Same three library outcomes, same
+# three answers, for the same reasons.
+pin_lock_terminal() { # -> 0 always; pins every owned lease with the truthful cause
+  local rc=0 msg
+  wl_lease_pin_terminal "the run could not finalize its terminal result under ${LOG_DIR:-<no log dir>}" "$TASK"; rc=$?
+  case "$rc" in
+    0)
+      msg="  the task lock is PINNED at $LOCK_DIR (and this checkout's lock at $CHECKOUT_LOCK_DIR) — this run could not prove how it ended, so a second dispatcher is refused (exit 17) until the cause is fixed and you clear them by hand." ;;
+    1)
+      return 0 ;;
+    2)
+      msg="  WARNING: the pin RECORD could not be persisted for: ${WL_LEASE_PIN_FAILED:-an unnamed lock}.
+  Those lock directories are deliberately RETAINED and were NOT released ($LOCK_DIR, and this checkout's lock at $CHECKOUT_LOCK_DIR), so a second dispatcher is still refused (exit 17).
+  What is missing is the written reason inside them: this run reached a terminal it could not prove. Do NOT read them as a removable stale lock." ;;
+    *)
+      msg="  WARNING: the lease library returned an UNRECOGNISED pin result ($rc), so this dispatcher cannot tell what was recorded.
+  Treat the lock directories as retained ($LOCK_DIR, and this checkout's lock at $CHECKOUT_LOCK_DIR): they were NOT released, and a second dispatcher is still refused (exit 17). Clear them by hand only after fixing what blocked the terminal result." ;;
+  esac
+  printf '%s\n' "$msg" >&2
+  [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
+  return 0
+}
+
+# The operator terminal's fail-closed exit, in the order that fails safe: pin
+# FIRST, so the leases are already retained before die() and the EXIT trap reach
+# release_lock, then die(38), whose own finalize attempt records the code-38
+# result where the filesystem still permits one. The retention line carries its
+# own marker comment so a mutation control can delete exactly it and prove the
+# EXIT path releases without it.
+die_terminal_unprovable() {
+  pin_lock_terminal # operator terminal retention
+  die 38 "the run reached a real operator terminal (state_class=${ST_CLASS:-unavailable}) but its terminal result could not be finalized under $LOG_DIR — refusing to exit 0, because a run that cannot prove how it ended must not report that it ended well."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
 }
 
 # Pinned beats owned, and that check lives inside the library rather than at each
@@ -3464,10 +3507,13 @@ while :; do
     #
     # FAILS CLOSED. A terminal whose result cannot be written is a run that cannot
     # say how it ended, and exiting 0 there would be a success claim with no
-    # evidence — the exact false report this whole change set exists to remove. One
-    # line, so the mutation control can delete the seam whole rather than leave an
-    # orphaned `fi` that proves nothing.
-    finalize_terminal_result 0 || die 38 "the run reached a real operator terminal (state_class=${ST_CLASS:-unavailable}) but its terminal result could not be finalized under $LOG_DIR — refusing to exit 0, because a run that cannot prove how it ended must not report that it ended well."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair." # operator terminal finalization
+    # evidence — the exact false report this whole change set exists to remove. And
+    # it fails closed HOLDING ITS LEASES: die_terminal_unprovable pins both before
+    # any release path runs, with the truthful cause recorded, so the unproven run
+    # cannot hand its checkout to the next dispatcher. One line, so the mutation
+    # control can delete the seam whole rather than leave an orphaned `fi` that
+    # proves nothing.
+    finalize_terminal_result 0 || die_terminal_unprovable # operator terminal finalization
     [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
     release_lock
     exit 0

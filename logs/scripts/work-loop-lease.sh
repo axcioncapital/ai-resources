@@ -85,6 +85,15 @@
 #        "nothing owned" and "owned but not durably pinned" need opposite
 #        responses from the caller, and a single non-zero would merge them.
 #
+# wl_lease_pin_terminal <unprovable-reason> [task-label]
+#   Same three outcomes, the same both-leases rule and the same partial-
+#   acquisition guards as wl_lease_pin, with ONE different durable cause: the
+#   calling run reached a terminal it could not prove — no survivor pids, no
+#   incomplete sweep. Exists so a non-teardown retention does not have to tell
+#   the teardown story: the descendant lines and their kill-first guidance are
+#   a false instrument for a run whose problem is a terminal result that could
+#   not be written. One added cause, not a reason taxonomy.
+#
 # wl_lease_release
 #     0  always. Pinned beats owned, checked HERE so no call site can skip it.
 #
@@ -582,31 +591,33 @@ wl_lease__pin_text() { # survivor-pids unknown-reason task-label stamp
   return 0
 }
 
-wl_lease_pin() { # survivor-pids unknown-reason [task-label]
-  local wl_surv="${1:-}" wl_unk="${2:-}" wl_label="${3:-$WL_LEASE_TASK}"
-  local wl_stamp wl_name wl_d
-  [ "$WL_LEASE_TASK_OWNED" -eq 1 ] || return 1
+# The durable record for the OTHER retention cause: a run that reached a real
+# terminal but could not prove how it ended. Same recognition marker as the
+# teardown text — acquire, status and the evidence check all key on it — and its
+# own machine-read cause line in place of the descendant/sweep pair. The clear
+# guidance names no pids to hunt, because there are none: what failed is a
+# write, and the remedy is fixing what blocked it.
+wl_lease__pin_terminal_text() { # unprovable-reason task-label stamp
+  printf 'PINNED by pid %s at %s\n' "$$" "$3"
+  printf 'task: %s\n' "$2"
+  # Read back verbatim by --status renderers. One cause, not a taxonomy.
+  printf 'terminal result unprovable: %s\n' "$1"
+  printf '\n'
+  printf 'This lease is deliberately NOT released. This run reached a terminal but could not\n'
+  printf 'durably record how it ended, so a second run must not start on this task until the\n'
+  printf 'cause above is fixed. No surviving actor process is implicated by this pin.\n'
+  printf 'To clear it: fix the cause above, then `rm -rf %s`.\n' "$WL_LEASE_TASK_DIR"
+  return 0
+}
 
-  # PINNED is set FIRST and stays set whatever the evidence does. It is what
-  # keeps wl_lease_release away from the directories, and a pin whose evidence
-  # failed to persist needs that more than one whose evidence is intact: the
-  # directory is then the only thing left refusing the next run.
-  WL_LEASE_PINNED=1
-  WL_LEASE_PIN_FAILED=''
-
-  # Stamped ONCE, then written to each owned lease independently. The checkout
-  # copy used to be a `cp` from the task file, which chained the two: a task
-  # write that failed took the checkout evidence down with it, and one fault
-  # was reported as — and looked exactly like — two.
-  wl_stamp="$(date '+%Y-%m-%dT%H:%M:%S')"
-
-  # BOTH leases are pinned when both are held, because a survivor holds both
-  # resources: it belongs to this task, and it is still running inside this
-  # checkout's working tree. Pinning only the task lease would leave the
-  # checkout open to exactly the contamination the survivor makes possible.
-  #
-  # PARTIAL ACQUISITION IS STILL THE CASE THAT MATTERS: the `continue` below is
-  # the guard that stops a pin claiming a resource this run never acquired.
+# The write-and-verify half every pin cause shares, so the invariants live once:
+# both leases are pinned when both are held — a retention reason that holds for
+# the task holds for the checkout the run was working in — and the `continue` is
+# the partial-acquisition guard that stops a pin claiming a resource this run
+# never acquired. The first argument names the text emitter; everything after it
+# is handed to that emitter unchanged.
+wl_lease__pin_owned() { # emitter [emitter-args...]
+  local wl_name wl_d
   for wl_name in task checkout; do
     if [ "$wl_name" = task ]; then
       wl_d="$WL_LEASE_TASK_DIR"
@@ -614,8 +625,7 @@ wl_lease_pin() { # survivor-pids unknown-reason [task-label]
       [ "$WL_LEASE_CHECKOUT_OWNED" -eq 1 ] || continue
       wl_d="$WL_LEASE_CHECKOUT_DIR"
     fi
-    wl_lease__pin_text "$wl_surv" "$wl_unk" "$wl_label" "$wl_stamp" \
-      >"$wl_d/survivors" 2>/dev/null
+    "$@" >"$wl_d/survivors" 2>/dev/null
     wl_lease__pin_evidence_ok "$wl_d" \
       || WL_LEASE_PIN_FAILED="${WL_LEASE_PIN_FAILED}${WL_LEASE_PIN_FAILED:+ }$wl_name"
   done
@@ -627,6 +637,36 @@ wl_lease_pin() { # survivor-pids unknown-reason [task-label]
   # caller can tell the operator rather than announce a pin that is not there.
   [ -z "$WL_LEASE_PIN_FAILED" ] || return 2
   return 0
+}
+
+wl_lease_pin() { # survivor-pids unknown-reason [task-label]
+  [ "$WL_LEASE_TASK_OWNED" -eq 1 ] || return 1
+
+  # PINNED is set FIRST and stays set whatever the evidence does. It is what
+  # keeps wl_lease_release away from the directories, and a pin whose evidence
+  # failed to persist needs that more than one whose evidence is intact: the
+  # directory is then the only thing left refusing the next run.
+  WL_LEASE_PINNED=1
+  WL_LEASE_PIN_FAILED=''
+
+  # Stamped ONCE, in the argument list, then written to each owned lease
+  # independently. The checkout copy used to be a `cp` from the task file, which
+  # chained the two: a task write that failed took the checkout evidence down
+  # with it, and one fault was reported as — and looked exactly like — two.
+  wl_lease__pin_owned wl_lease__pin_text \
+    "${1:-}" "${2:-}" "${3:-$WL_LEASE_TASK}" "$(date '+%Y-%m-%dT%H:%M:%S')"
+}
+
+wl_lease_pin_terminal() { # unprovable-reason [task-label]
+  [ "$WL_LEASE_TASK_OWNED" -eq 1 ] || return 1
+
+  # PINNED first, for the same reason as above: the pin must already be standing
+  # before any release path — die(), an EXIT trap — can reach the directories.
+  WL_LEASE_PINNED=1
+  WL_LEASE_PIN_FAILED=''
+
+  wl_lease__pin_owned wl_lease__pin_terminal_text \
+    "${1:-}" "${2:-$WL_LEASE_TASK}" "$(date '+%Y-%m-%dT%H:%M:%S')"
 }
 
 wl_lease_release() {

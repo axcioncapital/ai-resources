@@ -6277,7 +6277,7 @@ fi
 # that does not exist. This is the fail-closed requirement and it is the one that
 # matters most: a run that could not produce its evidence must not be able to
 # report success. The exit code must not be 0 and no completion may be claimed.
-sed 's/finalize_terminal_result 0 || die 38/wl2_absent_finalizer 0 || die 38/' "$DISPATCH_BIN" >"$MUT55/m20.sh"
+sed 's/finalize_terminal_result 0 ||/wl2_absent_finalizer 0 ||/' "$DISPATCH_BIN" >"$MUT55/m20.sh"
 chmod +x "$MUT55/m20.sh"
 if ! cmp -s "$DISPATCH_BIN" "$MUT55/m20.sh" && bash -n "$MUT55/m20.sh" 2>/dev/null; then
   ok "55d — M20 mutant differs from the dispatcher and is valid bash"
@@ -6308,6 +6308,94 @@ if ! cmp -s "$DISPATCH_BIN" "$MUT55/m20.sh" && bash -n "$MUT55/m20.sh" 2>/dev/nu
 else
   bad "55d — M20 mutant differs from the dispatcher and is valid bash" \
       "the sed matched nothing, or the mutant does not parse — the control cannot run"
+fi
+
+echo
+echo "Case 55e — a terminal that cannot be proven RETAINS both leases with its truthful cause"
+# THE CORRECTION'S FINDING, WHOLE. Exit 38 already refused to claim success, but
+# it still RELEASED both run leases — die() releases, and the EXIT trap releases
+# again — so the one run whose ending is unproven was also the one run that
+# handed its checkout straight to the next dispatcher. Retention is the missing
+# half of fail-closed: the leases must survive this process, carry a cause that
+# is TRUE (no descendant story — nothing survived a teardown here), and refuse
+# the next dispatcher until an operator has looked.
+sed 's/finalize_terminal_result 0 ||/wl2_absent_finalizer 0 ||/' "$DISPATCH_BIN" >"$MUT55/m21-force.sh"
+chmod +x "$MUT55/m21-force.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT55/m21-force.sh" && bash -n "$MUT55/m21-force.sh" 2>/dev/null; then
+  ok "55e — the forcing mutant differs from the dispatcher and is valid bash"
+  V55R="$(new_sandbox)"; state_file "$V55R" closed-task operator
+  OUT="$(bash "$MUT55/m21-force.sh" --checkout "$V55R" --task closed-task \
+        --log-dir "$V55R/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCR=$?
+  TL55="$(task_lock_for "$V55R" closed-task)"; CL55="$(checkout_lock_for "$V55R")"
+  expect_rc 38 "$RCR" "55e — the unprovable terminal still exits 38, never 0" "$OUT"
+  if [ -d "$TL55" ] && [ -d "$CL55" ]; then
+    ok "55e — BOTH owned lease directories survived die() and the EXIT trap"
+  else
+    bad "55e — BOTH owned lease directories survived die() and the EXIT trap" \
+        "task=$([ -d "$TL55" ] && echo present || echo absent) checkout=$([ -d "$CL55" ] && echo present || echo absent)"
+  fi
+  if grep -q '^PINNED by pid ' "$TL55/survivors" 2>/dev/null &&
+     grep -q '^PINNED by pid ' "$CL55/survivors" 2>/dev/null; then
+    ok "55e — each retained lease carries the durable pin marker a later run recognises"
+  else
+    bad "55e — each retained lease carries the durable pin marker" \
+        "task: $(head -1 "$TL55/survivors" 2>&1); checkout: $(head -1 "$CL55/survivors" 2>&1)"
+  fi
+  if grep -q '^terminal result unprovable: ' "$TL55/survivors" 2>/dev/null &&
+     ! grep -q '^descendants still running:' "$TL55/survivors" 2>/dev/null &&
+     ! grep -q 'descendant of the stopped actor' "$TL55/survivors" 2>/dev/null; then
+    ok "55e — the recorded cause is terminal-result unprovability, not an actor-teardown story"
+  else
+    bad "55e — the recorded cause is terminal-result unprovability, not a teardown story" \
+        "$(cat "$TL55/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V55R" closed-task --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "55e — a second dispatcher is refused by the retained lease" "$OUT"
+
+  # M21 — remove ONLY the retention call, by its own marker comment. Forced
+  # failure then reverts to the pre-correction behaviour — exit 38 with both
+  # leases RELEASED by the EXIT path — which is what proves the retention call
+  # is doing the work rather than some other part of the seam.
+  sed -e 's/finalize_terminal_result 0 ||/wl2_absent_finalizer 0 ||/' \
+      -e '/# operator terminal retention/d' "$DISPATCH_BIN" >"$MUT55/m21.sh"
+  chmod +x "$MUT55/m21.sh"
+  if ! cmp -s "$MUT55/m21-force.sh" "$MUT55/m21.sh" && bash -n "$MUT55/m21.sh" 2>/dev/null; then
+    ok "55e — M21 mutant differs from the forcing mutant and is valid bash"
+    V55S="$(new_sandbox)"; state_file "$V55S" closed-task operator
+    OUT="$(bash "$MUT55/m21.sh" --checkout "$V55S" --task closed-task \
+          --log-dir "$V55S/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCS=$?
+    TL55S="$(task_lock_for "$V55S" closed-task)"; CL55S="$(checkout_lock_for "$V55S")"
+    if [ "$RCS" -eq 38 ] && [ ! -d "$TL55S" ] && [ ! -d "$CL55S" ]; then
+      ok "55e — M21: without the retention call the EXIT path releases both leases (retention is fail-capable)"
+    else
+      bad "55e — M21: without the retention call the EXIT path releases both leases" \
+          "rc=$RCS task=$([ -d "$TL55S" ] && echo present || echo absent) checkout=$([ -d "$CL55S" ] && echo present || echo absent)"
+    fi
+  else
+    bad "55e — M21 mutant differs from the forcing mutant and is valid bash" \
+        "the retention marker was not found, or the mutant does not parse"
+  fi
+else
+  bad "55e — the forcing mutant differs from the dispatcher and is valid bash" \
+      "the sed matched nothing, or the mutant does not parse — the case cannot run"
+fi
+
+echo
+echo "Case 55f — the ordinary operator terminals still finalize once and release normally"
+# The other half of the closure check: retention must not leak into the
+# successful paths. 55a and 55b each finalized exactly one result above; here
+# their leases must be GONE — released, not pinned — so the next run is admitted.
+if [ ! -d "$(task_lock_for "$V55C" closed-task)" ] && [ ! -d "$(checkout_lock_for "$V55C")" ]; then
+  ok "55f — the CLOSED terminal released both leases once its result existed"
+else
+  bad "55f — the CLOSED terminal released both leases once its result existed" \
+      "task=$([ -d "$(task_lock_for "$V55C" closed-task)" ] && echo present || echo absent) checkout=$([ -d "$(checkout_lock_for "$V55C")" ] && echo present || echo absent)"
+fi
+if [ ! -d "$(task_lock_for "$V55B" blocked-task)" ] && [ ! -d "$(checkout_lock_for "$V55B")" ]; then
+  ok "55f — the BLOCKED_OPERATOR terminal released both leases once its result existed"
+else
+  bad "55f — the BLOCKED_OPERATOR terminal released both leases once its result existed" \
+      "task=$([ -d "$(task_lock_for "$V55B" blocked-task)" ] && echo present || echo absent) checkout=$([ -d "$(checkout_lock_for "$V55B")" ] && echo present || echo absent)"
 fi
 
 # ==================================================================== done

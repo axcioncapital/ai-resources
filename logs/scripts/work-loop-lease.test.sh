@@ -110,6 +110,16 @@ case "$MODE" in
     printf 'AFTER-RELEASE task=%s checkout=%s\n' \
       "$(present "$WL_LEASE_TASK_DIR")" "$(present "$WL_LEASE_CHECKOUT_DIR")" >>"$OUT"
     exit 0 ;;
+  pin-terminal)
+    # The NON-TEARDOWN cause: this run reached a terminal it could not prove.
+    # `prc` is captured whatever happens — under a library without the helper
+    # the call exits 127, and the case reads that as its red.
+    wl_lease_pin_terminal "the run could not finalize its terminal result under $CO/runs" "$TK"; prc=$?
+    printf 'PIN-TERMINAL rc=%s pinned=%s\n' "$prc" "${WL_LEASE_PINNED-<unset>}" >>"$OUT"
+    wl_lease_release
+    printf 'AFTER-RELEASE task=%s checkout=%s\n' \
+      "$(present "$WL_LEASE_TASK_DIR")" "$(present "$WL_LEASE_CHECKOUT_DIR")" >>"$OUT"
+    exit 0 ;;
   pin-task-only)
     # Acquire's rollback makes "owns the task lease but not the checkout lease"
     # unreachable through acquire alone, so the library is driven into that
@@ -1243,6 +1253,71 @@ else
   [ -z "$WIT22" ] \
     && ok "and no reclaim witness survived inside the winner's lease" \
     || bad "and no reclaim witness survived inside the lease" "$WIT22"
+fi
+
+# ================================================================= case 23
+echo
+echo "Case 23 — a terminal-result-unprovable pin records its own truthful cause, not a teardown story"
+# THE NON-TEARDOWN RETENTION CAUSE. A run that reaches a real operator terminal
+# but cannot finalize its terminal result must keep both leases and say WHY.
+# Until this case went red the library could only tell the teardown story —
+# survivor pids, an incomplete sweep, "a descendant of the stopped actor may
+# still be alive" — which for this cause is a false instrument: there are no
+# survivors, and the remedy is fixing what blocked the terminal write, not
+# hunting processes.
+d="$(new_checkout)"
+P23="$SANDBOX_ROOT/c23-pin.out"; N23="$SANDBOX_ROOT/c23-next.out"
+contend "$LEASE_LIB" "$d" terminal-task dispatcher 0 "$P23" pin-terminal >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 0 ] && ok "setup — the run acquired and then pinned for an unprovable terminal" \
+                || bad "setup" "rc=$RC $(cat "$P23" 2>/dev/null)"
+grep -q 'PIN-TERMINAL rc=0 pinned=1' "$P23" \
+  && ok "the terminal pin reports success with the pin set before any release path runs" \
+  || bad "the terminal pin reports success with the pin set first" "$(cat "$P23" 2>/dev/null)"
+grep -q 'AFTER-RELEASE task=present checkout=present' "$P23" \
+  && ok "release left BOTH pinned leases in place — pinned beats owned for this cause too" \
+  || bad "release left both pinned leases in place" "$(cat "$P23" 2>/dev/null)"
+# Both dirs are READ from the driver's own ACQUIRED line rather than recomputed:
+# the driver was handed the sandbox path as mktemp returned it, and hashing a
+# re-canonicalized form here would point these assertions at a lock nothing wrote.
+TD23="$(sed -n 's/.* task_dir=\([^ ]*\).*/\1/p' "$P23" | head -1)"
+CD23="$(sed -n 's/.* checkout_dir=\([^ ]*\).*/\1/p' "$P23" | head -1)"
+C23_OK=1
+for d23 in "$TD23" "$CD23"; do
+  grep -q '^PINNED by pid ' "$d23/survivors" 2>/dev/null || C23_OK=0
+  grep -q '^terminal result unprovable: ' "$d23/survivors" 2>/dev/null || C23_OK=0
+done
+[ "$C23_OK" -eq 1 ] \
+  && ok "every owned lease carries the durable marker acquire reads AND the truthful cause line" \
+  || bad "every owned lease carries the marker and the truthful cause" \
+      "task: $(cat "$TD23/survivors" 2>&1 | tr '\n' '|'); checkout: $(cat "$CD23/survivors" 2>&1 | tr '\n' '|')"
+if ! grep -q '^descendants still running:' "$TD23/survivors" 2>/dev/null &&
+   ! grep -q '^sweep incomplete:' "$TD23/survivors" 2>/dev/null &&
+   ! grep -q 'descendant of the stopped actor' "$TD23/survivors" 2>/dev/null; then
+  ok "and the record tells no teardown story — no survivor pids, no sweep, no descendant prose"
+else
+  bad "and the record tells no teardown story" "$(cat "$TD23/survivors" 2>&1 | tr '\n' '|')"
+fi
+contend "$LEASE_LIB" "$d" terminal-task next 0 "$N23" >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 17 ] && ok "the next run is refused by the terminal-pinned lease" \
+                 || bad "the next run is refused by the terminal-pinned lease" "rc=$RC $(cat "$N23" 2>/dev/null)"
+grep -q 'refusal=pinned' "$N23" \
+  && ok "and the refusal says PINNED, so the operator is sent to the evidence, not to a pid" \
+  || bad "and the refusal says pinned" "$(cat "$N23" 2>/dev/null)"
+# THE EXISTING CAUSE IS UNTOUCHED. The teardown pin keeps its exact machine-read
+# line and its exact operator guidance — this is what makes the extension
+# backward-compatible rather than a second dialect of pin evidence.
+d="$(new_checkout)"
+P23T="$SANDBOX_ROOT/c23-teardown.out"
+contend "$LEASE_LIB" "$d" td-task pinner 0 "$P23T" pin >/dev/null 2>&1; RC=$?
+[ "$RC" -eq 0 ] && ok "control setup — an ordinary teardown pin still succeeds" \
+                || bad "control setup" "rc=$RC $(cat "$P23T" 2>/dev/null)"
+TD23T="$(task_dir "$d" td-task)"
+if grep -q '^descendants still running: 4242$' "$TD23T/survivors" 2>/dev/null &&
+   grep -q 'descendant of the stopped actor' "$TD23T/survivors" 2>/dev/null; then
+  ok "the teardown pin's machine-read line and its guidance prose are unchanged"
+else
+  bad "the teardown pin's machine-read line and its guidance prose are unchanged" \
+      "$(cat "$TD23T/survivors" 2>&1 | tr '\n' '|')"
 fi
 
 # ==================================================================== done
