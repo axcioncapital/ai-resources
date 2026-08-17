@@ -51,7 +51,7 @@ The three proposals are not three roadmaps to append; they occupy three layers o
 |---|---|---|
 | Content-relay → path-passing refactor | lean § 2.4.2 | **Near-term implementation** (S1) — no open design, no authority conflict |
 | Perplexity lead-not-source ruling canonization | retrieval C5 | **Near-term implementation** (S2) — operator ruling already made 2026-08-14; slice verifies the ruling record before editing |
-| Filled canonical source registry | retrieval C2, P2 | **Near-term implementation** (S3), with an adjacency confirmation at the gate session (§ 7, G5 note) |
+| Filled canonical source registry | retrieval C2, P2 | **Near-term implementation** (S3), gated on G5's adjacency confirmation at the decision session (§ 7) |
 | Tiered routes / research modes (R1-R3 ≡ Light/Standard/Deep) | lean § 2.1, judgment § modes | **Prerequisite decision gate** (G1) — conflicts with the active mission's S10 rejection of research tiers; new usage evidence exists but reopening is the operator's |
 | Execution relay + mechanical Source Access Log + statistical lane | lean § 2.4.1; retrieval C1, C3, C4, P1, P4 | **Prerequisite decision gate** (G2) — conflicts with the mission's S10 "Stage-2 execution automation" rejection; build only after reopening |
 | `/research` entry command (R1+R2) | lean Wave 1.1 | **Near-term implementation after G1** (S5), qualified through `/develop-ai-resource` per repo rules |
@@ -67,7 +67,7 @@ The three proposals are not three roadmaps to append; they occupy three layers o
 
 ## 4. Operating mode, specification, and ticket split
 
-**Mode: Normal** (operating standard § 3). The remaining planning uncertainty — which slices, in what order, behind which gates — is resolvable in one effective planning context, and this document is that context. The work is not Small/Clear (material product decisions exist: tiers, automation reopening, spend), and it is not Foggy: the open decisions are enumerable, separable, and all route to the same operator session rather than forming a dependent decision web. Escalate to `/wayfinder` only if the G1/G2 outcomes contradict each other in a way that re-opens the architecture (§ 9, stop condition 2).
+**Mode: Normal** (operating standard § 3). The remaining planning uncertainty — which slices, in what order, behind which gates — is resolvable in one effective planning context, and this document is that context. The work is not Small/Clear (material product decisions exist: tiers, automation reopening, spend), and it is not Foggy: the open decisions are enumerable, separable, and all route to the same operator session rather than forming a dependent decision web. Escalate to `/wayfinder` only if a gate resolves in a form none of this plan's stated paths covers (§ 9, stop condition 2).
 
 **Specification: not useful now.** The design detail that a spec would carry already exists in the retrieval plan's C1–C8 specifications and `audits/token-audit-2026-05-18-research-workflow.md`; a separate spec would duplicate living documents. Per-slice detail lands in each slice's Work Loop brief.
 
@@ -75,25 +75,27 @@ The three proposals are not three roadmaps to append; they occupy three layers o
 
 ## 5. Implementation slices
 
-Sequencing principles: reusable substrate first, earliest real operating proof before broad rollout, and no slice that requires an operator decision starts before its gate clears. S1–S3 and S6 are executable under existing authority; S4 and S5 are gated.
+Sequencing principles: reusable substrate first, earliest real operating proof before broad rollout, and no slice starts before its authority exists.
+
+**Authority baseline.** Every slice below derives from proposed, unapproved sources, so technical readiness and authority are distinct: **no slice begins until the operator approves this plan (gate G4) or separately authorizes that slice.** Within that baseline, S1, S2 and S6 need no *additional* operator decision; S3 additionally waits for G5's adjacency confirmation; S4 and S5 are decision-gated (G2, G1). "Gate" lines below name what must clear beyond the plan-approval baseline.
 
 ### S1 — Content-relay → path-passing refactor
 - **Observable outcome:** Stage 3–4 subagent handoffs pass file paths instead of full draft content through the main session, per the existing specification.
 - **Acceptance evidence / proof seam:** failing case = measured token cost of one fixture section under the current relay pattern; pass = same fixture section post-refactor with the specified reduction (spec estimates 10k–50k tokens/section) and byte-identical analytical outputs. Deterministic; no judgment eval needed.
 - **Boundary:** only the command/skill files the token audit names; no semantic change to any output artifact.
-- **Dependencies:** none. **Gate:** none — efficiency fix inside existing authority. Live-consumer check (risk R4) applies.
+- **Dependencies:** none. **Gate:** plan approval only (§ 5 authority baseline) — no additional operator decision. Live-consumer check (risk R4) applies.
 
 ### S2 — Canonize the Perplexity lead-not-source ruling
 - **Observable outcome:** canonical `stage-instructions.md` Step 2.S4 (and the adjudication surfaces it feeds) require a source to have been actually opened before it grades as accessed; unopened Perplexity citations merge as `[SUPPLEMENTARY — LEAD]` with no claim ID and no coverage movement; a retrieval-tool negative is never evidence of absence.
 - **Acceptance evidence / proof seam:** failing case = current Step 2.S4 text (verified: no lead handling exists — § 2 finding 4); pass = a fixture merge run where an unopened citation demonstrably cannot acquire a claim ID or move a coverage verdict, plus the changed text quoted against what it replaced.
 - **Boundary:** the ruling only — no Source Access Log automation (that is S4), no scarcity-record redesign (mission thread 6 territory).
-- **Dependencies:** none. **Gate:** none new — the operator ruling is dated 2026-08-14. **Slice-time premise to verify first:** locate the ruling record in the worktree that carries it (claimed in retrieval § 1.5); if it cannot be produced, hand back rather than reconstructing the ruling from the proposal's paraphrase.
+- **Dependencies:** none. **Gate:** plan approval only (§ 5 authority baseline) — no new product decision is asked. **Slice-time premise to verify first:** locate the 2026-08-14 ruling record in the worktree that carries it (claimed in retrieval § 1.5) **and establish that the ruling authorizes the canonical change — not merely that it states the substantive rule in a project-local context.** If the record cannot be produced, or it turns out project-scoped, hand back for the canonization decision rather than reconstructing authority from the proposal's paraphrase.
 
 ### S3 — Ship the canonical source registry filled
 - **Observable outcome:** the canonical named-source appendix and evidence-need→source-class routing for the macro/sector/trend domain ship filled (from retrieval § 2.1, free sources only), so `source-class-mapper` is live on a fresh deployment instead of a no-op; the executor-routing guide joins canonical `reference/`.
 - **Acceptance evidence / proof seam:** failing case = current template (16 placeholder tokens, § 2 finding 5); pass = fresh scratch deploy where `source-class-mapper` produces a non-empty, domain-correct mapping with no hand-authoring, and the placeholder-registry deploy checks still pass.
 - **Boundary:** reference data only — no retrieval scripts, no subscriptions, no per-source automation; projects still specialize the registry.
-- **Dependencies:** none technically. **Gate:** advisory confirmation at G5 that a filled registry is not the S10-rejected "source-memory infrastructure" (Claude's reading: it is static routing reference, not memory of past searches — flagged, not silently resolved).
+- **Dependencies:** none technically. **Gate:** plan approval **plus G5's adjacency confirmation** that a filled registry is not the S10-rejected "source-memory infrastructure" — S3 does not start until that confirmation is recorded (Claude's reading: it is static routing reference, not memory of past searches — flagged for the operator, not silently resolved).
 
 ### S4 — Retrieval runtime: execution relay + mechanical Source Access Log *(gated on G2)*
 - **Observable outcome:** a script under the canonical workflow takes a session prompt file, calls the Perplexity **Agent API** with the domain/recency/language parameters the prompt-creator already specifies, writes the raw UTF-8 report to `execution/raw-reports/`, and emits Source Access Log entries (URL, accessed Y/N, HTTP status, date) mechanically; a domain-resolution precheck runs before any scarcity verdict. The Research Execution GPT lane stays manual (no public API) with batched paste blocks. The Cross-Model Rule is preserved: the assigned tool still executes the research; automation replaces the relay, not the work.
@@ -105,15 +107,15 @@ Sequencing principles: reusable substrate first, earliest real operating proof b
 - **Observable outcome:** one shared ai-resources command classifies an incoming question and runs the two light routes (R1 note with evidence table; R2 plan→execute→synthesize memo with one consolidated QC pass) with zero project deployment; R3 hands off to the deployed RW. Vocabulary (R1/R2/R3 vs Light/Standard/Deep) is whichever G1 settled.
 - **Acceptance evidence / proof seam:** deterministic: command-path tests for classification defaults and the one-word override. Representative AI-judgment proof: a small route-classification eval set (unambiguous R1/R2/R3 cases plus ambiguous-defaults-to-R2 cases) and one real R2 memo produced for a genuine launch-period question, judged against the evidence-vs-inference output contract. Operator-workflow proof: the operator runs one real R1 question end-to-end without touching workflow mechanics.
 - **Boundary:** new command + its templates only; no change to the deep pipeline; qualification runs through `/develop-ai-resource` → `/create-skill` per `docs/ai-resource-creation.md` (this plan and the lean proposal are the qualification evidence, but the pipeline still decides form).
-- **Dependencies:** G1 cleared; S3 useful but not required. **Gate:** G1.
+- **Dependencies:** G1 cleared (on top of the § 5 authority baseline); S3 useful but not required. **Execution path is settled by G2, and both outcomes are viable — this is the plan's dependency model, chosen so G1 and G2 stay independently decidable:** with G2 approved and S4 landed, R1/R2 execute retrieval through the runtime; with G2 kept rejected, R1/R2 run on the **manual execution model** — the assigned tool still executes the research, driven from one batched prompt block per route run with results pasted back (the lean proposal's own fallback design), and the route's acceptance evidence additionally records the operator relay burden per run. S4, when it lands, upgrades the execution path without changing the route contract, so S5 does not wait for S4. **Gate:** G1.
 
 ### S6 — Judgment-layer representative local operating trial
 - **Observable outcome:** one genuine Sector Intelligence unit runs through the existing local judgment implementation (judgment plan Unit 1): a real proposed Unit Judgment Brief from live evidence, founder revision/approval exercised, approved judgment demonstrably shaping directives and prose, no downstream component inventing an unapproved thesis, review/token burden recorded.
 - **Acceptance evidence / proof seam:** operator-workflow and AI-judgment proof by design — the trial *is* the evidence. Deterministic floor: the four existing regression suites stay green (82 tests, per the judgment plan's verified count).
 - **Boundary:** entirely inside `projects/axcion-sector-intelligence/`; **no canonical file changes**. Canonical adoption (judgment Units 2–7) remains deferred regardless of trial outcome and is re-planned on the trial's evidence.
-- **Dependencies:** a live Sector Intelligence research unit to attach to. **Gate:** none for the trial itself; founder participation is inherent to the trial, not a blocking pre-decision.
+- **Dependencies:** a live Sector Intelligence research unit to attach to. **Gate:** plan approval only (§ 5 authority baseline) — the trial needs no additional decision; founder participation is inherent to the trial, not a blocking pre-decision.
 
-**Sequence:** S1 → S2 → S3 (substrate, ungated, in this order of increasing blast radius); G-session (§ 7) scheduled as soon as the operator is available, in parallel with S1–S3; S6 as soon as a real unit exists (independent track); S4 then S5 after their gates clear. Earliest real operating proof arrives from S6 and S4's representative session — both before any broad rollout (S5 adoption beyond the first real uses, deep-pipeline slimming, consuming-project propagation are all behind that evidence).
+**Sequence:** the G-session (§ 7) comes **first** — its approval of this plan (G4) is the baseline authority every slice needs, and no slice starts before it (or a separate per-slice authorization). Then S1 → S2 → S3 (substrate, in order of increasing blast radius; S3 also requires its G5 confirmation from that session); S6 as soon as a real unit exists (independent track); S4 as G2 allows; S5 after G1 — through the runtime where S4 has landed, on the manual execution model where G2 stays rejected. Earliest real operating proof arrives from S6 and the first real route runs — all before broad rollout (S5 adoption beyond the first real uses, deep-pipeline slimming, consuming-project propagation are all behind that evidence).
 
 ## 6. Proof strategy
 
@@ -135,12 +137,12 @@ Sequencing principles: reusable substrate first, earliest real operating proof b
 
 ## 7. Operator decisions required (authority and cost)
 
-None of these is decided by this plan. Each is a gate; slices behind a gate do not start until it clears. Recommended handling: one decision session covering G1–G5.
+None of these is decided by this plan. **G4 — approval of this plan and its cutoff — is the baseline authorization without which no slice starts at all** (§ 5); G1, G2, G3 and G5 gate their named slices on top of it. Recommended handling: one decision session covering G1–G5.
 
 - **G1 — Reopen the research-tiers rejection.** The active mission `logs/missions/research-workflow-deploy-fitness.md` records "Research tiers" on the operator's S10 explicitly-not-to-be-built list, with re-litigation "without new pilot evidence" named as an off-mission signal. New evidence now exists (usage evidence: bypass pipelines, zero fast research through RW). Decision: reopen and approve tiered routes — and if so, settle the single vocabulary (R1/R2/R3 ≡ Light/Standard/Deep) — or keep the rejection. **Recommendation (Claude, attributed): reopen; the evidence is exactly the kind the mission contemplated.** Blocks S5.
 - **G2 — Reopen the Stage-2 execution-automation rejection.** The same S10 list records "Stage-2 execution automation (the manual model is confirmed; `execution-agent` stays unwired for Stage 2)". The retrieval plan's entire runtime (C1/C4/P1) contradicts it. Decision: reopen for the relay-only automation (Cross-Model Rule preserved) or keep the manual model. **Recommendation: reopen for the relay only.** Blocks S4.
 - **G3 — Paid source adoption.** Nordic Financial News subscription (~€290–790/yr) and any later Dealroom consideration (~€12k/yr). **Recommendation: defer both; adopt nothing paid until S4 operates and demonstrates the free stack's limits.** Blocks nothing near-term.
-- **G4 — Approve the near-term cutoff.** Repository authority does not determine the exact near-term boundary; § 8's cutoff is Claude's attributed proposal and needs operator approval (or amendment).
+- **G4 — Approve this plan and its near-term cutoff.** Repository authority does not determine the exact near-term boundary; § 8's cutoff is Claude's attributed proposal and needs operator approval (or amendment). Because every slice derives from unapproved proposals, this approval is also what authorizes S1, S2 and S6 to begin — until it is given (or a slice is separately authorized), nothing in § 5 is executable.
 - **G5 — Mission-contract mechanics and adjacency confirmations.** The deploy-fitness mission's Goal/scope/validation contract is frozen and `/mission` has no update verb (recorded in the mission file itself), so reopening G1/G2 items requires an operator-directed contract revision or an explicit successor decision — not a silent edit. Same session: confirm S3's filled registry is not the rejected "source-memory infrastructure" shape, and confirm the overlap handling with mission thread 6 (S4's mechanical log strengthens it; ownership stays with the mission).
 
 An approved gate changes the *authority*, not the scope discipline: post-gate slices still carry their stated boundaries.
@@ -170,8 +172,8 @@ An approved gate changes the *authority*, not the scope discipline: post-gate sl
 - **R6 — External API deadline.** Perplexity's Sonar Chat Completions API retires 2026-09-27; S4 builds against the Agent API and verifies parameter parity by execution, not documentation.
 
 **Stop conditions (any of these stops the affected slice and hands back):**
-1. A slice's load-bearing premise fails at execution time (the standing Work Loop rule — including S2's ruling-record premise).
-2. G1 and G2 resolve in a combination that contradicts this plan's architecture (e.g., tiers approved but all automation refused, making R1/R2 economically identical to the manual deep pipeline) — return to planning; escalate mode per § 4.
+1. A slice's load-bearing premise fails at execution time (the standing Work Loop rule — including S2's ruling-record-and-authorization premise).
+2. An operator gate resolves in a form none of this plan's stated paths covers (every G1×G2 combination is covered by design — no tiers / runtime routes / manual-model routes — so this fires only on a conditioned or partial approval that neither the runtime nor the manual execution model can serve) — return to planning; escalate mode per § 4.
 3. A slice cannot produce its named failing case (evidence that cannot fail is not evidence).
 4. A canonical edit would take live effect in a deployed project whose state cannot be verified first.
 5. Scope pressure to absorb a deferred item (Wave 2/3, judgment Units 2–9, mission threads) mid-slice — record the deferral, do not implement.
@@ -182,9 +184,9 @@ An approved gate changes the *authority*, not the scope discipline: post-gate sl
 **The near-term programme is complete when:**
 1. S1–S3 have landed with their deterministic proofs green;
 2. the G-session has produced recorded operator decisions on G1–G5 (whatever their outcome — a recorded "keep the rejection" completes the gate);
-3. every gate-approved slice among S4–S5 has landed with both its deterministic proof and its representative operating proof (one real research session through the runtime; one real R2 memo and one operator-run R1 question through the routes);
+3. every gate-approved slice among S4–S5 has landed with both its deterministic proof and its representative operating proof — for S4, one real research session through the runtime; for S5, one real R2 memo and one operator-run R1 question on whichever execution path its gates allowed (runtime, or the manual execution model with relay burden recorded);
 4. S6's trial has run on a genuine unit and its evidence memo exists to drive the judgment layer's re-planning;
 5. the three source proposals carry their disposition pointers and no competing sequencing authority remains; and
 6. everything not in the near-term boundary is either a recorded deferral here or owned by a named authority elsewhere.
 
-**First executable slice: S1 (content-relay → path-passing refactor).** It has zero authority conflict, a pre-existing specification, deterministic proof, and the highest token ROI per unit of effort in the entire backlog. It is not implemented by this planning unit.
+**First executable slice: S1 (content-relay → path-passing refactor), beginning once G4 approves this plan.** It needs no decision beyond that approval, has a pre-existing specification, deterministic proof, and the highest token ROI per unit of effort in the entire backlog. It is not implemented by this planning unit.
