@@ -37,8 +37,8 @@ Replace `CHAPTER_PATH` with the actual chapter file path from Step 1. Check stde
 ### Step 2: Execute Fact Verification
 
 3. Construct GPT-5 API call: read fact verification prompt from `/reference/sops/`, use chapter prose + evidence table as input.
-4. Delegate to execution-agent. Write verification report to `/report/chapters/{section}/{section}-chapter-NN-verification.md`.
-5. Write checkpoint to `/report/checkpoints/{section}/{section}-chapter-NN-verification-checkpoint.md`. Include: output file path, discrepancy count, discrepancy summary, verdict.
+4. Delegate to execution-agent, specifying `/report/chapters/{section}/{section}-chapter-NN-verification.md` as its output path. It writes the complete verification report there verbatim and returns that path plus a summary capped at 20 lines and 4 KB.
+5. Write checkpoint to `/report/checkpoints/{section}/{section}-chapter-NN-verification-checkpoint.md` from the agent's returned path and summary — the report body is not needed here. Include: output file path, discrepancy count, discrepancy summary, verdict. If the agent reports an API failure or a missing field, record that instead of inferring it.
 6. ▸ /compact — verification prompt, raw chapter content, and evidence table no longer needed; checkpoint carries forward.
 
 ---

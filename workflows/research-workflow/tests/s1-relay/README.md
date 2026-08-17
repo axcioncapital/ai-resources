@@ -142,11 +142,20 @@ current per-seam figures rather than quoting numbers from here.
      which sits under item 4 below as one of the ambiguous five rather than here.
 3. **W4-H1 and W4-H2 returns** (`H1-01`, `H2-01`). Bring 4.2a to the `run-synthesis` St2 pattern —
    the sibling writes the same artifact class to disk and returns "output file path, chapter structure
-   summary, evidence coverage notes". For `execution-agent`, the response is *already* written to disk
-   ("Write the response to the file path specified by the caller"), so the verbatim return is pure
-   duplication; the `Interpret or summarize … verbatim` prohibition must be rewritten in the same
-   commit to permit a path plus a capped summary while still forbidding interpretation of the response
-   itself.
+   summary, evidence coverage notes".
+   - ~~Pending~~ **— `H2-01` LANDED in Unit 9:** the response was *already* written to disk, so the
+     verbatim return was pure duplication. `execution-agent` now returns the caller-specified path
+     plus a handoff summary capped at 20 lines and 4 KB, carrying only the output path, response
+     status, error text, the verdict as stated, and the discrepancy count with Claim ID and Issue
+     type per discrepancy — grouped by Issue type if the per-discrepancy lines would breach the cap.
+     The old `Interpret or summarize … verbatim` prohibition was rewritten in the same commit, as
+     this entry required: it still forbids altering, interpreting, analyzing or paraphrasing the
+     response, still forbids handing the body back, and now names the file on disk as the verbatim
+     authoritative copy the summary may never stand in for. `verify-chapter` St2.4/2.5 were updated
+     to consume that contract. `H2-01` was the second of the two cap violations; only `H1-01`'s
+     remains.
+   - **Still pending: `H1-01`** — the `run-report` St4.2a full chapter-draft return, and the last
+     cap violation in the measured set.
 4. **Hand the ambiguous five back before touching them.** `H3-04`, `H2-04`, `H1-02`, `H1-03`, `H2-05`
    need the isolation contract settled — including the extract-class contradiction between
    `docs/required-reference-files.md`, `run-report` St4.0 and `run-cluster` St2.3 — and `H1-02`/`H1-03`
