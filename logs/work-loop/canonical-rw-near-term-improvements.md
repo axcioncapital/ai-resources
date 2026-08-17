@@ -63,6 +63,29 @@ Capability subset: baseline local repository work only—read/search/history ins
 
 ## Latest result
 
+**Correction round — the one frozen finding (cap-and-pointer gap), resolved.**
+
+Reproduced first, by inspection: the pre-correction 4.2a return clause said only "capped at 20 lines and 4 KB … drop detail and add one line reading `[truncated — full draft at the output path above]`". Read against that text, all three parts of the finding hold. It named no field priority, so nothing said which facts survive truncation. It bounded no individual field, so an oversized warning/failure field had no rule at all. And its single pointer line asserts a draft exists at the output path unconditionally, so a writer that failed before producing one would emit a false pointer. The 116-byte figure also reproduces as the finding describes: `check-relay-payload.sh` computes it at line 260 as `${#rel} + 1` per fixture glob times `reps` — `chapters/chapter-01-draft.md` is 28 characters, so 29 × 4 = 116. It is the harness's path-relay projection from the manifest, computed without reference to any constructed return, and it therefore cannot evidence the 20-line / 4 KB claim. Correct on all counts.
+
+Corrected, in `run-report.md` Step 4.2a only. The return is now a fixed five-item order so truncation can only remove detail from the end: **(1) status**, always present, exactly one line, either `status: draft-written <exact output path>` or `status: no-draft <reason>` carrying no path claim; **(2) warnings and failure state**, at most 5 lines and 1 KB, quoted from the writer's own named checks; **(3) scarcity items addressed**, at most 5 lines; **(4) evidence coverage status**, at most 3 lines; **(5) chapter structure**, at most 5 lines. Facts the writer does not hold are omitted, never inferred. Overflow drops whole items from the end starting at (5), and the final line is `[truncated — full draft at the output path above]` only when status is `draft-written`, or `[truncated — no draft was written]` when it is `no-draft`, with an explicit "never point at a draft that does not exist".
+
+Building the failure case exposed a second cap conflict inside my own first attempt at that wording, of exactly the kind Unit 9 hit: the field rule said "quote its first 5 lines" *and* "at most 1 KB", and the constructed case measured **1025 bytes at 5 lines — one byte over its own bound**. The two bounds could disagree. The committed wording resolves it rather than leaving it: quote as much of the beginning as fits inside **both** bounds, stopping at whichever is reached first, never overrunning one to satisfy the other. Under that rule the same field measures **4 lines / 736 bytes**.
+
+Measured handoff cases, both constructed to the corrected contract and measured with `wc`:
+
+- **Normal, every field written to its full budget** — 19 lines / 1531 bytes against the 20-line / 4096-byte caps. **FITS.** Line budget 1 + 5 + 5 + 3 + 5 = 19 leaves exactly one line for the truncation marker, so the worst legal case is 20 lines, not 21.
+- **Overlong failure** — the writer aborts before writing any draft, its own check output running 63 lines / 17444 bytes. **Under the old wording: 64 lines / 17496 bytes — BREACHES both caps**, and the pointer line it emits reads `[truncated — full draft at the output path above]` while no draft exists at that path. **Under the corrected wording: 7 lines / 977 bytes — FITS**, status is `no-draft` with no path claim, the failure field is 4 lines / 736 bytes inside its 5-line / 1 KB bound, and the final line reads `[truncated — no draft was written]`. The old wording can fail and does; the corrected wording is what stops it.
+
+Post-correction harness and check, rerun: `H1-01` `path` / `COMPLIANT`; `H1-02` `content` / `VIOLATION` / `ambiguous`; `H1-03` `content` / `VIOLATION` / `ambiguous` — all three unchanged from the accepted Unit 10 position. Aggregate unchanged at 24/40 compliant, 227357 relayed bytes, 6 measured violations, **0 cap violations**, 5 ambiguous, 0 unresolved. `H3-08`, `H3-24`, `H4-07`, `H4-08`, `H4-09` still `path`/`COMPLIANT`; `H3-09` still `EXEMPT-CONTENT`. `check-relay-payload.test.sh` → **17 passed, 0 failed**, with `T9 H1-01 flips COMPLIANT -> VIOLATION` still live (its `flip_back` sed matches the retained `Return: chapter draft path (the exact output path above) plus a factual handoff` prefix). `git diff --check` clean.
+
+Correction commit: `{{CORRECTION_COMMIT}}`, touching `workflows/research-workflow/.claude/commands/run-report.md` and this state file only. No manifest, harness-executable, fixture or downstream-seam change entered this round; `logs/friction-log.md` remains preserved and unstaged.
+
+Newly noticed during the correction and **recorded as a deferral, not implemented**: `reference/stage-instructions.md` § Step 4.2 describes the Step 4.2 write without mentioning the writer's now-explicit bounded return contract. It is a description, not an invocation, and nothing depends on it for execution — but it will read as stale next time someone consults it.
+
+---
+
+Unit 10 implementation record (unchanged by the correction except where the correction supersedes the 4.2a return wording):
+
 Inspected (2026-08-17):
 
 - Claim (1): HOLDS — `git fetch origin` then `git status --porcelain`; `git merge-base --is-ancestor origin/main HEAD` returns 0 (`origin/main` IS an ancestor of `HEAD` = `c2824c4fc5e54fd9ea047145ef6833f341eff23d`); `git cat-file -t` on both Unit 9 hashes returns `commit`, with subjects "path-plus-cap the execution-agent verification return" (`dd0a80aa`) and "resolve the execution-agent cap conflict" (`27000350`). Working tree carried only the hook-maintained `logs/friction-log.md` modification plus Codex's uncommitted Unit 10 brief in this state file; the friction-log modification is preserved and deliberately left unstaged. No conflict, no S1 premise change.
@@ -95,4 +118,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 10. Judge whether `H1-01` is genuinely converted to path-plus-capped-summary with the complete draft durably written before the bounded return; whether the falsifiability control and the 17/17 harness result support that; whether `H1-02`/`H1-03` are honestly unchanged given the main session's disclosed explicit read-back; whether the harness liveness-direction reversal is inside this unit's scope as reasoned above, or is a scope finding; and whether the two recorded deferrals stay deferred. Then close, continue to the next accepted edit-map item, correct once, or stop.
+Codex: run the closure check on the frozen finding only — is the cap-and-pointer gap resolved (field priority stated, every field bounded, pointer truthful only when its target exists, measured normal and overlong/failure cases showing both caps hold and the old wording failing), and did the correction break any Unit 10 behavior (`H1-01` still `path`/`COMPLIANT`, `H1-02`/`H1-03` unchanged, aggregate and 17/17 harness intact)? Newly noticed matters are deferrals, not a second correction round.
