@@ -203,7 +203,9 @@ done
 # check to make it pass. H4-01 and H4-02 moved to the second direction when Unit 2 converted the
 # W4-H4 reference-document relays; their old sed expressions targeted the pre-conversion wording
 # (`^2. Read the project reference docs ...` and `Pass each sub-agent as content:`) and no longer
-# describe the live surface. The replacements still flip on relay SHAPE, never on approved wording.
+# describe the live surface. H3-17 moved the same way when Unit 5 converted `run-execution` 2.3.1:
+# its old expression targeted `^1. Read all raw reports from ...`, which the conversion removed. The
+# replacements still flip on relay SHAPE, never on approved wording.
 cp -R "$WORKFLOW/.claude" "$TMP/live-claude"
 mkdir -p "$TMP/live"; mv "$TMP/live-claude" "$TMP/live/.claude"
 
@@ -238,9 +240,9 @@ flip_back H4-02 .claude/commands/run-cluster.md \
   's|, by PATH (the sub-agent reads each directly):|, as content:|' \
   "run-cluster's relay list hands the reference docs over as content"
 
-flip H3-17 .claude/commands/run-execution.md \
-  's|^1\. Read all raw reports from `/execution/raw-reports/`\.|1. List all raw reports from `/execution/raw-reports/` — file paths only, not content.|' \
-  'run-execution 2.3.1 lists raw-report paths'
+flip_back H3-17 .claude/commands/run-execution.md \
+  's|^1\. Resolve all raw reports from `/execution/raw-reports/` to project-root-relative paths only.*|1. Read all raw reports from `/execution/raw-reports/`.|' \
+  'run-execution 2.3.1 reads the raw reports back into the main session'
 
 # T9b — isolation control: flipping run-cluster's relay list must not move a seam in another file.
 # Without this, a check that simply degraded everywhere on any edit would pass T9 by accident.

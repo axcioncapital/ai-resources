@@ -101,15 +101,15 @@ Skill loading: For each skill step below, read the skill file from the ai-resour
 
 ### Step 2.3: Create Research Extracts [delegate]
 
-1. Read all raw reports from `/execution/raw-reports/`.
+1. Resolve all raw reports from `/execution/raw-reports/` to project-root-relative paths only — verify each session report file exists and is non-empty, label each by session letter, and do not read their contents into the main session.
 2. Read the checkpoint from `/execution/checkpoints/{section}/{section}-step-2.1-checkpoint.md` to recover the question-to-session mapping.
 3. Read the corresponding Answer Specs from `/preparation/answer-specs/{section}/`.
 4. Verify the project reference docs the skill consumes: `reference/quality-standards.md` (No-Source-Substitution Rule for evidence-lens tags consumed by `research-extract-creator`) and `reference/known-limits.md` (current rolling-2-year window declaration) are present, then carry their paths only into step 6 — never load them into this session; the sub-agent reads each itself at runtime.
 5. Read the `research-extract-creator` skill (`/ai-resources/skills/research-extract-creator/SKILL.md`).
-6. For each session report, launch a general-purpose sub-agent. Pass it: the skill content, the raw report content, the Answer Specs for the questions in that session, the question-to-session mapping, and the two project reference docs by PATH (sub-agent reads each directly): `reference/quality-standards.md` and `reference/known-limits.md`. Task: produce one Research Extract per question covered. Write each to `/execution/research-extracts/{section}/{section}-Q[N]-extract.md`. Return: list of extracts produced (question ID, file path, brief quality note).
+6. For each session report, launch a general-purpose sub-agent. Pass it: the skill content, the raw report path for that one session — project-root-relative and labeled by session letter, which the sub-agent reads in full and component by component before applying the skill, and it receives no other session's report — the Answer Specs for the questions in that session, the question-to-session mapping, and the two project reference docs by PATH (sub-agent reads each directly): `reference/quality-standards.md` and `reference/known-limits.md`. Task: produce one Research Extract per question covered. Write each to `/execution/research-extracts/{section}/{section}-Q[N]-extract.md`. Return: list of extracts produced (question ID, file path, brief quality note).
    - If multiple session reports are independent, launch sub-agents in parallel.
 7. Write checkpoint to `/execution/checkpoints/{section}/{section}-step-2.3-checkpoint.md`. Include: full extract inventory (question ID → file path → session letter), any quality flags from sub-agents.
-8. ▸ /compact — skill content and raw report content no longer needed; checkpoint and extract files carry forward.
+8. ▸ /compact — skill content no longer needed; checkpoint and extract files carry forward.
 
 ---
 
