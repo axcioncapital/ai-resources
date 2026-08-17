@@ -1,0 +1,99 @@
+---
+task: canonical-rw-near-term-improvements
+status: active
+turn: codex
+---
+
+## Objective and scope
+
+Deliver Slice S1 of the operator-approved near-term plan: refactor the canonical Research Workflow's justified W4-H1–H4 content relays to path-passing or path-plus-capped-summary, preserve intentional context isolation and analytical meaning, and prove the plan's deterministic 100% seam coverage / 80% payload-reduction target plus its representative chapter regression. The task exits when S1 and its required proof are accepted. Approval-metadata synchronization, S0, S2–S11, deep-pipeline slimming, and deploy-fitness mission work remain outside this task.
+
+## Lane and unit
+
+Standard. Implementation mode. Unit 1 — instrument S1 relay baseline.
+
+Named reason for the loop: S1 needs several bounded units, its live-workflow scope must be protected from adjacent programme work, and its evidence must be assessed independently before it counts as complete.
+
+## Brief
+
+Build S1's executable red baseline: a fixed representative artifact fixture, a bounded manifest of every live seam covered by W4-H1–H4, and a deterministic check that measures main-session relay payloads and exits nonzero against the current workflow when the plan's path/capped-summary target is not met. This is implementation of the proof seam that the production refactor will use. Do not change production relay behavior in this unit.
+
+Why this unit exists: the approved plan requires instrumentation and exact seam enumeration before any S1 behavior edit. The July audit names four finding classes, but W4-H3 and W4-H4 each contain multiple command/step seams, and `required-reference-files.md` preserves intentional content passing for per-chapter inputs while requiring path passing for reference documents. A production edit without a measured, executable boundary could either miss relays or break the isolation contract.
+
+Governing authority and source dispositions:
+
+- The operator approved the complete G1–G6 package on 2026-08-17. For S1, G4 approves the plan content, near-term cutoff, and § 6 benchmark at commit `7fec2ef6a4db178e465282975b06b06ce92892f9`; S1 needs no further operator gate. The other settled decisions remain governing for later slices: G1 adopts canonical Light/Standard/Deep routes; G2 permits relay-only Stage-2 automation under its stated controls; G3 defers paid sources; G5 narrowly establishes the plan's adjacency/supersession authority and approves S0/S3; G6 conditionally permits S7–S10 only after an S6 PASS.
+- `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md` § 5 S1 is the governing implementation contract. Its stale proposal/gate metadata does not reopen the settled decision. Synchronizing that metadata and proposal/mission pointers is held outside this unit as later integration housekeeping; it must not block implementation or enter this unit's diff.
+- `audits/token-audit-2026-07-03-ai-resources.md` § 4 W4-H1–H4 supplies the named finding classes and observed command/step surfaces. Treat it as diagnosis input, not proof of current behavior.
+- `workflows/research-workflow/docs/required-reference-files.md` § Path-passing convention is the governing isolation boundary: reference documents are intentionally passed by path, while per-chapter inputs are intentionally passed by content for context isolation. Do not classify an intentional content relay as safely path-passable without establishing how the consumer retains equivalent isolated context.
+- `plans/lean-research-workflow/proposal.md` § 2.4.2 is non-governing design rationale only. The active deploy-fitness mission and the three source proposals are not edited in this unit.
+
+Check against the repository before acting:
+
+1. Verify the live plan content still matches the approved S1 contract at commit `7fec2ef6a4db178e465282975b06b06ce92892f9`: instrument before editing; W4-H1–H4 only; path or path-plus-summary capped at 20 lines / 4 KB; eventual 100% named-seam compliance and at least 80% aggregate fixture-byte reduction; representative chapter regression preserving artifacts, claim IDs, verdicts, and analytical meaning. If the content differs materially, stop.
+2. Perform the repository-required origin sync and re-derive the branch facts before edits. Codex previously observed `HEAD=7fec2ef6a4db178e465282975b06b06ce92892f9`, local `origin/main=3e7789cdf1f081e9d9004f074a7c2d4e664a0331`, and no ancestry from that local `origin/main` to `HEAD`; these are observations to re-check, not current facts. If reconciliation materially changes the S1 premise or requires destructive history rewriting, stop. Git reconciliation is preflight, not the unit's observable deliverable.
+3. Re-enumerate W4-H1–H4 from the current command and agent bodies rather than copying the audit. At minimum inspect: `run-report` St4.0, St4.1b, and St4.2a; `evidence-to-report-writer`; `verify-chapter` St4 and `execution-agent`; `run-analysis` St1; `run-synthesis` St1; `run-execution` St2.1 and St2.3; `run-cluster` St2.2; and `produce-architecture` Ph2 and Ph3. Search the full Research Workflow command/agent surface for the same relay shapes so renamed or adjacent instances are not silently omitted.
+4. Establish every current live consumer/blast-radius relationship needed to edit each enumerated seam in the next unit. Verify whether the artifact already exists on disk and whether the receiving agent can read its path. Do not assume that similar-looking relays share the same isolation contract.
+5. Identify and preserve unrelated work, including pre-existing hook-maintained changes in `logs/friction-log.md`.
+
+Required implemented result:
+
+- Add the minimum test/harness/fixture surface under `workflows/research-workflow/` that matches this repository's existing conventions. It must be reusable by the next production-refactor unit, not a prose-only audit artifact.
+- Encode the exact live seam manifest as harness input or another executable form. Each seam record must carry: W4-H1/H2/H3/H4; exact command or agent path and step; payload producer and consumer; current relay shape; whether the payload already exists on disk; whether content relay is required by the documented isolation contract or is safely path-passable; live consumers/blast radius; fixed-fixture current bytes and lines; and the target contract (`path` or `path + capped summary`, with summary at most 20 lines and 4 KB).
+- Make one target command report per-seam and aggregate current relayed bytes, projected compliant bytes, reduction percentage, cap violations, uncovered/ambiguous seams, and target verdict. Against the unmodified production workflow it must exit nonzero for actual measured S1 violations. It must not fail merely because a marker, expected string, or this brief says the workflow is noncompliant.
+- Give the harness its own regression proof: a compliant synthetic/reference case passes, and at least one deliberately noncompliant case fails for the intended measurement reason. Keep the normal repository test entry points green; the explicitly invoked current-workflow target check is the expected red baseline.
+
+Scope and Codex framing decisions:
+
+- In scope: the exact W4-H1–H4 seam inventory; fixed fixture; executable measurement/target check and its tests under `workflows/research-workflow/`; this state file; hook-maintained `logs/friction-log.md` only if normal hooks append; read-only inspection of other governing and consumer surfaces; required branch reconciliation; local checks and local commit.
+- Excluded: all production command, agent, skill, reference, deploy, or sync behavior changes; the representative end-to-end chapter regression itself; approval-metadata edits to the plan/proposals/mission; S0 and S2–S11; compaction/model/output-policy redesign; new planning/specification/ticket artifacts; push, merge into `main`, deployment, credentials, spend, or external dispatch.
+- Codex framing decision: Unit 1 ends with a truthful failing target and exact bounded edit map. Converting the approved seams to path-passing is the next unit; representative end-to-end semantic proof follows the production change. The approval package is settled context, not a standalone implementation deliverable.
+
+Required evidence, all capable of failing:
+
+- The exact generated/read manifest and a reconciliation from every audit-named surface to one or more manifest records, with no unexplained W4-H1–H4 omission.
+- One command showing the current production workflow target exits nonzero for measured payload/cap/path-contract violations and prints per-seam plus aggregate byte totals and the resulting reduction gap.
+- Harness regression evidence showing a known-compliant case passes and a known-noncompliant case fails for the intended reason.
+- Evidence that intentional context-isolation relays were distinguished from safely path-passable relays, with ambiguous cases surfaced rather than guessed.
+- Relevant existing workflow self-checks/tests remain green; `git diff --check` passes; changed paths stay within the permitted surfaces; and Claude records the local commit hash.
+
+Completion condition: the committed unit provides an executable, regression-protected S1 baseline that exactly bounds the current W4-H1–H4 seams, measures their fixed-fixture payloads, identifies intentional versus safely replaceable relays and live consumers, and deterministically fails the unmodified production workflow against the approved target for substantive reasons. No production relay behavior or authority metadata changes in this unit.
+
+Stop and hand back if: the approved S1 plan content does not match the bound commit; origin reconciliation materially changes the premise; the exact W4-H1–H4 set cannot be bounded; a required path-passing target conflicts with the documented isolation contract and no in-envelope equivalent preserves isolation; live consumers cannot be enumerated; the check cannot be made capable of failing on measured behavior; or the result requires production behavior or another excluded surface to change.
+
+Capability subset: baseline local repository work only—read/search/history inspection, repository-mandated origin sync, edits to the scoped workflow fixture/harness/test surfaces and this state file, local test execution, and local commits. No push, merge into `main`, deployment, credential access, destructive action, external service, policy change, or communication.
+
+## Latest result
+
+Inspected (2026-08-17):
+
+- Claim (1): HOLDS — `HEAD` is exactly `7fec2ef6a4db178e465282975b06b06ce92892f9` and `git status --porcelain` shows `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md` unmodified, so the live plan text *is* the approved content. Read § 5 S1 (lines 93–97) and the § 5 authority baseline (line 85): all six contract elements are present and unchanged — instrument-before-editing, W4-H1–H4 only, path or path-plus-summary capped at 20 lines / 4 KB, 100% named-seam compliance plus ≥80% aggregate fixture-byte reduction, the representative chapter regression preserving artifacts/claim IDs/verdicts/analytical meaning, and "S1 and S6 need no additional operator decision".
+- Claim (2): HOLDS, with one material observation disclosed rather than acted on. Ran `git fetch origin` (exit 0) and re-derived: branch `session/2026-08-17-research-workflow-fixes`, `HEAD=7fec2ef6`, `origin/main=3e7789cdf1f081e9d9004f074a7c2d4e664a0331` (unchanged by the fetch), `git merge-base --is-ancestor origin/main HEAD` false, divergence 1 behind / 14 ahead. The single commit on `origin/main` absent from `HEAD` is `3e7789cd` "Retire /inject-dependency from the canonical research-workflow template" — `git show --stat` shows it deletes only `workflows/research-workflow/.claude/commands/inject-dependency.md` and one `shared-manifest.json` entry. `inject-dependency` carries no W4-H1–H4 relay shape and is not a seam surface, so the S1 premise is unchanged. No destructive history rewriting was needed or attempted, and the branch was not merged — reconciliation beyond re-deriving the facts is outside this unit.
+- Claim (3): HOLDS, and re-enumeration corrected two audit references. Swept all 30 commands and 4 agents under `workflows/research-workflow/.claude/` for the relay shapes (content returns, `Pass it:`/`as content` lists, bulk `Read all` operand reads, reference-doc relays), not just the audit's list. Result: 39 (seam, payload) records across all four classes — W4-H1 ×3, W4-H2 ×4, W4-H3 ×23, W4-H4 ×9. Every audit-named surface maps to ≥1 record and the mapping is asserted by test T8/T8b. Corrections: the `execution-agent` relay is wired at `verify-chapter` **Step 2 item 4**, not Step 4 (Step 4 only logs to `/logs/qc-log.md`); and `evidence-to-report-writer` is a **skill** loaded into a general-purpose subagent by `run-report` 4.2a, not one of the workflow's four agents (those are `execution-agent`, `improvement-analyst`, `qc-gate`, `verification-agent`). The sweep also found three seams the audit did not name — `run-report` 4.2a/b/c reference-doc relays — and they are the only ones already compliant.
+- Claim (4): HOLDS. Live consumers: five projects hold a copy of every seam-bearing surface (`axcion-content-programme`, `axcion-sector-intelligence`, `buy-side-service-plan`, `positioning-research`, `research-pe-regime-shift-advisory-gap`). Tested each with `[ -L ]` and `diff -q`: all are **regular file copies, not symlinks**, so a canonical edit does not take live effect — propagation needs `/sync-workflow` (S0 territory, outside this task). Two copies are byte-identical to canonical; three have already diverged. Payload-on-disk and reader capability verified per seam: every seam's payload already exists on disk except the 4.2a–c chapter draft (written at 4.2d, *after* the reviews consume it), and every receiving agent can resolve a path — `qc-gate` `tools: Read`, `verification-agent` `Read, Glob, Grep`, `execution-agent` `Read, Bash`, general-purpose all tools.
+- Claim (5): HOLDS — searched `git status --porcelain` and `git diff --stat logs/friction-log.md`: the file carries a pre-existing 55-line hook-maintained modification that predates this unit. It was neither read into nor written by this unit and is excluded from the commit by explicit pathspec. (The workspace freeze on the friction log is untouched.)
+
+Result: the S1 red baseline exists and is regression-protected. Added `workflows/research-workflow/tests/s1-relay/` — a byte-stable fixture for one section (51 files, 475,687 bytes: 4 chapters / 4 clusters / 8 questions / 3 sessions / 3 Part-2 drafts, reference docs sized from the live canonical files), the 39-record `seam-manifest.tsv`, the `check-relay-payload.sh` target check, its 17-case regression suite, and a README carrying the audit reconciliation, the isolation analysis and the bounded edit map for the next unit. No production command, agent, skill, reference or deploy file was touched.
+
+Evidence:
+
+- `bash workflows/research-workflow/tests/s1-relay/check-relay-payload.sh` against the unmodified production workflow **exits 1**, `verdict: TARGET NOT MET`, and reports per-seam and aggregate figures: pre-refactor baseline 1,785,794 bytes; currently relayed 1,498,210; **achieved reduction 16% against the ≥80% target**; 26 measured violations; 2 cap violations; 5 ambiguous; 0 unresolved; 3 of 39 seams compliant; 449,060 bytes of contract-exempt intentional content held outside the accounting. Each violation line names the file, step, payload, measured bytes/lines, repetition count, and quotes the live directive it was derived from.
+- The failure is **measured, not asserted.** The manifest records only where each seam is and what it should become; the check opens the live command body at the anchor and derives content-vs-path from that text. Falsifiability is tested three ways: T3 appends prose asserting "this workflow is NONCOMPLIANT … Expected: FAIL" to a compliant surface and the verdict stays `TARGET MET`; T3b shows one directive edit does flip it; and T9 applies a single mechanical edit to each of four **real** command bodies (`run-report` 4.2a return, `run-cluster` 2.2 and its relay list, `run-execution` 2.3.1) and asserts each seam flips VIOLATION → COMPLIANT, with T9b confirming an unrelated seam does not move.
+- `bash workflows/research-workflow/tests/s1-relay/check-relay-payload.test.sh` → **17 passed, 0 failed**, exit 0. Covers the compliant case passing (T1), the noncompliant case failing on measured bytes (T2), a stale anchor reported UNRESOLVED rather than silently passed (T4), the 20-line/4 KB cap enforced and cleared only by raising the cap (T5/T5b), the real workflow red with 0 unresolved rows (T6/T6b), byte-identical fixture regeneration (T7), and manifest class/surface coverage (T8/T8b).
+- Two bugs were found by these tests during the unit and fixed: the classifier attributed the `content` in every list's opening "Pass it: the skill content" to each later item, scoring genuinely path-passed payloads as content relays; and the reduction figure was computed against a live projection, which reads ~98% while nothing is fixed and would collapse to 0% once the refactor lands — it now measures against the fixed baseline. T9 also caught anchors keyed to the *noncompliant* wording, which would have made a fixed seam permanently UNRESOLVED; all 39 anchors were decoupled from `Read`/`content` phrasing.
+- `git diff --check` clean. Changed paths are `workflows/research-workflow/tests/` (new) and this state file only.
+
+## Blocker
+
+None.
+
+## Next action
+
+Codex: assess whether this baseline is a sufficient S1 proof seam and open the production-refactor unit. Deferrals recorded, none implemented:
+
+1. **The isolation contract does not settle five payloads**, and they are reported rather than guessed. The load-bearing one: the workflow contradicts itself about research extracts — `docs/required-reference-files.md` § Path-passing convention and `run-report` St4.0 both class extracts as content-passed per-chapter inputs, while `run-cluster` St2.3 already passes extract **paths** ("the sub-agent reads its own extracts"). `H3-04`/`H2-04` cannot be converted until that is settled. `H1-02`/`H1-03`/`H2-05` additionally need `run-report` 4.2's disk write (step d) reordered ahead of the reviews that consume the draft, which is a sequencing change rather than a relay swap.
+2. **`execution-agent`'s `Interpret or summarize the response — return it verbatim` prohibition** is an edit target, not a payload relay, so it carries no manifest row — a row anchored to a line the fix deletes would report UNRESOLVED forever. It is recorded in the README edit map and must be rewritten in the same commit as the W4-H2 return.
+3. **Adjacent same-shape relays outside the W4-H1–H4 named surfaces** were found by the sweep and deliberately left out of the manifest, because folding them in would expand S1's approved boundary: `run-execution` St2.4 and Subworkflow 2.S1/2.S3/2.S4, `run-preparation` Steps 1/2/3/5, `produce-prose-draft` step 6, `produce-knowledge-file`.
+4. **`origin/main` divergence** (1 behind / 14 ahead; `3e7789cd` retires `/inject-dependency`) is disclosed and unmerged. It does not affect the S1 premise, and merging is outside this unit.
+5. **Deploy side-effect, disclosed:** `/deploy-workflow` Step 3 copies the template with `cp -r`, so new projects will receive `tests/s1-relay/`. No deploy behaviour was edited, and the harness runs correctly against a deployed copy via `--workflow`; whether to exclude it is a separate decision.
+6. **The audit's reference-doc size figures are stale** — `reference/quality-standards.md` is 460 lines live against the audit's 260L. The fixture uses the live sizes as inspected 2026-08-17, so measured bytes reflect current reality rather than the July estimate.
