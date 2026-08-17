@@ -1,7 +1,10 @@
 # Work Loop v2 — post-compaction recovery repair implementation plan, v0.1
 
 **Date:** 2026-08-17  
-**Status:** PROPOSED. The operator approved the QC direction on 2026-08-17; this exact plan is not yet an implementation authorization.  
+**Status:** APPROVED. The operator authorized the exact plan content committed as `d72cf199` on
+2026-08-17. The approval is bound to that identifiable content, not to this filename: a material
+change to the objective, scope, exclusions, settled decisions, sequence, acceptance conditions or
+authority relationships returns this plan to draft and requires reapproval.  
 **Addresses:** Immediate context refill after compaction, including `$realign` crossing into recovery, oversized always-loaded Work Loop instructions, over-reading governing material, and accepted-result history surviving in active state.  
 **Primary evidence:** [`audits/2026-08-17-post-compaction-recovery-fix-qc.md`](../../audits/2026-08-17-post-compaction-recovery-fix-qc.md) and the operator-supplied incident report.  
 **Execution posture:** Four bounded implementation units, followed by one independent review and one representative live proof. No new specification, ticket system, state field, hook, dispatcher policy, or test framework.
@@ -349,7 +352,91 @@ Keep the evidence here so the repair does not create a second report artifact.
 
 ### Unit 1 — structural red / green
 
-Pending.
+Implemented 2026-08-17 in checkout `ai-resources-work-loop-fix-17-8`, branch
+`session/2026-08-17-work-loop-fix-17-8`.
+
+**Pre-existing baseline, established before any edit.** `work-loop-v2-slice-1.test.sh` was **not**
+green on entry: **315 passed / 44 failed**. The 44 are unrelated to this unit — see *Pre-existing
+defect* below. Unit 1's success condition is therefore "no regression against that baseline plus the
+new structural checks green", not "the suite is green".
+
+**Red before the move.** The 37 new `split` assertions were added first and run against the actual
+pre-split file: **30 failed** (`322 passed / 74 failed`). The seven that passed did so vacuously —
+the chain checks over files that did not yet exist, plus the negative fixture and the semantic-volume
+guard. Failing set included both architecture limits (602 lines, 12,669 words), all four
+reference-exists and direct-link checks, all four read-condition checks, all eleven one-owner checks
+and the resolver-marker check.
+
+**Green after the move.**
+
+| Suite | Command | Exit | Result |
+|---|---|---:|---|
+| Resolver parity | `bash logs/scripts/work-loop-v2-core-resolver.test.sh` | 0 | 5 passed, 0 failed |
+| Slice 1 | `bash logs/scripts/work-loop-v2-slice-1.test.sh` | 1 | **352 passed, 44 failed** |
+| State validator | `bash logs/scripts/work-loop-state.test.sh` | 0 | green |
+| Session preflight | `bash logs/scripts/work-loop-session-preflight.test.sh` | 0 | green |
+| Tracer 7 | `bash logs/scripts/work-loop-v2-tracer-7.test.sh` | 0 | green |
+| Deployment capability | `work-loop-capability.sh check --canonical …` | 0 | `verdict: READY` |
+
+Slice 1 exits 1 solely on the 44 pre-existing failures. A set-difference of the failing test names
+before and after the change is **empty**: no assertion that was green went red, and 37 new ones went
+green (315 → 352).
+
+**Final counts.** Main skill **204 lines / 4,575 words**, from 602 / 12,669 — under both the
+`<500`-line and `<5,000`-word limits. References: `core-resolution.md` 119, `courier-operation.md`
+109, `routing-and-admission.md` 90, `unit-framing.md` 157. Combined text across the main skill and
+all references is 14,626 words against a 12,669-word pre-split body, so nothing was trimmed to reach
+the numbers.
+
+**One-owner inventory — 18 moved headings, one owner each.**
+
+| Heading | Owner |
+|---|---|
+| `### Resolve the executable core` | `core-resolution.md` |
+| `## Courier mode`, `### Unattended runs` | `courier-operation.md` |
+| `## Routing a request`, `### Repository problems`, `### Classifying the mode`, `### What an intake result contains`, `### The routing index`, `## Admission` | `routing-and-admission.md` |
+| `## Opening a unit and writing the brief`, `### Size the unit against the clock`, `### Prepare once`, `### Keep authority semantic`, `### Mark what must be verified`, `### Justify the unit against the plan`, `### Select on relevance`, `### The capability envelope`, `### Keep every duty inside the four` | `unit-framing.md` |
+
+**Fail-capability, proved against wrong fixtures rather than asserted.** Each mutation was applied,
+observed red, and reverted:
+
+| Mutation | Observed |
+|---|---|
+| `### Classifying the mode` copied back into the main skill | `FAIL split one owner: classifying the mode` |
+| Resolver marker pair left behind in the main skill | `FAIL check 5` (resolver suite) and `FAIL split the resolver marker pair moved whole` |
+| `unit-framing.md` link removed from the main skill | `FAIL split main skill directly links unit-framing.md` + its read-condition check |
+| `unit-framing.md` truncated to 40 lines | `FAIL split no semantic loss` |
+| Reference containing a link to another reference | `PASS split NEGATIVE: the chain check rejects…` (the check detects it) |
+| Long reference with its contents list stripped | `PASS split NEGATIVE: the contents check rejects…` |
+
+After reverting every mutation the suite returned to 352 / 44.
+
+**Retargeting, not weakening.** No behavioral assertion was deleted or loosened. 37 assertions moved
+to the file that now owns their rule (`admission_res`, `routing_res`, `result_block`, `route_step`,
+`ex_block`, the eight `ce9` orientation checks, the sizing check, and the courier-mode
+disambiguation). Four negative sets were **widened** to cover the new references, so the split could
+not open a hole in them: no `## Mode` heading, no `mode:` frontmatter key, no verbatim copy of the
+core's mode definition, and no invented "adoption unit". The `ce9` stated-once check now counts
+across all five files rather than one. Resolver parity check 4 was retargeted from the main skill to
+`references/core-resolution.md`, and a new check 5 asserts the main skill keeps no second copy —
+parity between two files says nothing about a third.
+
+**Deployment — no change required, confirmed by precedent.** `auto-sync-shared.sh:571-589` symlinks
+each shared skill as a whole **directory**. `references/routing-index.md` was added on 2026-08-13
+(`a22b54b7`), after the project links existed, and is readable through the pre-existing
+`projects/axcion-content-programme/.agents/skills/work-loop-v2` link today with no deployment change.
+The four new siblings travel by the same mechanism.
+
+**Pre-existing defect found while establishing the baseline — not introduced here, not fixed here.**
+The 44 failures are the `pack` (unit packaging and hop termination, 26 checks) and `race`
+(hand-off reconciliation, 6 checks) families, plus 3 `mode` live-task checks. Their content was
+implemented and green — commit `8a61a496` records "harness 345/0 to 358/0 green" — and was then
+**lost from `.agents/skills/work-loop-v2/SKILL.md` by merge `9b1c19d3`** ("Merge branch
+'session/2026-08-14-concurrency-fix-2' into session/2026-08-14-durable-state"), which dropped the
+skill from 592 to 532 lines. Both source commits are ancestors of HEAD; their text is not. Verified
+by content probe across `16de1622`, `8a61a496`, `9b1c19d3` and HEAD. The `.claude/commands/`
+half is missing too. This is outside Unit 1's file scope and is recorded as a deferral for
+assessment, not repaired here.
 
 ### Unit 2 — recovery boundary and deterministic regression
 

@@ -249,6 +249,15 @@ check "2.2   the foreign unit never ran — the target gained no Ownership-note:
 # and closes. All read from the state file and Git — the only interface.
 CORR_F="logs/work-loop/fixture-slice2-correction.md"
 SKILL_F=".agents/skills/work-loop-v2/SKILL.md"
+# The four direct references the skill was split into (Unit 1,
+# work-loop-v2-post-compaction-recovery-repair). Assertions follow their content: a
+# rule that moved is verified against its new one semantic owner, never dropped and
+# never weakened. Frontmatter and universal-behavior checks stay on $SKILL_F.
+WL2_REFS=".agents/skills/work-loop-v2/references"
+CORERES_F="$WL2_REFS/core-resolution.md"
+COURIER_F="$WL2_REFS/courier-operation.md"
+ROUTADM_F="$WL2_REFS/routing-and-admission.md"
+UNITFR_F="$WL2_REFS/unit-framing.md"
 
 check "2.3   fixture present: $CORR_F" "[ -f '$CORR_F' ]"
 
@@ -385,7 +394,8 @@ limits_at_open() { [ -n "$LIMITS_OPENED" ] && git show "$LIMITS_OPENED:$LIMITS_F
 # missing behaviours, so a whole-file grep for 'admission' or 'Direct Work' proves
 # nothing. The heading must exist AND the section must carry the rule.
 admission_cmd() { awk '/^## Admission/{f=1;next} /^## /{f=0} f' "$CMD_F"; }
-admission_res() { awk '/^## Admission/{f=1;next} /^## /{f=0} f' "$SKILL_F"; }
+# Admission moved to $ROUTADM_F; the rule is unchanged, so only its owner is retargeted.
+admission_res() { awk '/^## Admission/{f=1;next} /^## /{f=0} f' "$ROUTADM_F"; }
 
 # Finding C, Step 6: these used to require BOTH artifacts to spell out core § 2's
 # policy ('direct work', 'named reason', 'feels significant'). That is precisely the
@@ -413,7 +423,7 @@ check "3.1   the resource defers the admission rule to core § 2" \
 check "3.1   the resource does not restate core § 2's excluded reason" \
   "[ -n \"\$(admission_res)\" ] && ! admission_res | grep -qi 'feels significant'"
 check "3.1   the resource no longer disclaims Slice 3" \
-  "[ -n \"\$(admission_res)\" ] && ! grep -q 'not to be improvised here' '$SKILL_F'"
+  "[ -n \"\$(admission_res)\" ] && ! grep -q 'not to be improvised here' '$ROUTADM_F'"
 
 # --- 3.1 entering the loop wrote a named reason when each task opened ---------
 check "3.1   the de-escalation task opened with a named reason, turn: claude" \
@@ -923,7 +933,8 @@ check "cont  the resource does not copy the core's continue mechanics" \
 # ordinary-language intake router, so the anchor is widened to the heading's stable
 # prefix. All six assertions below are unchanged and still test real properties —
 # only what they are pointed at moved.
-routing_res() { awk '/^## Routing/{f=1;next} /^## /{f=0} f' "$SKILL_F"; }
+# Routing moved to $ROUTADM_F with its behavior intact.
+routing_res() { awk '/^## Routing/{f=1;next} /^## /{f=0} f' "$ROUTADM_F"; }
 check "rout  the resource owns a routing section" "[ -n \"\$(routing_res)\" ]"
 check "rout  routing asks who owns the next move first" \
   "routing_res | grep -qi 'who owns the next move'"
@@ -1162,7 +1173,7 @@ check "ridx  /leverage-idea is named as excluded, with its router-within-router 
 # --- the intake result contract: one owner, four parts, no default stack ------
 # Reads $SKILL_F, not $RIDX_F: the intake-result contract is routing behavior and
 # Boundary A deliberately left it in the skill.
-result_block() { awk '/^### What an intake result contains/{f=1;next} /^### /{f=0} f' "$SKILL_F"; }
+result_block() { awk '/^### What an intake result contains/{f=1;next} /^### /{f=0} f' "$ROUTADM_F"; }
 check "ridx  the intake result contract exists" "[ -n \"\$(result_block)\" ]"
 for part in 'interpreted outcome' 'one owner' 'one short reason' 'next instruction'; do
   check "ridx  the intake result names its required part: $part" \
@@ -1192,19 +1203,19 @@ check "ridx  the owner is chosen before admission is applied" \
 # never do.
 # Reads $SKILL_F: the routing steps are behavior and stayed in the skill.
 route_step() {
-  awk '/^## Routing/{f=1;next} /^## /{f=0} f' "$SKILL_F" | grep -n -- "$1" | head -1 | cut -d: -f1
+  awk '/^## Routing/{f=1;next} /^## /{f=0} f' "$ROUTADM_F" | grep -n -- "$1" | head -1 | cut -d: -f1
 }
 check "ridx  mode is classified after admission, never at intake" \
   "[ -n \"\$(route_step 'Classify the mode')\" ] && [ -n \"\$(route_step 'admission test')\" ] && \
    [ \"\$(route_step 'Classify the mode')\" -gt \"\$(route_step 'admission test')\" ]"
 check "ridx  only an admitted Work Loop unit acquires a mode" \
-  "awk '/^## Routing/{f=1;next} /^## /{f=0} f' '$SKILL_F' | grep -qi 'never acquires one'"
+  "awk '/^## Routing/{f=1;next} /^## /{f=0} f' '$ROUTADM_F' | grep -qi 'never acquires one'"
 check "ridx  Direct Work is preserved as the default for small reversible work" \
-  "grep -qi 'Direct Work' '$SKILL_F'"
+  "grep -qi 'Direct Work' '$ROUTADM_F'"
 check "ridx  a specialist owner is not wrapped in a Work Loop unit" \
   "routing_res | grep -qi 'do not wrap'"
 check "ridx  a continue request is one intake case, not a parallel router" \
-  "routing_res | grep -qi 'continue' && ! grep -c '^## Routing' '$SKILL_F' | grep -qv '^1\$'"
+  "routing_res | grep -qi 'continue' && ! grep -c '^## Routing' '$ROUTADM_F' | grep -qv '^1\$'"
 
 # --- the description makes the router reachable without naming the skill -----
 # Reads $SKILL_F and can never follow the index: the YAML frontmatter description is
@@ -1280,13 +1291,13 @@ check "mode  the core still holds five active fields, not six" \
   "[ \"\$(grep -cE '^\| \`## (Objective and scope|Lane and unit|Latest result|Blocker|Next action)\`' '$CORE_F')\" = 5 ]"
 # Mode must not become a heading or a frontmatter key anywhere.
 check "mode  no '## Mode' heading was invented in any artifact" \
-  "! grep -qE '^## Mode' '$CORE_F' '$SKILL_F' '$CMD_F'"
+  "! grep -qE '^## Mode' '$CORE_F' '$SKILL_F' '$CMD_F' '$CORERES_F' '$COURIER_F' '$ROUTADM_F' '$UNITFR_F'"
 check "mode  no 'mode:' frontmatter key was invented in any artifact" \
-  "! grep -qE '^mode:' '$CORE_F' '$SKILL_F' '$CMD_F'"
+  "! grep -qE '^mode:' '$CORE_F' '$SKILL_F' '$CMD_F' '$CORERES_F' '$COURIER_F' '$ROUTADM_F' '$UNITFR_F'"
 
 # Each runtime carries its own half and links the rule, without copying it.
 check "mode  the Codex skill says when it classifies the mode" \
-  "grep -qi 'classify the mode' '$SKILL_F'"
+  "grep -qi 'classify the mode' '$ROUTADM_F'"
 # Specific sentence, not the bare words "after" and "admission" — both already
 # appeared in the routing section before this unit, so the loose form passed red.
 check "mode  the skill classifies the mode only after owner and admission" \
@@ -1302,28 +1313,29 @@ NOCOPY='is not a third lane, a new unit type, or a project phase'
 check "mode  neither runtime copies the core's mode definitions verbatim" \
   "flat_of '$CORE_F' | grep -q '$NOCOPY' && \
    ! flat_of '$SKILL_F' | grep -q '$NOCOPY' && \
+   ! flat_of '$ROUTADM_F' | grep -q '$NOCOPY' && \
    ! flat_of '$CMD_F' | grep -q '$NOCOPY'"
 # Adoption must reuse the core's existing unit vocabulary, not invent a type.
 check "mode  Adoption is fitted to an existing unit kind, not a new one" \
-  "mode_core | grep -qi 'discovery unit' && ! grep -qi 'adoption unit' '$CORE_F' '$SKILL_F' '$CMD_F'"
+  "mode_core | grep -qi 'discovery unit' && ! grep -qi 'adoption unit' '$CORE_F' '$SKILL_F' '$CMD_F' '$ROUTADM_F' '$UNITFR_F'"
 
 # --- no deferred-mode wording survives ---------------------------------------
 # Scoped to lines that mention mode AND a deferral word: "deferral" is legitimate
 # core § 5 vocabulary elsewhere, and courier mode is legitimately optional.
 deferred_mode_lines() {
-  grep -hiE '(unit.s )?mode' "$CORE_F" "$SKILL_F" "$CMD_F" \
+  grep -hiE '(unit.s )?mode' "$CORE_F" "$SKILL_F" "$CMD_F" "$ROUTADM_F" "$UNITFR_F" "$COURIER_F" \
     | grep -viE 'courier mode' \
     | grep -iE 'is a later unit|deliberately still unimplemented|not classified here|do not improvise it now|mode is deferred'
 }
 check "mode  no deferred-mode wording remains in any artifact" \
   "[ -z \"\$(deferred_mode_lines)\" ]"
 check "mode  courier mode is disambiguated from the unit's mode" \
-  "grep -qi 'courier mode' '$SKILL_F' && mode_core | grep -qi 'courier'"
+  "grep -qi 'courier mode' '$COURIER_F' && mode_core | grep -qi 'courier'"
 
 # --- the three operator classification examples ------------------------------
 # Present as worked examples with the RIGHT mode attached, so a reader has a
 # calibration point rather than three abstract definitions.
-ex_block() { awk '/^### Classifying the mode/{f=1;next} /^### /{f=0} f' "$SKILL_F"; }
+ex_block() { awk '/^### Classifying the mode/{f=1;next} /^### /{f=0} f' "$ROUTADM_F"; }
 check "mode  the skill carries the operator's worked examples" "[ -n \"\$(ex_block)\" ]"
 check "mode  Email OS classifies as Discovery" \
   "ex_block | grep -i 'Email OS' | grep -q 'Discovery'"
@@ -1506,6 +1518,8 @@ rm -f "$T_MISSING" "$T_TWO" "$T_UNKNOWN" "$W_D" "$W_I" "$W_A"
 NOPREM_F="logs/work-loop/fixture-noprem-prose.md"
 CMD_F=".claude/commands/work-loop-v2.md"
 SKILL_F=".agents/skills/work-loop-v2/SKILL.md"
+UNITFR_F=".agents/skills/work-loop-v2/references/unit-framing.md"
+ROUTADM_F=".agents/skills/work-loop-v2/references/routing-and-admission.md"
 
 check "prop  fixture present: $NOPREM_F" "[ -f '$NOPREM_F' ]"
 # Scoped to the record itself. A whole-file grep would pass on the fixture's own
@@ -1571,25 +1585,25 @@ check "prop  the skill does not restate core § 3's four statements" \
 # reads. Read them as a set — the first four alone would license a new orientation
 # ceremony, and the last three alone would license dropping the duty again.
 check "ce9   the skill states that establishing the determinations is not carrying them" \
-  "grep -qi 'Establishing the nine is not carrying them' '$SKILL_F'"
+  "grep -qi 'Establishing the nine is not carrying them' '$ROUTADM_F'"
 check "ce9   the approved outcome and position must reach the brief, not only be established" \
-  "grep -qi 'must also reach the brief itself' '$SKILL_F'"
+  "grep -qi 'must also reach the brief itself' '$ROUTADM_F'"
 check "ce9   the position keeps its source-supported precision" \
-  "grep -qi 'the last completed unit and any open unit' '$SKILL_F'"
+  "grep -qi 'the last completed unit and any open unit' '$ROUTADM_F'"
 check "ce9   collapsing the position to a phase label is named as the failure" \
-  "grep -qi 'never collapsed to a phase label' '$SKILL_F'"
+  "grep -qi 'never collapsed to a phase label' '$ROUTADM_F'"
 # The fresh-thread path points at the one rule instead of carrying a second copy.
 check "ce9   the fresh-thread recovery binds to the orientation rule" \
-  "grep -qi 'Re-establishing them is internal' '$SKILL_F'"
+  "grep -qi 'Re-establishing them is internal' '$UNITFR_F'"
 check "ce9   the carry duty is stated once, not duplicated" \
-  "[ \"\$(grep -ci 'Establishing the nine is not carrying them' '$SKILL_F')\" = '1' ]"
+  "[ \"\$(cat '$SKILL_F' '$ROUTADM_F' '$UNITFR_F' '$COURIER_F' '$CORERES_F' | grep -ci 'Establishing the nine is not carrying them')\" = '1' ]"
 # Over-correction guards. Requirement 3 of the brief: the operator-facing line stays
 # concise and the brief stays the single hand-off artifact. A change that satisfied
 # the four above by adding a checklist or a second document fails here.
 check "ce9   the one-line operator shape is unchanged" \
-  "grep -q 'Current position → governing workflow and phase → what is ready → what is blocked → recommended next unit → why it matters.' '$SKILL_F'"
+  "grep -q 'Current position → governing workflow and phase → what is ready → what is blocked → recommended next unit → why it matters.' '$ROUTADM_F'"
 check "ce9   orientation still writes nothing and adds no stage" \
-  "grep -qi 'Orientation writes nothing' '$SKILL_F' && grep -qi 'it is not a stage, a gate or a checklist the operator sees' '$SKILL_F'"
+  "grep -qi 'Orientation writes nothing' '$ROUTADM_F' && grep -qi 'it is not a stage, a gate or a checklist the operator sees' '$ROUTADM_F'"
 
 # === pack: unit packaging and hop termination (2026-08-14 incident) =========
 # Answers the recurrence of the 2026-08-11 sizing failure: a 902s timeout on a
@@ -1690,7 +1704,7 @@ check "pack  core § 4 still lists exactly five active content fields" \
   "[ \"\$(grep -c '^| \`## ' '$CORE_F')\" = '5' ]"
 # The timeout remains refused as a sizing remedy — the fix must not reopen it.
 check "pack  a longer timeout is still refused as the remedy" \
-  "grep -qi 'A longer timeout is not the remedy for an oversized unit' '$SKILL_F'"
+  "grep -qi 'A longer timeout is not the remedy for an oversized unit' '$UNITFR_F'"
 
 # --- readiness race: a claimed hand-off is reconciled before absence is claimed --
 # The incident: Codex read `turn: claude` once, concluded Claude had not completed the
@@ -1740,6 +1754,141 @@ check "race  several matching tasks still require disambiguation" \
   "command grep -qi 'brief names and task ids and ask which one' '$SKILL_F'"
 check "race  no new frontmatter key was introduced" \
   "[ \"\$(command grep -c '^turn: ' '$TRUE_F')\" = '1' ]"
+
+# === split: progressive disclosure of the Codex Work Loop skill ==============
+# Unit 1 of work-loop-v2-post-compaction-recovery-repair. The always-loaded skill
+# was 602 lines / 12,669 words, over this repository's <500-line and <5,000-word
+# guidance, and every Work Loop turn paid for all of it. The conditional material
+# moved into four direct references with ONE semantic owner each.
+#
+# Every check below is fail-capable against a stated wrong state, and each names
+# which one it discriminates:
+#   * the numeric and direct-link checks fail on the ACTUAL pre-split file
+#     (602 lines, no reference links, headings still in the main skill);
+#   * the one-owner check fails on the pre-split file AND on a duplicate;
+#   * the chain and table-of-contents checks fail on an INTENTIONALLY WRONG
+#     FIXTURE built below, because the repaired tree cannot exhibit those states.
+# A check that only greps for text this unit introduced would pass on any file
+# that quoted the brief, which is the failure mode § 8 of the plan names.
+
+REF_DIR=".agents/skills/work-loop-v2/references"
+CORERES_F="$REF_DIR/core-resolution.md"
+COURIER_F="$REF_DIR/courier-operation.md"
+ROUTADM_F="$REF_DIR/routing-and-admission.md"
+UNITFR_F="$REF_DIR/unit-framing.md"
+RIDX_REL="references/routing-index.md"
+
+# --- the two architecture limits on the always-loaded body -------------------
+# Discriminates the actual pre-split state: 602 and 12669.
+skill_lines() { command wc -l < "$SKILL_F" | tr -d ' '; }
+skill_words() { command wc -w < "$SKILL_F" | tr -d ' '; }
+check "split main skill body is below 500 lines" \
+  "[ \"\$(skill_lines)\" -lt 500 ]"
+check "split main skill body is below 5,000 words" \
+  "[ \"\$(skill_words)\" -lt 5000 ]"
+
+# --- the four references exist and are directly linked, each with a condition -
+# Discriminates the pre-split state twice over: the files did not exist, and the
+# main skill linked none of them.
+for ref in core-resolution courier-operation routing-and-admission unit-framing; do
+  check "split reference exists: $ref.md" "[ -f '$REF_DIR/$ref.md' ]"
+  check "split main skill directly links $ref.md" \
+    "command grep -qF '(references/$ref.md)' '$SKILL_F'"
+done
+# Routing needs BOTH routing files linked directly, so neither is reached through
+# the other (plan § 3.1).
+check "split main skill also directly links the routing index" \
+  "command grep -qF '($RIDX_REL)' '$SKILL_F'"
+# A link with no stated read condition is a bare pointer, not progressive
+# disclosure: the reader cannot tell when to pay for it.
+route_row() { command grep -F "(references/$1.md)" "$SKILL_F"; }
+for ref in core-resolution courier-operation routing-and-admission unit-framing; do
+  check "split the main skill states a read condition for $ref.md" \
+    "route_row '$ref' | command grep -qiE 'read (it )?(when|only when|during)'"
+done
+
+# --- one semantic owner per moved section -----------------------------------
+# Each moved heading must live in its designated reference AND be gone from the
+# main skill. Both halves are load-bearing: the first fails if the move never
+# happened, the second fails if the content was copied rather than moved.
+owner_check() {  # $1 = heading regex, $2 = owning reference
+  command grep -qE "$1" "$2" && ! command grep -qE "$1" "$SKILL_F"
+}
+check "split one owner: the executable-core resolver" \
+  "owner_check '^### Resolve the executable core' '$CORERES_F'"
+check "split one owner: courier mode" \
+  "owner_check '^## Courier mode' '$COURIER_F'"
+check "split one owner: unattended runs" \
+  "owner_check '^### Unattended runs' '$COURIER_F'"
+check "split one owner: routing a request" \
+  "owner_check '^## Routing a request' '$ROUTADM_F'"
+check "split one owner: classifying the mode" \
+  "owner_check '^### Classifying the mode' '$ROUTADM_F'"
+check "split one owner: what an intake result contains" \
+  "owner_check '^### What an intake result contains' '$ROUTADM_F'"
+check "split one owner: admission" \
+  "owner_check '^## Admission' '$ROUTADM_F'"
+check "split one owner: opening a unit and writing the brief" \
+  "owner_check '^## Opening a unit and writing the brief' '$UNITFR_F'"
+check "split one owner: size the unit against the clock" \
+  "owner_check '^### Size the unit against the clock' '$UNITFR_F'"
+check "split one owner: the capability envelope" \
+  "owner_check '^### The capability envelope' '$UNITFR_F'"
+# The resolver block is the one moved section with a machine-readable boundary,
+# so its marker pair moves whole rather than being left behind or duplicated.
+check "split the resolver marker pair moved whole to its reference" \
+  "[ \"\$(command grep -c 'work-loop-v2-core-resolution:' '$CORERES_F')\" = '2' ] && \
+   ! command grep -q 'work-loop-v2-core-resolution:' '$SKILL_F'"
+
+# --- no reference-to-reference loading chain --------------------------------
+# A reference that links another reference makes the second reachable only by
+# loading the first, which is the chain plan § 3.1 forbids. The repaired tree
+# cannot exhibit this, so the check is proved against a wrong fixture.
+chain_hits() {  # $1 = file; prints each references/ link it contains
+  command grep -oE '\(references/[A-Za-z0-9._-]+\)' "$1" 2>/dev/null
+}
+for ref in "$CORERES_F" "$COURIER_F" "$ROUTADM_F" "$UNITFR_F"; do
+  check "split no loading chain out of $(basename "$ref")" \
+    "[ -z \"\$(chain_hits '$ref')\" ]"
+done
+SPLIT_TMP=$(mktemp -d 2>/dev/null) || SPLIT_TMP=""
+if [ -n "$SPLIT_TMP" ]; then
+  # Wrong fixture: a reference that routes through another reference.
+  printf '# x\n\nSee [Routing index](references/routing-index.md) first.\n' \
+    > "$SPLIT_TMP/chained.md"
+  check "split NEGATIVE: the chain check rejects a reference that links a reference" \
+    "[ -n \"\$(chain_hits '$SPLIT_TMP/chained.md')\" ]"
+fi
+
+# --- a long reference carries a table of contents ---------------------------
+# Over 100 lines, a reader landing mid-file cannot see what else is there.
+has_toc() {  # $1 = file; passes when short, or when a contents list is present
+  [ "$(command wc -l < "$1" | tr -d ' ')" -le 100 ] && return 0
+  command grep -qiE '^\*\*(Contents|In this reference)' "$1"
+}
+for ref in "$CORERES_F" "$COURIER_F" "$ROUTADM_F" "$UNITFR_F"; do
+  check "split table of contents present if over 100 lines: $(basename "$ref")" \
+    "has_toc '$ref'"
+done
+if [ -n "$SPLIT_TMP" ]; then
+  # Wrong fixture: a long reference with its contents list stripped.
+  { command sed '/^\*\*Contents/,+1d' "$UNITFR_F"; } > "$SPLIT_TMP/no-toc.md" 2>/dev/null
+  check "split NEGATIVE: the contents check rejects a long reference with none" \
+    "[ \"\$(command wc -l < '$SPLIT_TMP/no-toc.md' | tr -d ' ')\" -gt 100 ] && ! has_toc '$SPLIT_TMP/no-toc.md'"
+  rm -rf "$SPLIT_TMP"
+fi
+
+# --- the split moved text; it did not shorten rules to hit a number ----------
+# The four references plus the main skill must still carry at least the word
+# count the pre-split single file did. A "fix" that trimmed semantics to satisfy
+# the numeric guards above goes red here, which is the over-correction guard.
+PRESPLIT_WORDS=12669
+total_words() {
+  command cat "$SKILL_F" "$CORERES_F" "$COURIER_F" "$ROUTADM_F" "$UNITFR_F" 2>/dev/null \
+    | command wc -w | tr -d ' '
+}
+check "split no semantic loss: the moved text is preserved, not trimmed" \
+  "[ \"\$(total_words)\" -ge \"$PRESPLIT_WORDS\" ]"
 
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \
