@@ -3356,6 +3356,181 @@ else
       "matches=$M31_HITS want 2; differs=$M31_DIFFERS parses=$M31_PARSES kept=$M31_KEPT — the control cannot run"
 fi
 
+# ================================================================ case 27w
+#
+# THE FOURTH AND LAST PRODUCTION CONSUMER (Unit 30). 27r and 27u proved this
+# terminal publishes and consumes the artifact it promised, in both windows;
+# nothing proved the artifact said what this run actually did. Measured on the
+# fixtures below before the edit: a record altered after successful finalization
+# to `outcome=COMPLETED` — the word for a task driven to its end, over a run a
+# signal stopped mid-hop — exited 28, was advertised as this run's terminal
+# result and released both leases after a clean teardown; so did one altered to
+# `code=22`. Path, structure and identity have nothing to object to; only meaning
+# does.
+#
+# SAME FORCING TECHNIQUE, SAME WINDOW as 56b, 58e, 60j and 62b: one altering line
+# injected after this seam's own finalization marker, between publication and
+# consumption. It is GUARDED on RESULT_FILE, unlike the other four, because
+# on_signal() also runs in windows where no record exists — an unguarded fixture
+# would act outside the window under test and stop being a control on it.
+#
+# THE LAUNCHED-ACTOR WINDOW IS WHERE THE RED IS TAKEN, because it is the one an
+# operator actually meets: a hop in flight, stopped by a signal. The pre-launch
+# window shares the identical expectation — code 28 has no branch in
+# result_outcome() — and 27u remains its green.
+echo
+echo "Case 27w — an interrupted record altered ONLY in outcome, or ONLY in code, is refused before release"
+MUT27W="$SANDBOX_ROOT/mutants27w"; mkdir -p "$MUT27W"
+
+mk_int_alter27() { # outfile sed-script [source] -> 0 when the fixture differs and parses
+  awk -v s="$2" '{print} /# interruption terminal finalization/ {
+    printf "  [ -n \"$RESULT_FILE\" ] && { sed %c%s%c \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\"; } # harness interruption alteration\n", 39, s, 39 }' \
+    "${3:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${3:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# One real launched-actor interruption against a forcing fixture, run the way 27r
+# runs its own: backgrounded by THIS shell so `wait` can reap it, actor pid file
+# polled, SIGTERM to the dispatcher. Returns the sandbox and the captured output
+# through globals rather than stdout, because the caller needs the sandbox to
+# inspect leases afterwards.
+int_run27w() { # fixture task -> sets V27W and O27W, or leaves V27W empty
+  local fx="$1" t="$2" dir pid apid
+  V27W=""; O27W=""; RC27W=0
+  dir="$(new_sandbox)"; state_file "$dir" "$t" claude
+  local scratch="$MUT27W/$t.d"; mkdir -p "$scratch"
+  bash "$fx" --checkout "$dir" --task "$t" --log-dir "$dir/runs" --timeout 300 \
+    --actor-cmd 'echo $$ > "'"$scratch"'/actor.pid"; sleep 300' >"$scratch/out" 2>&1 &
+  pid=$!
+  apid="$(sig27_actor_pid "$scratch")"
+  if [ -z "$apid" ]; then
+    kill -KILL "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+    return 1
+  fi
+  kill -TERM "$pid" 2>/dev/null
+  wait "$pid" 2>/dev/null; RC27W=$?
+  O27W="$(cat "$scratch/out")"
+  kill -KILL "$apid" 2>/dev/null
+  V27W="$dir"
+  return 0
+}
+
+# The full refusal contract for one forced interruption mismatch, asserted as
+# 58e, 60j and 62b assert theirs: exit 38, nothing advertised, the truthful
+# terminal named, both leases retained with the bounded token, next dispatcher
+# refused.
+expect_int_refusal27() { # fixture task expected-token label-prefix
+  local TL CL
+  if ! int_run27w "$1" "$2"; then
+    bad "$4 — the simulated actor started" "no actor pid file; the case is inconclusive"
+    return 0
+  fi
+  expect_rc 38 "$RC27W" "$4 — refused with exit 38, never 28" "$O27W"
+  out_lacks "  terminal result:" "$O27W" "$4 — the refused artifact is not advertised as this run's result"
+  # The dynamic label from Unit 23/25 still names the window this refusal fired
+  # in, and the shared exit's operator-terminal default stays absent.
+  out_has "reached the interruption terminal after a launched actor" "$O27W" \
+    "$4 — the refusal names the launched-actor interruption terminal it actually reached"
+  out_lacks "reached a real operator terminal" "$O27W" \
+    "$4 — the refusal claims no operator terminal"
+  TL="$(task_lock_for "$V27W" "$2")"; CL="$(checkout_lock_for "$V27W")"
+  # NOT a finalization story and NOT a teardown story: the record published
+  # perfectly well (27s owns the publication failure) and the teardown was clean
+  # (27r owns that release). What failed here is what the record says.
+  if [ -d "$TL" ] && [ -d "$CL" ] &&
+     grep -q '^terminal result unprovable: ' "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$CL/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL/survivors" 2>/dev/null; then
+    ok "$4 — both leases retained, both pins carrying the bounded '$3' cause"
+  else
+    bad "$4 — both leases retained, both pins carrying the bounded '$3' cause" \
+        "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V27W" "$2" --dry-run
+  expect_rc 17 "$RC" "$4 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+if mk_int_alter27 "$MUT27W/outonly.sh" 's/^outcome=.*/outcome=COMPLETED/'; then
+  ok "27w — the outcome-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_int_refusal27 "$MUT27W/outonly.sh" sig-sem-out-task outcome-mismatch \
+    "27w — an interruption whose record claims COMPLETED"
+else
+  bad "27w — the outcome-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+if mk_int_alter27 "$MUT27W/codeonly.sh" 's/^code=.*/code=22/'; then
+  ok "27w — the code-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_int_refusal27 "$MUT27W/codeonly.sh" sig-sem-code-task code-mismatch \
+    "27w — an interruption whose record claims code 22"
+else
+  bad "27w — the code-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+# INDEPENDENCE, structurally, the same assertion 60j and 62c make for their own
+# seams: this call site must derive its expected symbol through the sole mapping
+# owner and state its expected code as a literal. A call site that passed a field
+# out of the record would compare it with itself, and the two refusals above
+# would go green on a forgery.
+CALL27W="$(grep -n '# interruption terminal consumption' "$DISPATCH_BIN" | grep -v ':[[:space:]]*#' | cut -d: -f2-)"
+if printf '%s\n' "$CALL27W" | grep -q 'result_outcome 28' &&
+   ! printf '%s\n' "$CALL27W" | grep -qE 'RESULT_FILE|TR_OUTCOME|TR_CODE|res_field|\.result'; then
+  ok "27w — the interruption seam derives its expected pair through result_outcome and reads nothing from the artifact"
+else
+  bad "27w — the interruption seam derives its expected pair through result_outcome and reads nothing from the artifact" \
+      "call site: $CALL27W"
+fi
+
+# ================================================================ case 27x
+echo
+echo "Case 27x — mutation control: remove ONLY the interruption expected pair and both mismatches release again"
+# M37 — the fourth in the M33/M34/M36 line. It strips exactly the two expectation
+# arguments from the interruption call, leaving that call, its DYNAMIC label, its
+# run-evidence eligibility guard, the path gate, the parse and the identity
+# boundary in place, AND leaving the operator, dry-run and carry-one pairs
+# untouched — which is what proves the four migrated seams are separately
+# fail-capable rather than one shared switch. Fails closed: unless the selector
+# matched exactly once and the mutant differs and parses, the control does not run.
+sed 's/ "$term_label" "$(result_outcome 28)" 28 # interruption terminal consumption/ "$term_label" # interruption terminal consumption/' \
+  "$DISPATCH_BIN" >"$MUT27W/m37.sh" 2>/dev/null
+M37_HITS="$(grep -c ' "\$term_label" "\$(result_outcome 28)" 28 # interruption terminal consumption' "$DISPATCH_BIN" 2>/dev/null | head -1)"
+M37_LEFT="$(grep -c ' "\$term_label" "\$(result_outcome 28)" 28 # interruption terminal consumption' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_KEPT="$(grep -c 'consume_terminal_result "\$term_label" # interruption terminal consumption' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_GUARD="$(grep -cF '[ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] &&' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_OP="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_DRY="$(grep -c ' "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_CARRY="$(grep -c ' "\$(result_outcome 0)" 0 # carry-one terminal consumption' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT27W/m37.sh" || M37_DIFFERS=yes
+M37_PARSES=no; bash -n "$MUT27W/m37.sh" 2>/dev/null && M37_PARSES=yes
+if [ "$M37_HITS" = 1 ] && [ "$M37_LEFT" = 0 ] && [ "$M37_KEPT" = 1 ] && [ "$M37_GUARD" = 2 ] &&
+   [ "$M37_OP" = 1 ] && [ "$M37_DRY" = 1 ] && [ "$M37_CARRY" = 1 ] &&
+   [ "$M37_DIFFERS" = yes ] && [ "$M37_PARSES" = yes ]; then
+  ok "27x — M37 removed exactly the interruption pair, kept its labelled guarded consumer call and the other three pairs, differs, and parses"
+  for f27 in outcome:COMPLETED code:22; do
+    FLD27="${f27%%:*}"; VAL27="${f27##*:}"
+    if mk_int_alter27 "$MUT27W/m37-$FLD27.sh" "s/^$FLD27=.*/$FLD27=$VAL27/" "$MUT27W/m37.sh"; then
+      if int_run27w "$MUT27W/m37-$FLD27.sh" "sig-m37-$FLD27-task"; then
+        if [ "$RC27W" -eq 28 ] && [ ! -d "$(task_lock_for "$V27W" "sig-m37-$FLD27-task")" ] &&
+           [ ! -d "$(checkout_lock_for "$V27W")" ]; then
+          ok "27x — M37: without the expected pair the $FLD27-only mismatch exits 28 and releases (27w is fail-capable)"
+        else
+          bad "27x — M37: without the expected pair the $FLD27-only mismatch exits 28 and releases (27w is fail-capable)" \
+              "rc=$RC27W task-lease=$([ -d "$(task_lock_for "$V27W" "sig-m37-$FLD27-task")" ] && echo held || echo released)"
+        fi
+      else
+        bad "27x — M37: the $FLD27-only mutant launched its actor" "no actor pid file; the control is inconclusive"
+      fi
+    else
+      bad "27x — M37: the $FLD27-only fixture over the mutant differs and parses" \
+          "the injection matched nothing, or the fixture does not parse — the control cannot run"
+    fi
+  done
+else
+  bad "27x — M37 removed exactly the interruption pair, kept its labelled guarded consumer call and the other three pairs, differs, and parses" \
+      "matched=$M37_HITS left=$M37_LEFT kept=$M37_KEPT guards=$M37_GUARD operator=$M37_OP dry-run=$M37_DRY carry-one=$M37_CARRY differs=$M37_DIFFERS parses=$M37_PARSES — the control cannot run"
+fi
+
 # ================================================================= case 28
 echo
 echo "Case 28 — --deadline is a deadline, not a start gate"
@@ -8960,12 +9135,14 @@ fi
 #
 # WHICH SEAMS ARE MIGRATED, AND THE CASE SAYS SO. 62c names them: at Unit 27
 # this terminal was the only one, Unit 28 added the dry-run terminal (case 58e),
-# and Unit 29 added the post-hop carry-one terminal (case 60j). The interruption
-# consumer still supplies no expected pair and is unchanged, and the shared
-# nonzero die() funnel consumes nothing at all.
-# That is the standing deferral, asserted rather than assumed — 62c is updated
-# each time a seam migrates, which is what stops it drifting into a claim that
-# every terminal is gated.
+# Unit 29 the post-hop carry-one terminal (case 60j), and Unit 30 the interruption
+# terminal (case 27w) — which is all four consumer call sites.
+#
+# WHAT IS STILL NOT CLAIMED, now that the deferred list is empty. The shared
+# nonzero die() funnel consumes nothing at all: it is not a consumer call site,
+# so "every consumer supplies a pair" is not "every terminal is gated". 62c is
+# updated each time a seam migrates, and that distinction is what stops the
+# empty deferred list reading as coverage the dispatcher does not have.
 
 MUT62="$SANDBOX_ROOT/mutants62"; mkdir -p "$MUT62"
 
@@ -9080,7 +9257,7 @@ else
 fi
 
 echo
-echo "Case 62c — the expectation is the caller's, and exactly three seams supply one"
+echo "Case 62c — the expectation is the caller's, and all four seams supply one"
 # Structural, against the shipped text, and it carries the unit's scope claim.
 #
 # INDEPENDENCE FIRST. The call site must derive its expected symbol through the
@@ -9134,16 +9311,25 @@ $(grep -n 'consume_terminal_result' "$DISPATCH_BIN" |
   grep ' terminal consumption$')
 EOF
 sort62() { printf '%s' "$1" | tr ';' '\n' | grep -v '^$' | LC_ALL=C sort | tr '\n' ';'; }
-if [ "$(sort62 "$SUPPLY62")" = 'carry-one;dry-run;operator;' ]; then
-  ok "62c — exactly three call sites supply an expected pair: the operator, dry-run and carry-one terminals"
+if [ "$(sort62 "$SUPPLY62")" = 'carry-one;dry-run;interruption;operator;' ]; then
+  ok "62c — all four call sites supply an expected pair: the operator, dry-run, carry-one and interruption terminals"
 else
-  bad "62c — exactly three call sites supply an expected pair: the operator, dry-run and carry-one terminals" \
+  bad "62c — all four call sites supply an expected pair: the operator, dry-run, carry-one and interruption terminals" \
       "supplying='$SUPPLY62'"
 fi
-if [ "$(sort62 "$NOSUPPLY62")" = 'interruption;' ]; then
-  ok "62c — the interruption consumer supplies none and stays deferred"
+# THE EMPTY SIDE IS ASSERTED, NOT DROPPED. With the last consumer migrated this
+# list must be empty, and saying so is a different claim from deleting the
+# assertion: a fifth call site added later without a pair would land here, and a
+# case that had stopped looking would not see it.
+#
+# AND IT IS NOT A CLAIM ABOUT THE FUNNEL. `consume_terminal_result` is what this
+# enumeration ranges over; the shared nonzero `die()` funnel finalizes without
+# consuming at all, so it is not a call site here, is not covered by "none
+# remains deferred", and remains its own separate deliverable.
+if [ -z "$(sort62 "$NOSUPPLY62")" ]; then
+  ok "62c — no consumer call site is left without an expected pair (this says nothing about the nonzero die() funnel, which consumes none)"
 else
-  bad "62c — the interruption consumer supplies none and stays deferred" \
+  bad "62c — no consumer call site is left without an expected pair (this says nothing about the nonzero die() funnel, which consumes none)" \
       "not-supplying='$NOSUPPLY62'"
 fi
 # THE MIGRATED SEAM, BEHAVIOURALLY. This line predates Unit 29, when it asserted

@@ -2613,7 +2613,35 @@ on_signal() { # signal name
   local term_label="the interruption terminal after a launched actor"
   [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] || term_label="the interruption terminal before any actor launched"
   [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] && { finalize_terminal_result 28 || die_terminal_unprovable "$term_label"; } # interruption terminal finalization
-  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] && consume_terminal_result "$term_label" # interruption terminal consumption
+  # THE EXPECTED PAIR COMES FROM THIS CALLER, the last of the four production
+  # consumers to supply one and the simplest of them. The code is the literal 28
+  # the finalization above published under and the `exit 28` below returns; the
+  # symbol is `result_outcome()`'s answer for that code, the sole code-to-outcome
+  # owner. Code 28 has no branch inside that owner — it is a constant-table entry
+  # — so this expectation depends on no mode flag, no lifecycle class and no fork
+  # fact, and it is identical in both windows this seam serves.
+  #
+  # WHICH IS WHY THE PAIR IS NOT SPLIT BY WINDOW, though the label is. What the
+  # record must AGREE with is the ending; what a refusal must NAME is where it
+  # fired. A pre-launch and a post-launch interruption are the same ending — the
+  # record tells them apart through `stage`, `actor_launched` and
+  # `model_request_started`, which are required fields and not this comparison's
+  # business. Deriving a second expectation per window would invent a distinction
+  # the vocabulary does not have.
+  #
+  # WITHOUT THIS, THE GAP WAS REAL AND MEASURED here too: a record altered after
+  # finalization to `outcome=COMPLETED` — the word for a task driven to its end,
+  # over a run a signal stopped mid-hop — still exited 28, was advertised as this
+  # run's terminal result and released both leases after a clean teardown. So did
+  # one altered to `code=22`. Path, structure and identity have nothing to object
+  # to; only meaning does.
+  #
+  # THE GUARD AND THE LABEL ARE UNCHANGED. The same run-evidence eligibility
+  # condition as the finalization line above it (Unit 25), and the same dynamic
+  # `term_label`, which is simply followed positionally by the pair it now
+  # precedes. Both mutation controls that address this seam still see what they
+  # address: M29 matches the marker, M31 matches the guard.
+  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] && consume_terminal_result "$term_label" "$(result_outcome 28)" 28 # interruption terminal consumption
   if [ -n "$RESULT_FILE" ]; then
     printf '  terminal result: %s\n' "$RESULT_FILE" >&2
     [ -n "${RUN_LOG:-}" ] && printf '  terminal result: %s\n' "$RESULT_FILE" >>"$RUN_LOG"
