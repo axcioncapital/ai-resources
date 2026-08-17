@@ -1,18 +1,22 @@
 ---
 task: work-loop-v2-post-compaction-recovery-repair
-status: blocked
-turn: operator
+status: active
+turn: codex
 ---
 
 ## Objective and scope
 
 Implement the operator-approved content of `plans/work-loop-v2-v0.2/work-loop-v2-post-compaction-recovery-repair-implementation-plan-v0.1.md` at commit `d72cf199`: preserve the Work Loop contract while preventing unnecessary immediate context refill after compaction, restoring the `$realign` / `$reorient` boundary, making active-state result rollover reliable, and proving the repaired behavior.
 
-Scope is exactly Units 1–4 and the completion condition in that plan. Preserve its explicit exclusions: do not split the executable core; add no model default, hook, parser, state field, registry, cache, summary file, recovery daemon, universal state-size gate, provisional 12/16 KB launch policy, or unrelated Work Loop optimization; do not change Work Loop roles, lifecycle, admission, courier permissions, or dispatcher exit codes.
+Scope is exactly Units 0–4 and the completion condition in that plan, Unit 0 having been added by the operator-approved Amendment 1 of 2026-08-17. Preserve its explicit exclusions: do not split the executable core; add no model default, hook, parser, state field, registry, cache, summary file, recovery daemon, universal state-size gate, provisional 12/16 KB launch policy, or unrelated Work Loop optimization; do not change Work Loop roles, lifecycle, admission, courier permissions, or dispatcher exit codes.
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 1 — split the Work Loop skill without semantic loss.
+Standard. Implementation mode. Unit 0 — restore the lost Work Loop behavior.
+
+Unit 1 (split the Work Loop skill without semantic loss) was implemented and **not accepted**: plan
+§ 4 Unit 1 requires a green Slice 1 suite and the suite exits 1. Its work is committed at `66688592`
+and is held, unreverted, pending Unit 0. Unit 1 returns for assessment once the suite is green.
 
 Named reason for the loop: the approved repair spans four bounded implementation/proof units, must survive hand-offs, and requires assessment independent of the implementer before it counts as complete.
 
@@ -65,7 +69,7 @@ Evidence:
 
 - **Red first, on the real pre-split file.** The 37 structural assertions were written and run before any content moved: **30 failed** (`322 passed / 74 failed`) — both limits, all four reference-exists and direct-link checks, all four read-condition checks, all eleven one-owner checks, the resolver-marker check. The seven that passed did so vacuously over files that did not yet exist, which is why the two negative fixtures below exist.
 - **Green after.** Resolver suite `5 passed, 0 failed` (exit 0). Slice 1 **352 passed / 44 failed**. `work-loop-state`, `work-loop-session-preflight` and `work-loop-v2-tracer-7` all exit 0. Deployment capability check `verdict: READY` against canonical.
-- **Zero regression, stated against a baseline that was never green.** Slice 1 was **315 / 44 before any edit** — see the deferral below. A set-difference of failing test names before against after is **empty**: nothing green went red, and 37 new assertions went green (315 → 352). Slice 1's exit 1 is entirely the 44 pre-existing failures.
+- **No regression against the pre-existing failures.** Slice 1 was **315 / 44 before any edit** — see below. A set-difference of failing test names before against after is **empty**: nothing green went red, and 37 new assertions went green (315 → 352). Slice 1's exit 1 is entirely the 44 pre-existing failures. This is a measurement, not an acceptance claim: the approved bar in plan § 4 Unit 1 is a green suite, and that bar is unchanged.
 - **Fail-capability proved by mutation, not asserted.** Each applied, observed, reverted: a moved heading copied back into the main skill → `FAIL split one owner: classifying the mode`; the resolver marker pair left behind → `FAIL check 5` and `FAIL split the resolver marker pair moved whole`; a reference link removed → `FAIL split main skill directly links unit-framing.md` plus its read-condition check; `unit-framing.md` truncated to 40 lines → `FAIL split no semantic loss`. Two wrong fixtures built in-test prove the chain and table-of-contents checks discriminate, since the repaired tree cannot exhibit those states. Suite returned to 352 / 44 after every revert.
 - **Retargeting, not weakening.** No assertion deleted or loosened. Four negative sets were **widened** to the new references so the split could not open a hole in them (no `## Mode` heading, no `mode:` key, no verbatim copy of the core's mode definition, no invented "adoption unit"), and the `ce9` stated-once check now counts across all five files instead of one.
 
@@ -75,12 +79,29 @@ Deferral, recorded and deliberately not done (core § 5): **the Slice 1 suite ha
 
 ## Blocker
 
-Unit 1 cannot be accepted against the approved plan because `work-loop-v2-slice-1.test.sh` exits 1 with 44 failures, while plan §4 Unit 1 explicitly requires a green Slice 1 suite. The failures expose previously lost `pack`, `race`, and `mode` behavior, including unit packaging, hop termination, hand-off reconciliation, and live-task mode rules; these are material Work Loop behaviors rather than cosmetic checks.
-
-The Unit 1 evidence record also says that the success condition became "no regression against that baseline". That redefines an approved acceptance condition without operator approval and conflicts with the plan header's content-bound approval rule. It is not accepted as governing.
-
-Repairing the pre-existing loss requires a new bounded prerequisite unit and additional scope before Units 2–4. Continuing without it would waive the approved green-suite condition and build later recovery changes on a known incomplete Work Loop contract.
+None. The stop of 2026-08-17 was resolved by operator decision the same day: Amendment 1 to the
+governing plan is approved, adding Unit 0 as a bounded prerequisite before Unit 2. The plan header,
+§ 4 Unit 0, § 8 and § 9 record it. No acceptance condition was relaxed — Unit 1 still owes a green
+Slice 1 suite.
 
 ## Next action
 
-Operator: decide whether to approve a material plan amendment adding one bounded prerequisite unit before Unit 2 to restore the lost `pack`, `race`, and `mode` behavior, return the complete Slice 1 suite to green, remove the unauthorized acceptance-condition reinterpretation from the evidence record, and then return Unit 1 for assessment. If not approved, the repair must stop for replanning rather than continue with 44 known failures.
+Codex: open Unit 0 and write its brief into `## Brief`, replacing Unit 1's. Plan § 4 Unit 0 records
+the authorization, the boundary and the required work as you proposed it and the operator approved
+it; the brief itself is yours to write, including the claims Claude must check and the capability
+subset.
+
+Two repository facts to carry into that brief, established at the Unit 1 assessment and recorded in
+plan § 8:
+
+1. The loss spans **two** artifacts, not one. 21 of the 35 `pack` assertions read the skill and **14
+   read `.claude/commands/work-loop-v2.md`**, which shed 53 lines in the same merge — `## Ending the
+   hop` and every packaging line are absent from it. Unit 1's brief excluded that command from
+   editing; Unit 0's must include it or the suite cannot go green.
+2. The 3 `mode` failures are **not** lost behavior, contrary to the proposal's wording. They read
+   `LIVE_TASK_F` at `work-loop-v2-slice-1.test.sh:1387`, which names a task that has since closed, so
+   the checks read an empty `## Lane and unit`. The test's own comment at that line predicts this and
+   prescribes repointing the single line. Confirm or reject this reading when you write the brief.
+
+Restoration is a merge with judgment, not a revert: the skill has been split since the loss, so the
+packaging material's owner is now `references/unit-framing.md`.

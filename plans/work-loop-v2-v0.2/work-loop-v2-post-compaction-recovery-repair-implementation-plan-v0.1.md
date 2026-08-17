@@ -1,10 +1,18 @@
 # Work Loop v2 — post-compaction recovery repair implementation plan, v0.1
 
 **Date:** 2026-08-17  
-**Status:** APPROVED. The operator authorized the exact plan content committed as `d72cf199` on
-2026-08-17. The approval is bound to that identifiable content, not to this filename: a material
-change to the objective, scope, exclusions, settled decisions, sequence, acceptance conditions or
-authority relationships returns this plan to draft and requires reapproval.  
+**Status:** APPROVED, as amended 2026-08-17. The operator authorized the exact plan content
+committed as `d72cf199` on 2026-08-17. The approval is bound to that identifiable content, not to
+this filename: a material change to the objective, scope, exclusions, settled decisions, sequence,
+acceptance conditions or authority relationships returns this plan to draft and requires
+reapproval.
+
+**Amendment 1 (2026-08-17, operator-approved).** § 4 gains **Unit 0**, a bounded prerequisite
+sequenced before Unit 2, restoring Work Loop behavior lost by merge `9b1c19d3` and returning
+`work-loop-v2-slice-1.test.sh` to green. Raised by Codex at the Unit 1 assessment and approved by the
+operator the same day. Units 1–4 keep their numbering, scope and acceptance conditions unchanged; in
+particular **Unit 1's completion evidence still requires a green Slice 1 suite**, and no acceptance
+condition in this plan was relaxed by the amendment.  
 **Addresses:** Immediate context refill after compaction, including `$realign` crossing into recovery, oversized always-loaded Work Loop instructions, over-reading governing material, and accepted-result history surviving in active state.  
 **Primary evidence:** [`audits/2026-08-17-post-compaction-recovery-fix-qc.md`](../../audits/2026-08-17-post-compaction-recovery-fix-qc.md) and the operator-supplied incident report.  
 **Execution posture:** Four bounded implementation units, followed by one independent review and one representative live proof. No new specification, ticket system, state field, hook, dispatcher policy, or test framework.
@@ -153,6 +161,46 @@ for automatic dispatcher launches, not a universal validity condition for state 
 ## 4. Implementation units
 
 Each unit has one dominant deliverable and is committed separately by the implementation owner.
+
+### Unit 0 — Restore the lost Work Loop behavior (operator-authorized amendment, 2026-08-17)
+
+**Authorization.** Added by operator decision on 2026-08-17, on Codex's proposal at the Unit 1
+assessment. It is a material amendment: it inserts a unit and changes the sequence. Units 1–4 are
+otherwise unchanged and keep their numbering. **This entry records the authorization and its
+boundary. Codex writes the unit's brief into the state file** (core § 3 step 3); the required work
+below is Codex's own proposal as the operator approved it, not a substitute for that brief.
+
+**Dominant deliverable:** The packaging, hop-termination and hand-off-reconciliation rules are back
+in service under their post-split owners, and `work-loop-v2-slice-1.test.sh` is green.
+
+**Why it precedes Unit 2:** Unit 2 edits `$realign` and `$reorient`, both of which load the Work Loop
+skill that is missing these rules. Building the recovery boundary on a knowingly incomplete contract
+risks attributing the next failure to the wrong cause.
+
+**Files in scope:**
+
+- `.agents/skills/work-loop-v2/SKILL.md` and `.agents/skills/work-loop-v2/references/unit-framing.md`
+- `.claude/commands/work-loop-v2.md`
+- the `LIVE_TASK_F` pointer in `logs/scripts/work-loop-v2-slice-1.test.sh`
+
+**Required work, as approved:**
+
+1. Restore the `pack` and `race` content lost by merge `9b1c19d3`, sourced from `16de1622` (+28 skill,
+   +53 command) and `8a61a496` (+13 skill). Place each rule with its **post-split owner** — the
+   packaging and sizing material belongs in `references/unit-framing.md`, the reconciliation material
+   in the main skill's seam. This is a merge with judgment, not a revert.
+2. Repoint `LIVE_TASK_F` at the next open Standard record. **Correction to the approving proposal,
+   carried on repository evidence:** the 3 `mode` failures are *not* lost behavior. They read a
+   pointer at a task that has since closed, and the test's own comment at that line prescribes this
+   fix. Codex should confirm this reading when it writes the brief.
+3. Re-run the Unit 1 structural and resolver suites to confirm the restoration did not disturb the
+   split's one-owner property.
+
+**Completion evidence:** A failing-first observation for each restored rule against the current
+artifacts; `work-loop-v2-slice-1.test.sh` green (exit 0); resolver suite green; and a statement of
+where each restored rule now lives, so one-owner is preserved rather than assumed.
+
+**Then:** Unit 1 returns to Codex for assessment against its own unchanged completion evidence.
 
 ### Unit 1 — Split the Work Loop skill without semantic loss
 
@@ -355,10 +403,16 @@ Keep the evidence here so the repair does not create a second report artifact.
 Implemented 2026-08-17 in checkout `ai-resources-work-loop-fix-17-8`, branch
 `session/2026-08-17-work-loop-fix-17-8`.
 
+**Status: NOT ACCEPTED.** Codex assessed this unit on 2026-08-17 and did not accept it. This
+section's completion evidence requires a **green Slice 1 suite**, and the suite exits 1 with 44
+failures. An earlier revision of this record reframed the bar as "no regression against that
+baseline"; that redefined an approved acceptance condition without operator approval and has been
+removed. The approved condition stands unchanged. The evidence below is recorded as measured, not as
+a claim that the unit is complete.
+
 **Pre-existing baseline, established before any edit.** `work-loop-v2-slice-1.test.sh` was **not**
 green on entry: **315 passed / 44 failed**. The 44 are unrelated to this unit — see *Pre-existing
-defect* below. Unit 1's success condition is therefore "no regression against that baseline plus the
-new structural checks green", not "the suite is green".
+defect* below.
 
 **Red before the move.** The 37 new `split` assertions were added first and run against the actual
 pre-split file: **30 failed** (`322 passed / 74 failed`). The seven that passed did so vacuously —
@@ -428,15 +482,34 @@ each shared skill as a whole **directory**. `references/routing-index.md` was ad
 The four new siblings travel by the same mechanism.
 
 **Pre-existing defect found while establishing the baseline — not introduced here, not fixed here.**
-The 44 failures are the `pack` (unit packaging and hop termination, 26 checks) and `race`
-(hand-off reconciliation, 6 checks) families, plus 3 `mode` live-task checks. Their content was
-implemented and green — commit `8a61a496` records "harness 345/0 to 358/0 green" — and was then
-**lost from `.agents/skills/work-loop-v2/SKILL.md` by merge `9b1c19d3`** ("Merge branch
-'session/2026-08-14-concurrency-fix-2' into session/2026-08-14-durable-state"), which dropped the
-skill from 592 to 532 lines. Both source commits are ancestors of HEAD; their text is not. Verified
-by content probe across `16de1622`, `8a61a496`, `9b1c19d3` and HEAD. The `.claude/commands/`
-half is missing too. This is outside Unit 1's file scope and is recorded as a deferral for
-assessment, not repaired here.
+The 44 failures have **two unrelated causes**, and the distinction sizes the repair:
+
+- **41 are lost content** — `pack` (unit packaging and hop termination, **35** checks) and `race`
+  (hand-off reconciliation, **6** checks). Of the 35 `pack` checks, **21 read the skill and 14 read
+  `.claude/commands/work-loop-v2.md`**: both runtime artifacts lost their half in the same merge, the
+  command shedding 53 lines. `## Ending the hop` and every packaging line are absent from it today.
+- **3 are a stale pointer, not lost content** — the `mode` live-task checks read `LIVE_TASK_F` at
+  `work-loop-v2-slice-1.test.sh:1387`, which names `logs/work-loop/work-loop-v2-durable-state-system.md`.
+  That task has since **closed**, so its record is reduced to the four closing headings and carries no
+  `## Lane and unit` for the checks to read. The test's own comment at that line predicts exactly this
+  and prescribes the fix: repoint the single line at the next open Standard record. Routine
+  maintenance, not restoration.
+
+The lost content was implemented and green — commit `8a61a496` records "harness 345/0 to 358/0
+green" — and was then **lost by merge `9b1c19d3`** ("Merge branch
+'session/2026-08-14-concurrency-fix-2' into session/2026-08-14-durable-state"), which dropped
+`.agents/skills/work-loop-v2/SKILL.md` from 592 to 532 lines. Both source commits are ancestors of
+HEAD; their text is not. Verified by content probe across `16de1622`, `8a61a496`, `9b1c19d3` and
+HEAD. Recoverable text: 41 lines into the skill (`16de1622` +28, `8a61a496` +13) and 53 into the
+command (`16de1622`). Restoration is **not** a clean revert — the skill has been split since, so the
+packaging material's owner is now `references/unit-framing.md` rather than the main body.
+
+This was outside Unit 1's file scope and was not repaired there. The operator authorized a bounded
+prerequisite unit for it on 2026-08-17 — see § 4 Unit 0.
+
+### Unit 0 — restored behavior red / green
+
+Pending.
 
 ### Unit 2 — recovery boundary and deterministic regression
 
@@ -465,7 +538,7 @@ Pending.
 
 ## 9. Completion condition
 
-This plan is implemented when Units 1–4 are complete, every focused and existing regression is green,
+This plan is implemented when Units 0–4 are complete, every focused and existing regression is green,
 the independent review has no unresolved material finding, and the representative live case proves
 correct recovery plus current-result rollover without the incident's unnecessary read set.
 
