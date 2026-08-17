@@ -268,7 +268,7 @@ guard_write() {
 }
 
 install_generated_guard() {
-  local canonical hook_path hooks_dir
+  local canonical hook_path
   canonical="$AI_RESOURCES/.claude/hooks/pre-commit"
   [ -f "$canonical" ] && [ -r "$canonical" ] || return 0
   [ -n "$repo_top" ] || return 0
@@ -279,30 +279,30 @@ install_generated_guard() {
     return 0
   fi
 
-  # The executing hook path, from Git — never built from directory nesting,
-  # because a linked worktree has no .git directory to nest into. core.hooksPath
-  # is consulted first because that is what Git itself honours when it is set;
-  # otherwise --git-path resolves hooks/ to the SHARED common directory, which is
-  # the surface a linked worktree actually runs.
-  hooks_dir=$(git -C "$PROJECT_DIR" config --get core.hooksPath 2>/dev/null)
-  if [ -n "$hooks_dir" ]; then
-    case "$hooks_dir" in
-      /*) ;;
-      # Git resolves a relative core.hooksPath against the directory hooks run
-      # in — the top of the working tree.
-      *) hooks_dir="$repo_top/$hooks_dir" ;;
-    esac
-    hook_path="$hooks_dir/pre-commit"
-  else
-    hook_path=$(git -C "$PROJECT_DIR" rev-parse --git-path hooks/pre-commit 2>/dev/null) || return 0
-    [ -n "$hook_path" ] || return 0
-    case "$hook_path" in
-      /*) ;;
-      # --git-path answers relative to the cwd of the git call, which is
-      # $PROJECT_DIR here — the same resolution the exclude path above uses.
-      *) hook_path="$PROJECT_DIR/$hook_path" ;;
-    esac
-  fi
+  # The executing hook path — asked of Git, and never built here. Two things this
+  # single call already gets right, both of which hand-rolled resolution gets
+  # wrong:
+  #
+  #   * a LINKED WORKTREE resolves hooks/ to the SHARED common directory, which
+  #     is the surface it actually runs. There is no .git directory to nest into,
+  #     so constructing the path from directory layout cannot work at all.
+  #   * core.hooksPath is ALREADY honoured, including its tilde form. Do not add
+  #     a `git config --get core.hooksPath` branch back: with
+  #     core.hooksPath='~/guard-hooks', Git executes $HOME/guard-hooks/pre-commit,
+  #     while prefixing the raw config value with the repo top yields
+  #     <repo-top>/~/guard-hooks/pre-commit — a literal `~` directory that Git
+  #     never executes. That was measured, and it is why this is one call.
+  hook_path=$(git -C "$PROJECT_DIR" rev-parse --git-path hooks/pre-commit 2>/dev/null) || return 0
+  [ -n "$hook_path" ] || return 0
+  case "$hook_path" in
+    /*) ;;
+    # --git-path answers relative to the cwd of the git call, which is
+    # $PROJECT_DIR here — the same resolution the exclude path above uses. It
+    # stays relative for a default .git/hooks and for a relative core.hooksPath
+    # alike (`custom-hooks/pre-commit` from the root, `../custom-hooks/pre-commit`
+    # from a subdirectory), so this anchoring covers both.
+    *) hook_path="$PROJECT_DIR/$hook_path" ;;
+  esac
 
   # Symlink test FIRST, before any regular-file test — see limit 1 above.
   if [ -L "$hook_path" ]; then

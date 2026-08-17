@@ -396,6 +396,56 @@ run_gen "$P_C4" >/dev/null
   && ok "C4 second run performs no write" || bad "C4 second run performs no write"
 check "C4 the hook is still executable after two runs" test -x "$hp_c4"
 
+# C5 a NON-DEFAULT hook directory via core.hooksPath. The guard must land exactly
+# where Git says it will run, for both forms the config takes.
+P_C5=$(build_ws "$TMP/ws-c5")
+git -C "$P_C5" config core.hooksPath 'custom-hooks'
+run_gen "$P_C5" >/dev/null
+check "C5 a relative core.hooksPath installs into that directory" \
+  cmp -s "$PRECOMMIT" "$P_C5/custom-hooks/pre-commit"
+check_not "C5 nothing was installed at the default .git/hooks path" \
+  test -e "$P_C5/.git/hooks/pre-commit"
+
+P_C5B=$(build_ws "$TMP/ws-c5b")
+git -C "$P_C5B" config core.hooksPath "$TMP/ws-c5b/abs-hooks"
+run_gen "$P_C5B" >/dev/null
+check "C5 an absolute core.hooksPath installs at that absolute path" \
+  cmp -s "$PRECOMMIT" "$TMP/ws-c5b/abs-hooks/pre-commit"
+
+# C6 the tilde form, with HOME redirected INSIDE the fixture so nothing outside
+# TMP is ever touched. Git expands `~/guard-hooks` against HOME and executes the
+# expanded path; resolving it by hand and prefixing the repository top instead
+# yields a literal `~` directory Git never runs. This case is the reason the
+# resolver is one `git rev-parse --git-path` call and not a config branch.
+P_C6=$(build_ws "$TMP/ws-c6")
+FAKE_HOME="$TMP/ws-c6/home"
+mkdir -p "$FAKE_HOME"
+git -C "$P_C6" config core.hooksPath '~/guard-hooks'
+git_hook_path=$(HOME="$FAKE_HOME" git -C "$P_C6" rev-parse --git-path hooks/pre-commit)
+case "$git_hook_path" in /*) ;; *) git_hook_path="$P_C6/$git_hook_path" ;; esac
+check "C6 fixture sanity: Git expands the tilde against the fixture HOME" \
+  bash -c '[ "$1" = "$2/guard-hooks/pre-commit" ]' _ "$git_hook_path" "$FAKE_HOME"
+HOME="$FAKE_HOME" CLAUDE_PROJECT_DIR="$P_C6" \
+  bash "$TMP/ws-c6/ai-resources/.claude/hooks/auto-sync-shared.sh" >/dev/null 2>&1
+check "C6 the guard installs exactly at Git's reported tilde-expanded path" \
+  cmp -s "$PRECOMMIT" "$git_hook_path"
+check "C6 the installed guard is executable" test -x "$git_hook_path"
+check_not "C6 nothing was written under a literal '~' directory" \
+  bash -c 'ls -d "$1"/~ >/dev/null 2>&1' _ "$P_C6"
+check_not "C6 nothing was installed at the default .git/hooks path" \
+  test -e "$P_C6/.git/hooks/pre-commit"
+# And the installed guard is the one Git actually runs: a force-added generated
+# destination must be refused from this repository.
+git -C "$P_C6" add -f .claude/commands/sharedcmd.md 2>/dev/null
+c6_head=$(git -C "$P_C6" rev-parse HEAD 2>/dev/null || echo none)
+if HOME="$FAKE_HOME" git -C "$P_C6" commit -qm "force-add under a tilde hooksPath" >/dev/null 2>&1; then
+  bad "C6 the tilde-path guard actually executes and blocks the commit"
+else
+  ok "C6 the tilde-path guard actually executes and blocks the commit"
+fi
+[ "$(git -C "$P_C6" rev-parse HEAD 2>/dev/null || echo none)" = "$c6_head" ] \
+  && ok "C6 HEAD did not advance" || bad "C6 HEAD did not advance"
+
 echo "---"
 echo "pass=$pass fail=$fail skip=$skip"
 [ "$fail" -eq 0 ] || exit 1
