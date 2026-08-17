@@ -4316,7 +4316,36 @@ while :; do
     # then consume the exact promised artifact, and only then release. One line
     # each with its own marker, so a mutation control can delete either half.
     finalize_terminal_result 0 || die_terminal_unprovable "the carry-one terminal after one carried hop" # carry-one terminal finalization
-    consume_terminal_result "the carry-one terminal after one carried hop" # carry-one terminal consumption
+    # THE EXPECTED PAIR COMES FROM THIS CALLER, the third seam to supply one and
+    # the same argument the operator and dry-run seams make: this call site knows
+    # which terminal it is finalizing, and the artifact merely asserts one. The
+    # code is the literal 0 the finalization above published under and the
+    # `exit 0` below returns; the symbol is `result_outcome()`'s answer for that
+    # code, the sole code-to-outcome owner.
+    #
+    # WHAT MAKES THAT ANSWER CARRY_ONE_COMPLETE HERE IS THIS RUN, NOT THE TASK,
+    # and both facts it turns on are the dispatcher's own: `CARRY_ONE`, settled at
+    # argument parse, and `ACTOR_PROCESS_STARTED`, the fork this run really
+    # performed. Both are already true at this line — it is inside the
+    # `CARRY_ONE -eq 1` block, after a hop that launched an actor — which is what
+    # lets ONE call cover all four reachable carried transitions without naming a
+    # symbol or holding a second table. The dry-run branch is ordered ahead of the
+    # carry-one one inside that owner, and a --carry-one --dry-run never reaches
+    # here at all, so the preflight's own expectation is not disturbed.
+    #
+    # WITHOUT THIS, THE GAP WAS REAL AND MEASURED at this seam too: a record
+    # altered after finalization to `outcome=COMPLETED` — the full loop's word for
+    # a run that drove the task to its end, over a run that carried exactly one
+    # hop — still exited 0, was advertised as this run's terminal result and
+    # released both leases. So did one altered to `code=22`, the code for a hop
+    # that made no transition, over a run whose transition table had just passed.
+    # Path, structure and identity have nothing to object to; only meaning does.
+    #
+    # THE LABEL IS THE ACCEPTED ONE, unchanged and simply moved ahead of the pair
+    # it now has to precede positionally. It is this seam's own truthful sentence
+    # (Unit 16, finding F1), and the shared exit's default and wording are
+    # untouched.
+    consume_terminal_result "the carry-one terminal after one carried hop" "$(result_outcome 0)" 0 # carry-one terminal consumption
     [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
     release_lock
     exit 0

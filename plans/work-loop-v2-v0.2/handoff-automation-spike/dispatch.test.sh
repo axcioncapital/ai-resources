@@ -8527,6 +8527,149 @@ else
       "matched ${M28_HITS:-0} lines, want exactly 1; differs=$M28_DIFFERS parses=$M28_PARSES — the control cannot run"
 fi
 
+echo
+echo "Case 60j — a carried record altered ONLY in outcome, or ONLY in code, is refused before release"
+# Unit 29. The third production consumer, and the seam's last unproven half.
+# 60a-b proved a carried hop publishes and consumes the artifact it promised and
+# that the artifact says CARRY_ONE_COMPLETE/0; nothing proved the artifact the
+# CONSUMER accepted said that. Measured on these fixtures before the edit: a
+# record altered after successful finalization to `outcome=COMPLETED` — the full
+# loop's word for a run that drove the task to its end, over a run that carried
+# exactly one hop — exited 0, was advertised as this run's terminal result and
+# released both leases; so did one altered to `code=22`, the code for a hop that
+# made no transition, over a run whose transition table had just passed. Path,
+# structure and identity have nothing to object to; only meaning does.
+#
+# SAME FORCING TECHNIQUE, SAME WINDOW as 56b, 58e and 62b: one altering line
+# injected after this seam's own finalization marker, between publication and
+# consumption. Everything asserted afterwards is the unmodified seam's behaviour.
+#
+# A CODEX ACTOR, for 60e's reason unchanged: no commit and no permission-denial
+# probe stands between the hop and the seam under test.
+#
+# THE ACCEPTED ROWS ARE NOT RE-RUN HERE. 60a and 60b already exercise a real
+# carried hop's post-hop facts, release, and all four lifecycle rows' outcome and
+# next-action meanings — against this integrated dispatcher, so they are this
+# unit's green for the accepted behaviour rather than a second matrix.
+MUT60J="$SANDBOX_ROOT/mutants60j"; mkdir -p "$MUT60J"
+
+mk_carry_alter60() { # outfile sed-script [source] -> 0 when the fixture differs and parses
+  awk -v s="$2" '{print} /# carry-one terminal finalization/ {
+    printf "    sed %c%s%c \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\" # harness carry-one alteration\n", 39, s, 39 }' \
+    "${3:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${3:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# The full refusal contract for one forced carried mismatch, asserted exactly as
+# 58e asserts the preflight's: exit 38, nothing advertised, the truthful terminal
+# named, both leases retained with the bounded token as their cause, and the next
+# dispatcher refused.
+expect_carry_refusal60() { # fixture expected-token label-prefix
+  local V O R TL CL
+  V="$(new_sandbox)"; state_file "$V" carry-sem codex
+  O="$(bash "$1" --checkout "$V" --task carry-sem --log-dir "$V/runs" --timeout 20 \
+        --carry-one --actor-cmd "$FLIP" 2>&1)"; R=$?
+  expect_rc 38 "$R" "$3 — refused with exit 38, never 0" "$O"
+  out_lacks "  terminal result:" "$O" "$3 — the refused artifact is not advertised as this run's result"
+  # The accepted label from Unit 16 (finding F1) still names the terminal this run
+  # really reached, and the operator terminal's default sentence stays absent.
+  out_has "reached the carry-one terminal after one carried hop" "$O" \
+    "$3 — the refusal names the carry-one terminal it actually reached"
+  out_lacks "reached a real operator terminal" "$O" \
+    "$3 — the refusal claims no operator terminal"
+  TL="$(task_lock_for "$V" carry-sem)"; CL="$(checkout_lock_for "$V")"
+  # NOT a finalization story: the record published perfectly well, and 60e owns
+  # the case where it does not. What failed here is what the record says.
+  if [ -d "$TL" ] && [ -d "$CL" ] &&
+     grep -q '^terminal result unprovable: ' "$TL/survivors" 2>/dev/null &&
+     grep -q "$2" "$TL/survivors" 2>/dev/null &&
+     grep -q "$2" "$CL/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL/survivors" 2>/dev/null; then
+    ok "$3 — both leases retained, both pins carrying the bounded '$2' cause"
+  else
+    bad "$3 — both leases retained, both pins carrying the bounded '$2' cause" \
+        "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V" carry-sem --dry-run
+  expect_rc 17 "$RC" "$3 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+if mk_carry_alter60 "$MUT60J/outonly.sh" 's/^outcome=.*/outcome=COMPLETED/'; then
+  ok "60j — the outcome-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_carry_refusal60 "$MUT60J/outonly.sh" outcome-mismatch \
+    "60j — a carried hop whose record claims COMPLETED"
+else
+  bad "60j — the outcome-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+if mk_carry_alter60 "$MUT60J/codeonly.sh" 's/^code=.*/code=22/'; then
+  ok "60j — the code-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_carry_refusal60 "$MUT60J/codeonly.sh" code-mismatch \
+    "60j — a carried hop whose record claims code 22"
+else
+  bad "60j — the code-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+# INDEPENDENCE, structurally, on the same argument 62c makes for the operator
+# seam: the call site must derive its expected symbol through the sole mapping
+# owner and state its expected code as a literal. A call site that passed a field
+# out of the record would compare it with itself, and the two refusals above
+# would go green on a forgery.
+CALL60J="$(grep -n '# carry-one terminal consumption' "$DISPATCH_BIN" | grep -v ':[[:space:]]*#' | cut -d: -f2-)"
+if printf '%s\n' "$CALL60J" | grep -q 'result_outcome 0' &&
+   ! printf '%s\n' "$CALL60J" | grep -qE 'RESULT_FILE|TR_OUTCOME|TR_CODE|res_field|\.result'; then
+  ok "60j — the carry-one seam derives its expected pair through result_outcome and reads nothing from the artifact"
+else
+  bad "60j — the carry-one seam derives its expected pair through result_outcome and reads nothing from the artifact" \
+      "call site: $CALL60J"
+fi
+
+echo
+echo "Case 60k — mutation control: remove ONLY the carry-one expected pair and both mismatches release again"
+# M36 — the mirror of M33 and M34 one seam over. It strips exactly the two
+# expectation arguments from the carry-one call, leaving that call, its truthful
+# label, the path gate, the parse and the identity boundary in place, AND leaving
+# the operator and dry-run pairs untouched — which is what proves the three
+# migrated seams are separately fail-capable rather than one shared switch. Fails
+# closed: unless the selector matched exactly once and the mutant differs and
+# parses, the control does not run.
+sed 's/ "$(result_outcome 0)" 0 # carry-one terminal consumption/ # carry-one terminal consumption/' \
+  "$DISPATCH_BIN" >"$MUT60J/m36.sh" 2>/dev/null
+M36_HITS="$(grep -c ' "\$(result_outcome 0)" 0 # carry-one terminal consumption' "$DISPATCH_BIN" 2>/dev/null || true)"
+M36_LEFT="$(grep -c ' "\$(result_outcome 0)" 0 # carry-one terminal consumption' "$MUT60J/m36.sh" 2>/dev/null || true)"
+M36_KEPT="$(grep -c 'consume_terminal_result "the carry-one terminal after one carried hop" # carry-one terminal consumption' "$MUT60J/m36.sh" 2>/dev/null || true)"
+M36_OP="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$MUT60J/m36.sh" 2>/dev/null || true)"
+M36_DRY="$(grep -c ' "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$MUT60J/m36.sh" 2>/dev/null || true)"
+M36_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT60J/m36.sh" || M36_DIFFERS=yes
+M36_PARSES=no; bash -n "$MUT60J/m36.sh" 2>/dev/null && M36_PARSES=yes
+if [ "$M36_HITS" = 1 ] && [ "$M36_LEFT" = 0 ] && [ "$M36_KEPT" = 1 ] &&
+   [ "$M36_OP" = 1 ] && [ "$M36_DRY" = 1 ] &&
+   [ "$M36_DIFFERS" = yes ] && [ "$M36_PARSES" = yes ]; then
+  ok "60k — M36 removed exactly the carry-one pair, kept its labelled consumer call and the other two pairs, differs, and parses"
+  for f60 in outcome:COMPLETED code:22; do
+    FLD60="${f60%%:*}"; VAL60="${f60##*:}"
+    if mk_carry_alter60 "$MUT60J/m36-$FLD60.sh" "s/^$FLD60=.*/$FLD60=$VAL60/" "$MUT60J/m36.sh"; then
+      V60J="$(new_sandbox)"; state_file "$V60J" carry-sem codex
+      OUT="$(bash "$MUT60J/m36-$FLD60.sh" --checkout "$V60J" --task carry-sem \
+            --log-dir "$V60J/runs" --timeout 20 --carry-one --actor-cmd "$FLIP" 2>&1)"; RCM=$?
+      if [ "$RCM" -eq 0 ] && [ ! -d "$(task_lock_for "$V60J" carry-sem)" ] &&
+         [ ! -d "$(checkout_lock_for "$V60J")" ]; then
+        ok "60k — M36: without the expected pair the $FLD60-only mismatch exits 0 and releases (60j is fail-capable)"
+      else
+        bad "60k — M36: without the expected pair the $FLD60-only mismatch exits 0 and releases (60j is fail-capable)" \
+            "rc=$RCM task-lease=$([ -d "$(task_lock_for "$V60J" carry-sem)" ] && echo held || echo released)"
+      fi
+    else
+      bad "60k — M36: the $FLD60-only fixture over the mutant differs and parses" \
+          "the injection matched nothing, or the fixture does not parse — the control cannot run"
+    fi
+  done
+else
+  bad "60k — M36 removed exactly the carry-one pair, kept its labelled consumer call and the other two pairs, differs, and parses" \
+      "matched=$M36_HITS left=$M36_LEFT kept=$M36_KEPT operator-pair=$M36_OP dry-run-pair=$M36_DRY differs=$M36_DIFFERS parses=$M36_PARSES — the control cannot run"
+fi
+
 # ==================================================================== case 61
 # THE THIRD TRUST QUESTION, and the gap cases 51-54 leave open by design.
 #
@@ -8816,9 +8959,10 @@ fi
 # unmodified seam's own behaviour.
 #
 # WHICH SEAMS ARE MIGRATED, AND THE CASE SAYS SO. 62c names them: at Unit 27
-# this terminal was the only one, and Unit 28 added the dry-run terminal (case
-# 58e). The interruption and carry-one consumers still supply no expected pair
-# and are unchanged, and the shared nonzero die() funnel consumes nothing at all.
+# this terminal was the only one, Unit 28 added the dry-run terminal (case 58e),
+# and Unit 29 added the post-hop carry-one terminal (case 60j). The interruption
+# consumer still supplies no expected pair and is unchanged, and the shared
+# nonzero die() funnel consumes nothing at all.
 # That is the standing deferral, asserted rather than assumed — 62c is updated
 # each time a seam migrates, which is what stops it drifting into a claim that
 # every terminal is gated.
@@ -8936,7 +9080,7 @@ else
 fi
 
 echo
-echo "Case 62c — the expectation is the caller's, and exactly two seams supply one"
+echo "Case 62c — the expectation is the caller's, and exactly three seams supply one"
 # Structural, against the shipped text, and it carries the unit's scope claim.
 #
 # INDEPENDENCE FIRST. The call site must derive its expected symbol through the
@@ -8953,11 +9097,16 @@ else
 fi
 # WHICH CONSUMERS ARE MIGRATED, NAMED RATHER THAN COUNTED LOOSELY. Every
 # consume_terminal_result call site is enumerated from the shipped text and
-# classified by whether it supplies a pair. Two must — the operator terminal
-# (Unit 27) and the dry-run terminal (Unit 28) — and the interruption and
-# carry-one consumers must not. Asserting the exact NAMES, not just a count, is
-# what stops a later unit migrating one seam while silently dropping another and
-# still satisfying "two".
+# classified by whether it supplies a pair. Three must — the operator terminal
+# (Unit 27), the dry-run terminal (Unit 28) and the post-hop carry-one terminal
+# (Unit 29, case 60j) — and the interruption consumer must not. Asserting the
+# exact NAMES, not just a count, is what stops a later unit migrating one seam
+# while silently dropping another and still satisfying "three".
+#
+# COMPARED AS SORTED SETS, because the enumeration follows the order the call
+# sites happen to appear in the dispatcher. Spelling out every permutation was
+# already awkward at two names and is the wrong assertion at three: what is being
+# claimed is which seams, not where they sit in the file.
 #
 # THE DEFERRED SIDE IS THE HALF THAT MATTERS HERE. This assertion is the honest
 # limit on 56e: the composed boundary exists for every caller, but only the two
@@ -8984,25 +9133,29 @@ $(grep -n 'consume_terminal_result' "$DISPATCH_BIN" |
   grep -v '^[0-9]*:[[:space:]]*#' |
   grep ' terminal consumption$')
 EOF
-if [ "$SUPPLY62" = 'operator;dry-run;' ] || [ "$SUPPLY62" = 'dry-run;operator;' ]; then
-  ok "62c — exactly two call sites supply an expected pair: the operator and dry-run terminals"
+sort62() { printf '%s' "$1" | tr ';' '\n' | grep -v '^$' | LC_ALL=C sort | tr '\n' ';'; }
+if [ "$(sort62 "$SUPPLY62")" = 'carry-one;dry-run;operator;' ]; then
+  ok "62c — exactly three call sites supply an expected pair: the operator, dry-run and carry-one terminals"
 else
-  bad "62c — exactly two call sites supply an expected pair: the operator and dry-run terminals" \
+  bad "62c — exactly three call sites supply an expected pair: the operator, dry-run and carry-one terminals" \
       "supplying='$SUPPLY62'"
 fi
-if [ "$NOSUPPLY62" = 'interruption;carry-one;' ] || [ "$NOSUPPLY62" = 'carry-one;interruption;' ]; then
-  ok "62c — the interruption and carry-one consumers supply none and stay deferred"
+if [ "$(sort62 "$NOSUPPLY62")" = 'interruption;' ]; then
+  ok "62c — the interruption consumer supplies none and stays deferred"
 else
-  bad "62c — the interruption and carry-one consumers supply none and stay deferred" \
+  bad "62c — the interruption consumer supplies none and stays deferred" \
       "not-supplying='$NOSUPPLY62'"
 fi
-# ONE DEFERRED SEAM, BEHAVIOURALLY. The structural count above says carry-one
-# passes no pair; this says a real carried hop still ends exactly as accepted —
-# so a semantic gate leaking out of the shared function into an unmigrated caller
-# would show up here as a 38 rather than as an unasserted assumption.
+# THE MIGRATED SEAM, BEHAVIOURALLY. This line predates Unit 29, when it asserted
+# that the then-deferred carry-one terminal was untouched by the shared boundary.
+# It is kept and re-read rather than deleted: the same run now has to stay green
+# with that seam MIGRATED, which is what would catch an expectation derived
+# wrongly at the new call site — it would surface here as a 38 on a carried hop
+# that did nothing wrong. The deferred seam that remains is interruption, and
+# the structural assertion above is what carries that claim.
 V62D="$(new_sandbox)"; state_file "$V62D" carry-defer-task codex
 run_dispatch "$V62D" carry-defer-task --carry-one --actor-cmd "$FLIP"
-expect_rc 0 "$RC" "62c — the deferred carry-one terminal still exits 0 and releases, unchanged" "$OUT"
+expect_rc 0 "$RC" "62c — the migrated carry-one terminal still exits 0 and releases on a genuine carried hop" "$OUT"
 
 echo
 echo "Case 62d — mutation control: remove ONLY the expected pair and both mismatches release again"
