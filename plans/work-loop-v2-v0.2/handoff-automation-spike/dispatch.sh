@@ -2416,6 +2416,42 @@ on_signal() { # signal name
   printf '%s\n' "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
 
+  # TRUSTED EVIDENCE BEFORE RELEASE — the last post-launch terminal that had none
+  # (Unit 23). Everything above this point reports on SCREEN and then released the
+  # lease and exited 28, leaving nothing a later reader could point at: the same
+  # unproven-ending hole closed at the operator seam (Unit 8), the shared die
+  # funnel (Unit 11) and the dry-run and carry-one terminals (Unit 12 onward).
+  # Same boundary, same order, same fail-closed behaviour as those: finalize, then
+  # consume the exact promised artifact, and only then release.
+  #
+  # GUARDED ON THE FORK THIS RUN ACTUALLY PERFORMED, not on ACTOR_PGID. The two
+  # differ between hops — ACTOR_PGID is cleared when a hop ends, while
+  # ACTOR_PROCESS_STARTED stays 1 — and a signal arriving between hops is still an
+  # interruption AFTER a launch, which is this unit's scope. It is also the same
+  # fact the record's own `stage` and `actor_launched` fields are derived from, so
+  # the guard and the record cannot disagree about whether a hop happened.
+  #
+  # A SIGNAL BEFORE ANY LAUNCH IS DELIBERATELY LEFT ON THE OLD PATH. Those windows
+  # — before run identity, and after it but before the first fork — are explicitly
+  # deferred, not approximated: finalize_terminal_result() would refuse them at its
+  # own run-identity guard anyway, and routing them through die_terminal_unprovable
+  # would turn a clean interruption into an unprovable-ending 38. Case 27r-deferred
+  # asserts that window still exits 28 with no result, so this scope claim stays
+  # checkable rather than merely stated.
+  #
+  # PINNED BEATS RELEASED, unchanged. report_teardown() above may already have
+  # pinned the lease on an unverified teardown; release_lock() honours that inside
+  # the lease library, so publishing here cannot buy a release the teardown refused.
+  #
+  # One line each with its own marker, so a mutation control can delete either half
+  # without leaving an orphaned block behind (case 27t / M29).
+  [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] && { finalize_terminal_result 28 || die_terminal_unprovable "the interruption terminal after a launched actor"; } # interruption terminal finalization
+  [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] && consume_terminal_result "the interruption terminal after a launched actor" # interruption terminal consumption
+  if [ -n "$RESULT_FILE" ]; then
+    printf '  terminal result: %s\n' "$RESULT_FILE" >&2
+    [ -n "${RUN_LOG:-}" ] && printf '  terminal result: %s\n' "$RESULT_FILE" >>"$RUN_LOG"
+  fi
+
   release_lock
   exit 28
 }

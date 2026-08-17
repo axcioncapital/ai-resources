@@ -2875,6 +2875,245 @@ fi
 
 fi   # python3 available
 
+# ================================================================ case 27r
+#
+# THE INTERRUPTION TERMINAL'S EVIDENCE (Unit 23). Cases 27–27q above prove the
+# signal path STOPS things: the actor dies, its descendants die, the exit is 28,
+# an unverified teardown pins. None of them asks the question this one does —
+# whether the run left behind anything a later reader can point at.
+#
+# Before this unit it did not. on_signal() reported on screen, released the lease
+# and exited 28 with no run-bound terminal result, which is the same
+# unproven-ending hole units 8, 11 and 12 closed at the operator, funnel and
+# dry-run seams. This is the launched-actor half of the remaining one; a signal
+# arriving BEFORE an actor was forked is deliberately still on the old path and
+# is asserted as such in 27r-deferred below, so this case cannot be read as
+# "every interruption is now covered".
+#
+# THE ACTOR IS SIMULATED, so model_request_started must stay `no`. That is not
+# incidental: it is the field a supervised-use claim rests on, and a terminal
+# that started reporting `yes` because a fixture hung would be the false claim
+# the whole change set exists to remove.
+# WAITS ONLY. The dispatcher is backgrounded by the CALLER, in the main shell,
+# because `wait` can only reap its own children: backgrounding it inside a
+# `$(...)` helper put the job in a subshell and every `wait` returned 127, which
+# reads as an exit code the dispatcher never produced.
+sig27_actor_pid() { # root -> pid of the hung simulated actor, once it exists
+  local root="$1" _
+  for _ in $(seq 1 40); do [ -f "$root/actor.pid" ] && break; sleep 0.5; done
+  sleep 1
+  cat "$root/actor.pid" 2>/dev/null
+}
+
+echo
+echo "Case 27r — an interruption AFTER a launched actor publishes and consumes one trusted result BEFORE release"
+d="$(new_sandbox)"; state_file "$d" "sig-evidence-task" "claude"
+R27R="$SANDBOX_ROOT/sig27r"; mkdir -p "$R27R"
+SIG27R_ACTOR='echo $$ > "'"$R27R"'/actor.pid"; sleep 300'
+bash "$DISPATCH_BIN" --checkout "$d" --task sig-evidence-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$SIG27R_ACTOR" >"$R27R/out" 2>&1 &
+D27R=$!
+A27R="$(sig27_actor_pid "$R27R")"
+LK27R="$(task_lock_for "$d" sig-evidence-task)"
+if [ -z "$A27R" ]; then
+  bad "27r — the simulated actor started" "no actor pid file; case 27r is inconclusive"
+else
+  ok "27r — the simulated actor started (pid $A27R)"
+  kill -TERM "$D27R" 2>/dev/null
+  wait "$D27R" 2>/dev/null; RC27R=$?
+  OUT27R="$(cat "$R27R/out")"
+  expect_rc 28 "$RC27R" "27r — still exits 28 INTERRUPTED, unchanged" "$OUT27R"
+  ROOT27R="$(cd "$d/runs" && pwd -P)"
+  RID27R="$(run_id_of "$OUT27R")"
+  RES27R="$ROOT27R/$RID27R.result"
+  # THE RED THIS UNIT EXISTS TO TURN: before the edit there is no result at all.
+  if [ "$(res_count "$ROOT27R")" = "1" ] && [ "$(part_count "$ROOT27R")" = "0" ]; then
+    ok "27r — exactly one finalized result, no partial left behind"
+  else
+    bad "27r — exactly one finalized result, no partial left behind" \
+        "results=$(res_count "$ROOT27R") partials=$(part_count "$ROOT27R")"
+  fi
+  for pair in "outcome:INTERRUPTED" "code:28" "stage:post-hop" "actor_launched:yes" \
+              "model_request_started:no" "task:sig-evidence-task"; do
+    k27="${pair%%:*}"; w27="${pair#*:}"
+    if [ "$(res_field "$RES27R" "$k27")" = "$w27" ]; then
+      ok "27r — the record carries $k27=$w27"
+    else
+      bad "27r — the record carries $k27=$w27" "got: $(res_field "$RES27R" "$k27")"
+    fi
+  done
+  [ "$(tail -1 "$RES27R" 2>/dev/null)" = "result_complete=yes" ] \
+    && ok "27r — the record ends with its completion sentinel" \
+    || bad "27r — the record ends with its completion sentinel" "last: $(tail -1 "$RES27R" 2>/dev/null)"
+  # CONSUMPTION IS OBSERVED BY ITS ABSENCE OF REFUSAL. Every consumer refusal
+  # leaves through die_terminal_untrusted, which exits 38 and pins; an exit of 28
+  # with the promised artifact present and no scratch file left is the accepted
+  # gate having run and returned. The scratch check is what separates "consumed"
+  # from "never called".
+  ls "$ROOT27R"/*.consume >/dev/null 2>&1 \
+    && bad "27r — the consumer left no scratch file behind" "$(ls "$ROOT27R"/*.consume 2>&1 | tr '\n' ' ')" \
+    || ok "27r — the consumer left no scratch file behind"
+  # MATCHED ON THE RUN ID, not on the full path. The dispatcher prints
+  # "$LOG_DIR/$RUN_ID.result" from the --log-dir argument exactly as passed, while
+  # this harness canonicalizes with `pwd -P`; on macOS those are the same file
+  # spelled two ways (/var/... and /private/var/...). Asserting the literal string
+  # would fail on the spelling and prove nothing about the behaviour. What matters
+  # is that the operator is pointed at THIS run's result.
+  printf '%s\n' "$OUT27R" | grep -q "  terminal result: .*/$RID27R\.result$" \
+    && ok "27r — the operator is told where the evidence is" \
+    || bad "27r — the operator is told where the evidence is" "$OUT27R"
+  # RELEASED ONLY AFTER CONSUMPTION. Teardown was clean here, so the lease must
+  # be gone — and it may only be gone because the two lines above returned.
+  [ -d "$LK27R" ] \
+    && bad "27r — a clean teardown releases the lease after consumption" "$LK27R still held" \
+    || ok "27r — a clean teardown releases the lease after consumption"
+  # UNCHANGED BEHAVIOUR, asserted rather than assumed: the wording and the
+  # no-retry promise are what cases 27–27q rely on.
+  printf '%s\n' "$OUT27R" | grep -q "STOP \[28\]" \
+    && ok "27r — the interruption wording is unchanged" \
+    || bad "27r — the interruption wording is unchanged" "$OUT27R"
+  printf '%s\n' "$OUT27R" | grep -q "Nothing is retried" \
+    && ok "27r — the no-retry promise is unchanged" \
+    || bad "27r — the no-retry promise is unchanged" "$OUT27R"
+  kill -KILL "$A27R" 2>/dev/null
+fi
+
+# ================================================================ case 27r-d
+#
+# THE DEFERRAL, ASSERTED. A signal that arrives before any actor was forked is
+# explicitly NOT covered by this unit, and the scope claim is only honest if it
+# is checked: an interruption with no launched actor must still take the old path
+# — exit 28, no terminal result — rather than quietly publishing one. If a later
+# edit extends the integration to that window, this case turns red and says so,
+# which is what stops the coverage claim drifting without evidence.
+echo
+echo "Case 27r-deferred — an interruption BEFORE any actor launched still exits 28 with NO result"
+d="$(new_sandbox)"; state_file "$d" "sig-prelaunch-task" "claude"
+R27D="$SANDBOX_ROOT/sig27d"; mkdir -p "$R27D"
+# A checkout whose git dir is busy is not needed: --actor-cmd is never reached
+# because the state file's turn is operator-terminal, so the run stops pre-hop.
+# Instead the signal is delivered to a dispatcher held BEFORE its first launch by
+# a slow ownership helper, which is the one seam that can be stalled from outside
+# without touching the signal path itself.
+cat >"$d/logs/scripts/work-loop-owner.sh" <<'SLOWOWN'
+#!/bin/bash
+sleep 30
+exit 0
+SLOWOWN
+chmod +x "$d/logs/scripts/work-loop-owner.sh"
+bash "$DISPATCH_BIN" --checkout "$d" --task sig-prelaunch-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$NOOP" >"$R27D/out" 2>&1 &
+D27D=$!
+sleep 3
+kill -TERM "$D27D" 2>/dev/null
+wait "$D27D" 2>/dev/null; RC27D=$?
+OUT27D="$(cat "$R27D/out")"
+expect_rc 28 "$RC27D" "27r-deferred — a pre-launch interruption still exits 28" "$OUT27D"
+if [ "$(res_count "$d/runs" 2>/dev/null)" = "0" ]; then
+  ok "27r-deferred — no terminal result is published, and none is claimed"
+else
+  bad "27r-deferred — no terminal result is published, and none is claimed" \
+      "results=$(res_count "$d/runs") — the deferred window was covered without evidence"
+fi
+
+# ================================================================ case 27s
+#
+# THE FAIL-CLOSED HALF. A publication that cannot be written must not buy a lease
+# release with an ordinary exit 28 — the same rule units 8 and 11 set at the other
+# seams. The evidence directory is made unwritable while the actor hangs, so the
+# finalizer's atomic write fails on a real failed write rather than on a stub.
+echo
+echo "Case 27s — an interruption whose result CANNOT be published exits 38 and keeps the lease"
+d="$(new_sandbox)"; state_file "$d" "sig-unprovable-task" "claude"
+R27S="$SANDBOX_ROOT/sig27s"; mkdir -p "$R27S"
+SIG27S_ACTOR='echo $$ > "'"$R27S"'/actor.pid"; sleep 300'
+bash "$DISPATCH_BIN" --checkout "$d" --task sig-unprovable-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$SIG27S_ACTOR" >"$R27S/out" 2>&1 &
+D27S=$!
+A27S="$(sig27_actor_pid "$R27S")"
+LK27S="$(task_lock_for "$d" sig-unprovable-task)"
+if [ -z "$A27S" ]; then
+  bad "27s — the simulated actor started" "no actor pid file; case 27s is inconclusive"
+else
+  ok "27s — the simulated actor started (pid $A27S)"
+  chmod a-w "$d/runs"
+  kill -TERM "$D27S" 2>/dev/null
+  wait "$D27S" 2>/dev/null; RC27S=$?
+  OUT27S="$(cat "$R27S/out")"
+  chmod u+w "$d/runs" 2>/dev/null
+  expect_rc 38 "$RC27S" "27s — an unprovable interruption exits 38, NOT an ordinary 28" "$OUT27S"
+  [ -d "$LK27S" ] \
+    && ok "27s — the lease is retained, so a second dispatcher is refused" \
+    || bad "27s — the lease is retained, so a second dispatcher is refused" "$LK27S was released"
+  printf '%s\n' "$OUT27S" | grep -q 'must not report that it ended' \
+    && ok "27s — the operator is told the ending could not be proved" \
+    || bad "27s — the operator is told the ending could not be proved" "$OUT27S"
+  kill -KILL "$A27S" 2>/dev/null
+fi
+
+# ================================================================ case 27t
+#
+# THE MUTATION CONTROL (M29). Removes ONLY the two new integration lines from a
+# throwaway copy of the dispatcher and re-runs 27r's fixture. If the case still
+# passed without them, it would be proving something other than the integration.
+#
+# The selector matches each production line whole and FAILS CLOSED: absence,
+# duplication, a mutant that does not differ, or one that does not parse all stop
+# the control rather than letting it report a pass it did not earn. Both lines go
+# together because they are one seam — deleting only the finalization would leave
+# the consumer gating a promised artifact that was never written, which exits 38
+# for a different reason and would not isolate the publication.
+echo
+echo "Case 27t — M29: with the interruption integration removed, 27r's evidence disappears and the exit stays 28"
+M29_SRC="$SANDBOX_ROOT/dispatch-M29.sh"
+M29_FIN='# interruption terminal finalization'
+M29_CON='# interruption terminal consumption'
+# `grep -c` prints its count AND exits 1 on zero matches, so a `|| printf 0`
+# fallback would emit the count twice and the guard below would compare against
+# "0\n0". head -1 takes grep's own answer, which is already correct at zero.
+M29_HF="$(grep -cF "$M29_FIN" "$DISPATCH_BIN" 2>/dev/null | head -1)"
+M29_HC="$(grep -cF "$M29_CON" "$DISPATCH_BIN" 2>/dev/null | head -1)"
+if [ "$M29_HF" = "1" ] && [ "$M29_HC" = "1" ]; then
+  grep -vF "$M29_FIN" "$DISPATCH_BIN" | grep -vF "$M29_CON" >"$M29_SRC"
+  M29_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$M29_SRC" || M29_DIFFERS=yes
+  M29_PARSES=no; bash -n "$M29_SRC" 2>/dev/null && M29_PARSES=yes
+else
+  M29_DIFFERS=no; M29_PARSES=no
+fi
+if [ "$M29_HF" = "1" ] && [ "$M29_HC" = "1" ] && [ "$M29_DIFFERS" = yes ] && [ "$M29_PARSES" = yes ]; then
+  ok "27t — M29 matched each integration line exactly once, differs, and still parses"
+  d="$(new_sandbox)"; state_file "$d" "sig-mutant-task" "claude"
+  R27T="$SANDBOX_ROOT/sig27t"; mkdir -p "$R27T"
+  M29_ACTOR='echo $$ > "'"$R27T"'/actor.pid"; sleep 300'
+  bash "$M29_SRC" --checkout "$d" --task sig-mutant-task --log-dir "$d/runs" \
+    --timeout 300 --actor-cmd "$M29_ACTOR" >"$R27T/out" 2>&1 &
+  D27T=$!
+  for _ in $(seq 1 40); do [ -f "$R27T/actor.pid" ] && break; sleep 0.5; done
+  sleep 1
+  A27T="$(cat "$R27T/actor.pid" 2>/dev/null)"
+  if [ -z "$A27T" ]; then
+    bad "27t — the mutant launched its actor" "no actor pid file; M29 is inconclusive"
+  else
+    kill -TERM "$D27T" 2>/dev/null
+    wait "$D27T" 2>/dev/null; RC27T=$?
+    OUT27T="$(cat "$R27T/out")"
+    expect_rc 28 "$RC27T" "27t — the mutant still reaches exit 28, so the fixture is not merely broken" "$OUT27T"
+    if [ "$(res_count "$d/runs" 2>/dev/null)" = "0" ]; then
+      ok "27t — with the integration removed, NO terminal result is published"
+    else
+      bad "27t — with the integration removed, NO terminal result is published" \
+          "results=$(res_count "$d/runs") — the control cannot distinguish the seam"
+    fi
+    [ -d "$(task_lock_for "$d" sig-mutant-task)" ] \
+      && bad "27t — the mutant released the lease on an unproven ending" "lease retained" \
+      || ok "27t — the mutant released the lease on an unproven ending, which is the hole 27r closes"
+    kill -KILL "$A27T" 2>/dev/null
+  fi
+else
+  bad "27t — M29 matched each integration line exactly once, differs, and still parses" \
+      "finalization matches=$M29_HF consumption matches=$M29_HC differs=$M29_DIFFERS parses=$M29_PARSES — the control cannot run"
+fi
+
 # ================================================================= case 28
 echo
 echo "Case 28 — --deadline is a deadline, not a start gate"
