@@ -87,19 +87,14 @@ cases and leaves a third open, and the manifest's `isolation` column keeps them 
   per-chapter inputs "passed by content per the context-isolation rule". Their target is
   `content-required`; the check measures them and holds them **outside** the reduction accounting
   rather than scoring them as violations.
-- **`ambiguous` — surfaced, not guessed.** Five payloads are neither a reference doc nor a named
-  per-chapter input, so the contract does not settle them. The check reports each one and fails the
-  run rather than assuming:
-  - `H3-04` / `H2-04` **research extracts.** The convention lists extracts among the content-passed
-    per-chapter inputs, and `run-report` St4.0 restates that ("Sub-agents receive content, not file
-    paths"). But `run-cluster` St2.3 already passes extract **paths** — "the sub-agent reads its own
-    extracts" — so the workflow contradicts itself about this exact artifact class. Which reading
-    governs is an isolation-contract question, not an implementation choice.
-  - `H1-02` / `H1-03` **the chapter draft relayed onward to the reviewer and the compliance QC.**
-    These consume a draft that has not been written to disk yet at that point in 4.2 (the write is
-    step d), so path-passing them requires reordering the write ahead of the review — a sequencing
-    change, not a relay swap.
-  - `H2-05` **chapter prose to `evidence-prose-fixer`.** Same shape as above.
+- **`ambiguous` — surfaced, not guessed.** A payload that is neither a reference doc nor a named
+  per-chapter input is not settled by the convention, so the check reports it and fails the run
+  rather than assuming a reading. **No live row carries this classification today** — five did, and
+  the Unit 11 discovery settled all five from repository evidence (see item 4 of the edit map
+  below). Because no live row exercises the branch any more, its falsifiability is proved on the
+  synthetic surface instead: `T5c` asserts the finding fires and counts, `T5d` asserts that settling
+  it clears that finding and moves nothing else. The classification is still live and still fails a
+  run; it simply has nothing to catch at present.
 
 ## Blast radius
 
@@ -171,9 +166,10 @@ current per-seam figures rather than quoting numbers from here.
    - `H1-02`, `H1-03`, `H2-05` → **path-safe**, `operand-path-ok`. Carried by live precedent, not
      analogy: `H3-05` (a general-purpose sub-agent already reads chapter drafts by path), `H3-07`
      (a qc-gate already receives draft paths "in place of chapter draft content") and `H3-24` (the
-     same St4.2c qc-gate already reads the architecture operand by path). `H1-02`/`H1-03` are
-     implemented; **`H2-05` is ruled path-safe but not yet implemented**, so it stays a measured
-     violation — the classification is not being used to manufacture completion.
+     same St4.2c qc-gate already reads the architecture operand by path). `H1-02`/`H1-03` landed in
+     Unit 12; **`H2-05` landed in Unit 13** — St3.7a now passes the exact Step 1 chapter path and
+     `evidence-prose-fixer` reads the complete chapter itself. All three are implemented, and each
+     was proved independently live (`T9c`, `T9d`).
    - `H2-04` → **`intentional-content` / `content-required`.** Its extracts become the evidence-table
      half of the `verify-chapter` St2.3 GPT-5 prompt body. `execution-agent` *receives* the user
      message and may not modify it, and an external model has no filesystem, so a path cannot be a

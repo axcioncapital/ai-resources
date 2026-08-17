@@ -289,6 +289,22 @@ for pair in 'H1-02 H1-03' 'H1-03 H1-02'; do
                   || bad "T9c reverting $1 moved an unrelated seam" "$moved"
 done
 
+flip_back H2-05 .claude/commands/verify-chapter.md \
+  's|the chapter prose by PATH|the chapter prose as content|' \
+  'verify-chapter 3.7a hands the fixer the whole chapter body again'
+
+# T9d — the same independence control as T9c, for the one seam this file's OTHER two rows sit beside.
+# verify-chapter carries H2-03 (still a measured violation) and H2-04 (a settled content exemption)
+# in the same file as H2-05, so an edit that degraded the file wholesale would pass T9 by accident.
+moved=''
+for other in H2-03 H2-04 H3-04 H3-09 H1-02 H1-03; do
+  b="$(bash "$CHECK" --workflow "$TMP/live" --format tsv 2>&1 | awk -F'\t' -v s="$other" '$1 == s { print $6 }')"
+  a="$(bash "$CHECK" --workflow "$TMP/flip-H2-05" --format tsv 2>&1 | awk -F'\t' -v s="$other" '$1 == s { print $6 }')"
+  [ -n "$b" ] && [ "$b" = "$a" ] || moved="$moved $other($b->$a)"
+done
+[ -z "$moved" ] && ok 'T9d reverting H2-05 alone moves no other seam, including its two file-mates' \
+                || bad 'T9d reverting H2-05 moved an unrelated seam' "$moved"
+
 flip_back H4-01 .claude/commands/run-cluster.md \
   's|^2\. Identify the project reference docs the two skills consume by PATH|2. Read the project reference docs the two skills consume as content|' \
   'run-cluster 2.2 reads the reference docs back into the main session'

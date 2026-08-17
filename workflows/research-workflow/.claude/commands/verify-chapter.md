@@ -46,7 +46,7 @@ Replace `CHAPTER_PATH` with the actual chapter file path from Step 1. Check stde
 ### Step 3: Apply Corrections (if discrepancies found)
 
 7. If discrepancies found:
-   a. Read `/ai-resources/skills/evidence-prose-fixer/SKILL.md`. Launch a general-purpose sub-agent **[delegate]**. Pass it: the skill content, the verification report, and the chapter prose. Task: generate corrections for each discrepancy. Return: correction list with per-item bright-line metadata.
+   a. Read `/ai-resources/skills/evidence-prose-fixer/SKILL.md`. Launch a general-purpose sub-agent **[delegate]**. Pass it: the skill content, the verification report, and the chapter prose by PATH — the exact chapter path resolved at Step 1, which the sub-agent reads in full before generating any correction; no correction has been applied to that file yet, so it is byte-identical to the chapter verified at Step 2. Task: generate corrections for each discrepancy. Return: correction list with per-item bright-line metadata.
    b. **Bright-line check on EVERY proposed correction:**
       - Does it span more than one paragraph? → Flag.
       - Does it alter an analytical claim or conclusion? → Flag.
