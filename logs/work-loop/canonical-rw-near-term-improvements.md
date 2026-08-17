@@ -118,7 +118,7 @@ Projected consequence, stated as arithmetic over current row states and **not** 
 
 **Deferrals — recorded, not implemented.** Newly noticed: `verify-chapter` Step 3.7a passes the fixer only "the skill content, the verification report, and the chapter prose", omitting `evidence-prose-fixer`'s Input 3 Evidence Pack, which its own contract marks "required — blocking". That is a live input gap independent of transport and is not part of any of the five rulings. Carried unchanged from before: stale `reference/stage-instructions.md` wording about the Step 4.2 writer return; the writer's Reviewer Findings footer sequencing inconsistency; README `Blast radius` wording; `verify-chapter` Step 3 item 7a's report-content relay; optional truncation naming in `verify-chapter` item 5.
 
-**Repository account.** No source, skill, agent, doc, manifest, harness, fixture, plan, deployed or archived file was modified — `git status --porcelain` shows only this state file plus the preserved hook-maintained `logs/friction-log.md`. `origin/main` remains an ancestor of `HEAD`. No implementation test was run, because this unit implements nothing. Discovery commit: `{{DISCOVERY_COMMIT}}`.
+**Repository account.** No source, skill, agent, doc, manifest, harness, fixture, plan, deployed or archived file was modified — `git status --porcelain` shows only this state file plus the preserved hook-maintained `logs/friction-log.md`. `origin/main` remains an ancestor of `HEAD`. No implementation test was run, because this unit implements nothing. Discovery commit: `17c398031f9907f2a7292e78972f525639421abd` (verified with `git rev-parse`), containing this state file only.
 
 ## Blocker
 
