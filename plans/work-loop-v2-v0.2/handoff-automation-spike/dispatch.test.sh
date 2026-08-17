@@ -6914,6 +6914,107 @@ else
       "rc=$RCS results=$(res_count "$V58S/runs" 2>/dev/null)"
 fi
 
+# ============== case 59: a dry-run's code-zero outcome is its own, not the task's
+#
+# Unit 14. The code-zero vocabulary read the task's lifecycle class first, so one
+# terminal class produced three symbols: UNCLASSIFIED over an active task, and —
+# worse — COMPLETED over a closed one and OPERATOR_TAKEOVER over a blocked one.
+# A preflight that launched nothing wore the symbols of runs that actually
+# finished or were actually handed over, and only the separate mode field told
+# them apart. Dispatcher-owned MODE is now read first at the same single owner.
+#
+# THE CLAIM IS SAMENESS ACROSS LIFECYCLE, NOT A HARD-CODED STRING, for the reason
+# 55c states one case over: pinning exact words would go green on a rename that
+# quietly re-collapsed the classes. The pair is asserted equal across all three
+# states, distinct from both loop-terminal pairs, and not the unmapped fallback.
+
+# Reads the record a dry-run leaves, through the run id the dispatcher printed.
+dry_pair() { # sandbox task [status] -> "<outcome> <next_action>"
+  local d="$1" t="$2" s="${3:-}" r
+  if [ -n "$s" ]; then state_file "$d" "$t" operator "$t" "$s"; else state_file "$d" "$t" codex; fi
+  run_dispatch "$d" "$t" --dry-run
+  r="$d/runs/$(run_id_of "$OUT").result"
+  printf '%s %s' "$(res_field "$r" outcome)" "$(res_field "$r" next_action)"
+}
+
+echo
+echo "Case 59a — one dry-run outcome and next action across active, closed and blocked tasks"
+V59A="$(new_sandbox)"; P59A="$(dry_pair "$V59A" dry-active)"
+V59C="$(new_sandbox)"; P59C="$(dry_pair "$V59C" dry-closed closed)"
+V59B="$(new_sandbox)"; P59B="$(dry_pair "$V59B" dry-blocked blocked)"
+if [ -n "$P59A" ] && [ "$P59A" = "$P59C" ] && [ "$P59C" = "$P59B" ]; then
+  ok "59a — the same pair on all three lifecycle states ($P59A)"
+else
+  bad "59a — the same pair on all three lifecycle states" \
+      "active='$P59A' closed='$P59C' blocked='$P59B'"
+fi
+# NOT THE FALLBACK. A mode branch that printed the unmapped symbol would satisfy
+# sameness above while classifying nothing — the same "mapped, not merely
+# present" distinction 55c draws.
+case "$P59A" in
+  *UNCLASSIFIED*|*operator-read-run-log*)
+    bad "59a — the dry-run pair is a real classification, not the unmapped fallback" "$P59A" ;;
+  *) ok "59a — the dry-run pair is a real classification, not the unmapped fallback" ;;
+esac
+
+echo
+echo "Case 59b — the two real loop terminals keep their accepted meanings"
+# The regression half. These are 55a/55b's records, re-read for the two fields
+# this unit touched: a mode branch that leaked into live mode would show here.
+V59L="$(new_sandbox)"; state_file "$V59L" closed-task operator
+run_dispatch "$V59L" closed-task --actor-cmd "$NOOP"
+R59L="$V59L/runs/$(run_id_of "$OUT").result"
+V59K="$(new_sandbox)"; state_file "$V59K" blocked-task operator blocked-task blocked
+run_dispatch "$V59K" blocked-task --actor-cmd "$NOOP"
+R59K="$V59K/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R59L" outcome)" = COMPLETED ] &&
+   [ "$(res_field "$R59L" next_action)" = none-task-closed ]; then
+  ok "59b — a real CLOSED terminal still reports COMPLETED / none-task-closed"
+else
+  bad "59b — a real CLOSED terminal still reports COMPLETED / none-task-closed" \
+      "$(res_field "$R59L" outcome) / $(res_field "$R59L" next_action)"
+fi
+if [ "$(res_field "$R59K" outcome)" = OPERATOR_TAKEOVER ] &&
+   [ "$(res_field "$R59K" next_action)" = operator-answer-the-blocking-question ]; then
+  ok "59b — a real BLOCKED_OPERATOR terminal still reports OPERATOR_TAKEOVER / its question"
+else
+  bad "59b — a real BLOCKED_OPERATOR terminal still reports OPERATOR_TAKEOVER / its question" \
+      "$(res_field "$R59K" outcome) / $(res_field "$R59K" next_action)"
+fi
+# And the dry-run pair is neither of theirs — the distinction this unit exists for.
+if [ "$P59A" != "COMPLETED none-task-closed" ] &&
+   [ "$P59A" != "OPERATOR_TAKEOVER operator-answer-the-blocking-question" ]; then
+  ok "59b — the dry-run pair borrows neither loop terminal's meaning"
+else
+  bad "59b — the dry-run pair borrows neither loop terminal's meaning" "$P59A"
+fi
+
+echo
+echo "Case 59c — mutation control: remove ONLY the mode-derived branches"
+MUT59="$SANDBOX_ROOT/mutants59"; mkdir -p "$MUT59"
+# Both mode branches go and nothing else: the lifecycle cases below them are
+# untouched, so the mutant reverts to exactly the pre-unit derivation.
+sed -e '/dry-run) printf .DRY_RUN_COMPLETE.; return 0 ;;/d' \
+    -e '/dry-run) printf .none-dry-run-preflight-complete.; return 0 ;;/d' \
+    "$DISPATCH_BIN" >"$MUT59/m26.sh"
+chmod +x "$MUT59/m26.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT59/m26.sh" && bash -n "$MUT59/m26.sh" 2>/dev/null; then
+  ok "59c — M26 mutant differs from the dispatcher and is valid bash"
+  SAVE_BIN="$DISPATCH_BIN"; DISPATCH_BIN="$MUT59/m26.sh"
+  V59MA="$(new_sandbox)"; M59A="$(dry_pair "$V59MA" dry-active)"
+  V59MC="$(new_sandbox)"; M59C="$(dry_pair "$V59MC" dry-closed closed)"
+  DISPATCH_BIN="$SAVE_BIN"
+  if [ "$M59A" != "$M59C" ] && [ "$M59C" = "COMPLETED none-task-closed" ]; then
+    ok "59c — M26: without the branches the lifecycle-borrowed pairs return (59a is fail-capable)"
+  else
+    bad "59c — M26: without the branches the lifecycle-borrowed pairs return (59a is fail-capable)" \
+        "active='$M59A' closed='$M59C'"
+  fi
+else
+  bad "59c — M26 mutant differs from the dispatcher and is valid bash" \
+      "a mode branch was not found, or the mutant does not parse"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

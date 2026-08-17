@@ -512,7 +512,22 @@ result_outcome() { # code -> symbol
     # validator and set it before the loop began; this reads that decision and
     # never re-derives one from the body, the turn, or anything an actor wrote.
     # Anything else at code 0 falls through to UNCLASSIFIED rather than guessing.
-    0)  case "${ST_CLASS:-}" in
+    # WHAT THIS RUN DID, BEFORE WHAT THE TASK IS. A dry-run inspects and launches
+    # nothing, so its ending is its own class — and reading the task's lifecycle
+    # first made it wear the loop terminals' symbols: a preflight over a closed
+    # task reported COMPLETED, one over a blocked task reported OPERATOR_TAKEOVER,
+    # and one over an active task fell through to UNCLASSIFIED. Three symbols for
+    # one terminal class, two of them belonging to runs that actually finished or
+    # were actually handed over.
+    #
+    # MODE IS DISPATCHER-OWNED and settled at argument parse, so this reads no
+    # state, re-derives no lifecycle, and adds no second owner — it is one branch
+    # ahead of the existing one. `live` falls through unchanged, which is what
+    # keeps the two real loop terminals exactly as accepted.
+    0)  case "${MODE:-}" in
+          dry-run) printf 'DRY_RUN_COMPLETE'; return 0 ;;
+        esac
+        case "${ST_CLASS:-}" in
           CLOSED)           printf 'COMPLETED' ;;
           BLOCKED_OPERATOR) printf 'OPERATOR_TAKEOVER' ;;
           *)                printf 'UNCLASSIFIED' ;;
@@ -544,7 +559,16 @@ result_next_action() { # code -> token
     # Split for the same reason the outcome above is: "you have nothing to do" and
     # "this is waiting on you" are opposite instructions, and code 0 alone cannot
     # carry the difference.
-    0)  case "${ST_CLASS:-}" in
+    # Mode first, for the same reason and in the same shape as the outcome above.
+    # The misdirection here was the sharper half: a dry-run over a closed task
+    # told the operator "none — task closed" about a run whose entire point was
+    # to preview a launch, and one over an active task sent them to read a log
+    # that says the preflight passed. Neither is the action a completed preflight
+    # actually calls for, which is none.
+    0)  case "${MODE:-}" in
+          dry-run) printf 'none-dry-run-preflight-complete'; return 0 ;;
+        esac
+        case "${ST_CLASS:-}" in
           CLOSED)           printf 'none-task-closed' ;;
           BLOCKED_OPERATOR) printf 'operator-answer-the-blocking-question' ;;
           *)                printf 'operator-read-run-log' ;;
