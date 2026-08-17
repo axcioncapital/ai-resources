@@ -1806,18 +1806,30 @@ die_terminal_untrusted() { # bounded-refusal-token
 # exits DIRECTLY, publishing nothing twice: one finalization attempt, one pin,
 # one exit.
 #
-# TWO RETURNS ARE DELIBERATE, and each names the case where the transfer must
-# NOT fire. A terminal with no run evidence yet (no RUN_ID/LOG_DIR) is outside
+# ONE RETURN IS DELIBERATE, and it names the only case where the transfer must
+# not fire: a terminal with no run evidence yet (no RUN_ID/LOG_DIR) is outside
 # the covered funnel — the same boundary finalize_terminal_result draws for
-# itself — and keeps its original exit. A lease already PINNED has its truthful
-# cause on disk (a teardown's survivor pids, or the operator seam's own pin);
-# re-pinning would overwrite that evidence with a weaker story, and nothing is
-# releasable while pinned anyway, so the original exit stands.
+# itself — and keeps its original exit.
+#
+# ALREADY-PINNED STILL EXITS 38. An earlier revision returned here when the
+# leases were already pinned, which kept the original exit code and recorded the
+# publication failure nowhere — a non-38 terminal indistinguishable from one
+# whose result exists (the Unit 11 correction's frozen finding). What survives
+# from that revision is only the part that was right: the pin is NOT repeated,
+# because the cause already on disk (a teardown's survivor pids, or the operator
+# seam's own pin) is stronger evidence than a finalization story and one write
+# would overwrite the other. The failed publication is recorded on both output
+# channels instead, and the exit is 38 either way — an unprovable ending is
+# named as one no matter what pinned the leases first.
 die_funnel_unprovable() { # original-code -> returns 0 only where the transfer must not fire
-  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] || return 0
-  [ "${WL_LEASE_PINNED:-0}" -eq 0 ] || return 0
-  pin_lock_terminal # die funnel retention
-  local m="STOP [38] the run was ending with terminal code $1 but its terminal result could not be finalized under ${LOG_DIR:-<no log dir>} — exiting 38 instead, because a run that cannot prove how it ended must not report that it ended with $1 and hand its checkout on."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
+  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] || return 0 # die funnel coverage guard
+  local held='are retained with that cause recorded'
+  if [ "${WL_LEASE_PINNED:-0}" -eq 0 ]; then
+    pin_lock_terminal # die funnel retention
+  else
+    held='remain retained under the cause recorded before this failure — that earlier evidence is preserved unchanged, and this message is where the failed publication is recorded'
+  fi
+  local m="STOP [38] the run was ending with terminal code $1 but its terminal result could not be finalized under ${LOG_DIR:-<no log dir>} — exiting 38 instead, because a run that cannot prove how it ended must not report that it ended with $1 and hand its checkout on."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases $held, so a second dispatcher is refused (exit 17) until you clear them."
   printf '%s\n' "$m" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$m" >>"$RUN_LOG"
   release_lock

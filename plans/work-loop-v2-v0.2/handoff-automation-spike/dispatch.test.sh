@@ -6719,6 +6719,74 @@ else
   bad "57d — the transfer pins once through the shared owner, never re-finalizes, never waits, exits 38" "$XFER57"
 fi
 
+echo
+echo "Case 57e — ALREADY-PINNED leases + failed publication is still observably unprovable (exit 38)"
+# The Unit 11 correction's frozen finding: with a teardown cause already pinned,
+# a failed publication used to keep its original exit and record the failure
+# nowhere — a non-38 terminal indistinguishable from one whose result exists.
+# The forcing fixture plants a teardown-style pin at the top of die() (through
+# the shared library's own pin writer — no new writer), and the actor makes the
+# evidence directory unwritable, so the pinned + failed-finalize conjunction is
+# real when the funnel reaches it.
+awk '{print} /^die\(\) { # code, message/ {print "  wl_lease_pin \"424242\" \"\" \"die-task\" 2>/dev/null # harness forced teardown pin"}' \
+  "$DISPATCH_BIN" >"$MUT57/prepin.sh"
+chmod +x "$MUT57/prepin.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT57/prepin.sh" && bash -n "$MUT57/prepin.sh" 2>/dev/null; then
+  ok "57e — the pre-pin forcing fixture differs from the dispatcher and is valid bash"
+  V57P="$(new_sandbox)"; state_file "$V57P" die-task codex
+  OUT="$(bash "$MUT57/prepin.sh" --checkout "$V57P" --task die-task \
+        --log-dir "$V57P/runs" --timeout 20 --actor-cmd "$BREAK_PUBLISH" 2>&1)"; RCP=$?
+  expect_rc 38 "$RCP" "57e — the already-pinned failed publication exits 38, not the original 22" "$OUT"
+  out_has "exiting 38 instead" "$OUT" "57e — the failed publication is recorded on the output channels"
+  TL57P="$(task_lock_for "$V57P" die-task)"; CL57P="$(checkout_lock_for "$V57P")"
+  # THE STRONGER CAUSE SURVIVES. The teardown pin's survivor-pid evidence must
+  # still be the recorded cause — a transfer that re-pinned would have replaced
+  # it with the weaker finalization story, which is the half of the old guard
+  # that was right and must stay.
+  if [ -d "$TL57P" ] && [ -d "$CL57P" ] &&
+     grep -q 'descendants still running: 424242' "$TL57P/survivors" 2>/dev/null &&
+     ! grep -q '^terminal result unprovable: ' "$TL57P/survivors" 2>/dev/null; then
+    ok "57e — both leases stay pinned under the earlier teardown cause, preserved unchanged"
+  else
+    bad "57e — both leases stay pinned under the earlier teardown cause, preserved unchanged" \
+        "task=$([ -d "$TL57P" ] && echo present || echo absent) cause: $(cat "$TL57P/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  if [ "$(res_count "$V57P/runs")" = 0 ]; then
+    ok "57e — no terminal result exists and none is claimed"
+  else
+    bad "57e — no terminal result exists and none is claimed" "results=$(res_count "$V57P/runs")"
+  fi
+  chmod u+w "$V57P/runs" 2>/dev/null
+  run_dispatch "$V57P" die-task --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "57e — the next dispatcher is refused by the retained lease" "$OUT"
+
+  # M24 — restore ONLY the old early return, by the coverage guard's marker: the
+  # pinned conjunction then keeps the original exit again, which is the finding
+  # itself and proves this case can fail.
+  awk '{print} /# die funnel coverage guard/ {print "  [ \"${WL_LEASE_PINNED:-0}\" -eq 0 ] || return 0 # harness restored early return"}' \
+    "$MUT57/prepin.sh" >"$MUT57/m24.sh"
+  chmod +x "$MUT57/m24.sh"
+  if ! cmp -s "$MUT57/prepin.sh" "$MUT57/m24.sh" && bash -n "$MUT57/m24.sh" 2>/dev/null; then
+    ok "57e — M24 mutant differs from the forcing fixture and is valid bash"
+    V57Q="$(new_sandbox)"; state_file "$V57Q" die-task codex
+    OUT="$(bash "$MUT57/m24.sh" --checkout "$V57Q" --task die-task \
+          --log-dir "$V57Q/runs" --timeout 20 --actor-cmd "$BREAK_PUBLISH" 2>&1)"; RCQ=$?
+    if [ "$RCQ" -eq 22 ]; then
+      ok "57e — M24: with the early return restored the pinned failure exits 22 again (57e is fail-capable)"
+    else
+      bad "57e — M24: with the early return restored the pinned failure exits 22 again (57e is fail-capable)" \
+          "rc=$RCQ"
+    fi
+    chmod u+w "$V57Q/runs" 2>/dev/null
+  else
+    bad "57e — M24 mutant differs from the forcing fixture and is valid bash" \
+        "the coverage-guard marker was not found, or the mutant does not parse"
+  fi
+else
+  bad "57e — the pre-pin forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
