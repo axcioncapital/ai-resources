@@ -191,36 +191,52 @@ done
                 || bad 'T8b an audit-named surface has no manifest row' "missing:$miss"
 
 # T9 — LIVE-SURFACE liveness. One mechanical edit per class, on a COPY of the real workflow, must
-# flip that seam from violation to compliant. Without this, a check that can never go green on the
-# real bodies would look identical to one that measures them.
+# move that seam's state. Without this, a check that can never move on the real bodies would look
+# identical to one that measures them.
+#
+# The direction depends on where the refactor has reached, and BOTH directions prove the same
+# property — the verdict is derived from the live directive text:
+#   - a seam still relaying content is edited toward a path and must go VIOLATION -> COMPLIANT;
+#   - a seam already converted is edited back toward content and must go COMPLIANT -> VIOLATION.
+# A converted seam cannot prove liveness in the first direction (it has no violation left to clear),
+# so pinning it there would turn a real conversion into a test failure and invite weakening the
+# check to make it pass. H4-01 and H4-02 moved to the second direction when Unit 2 converted the
+# W4-H4 reference-document relays; their old sed expressions targeted the pre-conversion wording
+# (`^2. Read the project reference docs ...` and `Pass each sub-agent as content:`) and no longer
+# describe the live surface. The replacements still flip on relay SHAPE, never on approved wording.
 cp -R "$WORKFLOW/.claude" "$TMP/live-claude"
 mkdir -p "$TMP/live"; mv "$TMP/live-claude" "$TMP/live/.claude"
 
-flip() {  # $1=seam_id  $2=file  $3=sed expr  $4=label
+flip_dir() {  # $1=seam_id $2=file $3=sed expr $4=label $5=expected-before $6=expected-after
   local root="$TMP/flip-$1"
   rm -rf "$root"; mkdir -p "$root"; cp -R "$TMP/live/.claude" "$root/.claude"
   sed -i.bak "$3" "$root/$2"; rm -f "$root/$2.bak"
   local before after
   before="$(bash "$CHECK" --workflow "$TMP/live" --format tsv 2>&1 | awk -F'\t' -v s="$1" '$1 == s { print $6 }')"
   after="$(bash "$CHECK" --workflow "$root" --format tsv 2>&1 | awk -F'\t' -v s="$1" '$1 == s { print $6 }')"
-  if [ "$before" = 'VIOLATION' ] && [ "$after" = 'COMPLIANT' ]; then
-    ok "T9 $1 flips VIOLATION -> COMPLIANT when $4"
+  if [ "$before" = "$5" ] && [ "$after" = "$6" ]; then
+    ok "T9 $1 flips $5 -> $6 when $4"
   else
-    bad "T9 $1 should flip on a real directive edit ($4)" "before=$before after=$after"
+    bad "T9 $1 should flip $5 -> $6 on a real directive edit ($4)" "before=$before after=$after"
   fi
 }
+
+# a seam still relaying content: edited toward a path, it must clear
+flip()      { flip_dir "$1" "$2" "$3" "$4" VIOLATION COMPLIANT; }
+# a seam already converted: edited back toward content, it must break
+flip_back() { flip_dir "$1" "$2" "$3" "$4" COMPLIANT VIOLATION; }
 
 flip H1-01 .claude/commands/run-report.md \
   's/Return: chapter draft content, scarcity/Return: chapter draft path, scarcity/' \
   'run-report 4.2a returns a path instead of the draft'
 
-flip H4-01 .claude/commands/run-cluster.md \
-  's|^2\. Read the project reference docs the two skills consume:|2. Note the project reference docs the two skills consume — file paths only, not content:|' \
-  'run-cluster 2.2 takes reference file paths only'
+flip_back H4-01 .claude/commands/run-cluster.md \
+  's|^2\. Identify the project reference docs the two skills consume by PATH|2. Read the project reference docs the two skills consume as content|' \
+  'run-cluster 2.2 reads the reference docs back into the main session'
 
-flip H4-02 .claude/commands/run-cluster.md \
-  's/Pass each sub-agent as content:/Pass each sub-agent as paths:/' \
-  "run-cluster's relay list declares paths"
+flip_back H4-02 .claude/commands/run-cluster.md \
+  's|, by PATH (the sub-agent reads each directly):|, as content:|' \
+  "run-cluster's relay list hands the reference docs over as content"
 
 flip H3-17 .claude/commands/run-execution.md \
   's|^1\. Read all raw reports from `/execution/raw-reports/`\.|1. List all raw reports from `/execution/raw-reports/` — file paths only, not content.|' \

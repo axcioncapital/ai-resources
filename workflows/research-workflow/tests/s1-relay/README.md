@@ -31,8 +31,10 @@ line, and derives the current shape — content or path — from that text. So:
   noncompliant. `check-relay-payload.test.sh` T3 proves it: appending prose that asserts
   noncompliance to a compliant surface leaves the verdict at TARGET MET.
 - The check can go green. T9 takes the **real** command bodies, applies one mechanical edit to a
-  single live directive, and asserts that seam flips VIOLATION → COMPLIANT. T9b confirms an unrelated
-  seam in another file does not move.
+  single live directive, and asserts that seam changes state — VIOLATION → COMPLIANT for a seam still
+  relaying content, COMPLIANT → VIOLATION for one already converted. Both directions prove the same
+  thing: the verdict follows the live directive text. T9b confirms an unrelated seam in another file
+  does not move.
 - Reduction is measured against a **fixed baseline** (every in-scope seam's full fixture payload,
   computed from manifest + fixture alone), not against a live projection. A projection-based figure
   reads ~98% while nothing has been fixed, then collapses once the refactor lands — failing exactly
@@ -60,7 +62,7 @@ holds. Two audit references did not survive re-enumeration and are corrected in 
 | W4-H3 | `produce-architecture` Ph2+Ph3 (drafts double-read) | `H3-20`/`H3-21` (Ph2), `H3-22`/`H3-23` (Ph3) |
 | W4-H4 | `run-cluster` St2.2 | `H4-01`, `H4-02` |
 | W4-H4 | `run-execution` St2.1 + St2.3 | `H4-03`/`H4-04` (St2.1), `H4-05`/`H4-06` (St2.3) |
-| W4-H4 | (not audit-named — found by sweep) `run-report` 4.2a/b/c reference docs | `H4-07`, `H4-08`, `H4-09` — the only seams **already compliant** |
+| W4-H4 | (not audit-named — found by sweep) `run-report` 4.2a/b/c reference docs | `H4-07`, `H4-08`, `H4-09` — **already compliant at the Unit 1 baseline**; `H4-01`–`H4-06` joined them in Unit 2 |
 
 **One deliberate omission.** The audit's W4-H2 also covers `execution-agent`'s
 `Interpret or summarize the response — return it verbatim` prohibition. That line is an **edit target**,
@@ -74,8 +76,9 @@ cases and leaves a third open, and the manifest's `isolation` column keeps them 
 
 - **`reference-path-ok`** — the four reference docs. The convention *already* mandates path-passing for
   them ("The Stage 2–4 commands pass these reference files to subagents **by path, not by content**").
-  `run-report` 4.2a/b/c comply. `run-cluster` St2.2/2.3 and `run-execution` St2.1/St2.3 do not — they
-  read the docs into main and pass them as content, `run-cluster` once per cluster. These are the
+  `run-report` 4.2a/b/c complied from the start. `run-cluster` St2.2/2.3 and `run-execution`
+  St2.1/St2.3 did not — they read the docs into main and passed them as content, `run-cluster` once
+  per cluster; **Unit 2 converted all six**. These were the
   clean conversions: the documented convention is on their side and the consuming agents all hold
   `Read` (`qc-gate`: `Read`; `verification-agent`: `Read, Glob, Grep`; `execution-agent`: `Read, Bash`;
   general-purpose: all tools), so every consumer can resolve a path.
@@ -114,12 +117,14 @@ must be reckoned with before any propagation is claimed.
 Ordered by ratio of measured bytes removed to isolation risk. Run `check-relay-payload.sh` for the
 current per-seam figures rather than quoting numbers from here.
 
-1. **Reference docs — no contract question at all** (`H4-01`, `H4-02`, `H4-03`, `H4-04`, `H4-05`,
-   `H4-06`). Stop reading the docs into main; pass `reference/{name}.md` as a path, matching what
-   `run-report` 4.2a/b/c already does. `H4-02` is the single largest measured seam because the relay
-   repeats per cluster. Keep `run-cluster`'s stage-entry completeness gate: it verifies the files are
-   present **and filled** before launching, and path-passing makes that gate more load-bearing, not
-   less.
+1. ~~**Reference docs — no contract question at all**~~ **— LANDED in Unit 2** (`H4-01`, `H4-02`,
+   `H4-03`, `H4-04`, `H4-05`, `H4-06`). The docs are no longer read into main; each seam passes
+   `reference/{name}.md` as a path, matching what `run-report` 4.2a/b/c already did. `H4-02` was the
+   single largest measured seam because the relay repeats per cluster. `run-cluster`'s stage-entry
+   completeness gate is unchanged and still verifies the files are present **and filled** before
+   launching — path-passing makes that gate more load-bearing, not less. `run-execution` has no
+   command-level completeness gate; its Steps 2.1.4 / 2.3.4 now verify presence in place of the
+   content read, so the same fail-fast point survives.
 2. **Bulk operand reads and their onward relays** (`H3-01`, `H3-05`, `H3-06`, `H3-07`, `H3-17`,
    `H3-18`, `H3-19`, `H3-20`–`H3-23`, `H3-08`). All are `operand-path-ok`: the payload is already on
    disk and the consumer can read it. `produce-architecture` Ph2/Ph3 read the same drafts twice, so
