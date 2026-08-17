@@ -4920,10 +4920,20 @@ echo "Case 50c — mutation controls: the assertions above go red when the produ
 # asserts. A green suite against a mutant means the assertion proves nothing.
 MUT_DIR="$SANDBOX_ROOT/mutants"; mkdir -p "$MUT_DIR"
 
-# M1 — finalization SKIPPED.
-sed 's|^  finalize_terminal_result "\$code"$|  :|' "$DISPATCH_BIN" >"$MUT_DIR/m1.sh"
-if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m1.sh"; then
-  ok "50c — M1 mutant differs from the dispatcher (the call site was found)"
+# M1 — finalization SKIPPED. Since Unit 11 this seam carries its own failure
+# transfer, so the WHOLE action has to go — the publish and the unprovability exit
+# it falls to. Cutting only the call would leave `|| die_funnel_unprovable "$code"`
+# dangling, which changes the syntax rather than the behaviour under test. The line
+# is matched whole and its occurrences counted, so a seam that moves, changes shape
+# or appears twice stops the control rather than silently mutating something else
+# or testing a script that was never changed.
+M1_LINE='  finalize_terminal_result "$code" || die_funnel_unprovable "$code" # die funnel failure transfer'
+M1_HITS="$(grep -Fxc -- "$M1_LINE" "$DISPATCH_BIN" 2>/dev/null)"
+awk -v want="$M1_LINE" '$0 == want { print "  :"; next } { print }' "$DISPATCH_BIN" >"$MUT_DIR/m1.sh"
+M1_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT_DIR/m1.sh" || M1_DIFFERS=yes
+M1_PARSES=no; bash -n "$MUT_DIR/m1.sh" 2>/dev/null && M1_PARSES=yes
+if [ "$M1_HITS" = "1" ] && [ "$M1_DIFFERS" = yes ] && [ "$M1_PARSES" = yes ]; then
+  ok "50c — M1 mutant differs from the dispatcher and still parses (the one call site was found)"
   d="$(new_sandbox)"; state_file "$d" "m1-task" "codex"
   OUT="$(bash "$MUT_DIR/m1.sh" --checkout "$d" --task m1-task --log-dir "$d/runs" \
         --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
@@ -4931,8 +4941,8 @@ if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m1.sh"; then
     && ok "50c — M1: with finalization skipped, no result is produced (assertion is fail-capable)" \
     || bad "50c — M1: with finalization skipped, no result is produced" "rc=$RC results=$(res_count "$d/runs")"
 else
-  bad "50c — M1 mutant differs from the dispatcher (the call site was found)" \
-      "the sed matched nothing — the control cannot run"
+  bad "50c — M1 mutant differs from the dispatcher and still parses (the one call site was found)" \
+      "matched ${M1_HITS:-0} lines, want exactly 1; differs=$M1_DIFFERS parses=$M1_PARSES — the control cannot run"
 fi
 
 # M2 — the atomic publish removed, so the temporary is never renamed.
