@@ -806,11 +806,108 @@ TR_SOURCE=''
 TR_TASK=''
 TR_CHECKOUT=''
 TR_RUN=''
+# THE SNAPSHOT THE ACCEPTED FIELDS CAME FROM, not merely the pathname they were
+# read through. A pathname is not an artifact: a structurally valid record can be
+# parsed and then REPLACED at that same path by another structurally valid one,
+# and a check that only remembered the name would go on reporting the first
+# record's task, checkout and run for the second record's bytes. This is what
+# lets identity acceptance be tied to the exact bytes that were validated.
+TR_SHA=''
+# Which path the pre-read safety gate cleared. The identity boundary refuses to
+# compare anything the gate did not pass first — see that function's note on why
+# the order is a correctness property and not a convention.
+TR_PATH_CLEARED=''
+# WHAT THE GATE HAD CLEARED AT THE MOMENT THE PARSE BEGAN, which is a different
+# fact from what it has cleared by now, and the difference is the whole point.
+# Two globals that merely both ended up naming this artifact would be satisfied by
+# parsing first and gating afterwards — bytes read through a path nothing had
+# vetted, then retroactively blessed. This one is captured at the top of the parse,
+# so it can only name the artifact if the gate genuinely ran first.
+TR_PARSE_GATED=''
+
+# Self-contained on purpose: `file_hash()` exists further down this file, but the
+# marker-delimited region is lifted out and sourced on its own by the focused
+# harness, so a call to anything defined outside these markers would be undefined
+# exactly where the region is under test.
+wl2_tr_sha() { # path -> the artifact's sha256, or empty when it cannot be taken
+  shasum -a 256 "$1" 2>/dev/null | cut -d' ' -f1
+}
+
+# ------------------------------- the terminal result's PRE-READ path safety gate
+#
+# THIS RUNS BEFORE A SINGLE BYTE IS OPENED, and that ordering is the whole reason
+# it is a separate function. The path checks used to live at the identity boundary,
+# which runs after the structural parse — so a planted symlink or a symlinked
+# evidence root was opened, sized and read to its end, and only then refused. The
+# refusal token was right and the behaviour was wrong: a reader that has already
+# followed a hostile path has already done the thing the refusal was for.
+#
+# IT OPENS NOTHING. `-L` is an lstat on the name and `cd`+`pwd -P` resolves
+# directories; neither reads the artifact. That is the property the correction's
+# control asserts, and it is why no size bound is needed here.
+#
+# REFUSE, NEVER NORMALIZE. A traversal segment, a leading dash, or a control
+# character is refused outright rather than cleaned up. Deciding what a hostile
+# path "really meant" is how a resolved path becomes a trusted one.
+validate_terminal_result_path() { # artifact task checkout run evidence-root -> 0 and ok, or 1 and one bounded token
+  local f="${1-}" x_task="${2-}" x_checkout="${3-}" x_run="${4-}" x_root="${5-}"
+  local v promised real_root real_dir
+  TR_PATH_CLEARED=''
+
+  [ -n "$f" ] || { printf 'no-path\n'; return 1; }
+  # AN UNSUPPLIED EXPECTATION IS NOT A WILDCARD. A caller that has not established
+  # one of the four is refused, never silently matched against whatever the
+  # artifact happens to say — which is the one way this gate could be made to
+  # clear every path ever presented.
+  [ -n "$x_task" ] && [ -n "$x_checkout" ] && [ -n "$x_run" ] && [ -n "$x_root" ] \
+    || { printf 'no-expectation\n'; return 1; }
+
+  # Applied to the caller's values as well as the path: a dispatcher variable that
+  # has been corrupted is not a safer source than an artifact. The `..` test is
+  # deliberately blunt — refusing every occurrence is a rule with no parser in it,
+  # and a run id or a checkout path that legitimately contains one does not exist.
+  for v in "$f" "$x_task" "$x_checkout" "$x_run" "$x_root"; do
+    case "$v" in
+      -*)            printf 'unsafe-path\n'; return 1 ;;
+      *..*)          printf 'unsafe-path\n'; return 1 ;;
+      *[[:cntrl:]]*) printf 'unsafe-path\n'; return 1 ;;
+    esac
+  done
+
+  # THE PROMISED PATH IS DERIVED, NEVER ACCEPTED. It is built from the admitted
+  # evidence root and the expected run id — the same two values the producer used
+  # — and the artifact's path must equal it literally. This is also what bounds
+  # the artifact to the evidence root: any path outside the root is not equal to
+  # a path inside it, so no separate containment test is needed for the literal
+  # case. The resolved test below covers the case a link makes it non-literal.
+  promised="$x_root/$x_run.result"
+  [ "$f" = "$promised" ] || { printf 'path-not-promised\n'; return 1; }
+
+  # A LINK IS NOT THE FILE IT NAMES. The name matches and the target may be a real,
+  # structurally valid, field-matching result — which is exactly why this is
+  # refused on the name, before anything opens it.
+  if [ -L "$f" ]; then printf 'symlinked-path\n'; return 1; fi
+
+  # The literal check above cannot see a root that is itself a link, or an ancestor
+  # that is: the strings match while the bytes come from somewhere else entirely.
+  real_root="$(cd "$x_root" 2>/dev/null && pwd -P)" || { printf 'outside-evidence-root\n'; return 1; }
+  real_dir="$(cd "$(dirname "$f")" 2>/dev/null && pwd -P)" || { printf 'outside-evidence-root\n'; return 1; }
+  [ "$real_root" = "$x_root" ] || { printf 'outside-evidence-root\n'; return 1; }
+  [ "$real_dir" = "$real_root" ] || { printf 'outside-evidence-root\n'; return 1; }
+
+  TR_PATH_CLEARED="$f"
+  printf 'ok\n'
+  return 0
+}
 
 validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded reason token
   local f="${1-}" bytes line key val n=0 seen=' ' last='' k
-  local got_task='' got_checkout='' got_run=''
-  TR_SOURCE=''; TR_TASK=''; TR_CHECKOUT=''; TR_RUN=''
+  local got_task='' got_checkout='' got_run='' sha_before='' sha_after=''
+  TR_SOURCE=''; TR_TASK=''; TR_CHECKOUT=''; TR_RUN=''; TR_SHA=''
+  # Read, never written, at the first instruction of the parse. TR_PATH_CLEARED
+  # belongs to the gate and is deliberately not reset here: clearing it would make
+  # this function able to invalidate a gate decision it does not own.
+  TR_PARSE_GATED="${TR_PATH_CLEARED:-}"
   [ -n "$f" ]                || { printf 'no-path\n';    return 1; }
   [ -f "$f" ] && [ -r "$f" ] || { printf 'unreadable\n'; return 1; }
   # The size bound is taken BEFORE a single line is read, so an oversized artifact
@@ -819,6 +916,19 @@ validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded 
   bytes="${bytes// /}"
   case "$bytes" in ''|*[!0-9]*) printf 'unreadable\n'; return 1 ;; esac
   [ "$bytes" -le "$TERMINAL_RESULT_MAX_BYTES" ] || { printf 'too-large\n'; return 1; }
+
+  # TAKEN BEFORE THE PARSE AND AGAIN AFTER IT, and both are required to match. The
+  # obvious version of this takes one snapshot when the parse finishes, which
+  # leaves the parse itself unguarded: a record rewritten between the first line
+  # and the last would have been read as a mixture of two artifacts and reported
+  # as one. Bracketing the read is what makes TR_* the fields of a single,
+  # identifiable set of bytes rather than of whatever happened to be there.
+  #
+  # NO HASH MEANS NO ACCEPTANCE. If the digest cannot be taken the record is
+  # refused, never accepted unbound — an artifact this function cannot pin is
+  # exactly the one a later identity check could not detect a swap of.
+  sha_before="$(wl2_tr_sha "$f")"
+  [ -n "$sha_before" ] || { printf 'unhashable\n'; return 1; }
 
   # `|| [ -n "$line" ]` so a final line with no trailing newline is still read and
   # judged. Dropping it would make a truncated record look like a complete one.
@@ -867,9 +977,15 @@ validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded 
   for k in $TERMINAL_RESULT_REQUIRED; do
     case "$seen" in *" $k "*) ;; *) printf 'missing-field\n'; return 1 ;; esac
   done
+  sha_after="$(wl2_tr_sha "$f")"
+  [ -n "$sha_after" ] || { printf 'unhashable\n'; return 1; }
+  [ "$sha_before" = "$sha_after" ] || { printf 'artifact-changed\n'; return 1; }
+
   # Published last, after every structural refusal above has had its chance. The
-  # sweep just proved all three keys are present, so none of these is empty.
+  # sweep just proved all three keys are present, so none of these is empty, and
+  # the bracketing digests just proved they all came from one set of bytes.
   TR_SOURCE="$f"; TR_TASK="$got_task"; TR_CHECKOUT="$got_checkout"; TR_RUN="$got_run"
+  TR_SHA="$sha_after"
   printf 'ok\n'
   return 0
 }
@@ -906,51 +1022,32 @@ validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded 
 # record: one artifact, one parse, one owner.
 validate_terminal_result_identity() { # artifact task checkout run evidence-root -> 0 and ok, or 1 and one bounded token
   local f="${1-}" x_task="${2-}" x_checkout="${3-}" x_run="${4-}" x_root="${5-}"
-  local v promised real_root real_dir
+  local sha_now
 
   [ -n "$f" ] || { printf 'no-path\n'; return 1; }
-  # AN UNSUPPLIED EXPECTATION IS NOT A WILDCARD. A caller that has not established
-  # one of the four is refused, never silently matched against whatever the
-  # artifact happens to say — which is the one way this function could be made to
-  # accept every record ever written.
   [ -n "$x_task" ] && [ -n "$x_checkout" ] && [ -n "$x_run" ] && [ -n "$x_root" ] \
     || { printf 'no-expectation\n'; return 1; }
 
-  # Checked before anything is compared or resolved, and applied to the caller's
-  # values as well as the path: a dispatcher variable that has been corrupted is
-  # not a safer source than an artifact. The `..` test is deliberately blunt —
-  # refusing every occurrence is a rule with no parser in it, and a run id or a
-  # checkout path that legitimately contains one does not exist.
-  for v in "$f" "$x_task" "$x_checkout" "$x_run" "$x_root"; do
-    case "$v" in
-      -*)            printf 'unsafe-path\n'; return 1 ;;
-      *..*)          printf 'unsafe-path\n'; return 1 ;;
-      *[[:cntrl:]]*) printf 'unsafe-path\n'; return 1 ;;
-    esac
-  done
+  # THE TWO PRECONDITIONS, IN THE ORDER THEY MUST HAVE HAPPENED. `TR_PARSE_GATED`
+  # is the load-bearing one, and it is not the same check as "the gate has cleared
+  # this path": it is "the gate had already cleared this path when the parse
+  # opened it". A caller that parsed first and gated afterwards satisfies the
+  # weaker reading while having done exactly the thing the gate exists to prevent.
+  # Checking it before `unvalidated` matters too — if only the parse ran, the bytes
+  # were read through a path nothing vetted, and "unvalidated" would name the
+  # wrong failure.
+  [ "${TR_PARSE_GATED:-}" = "$f" ] || { printf 'path-unchecked\n'; return 1; }
+  [ "${TR_SOURCE:-}" = "$f" ]      || { printf 'unvalidated\n';    return 1; }
 
-  [ "${TR_SOURCE:-}" = "$f" ] || { printf 'unvalidated\n'; return 1; }
-
-  # THE PROMISED PATH IS DERIVED, NEVER ACCEPTED. It is built from the admitted
-  # evidence root and the expected run id — the same two values the producer used
-  # — and the artifact's path must equal it literally. This is also what bounds
-  # the artifact to the evidence root: any path outside the root is not equal to
-  # a path inside it, so no separate containment test is needed for the literal
-  # case. The resolved test below covers the case a link makes it non-literal.
-  promised="$x_root/$x_run.result"
-  [ "$f" = "$promised" ] || { printf 'path-not-promised\n'; return 1; }
-
-  # A LINK IS NOT THE FILE IT NAMES. The name matches, the target is a real and
-  # structurally valid result, and every field comparison below would pass — which
-  # is why this is refused here rather than left to those comparisons.
-  if [ -L "$f" ]; then printf 'symlinked-path\n'; return 1; fi
-
-  # The literal check above cannot see a root that is itself a link, or an ancestor
-  # that is: the strings match while the bytes come from somewhere else entirely.
-  real_root="$(cd "$x_root" 2>/dev/null && pwd -P)" || { printf 'outside-evidence-root\n'; return 1; }
-  real_dir="$(cd "$(dirname "$f")" 2>/dev/null && pwd -P)" || { printf 'outside-evidence-root\n'; return 1; }
-  [ "$real_root" = "$x_root" ] || { printf 'outside-evidence-root\n'; return 1; }
-  [ "$real_dir" = "$real_root" ] || { printf 'outside-evidence-root\n'; return 1; }
+  # THE ARTIFACT IS PINNED TO THE BYTES THAT WERE VALIDATED, not to the name they
+  # were read through. Without this, a structurally valid record can be parsed and
+  # then replaced at the same promised path by ANOTHER structurally valid record,
+  # and every comparison below would still be answered from the first record's
+  # fields — a result accepted for bytes nothing ever checked. Fails closed: an
+  # artifact that can no longer be hashed is refused, not waved through.
+  sha_now="$(wl2_tr_sha "$f")"
+  [ -n "$sha_now" ] || { printf 'unhashable\n'; return 1; }
+  [ "$sha_now" = "${TR_SHA:-}" ] || { printf 'artifact-changed\n'; return 1; }
 
   # Artifact against caller, one field at a time, each on its own line so a
   # mutation control can remove exactly one comparison and prove the others are

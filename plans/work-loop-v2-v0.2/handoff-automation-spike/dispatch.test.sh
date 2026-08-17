@@ -5470,15 +5470,30 @@ fi
 # here is dispatch.sh's own production text, and 52d proves it by mutating
 # dispatch.sh and watching these assertions go red.
 
-# One structural validation followed by one identity validation, in a single
-# subshell — the order the production contract requires, and the reason the
-# identity function can consume what the structural pass already read instead of
-# parsing the record a second time.
+# THE THREE CHECKS IN THE ONE ORDER THAT IS CORRECT, in a single subshell: gate
+# the path while nothing is open, parse the bytes exactly once, then compare
+# identity against that pinned snapshot.
+#
+# THE GATE SHORT-CIRCUITS, and that is the behaviour under test rather than a
+# convenience of the harness. A refused path must stop here, before the parser is
+# ever handed the name — case 53a asserts that nothing was parsed by looking at
+# what the parse would have published.
+# THE TOKENS GO THROUGH A FILE, NOT THROUGH `$(...)`, and that is a correctness
+# requirement rather than a style choice. Command substitution runs its command in
+# a subshell, so the three checks hand each other their state — which path the gate
+# cleared, what the parse published — through globals that a subshell would
+# discard. Capturing the first two that way would silently break the chain and
+# make every precondition below look unmet. The scratch file sits in
+# SANDBOX_ROOT, outside any checkout, so it cannot disturb a tree manifest.
 ident_run() { # lib artifact task checkout run root -> "<rc> <token>"
   ( . "$1" >/dev/null 2>&1 || { printf '99 lib-unsourceable\n'; exit 0; }
-    validate_terminal_result "$2" >/dev/null 2>&1
-    tok="$(validate_terminal_result_identity "$2" "$3" "$4" "$5" "$6" 2>/dev/null)"; rc=$?
-    printf '%s %s\n' "$rc" "$tok" )
+    t="$SANDBOX_ROOT/.ident-token"
+    validate_terminal_result_path "$2" "$3" "$4" "$5" "$6" >"$t" 2>/dev/null; rc=$?
+    [ "$rc" -eq 0 ] || { printf '%s %s\n' "$rc" "$(cat "$t")"; exit 0; }
+    validate_terminal_result "$2" >"$t" 2>/dev/null; rc=$?
+    [ "$rc" -eq 0 ] || { printf '%s %s\n' "$rc" "$(cat "$t")"; exit 0; }
+    validate_terminal_result_identity "$2" "$3" "$4" "$5" "$6" >"$t" 2>/dev/null; rc=$?
+    printf '%s %s\n' "$rc" "$(cat "$t")" )
 }
 
 ident_expect() { # lib artifact task checkout run root want-rc want-token label
@@ -5576,15 +5591,36 @@ ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$(printf 'a\nb')" "$ROO
 ident_expect "$VAL_LIB" "$REAL52" "" "$CO52" "$RID52" "$ROOT52" 1 no-expectation \
   "52b — an unsupplied expected task is refused rather than treated as any task"
 
-# STRUCTURAL VALIDATION IS A PRECONDITION, NOT AN ASSUMPTION. Identity is asked
-# about an artifact nothing structurally validated, and refuses to answer.
+# BOTH PRECONDITIONS ARE PRECONDITIONS, NOT ASSUMPTIONS, and they are separate
+# failures with separate tokens. Asked cold, identity has neither a gate decision
+# nor a parse to consume, and it names the earlier of the two — the path was never
+# vetted, which is the more serious of the two things missing.
+NOGATE52="$( . "$VAL_LIB" >/dev/null 2>&1
+             tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+             printf '%s %s\n' "$?" "$tok" )"
+if [ "$NOGATE52" = "1 path-unchecked" ]; then
+  ok "52b — identity refuses an artifact whose path the safety gate never cleared"
+else
+  bad "52b — identity refuses an artifact whose path the safety gate never cleared" \
+      "expected '1 path-unchecked', got '$NOGATE52'"
+fi
+
+# THE PARSE RAN, BUT NOT ON THIS ARTIFACT. The gate cleared this path and a parse
+# did happen after it — so the ordering precondition is satisfied — but what that
+# parse read was a different file, so the published fields belong to something
+# else. This is the state `unvalidated` names, and reaching it takes a parse:
+# an artifact with no parse at all stops one check earlier, at `path-unchecked`,
+# which is what the assertion above covers. The two are distinguishable, and
+# neither stands in for the other.
 UNVAL52="$( . "$VAL_LIB" >/dev/null 2>&1
+            validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+            validate_terminal_result "$COPY52" >/dev/null 2>&1
             tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
             printf '%s %s\n' "$?" "$tok" )"
 if [ "$UNVAL52" = "1 unvalidated" ]; then
-  ok "52b — identity refuses an artifact the structural validator did not read"
+  ok "52b — identity refuses an artifact when the parse that ran read a different file"
 else
-  bad "52b — identity refuses an artifact the structural validator did not read" \
+  bad "52b — identity refuses an artifact when the parse that ran read a different file" \
       "expected '1 unvalidated', got '$UNVAL52'"
 fi
 
@@ -5667,6 +5703,210 @@ if ! cmp -s "$DISPATCH_BIN" "$MUT52/m12.sh"; then
   fi
 else
   bad "52d — M12 mutant differs from the dispatcher (the symlink refusal was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# ==================================================================== case 53
+# THE TWO CORRECTION FINDINGS AGAINST UNIT 7, and both are about WHEN a check
+# happens rather than whether it exists.
+#
+# 53a — REFUSED BEFORE READ, not read and rejected afterwards. Unit 7 put the
+# symlink and resolved-root refusals in the identity boundary, which runs after
+# the structural parse. Every rejection token was correct and the artifact had
+# already been opened, sized and read to its end through the hostile path first. A
+# reader that has followed a planted link has done the thing the refusal was for,
+# and returning the right word afterwards does not undo it.
+#
+# 53b — THE ACCEPTED FIELDS ARE PINNED TO BYTES, not to a pathname. Unit 7 recorded
+# `TR_SOURCE="$f"`, which proves which NAME was parsed and nothing about what is at
+# that name now. A structurally valid record could be parsed and then replaced at
+# the same promised path by another structurally valid record, and identity would
+# still answer from the first one's fields.
+#
+# HOW "BEFORE" IS OBSERVED, since a token alone cannot say when. The parse is the
+# only thing that publishes TR_SOURCE and TR_SHA, so those staying empty after a
+# refusal is direct evidence that no parse happened. 53c breaks each check in the
+# dispatcher and watches that evidence flip.
+
+echo
+echo "Case 53a — an unsafe path is refused BEFORE the artifact is opened"
+
+# The probe returns the token AND what the parse would have published. A refusal
+# that reports `symlinked-path` with an empty TR_SOURCE was decided on the name;
+# the same token with TR_SOURCE set would mean the bytes were read first and the
+# refusal came too late.
+gate_probe() { # lib artifact task checkout run root -> "<token>|<TR_SOURCE>|<TR_SHA>"
+  ( . "$1" >/dev/null 2>&1 || { printf 'lib-unsourceable||\n'; exit 0; }
+    t="$SANDBOX_ROOT/.gate-token"
+    validate_terminal_result_path "$2" "$3" "$4" "$5" "$6" >"$t" 2>/dev/null
+    if [ "$(cat "$t")" = ok ]; then validate_terminal_result "$2" >"$t" 2>/dev/null; fi
+    printf '%s|%s|%s\n' "$(cat "$t")" "${TR_SOURCE:-}" "${TR_SHA:-}" )
+}
+
+GATE53="$(gate_probe "$VAL_LIB" "$SYM52ROOT/$RID52.result" identity-task "$CO52" "$RID52" "$SYM52ROOT")"
+if [ "$GATE53" = "symlinked-path||" ]; then
+  ok "53a — a symlinked promised path is refused with nothing parsed (TR_SOURCE and TR_SHA stay empty)"
+else
+  bad "53a — a symlinked promised path is refused with nothing parsed (TR_SOURCE and TR_SHA stay empty)" \
+      "expected 'symlinked-path||', got '$GATE53'"
+fi
+
+GATE53R="$(gate_probe "$VAL_LIB" "$LINKROOT52/$RID52.result" identity-task "$CO52" "$RID52" "$LINKROOT52")"
+if [ "$GATE53R" = "outside-evidence-root||" ]; then
+  ok "53a — an evidence root that resolves elsewhere is refused with nothing parsed"
+else
+  bad "53a — an evidence root that resolves elsewhere is refused with nothing parsed" \
+      "expected 'outside-evidence-root||', got '$GATE53R'"
+fi
+
+# THE POSITIVE HALF, so the two assertions above cannot pass by the probe simply
+# never parsing anything. A safe path clears the gate and the parse then publishes
+# both values.
+GATE53OK="$(gate_probe "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52")"
+case "$GATE53OK" in
+  "ok|$REAL52|"?*) ok "53a — a safe path clears the gate and the parse then publishes the snapshot" ;;
+  *) bad "53a — a safe path clears the gate and the parse then publishes the snapshot" \
+         "expected 'ok|$REAL52|<sha>', got '$GATE53OK'" ;;
+esac
+
+# GATING AFTER PARSING IS NOT GATING. Both globals end up naming this artifact, so
+# a check that only asked "has the gate cleared this path" would be satisfied —
+# while the bytes were read through a path nothing had vetted at the time.
+LATE53="$( . "$VAL_LIB" >/dev/null 2>&1
+           validate_terminal_result "$REAL52" >/dev/null 2>&1
+           validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+           tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+           printf '%s %s\n' "$?" "$tok" )"
+if [ "$LATE53" = "1 path-unchecked" ]; then
+  ok "53a — parsing first and gating afterwards is refused, not retroactively blessed"
+else
+  bad "53a — parsing first and gating afterwards is refused, not retroactively blessed" \
+      "expected '1 path-unchecked', got '$LATE53'"
+fi
+
+echo
+echo "Case 53b — acceptance is bound to the validated bytes, not to the pathname"
+V53="$SANDBOX_ROOT/v53"; mkdir -p "$V53"
+
+# THE REPLACEMENT CARRIES THE SAME task, checkout AND run, and that is what makes
+# this the sharp case. Every field comparison passes on either record, so no
+# identity comparison can explain a rejection — only the snapshot binding can. The
+# fields that DO differ are the ones a caller would go on to act upon.
+SWAP53="$V53/swapped.result"
+sed 's|^next_action=.*|next_action=something-else-entirely|' "$REAL52" >"$SWAP53" 2>/dev/null
+val_expect "$VAL_LIB" "$SWAP53" 0 ok \
+  "53b — the replacement is itself a structurally valid v1 record"
+if ! cmp -s "$REAL52" "$SWAP53"; then
+  ok "53b — the replacement differs in bytes from the validated result"
+else
+  bad "53b — the replacement differs in bytes from the validated result" "the sed matched nothing"
+fi
+
+# Gate, parse, THEN swap the file at the same promised path, THEN ask identity.
+SWAP53RUN="$( . "$VAL_LIB" >/dev/null 2>&1
+              cp "$REAL52" "$V53/original.result"
+              validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+              validate_terminal_result "$REAL52" >/dev/null 2>&1
+              cp "$SWAP53" "$REAL52"
+              tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+              rc=$?
+              cp "$V53/original.result" "$REAL52"
+              printf '%s %s\n' "$rc" "$tok" )"
+if [ "$SWAP53RUN" = "1 artifact-changed" ]; then
+  ok "53b — a record replaced at the promised path after validation is rejected"
+else
+  bad "53b — a record replaced at the promised path after validation is rejected" \
+      "expected '1 artifact-changed', got '$SWAP53RUN'"
+fi
+
+# THE ORIGINAL IS STILL ACCEPTED, so the assertion above is not passing because the
+# checkout was left in a state where everything fails.
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 0 ok \
+  "53b — the restored original result is still accepted"
+
+echo
+echo "Case 53c — mutation controls: the corrections above go green when each check is broken"
+MUT53="$SANDBOX_ROOT/mutants53"; mkdir -p "$MUT53"
+
+# M13 — remove the snapshot comparison. Without it the swapped record is accepted
+# from the first parse's stale fields, which is finding 2 exactly as it was
+# reported.
+sed "/printf 'artifact-changed/d" "$DISPATCH_BIN" >"$MUT53/m13.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT53/m13.sh"; then
+  ok "53c — M13 mutant differs from the dispatcher (the snapshot comparison was found)"
+  if extract_validator "$MUT53/m13.sh" "$MUT53/m13.lib"; then
+    M13="$( . "$MUT53/m13.lib" >/dev/null 2>&1
+            cp "$REAL52" "$V53/original.result"
+            validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+            validate_terminal_result "$REAL52" >/dev/null 2>&1
+            cp "$SWAP53" "$REAL52"
+            tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+            rc=$?
+            cp "$V53/original.result" "$REAL52"
+            printf '%s %s\n' "$rc" "$tok" )"
+    if [ "$M13" = "0 ok" ]; then
+      ok "53c — M13: without the snapshot comparison the swapped record is accepted (53b is fail-capable)"
+    else
+      bad "53c — M13: without the snapshot comparison the swapped record is accepted (53b is fail-capable)" \
+          "expected '0 ok', got '$M13'"
+    fi
+  else
+    bad "53c — M13: without the snapshot comparison the swapped record is accepted (53b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "53c — M13 mutant differs from the dispatcher (the snapshot comparison was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M14 — remove the ordering precondition. Without it, parsing first and gating
+# afterwards is accepted, which is the retroactive blessing 53a refuses.
+sed "/printf 'path-unchecked/d" "$DISPATCH_BIN" >"$MUT53/m14.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT53/m14.sh"; then
+  ok "53c — M14 mutant differs from the dispatcher (the ordering precondition was found)"
+  if extract_validator "$MUT53/m14.sh" "$MUT53/m14.lib"; then
+    M14="$( . "$MUT53/m14.lib" >/dev/null 2>&1
+            validate_terminal_result "$REAL52" >/dev/null 2>&1
+            validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+            tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+            printf '%s %s\n' "$?" "$tok" )"
+    if [ "$M14" = "0 ok" ]; then
+      ok "53c — M14: without the ordering precondition a late gate is accepted (53a is fail-capable)"
+    else
+      bad "53c — M14: without the ordering precondition a late gate is accepted (53a is fail-capable)" \
+          "expected '0 ok', got '$M14'"
+    fi
+  else
+    bad "53c — M14: without the ordering precondition a late gate is accepted (53a is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "53c — M14 mutant differs from the dispatcher (the ordering precondition was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M15 — remove the gate's symlink refusal. The gate then clears the planted link,
+# the parse follows it and publishes a snapshot — which is 53a's "nothing was
+# parsed" evidence going the other way, and is exactly the pre-correction
+# behaviour finding 1 reported.
+sed "/printf 'symlinked-path/d" "$DISPATCH_BIN" >"$MUT53/m15.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT53/m15.sh"; then
+  ok "53c — M15 mutant differs from the dispatcher (the gate's symlink refusal was found)"
+  if extract_validator "$MUT53/m15.sh" "$MUT53/m15.lib"; then
+    M15="$(gate_probe "$MUT53/m15.lib" "$SYM52ROOT/$RID52.result" identity-task "$CO52" "$RID52" "$SYM52ROOT")"
+    case "$M15" in
+      "ok|$SYM52ROOT/$RID52.result|"?*)
+        ok "53c — M15: without the gate's symlink refusal the link is followed and parsed (53a is fail-capable)" ;;
+      *)
+        bad "53c — M15: without the gate's symlink refusal the link is followed and parsed (53a is fail-capable)" \
+            "expected the link to be parsed, got '$M15'" ;;
+    esac
+  else
+    bad "53c — M15: without the gate's symlink refusal the link is followed and parsed (53a is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "53c — M15 mutant differs from the dispatcher (the gate's symlink refusal was found)" \
       "the sed matched nothing — the control cannot run"
 fi
 
