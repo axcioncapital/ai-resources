@@ -181,14 +181,19 @@ risks attributing the next failure to the wrong cause.
 
 - `.agents/skills/work-loop-v2/SKILL.md` and `.agents/skills/work-loop-v2/references/unit-framing.md`
 - `.claude/commands/work-loop-v2.md`
-- the `LIVE_TASK_F` pointer in `logs/scripts/work-loop-v2-slice-1.test.sh`
+- in `logs/scripts/work-loop-v2-slice-1.test.sh`: the 13 `pack` assertions whose phrases now belong to
+  `unit-framing.md`, retargeted from `$SKILL_F` to `$UNITFR_F`, plus the `LIVE_TASK_F` pointer — 14
+  retargets in all. **Corrected 2026-08-17 from a bound of the `LIVE_TASK_F` pointer alone**, which
+  could not hold together with the approved one-owner placement and green-suite conditions: moving the
+  packaging rules to their post-split owner necessarily moves the assertions that read them. Only the
+  file variable changes; no assertion is deleted, skipped, loosened, renamed or otherwise rewritten.
 
 **Required work, as approved:**
 
-1. Restore the `pack` and `race` content lost by merge `9b1c19d3`, sourced from `16de1622` (+28 skill,
-   +53 command) and `8a61a496` (+13 skill). Place each rule with its **post-split owner** — the
-   packaging and sizing material belongs in `references/unit-framing.md`, the reconciliation material
-   in the main skill's seam. This is a merge with judgment, not a revert.
+1. Restore the `pack` and `race` content lost by merge `00855ec6`, sourced from `16de1622` (+28 skill,
+   +53 command) and the full 19-line block at `8a61a496`. Place each rule with its **post-split
+   owner** — the packaging and sizing material belongs in `references/unit-framing.md`, the
+   reconciliation material in the main skill's seam. This is a merge with judgment, not a revert.
 2. Repoint `LIVE_TASK_F` at the next open Standard record. **Correction to the approving proposal,
    carried on repository evidence:** the 3 `mode` failures are *not* lost behavior. They read a
    pointer at a task that has since closed, and the test's own comment at that line prescribes this
@@ -485,9 +490,10 @@ The four new siblings travel by the same mechanism.
 The 44 failures have **two unrelated causes**, and the distinction sizes the repair:
 
 - **41 are lost content** — `pack` (unit packaging and hop termination, **35** checks) and `race`
-  (hand-off reconciliation, **6** checks). Of the 35 `pack` checks, **21 read the skill and 14 read
-  `.claude/commands/work-loop-v2.md`**: both runtime artifacts lost their half in the same merge, the
-  command shedding 53 lines. `## Ending the hop` and every packaging line are absent from it today.
+  (hand-off reconciliation, **6** checks). Of the 35 `pack` checks, **13 read the skill and 22 read
+  `.claude/commands/work-loop-v2.md`** — corrected 2026-08-17 from a recorded 21/14 split, by counting
+  the assertions in the `pack` block: both runtime artifacts lost their half in the same merge, the
+  command shedding 27 lines. `## Ending the hop` and every packaging line are absent from it today.
 - **3 are a stale pointer, not lost content** — the `mode` live-task checks read `LIVE_TASK_F` at
   `work-loop-v2-slice-1.test.sh:1387`, which names `logs/work-loop/work-loop-v2-durable-state-system.md`.
   That task has since **closed**, so its record is reduced to the four closing headings and carries no
@@ -496,20 +502,54 @@ The 44 failures have **two unrelated causes**, and the distinction sizes the rep
   maintenance, not restoration.
 
 The lost content was implemented and green — commit `8a61a496` records "harness 345/0 to 358/0
-green" — and was then **lost by merge `9b1c19d3`** ("Merge branch
-'session/2026-08-14-concurrency-fix-2' into session/2026-08-14-durable-state"), which dropped
-`.agents/skills/work-loop-v2/SKILL.md` from 592 to 532 lines. Both source commits are ancestors of
-HEAD; their text is not. Verified by content probe across `16de1622`, `8a61a496`, `9b1c19d3` and
-HEAD. Recoverable text: 41 lines into the skill (`16de1622` +28, `8a61a496` +13) and 53 into the
-command (`16de1622`). Restoration is **not** a clean revert — the skill has been split since, so the
-packaging material's owner is now `references/unit-framing.md` rather than the main body.
+green" — and was then **lost by merge `00855ec6`** ("Merge branch
+'session/2026-08-14-durable-state'"). **Corrected 2026-08-17 from a recorded loss commit of
+`9b1c19d3`**: a content probe across both parents of each candidate shows the rules present at
+`4ba2ff0e` and absent at `00855ec6`, while *both* parents of `9b1c19d3` (`04be4f6a`, `9cf6b56b`)
+already lack them — so `9b1c19d3` cannot be where they were dropped. At `00855ec6` the skill went
+from 591 lines to 603 (the other parent added unrelated content while shedding these rules) and the
+command from 349 to 322. Both source commits are ancestors of HEAD; their text is not. Recoverable
+text: the skill's packaging material (`16de1622` +28) plus the **full 19-line operator-shorthand and
+reconciliation block as it stood at `8a61a496`** — not only that commit's 13 added lines, because
+two of the six `race` checks read the pre-existing shorthand half of the same block — and 53 lines
+into the command (`16de1622`). Restoration is **not** a clean revert — the skill has been split
+since, so the packaging material's owner is now `references/unit-framing.md` rather than the main
+body.
 
 This was outside Unit 1's file scope and was not repaired there. The operator authorized a bounded
 prerequisite unit for it on 2026-08-17 — see § 4 Unit 0.
 
 ### Unit 0 — restored behavior red / green
 
-Pending.
+**Red, against the unchanged target files:** `work-loop-v2-slice-1.test.sh` exit 1 — 352 passed, 44
+failed, split 35 `pack` / 6 `race` / 3 `mode`, matching the baseline recorded at the hand-back.
+
+**Green, after the restoration:** exit 0 — 396 passed, 0 failed. Every one of the 44 resolved with no
+assertion deleted, skipped, loosened, renamed or rewritten; the 14 authorized retargets change only
+which file a predicate reads.
+
+**Where each restored rule now lives** — one owner apiece, and the harness's own one-owner guards stay
+green against it:
+
+- **Packaging and sizing** (13 `pack` checks) → `.agents/skills/work-loop-v2/references/unit-framing.md`
+  § *Size the unit against the clock*, +26 lines: the two split triggers, the primary-edit-begins-after
+  rule, the four packaging lines and their mode scoping.
+- **Hand-off reconciliation** (6 `race` checks) → `.agents/skills/work-loop-v2/SKILL.md` § *The seam*,
+  +19 lines: the full operator-shorthand and reconciliation block.
+- **Claude-side packaging check and hop termination** (22 `pack` checks) →
+  `.claude/commands/work-loop-v2.md`, +52 lines: § *The brief's packaging lines* under § *The unit's
+  mode*, and § *Ending the hop*.
+- **Stale live-task pointer** (3 `mode` checks) → `LIVE_TASK_F` repointed at this task's own active
+  Standard record. Maintenance, as § 8 predicted, not restoration.
+
+**Unit 1's structural contract preserved:** main skill 223 lines / 4,802 words — under both the
+500-line and 5,000-word limits. Direct-reference, read-condition, one-owner, no-chain,
+table-of-contents, semantic-volume and resolver-parity guards all green.
+
+**Affected regressions, all exit 0:** `work-loop-v2-core-resolver` (5/0), `work-loop-state`,
+`work-loop-owner`, `work-loop-session-preflight` (60/0), `work-loop-capability` (81/0),
+`work-loop-v2-tracer-7` (120/0). The capability drift check still reports `READY` with every copied
+component byte-identical to canonical.
 
 ### Unit 2 — recovery boundary and deterministic regression
 

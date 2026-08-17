@@ -1384,7 +1384,7 @@ check "mode  no mode fixture's named reason defeats its own admission" \
 # next open Standard record; leaving it on a closed one makes both checks read an
 # empty string and go red, which is exactly what happened to the retired
 # work-loop-v2-intake-router.md.
-LIVE_TASK_F="logs/work-loop/work-loop-v2-durable-state-system.md"
+LIVE_TASK_F="logs/work-loop/work-loop-v2-post-compaction-recovery-repair.md"
 check "mode  the live task's named reason does not defeat its own admission either" \
   "[ -n \"\$(reason_of '$LIVE_TASK_F')\" ] && \
    ! printf '%s' \"\$(reason_of '$LIVE_TASK_F')\" | grep -qiE '$SELF_DEFEATING'"
@@ -1614,34 +1614,34 @@ check "ce9   orientation still writes nothing and adds no stage" \
 
 # The two split triggers the old five-trigger list did not catch.
 check "pack  the shared-component-plus-first-consumer split trigger exists" \
-  "grep -qi 'builds a shared component' '$SKILL_F' && grep -qi 'integrates its first consumer' '$SKILL_F'"
+  "grep -qi 'builds a shared component' '$UNITFR_F' && grep -qi 'integrates its first consumer' '$UNITFR_F'"
 check "pack  the integrate-plus-full-regression split trigger exists" \
-  "grep -qi 'runs the full regression matrix for that integration' '$SKILL_F'"
+  "grep -qi 'runs the full regression matrix for that integration' '$UNITFR_F'"
 
 # Front-loaded evidence: the 593s failure. The primary edit must not wait on a broad baseline.
 check "pack  the primary edit begins after one targeted failing case" \
-  "grep -qi 'primary edit begins after one targeted failing case, not after a broad baseline' '$SKILL_F'"
+  "grep -qi 'primary edit begins after one targeted failing case, not after a broad baseline' '$UNITFR_F'"
 check "pack  accepted evidence is cited, not re-derived before editing" \
-  "grep -qi 'do not ask Claude to re-derive it before editing' '$SKILL_F'"
+  "grep -qi 'do not ask Claude to re-derive it before editing' '$UNITFR_F'"
 
 # The packaging lines — producer side.
 for pack_line in 'Dominant deliverable:' 'Evidence required in this hop:' \
                  'Evidence explicitly deferred:' 'Primary edit begins after:'; do
   check "pack  the skill writes the packaging line \"$pack_line\"" \
-    "grep -qF '$pack_line' '$SKILL_F'"
+    "grep -qF '$pack_line' '$UNITFR_F'"
 done
 check "pack  Dominant deliverable admits exactly one entry" \
-  "grep -qi 'Dominant deliverable\` admits exactly one entry' '$SKILL_F'"
+  "grep -qi 'Dominant deliverable\` admits exactly one entry' '$UNITFR_F'"
 
 # Mode-awareness. The fourth line is Implementation-shaped: core § 3 gives Discovery
 # and Adoption no primary edit, so requiring it on every mode would make every
 # Discovery and Adoption brief a false premise and bounce it forever.
 check "pack  the skill scopes the fourth line to Implementation only" \
-  "grep -qi 'the fourth belongs to Implementation alone' '$SKILL_F'"
+  "grep -qi 'the fourth belongs to Implementation alone' '$UNITFR_F'"
 check "pack  the skill states three lines for Discovery and Adoption" \
-  "grep -qi 'Write three lines in Discovery or Adoption mode, four in Implementation mode' '$SKILL_F'"
+  "grep -qi 'Write three lines in Discovery or Adoption mode, four in Implementation mode' '$UNITFR_F'"
 check "pack  the skill keeps the first three mode-neutral and still packaging-bearing" \
-  "grep -qi 'A Discovery unit can be overpacked exactly as an Implementation unit can' '$SKILL_F'"
+  "grep -qi 'A Discovery unit can be overpacked exactly as an Implementation unit can' '$UNITFR_F'"
 check "pack  the command scopes the fourth line to Implementation only" \
   "grep -qi 'One more in \*\*Implementation\*\* mode only' '$CMD_F'"
 check "pack  the command treats the fourth line's absence off-Implementation as correct" \
@@ -1699,7 +1699,7 @@ check "pack  Direct Work is not described as changing nothing" \
   "grep -qi 'says nothing about whether the repository changed' '$CMD_F'"
 # No new state field: core § 4's five-field ceiling is the thing most at risk here.
 check "pack  the packaging lines add no state field" \
-  "grep -qi \"five-field ceiling is unchanged and no new field, artifact or stage is created\" '$SKILL_F'"
+  "grep -qi \"five-field ceiling is unchanged and no new field, artifact or stage is created\" '$UNITFR_F'"
 check "pack  core § 4 still lists exactly five active content fields" \
   "[ \"\$(grep -c '^| \`## ' '$CORE_F')\" = '5' ]"
 # The timeout remains refused as a sizing remedy — the fix must not reopen it.
