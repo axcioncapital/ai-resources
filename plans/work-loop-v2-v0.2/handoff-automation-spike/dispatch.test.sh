@@ -4713,6 +4713,270 @@ partial_section "$OUT" | grep -Fq "logs/session-notes.md" \
   && ok "49 — the uncommitted session-notes.md edit is reported as a partial effect" \
   || bad "49 — the uncommitted session-notes.md edit is reported as a partial effect" "$(partial_section "$OUT")"
 
+# ==================================================================== case 50
+#
+# Change set A, items 3 and 4: the die() funnel finalizes exactly ONE versioned,
+# run-bound, complete terminal result before it releases the lease.
+#
+# SCOPE OF THIS CASE, stated so a later reader does not over-read it. It covers
+# the terminal families that already converge on die()/die_hop() — the nine
+# post-admission nonzero families D–L. It deliberately does NOT cover the
+# families that reach their exit by another route: usage/argument refusal and
+# checkout/lease-infrastructure failure exit directly before a run id exists,
+# lease refusal has its own producer (refuse_17), the signal handler exits on its
+# own path, and the five zero-exit sites are not terminals this producer owns.
+# Those are separate integrations and asserting them here would claim coverage
+# the dispatcher does not yet have.
+#
+# There is no reader in this case either. Every assertion below reads the
+# artifact with `sed`/`grep` from the harness, which is exactly the point: the
+# record has to be consumable without a parser shipped alongside it.
+
+# One field out of a result file. `head -1` because a duplicate singleton field is
+# a defect the grammar assertion below catches separately — this helper must not
+# quietly paper over it by concatenating.
+res_field() { # file key -> value
+  sed -n "s/^$2=//p" "$1" 2>/dev/null | head -1
+}
+# The run-bound result path, derived from the run log line the dispatcher printed
+# rather than from anything this harness composes. If the two ever disagree, the
+# record is not run-bound and every assertion below should fail — which is why the
+# id is READ, not reconstructed.
+run_id_of() { # dispatcher output -> run id
+  printf '%s\n' "$1" | sed -n 's/^run=\([^ ]*\) .*/\1/p' | head -1
+}
+res_count() { # runs dir -> number of finalized results
+  ls "$1"/*.result 2>/dev/null | wc -l | tr -d ' '
+}
+part_count() { # runs dir -> number of UNfinalized temporary artifacts
+  ls "$1"/*.result.partial 2>/dev/null | wc -l | tr -d ' '
+}
+
+echo
+echo "Case 50a — a post-hop nonzero terminal (22) finalizes exactly one complete run-bound result"
+# Modelled on case 6 — the narrowest existing post-hop terminal in this suite. The
+# actor ALSO plants two lookalike results: one at a name it invented, and one at
+# the exact run-bound path it derived by globbing the run log. Both are the
+# "actor-created lookalike" the trusted-field-ownership contract forbids from
+# supplying the result framing.
+NOOP_PLANT='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
+      for f in "$WL_CHECKOUT"/runs/*.log; do
+        [ -e "$f" ] || continue
+        printf "terminal_result_version=1\noutcome=SUCCESS\ncode=0\nactor_launched=no\nresult_complete=yes\n" > "${f%.log}.result";
+      done;
+      printf "terminal_result_version=1\noutcome=SUCCESS\ncode=0\nresult_complete=yes\n" > "$WL_CHECKOUT/runs/actor-planted.result";
+      exit 0'
+d="$(new_sandbox)"; state_file "$d" "result-post-task" "codex"
+run_dispatch "$d" result-post-task --actor-cmd "$NOOP_PLANT"
+expect_rc 22 "$RC" "50a — exits 22 on no observable transition" "$OUT"
+RID="$(run_id_of "$OUT")"
+[ -n "$RID" ] && ok "50a — the run announced a run id" \
+              || bad "50a — the run announced a run id" "$OUT"
+R50="$d/runs/$RID.result"
+if [ -f "$R50" ]; then
+  ok "50a — a terminal result exists at the run-bound path"
+else
+  bad "50a — a terminal result exists at the run-bound path" \
+      "missing $R50; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+fi
+# NO PARTIAL ARTIFACT SURVIVES. The producer writes to a temporary and renames, so
+# a leftover .partial means the finalization did not complete atomically.
+[ "$(part_count "$d/runs")" = "0" ] \
+  && ok "50a — no unfinalized temporary artifact was left behind" \
+  || bad "50a — no unfinalized temporary artifact was left behind" "$(ls "$d/runs"/*.result.partial 2>&1)"
+# EXACTLY ONE finalization, not two. Counted as version lines inside the artifact:
+# a producer that appended instead of replacing would carry two.
+NV="$(grep -c '^terminal_result_version=' "$R50" 2>/dev/null || printf '0')"
+[ "$NV" = "1" ] && ok "50a — the artifact carries exactly one version line" \
+                || bad "50a — the artifact carries exactly one version line" "found $NV"
+[ "$(head -1 "$R50" 2>/dev/null)" = "terminal_result_version=1" ] \
+  && ok "50a — the first line is the recognized schema version" \
+  || bad "50a — the first line is the recognized schema version" "$(head -1 "$R50" 2>/dev/null)"
+# THE COMPLETENESS SENTINEL, last line. Together with the atomic rename this is
+# what separates "a complete result" from "a result that was being written".
+[ "$(tail -1 "$R50" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "50a — the last line is the completeness sentinel" \
+  || bad "50a — the last line is the completeness sentinel" "$(tail -1 "$R50" 2>/dev/null)"
+# BOUNDED GRAMMAR. Every line is one key=value pair, so a value carrying a newline
+# — a path, a git status line, an operator-supplied argument — cannot inject a
+# field. The check is the complement: no line that fails the shape.
+if [ -z "$(grep -vE '^[a-z][a-z0-9_]*=' "$R50" 2>/dev/null)" ]; then
+  ok "50a — every line matches the bounded key=value grammar"
+else
+  bad "50a — every line matches the bounded key=value grammar" "$(grep -vnE '^[a-z][a-z0-9_]*=' "$R50" | head -3 | tr '\n' ';')"
+fi
+# THE TRUTHFUL REQUIRED FIELDS, checked against what the dispatcher observed
+# rather than against what the actor claimed.
+for pair in "outcome:NO_TRANSITION" "code:22" "task:result-post-task" \
+            "stage:post-hop" "actor:codex" "actor_launched:yes" \
+            "model_request_started:no" "mode:simulated" "hop:1" \
+            "lease_at_finalization:held"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50" "$k")"
+  [ "$got" = "$want" ] && ok "50a — $k=$want" || bad "50a — $k=$want" "got: ${got:-<absent>}"
+done
+[ "$(res_field "$R50" run)" = "$RID" ] \
+  && ok "50a — the result names its own run id" \
+  || bad "50a — the result names its own run id" "got: $(res_field "$R50" run)"
+[ "$(res_field "$R50" checkout)" = "$(cd "$d" && pwd -P)" ] \
+  && ok "50a — the result names the canonical checkout" \
+  || bad "50a — the result names the canonical checkout" "got: $(res_field "$R50" checkout)"
+# Exit 22 is precisely "the bytes did not move", so before and after must be equal
+# AND present. Equal-and-absent would satisfy a naive comparison, which is why the
+# non-emptiness is asserted separately.
+SB="$(res_field "$R50" state_sha256_before)"; SA="$(res_field "$R50" state_sha256_after)"
+if [ -n "$SB" ] && [ "$SB" != "unavailable" ] && [ "$SB" = "$SA" ]; then
+  ok "50a — state hashes are recorded and equal, matching the 22 it reported"
+else
+  bad "50a — state hashes are recorded and equal, matching the 22 it reported" "before=$SB after=$SA"
+fi
+HB="$(res_field "$R50" head_before)"
+[ -n "$HB" ] && [ "$HB" = "$(git -C "$d" rev-parse HEAD)" ] \
+  && ok "50a — head_before is the real commit, read from Git" \
+  || bad "50a — head_before is the real commit, read from Git" "got: $HB"
+[ -f "$(res_field "$R50" run_log)" ] \
+  && ok "50a — the named run log exists on disk" \
+  || bad "50a — the named run log exists on disk" "got: $(res_field "$R50" run_log)"
+[ -n "$(res_field "$R50" next_action)" ] \
+  && ok "50a — a next required action is recorded" \
+  || bad "50a — a next required action is recorded"
+# THE UNAVAILABLE FACTS ARE STATED, NOT OMITTED AND NOT GUESSED. These three are
+# not established anywhere in this dispatcher today. Recording the requested
+# permission mode while leaving the effective one unavailable is the distinction
+# the plan draws between evidence and authorization.
+for k in recorded_usage actor_session_id permission_mode_effective; do
+  [ "$(res_field "$R50" "$k")" = "unavailable" ] \
+    && ok "50a — $k is explicitly unavailable" \
+    || bad "50a — $k is explicitly unavailable" "got: $(res_field "$R50" "$k")"
+done
+# THE ACTOR CANNOT SUPPLY THE FRAMING. It wrote SUCCESS/0 over the exact run-bound
+# path before exiting; the dispatcher's finalization replaced it with what the
+# dispatcher observed. Asserted on the field values, not on file count, because a
+# lookalike that survived would still be exactly one file.
+case "$(res_field "$R50" outcome):$(res_field "$R50" code)" in
+  NO_TRANSITION:22) ok "50a — the actor's planted SUCCESS result did not become the trusted result" ;;
+  *) bad "50a — the actor's planted SUCCESS result did not become the trusted result" \
+         "got outcome=$(res_field "$R50" outcome) code=$(res_field "$R50" code)" ;;
+esac
+[ -f "$d/runs/actor-planted.result" ] \
+  && ok "50a — the actor's invented lookalike is still on disk and is simply not run-bound" \
+  || bad "50a — the actor's invented lookalike is still on disk and is simply not run-bound"
+
+echo
+echo "Case 50b — a PRE-HOP die() family (18) finalizes once, with the unavailable fields explicit"
+# The control for the half of the funnel where no actor ran. Nothing observed
+# after a launch exists here, and the producer must say so rather than abort under
+# `set -u` or invent a post-hop fact. Exit 18 is chosen because it is a pre-hop
+# die() reached AFTER the run id exists and BEFORE before_hash/before_head are
+# assigned — the narrowest place where unset state is reachable.
+d="$(new_sandbox)"; state_file "$d" "result-pre-task" "codex"
+printf 'out of allowlist\n' >>"$d/other.txt"
+run_dispatch "$d" result-pre-task --actor-cmd "$NOOP"
+expect_rc 18 "$RC" "50b — exits 18 on pre-existing out-of-allowlist changes" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "50b — no actor was launched" || bad "50b — no actor was launched" "calls=$(calls "$d")"
+RIDB="$(run_id_of "$OUT")"
+R50B="$d/runs/$RIDB.result"
+[ -f "$R50B" ] && ok "50b — a terminal result exists for the pre-hop stop" \
+              || bad "50b — a terminal result exists for the pre-hop stop" "missing $R50B; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(res_count "$d/runs")" = "1" ] \
+  && ok "50b — exactly one result was finalized" \
+  || bad "50b — exactly one result was finalized" "found $(res_count "$d/runs")"
+[ "$(part_count "$d/runs")" = "0" ] \
+  && ok "50b — no unfinalized temporary artifact was left behind" \
+  || bad "50b — no unfinalized temporary artifact was left behind" "$(ls "$d/runs"/*.result.partial 2>&1)"
+[ "$(tail -1 "$R50B" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "50b — the pre-hop result is complete" \
+  || bad "50b — the pre-hop result is complete" "$(tail -1 "$R50B" 2>/dev/null)"
+for pair in "outcome:FOREIGN_UNSTAGED" "code:18" "stage:pre-hop" "actor:none" \
+            "actor_launched:no" "model_request_started:no" "hop:0"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50B" "$k")"
+  [ "$got" = "$want" ] && ok "50b — $k=$want" || bad "50b — $k=$want" "got: ${got:-<absent>}"
+done
+# THE UNSET-STATE FIELDS. Each is a fact that only a launched hop establishes, and
+# each must carry the explicit bounded token rather than an empty value, an
+# omitted key, or a value carried over from somewhere else.
+for k in state_sha256_before state_sha256_after head_after capture; do
+  got="$(res_field "$R50B" "$k")"
+  case "$got" in
+    unavailable|none) ok "50b — $k is explicitly '$got', not omitted or guessed" ;;
+    *) bad "50b — $k is explicitly unavailable/none" "got: ${got:-<absent>}" ;;
+  esac
+done
+# The one fact this terminal DID establish, so the case cannot pass by marking
+# everything unavailable. 18 fires precisely because a foreign path was seen.
+[ "$(res_field "$R50B" worktree_foreign_paths)" = "1" ] \
+  && ok "50b — the foreign path it stopped on is counted, not blanked" \
+  || bad "50b — the foreign path it stopped on is counted, not blanked" "got: $(res_field "$R50B" worktree_foreign_paths)"
+[ "$(res_field "$R50B" state_class)" = "ACTIVE_CODEX" ] \
+  && ok "50b — the validator's classification is carried, not re-derived" \
+  || bad "50b — the validator's classification is carried, not re-derived" "got: $(res_field "$R50B" state_class)"
+
+echo
+echo "Case 50c — mutation controls: the assertions above go red when the producer is broken"
+# Three mutants of the real dispatcher, each breaking one property case 50a
+# asserts. A green suite against a mutant means the assertion proves nothing.
+MUT_DIR="$SANDBOX_ROOT/mutants"; mkdir -p "$MUT_DIR"
+
+# M1 — finalization SKIPPED.
+sed 's|^  finalize_terminal_result "\$code"$|  :|' "$DISPATCH_BIN" >"$MUT_DIR/m1.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m1.sh"; then
+  ok "50c — M1 mutant differs from the dispatcher (the call site was found)"
+  d="$(new_sandbox)"; state_file "$d" "m1-task" "codex"
+  OUT="$(bash "$MUT_DIR/m1.sh" --checkout "$d" --task m1-task --log-dir "$d/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+  [ "$RC" -eq 22 ] && [ "$(res_count "$d/runs")" = "0" ] \
+    && ok "50c — M1: with finalization skipped, no result is produced (assertion is fail-capable)" \
+    || bad "50c — M1: with finalization skipped, no result is produced" "rc=$RC results=$(res_count "$d/runs")"
+else
+  bad "50c — M1 mutant differs from the dispatcher (the call site was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M2 — the atomic publish removed, so the temporary is never renamed.
+sed 's|^  mv -f "\$tmp" "\$final" .*$|  true|' "$DISPATCH_BIN" >"$MUT_DIR/m2.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m2.sh"; then
+  ok "50c — M2 mutant differs from the dispatcher (the rename was found)"
+  d="$(new_sandbox)"; state_file "$d" "m2-task" "codex"
+  OUT="$(bash "$MUT_DIR/m2.sh" --checkout "$d" --task m2-task --log-dir "$d/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+  if [ "$(res_count "$d/runs")" = "0" ] && [ "$(part_count "$d/runs")" = "1" ]; then
+    ok "50c — M2: without the rename, a partial artifact is exposed and no final one exists"
+  else
+    bad "50c — M2: without the rename, a partial artifact is exposed and no final one exists" \
+        "rc=$RC final=$(res_count "$d/runs") partial=$(part_count "$d/runs")"
+  fi
+else
+  bad "50c — M2 mutant differs from the dispatcher (the rename was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M3 — the result path stops being run-bound, so two runs in one evidence
+# directory finalize over each other and the second overwrites the first.
+sed 's|^  local final="\$LOG_DIR/\$RUN_ID.result"$|  local final="$LOG_DIR/terminal.result"|' \
+    "$DISPATCH_BIN" >"$MUT_DIR/m3.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m3.sh"; then
+  ok "50c — M3 mutant differs from the dispatcher (the run-bound path was found)"
+  d="$(new_sandbox)"; state_file "$d" "m3-task" "codex"
+  bash "$MUT_DIR/m3.sh" --checkout "$d" --task m3-task --log-dir "$d/runs" \
+       --timeout 20 --actor-cmd "$NOOP" >/dev/null 2>&1
+  bash "$MUT_DIR/m3.sh" --checkout "$d" --task m3-task --log-dir "$d/runs" \
+       --timeout 20 --actor-cmd "$NOOP" >/dev/null 2>&1
+  [ "$(res_count "$d/runs")" = "1" ] \
+    && ok "50c — M3: two runs collapse onto one result (run-binding is what prevents it)" \
+    || bad "50c — M3: two runs collapse onto one result" "found $(res_count "$d/runs")"
+  # The unmutated control, same shape: two runs, two results.
+  d="$(new_sandbox)"; state_file "$d" "m3-control-task" "codex"
+  run_dispatch "$d" m3-control-task --actor-cmd "$NOOP"
+  run_dispatch "$d" m3-control-task --actor-cmd "$NOOP"
+  [ "$(res_count "$d/runs")" = "2" ] \
+    && ok "50c — and the real dispatcher keeps both runs' results apart" \
+    || bad "50c — and the real dispatcher keeps both runs' results apart" "found $(res_count "$d/runs")"
+else
+  bad "50c — M3 mutant differs from the dispatcher (the run-bound path was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

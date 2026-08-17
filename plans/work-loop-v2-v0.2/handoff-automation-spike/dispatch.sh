@@ -390,6 +390,236 @@ HOP_ALLOWED_SNAPSHOT=""
 # so the dispatcher's own evidence is not reported back as the actor's work (O2).
 LOG_REL=""
 
+# --------------------------------------------------- terminal result (set A)
+#
+# ONE bounded, versioned, run-bound, machine-readable record per terminal stop,
+# finalized atomically before the lease is released. Plan § 5 Change set A,
+# required behaviour items 2, 3 and 4, and the durable-ordering rule that a lease
+# is released only after the terminal result exists.
+#
+# WHAT THIS COVERS TODAY, and the boundary is the point. This producer hangs off
+# die(), which is the shared funnel for the nine post-admission nonzero families
+# (missing runtime/auth, invalid state/identity/turn, ownership, the pre-hop
+# repository guards, shutdown/hop-limit, actor failure/timeout/budget, unexpected
+# effect/commit, permission denial, and missing-handback/no-transition). It does
+# NOT cover the families that exit by another route: usage and argument refusal
+# and checkout/lease-infrastructure failure exit directly before a run id exists;
+# lease refusal has its own producer (refuse_17); on_signal() exits on its own
+# path; and the five zero-exit sites are not this producer's terminals. Wiring
+# those is separate work with its own evidence — quietly extending the funnel here
+# would claim coverage that has not been proven.
+#
+# THE FIELDS ARE THE DISPATCHER'S, NOT THE ACTOR'S. Every value below comes from
+# a variable this script assigned from its own observation of the process, the
+# repository or the lease, or from a constant defined here. No actor prose, no raw
+# capture content, and no line of the STOP message is copied into the record: the
+# human wording lives in the run log, which the record names. An actor that writes
+# a lookalike file cannot supply the framing, because finalization happens after
+# the actor is gone and replaces whatever is at the run-bound path.
+#
+# A FACT THAT IS NOT ESTABLISHED IS STATED, NEVER OMITTED AND NEVER GUESSED. Two
+# bounded tokens carry that, and they are not synonyms:
+#   unavailable — this dispatcher cannot establish the fact at this terminal
+#   none        — the fact is established, and it is absent
+# So a pre-hop stop reports state_sha256_after=unavailable (no hop ran to observe
+# it) while a run with no --deadline reports deadline_seconds=none (the operator
+# asked for none). Reading one as the other would turn "we did not look" into "we
+# looked and there was nothing", which is the false statement this whole change
+# set exists to remove.
+TERMINAL_RESULT_VERSION=1
+RESULT_FILE=""
+RESULT_FINALIZED=0
+
+# Bound one value to a single line. Newlines, carriage returns and tabs become
+# spaces and the value is truncated. This is what makes the grammar safe: a path,
+# a git status line or an operator-supplied argument cannot inject a second
+# key=value pair into the record. Pure parameter expansion, so it is UTF-8 safe —
+# a `tr` character-class filter would mangle the non-ASCII that appears in real
+# checkout paths.
+tr_val() { # value -> one bounded single-line value
+  local v="${1-}"
+  v="${v//$'\n'/ }"; v="${v//$'\r'/ }"; v="${v//$'\t'/ }"
+  printf '%s' "${v:0:512}"
+}
+
+tr_kv() { # key value -> one record line
+  printf '%s=%s\n' "$1" "$(tr_val "${2-}")"
+}
+
+# A value, or the bounded token that says why there is none. Written as a helper
+# rather than inline `${x:-unavailable}` so that an empty string can never reach
+# the record as an empty value — an absent value and an unavailable fact look
+# identical to a reader, and only one of them is honest.
+tr_kv_or() { # key value fallback-token
+  local v="${2-}"
+  [ -n "$v" ] || v="$3"
+  tr_kv "$1" "$v"
+}
+
+# Exit code -> the symbolic outcome an operator and a later reader both key on.
+# A CONSTANT TABLE, mirroring the header's exit-code list. Deliberately not derived
+# from the STOP message: the message is prose that interpolates git and child
+# output, and reading an outcome out of it would be the prose-authority contract
+# plan § 5 forbids.
+result_outcome() { # code -> symbol
+  case "$1" in
+    10) printf 'BAD_USAGE' ;;              11) printf 'BAD_CHECKOUT' ;;
+    12) printf 'BAD_TASK_ID' ;;            13) printf 'STATE_MISSING' ;;
+    14) printf 'IDENTITY_MISMATCH' ;;      15) printf 'BAD_TURN' ;;
+    16) printf 'FOREIGN_STAGED' ;;         17) printf 'LOCK_HELD' ;;
+    18) printf 'FOREIGN_UNSTAGED' ;;       19) printf 'GIT_HAZARD' ;;
+    20) printf 'ACTOR_FAILED' ;;           21) printf 'ACTOR_TIMEOUT' ;;
+    22) printf 'NO_TRANSITION' ;;          23) printf 'HOP_LIMIT' ;;
+    24) printf 'UNEXPECTED_EFFECT' ;;      25) printf 'UNCOMMITTED_HANDBACK' ;;
+    26) printf 'MALFORMED_TERMINAL' ;;     28) printf 'INTERRUPTED' ;;
+    29) printf 'BUDGET_EXHAUSTED' ;;       30) printf 'UNEXPECTED_COMMIT' ;;
+    31) printf 'UNATTENDED_UNAVAILABLE' ;; 33) printf 'OWNERSHIP_REFUSED' ;;
+    34) printf 'OWNERSHIP_AMBIGUOUS' ;;    35) printf 'OWNERSHIP_UNAVAILABLE' ;;
+    36) printf 'STATE_UNCHANGED_HANDBACK' ;; 37) printf 'PERMISSION_DENIED' ;;
+    *)  printf 'UNCLASSIFIED' ;;
+  esac
+}
+
+# Exit code -> the next required action, as a bounded token. Same argument as
+# above: the operator's recoverable-next-action sentences stay in the STOP message
+# and the run log, and this is the machine-readable summary of them. A reader that
+# needs the wording reads the run log the record names.
+result_next_action() { # code -> token
+  case "$1" in
+    10|11|12)    printf 'operator-correct-invocation' ;;
+    13|14|15|26) printf 'operator-repair-state-file-then-rerun' ;;
+    16|18|19)    printf 'operator-clean-checkout-then-rerun' ;;
+    17)          printf 'wait-for-lease-holder' ;;
+    20|21)       printf 'operator-inspect-hop-capture-then-decide-rerun' ;;
+    22)          printf 'operator-inspect-state-file-no-transition' ;;
+    23)          printf 'operator-decide-whether-to-continue-with-more-hops' ;;
+    24|30)       printf 'operator-inspect-out-of-allowlist-effects' ;;
+    25|36)       printf 'operator-resolve-uncommitted-state-file' ;;
+    28)          printf 'operator-inspect-after-interruption' ;;
+    29)          printf 'operator-rerun-with-larger-budget' ;;
+    31)          printf 'operator-restore-contained-profile-prerequisites' ;;
+    33|34|35)    printf 'operator-resolve-ownership' ;;
+    37)          printf 'operator-decide-capability-grant' ;;
+    *)           printf 'operator-read-run-log' ;;
+  esac
+}
+
+# The permission mode this dispatcher REQUESTED for the launch this terminal
+# relates to. It is a constant of the launch path, read back here rather than
+# stored at launch, because no variable holds it — the attended Claude branch
+# passes the literal `--permission-mode default`.
+#
+# THE EFFECTIVE MODE IS NEVER DERIVED FROM THIS. Only the child's own system/init
+# event establishes what it actually ran under, and nothing in this dispatcher
+# reads it, so permission_mode_effective is unconditionally `unavailable` below.
+# Promoting a requested property to an effective one is the single most tempting
+# false statement available here, and recording the request is evidence reporting
+# — not authorization, and not Change set B's transport work.
+result_permission_mode_requested() {
+  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || { printf 'none'; return 0; }
+  [ "$MODE" = "live" ] || { printf 'none'; return 0; }
+  [ "${CUR_ACTOR:-}" = "claude" ] || { printf 'none'; return 0; }
+  # The contained profile deliberately carries no permission mode of its own.
+  [ "$UNATTENDED" -eq 1 ] && { printf 'none'; return 0; }
+  printf 'default'
+}
+
+# Count lines without letting an empty string count as one. `grep -c .` rather
+# than `wc -l`, which reports 1 for a single empty line.
+count_lines() { printf '%s\n' "${1-}" | grep -c . || true; }
+
+finalize_terminal_result() { # code -> 0 when a complete record exists
+  [ "$RESULT_FINALIZED" -eq 1 ] && return 0
+  # No run identity means this terminal is outside the covered funnel — an
+  # argument refusal or a lease-infrastructure failure. Those exit directly and
+  # never reach here; the guard is what keeps that true if a later edit moves a
+  # die() above the run-evidence block.
+  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] || return 1
+
+  local code="$1"
+  local final="$LOG_DIR/$RUN_ID.result"
+  local tmp="$final.partial"
+  RESULT_FILE="$final"
+
+  local launched=no started=no stage=pre-hop
+  if [ "${HOP_BASELINE_READY:-0}" -eq 1 ]; then
+    launched=yes; stage=post-hop
+    # A simulated actor is not a model request, and saying it was would falsify
+    # exactly the field a supervised-use claim rests on.
+    [ "$MODE" = "live" ] && started=yes
+  fi
+
+  local foreign_n dirty_n delta_n
+  foreign_n="$(count_lines "$(foreign_worktree)")"
+  dirty_n="$(count_lines "$(allowlisted_dirty)")"
+  if [ "${HOP_BASELINE_READY:-0}" -eq 1 ]; then
+    delta_n="$(count_lines "$(partial_effect_paths)")"
+  else
+    delta_n=unavailable
+  fi
+
+  local remaining=none
+  [ -n "${DEADLINE_AT:-}" ] && remaining="$(remaining_seconds)"
+
+  # Written to a temporary in the SAME directory and renamed. rename(2) within one
+  # filesystem is atomic, so a reader sees the complete record or no record at all
+  # — never the half-written one a direct `>` would expose. The sentinel last line
+  # is the second, independent handle on that: a record whose final line is
+  # missing was not finalized by this function.
+  {
+    tr_kv terminal_result_version "$TERMINAL_RESULT_VERSION"
+    tr_kv schema                  work-loop-v2-dispatcher-terminal-result
+    tr_kv outcome                 "$(result_outcome "$code")"
+    tr_kv code                    "$code"
+    tr_kv task                    "$TASK"
+    tr_kv checkout                "$CHECKOUT"
+    tr_kv run                     "$RUN_ID"
+    tr_kv mode                    "$MODE"
+    tr_kv stage                   "$stage"
+    tr_kv_or actor                "${CUR_ACTOR:-}" none
+    tr_kv actor_launched          "$launched"
+    tr_kv model_request_started   "$started"
+    tr_kv hop                     "${CUR_HOP:-0}"
+    tr_kv max_hops                "$MAX_HOPS"
+    tr_kv state_file              "$STATE_FILE"
+    tr_kv_or turn_at_terminal     "${ST_TURN:-}"    unavailable
+    tr_kv_or state_class          "${ST_CLASS:-}"   unavailable
+    tr_kv_or state_sha256_before  "${before_hash:-}" unavailable
+    tr_kv_or state_sha256_after   "${after_hash:-}"  unavailable
+    tr_kv_or head_before          "${before_head:-}" unavailable
+    tr_kv_or head_after           "${after_head:-}"  unavailable
+    tr_kv worktree_foreign_paths          "$foreign_n"
+    tr_kv worktree_allowlisted_dirty_paths "$dirty_n"
+    tr_kv changed_paths_since_launch      "$delta_n"
+    tr_kv permission_mode_requested "$(result_permission_mode_requested)"
+    # Never derived from the requested mode above. See that function's note.
+    tr_kv permission_mode_effective unavailable
+    tr_kv_or deadline_seconds     "${DEADLINE:-}"   none
+    tr_kv deadline_remaining_seconds "$remaining"
+    tr_kv actor_timeout_seconds   "$ACTOR_TIMEOUT"
+    # Never extracted from any capture by this dispatcher — permission_denials_in()
+    # reads only `.permission_denials`. Change set B territory, stated as absent.
+    tr_kv recorded_usage          unavailable
+    # The legacy session identity was retired at Tracer bullet 4 and nothing
+    # replaced it, so there is no identifier to record.
+    tr_kv actor_session_id        unavailable
+    tr_kv run_log                 "$RUN_LOG"
+    tr_kv_or capture              "${LAST_CAPTURE:-}" none
+    tr_kv lease_task_dir          "${LOCK_DIR:-}"
+    tr_kv lease_checkout_dir      "${CHECKOUT_LOCK_DIR:-}"
+    # Finalization happens BEFORE release_lock in die(), which is the plan's
+    # durable ordering: a lease is released only once the terminal result exists.
+    # So the lease is necessarily still held at the moment this line is written.
+    tr_kv lease_at_finalization   held
+    tr_kv next_action             "$(result_next_action "$code")"
+    tr_kv result_complete         yes
+  } >"$tmp" 2>/dev/null || { rm -f "$tmp" 2>/dev/null; RESULT_FILE=""; return 1; }
+
+  mv -f "$tmp" "$final" 2>/dev/null || { rm -f "$tmp" 2>/dev/null; RESULT_FILE=""; return 1; }
+  RESULT_FINALIZED=1
+  return 0
+}
+
 die() { # code, message
   local code="$1"; shift
   local msg="$*"
@@ -399,6 +629,16 @@ die() { # code, message
   [ "${HOP_BASELINE_READY:-0}" -eq 1 ] && msg="$msg$(partial_effect_block)"
   printf 'STOP [%s] %s\n' "$code" "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf 'STOP [%s] %s\n' "$code" "$msg" >>"$RUN_LOG"
+  # Ordered deliberately: after the human message is on both channels, so the run
+  # log the record points at already carries the wording; and BEFORE release_lock,
+  # because a lease may only be released once the terminal result exists.
+  # THE PATH IS PRINTED — evidence nobody can find is not evidence, the same
+  # lesson refuse_17() records one directory over.
+  finalize_terminal_result "$code"
+  if [ -n "$RESULT_FILE" ]; then
+    printf '  terminal result: %s\n' "$RESULT_FILE" >&2
+    printf '  terminal result: %s\n' "$RESULT_FILE" >>"$RUN_LOG"
+  fi
   release_lock
   exit "$code"
 }
@@ -1996,18 +2236,30 @@ allowlisted_dirty_snapshot() {
 # effects stays as short as it is now. When it does print, it says explicitly
 # that the paths are NOT a violation — otherwise a reader meeting a file list
 # inside a STOP message reasonably assumes the files are the problem.
+# The delta itself, as lines. Split out of partial_effect_block() so the terminal
+# result can COUNT the same paths the operator is shown, without a second
+# derivation of "what did this hop leave behind" (plan § 8 — one production owner
+# per seam). The prose block below is the only other caller; if these two ever
+# disagreed, the operator's message and the machine record would describe
+# different runs, which is precisely the drift the plan forbids.
+partial_effect_paths() {
+  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
+  local after
+  after="$(allowlisted_dirty_snapshot)"
+  if [ -n "$HOP_ALLOWED_SNAPSHOT" ]; then
+    comm -13 \
+      <(printf '%s\n' "$HOP_ALLOWED_SNAPSHOT") \
+      <(printf '%s\n' "$after") | cut -f2-
+  else
+    printf '%s\n' "$after" | cut -f2-
+  fi
+}
+
 partial_effect_block() {
   [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
 
-  local after dirty
-  after="$(allowlisted_dirty_snapshot)"
-  if [ -n "$HOP_ALLOWED_SNAPSHOT" ]; then
-    dirty="$(comm -13 \
-      <(printf '%s\n' "$HOP_ALLOWED_SNAPSHOT") \
-      <(printf '%s\n' "$after") | cut -f2-)"
-  else
-    dirty="$(printf '%s\n' "$after" | cut -f2-)"
-  fi
+  local dirty
+  dirty="$(partial_effect_paths)"
   [ -n "$dirty" ] || return 0
   printf '%s' $'\n'"PARTIAL FILE EFFECTS — since launch, the hop changed these ALLOWED paths and left them modified and uncommitted:"$'\n'"$dirty"$'\n'"These are inside --allow-path and are NOT a violation: they are work the hop changed and did not commit. They are still on disk. READ THEM BEFORE DECIDING ANYTHING — do not discard them and do not assume they are absent. \`git -C $CHECKOUT diff\` shows tracked content."
 }
