@@ -65,6 +65,18 @@ Stop and hand back without widening if the operator block does not own both cano
 
 ## Latest result
 
+Unit 8 correction round — **handed back on a premise failure the correction instruction anticipated**. No file was changed: `git diff` across `dispatch.sh` and `dispatch.test.sh` is empty, and this state file is the only commit.
+
+Inspected for the correction (2026-08-17):
+
+- The finding REPRODUCES — `die()` reaches `release_lock` at `dispatch.sh:1153`, and `trap 'release_lock' EXIT` at `dispatch.sh:2137` reaches it again, so the exit-38 path gives up both owned run leases exactly as reported.
+- Lease **retention** IS achievable inside the correction boundary — `wl_lease_release()` returns early on `[ "$WL_LEASE_PINNED" -eq 1 ]`, and `wl_lease_pin()` sets `WL_LEASE_PINNED=1` as its first action before any evidence is written. A `pin_lock` call from `dispatch.sh:1703` would therefore survive both `die()`'s release and the EXIT trap, and a second dispatcher would be refused with exit 17. That half needs no library change.
+- A **truthful reason** is NOT achievable inside the correction boundary, and that is the blocker. Detail in `## Blocker`.
+
+---
+
+Unit 8's hand-back evidence follows, unchanged.
+
 Inspected (2026-08-17):
 
 - Claim (1): HOLDS — read the loop's operator block at `dispatch.sh:3390-3416` (pre-unit `0681544f`). It sits at the top of `while :; do validate_state; ...`, branches on `closing_record_ok()`, which is `[ "${ST_CLASS:-}" = CLOSED ]` at `dispatch.sh:3000-3002`, and then runs `release_lock` and `exit 0`. Searched the block for `finalize_terminal_result` — no match; the only call was `die()`'s at `dispatch.sh:1146`.
@@ -102,8 +114,29 @@ Accepted deferrals remain: requested permission mode reconstruction until Change
 
 ## Blocker
 
-None.
+**A truthful retained-lease reason cannot be isolated within the correction boundary.** This is the exact premise failure the correction instruction told me to hand back rather than widen, so nothing was built around it.
+
+The durable pin record is written in one place — `wl_lease__pin_text()` in `logs/scripts/work-loop-lease.sh` — and everything it can say about *why* a lease is retained is fixed there:
+
+1. Its only two variable reason lines are `descendants still running: %s` and `sweep incomplete: %s`. Both assert facts about actor-descendant teardown. Neither is established on the exit-38 path, where no actor ran at all in that iteration and the actual cause is that the terminal record could not be written. Passing the reason through either is precisely the mislabelling the correction instruction forbids ("do not describe it as uncertain actor teardown unless that is actually established").
+2. Its fixed prose is emitted unconditionally: *"A second run must not start on this task while a descendant of the stopped actor may still be alive."* So even `pin_lock "" ""` — which would pin successfully, since the `PINNED by pid ` marker `wl_lease__pin_evidence_ok()` checks is written unconditionally, giving rc=0 — produces a durable record naming the wrong cause. The retention would be right and the evidence would be false, which fails the required proof's last clause.
+3. The library states the constraint itself: *"These two line formats are read back by --status and asserted by the transports' suites. Change them here or nowhere."*
+
+That leaves only two ways to make the evidence truthful, and the correction boundary excludes both:
+
+- **Edit the library** to carry a third reason line (e.g. `terminal result unprovable: <reason>`) and make the closing prose conditional. `logs/scripts/work-loop-lease.sh` is outside "change only `dispatch.sh`, `dispatch.test.sh`, and this task state". Measured blast radius: five files reference those formats — `dispatch.sh`, `dispatch.test.sh`, `logs/scripts/work-loop-lease.sh`, `logs/scripts/work-loop-lease.test.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh` — of which the last two are also outside the permitted paths.
+- **Write the pin record from `dispatch.sh`**, which would make this dispatcher a second writer of lease evidence — forbidden by the same boundary ("do not add another lease owner") and by the library's own single-owner design.
+
+What is *not* blocked, so Codex can size the options: retention needs no library change at all (see `## Latest result`). The blocker is only the truthfulness of the recorded reason. A pin with a false reason is available today and I did not ship it, because a durable record that misstates why a lease is held is the same class of false report this change set exists to remove — and it would send an operator hunting for actor processes that never existed.
 
 ## Next action
 
-Codex: assess Unit 8 — the real operator-terminal seam, the code-0 completion/takeover distinction keyed on `ST_CLASS`, the fail-closed exit-38 branch, and whether the three mutation controls make the seam and its distinction fail-capable. Two points need an explicit verdict rather than a nod: (1) I added exit code **38 `TERMINAL_UNPROVABLE`** rather than reuse 26, whose documented meaning and next action both point at the state file, which is not the fault here — 27 and 32 are marked do-not-reuse; (2) the "without clearing the applicable lease" clause is only partly satisfied — the ownership declaration is never cleared and that is asserted, but the run lease is still released by `trap 'release_lock' EXIT` at `dispatch.sh:2137` on every exit, and suppressing that is a global teardown change outside this unit. Then close, continue, correct once, or stop.
+Codex: decide how the exit-38 path should retain its leases truthfully. Retention itself is unblocked and needs no library change; the blocker is only what the durable pin record is allowed to say. Three options, with what each costs:
+
+1. **Widen the correction boundary to include `logs/scripts/work-loop-lease.sh`** — add a third pin reason line (e.g. `terminal result unprovable: <reason>`) and make the closing prose conditional on which cause fired. Truthful, and it fixes the shape for any future non-teardown pin. Cost: touches the shared lease library and two test files outside the current permitted paths (`logs/scripts/work-loop-lease.test.sh`, `scripts/axcion-harness-v0.2/carry-turn.test.sh`), and the library declares those formats "change them here or nowhere", so this is a deliberate contract change rather than an edit in passing.
+2. **Split the library change into its own unit**, then redo this correction against the extended contract. Keeps each unit's boundary intact and keeps the shared-library change independently assessable. Cost: one extra hop before the exit-38 path is fixed; the path keeps releasing its leases until then.
+3. **Accept a bounded limitation for now** — leave the exit-38 path releasing its leases, recorded as an accepted limitation with its reason, and revisit when a non-teardown pin cause is needed elsewhere. Cost: the evidence-unknown window the finding identifies stays open.
+
+My recommendation is (2): it gets the truthful record without doing a shared-library contract change inside a correction round scoped to one dispatcher path, and it leaves the library change reviewable on its own terms. I did not pick between these myself because all three change what the correction round is, which is Codex's call — and (1) in particular expands scope in a way core § 6 rule 4 does not let me take.
+
+Not chosen and worth stating explicitly: pinning with one of the two existing reason lines. It is available today and would pass a retention-only check, but it would durably record actor-descendant teardown that never happened.
