@@ -7671,6 +7671,15 @@ expect_dry_refusal58() { # fixture expected-token label-prefix
   O="$(bash "$1" --checkout "$V" --task dry-task --log-dir "$V/runs" --timeout 20 --dry-run 2>&1)"; R=$?
   expect_rc 38 "$R" "$3 — refused with exit 38, never 0" "$O"
   out_lacks "  terminal result:" "$O" "$3 — the refused artifact is not advertised as this run's result"
+  # THE REFUSAL NAMES THE TERMINAL IT ACTUALLY REACHED. The shared exit's default
+  # sentence belongs to the OPERATOR terminal, and a bare call here inherited it —
+  # so this seam told an operator who launched nothing that a loop terminal had
+  # been reached. Both halves are asserted: naming the preflight is not enough if
+  # the operator-terminal claim is also present somewhere in the output.
+  out_has "reached the admitted dry-run preflight terminal" "$O" \
+    "$3 — the refusal names the preflight terminal it actually reached"
+  out_lacks "reached a real operator terminal" "$O" \
+    "$3 — the refusal claims no operator terminal"
   TL="$(task_lock_for "$V" dry-task)"; CL="$(checkout_lock_for "$V")"
   # NOT a finalization story, and that distinction is the point: the record
   # published perfectly well. What failed is what it says.
@@ -7736,10 +7745,10 @@ echo "Case 58f — mutation control: remove ONLY the dry-run expected pair and b
 # and the identity boundary in place, AND leaving the operator terminal's own
 # pair untouched — which is what proves the two migrated seams are separately
 # fail-capable rather than one shared switch. Fails closed.
-sed 's/ "" "$(result_outcome 0)" 0 # dry-run terminal consumption/ # dry-run terminal consumption/' \
+sed 's/ "$(result_outcome 0)" 0 # dry-run terminal consumption/ # dry-run terminal consumption/' \
   "$DISPATCH_BIN" >"$MUT58E/m34.sh" 2>/dev/null
-M34_HITS="$(grep -c ' "" "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$DISPATCH_BIN" 2>/dev/null || true)"
-M34_LEFT="$(grep -c ' "" "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$MUT58E/m34.sh" 2>/dev/null || true)"
+M34_HITS="$(grep -c ' "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$DISPATCH_BIN" 2>/dev/null || true)"
+M34_LEFT="$(grep -c ' "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$MUT58E/m34.sh" 2>/dev/null || true)"
 M34_KEPT="$(grep -c '# dry-run terminal consumption' "$MUT58E/m34.sh" 2>/dev/null || true)"
 M34_OTHER="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$MUT58E/m34.sh" 2>/dev/null || true)"
 M34_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT58E/m34.sh" || M34_DIFFERS=yes
@@ -7768,6 +7777,44 @@ if [ "$M34_HITS" = 1 ] && [ "$M34_LEFT" = 0 ] && [ "$M34_KEPT" = 1 ] && [ "$M34_
 else
   bad "58f — M34 removed exactly the dry-run pair, kept its consumer call and the operator pair, differs, and parses" \
       "matched=$M34_HITS left=$M34_LEFT kept=$M34_KEPT operator-pair=$M34_OTHER differs=$M34_DIFFERS parses=$M34_PARSES — the control cannot run"
+fi
+
+# M35 — the label's own control, and it is separate from M34 on purpose: M34
+# proves the semantic REFUSAL is real, this proves the refusal's WORDING is. It
+# restores exactly the empty label the bare call used to pass, leaving the
+# expected pair and every boundary in place, so the run still refuses with the
+# same token and the same retention — and the sentence goes back to claiming a
+# real operator terminal was reached over a preflight. Without this, 58e's two
+# wording assertions could pass against a message that was never at risk.
+sed 's/consume_terminal_result "the admitted dry-run preflight terminal" /consume_terminal_result "" /' \
+  "$DISPATCH_BIN" >"$MUT58E/m35.sh" 2>/dev/null
+M35_HITS="$(grep -c 'consume_terminal_result "the admitted dry-run preflight terminal" ' "$DISPATCH_BIN" 2>/dev/null || true)"
+M35_LEFT="$(grep -c 'consume_terminal_result "the admitted dry-run preflight terminal" ' "$MUT58E/m35.sh" 2>/dev/null || true)"
+M35_PAIR="$(grep -c ' "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$MUT58E/m35.sh" 2>/dev/null || true)"
+M35_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT58E/m35.sh" || M35_DIFFERS=yes
+M35_PARSES=no; bash -n "$MUT58E/m35.sh" 2>/dev/null && M35_PARSES=yes
+if [ "$M35_HITS" = 1 ] && [ "$M35_LEFT" = 0 ] && [ "$M35_PAIR" = 1 ] &&
+   [ "$M35_DIFFERS" = yes ] && [ "$M35_PARSES" = yes ]; then
+  ok "58f — M35 restored the empty label, kept the expected pair, differs, and parses"
+  if mk_dry_alter58 "$MUT58E/m35-out.sh" 's/^outcome=.*/outcome=COMPLETED/' "$MUT58E/m35.sh"; then
+    V58G="$(new_sandbox)"; state_file "$V58G" dry-task codex
+    OUT="$(bash "$MUT58E/m35-out.sh" --checkout "$V58G" --task dry-task \
+          --log-dir "$V58G/runs" --timeout 20 --dry-run 2>&1)"; RCM=$?
+    if [ "$RCM" -eq 38 ] &&
+       printf '%s\n' "$OUT" | grep -q 'reached a real operator terminal' &&
+       ! printf '%s\n' "$OUT" | grep -q 'reached the admitted dry-run preflight terminal'; then
+      ok "58f — M35: with the empty label the preflight refusal claims an operator terminal again (58e's wording is fail-capable)"
+    else
+      bad "58f — M35: with the empty label the preflight refusal claims an operator terminal again (58e's wording is fail-capable)" \
+          "rc=$RCM message: $(printf '%s\n' "$OUT" | grep -m1 '^STOP')"
+    fi
+  else
+    bad "58f — M35: the outcome-only fixture over the mutant differs and parses" \
+        "the injection matched nothing, or the fixture does not parse — the control cannot run"
+  fi
+else
+  bad "58f — M35 restored the empty label, kept the expected pair, differs, and parses" \
+      "matched=$M35_HITS left=$M35_LEFT pair=$M35_PAIR differs=$M35_DIFFERS parses=$M35_PARSES — the control cannot run"
 fi
 
 echo
@@ -8917,17 +8964,25 @@ fi
 # named below are subject to it, and this case says which. It makes no claim
 # whatever about the shared nonzero die() funnel, which consumes nothing.
 SUPPLY62=''; NOSUPPLY62=''
+# CALL SITES ONLY, and the selection is deliberately narrow twice over. Comment
+# lines are dropped because prose that names the function is not a call — the
+# dry-run seam's own note cites `consume_terminal_result` and was miscounted as a
+# deferred consumer until this filter existed. The end-of-line marker is what
+# identifies the rest: every production call site carries `# <seam> terminal
+# consumption`, which is also the handle every mutation control addresses them
+# by, so a call site without one would be invisible to those controls too and is
+# correctly treated as not existing here.
 while IFS= read -r l; do
-  case "$l" in
-    *'consume_terminal_result()'*) continue ;;
-  esac
   if printf '%s\n' "$l" | grep -q 'result_outcome'; then
     SUPPLY62="$SUPPLY62$(printf '%s\n' "$l" | sed 's/.*# //;s/ .*//');"
   else
     NOSUPPLY62="$NOSUPPLY62$(printf '%s\n' "$l" | sed 's/.*# //;s/ .*//');"
   fi
 done <<EOF
-$(grep -n 'consume_terminal_result' "$DISPATCH_BIN" | grep -v 'consume_terminal_result()')
+$(grep -n 'consume_terminal_result' "$DISPATCH_BIN" |
+  grep -v 'consume_terminal_result()' |
+  grep -v '^[0-9]*:[[:space:]]*#' |
+  grep ' terminal consumption$')
 EOF
 if [ "$SUPPLY62" = 'operator;dry-run;' ] || [ "$SUPPLY62" = 'dry-run;operator;' ]; then
   ok "62c — exactly two call sites supply an expected pair: the operator and dry-run terminals"

@@ -3965,7 +3965,20 @@ if [ "$DRY_RUN" -eq 1 ]; then
   # both leases and was advertised as this preflight's terminal result. So did one
   # altered to `code=22`. Structure, path and identity have nothing to object to;
   # only meaning does.
-  consume_terminal_result "" "$(result_outcome 0)" 0 # dry-run terminal consumption
+  # THE LABEL IS THIS SEAM'S OWN, and it is a correctness fix rather than a
+  # nicety. `die_terminal_untrusted`'s default sentence is the OPERATOR
+  # terminal's — "the run reached a real operator terminal" — and the bare call
+  # that used to sit here inherited it, so every refusal at this seam described a
+  # preflight as a terminal it never reached. That was survivable while the only
+  # refusals here were hostile-path or swapped-record cases; the semantic gate
+  # above makes it the ordinary refusal, printed to an operator who launched
+  # nothing and is being told a loop terminal was reached.
+  #
+  # CARRIED, NOT RE-DERIVED, exactly as consume_terminal_result's own note says:
+  # only this call site knows which terminal it is. The shared exit's wording,
+  # its default, and the accepted operator-terminal sentence are all untouched —
+  # this supplies the argument that was always available and never passed.
+  consume_terminal_result "the admitted dry-run preflight terminal" "$(result_outcome 0)" 0 # dry-run terminal consumption
   [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
   release_lock
   exit 0
