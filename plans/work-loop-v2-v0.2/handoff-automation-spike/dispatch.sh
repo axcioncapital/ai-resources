@@ -743,6 +743,108 @@ finalize_terminal_result() { # code -> 0 when a complete record exists
   return 0
 }
 
+# ------------------------------------- the terminal result's structural reader
+#
+# ONE PRODUCTION OWNER for reading what finalize_terminal_result() writes, placed
+# next to the producer so the pair is edited together. Before this there was no
+# reader at all: the harness picked fields out with `sed`, which proved the record
+# is consumable but is not the same claim as "this program refuses a record it
+# must not trust".
+#
+# WHAT IT ANSWERS, and only this: is the artifact at this path structurally the
+# version 1 record this dispatcher writes? It returns 0 and the token `ok`, or 1
+# and exactly one bounded token naming the first structural reason it refused.
+#
+# WHAT IT DELIBERATELY DOES NOT ANSWER. It says nothing about whether the values
+# are TRUE — that the run id is this run's, that the checkout is this checkout,
+# that the outcome matches the exit code, that the path was not a symlink planted
+# somewhere else. Structure and meaning are separate questions and they are
+# separate units; a caller that read a passing verdict as "these facts are mine"
+# would have invented exactly the trust the trusted-field-ownership contract
+# forbids. Nothing in this dispatcher calls it yet, and that is deliberate: the
+# first consumer — which must also settle identity — is its own unit.
+#
+# REJECT, NEVER NORMALIZE. There is no repair path, no "close enough", no partial
+# acceptance. A record this function does not fully recognize is refused whole,
+# because a half-accepted terminal result is how a reader ends up reporting a
+# field that was never written.
+#
+# IT NEITHER EXECUTES NOR SOURCES THE ARTIFACT. The content is read as data by
+# `read`, never evaluated: an actor that plants a lookalike gets its bytes
+# compared, not run. That is why the bounds below exist as well — a reader with
+# no size bound is a reader anyone who can write the path can make run for as
+# long as they like.
+# --- wl2:terminal-result-validator:begin ---
+TERMINAL_RESULT_SCHEMA='work-loop-v2-dispatcher-terminal-result'
+# Finite, and generous against the real artifact rather than tight against it:
+# the producer emits 41 lines whose values `tr_val` already truncates at 512, so
+# a record anywhere near these bounds is not one this dispatcher wrote.
+TERMINAL_RESULT_MAX_BYTES=65536
+TERMINAL_RESULT_MAX_LINES=200
+TERMINAL_RESULT_MAX_VALUE=512
+# THE COMPLETE v1 SINGLETON SET, in the producer's own order. Two key lists in
+# one file is how a reader silently drifts from its writer, so the harness
+# compares this set against the keys a real run actually emitted rather than
+# against a list it restates — a field added to the producer and not to this line
+# fails that assertion rather than passing unnoticed.
+TERMINAL_RESULT_REQUIRED='terminal_result_version schema outcome code task checkout run mode stage actor actor_launched model_request_started hop max_hops state_file turn_at_terminal state_class state_sha256_before state_sha256_after head_before head_after worktree_foreign_paths worktree_allowlisted_dirty_paths changed_paths_since_launch permission_mode_requested permission_mode_effective deadline_seconds deadline_remaining_seconds actor_timeout_seconds recorded_usage actor_session_id run_log capture owner_check owner_declared lease_task_dir lease_checkout_dir lease_task_at_finalization lease_checkout_at_finalization next_action result_complete'
+
+validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded reason token
+  local f="${1-}" bytes line key val n=0 seen=' ' last='' k
+  [ -n "$f" ]                || { printf 'no-path\n';    return 1; }
+  [ -f "$f" ] && [ -r "$f" ] || { printf 'unreadable\n'; return 1; }
+  # The size bound is taken BEFORE a single line is read, so an oversized artifact
+  # costs one stat rather than a walk through however much was planted.
+  bytes="$(wc -c <"$f" 2>/dev/null)" || { printf 'unreadable\n'; return 1; }
+  bytes="${bytes// /}"
+  case "$bytes" in ''|*[!0-9]*) printf 'unreadable\n'; return 1 ;; esac
+  [ "$bytes" -le "$TERMINAL_RESULT_MAX_BYTES" ] || { printf 'too-large\n'; return 1; }
+
+  # `|| [ -n "$line" ]` so a final line with no trailing newline is still read and
+  # judged. Dropping it would make a truncated record look like a complete one.
+  while IFS= read -r line || [ -n "$line" ]; do
+    n=$((n+1))
+    [ "$n" -le "$TERMINAL_RESULT_MAX_LINES" ] || { printf 'too-many-lines\n'; return 1; }
+    case "$line" in [a-z]*=*) ;; *) printf 'malformed-line\n'; return 1 ;; esac
+    key="${line%%=*}"
+    val="${line#*=}"
+    case "$key" in *[!a-z0-9_]*) printf 'malformed-line\n'; return 1 ;; esac
+    [ "${#val}" -le "$TERMINAL_RESULT_MAX_VALUE" ] || { printf 'value-too-long\n'; return 1; }
+    # The producer's `tr_val` turns tabs and carriage returns into spaces, so a
+    # value carrying one did not come from it.
+    case "$val" in *$'\t'*|*$'\r'*) printf 'malformed-line\n'; return 1 ;; esac
+    # THE VERSION ANNOUNCES ITSELF FIRST, before anything else is interpreted. A
+    # reader that merely searched for the expected version string would accept a
+    # record that declared something else at the top and buried the match below.
+    if [ "$n" -eq 1 ]; then
+      [ "$key" = terminal_result_version ] || { printf 'bad-version-line\n'; return 1; }
+      [ "$val" = 1 ]                       || { printf 'unknown-version\n';  return 1; }
+    fi
+    if [ "$key" = schema ] && [ "$val" != "$TERMINAL_RESULT_SCHEMA" ]; then
+      printf 'unknown-schema\n'; return 1
+    fi
+    # A field this version does not define is a partial acceptance, not a
+    # harmless extra: the version is exact, so an unrecognized key means the
+    # writer and this reader do not agree about what the record is.
+    case " $TERMINAL_RESULT_REQUIRED " in *" $key "*) ;; *) printf 'unknown-field\n'; return 1 ;; esac
+    case "$seen" in *" $key "*) printf 'duplicate-field\n'; return 1 ;; esac
+    seen="$seen$key "
+    last="$line"
+  done <"$f"
+
+  [ "$n" -gt 0 ] || { printf 'empty\n'; return 1; }
+  # THE SENTINEL IS CHECKED BEFORE THE MISSING-FIELD SWEEP, so a record cut short
+  # mid-write is named for what it is — unfinished — rather than for whichever
+  # field the truncation happened to remove first.
+  [ "$last" = 'result_complete=yes' ] || { printf 'incomplete\n'; return 1; }
+  for k in $TERMINAL_RESULT_REQUIRED; do
+    case "$seen" in *" $k "*) ;; *) printf 'missing-field\n'; return 1 ;; esac
+  done
+  printf 'ok\n'
+  return 0
+}
+# --- wl2:terminal-result-validator:end ---
+
 die() { # code, message
   local code="$1"; shift
   local msg="$*"

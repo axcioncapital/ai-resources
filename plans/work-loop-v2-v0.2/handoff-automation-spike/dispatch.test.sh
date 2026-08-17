@@ -5206,6 +5206,247 @@ else
       "the sed matched nothing — the control cannot run"
 fi
 
+# ==================================================================== case 51
+# THE STANDALONE STRUCTURAL VALIDATOR for the v1 terminal result case 50 proves
+# the dispatcher produces. Case 50 read that artifact with harness `sed`/`grep`
+# on purpose — to show it is consumable without a parser shipped alongside it.
+# This case adds the parser the DISPATCHER itself owns, and the two claims are
+# different: "a careful reader can extract a field" is not "this program refuses
+# a record it must not trust".
+#
+# THERE IS NO CONSUMER HERE, and that is this unit's boundary. Nothing below
+# makes a valid result advance a loop, choose a path, wait for a record, or infer
+# a semantic fact from a structure that validated. The validator answers exactly
+# one question — is this artifact structurally the v1 record this dispatcher
+# writes — and returns one bounded token saying why not. Meaning, run/task/path
+# identity and first-consumer integration are separate units.
+#
+# HOW IT IS EXERCISED, and why that route. dispatch.sh parses its arguments and
+# exits at load, so it cannot be sourced; and this unit may not add a CLI, status
+# or transition route to reach the function, because that route would be the
+# consumer the boundary above excludes. So the harness lifts the
+# marker-delimited validator region out of the dispatcher UNDER TEST and sources
+# that. It is not a second implementation: the text executed below is
+# dispatch.sh's own production text, and 51c proves it by mutating dispatch.sh
+# and watching these assertions go red.
+
+VAL_BEGIN='# --- wl2:terminal-result-validator:begin ---'
+VAL_END='# --- wl2:terminal-result-validator:end ---'
+
+extract_validator() { # dispatcher-path outfile -> 0 when a non-empty region came out
+  awk -v b="$VAL_BEGIN" -v e="$VAL_END" '
+    $0 == b { f=1; next } $0 == e { f=0; next } f' "$1" >"$2" 2>/dev/null
+  [ -s "$2" ]
+}
+
+# One validation, in its own subshell. The isolation is the point twice over:
+# nothing the extracted text defines leaks into the harness, and nothing the
+# harness already holds can stand in for a definition the dispatcher failed to
+# ship — an undefined function exits 127 here rather than silently resolving.
+val_run() { # lib artifact -> "<rc> <token>"
+  ( . "$1" >/dev/null 2>&1 || { printf '99 lib-unsourceable\n'; exit 0; }
+    tok="$(validate_terminal_result "$2" 2>/dev/null)"; rc=$?
+    printf '%s %s\n' "$rc" "$tok" )
+}
+
+# want-rc want-token label
+val_expect() { # lib artifact want-rc want-token label
+  local got; got="$(val_run "$1" "$2")"
+  if [ "$got" = "$3 $4" ]; then ok "$5"; else bad "$5" "expected '$3 $4', got '$got'"; fi
+}
+
+echo
+echo "Case 51a — the dispatcher's own validator accepts the artifact its producer really writes"
+VAL_LIB="$SANDBOX_ROOT/wl2-validator-lib.sh"
+if extract_validator "$DISPATCH_BIN" "$VAL_LIB"; then
+  ok "51a — a marker-delimited validator region exists in the dispatcher"
+else
+  bad "51a — a marker-delimited validator region exists in the dispatcher" \
+      "no region between the markers in $DISPATCH_BIN — there is no production validator to exercise"
+  : >"$VAL_LIB"
+fi
+
+# THE VALID CONTROL IS A REAL RUN'S OUTPUT, not a hand-built happy-path sample.
+# A validator agreeing with a fixture the same author wrote proves only that the
+# two agree; agreeing with what finalize_terminal_result() actually emitted is
+# what makes it compatible with the artifact in the field.
+V51D="$(new_sandbox)"; state_file "$V51D" "validator-task" "codex"
+run_dispatch "$V51D" validator-task --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "51a — the producing run reaches a nonzero terminal (22)" "$OUT"
+RID51="$(run_id_of "$OUT")"
+REAL51="$V51D/runs/$RID51.result"
+if [ -f "$REAL51" ]; then
+  ok "51a — the producing run left a terminal result to validate"
+else
+  bad "51a — the producing run left a terminal result to validate" \
+      "missing $REAL51; runs/ holds: $(ls "$V51D/runs" 2>&1 | tr '\n' ' ')"
+fi
+val_expect "$VAL_LIB" "$REAL51" 0 ok "51a — the unchanged real producer result is accepted"
+
+# THE DECLARED SET IS THE PRODUCED SET. Two key lists in one file is how a
+# reader drifts from its writer without either side looking wrong, so the
+# validator's required set is compared against the keys the producer actually
+# emitted rather than against a list this harness restates.
+PRODUCED_KEYS="$(sed -n 's/^\([a-z][a-z0-9_]*\)=.*/\1/p' "$REAL51" 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')"
+DECLARED_KEYS="$( ( . "$VAL_LIB" >/dev/null 2>&1 &&
+                    printf '%s\n' $TERMINAL_RESULT_REQUIRED ) 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')"
+if [ -n "$PRODUCED_KEYS" ] && [ "$PRODUCED_KEYS" = "$DECLARED_KEYS" ]; then
+  ok "51a — the validator's required set is exactly the set the producer writes"
+else
+  bad "51a — the validator's required set is exactly the set the producer writes" \
+      "produced: ${PRODUCED_KEYS:-<none>} / declared: ${DECLARED_KEYS:-<none>}"
+fi
+
+echo
+echo "Case 51b — every structural defect is REJECTED with one bounded reason token"
+V51="$SANDBOX_ROOT/v51"; mkdir -p "$V51"
+
+# A duplicate singleton. The brief's named case: two `outcome=` lines, everything
+# else intact and the sentinel still last, so nothing but the duplication can
+# explain a rejection.
+awk '/^outcome=/{print} {print}' "$REAL51" >"$V51/dup" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/dup" 1 duplicate-field "51b — a duplicated singleton is rejected"
+
+# An unrecognized version. The record is otherwise this producer's own bytes,
+# which is the case a later v2 would present.
+sed '1s/^terminal_result_version=1$/terminal_result_version=2/' "$REAL51" >"$V51/ver2" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/ver2" 1 unknown-version "51b — an unrecognized version is rejected"
+
+# The version line PRESENT BUT NOT FIRST. A validator that merely grepped for the
+# expected version string would accept this; the structural claim is that the
+# record announces its version before anything else can be read.
+{ sed -n '2p' "$REAL51"; sed -n '1p' "$REAL51"; sed -n '3,$p' "$REAL51"; } >"$V51/vermoved" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/vermoved" 1 bad-version-line "51b — a version line that is not the first line is rejected"
+
+sed 's|^schema=.*|schema=work-loop-v2-something-else|' "$REAL51" >"$V51/schema" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/schema" 1 unknown-schema "51b — an unrecognized schema name is rejected"
+
+sed '/^owner_check=/d' "$REAL51" >"$V51/missing" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/missing" 1 missing-field "51b — a missing required singleton is rejected"
+
+awk 'NR==5{print "NOT_A_PAIR"} {print}' "$REAL51" >"$V51/nopair" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/nopair" 1 malformed-line "51b — a line outside the key=value grammar is rejected"
+
+awk 'NR==5{print "bad-key=x"} {print}' "$REAL51" >"$V51/badkey" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/badkey" 1 malformed-line "51b — a key outside the bounded key charset is rejected"
+
+awk 'NR==5{print "surprise_field=x"} {print}' "$REAL51" >"$V51/extra" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/extra" 1 unknown-field "51b — a field this version does not define is rejected"
+
+# TRUNCATED, the crash-boundary shape: a record that was being written when the
+# writer stopped. It has no sentinel and it is missing most of its fields, and
+# the token names the more specific of the two.
+head -20 "$REAL51" >"$V51/trunc" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/trunc" 1 incomplete "51b — a truncated record with no sentinel is rejected"
+
+# THE SENTINEL PRESENT BUT NOT LAST — the second half of the not-merely-grepping
+# claim. Every required field is here exactly once and the grammar is clean; the
+# only defect is that `result_complete=yes` is not the final line, which is
+# precisely what separates a finished record from one still being written.
+{ sed -n '1p' "$REAL51"; grep '^result_complete=' "$REAL51"
+  sed '1d;/^result_complete=/d' "$REAL51"; } >"$V51/midsentinel" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/midsentinel" 1 incomplete "51b — a sentinel that is not the last line is rejected"
+
+sed 's|^result_complete=yes$|result_complete=no|' "$REAL51" >"$V51/notyes" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/notyes" 1 incomplete "51b — a negated completion sentinel is rejected"
+
+# THE FINITE ARTIFACT BOUND. A reader with no size bound is a reader an actor can
+# make run for as long as it likes by planting a large file at the path.
+PAD70K="$(head -c 70000 /dev/zero 2>/dev/null | tr '\0' 'x')"
+{ cat "$REAL51"; printf 'next_action=%s\n' "$PAD70K"; } >"$V51/big" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/big" 1 too-large "51b — an artifact past the declared byte bound is rejected"
+
+PAD600="$(head -c 600 /dev/zero 2>/dev/null | tr '\0' 'y')"
+sed "s|^next_action=.*|next_action=$PAD600|" "$REAL51" >"$V51/longval" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/longval" 1 value-too-long "51b — a value past the declared value bound is rejected"
+
+: >"$V51/empty"
+val_expect "$VAL_LIB" "$V51/empty" 1 empty "51b — an empty artifact is rejected"
+val_expect "$VAL_LIB" "$V51/does-not-exist" 1 unreadable "51b — an absent artifact is rejected"
+
+# READ-ONLY, PROVED AGAINST THE WHOLE CHECKOUT rather than against the artifact
+# alone. The claim is not just "it did not rewrite the record" but "it touched no
+# state file, no lease, no ownership declaration, no log and no capture", and a
+# tree manifest is the only assertion that covers all of them at once.
+BEFORE51="$(tree_manifest "$V51D")"
+val_run "$VAL_LIB" "$REAL51" >/dev/null 2>&1
+val_run "$VAL_LIB" "$V51/dup" >/dev/null 2>&1
+AFTER51="$(tree_manifest "$V51D")"
+if [ "$BEFORE51" = "$AFTER51" ]; then
+  ok "51b — validating changes nothing in the checkout (artifact, state, leases, logs)"
+else
+  bad "51b — validating changes nothing in the checkout (artifact, state, leases, logs)" \
+      "$(printf '%s\n' "$BEFORE51" >"$V51/before"; printf '%s\n' "$AFTER51" >"$V51/after"
+         diff "$V51/before" "$V51/after" | head -4 | tr '\n' ';')"
+fi
+
+# IT NEITHER SOURCES NOR EVALUATES WHAT IT READS, asserted twice. The static half
+# is what the production text may not contain; the live half plants a value that
+# WOULD have an effect if any of those constructs were reached.
+#
+# WHOLE-LINE COMMENTS ARE STRIPPED FIRST, and that sharpens the claim rather than
+# softening it: a comment cannot execute, so a prose line mentioning `eval` would
+# be a false positive about the one thing this control exists to catch.
+VAL_CODE="$SANDBOX_ROOT/wl2-validator-code.sh"
+NOEXEC_RE='(^|[^[:alnum:]_])(eval|source)[[:space:]]|^[[:space:]]*\.[[:space:]]|`|\$\(<'
+sed 's/^[[:space:]]*#.*$//' "$VAL_LIB" >"$VAL_CODE" 2>/dev/null
+if [ -s "$VAL_LIB" ] && ! grep -nE "$NOEXEC_RE" "$VAL_CODE" >/dev/null 2>&1; then
+  ok "51b — the validator's executable text contains no eval, source, dot-source or backtick"
+else
+  bad "51b — the validator's executable text contains no eval, source, dot-source or backtick" \
+      "$(grep -nE "$NOEXEC_RE" "$VAL_CODE" 2>/dev/null | head -3 | tr '\n' ';')"
+fi
+CANARY51="$V51D/CANARY"
+sed "s|^next_action=.*|next_action=\$(touch $CANARY51)|" "$REAL51" >"$V51/inject" 2>/dev/null
+val_run "$VAL_LIB" "$V51/inject" >/dev/null 2>&1
+if [ ! -e "$CANARY51" ]; then
+  ok "51b — a command substitution inside a value is data, not code"
+else
+  bad "51b — a command substitution inside a value is data, not code" "the canary at $CANARY51 was created"
+fi
+
+echo
+echo "Case 51c — mutation controls: the rejections above go green when the validator is broken"
+MUT51="$SANDBOX_ROOT/mutants51"; mkdir -p "$MUT51"
+
+# M9 — remove the duplicate-detection line from the DISPATCHER, then extract the
+# validator from the mutant. If 51b's duplicate rejection were satisfied by
+# anything other than that line, this control would still reject and the
+# assertion above would not be evidence.
+sed "/printf 'duplicate-field/d" "$DISPATCH_BIN" >"$MUT51/m9.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT51/m9.sh"; then
+  ok "51c — M9 mutant differs from the dispatcher (the duplicate check was found)"
+  if extract_validator "$MUT51/m9.sh" "$MUT51/m9.lib"; then
+    val_expect "$MUT51/m9.lib" "$V51/dup" 0 ok \
+      "51c — M9: without the duplicate check the duplicate is accepted (51b is fail-capable)"
+  else
+    bad "51c — M9: without the duplicate check the duplicate is accepted (51b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "51c — M9 mutant differs from the dispatcher (the duplicate check was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M10 — remove the sentinel-is-last line. Without it the validator still finds
+# every required field exactly once in the reordered record, so it accepts a
+# record that was never finalized. That is exactly the failure a grep for
+# `result_complete=yes` would have shipped.
+sed "/printf 'incomplete/d" "$DISPATCH_BIN" >"$MUT51/m10.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT51/m10.sh"; then
+  ok "51c — M10 mutant differs from the dispatcher (the sentinel check was found)"
+  if extract_validator "$MUT51/m10.sh" "$MUT51/m10.lib"; then
+    val_expect "$MUT51/m10.lib" "$V51/midsentinel" 0 ok \
+      "51c — M10: without the sentinel check a non-final record is accepted (51b is fail-capable)"
+  else
+    bad "51c — M10: without the sentinel check a non-final record is accepted (51b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "51c — M10 mutant differs from the dispatcher (the sentinel check was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
