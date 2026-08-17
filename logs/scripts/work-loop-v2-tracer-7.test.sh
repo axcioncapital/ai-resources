@@ -1177,10 +1177,22 @@ S9PID=$!; BG_PIDS="$BG_PIDS $S9PID"
 
 if wait_for_file "$S9MARK" 45; then
   ok "S9    the attended carrier's actor launched"
+  # The marker proves the actor launched and NOTHING MORE. The sentinel appends it
+  # before it reads its action file and dispatches into the partial branch, so
+  # releasing on the marker alone lands here with the partial effect not yet
+  # written — intermittently, whenever those few command substitutions lose the
+  # race. Wait for the evidence the assertion below actually reads.
+  #
+  # This is a synchronization gate, NOT the assertion. An effect that never
+  # arrives still fails at the `[ -f ]` below, so the check stays falsifiable; the
+  # bound is 8s, well inside the actor's 9s post-write hold, so the carrier is
+  # still provably live when the assertion runs and "during the hop" remains what
+  # is being asserted rather than "eventually".
+  S9PARTIAL="$S9CO/logs/work-loop/partial-effect.txt"
+  wait_for_file "$S9PARTIAL" 8 >/dev/null
   alive "$S9PID" && ok "S9    the carrier is live while the dispatcher contends" \
                  || bad "S9    the carrier is live while the dispatcher contends"
-  # The partial effect is already on disk, mid-hop.
-  [ -f "$S9CO/logs/work-loop/partial-effect.txt" ] \
+  [ -f "$S9PARTIAL" ] \
     && ok "S9    the partial effect is visible on disk during the hop" \
     || bad "S9    the partial effect is visible on disk during the hop"
 

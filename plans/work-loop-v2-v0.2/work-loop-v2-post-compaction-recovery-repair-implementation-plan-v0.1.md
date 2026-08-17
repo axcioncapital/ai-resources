@@ -607,7 +607,14 @@ fields, its seam `Next:` rule and its read-only posture.
 ### Unit 3 — state rollover red / green
 
 Implemented 2026-08-17 in checkout `ai-resources-work-loop-fix-17-8`, branch
-`session/2026-08-17-work-loop-fix-17-8`. The rollover control was added to `work-loop-v2-slice-1.test.sh`,
+`session/2026-08-17-work-loop-fix-17-8`.
+
+**Status: ACCEPTED 2026-08-17** at commit `fe61527c`, against the unchanged approved condition. The
+Tracer 7 intermittent recorded below was real and is preserved as recorded; it was a pre-existing race
+in Tracer 7, not a defect in this unit, and it was repaired separately as the Unit 4 prerequisite
+below.
+
+The rollover control was added to `work-loop-v2-slice-1.test.sh`,
 the existing surface that already carries the state-file field contract and the section-scoped
 `latest_of` reader; no second harness was created, and no fixture was retained under `logs/work-loop/`.
 
@@ -671,6 +678,44 @@ unit changed is outside S9, which executes against a temporary sandbox checkout.
 the reason: Tracer 7 is Unit 2's accepted evidence surface, and this unit's framing holds the
 dispatcher, courier and their harness outside scope, so re-synchronising S9 to wait on the partial
 effect rather than the marker is an unbriefed edit to an accepted unit and belongs in its own unit.
+
+### Unit 4 prerequisite (Unit 4a) — deterministic Tracer 7 S9 synchronization
+
+Implemented 2026-08-17 in checkout `ai-resources-work-loop-fix-17-8`, branch
+`session/2026-08-17-work-loop-fix-17-8`. Execution packaging inside approved Unit 4, not a sixth plan
+unit: it changes no objective, scope, exclusion, acceptance condition or unit order. It exists because
+Unit 4's live proof cannot be read against an intermittently red regression.
+
+**The race, quoted from the surface.** `make_sentinel` appends the launch marker at
+`work-loop-v2-tracer-7.test.sh:276`, *before* it reads its action file, resolves the repo path and
+dispatches into the `partial:*` branch, which writes `partial-effect.txt` at line 293. S9 released on
+`wait_for_file "$S9MARK" 45` and read `[ -f .../partial-effect.txt ]` three lines later, so the
+assertion could run inside the window those command substitutions occupy. The ordering is production
+behaviour and was left unchanged; only the release condition was wrong.
+
+**Red, deterministically.** A control reproduced the seam with the harness's own `wait_for_file` and
+`alive` copied verbatim, widening the marker-to-effect interval from those substitutions to a
+controlled 3s and giving each run an isolated directory and a reaped actor. The current
+marker-based gate failed **3 of 3 runs**; the corrected gate passed **3 of 3**. An earlier revision of
+the control shared one directory between runs, and a previous run's still-sleeping actor rewrote the
+effect — it reported 1 red of 3, which is luck, not ordering. That is why the isolation is part of the
+control rather than incidental to it.
+
+**Green, after the edit.** Full suite exit 0 — **163 passed / 0 failed**, with all thirteen S9
+assertions retained and all nine scenarios PASS. The count is identical to the pre-fix green runs, so
+no assertion was added, weakened or removed. The exact sequence that had reproduced the flake
+(`work-loop-owner.test.sh` immediately followed by Tracer 7, which produced 162/1) now returns 163/0
+on both of two consecutive runs.
+
+**The gate is still falsifiable.** The wait is a synchronization gate, not the assertion: `[ -f ]`
+still decides. A control in which the actor launches but *never* writes the partial effect leaves the
+corrected gate **FAIL** with the carrier still live, so a genuine regression is caught rather than
+waited out. The 8s bound sits inside the actor's 9s post-write hold, which is what keeps "during the
+hop" the thing being asserted rather than "eventually".
+
+**Scope held.** The sentinel's action ordering, the attended carrier, the dispatcher, every other
+scenario, and all Work Loop skills, commands, core, hooks, validators and owner helpers are unchanged.
+No fixture was retained; the control lived outside the repository and was removed.
 
 ### Unit 4 — live post-compaction case
 
