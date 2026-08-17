@@ -178,19 +178,52 @@ else
       "ambiguous=$(amb_count "$set_out") viol=$(viol_count "$set_out") vs $(viol_count "$amb_out")"
 fi
 
-# T6 — the REAL workflow is the expected red baseline: resolvable everywhere, violations measured.
+# T6 — the REAL workflow. This assertion used to read "the expected RED baseline: violations
+# measured", and that was true for as long as a measured violation remained. Unit 15 encoded the last
+# one — H2-03 — as the accepted `content-required` exception, so every named seam is now either
+# converted or explicitly exempt and the live surface is green. Pinning T6 to red would now fail on a
+# correct surface, which is the mirror of the trap the T9 comment describes: it would invite
+# weakening the check to make it pass.
+#
+# Green is the weaker claim, though, so it does not stand alone. T6c below re-earns it: a real
+# content relay put back into a live command body must turn the WHOLE RUN red again, verdict and exit
+# status included. Together they say the green is measured, not asserted.
 OUT="$(bash "$CHECK" --workflow "$WORKFLOW" 2>&1)"; RC=$?
-real_viol="$(printf '%s' "$OUT" | sed -n 's/^  measured violations     : //p')"
-real_unres="$(printf '%s' "$OUT" | sed -n 's/^  unresolved (uncovered)  : //p')"
-if [ "$RC" -eq 1 ] && [ "${real_viol:-0}" -gt 0 ]; then
-  ok "T6 unmodified production workflow exits nonzero with $real_viol measured violations"
+real_viol="$(printf '%s' "$OUT" | sed -n 's/^  measured violations *: //p')"
+real_unres="$(printf '%s' "$OUT" | sed -n 's/^  unresolved (uncovered) *: //p')"
+real_amb="$(printf '%s' "$OUT" | sed -n 's/^  ambiguous (unsettled) *: //p')"
+real_cap="$(printf '%s' "$OUT" | sed -n 's/^  cap violations *: //p')"
+if [ "$RC" -eq 0 ] &&
+   printf '%s' "$OUT" | grep -q 'verdict: TARGET MET' &&
+   [ "${real_viol:-1}" -eq 0 ] && [ "${real_cap:-1}" -eq 0 ] && [ "${real_amb:-1}" -eq 0 ]; then
+  ok 'T6 unmodified production workflow is green: exit 0, TARGET MET, 0 violations/cap/ambiguous'
 else
-  bad 'T6 the real workflow should exit nonzero with measured violations' "exit=$RC viol=${real_viol:-?}"
+  bad 'T6 the real workflow should now be green' \
+      "exit=$RC viol=${real_viol:-?} cap=${real_cap:-?} amb=${real_amb:-?}"
 fi
 if [ "${real_unres:-1}" -eq 0 ]; then
   ok 'T6b every manifest row resolves against the real workflow (0 uncovered)'
 else
   bad 'T6b no manifest row may be unresolved against the real workflow' "unresolved=${real_unres:-?}"
+fi
+
+# T6c — the green in T6 must be EARNED. Put one real content relay back into a live command body and
+# the whole run must go red: verdict TARGET NOT MET and exit 1, not merely one row changing colour.
+# Without this, T6 would assert green on a check that had quietly lost the ability to fail at all.
+cp -R "$WORKFLOW/.claude" "$TMP/t6c-claude"
+mkdir -p "$TMP/t6c"; mv "$TMP/t6c-claude" "$TMP/t6c/.claude"
+sed -i.bak 's|the chapter prose by PATH|the chapter prose as content|' \
+  "$TMP/t6c/.claude/commands/verify-chapter.md"
+rm -f "$TMP/t6c/.claude/commands/verify-chapter.md.bak"
+OUT="$(bash "$CHECK" --workflow "$TMP/t6c" 2>&1)"; RC=$?
+t6c_viol="$(printf '%s' "$OUT" | sed -n 's/^  measured violations *: //p')"
+if [ "$RC" -eq 1 ] &&
+   printf '%s' "$OUT" | grep -q 'verdict: TARGET NOT MET' &&
+   [ "${t6c_viol:-0}" -eq 1 ]; then
+  ok 'T6c the green is earned: one real content relay returns the whole run to TARGET NOT MET (exit 1)'
+else
+  bad 'T6c restoring a real content relay must fail the whole run' \
+      "exit=$RC verdict/viol=${t6c_viol:-?}"
 fi
 
 # T7 — the fixture is byte-stable, so reduction percentages stay comparable between runs.

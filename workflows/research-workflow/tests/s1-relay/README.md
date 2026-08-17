@@ -183,9 +183,31 @@ current per-seam figures rather than quoting numbers from here.
      carve-out that would free St4.0.5 — "a cross-chapter bulk operand, not a per-chapter input" —
      so if `H3-09` were ever reclassified, `H3-04` would become path-safe by that precedent. Nothing
      here proposes that.
-   - **Still open, and deliberately not decided here:** `H2-03` is `operand-path-ok` and unchanged,
-     but its chapter feeds the *same* St2.3 prompt body as `H2-04`'s extracts. Re-examine it before
-     scheduling its implementation unit.
+   - ~~Still open~~ **— `H2-03` was settled by the Unit 14 discovery (commit `02996c0e`) and encoded
+     by Unit 15: `intentional-content` / `content-required`, the same classification as `H2-04`.**
+     The two are the chapter-prose and evidence-table halves of one caller-assembled GPT-5 request,
+     which St2.3 names in a single phrase ("use chapter prose + evidence table as input"). Four live
+     contract statements each independently require the main session to hold the chapter body: the
+     command's pre-dispatch confidentiality check scans the *outbound message* for confidential
+     identifiers, and a path cannot be scanned; `execution-agent` *receives* "a user message to send"
+     and may not modify it; it may not "send any information not explicitly provided in the user
+     message", so reading a passed path and transmitting the file would breach its own
+     confidentiality rule; and St2.6 already states the main session holds "raw chapter content".
+     The external endpoint also cannot resolve a repository path. **No source edit was needed or
+     made** — `verify-chapter` St1.1 is unchanged.
+   - **Deterministic completion is by an accepted exception, not by converting everything.** With
+     `H2-03` encoded, all 40 named seams are either converted (27) or explicitly justified (13), so
+     the check reports `TARGET MET` and exits 0. That the last measured violation became an
+     exemption is exactly the shape that would be metric-gaming if the exemption were weak, so the
+     proof is built to be falsifiable in the narrowest possible way: reverting **only** `H2-03`'s two
+     manifest fields, with the workflow source untouched, restores exactly one violation and
+     `TARGET NOT MET` while all 39 other rows stay put. `T6c` re-earns it from the other direction —
+     putting one real content relay back into a live command body returns the whole run to
+     `TARGET NOT MET`, exit 1.
+   - **Making prompt assembly path-based would be a redesign, not this refactor.** It would move
+     construction and the confidentiality gate into `execution-agent`, changing its stated
+     responsibility from "send what you are given" to "assemble and send" and relocating an
+     operator-facing safety control out of the command that owns it. Outside S1.
 
 Summaries added anywhere in step 3 are capped at **20 lines and 4 KB**; the check enforces both.
 
