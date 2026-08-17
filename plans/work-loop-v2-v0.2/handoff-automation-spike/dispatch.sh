@@ -2906,6 +2906,32 @@ die_hop() { # code, message
   die "$@"
 }
 
+# Seconds left on the whole-run clock. Prints a very large number when no
+# deadline was set, so callers can use min() unconditionally without branching.
+#
+# HOISTED HERE FOR THE SAME REASON THE SECTION ABOVE WAS (Unit 24). This is a
+# pure fact producer, so its position carries no semantics of its own — except
+# that finalize_terminal_result() calls it whenever DEADLINE_AT is set, and the
+# --unattended gate immediately below exits 31 in six places. While this
+# definition sat next to its first in-loop caller, every one of those six ran
+# finalization against a function that did not yet exist: bash reported
+# `command not found`, the command substitution produced an empty string, and
+# `deadline_remaining_seconds` went out EMPTY beside `result_complete=yes` — a
+# record certifying itself complete while missing a required field. The empty
+# value is the tell, and it is the same defect class Unit 21 removed one section
+# up; only that section was hoisted then, and this fact was not in it.
+#
+# So it carries the same constraint, and it is stated here rather than left to be
+# inferred: THIS DEFINITION MUST PRECEDE EVERY TOP-LEVEL die() THAT CAN REACH
+# FINALIZATION. Moving it back down, or adding a stopping preflight above it,
+# reintroduces the empty field.
+remaining_seconds() {
+  if [ -z "$DEADLINE_AT" ]; then printf '%s' 2147483647; return 0; fi
+  local left=$(( DEADLINE_AT - $(date '+%s') ))
+  [ "$left" -lt 0 ] && left=0
+  printf '%s' "$left"
+}
+
 # ------------------------------------------------- unattended contained profile
 #
 # Item 1d. The operator settled the policy and a probe proved the mechanism; this
@@ -3449,14 +3475,11 @@ You do not run git. Claude commits.
 EOF
 }
 
-# Seconds left on the whole-run clock. Prints a very large number when no
-# deadline was set, so callers can use min() unconditionally without branching.
-remaining_seconds() {
-  if [ -z "$DEADLINE_AT" ]; then printf '%s' 2147483647; return 0; fi
-  local left=$(( DEADLINE_AT - $(date '+%s') ))
-  [ "$left" -lt 0 ] && left=0
-  printf '%s' "$left"
-}
+# remaining_seconds() USED TO BE DEFINED HERE, immediately above its first
+# in-loop caller. It now sits with the terminal-result dependencies further up —
+# see the note at its new position. Nothing else moved, and the clamp below reads
+# it exactly as it always did: a function is resolved when it is CALLED, and every
+# caller in this region runs long after either position.
 
 # The clamp that makes --deadline a deadline rather than a start gate.
 #

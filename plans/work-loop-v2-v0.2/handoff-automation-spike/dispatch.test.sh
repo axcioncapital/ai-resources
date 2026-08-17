@@ -5537,6 +5537,161 @@ for pair in "outcome:UNATTENDED_UNAVAILABLE" "code:31" "stage:pre-hop" \
 done
 unset WL50H_ARGV
 
+# =================================================================== case 50i
+#
+# THE SAME EARLIEST TERMINAL, WITH A CLOCK (Unit 24). Case 50h proved this
+# terminal collects the worktree facts it reports. It runs without --deadline, so
+# `deadline_remaining_seconds` is the honest literal `none` and the row cannot see
+# the defect this case exists for: with a deadline supplied, the finalizer at
+# dispatch.sh:796 asks remaining_seconds() for the fact, and the sole definition
+# of that function used to sit BELOW the die 31 that reaches finalization. Bash
+# reported `command not found`, the command substitution produced an empty string,
+# and the record went out carrying `deadline_remaining_seconds=` beside
+# `result_complete=yes`.
+#
+# THE SYMPTOM IS AN EMPTY REQUIRED FIELD, not a wrong number, which is why the
+# assertions below check GRAMMAR AND BOUNDS rather than a second count. An empty
+# value and a truthful one are distinguishable without being timing-sensitive:
+# the deadline is 600s and the run takes a few, so the only requirement is a
+# non-negative integer no greater than the deadline. The lower bound of 1 is what
+# separates a real reading from the two failure modes that would otherwise slip
+# through — an empty string, and a `0` that would claim the budget was already
+# spent. The upper bound rules out the no-deadline sentinel (2147483647).
+echo
+echo "Case 50i — the earliest finalizing terminal reports a TRUTHFUL remaining deadline, not an empty field"
+V50I="$(new_sandbox)"; state_file "$V50I" "gate-clock-task" "claude"
+FK50I="$SANDBOX_ROOT/fake-claude-50i.sh"
+cat >"$FK50I" <<'FK50IEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.218 (Claude Code)"; exit 0; fi
+printf '%s\n' "$@" > "$WL50I_ARGV"
+exit 0
+FK50IEOF
+chmod +x "$FK50I"
+export WL50I_ARGV="$SANDBOX_ROOT/argv-50i.txt"; rm -f "$WL50I_ARGV"
+# The same dirty tree 50h uses, so the worktree facts this unit must NOT disturb
+# are asserted against git here too rather than assumed from that case.
+printf 'edited by the fixture\n' >>"$V50I/other.txt"
+printf '\nfixture edit\n' >>"$V50I/logs/work-loop/gate-clock-task.md"
+G50I_FOREIGN="$(git -C "$V50I" status --porcelain 2>/dev/null | grep -c 'other\.txt' || true)"
+G50I_ALLOWED="$(git -C "$V50I" status --porcelain 2>/dev/null | grep -c 'logs/work-loop/' || true)"
+D50I=600
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V50I" --task gate-clock-task --log-dir "$V50I/runs" \
+      --carry-one --claude-bin "$FK50I" --unattended --deadline "$D50I" 2>&1)"; RC=$?
+expect_rc 31 "$RC" "50i — the version gate still refuses with its accepted code" "$OUT"
+[ -f "$WL50I_ARGV" ] \
+  && bad "50i — nothing was launched" "the child ran: $(tr '\n' ' ' <"$WL50I_ARGV")" \
+  || ok "50i — nothing was launched"
+# THE DIAGNOSTIC IS AN ASSERTION, exactly as in 50h: a repair that produced a
+# number while still calling an undefined function would be papering over the cause.
+printf '%s\n' "$OUT" | grep -q 'command not found' \
+  && bad "50i — finalization emits no undefined-function diagnostic" \
+         "$(printf '%s\n' "$OUT" | grep 'command not found' | tr '\n' ' ')" \
+  || ok "50i — finalization emits no undefined-function diagnostic"
+R50I="$V50I/runs/$(run_id_of "$OUT").result"
+if [ "$(res_count "$V50I/runs")" = "1" ] && [ "$(part_count "$V50I/runs")" = "0" ] &&
+   [ "$(tail -1 "$R50I" 2>/dev/null)" = "result_complete=yes" ]; then
+  ok "50i — exactly one complete result, no partial"
+else
+  bad "50i — exactly one complete result, no partial" \
+      "results=$(res_count "$V50I/runs") partials=$(part_count "$V50I/runs") last=$(tail -1 "$R50I" 2>/dev/null)"
+fi
+# THE SUPPLIED DEADLINE, which must be carried through unchanged.
+[ "$(res_field "$R50I" deadline_seconds)" = "$D50I" ] \
+  && ok "50i — deadline_seconds carries the supplied $D50I" \
+  || bad "50i — deadline_seconds carries the supplied $D50I" "got: $(res_field "$R50I" deadline_seconds)"
+# THE FIELD UNDER REPAIR. Grammar first, then bounds — an empty value fails the
+# grammar check, which is the red this unit turns.
+REM50I="$(res_field "$R50I" deadline_remaining_seconds)"
+case "${REM50I:-}" in
+  ''|*[!0-9]*)
+    bad "50i — deadline_remaining_seconds is a bounded non-negative integer" \
+        "got: '${REM50I:-<empty>}' — not an integer; the fact producer was unavailable at this terminal" ;;
+  *)
+    if [ "$REM50I" -ge 1 ] && [ "$REM50I" -le "$D50I" ]; then
+      ok "50i — deadline_remaining_seconds is a bounded truthful integer ($REM50I of $D50I)"
+    else
+      bad "50i — deadline_remaining_seconds is a bounded truthful integer" \
+          "got: $REM50I, want 1..$D50I — outside the supplied budget"
+    fi ;;
+esac
+# UNIT 21'S FACTS ARE UNDISTURBED, checked against git rather than against 50h.
+if [ "$(res_field "$R50I" worktree_foreign_paths)" = "$G50I_FOREIGN" ] &&
+   [ "$(res_field "$R50I" worktree_allowlisted_dirty_paths)" = "$G50I_ALLOWED" ] &&
+   [ "$G50I_FOREIGN" != "0" ] && [ "$G50I_ALLOWED" != "0" ]; then
+  ok "50i — the Unit 21 worktree facts still match git ($G50I_FOREIGN foreign, $G50I_ALLOWED allowed)"
+else
+  bad "50i — the Unit 21 worktree facts still match git" \
+      "git says foreign=$G50I_FOREIGN allowed=$G50I_ALLOWED; the record says foreign=$(res_field "$R50I" worktree_foreign_paths) allowed=$(res_field "$R50I" worktree_allowlisted_dirty_paths)"
+fi
+# THE REFUSAL IS UNCHANGED. This unit changes fact availability, not policy.
+for pair in "outcome:UNATTENDED_UNAVAILABLE" "code:31" "stage:pre-hop" \
+            "actor_launched:no" "model_request_started:no" \
+            "next_action:operator-restore-contained-profile-prerequisites"; do
+  k50i="${pair%%:*}"; w50i="${pair#*:}"
+  g50i="$(res_field "$R50I" "$k50i")"
+  [ "$g50i" = "$w50i" ] && ok "50i — $k50i=$w50i" || bad "50i — $k50i=$w50i" "got: ${g50i:-<absent>}"
+done
+unset WL50I_ARGV
+
+# =================================================================== case 50j
+#
+# M30 — THE RELOCATION IS WHAT MATTERS, not the function. This control does not
+# delete remaining_seconds(): it moves the definition back BELOW the terminal that
+# needs it, which is exactly the pre-repair topology. The mutant therefore still
+# holds one syntactically valid definition and still parses, and every later
+# caller inside the hop loop would still resolve — only the early terminal loses
+# the fact, which is the precise claim under test.
+#
+# Fails closed on all four ways the selector could be wrong: no definition found,
+# more than one, a mutant that does not differ, or one that does not parse.
+echo
+echo "Case 50j — M30: with the clock fact defined below the terminal again, 50i's field goes empty and the refusal still finalizes"
+M30_SRC="$SANDBOX_ROOT/dispatch-M30.sh"
+M30_DEFS="$(grep -c '^remaining_seconds() {$' "$DISPATCH_BIN" 2>/dev/null | head -1)"
+if [ "$M30_DEFS" = "1" ]; then
+  # Cut the definition block (its opening line to the next column-0 brace) and
+  # re-append it verbatim at end of file — below every top-level statement.
+  awk '
+    /^remaining_seconds\(\) \{$/ { infn=1; blk=$0 ORS; next }
+    infn==1 { blk=blk $0 ORS; if ($0 ~ /^\}/) infn=0; next }
+    { print }
+    END { printf "%s", blk }
+  ' "$DISPATCH_BIN" >"$M30_SRC"
+  M30_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$M30_SRC" || M30_DIFFERS=yes
+  M30_PARSES=no; bash -n "$M30_SRC" 2>/dev/null && M30_PARSES=yes
+  M30_STILL="$(grep -c '^remaining_seconds() {$' "$M30_SRC" 2>/dev/null | head -1)"
+else
+  M30_DIFFERS=no; M30_PARSES=no; M30_STILL=0
+fi
+if [ "$M30_DEFS" = "1" ] && [ "$M30_DIFFERS" = yes ] && [ "$M30_PARSES" = yes ] && [ "$M30_STILL" = "1" ]; then
+  ok "50j — M30 found exactly one definition, moved it, still parses, and still has exactly one"
+  V50J="$(new_sandbox)"; state_file "$V50J" "gate-clock-mutant" "claude"
+  FK50J="$SANDBOX_ROOT/fake-claude-50j.sh"
+  cp "$FK50I" "$FK50J" 2>/dev/null || true
+  export WL50I_ARGV="$SANDBOX_ROOT/argv-50j.txt"; rm -f "$WL50I_ARGV"
+  OUTM30="$(bash "$M30_SRC" --checkout "$V50J" --task gate-clock-mutant --log-dir "$V50J/runs" \
+        --carry-one --claude-bin "$FK50J" --unattended --deadline 600 2>&1)"; RCM30=$?
+  expect_rc 31 "$RCM30" "50j — the mutant still refuses with code 31, so the fixture is not merely broken" "$OUTM30"
+  RM30="$V50J/runs/$(run_id_of "$OUTM30").result"
+  [ "$(tail -1 "$RM30" 2>/dev/null)" = "result_complete=yes" ] \
+    && ok "50j — the mutant still finalizes a complete result" \
+    || bad "50j — the mutant still finalizes a complete result" "last: $(tail -1 "$RM30" 2>/dev/null)"
+  REMM30="$(res_field "$RM30" deadline_remaining_seconds)"
+  case "${REMM30:-}" in
+    ''|*[!0-9]*) ok "50j — with the definition moved back down, the field is NOT a truthful integer ('${REMM30:-<empty>}')" ;;
+    *)           bad "50j — with the definition moved back down, the field is NOT a truthful integer" \
+                     "got: $REMM30 — the control cannot distinguish the relocation" ;;
+  esac
+  printf '%s\n' "$OUTM30" | grep -q 'remaining_seconds: command not found' \
+    && ok "50j — and the mutant names the undefined fact producer, which is the cause 50i removes" \
+    || bad "50j — and the mutant names the undefined fact producer" "$(printf '%s\n' "$OUTM30" | grep 'command not found' | tr '\n' ' ')"
+  unset WL50I_ARGV
+else
+  bad "50j — M30 found exactly one definition, moved it, still parses, and still has exactly one" \
+      "definitions=$M30_DEFS after=$M30_STILL differs=$M30_DIFFERS parses=$M30_PARSES — the control cannot run"
+fi
+
 # ==================================================================== case 51
 # THE STANDALONE STRUCTURAL VALIDATOR for the v1 terminal result case 50 proves
 # the dispatcher produces. Case 50 read that artifact with harness `sed`/`grep`
