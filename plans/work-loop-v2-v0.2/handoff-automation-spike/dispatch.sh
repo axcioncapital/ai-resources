@@ -188,6 +188,16 @@
 #                              (32 is also a gap, retired at Tracer bullet 4
 #                              with the legacy session-identity init. See the
 #                              RETIRED block below. Do not reuse either number.)
+#   38  TERMINAL_UNPROVABLE    the run reached a real operator terminal — CLOSED or
+#                              BLOCKED_OPERATOR — but its terminal result could not
+#                              be finalized, so there is no durable evidence of the
+#                              outcome. Deliberately NOT 26: that one says the state
+#                              file is malformed and sends the operator to repair
+#                              it, which is the wrong instrument here — the state
+#                              file is fine and the WRITE is what failed. A run that
+#                              cannot prove how it ended must not exit 0 saying it
+#                              ended well, which is the whole reason this code
+#                              exists rather than a silent success.
 #   33  OWNERSHIP_REFUSED      logs/scripts/work-loop-owner.sh refused this task
 #                              in this checkout: either the checkout is claimed
 #                              by a different open task, or this task is claimed
@@ -488,6 +498,23 @@ tr_kv_or() { # key value fallback-token
 # plan § 5 forbids.
 result_outcome() { # code -> symbol
   case "$1" in
+    # CODE 0 IS TWO DIFFERENT ENDS, and the exit code cannot tell them apart
+    # because neither is a failure. A task that CLOSED is finished; one that is
+    # BLOCKED_OPERATOR has stopped and is waiting for a person. Collapsing them
+    # would be the single most misleading thing this table could do — the operator
+    # reading two identical records would have no way to know which run still
+    # needs them.
+    #
+    # ST_CLASS, NOT A FRESH READING. validate_state() already asked the canonical
+    # validator and set it before the loop began; this reads that decision and
+    # never re-derives one from the body, the turn, or anything an actor wrote.
+    # Anything else at code 0 falls through to UNCLASSIFIED rather than guessing.
+    0)  case "${ST_CLASS:-}" in
+          CLOSED)           printf 'COMPLETED' ;;
+          BLOCKED_OPERATOR) printf 'OPERATOR_TAKEOVER' ;;
+          *)                printf 'UNCLASSIFIED' ;;
+        esac ;;
+    38) printf 'TERMINAL_UNPROVABLE' ;;
     10) printf 'BAD_USAGE' ;;              11) printf 'BAD_CHECKOUT' ;;
     12) printf 'BAD_TASK_ID' ;;            13) printf 'STATE_MISSING' ;;
     14) printf 'IDENTITY_MISMATCH' ;;      15) printf 'BAD_TURN' ;;
@@ -511,6 +538,15 @@ result_outcome() { # code -> symbol
 # needs the wording reads the run log the record names.
 result_next_action() { # code -> token
   case "$1" in
+    # Split for the same reason the outcome above is: "you have nothing to do" and
+    # "this is waiting on you" are opposite instructions, and code 0 alone cannot
+    # carry the difference.
+    0)  case "${ST_CLASS:-}" in
+          CLOSED)           printf 'none-task-closed' ;;
+          BLOCKED_OPERATOR) printf 'operator-answer-the-blocking-question' ;;
+          *)                printf 'operator-read-run-log' ;;
+        esac ;;
+    38)          printf 'operator-inspect-run-log-terminal-not-finalized' ;;
     10|11|12)    printf 'operator-correct-invocation' ;;
     13|14|15|26) printf 'operator-repair-state-file-then-rerun' ;;
     16|18|19)    printf 'operator-clean-checkout-then-rerun' ;;
@@ -3411,6 +3447,28 @@ while :; do
       say "$op_q"
       say "--- end ---"
     fi
+    # THE TWO SUCCESSFUL ENDS OF A LOOP, and until now the only two with no durable
+    # evidence. Every nonzero terminal funnels through die() and finalizes a
+    # run-bound record; these said their piece on screen, released the lease and
+    # exited 0 leaving nothing behind — for precisely the outcomes an operator most
+    # needs to be able to point at afterwards.
+    #
+    # BEFORE release_lock, deliberately, and the same ordering die() uses: a lease
+    # may only be given up once the evidence of what happened exists. Reversing
+    # these two lines would leave a window where the run looks finished and nothing
+    # says how it finished.
+    #
+    # code 0 BECAUSE NEITHER IS A FAILURE. Which of the two it was lives in the
+    # record's outcome and next_action, keyed on the canonical ST_CLASS — see
+    # result_outcome() for why the exit code cannot carry that distinction itself.
+    #
+    # FAILS CLOSED. A terminal whose result cannot be written is a run that cannot
+    # say how it ended, and exiting 0 there would be a success claim with no
+    # evidence — the exact false report this whole change set exists to remove. One
+    # line, so the mutation control can delete the seam whole rather than leave an
+    # orphaned `fi` that proves nothing.
+    finalize_terminal_result 0 || die 38 "the run reached a real operator terminal (state_class=${ST_CLASS:-unavailable}) but its terminal result could not be finalized under $LOG_DIR — refusing to exit 0, because a run that cannot prove how it ended must not report that it ended well."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair." # operator terminal finalization
+    [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
     release_lock
     exit 0
   fi

@@ -6083,6 +6083,233 @@ else
       "the sed matched nothing — the control cannot run"
 fi
 
+# ==================================================================== case 55
+# THE REAL OPERATOR TERMINAL, which is where the result boundary Units 5-7 built
+# finally has to be used rather than merely to exist.
+#
+# WHAT WAS WRONG. Every nonzero terminal in the D-L families funnels through die()
+# and finalizes a run-bound record. The two SUCCESSFUL ends of a loop did not: a
+# task that reached `turn: operator` — whether closed or blocked — said its piece
+# on screen, released its lease and exited 0 with no terminal result at all. Those
+# are the two outcomes an operator most wants durable evidence of, and they were
+# the two with none.
+#
+# COMPLETION AND TAKEOVER ARE NOT THE SAME OUTCOME, and this is the distinction
+# the unit exists to make durable. `CLOSED` means the work finished.
+# `BLOCKED_OPERATOR` means it stopped and is waiting for a person. Both exit 0
+# because neither is a failure, so the exit code cannot tell them apart and a
+# record that collapsed them would be actively misleading — 55c is the control
+# that would catch exactly that collapse.
+#
+# THE CLASSIFICATION IS NOT RE-DERIVED HERE. `validate_state()` already asked the
+# canonical validator and set ST_CLASS before the loop began; this seam reads that
+# and nothing else. No second lifecycle parser, no body-shape inference, no
+# reconstruction from state prose, Git or logs.
+
+echo
+echo "Case 55a — a loop-mode CLOSED terminal finalizes exactly one truthful completion result"
+V55C="$(new_sandbox)"; state_file "$V55C" closed-task operator
+CO55C="$(cd "$V55C" && pwd -P)"
+run_dispatch "$V55C" closed-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "55a — a CLOSED record is not a failure and still exits 0" "$OUT"
+RID55C="$(run_id_of "$OUT")"
+ROOT55C="$(cd "$V55C/runs" && pwd -P)"
+REAL55C="$ROOT55C/$RID55C.result"
+
+# THE RED THE UNIT BEGINS FROM. Before the seam existed this file was simply not
+# there, and everything below it could only report that absence.
+if [ -f "$REAL55C" ]; then
+  ok "55a — the CLOSED terminal left the promised run-bound result"
+else
+  bad "55a — the CLOSED terminal left the promised run-bound result" \
+      "missing $REAL55C; runs/ holds: $(ls "$ROOT55C" 2>&1 | tr '\n' ' ')"
+fi
+
+# EXACTLY ONE, and no half-written temporary left behind.
+if [ "$(res_count "$ROOT55C")" = 1 ] && [ "$(part_count "$ROOT55C")" = 0 ]; then
+  ok "55a — exactly one finalized result and no leftover partial"
+else
+  bad "55a — exactly one finalized result and no leftover partial" \
+      "results=$(res_count "$ROOT55C") partials=$(part_count "$ROOT55C")"
+fi
+
+# It is the accepted boundary that judges it, not this harness reading fields with
+# sed — that is the whole point of having shipped a parser and an identity check.
+val_expect   "$VAL_LIB" "$REAL55C" 0 ok "55a — the CLOSED result is structurally valid v1"
+ident_expect "$VAL_LIB" "$REAL55C" closed-task "$CO55C" "$RID55C" "$ROOT55C" 0 ok \
+  "55a — the CLOSED result is identity-valid for this task, checkout, run and promised path"
+
+if [ "$(res_field "$REAL55C" code)" = 0 ] &&
+   [ "$(res_field "$REAL55C" state_class)" = CLOSED ] &&
+   [ "$(res_field "$REAL55C" result_complete)" = yes ]; then
+  ok "55a — it truthfully carries code 0, the canonical CLOSED classification and the sentinel"
+else
+  bad "55a — it truthfully carries code 0, the canonical CLOSED classification and the sentinel" \
+      "code=$(res_field "$REAL55C" code) state_class=$(res_field "$REAL55C" state_class) complete=$(res_field "$REAL55C" result_complete)"
+fi
+
+# NOTHING LAUNCHED. The operator terminal is reached before any hop in this
+# iteration, and finalizing must not have changed that.
+if [ "$(calls "$V55C")" = 0 ] && [ "$(res_field "$REAL55C" actor_launched)" = no ]; then
+  ok "55a — no actor launched, and the record says so"
+else
+  bad "55a — no actor launched, and the record says so" \
+      "calls=$(calls "$V55C") actor_launched=$(res_field "$REAL55C" actor_launched)"
+fi
+
+echo
+echo "Case 55b — a loop-mode BLOCKED_OPERATOR terminal finalizes a DISTINCT takeover result"
+V55B="$(new_sandbox)"; state_file "$V55B" blocked-task operator blocked-task blocked
+CO55B="$(cd "$V55B" && pwd -P)"
+run_dispatch "$V55B" blocked-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "55b — a blocked record is a stop, not a failure, and exits 0" "$OUT"
+RID55B="$(run_id_of "$OUT")"
+ROOT55B="$(cd "$V55B/runs" && pwd -P)"
+REAL55B="$ROOT55B/$RID55B.result"
+
+if [ -f "$REAL55B" ]; then
+  ok "55b — the BLOCKED_OPERATOR terminal left the promised run-bound result"
+else
+  bad "55b — the BLOCKED_OPERATOR terminal left the promised run-bound result" \
+      "missing $REAL55B; runs/ holds: $(ls "$ROOT55B" 2>&1 | tr '\n' ' ')"
+fi
+
+val_expect   "$VAL_LIB" "$REAL55B" 0 ok "55b — the takeover result is structurally valid v1"
+ident_expect "$VAL_LIB" "$REAL55B" blocked-task "$CO55B" "$RID55B" "$ROOT55B" 0 ok \
+  "55b — the takeover result is identity-valid for its own run"
+
+if [ "$(res_field "$REAL55B" code)" = 0 ] &&
+   [ "$(res_field "$REAL55B" state_class)" = BLOCKED_OPERATOR ]; then
+  ok "55b — it truthfully carries code 0 and the canonical BLOCKED_OPERATOR classification"
+else
+  bad "55b — it truthfully carries code 0 and the canonical BLOCKED_OPERATOR classification" \
+      "code=$(res_field "$REAL55B" code) state_class=$(res_field "$REAL55B" state_class)"
+fi
+
+echo
+echo "Case 55c — completion and takeover cannot collapse into one outcome"
+OUT55C="$(res_field "$REAL55C" outcome)";     OUT55B="$(res_field "$REAL55B" outcome)"
+NXT55C="$(res_field "$REAL55C" next_action)"; NXT55B="$(res_field "$REAL55B" next_action)"
+
+# Asserted as a DIFFERENCE, not against two hard-coded words. A test that pinned
+# the exact strings would go green on a rename that quietly made both the same;
+# what matters to an operator reading two records is that they can tell which one
+# finished and which one is waiting for them.
+if [ -n "$OUT55C" ] && [ -n "$OUT55B" ] && [ "$OUT55C" != "$OUT55B" ]; then
+  ok "55c — the two terminals record different outcomes ($OUT55C vs $OUT55B)"
+else
+  bad "55c — the two terminals record different outcomes" \
+      "closed='$OUT55C' blocked='$OUT55B'"
+fi
+if [ -n "$NXT55C" ] && [ -n "$NXT55B" ] && [ "$NXT55C" != "$NXT55B" ]; then
+  ok "55c — the two terminals record different next actions ($NXT55C vs $NXT55B)"
+else
+  bad "55c — the two terminals record different next actions" \
+      "closed='$NXT55C' blocked='$NXT55B'"
+fi
+
+# NEITHER IS THE FALLBACK. `UNCLASSIFIED` is what an unmapped code produces, so a
+# seam that forgot to map code 0 would still satisfy "they are both non-empty" on
+# one of them. This is what separates "mapped" from "merely present".
+if [ "$OUT55C" != UNCLASSIFIED ] && [ "$OUT55B" != UNCLASSIFIED ]; then
+  ok "55c — neither outcome fell through to the unmapped-code fallback"
+else
+  bad "55c — neither outcome fell through to the unmapped-code fallback" \
+      "closed='$OUT55C' blocked='$OUT55B'"
+fi
+
+echo
+echo "Case 55d — mutation controls: the terminal seam and its distinction are fail-capable"
+MUT55="$SANDBOX_ROOT/mutants55"; mkdir -p "$MUT55"
+
+# M18 — remove the finalization call from the operator block. The run then exits 0
+# with no result, which is the pre-unit behaviour exactly. Addressed by its marker
+# comment: deleting by function name would also remove die()'s call and prove
+# something else entirely.
+sed "/# operator terminal finalization/d" "$DISPATCH_BIN" >"$MUT55/m18.sh"
+chmod +x "$MUT55/m18.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT55/m18.sh" && bash -n "$MUT55/m18.sh" 2>/dev/null; then
+  ok "55d — M18 mutant differs from the dispatcher and is valid bash"
+  V55M="$(new_sandbox)"; state_file "$V55M" closed-task operator
+  OUT="$(bash "$MUT55/m18.sh" --checkout "$V55M" --task closed-task \
+        --log-dir "$V55M/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCM=$?
+  RIDM="$(run_id_of "$OUT")"
+  if [ "$RCM" -eq 0 ] && [ ! -f "$V55M/runs/$RIDM.result" ]; then
+    ok "55d — M18: without the seam the CLOSED path exits 0 with no result (55a is fail-capable)"
+  else
+    bad "55d — M18: without the seam the CLOSED path exits 0 with no result (55a is fail-capable)" \
+        "rc=$RCM result=$([ -f "$V55M/runs/$RIDM.result" ] && echo present || echo absent)"
+  fi
+else
+  bad "55d — M18 mutant differs from the dispatcher and is valid bash" \
+      "the sed matched nothing, or the mutant does not parse — the control cannot run"
+fi
+
+# M19 — collapse the two classifications onto one outcome. Everything else stays:
+# both records are still produced, still valid, still code 0. Only the distinction
+# goes, and 55c is what must notice.
+sed 's/OPERATOR_TAKEOVER/COMPLETED/' "$DISPATCH_BIN" >"$MUT55/m19.sh"
+chmod +x "$MUT55/m19.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT55/m19.sh" && bash -n "$MUT55/m19.sh" 2>/dev/null; then
+  ok "55d — M19 mutant differs from the dispatcher and is valid bash"
+  V55X="$(new_sandbox)"; state_file "$V55X" closed-task operator
+  OUT="$(bash "$MUT55/m19.sh" --checkout "$V55X" --task closed-task \
+        --log-dir "$V55X/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"
+  RIDX="$(run_id_of "$OUT")"
+  V55Y="$(new_sandbox)"; state_file "$V55Y" blocked-task operator blocked-task blocked
+  OUT="$(bash "$MUT55/m19.sh" --checkout "$V55Y" --task blocked-task \
+        --log-dir "$V55Y/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"
+  RIDY="$(run_id_of "$OUT")"
+  MX="$(res_field "$V55X/runs/$RIDX.result" outcome)"
+  MY="$(res_field "$V55Y/runs/$RIDY.result" outcome)"
+  if [ -n "$MX" ] && [ "$MX" = "$MY" ]; then
+    ok "55d — M19: with the classifications collapsed both terminals report '$MX' (55c is fail-capable)"
+  else
+    bad "55d — M19: with the classifications collapsed both terminals report the same outcome (55c is fail-capable)" \
+        "closed='$MX' blocked='$MY'"
+  fi
+else
+  bad "55d — M19 mutant differs from the dispatcher and is valid bash" \
+      "the sed matched nothing, or the mutant does not parse — the control cannot run"
+fi
+
+# M20 — FORCE FINALIZATION TO FAIL, by pointing the operator seam at a finalizer
+# that does not exist. This is the fail-closed requirement and it is the one that
+# matters most: a run that could not produce its evidence must not be able to
+# report success. The exit code must not be 0 and no completion may be claimed.
+sed 's/finalize_terminal_result 0 || die 38/wl2_absent_finalizer 0 || die 38/' "$DISPATCH_BIN" >"$MUT55/m20.sh"
+chmod +x "$MUT55/m20.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT55/m20.sh" && bash -n "$MUT55/m20.sh" 2>/dev/null; then
+  ok "55d — M20 mutant differs from the dispatcher and is valid bash"
+  V55Z="$(new_sandbox)"; state_file "$V55Z" closed-task operator
+  OUT="$(bash "$MUT55/m20.sh" --checkout "$V55Z" --task closed-task \
+        --log-dir "$V55Z/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCZ=$?
+  RIDZ="$(run_id_of "$OUT")"
+  ZOUT="$(res_field "$V55Z/runs/$RIDZ.result" outcome)"
+  # THE SPECIFIC TERMINAL, not merely "not zero". An assertion that only required a
+  # nonzero exit would be satisfied by the run failing for some unrelated reason,
+  # which is not the claim: the claim is that this exact condition is recognised
+  # and reported as itself.
+  if [ "$RCZ" -eq 38 ] && [ "$ZOUT" = TERMINAL_UNPROVABLE ]; then
+    ok "55d — M20: a finalization that cannot be proven exits 38 and reports TERMINAL_UNPROVABLE, never completion"
+  else
+    bad "55d — M20: a finalization that cannot be proven exits 38 and reports TERMINAL_UNPROVABLE, never completion" \
+        "rc=$RCZ outcome='$ZOUT'"
+  fi
+  # AND THE OWNERSHIP DECLARATION IS UNTOUCHED. The dispatcher never clears it on
+  # any path — that is the actor's move at closure — so a run that failed to prove
+  # its terminal cannot have quietly handed the checkout on.
+  if [ ! -e "$V55Z/logs/work-loop/.owner" ]; then
+    ok "55d — M20: the failed terminal did not clear or forge an ownership declaration"
+  else
+    bad "55d — M20: the failed terminal did not clear or forge an ownership declaration" \
+        "declaration present: $(cat "$V55Z/logs/work-loop/.owner" 2>&1 | tr '\n' ' ')"
+  fi
+else
+  bad "55d — M20 mutant differs from the dispatcher and is valid bash" \
+      "the sed matched nothing, or the mutant does not parse — the control cannot run"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
