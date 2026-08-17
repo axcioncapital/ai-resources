@@ -88,3 +88,5 @@ Promoted findings carry their source and a content-derived id; tick an item to r
 - [ ] `axcion-systems-builder`'s `.codex/hooks.json` points both SessionStart hooks at a directory that does not exist, so auto-sync and permission-sanity have not run — `logs/improvement-log.md` <!-- promote:9c4bbfbda9d6 -->
 
 - [ ] `split-log.sh`'s archive step silently drops entries on a false idempotency match — `logs/improvement-log.md` <!-- promote:c782bdd9c104 -->
+
+- [ ] Work Loop v2 SKILL.md is 580 lines against a 500-line budget, and the breach predates the packaging fix — `logs/improvement-log.md` <!-- promote:6059a382b22d -->
