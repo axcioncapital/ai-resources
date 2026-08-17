@@ -28,18 +28,37 @@ Do not continue the plan, implementation, review, or correction that triggered
 the invocation until this pass finishes. Treat the operator's invocation as a
 request to inspect the course, not as evidence that drift definitely occurred.
 
-Run `pwd` on its own. Read the complete `work-loop-v2` skill available in the
+Run `pwd` on its own.
+
+**Degraded context is tested first, before any Work Loop authority is loaded.**
+If the invocation or the context indicates compaction, context degradation, or
+an uncertain task or checkout identity, invoke `$reorient` immediately.
+Do not discover a likely task by scanning files, and do not load the Work Loop
+skill first to decide the question — recovery is `$reorient`'s to own, and
+reading authority into a degraded pass is how this skill absorbed recovery
+before.
+
+That branch produces no realignment judgment at all.
+Emit no `ALIGNED`, `REALIGNED`, `OPERATOR DECISION NEEDED` or `STOPPED`
+verdict, edit no task state and reconstruct no decision at risk.
+The realignment pass ends when `$reorient` reports or fails.
+
+Ending the pass this way does not close the Work Loop task or force a new
+thread. Once recovery has established the actor-correct next action, the same
+task continues; a later realignment happens only if a live proposed move still
+needs that separate judgment.
+
+**When context and binding are already sound, this pass continues as before.**
+Read the complete `work-loop-v2` skill available in the
 current scope and follow its current executable-core resolution. It remains
 authoritative for roles, turns, state shape, correction, and hand-off behavior.
 Where this skill and Work Loop v2 disagree, Work Loop v2 wins and the difference
 is a defect to report.
 
 Use the exact active `logs/work-loop/{task-id}.md` path already established in
-the conversation or preserved context. If that identity or checkout binding is
-uncertain, stop this pass and invoke `$reorient`; do not discover a likely task
-by scanning files. If an unattended run may be active, use the dispatcher's
-read-only status operation before reading or touching task state. Never edit a
-state file while a run is in flight.
+the conversation or preserved context. If an unattended run may be active, use
+the dispatcher's read-only status operation before reading or touching task
+state. Never edit a state file while a run is in flight.
 
 ### 2. Reconstruct only the decision at risk
 
@@ -143,8 +162,9 @@ trace, or a list of everything that passed.
 
 - **No active Work Loop task:** say that `$realign` has no loop course to
   correct and route the request normally. Create nothing.
-- **Missing or uncertain task identity:** invoke `$reorient` and stop this pass;
-  do not search for a likely task.
+- **Missing or uncertain task identity, or any sign of compaction or context
+  degradation:** hand to `$reorient` and end the pass, per step 1's first
+  branch; do not search for a likely task and do not return a verdict.
 - **Live unattended run:** report its status and do not edit state.
 - **Conflicting authority:** identify the exact conflict and request the one
   operator decision needed; do not choose the convenient source.

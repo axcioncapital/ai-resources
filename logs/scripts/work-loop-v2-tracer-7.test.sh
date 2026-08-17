@@ -898,6 +898,259 @@ bash "$DISPATCH_BIN" --checkout "$S8CO" --task s8-task --claude-bin "$S8BIN" \
   >"$SANDBOX_ROOT/s8.dout2" 2>&1
 expect_ne "$S8TRUE" "$(classify "$S8CO" s8-task)" \
   "S8    control: an actor that really writes DOES move the classification"
+
+# --------------------------------------------------------------------------
+# (c) THE RECOVERY / REALIGNMENT BOUNDARY — the instruction contract.
+# Plan §§ 3.2, 3.3 and Unit 2. These read the two skills as artifacts. Phrase
+# presence alone would pass on any file that quoted the brief, so each check is
+# paired with a fixture the SAME predicate must reject:
+#   * the ORDER checks get a wrong-order fixture — the identical file with the
+#     two anchor lines exchanged, so both phrases are present and the sequence
+#     is wrong. That is the actual defect being repaired, not a proxy for it.
+#   * the CLAUSE checks get the pre-edit artifact at HEAD, in which the clause
+#     is genuinely absent. A clause green in both states proves nothing.
+# --------------------------------------------------------------------------
+REALIGN_F="$REPO_ROOT/.agents/skills/realign/SKILL.md"
+REORIENT_F="$REPO_ROOT/.agents/skills/reorient/SKILL.md"
+S8FIX="$SANDBOX_ROOT/s8.fixtures"; mkdir -p "$S8FIX"
+# The pre-edit artifacts, pinned to the commit that PERMANENTLY holds them —
+# Unit 0's commit, the last one before this repair. `HEAD` was wrong and would
+# have rotted on the very next commit: once Unit 2 lands, HEAD carries the
+# repaired skills, every clause reads "present in both", and the control would
+# report a false failure. A fixed commit cannot drift.
+S8PRE_REF="${WL_UNIT2_PRE_REF:-072438b3}"
+git -C "$REPO_ROOT" show "$S8PRE_REF:.agents/skills/realign/SKILL.md"  >"$S8FIX/realign-pre.md"  2>/dev/null
+git -C "$REPO_ROOT" show "$S8PRE_REF:.agents/skills/reorient/SKILL.md" >"$S8FIX/reorient-pre.md" 2>/dev/null
+[ -s "$S8FIX/realign-pre.md" ] && [ -s "$S8FIX/reorient-pre.md" ] \
+  && ok "S8    the pre-edit artifacts are readable at $S8PRE_REF" \
+  || bad "S8    the pre-edit artifacts are readable at $S8PRE_REF" \
+         "without them every clause control below is vacuous"
+
+line_of() { grep -nF "$2" "$1" 2>/dev/null | head -1 | cut -d: -f1; }
+# Both anchors present AND the first strictly earlier. Missing anchor fails too:
+# an instruction that never states the branch has not ordered it correctly.
+order_ok() { # file early late
+  local a b
+  a="$(line_of "$1" "$2")"; b="$(line_of "$1" "$3")"
+  [ -n "$a" ] && [ -n "$b" ] && [ "$a" -lt "$b" ]
+}
+# The wrong-order fixture: the same file with those two lines exchanged.
+swap_anchors() { # file early late out
+  local a b
+  a="$(line_of "$1" "$2")"; b="$(line_of "$1" "$3")"
+  [ -n "$a" ] && [ -n "$b" ] || return 1
+  awk -v a="$a" -v b="$b" '
+    NR==FNR { if (FNR==a) la=$0; if (FNR==b) lb=$0; next }
+    FNR==a { print lb; next }
+    FNR==b { print la; next }
+    { print }' "$1" "$1" >"$4"
+}
+check_order() { # label file early late
+  if order_ok "$2" "$3" "$4"; then ok "$1"
+  else bad "$1" "early anchor at line [$(line_of "$2" "$3")], late anchor at [$(line_of "$2" "$4")]"; fi
+  local wrong="$S8FIX/$(basename "$2").wrong-order"
+  if swap_anchors "$2" "$3" "$4" "$wrong"; then
+    if order_ok "$wrong" "$3" "$4"; then
+      bad "$1 — control: the swapped fixture is rejected" "it passed with the order reversed"
+    else ok "$1 — control: the swapped fixture is rejected"; fi
+  else
+    bad "$1 — control: the swapped fixture is rejected" "fixture unbuildable: an anchor is missing"
+  fi
+}
+# These phrases legitimately wrap across lines in the prose, and a line-based
+# grep would force the source to be reflowed to suit the test rather than the
+# other way round. Normalize whitespace first, exactly as the Slice 1 suite does.
+flat_f() { tr -s '[:space:]' ' ' <"$1"; }
+# `--` is load-bearing: several of these patterns begin with "-", which grep
+# would otherwise read as an option rather than as text to find.
+has_flat() { flat_f "$1" | grep -qF -- "$2"; }
+# Present now, absent in the pre-edit artifact. Both halves are load-bearing.
+check_clause() { # label file prefile phrase
+  local now=absent pre=absent
+  has_flat "$2" "$4" && now=present
+  # An unreadable pre-edit fixture is a FAILURE, not an absence. Treating it as
+  # "absent" would make every control below pass on a checkout that could not
+  # produce the comparison at all — the fail-open this pairing exists to close.
+  [ -s "$3" ] || { bad "$1" "the pre-edit fixture is missing or empty — the control cannot run"; return; }
+  has_flat "$3" "$4" && pre=present
+  if [ "$now" = present ] && [ "$pre" = absent ]; then ok "$1"
+  else bad "$1" "live=$now pre-edit=$pre — $4"; fi
+}
+# A preserved property: green before AND after. Stated separately from
+# check_clause so the two intents cannot be confused when one goes red.
+check_preserved() { # label file phrase
+  if has_flat "$2" "$3"; then ok "$1"; else bad "$1" "absent: $3"; fi
+}
+
+A_REC='invoke `$reorient` immediately'
+A_AUTH='Read the complete `work-loop-v2` skill'
+check_order "S8    \$realign delegates recovery BEFORE loading Work Loop authority" \
+  "$REALIGN_F" "$A_REC" "$A_AUTH"
+
+check_clause "S8    \$realign's recovery branch emits no realignment verdict" \
+  "$REALIGN_F" "$S8FIX/realign-pre.md" 'Emit no `ALIGNED`, `REALIGNED`, `OPERATOR DECISION NEEDED` or `STOPPED`'
+check_clause "S8    \$realign's recovery branch edits no task state" \
+  "$REALIGN_F" "$S8FIX/realign-pre.md" 'edit no task state and reconstruct no decision at risk'
+check_clause "S8    the realignment pass ends when \$reorient reports or fails" \
+  "$REALIGN_F" "$S8FIX/realign-pre.md" 'The realignment pass ends when `$reorient` reports or fails'
+check_clause "S8    ending the pass does not close the task or force a new thread" \
+  "$REALIGN_F" "$S8FIX/realign-pre.md" 'does not close the Work Loop task or force a new thread'
+# Preserved, and stated as preserved: healthy context keeps the old behaviour.
+check_preserved "S8    \$realign keeps its four-verdict output contract" \
+  "$REALIGN_F" 'ALIGNED | REALIGNED | OPERATOR DECISION NEEDED | STOPPED'
+check_preserved "S8    \$realign keeps its actor-correct Next: contract" \
+  "$REALIGN_F" 'Next: {the actor-correct instruction required by Work Loop v2}'
+check_preserved "S8    \$realign still loads Work Loop authority on a healthy pass" \
+  "$REALIGN_F" 'It remains authoritative for roles, turns, state shape, correction, and hand-off behavior.'
+
+A_TASK='Resolve the authoritative task without guessing'
+check_order "S8    \$reorient resolves the exact task BEFORE loading Work Loop authority" \
+  "$REORIENT_F" "$A_TASK" "$A_AUTH"
+
+check_clause "S8    \$reorient names the split-out core resolver reference" \
+  "$REORIENT_F" "$S8FIX/reorient-pre.md" 'references/core-resolution.md'
+check_clause "S8    \$reorient reads the plan header and only the task-named sections" \
+  "$REORIENT_F" "$S8FIX/reorient-pre.md" 'the exact sections that state names'
+check_clause "S8    widening inside the plan must be recorded with its reason" \
+  "$REORIENT_F" "$S8FIX/reorient-pre.md" 'record why the widening was necessary'
+check_clause "S8    the routing index is not read for an established task" \
+  "$REORIENT_F" "$S8FIX/reorient-pre.md" 'Do not read the routing index for an already-established task'
+check_clause "S8    large files are not batched into one truncatable read" \
+  "$REORIENT_F" "$S8FIX/reorient-pre.md" 'Do not batch several large files into one read'
+check_clause "S8    a full plan read stays allowed when genuinely necessary" \
+  "$REORIENT_F" "$S8FIX/reorient-pre.md" 'never forbidden by an arbitrary byte limit'
+# Preserved: the seven-field block and the seam rule survive the rewrite.
+for f in '- Objective:' '- Current task:' '- Verified state:' '- Next action:' \
+         '- Key constraints:' '- Drift detected:' '- Evidence consulted:'; do
+  check_preserved "S8    \$reorient keeps REORIENTED field \"$f\"" "$REORIENT_F" "$f"
+done
+check_preserved "S8    \$reorient keeps its actor-correct Next: contract" \
+  "$REORIENT_F" 'end with the explicit `Next:` instruction for the actor whose turn it actually is'
+check_preserved "S8    \$reorient stays read-only" \
+  "$REORIENT_F" 'Keep this skill instruction-only and read-only.'
+
+# --------------------------------------------------------------------------
+# (d) THE RECOVERY ROUTE under Unit 2's five named controls, executed.
+# One checkout, THREE open task files, exactly one declared. No hook runs here
+# at all — that is the "explicit $reorient still works" control, and it is a
+# real one because the checkout carries no hook to fire.
+# --------------------------------------------------------------------------
+S8MC="$(new_base)"
+open_record "$S8MC" s8-decoy-a active claude
+open_record "$S8MC" s8-decoy-b active codex
+cat >"$S8MC/logs/work-loop/s8-real-task.md" <<'EOF'
+---
+task: s8-real-task
+status: active
+turn: claude
+---
+
+## Objective and scope
+Tracer 7 fixture for s8-real-task. Nothing real depends on this file.
+
+## Lane and unit
+Standard. Implementation mode. Unit 1 — the fixture unit.
+
+## Latest result
+Distinctive marker LR-s8-real-task: the twenty-third check returned exit 17.
+
+## Blocker
+None.
+
+## Next action
+Distinctive marker NA-s8-real-task: continue under `plans/s8-fixture-plan.md` section "Unit 1 constraints".
+EOF
+mkdir -p "$S8MC/plans"
+cat >"$S8MC/plans/s8-fixture-plan.md" <<'EOF'
+# S8 fixture plan
+
+**Authority.** Operator-approved on 2026-08-17.
+
+## Unit 1 constraints
+DURABLE-FACT-S8: the fixture unit may not exceed two files.
+
+## Unit 9 constraints
+DECOY-FACT-S8: this section is not the one the task names.
+EOF
+declare_owner "$S8MC" s8-real-task
+git -C "$S8MC" add -A >/dev/null 2>&1
+git -C "$S8MC" commit -qm "s8 multi-task fixture" >/dev/null 2>&1
+
+# The cascade, executed literally for the steps Unit 2 fixes: declaration, then
+# the exact task, then the task state, then ONLY the plan section the task names.
+cat >"$SANDBOX_ROOT/s8.route" <<'ROUTE'
+#!/bin/bash
+set -uo pipefail
+co="$1"
+[ -f "$co/logs/work-loop/.owner" ] || { echo "STOP:1"; exit 1; }
+decl="$(head -1 "$co/logs/work-loop/.owner")"
+[ -n "$decl" ] || { echo "STOP:1"; exit 1; }
+case "$decl" in *[[:space:]]*) echo "STOP:1"; exit 1 ;; esac
+bash "$co/logs/scripts/work-loop-owner.sh" check --depth local --checkout "$co" --task "$decl" >/dev/null 2>&1 \
+  || { echo "STOP:2"; exit 1; }
+f="$co/logs/work-loop/$decl.md"
+[ -f "$f" ] || { echo "STOP:3"; exit 1; }
+class="$(bash "$co/logs/scripts/work-loop-state.sh" validate --checkout "$co" --task "$decl" 2>&1)" \
+  || { echo "STOP:4"; exit 1; }
+case "$class" in ACTIVE_CLAUDE|ACTIVE_CODEX) ;; *) echo "STOP:5 $class"; exit 1 ;; esac
+printf 'task=%s\nclassification=%s\n' "$decl" "$class"
+next="$(awk '$0=="## Next action"{f=1;next} /^## /{f=0} f' "$f")"
+printf 'next=%s\n' "$(printf '%s' "$next" | tr -d '\n')"
+plan="$(printf '%s' "$next" | sed -n 's/.*`\([^`]*\.md\)`.*/\1/p')"
+sect="$(printf '%s' "$next" | sed -n 's/.*section "\([^"]*\)".*/\1/p')"
+[ -n "$plan" ] && [ -n "$sect" ] || { echo "STOP:6"; exit 1; }
+printf 'plan=%s\nsection=%s\n' "$plan" "$sect"
+printf 'authority=%s\n' "$(sed -n '1,/^## /p' "$co/$plan" | grep -c '\*\*Authority\.\*\*')"
+printf 'sectbody=%s\n' "$(awk -v h="## $sect" '$0==h{f=1;next} /^## /{f=0} f' "$co/$plan" | tr -d '\n')"
+ROUTE
+chmod +x "$SANDBOX_ROOT/s8.route"
+
+S8SUM_BEFORE="$(shasum -a 256 "$S8MC/logs/work-loop/s8-real-task.md" | cut -d' ' -f1)"
+S8MOUT="$(env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin HOME="$SANDBOX_ROOT" \
+           /bin/bash "$SANDBOX_ROOT/s8.route" "$S8MC" 2>&1)"; S8MRC=$?
+expect_rc 0 "$S8MRC" "S8    the recovery route resolves among three open task files" "$S8MOUT"
+expect_eq "s8-real-task" "$(printf '%s\n' "$S8MOUT" | sed -n 's/^task=//p')" \
+  "S8    it returns the declared task, not a scan result"
+expect_lacks "$S8MOUT" "s8-decoy-a" "S8    it never names the first undeclared open task"
+expect_lacks "$S8MOUT" "s8-decoy-b" "S8    it never names the second undeclared open task"
+# The hidden durable facts: one in the task, one in the plan section the task names.
+expect_has "$S8MOUT" "NA-s8-real-task"  "S8    the durable fact hidden in the task is recovered"
+expect_has "$S8MOUT" "DURABLE-FACT-S8"  "S8    the durable fact in the task-named plan section is recovered"
+expect_has "$S8MOUT" "authority=1"      "S8    the plan's authority header is read"
+# Targeted, not a whole-plan slurp — the decoy section must NOT come back.
+expect_lacks "$S8MOUT" "DECOY-FACT-S8"  "S8    the plan section NOT named by the task is not read"
+# Explicit recovery with no hook anywhere: the control for "the hook is absent".
+[ ! -e "$S8MC/.codex/hooks/work-loop-reorient.sh" ] \
+  && ok "S8    this checkout carries no compaction hook, so recovery was explicit" \
+  || bad "S8    this checkout carries no compaction hook, so recovery was explicit" "a hook exists"
+# Read-only: the state file is byte-identical across the recovery pass.
+S8SUM_AFTER="$(shasum -a 256 "$S8MC/logs/work-loop/s8-real-task.md" | cut -d' ' -f1)"
+expect_eq "$S8SUM_BEFORE" "$S8SUM_AFTER" "S8    recovery leaves the task state byte-identical"
+# CONTROL — the checksum must be capable of noticing. Without this, "identical"
+# could mean the comparison can never differ.
+printf '\nMutation.\n' >>"$S8MC/logs/work-loop/s8-real-task.md"
+expect_ne "$S8SUM_BEFORE" "$(shasum -a 256 "$S8MC/logs/work-loop/s8-real-task.md" | cut -d' ' -f1)" \
+  "S8    control: the byte comparison DOES notice a real write"
+
+# A blocked task must stop the recovery, not be resumed from.
+S8BK="$(new_base)"
+open_record "$S8BK" s8-blocked-task blocked operator
+declare_owner "$S8BK" s8-blocked-task
+S8BOUT="$(env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin HOME="$SANDBOX_ROOT" \
+           /bin/bash "$SANDBOX_ROOT/s8.route" "$S8BK" 2>&1)"; S8BRC=$?
+expect_rc 1 "$S8BRC" "S8    a BLOCKED_OPERATOR task stops recovery instead of resuming" "$S8BOUT"
+expect_has "$S8BOUT" "STOP:5" "S8    it stops at the resumable-classification check"
+expect_has "$S8BOUT" "BLOCKED_OPERATOR" "S8    it names the classification that stopped it"
+
+# A record the validator refuses must stop at the validator, not one check later.
+S8RF="$(new_base)"
+open_record "$S8RF" s8-refused-task active operator   # illegal pair: active/operator
+declare_owner "$S8RF" s8-refused-task
+git -C "$S8RF" add -A >/dev/null 2>&1; git -C "$S8RF" commit -qm "refused fixture" >/dev/null 2>&1
+S8ROUT="$(env -i PATH=/usr/bin:/bin:/usr/sbin:/sbin HOME="$SANDBOX_ROOT" \
+           /bin/bash "$SANDBOX_ROOT/s8.route" "$S8RF" 2>&1)"; S8RRC=$?
+expect_rc 1 "$S8RRC" "S8    a validator refusal stops recovery" "$S8ROUT"
+expect_has "$S8ROUT" "STOP:4" "S8    it stops at the validator, not at a later check"
 close_scenario
 
 # ==========================================================================

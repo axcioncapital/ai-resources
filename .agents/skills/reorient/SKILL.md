@@ -10,27 +10,16 @@ Treat compacted conversation as navigation only, never as authority.
 
 ## Workflow
 
-### 1. Verify the checkout and reload Work Loop v2
+### 1. Verify the checkout
 
 Run `pwd` on its own before reading anything else. The directory actually open
 determines which checkout and task state can be authoritative.
 
-Read the complete `work-loop-v2` skill available in the current scope. Follow
-its executable-core resolver and current instructions; where this skill and
-Work Loop v2 disagree, Work Loop v2 wins and the difference is a defect to
-report.
-
-Re-establish the role split from that authority:
-
-- The operator owns intent, priorities, business judgment, scope, and
-  consequential decisions.
-- Codex owns context and session control, instruction quality, independent
-  review, drift prevention, and protection of project value.
-- Claude owns live repository investigation, technical design,
-  implementation, tests, technical evidence, and commits.
-
-Do not take over Claude's technical role because conversational context was
-compacted.
+That is the whole of this step. **Resolving the task comes next, and the Work
+Loop skill is loaded after it** — a recovery that reads authority before it
+knows which task it is recovering pays for that authority whether or not any
+task turns out to be resolvable, and then has to read it again in the light of
+the task it eventually finds.
 
 ### 2. Resolve the authoritative task without guessing
 
@@ -98,21 +87,55 @@ file while a run is in flight.
 
 ### 3. Read the minimum authoritative context
 
-Read only what is needed to establish the next justified move, in this order:
+The task is now known, so authority is read for *that* task. Read only what is
+needed to establish the next justified move, in this order:
 
-1. Permanent repository and agent instructions, plus the canonical Work Loop
-   v2 skill and executable core.
-2. The exact current task state file.
-3. The governing approved project plan or specification named by that state.
-4. The latest validated handoff or authoritative current-state source named by
-   the plan or task.
-5. Decisions, constraints, blockers, accepted limitations, and explicitly
-   deferred work that bear on the current task.
-6. Existing technical evidence needed to establish what happened.
+1. Read the complete `work-loop-v2` skill available in the current scope. It is
+   the lean always-loaded body; its conditional detail sits in direct
+   references, and you read a reference only when its stated condition is met.
+   Where this skill and Work Loop v2 disagree, Work Loop v2 wins and the
+   difference is a defect to report.
+2. Read `references/core-resolution.md`, run the resolver it carries, and read
+   the complete core file that resolver prints. The resolver moved out of the
+   main skill body at the progressive-disclosure split, so following "the
+   skill's resolver" without opening that reference now finds nothing.
+3. Read the exact current task state file.
+4. Read the governing approved plan or specification the task names — its
+   authority or header block, and the exact sections that state names.
+   Not the whole document by default.
+5. Widen inside that same plan only where those sections cannot establish a
+   load-bearing constraint or the next action, and record why the widening was
+   necessary.
+6. Read only the directly named current-state, decision or evidence sources
+   still needed to resolve a material uncertainty — decisions, constraints,
+   blockers, accepted limitations, deferred work, and existing technical
+   evidence that bear on this task.
+
+Re-establish the role split from that authority: the operator owns intent,
+priorities, business judgment, scope and consequential decisions; Codex owns
+context and session control, instruction quality, independent review, drift
+prevention and protection of project value; Claude owns live repository
+investigation, technical design, implementation, tests, technical evidence and
+commits. Do not take over Claude's technical role because conversational
+context was compacted.
+
+Three bounds on that cascade:
+
+- **Do not read the routing index for an already-established task.** Routing
+  chooses an owner for a new request; this task already has one.
+- **Do not batch several large files into one read** that can be truncated. A
+  truncated read that looks complete is worse than a read you know is missing.
+- A full plan read stays allowed where it is genuinely necessary. It is not the
+  default and it is never forbidden by an arbitrary byte limit.
+
+A non-skill source already read completely in the same uncompacted context may
+be reused while it is unchanged. That never permits skipping the complete load
+a selected skill requires, and never treats a compacted summary as an authority
+cache.
 
 Stop expanding the read set once objective, state, current task, constraints,
-and next action are established. Do not create a new plan when an approved plan
-already exists.
+and the actor-correct next action are established. Do not create a new plan when
+an approved plan already exists.
 
 Codex never mutates Git state under Work Loop v2; read-only inspection is
 permitted where Codex's own judgment needs a repository fact. That permission
@@ -230,9 +253,10 @@ created. If any check fails, use Failure Behavior instead of reporting success.
 
 Input: `Use $reorient after the compaction.`
 
-Expected behavior: verify `pwd`, reload Work Loop v2, read the preserved exact
-task path and its governing sources, reconcile compacted memory, report the
-seven fields, and end with the actor-correct `Next:` line.
+Expected behavior: verify `pwd`, resolve the exact task from the preserved path
+or the validated declaration, then load Work Loop v2 and its core resolver, read
+the task state and the plan sections that state names, reconcile compacted
+memory, report the seven fields, and end with the actor-correct `Next:` line.
 
 ## Runtime Recommendations
 

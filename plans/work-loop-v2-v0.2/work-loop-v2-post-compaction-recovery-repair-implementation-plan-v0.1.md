@@ -408,12 +408,14 @@ Keep the evidence here so the repair does not create a second report artifact.
 Implemented 2026-08-17 in checkout `ai-resources-work-loop-fix-17-8`, branch
 `session/2026-08-17-work-loop-fix-17-8`.
 
-**Status: NOT ACCEPTED.** Codex assessed this unit on 2026-08-17 and did not accept it. This
-section's completion evidence requires a **green Slice 1 suite**, and the suite exits 1 with 44
-failures. An earlier revision of this record reframed the bar as "no regression against that
-baseline"; that redefined an approved acceptance condition without operator approval and has been
-removed. The approved condition stands unchanged. The evidence below is recorded as measured, not as
-a claim that the unit is complete.
+**Status: ACCEPTED 2026-08-17**, against the unchanged approved condition. Codex first assessed this
+unit on 2026-08-17 and did **not** accept it: the completion evidence requires a **green Slice 1
+suite**, and the suite then exited 1 with 44 failures. An earlier revision of this record reframed
+the bar as "no regression against that baseline"; that redefined an approved acceptance condition
+without operator approval and was removed. The approved condition stands unchanged and was met by
+Unit 0, which resolved all 44 failures and returned the suite to exit 0 while preserving every
+structural guard this section measures. The structural evidence below is unchanged and was always
+valid; what was missing was the green suite, and it is no longer missing.
 
 **Pre-existing baseline, established before any edit.** `work-loop-v2-slice-1.test.sh` was **not**
 green on entry: **315 passed / 44 failed**. The 44 are unrelated to this unit — see *Pre-existing
@@ -521,6 +523,8 @@ prerequisite unit for it on 2026-08-17 — see § 4 Unit 0.
 
 ### Unit 0 — restored behavior red / green
 
+**Status: ACCEPTED 2026-08-17.** Committed at `072438b3`.
+
 **Red, against the unchanged target files:** `work-loop-v2-slice-1.test.sh` exit 1 — 352 passed, 44
 failed, split 35 `pack` / 6 `race` / 3 `mode`, matching the baseline recorded at the hand-back.
 
@@ -553,7 +557,50 @@ component byte-identical to canonical.
 
 ### Unit 2 — recovery boundary and deterministic regression
 
-Pending.
+Implemented 2026-08-17 in checkout `ai-resources-work-loop-fix-17-8`, branch
+`session/2026-08-17-work-loop-fix-17-8`. The recovery assertions extend Tracer 7's existing
+compaction/Reorient scenario (S8); no second harness was created.
+
+**Red, against the unchanged pre-edit skills.** The focused assertions were written first and run
+against `$realign` and `$reorient` as they stood: `work-loop-v2-tracer-7.test.sh` exit 1 —
+**148 passed / 14 failed**. The 14 were the whole instruction contract: both branch-order checks and
+both of their wrong-order controls, the four `$realign` recovery-branch clauses, and the six
+`$reorient` cascade clauses. Everything else in the file, including all five new route controls, was
+green before the edit — those controls exercise the existing helpers, so they prove the harness
+rather than the repair.
+
+**Green, after the edit.** Exit 0 — **162 passed / 0 failed**. All 14 resolved; the previously green
+148 stayed green.
+
+**Why the order checks can fail.** Each is a line-position predicate, not a phrase search, and each
+is paired with a **wrong-order fixture**: the identical file with the two anchor lines exchanged, so
+both phrases are present and only the sequence is wrong. The same predicate must reject it, and does.
+This is the actual defect — `$realign` read Work Loop authority at line 31 and tested uncertain
+identity at line 39 — rather than a proxy for it.
+
+**Why the clause checks can fail.** Each is paired with the pre-edit artifact at HEAD, in which the
+clause is genuinely absent. A clause green in both states would prove nothing and is reported as a
+failure by the same helper.
+
+**The five named Unit 2 controls, executed.** In a checkout carrying **three open task files** with
+exactly one declared, the recovery route returns `s8-real-task` and never names either decoy; it
+recovers the durable fact hidden in the task (`NA-s8-real-task`) and the one in the plan section the
+task names (`DURABLE-FACT-S8`) together with the plan's authority header, while the section the task
+does **not** name (`DECOY-FACT-S8`) never comes back — that is the targeted-read property, not a
+whole-plan slurp. That checkout carries **no compaction hook at all**, so the recovery is the
+explicit-`$reorient` control. A `BLOCKED_OPERATOR` task stops at `STOP:5` naming its classification,
+and a record the validator refuses stops at `STOP:4` — the validator, not one check later. Both exit
+non-zero rather than resuming.
+
+**No task state changes during recovery.** The state file is byte-identical across the recovery pass
+(SHA-256 before and after), with a control proving the comparison notices a real write.
+
+**Preserved and asserted as preserved:** `$realign`'s four-verdict output contract, its
+actor-correct `Next:` line and its healthy-context authority load; `$reorient`'s seven `REORIENTED`
+fields, its seam `Next:` rule and its read-only posture.
+
+**Affected regressions, all exit 0:** Tracer 7 162/0, Tracer 6 74/0, Slice 1 396/0, core-resolver
+5/0, state 100/0, owner 133/0, lease 136/0, capability 81/0, session-preflight 60/0.
 
 ### Unit 3 — state rollover red / green
 
