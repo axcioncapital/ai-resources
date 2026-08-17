@@ -789,8 +789,28 @@ TERMINAL_RESULT_MAX_VALUE=512
 # fails that assertion rather than passing unnoticed.
 TERMINAL_RESULT_REQUIRED='terminal_result_version schema outcome code task checkout run mode stage actor actor_launched model_request_started hop max_hops state_file turn_at_terminal state_class state_sha256_before state_sha256_after head_before head_after worktree_foreign_paths worktree_allowlisted_dirty_paths changed_paths_since_launch permission_mode_requested permission_mode_effective deadline_seconds deadline_remaining_seconds actor_timeout_seconds recorded_usage actor_session_id run_log capture owner_check owner_declared lease_task_dir lease_checkout_dir lease_task_at_finalization lease_checkout_at_finalization next_action result_complete'
 
+# THE THREE IDENTITY FIELDS, captured by the structural pass that already reads
+# every line, and consumed by the identity boundary below. Two readers over one
+# artifact is how a program comes to disagree with itself about what it read, so
+# the record is parsed ONCE and these carry what that parse saw.
+#
+# `TR_SOURCE` is which artifact they came from, and it is what makes them safe to
+# consume: the identity boundary refuses to answer about any other path, so a
+# caller cannot validate one record and then ask about a second one.
+#
+# THEY ARE SET ONLY ON ACCEPTANCE. A rejected record leaves all four empty rather
+# than leaving whichever fields were read before the refusal — half a parse is not
+# a fact, and an identity check reading one would be comparing against a record
+# this dispatcher just refused.
+TR_SOURCE=''
+TR_TASK=''
+TR_CHECKOUT=''
+TR_RUN=''
+
 validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded reason token
   local f="${1-}" bytes line key val n=0 seen=' ' last='' k
+  local got_task='' got_checkout='' got_run=''
+  TR_SOURCE=''; TR_TASK=''; TR_CHECKOUT=''; TR_RUN=''
   [ -n "$f" ]                || { printf 'no-path\n';    return 1; }
   [ -f "$f" ] && [ -r "$f" ] || { printf 'unreadable\n'; return 1; }
   # The size bound is taken BEFORE a single line is read, so an oversized artifact
@@ -829,6 +849,13 @@ validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded 
     case " $TERMINAL_RESULT_REQUIRED " in *" $key "*) ;; *) printf 'unknown-field\n'; return 1 ;; esac
     case "$seen" in *" $key "*) printf 'duplicate-field\n'; return 1 ;; esac
     seen="$seen$key "
+    # Held in locals, not published yet. The duplicate check above has already
+    # run, so each of these is captured exactly once per record.
+    case "$key" in
+      task)     got_task="$val" ;;
+      checkout) got_checkout="$val" ;;
+      run)      got_run="$val" ;;
+    esac
     last="$line"
   done <"$f"
 
@@ -840,6 +867,98 @@ validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded 
   for k in $TERMINAL_RESULT_REQUIRED; do
     case "$seen" in *" $k "*) ;; *) printf 'missing-field\n'; return 1 ;; esac
   done
+  # Published last, after every structural refusal above has had its chance. The
+  # sweep just proved all three keys are present, so none of these is empty.
+  TR_SOURCE="$f"; TR_TASK="$got_task"; TR_CHECKOUT="$got_checkout"; TR_RUN="$got_run"
+  printf 'ok\n'
+  return 0
+}
+
+# --------------------------------- the terminal result's expected-identity reader
+#
+# THE SECOND HALF OF A QUESTION THE VALIDATOR ABOVE DELIBERATELY LEAVES OPEN. That
+# one answers "is this the shape this dispatcher writes". This one answers "is this
+# the result promised for THIS task, THIS checkout and THIS run" — and the gap
+# between them is the whole point: a copied, replayed or planted record is
+# structurally flawless, because it is a real record that belongs to something
+# else.
+#
+# EVERY EXPECTATION COMES FROM THE CALLER, and that constraint is what gives the
+# comparison any value. The four expected values are dispatcher-owned variables
+# passed in as arguments. Nothing here reads an expectation out of the artifact,
+# out of a state file, or out of anything an actor wrote: a check that sourced both
+# sides of its own comparison from the thing under test would confirm the record
+# agrees with itself, which is exactly what a forgery does too.
+#
+# IT DOES NOT GO LOOKING. No directory is scanned, no candidate is chosen, no
+# newest-file is picked. The caller states the path it promised and this function
+# says whether the artifact there is that promise kept. Choosing a path is a
+# consumer's job and consumers are a later unit.
+#
+# REFUSE, NEVER NORMALIZE — the same rule the structural reader states, applied to
+# paths, where it matters more. A traversal segment, a leading dash, a control
+# character or a symlink is refused outright. Resolving any of them would mean
+# deciding what the caller "really meant" about which file to trust, and the
+# answer to a hostile path is never a cleaned-up version of it.
+#
+# STRUCTURE FIRST, ALWAYS. This reads what validate_terminal_result() captured and
+# refuses when that did not run on this exact artifact. It never re-parses the
+# record: one artifact, one parse, one owner.
+validate_terminal_result_identity() { # artifact task checkout run evidence-root -> 0 and ok, or 1 and one bounded token
+  local f="${1-}" x_task="${2-}" x_checkout="${3-}" x_run="${4-}" x_root="${5-}"
+  local v promised real_root real_dir
+
+  [ -n "$f" ] || { printf 'no-path\n'; return 1; }
+  # AN UNSUPPLIED EXPECTATION IS NOT A WILDCARD. A caller that has not established
+  # one of the four is refused, never silently matched against whatever the
+  # artifact happens to say — which is the one way this function could be made to
+  # accept every record ever written.
+  [ -n "$x_task" ] && [ -n "$x_checkout" ] && [ -n "$x_run" ] && [ -n "$x_root" ] \
+    || { printf 'no-expectation\n'; return 1; }
+
+  # Checked before anything is compared or resolved, and applied to the caller's
+  # values as well as the path: a dispatcher variable that has been corrupted is
+  # not a safer source than an artifact. The `..` test is deliberately blunt —
+  # refusing every occurrence is a rule with no parser in it, and a run id or a
+  # checkout path that legitimately contains one does not exist.
+  for v in "$f" "$x_task" "$x_checkout" "$x_run" "$x_root"; do
+    case "$v" in
+      -*)            printf 'unsafe-path\n'; return 1 ;;
+      *..*)          printf 'unsafe-path\n'; return 1 ;;
+      *[[:cntrl:]]*) printf 'unsafe-path\n'; return 1 ;;
+    esac
+  done
+
+  [ "${TR_SOURCE:-}" = "$f" ] || { printf 'unvalidated\n'; return 1; }
+
+  # THE PROMISED PATH IS DERIVED, NEVER ACCEPTED. It is built from the admitted
+  # evidence root and the expected run id — the same two values the producer used
+  # — and the artifact's path must equal it literally. This is also what bounds
+  # the artifact to the evidence root: any path outside the root is not equal to
+  # a path inside it, so no separate containment test is needed for the literal
+  # case. The resolved test below covers the case a link makes it non-literal.
+  promised="$x_root/$x_run.result"
+  [ "$f" = "$promised" ] || { printf 'path-not-promised\n'; return 1; }
+
+  # A LINK IS NOT THE FILE IT NAMES. The name matches, the target is a real and
+  # structurally valid result, and every field comparison below would pass — which
+  # is why this is refused here rather than left to those comparisons.
+  if [ -L "$f" ]; then printf 'symlinked-path\n'; return 1; fi
+
+  # The literal check above cannot see a root that is itself a link, or an ancestor
+  # that is: the strings match while the bytes come from somewhere else entirely.
+  real_root="$(cd "$x_root" 2>/dev/null && pwd -P)" || { printf 'outside-evidence-root\n'; return 1; }
+  real_dir="$(cd "$(dirname "$f")" 2>/dev/null && pwd -P)" || { printf 'outside-evidence-root\n'; return 1; }
+  [ "$real_root" = "$x_root" ] || { printf 'outside-evidence-root\n'; return 1; }
+  [ "$real_dir" = "$real_root" ] || { printf 'outside-evidence-root\n'; return 1; }
+
+  # Artifact against caller, one field at a time, each on its own line so a
+  # mutation control can remove exactly one comparison and prove the others are
+  # not standing in for it.
+  [ "$TR_TASK" = "$x_task" ]         || { printf 'task-mismatch\n';     return 1; }
+  [ "$TR_CHECKOUT" = "$x_checkout" ] || { printf 'checkout-mismatch\n'; return 1; }
+  [ "$TR_RUN" = "$x_run" ]           || { printf 'run-mismatch\n';      return 1; }
+
   printf 'ok\n'
   return 0
 }

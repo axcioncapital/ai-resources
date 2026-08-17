@@ -5447,6 +5447,229 @@ else
       "the sed matched nothing — the control cannot run"
 fi
 
+# ==================================================================== case 52
+# EXPECTED-IDENTITY BINDING for the artifact case 51 proved is structurally a v1
+# record. The two questions are different, and case 51 says so in its own words:
+# "is this the shape this dispatcher writes" is not "is this the result promised
+# for THIS task, THIS checkout and THIS run". A structurally perfect record is
+# exactly what a copied, replayed or planted one looks like.
+#
+# WHAT THE BOUNDARY COMPARES, and the constraint that makes it worth having: only
+# the artifact against values the CALLER supplied. It never reads an expectation
+# out of the artifact, never scans a directory for a candidate, and never takes a
+# path from actor prose. An identity check that sourced either side of its own
+# comparison from the thing under test would confirm the record agrees with
+# itself, which every forgery also does.
+#
+# STILL NOT A CONSUMER. Nothing below makes a validated result advance a loop,
+# choose a route, wait for a record, or settle a semantic fact. Outcome/code
+# agreement and first-consumer integration remain later units.
+#
+# SAME EXERCISE ROUTE as case 51, for the same reason: the marker-delimited region
+# is lifted out of the dispatcher under test and sourced, so the text executed
+# here is dispatch.sh's own production text, and 52d proves it by mutating
+# dispatch.sh and watching these assertions go red.
+
+# One structural validation followed by one identity validation, in a single
+# subshell — the order the production contract requires, and the reason the
+# identity function can consume what the structural pass already read instead of
+# parsing the record a second time.
+ident_run() { # lib artifact task checkout run root -> "<rc> <token>"
+  ( . "$1" >/dev/null 2>&1 || { printf '99 lib-unsourceable\n'; exit 0; }
+    validate_terminal_result "$2" >/dev/null 2>&1
+    tok="$(validate_terminal_result_identity "$2" "$3" "$4" "$5" "$6" 2>/dev/null)"; rc=$?
+    printf '%s %s\n' "$rc" "$tok" )
+}
+
+ident_expect() { # lib artifact task checkout run root want-rc want-token label
+  local got; got="$(ident_run "$1" "$2" "$3" "$4" "$5" "$6")"
+  if [ "$got" = "$7 $8" ]; then ok "$9"; else bad "$9" "expected '$7 $8', got '$got'"; fi
+}
+
+echo
+echo "Case 52a — a real result at its promised path is accepted for the identity it was written under"
+V52D="$(new_sandbox)"; state_file "$V52D" "identity-task" "codex"
+run_dispatch "$V52D" identity-task --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "52a — the producing run reaches a nonzero terminal (22)" "$OUT"
+RID52="$(run_id_of "$OUT")"
+# The dispatcher canonicalizes both --checkout and --log-dir, so the harness must
+# compare against the canonical forms or every assertion below would fail on
+# macOS for the wrong reason: $TMPDIR resolves through /private.
+CO52="$(cd "$V52D" && pwd -P)"
+ROOT52="$(cd "$V52D/runs" && pwd -P)"
+REAL52="$ROOT52/$RID52.result"
+if [ -f "$REAL52" ]; then
+  ok "52a — the producing run left a terminal result at its promised path"
+else
+  bad "52a — the producing run left a terminal result at its promised path" \
+      "missing $REAL52; runs/ holds: $(ls "$ROOT52" 2>&1 | tr '\n' ' ')"
+fi
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 0 ok \
+  "52a — the real result is accepted for its own task, checkout, run and promised path"
+
+echo
+echo "Case 52b — a structurally valid record is REJECTED when any expected field or the path disagrees"
+V52="$SANDBOX_ROOT/v52"; mkdir -p "$V52"
+
+# THE CENTRAL CASE, and the one this unit exists for. A byte-identical copy of a
+# real result, placed at the plausible promised path of a DIFFERENT run in the
+# same evidence root, presented as that run. Structure cannot tell these apart —
+# 52c asserts that in so many words — so only the identity comparison can.
+OTHER52="20260101T000000-deadbeef-9999-identity-task"
+COPY52="$ROOT52/$OTHER52.result"
+cp "$REAL52" "$COPY52"
+ident_expect "$VAL_LIB" "$COPY52" identity-task "$CO52" "$OTHER52" "$ROOT52" 1 run-mismatch \
+  "52b — a valid result copied to another run's promised path is rejected as that run"
+
+# The same copy presented under the ORIGINAL run's expectations. Now the record's
+# own run field matches, and the defect is that the artifact is not sitting where
+# the promised path for that run says it must be.
+ident_expect "$VAL_LIB" "$COPY52" identity-task "$CO52" "$RID52" "$ROOT52" 1 path-not-promised \
+  "52b — a result read from anywhere but the promised path for the expected run is rejected"
+
+ident_expect "$VAL_LIB" "$REAL52" a-different-task "$CO52" "$RID52" "$ROOT52" 1 task-mismatch \
+  "52b — a task the caller did not expect is rejected"
+
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$SANDBOX_ROOT/not-this-checkout" "$RID52" "$ROOT52" \
+  1 checkout-mismatch "52b — a checkout the caller did not expect is rejected"
+
+# A SYMLINK AT THE PROMISED PATH — Unit 6's deferred observation, owned here.
+#
+# THE LINK POINTS AT THE RIGHT RESULT, and that is what makes this the sharp case
+# rather than a soft one. Its name is the promised path for the expected run, and
+# its target is the genuine result for that very run, so the task, the checkout
+# and the run all match and NO field comparison can explain a rejection. The only
+# defect left is that the dispatcher promised a file at that path and found a
+# pointer — which is the whole claim: a link is not the file it names, however
+# right the file it names happens to be.
+#
+# An earlier draft of this fixture pointed the link at a DIFFERENT run's result,
+# and M12 caught it: the run comparison rejected that one first, so the assertion
+# was never evidence about the symlink refusal at all.
+SYM52D="$SANDBOX_ROOT/v52-symroot"; mkdir -p "$SYM52D"
+SYM52ROOT="$(cd "$SYM52D" && pwd -P)"
+ln -s "$REAL52" "$SYM52ROOT/$RID52.result"
+ident_expect "$VAL_LIB" "$SYM52ROOT/$RID52.result" identity-task "$CO52" "$RID52" "$SYM52ROOT" \
+  1 symlinked-path "52b — a symlink standing at the promised path is refused, not followed"
+
+# AN EVIDENCE ROOT THAT IS ITSELF A LINK. The final component is a real file and
+# the promised path matches literally, so only resolving the directory catches
+# that the admitted root is not the directory actually being read.
+LINKROOT52="$SANDBOX_ROOT/v52-linkroot"
+ln -s "$ROOT52" "$LINKROOT52"
+ident_expect "$VAL_LIB" "$LINKROOT52/$RID52.result" identity-task "$CO52" "$RID52" "$LINKROOT52" \
+  1 outside-evidence-root "52b — a promised path whose evidence root resolves elsewhere is rejected"
+
+# HOSTILE PATH SHAPES ARE REFUSED, NOT NORMALIZED. A traversal segment, a leading
+# dash that a later command would read as an option, and an embedded newline are
+# each refused outright rather than cleaned up into something trusted.
+ident_expect "$VAL_LIB" "$ROOT52/../runs/$RID52.result" identity-task "$CO52" "$RID52" "$ROOT52" \
+  1 unsafe-path "52b — a traversal segment in the artifact path is refused, not resolved"
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "-$ROOT52" \
+  1 unsafe-path "52b — an evidence root that could be read as an option is refused"
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$(printf 'a\nb')" "$ROOT52" \
+  1 unsafe-path "52b — an expected value carrying a control character is refused"
+
+# AN EMPTY EXPECTATION IS NOT A WILDCARD. A caller that has not established one of
+# the four values must be refused, never quietly matched against whatever the
+# artifact happens to say.
+ident_expect "$VAL_LIB" "$REAL52" "" "$CO52" "$RID52" "$ROOT52" 1 no-expectation \
+  "52b — an unsupplied expected task is refused rather than treated as any task"
+
+# STRUCTURAL VALIDATION IS A PRECONDITION, NOT AN ASSUMPTION. Identity is asked
+# about an artifact nothing structurally validated, and refuses to answer.
+UNVAL52="$( . "$VAL_LIB" >/dev/null 2>&1
+            tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+            printf '%s %s\n' "$?" "$tok" )"
+if [ "$UNVAL52" = "1 unvalidated" ]; then
+  ok "52b — identity refuses an artifact the structural validator did not read"
+else
+  bad "52b — identity refuses an artifact the structural validator did not read" \
+      "expected '1 unvalidated', got '$UNVAL52'"
+fi
+
+echo
+echo "Case 52c — the boundary reads only what the caller supplied, and changes nothing"
+
+# THE FRAMING CLAIM, asserted rather than assumed: the copied result 52b rejects
+# is structurally FLAWLESS. If structure alone could catch it, this whole case
+# would be redundant — and this assertion is what would say so.
+val_expect "$VAL_LIB" "$COPY52" 0 ok \
+  "52c — the copied result is structurally valid, so only identity can reject it"
+
+# READ-ONLY ACROSS THE WHOLE CHECKOUT, on the same argument case 51b makes: the
+# claim covers state files, leases, ownership, logs and captures, not just the
+# artifact.
+BEFORE52="$(tree_manifest "$V52D")"
+ident_run "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+ident_run "$VAL_LIB" "$COPY52" identity-task "$CO52" "$OTHER52" "$ROOT52" >/dev/null 2>&1
+AFTER52="$(tree_manifest "$V52D")"
+if [ "$BEFORE52" = "$AFTER52" ]; then
+  ok "52c — identity validation changes nothing in the checkout"
+else
+  bad "52c — identity validation changes nothing in the checkout" \
+      "$(printf '%s\n' "$BEFORE52" >"$V52/before"; printf '%s\n' "$AFTER52" >"$V52/after"
+         diff "$V52/before" "$V52/after" | head -4 | tr '\n' ';')"
+fi
+
+# IT DOES NOT GO LOOKING FOR A RESULT. A boundary that could enumerate the
+# evidence root could pick its own candidate, which is the consumer behaviour this
+# unit excludes. Comments are stripped first, for the reason 51b gives.
+IDENT_CODE="$SANDBOX_ROOT/wl2-identity-code.sh"
+awk '/^validate_terminal_result_identity\(\)/{f=1} f' "$VAL_LIB" 2>/dev/null |
+  sed 's/^[[:space:]]*#.*$//' >"$IDENT_CODE" 2>/dev/null
+SCAN_RE='(^|[^[:alnum:]_])(ls|find|glob|shopt)[[:space:]]|\*\.result|\$\(ls|\$\(find'
+if [ -s "$IDENT_CODE" ] && ! grep -nE "$SCAN_RE" "$IDENT_CODE" >/dev/null 2>&1; then
+  ok "52c — the identity boundary's text contains no directory scan for a candidate result"
+else
+  bad "52c — the identity boundary's text contains no directory scan for a candidate result" \
+      "${IDENT_CODE} empty, or: $(grep -nE "$SCAN_RE" "$IDENT_CODE" 2>/dev/null | head -3 | tr '\n' ';')"
+fi
+
+echo
+echo "Case 52d — mutation controls: the rejections above go green when the identity check is broken"
+MUT52="$SANDBOX_ROOT/mutants52"; mkdir -p "$MUT52"
+
+# M11 — remove the run comparison from the DISPATCHER. Without it the copied
+# result presented as another run is accepted, which is precisely the forgery
+# 52b's central assertion claims to catch. If 52b passed for any other reason,
+# this control would still reject and 52b would not be evidence.
+sed "/printf 'run-mismatch/d" "$DISPATCH_BIN" >"$MUT52/m11.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT52/m11.sh"; then
+  ok "52d — M11 mutant differs from the dispatcher (the run comparison was found)"
+  if extract_validator "$MUT52/m11.sh" "$MUT52/m11.lib"; then
+    ident_expect "$MUT52/m11.lib" "$COPY52" identity-task "$CO52" "$OTHER52" "$ROOT52" 0 ok \
+      "52d — M11: without the run comparison the copied result is accepted (52b is fail-capable)"
+  else
+    bad "52d — M11: without the run comparison the copied result is accepted (52b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "52d — M11 mutant differs from the dispatcher (the run comparison was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M12 — remove the symlink refusal. Without it the link is followed to a real,
+# structurally valid, field-matching result and ACCEPTED, which is exactly the
+# outcome Unit 6 deferred and this unit owns. This control is also what proved the
+# fixture above had to point at the matching run: while it pointed elsewhere, the
+# mutant still rejected — on the run comparison — and the assertion it was meant
+# to underwrite was not evidence.
+sed "/printf 'symlinked-path/d" "$DISPATCH_BIN" >"$MUT52/m12.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT52/m12.sh"; then
+  ok "52d — M12 mutant differs from the dispatcher (the symlink refusal was found)"
+  if extract_validator "$MUT52/m12.sh" "$MUT52/m12.lib"; then
+    ident_expect "$MUT52/m12.lib" "$SYM52ROOT/$RID52.result" identity-task "$CO52" "$RID52" "$SYM52ROOT" \
+      0 ok "52d — M12: without the symlink refusal the planted link is followed (52b is fail-capable)"
+  else
+    bad "52d — M12: without the symlink refusal the planted link is followed (52b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "52d — M12 mutant differs from the dispatcher (the symlink refusal was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
