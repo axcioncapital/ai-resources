@@ -45,6 +45,75 @@ AO_LOGS
     fi
 fi
 
+# Guard 3: generated symlink destinations must not be committed.
+# auto-sync-shared.sh (the generator) maintains a marked block in this
+# repository's LOCAL exclude file listing every generated symlink it manages
+# (root-anchored, one per line). Git already refuses ordinary adds of those
+# ignored paths, so a block-covered path in the index arrived via `git add -f`
+# — re-tracking a checkout-local generated product. The block is consumed as
+# the single source of truth: the marker strings are sed-extracted from the
+# generator itself (same single-source contract as fix-symlinks.md re-reading
+# EXCLUDE_COMMANDS — both are static, single-line, start-of-line literal
+# assignments there), and no manifest, exclusion or path logic is re-derived
+# here. If the generator, its markers, the exclude file or the block are
+# absent, the guard skips — same fail-open posture as Guard 2 when its script
+# is missing. Every substitution carries `|| true`: this section runs under
+# `set -e`, and a guard that aborts the hook on its own lookup failure would
+# block every commit in repos it cannot even judge.
+gen_root="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+gen_src=""
+if [ -n "$gen_root" ]; then
+    # Canonical generator: the repo's own copy (ai-resources itself), else the
+    # ai-resources child of the repo root or an ancestor (workspace root and
+    # nested projects) — the same walk auto-sync itself uses to find canonical.
+    gen_d="$gen_root"
+    while :; do
+        if [ -f "$gen_d/.claude/hooks/auto-sync-shared.sh" ] && [ "$(basename "$gen_d")" = "ai-resources" ]; then
+            gen_src="$gen_d/.claude/hooks/auto-sync-shared.sh"; break
+        fi
+        if [ -f "$gen_d/ai-resources/.claude/hooks/auto-sync-shared.sh" ]; then
+            gen_src="$gen_d/ai-resources/.claude/hooks/auto-sync-shared.sh"; break
+        fi
+        [ "$gen_d" = "/" ] && break
+        gen_d=$(dirname "$gen_d")
+    done
+    # ai-resources' own checkout: the hook lives at the repo root without the
+    # directory being named ai-resources in a worktree; accept the direct copy.
+    if [ -z "$gen_src" ] && [ -f "$gen_root/.claude/hooks/auto-sync-shared.sh" ]; then
+        gen_src="$gen_root/.claude/hooks/auto-sync-shared.sh"
+    fi
+fi
+if [ -n "$gen_src" ]; then
+    gen_begin=$(sed -n 's/^EXCL_BEGIN="\(.*\)"$/\1/p' "$gen_src" 2>/dev/null | head -1 || true)
+    gen_end=$(sed -n 's/^EXCL_END="\(.*\)"$/\1/p' "$gen_src" 2>/dev/null | head -1 || true)
+    gen_excl=$(git rev-parse --git-path info/exclude 2>/dev/null || true)
+    if [ -n "$gen_begin" ] && [ -n "$gen_end" ] && [ -n "$gen_excl" ] && [ -f "$gen_excl" ]; then
+        gen_block=$(awk -v b="$gen_begin" -v e="$gen_end" '$0==e{inb=0} inb{print} $0==b{inb=1}' "$gen_excl" 2>/dev/null || true)
+        if [ -n "$gen_block" ]; then
+            gen_hits=""
+            while IFS= read -r -d '' gen_path; do
+                [ -n "$gen_path" ] || continue
+                if printf '%s\n' "$gen_block" | grep -Fxq "/$gen_path"; then
+                    gen_hits="${gen_hits}  ${gen_path}
+"
+                fi
+            done < <(git diff --cached --name-only -z || true)
+            if [ -n "$gen_hits" ]; then
+                {
+                    echo "BLOCKED: the staged index contains generated symlink destination(s) managed by auto-sync-shared.sh:"
+                    printf '%s' "$gen_hits"
+                    echo "  These are checkout-local generated products, listed in the managed block of"
+                    echo "  $gen_excl — they were force-added past Git's ignore refusal and must not be committed."
+                    echo "  Fix: git restore --staged <path>   (the symlink itself stays in place; the"
+                    echo "  SessionStart sync regenerates any missing link). Use 'git commit --no-verify'"
+                    echo "  only if committing a generated link is genuinely intended."
+                } >&2
+                exit 1
+            fi
+        fi
+    fi
+fi
+
 # ===== end integrity guards =====
 
 echo "Running skill validation..."

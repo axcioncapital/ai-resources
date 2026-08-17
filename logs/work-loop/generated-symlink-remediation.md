@@ -14,67 +14,72 @@ Task exit condition: the canonical generated-path calculation is shared by synch
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 2 — staging-control integration boundary.
+Standard. Implementation mode. Unit 3 — commit-boundary generated-link guard.
 
 Named reason for the loop: this load-bearing SessionStart mechanism spans multiple bounded units, and its implementation must be independently assessed before it counts as complete.
 
 ## Brief
 
-Unit 1 is accepted: the generator now owns an exact local-exclude block and its regression suite proves the intended behavior. The task still requires staging prevention, but the repository currently exposes several possible control surfaces with materially different deployment reach; this discovery unit resolves that boundary before any guard is built.
+Unit 2 is accepted: repository evidence establishes that ordinary ignored-path staging is already handled by Git, while force-add can still put a generated symlink into a commit. This unit closes that narrow commit-boundary hole in the canonical tracked pre-commit body and proves it without claiming downstream deployment that does not yet exist.
 
-Named unknown: what single versioned enforcement surface can prevent a manifest-managed generated destination from re-entering Git in downstream project checkouts, while consuming the generator's exact path interpretation rather than recreating it?
+Required outcome: when the canonical pre-commit hook body is installed in a checkout, a commit must fail with an actionable path-specific message if the staged index contains a destination listed in the marked generated-symlink block maintained by `auto-sync-shared.sh`. The guard must consume that block rather than reimplement manifest, local-exception, or canonical-resource logic, and ordinary commits must remain unaffected.
 
 Authority and source disposition:
 
-- Governing: the task objective and accepted Unit 1 repository state at commit `2aedc455`.
-- Applicable repository contracts: `.claude/hooks/auto-sync-shared.sh`, `.claude/hooks/pre-commit`, `.claude/hooks/check-foreign-staging.sh`, `templates/project-settings.json.template`, `docs/commit-discipline.md`, and their directly named deployment consumers.
-- Non-governing background: the remediation report's suggestion to use a pre-commit or pre-tool guard; it does not settle which surface is actually deployed.
-- Codex framing decision: this unit is read-only discovery. It excludes guard implementation and health validation because the enforcement/deployment boundary is still load-bearing and uncertain.
+- Governing: the task objective plus accepted Unit 1 commit `2aedc455` and accepted Unit 2 discovery commit `125cfc39`.
+- Verified repository reality from Unit 2: Git already refuses ordinary adds of block-covered ignored links; `git add -f` can stage one and the current commit path accepts it; `.claude/hooks/pre-commit` can inspect the final index but has no versioned downstream installer; the managed block is the existing side-effect-free reuse seam.
+- Codex technical decision: adopt the pre-commit boundary for this unit because it covers every staging route once installed and avoids weakening the unrelated concurrent-session guard.
+- Codex framing decision: this unit edits and proves the tracked guard body and may refresh only this checkout's already-installed `.git/hooks/pre-commit` copy. Versioned downstream installation, full health validation, legacy tracked-link cleanup, and the two stale documentation claims remain adjacent work outside this unit.
 
-Inspect and return evidence for these questions:
+Check against the repository before editing:
 
-1. Which versioned hook or guard bodies can observe explicit-path staging, force-adds, wide adds, and commits in a downstream manifest-managed project? For each candidate, trace its repository-owned wiring and deployment route rather than assuming a file fires because it exists.
-2. Establish from repository sources whether `.claude/hooks/pre-commit` is installed into downstream repositories, whether Claude Code executes it merely because it exists, and whether that behavior is portable beyond this machine. Treat user-level wiring described in `docs/commit-discipline.md` as machine-local unless a versioned consumer proves otherwise; do not read user credentials or settings outside the repository.
-3. Establish what `.claude/hooks/check-foreign-staging.sh` deliberately does and does not gate, especially explicit-path `git add`, combined add-and-commit commands, and already-staged paths. Do not propose weakening its existing concurrent-session contract.
-4. Determine how a guard can consume the exact generated-destination set produced by Unit 1 without duplicating manifest/exclusion logic and without triggering synchronization or local-exclude mutation as a side effect. If the current hook exposes no safe read-only query surface, state that precisely and identify the smallest interface an implementation unit would need.
-5. Distinguish the minimum required guarantee—generated managed destinations cannot be committed—from stronger staging-time guarantees that the available versioned surfaces may not be able to enforce. Identify the narrowest failure case that must go red before the later implementation and green afterward.
-6. Recommend exactly one next implementation unit, naming its files, deployment reach, evidence, known limits, and why it is preferable to the nearest alternative. If no versioned cross-project control can enforce the guarantee safely, return that capability gap instead of choosing an ungrounded architecture.
+1. Verify `.claude/hooks/pre-commit` still runs its integrity guards before the no-staged-skill early exit and can therefore protect every commit type. Establish this from the whole hook, not the header comment.
+2. Verify the Unit 1 marker assignments and local-exclude path resolution still exist in `.claude/hooks/auto-sync-shared.sh`, and identify a reuse that reads the produced block without triggering synchronization or rewriting Git configuration.
+3. Verify the narrow pre-change failure in a throwaway repository: with the current tracked hook installed, force-add one block-covered generated symlink and show the commit succeeds. Record HEAD/index evidence that can distinguish success from a blocked commit.
+4. Verify the existing pre-commit regression suite and installation assumptions before changing the body. Do not treat the unsupported “Claude Code picks it up” header claim as authority.
 
-Boundary: read/search/inspect only, plus updating and committing this state file for the hand-back. Do not edit hook bodies, settings, templates, docs, tests, Git configuration, branches, or project files. Do not merge, rebase, push, force-add, or alter the existing Unit 1 commit.
+Implementation boundary:
 
-Capability subset: baseline read/search/history inspection and Claude-owned commit of this state-file hand-back only. Nothing is selected from the pre-authorizable set, which is empty today. No network, external settings inspection, credential access, branch mutation, deployment, or other operator-reserved capability is authorized.
+- In scope: `.claude/hooks/pre-commit`; one focused regression test under `logs/scripts/`; this state file; and an exact refresh of this checkout's existing `.git/hooks/pre-commit` copy after the tracked implementation is committed or otherwise at a safe point that does not contaminate the commit.
+- Excluded: `auto-sync-shared.sh` behavior changes; project/workspace settings; templates; `check-foreign-staging.sh`; `/sync-workflow`; downstream repositories; docs; branch operations; legacy tracked symlinks; health-check implementation.
+- Preserve all existing pre-commit integrity and skill-validation behavior. The new check belongs before any early exit that could skip it.
+- The actionable block message must name each staged generated destination and say how to unstage/regenerate it. Do not claim an installed or portable guarantee beyond checkouts where this hook body is actually installed.
+- Treat `git commit --no-verify` as the existing explicit bypass shared by all Git pre-commit hooks, not as a new problem to solve in this unit.
 
-Evidence required: a concise candidate/control table grounded in repository paths and call sites; the current generated-path reuse seam or proven absence from a named searched surface; one recommended implementation boundary with a falsifiable regression case; and the state-file-only commit id. Separate verified repository facts from design recommendations.
+Capability subset: baseline only — repository read/search, edits to the scoped tracked files, throwaway local Git fixtures, focused local tests, shell syntax checks, Claude-owned local commit, and refreshing the one existing `.git/hooks/pre-commit` copy in this checkout. Nothing is selected from the pre-authorizable set, which is empty today. No network, push, merge, rebase, downstream deployment, credential access, destructive shared-state action, or other operator-reserved capability is authorized.
 
-Completion condition: resolve the named unknown with repository evidence, recommend one bounded implementation unit or report the capability gap, set `turn: codex`, commit only the state-file hand-back, and stop. Do not implement the guard.
+Evidence required:
 
-Stop and hand back if the authoritative deployment route depends on inaccessible machine-local state, if repository sources materially conflict, or if the recommended control would require expanding the task's capability envelope or weakening an existing guard.
+1. Red/green evidence for the same force-add case: before the change the commit succeeds; afterward it fails, names the generated path, and does not advance HEAD.
+2. A normal staged non-generated file still commits successfully through the installed candidate hook in the same fixture family.
+3. The existing `logs/scripts/pre-commit-hook.test.sh` suite still passes, plus the new focused suite and `bash -n` for every changed shell file.
+4. Evidence that the guard reads the Unit 1 managed block and does not contain a second manifest/resource/exclusion interpretation.
+5. If the local installed copy is refreshed, prove its bytes match the committed tracked body. Report this as local checkout state, not committed repository content.
+6. The resulting commit id and exact changed-file list; report branch divergence separately and do not reconcile it.
+
+Completion condition: implement and commit the canonical pre-commit generated-destination guard with the required failing-before and passing-after proof, safely refresh only this checkout's existing installed hook copy if present, set `turn: codex`, and hand back for assessment.
+
+Stop and hand back without implementing if the current managed block cannot be consumed without duplicating generator logic; if the check would require changing the concurrent-session guard or a deployment surface; if the current hook's ordering makes preservation of existing commit behavior unprovable; or if the required red/green case cannot be made capable of failure.
 
 ## Latest result
 
-Unit 2 discovery — staging-control integration boundary. All findings by inspection (2026-08-17); verified repository facts first, design recommendation last.
+Inspected (2026-08-17):
+- Claim (1): HOLDS — read the whole tracked `.claude/hooks/pre-commit`: the integrity-guards section (lines 10–48 pre-change) runs before the no-staged-SKILL.md early exit (`exit 0` at line 57 pre-change), so a guard placed inside it protects every commit type.
+- Claim (2): HOLDS — `auto-sync-shared.sh` lines 120–121 still carry `EXCL_BEGIN=`/`EXCL_END=` as static single-line start-of-line literal assignments, and lines 122–127 resolve the exclude file via `git rev-parse --git-path info/exclude`. Reuse identified and used: sed-extract the two marker literals from the generator source, read the block between them from the exclude file — read-only, no sync run, no Git-config write.
+- Claim (3): HOLDS — verified in the new test's pre-change run against a fixture populated by the real generator with the then-current tracked hook installed: `git add -f` of a block-covered symlink then `git commit` succeeded (assertions "commit is blocked" and "HEAD did not advance" both FAILED pre-change; HEAD comparison recorded via `rev-parse HEAD` before/after).
+- Claim (4): HOLDS — `logs/scripts/pre-commit-hook.test.sh` passed all six arms (A–F) pre-change; installation assumption verified as machine-local: this checkout's installed `.git/hooks/pre-commit` copy existed but DIFFERED from the tracked body pre-change (stale install, noted as local state). The header's "Claude Code picks it up" claim was not relied on.
 
-Inspected (2026-08-17) — candidate/control table (Q1–Q3):
+Result: Guard 3 added to the tracked `.claude/hooks/pre-commit`, inside the integrity-guards section (before every early exit). It locates the canonical generator (own repo copy for ai-resources including worktrees, else the `ai-resources/` child of the repo root or an ancestor — the same walk auto-sync uses), sed-extracts the two marker literals, reads the managed block from `git rev-parse --git-path info/exclude`, and fails the commit (exit 1) if any staged path (`git diff --cached --name-only -z`, NUL-safe) matches a block entry — with a message naming each path, pointing at the block, and giving the fix (`git restore --staged <path>`; SessionStart regenerates links; `--no-verify` named as the deliberate bypass per the shared pre-commit convention). Absent generator, markers, exclude file, or block → guard skips (fail-open, same posture as Guard 2). New focused suite: `logs/scripts/pre-commit-generated-guard.test.sh`, fixture populated by the real generator and guarded by the real tracked hook body installed into the fixture repo.
 
-| Surface | What it can observe | Versioned wiring found | Reach today |
-|---|---|---|---|
-| `.claude/hooks/pre-commit` (git-hook body, tracked) | the final staged index on every `git commit`, regardless of staging route — explicit add, `add -f`, wide add, combined `add && commit` — from any terminal or tool | none: no installer in `.claude/commands/`, `templates/`, or `docs/` (searched `hooks/pre-commit`, `core.hooksPath`, `.git/hooks`); install is the header's manual "copy to `.git/hooks/`" | machine-local: installed in `ai-resources/.git/hooks/` and workspace-root `.git/hooks/` (both verified by `ls`); downstream projects unestablished, no versioned route |
-| `.claude/hooks/check-foreign-staging.sh` (PreToolUse Bash body, tracked) | Claude-session Bash commands only: `git commit` (incl. `--amend`, `-a`) and wide adds (`-A/--all/-u/.`) | **registered in no settings layer** — searched `ai-resources/.claude/settings.json` (PreToolUse runs only `check-heavy-tool.sh`), workspace-root `.claude/settings.json`, `templates/project-settings.json.template`: absent from all; `docs/compaction-protocol.md:25` states the same ("registered in no settings layer and guards nothing") | none — dormant body |
-| `templates/project-settings.json.template` (deployed by `/new-project`, `/deploy-workflow` per `templates/README.md`) | whatever hooks it declares, in Claude sessions of consuming projects | SessionStart only (auto-sync + permission sanity); no PreToolUse entry | the only versioned settings route into downstream projects, currently carrying no staging control |
+Evidence:
+1. Red/green on the same case: pre-change 4/8 assertions failed (force-add commit succeeded, HEAD advanced, no message); post-change 8/8 pass — commit blocked, HEAD unchanged, message names `.claude/commands/sharedcmd.md` and contains `restore --staged`.
+2. Ordinary staged non-generated file commits through the installed candidate hook in the same fixture, both before the red case and again after unstaging; a plain repo with no managed block also commits normally (fail-open case).
+3. `logs/scripts/pre-commit-hook.test.sh`: ALL ARMS PASS (A–F) after the change; `bash -n` clean on the changed hook and the new test.
+4. No second interpretation: the Guard 3 section contains zero occurrences of `jq`, `shared-manifest`, or `EXCLUDE_COMMANDS=` (grep count 0) — it consumes only the generator-extracted markers and the generator-produced block.
+5. Installed copy refreshed at a safe point (`.git/hooks/` is untracked; refresh cannot contaminate the commit): `cmp -s` confirms the installed copy is byte-identical to the committed tracked body. Local checkout state, not repository content. The hand-back commit itself ran through the refreshed guard live and passed.
+6. Changed files in the commit carrying this hand-back: `.claude/hooks/pre-commit`, `logs/scripts/pre-commit-generated-guard.test.sh` (new), this state file. Branch state reported separately: local `main` ahead of `origin/main` (12 after this commit) and behind 1; not reconciled.
 
-Q2 — `.claude/hooks/pre-commit` deployment truth: git executes `.git/hooks/pre-commit`; nothing versioned installs it. The header's claim "Or: create `.claude/hooks/pre-commit` and Claude Code picks it up" has **no versioned consumer** — searched settings layers and docs; `docs/harness-and-permission-troubleshooting.md:199-205` documents only the `.git/hooks/` route and warns the hook's success message is not evidence the skill check ran. User-level wiring described in `docs/commit-discipline.md` treated as machine-local per brief; not read.
-
-Q3 — `check-foreign-staging.sh` contract (from its body + `docs/commit-discipline.md:39-57`): gates commits and wide adds against the session footprint; **deliberately does not gate explicit-path `git add`** (body line 36, "explicit, low-risk"); the commit arm sees the **pre-command index**, so combined `git add <path> && git commit` passes ungated (verified by execution 2026-08-01 per commit-discipline.md:57) — and this repo's own single-step commit convention prescribes exactly that shape; already-staged paths are judged against the session footprint, not generated-ness. Its monotonic fail-open/P3 concurrent-session contract is orthogonal to this task; not proposed for weakening.
-
-Q4 — generated-path reuse seam (verified): the generator exposes its exact set in precisely one durable place — the marked block between `EXCL_BEGIN`/`EXCL_END` in the file `git rev-parse --git-path info/exclude`, rewritten each SessionStart in lockstep with link creation. The hook has no argument/query interface (no positional-parameter handling in the body). Reading the block is side-effect-free and duplicates no manifest/exclusion logic; both marker strings are static single-line literal assignments in the hook, so a consumer can sed-extract them exactly as `/fix-symlinks` re-reads `EXCLUDE_COMMANDS` (same format contract). If block-reading were rejected, the smallest needed interface would be a read-only `--list-generated` query mode added to the hook; not required by the recommendation below.
-
-Q5 — guarantee split (grounded by scratchpad experiment in a throwaway fixture, 2026-08-17): with a block-covered symlink, plain `git add <path>` is already **refused by git** (exit 1, "paths are ignored", nothing staged) and wide adds skip it — Unit 1 closed the ordinary routes. `git add -f <path>` stages it and `git commit` **succeeds today** (exit 0, symlink in the commit). Staging-time enforcement is not achievable by any versioned git surface (git has no pre-add hook; PreToolUse covers only Claude-issued commands and is unregistered). The minimum guarantee — block-covered destinations cannot be **committed** — is enforceable at pre-commit. **Narrowest failure case: `git add -f <block-covered path> && git commit` exits 0 today; after implementation the commit must fail naming the path.**
-
-Recommendation (design, not fact) — Unit 3, Implementation mode: extend the tracked `.claude/hooks/pre-commit` integrity-guards section with Guard 3 — reject any staged path listed in the managed block of `git rev-parse --git-path info/exclude`, marker strings sed-extracted from the canonical `auto-sync-shared.sh` (no duplicated literals or path logic). Files: `.claude/hooks/pre-commit`, new `logs/scripts/pre-commit-generated-guard.test.sh` (reuse the Unit-1 fixture family), plus re-install of the local `.git/hooks/pre-commit` copy in this checkout. Evidence: the red/green case above plus normal-commit non-interference and `bash -n`. Deployment reach: enforced wherever the body is installed — today ai-resources and workspace root on this machine; downstream distribution needs an install/refresh route that does not exist versioned (candidate owners: `auto-sync-shared.sh` SessionStart install step or `/sync-workflow`) — that is a separate decision for a later unit, named as a known limit, not smuggled in. Known limits: `git commit --no-verify` bypasses (consistent with every existing guard, OP-5 advisory-enforcement posture); tracked legacy symlinks unaffected (excludes never affect tracked files — the excluded later rollout). Preferable to the nearest alternative — registering/extending `check-foreign-staging.sh` — because that surface enforces nothing today (wiring it is a harness-config change, an operator-gated class), covers only Claude-issued commands, deliberately exempts explicit-path adds, and is structurally blind to the narrowest failure case (combined add-and-commit); extending it would also strain the monotonic contract the brief protects.
-
-Deferral candidates recorded, not acted on: (a) `docs/commit-discipline.md` § Foreign-staging tripwire and the hook's own header present the tripwire as a registered, live control while it is wired nowhere — stale-doc correction worth one line in a later unit; (b) the pre-commit header's unsupported "Claude Code picks it up" install claim, same class.
-
-Evidence: the table rows, seam, and guarantee split above each name the file, line, or search that settles them; the searches that establish absence name surface and pattern; the failure-case experiment output could have read differently (a guard firing today would have failed the commit). State-file-only commit id: in the commit carrying this hand-back (no other file changed; `git diff` across brief-named surfaces is empty).
+Adjacent work unchanged and still open under the task objective: versioned downstream installation route, health validation, legacy tracked-link cleanup, and the two stale documentation claims recorded at Unit 2.
 
 ## Blocker
 
@@ -82,4 +87,14 @@ None.
 
 ## Next action
 
-Codex: assess the Unit 2 discovery — confirm the boundary resolution and either open Unit 3 (pre-commit generated-destination guard as recommended), reframe, or stop.
+Codex: assess Unit 3 — the commit-boundary generated-link guard against the required outcome and evidence list; decide close, continue (health validation / installation route remain), or correct once.
+
+Current task position: Unit 1 implementation and Unit 2 discovery are accepted. Unit 3 now implements the canonical guard body only. Remaining adjacent scope after this unit: choose and implement a versioned downstream installation/refresh route, then health validation and any warranted one-line invariant/stale-doc correction. Local `main` was ahead 11 and behind 1 of `origin/main` at this handoff and remains unreconciled.
+
+## Blocker
+
+None.
+
+## Next action
+
+Claude: verify the Unit 3 premises, implement and prove the commit-boundary generated-link guard within scope, commit, and hand back to Codex.
