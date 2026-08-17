@@ -1,7 +1,19 @@
 #!/bin/bash
 # Pre-commit hook: validates skill files before allowing a commit
-# Install: copy to .git/hooks/pre-commit and make executable
-# Or: create .claude/hooks/pre-commit and Claude Code picks it up
+# Install: auto-sync-shared.sh installs and refreshes this body at the
+# checkout's executing hook path on SessionStart. Manual install still works:
+# copy to the path `git rev-parse --git-path hooks/pre-commit` reports and make
+# it executable.
+#
+# PROVENANCE MARKER — load-bearing, do not edit, reflow or move. The single
+# comment line below is matched with `grep -Fxq` by auto-sync-shared.sh to
+# recognise an installed copy as its own managed product, and therefore as safe
+# to overwrite on refresh. A hook body WITHOUT that line is treated as
+# project-owned and is never overwritten — which is the whole protection for the
+# projects that point pre-commit at a hook of their own. Changing this text
+# without changing GUARD_MARKER in auto-sync-shared.sh orphans every copy
+# already installed: they stop being recognised and stop receiving refreshes.
+# managed-by: auto-sync-shared.sh — canonical .claude/hooks/pre-commit
 
 set -e
 

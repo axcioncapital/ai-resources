@@ -189,6 +189,161 @@ write_exclude_block() {
   fi
 }
 
+# Generated-guard installation and refresh.
+#
+# The commit-boundary guard that refuses staged generated destinations (Guard 3
+# of .claude/hooks/pre-commit) only runs from the checkout's EXECUTING hook path,
+# and until now nothing put it there — the sweep above symlinks commands, agents
+# and skills, and a tracked file at .claude/hooks/pre-commit is not a hook Git
+# runs. Installing it belongs HERE rather than in a general hook manager, because
+# this script is already the single owner of the generated-destination contract:
+# the managed exclude block written above is exactly what the guard consumes. A
+# separate installer would be a second owner of one contract.
+#
+# Two hard limits, and their order matters:
+#
+#   1. A SYMLINK at the hook path is classified FIRST and is never followed,
+#      replaced or chmod'ed. Real projects here point pre-commit at a
+#      project-owned script; following the link would overwrite that script's
+#      own contents, which is worse than not installing at all.
+#   2. A differing regular body is refreshed ONLY on exact evidence that it is a
+#      copy of this canonical hook — the provenance marker, or the one full
+#      digest of the exact pre-marker body that shipped before the marker
+#      existed. Every other marker-less body is project-owned: reported, never
+#      touched. There is deliberately NO "looks like our hook" heuristic. A
+#      workspace-root copy in this very repository's own lineage (canonical as of
+#      3878b4de) is marker-less and is NOT the pre-marker ancestor, so it stays
+#      untouched — a header-similarity test would have overwritten it.
+#
+# Fail open throughout, exactly like the rest of this SessionStart hook: no
+# canonical body, no digest tool, an unwritable hook directory or a failed write
+# skips the work and reports it. A failed write cannot corrupt an installed hook,
+# because the new body is staged in a sibling temp file and only ever moved into
+# place atomically — the destination holds either the old body or the whole new
+# one, never a half-written one.
+GUARD_MARKER="# managed-by: auto-sync-shared.sh — canonical .claude/hooks/pre-commit"
+# Exactly ONE entry, and it stays exactly one: the full SHA-256 of the tracked
+# pre-commit body at 638ab8cc — the last canonical body before GUARD_MARKER
+# existed. This is the only marker-less body that may ever be refreshed. Do not
+# grow it into a list of "known old versions": every addition widens the set of
+# project-owned bodies that could collide with it, and the marker already covers
+# everything shipped since.
+GUARD_ANCESTOR_SHA256="6c75cb196970bf1d4867167b93dc82cf39ae6d85191a8b20f7f51681f5f5c3f5"
+guard_report=""
+
+guard_sha256() {
+  local out
+  if command -v shasum >/dev/null 2>&1; then
+    out=$(shasum -a 256 "$1" 2>/dev/null) || return 1
+  elif command -v sha256sum >/dev/null 2>&1; then
+    out=$(sha256sum "$1" 2>/dev/null) || return 1
+  else
+    return 1
+  fi
+  printf '%s' "${out%% *}"
+}
+
+guard_write() {
+  # <destination> <canonical-source>. Atomic, and the prior body survives every
+  # failure path. Returns 1 with guard_report set when it could not write.
+  local dest="$1" src="$2" tmp
+  mkdir -p "$(dirname "$dest")" 2>/dev/null || {
+    guard_report="could not create the hook directory for $dest; the generated-symlink commit guard was not installed and nothing was changed"
+    return 1
+  }
+  # The temp file is a SIBLING of the destination so the mv below is a rename
+  # within one filesystem rather than a copy that can fail half-written.
+  tmp=$(mktemp "$(dirname "$dest")/.pre-commit.XXXXXX" 2>/dev/null) || {
+    guard_report="could not stage a new pre-commit beside $dest (directory not writable); any existing hook was left untouched"
+    return 1
+  }
+  if ! cat "$src" >"$tmp" 2>/dev/null ||
+     ! chmod +x "$tmp" 2>/dev/null ||
+     ! mv -f "$tmp" "$dest" 2>/dev/null; then
+    rm -f "$tmp" 2>/dev/null
+    guard_report="failed to write the pre-commit guard at $dest; the previous hook body was left in place"
+    return 1
+  fi
+  return 0
+}
+
+install_generated_guard() {
+  local canonical hook_path hooks_dir
+  canonical="$AI_RESOURCES/.claude/hooks/pre-commit"
+  [ -f "$canonical" ] && [ -r "$canonical" ] || return 0
+  [ -n "$repo_top" ] || return 0
+  # Canonical must carry the marker. Installing a marker-less body would create a
+  # copy this script could never recognise again, so it would never be refreshed.
+  if ! grep -Fxq "$GUARD_MARKER" "$canonical" 2>/dev/null; then
+    guard_report="canonical pre-commit at $canonical carries no provenance marker; guard installation was skipped"
+    return 0
+  fi
+
+  # The executing hook path, from Git — never built from directory nesting,
+  # because a linked worktree has no .git directory to nest into. core.hooksPath
+  # is consulted first because that is what Git itself honours when it is set;
+  # otherwise --git-path resolves hooks/ to the SHARED common directory, which is
+  # the surface a linked worktree actually runs.
+  hooks_dir=$(git -C "$PROJECT_DIR" config --get core.hooksPath 2>/dev/null)
+  if [ -n "$hooks_dir" ]; then
+    case "$hooks_dir" in
+      /*) ;;
+      # Git resolves a relative core.hooksPath against the directory hooks run
+      # in — the top of the working tree.
+      *) hooks_dir="$repo_top/$hooks_dir" ;;
+    esac
+    hook_path="$hooks_dir/pre-commit"
+  else
+    hook_path=$(git -C "$PROJECT_DIR" rev-parse --git-path hooks/pre-commit 2>/dev/null) || return 0
+    [ -n "$hook_path" ] || return 0
+    case "$hook_path" in
+      /*) ;;
+      # --git-path answers relative to the cwd of the git call, which is
+      # $PROJECT_DIR here — the same resolution the exclude path above uses.
+      *) hook_path="$PROJECT_DIR/$hook_path" ;;
+    esac
+  fi
+
+  # Symlink test FIRST, before any regular-file test — see limit 1 above.
+  if [ -L "$hook_path" ]; then
+    guard_report="pre-commit at $hook_path is a symlink to a project-owned hook (-> $(readlink "$hook_path")); the generated-symlink commit guard was NOT installed and neither the link nor its target was touched"
+    return 0
+  fi
+
+  if [ ! -e "$hook_path" ]; then
+    guard_write "$hook_path" "$canonical" || return 0
+    guard_report="installed the generated-symlink commit guard at $hook_path (this checkout only)"
+    return 0
+  fi
+
+  if [ ! -f "$hook_path" ]; then
+    guard_report="pre-commit at $hook_path is neither a regular file nor a symlink; left untouched"
+    return 0
+  fi
+
+  if cmp -s "$canonical" "$hook_path"; then
+    # Already current: no write at all, so bytes and mtime are both unchanged.
+    # The mode is still corrected when needed — chmod does not alter mtime, and a
+    # non-executable copy would silently never run.
+    [ -x "$hook_path" ] || chmod +x "$hook_path" 2>/dev/null || true
+    return 0
+  fi
+
+  if grep -Fxq "$GUARD_MARKER" "$hook_path" 2>/dev/null; then
+    guard_write "$hook_path" "$canonical" &&
+      guard_report="refreshed the managed pre-commit guard at $hook_path (this checkout only)"
+    return 0
+  fi
+
+  if [ "$(guard_sha256 "$hook_path")" = "$GUARD_ANCESTOR_SHA256" ]; then
+    guard_write "$hook_path" "$canonical" &&
+      guard_report="refreshed the pre-marker canonical pre-commit at $hook_path to the marker-bearing body (this checkout only)"
+    return 0
+  fi
+
+  guard_report="pre-commit at $hook_path is project-owned (no canonical provenance marker, and not the one known pre-marker canonical body); the generated-symlink commit guard was NOT installed and the file was left byte-for-byte untouched"
+}
+
 synced=""
 failed=""
 unknown=""
@@ -267,6 +422,10 @@ done
 # generated (or found already generated) this run.
 write_exclude_block
 
+# Then make sure the commit-boundary guard that CONSUMES that block is actually
+# installed where this checkout's Git will run it. Same owner, same contract.
+install_generated_guard
+
 # Drift detection: targets that exist as regular files (not symlinks) but differ
 # from the canonical source. Uses "AI-RESOURCES DRIFT:" prefix to distinguish from
 # check-template-drift.sh ("Template drift detected:") — both may fire independently.
@@ -326,7 +485,7 @@ if [ -f "$CAP_BIN" ]; then
   fi
 fi
 
-if [ -n "$synced" ] || [ -n "$drifted" ] || [ -n "$failed" ] || [ -n "$unknown" ] || [ -n "$wl2_warning" ]; then
+if [ -n "$synced" ] || [ -n "$drifted" ] || [ -n "$failed" ] || [ -n "$unknown" ] || [ -n "$wl2_warning" ] || [ -n "$guard_report" ]; then
   msg=""
   if [ -n "$synced" ]; then
     count=$(echo $synced | wc -w | tr -d ' ')
@@ -349,6 +508,13 @@ if [ -n "$synced" ] || [ -n "$drifted" ] || [ -n "$failed" ] || [ -n "$unknown" 
   fi
   if [ -n "$wl2_warning" ]; then
     [ -n "$msg" ] && msg="$msg | $wl2_warning" || msg="$wl2_warning"
+  fi
+  if [ -n "$guard_report" ]; then
+    # Own prefix, like the two above, so this can fire alongside them without
+    # ambiguity. Scoped to THIS checkout on purpose: one SessionStart run says
+    # nothing about any other project's hook surface.
+    guard_msg="GENERATED-GUARD: $guard_report"
+    [ -n "$msg" ] && msg="$msg | $guard_msg" || msg="$guard_msg"
   fi
   echo "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"$msg\"}}"
 fi
