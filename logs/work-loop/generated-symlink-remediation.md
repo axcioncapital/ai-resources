@@ -94,7 +94,7 @@ Evidence:
 6. Regression set, all passing: `auto-sync-shared-excludes.test.sh` (16), `pre-commit-generated-guard.test.sh` (8), `pre-commit-hook.test.sh` (ALL ARMS PASS, A–F), the new suite (49), and `bash -n` on all three changed shell files. No unrelated suites were rerun.
 7. Live surfaces re-verified byte-identical to the pre-work survey after all testing: this checkout's installed hook still `6c75cb19…`, the workspace-root's still `6fd8b544…`, and both project-owned symlinks (`axcion-pitch-engine`, `axcion-website`) still symlinks to their original targets.
 
-Commits: `cd959ac2` and `e0cf0ef0` (implementation), `{CORRECTION}` (this correction). Changed by the correction: `.claude/hooks/auto-sync-shared.sh`, `logs/scripts/auto-sync-shared-guard-install.test.sh`, and this state file — `.claude/hooks/pre-commit` was not touched. Branch divergence is reported, not reconciled: `main` is ahead 17 / behind 1 against `origin/main`.
+Commits: `cd959ac2` and `e0cf0ef0` (implementation), `c58fdf11` (this correction). Changed by the correction: `.claude/hooks/auto-sync-shared.sh`, `logs/scripts/auto-sync-shared-guard-install.test.sh`, and this state file — `.claude/hooks/pre-commit` was not touched. Branch divergence is reported, not reconciled: `main` is ahead 17 / behind 1 against `origin/main`.
 
 Observation Codex should carry into the closure check, not a deferral: because canonical now carries the marker while this checkout's installed copy is still the pinned ancestor, the next SessionStart in `ai-resources` will refresh that installed copy through the one-entry transition. That is the designed first-marker path and its fixture is case B4; this unit deliberately did not perform it live.
 
