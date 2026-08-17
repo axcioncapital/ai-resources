@@ -114,12 +114,58 @@ Two constraints the implementation must carry: `.git/hooks/` is untracked, so `g
 
 Failing case that proves the gap: in a manifest-bearing fixture with no installed hook, run the real generator (creates links + block), `git add -f` a block-covered generated symlink, commit — it succeeds today; after the change the same sequence must fail with the Guard 3 message. Regression checks that can fail: install-when-absent; no-op-when-identical (bytes and mtime unchanged); refuse-and-report on a symlink hook; refuse-and-report on a marker-less body; refresh on a marker-bearing stale body; **worktree case** — install from the main checkout, commit from a linked worktree, guard fires; fail-open on a non-repo project dir and on an unwritable hooks dir (exit 0, session unaffected); idempotency across two consecutive runs; existing A–F suite and the generated-guard suite still pass; `bash -n` on every changed shell file.
 
+### Unit 4 correction (2026-08-17) — the two frozen findings; still read-only, nothing implemented
+
+**Finding 1 — per-surface coverage, reconciled. One surface of 30 has no route; the sole-owner recommendation survives, with a stated precondition.**
+
+The 43-vs-41 gap was never a surface gap in itself: registration is per *checkout*, coverage is per *surface*, and several surfaces are reached by more than one checkout. Mapping every checkout to its executing surface and testing its own `.claude/settings.json` and `.claude/settings.local.json` for the `auto-sync-shared` entry gives 41 registered / 2 not. The two unregistered checkouts resolve differently:
+
+| Unregistered checkout | Executing surface | Also reached by | Verdict |
+|---|---|---|---|
+| `projects/repo-documentation/vault` | `projects/repo-documentation/.git/hooks` | `projects/repo-documentation` (registered) | **covered** — the surface has a route |
+| `projects/strategy-os` | `projects/strategy-os/.git/hooks` | nothing else | **uncovered** — sole checkout, no route |
+
+So **29 of 30 surfaces have at least one real SessionStart route; one does not.** The user-level `~/.claude/settings.json` carries no `auto-sync-shared` entry (grep count 0), so nothing supplies the missing route from above.
+
+`projects/strategy-os` is a settings-drift defect, not a design gap. Its `.claude/settings.json` *does* carry a `SessionStart` array, but with only the `check-permission-sanity.sh` walk-up entry; the second entry that `templates/project-settings.json.template:38` defines — the identical walk-up to `auto-sync-shared.sh` — is absent. It is an active project (last commit 2026-08-16) that already holds a `shared-manifest.json` and 9 generated command symlinks, so it is genuinely in the population this task protects.
+
+This does not revise the owner, because **no candidate reaches it either**: `/new-project` fires only at creation, which is already past; `/sync-workflow` is `TEMPLATE_DIR`-scoped and strategy-os is not a workflow deployment; `/deploy-workflow` excludes `pre-commit` outright. A second owner would add policy surface and still leave this checkout uncovered. The honest statement of reach is therefore narrower than the original claim: **`auto-sync-shared.sh` reaches every surface where it is registered, and registration is today complete for 29 of 30.** Restoring the missing entry is a one-line settings repair in a downstream project — outside this unit's scope, and the existing `/permission-sweep` + `check-permission-sanity.sh` machinery is the standing owner of exactly this drift class.
+
+Two consequences carried into the next unit: the installer must not claim or log workspace-wide coverage it cannot have (it installs only where it runs), and the unit should emit the uncovered-checkout signal rather than assume it away — a manifest-bearing checkout whose settings lack the registration is invisible to the installer by construction.
+
+**Finding 2 — first-marker transition for the installed `ai-resources` copy: an exact-digest ancestor allowlist with one entry.**
+
+The problem is real as stated: adding a provenance marker to the tracked body makes the currently installed copy simultaneously marker-less and different, which rule (e) refuses to touch — the very copy Unit 3 installed would freeze at the pre-marker body.
+
+Measured digests (SHA-256, first 16 hex):
+
+| File | Digest | Bytes |
+|---|---|---|
+| tracked `.claude/hooks/pre-commit` (current, = `638ab8cc`) | `6c75cb196970bf1d` | 10217 |
+| installed `ai-resources/.git/hooks/pre-commit` | `6c75cb196970bf1d` | 10217 |
+| installed workspace-root `.git/hooks/pre-commit` | `6fd8b544feaf150a` | 6243 |
+
+Transition: the classifier gains one bounded rule — refresh when the installed body's SHA-256 is an exact member of an explicitly enumerated set of known pre-marker canonical digests. At introduction that set has **exactly one member, `6c75cb19…`**, the digest of the tracked body at `638ab8cc`, which is bit-for-bit the copy Unit 3 installed.
+
+Why exact digest rather than any marker-adjacent heuristic — and this is the evidence that forces it: the workspace-root installed body's **first 8 lines are byte-identical to the canonical body** (`diff` of the two heads is empty). Any header test, provenance-substring test, or "looks like our hook" heuristic classifies that 6243-byte body as canonical and overwrites it. Exact digest equality cannot: `6fd8b544…` is not the allowlisted value, so rule (e) catches it and it is reported, not touched.
+
+Ordering is load-bearing and must be specified, not left to the implementation: **test `[ -L ]` before `[ -f ]`.** Both project-owned hooks are symlinks pointing at existing regular files, so `[ -f ]` follows the link and returns true for them; a `-f`-first classifier would read `boundary-leakage-check.sh` and `check-case-boundary.sh` as ordinary bodies and fall through to the digest comparison. Symlink → report and stop, always first.
+
+The rule is self-limiting rather than an ongoing heuristic: it matches exactly one dead byte-sequence. Once the first run refreshes that copy, no live file matches it again — the entry can be frozen in place or dropped in a later unit, and it can never match a future body. Blast radius at introduction is at most one surface, `ai-resources/.git/hooks/pre-commit`, which this task installed itself. Snapshot-before-overwrite applies to this path as it does to every write.
+
+Added to the smallest-next-unit scope, with failing regression cases: a fixture carrying the pre-marker body (`git show 638ab8cc:.claude/hooks/pre-commit`) must end the run holding the new marker-bearing body and still commit normally; a fixture carrying the workspace-root body must end the run **byte-unchanged** with a report line emitted; a fixture whose hook is a symlink to a working guard must end byte-unchanged with the guard still executing. All three can fail.
+
 ## Blocker
 
 None.
 
 ## Next action
 
-Codex: reframe Unit 5 from this recommendation — `auto-sync-shared.sh` as sole install/refresh owner, provenance-marker gating, report-don't-overwrite for the marker-less workspace-root copy and the two project-owned symlink hooks.
+Codex: closure check on the two frozen findings only — (1) per-surface coverage reconciled at 29/30 with `projects/strategy-os` named as an uncovered settings-drift surface and the owner recommendation unrevised, (2) first-marker transition specified as a one-entry exact-digest ancestor allowlist with symlink-first ordering, both folded into the smallest-next-unit scope and regression plan.
 
-Current task position: Units 1–3 accepted; Unit 4 discovery complete and implements nothing. Remaining adjacent scope: the installer implementation above, then health validation, the workspace-root stale-hook adoption decision, legacy tracked-link cleanup, and the two stale documentation claims. Branch state reported separately and not reconciled: local `main` is ahead of `origin/main` by 13 and behind 1 (`3e7789cd`, another author) before the commit carrying this hand-back.
+Current task position: Units 1–3 accepted; Unit 4 discovery corrected once and still implements nothing. Remaining adjacent scope: the installer implementation, the `projects/strategy-os` registration repair, health validation, the workspace-root stale-hook adoption decision, legacy tracked-link cleanup, and the two stale documentation claims. Branch state reported separately and not reconciled: local `main` is ahead of `origin/main` by 14 and behind 1 (`3e7789cd`, another author) before the commit carrying this correction.
+
+1. Reconcile the coverage evidence behind the sole-owner recommendation. The result identifies 43 manifest-bearing checkouts and 30 distinct executing hook surfaces, but only 41 `settings.json` registrations while claiming `auto-sync-shared.sh` reaches every surface. Map the two unregistered checkouts to their executing surfaces and prove that each of the 30 surfaces has at least one real SessionStart route that runs this hook; if any surface lacks one, revise the recommendation and smallest next unit accordingly.
+2. Resolve the first-marker transition for the currently installed `ai-resources/.git/hooks/pre-commit`. Unit 3 established that it is byte-identical to commit `638ab8cc`, but adding a provenance marker to the tracked body would immediately make that installed copy marker-less and different, which the proposed policy refuses to refresh. Specify a bounded, evidence-backed transition that updates this known canonical copy without creating a heuristic that could overwrite the marker-less workspace-root body or either project-owned symlink hook. Carry the resulting transition and its failing regression case into the smallest-next-unit scope.
+
+Correction scope is state-file-only discovery. Do not implement, install, refresh, or edit any hook, command, template, setting, documentation, or downstream project. Commit the corrected hand-back, set `turn: codex`, and return for the closure check of these two findings only.
