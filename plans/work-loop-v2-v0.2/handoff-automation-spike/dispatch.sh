@@ -416,6 +416,28 @@ HOP_ALLOWED_SNAPSHOT=""
 # attempt would deny it — the mirror-image falsehood.
 ACTOR_PROCESS_STARTED=0
 
+# WHICH actor the most recent fork was for. The companion to the flag above, and
+# deliberately NOT monotonic with it: the flag answers "did any actor ever run in
+# this run", this answers "which actor is the launch THIS terminal relates to".
+#
+# WHY IT EXISTS AT ALL. `permission_mode_requested` used to read CUR_ACTOR, which
+# names the actor IN FLIGHT and is cleared the moment a hop is over. Every failure
+# terminal finalizes above that clear and reported the requested mode correctly;
+# the successful carry-one terminal finalizes below it and reported `none` — "no
+# mode was requested" about a launch whose argv carried --permission-mode default.
+# The in-flight reading is right for `actor` and for the signal handler, which may
+# only name a process that is actually terminable; it is wrong for a durable fact
+# about the launch. Two questions, so two variables.
+#
+# CLEARED ON ENTRY TO launch_actor(), SET AT THE FORK. Both halves are
+# load-bearing and neither is redundant. Setting it at the fork is what keeps a
+# launch that died on its binary from claiming a mode no child ever received;
+# clearing it on entry is what keeps the PREVIOUS hop's fork from answering for
+# this one. ACTOR_PROCESS_STARTED alone cannot do either job — it is 1 for the
+# rest of the run after the first fork, so from hop 2 onward it stops
+# distinguishing a launch that happened from one that did not.
+LAUNCHED_ACTOR=""
+
 # The ownership admission verdict, recorded where that check actually runs so a
 # terminal reports what was OBSERVED rather than what the code's ordering
 # implies. `unchecked` is the honest value for a terminal reached before the
@@ -635,10 +657,21 @@ result_next_action() { # code -> token
 # by an argv that was actually handed to a child; a run that stopped on an
 # unresolvable binary requested nothing, and reporting `default` there would be
 # the same false-launch claim actor_launched carried.
+#
+# THE ACTOR GUARD READS LAUNCHED_ACTOR, NOT CUR_ACTOR, and the difference is the
+# whole of Unit 19. CUR_ACTOR names the actor IN FLIGHT, so it is empty at every
+# terminal that finalizes after the hop-over clear — which is exactly the
+# successful carry-one terminal, the one outcome a courier exists to produce. It
+# reported `none` there: no mode requested, about a launch whose argv carried
+# --permission-mode default. LAUNCHED_ACTOR is the durable fact about the launch
+# instead of the liveness fact about the process, so the answer no longer depends
+# on whether the child happens to still be running when the record is written.
+# `actor` still reports CUR_ACTOR and the signal handler still reads it: the
+# in-flight reading is correct for both, and neither is touched here.
 result_permission_mode_requested() {
   [ "$ACTOR_PROCESS_STARTED" -eq 1 ] || { printf 'none'; return 0; }
   [ "$MODE" = "live" ] || { printf 'none'; return 0; }
-  [ "${CUR_ACTOR:-}" = "claude" ] || { printf 'none'; return 0; }
+  [ "${LAUNCHED_ACTOR:-}" = "claude" ] || { printf 'none'; return 0; }
   # The contained profile deliberately carries no permission mode of its own.
   [ "$UNATTENDED" -eq 1 ] && { printf 'none'; return 0; }
   printf 'default'
@@ -3305,6 +3338,14 @@ run_bounded() { # timeout, logfile, cmd...
   # launch path in launch_actor() funnels through here, and its pre-fork die()s
   # do not — which is precisely the distinction the terminal record needs.
   ACTOR_PROCESS_STARTED=1
+  # WHICH actor that fork was for, recorded on the same line for the same reason.
+  # CUR_ACTOR is read rather than passed because at THIS instant it is the actor
+  # being forked by definition: the hop loop sets it immediately before calling
+  # launch_actor() and clears it only once the hop is over, and launch_actor() is
+  # the sole caller of this function. Should a later edit break that, this reads
+  # empty and the permission field falls back to `none` — the fail-closed
+  # direction, never a mode claimed for a launch that did not happen.
+  LAUNCHED_ACTOR="${CUR_ACTOR:-}"
   eval "exec ${TREE_MARKER_FD}>&-"
   set +m
 
@@ -3399,6 +3440,12 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
   # wrong on the retry branch, where the hop suffix is "${hop}r" — the denial
   # check would have silently read the first attempt's capture.
   LAST_CAPTURE="$out"
+  # THIS ATTEMPT HAS NOT FORKED YET. Cleared here rather than left standing, so a
+  # stop in the four pre-fork die() paths below cannot answer with the PREVIOUS
+  # hop's fork. Re-set by run_bounded() at the moment a child actually exists.
+  # Unlike LAST_CAPTURE above, which names a file this function has already
+  # created, this names an event that has not happened.
+  LAUNCHED_ACTOR=""
 
   if [ -n "$ACTOR_CMD" ]; then
     say "  launch: mode=simulated timeout=${limit}s cmd=$ACTOR_CMD"

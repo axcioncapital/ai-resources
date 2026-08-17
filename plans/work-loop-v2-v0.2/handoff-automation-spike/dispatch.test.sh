@@ -7298,6 +7298,209 @@ else
       "operator: $(grep -c '# operator terminal finalization' "$DISPATCH_BIN"); dry-run: $(grep -c '# dry-run terminal finalization' "$DISPATCH_BIN")"
 fi
 
+# ========= case 60h: the requested permission mode survives to a carried terminal
+#
+# Unit 19. `permission_mode_requested` was produced from CUR_ACTOR, and the
+# hop-over line clears CUR_ACTOR between the transition table and the --carry-one
+# block. Every FAILURE terminal finalizes ABOVE that clear and reported `default`;
+# the one SUCCESSFUL post-hop terminal finalizes BELOW it and reported `none` —
+# "no permission mode was requested" about a launch whose argv carried
+# `--permission-mode default`, which case 31b asserts reaches the child verbatim.
+#
+# LIVE, NOT SIMULATED, and that distinction is the whole case. --actor-cmd sets
+# MODE=live -> simulated, which the producer's SECOND guard already answers `none`
+# at, so a simulated row cannot tell the defect from correct behaviour. A fake
+# claude BINARY keeps MODE=live and forks a real child while contacting no model —
+# the technique cases 31 and 32 already use for the argv assertions.
+#
+# THE FOUR ROWS ARE NOT REDUNDANT. Each one is answered by a DIFFERENT guard in
+# result_permission_mode_requested(), so a repair that collapsed the function to a
+# constant would be caught by whichever row it stopped answering: the live codex
+# row by the actor guard, the simulated row by the mode guard, the unattended row
+# by the contained-profile guard, and the pre-fork row by the fork guard.
+echo
+echo "Case 60h — a carried live attended Claude terminal reports the mode it actually requested"
+
+# Stands in for the claude binary on the LIVE branch: answers --version, hands the
+# turn on, commits. It contacts nothing — a real fork is the point, not a model.
+#
+# THE VERSION IS NOT DECORATION. --unattended is gated on claude >= 2.1.219 and
+# refuses at 31 below it, which is a PRE-fork stop: a double reporting 0.0.0 would
+# make row 4 assert `none` about a launch that never happened, and pass for the
+# wrong reason. Same value case 32 uses, for the same gate.
+FAKE60H="$SANDBOX_ROOT/fake-claude-60h.sh"
+cat >"$FAKE60H" <<'F60HEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.220 (Claude Code)"; exit 0; fi
+sf="$WL60H_SF"
+awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+git -C "$WL60H_CO" add "$sf" >/dev/null 2>&1
+git -C "$WL60H_CO" commit -qm "fake claude hop" >/dev/null 2>&1
+exit 0
+F60HEOF
+chmod +x "$FAKE60H"
+
+# The same double, refusing to move the file at all. It drives the FAILURE
+# terminal that finalizes above the hop-over clear (22, no observable transition),
+# which is the row that must NOT change: it already reported the requested mode
+# truthfully, and a repair that moved the clear instead of preserving the fact
+# would break it.
+FAKE60HN="$SANDBOX_ROOT/fake-claude-60h-noop.sh"
+cat >"$FAKE60HN" <<'F60HNEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.220 (Claude Code)"; exit 0; fi
+exit 0
+F60HNEOF
+chmod +x "$FAKE60HN"
+
+# The codex mirror. NO COMMIT: Codex never runs git (core § 4), and the post-hop
+# guard dies 24 on a codex hop that moved HEAD.
+FAKE60HX="$SANDBOX_ROOT/fake-codex-60h.sh"
+cat >"$FAKE60HX" <<'F60HXEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "0.0.0-fake-codex (test double)"; exit 0; fi
+sf="$WL60H_SF"
+awk '/^turn: /&&!d{print "turn: claude"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+exit 0
+F60HXEOF
+chmod +x "$FAKE60HX"
+
+# --- row 1: THE TARGETED FAILING ROW ----------------------------------------
+V60H="$(new_sandbox)"; state_file "$V60H" carry-perm claude
+export WL60H_SF="$V60H/logs/work-loop/carry-perm.md"
+export WL60H_CO="$V60H"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V60H" --task carry-perm --log-dir "$V60H/runs" \
+      --carry-one --claude-bin "$FAKE60H" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "60h — the live attended Claude hop is carried" "$OUT"
+R60H="$V60H/runs/$(run_id_of "$OUT").result"
+[ -f "$R60H" ] && ok "60h — the carried terminal finalized a result" \
+              || bad "60h — the carried terminal finalized a result" \
+                     "missing $R60H; runs/ holds: $(ls "$V60H/runs" 2>&1 | tr '\n' ' ')"
+# The preconditions, asserted separately from the field under test so a row that
+# never reached the live branch cannot pass by reporting the right token for the
+# wrong reason.
+if [ "$(res_field "$R60H" mode)" = live ] &&
+   [ "$(res_field "$R60H" outcome)" = CARRY_ONE_COMPLETE ] &&
+   [ "$(res_field "$R60H" stage)" = post-hop ] &&
+   [ "$(res_field "$R60H" actor_launched)" = yes ] &&
+   [ "$(res_field "$R60H" hop)" = 1 ] &&
+   [ "$(res_field "$R60H" turn_at_terminal)" = codex ]; then
+  ok "60h — the row really is a live, carried, post-hop Claude terminal"
+else
+  bad "60h — the row really is a live, carried, post-hop Claude terminal" \
+      "mode=$(res_field "$R60H" mode) outcome=$(res_field "$R60H" outcome) stage=$(res_field "$R60H" stage) launched=$(res_field "$R60H" actor_launched) hop=$(res_field "$R60H" hop) turn=$(res_field "$R60H" turn_at_terminal)"
+fi
+[ "$(res_field "$R60H" permission_mode_requested)" = default ] \
+  && ok "60h — the carried terminal reports the requested mode: default" \
+  || bad "60h — the carried terminal reports the requested mode: default" \
+         "got: $(res_field "$R60H" permission_mode_requested) — the launch argv carried --permission-mode default (case 31b)"
+# ACCEPTED SEMANTICS, PRESERVED. `actor` names the actor IN FLIGHT and the
+# hop-over clear is what makes `none` true here (60a). The repair must preserve
+# the launch fact WITHOUT reinstating an in-flight actor that no longer exists.
+[ "$(res_field "$R60H" actor)" = none ] \
+  && ok "60h — and actor stays none: no process is in flight at the carried terminal" \
+  || bad "60h — and actor stays none" "got: $(res_field "$R60H" actor)"
+# Requested is never promoted to effective. Nothing here reads the child's own
+# system/init event, so the effective mode stays the bounded unavailable token.
+[ "$(res_field "$R60H" permission_mode_effective)" = unavailable ] \
+  && ok "60h — the effective mode is still unavailable, not derived from the request" \
+  || bad "60h — the effective mode is still unavailable" "got: $(res_field "$R60H" permission_mode_effective)"
+
+# --- row 2: live CODEX carries, and requests no permission mode ---------------
+# Answered by the ACTOR guard, at MODE=live, so it is not the simulated row again.
+V60HX="$(new_sandbox)"; state_file "$V60HX" carry-perm-codex codex
+export WL60H_SF="$V60HX/logs/work-loop/carry-perm-codex.md"
+export WL60H_CO="$V60HX"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V60HX" --task carry-perm-codex --log-dir "$V60HX/runs" \
+      --carry-one --codex-bin "$FAKE60HX" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "60h — the live Codex hop is carried" "$OUT"
+R60HX="$V60HX/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R60HX" mode)" = live ] &&
+   [ "$(res_field "$R60HX" actor_launched)" = yes ] &&
+   [ "$(res_field "$R60HX" permission_mode_requested)" = none ]; then
+  ok "60h — a live carried Codex terminal still requests no permission mode"
+else
+  bad "60h — a live carried Codex terminal still requests no permission mode" \
+      "mode=$(res_field "$R60HX" mode) launched=$(res_field "$R60HX" actor_launched) perm=$(res_field "$R60HX" permission_mode_requested)"
+fi
+
+# --- row 3: a SIMULATED Claude carry requests nothing -------------------------
+# Answered by the MODE guard. --actor-cmd never builds a claude argv at all.
+V60HS="$(new_sandbox)"; state_file "$V60HS" carry-perm-sim claude
+run_dispatch "$V60HS" carry-perm-sim --carry-one --actor-cmd "$FLIP"
+expect_rc 0 "$RC" "60h — the simulated Claude hop is carried" "$OUT"
+R60HS="$V60HS/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R60HS" mode)" = simulated ] &&
+   [ "$(res_field "$R60HS" actor_launched)" = yes ] &&
+   [ "$(res_field "$R60HS" permission_mode_requested)" = none ]; then
+  ok "60h — a simulated carried Claude terminal requests no permission mode"
+else
+  bad "60h — a simulated carried Claude terminal requests no permission mode" \
+      "mode=$(res_field "$R60HS" mode) launched=$(res_field "$R60HS" actor_launched) perm=$(res_field "$R60HS" permission_mode_requested)"
+fi
+
+# --- row 4: the contained profile carries no permission mode of its own -------
+# Answered by the UNATTENDED guard, on the live branch with a real fork.
+V60HU="$(new_sandbox)"; state_file "$V60HU" carry-perm-unatt claude
+export WL60H_SF="$V60HU/logs/work-loop/carry-perm-unatt.md"
+export WL60H_CO="$V60HU"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V60HU" --task carry-perm-unatt --log-dir "$V60HU/runs" \
+      --carry-one --claude-bin "$FAKE60H" --unattended 2>&1)"; RC=$?
+expect_rc 0 "$RC" "60h — the unattended Claude hop is carried" "$OUT"
+R60HU="$V60HU/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R60HU" mode)" = live ] &&
+   [ "$(res_field "$R60HU" actor_launched)" = yes ] &&
+   [ "$(res_field "$R60HU" permission_mode_requested)" = none ]; then
+  ok "60h — a carried --unattended terminal still requests no permission mode"
+else
+  bad "60h — a carried --unattended terminal still requests no permission mode" \
+      "mode=$(res_field "$R60HU" mode) launched=$(res_field "$R60HU" actor_launched) perm=$(res_field "$R60HU" permission_mode_requested)"
+fi
+
+# --- row 5: the FAILURE terminal above the clear is unchanged -----------------
+# The same live attended launch, stopped at 22 instead of carried. It finalizes
+# while the actor is still named in flight, and it ALREADY reported `default`.
+# Asserting it here is what makes the repair provably a preservation rather than a
+# move of the hop-over clear: this row and row 1 must now agree, and the clear
+# must still be the thing that separates `actor=claude` from `actor=none`.
+V60HF="$(new_sandbox)"; state_file "$V60HF" carry-perm-fail claude
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V60HF" --task carry-perm-fail --log-dir "$V60HF/runs" \
+      --carry-one --claude-bin "$FAKE60HN" 2>&1)"; RC=$?
+expect_rc 22 "$RC" "60h — a live Claude hop that changes nothing stops at 22" "$OUT"
+R60HF="$V60HF/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R60HF" permission_mode_requested)" = default ] &&
+   [ "$(res_field "$R60HF" actor)" = claude ]; then
+  ok "60h — the failure terminal above the clear still reports default, with the actor still in flight"
+else
+  bad "60h — the failure terminal above the clear still reports default, with the actor still in flight" \
+      "perm=$(res_field "$R60HF" permission_mode_requested) actor=$(res_field "$R60HF" actor)"
+fi
+
+# --- row 6: a pre-fork stop requests nothing, even after an earlier fork ------
+# THE ROW THAT DECIDES WHERE THE FACT MAY BE RECORDED. Case 50d proves a FIRST-hop
+# pre-fork stop reports `none`, but it is protected there only by the run-level
+# ACTOR_PROCESS_STARTED flag. Once any hop has forked, that flag is 1 for the rest
+# of the run, so a launched-actor fact recorded on ENTRY to launch_actor() — before
+# the binary checks — would make hop 2's unresolvable claude binary report
+# `default` for an argv no child ever received. Hop 1 is a live codex fork that
+# hands on to claude; hop 2 stops on a claude binary that does not exist.
+V60HP="$(new_sandbox)"; state_file "$V60HP" prefork-after-fork codex
+export WL60H_SF="$V60HP/logs/work-loop/prefork-after-fork.md"
+export WL60H_CO="$V60HP"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V60HP" --task prefork-after-fork --log-dir "$V60HP/runs" \
+      --max-hops 3 --codex-bin "$FAKE60HX" --claude-bin "$V60HP/no-such-claude-binary" 2>&1)"; RC=$?
+expect_rc 20 "$RC" "60h — hop 2 stops on the unresolvable claude binary" "$OUT"
+R60HP="$V60HP/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R60HP" hop)" = 2 ] &&
+   [ "$(res_field "$R60HP" actor_launched)" = yes ] &&
+   [ "$(res_field "$R60HP" permission_mode_requested)" = none ]; then
+  ok "60h — a pre-fork stop after an earlier fork requests no permission mode"
+else
+  bad "60h — a pre-fork stop after an earlier fork requests no permission mode" \
+      "hop=$(res_field "$R60HP" hop) launched=$(res_field "$R60HP" actor_launched) perm=$(res_field "$R60HP" permission_mode_requested)"
+fi
+unset WL60H_SF WL60H_CO
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
