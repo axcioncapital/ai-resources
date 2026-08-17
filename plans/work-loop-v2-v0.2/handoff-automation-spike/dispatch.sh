@@ -385,6 +385,31 @@ LAST_CAPTURE=""
 HOP_BASELINE_READY=0
 HOP_ALLOWED_SNAPSHOT=""
 
+# Was a child process for an actor ever actually FORKED in this run? Set in
+# run_bounded(), the one place a process is started, and never inferred from an
+# intent flag.
+#
+# HOP_BASELINE_READY was doing this job and cannot: it is raised immediately
+# BEFORE launch_actor(), and launch_actor() carries four die() paths of its own
+# that run before any fork — a non-executable codex binary, an unresolvable
+# claude binary, a checkout it cannot enter, an unrecognised actor name. Every
+# one of those reported a launch, and in live mode a model request, that never
+# happened. A terminal result that says a model ran when none did is the exact
+# false statement the trusted-field contract exists to remove.
+#
+# MONOTONIC, deliberately. It answers "did an actor process run at some point in
+# this run", which is what a reader of a terminal record needs: a hop-2 pre-fork
+# stop after a completed hop 1 really did launch an actor, and resetting per
+# attempt would deny it — the mirror-image falsehood.
+ACTOR_PROCESS_STARTED=0
+
+# The ownership admission verdict, recorded where that check actually runs so a
+# terminal reports what was OBSERVED rather than what the code's ordering
+# implies. `unchecked` is the honest value for a terminal reached before the
+# check — validate_state() dies above it — and it is NOT a synonym for
+# `unavailable`, which is reserved for the check being unrunnable.
+OWNER_STATUS=unchecked
+
 # The log directory's path relative to the checkout, when it sits inside one.
 # Set where the allowlist is extended to cover it, and read by allowlisted_dirty()
 # so the dispatcher's own evidence is not reported back as the actor's work (O2).
@@ -515,8 +540,12 @@ result_next_action() { # code -> token
 # Promoting a requested property to an effective one is the single most tempting
 # false statement available here, and recording the request is evidence reporting
 # — not authorization, and not Change set B's transport work.
+# GATED ON THE OBSERVED FORK, not on the baseline flag. A mode is only requested
+# by an argv that was actually handed to a child; a run that stopped on an
+# unresolvable binary requested nothing, and reporting `default` there would be
+# the same false-launch claim actor_launched carried.
 result_permission_mode_requested() {
-  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || { printf 'none'; return 0; }
+  [ "$ACTOR_PROCESS_STARTED" -eq 1 ] || { printf 'none'; return 0; }
   [ "$MODE" = "live" ] || { printf 'none'; return 0; }
   [ "${CUR_ACTOR:-}" = "claude" ] || { printf 'none'; return 0; }
   # The contained profile deliberately carries no permission mode of its own.
@@ -527,6 +556,60 @@ result_permission_mode_requested() {
 # Count lines without letting an empty string count as one. `grep -c .` rather
 # than `wc -l`, which reports 1 for a single empty line.
 count_lines() { printf '%s\n' "${1-}" | grep -c . || true; }
+
+# The checkout's open-task declaration, as one bounded token. Read-only.
+#
+# ONE READER FOR TWO CONSUMERS — the --status branch and the terminal record —
+# because the same awk written out twice is exactly the drift plan § 8 forbids,
+# and the record must report the same declaration an operator is shown.
+#
+# The three answers are distinct facts, not shades of one: a task id is a
+# declaration that exists, `none` is a checkout that declares nobody (established
+# and absent), `unavailable` is a declaration this dispatcher could not read.
+owner_declaration() { # -> declared task id | none | unavailable
+  local f line
+  [ -n "${CHECKOUT:-}" ] || { printf 'unavailable'; return 0; }
+  f="$CHECKOUT/logs/work-loop/.owner"
+  [ -e "$f" ] || { printf 'none'; return 0; }
+  [ -f "$f" ] && [ -r "$f" ] || { printf 'unavailable'; return 0; }
+  line="$(awk 'NF {print; exit}' "$f" 2>/dev/null)"
+  if [ -n "$line" ]; then printf '%s' "$line"; else printf 'unavailable'; fi
+}
+
+# The lease this run stands on, as OBSERVED at finalization.
+#
+# die() finalizes before release_lock, so `held-by-this-run` is the answer this
+# ordering predicts — and a predicted answer written as a constant is not
+# evidence. The field said `held` unconditionally, which would have kept saying
+# `held` for a lease that had been pinned by a teardown, reclaimed by another
+# run, or never taken at all. The point of the field is to record which of those
+# is true at the moment the record is written.
+#
+# The holder globals are saved and restored around the library's own reader,
+# which is the single reader of a lease directory's metadata (plan § 8).
+# Finalization runs after the refusal and pin wording is already composed, so
+# nothing downstream reads them today; a reporting function that silently
+# rewrote shared state would still be a trap set for the next edit.
+result_lease_status() { # lease-dir owned-flag -> one bounded token
+  local dir="${1:-}" owned="${2:-0}" pid s_pid s_task s_co s_prog
+  [ -n "$dir" ] && [ -n "${WL_LEASE_ROOT:-}" ] || { printf 'unavailable'; return 0; }
+  if [ ! -d "$dir" ]; then
+    # `missing` and `free` are different findings: the first is a lease this run
+    # believes it holds and the filesystem does not have, which is a fault worth
+    # seeing; the second is an honest absence.
+    if [ "$owned" -eq 1 ]; then printf 'missing'; else printf 'free'; fi
+    return 0
+  fi
+  [ -f "$dir/survivors" ] && { printf 'pinned'; return 0; }
+  s_pid="${WL_LEASE_HOLDER_PID:-}";      s_task="${WL_LEASE_HOLDER_TASK:-}"
+  s_co="${WL_LEASE_HOLDER_CHECKOUT:-}";  s_prog="${WL_LEASE_HOLDER_PROGRAM:-}"
+  wl_lease__read_holder "$dir"
+  pid="${WL_LEASE_HOLDER_PID:-}"
+  WL_LEASE_HOLDER_PID="$s_pid";          WL_LEASE_HOLDER_TASK="$s_task"
+  WL_LEASE_HOLDER_CHECKOUT="$s_co";      WL_LEASE_HOLDER_PROGRAM="$s_prog"
+  if [ "$owned" -eq 1 ] && [ "$pid" = "$$" ]; then printf 'held-by-this-run'; return 0; fi
+  printf 'held-by-other'
+}
 
 finalize_terminal_result() { # code -> 0 when a complete record exists
   [ "$RESULT_FINALIZED" -eq 1 ] && return 0
@@ -541,12 +624,30 @@ finalize_terminal_result() { # code -> 0 when a complete record exists
   local tmp="$final.partial"
   RESULT_FILE="$final"
 
+  # OBSERVED, NOT IMPLIED. `launched` is the fork run_bounded() actually
+  # performed, and `stage` names which of three places this terminal sits in:
+  #   pre-hop   no hop baseline yet — nothing was ever about to launch
+  #   launch    the baseline is live but no child was forked; launch_actor()
+  #             stopped on the binary, the checkout or the actor name
+  #   post-hop  an actor process really ran in this run
+  # The middle value is what this correction added: it used to be reported as
+  # post-hop with actor_launched=yes, which is a launch that did not happen.
   local launched=no started=no stage=pre-hop
-  if [ "${HOP_BASELINE_READY:-0}" -eq 1 ]; then
+  if [ "$ACTOR_PROCESS_STARTED" -eq 1 ]; then
     launched=yes; stage=post-hop
     # A simulated actor is not a model request, and saying it was would falsify
     # exactly the field a supervised-use claim rests on.
-    [ "$MODE" = "live" ] && started=yes
+    #
+    # A LIVE FORK IS NOT ONE EITHER, and this is the second half of the same
+    # correction. Forking the product's CLI is not evidence that the CLI went on
+    # to issue a model request: whether it did is in the child's own stream
+    # events, and nothing in this dispatcher reads them (the reader is deferred,
+    # and reading the capture for framing is forbidden here anyway). So the live
+    # answer is the bounded unavailable token. `yes` would be the same guess this
+    # correction just removed from actor_launched, one field over.
+    [ "$MODE" = "live" ] && started=unavailable
+  elif [ "${HOP_BASELINE_READY:-0}" -eq 1 ]; then
+    stage=launch
   fi
 
   local foreign_n dirty_n delta_n
@@ -560,6 +661,15 @@ finalize_terminal_result() { # code -> 0 when a complete record exists
 
   local remaining=none
   [ -n "${DEADLINE_AT:-}" ] && remaining="$(remaining_seconds)"
+
+  # Read once, on their own lines, before the record block. Two reasons, and the
+  # second is the load-bearing one: the ownership and lease observations are what
+  # a mutation control has to be able to replace with a constant to prove they
+  # are not one already, and a control cannot address half of a wrapped line.
+  local owner_decl lease_task lease_checkout
+  owner_decl="$(owner_declaration)"
+  lease_task="$(result_lease_status "${LOCK_DIR:-}" "${WL_LEASE_TASK_OWNED:-0}")"
+  lease_checkout="$(result_lease_status "${CHECKOUT_LOCK_DIR:-}" "${WL_LEASE_CHECKOUT_OWNED:-0}")"
 
   # Written to a temporary in the SAME directory and renamed. rename(2) within one
   # filesystem is atomic, so a reader sees the complete record or no record at all
@@ -605,12 +715,16 @@ finalize_terminal_result() { # code -> 0 when a complete record exists
     tr_kv actor_session_id        unavailable
     tr_kv run_log                 "$RUN_LOG"
     tr_kv_or capture              "${LAST_CAPTURE:-}" none
+    # WHO OWNS THE TASK and WHO HOLDS THE LEASE are two questions, and both are
+    # read from what this dispatcher observed rather than from what the ordering
+    # implies. The admission verdict is recorded at the check; the declaration and
+    # both lease directories are inspected here, at the moment of writing.
+    tr_kv owner_check             "$OWNER_STATUS"
+    tr_kv owner_declared          "$owner_decl"
     tr_kv lease_task_dir          "${LOCK_DIR:-}"
     tr_kv lease_checkout_dir      "${CHECKOUT_LOCK_DIR:-}"
-    # Finalization happens BEFORE release_lock in die(), which is the plan's
-    # durable ordering: a lease is released only once the terminal result exists.
-    # So the lease is necessarily still held at the moment this line is written.
-    tr_kv lease_at_finalization   held
+    tr_kv lease_task_at_finalization     "$lease_task"
+    tr_kv lease_checkout_at_finalization "$lease_checkout"
     tr_kv next_action             "$(result_next_action "$code")"
     tr_kv result_complete         yes
   } >"$tmp" 2>/dev/null || { rm -f "$tmp" 2>/dev/null; RESULT_FILE=""; return 1; }
@@ -1655,12 +1769,15 @@ if [ "$STATUS_MODE" -eq 1 ]; then
   # "is a run going?"; ownership says "does this task belong here?". Read-only,
   # like everything else in this branch: the declaration is CAT'd, never written,
   # and no lock is taken.
-  if [ -f "$CHECKOUT/logs/work-loop/.owner" ]; then
-    printf 'owner: this checkout declares %s\n' \
-      "$(awk 'NF {print; exit}' "$CHECKOUT/logs/work-loop/.owner" 2>/dev/null || printf 'an unreadable declaration')"
-  else
-    printf 'owner: this checkout declares no writer (no logs/work-loop/.owner)\n'
-  fi
+  # Through owner_declaration(), the same reader the terminal record uses, so the
+  # operator's screen and the machine-readable record cannot disagree about who
+  # this checkout declares.
+  OWNER_DECL="$(owner_declaration)"
+  case "$OWNER_DECL" in
+    none)        printf 'owner: this checkout declares no writer (no logs/work-loop/.owner)\n' ;;
+    unavailable) printf 'owner: this checkout has a declaration it cannot read (logs/work-loop/.owner)\n' ;;
+    *)           printf 'owner: this checkout declares %s\n' "$OWNER_DECL" ;;
+  esac
   # WHO holds it, not only WHICH TASK. This line named a task and left the
   # holder to be assumed, and the assumption an operator makes from a dispatcher's
   # own output is "a dispatcher" — wrong whenever an attended carry holds the
@@ -2534,6 +2651,10 @@ run_bounded() { # timeout, logfile, cmd...
   eval "exec ${TREE_MARKER_FD}>\"\$marker\""
   "$@" >>"$out" 2>&1 &
   pid=$!
+  # THE ONE PLACE A CHILD IS FORKED, so the one place that may record it. Every
+  # launch path in launch_actor() funnels through here, and its pre-fork die()s
+  # do not — which is precisely the distinction the terminal record needs.
+  ACTOR_PROCESS_STARTED=1
   eval "exec ${TREE_MARKER_FD}>&-"
   set +m
 
@@ -2820,13 +2941,16 @@ OWNER_HELPER="$CHECKOUT/logs/scripts/work-loop-owner.sh"
 if [ -f "$OWNER_HELPER" ] && [ -r "$OWNER_HELPER" ]; then
   OWNER_OUT="$(bash "$OWNER_HELPER" check --checkout "$CHECKOUT" --task "$TASK" --depth repo 2>&1)"
   OWNER_RC=$?
+  # The verdict is recorded BEFORE it is acted on, so a terminal result reports
+  # the observed admission outcome rather than the fact that the code got here.
   case "$OWNER_RC" in
-    0) say "ownership: PROCEED — $(printf '%s' "$OWNER_OUT" | sed -n 's/^reason: //p')" ;;
-    3) die 33 "ownership refused for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: continue the task in the checkout named above, or close it there first. Nothing was launched." ;;
-    4) die 34 "ownership is AMBIGUOUS for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: this is not a failure to work around — decide which checkout owns the task, remove the copies that are not authoritative, and record the owner with \`work-loop-owner.sh claim\`. Nothing was launched." ;;
-    *) die 35 "the ownership check ran and failed (exit $OWNER_RC) in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: ownership is unestablished, so nothing was launched. Fix or replace $OWNER_HELPER, then re-run." ;;
+    0) OWNER_STATUS=proceed; say "ownership: PROCEED — $(printf '%s' "$OWNER_OUT" | sed -n 's/^reason: //p')" ;;
+    3) OWNER_STATUS=refused; die 33 "ownership refused for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: continue the task in the checkout named above, or close it there first. Nothing was launched." ;;
+    4) OWNER_STATUS=ambiguous; die 34 "ownership is AMBIGUOUS for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: this is not a failure to work around — decide which checkout owns the task, remove the copies that are not authoritative, and record the owner with \`work-loop-owner.sh claim\`. Nothing was launched." ;;
+    *) OWNER_STATUS=check-failed; die 35 "the ownership check ran and failed (exit $OWNER_RC) in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: ownership is unestablished, so nothing was launched. Fix or replace $OWNER_HELPER, then re-run." ;;
   esac
 else
+  OWNER_STATUS=unavailable
   die 35 "the ownership check is unavailable: $OWNER_HELPER is missing or unreadable in $CHECKOUT"$'\n'"Recoverable next action: ownership cannot be established without it, so nothing was launched and nothing was committed. Copy the helper into this checkout — or run the task in a checkout that carries it — then re-run."
 fi
 

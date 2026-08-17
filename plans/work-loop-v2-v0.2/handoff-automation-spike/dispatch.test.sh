@@ -4810,7 +4810,9 @@ fi
 for pair in "outcome:NO_TRANSITION" "code:22" "task:result-post-task" \
             "stage:post-hop" "actor:codex" "actor_launched:yes" \
             "model_request_started:no" "mode:simulated" "hop:1" \
-            "lease_at_finalization:held"; do
+            "owner_check:proceed" "owner_declared:none" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
   k="${pair%%:*}"; want="${pair#*:}"
   got="$(res_field "$R50" "$k")"
   [ "$got" = "$want" ] && ok "50a — $k=$want" || bad "50a — $k=$want" "got: ${got:-<absent>}"
@@ -4974,6 +4976,164 @@ if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m3.sh"; then
     || bad "50c — and the real dispatcher keeps both runs' results apart" "found $(res_count "$d/runs")"
 else
   bad "50c — M3 mutant differs from the dispatcher (the run-bound path was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+echo
+echo "Case 50d — a die() BEFORE any child is forked reports no launch and no model request"
+# The correction control for the launch fields. launch_actor() dies four ways
+# before run_bounded() forks anything — a non-executable codex binary, an
+# unresolvable claude binary, a checkout it cannot enter, an unknown actor name —
+# and every one of them is reached AFTER HOP_BASELINE_READY is raised. While that
+# flag was the source of actor_launched, all four reported a launch, and in live
+# mode a model request, that never happened.
+#
+# STILL NO LIVE PRODUCT TRANSPORT. The run is in live mode because no --actor-cmd
+# is given, and it stops on a binary path that does not exist: nothing is
+# executed, no model is contacted, and the case is controller evidence like every
+# other one here.
+d="$(new_sandbox)"; state_file "$d" "pre-fork-task" "codex"
+run_dispatch "$d" pre-fork-task --codex-bin "$d/no-such-codex-binary"
+expect_rc 20 "$RC" "50d — exits 20 when the actor binary is not executable" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "50d — no actor process ran" || bad "50d — no actor process ran" "calls=$(calls "$d")"
+RIDD="$(run_id_of "$OUT")"
+R50D="$d/runs/$RIDD.result"
+[ -f "$R50D" ] && ok "50d — the pre-fork stop still finalizes one result" \
+              || bad "50d — the pre-fork stop still finalizes one result" "missing $R50D; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(res_count "$d/runs")" = "1" ] \
+  && ok "50d — exactly one result was finalized" \
+  || bad "50d — exactly one result was finalized" "found $(res_count "$d/runs")"
+[ "$(tail -1 "$R50D" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "50d — the pre-fork result is complete" \
+  || bad "50d — the pre-fork result is complete" "$(tail -1 "$R50D" 2>/dev/null)"
+# THE LOAD-BEARING ASSERTIONS. `no` here is established-and-absent, not
+# unavailable: nothing forked, so nothing could have requested a model. `launch`
+# is the third stage value — the baseline was live and the fork never happened,
+# which is neither pre-hop nor post-hop.
+for pair in "outcome:ACTOR_FAILED" "code:20" "mode:live" "actor:codex" \
+            "actor_launched:no" "model_request_started:no" "stage:launch" \
+            "hop:1" "permission_mode_requested:none"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50D" "$k")"
+  [ "$got" = "$want" ] && ok "50d — $k=$want" || bad "50d — $k=$want" "got: ${got:-<absent>}"
+done
+
+# The same stop on the CLAUDE path, which is the one that names a permission
+# mode. A mode is only requested by an argv handed to a child, so a run that
+# never forked one requested nothing — reporting the launch path's constant here
+# would be the same false-launch claim wearing a different field name.
+d="$(new_sandbox)"; state_file "$d" "pre-fork-claude-task" "claude"
+run_dispatch "$d" pre-fork-claude-task --claude-bin "$d/no-such-claude-binary"
+expect_rc 20 "$RC" "50d — exits 20 when the claude binary is not resolvable" "$OUT"
+RIDD2="$(run_id_of "$OUT")"
+R50D2="$d/runs/$RIDD2.result"
+for pair in "actor:claude" "actor_launched:no" "stage:launch" \
+            "permission_mode_requested:none" "permission_mode_effective:unavailable"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50D2" "$k")"
+  [ "$got" = "$want" ] && ok "50d — claude path: $k=$want" || bad "50d — claude path: $k=$want" "got: ${got:-<absent>}"
+done
+
+echo
+echo "Case 50e — owner and lease status are OBSERVED, and an ownership refusal says so"
+# The correction control for finding 2. Case 50a already pins the clean values
+# (owner_check=proceed, owner_declared=none, both leases held-by-this-run); this
+# case is the other observation, so neither field can be a constant that happens
+# to look right. A checkout that declares a DIFFERENT open task is refused at
+# admission (33), which is inside the covered funnel, so the record exists and
+# has to carry what the check actually returned.
+d="$(new_sandbox)"; state_file "$d" "owner-refused-task" "codex"
+printf 'decoy-alpha\n' >"$d/logs/work-loop/.owner"
+run_dispatch "$d" owner-refused-task --actor-cmd "$NOOP"
+expect_rc 33 "$RC" "50e — exits 33 when the checkout declares another task" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "50e — nothing was launched" || bad "50e — nothing was launched" "calls=$(calls "$d")"
+RIDE="$(run_id_of "$OUT")"
+R50E="$d/runs/$RIDE.result"
+[ -f "$R50E" ] && ok "50e — the ownership refusal finalizes a result" \
+              || bad "50e — the ownership refusal finalizes a result" "missing $R50E; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+for pair in "outcome:OWNERSHIP_REFUSED" "code:33" \
+            "owner_check:refused" "owner_declared:decoy-alpha" \
+            "actor_launched:no" "stage:pre-hop"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50E" "$k")"
+  [ "$got" = "$want" ] && ok "50e — $k=$want" || bad "50e — $k=$want" "got: ${got:-<absent>}"
+done
+# The lease is taken before admission runs, so a refusal is finalized holding
+# both — read from the lease directories, not asserted from that ordering.
+for k in lease_task_at_finalization lease_checkout_at_finalization; do
+  [ "$(res_field "$R50E" "$k")" = "held-by-this-run" ] \
+    && ok "50e — $k=held-by-this-run" \
+    || bad "50e — $k=held-by-this-run" "got: $(res_field "$R50E" "$k")"
+done
+# The recorded pid is what separates "held by this run" from "held": the value is
+# only reachable by reading the holder file the library wrote.
+LTD="$(res_field "$R50E" lease_task_dir)"
+[ -n "$LTD" ] && [ ! -d "$LTD" ] \
+  && ok "50e — and the lease it reported holding was released on the way out" \
+  || bad "50e — and the lease it reported holding was released on the way out" "still present: $LTD"
+
+echo
+echo "Case 50f — mutation controls for the corrected launch and lease observations"
+# M4 and M5 are to case 50d and 50e what M1–M3 were to 50a: without them, an
+# assertion that the fields are OBSERVED proves nothing, because a constant of
+# the right shape would satisfy it.
+
+# M4 — the launch fields go back to being derived from the intent flag, which is
+# the defect this correction removed. The 50d scenario must then claim a launch.
+sed 's|^  if \[ "\$ACTOR_PROCESS_STARTED" -eq 1 \]; then$|  if [ "${HOP_BASELINE_READY:-0}" -eq 1 ]; then|' \
+    "$DISPATCH_BIN" >"$MUT_DIR/m4.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m4.sh"; then
+  ok "50f — M4 mutant differs from the dispatcher (the observed-fork branch was found)"
+  d="$(new_sandbox)"; state_file "$d" "m4-task" "codex"
+  OUT="$(bash "$MUT_DIR/m4.sh" --checkout "$d" --task m4-task --log-dir "$d/runs" \
+        --timeout 20 --codex-bin "$d/no-such-codex-binary" 2>&1)"; RC=$?
+  RIDM4="$(run_id_of "$OUT")"
+  [ "$(res_field "$d/runs/$RIDM4.result" actor_launched)" = "yes" ] \
+    && ok "50f — M4: with the intent flag restored, a pre-fork stop claims a launch (50d is fail-capable)" \
+    || bad "50f — M4: with the intent flag restored, a pre-fork stop claims a launch" \
+           "rc=$RC actor_launched=$(res_field "$d/runs/$RIDM4.result" actor_launched)"
+else
+  bad "50f — M4 mutant differs from the dispatcher (the observed-fork branch was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M5 — the reported task lease points somewhere the lease is not. A status READ
+# from the filesystem changes; a hard-coded one cannot. Only the reporting path
+# is redirected: the library acquires and releases through its own variables.
+sed 's|^LOCK_DIR="\$WL_LEASE_TASK_DIR"$|LOCK_DIR="$WL_LEASE_TASK_DIR.absent"|' \
+    "$DISPATCH_BIN" >"$MUT_DIR/m5.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m5.sh"; then
+  ok "50f — M5 mutant differs from the dispatcher (the reported lease path was found)"
+  d="$(new_sandbox)"; state_file "$d" "m5-task" "codex"
+  OUT="$(bash "$MUT_DIR/m5.sh" --checkout "$d" --task m5-task --log-dir "$d/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+  RIDM5="$(run_id_of "$OUT")"
+  [ "$(res_field "$d/runs/$RIDM5.result" lease_task_at_finalization)" = "missing" ] \
+    && ok "50f — M5: with the lease directory absent, the status tracks the filesystem" \
+    || bad "50f — M5: with the lease directory absent, the status tracks the filesystem" \
+           "rc=$RC lease_task_at_finalization=$(res_field "$d/runs/$RIDM5.result" lease_task_at_finalization)"
+
+  # M6 — the same absent lease, plus the observation replaced by the constant the
+  # field used to be. It reports a held lease that is not there, which is exactly
+  # what M5 catches and what a hard-coded field would have gone on doing.
+  sed 's|^  lease_task="\$(result_lease_status .*$|  lease_task=held-by-this-run|' \
+      "$MUT_DIR/m5.sh" >"$MUT_DIR/m6.sh"
+  if ! cmp -s "$MUT_DIR/m5.sh" "$MUT_DIR/m6.sh"; then
+    ok "50f — M6 mutant differs from M5 (the lease observation was found)"
+    d="$(new_sandbox)"; state_file "$d" "m6-task" "codex"
+    OUT="$(bash "$MUT_DIR/m6.sh" --checkout "$d" --task m6-task --log-dir "$d/runs" \
+          --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+    RIDM6="$(run_id_of "$OUT")"
+    [ "$(res_field "$d/runs/$RIDM6.result" lease_task_at_finalization)" = "held-by-this-run" ] \
+      && ok "50f — M6: hard-coded, it claims a lease that is not on disk (M5's assertion is fail-capable)" \
+      || bad "50f — M6: hard-coded, it claims a lease that is not on disk" \
+             "rc=$RC lease_task_at_finalization=$(res_field "$d/runs/$RIDM6.result" lease_task_at_finalization)"
+  else
+    bad "50f — M6 mutant differs from M5 (the lease observation was found)" \
+        "the sed matched nothing — the control cannot run"
+  fi
+else
+  bad "50f — M5 mutant differs from the dispatcher (the reported lease path was found)" \
       "the sed matched nothing — the control cannot run"
 fi
 
