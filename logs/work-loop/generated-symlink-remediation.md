@@ -88,7 +88,7 @@ Evidence: `logs/scripts/auto-sync-shared-health.test.sh`, now 74 assertions, `pa
 - The accepted Unit 6 evidence still holds unchanged: leg A's wrong-but-resolving target against pinned `d0d90237`; leg B's four healthy destinations plus delete-and-regenerate with `git status --porcelain` empty and `git diff --quiet HEAD` clean; leg C's real linked worktree at `projects/deep/nest/proj-wt`, different relative target, same resolved canonical, exclude surface covering exactly its five generated destinations; leg D's tracked-plus-unusable-block reporting with target and mtime unchanged; leg E's two mutation controls, which still make the target-comparison and tracking verdicts disappear.
 - Regression protection, the required set only: `auto-sync-shared-excludes.test.sh` 16/16; `pre-commit-generated-guard.test.sh` 8/8; `auto-sync-shared-guard-install.test.sh` 59/59 skip=0; `pre-commit-hook.test.sh` all arms pass; `bash -n` clean on both changed shell files. No unrelated suite was run.
 
-Changed files: `.claude/hooks/auto-sync-shared.sh`, `logs/scripts/auto-sync-shared-health.test.sh`, `logs/work-loop/generated-symlink-remediation.md`. Correction commit id: recorded in the follow-up commit noted below.
+Changed files: `.claude/hooks/auto-sync-shared.sh`, `logs/scripts/auto-sync-shared-health.test.sh`, `logs/work-loop/generated-symlink-remediation.md`. Correction commit id: `36e8e73f`.
 
 Nothing newly noticed during this correction is carried as a new deferral; the deferral list in the brief is unchanged.
 
