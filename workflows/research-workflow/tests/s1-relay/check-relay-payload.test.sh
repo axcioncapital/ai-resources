@@ -205,7 +205,9 @@ done
 # (`^2. Read the project reference docs ...` and `Pass each sub-agent as content:`) and no longer
 # describe the live surface. H3-17 moved the same way when Unit 5 converted `run-execution` 2.3.1:
 # its old expression targeted `^1. Read all raw reports from ...`, which the conversion removed. The
-# replacements still flip on relay SHAPE, never on approved wording.
+# replacements still flip on relay SHAPE, never on approved wording. H1-01 moved the same way when
+# Unit 10 converted `run-report` 4.2a: its old expression targeted `Return: chapter draft content,
+# scarcity`, which the conversion removed.
 cp -R "$WORKFLOW/.claude" "$TMP/live-claude"
 mkdir -p "$TMP/live"; mv "$TMP/live-claude" "$TMP/live/.claude"
 
@@ -228,9 +230,9 @@ flip()      { flip_dir "$1" "$2" "$3" "$4" VIOLATION COMPLIANT; }
 # a seam already converted: edited back toward content, it must break
 flip_back() { flip_dir "$1" "$2" "$3" "$4" COMPLIANT VIOLATION; }
 
-flip H1-01 .claude/commands/run-report.md \
-  's/Return: chapter draft content, scarcity/Return: chapter draft path, scarcity/' \
-  'run-report 4.2a returns a path instead of the draft'
+flip_back H1-01 .claude/commands/run-report.md \
+  's|Return: chapter draft path (the exact output path above) plus a factual handoff|Return: chapter draft content|' \
+  'run-report 4.2a returns the full draft again instead of its path'
 
 flip_back H4-01 .claude/commands/run-cluster.md \
   's|^2\. Identify the project reference docs the two skills consume by PATH|2. Read the project reference docs the two skills consume as content|' \

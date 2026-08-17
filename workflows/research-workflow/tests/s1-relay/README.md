@@ -152,14 +152,25 @@ current per-seam figures rather than quoting numbers from here.
      this entry required: it still forbids altering, interpreting, analyzing or paraphrasing the
      response, still forbids handing the body back, and now names the file on disk as the verbatim
      authoritative copy the summary may never stand in for. `verify-chapter` St2.4/2.5 were updated
-     to consume that contract. `H2-01` was the second of the two cap violations; only `H1-01`'s
-     remains.
-   - **Still pending: `H1-01`** — the `run-report` St4.2a full chapter-draft return, and the last
-     cap violation in the measured set.
+     to consume that contract. `H2-01` was the second of the two cap violations.
+   - ~~Still pending~~ **— `H1-01` LANDED in Unit 10:** St4.2a now hands `evidence-to-report-writer`
+     the canonical `-draft.md` output path, the sub-agent writes the complete draft there before
+     returning, and the return carries the exact path plus chapter structure, scarcity items,
+     evidence-coverage status and warning/failure state, capped at 20 lines and 4 KB. St4.2d no
+     longer writes the draft from a return payload — it verifies the file the writer wrote, and
+     still writes the review report and checkpoint. `H1-01` was the last cap violation in the
+     measured set; **no cap violation remains.**
+   - **Nothing is pending in this group.** `H1-02` and `H1-03` are unchanged and sit under item 4
+     below as two of the ambiguous five. St4.2b and St4.2c still receive the draft as content — the
+     main session now reads it back from the St4.2a output path, an explicit read recorded here
+     rather than counted as path-passing, and their transport and classification are untouched.
 4. **Hand the ambiguous five back before touching them.** `H3-04`, `H2-04`, `H1-02`, `H1-03`, `H2-05`
    need the isolation contract settled — including the extract-class contradiction between
-   `docs/required-reference-files.md`, `run-report` St4.0 and `run-cluster` St2.3 — and `H1-02`/`H1-03`
-   additionally need the 4.2 write reordered ahead of the review.
+   `docs/required-reference-files.md`, `run-report` St4.0 and `run-cluster` St2.3. `H1-02`/`H1-03`
+   additionally needed the 4.2 write reordered ahead of the review; **Unit 10 landed that reorder**
+   (the writer writes the draft at St4.2a), so their remaining blocker is the isolation decision
+   alone. That decision is still theirs to make in their own bounded unit — Unit 10 changed neither
+   seam's transport nor its classification.
 
 Summaries added anywhere in step 3 are capped at **20 lines and 4 KB**; the check enforces both.
 
