@@ -62,6 +62,33 @@ Capability subset: baseline local repository work only—read/search/history ins
 
 ## Latest result
 
+Correction round on Unit 9. Reproduced (2026-08-17):
+
+- Finding (1): REPRODUCED — read the live `execution-agent.md` at `dd0a80aa9288bbf91f3a9e8d738e830c474a3751`. Line 18 and line 29 both stated the 20-line / 4 KB cap, and line 29 then read "Shorten the discrepancy detail to stay inside it — never the verdict, the count, the status, or the error text." Those two instructions are unsatisfiable together whenever one protected field is itself larger than the cap. The realistic case is the error text: line 20 required reporting the error, nothing bounded its size, and nothing wrote it durably anywhere, so a long upstream error body had to be returned whole *and* fit inside 4 KB. The Unit 9 cap demonstration could not expose this because it varied only the discrepancy count, which is the one field line 29 permitted shortening.
+
+Corrected, and only this:
+
+- The cap now always wins and carries a deterministic fit order: group the discrepancy detail by Issue type, then reduce that detail to the count line alone, and if a required field is still too large on its own, keep the field and quote as much of its leading text as fits, closed with `[truncated — full text at {path}]` naming the caller-specified file.
+- Never drop a required field, never breach the cap silently, and never rewrite a field to make it shorter. The no-interpretation rule is explicitly unaffected: a truncated quote is still a quote, and paraphrasing or condensing one is named as a breach of it.
+- The pointer is made real rather than assumed. Every response-derived field already had a complete durable copy in the caller-specified file; the error text did not, so a failed call now writes the complete error text to that file in place of the response. The verbatim-storage rule, the metadata append, the single-call rule, the prompt/message preservation, the confidentiality boundary and the no-retry rule are all untouched, as is `verify-chapter` — its item 5 already records a reported failure or missing field rather than inferring it, and a truncated field arrives carrying its own marker, so no caller change was needed and none was made.
+
+Result: the correction is committed at `27000350ad222901c9ad815108775a5c90b81a36` (verified with `git rev-parse HEAD`), changing one file — `workflows/research-workflow/.claude/agents/execution-agent.md`, 4 insertions and 2 deletions. No other Unit 9 file needed it: the README's `H2-01` entry describes the grouping rule and the landed seam state, neither of which this correction changes.
+
+Evidence:
+
+- Overlong-field falsifiability, the case the finding names: an 8417-byte upstream 502 error body. Built under the **pre-correction** rule — status, verdict-absent, count-absent, output path, and the error text unshortened — the summary measures 5 lines and 8664 bytes, breaching the 4096-byte cap. Built under the **corrected** rule — same fields, error text quoted up to the fitting length and closed with the truncation pointer — it measures 6 lines and 4096 bytes, inside both caps. The check fails on the old contract and passes on the new one, which is the point; the two constructions are at `$SCRATCH/u9c-overlong-pre.txt` and `$SCRATCH/u9c-overlong-post.txt`.
+- Unit 9 behaviour is unbroken. `H2-01` remains `path` / `COMPLIANT` for `path+capped-summary` at 30 relayed bytes; a row-level diff of the full 40-row TSV before and after the correction is empty, so no seam moved. Aggregate unchanged: 292721 bytes relayed, reduction 83.9109%, compliant 23/40, 7 measured violations, 1 cap violation (`H1-01`), 5 ambiguous, 0 unresolved. `grep -cE '^- Return the'` still returns 1, so the anchor resolves once.
+- Regression: `check-relay-payload.test.sh` reports 17 passed, 0 failed. `git diff --check` clean. `origin/main` remains an ancestor of `HEAD`. The earlier 34-discrepancy grouping demonstration (11 lines / 600 bytes) is unaffected — the grouping rule it exercised is retained verbatim, with the truncation rule added beneath it.
+- Repository: committed path is the single file named above; local commit `27000350ad222901c9ad815108775a5c90b81a36`. No push, no merge, no API call.
+
+Aggregate S1 position is unchanged by the correction: Units 1–9 implemented (1–8 accepted, 9 awaiting the closure check); 23/40 seams compliant; fixed-fixture reduction 83.9109%; 7 measured violations, 1 cap violation, 5 ambiguous seams and the representative chapter regression remain, so the aggregate 100%-coverage target stays red.
+
+Newly noticed during the correction, recorded as deferrals and not implemented: (a) `verify-chapter` item 5 could name truncation explicitly alongside failure and missing fields — it is not needed for honesty, since a truncated field arrives already marked, and it sits outside the frozen finding; (b) the two deferrals carried from Unit 9 stand unchanged — the README `Blast radius` wording, and the Step 3 item 7a verification-report content relay.
+
+---
+
+Unit 9 implementation record, retained for the closure check:
+
 Inspected (2026-08-17):
 
 - Claim (1): HOLDS — `work-loop-state.sh validate` returned `ACTIVE_CLAUDE`; `work-loop-owner.sh check --depth repo` returned PROCEED; `work-loop-capability.sh check --canonical` returned READY with every copied component byte-identical to canonical. After `git fetch origin`, `git merge-base --is-ancestor origin/main HEAD` succeeded. `git rev-parse 37b25f6ec4b7227db55e0e8127a1fa80526174b8` resolved and its subject is the Unit 8 commit, so Codex's hash correction is confirmed against the repository. `logs/friction-log.md` still carries its unrelated hook-maintained modification; it was left unstaged and unedited. No material S1 premise changed.
@@ -93,4 +120,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 9 — the `H2-01` path-plus-capped-summary return contract at `dd0a80aa9288bbf91f3a9e8d738e830c474a3751`, its cap demonstration and falsifiability, the caller update in `verify-chapter`, the resolved no-interpretation prohibition, the bounded README edit-map correction, and the updated aggregate S1 position. Then close, continue to the next S1 unit, or correct once.
+Codex: run the closure check on the frozen finding only — is the cap conflict resolved at `27000350ad222901c9ad815108775a5c90b81a36`, and did the correction break Unit 9 behaviour? The overlong-field case, the unchanged `H2-01` classification and aggregate, and the green suite are recorded above. Newly noticed matters are listed as deferrals, not a second correction round.
