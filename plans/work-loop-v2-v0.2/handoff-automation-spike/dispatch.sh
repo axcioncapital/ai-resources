@@ -813,6 +813,11 @@ TR_RUN=''
 # record's task, checkout and run for the second record's bytes. This is what
 # lets identity acceptance be tied to the exact bytes that were validated.
 TR_SHA=''
+# The device and inode the accepted bytes were read from. `TR_SHA` alone cannot
+# separate "still the same file" from "a different file holding identical
+# content", and the frozen requirement is content OR file identity — so both are
+# pinned, and a byte-identical stand-in is still a replacement.
+TR_FID=''
 # Which path the pre-read safety gate cleared. The identity boundary refuses to
 # compare anything the gate did not pass first — see that function's note on why
 # the order is a correctness property and not a convention.
@@ -831,6 +836,23 @@ TR_PARSE_GATED=''
 # exactly where the region is under test.
 wl2_tr_sha() { # path -> the artifact's sha256, or empty when it cannot be taken
   shasum -a 256 "$1" 2>/dev/null | cut -d' ' -f1
+}
+
+# WHICH FILE, as distinct from WHICH BYTES. A digest cannot tell one file from a
+# different file holding identical content, and "the record was replaced" is true
+# in both cases: the promised path is supposed to hold the artifact this run
+# wrote, not an indistinguishable stand-in something else put there.
+#
+# GNU FORM FIRST, DELIBERATELY. BSD `stat -f` takes a format string while GNU
+# `stat -f` reports the FILESYSTEM instead, so probing BSD-first would make GNU
+# emit confident nonsense rather than fail. GNU `-c` simply errors on BSD, which
+# is the unambiguous direction to fall through.
+#
+# NEITHER FORM DEREFERENCES. Both stat the name itself unless given `-L`, so a
+# symlink reports its own identity rather than its target's — which is what lets
+# a regular file swapped for a link be seen as the change it is.
+wl2_tr_fid() { # path -> "<device>:<inode>", or empty when it cannot be taken
+  stat -c '%d:%i' "$1" 2>/dev/null || stat -f '%d:%i' "$1" 2>/dev/null
 }
 
 # ------------------------------- the terminal result's PRE-READ path safety gate
@@ -903,12 +925,40 @@ validate_terminal_result_path() { # artifact task checkout run evidence-root -> 
 validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded reason token
   local f="${1-}" bytes line key val n=0 seen=' ' last='' k
   local got_task='' got_checkout='' got_run='' sha_before='' sha_after=''
-  TR_SOURCE=''; TR_TASK=''; TR_CHECKOUT=''; TR_RUN=''; TR_SHA=''
+  local fid_before='' fid_after=''
+  TR_SOURCE=''; TR_TASK=''; TR_CHECKOUT=''; TR_RUN=''; TR_SHA=''; TR_FID=''
   # Read, never written, at the first instruction of the parse. TR_PATH_CLEARED
   # belongs to the gate and is deliberately not reset here: clearing it would make
   # this function able to invalidate a gate decision it does not own.
   TR_PARSE_GATED="${TR_PATH_CLEARED:-}"
   [ -n "$f" ]                || { printf 'no-path\n';    return 1; }
+
+  # THE READER DEFENDS ITS OWN READ, and this is the correction's point. Recording
+  # what the gate had decided is not the same as acting on it: this function used
+  # to copy that decision and then open the artifact anyway, leaving the refusal to
+  # an identity check that runs after every byte is already read. A caller that
+  # invokes the parser directly — which nothing stops, and which the standalone
+  # structural contract positively allows — got the old late-refusal behaviour back
+  # in full.
+  #
+  # `-L` IS AN LSTAT ON THE NAME. It reads nothing, so it can sit ahead of `-f`,
+  # which follows links and is therefore already a decision to trust one. This is
+  # deliberately NOT delegated to the gate: the gate answers a different question
+  # (is this the promised path for an expected identity) and a reader that cannot
+  # be called safely on its own is a reader whose safety depends on its callers.
+  if [ ! -L "$f" ]; then :; else printf 'symlinked-path\n'; return 1; fi # reader pre-open path refusal
+  # A GATE DECISION ABOUT SOME OTHER ARTIFACT IS A STALE CLEARANCE, not a
+  # clearance. No gate at all stays allowed — Unit 6's structural validator is
+  # callable on its own and case 51 exercises exactly that — but a gate that
+  # cleared a different path must not be read as covering this one.
+  #
+  # ONE LINE, like every other refusal here, and that is a testability property
+  # rather than a formatting choice: the mutation controls delete a refusal by its
+  # token and watch the assertion go green. A multi-line `if` loses its body to
+  # that deletion and leaves `then fi` — a syntax error, which is a mutant that
+  # proves nothing because it cannot run at all.
+  if [ -n "${TR_PATH_CLEARED:-}" ] && [ "${TR_PATH_CLEARED}" != "$f" ]; then printf 'path-unchecked\n'; return 1; fi
+
   [ -f "$f" ] && [ -r "$f" ] || { printf 'unreadable\n'; return 1; }
   # The size bound is taken BEFORE a single line is read, so an oversized artifact
   # costs one stat rather than a walk through however much was planted.
@@ -929,6 +979,8 @@ validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded 
   # exactly the one a later identity check could not detect a swap of.
   sha_before="$(wl2_tr_sha "$f")"
   [ -n "$sha_before" ] || { printf 'unhashable\n'; return 1; }
+  fid_before="$(wl2_tr_fid "$f")"
+  [ -n "$fid_before" ] || { printf 'unidentifiable\n'; return 1; }
 
   # `|| [ -n "$line" ]` so a final line with no trailing newline is still read and
   # judged. Dropping it would make a truncated record look like a complete one.
@@ -980,12 +1032,16 @@ validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded 
   sha_after="$(wl2_tr_sha "$f")"
   [ -n "$sha_after" ] || { printf 'unhashable\n'; return 1; }
   [ "$sha_before" = "$sha_after" ] || { printf 'artifact-changed\n'; return 1; }
+  fid_after="$(wl2_tr_fid "$f")"
+  [ -n "$fid_after" ] || { printf 'unidentifiable\n'; return 1; }
+  [ "$fid_before" = "$fid_after" ] || { printf 'artifact-replaced\n'; return 1; }
 
   # Published last, after every structural refusal above has had its chance. The
   # sweep just proved all three keys are present, so none of these is empty, and
-  # the bracketing digests just proved they all came from one set of bytes.
+  # the bracketing digests and file identities just proved they all came from one
+  # set of bytes in one file.
   TR_SOURCE="$f"; TR_TASK="$got_task"; TR_CHECKOUT="$got_checkout"; TR_RUN="$got_run"
-  TR_SHA="$sha_after"
+  TR_SHA="$sha_after"; TR_FID="$fid_after"
   printf 'ok\n'
   return 0
 }
@@ -1022,7 +1078,7 @@ validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded 
 # record: one artifact, one parse, one owner.
 validate_terminal_result_identity() { # artifact task checkout run evidence-root -> 0 and ok, or 1 and one bounded token
   local f="${1-}" x_task="${2-}" x_checkout="${3-}" x_run="${4-}" x_root="${5-}"
-  local sha_now
+  local sha_now fid_now
 
   [ -n "$f" ] || { printf 'no-path\n'; return 1; }
   [ -n "$x_task" ] && [ -n "$x_checkout" ] && [ -n "$x_run" ] && [ -n "$x_root" ] \
@@ -1045,6 +1101,20 @@ validate_terminal_result_identity() { # artifact task checkout run evidence-root
   # and every comparison below would still be answered from the first record's
   # fields — a result accepted for bytes nothing ever checked. Fails closed: an
   # artifact that can no longer be hashed is refused, not waved through.
+  # PATH TOPOLOGY IS RE-ESTABLISHED, NOT REMEMBERED. The gate cleared this name
+  # while it was a regular file; nothing prevents it becoming a link afterwards,
+  # and both hashes would then happily follow that link to byte-identical valid
+  # content. Checked before the digests for exactly that reason — a link is a
+  # changed path, and naming it as a content change would describe the wrong event.
+  if [ ! -L "$f" ]; then :; else printf 'symlinked-path\n'; return 1; fi
+
+  # WHICH FILE, then WHICH BYTES. A byte-identical replacement at the same name has
+  # the same digest by construction, so the digest cannot see it; file identity
+  # can. Both are required, and each names its own event.
+  fid_now="$(wl2_tr_fid "$f")"
+  [ -n "$fid_now" ] || { printf 'unidentifiable\n'; return 1; }
+  [ "$fid_now" = "${TR_FID:-}" ] || { printf 'artifact-replaced\n'; return 1; }
+
   sha_now="$(wl2_tr_sha "$f")"
   [ -n "$sha_now" ] || { printf 'unhashable\n'; return 1; }
   [ "$sha_now" = "${TR_SHA:-}" ] || { printf 'artifact-changed\n'; return 1; }

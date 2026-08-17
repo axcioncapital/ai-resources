@@ -5910,6 +5910,179 @@ else
       "the sed matched nothing — the control cannot run"
 fi
 
+# ==================================================================== case 54
+# THE TWO RESIDUALS the correction round left on the same findings. Both are the
+# same shape as the originals: a check that exists but does not cover the case it
+# is supposed to.
+#
+# 54a — THE READER DID NOT DEFEND ITS OWN READ. The correction put a pre-read gate
+# in front of the parser and had identity refuse when the gate had not cleared the
+# artifact. But the PARSER still opened, sized, hashed and read anything it was
+# handed: it recorded the gate's decision and then ignored it. Nothing stops a
+# caller invoking the parser directly, and Unit 6's standalone structural contract
+# positively allows it — so the late-refusal defect survived one function over.
+#
+# 54b — THE SNAPSHOT SAW BYTES, NOT FILES. `TR_SHA` catches a record replaced by a
+# DIFFERENT record. It cannot catch a replacement by a byte-identical file, whose
+# digest is equal by construction, nor a regular file swapped for a symlink to
+# byte-identical content — where both hashes cheerfully follow the link. The frozen
+# requirement is content OR file identity, and only content was bound.
+#
+# THE GATE STAYS OPTIONAL, and that is a boundary rather than an omission. Case 51
+# calls the parser with no gate at all on a dozen fixtures, and that is accepted
+# Unit 6 behaviour. What 54a fixes is the parser following an UNSAFE path, and a
+# gate clearance that names a DIFFERENT artifact; a plain ungated regular file is
+# still parsed, exactly as before.
+
+echo
+echo "Case 54a — the parser refuses an unsafe path itself, with no gate in front of it"
+
+# Straight at the parser, no gate anywhere. The published snapshot is the witness:
+# only the parse sets TR_SOURCE, so an empty one proves the artifact was never read.
+parse_probe() { # lib artifact -> "<token>|<TR_SOURCE>"
+  ( . "$1" >/dev/null 2>&1 || { printf 'lib-unsourceable|\n'; exit 0; }
+    t="$SANDBOX_ROOT/.parse-token"
+    validate_terminal_result "$2" >"$t" 2>/dev/null
+    printf '%s|%s\n' "$(cat "$t")" "${TR_SOURCE:-}" )
+}
+
+PARSE54="$(parse_probe "$VAL_LIB" "$SYM52ROOT/$RID52.result")"
+if [ "$PARSE54" = "symlinked-path|" ]; then
+  ok "54a — the parser refuses a symlinked artifact before opening it, with nothing published"
+else
+  bad "54a — the parser refuses a symlinked artifact before opening it, with nothing published" \
+      "expected 'symlinked-path|', got '$PARSE54'"
+fi
+
+# THE ACCEPTED UNGATED CASE, asserted so the fix above cannot have been made by
+# refusing everything the gate did not clear. Case 51 depends on this and so does
+# Unit 6's standalone structural contract.
+PARSE54OK="$(parse_probe "$VAL_LIB" "$REAL52")"
+if [ "$PARSE54OK" = "ok|$REAL52" ]; then
+  ok "54a — an ungated regular artifact is still parsed, as Unit 6's standalone contract requires"
+else
+  bad "54a — an ungated regular artifact is still parsed, as Unit 6's standalone contract requires" \
+      "expected 'ok|$REAL52', got '$PARSE54OK'"
+fi
+
+# A GATE CLEARANCE FOR SOME OTHER ARTIFACT IS NOT A CLEARANCE FOR THIS ONE.
+STALE54="$( . "$VAL_LIB" >/dev/null 2>&1
+            validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+            tok="$(validate_terminal_result "$COPY52" 2>/dev/null)"
+            printf '%s %s\n' "$?" "$tok" )"
+if [ "$STALE54" = "1 path-unchecked" ]; then
+  ok "54a — a gate clearance naming a different artifact does not cover this one"
+else
+  bad "54a — a gate clearance naming a different artifact does not cover this one" \
+      "expected '1 path-unchecked', got '$STALE54'"
+fi
+
+echo
+echo "Case 54b — acceptance is bound to WHICH FILE, not only to which bytes"
+V54="$SANDBOX_ROOT/v54"; mkdir -p "$V54"
+
+# A BYTE-IDENTICAL REPLACEMENT, swapped in atomically the way a real one would be.
+# Same name, same content, same digest — a different file. The digest cannot see
+# this by construction, which is exactly why file identity has to be pinned too.
+SWAP54="$( . "$VAL_LIB" >/dev/null 2>&1
+           cp "$REAL52" "$V54/keep.result"
+           validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+           validate_terminal_result "$REAL52" >/dev/null 2>&1
+           cp "$REAL52" "$V54/twin.result"; mv -f "$V54/twin.result" "$REAL52"
+           tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+           rc=$?
+           cp "$V54/keep.result" "$REAL52"
+           printf '%s %s\n' "$rc" "$tok" )"
+if [ "$SWAP54" = "1 artifact-replaced" ]; then
+  ok "54b — a byte-identical file substituted at the promised path is rejected"
+else
+  bad "54b — a byte-identical file substituted at the promised path is rejected" \
+      "expected '1 artifact-replaced', got '$SWAP54'"
+fi
+
+# THE SAME BYTES, REACHED THROUGH A LINK. The gate cleared this name while it was a
+# regular file; it is a symlink by the time identity looks. Both digests would
+# follow it happily to valid, matching content.
+LINK54="$( . "$VAL_LIB" >/dev/null 2>&1
+           cp "$REAL52" "$V54/target.result"
+           validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+           validate_terminal_result "$REAL52" >/dev/null 2>&1
+           cp "$REAL52" "$V54/keep2.result"
+           rm -f "$REAL52"; ln -s "$V54/target.result" "$REAL52"
+           tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+           rc=$?
+           rm -f "$REAL52"; cp "$V54/keep2.result" "$REAL52"
+           printf '%s %s\n' "$rc" "$tok" )"
+if [ "$LINK54" = "1 symlinked-path" ]; then
+  ok "54b — a promised path that became a symlink after the gate is rejected"
+else
+  bad "54b — a promised path that became a symlink after the gate is rejected" \
+      "expected '1 symlinked-path', got '$LINK54'"
+fi
+
+# THE UNDISTURBED ARTIFACT IS STILL ACCEPTED, so neither assertion above is passing
+# because the fixture was left broken.
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 0 ok \
+  "54b — the untouched original result is still accepted"
+
+echo
+echo "Case 54c — mutation controls: the final fixes go green when each binding is broken"
+MUT54="$SANDBOX_ROOT/mutants54"; mkdir -p "$MUT54"
+
+# M16 — remove the file-identity comparison. The byte-identical substitute is then
+# accepted on its matching digest, which is residual 2 exactly as reported.
+sed "/printf 'artifact-replaced/d" "$DISPATCH_BIN" >"$MUT54/m16.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT54/m16.sh"; then
+  ok "54c — M16 mutant differs from the dispatcher (the file-identity comparison was found)"
+  if extract_validator "$MUT54/m16.sh" "$MUT54/m16.lib"; then
+    M16="$( . "$MUT54/m16.lib" >/dev/null 2>&1
+            cp "$REAL52" "$V54/keep3.result"
+            validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+            validate_terminal_result "$REAL52" >/dev/null 2>&1
+            cp "$REAL52" "$V54/twin3.result"; mv -f "$V54/twin3.result" "$REAL52"
+            tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+            rc=$?
+            cp "$V54/keep3.result" "$REAL52"
+            printf '%s %s\n' "$rc" "$tok" )"
+    if [ "$M16" = "0 ok" ]; then
+      ok "54c — M16: without the file-identity binding the byte-identical swap is accepted (54b is fail-capable)"
+    else
+      bad "54c — M16: without the file-identity binding the byte-identical swap is accepted (54b is fail-capable)" \
+          "expected '0 ok', got '$M16'"
+    fi
+  else
+    bad "54c — M16: without the file-identity binding the byte-identical swap is accepted (54b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "54c — M16 mutant differs from the dispatcher (the file-identity comparison was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M17 — remove ONLY the reader's own pre-open refusal. The gate keeps its identical
+# refusal, so deleting by token would remove both and prove nothing about which one
+# does the work; the trailing marker comment is what makes this control address the
+# reader's line alone.
+sed "/# reader pre-open path refusal/d" "$DISPATCH_BIN" >"$MUT54/m17.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT54/m17.sh"; then
+  ok "54c — M17 mutant differs from the dispatcher (the reader's own refusal was found)"
+  if extract_validator "$MUT54/m17.sh" "$MUT54/m17.lib"; then
+    M17="$(parse_probe "$MUT54/m17.lib" "$SYM52ROOT/$RID52.result")"
+    if [ "$M17" = "ok|$SYM52ROOT/$RID52.result" ]; then
+      ok "54c — M17: without the reader's own refusal the parser follows the link again (54a is fail-capable)"
+    else
+      bad "54c — M17: without the reader's own refusal the parser follows the link again (54a is fail-capable)" \
+          "expected 'ok|$SYM52ROOT/$RID52.result', got '$M17'"
+    fi
+  else
+    bad "54c — M17: without the reader's own refusal the parser follows the link again (54a is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "54c — M17 mutant differs from the dispatcher (the reader's own refusal was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
