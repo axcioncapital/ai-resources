@@ -2978,43 +2978,188 @@ else
   kill -KILL "$A27R" 2>/dev/null
 fi
 
-# ================================================================ case 27r-d
+# ================================================================ case 27u
 #
-# THE DEFERRAL, ASSERTED. A signal that arrives before any actor was forked is
-# explicitly NOT covered by this unit, and the scope claim is only honest if it
-# is checked: an interruption with no launched actor must still take the old path
-# — exit 28, no terminal result — rather than quietly publishing one. If a later
-# edit extends the integration to that window, this case turns red and says so,
-# which is what stops the coverage claim drifting without evidence.
+# THE PRE-LAUNCH HALF OF THE SAME TERMINAL (Unit 25). This case was 27r-deferred:
+# it asserted that an interruption arriving before any fork still exited 28 with
+# NO result, and that assertion was honest for Unit 23's scope. It was also the
+# measurement that showed the boundary was drawn at the wrong fact. By the time
+# the signal lands here the run has taken BOTH leases, claimed its RUN_ID and
+# opened its run log — it has already changed the shared world — and it was
+# exiting 28 having published nothing a later reader could point at.
+#
+# THE FIXTURE IS UNCHANGED FROM THE DEFERRAL, deliberately: same slow ownership
+# helper, same 3-second signal, same window. Only the expectation moved, so the
+# red this turned is the exact behaviour the deferral recorded.
+#
+# THE SIGNAL IS DELIVERED TO A DISPATCHER HELD BEFORE ITS FIRST LAUNCH by a slow
+# ownership helper, which is the one seam that can be stalled from outside
+# without touching the signal path itself. A busy git dir is not needed and would
+# not model this: --actor-cmd is never reached, so the run stops pre-hop.
+#
+# TWO FOREIGN PATHS ARE PLANTED ON PURPOSE, and they are what makes the hoist
+# fail-capable rather than merely stated. finalize_terminal_result() counts them
+# through foreign_worktree(), which — before this unit — was defined BELOW the
+# block that raises RUN_ID. A record published from this window against that
+# ordering would report `worktree_foreign_paths=0`: not an absent field but a
+# positive, plausible, false claim that the working tree was clean, written by a
+# function that did not exist. Asserting the count against an independently
+# computed ground truth is what turns that into a failure instead of a pass.
+#
+# THEY DO NOT DISTURB THE RUN. The pre-hop foreign-path guard that refuses to
+# launch on a dirty tree sits BELOW the ownership check, so the signal lands
+# first and the guard is never reached.
 echo
-echo "Case 27r-deferred — an interruption BEFORE any actor launched still exits 28 with NO result"
+echo "Case 27u — an interruption AFTER run evidence exists but BEFORE any fork publishes one trusted result"
 d="$(new_sandbox)"; state_file "$d" "sig-prelaunch-task" "claude"
-R27D="$SANDBOX_ROOT/sig27d"; mkdir -p "$R27D"
-# A checkout whose git dir is busy is not needed: --actor-cmd is never reached
-# because the state file's turn is operator-terminal, so the run stops pre-hop.
-# Instead the signal is delivered to a dispatcher held BEFORE its first launch by
-# a slow ownership helper, which is the one seam that can be stalled from outside
-# without touching the signal path itself.
+R27U="$SANDBOX_ROOT/sig27u"; mkdir -p "$R27U"
+printf 'planted\n' >"$d/foreign-a.txt"
+printf 'planted\n' >"$d/foreign-b.txt"
+# The ground truth, computed by this harness from git rather than from the record
+# under test: porcelain entries whose path is outside the three allowlist
+# prefixes the dispatcher was given (--allow-path defaults plus the run dir it
+# adds for --log-dir "$d/runs").
+foreign_truth() { # checkout -> count of out-of-allowlist porcelain entries
+  git -C "$1" status --porcelain 2>/dev/null |
+    while IFS= read -r l; do
+      p="${l:3}"; p="${p%\"}"; p="${p#\"}"
+      case "$p" in
+        runs/*|logs/work-loop/*|plans/work-loop-v2-v0.2/handoff-automation-spike/*) ;;
+        *) printf 'x\n' ;;
+      esac
+    done | grep -c . || true
+}
 cat >"$d/logs/scripts/work-loop-owner.sh" <<'SLOWOWN'
 #!/bin/bash
 sleep 30
 exit 0
 SLOWOWN
 chmod +x "$d/logs/scripts/work-loop-owner.sh"
+# COMPUTED AFTER THE STALL IS INSTALLED, and that ordering is not cosmetic:
+# overwriting the tracked ownership helper is itself an out-of-allowlist working
+# tree change, so a ground truth taken before it would be short by one and would
+# disagree with a record that is right. The run directory is excluded because the
+# dispatcher adds it to its own allowlist for --log-dir inside the checkout.
+FG27U="$(foreign_truth "$d")"
+CO27U="$(cd "$d" && pwd -P)"
+LK27U="$(task_lock_for "$d" sig-prelaunch-task)"
+CL27U="$(checkout_lock_for "$d")"
 bash "$DISPATCH_BIN" --checkout "$d" --task sig-prelaunch-task --log-dir "$d/runs" \
-  --timeout 300 --actor-cmd "$NOOP" >"$R27D/out" 2>&1 &
-D27D=$!
+  --timeout 300 --actor-cmd "$NOOP" >"$R27U/out" 2>&1 &
+D27U=$!
 sleep 3
-kill -TERM "$D27D" 2>/dev/null
-wait "$D27D" 2>/dev/null; RC27D=$?
-OUT27D="$(cat "$R27D/out")"
-expect_rc 28 "$RC27D" "27r-deferred — a pre-launch interruption still exits 28" "$OUT27D"
-if [ "$(res_count "$d/runs" 2>/dev/null)" = "0" ]; then
-  ok "27r-deferred — no terminal result is published, and none is claimed"
+# BOTH LEASES ARE OBSERVED HELD AT THE MOMENT OF THE SIGNAL, before it is sent.
+# This is the fact that makes the window worth an artifact at all: the run is not
+# merely "started", it is holding the two things that keep every other dispatcher
+# out. Read here rather than inferred from the record afterwards.
+[ -d "$LK27U" ] && [ -d "$CL27U" ] \
+  && ok "27u — both leases are held at the moment the signal is delivered" \
+  || bad "27u — both leases are held at the moment the signal is delivered" \
+         "task=$([ -d "$LK27U" ] && echo held || echo absent) checkout=$([ -d "$CL27U" ] && echo held || echo absent)"
+kill -TERM "$D27U" 2>/dev/null
+wait "$D27U" 2>/dev/null; RC27U=$?
+OUT27U="$(cat "$R27U/out")"
+expect_rc 28 "$RC27U" "27u — a pre-launch interruption still exits 28, unchanged" "$OUT27U"
+ROOT27U="$(cd "$d/runs" && pwd -P)"
+RID27U="$(run_id_of "$OUT27U")"
+RES27U="$ROOT27U/$RID27U.result"
+# THE RED THIS UNIT EXISTS TO TURN: before the edit this window published nothing.
+if [ "$(res_count "$ROOT27U")" = "1" ] && [ "$(part_count "$ROOT27U")" = "0" ]; then
+  ok "27u — exactly one finalized result, no partial left behind"
 else
-  bad "27r-deferred — no terminal result is published, and none is claimed" \
-      "results=$(res_count "$d/runs") — the deferred window was covered without evidence"
+  bad "27u — exactly one finalized result, no partial left behind" \
+      "results=$(res_count "$ROOT27U") partials=$(part_count "$ROOT27U")"
 fi
+# NOTHING WAS LAUNCHED, asserted on three independent surfaces: the record's own
+# tuple, the teardown line the handler prints only when a pgid exists, and the
+# actor's own call log. A record claiming pre-hop while an actor had in fact run
+# would be the exact false claim this field exists to prevent.
+for pair in "outcome:INTERRUPTED" "code:28" "stage:pre-hop" "actor_launched:no" \
+            "model_request_started:no" "actor:none" "hop:0" "mode:simulated" \
+            "task:sig-prelaunch-task"; do
+  k27="${pair%%:*}"; w27="${pair#*:}"
+  if [ "$(res_field "$RES27U" "$k27")" = "$w27" ]; then
+    ok "27u — the record carries $k27=$w27"
+  else
+    bad "27u — the record carries $k27=$w27" "got: $(res_field "$RES27U" "$k27")"
+  fi
+done
+printf '%s\n' "$OUT27U" | grep -q 'terminating actor descendant tree' \
+  && bad "27u — no actor descendant tree was torn down" "$OUT27U" \
+  || ok "27u — no actor descendant tree was torn down"
+[ -f "$d.calls" ] \
+  && bad "27u — the simulated actor was never invoked" "$(cat "$d.calls")" \
+  || ok "27u — the simulated actor was never invoked"
+# TRUST IS ASSERTED AGAINST FIXTURE FACTS, not read back off the record. Each
+# expectation below is a value this harness knows independently — the sandbox
+# path, the run id parsed from the dispatcher's own first line, the state file it
+# was pointed at, the declaration the sandbox does NOT carry, and the two lease
+# directories this harness computed before the run started.
+for pair in "checkout:$CO27U" "run:$RID27U" "run_log:$d/runs/$RID27U.log" \
+            "state_file:$CO27U/logs/work-loop/sig-prelaunch-task.md" \
+            "owner_declared:none" "owner_check:unchecked" \
+            "lease_task_dir:$LK27U" "lease_checkout_dir:$CL27U" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run" \
+            "turn_at_terminal:claude" "state_class:ACTIVE_CLAUDE"; do
+  k27="${pair%%:*}"; w27="${pair#*:}"
+  if [ "$(res_field "$RES27U" "$k27")" = "$w27" ]; then
+    ok "27u — $k27 matches the fixture fact"
+  else
+    bad "27u — $k27 matches the fixture fact" "want: $w27 — got: $(res_field "$RES27U" "$k27")"
+  fi
+done
+# THE ANTI-FABRICATION ASSERTION. A `0` here is what a record written against the
+# un-hoisted ordering reports, and it is indistinguishable from a clean tree
+# unless the expected value is known independently and is NOT zero.
+if [ "$FG27U" -gt 0 ] 2>/dev/null && [ "$(res_field "$RES27U" worktree_foreign_paths)" = "$FG27U" ]; then
+  ok "27u — worktree_foreign_paths=$FG27U was counted, not fabricated"
+else
+  bad "27u — worktree_foreign_paths was counted, not fabricated" \
+      "git ground truth=$FG27U — record says $(res_field "$RES27U" worktree_foreign_paths)"
+fi
+# THE PRE-HOP FIELDS THAT MUST BE EXPLICITLY UNAVAILABLE RATHER THAN GUESSED.
+# There is no launch baseline, so there is no delta to report; no --deadline was
+# given, so there is no remainder. Both are bounded tokens, and neither is empty.
+for pair in "changed_paths_since_launch:unavailable" "deadline_seconds:none" \
+            "deadline_remaining_seconds:none" "permission_mode_requested:none"; do
+  k27="${pair%%:*}"; w27="${pair#*:}"
+  if [ "$(res_field "$RES27U" "$k27")" = "$w27" ]; then
+    ok "27u — $k27 is the bounded token $w27, not a guess"
+  else
+    bad "27u — $k27 is the bounded token $w27, not a guess" "got: $(res_field "$RES27U" "$k27")"
+  fi
+done
+[ "$(tail -1 "$RES27U" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "27u — the record ends with its completion sentinel" \
+  || bad "27u — the record ends with its completion sentinel" "last: $(tail -1 "$RES27U" 2>/dev/null)"
+# CONSUMED, not merely written — the same observation 27r makes, for the same
+# reason: every consumer refusal leaves through die_terminal_untrusted with exit
+# 38, so an exit of 28 with the promised artifact present and no scratch file
+# left is the accepted gate having run and returned.
+ls "$ROOT27U"/*.consume >/dev/null 2>&1 \
+  && bad "27u — the consumer left no scratch file behind" "$(ls "$ROOT27U"/*.consume 2>&1 | tr '\n' ' ')" \
+  || ok "27u — the consumer left no scratch file behind"
+printf '%s\n' "$OUT27U" | grep -q "  terminal result: .*/$RID27U\.result$" \
+  && ok "27u — the operator is told where the evidence is" \
+  || bad "27u — the operator is told where the evidence is" "$OUT27U"
+# RELEASED ONLY AFTER CONSUMPTION. Nothing was launched, so nothing could pin;
+# the leases may only be gone because both integration lines returned.
+if [ -d "$LK27U" ] || [ -d "$CL27U" ]; then
+  bad "27u — a clean pre-launch stop releases both leases after consumption" \
+      "task=$([ -d "$LK27U" ] && echo held || echo gone) checkout=$([ -d "$CL27U" ] && echo held || echo gone)"
+else
+  ok "27u — a clean pre-launch stop releases both leases after consumption"
+fi
+# THE WORDING IS TRUE OF WHAT HAPPENED. The launched-actor message claims a hop
+# was interrupted and may have left a partial effect; printed here it sends the
+# operator to reconcile a hop against effects that cannot exist, because no actor
+# was ever forked. The no-retry promise is unchanged in both wordings.
+out_has  'before the first hop launched' "$OUT27U" "27u — the stop names the pre-launch window"
+out_has  'no actor was ever launched by this run' "$OUT27U" "27u — the message says nothing was launched"
+out_lacks 'the actor was killed mid-hop' "$OUT27U" "27u — it does not claim a hop was interrupted"
+out_has  'Nothing is retried' "$OUT27U" "27u — the no-retry promise is unchanged"
+out_has  'STOP [28]' "$OUT27U" "27u — the interruption wording is unchanged"
 
 # ================================================================ case 27s
 #
@@ -3112,6 +3257,103 @@ if [ "$M29_HF" = "1" ] && [ "$M29_HC" = "1" ] && [ "$M29_DIFFERS" = yes ] && [ "
 else
   bad "27t — M29 matched each integration line exactly once, differs, and still parses" \
       "finalization matches=$M29_HF consumption matches=$M29_HC differs=$M29_DIFFERS parses=$M29_PARSES — the control cannot run"
+fi
+
+# ================================================================ case 27v
+#
+# THE MUTATION CONTROL FOR THE WIDENING (M31). Case 27t deletes both integration
+# lines and proves the seam exists at all. It cannot prove what THIS unit added,
+# because both windows now travel through those same two lines: deleting them
+# takes 27r's evidence away as well, and a control that removes the launched-actor
+# path too is not isolating the pre-launch one.
+#
+# SO THIS MUTANT REVERTS RATHER THAN DELETES. Each guard is rewritten from the
+# run-evidence condition back to Unit 23's fork condition — the exact edit this
+# unit made, and nothing else. The integration lines stay, the finalizer and the
+# consumer stay, and the launched-actor path is left fully present. If 27u still
+# passed against that mutant, it would be proving something other than the
+# widening.
+#
+# BOTH HALVES ARE MEASURED, on the same mutant: the pre-launch fixture must lose
+# its result and fall back to a bare exit 28, and 27r's launched fixture must
+# still publish exactly one. A mutant that broke both would satisfy the first
+# assertion while telling us nothing.
+#
+# LITERAL, NOT REGEX. The guard text is full of `[`, `$`, `{` and `}`; awk's
+# index/substr replaces the exact bytes with no pattern interpretation, and the
+# count guard below fails closed on absence, on a single match, or on three.
+echo
+echo "Case 27v — M31: with the guard reverted to the fork fact, 27u's evidence disappears and 27r's remains"
+M31_SRC="$SANDBOX_ROOT/dispatch-M31.sh"
+M31_OLD='[ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] &&'
+M31_NEW='[ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] &&'
+M31_HITS="$(grep -cF "$M31_OLD" "$DISPATCH_BIN" 2>/dev/null | head -1)"
+if [ "$M31_HITS" = "2" ]; then
+  awk -v old="$M31_OLD" -v new="$M31_NEW" '
+    { i = index($0, old)
+      if (i > 0) $0 = substr($0, 1, i-1) new substr($0, i + length(old))
+      print }' "$DISPATCH_BIN" >"$M31_SRC"
+  M31_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$M31_SRC" || M31_DIFFERS=yes
+  M31_PARSES=no; bash -n "$M31_SRC" 2>/dev/null && M31_PARSES=yes
+  # The launched-actor path must survive the mutation, or the control is a
+  # deletion wearing a different name.
+  M31_KEPT=no
+  [ "$(grep -cF '# interruption terminal finalization' "$M31_SRC" | head -1)" = "1" ] &&
+    [ "$(grep -cF '# interruption terminal consumption' "$M31_SRC" | head -1)" = "1" ] && M31_KEPT=yes
+else
+  M31_DIFFERS=no; M31_PARSES=no; M31_KEPT=no
+fi
+if [ "$M31_HITS" = "2" ] && [ "$M31_DIFFERS" = yes ] && [ "$M31_PARSES" = yes ] && [ "$M31_KEPT" = yes ]; then
+  ok "27v — M31 matched the widened guard exactly twice, differs, still parses, and kept both integration lines"
+
+  # HALF ONE — the pre-launch window loses its evidence.
+  d="$(new_sandbox)"; state_file "$d" "sig-m31-pre-task" "claude"
+  R27V="$SANDBOX_ROOT/sig27v"; mkdir -p "$R27V"
+  cat >"$d/logs/scripts/work-loop-owner.sh" <<'SLOWM31'
+#!/bin/bash
+sleep 30
+exit 0
+SLOWM31
+  chmod +x "$d/logs/scripts/work-loop-owner.sh"
+  bash "$M31_SRC" --checkout "$d" --task sig-m31-pre-task --log-dir "$d/runs" \
+    --timeout 300 --actor-cmd "$NOOP" >"$R27V/out" 2>&1 &
+  D27V=$!
+  sleep 3
+  kill -TERM "$D27V" 2>/dev/null
+  wait "$D27V" 2>/dev/null; RC27V=$?
+  OUT27V="$(cat "$R27V/out")"
+  expect_rc 28 "$RC27V" "27v — the mutant still reaches exit 28, so the fixture is not merely broken" "$OUT27V"
+  if [ "$(res_count "$d/runs" 2>/dev/null)" = "0" ]; then
+    ok "27v — with the guard reverted, the pre-launch window publishes NO result"
+  else
+    bad "27v — with the guard reverted, the pre-launch window publishes NO result" \
+        "results=$(res_count "$d/runs") — the control cannot distinguish the widening"
+  fi
+
+  # HALF TWO — the launched-actor window keeps its evidence, on the same mutant.
+  d="$(new_sandbox)"; state_file "$d" "sig-m31-post-task" "claude"
+  R27W="$SANDBOX_ROOT/sig27w"; mkdir -p "$R27W"
+  M31_ACTOR='echo $$ > "'"$R27W"'/actor.pid"; sleep 300'
+  bash "$M31_SRC" --checkout "$d" --task sig-m31-post-task --log-dir "$d/runs" \
+    --timeout 300 --actor-cmd "$M31_ACTOR" >"$R27W/out" 2>&1 &
+  D27W=$!
+  A27W="$(sig27_actor_pid "$R27W")"
+  if [ -z "$A27W" ]; then
+    bad "27v — the mutant launched its actor" "no actor pid file; the second half is inconclusive"
+  else
+    kill -TERM "$D27W" 2>/dev/null
+    wait "$D27W" 2>/dev/null; RC27W=$?
+    if [ "$(res_count "$d/runs" 2>/dev/null)" = "1" ]; then
+      ok "27v — and the launched-actor window still publishes exactly one (the mutation is not a deletion)"
+    else
+      bad "27v — and the launched-actor window still publishes exactly one" \
+          "rc=$RC27W results=$(res_count "$d/runs") — M31 broke more than the widening"
+    fi
+    kill -KILL "$A27W" 2>/dev/null
+  fi
+else
+  bad "27v — M31 matched the widened guard exactly twice, differs, still parses, and kept both integration lines" \
+      "matches=$M31_HITS want 2; differs=$M31_DIFFERS parses=$M31_PARSES kept=$M31_KEPT — the control cannot run"
 fi
 
 # ================================================================= case 28

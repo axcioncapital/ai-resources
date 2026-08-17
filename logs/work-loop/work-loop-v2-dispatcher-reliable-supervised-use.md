@@ -14,118 +14,72 @@ Task exit condition: one integrated candidate has passed Gate SA and the indepen
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 24 — make exit-31 deadline evidence truthful
+Standard. Implementation mode. Unit 25 — publish trusted evidence for admitted pre-launch interruption
 
 Named reason for the loop: the objective spans multiple bounded implementation and proof units, must survive session boundaries, and requires independent Codex assessment before it can count as complete.
 
 ## Brief
 
-Unit 23 is accepted at `0a1ea07dd2390ec6464f5309b06ef20604ed1ce9`: an interruption after an actor fork now finalizes and consumes one trusted `INTERRUPTED` result before any releasable lease is released, while early interruption windows remain explicitly deferred. Its evidence exposed one independent and already measured Change set A defect: an unattended exit-31 terminal reached with `--deadline` writes an empty `deadline_remaining_seconds` beside `result_complete=yes` because the fact-producing function is not yet available. Repair that one false terminal fact now; do not reopen the general pre-run boundary.
+Unit 24 is accepted at `9059daa21907a6c73a29dc801fa5a74a81906875`: the earliest finite-deadline exit-31 terminal now records a truthful bounded remaining-deadline fact through a pure relocation of the sole fact producer, with the focused red/green, M30, and directly affected deadline and terminal controls green. The next required Change set A gap is narrower than the broad structural guard proposed at handback: a signal after this run owns its leases and evidence identity but before its first actor fork still exits 28 without the run-bound terminal result the plan requires. Close that measured admitted pre-launch window now; preserve the earlier signal window before run evidence exists as an explicit deferral.
 
-Dominant deliverable: truthful `deadline_remaining_seconds` evidence on the earliest unattended exit-31 terminal when a whole-run deadline was supplied.
-Evidence required in this hop: one targeted red/green exit-31 case whose result is otherwise complete but whose deadline-remaining field changes from empty to a bounded numeric fact, plus one focused load-bearing negative control.
-Evidence explicitly deferred: the other five exit-31 sites as separate fixtures; pre-run and pre-launch interruption; usage, infrastructure and lease-refusal result migration; semantic tuple validation; permission-result rows; status and resume; crash and hostile-input matrices; Change sets B–D; live trials; adoption review; the full synchronous regression gate; merge, push, deployment and destructive cleanup.
-Primary edit begins after: extend the existing earliest-finalizing-terminal fixture with a finite `--deadline` and quote the current red result—`code=31` and `result_complete=yes` are present, but `deadline_remaining_seconds` is empty rather than a truthful bounded integer.
+Dominant deliverable: one trusted, consumed `INTERRUPTED` terminal result for a signal delivered after run evidence exists but before the first actor fork.
+Evidence required in this hop: one targeted red/green pre-launch interruption case, the existing launched-actor interruption regression, and one focused load-bearing negative control.
+Evidence explicitly deferred: interruption before run identity/evidence exists; a structural guard relating every top-level terminal to every finalizer dependency; separate interruption fixtures for every preflight command; usage, infrastructure and lease-refusal result migration; semantic tuple validation; permission-result rows; status and resume; crash and hostile-input matrices; Change sets B–D; live trials; adoption review; the full synchronous regression gate; merge, push, deployment and destructive cleanup.
+Primary edit begins after: quote the existing Case 27r-deferred red—exit 28 and no actor fork are correct, but zero terminal results are published even though this run has already created its run identity and evidence location.
 
 Required outcome:
 
-- The earliest reachable exit-31 result with a supplied deadline records `deadline_seconds` as supplied and `deadline_remaining_seconds` as a non-negative integer no greater than that deadline.
-- The result remains one complete `UNATTENDED_UNAVAILABLE` / code-31 artifact with all Unit 21 worktree facts unchanged and no command-not-found diagnostic.
-- Reuse the existing deadline fact owner. Do not add a second clock reader, terminal-only approximation, schema field or parser.
-- If the minimum safe implementation is a pure relocation of an existing function, preserve its executable body byte-for-byte and prove no duplicate definition survives. If repository evidence supports another smaller implementation, explain it and prove there is still one owner.
-- Preserve the normal actor-timeout clamp and every post-definition caller. This unit changes fact availability at the early terminal; it does not change deadline policy, timeout behavior or the unattended operating boundary.
-- Do not claim all exit-31 rows are individually covered. The shared finalizer may justify the implementation across them, but separate fixtures remain deferred.
+- A SIGINT or SIGTERM delivered after `RUN_ID` and the run evidence path exist, but before `run_bounded()` forks an actor, finalizes and consumes exactly one trusted `INTERRUPTED` / code-28 result before a releasable lease is released.
+- The record truthfully distinguishes this window from Unit 23: `stage=pre-hop`, `actor_launched=no`, and `model_request_started=no`; it carries this run's exact task, checkout, run, log, owner/lease and available state/worktree facts, and ends with `result_complete=yes`.
+- No actor launches, nothing is retried, the interruption wording remains honest for a pre-launch stop, and a clean pre-launch stop releases only after the exact promised artifact passes the accepted path, structure and identity consumer.
+- Reuse the existing terminal producer, validators and consumer. Add no second signal handler, result producer, parser, lifecycle reader, result path, wait loop or recovery state.
+- Preserve Unit 23's launched-actor teardown, evidence and pinning behavior unchanged. Preserve the pre-run signal window before run identity/evidence exists without inventing a result or converting it into an unprovable code-38 ending.
+- Do not implement the proposed all-terminal structural ordering guard in this unit. It is an adjacent prevention improvement, not evidence required to close this measured terminal gap.
 
 Check against the repository before editing:
 
-1. Verify `finalize_terminal_result()` still calls `remaining_seconds()` when `DEADLINE_AT` is set, and the earliest exit-31 call still executes before the sole `remaining_seconds()` definition. If either premise is false, hand back.
-2. Verify `remaining_seconds()` is one pure fact producer over the existing deadline state and identify every live caller/definition in `dispatch.sh`. If moving or reusing it would change policy or create a second owner, stop.
-3. Verify Case 50h remains the smallest focused fixture for the earliest exit-31 terminal and already asserts the accepted worktree/result semantics. Extend that fixture or an equally narrow adjacent row; do not build a new broad matrix.
-4. Treat the approved plan's requirement for truthful deadline facts and one production owner as governing. Unit 23's measured defect is verify-first repository evidence, not authority to widen scope.
+1. Verify the current handler publishes and consumes an interruption result only when `ACTOR_PROCESS_STARTED=1`, while Case 27r-deferred delivers its signal after both leases and run evidence exist but before the first fork. Name the exact ordering evidence. If the fixture actually lands before run identity/evidence, hand back rather than broadening it.
+2. Verify every producer/consumer dependency and required field used in that admitted pre-launch window is already callable and has a truthful bounded value or an accepted explicit unavailable token. If publication would fabricate a field, require a second owner, or depend on a post-fork fact, stop and hand back.
+3. Verify the accepted consumer can authenticate the exact promised pre-launch artifact without waiting or scanning, and that its refusal path pins before any release. Do not create a pre-launch-specific consumer.
+4. Verify the signal window before run evidence exists remains distinguishable and outside this unit. The plan's atomic terminal-result and release-order requirements govern; Unit 23/24 evidence and the current fixture are verify-first repository facts, not authority to widen scope.
 
 Required fail-capable evidence:
 
-- Quote the targeted red before the production edit and green after it, showing `outcome`, `code`, `result_complete`, supplied deadline, remaining deadline, and unchanged worktree facts.
-- Assert the remaining value's numeric grammar and bounds rather than a timing-sensitive exact second.
-- Include one mutation or negative control that makes only the early deadline fact unavailable again and causes the focused assertion to fail while the exit-31 result still finalizes.
-- Prove one live `remaining_seconds()` definition and unchanged function body if relocation is used; show directly affected later deadline callers remain green with only focused controls.
-- Run shell syntax checks and the focused result/deadline slice only. Do not rerun the full dispatcher suite.
+- Quote the targeted red before the production edit and green after it. The red must retain exit 28 and no actor launch but show zero results; the green must show exactly one result, zero partial artifacts, the pre-hop/no-launch/no-model tuple, the completion sentinel, accepted consumer passage, and release only after consumption.
+- Assert the result's task, checkout, run/log path, owner/lease observations and available state/worktree facts against independent fixture facts. Do not infer trust from `result_complete=yes` alone.
+- Add one mutation control that removes only the new pre-launch eligibility/integration and makes the focused case return to exit 28 with no result while the launched-actor path remains present. The selector must match exactly, produce a different parseable dispatcher, and fail closed if it cannot.
+- Keep Unit 23's launched-actor interruption, publication-failure/pinning and no-retry cases green, plus only the directly affected focused interruption slice. Run `bash -n` on both changed shell files; do not rerun the full dispatcher suite.
 - Report the implementation commit and exact changed paths. Only `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`, and this task state may change; `logs/friction-log.md` remains pre-existing noise and must not be staged or committed.
 
 Capability subset: baseline only — inspect the approved plan and accepted dispatcher/test seams; edit only the two spike files and this state; run focused local checks and shell syntax validation; make the local handback commit. The five baseline deny rules and four mandatory nested-actor rules are required in full. Nothing is selected from the pre-authorizable set, which is empty today. No external service, production action or operator-reserved capability is needed.
 
-Completion condition: one committed implementation makes the earliest finite-deadline exit-31 result carry a truthful bounded `deadline_remaining_seconds`; the targeted red/green proof and load-bearing control pass; deadline policy and later callers remain unchanged; only the three permitted paths change; and the task returns with `turn: codex`.
+Completion condition: one committed implementation makes the admitted pre-launch signal window publish and consume exactly one truthful run-bound interruption result before release; the targeted red/green and load-bearing control pass; the launched-actor and pre-evidence boundaries remain truthful and unchanged; only the three permitted paths change; and the task returns with `turn: codex`.
 
-Stop and hand back if the defect cannot be reproduced; if one-owner repair requires changing deadline semantics, schema or the unattended operating boundary; if the focused fixture cannot distinguish an empty value from a truthful bounded integer; or if fixing this fact requires covering other terminal families in the same unit. Challenge a false premise rather than widening.
+Stop and hand back if Case 27r-deferred does not actually run after evidence identity exists; if any required terminal fact would have to be guessed; if the existing producer/consumer cannot safely serve this window; if preserving the earlier pre-evidence boundary requires a new state or recovery mechanism; or if the implementation would absorb the broad structural guard or another terminal family. Challenge a false premise rather than widening.
 
 ## Latest result
 
-Accepted Unit 23 at `0a1ea07dd2390ec6464f5309b06ef20604ed1ce9` (2026-08-17): a launched-actor SIGINT/SIGTERM terminal now reuses the accepted producer, structural/path/identity validators and consumer to finalize and consume exactly one `INTERRUPTED` result before release. The focused slice moved from `9/13` red to `25/0` green; M29 removed only the new integration and reproduced exit 28 with no result and an improperly released lease; the existing case-27 family remained `141/0`, and directly affected consumer/unprovable controls remained `45/0`.
+Inspected (2026-08-17):
 
-Accepted boundary: the implementation is guarded by the persistent actor-fork fact, so it covers interruption after a fork, including between-hop timing, and deliberately does not cover interruption before the first fork. Clean teardown releases after trusted consumption; uncertain teardown remains pinned; publication failure transfers to exit 38 with the lease retained. No schema, parser, evidence location or lifecycle reader was added.
+- Packaging lines: HOLDS — all four present for Implementation mode, `Dominant deliverable:` naming exactly one deliverable.
+- Claim (1): HOLDS — pre-edit `dispatch.sh:2448-2449` published and consumed only under `[ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ]`; searched the whole file for `ACTOR_PROCESS_STARTED` and found the flag raised only at `run_bounded()`. Case 27r-deferred's stall is the ownership check, which is top-level code below `RUN_ID`/`RUN_LOG` and below `acquire_lock`. Measured, not inferred: an instrumented replay of the fixture showed, at the instant before the signal, the run log already on disk in `$d/runs`, both the task and checkout lease directories present, and `initial: turn=claude ...` already printed (so `validate_state` had returned) — then exit 28, `results=0`, `partials=0`, both leases released. The fixture lands after evidence identity and before the first fork, as the brief states.
+- Claim (2): HOLDS at the window the fixture measures, and the repair is what makes it hold across the window the brief names. Every field the record needs there resolves to a real value or an accepted bounded token — `ST_TURN`/`ST_CLASS` set by `validate_state`, `OWNER_STATUS` initialised to `unchecked`, `changed_paths_since_launch` to `unavailable` with no hop baseline, `deadline_remaining_seconds` to `none` with no deadline — and nothing needed is a post-fork fact. But the brief's stated boundary starts at `RUN_ID`, and the record's four working-tree/deadline producers (`foreign_worktree`, `allowlisted_dirty`, `partial_effect_paths`, `remaining_seconds`) were all defined *below* the block that raises `RUN_ID`. Publishing from anywhere in that sub-window would have emitted `worktree_foreign_paths=0` from a function that did not exist — the Unit 21/24 defect one window over. Repaired by relocation rather than by narrowing the boundary; see Result.
+- Claim (3): HOLDS — `consume_terminal_result()` derives the promised path as `$LOG_DIR_ABS/$RUN_ID.result` from two values the run already owns, with no listing, newest-file pick or wait; searched the function and its three validators for any scan or sleep and found none. Every refusal leaves through `die_terminal_untrusted()`, which calls `pin_lock_terminal` before `die 38`, so the pin precedes any release. No pre-launch-specific consumer was added — the same call serves both windows.
+- Claim (4): HOLDS — the guard requires `RUN_ID` and `LOG_DIR`, which is the finalizer's own precondition, so a signal before run identity exists still takes the old path: no record, no `die_terminal_unprovable`, no code 38. Searched `on_signal` for any other publication route and found only the two marked lines.
 
-Deferred without implementation: pre-first-fork interruption; cosmetic duplicate partial-effect wording on the interruption-to-38 failure path; and the measured finite-deadline exit-31 empty-field defect, which Unit 24 now owns. The full dispatcher suite was not rerun; only the focused and directly affected controls were claimed. Runtime profile reported baseline-only local edits/tests and no external or operator-reserved action; no effective sandbox or network containment was claimed.
+Result: the admitted pre-launch interruption window now finalizes and consumes exactly one trusted run-bound `INTERRUPTED` result before either lease is released. Three production changes, all in `dispatch.sh`. First, the `repository state` section (nine pure function definitions, including `remaining_seconds()`) was relocated above the run-evidence block — a pure move, verified by an identical sorted line multiset against the pre-edit file, so from the instant `RUN_ID` exists every fact producer the record calls is defined. Second, both integration lines in `on_signal()` were re-guarded from `ACTOR_PROCESS_STARTED` to `[ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ]` — the finalizer's own condition, so the guard and the producer cannot disagree — with the terminal label chosen from the fork fact so a refusal names the window it fired in. Third, the stop message was split on the same fork fact: a pre-launch stop no longer claims "the actor was killed mid-hop; it may have left a partial effect" about a process the run never forked, and the location reads "before the first hop launched" instead of "between hops". `RUN_LOG` gained an empty default, because the new guard makes the one-statement window between the `RUN_ID` and `RUN_LOG` assignments reachable by a handler that reads `$RUN_LOG` unguarded under `set -u`. No second handler, producer, parser, lifecycle reader, result path, wait loop or recovery state was added, and no readiness flag.
 
-Inspected (2026-08-17), against the live files at `0a1ea07d`:
+Evidence: Case 27r-deferred was retargeted in place as **Case 27u** — same sandbox, same slow-ownership-helper stall, same 3-second signal, only the expectation moved. Against the pre-edit dispatcher it is **8 pass / 32 fail**: exit 28, no teardown line and no actor call log (correct), but zero results, every record field empty, and the mid-hop wording printed. Against the edited dispatcher it is **40 pass / 0 fail**: exactly one result and zero partials; `stage=pre-hop`, `actor_launched=no`, `model_request_started=no`, `actor=none`, `hop=0`; `checkout`, `run`, `run_log`, `state_file`, `lease_task_dir` and `lease_checkout_dir` each matched against the fixture's own independently computed value rather than read back off the record; `owner_declared=none` and `owner_check=unchecked` matched against what the sandbox actually declares; both leases observed **held** immediately before the signal and **gone** after, with no `*.consume` scratch left, which is the accepted gate having run and returned; `result_complete=yes` as the last line; and the operator pointed at this run's own `.result`.
 
-- Claim (1) — the finalizer still calls `remaining_seconds()` when `DEADLINE_AT` is set, and the earliest exit-31 call still runs before the sole definition: **HOLDS**. `dispatch.sh:796` reads `[ -n "${DEADLINE_AT:-}" ] && remaining="$(remaining_seconds)"`, emitted at `:841`. `DEADLINE_AT` is set at `:2690`. The earliest top-level `die 31` was at `:3023`; the sole definition was at `:3454` — 431 lines below the terminal that needs it.
-- Claim (2) — one pure fact producer, every caller identified: **HOLDS**. Exactly one definition (`grep -c '^remaining_seconds() {$'` = 1). The body reads `DEADLINE_AT` and the clock, clamps at zero, prints an integer; it mutates nothing and decides nothing, so it carries no policy. Live callers: `:796` (the finalizer), `:3487` (the `effective_timeout` clamp) and `:3862`, `:3873`, `:3894`, `:3915`, `:3925` (budget checks inside the hop loop). Every one except `:796` was already below the old definition, so **no caller needed changing and no second owner was created**.
-- Claim (3) — Case 50h is the smallest fixture for the earliest exit-31 terminal: **HOLDS**. It drives that terminal with a fake `claude` reporting `2.1.218` and already asserts the accepted worktree and refusal semantics. It runs *without* `--deadline`, so its `deadline_remaining_seconds` is the honest literal `none` and it cannot see this defect — which is why a narrow adjacent row was added rather than 50h being edited.
-- Claim (4) — plan governs: **HOLDS**. Change set A required behaviour 4 requires the result to record deadline facts truthfully; item 2's one-schema rule and § 8's one-production-owner-per-seam rule are what make relocation, rather than a second clock reader, the only admissible repair.
+The anti-fabrication assertion is the load-bearing one: two foreign paths are planted and the record's `worktree_foreign_paths` is compared against a git ground truth this harness computes itself, after the stall is installed. It reads `3` against a truth of `3`. A record published without the relocation would read `0` — a positive, plausible, false claim of a clean tree — so the hoist is fail-capable through the case rather than merely asserted.
 
-Result: the earliest unattended exit-31 terminal now records a truthful bounded `deadline_remaining_seconds` when a whole-run deadline was supplied. The repair is a **pure relocation** of the single existing fact producer to a position above the terminals that consume it — no new clock reader, approximation, schema field or parser, and no change to deadline policy, the timeout clamp or the unattended boundary.
+**Case 27v (M31)** is the mutation control. Deletion could not isolate this unit, because both windows now travel the same two lines, so the mutant *reverts* each guard to Unit 23's fork condition by literal `awk` substitution and nothing else. It fails closed on a match count other than two, on a mutant that does not differ, does not parse, or has lost either integration marker. Both halves are measured on that one mutant: the pre-launch fixture falls back to exit 28 with **zero** results, and 27r's launched fixture still publishes **exactly one** — so the control removes the widening and not the seam.
 
-Evidence:
+Regressions, all green and unchanged: the whole case-27 interruption family **183/0**, which carries 27r's launched-actor evidence, 27s's publication-failure and pinning at exit 38, and 27t's M29 deletion control; the case-50 terminal-record family **131/0**; case 28 with case 31 **25/0**. `bash -n` clean on both changed files.
 
-**The production change is a pure relocation, proved mechanically.** `git diff` is 31 insertions / 8 deletions. The executable delta is exactly six lines out and the same six lines in:
+Changed paths: `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`, and this task state file. `logs/friction-log.md` was left untouched and unstaged.
 
-```
--remaining_seconds() {                                                    +remaining_seconds() {
--  if [ -z "$DEADLINE_AT" ]; then printf '%s' 2147483647; return 0; fi    +  if [ -z "$DEADLINE_AT" ]; then printf '%s' 2147483647; return 0; fi
--  local left=$(( DEADLINE_AT - $(date '+%s') ))                          +  local left=$(( DEADLINE_AT - $(date '+%s') ))
--  [ "$left" -lt 0 ] && left=0                                            +  [ "$left" -lt 0 ] && left=0
--  printf '%s' "$left"                                                    +  printf '%s' "$left"
--}                                                                        +}
-```
-
-A sorted-content diff over every non-comment, non-blank line of the whole file before and after returns **IDENTICAL across all 1623 lines** — no executable line was added, removed or altered anywhere. A direct `diff` of the function body extracted from `HEAD` against the body at its new position is empty (6 lines, byte-for-byte). Exactly one definition survives, now at `:2928`, above the earliest `die 31` at `:3049`; the remaining insertions are the comment recording the constraint, plus a five-line note left at the old site saying where it went and why the clamp below is unaffected.
-
-**Placement and why not inside Unit 21's block.** The definition sits immediately after `die_hop()` and immediately before the `--unattended` contained-profile section whose six `die 31` sites consume it — adjacent to Unit 21's hoisted repository-state section but not inside it, because that section's comment states its own identity as *repository* state and this is clock state. The new comment carries the same constraint in the same words — *this definition must precede every top-level `die()` that can reach finalization* — so the next reader meets the rule at both positions rather than inferring it from one.
-
-**Red, quoted on the pre-edit dispatcher** (focused slice `16 pass / 2 fail`):
-
-```
-FAIL  50i — finalization emits no undefined-function diagnostic
-      dispatch.sh: line 796: remaining_seconds: command not found
-FAIL  50i — deadline_remaining_seconds is a bounded non-negative integer
-      got: '<empty>' — not an integer; the fact producer was unavailable at this terminal
-```
-
-Every other row was already green in the red run — `code=31`, `stage=pre-hop`, `actor_launched=no`, `model_request_started=no`, `next_action`, `result_complete=yes`, one result with zero partials, `deadline_seconds=600`, and both Unit 21 worktree facts matching git at 1 foreign / 1 allowed. That is what isolates this defect to the one field.
-
-**Green, same slice, repaired dispatcher: `18 pass / 0 fail`**, with `deadline_remaining_seconds is a bounded truthful integer (599 of 600)`.
-
-**Grammar and bounds, not a timing-sensitive second.** The assertion tests the value is an integer (`case` against `*[!0-9]*`, which is what an empty string fails) and then that `1 ≤ v ≤ 600`. The three failure modes it must separate are all excluded without depending on how long the run took: the empty string fails the grammar, a `0` would falsely claim the budget was spent, and the no-deadline sentinel `2147483647` exceeds the supplied deadline.
-
-**Negative control — M30, case 50j.** It does not delete the function; it moves the definition **back below** the terminal, which is the pre-repair topology exactly. Under the mutant: still exit 31, still one complete result, `deadline_remaining_seconds` **empty again**, and `remaining_seconds: command not found` present — so what the repair changed is the position, not the existence, of the fact producer. The control fails closed on four conditions and asserts all of them: exactly one definition found before the move, exactly one after it, the mutant differs, and the mutant still parses.
-
-**Regression controls, all green against the repaired dispatcher:**
-
-- **Case 28 — `11 / 0`.** The `--deadline` clamp, which is the later-caller path most directly affected: it proves a deadline still clamps the actor timeout and still exits 29 within the arithmetic bound.
-- **Case-50 family (50a–50j) — `131 / 0`.** The whole terminal-result surface, including 50h unchanged as the no-deadline sibling and every existing mutation control.
-- **Case-27 family — `141 / 0`.** Carries the per-actor timeout path (27e) and the global-deadline path (27f), the two teardown routes that read the clock, plus Unit 23's interruption cases.
-
-`bash -n` clean on both changed files. The full suite was deliberately not rerun, per the brief.
-
-**Scope held.** No claim is made that the other five exit-31 sites are individually covered; they share this finalizer and the relocation serves them, but separate fixtures remain deferred exactly as the brief specifies.
-
-**Runtime profile.** Baseline capability subset only. Edits confined to the two permitted spike files and this state file; focused local test runs and `bash -n`; one local commit. No external service, no model request, no operator-reserved capability, and no effective sandbox or network containment is claimed for this host.
-
-Deferrals recorded, none implemented:
-
-1. **The other five `die 31` sites have no separate fixtures.** Case 50i covers the first (the Darwin platform check); the remaining five reach the same finalizer by the same route, so the repair serves them, but that is an argument from shared code rather than measured evidence.
-2. **No test asserts the ordering constraint itself.** Both Unit 21's hoisted section and this definition are protected only by comments; nothing fails if a future edit moves either below a stopping preflight. A structural guard — asserting every top-level `die()` line number exceeds the last finalizer-dependency definition — would close the whole class rather than one field at a time, and is the natural successor to both units.
-3. **`effective_timeout()` at the old site is now separated from its comment's "immediately above its first caller" framing.** The replacement note says where the function went, so nothing is unexplained, but the two are no longer adjacent.
+Deferrals recorded, not done: (a) the signal window *before* `RUN_ID` exists still exits 28 with no result — unchanged, and no case asserts it, exactly as the brief deferred; (b) the broad structural guard relating every top-level terminal to every finalizer dependency; (c) nothing asserts the section ordering *directly* — 27u proves it through the foreign count, which is real evidence but indirect, and a structural assertion would be the cheaper long-term protection; (d) the `RUN_LOG` default closes a one-statement race that no deterministic test can reach, so it carries no case of its own.
 
 ## Blocker
 
@@ -133,5 +87,4 @@ None.
 
 ## Next action
 
-Codex: assess the exit-31 deadline repair. Pure relocation of the single existing fact producer — sorted-content diff IDENTICAL across all 1623 executable lines, body byte-for-byte, one definition surviving at `:2928` above the earliest `die 31` at `:3049`; focused slice `16/2` red to `18/0` green with the field going from empty to `599 of 600`; M30 proves the position rather than the function is load-bearing by moving the definition back down and recovering the empty field; case 28 `11/0`, case-50 family `131/0` and case-27 family `141/0` as directly affected controls. Decide whether deferral 2 — a structural guard asserting every top-level `die()` sits below every finalizer dependency, which would close this defect class rather than one field at a time — opens as the next unit, or whether the pre-launch interruption windows take priority.
-
+Codex: assess Unit 25 — the admitted post-evidence, pre-fork interruption window now publishes and consumes one trusted run-bound result before release, proven by a red/green on the retargeted fixture, a revert-style mutation control measured on both windows, and the directly affected interruption, terminal-record and deadline regressions. Judge whether the relocation of the fact-producer section above the run-evidence block is accepted as part of this unit or should be recorded as its own decision, and whether the four deferrals above are carried forward as recorded.

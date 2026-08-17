@@ -391,6 +391,16 @@ CUR_ACTOR=""
 # The capture file the most recent launch_actor() actually wrote (O3).
 LAST_CAPTURE=""
 
+# DECLARED HERE, NOT ONLY WHERE IT IS COMPOSED (Unit 25). The run-evidence block
+# assigns RUN_ID and RUN_LOG on two ADJACENT lines, and from Unit 25 the signal
+# handler publishes as soon as RUN_ID exists — so a signal landing in the one
+# statement between them would reach finalize_terminal_result(), which reads
+# `$RUN_LOG` unguarded, with the name never assigned. Under `set -u` that is not
+# an empty field but an immediate shell exit carrying neither 28 nor a record.
+# The window is one assignment wide and it is real; an empty default closes it
+# without adding a guard anyone downstream has to remember.
+RUN_LOG=""
+
 # The allowlisted working-tree snapshot taken immediately before the most recent
 # actor launch. Once set, it remains the comparison point until the next launch,
 # so a post-hop guard (including a malformed state file or hop limit) can still
@@ -2383,7 +2393,15 @@ on_signal() { # signal name
   SHUTDOWN=1
   trap '' INT TERM   # a second signal must not re-enter mid-teardown
 
+  # THREE PLACES, NOT TWO (Unit 25). `between hops` is true of a run that has
+  # finished at least one hop and false of one that has never launched anything —
+  # and the second is the window this unit brought inside the evidence boundary,
+  # so the wording it is reported under has to stop describing hops that did not
+  # happen. Read from ACTOR_PROCESS_STARTED, the same fork fact the record's own
+  # `stage` and `actor_launched` fields derive from, so the operator's screen and
+  # the machine record cannot describe different runs.
   local where="between hops"
+  [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] || where="before the first hop launched"
   [ -n "$CUR_ACTOR" ] && where="during hop $CUR_HOP (actor '$CUR_ACTOR')"
 
   printf 'STOP [28] interrupted by SIG%s %s — task %s\n' "$sig" "$where" "$TASK" >&2
@@ -2402,9 +2420,22 @@ on_signal() { # signal name
   # An interrupted actor is NEVER retried and this run never resumes: the signal
   # may have landed after an effect nobody observed. The state file and Git are
   # the truth, and they are where the operator has to look.
+  #
+  # THE PRE-LAUNCH VARIANT SAYS SOMETHING DIFFERENT BECAUSE SOMETHING DIFFERENT
+  # HAPPENED (Unit 25). "the actor was killed mid-hop; it may have left a partial
+  # effect" is a claim about a process this run never forked, and it was being
+  # printed for every interruption that arrived before the first launch — sending
+  # the operator to reconcile a hop against effects that cannot exist. The
+  # no-retry promise and the recoverable-next-action shape are unchanged in both,
+  # because both are true in both; only the sentence describing what was stopped
+  # is chosen by the fork fact.
   local msg="  the actor was killed mid-hop; it may have left a partial effect. Nothing is retried.
   Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\`, decide what the
   hop actually completed, then re-run this dispatcher. Run evidence: ${RUN_LOG:-<none>}"
+  [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] || msg="  no actor was ever launched by this run, so no hop was interrupted and nothing it could
+  have left behind exists. Nothing is retried.
+  Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\` to confirm the
+  turn is where you left it, then re-run this dispatcher. Run evidence: ${RUN_LOG:-<none>}"
 
   # O2 reaches the signal path too. This handler already SAID "it may have left
   # a partial effect" and then made the operator go and find out for themselves
@@ -2424,29 +2455,50 @@ on_signal() { # signal name
   # Same boundary, same order, same fail-closed behaviour as those: finalize, then
   # consume the exact promised artifact, and only then release.
   #
-  # GUARDED ON THE FORK THIS RUN ACTUALLY PERFORMED, not on ACTOR_PGID. The two
-  # differ between hops — ACTOR_PGID is cleared when a hop ends, while
-  # ACTOR_PROCESS_STARTED stays 1 — and a signal arriving between hops is still an
-  # interruption AFTER a launch, which is this unit's scope. It is also the same
-  # fact the record's own `stage` and `actor_launched` fields are derived from, so
-  # the guard and the record cannot disagree about whether a hop happened.
+  # GUARDED ON RUN EVIDENCE, NOT ON THE FORK (Unit 25). Unit 23 guarded these two
+  # lines on ACTOR_PROCESS_STARTED, which drew the boundary at the wrong fact: a
+  # signal that arrives after this run has taken both leases, claimed its RUN_ID
+  # and opened its run log has ALREADY changed the shared world, and it exited 28
+  # having published nothing a later reader could point at — the same
+  # unproven-ending hole one window earlier. Case 27r-deferred measured exactly
+  # that: leases held, run log on disk, exit 28, zero results.
   #
-  # A SIGNAL BEFORE ANY LAUNCH IS DELIBERATELY LEFT ON THE OLD PATH. Those windows
-  # — before run identity, and after it but before the first fork — are explicitly
-  # deferred, not approximated: finalize_terminal_result() would refuse them at its
-  # own run-identity guard anyway, and routing them through die_terminal_unprovable
-  # would turn a clean interruption into an unprovable-ending 38. Case 27r-deferred
-  # asserts that window still exits 28 with no result, so this scope claim stays
-  # checkable rather than merely stated.
+  # THE CONDITION IS THE PRODUCER'S OWN. finalize_terminal_result() refuses to
+  # write without RUN_ID and LOG_DIR; asking the same question here means the two
+  # cannot disagree, and it is why publishing is added without adding an
+  # eligibility flag, a readiness state or a second notion of "far enough along".
+  #
+  # WHAT MAKES IT SAFE IS THE HOIST, NOT THIS LINE. Every fact the record collects
+  # — foreign_worktree(), allowlisted_dirty(), partial_effect_paths(),
+  # remaining_seconds() — is defined ABOVE the block that raises RUN_ID (see that
+  # section's note). Without that ordering this guard would publish records whose
+  # working-tree counts were fabricated `0`s from producers that did not yet
+  # exist, which is the Unit 21 and Unit 24 defect reintroduced one window over.
+  #
+  # THE WINDOW BEFORE RUN IDENTITY IS STILL DELIBERATELY ON THE OLD PATH, and it
+  # is left there rather than approximated: the finalizer would refuse it at its
+  # own guard, and routing that refusal through die_terminal_unprovable would turn
+  # a clean interruption — of a run that had written nothing anywhere — into an
+  # unprovable-ending 38. It is asserted as such rather than merely claimed.
+  #
+  # THE RECORD DISTINGUISHES THE TWO WINDOWS ITSELF. `stage`, `actor_launched` and
+  # `model_request_started` all derive from ACTOR_PROCESS_STARTED, so a pre-launch
+  # interruption publishes pre-hop/no/no and a post-launch one publishes
+  # post-hop/yes/no. Widening the guard therefore adds a record; it does not blur
+  # the distinction Unit 23 established, and the terminal label follows the same
+  # fact so a refusal names the window it actually fired in.
   #
   # PINNED BEATS RELEASED, unchanged. report_teardown() above may already have
   # pinned the lease on an unverified teardown; release_lock() honours that inside
   # the lease library, so publishing here cannot buy a release the teardown refused.
   #
   # One line each with its own marker, so a mutation control can delete either half
-  # without leaving an orphaned block behind (case 27t / M29).
-  [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] && { finalize_terminal_result 28 || die_terminal_unprovable "the interruption terminal after a launched actor"; } # interruption terminal finalization
-  [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] && consume_terminal_result "the interruption terminal after a launched actor" # interruption terminal consumption
+  # without leaving an orphaned block behind (case 27t / M29), or rewrite either
+  # guard back to the fork fact to isolate the widening alone (case 27v / M31).
+  local term_label="the interruption terminal after a launched actor"
+  [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] || term_label="the interruption terminal before any actor launched"
+  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] && { finalize_terminal_result 28 || die_terminal_unprovable "$term_label"; } # interruption terminal finalization
+  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] && consume_terminal_result "$term_label" # interruption terminal consumption
   if [ -n "$RESULT_FILE" ]; then
     printf '  terminal result: %s\n' "$RESULT_FILE" >&2
     [ -n "${RUN_LOG:-}" ] && printf '  terminal result: %s\n' "$RESULT_FILE" >>"$RUN_LOG"
@@ -2636,145 +2688,37 @@ EOF
   exit 0
 fi
 
-# ------------------------------------------------------------ run evidence
-#
-# OPENED ONLY ONCE BOTH LEASES ARE HELD, and the position is the whole point.
-# Everything above this line is admission: argument parsing, the lease library,
-# acquire_lock and the read-only --status branch. Not one of them creates,
-# truncates, allowlists or writes a path inside the requested --log-dir, so a run
-# that is refused at 17 leaves the checkout byte-identical. Its evidence goes to
-# the shared lease root instead (open_refusal_record, above acquire_lock).
-#
-# `--status` NEEDS NO GUARD HERE, and its absence is stronger than the flag it
-# replaces. The branch above exits 0 on every path, so this block is structurally
-# unreachable in status mode rather than conditionally skipped — the read-only
-# contract case 30 and case 12h assert is now a property of the control flow.
-# `--dry-run` is NOT excluded: it takes both leases, so it is an admitted run and
-# its evidence belongs where every admitted run's does.
-[ -n "$LOG_DIR" ] || LOG_DIR="$DEFAULT_LOG_DIR"
-mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
-# The dispatcher's own evidence directory is not "foreign work". When --log-dir
-# points inside the checkout, the run log this process is about to write would
-# otherwise register as an out-of-allowlist change made by the dispatcher itself,
-# and the pre-hop gate below would stop on it.
-LOG_DIR_ABS="$(cd "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canonicalize log dir\n' >&2; exit 10; }
-if [ "$LOG_DIR_ABS" != "$CHECKOUT" ] && [ "${LOG_DIR_ABS#"$CHECKOUT"/}" != "$LOG_DIR_ABS" ]; then
-  # Assigns the global declared near LAST_CAPTURE — allowlisted_dirty() reads it
-  # to keep this directory out of the partial-effect report (O2).
-  LOG_REL="${LOG_DIR_ABS#"$CHECKOUT"/}"
-  ALLOW_PATHS+=("^$(printf '%s' "$LOG_REL" | sed 's|[][\.*^$]|\\&|g')/")
-fi
-
-# The run id has to survive two runs of the SAME task, started in the SAME
-# second, from DIFFERENT checkouts, writing into ONE shared --log-dir. A
-# second-resolution timestamp plus the task id does not: both runs computed the
-# same id and silently overwrote each other's run log, hop captures and
-# unattended profile. The same-checkout case is not the concern — the lock
-# refuses that at exit 17, and this change does not touch the lock.
-#
-# The discriminator is the one already computed: LOCK_KEY is sha256(checkout|task),
-# so within a single task it varies exactly when the checkout does. The pid
-# separates two runs that somehow share both. No new concept is introduced.
-#
-# Field order is load-bearing, both ends:
-#   timestamp FIRST — the directory still sorts chronologically by name;
-#   task id LAST    — --status globs "*-$TASK.log", which stays an exact match
-#                     and keeps matching run logs written before this change.
-RUN_ID="$(date '+%Y%m%dT%H%M%S')-${LOCK_KEY:0:8}-$$-$TASK"
-RUN_LOG="$LOG_DIR/$RUN_ID.log"
-: >"$RUN_LOG"
-
-# RUN_START is captured at the top of the script (see there). DEADLINE_AT empty
-# means no deadline was asked for.
-DEADLINE_AT=""
-[ -n "$DEADLINE" ] && DEADLINE_AT=$(( RUN_START + DEADLINE ))
-
-say "run=$RUN_ID mode=$MODE task=$TASK"
-say "checkout=$CHECKOUT"
-say "state=$STATE_FILE"
-say "max_hops=$MAX_HOPS timeout=${ACTOR_TIMEOUT}s carry_one=$CARRY_ONE"
-if [ -n "$DEADLINE_AT" ]; then
-  say "deadline=${DEADLINE}s (expires $(date -r "$DEADLINE_AT" '+%Y-%m-%dT%H:%M:%S' 2>/dev/null || printf 'epoch %s' "$DEADLINE_AT"))"
-else
-  # Worth saying out loud. Without a deadline the real upper bound is
-  # max_hops * timeout, which is where the plan's three-hour surprise came from.
-  say "deadline=none — upper bound is max_hops * timeout = $(( MAX_HOPS * ACTOR_TIMEOUT ))s"
-fi
-say "allow_paths=${ALLOW_PATHS[*]}"
-if [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
-  say "claude_deny=${CLAUDE_DENY[*]}"
-else
-  # Said out loud because it is the risk the operator walks away on. "none" is a
-  # statement about the OPERATOR's set only: it means no extra rule was supplied,
-  # NOT that nothing is denied. Since O1 the attended path always denies the four
-  # nested-actor rules, and --unattended always carries the contained profile's
-  # own base denies — so the old wording ("no tool denied beyond the child's own
-  # policy") became false on both paths and is deliberately not restored.
-  # Beyond those sets the child's own policy applies, which is no longer this
-  # checkout's bypassPermissions on an attended hop — P0-F states
-  # --permission-mode default at launch — but a permission mode only makes the
-  # child ASK, and network is not coverable this way in any case:
-  # runs/probe-unattended-authority-2026-08-07.md.
-  say "claude_deny=none — no EXTRA deny rule was supplied by the operator; this does NOT mean nothing is denied (see the nested_actor_deny line below, and the contained profile's own denies under --unattended). Beyond those, the child's own policy applies (attended hops run --permission-mode default)"
-fi
-# Recorded separately from claude_deny, and always. claude_deny is the
-# OPERATOR's set and may legitimately be empty; this one is the dispatcher's own.
-# Folding them into one line would let "claude_deny=none" read as "nothing is
-# denied", which stopped being true on the attended path (O1).
-#
-# Branched on the run shape because O1 reaches attended launches only. Printing
-# the attended set on an unattended run would state a policy that this run's
-# argv does not carry — the same class of false run evidence the honest-stop
-# work exists to remove, one log line over.
-if [ "$UNATTENDED" -eq 1 ]; then
-  say "nested_actor_deny=n/a — this run is --unattended, and the contained profile carries no nested-actor rule; it is a separately settled artifact (see u_deny in launch_actor)"
-  say "  nesting is blocked on this path only INCIDENTALLY, by the sandbox's network refusal — that is a side effect of another control, not a stated policy"
-else
-  say "nested_actor_deny=${NESTED_ACTOR_DENY[*]}"
-  say "  nested_actor_deny is REQUESTED POLICY, not containment — it denies the default direct route at the child's permission layer and does not remove the capability"
-fi
-
-# Recorded at preflight, not at the stop. Whether exit 37 can name the denied
-# tool and its exact target depends on this host having a JSON parser, and the
-# operator of a long unattended run should learn that before walking away rather
-# than when the stop arrives unable to say what was refused.
-#
-# EACH PARSER IS PROBED BY RUNNING IT, not by `command -v`. A jq that is on PATH
-# but broken passes an existence check and then fails at the stop, which would
-# make this line disagree with what permission_denials_in() actually does — the
-# log would name a parser the run never used. The parse itself re-tries in the
-# same order at call time, so a parser that breaks mid-run still degrades to the
-# next tier rather than to a wrong answer.
-if printf '{}' | jq -r . >/dev/null 2>&1; then
-  say "denial_parser=jq — a permission stop (37) carries the denied tool and its EXACT target, untruncated"
-elif python3 -c 'import json' >/dev/null 2>&1; then
-  say "denial_parser=python3 — jq is unusable here; a permission stop (37) still carries the denied tool and its EXACT target, untruncated"
-else
-  say "denial_parser=none — neither jq nor python3 is usable here, so a permission stop (37) CANNOT name the denied tool and target; it will say so rather than guess"
-fi
-
 # --------------------------------------------------------- repository state
 #
-# HOISTED ABOVE THE PREFLIGHT THAT CAN STOP (Unit 21). Everything in this section
-# is a pure function definition, so its position carries no ordering semantics of
-# its own — with one exception, and it is why the section sits here rather than
-# after the block below. finalize_terminal_result() collects two of its fields by
-# calling foreign_worktree() and allowlisted_dirty(), and the run-evidence block
-# above is where RUN_ID and LOG_DIR are raised — the point from which any top-level
-# die() finalizes a record. The --unattended gate below sits between those two
-# facts and exits 31 in six places. While this section came after it, every one of
-# those six ran finalization against functions that did not yet exist: bash
-# reported `command not found` twice, the command substitutions produced empty
-# strings, and count_lines() turned each into `0`.
+# HOISTED ABOVE THE RUN-EVIDENCE BLOCK (Unit 25; first hoisted at Unit 21, and
+# again at Unit 24 for remaining_seconds). Everything in this section is a pure
+# function definition, so its position carries no ordering semantics of its own —
+# with one exception, and that exception is why the section sits HERE, above the
+# block that raises RUN_ID and LOG_DIR, rather than anywhere below it.
+#
+# finalize_terminal_result() collects four of its fields by calling
+# foreign_worktree(), allowlisted_dirty(), partial_effect_paths() and
+# remaining_seconds(). RUN_ID and LOG_DIR are what make that function willing to
+# write at all — its own first guard — so the instant the block below raises them,
+# every producer it calls must already exist. While this section came AFTER that
+# block, two separate windows ran finalization against functions that did not yet
+# exist: the --unattended gate's six exit-31 sites (Unit 21, and Unit 24 for the
+# deadline field), and now the signal handler, which from Unit 25 publishes for
+# any interruption arriving after run identity exists.
 #
 # THE SYMPTOM WAS NOT AN ABSENT FIELD. `0` is a positive, checkable claim that the
 # working tree held no foreign paths and no uncommitted allowed paths — written by
 # a check that never ran, and false whenever the tree was in fact dirty. An empty
 # value would have been questioned; a plausible one was not.
 #
-# So the constraint this position encodes is: THIS SECTION MUST PRECEDE EVERY
-# TOP-LEVEL die() THAT CAN REACH FINALIZATION. Moving it back down, or adding a
-# stopping preflight above it, reintroduces the same fabricated fact.
+# So the constraint this position encodes is stronger than the one Unit 21 wrote,
+# and it is stated as the stronger rule because the weaker one no longer covers
+# the handler: THIS SECTION MUST PRECEDE THE RUN-EVIDENCE BLOCK BELOW. Every
+# terminal that can finalize — top-level die(), the unattended gate, the signal
+# handler — becomes reachable at or after that block, so preceding it is what
+# makes "the producers exist" true for all of them at once, without a readiness
+# flag any of them could forget to consult. Moving this section back down, or
+# adding a stopping preflight above it, reintroduces the same fabricated fact.
 
 git_head() { git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null; }
 
@@ -2912,25 +2856,142 @@ die_hop() { # code, message
 # HOISTED HERE FOR THE SAME REASON THE SECTION ABOVE WAS (Unit 24). This is a
 # pure fact producer, so its position carries no semantics of its own — except
 # that finalize_terminal_result() calls it whenever DEADLINE_AT is set, and the
-# --unattended gate immediately below exits 31 in six places. While this
-# definition sat next to its first in-loop caller, every one of those six ran
-# finalization against a function that did not yet exist: bash reported
-# `command not found`, the command substitution produced an empty string, and
-# `deadline_remaining_seconds` went out EMPTY beside `result_complete=yes` — a
-# record certifying itself complete while missing a required field. The empty
-# value is the tell, and it is the same defect class Unit 21 removed one section
-# up; only that section was hoisted then, and this fact was not in it.
+# --unattended gate exits 31 in six places. While this definition sat next to its
+# first in-loop caller, every one of those six ran finalization against a function
+# that did not yet exist: bash reported `command not found`, the command
+# substitution produced an empty string, and `deadline_remaining_seconds` went out
+# EMPTY beside `result_complete=yes` — a record certifying itself complete while
+# missing a required field. The empty value is the tell, and it is the same defect
+# class Unit 21 removed one section up; only that section was hoisted then, and
+# this fact was not in it.
 #
-# So it carries the same constraint, and it is stated here rather than left to be
-# inferred: THIS DEFINITION MUST PRECEDE EVERY TOP-LEVEL die() THAT CAN REACH
-# FINALIZATION. Moving it back down, or adding a stopping preflight above it,
-# reintroduces the empty field.
+# It travels with that section, and the section's own note above states the
+# constraint both now carry: THIS DEFINITION MUST PRECEDE THE RUN-EVIDENCE BLOCK.
+# Moving it back down, or adding a stopping preflight above it, reintroduces the
+# empty field.
 remaining_seconds() {
   if [ -z "$DEADLINE_AT" ]; then printf '%s' 2147483647; return 0; fi
   local left=$(( DEADLINE_AT - $(date '+%s') ))
   [ "$left" -lt 0 ] && left=0
   printf '%s' "$left"
 }
+
+# ------------------------------------------------------------ run evidence
+#
+# OPENED ONLY ONCE BOTH LEASES ARE HELD, and the position is the whole point.
+# Everything above this line is admission: argument parsing, the lease library,
+# acquire_lock and the read-only --status branch. Not one of them creates,
+# truncates, allowlists or writes a path inside the requested --log-dir, so a run
+# that is refused at 17 leaves the checkout byte-identical. Its evidence goes to
+# the shared lease root instead (open_refusal_record, above acquire_lock).
+#
+# `--status` NEEDS NO GUARD HERE, and its absence is stronger than the flag it
+# replaces. The branch above exits 0 on every path, so this block is structurally
+# unreachable in status mode rather than conditionally skipped — the read-only
+# contract case 30 and case 12h assert is now a property of the control flow.
+# `--dry-run` is NOT excluded: it takes both leases, so it is an admitted run and
+# its evidence belongs where every admitted run's does.
+[ -n "$LOG_DIR" ] || LOG_DIR="$DEFAULT_LOG_DIR"
+mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
+# The dispatcher's own evidence directory is not "foreign work". When --log-dir
+# points inside the checkout, the run log this process is about to write would
+# otherwise register as an out-of-allowlist change made by the dispatcher itself,
+# and the pre-hop gate below would stop on it.
+LOG_DIR_ABS="$(cd "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canonicalize log dir\n' >&2; exit 10; }
+if [ "$LOG_DIR_ABS" != "$CHECKOUT" ] && [ "${LOG_DIR_ABS#"$CHECKOUT"/}" != "$LOG_DIR_ABS" ]; then
+  # Assigns the global declared near LAST_CAPTURE — allowlisted_dirty() reads it
+  # to keep this directory out of the partial-effect report (O2).
+  LOG_REL="${LOG_DIR_ABS#"$CHECKOUT"/}"
+  ALLOW_PATHS+=("^$(printf '%s' "$LOG_REL" | sed 's|[][\.*^$]|\\&|g')/")
+fi
+
+# The run id has to survive two runs of the SAME task, started in the SAME
+# second, from DIFFERENT checkouts, writing into ONE shared --log-dir. A
+# second-resolution timestamp plus the task id does not: both runs computed the
+# same id and silently overwrote each other's run log, hop captures and
+# unattended profile. The same-checkout case is not the concern — the lock
+# refuses that at exit 17, and this change does not touch the lock.
+#
+# The discriminator is the one already computed: LOCK_KEY is sha256(checkout|task),
+# so within a single task it varies exactly when the checkout does. The pid
+# separates two runs that somehow share both. No new concept is introduced.
+#
+# Field order is load-bearing, both ends:
+#   timestamp FIRST — the directory still sorts chronologically by name;
+#   task id LAST    — --status globs "*-$TASK.log", which stays an exact match
+#                     and keeps matching run logs written before this change.
+RUN_ID="$(date '+%Y%m%dT%H%M%S')-${LOCK_KEY:0:8}-$$-$TASK"
+RUN_LOG="$LOG_DIR/$RUN_ID.log"
+: >"$RUN_LOG"
+
+# RUN_START is captured at the top of the script (see there). DEADLINE_AT empty
+# means no deadline was asked for.
+DEADLINE_AT=""
+[ -n "$DEADLINE" ] && DEADLINE_AT=$(( RUN_START + DEADLINE ))
+
+say "run=$RUN_ID mode=$MODE task=$TASK"
+say "checkout=$CHECKOUT"
+say "state=$STATE_FILE"
+say "max_hops=$MAX_HOPS timeout=${ACTOR_TIMEOUT}s carry_one=$CARRY_ONE"
+if [ -n "$DEADLINE_AT" ]; then
+  say "deadline=${DEADLINE}s (expires $(date -r "$DEADLINE_AT" '+%Y-%m-%dT%H:%M:%S' 2>/dev/null || printf 'epoch %s' "$DEADLINE_AT"))"
+else
+  # Worth saying out loud. Without a deadline the real upper bound is
+  # max_hops * timeout, which is where the plan's three-hour surprise came from.
+  say "deadline=none — upper bound is max_hops * timeout = $(( MAX_HOPS * ACTOR_TIMEOUT ))s"
+fi
+say "allow_paths=${ALLOW_PATHS[*]}"
+if [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
+  say "claude_deny=${CLAUDE_DENY[*]}"
+else
+  # Said out loud because it is the risk the operator walks away on. "none" is a
+  # statement about the OPERATOR's set only: it means no extra rule was supplied,
+  # NOT that nothing is denied. Since O1 the attended path always denies the four
+  # nested-actor rules, and --unattended always carries the contained profile's
+  # own base denies — so the old wording ("no tool denied beyond the child's own
+  # policy") became false on both paths and is deliberately not restored.
+  # Beyond those sets the child's own policy applies, which is no longer this
+  # checkout's bypassPermissions on an attended hop — P0-F states
+  # --permission-mode default at launch — but a permission mode only makes the
+  # child ASK, and network is not coverable this way in any case:
+  # runs/probe-unattended-authority-2026-08-07.md.
+  say "claude_deny=none — no EXTRA deny rule was supplied by the operator; this does NOT mean nothing is denied (see the nested_actor_deny line below, and the contained profile's own denies under --unattended). Beyond those, the child's own policy applies (attended hops run --permission-mode default)"
+fi
+# Recorded separately from claude_deny, and always. claude_deny is the
+# OPERATOR's set and may legitimately be empty; this one is the dispatcher's own.
+# Folding them into one line would let "claude_deny=none" read as "nothing is
+# denied", which stopped being true on the attended path (O1).
+#
+# Branched on the run shape because O1 reaches attended launches only. Printing
+# the attended set on an unattended run would state a policy that this run's
+# argv does not carry — the same class of false run evidence the honest-stop
+# work exists to remove, one log line over.
+if [ "$UNATTENDED" -eq 1 ]; then
+  say "nested_actor_deny=n/a — this run is --unattended, and the contained profile carries no nested-actor rule; it is a separately settled artifact (see u_deny in launch_actor)"
+  say "  nesting is blocked on this path only INCIDENTALLY, by the sandbox's network refusal — that is a side effect of another control, not a stated policy"
+else
+  say "nested_actor_deny=${NESTED_ACTOR_DENY[*]}"
+  say "  nested_actor_deny is REQUESTED POLICY, not containment — it denies the default direct route at the child's permission layer and does not remove the capability"
+fi
+
+# Recorded at preflight, not at the stop. Whether exit 37 can name the denied
+# tool and its exact target depends on this host having a JSON parser, and the
+# operator of a long unattended run should learn that before walking away rather
+# than when the stop arrives unable to say what was refused.
+#
+# EACH PARSER IS PROBED BY RUNNING IT, not by `command -v`. A jq that is on PATH
+# but broken passes an existence check and then fails at the stop, which would
+# make this line disagree with what permission_denials_in() actually does — the
+# log would name a parser the run never used. The parse itself re-tries in the
+# same order at call time, so a parser that breaks mid-run still degrades to the
+# next tier rather than to a wrong answer.
+if printf '{}' | jq -r . >/dev/null 2>&1; then
+  say "denial_parser=jq — a permission stop (37) carries the denied tool and its EXACT target, untruncated"
+elif python3 -c 'import json' >/dev/null 2>&1; then
+  say "denial_parser=python3 — jq is unusable here; a permission stop (37) still carries the denied tool and its EXACT target, untruncated"
+else
+  say "denial_parser=none — neither jq nor python3 is usable here, so a permission stop (37) CANNOT name the denied tool and target; it will say so rather than guess"
+fi
 
 # ------------------------------------------------- unattended contained profile
 #
