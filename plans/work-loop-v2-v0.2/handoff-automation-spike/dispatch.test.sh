@@ -6590,6 +6590,135 @@ else
   bad "56e — the consumer neither waits nor searches: no sleep, no listing" "$BODY56"
 fi
 
+# ===================== case 57: the die() funnel honors finalizer failure
+#
+# Unit 11. Every D–L terminal publishes its result through the one die() funnel,
+# which invoked the accepted finalizer and IGNORED its return: a run whose
+# publication failed still exited with its original code and released both
+# leases — the unproven-ending hole the operator seam closed at Unit 8,
+# reachable from every other terminal. The funnel now transfers a failed
+# publication to its own unprovability exit: pin both owned leases with the
+# truthful finalization-failure cause, exit 38, release nothing.
+#
+# THE INDUCTION IS RUNTIME, NOT A MUTANT: the actor removes write permission
+# from the evidence directory, so the atomic producer cannot create its
+# temporary at publication time. Everything asserted afterwards is the
+# unmodified funnel's own behaviour on a real failed write.
+
+BREAK_PUBLISH='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls"; chmod a-w "$WL_CHECKOUT/runs"; exit 0'
+
+echo
+echo "Case 57a — a representative D–L terminal still publishes once and releases normally"
+# The no-transition terminal (22) — the same representative path 51a produces
+# from. The success branch must be byte-for-byte the old behaviour: original
+# code, one valid result, normal release, next acquire admitted.
+V57A="$(new_sandbox)"; state_file "$V57A" die-task codex
+run_dispatch "$V57A" die-task --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "57a — the no-transition terminal keeps its original code 22" "$OUT"
+RID57="$(run_id_of "$OUT")"
+ROOT57="$(cd "$V57A/runs" && pwd -P)"
+if [ "$(res_count "$ROOT57")" = 1 ] && [ "$(res_field "$ROOT57/$RID57.result" code)" = 22 ]; then
+  ok "57a — exactly one finalized result, truthfully carrying code 22"
+else
+  bad "57a — exactly one finalized result, truthfully carrying code 22" \
+      "results=$(res_count "$ROOT57") code=$(res_field "$ROOT57/$RID57.result" code)"
+fi
+if [ ! -d "$(task_lock_for "$V57A" die-task)" ] && [ ! -d "$(checkout_lock_for "$V57A")" ]; then
+  ok "57a — both leases released once the result existed"
+else
+  bad "57a — both leases released once the result existed" "a lease survived"
+fi
+run_dispatch "$V57A" die-task --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "57a — the next dispatcher is admitted after the proven exit" "$OUT"
+
+echo
+echo "Case 57b — a FAILED publication transfers to the unprovability exit instead of the original code"
+V57B="$(new_sandbox)"; state_file "$V57B" die-task codex
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V57B" --task die-task \
+      --log-dir "$V57B/runs" --timeout 20 --actor-cmd "$BREAK_PUBLISH" 2>&1)"; RC57=$?
+expect_rc 38 "$RC57" "57b — the induced finalizer failure exits 38, not the original 22" "$OUT"
+if [ "$(res_count "$V57B/runs")" = 0 ]; then
+  ok "57b — no terminal result exists and none is claimed"
+else
+  bad "57b — no terminal result exists and none is claimed" "results=$(res_count "$V57B/runs")"
+fi
+out_lacks "  terminal result:" "$OUT" "57b — no terminal result is advertised"
+TL57="$(task_lock_for "$V57B" die-task)"; CL57="$(checkout_lock_for "$V57B")"
+if [ -d "$TL57" ] && [ -d "$CL57" ]; then
+  ok "57b — BOTH owned leases survived die() and the EXIT trap"
+else
+  bad "57b — BOTH owned leases survived die() and the EXIT trap" \
+      "task=$([ -d "$TL57" ] && echo present || echo absent) checkout=$([ -d "$CL57" ] && echo present || echo absent)"
+fi
+# The truthful cause: a finalization failure, through the one shared lease
+# writer — not a teardown story (nothing survived) and not a consumer-refusal
+# story (nothing was published to refuse).
+if grep -q '^terminal result unprovable: ' "$TL57/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$TL57/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$CL57/survivors" 2>/dev/null &&
+   ! grep -q 'was refused before release' "$TL57/survivors" 2>/dev/null &&
+   ! grep -q '^descendants still running:' "$TL57/survivors" 2>/dev/null; then
+  ok "57b — both pins carry the bounded finalization-failure cause"
+else
+  bad "57b — both pins carry the bounded finalization-failure cause" \
+      "task: $(cat "$TL57/survivors" 2>&1 | tr '\n' '|'); checkout: $(cat "$CL57/survivors" 2>&1 | tr '\n' '|')"
+fi
+chmod u+w "$V57B/runs" 2>/dev/null
+run_dispatch "$V57B" die-task --actor-cmd "$NOOP"
+expect_rc 17 "$RC" "57b — the next dispatcher is refused by the retained lease" "$OUT"
+
+echo
+echo "Case 57c — mutation control: remove ONLY the failure transfer and the unsafe fall-through returns"
+MUT57="$SANDBOX_ROOT/mutants57"; mkdir -p "$MUT57"
+# Addressed by the transfer's own marker text, replace-not-delete: the finalizer
+# call on the same line must survive, or the mutant would prove the absence of
+# finalization rather than the absence of the transfer.
+sed 's/ || die_funnel_unprovable "$code" # die funnel failure transfer//' "$DISPATCH_BIN" >"$MUT57/m23.sh"
+chmod +x "$MUT57/m23.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT57/m23.sh" && bash -n "$MUT57/m23.sh" 2>/dev/null &&
+   grep -q 'finalize_terminal_result "$code"' "$MUT57/m23.sh"; then
+  ok "57c — M23 mutant differs, parses, and keeps the finalizer call itself"
+  V57M="$(new_sandbox)"; state_file "$V57M" die-task codex
+  OUT="$(bash "$MUT57/m23.sh" --checkout "$V57M" --task die-task \
+        --log-dir "$V57M/runs" --timeout 20 --actor-cmd "$BREAK_PUBLISH" 2>&1)"; RCM=$?
+  TL57M="$(task_lock_for "$V57M" die-task)"; CL57M="$(checkout_lock_for "$V57M")"
+  if [ "$RCM" -eq 22 ] && [ ! -d "$TL57M" ] && [ ! -d "$CL57M" ]; then
+    ok "57c — M23: without the transfer the failed publication exits 22 and releases (57b is fail-capable)"
+  else
+    bad "57c — M23: without the transfer the failed publication exits 22 and releases (57b is fail-capable)" \
+        "rc=$RCM task=$([ -d "$TL57M" ] && echo present || echo absent) checkout=$([ -d "$CL57M" ] && echo present || echo absent)"
+  fi
+  chmod u+w "$V57M/runs" 2>/dev/null
+  run_dispatch "$V57M" die-task --actor-cmd "$NOOP"
+  expect_rc 22 "$RC" "57c — M23: the next dispatcher is admitted after the unproven exit" "$OUT"
+else
+  bad "57c — M23 mutant differs, parses, and keeps the finalizer call itself" \
+      "the transfer marker was not found, or the mutant does not parse"
+fi
+
+echo
+echo "Case 57d — the funnel publishes once and the transfer neither retries nor adds a writer"
+# Structural, against the shipped text — 56e's style. The behavioural half is
+# 57a-c; this half pins the shape: one finalizer invocation in die(), one
+# transfer, one pin call in the transfer, no second attempt and no waiting.
+DIE57="$(sed -n '/^die() {/,/^}/p' "$DISPATCH_BIN")"
+XFER57="$(sed -n '/^die_funnel_unprovable()/,/^}/p' "$DISPATCH_BIN")"
+if [ "$(printf '%s\n' "$DIE57" | grep -c 'finalize_terminal_result ')" = 1 ] &&
+   [ "$(grep -c '# die funnel failure transfer' "$DISPATCH_BIN")" = 1 ]; then
+  ok "57d — die() invokes the accepted finalizer once, with exactly one failure transfer"
+else
+  bad "57d — die() invokes the accepted finalizer once, with exactly one failure transfer" \
+      "finalize calls: $(printf '%s\n' "$DIE57" | grep -c 'finalize_terminal_result '); markers: $(grep -c '# die funnel failure transfer' "$DISPATCH_BIN")"
+fi
+if [ "$(printf '%s\n' "$XFER57" | grep -c 'pin_lock_terminal')" = 1 ] &&
+   ! printf '%s\n' "$XFER57" | grep -q 'finalize_terminal_result' &&
+   ! printf '%s\n' "$XFER57" | grep -q 'sleep' &&
+   printf '%s\n' "$XFER57" | grep -q 'exit 38'; then
+  ok "57d — the transfer pins once through the shared owner, never re-finalizes, never waits, exits 38"
+else
+  bad "57d — the transfer pins once through the shared owner, never re-finalizes, never waits, exits 38" "$XFER57"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

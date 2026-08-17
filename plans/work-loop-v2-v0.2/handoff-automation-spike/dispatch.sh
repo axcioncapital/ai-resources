@@ -1184,7 +1184,13 @@ die() { # code, message
   # because a lease may only be released once the terminal result exists.
   # THE PATH IS PRINTED — evidence nobody can find is not evidence, the same
   # lesson refuse_17() records one directory over.
-  finalize_terminal_result "$code"
+  #
+  # THE RETURN IS HONORED. A failed publication transfers to the funnel's own
+  # unprovability exit — pin, 38, no release — instead of continuing to the
+  # original code below as though the evidence existed. One line, its own
+  # marker, so the mutation control can remove exactly the transfer and prove
+  # the unsafe fall-through comes back without it.
+  finalize_terminal_result "$code" || die_funnel_unprovable "$code" # die funnel failure transfer
   if [ -n "$RESULT_FILE" ]; then
     printf '  terminal result: %s\n' "$RESULT_FILE" >&2
     printf '  terminal result: %s\n' "$RESULT_FILE" >>"$RUN_LOG"
@@ -1786,6 +1792,36 @@ die_terminal_untrusted() { # bounded-refusal-token
   # artifact itself is left in place, untouched, as evidence of what was found.
   RESULT_FILE=""
   die 38 "the run reached a real operator terminal (state_class=${ST_CLASS:-unavailable}) and finalized its terminal result, but the promised artifact at $LOG_DIR_ABS/$RUN_ID.result failed this run's own consumer gate (${1:-refused}) — refusing to exit 0, because a result this run cannot prove is its own must not be reported as how it ended."$'\n'"Recoverable next action: inspect that path against the run log $RUN_LOG, remove or repair the interfering artifact, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
+}
+
+# The SHARED FUNNEL's own failure transfer. die() publishes the terminal result
+# for every D–L terminal; until Unit 11 it invoked the finalizer and IGNORED its
+# return, so a run whose publication failed still exited with its original code
+# and released both leases — the same unproven-ending hole the operator seam
+# closed at Unit 8, reachable from every other terminal.
+#
+# NOT die_terminal_unprovable, and it cannot be: that function calls die(),
+# which is the funnel this transfer sits inside — entering it from here would
+# re-invoke the finalizer that just failed and recurse. This transfer pins and
+# exits DIRECTLY, publishing nothing twice: one finalization attempt, one pin,
+# one exit.
+#
+# TWO RETURNS ARE DELIBERATE, and each names the case where the transfer must
+# NOT fire. A terminal with no run evidence yet (no RUN_ID/LOG_DIR) is outside
+# the covered funnel — the same boundary finalize_terminal_result draws for
+# itself — and keeps its original exit. A lease already PINNED has its truthful
+# cause on disk (a teardown's survivor pids, or the operator seam's own pin);
+# re-pinning would overwrite that evidence with a weaker story, and nothing is
+# releasable while pinned anyway, so the original exit stands.
+die_funnel_unprovable() { # original-code -> returns 0 only where the transfer must not fire
+  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] || return 0
+  [ "${WL_LEASE_PINNED:-0}" -eq 0 ] || return 0
+  pin_lock_terminal # die funnel retention
+  local m="STOP [38] the run was ending with terminal code $1 but its terminal result could not be finalized under ${LOG_DIR:-<no log dir>} — exiting 38 instead, because a run that cannot prove how it ended must not report that it ended with $1 and hand its checkout on."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
+  printf '%s\n' "$m" >&2
+  [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$m" >>"$RUN_LOG"
+  release_lock
+  exit 38
 }
 
 # --------------------------------------- the operator terminal's consumer gate
