@@ -89,7 +89,7 @@ Evidence: new suite `logs/scripts/auto-sync-shared-health.test.sh`, 53 assertion
 - Negative controls (leg E), both against disposable copies of the generator, so the assertions bind to code rather than to wording this brief supplied: neutering the resolved-target comparison makes leg A's verdict disappear entirely; neutering the tracked-set lookup makes the tracking verdict disappear, paired against the unmutated generator reporting it on the same fixture shape. Both mutations exit 3 → `skip`, never `pass`, if their target text is absent.
 - Regression protection: `auto-sync-shared-excludes.test.sh` 16/16; `pre-commit-generated-guard.test.sh` 8/8; `auto-sync-shared-guard-install.test.sh` 59/59 skip=0; `pre-commit-hook.test.sh` all arms pass; `bash -n` clean on both changed shell files. No unrelated suite was run.
 
-Changed files: `.claude/hooks/auto-sync-shared.sh`, `logs/scripts/auto-sync-shared-health.test.sh`, `logs/work-loop/generated-symlink-remediation.md`. Commit id: recorded in this record's commit (see `## Next action`).
+Changed files: `.claude/hooks/auto-sync-shared.sh`, `logs/scripts/auto-sync-shared-health.test.sh`, `logs/work-loop/generated-symlink-remediation.md`. Commit id: `be42752e`.
 
 Branch divergence, reported and not reconciled: local `main` is ahead of `origin/main` by the accumulated Unit 1–6 commits; nothing was pushed, merged or rebased.
 
