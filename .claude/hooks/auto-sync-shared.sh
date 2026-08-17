@@ -386,15 +386,26 @@ install_generated_guard() {
 # consumes it — because coverage means "present in that file", and a skipped or
 # refused exclude write is one of the failures this must catch.
 #
-# The ownership boundary is deliberately narrow, so this does not become a second
-# owner of a condition something else already reports:
+# What reaching this check means, and why a non-symlink here is NOT project-owned:
+# LOCAL_COMMANDS, LOCAL_AGENTS and LOCAL_SKILLS each remove a manifest-declared
+# resource from its loop BEFORE note_generated records it. So every destination in
+# $managed_pairs is a name the manifest left under shared management, and whatever
+# occupies it that is not a symlink is an UNDECLARED collision on a generated
+# name, not an owned file. Nothing else reports that: it never enters the managed
+# exclude block (note_generated lists symlinks only), so the commit guard which
+# consumes that block cannot see it either, and it can be committed with no
+# verdict anywhere. The drift pass below does not close the gap — it reports only
+# command/agent regular files whose CONTENT differs, so a byte-identical copy is
+# silent, and skills deliberately have no drift pass at all.
 #
-#   * a SYMLINK at a managed name is a generated product — health's business;
-#   * a regular FILE there is project-owned. It is never ignored, never touched,
-#     and never counted healthy; the drift pass below owns regular-file
-#     divergence, and reporting it here too would duplicate that owner;
-#   * a real DIRECTORY at a managed skill name is a legitimate project-local
-#     skill (see the no-drift-pass note below), so it is silent for the same reason.
+# So each state gets a verdict, and none gets a repair:
+#
+#   * a SYMLINK at a managed name is a generated product — the four checks apply;
+#   * anything else that exists there is reported as "not a symlink" with the
+#     manifest-local correction, and is left byte-untouched and unignored. The
+#     drift message keeps its own separate ownership of content divergence, so a
+#     DIFFERING command copy is named by both: they are two different findings
+#     about one file, not a duplicate.
 #
 # Fail open, like everything else here: no repository, no readable exclude file,
 # no resolvable path — it reports what it found and the session starts anyway. It
@@ -434,7 +445,7 @@ phys_of() {
 validate_generated_health() {
   [ -n "$repo_top" ] || return 0
   local pairs health_block health_tracked line kind dest src rel
-  local i n reasons health_phys health_src_phys
+  local i n reasons health_phys health_src_phys health_what
   local -a h_kinds=() h_dests=() h_srcs=() h_rels=()
 
   pairs=$(printf '%s' "$managed_pairs" | LC_ALL=C sort -u)
@@ -487,12 +498,19 @@ EOF
     elif [ ! -e "$dest" ]; then
       health_report="${health_report}[$rel: the managed link is absent after this run, so nothing was generated at that name]
 "
+    else
+      # Undeclared collision on a shared-generated name — see the note above for
+      # why the manifest opt-outs make that the only reading. Reported, and
+      # nothing else: it stays byte-untouched, unignored, and the session starts.
+      # The correction is the operator's choice between declaring it local and
+      # removing it, and both are theirs to make, not this hook's.
+      if [ -d "$dest" ]; then health_what="a directory"
+      elif [ -f "$dest" ]; then health_what="a regular file"
+      else health_what="neither a regular file nor a directory"
+      fi
+      health_report="${health_report}[$rel: not a symlink, $health_what occupies this shared-generated name and was left untouched; declare it under ${kind}s.local in .claude/shared-manifest.json to own it, or remove it so the next session start regenerates the link]
+"
     fi
-    # Anything else is NOT a generated product and is deliberately silent here:
-    # a project-owned regular file (drift detection owns it) or a real
-    # project-local skill directory. Neither is counted healthy, and neither is
-    # touched or ignored. See the ownership boundary above.
-    : "$kind"
   done
 }
 

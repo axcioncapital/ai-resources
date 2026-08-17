@@ -48,6 +48,10 @@ PRECOMMIT="$REPO_TOP/.claude/hooks/pre-commit"
 # makes leg A's "before" a measurement rather than a story about the past; if the
 # object is unreachable (shallow or partial clone) the leg is SKIPPED, never passed.
 PRE_HEALTH_REV="d0d90237"
+# The Unit 6 implementation commit, before its one frozen correction: it validated
+# symlink health but silently reclassified any non-symlink at a managed name as
+# project-owned. Leg F's before-leg measures that gap against this body.
+PRE_NONLINK_REV="be42752e"
 
 TMP=$(mktemp -d) || exit 1
 cleanup() { chmod -R u+rwX "$TMP" 2>/dev/null; rm -rf "$TMP"; }
@@ -129,6 +133,10 @@ build_ws() { # <workspace-dir> — echoes the project directory
   cp "$PRECOMMIT" "$ws/ai-resources/.claude/hooks/pre-commit"
   echo shared-command > "$ws/ai-resources/.claude/commands/sharedcmd.md"
   echo drift-source   > "$ws/ai-resources/.claude/commands/driftcmd.md"
+  # Canonical, but declared commands.local in the manifest below — so the sync
+  # loops drop it BEFORE note_generated runs and it never enters the traversal.
+  # Leg F needs that to prove a genuinely owned resource stays silent.
+  echo local-source   > "$ws/ai-resources/.claude/commands/localcmd.md"
   echo shared-agent   > "$ws/ai-resources/.claude/agents/sharedagent.md"
   echo core-skill     > "$ws/ai-resources/.agents/skills/diagnose-and-fix/SKILL.md"
   echo optin-skill    > "$ws/ai-resources/.agents/skills/optskill/SKILL.md"
@@ -143,7 +151,7 @@ build_ws() { # <workspace-dir> — echoes the project directory
   git -C "$p" config user.name  test
   cat > "$p/.claude/shared-manifest.json" <<'EOF'
 {
-  "commands": { "local": [] },
+  "commands": { "local": ["localcmd"] },
   "agents":   { "local": [] },
   "skills":   { "shared": ["optskill"], "local": [] }
 }
@@ -381,15 +389,19 @@ check "D the ignore-coverage failure is reported" \
   && ok "D the hand-mangled exclude file is left exactly as found" \
   || bad "D the hand-mangled exclude file is left exactly as found"
 
-check "D the project-owned regular file is still a regular file, not a link" \
+check "D the regular-file collision is still a regular file, not a link" \
   bash -c '[ -f "$1" ] && [ ! -L "$1" ]' _ "$P_D/.claude/commands/driftcmd.md"
 [ "$(cat "$P_D/.claude/commands/driftcmd.md")" = "$d_drift_before" ] \
-  && ok "D the project-owned regular file is byte-untouched" \
-  || bad "D the project-owned regular file is byte-untouched"
-check_not "D the project-owned regular file stays unignored" \
+  && ok "D the regular-file collision is byte-untouched" \
+  || bad "D the regular-file collision is byte-untouched"
+check_not "D the regular-file collision stays unignored" \
   git -C "$P_D" check-ignore -q .claude/commands/driftcmd.md
-check_not "D the project-owned regular file is NOT reported under the health prefix" \
-  bash -c 'printf %s "$1" | grep -q "driftcmd\.md"' _ "$seg_d"
+check "D the undeclared regular-file collision IS reported as not a symlink" \
+  bash -c 'printf %s "$1" | grep -q "driftcmd\.md: not a symlink, a regular file"' _ "$seg_d"
+# The separate drift message keeps its own ownership: this copy DIFFERS from
+# canonical, so both findings fire on one file and neither replaces the other.
+check "D the separate AI-RESOURCES DRIFT message still fires for the differing copy" \
+  bash -c 'printf %s "$1" | tr "|" "\n" | grep "AI-RESOURCES DRIFT" | grep -q "driftcmd\.md"' _ "$out_d"
 
 # ==================================================== leg E — negative controls
 echo "--- E: negative controls (mutations must make the verdicts disappear) ---"
@@ -437,6 +449,97 @@ if mutate "$SYNC_HOOK" "$TMP/gen-mut-tracked.sh" \
     bash -c 'printf %s "$1" | grep -q "tracked by Git"' _ "$seg_e2b"
 else
   skipped "E2 not measured: the tracked-set mutation target was not found"
+fi
+
+# ============================== leg F — undeclared non-symlink collisions
+echo "--- F: undeclared collisions on generated names vs declared locals ---"
+
+# The case no other message can see. A BYTE-IDENTICAL regular copy at a managed
+# command name is silent under AI-RESOURCES DRIFT (which only reports differing
+# content) and skills have no drift pass at all, while neither ever enters the
+# managed exclude block — so before this correction such a collision could be
+# committed with no verdict anywhere.
+P_F=$(build_ws "$TMP/ws-f")
+WS_F="$TMP/ws-f"
+mkdir -p "$P_F/.claude/commands" "$P_F/.agents/skills"
+cp "$WS_F/ai-resources/.claude/commands/driftcmd.md" "$P_F/.claude/commands/driftcmd.md"
+# A declared local resource at a managed name: the manifest owns it, so the sync
+# loops drop it before the traversal and health must stay silent about it.
+echo project-owned > "$P_F/.claude/commands/localcmd.md"
+# A real directory at a CORE skill name — undeclared, and the surface with no
+# drift pass whatsoever.
+mkdir -p "$P_F/.agents/skills/diagnose-and-fix"
+echo project-local-skill > "$P_F/.agents/skills/diagnose-and-fix/SKILL.md"
+
+f_ident_before=$(cat "$P_F/.claude/commands/driftcmd.md")
+f_local_before=$(cat "$P_F/.claude/commands/localcmd.md")
+f_skill_before=$(cat "$P_F/.agents/skills/diagnose-and-fix/SKILL.md")
+
+out_f=$(run_gen "$P_F" "$SYNC_HOOK"); rc_f=$?
+seg_f=$(health_segment "$out_f")
+
+[ "$rc_f" -eq 0 ] && ok "F the run exits 0" || bad "F the run exits 0"
+check "F the byte-identical regular collision is reported as not a symlink" \
+  bash -c 'printf %s "$1" | grep -q "driftcmd\.md: not a symlink, a regular file"' _ "$seg_f"
+check "F the report names the manifest-local correction for a command" \
+  bash -c 'printf %s "$1" | grep -q "commands\.local"' _ "$seg_f"
+check_not "F no AI-RESOURCES DRIFT message fires for it (the gap health now covers)" \
+  bash -c 'printf %s "$1" | grep -q "AI-RESOURCES DRIFT"' _ "$out_f"
+[ "$(cat "$P_F/.claude/commands/driftcmd.md")" = "$f_ident_before" ] \
+  && ok "F the byte-identical collision is left byte-untouched" \
+  || bad "F the byte-identical collision is left byte-untouched"
+check_not "F the byte-identical collision stays unignored" \
+  git -C "$P_F" check-ignore -q .claude/commands/driftcmd.md
+check "F it is still a regular file, not replaced by a link" \
+  bash -c '[ -f "$1" ] && [ ! -L "$1" ]' _ "$P_F/.claude/commands/driftcmd.md"
+
+check "F the undeclared skill DIRECTORY is reported as not a symlink" \
+  bash -c 'printf %s "$1" | grep -q "\.agents/skills/diagnose-and-fix: not a symlink, a directory"' _ "$seg_f"
+check "F the report names the manifest-local correction for a skill" \
+  bash -c 'printf %s "$1" | grep -q "skills\.local"' _ "$seg_f"
+[ "$(cat "$P_F/.agents/skills/diagnose-and-fix/SKILL.md")" = "$f_skill_before" ] \
+  && ok "F the undeclared skill directory is left byte-untouched" \
+  || bad "F the undeclared skill directory is left byte-untouched"
+check_not "F the undeclared skill directory stays unignored" \
+  git -C "$P_F" check-ignore -q .agents/skills/diagnose-and-fix
+check "F the undeclared skill directory is still a real directory, not a link" \
+  bash -c '[ -d "$1" ] && [ ! -L "$1" ]' _ "$P_F/.agents/skills/diagnose-and-fix"
+
+check_not "F a manifest-DECLARED local resource is never reported" \
+  bash -c 'printf %s "$1" | grep -q "localcmd\.md"' _ "$seg_f"
+[ "$(cat "$P_F/.claude/commands/localcmd.md")" = "$f_local_before" ] \
+  && ok "F the declared local resource is byte-untouched" \
+  || bad "F the declared local resource is byte-untouched"
+check_not "F the declared local resource stays unignored" \
+  git -C "$P_F" check-ignore -q .claude/commands/localcmd.md
+
+# The before-leg for this correction, measured the same way leg A measures the
+# unit's own before: the pinned generator that had health validation but silently
+# reclassified a non-symlink as project-owned. On the identical-copy fixture it
+# emits no verdict at all — no health entry AND no drift entry — which is the gap.
+if git -C "$REPO_TOP" cat-file -e "$PRE_NONLINK_REV:.claude/hooks/auto-sync-shared.sh" 2>/dev/null; then
+  git -C "$REPO_TOP" show "$PRE_NONLINK_REV:.claude/hooks/auto-sync-shared.sh" > "$TMP/gen-pre-nonlink.sh"
+  P_F2=$(build_ws "$TMP/ws-f2")
+  mkdir -p "$P_F2/.claude/commands"
+  cp "$TMP/ws-f2/ai-resources/.claude/commands/driftcmd.md" "$P_F2/.claude/commands/driftcmd.md"
+  # Without this the collision would never be planted and every "before"
+  # assertion below would pass vacuously — the exact evidence-that-cannot-fail
+  # this suite exists to avoid.
+  check "F before: the identical collision really is planted as a regular file" \
+    bash -c '[ -f "$1" ] && [ ! -L "$1" ]' _ "$P_F2/.claude/commands/driftcmd.md"
+  out_f2=$(run_gen "$P_F2" "$TMP/gen-pre-nonlink.sh"); rc_f2=$?
+  seg_f2=$(health_segment "$out_f2")
+  [ "$rc_f2" -eq 0 ] \
+    && ok "F before: the pinned pre-correction generator exits 0" \
+    || bad "F before: the pinned pre-correction generator exits 0"
+  check_not "F before: it emits NO health verdict for the identical collision (the gap)" \
+    bash -c 'printf %s "$1" | grep -q "driftcmd\.md"' _ "$seg_f2"
+  check_not "F before: it emits no drift verdict either, so the collision was wholly silent" \
+    bash -c 'printf %s "$1" | grep -q "AI-RESOURCES DRIFT"' _ "$out_f2"
+  check_not "F before: the collision was neither ignored nor coverable by the commit guard" \
+    git -C "$P_F2" check-ignore -q .claude/commands/driftcmd.md
+else
+  skipped "F before-leg not measured: $PRE_NONLINK_REV:.claude/hooks/auto-sync-shared.sh unreachable"
 fi
 
 echo "---"
