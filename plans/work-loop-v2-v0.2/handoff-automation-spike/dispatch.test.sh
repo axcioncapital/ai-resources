@@ -7641,6 +7641,136 @@ else
 fi
 
 echo
+echo "Case 58e — a dry-run record altered ONLY in outcome, or ONLY in code, is refused before release"
+# Unit 28. The seam's second half. 58a-c proved the dry-run publishes and consumes
+# the artifact it promised; nothing proved the artifact said what this run
+# actually did. Measured on these fixtures before the edit: a record altered to
+# `outcome=COMPLETED` — over a preflight that launched no actor and started no
+# model request — exited 0, released both leases and was advertised as this run's
+# terminal result, and so did one altered to `code=22`. Path, structure and
+# identity have nothing to object to; only meaning does.
+#
+# SAME FORCING TECHNIQUE, SAME WINDOW as 56b and 62b: one altering line injected
+# after the dry-run finalization marker, between publication and consumption.
+# Everything asserted afterwards is the unmodified seam's own behaviour.
+MUT58E="$SANDBOX_ROOT/mutants58e"; mkdir -p "$MUT58E"
+
+mk_dry_alter58() { # outfile sed-script [source] -> 0 when the fixture differs and parses
+  awk -v s="$2" '{print} /# dry-run terminal finalization/ {
+    printf "  sed %c%s%c \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\" # harness dry-run alteration\n", 39, s, 39 }' \
+    "${3:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${3:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# The full refusal contract for one forced dry-run mismatch, asserted exactly as
+# 58b asserts the publication failure: exit 38, nothing advertised, both leases
+# retained with the bounded token as their cause, next dispatcher refused.
+expect_dry_refusal58() { # fixture expected-token label-prefix
+  local V O R TL CL
+  V="$(new_sandbox)"; state_file "$V" dry-task codex
+  O="$(bash "$1" --checkout "$V" --task dry-task --log-dir "$V/runs" --timeout 20 --dry-run 2>&1)"; R=$?
+  expect_rc 38 "$R" "$3 — refused with exit 38, never 0" "$O"
+  out_lacks "  terminal result:" "$O" "$3 — the refused artifact is not advertised as this run's result"
+  TL="$(task_lock_for "$V" dry-task)"; CL="$(checkout_lock_for "$V")"
+  # NOT a finalization story, and that distinction is the point: the record
+  # published perfectly well. What failed is what it says.
+  if [ -d "$TL" ] && [ -d "$CL" ] &&
+     grep -q '^terminal result unprovable: ' "$TL/survivors" 2>/dev/null &&
+     grep -q "$2" "$TL/survivors" 2>/dev/null &&
+     grep -q "$2" "$CL/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL/survivors" 2>/dev/null; then
+    ok "$3 — both leases retained, both pins carrying the bounded '$2' cause"
+  else
+    bad "$3 — both leases retained, both pins carrying the bounded '$2' cause" \
+        "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V" dry-task --dry-run
+  expect_rc 17 "$RC" "$3 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+if mk_dry_alter58 "$MUT58E/outonly.sh" 's/^outcome=.*/outcome=COMPLETED/'; then
+  ok "58e — the outcome-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_dry_refusal58 "$MUT58E/outonly.sh" outcome-mismatch \
+    "58e — a preflight whose record claims COMPLETED"
+else
+  bad "58e — the outcome-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+if mk_dry_alter58 "$MUT58E/codeonly.sh" 's/^code=.*/code=22/'; then
+  ok "58e — the code-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_dry_refusal58 "$MUT58E/codeonly.sh" code-mismatch \
+    "58e — a preflight whose record claims code 22"
+else
+  bad "58e — the code-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+# THE EXPECTATION IS MODE'S ANSWER, NOT THE TASK'S, and that is what lets ONE
+# call cover a preflight over any lifecycle class. 59a already proves the RECORD
+# carries DRY_RUN_COMPLETE over active, closed and blocked tasks; this proves the
+# seam's EXPECTATION tracks it, by running a real dry-run over each and requiring
+# the accepted release. A seam that had derived its expectation from ST_CLASS
+# would refuse two of these three.
+for t58 in dry-task:codex closed-task:operator blocked-task:operator; do
+  T58="${t58%%:*}"; TU58="${t58##*:}"
+  V58L="$(new_sandbox)"
+  if [ "$T58" = blocked-task ]; then state_file "$V58L" "$T58" "$TU58" "$T58" blocked
+  else state_file "$V58L" "$T58" "$TU58"; fi
+  run_dispatch "$V58L" "$T58" --dry-run
+  R58L="$RC"; RID58L="$(run_id_of "$OUT")"
+  if [ "$R58L" -eq 0 ] &&
+     [ "$(res_field "$V58L/runs/$RID58L.result" outcome)" = DRY_RUN_COMPLETE ] &&
+     [ "$(res_field "$V58L/runs/$RID58L.result" code)" = 0 ] &&
+     [ ! -d "$(task_lock_for "$V58L" "$T58")" ]; then
+    ok "58e — a real dry-run over $T58 expects and accepts DRY_RUN_COMPLETE/0, and releases"
+  else
+    bad "58e — a real dry-run over $T58 expects and accepts DRY_RUN_COMPLETE/0, and releases" \
+        "rc=$R58L outcome=$(res_field "$V58L/runs/$RID58L.result" outcome) code=$(res_field "$V58L/runs/$RID58L.result" code)"
+  fi
+done
+
+echo
+echo "Case 58f — mutation control: remove ONLY the dry-run expected pair and both mismatches release again"
+# M34 — the mirror of M33 one seam over. It strips exactly the two expectation
+# arguments from the dry-run call, leaving that call, the path gate, the parse
+# and the identity boundary in place, AND leaving the operator terminal's own
+# pair untouched — which is what proves the two migrated seams are separately
+# fail-capable rather than one shared switch. Fails closed.
+sed 's/ "" "$(result_outcome 0)" 0 # dry-run terminal consumption/ # dry-run terminal consumption/' \
+  "$DISPATCH_BIN" >"$MUT58E/m34.sh" 2>/dev/null
+M34_HITS="$(grep -c ' "" "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$DISPATCH_BIN" 2>/dev/null || true)"
+M34_LEFT="$(grep -c ' "" "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$MUT58E/m34.sh" 2>/dev/null || true)"
+M34_KEPT="$(grep -c '# dry-run terminal consumption' "$MUT58E/m34.sh" 2>/dev/null || true)"
+M34_OTHER="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$MUT58E/m34.sh" 2>/dev/null || true)"
+M34_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT58E/m34.sh" || M34_DIFFERS=yes
+M34_PARSES=no; bash -n "$MUT58E/m34.sh" 2>/dev/null && M34_PARSES=yes
+if [ "$M34_HITS" = 1 ] && [ "$M34_LEFT" = 0 ] && [ "$M34_KEPT" = 1 ] && [ "$M34_OTHER" = 1 ] &&
+   [ "$M34_DIFFERS" = yes ] && [ "$M34_PARSES" = yes ]; then
+  ok "58f — M34 removed exactly the dry-run pair, kept its consumer call and the operator pair, differs, and parses"
+  for f58 in outcome:COMPLETED code:22; do
+    FLD58="${f58%%:*}"; VAL58="${f58##*:}"
+    if mk_dry_alter58 "$MUT58E/m34-$FLD58.sh" "s/^$FLD58=.*/$FLD58=$VAL58/" "$MUT58E/m34.sh"; then
+      V58F="$(new_sandbox)"; state_file "$V58F" dry-task codex
+      OUT="$(bash "$MUT58E/m34-$FLD58.sh" --checkout "$V58F" --task dry-task \
+            --log-dir "$V58F/runs" --timeout 20 --dry-run 2>&1)"; RCM=$?
+      if [ "$RCM" -eq 0 ] && [ ! -d "$(task_lock_for "$V58F" dry-task)" ] &&
+         [ ! -d "$(checkout_lock_for "$V58F")" ]; then
+        ok "58f — M34: without the expected pair the $FLD58-only mismatch exits 0 and releases (58e is fail-capable)"
+      else
+        bad "58f — M34: without the expected pair the $FLD58-only mismatch exits 0 and releases (58e is fail-capable)" \
+            "rc=$RCM task-lease=$([ -d "$(task_lock_for "$V58F" dry-task)" ] && echo held || echo released)"
+      fi
+    else
+      bad "58f — M34: the $FLD58-only fixture over the mutant differs and parses" \
+          "the injection matched nothing, or the fixture does not parse — the control cannot run"
+    fi
+  done
+else
+  bad "58f — M34 removed exactly the dry-run pair, kept its consumer call and the operator pair, differs, and parses" \
+      "matched=$M34_HITS left=$M34_LEFT kept=$M34_KEPT operator-pair=$M34_OTHER differs=$M34_DIFFERS parses=$M34_PARSES — the control cannot run"
+fi
+
+echo
 echo "Case 58d — the boundary reuses the accepted owners and --status stays read-only"
 if [ "$(grep -c '# dry-run terminal finalization' "$DISPATCH_BIN")" = 1 ] &&
    [ "$(grep -c '# dry-run terminal consumption' "$DISPATCH_BIN")" = 1 ]; then
@@ -8638,10 +8768,13 @@ fi
 # between publication and consumption, and everything asserted afterwards is the
 # unmodified seam's own behaviour.
 #
-# ONE SEAM, AND THE CASE SAYS SO. 62c asserts that the dry-run, interruption,
-# carry-one and funnel terminals supply no expected pair and are therefore
-# unchanged. That is the deferral this unit agreed to, asserted rather than
-# assumed.
+# WHICH SEAMS ARE MIGRATED, AND THE CASE SAYS SO. 62c names them: at Unit 27
+# this terminal was the only one, and Unit 28 added the dry-run terminal (case
+# 58e). The interruption and carry-one consumers still supply no expected pair
+# and are unchanged, and the shared nonzero die() funnel consumes nothing at all.
+# That is the standing deferral, asserted rather than assumed — 62c is updated
+# each time a seam migrates, which is what stops it drifting into a claim that
+# every terminal is gated.
 
 MUT62="$SANDBOX_ROOT/mutants62"; mkdir -p "$MUT62"
 
@@ -8756,7 +8889,7 @@ else
 fi
 
 echo
-echo "Case 62c — the expectation is the caller's, and ONLY this seam supplies one"
+echo "Case 62c — the expectation is the caller's, and exactly two seams supply one"
 # Structural, against the shipped text, and it carries the unit's scope claim.
 #
 # INDEPENDENCE FIRST. The call site must derive its expected symbol through the
@@ -8771,37 +8904,50 @@ else
   bad "62c — the seam derives its expected pair through result_outcome and reads nothing from the artifact" \
       "call site: $CALL62"
 fi
-# ONE MIGRATED CONSUMER. Every consume_terminal_result call site is enumerated
-# from the shipped text and each is classified by whether it supplies a pair.
-# Exactly one must, and it must be the operator terminal — anything else means
-# either the deferral was broken or the integration landed at the wrong seam.
-SUPPLY62=0; NOSUPPLY62=0; WHICH62=''
+# WHICH CONSUMERS ARE MIGRATED, NAMED RATHER THAN COUNTED LOOSELY. Every
+# consume_terminal_result call site is enumerated from the shipped text and
+# classified by whether it supplies a pair. Two must — the operator terminal
+# (Unit 27) and the dry-run terminal (Unit 28) — and the interruption and
+# carry-one consumers must not. Asserting the exact NAMES, not just a count, is
+# what stops a later unit migrating one seam while silently dropping another and
+# still satisfying "two".
+#
+# THE DEFERRED SIDE IS THE HALF THAT MATTERS HERE. This assertion is the honest
+# limit on 56e: the composed boundary exists for every caller, but only the two
+# named below are subject to it, and this case says which. It makes no claim
+# whatever about the shared nonzero die() funnel, which consumes nothing.
+SUPPLY62=''; NOSUPPLY62=''
 while IFS= read -r l; do
   case "$l" in
     *'consume_terminal_result()'*) continue ;;
   esac
   if printf '%s\n' "$l" | grep -q 'result_outcome'; then
-    SUPPLY62=$((SUPPLY62+1)); WHICH62="$WHICH62 $(printf '%s\n' "$l" | sed 's/.*# //')"
+    SUPPLY62="$SUPPLY62$(printf '%s\n' "$l" | sed 's/.*# //;s/ .*//');"
   else
-    NOSUPPLY62=$((NOSUPPLY62+1))
+    NOSUPPLY62="$NOSUPPLY62$(printf '%s\n' "$l" | sed 's/.*# //;s/ .*//');"
   fi
 done <<EOF
 $(grep -n 'consume_terminal_result' "$DISPATCH_BIN" | grep -v 'consume_terminal_result()')
 EOF
-if [ "$SUPPLY62" = 1 ] && [ "$NOSUPPLY62" -ge 3 ] &&
-   [ "$(printf '%s' "$WHICH62" | tr -d ' ')" = "operatorterminalconsumption" ]; then
-  ok "62c — exactly one call site supplies an expected pair, and it is the operator terminal ($NOSUPPLY62 deferred seams unchanged)"
+if [ "$SUPPLY62" = 'operator;dry-run;' ] || [ "$SUPPLY62" = 'dry-run;operator;' ]; then
+  ok "62c — exactly two call sites supply an expected pair: the operator and dry-run terminals"
 else
-  bad "62c — exactly one call site supplies an expected pair, and it is the operator terminal" \
-      "supplying=$SUPPLY62 ($WHICH62) not-supplying=$NOSUPPLY62"
+  bad "62c — exactly two call sites supply an expected pair: the operator and dry-run terminals" \
+      "supplying='$SUPPLY62'"
 fi
-# THE DEFERRED SEAMS, BEHAVIOURALLY. The structural count above says they pass no
-# pair; this says a real one of them still ends exactly as accepted. The dry-run
-# terminal is the representative: it is the other code-zero consumer, so a
-# semantic gate leaking into the shared function would show up here as a 38.
-V62D="$(new_sandbox)"; state_file "$V62D" closed-task operator
-run_dispatch "$V62D" closed-task --dry-run --actor-cmd "$NOOP"
-expect_rc 0 "$RC" "62c — the deferred dry-run terminal still exits 0 and releases, unchanged" "$OUT"
+if [ "$NOSUPPLY62" = 'interruption;carry-one;' ] || [ "$NOSUPPLY62" = 'carry-one;interruption;' ]; then
+  ok "62c — the interruption and carry-one consumers supply none and stay deferred"
+else
+  bad "62c — the interruption and carry-one consumers supply none and stay deferred" \
+      "not-supplying='$NOSUPPLY62'"
+fi
+# ONE DEFERRED SEAM, BEHAVIOURALLY. The structural count above says carry-one
+# passes no pair; this says a real carried hop still ends exactly as accepted —
+# so a semantic gate leaking out of the shared function into an unmigrated caller
+# would show up here as a 38 rather than as an unasserted assumption.
+V62D="$(new_sandbox)"; state_file "$V62D" carry-defer-task codex
+run_dispatch "$V62D" carry-defer-task --carry-one --actor-cmd "$FLIP"
+expect_rc 0 "$RC" "62c — the deferred carry-one terminal still exits 0 and releases, unchanged" "$OUT"
 
 echo
 echo "Case 62d — mutation control: remove ONLY the expected pair and both mismatches release again"

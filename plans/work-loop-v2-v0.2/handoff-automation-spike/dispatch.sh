@@ -3947,7 +3947,25 @@ if [ "$DRY_RUN" -eq 1 ]; then
   # own die_terminal_untrusted. Each line carries its own marker so a mutation
   # control can delete exactly one seam and prove the other is not covering it.
   finalize_terminal_result 0 || die_terminal_unprovable # dry-run terminal finalization
-  consume_terminal_result # dry-run terminal consumption
+  # THE EXPECTED PAIR COMES FROM THIS CALLER, exactly as at the operator seam and
+  # for the same reason: the caller knows which terminal it is finalizing, and the
+  # artifact merely asserts one. The code is the literal 0 the finalization above
+  # published under and the `exit 0` below returns; the symbol is
+  # `result_outcome()`'s answer for that code, the sole code-to-outcome owner.
+  #
+  # WHAT MAKES THAT ANSWER DRY_RUN_COMPLETE HERE IS `MODE`, not the task. That
+  # branch is settled at argument parse and read before any lifecycle class, which
+  # is Unit 14's accepted design — so this seam supplies the right expectation over
+  # an active, closed or blocked task alike, without naming a symbol or holding a
+  # second table. A preflight is a preflight whatever the task underneath it is.
+  #
+  # WITHOUT THIS, THE GAP WAS REAL AND MEASURED, and sharper here than anywhere:
+  # a record altered after finalization to say `outcome=COMPLETED` — over a run
+  # that launched nothing and asked nothing of a model — still exited 0, released
+  # both leases and was advertised as this preflight's terminal result. So did one
+  # altered to `code=22`. Structure, path and identity have nothing to object to;
+  # only meaning does.
+  consume_terminal_result "" "$(result_outcome 0)" 0 # dry-run terminal consumption
   [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
   release_lock
   exit 0
