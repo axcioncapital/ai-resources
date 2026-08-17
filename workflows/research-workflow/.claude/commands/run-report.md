@@ -17,24 +17,24 @@ This is an explicit-tier requirement, not a default declaration — it aligns wi
 
 ### Step 4.0: Load Inputs
 
-1. Read all chapter drafts from `/analysis/chapters/{section}/`.
+1. Resolve all chapter drafts from `/analysis/chapters/{section}/` to project-root-relative paths only — verify each file exists and is non-empty, label each by chapter, and do not read their contents into the main session.
 2. Read the scarcity register from `/execution/scarcity-register/{section}/{section}-scarcity-register.md` (if it exists).
 3. Read all section directives from `/analysis/section-directives/{section}/`.
 4. Read all refined cluster memos from `/analysis/cluster-memos/{section}/`.
 5. Read all research extracts from `/execution/research-extracts/{section}/`.
 6. Read approved editorial recommendations from `/analysis/editorial-review/{section}/{section}-memo-review-recommendations.md`.
 
-These inputs are referenced throughout the pipeline. Sub-agents receive content, not file paths (per context isolation rules). **Carve-out (Step 4.2 a/b/c, FX-C1):** project reference docs the per-chapter triplet consumes (`reference/quality-standards.md`, `reference/style-guide.md`) are passed by PATH, not content — the subagent reads them at runtime. Path-passing here is intentional per-chapter token-economy: content-passing would inject the same reference content N × 3 times across the chapter loop. Subagents have Read access to project paths; the carve-out applies only to reference docs, not to the inputs enumerated above.
+These inputs are referenced throughout the pipeline. Sub-agents receive the per-chapter inputs as content, not file paths, per the context-isolation rule — which `docs/required-reference-files.md` § Path-passing convention scopes to research extracts, cluster memos and section directives. **Carve-out (Step 4.2 a/b/c, FX-C1):** project reference docs the per-chapter triplet consumes (`reference/quality-standards.md`, `reference/style-guide.md`) are passed by PATH, not content — the subagent reads them at runtime. Path-passing here is intentional per-chapter token-economy: content-passing would inject the same reference content N × 3 times across the chapter loop. **Carve-out (Steps 4.1 and 4.1b):** the complete chapter-draft set is a cross-chapter bulk operand, not a per-chapter input — architecture creation and architecture QC each run over every chapter at once — so it is passed by PATH and each sub-agent reads the drafts itself. Subagents have Read access to project paths; both carve-outs are bounded, and every other input enumerated above is still passed as content.
 
 ---
 
 ### Step 4.1: Create Report Architecture [delegate]
 
-1. Read chapter drafts (loaded in Step 4.0).
+1. Use the labeled chapter-draft paths resolved in Step 4.0.
 2. Read `/ai-resources/skills/research-structure-creator/SKILL.md`.
-3. Launch a general-purpose sub-agent. Pass it: the skill content and all chapter draft content. Task: execute the skill logic to produce the report architecture. Write to `/report/architecture/{section}/{section}-architecture.md`. Return: architecture summary (section count, chapter-to-section mapping, structural decisions).
+3. Launch a general-purpose sub-agent. Pass it: the skill content and all chapter draft paths, project-root-relative and labeled by chapter — the sub-agent reads each draft at its given path before running the Content Inventory phase. Task: execute the skill logic to produce the report architecture. Write to `/report/architecture/{section}/{section}-architecture.md`. Return: architecture summary (section count, chapter-to-section mapping, structural decisions).
 4. Write checkpoint to `/report/checkpoints/{section}/{section}-step-4.1-checkpoint.md` from the sub-agent's returned summary. Include: output file path, section count, chapter-to-section mapping with chapter processing order.
-5. ▸ /compact — skill content and raw chapter drafts no longer needed; checkpoint carries forward.
+5. ▸ /compact — skill content no longer needed; checkpoint carries forward.
 6. PAUSE — Present architecture to the operator for review.
 
 ---
@@ -42,8 +42,8 @@ These inputs are referenced throughout the pipeline. Sub-agents receive content,
 ### Step 4.1b: Architecture QC [delegate-qc]
 
 1. Read `/ai-resources/skills/architecture-qc/SKILL.md`.
-2. Read all inputs needed for the QC: the architecture (`/report/architecture/{section}/{section}-architecture.md`), scarcity register (`/execution/scarcity-register/{section}/{section}-scarcity-register.md`), all section directives from `/analysis/section-directives/{section}/`, approved editorial recommendations (`/analysis/editorial-review/{section}/{section}-memo-review-recommendations.md`), and all chapter drafts from `/analysis/chapters/{section}/`.
-3. Launch a qc-gate sub-agent. Pass it: the skill content, the architecture content, scarcity register content, section directives content, editorial recommendations content, and chapter draft content. Task: evaluate the architecture against all 14 criteria and produce the QC report.
+2. Load all inputs needed for the QC: the architecture (`/report/architecture/{section}/{section}-architecture.md`), scarcity register (`/execution/scarcity-register/{section}/{section}-scarcity-register.md`), all section directives from `/analysis/section-directives/{section}/`, and approved editorial recommendations (`/analysis/editorial-review/{section}/{section}-memo-review-recommendations.md`) as content; and all chapter drafts as project-root-relative paths only, from `/analysis/chapters/{section}/`, without reading them into the main session.
+3. Launch a qc-gate sub-agent. Pass it: the skill content, the architecture content, scarcity register content, section directives content, editorial recommendations content, and, in place of chapter draft content, the chapter draft paths — project-root-relative, labeled by chapter; the sub-agent reads each draft at its given path. Task: evaluate the architecture against all 14 criteria and produce the QC report.
 4. Write QC report to `/report/checkpoints/{section}/{section}-step-4.1b-architecture-qc.md`.
 5. If Overall Verdict is FAIL with critical findings: PAUSE — present failures to the operator. Architecture must be fixed before proceeding.
 6. If Overall Verdict is PASS: note result and proceed to Step 4.2.
