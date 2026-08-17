@@ -561,6 +561,8 @@ Implemented 2026-08-17 in checkout `ai-resources-work-loop-fix-17-8`, branch
 `session/2026-08-17-work-loop-fix-17-8`. The recovery assertions extend Tracer 7's existing
 compaction/Reorient scenario (S8); no second harness was created.
 
+**Status: ACCEPTED 2026-08-17** at commit `e0b1944b`, against the unchanged approved condition.
+
 **Red, against the unchanged pre-edit skills.** The focused assertions were written first and run
 against `$realign` and `$reorient` as they stood: `work-loop-v2-tracer-7.test.sh` exit 1 —
 **148 passed / 14 failed**. The 14 were the whole instruction contract: both branch-order checks and
@@ -604,7 +606,71 @@ fields, its seam `Next:` rule and its read-only posture.
 
 ### Unit 3 — state rollover red / green
 
-Pending.
+Implemented 2026-08-17 in checkout `ai-resources-work-loop-fix-17-8`, branch
+`session/2026-08-17-work-loop-fix-17-8`. The rollover control was added to `work-loop-v2-slice-1.test.sh`,
+the existing surface that already carries the state-file field contract and the section-scoped
+`latest_of` reader; no second harness was created, and no fixture was retained under `logs/work-loop/`.
+
+**The failing control, and what it rejects.** Four disposable valid active states were built in a
+temp dir with `DISTINCTIVE-OLD-RESULT` as the preceding accepted-result marker and
+`DISTINCTIVE-NEW-RESULT` as the current unit's:
+
+| Control | Shape | Assertion |
+|---|---|---|
+| `clean` | the preceding result replaced | **PASS** |
+| `append` | the incident shape — both results standing in `## Latest result` | **FAIL** (rejected) |
+| `parked` | the preceding result moved to a `## Previous results` block | **FAIL** (rejected) |
+| `stale` | the result never rewritten; only `## Objective and scope` names the new marker | **FAIL** (rejected) |
+
+The assertion is scoped to the `## Latest result` **body**, and `stale` is the control that proves
+the scoping is load-bearing rather than decorative: a whole-file grep for `DISTINCTIVE-NEW-RESULT`
+returns **1 hit and would pass**, while the section-scoped read returns **0 and correctly fails**.
+Governing text may legitimately name either marker, so a whole-file grep is invalid in both
+directions.
+
+**Why the protection had to be behavioural.** The validator cannot see this defect, and that is
+recorded as an executed control rather than asserted: the incident-shaped `append` record classifies
+**`ACTIVE_CODEX`** — byte-for-byte the same classification the `clean` record gets. Its frontmatter,
+heading set and field count are all correct; only one field's body is wrong, which is not a lifecycle
+question. `parked` is the one mutant the validator does catch (`STOP [16] unsupported top-level
+heading '## Previous results'`), so the rollover assertion's heading check is a second, independent
+catch on that shape rather than the only one.
+
+**No command correction was made, and the evidence is why.** Plan § 3.4 permits a command-side
+correction only where the failing case requires one. `.claude/commands/work-loop-v2.md` Step 5 already
+carries the instruction verbatim — "The state file is current truth, not a diary (core § 4): replace
+the previous result rather than appending to it." — and this unit's real hand-back replaced the
+preceding result under that unchanged instruction. The instruction is therefore sufficient, and the
+smallest change supported by the evidence is none. Two contract checks now hold it in place, both
+scoped to Step 5 and both proved fail-capable against a mutant command with the instruction line
+removed: PASS on the actual command, FAIL on the mutant. An unscoped grep would not discriminate the
+instruction being moved out of Step 5.
+
+**The real transition.** This unit's own Claude hand-back is the required normal Work Loop transition.
+Before, `## Latest result` carried the Unit 2 acceptance plus one `DISTINCTIVE-OLD-RESULT` marker
+(section-scoped count: OLD 1, NEW 0; whole-file: OLD 1, NEW 0). After, the section carries only the
+Unit 3 result and `DISTINCTIVE-NEW-RESULT` (section-scoped: OLD 0, NEW 1), with `DISTINCTIVE-OLD-RESULT`
+absent from the whole state file. Validator: `ACTIVE_CODEX`, exit 0. Headings unchanged at the six
+active ones — no second or historical result block was added, and the brief, blocker and next action
+remain valid.
+
+**Focused suite:** `work-loop-v2-slice-1.test.sh` exit 0 — **405 passed / 0 failed**, up from 396/0 at
+Unit 2, the nine added checks being the four controls, the scoping discriminator, the validator-blindness
+control, the no-fixture-retained control and the two Step 5 contract checks.
+
+**Affected regressions:** Slice 1 405/0 exit 0; state, owner and capability exit 0. Tracer 7 exit 0 at
+163/0 on five of seven runs, and 162/1 on two.
+
+**The Tracer 7 intermittent, recorded rather than absorbed.** The single failing check is S9's "the
+partial effect is visible on disk during the hop". It is a pre-existing race in Tracer 7's own
+sandbox, not an effect of this unit: the sentinel appends its marker file
+(`work-loop-v2-tracer-7.test.sh:276`) before writing `partial-effect.txt` (line 293), while the
+scenario releases from `wait_for_file "$S9MARK" 45` on the marker alone and tests for the partial
+effect on the next line. Under load the assertion can run between the two writes. Every file this
+unit changed is outside S9, which executes against a temporary sandbox checkout. **Deferred**, with
+the reason: Tracer 7 is Unit 2's accepted evidence surface, and this unit's framing holds the
+dispatcher, courier and their harness outside scope, so re-synchronising S9 to wait on the partial
+effect rather than the marker is an unbriefed edit to an accepted unit and belongs in its own unit.
 
 ### Unit 4 — live post-compaction case
 

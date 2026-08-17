@@ -1890,6 +1890,105 @@ total_words() {
 check "split no semantic loss: the moved text is preserved, not trimmed" \
   "[ \"\$(total_words)\" -ge \"$PRESPLIT_WORDS\" ]"
 
+# === rollover: a hand-back replaces the preceding result, it does not append ==
+# Unit 3 of work-loop-v2-post-compaction-recovery-repair, plan §§ 3.4 and 4 Unit 3.
+# The incident: a completed unit left the preceding accepted result standing beside
+# the new one, so `## Latest result` became the running log core § 4 forbids.
+#
+# The validator cannot catch this. Proved below: the incident-shaped mutant is a
+# fully legal record — it classifies ACTIVE_CODEX, exactly like the clean one. The
+# frontmatter, the heading set and the field count are all correct; only the BODY
+# of one field is wrong, which is not a lifecycle question and never becomes one.
+# That is why the protection has to be behavioural, and why it lives here.
+#
+# Every control below is disposable and built in a temp dir. Plan § 4 Unit 3
+# forbids retaining fixture state under logs/work-loop/, so no state file is added
+# there — which also keeps this check from being a task record that ages.
+
+ROLL_OLD='DISTINCTIVE-OLD-RESULT'   # the preceding unit's accepted-result marker
+ROLL_NEW='DISTINCTIVE-NEW-RESULT'   # the marker the current unit's result must carry
+
+# The assertion under test. Scoped to the `## Latest result` BODY, because a
+# whole-file grep is invalid here in both directions: the brief, objective or plan
+# text may legitimately name either marker, so a whole-file hit for the new marker
+# proves nothing about the result, and the NEGATIVE case below is where that shows.
+rollover_ok() {  # $1 = state file, $2 = preceding marker, $3 = new marker
+  latest_of "$1" | command grep -qF "$3" || return 1   # new result is IN the current result
+  latest_of "$1" | command grep -qF "$2" && return 1   # preceding result is not kept beside it
+  command grep -qF "$2" "$1" && return 1               # nor parked anywhere else in the record
+  [ "$(command grep -c '^## Latest result' "$1")" = 1 ] || return 1
+  # No historical result block under any other name: the active headings stay
+  # inside core § 4's five plus the brief.
+  ! command grep -E '^## ' "$1" | command grep -qvE \
+    '^## (Objective and scope|Lane and unit|Brief|Latest result|Blocker|Next action)$'
+}
+
+ROLL_TMP=$(mktemp -d 2>/dev/null) || ROLL_TMP=""
+if [ -n "$ROLL_TMP" ]; then
+  roll_state() {  # $1 = out file, $2 = latest-result body, $3 = extra block or empty
+    { printf -- '---\ntask: rollover-control\nstatus: active\nturn: codex\n---\n\n'
+      printf '## Objective and scope\n\nProve rollover.\n\n'
+      printf '## Lane and unit\n\nStandard. Implementation mode. Unit 2 — rollover.\n\n'
+      printf '## Brief\n\nWhy: this unit must supersede the preceding accepted result.\n\n'
+      printf '## Latest result\n\n%s\n\n' "$2"
+      [ -n "$3" ] && printf '%s\n\n' "$3"
+      printf '## Blocker\n\nNone.\n\n## Next action\n\nCodex: assess.\n'
+    } > "$1"
+  }
+  # (1) clean replacement — the correct end state.
+  roll_state "$ROLL_TMP/clean.md" "Result: unit 2 done. $ROLL_NEW"$'\n'"Evidence: focused check." ""
+  # (2) the incident shape — both results standing in the same field.
+  roll_state "$ROLL_TMP/append.md" "$ROLL_OLD"$'\n\n'"Result: unit 2 done. $ROLL_NEW"$'\n'"Evidence: focused check." ""
+  # (3) the same history, moved to a block of its own rather than deleted.
+  roll_state "$ROLL_TMP/parked.md" "Result: unit 2 done. $ROLL_NEW"$'\n'"Evidence: focused check." \
+    "## Previous results"$'\n\n'"$ROLL_OLD"
+  # (4) the result was never rewritten, and only the OBJECTIVE names the new marker.
+  #     A whole-file grep passes on this file. That is the mistake being excluded.
+  { printf -- '---\ntask: rollover-control\nstatus: active\nturn: codex\n---\n\n'
+    printf '## Objective and scope\n\nProve rollover; the result must contain %s.\n\n' "$ROLL_NEW"
+    printf '## Lane and unit\n\nStandard. Implementation mode. Unit 2 — rollover.\n\n'
+    printf '## Brief\n\nWhy: supersede the preceding accepted result.\n\n'
+    printf '## Latest result\n\n%s\n\n' "$ROLL_OLD"
+    printf '## Blocker\n\nNone.\n\n## Next action\n\nCodex: assess.\n'
+  } > "$ROLL_TMP/stale.md"
+
+  check "roll  a replaced result passes the rollover assertion" \
+    "rollover_ok '$ROLL_TMP/clean.md' '$ROLL_OLD' '$ROLL_NEW'"
+  check "roll  NEGATIVE: the incident shape — both results in one field — is rejected" \
+    "! rollover_ok '$ROLL_TMP/append.md' '$ROLL_OLD' '$ROLL_NEW'"
+  check "roll  NEGATIVE: history parked in a block of its own is rejected" \
+    "! rollover_ok '$ROLL_TMP/parked.md' '$ROLL_OLD' '$ROLL_NEW'"
+  check "roll  NEGATIVE: an unwritten result is rejected though the file names the marker" \
+    "! rollover_ok '$ROLL_TMP/stale.md' '$ROLL_OLD' '$ROLL_NEW'"
+  # The scoping itself, stated as the discriminator rather than left implicit: on
+  # (4) a whole-file grep and the scoped read disagree, and the scoped read is right.
+  check "roll  the section-scoped read is what discriminates, not a whole-file grep" \
+    "command grep -qF '$ROLL_NEW' '$ROLL_TMP/stale.md' && \
+     ! latest_of '$ROLL_TMP/stale.md' | command grep -qF '$ROLL_NEW'"
+  # Why behaviour, not lifecycle: the validator accepts the incident shape.
+  roll_class() {  # $1 = control file; classifies it as a real record, then removes it
+    command cp "$1" logs/work-loop/rollover-control.md
+    command bash logs/scripts/work-loop-state.sh validate \
+      --checkout "$ROOT" --task rollover-control 2>/dev/null
+    command rm -f logs/work-loop/rollover-control.md
+  }
+  check "roll  the validator cannot see the incident: it classifies exactly as the clean one" \
+    "[ \"\$(roll_class '$ROLL_TMP/append.md')\" = ACTIVE_CODEX ] && \
+     [ \"\$(roll_class '$ROLL_TMP/clean.md')\" = ACTIVE_CODEX ]"
+  check "roll  no control was left behind under logs/work-loop/" \
+    "[ ! -e logs/work-loop/rollover-control.md ]"
+  rm -rf "$ROLL_TMP"
+fi
+
+# The command owns the behaviour; this reads the contract at Step 5, not the fixture.
+# Scoped to Step 5: core § 4's identical prose appears elsewhere in the tree, and an
+# unscoped grep would stay green if the instruction were deleted from the command.
+step5_of() { awk '/^## Step 5 —/{f=1;next} /^## /{f=0} f' "$CMD_F"; }
+check "roll  the command instructs Step 5 to replace the previous result, not append" \
+  "step5_of | command grep -qi 'replace the previous result rather than appending'"
+check "roll  Step 5 grounds that in core § 4 current-truth rather than restating it" \
+  "step5_of | command grep -qi 'current truth, not a diary'"
+
 # --- v1 isolation: logs/loop/ must gain nothing (slice plan 1.1) ------------
 check "v1    no Slice 1, 2 or 3 artifact leaked into logs/loop/" \
   "! ls logs/loop/ 2>/dev/null | grep -qE 'fixture-slice1|fixture-slice2|fixture-slice3|fixture-target|$CODEX_TASK'"
