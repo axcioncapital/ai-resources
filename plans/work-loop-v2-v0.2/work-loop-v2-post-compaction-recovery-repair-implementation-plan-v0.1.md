@@ -686,6 +686,8 @@ Implemented 2026-08-17 in checkout `ai-resources-work-loop-fix-17-8`, branch
 unit: it changes no objective, scope, exclusion, acceptance condition or unit order. It exists because
 Unit 4's live proof cannot be read against an intermittently red regression.
 
+**Status: ACCEPTED 2026-08-17** at commit `7b130cd1`, against the unchanged approved condition.
+
 **The race, quoted from the surface.** `make_sentinel` appends the launch marker at
 `work-loop-v2-tracer-7.test.sh:276`, *before* it reads its action file, resolves the repo path and
 dispatches into the `partial:*` branch, which writes `partial-effect.txt` at line 293. S9 released on
@@ -716,6 +718,66 @@ hop" the thing being asserted rather than "eventually".
 **Scope held.** The sentinel's action ordering, the attended carrier, the dispatcher, every other
 scenario, and all Work Loop skills, commands, core, hooks, validators and owner helpers are unchanged.
 No fixture was retained; the control lived outside the repository and was removed.
+
+### Unit 4 preparation (Unit 4b) — the representative case, prepared and unrun
+
+Prepared 2026-08-17. Execution packaging inside approved Unit 4: it builds the case and does **not**
+run it, so Unit 4 itself stays pending below and its required live proof and independent review are
+untouched.
+
+**The case.** Disposable linked worktree at
+`/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-wl2-unit4-case`, branch
+`disposable/wl2-unit4-case-2026-08-17`, based at `7b130cd1`, fixture committed at `d99e7eda`. Exact
+preserved task `u4-live-case` (`logs/work-loop/u4-live-case.md`), classifying `ACTIVE_CLAUDE`, among
+77 task files of which 16 are active. Plausible decoy `u4-context-refill-audit`, itself a valid
+`ACTIVE_CODEX` record so it survives inspection. Governing plan
+`plans/work-loop-v2-v0.2/u4-live-case-governing-plan.md`, 682 lines / 79,995 bytes, whose named
+`## 7. Rollover acceptance` (359 bytes, **0.4%** of the file) carries `DURABLE-FACT-U4-ROLLOVER`, and
+whose unreferenced `## 12. Deprecated transport notes` carries `DECOY-FACT-U4-TRANSPORT`. The
+task-only fact is `NA-U4-EXACT-TASK-FACT`; the standing accepted-result marker is `U4-OLD-RESULT`, so
+the follow-on hand-back exercises Unit 3's rollover assertions.
+
+**Red/green, with the same script both times.** The preflight is red **12 passed / 25 failed** against
+a clean disposable checkout at the same base commit, and green **42 / 0** against the prepared case.
+An earlier red (15/22) is not cited as the pair: it ran an older revision of the preflight, and a
+red and a green from two different scripts are not a red/green.
+
+**Two false greens were found in the preflight itself and fixed.** The ownership check passed on the
+empty checkout, because the helper returns `PROCEED` with reason *"free to claim"* when nothing is
+declared — it now requires the verdict **and** the reason naming this checkout as declaring the task.
+And the fact-uniqueness greps matched the preflight's own text, since it names every marker; the
+preflight now lives in `.unit4-preflight/`, outside the case's read surface, and both greps exclude it.
+
+**Negative controls.** Presence greps are paired with rejected wrong fixtures: a plan section stripped
+of its fact, an owner declaration naming another task, a prompt bound to the decoy path, and an
+enabled `compact` registration.
+
+**The hook control.** `.codex/hooks.json` in the disposable checkout has its `SessionStart` /
+`compact` registration removed, so the operator prompt is the only recovery trigger the case supplies.
+Every hook command in that file is an absolute path into canonical `ai-resources`, so the removal is a
+registration change on the disposable branch and reaches no other checkout.
+
+**The read-measurement convention, and its evidenced limit.** The session self-reports
+`READ <path> <bytes returned>` per read, with batching and suppression forbidden. Every reported line
+is checkable against the frozen case; the trace **cannot prove completeness**, because an unreported
+read leaves no mark in it. That gap was investigated, not assumed: filesystem access time was tested
+as a machinery-free way to close it and does not work on this volume — `atime` updates only on the
+first read after a write, not on a re-read or a cached read, and touching the files first to re-arm it
+leaves the following read undetected. A sweep on that basis would **under**-report, the flattering
+direction, so it was written, disproved and deleted rather than shipped with a caveat. Anything that
+would close the gap properly is excluded by § 3 and by this plan's exclusions — and § 4 Unit 4 does
+not require it, calling the number a *repository-read budget proxy* and *diagnostic evidence, not a
+universal product limit*, with pass/fail resting on correct state reconstruction and the
+permitted-source set.
+
+**Not run, and asserted as not run.** No model was invoked in the case. The task still reads
+`turn: claude`, the preceding accepted-result marker still stands, and no live-run artifact exists.
+
+**Cleanup ownership — one item needs the operator.** A second, throwaway worktree at
+`ai-resources-wl2-unit4-cleanctl` was created solely to produce the red run and is no longer needed.
+`git worktree remove` refused it: the liveness guard saw the untracked preflight copy inside it as
+uncommitted work and recent writes, and liveness is the operator's fact. It was left in place rather
+than overridden. Both it and the case checkout are removed at Unit 4's close.
 
 ### Unit 4 — live post-compaction case
 
