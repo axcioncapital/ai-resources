@@ -78,9 +78,15 @@ Correction round — both frozen findings reproduced by inspection before editin
 
 Nothing newly noticed was implemented; no candidate deferrals arose beyond the corrections themselves.
 
+Final tightly-bounded fix (menu choice, core § 3): the `G2 approved, S4 not yet landed` transitional state was reproduced by inspection first — S5's dependency line offered the manual path only "with G2 kept rejected" while also claiming S5 does not wait for S4, and the § 5 sequence line carried the same G2-conditioned wording. Fixed by re-anchoring the condition from *how G2 resolved* to *whether the runtime has landed*: R1/R2 use the runtime once S4 has landed and the manual execution model in every state where it has not — G2 rejected, and equally G2 approved with S4 pending. Three surfaces touched, all directly affected: S5's dependency line, the § 5 sequence line, and § 10 completion item 3 ("whichever execution path was available at the time"). No gate decision changed, neither frozen finding reopened, nothing broadened.
+
 Result: plan updated in place at `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`; only that file and this state file changed.
 
-Evidence (able to fail, and previously did): stale-wording regression greps — `executable under existing authority`, `Gate:** none`, `in parallel with S1–S3`, `economically identical`, `advisory confirmation at G5` — all now no-match (each matched before the correction); 9 correction-presence greps (authority baseline, plan-approval precondition, manual execution model, S5-does-not-wait-for-S4, G4-approves-plan, ruling-authorization premise, blocking G5, G1×G2 coverage, path-conditional S5 proof) all PASS. Nothing broke: the original 18 structural checks still all PASS, the negative control still fails, `git diff --check` exit 0, and `git status --porcelain` shows only the plan, this state file, and the pre-existing uncommitted `logs/friction-log.md` hook modification.
+Evidence (able to fail, and previously did): stale-wording regression greps — `executable under existing authority`, `Gate:** none`, `in parallel with S1–S3`, `economically identical`, `advisory confirmation at G5` — all no-match (each matched before the correction); 9 correction-presence greps (authority baseline, plan-approval precondition, manual execution model, G4-approves-plan, ruling-authorization premise, blocking G5, G1×G2 coverage) all PASS.
+
+Evidence for the final fix (scoped, able to fail): the four G2-conditioned strings that created the contradictory transitional state — `with G2 kept rejected, R1/R2 run`, `on the manual execution model where G2 stays rejected`, `whichever execution path its gates allowed`, `with G2 approved and S4 landed` — all now no-match, and each matched before this fix; five clarification-presence greps (`turns on whether the runtime has landed, not on how G2 resolved`, `G2 approved with S4 still pending`, `in every state where it has not`, `S5 never waits for S4`, `available at the time`) all PASS.
+
+Nothing broke: the original 18 structural checks still all PASS, the prior correction's presence and stale-wording sets still hold, the negative control (`## 99. Nonexistent section`) still fails, `git diff --check` exit 0, and `git status --porcelain` shows only the plan, this state file, and the pre-existing uncommitted `logs/friction-log.md` hook modification.
 
 ## Blocker
 
@@ -88,4 +94,4 @@ None.
 
 ## Next action
 
-Codex: closure check on the two frozen findings only — (1) is the authority/sequence contradiction resolved (technical readiness consistently distinguished from authority; no slice executable before plan approval or separate authorization; S3 blocked on G5; S2's ruling-authorization premise), and (2) is the S4/S5 dependency model now coherent without deciding G1 or G2 for the operator — and did the correction break anything. Then close, or use the § 3 menu.
+Codex: final closure check covering this fix and nothing else — is the `G2 approved, S4 not yet landed` transitional state now executable (the manual execution model is available whenever the runtime has not landed, so S5 stays independent of S4), and did the clarification break anything. Then close.
