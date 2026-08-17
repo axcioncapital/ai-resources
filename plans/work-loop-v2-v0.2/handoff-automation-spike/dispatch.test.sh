@@ -5216,6 +5216,88 @@ else
       "the sed matched nothing — the control cannot run"
 fi
 
+echo
+echo "Case 50h — the EARLIEST finalizing terminal reports worktree facts it actually collected"
+# Unit 21, and it is the terminal this suite could not previously see. The
+# --unattended version gate exits 31 from six places, and until this unit every
+# one of them finalized BEFORE foreign_worktree() and allowlisted_dirty() were
+# defined: bash printed `command not found` twice, the command substitutions came
+# back empty, and count_lines() turned each into `0`.
+#
+# `0` IS WHY THIS NEEDED A CASE AND NOT A GLANCE. An absent field is a question an
+# operator asks; `0` is an answer they act on — "the working tree held nothing
+# foreign and nothing uncommitted" — produced by a check that never ran. Case 50b
+# already pins these two fields at a LATER pre-hop terminal, where the helpers do
+# exist, so the defect lived precisely in the gap no case reached.
+#
+# THE FIXTURE MAKES `0` FALSIFIABLE, which is the whole point: it dirties one
+# TRACKED file on each side of the allowlist, so the truthful answers are 1 and 1
+# and the pre-repair value is provably wrong rather than coincidentally right. A
+# clean-tree fixture would have reported 0 and passed against the broken build.
+# Tracked, not new, because `git status --porcelain` collapses an untracked
+# directory to a single `?? plans/` line and the expected count would then depend
+# on which directories the sandbox happens to have materialised.
+#
+# NO MODEL AND NO ACTOR. The gate refuses on the version the fake binary reports,
+# before any launch — the same route case 32f already drives.
+V50H="$(new_sandbox)"; state_file "$V50H" "gate-facts-task" "claude"
+FK50H="$SANDBOX_ROOT/fake-claude-50h.sh"
+cat >"$FK50H" <<'FK50HEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.218 (Claude Code)"; exit 0; fi
+printf '%s\n' "$@" > "$WL50H_ARGV"
+exit 0
+FK50HEOF
+chmod +x "$FK50H"
+export WL50H_ARGV="$SANDBOX_ROOT/argv-50h.txt"; rm -f "$WL50H_ARGV"
+printf 'edited by the fixture\n' >>"$V50H/other.txt"
+printf '\nfixture edit\n' >>"$V50H/logs/work-loop/gate-facts-task.md"
+# Ground truth, read from git rather than assumed, so the expectations below are
+# anchored to the repository and not to this comment.
+G50H_FOREIGN="$(git -C "$V50H" status --porcelain 2>/dev/null | grep -c 'other\.txt' || true)"
+G50H_ALLOWED="$(git -C "$V50H" status --porcelain 2>/dev/null | grep -c 'logs/work-loop/' || true)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V50H" --task gate-facts-task --log-dir "$V50H/runs" \
+      --carry-one --claude-bin "$FK50H" --unattended 2>&1)"; RC=$?
+expect_rc 31 "$RC" "50h — the version gate still refuses with its accepted code" "$OUT"
+[ -f "$WL50H_ARGV" ] \
+  && bad "50h — nothing was launched" "the child ran: $(tr '\n' ' ' <"$WL50H_ARGV")" \
+  || ok "50h — nothing was launched"
+# THE DIAGNOSTIC ITSELF IS AN ASSERTION. A repair that produced the right numbers
+# while still calling undefined functions would be papering over the cause.
+printf '%s\n' "$OUT" | grep -q 'command not found' \
+  && bad "50h — finalization emits no undefined-function diagnostic" \
+         "$(printf '%s\n' "$OUT" | grep 'command not found' | tr '\n' ' ')" \
+  || ok "50h — finalization emits no undefined-function diagnostic"
+R50H="$V50H/runs/$(run_id_of "$OUT").result"
+if [ "$(res_count "$V50H/runs")" = "1" ] && [ "$(part_count "$V50H/runs")" = "0" ] &&
+   [ "$(tail -1 "$R50H" 2>/dev/null)" = "result_complete=yes" ]; then
+  ok "50h — exactly one complete result, no partial"
+else
+  bad "50h — exactly one complete result, no partial" \
+      "results=$(res_count "$V50H/runs") partials=$(part_count "$V50H/runs") last=$(tail -1 "$R50H" 2>/dev/null)"
+fi
+# THE TWO FIELDS UNDER REPAIR, compared against git rather than against a literal.
+if [ "$(res_field "$R50H" worktree_foreign_paths)" = "$G50H_FOREIGN" ] &&
+   [ "$(res_field "$R50H" worktree_allowlisted_dirty_paths)" = "$G50H_ALLOWED" ] &&
+   [ "$G50H_FOREIGN" != "0" ] && [ "$G50H_ALLOWED" != "0" ]; then
+  ok "50h — both worktree facts match the dirty tree git reports ($G50H_FOREIGN foreign, $G50H_ALLOWED allowed)"
+else
+  bad "50h — both worktree facts match the dirty tree git reports" \
+      "git says foreign=$G50H_FOREIGN allowed=$G50H_ALLOWED; the record says foreign=$(res_field "$R50H" worktree_foreign_paths) allowed=$(res_field "$R50H" worktree_allowlisted_dirty_paths)"
+fi
+# THE REFUSAL IS UNCHANGED. The repair is evidence hygiene, so every other value
+# this terminal already carried has to be exactly what it was — including that no
+# model request and no launch happened, which is what keeps this a supervised-use
+# terminal rather than a Gate U claim.
+for pair in "outcome:UNATTENDED_UNAVAILABLE" "code:31" "stage:pre-hop" \
+            "actor_launched:no" "model_request_started:no" \
+            "next_action:operator-restore-contained-profile-prerequisites"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50H" "$k")"
+  [ "$got" = "$want" ] && ok "50h — $k=$want" || bad "50h — $k=$want" "got: ${got:-<absent>}"
+done
+unset WL50H_ARGV
+
 # ==================================================================== case 51
 # THE STANDALONE STRUCTURAL VALIDATOR for the v1 terminal result case 50 proves
 # the dispatcher produces. Case 50 read that artifact with harness `sed`/`grep`

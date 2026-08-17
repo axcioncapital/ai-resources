@@ -2717,6 +2717,159 @@ else
   say "denial_parser=none — neither jq nor python3 is usable here, so a permission stop (37) CANNOT name the denied tool and target; it will say so rather than guess"
 fi
 
+# --------------------------------------------------------- repository state
+#
+# HOISTED ABOVE THE PREFLIGHT THAT CAN STOP (Unit 21). Everything in this section
+# is a pure function definition, so its position carries no ordering semantics of
+# its own — with one exception, and it is why the section sits here rather than
+# after the block below. finalize_terminal_result() collects two of its fields by
+# calling foreign_worktree() and allowlisted_dirty(), and the run-evidence block
+# above is where RUN_ID and LOG_DIR are raised — the point from which any top-level
+# die() finalizes a record. The --unattended gate below sits between those two
+# facts and exits 31 in six places. While this section came after it, every one of
+# those six ran finalization against functions that did not yet exist: bash
+# reported `command not found` twice, the command substitutions produced empty
+# strings, and count_lines() turned each into `0`.
+#
+# THE SYMPTOM WAS NOT AN ABSENT FIELD. `0` is a positive, checkable claim that the
+# working tree held no foreign paths and no uncommitted allowed paths — written by
+# a check that never ran, and false whenever the tree was in fact dirty. An empty
+# value would have been questioned; a plausible one was not.
+#
+# So the constraint this position encodes is: THIS SECTION MUST PRECEDE EVERY
+# TOP-LEVEL die() THAT CAN REACH FINALIZATION. Moving it back down, or adding a
+# stopping preflight above it, reintroduces the same fabricated fact.
+
+git_head() { git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null; }
+
+# Working-tree lines NOT covered by the allowlist. Any change here during an
+# actor run is an unexpected repository effect.
+foreign_worktree() {
+  local line p
+  git -C "$CHECKOUT" status --porcelain 2>/dev/null | while IFS= read -r line; do
+    p="${line:3}"
+    p="${p%\"}"; p="${p#\"}"
+    local allowed=0 re
+    for re in "${ALLOW_PATHS[@]}"; do
+      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
+    done
+    [ "$allowed" -eq 0 ] && printf '%s\n' "$line"
+  done | sort
+}
+
+staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort; }
+
+# Working-tree lines that ARE covered by the allowlist — the exact complement of
+# foreign_worktree(), and the blind spot that made incident 2 unreadable (O2).
+#
+# foreign_worktree() answers "did the actor touch something it was not allowed
+# to?". Nothing answered "did the actor touch something it WAS allowed to, and
+# leave it uncommitted?" — so a hop that edited three permitted files and was
+# then killed reported nothing at all, because every check that could have seen
+# those edits was scoped to violations. The three facts a timeout reports today
+# are individually true and collectively misleading: the state file did not
+# change, the branch did not move, no foreign path was touched. All true. Work
+# was still left on the floor, and the operator was not told.
+#
+# THIS IS EXPECTED OUTPUT, NOT A VIOLATION. In-allowlist edits are what the
+# actor was sent to make. Listing them is reporting, never a stop condition —
+# nothing in this dispatcher exits nonzero BECAUSE this function returned
+# something. It only ever adds detail to a stop that had already been decided.
+#
+# ONE PATH IS EXCLUDED, and it is the dispatcher's own bookkeeping rather than
+# the actor's work: the run directory, ADDED to the allowlist by this script at
+# the LOG_REL block. Without that exclusion every stop would report the
+# dispatcher's own evidence files back to the operator as "work the hop did and
+# did not commit". That is not merely noisy: it is the same class of false
+# statement O2 exists to remove.
+#
+# There used to be a SECOND exclusion, logs/session-notes.md, added for the
+# legacy session-identity init this dispatcher no longer performs (Tracer 4).
+# It went out with the init: the dispatcher writes no session note, so an
+# uncommitted session-notes.md in this checkout is now somebody else's work and
+# hiding it from partial-effect accounting would be the false statement rather
+# than the fix. It is not in the allowlist either, so it reaches this function
+# only when the operator passed it explicitly — in which case reporting it is
+# exactly right.
+allowlisted_dirty() {
+  local line p
+  git -C "$CHECKOUT" status --porcelain --untracked-files=all 2>/dev/null | while IFS= read -r line; do
+    p="${line:3}"
+    p="${p%\"}"; p="${p#\"}"
+    if [ -n "$LOG_REL" ]; then
+      case "$p" in "$LOG_REL"/*|"$LOG_REL") continue ;; esac
+    fi
+    local allowed=0 re
+    for re in "${ALLOW_PATHS[@]}"; do
+      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
+    done
+    [ "$allowed" -eq 1 ] && printf '%s\n' "$line"
+  done | sort
+}
+
+# Fingerprint every currently dirty allowed path. The porcelain status alone is
+# not enough: if a file was already dirty before launch and the actor edits it
+# again, its status line can remain byte-for-byte identical. Pairing that line
+# with the worktree blob hash makes the actor's additional edit observable while
+# leaving untouched pre-existing handoffs out of the report.
+allowlisted_dirty_snapshot() {
+  local line p oid
+  allowlisted_dirty | while IFS= read -r line; do
+    [ -n "$line" ] || continue
+    p="${line:3}"
+    p="${p%\"}"; p="${p#\"}"
+    if [ -e "$CHECKOUT/$p" ] || [ -L "$CHECKOUT/$p" ]; then
+      oid="$(git -C "$CHECKOUT" hash-object -- "$p" 2>/dev/null || true)"
+      [ -n "$oid" ] || oid="UNHASHABLE"
+    else
+      oid="ABSENT"
+    fi
+    printf '%s\t%s\n' "$oid" "$line"
+  done | sort
+}
+
+# The partial-effect block appended to every post-launch stop (O2).
+#
+# Prints nothing when the working tree is clean, so a stop with no partial
+# effects stays as short as it is now. When it does print, it says explicitly
+# that the paths are NOT a violation — otherwise a reader meeting a file list
+# inside a STOP message reasonably assumes the files are the problem.
+# The delta itself, as lines. Split out of partial_effect_block() so the terminal
+# result can COUNT the same paths the operator is shown, without a second
+# derivation of "what did this hop leave behind" (plan § 8 — one production owner
+# per seam). The prose block below is the only other caller; if these two ever
+# disagreed, the operator's message and the machine record would describe
+# different runs, which is precisely the drift the plan forbids.
+partial_effect_paths() {
+  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
+  local after
+  after="$(allowlisted_dirty_snapshot)"
+  if [ -n "$HOP_ALLOWED_SNAPSHOT" ]; then
+    comm -13 \
+      <(printf '%s\n' "$HOP_ALLOWED_SNAPSHOT") \
+      <(printf '%s\n' "$after") | cut -f2-
+  else
+    printf '%s\n' "$after" | cut -f2-
+  fi
+}
+
+partial_effect_block() {
+  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
+
+  local dirty
+  dirty="$(partial_effect_paths)"
+  [ -n "$dirty" ] || return 0
+  printf '%s' $'\n'"PARTIAL FILE EFFECTS — since launch, the hop changed these ALLOWED paths and left them modified and uncommitted:"$'\n'"$dirty"$'\n'"These are inside --allow-path and are NOT a violation: they are work the hop changed and did not commit. They are still on disk. READ THEM BEFORE DECIDING ANYTHING — do not discard them and do not assume they are absent. \`git -C $CHECKOUT diff\` shows tracked content."
+}
+
+# Compatibility name for call sites that explicitly mean a post-launch stop.
+#
+# die() itself owns the structural guarantee now, so plain-die paths reached
+# after launch (notably validate_state and the hop-limit guard) cannot bypass it.
+die_hop() { # code, message
+  die "$@"
+}
+
 # ------------------------------------------------- unattended contained profile
 #
 # Item 1d. The operator settled the policy and a probe proved the mechanism; this
@@ -2938,138 +3091,6 @@ Recoverable next action: this dispatcher no longer classifies state itself, so i
     CLOSED)           ST_TURN=operator ;;
     *) die 15 "the validator returned an unrecognised classification '$ST_CLASS' — this dispatcher does not guess at state" ;;
   esac
-}
-
-# --------------------------------------------------------- repository state
-
-git_head() { git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null; }
-
-# Working-tree lines NOT covered by the allowlist. Any change here during an
-# actor run is an unexpected repository effect.
-foreign_worktree() {
-  local line p
-  git -C "$CHECKOUT" status --porcelain 2>/dev/null | while IFS= read -r line; do
-    p="${line:3}"
-    p="${p%\"}"; p="${p#\"}"
-    local allowed=0 re
-    for re in "${ALLOW_PATHS[@]}"; do
-      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
-    done
-    [ "$allowed" -eq 0 ] && printf '%s\n' "$line"
-  done | sort
-}
-
-staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort; }
-
-# Working-tree lines that ARE covered by the allowlist — the exact complement of
-# foreign_worktree(), and the blind spot that made incident 2 unreadable (O2).
-#
-# foreign_worktree() answers "did the actor touch something it was not allowed
-# to?". Nothing answered "did the actor touch something it WAS allowed to, and
-# leave it uncommitted?" — so a hop that edited three permitted files and was
-# then killed reported nothing at all, because every check that could have seen
-# those edits was scoped to violations. The three facts a timeout reports today
-# are individually true and collectively misleading: the state file did not
-# change, the branch did not move, no foreign path was touched. All true. Work
-# was still left on the floor, and the operator was not told.
-#
-# THIS IS EXPECTED OUTPUT, NOT A VIOLATION. In-allowlist edits are what the
-# actor was sent to make. Listing them is reporting, never a stop condition —
-# nothing in this dispatcher exits nonzero BECAUSE this function returned
-# something. It only ever adds detail to a stop that had already been decided.
-#
-# ONE PATH IS EXCLUDED, and it is the dispatcher's own bookkeeping rather than
-# the actor's work: the run directory, ADDED to the allowlist by this script at
-# the LOG_REL block. Without that exclusion every stop would report the
-# dispatcher's own evidence files back to the operator as "work the hop did and
-# did not commit". That is not merely noisy: it is the same class of false
-# statement O2 exists to remove.
-#
-# There used to be a SECOND exclusion, logs/session-notes.md, added for the
-# legacy session-identity init this dispatcher no longer performs (Tracer 4).
-# It went out with the init: the dispatcher writes no session note, so an
-# uncommitted session-notes.md in this checkout is now somebody else's work and
-# hiding it from partial-effect accounting would be the false statement rather
-# than the fix. It is not in the allowlist either, so it reaches this function
-# only when the operator passed it explicitly — in which case reporting it is
-# exactly right.
-allowlisted_dirty() {
-  local line p
-  git -C "$CHECKOUT" status --porcelain --untracked-files=all 2>/dev/null | while IFS= read -r line; do
-    p="${line:3}"
-    p="${p%\"}"; p="${p#\"}"
-    if [ -n "$LOG_REL" ]; then
-      case "$p" in "$LOG_REL"/*|"$LOG_REL") continue ;; esac
-    fi
-    local allowed=0 re
-    for re in "${ALLOW_PATHS[@]}"; do
-      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
-    done
-    [ "$allowed" -eq 1 ] && printf '%s\n' "$line"
-  done | sort
-}
-
-# Fingerprint every currently dirty allowed path. The porcelain status alone is
-# not enough: if a file was already dirty before launch and the actor edits it
-# again, its status line can remain byte-for-byte identical. Pairing that line
-# with the worktree blob hash makes the actor's additional edit observable while
-# leaving untouched pre-existing handoffs out of the report.
-allowlisted_dirty_snapshot() {
-  local line p oid
-  allowlisted_dirty | while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    p="${line:3}"
-    p="${p%\"}"; p="${p#\"}"
-    if [ -e "$CHECKOUT/$p" ] || [ -L "$CHECKOUT/$p" ]; then
-      oid="$(git -C "$CHECKOUT" hash-object -- "$p" 2>/dev/null || true)"
-      [ -n "$oid" ] || oid="UNHASHABLE"
-    else
-      oid="ABSENT"
-    fi
-    printf '%s\t%s\n' "$oid" "$line"
-  done | sort
-}
-
-# The partial-effect block appended to every post-launch stop (O2).
-#
-# Prints nothing when the working tree is clean, so a stop with no partial
-# effects stays as short as it is now. When it does print, it says explicitly
-# that the paths are NOT a violation — otherwise a reader meeting a file list
-# inside a STOP message reasonably assumes the files are the problem.
-# The delta itself, as lines. Split out of partial_effect_block() so the terminal
-# result can COUNT the same paths the operator is shown, without a second
-# derivation of "what did this hop leave behind" (plan § 8 — one production owner
-# per seam). The prose block below is the only other caller; if these two ever
-# disagreed, the operator's message and the machine record would describe
-# different runs, which is precisely the drift the plan forbids.
-partial_effect_paths() {
-  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
-  local after
-  after="$(allowlisted_dirty_snapshot)"
-  if [ -n "$HOP_ALLOWED_SNAPSHOT" ]; then
-    comm -13 \
-      <(printf '%s\n' "$HOP_ALLOWED_SNAPSHOT") \
-      <(printf '%s\n' "$after") | cut -f2-
-  else
-    printf '%s\n' "$after" | cut -f2-
-  fi
-}
-
-partial_effect_block() {
-  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
-
-  local dirty
-  dirty="$(partial_effect_paths)"
-  [ -n "$dirty" ] || return 0
-  printf '%s' $'\n'"PARTIAL FILE EFFECTS — since launch, the hop changed these ALLOWED paths and left them modified and uncommitted:"$'\n'"$dirty"$'\n'"These are inside --allow-path and are NOT a violation: they are work the hop changed and did not commit. They are still on disk. READ THEM BEFORE DECIDING ANYTHING — do not discard them and do not assume they are absent. \`git -C $CHECKOUT diff\` shows tracked content."
-}
-
-# Compatibility name for call sites that explicitly mean a post-launch stop.
-#
-# die() itself owns the structural guarantee now, so plain-die paths reached
-# after launch (notably validate_state and the hop-limit guard) cannot bypass it.
-die_hop() { # code, message
-  die "$@"
 }
 
 # ------------------------------------------------ permission denials (O3)
