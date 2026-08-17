@@ -55,7 +55,7 @@ holds. Two audit references did not survive re-enumeration and are corrected in 
 |---|---|---|
 | W4-H1 | `run-report` St4.2a (full draft return) | `H1-01`, plus the downstream re-relays `H1-02` (4.2b) and `H1-03` (4.2c) |
 | W4-H2 | `execution-agent`, `verify-chapter` | `H2-01` (agent return contract), `H2-03`/`H2-04` (Step 1 inputs), `H2-05` (Step 3 correction relay) |
-| W4-H3 | `run-report` St4.0 (six categories) + St4.1b re-read | `H3-01`–`H3-04` (St4.0), `H3-05` (St4.1), `H3-06`/`H3-07` (St4.1b), `H3-08`/`H3-09` (St4.2a operands) |
+| W4-H3 | `run-report` St4.0 (six categories) + St4.1b re-read + the St4.2 per-chapter operands | `H3-01`–`H3-04` (St4.0), `H3-05` (St4.1), `H3-06`/`H3-07` (St4.1b), `H3-08`/`H3-09` (St4.2a operands), `H3-24` (St4.2c architecture operand — not audit-named; the relay repeats the same approved architecture to `report-compliance-qc` four times per section and carried no row until Unit 7 added one) |
 | W4-H3 | `run-analysis` St1 (all memos) | `H3-10`, plus the five content relays it feeds: `H3-11`, `H3-12`, `H3-13`, `H3-14` |
 | W4-H3 | `run-synthesis` St1 | `H3-15`, `H3-16` |
 | W4-H3 | `run-execution` St2.3 (all raw reports) | `H3-17`, `H3-18`, `H3-19` |
@@ -126,10 +126,16 @@ current per-seam figures rather than quoting numbers from here.
    launching — path-passing makes that gate more load-bearing, not less. `run-execution` has no
    command-level completeness gate; its Steps 2.1.4 / 2.3.4 now verify presence in place of the
    content read, so the same fail-fast point survives.
-2. **Bulk operand reads and their onward relays** (`H3-01`, `H3-05`, `H3-06`, `H3-07`, `H3-17`,
-   `H3-18`, `H3-19`, `H3-20`–`H3-23`, `H3-08`). All are `operand-path-ok`: the payload is already on
+2. **Bulk operand reads and their onward relays.** All are `operand-path-ok`: the payload is already on
    disk and the consumer can read it. `produce-architecture` Ph2/Ph3 read the same drafts twice, so
    one conversion clears both.
+   - ~~Pending~~ **— LANDED in Units 3–7:** `H3-20`–`H3-23` (Unit 3, `produce-architecture` Ph2/Ph3
+     section drafts); `H3-01`, `H3-05`, `H3-06`, `H3-07` (Unit 4, the `run-report` chapter-draft set);
+     `H3-17`, `H3-18` (Unit 5, `run-execution` St2.3 raw reports); `H3-08` (Unit 6, the St4.2a
+     architecture operand); `H3-24` (Unit 7, the St4.2c architecture operand — the row itself did not
+     exist before that unit, so this seam was outside the measured denominator until Unit 7 added it).
+   - **Still pending: `H3-19`** — the `run-execution` St2.1 Answer Specs operand, the last measured
+     W4-H3 content relay in this group.
 3. **W4-H1 and W4-H2 returns** (`H1-01`, `H2-01`). Bring 4.2a to the `run-synthesis` St2 pattern —
    the sibling writes the same artifact class to disk and returns "output file path, chapter structure
    summary, evidence coverage notes". For `execution-agent`, the response is *already* written to disk
