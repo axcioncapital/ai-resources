@@ -14,66 +14,67 @@ Task exit condition: the canonical generated-path calculation is shared by synch
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 1 — generated-path inventory and local excludes.
+Standard. Discovery mode. Unit 2 — staging-control integration boundary.
 
 Named reason for the loop: this load-bearing SessionStart mechanism spans multiple bounded units, and its implementation must be independently assessed before it counts as complete.
 
 ## Brief
 
-The operator wants the generated-symlink conflict source removed using Work Loop v2. This first unit establishes the prerequisite policy at generation time without touching legacy branches, so later staging protection and cleanup can rely on one observable set of generated destinations.
+Unit 1 is accepted: the generator now owns an exact local-exclude block and its regression suite proves the intended behavior. The task still requires staging prevention, but the repository currently exposes several possible control surfaces with materially different deployment reach; this discovery unit resolves that boundary before any guard is built.
 
-Required outcome: when `.claude/hooks/auto-sync-shared.sh` runs for a manifest-managed project, the generated command, agent, and opted-in/core skill destinations that it manages are covered by an exact, idempotent marked block in that checkout's local Git exclude configuration. Project-owned/local destinations and unrelated existing exclude entries remain untouched and unignored.
+Named unknown: what single versioned enforcement surface can prevent a manifest-managed generated destination from re-entering Git in downstream project checkouts, while consuming the generator's exact path interpretation rather than recreating it?
 
 Authority and source disposition:
 
-- Governing: the operator's current decision to use Work Loop v2 for a simple remediation of generated symlink conflicts.
-- Applicable repository contract: `docs/repo-architecture.md` and the current manifest semantics implemented by `.claude/hooks/auto-sync-shared.sh`; preserve relative symlinks and project-owned exceptions unless live repository evidence disproves that reading.
-- Non-governing background: the supplied “Generated Symlink Remediation Report.” Its proposed mechanism is useful context, but its claims and branch names are not repository truth.
-- Codex framing decision: this unit excludes staging guards, expanded health checks, and fleet cleanup so it has one dominant deliverable. Those remain adjacent work under the task objective.
+- Governing: the task objective and accepted Unit 1 repository state at commit `2aedc455`.
+- Applicable repository contracts: `.claude/hooks/auto-sync-shared.sh`, `.claude/hooks/pre-commit`, `.claude/hooks/check-foreign-staging.sh`, `templates/project-settings.json.template`, `docs/commit-discipline.md`, and their directly named deployment consumers.
+- Non-governing background: the remediation report's suggestion to use a pre-commit or pre-tool guard; it does not settle which surface is actually deployed.
+- Codex framing decision: this unit is read-only discovery. It excludes guard implementation and health validation because the enforcement/deployment boundary is still load-bearing and uncertain.
 
-Check against the repository before editing:
+Inspect and return evidence for these questions:
 
-1. Verify `.claude/hooks/auto-sync-shared.sh` is the canonical manifest-aware generator for commands, agents, core skills, and `skills.shared`; establish this from the hook plus its direct consumer documentation.
-2. Verify the current hook creates relative links but does not maintain an exact local-exclude block for its generated destinations. Search the whole hook and any directly invoked helper before claiming absence.
-3. Verify the manifest `commands.local`, `agents.local`, and `skills.local` entries are the project-owned exceptions the generator must not ignore or replace.
-4. Verify the current checkout and branch state. The preparation pass observed a clean `main` that was nine commits ahead and one behind `origin/main`; do not treat that observation as current truth.
-5. The report names `managed-it-cloud` and `cleantech-equipment`, which the preparation pass did not find among branches visible from this workspace. This is not a premise for this canonical-mechanism unit; do not infer that the later rollout belongs in this checkout.
+1. Which versioned hook or guard bodies can observe explicit-path staging, force-adds, wide adds, and commits in a downstream manifest-managed project? For each candidate, trace its repository-owned wiring and deployment route rather than assuming a file fires because it exists.
+2. Establish from repository sources whether `.claude/hooks/pre-commit` is installed into downstream repositories, whether Claude Code executes it merely because it exists, and whether that behavior is portable beyond this machine. Treat user-level wiring described in `docs/commit-discipline.md` as machine-local unless a versioned consumer proves otherwise; do not read user credentials or settings outside the repository.
+3. Establish what `.claude/hooks/check-foreign-staging.sh` deliberately does and does not gate, especially explicit-path `git add`, combined add-and-commit commands, and already-staged paths. Do not propose weakening its existing concurrent-session contract.
+4. Determine how a guard can consume the exact generated-destination set produced by Unit 1 without duplicating manifest/exclusion logic and without triggering synchronization or local-exclude mutation as a side effect. If the current hook exposes no safe read-only query surface, state that precisely and identify the smallest interface an implementation unit would need.
+5. Distinguish the minimum required guarantee—generated managed destinations cannot be committed—from stronger staging-time guarantees that the available versioned surfaces may not be able to enforce. Identify the narrowest failure case that must go red before the later implementation and green afterward.
+6. Recommend exactly one next implementation unit, naming its files, deployment reach, evidence, known limits, and why it is preferable to the nearest alternative. If no versioned cross-project control can enforce the guarantee safely, return that capability gap instead of choosing an ungrounded architecture.
 
-Implementation boundary:
+Boundary: read/search/inspect only, plus updating and committing this state file for the hand-back. Do not edit hook bodies, settings, templates, docs, tests, Git configuration, branches, or project files. Do not merge, rebase, push, force-add, or alter the existing Unit 1 commit.
 
-- In scope: `.claude/hooks/auto-sync-shared.sh`; focused regression test code under `logs/scripts/`; the minimum directly coupled documentation update only if the live documented contract would otherwise become false; this state file.
-- Excluded: `.gitignore` broad-directory rules; existing tracked symlink removal; any branch checkout, merge, rebase, push, or force operation; project content; workspace-root `.claude/hooks/sync-shared-resources.sh`; staging-guard and full health-check implementation.
-- Preserve existing unrelated local-exclude content byte-for-byte outside the managed block. Repeated synchronization must produce the same block without duplicates.
-- Leave the implementation mechanism to repository evidence. Do not create a second generated-path interpretation that can drift from the generator.
+Capability subset: baseline read/search/history inspection and Claude-owned commit of this state-file hand-back only. Nothing is selected from the pre-authorizable set, which is empty today. No network, external settings inspection, credential access, branch mutation, deployment, or other operator-reserved capability is authorized.
 
-Capability subset: baseline only — read and search the repository, inspect local Git state, edit only the scoped repository files, create throwaway local test fixtures, run focused local tests, and make the local commit owned by Claude. Nothing is selected from the pre-authorizable set, which is empty today. No network, push, merge, rebase, deployment, credential access, destructive shared-state action, or other operator-reserved capability is authorized.
+Evidence required: a concise candidate/control table grounded in repository paths and call sites; the current generated-path reuse seam or proven absence from a named searched surface; one recommended implementation boundary with a falsifiable regression case; and the state-file-only commit id. Separate verified repository facts from design recommendations.
 
-Evidence required:
+Completion condition: resolve the named unknown with repository evidence, recommend one bounded implementation unit or report the capability gap, set `turn: codex`, commit only the state-file hand-back, and stop. Do not implement the guard.
 
-1. A failing pre-change regression case showing a manifest-managed generated destination is not covered by the intended local exclude behavior.
-2. The focused regression test passing after implementation, proving in one representative fixture that generated command, agent, and skill destinations are ignored; project-owned/local destinations are not ignored; unrelated exclude entries survive; and a second run is idempotent.
-3. A different-depth case proving relative link generation and the generated exclude paths remain correct when the managed project is nested differently. Reuse the same fixture family rather than building an unrelated test matrix.
-4. Shell syntax validation for each changed shell file.
-5. The resulting commit id and a concise changed-file list. Report repository/branch state separately; do not claim it was reconciled.
-
-Completion condition: implement and commit the generated-path inventory/local-exclude behavior with the failing-before and passing-after evidence above, then set `turn: codex` and hand back for assessment.
-
-Stop and hand back without implementing if a load-bearing claim is false; if the canonical generated destinations cannot be derived without a second competing interpretation; if safe proof requires touching the real checkout's tracked files or excluded legacy branches; if repository policy requires resolving the diverged branch first; or if the required evidence cannot be made capable of failure.
+Stop and hand back if the authoritative deployment route depends on inaccessible machine-local state, if repository sources materially conflict, or if the recommended control would require expanding the task's capability envelope or weakening an existing guard.
 
 ## Latest result
 
-Inspected (2026-08-17):
-- Claim (1): HOLDS — read `.claude/hooks/auto-sync-shared.sh` end-to-end and `docs/repo-architecture.md` § Symlink topology (line 149 names the hook as the workspace auto-sync generator for commands, agents, `CORE_SHARED_SKILLS`, and `skills.shared[]`); the hook implements exactly that.
-- Claim (2): HOLDS — the hook emits relative targets via `os.path.relpath` in all three sync loops; searched the whole hook and its only invoked helper (`logs/scripts/work-loop-capability.sh`, invoked check-only) for `exclude|info/|update-index|gitignore`; no local-exclude maintenance existed — only the unrelated `EXCLUDE_COMMANDS`/`EXCLUDE_AGENT_GLOBS` name lists and comments.
-- Claim (3): HOLDS — `commands.local`/`agents.local`/`skills.local` are read at hook lines 85–94 and used only as skip-lists in the sync loops; `repo-architecture.md` lines 143 and 153 document them as project-owned.
-- Claim (4): HOLDS (re-verified fresh) — `git status -sb`: clean `main`, ahead 9 / behind 1 of `origin/main`; only untracked path was this state file. Not reconciled; reported as-is.
-- Claim (5): NOTED — searched `git branch -a`; neither `managed-it-cloud` nor `cleantech-equipment` exists in this workspace. Treated as non-premise per the brief; no rollout inferred.
+Unit 2 discovery — staging-control integration boundary. All findings by inspection (2026-08-17); verified repository facts first, design recommendation last.
 
-Result: `auto-sync-shared.sh` now derives, inside the same three sync loops that generate the links, the set of managed generated destinations (symlinks only — regular files at managed names and manifest `*.local` entries are never listed) and rewrites one marked block (`# BEGIN/END auto-sync-shared generated symlinks`) in the checkout's local Git exclude file (`git rev-parse --git-path info/exclude`), root-anchored per destination. Content outside the markers is preserved; an unbalanced hand-edited block or a project outside any Git repo skips maintenance (fail open). New focused regression test: `logs/scripts/auto-sync-shared-excludes.test.sh`.
+Inspected (2026-08-17) — candidate/control table (Q1–Q3):
 
-Evidence: pre-change run of the test failed 8/16 assertions — every "destination is git-ignored" case plus block presence failed; the 8 passes were pre-existing behavior (relative links, project-owned files unignored, byte-preservation). Post-change the same test passes 16/16, covering: generated command/agent/core-skill/opted-in-skill ignored; manifest-local command, drifted regular file, and `shared-manifest.json` unignored; pre-existing exclude content byte-identical prefix; exactly one block; second run byte-identical (idempotent); and a different-depth variant (repo root above the project, project nested two levels down) proving relative links resolve and exclude paths are root-anchored (`/nested/proj2/...`). `bash -n` clean on both changed files. Changed files: `.claude/hooks/auto-sync-shared.sh`, `logs/scripts/auto-sync-shared-excludes.test.sh` (new), this state file — all in the commit carrying this hand-back. Branch state reported separately above (claim 4); not reconciled.
+| Surface | What it can observe | Versioned wiring found | Reach today |
+|---|---|---|---|
+| `.claude/hooks/pre-commit` (git-hook body, tracked) | the final staged index on every `git commit`, regardless of staging route — explicit add, `add -f`, wide add, combined `add && commit` — from any terminal or tool | none: no installer in `.claude/commands/`, `templates/`, or `docs/` (searched `hooks/pre-commit`, `core.hooksPath`, `.git/hooks`); install is the header's manual "copy to `.git/hooks/`" | machine-local: installed in `ai-resources/.git/hooks/` and workspace-root `.git/hooks/` (both verified by `ls`); downstream projects unestablished, no versioned route |
+| `.claude/hooks/check-foreign-staging.sh` (PreToolUse Bash body, tracked) | Claude-session Bash commands only: `git commit` (incl. `--amend`, `-a`) and wide adds (`-A/--all/-u/.`) | **registered in no settings layer** — searched `ai-resources/.claude/settings.json` (PreToolUse runs only `check-heavy-tool.sh`), workspace-root `.claude/settings.json`, `templates/project-settings.json.template`: absent from all; `docs/compaction-protocol.md:25` states the same ("registered in no settings layer and guards nothing") | none — dormant body |
+| `templates/project-settings.json.template` (deployed by `/new-project`, `/deploy-workflow` per `templates/README.md`) | whatever hooks it declares, in Claude sessions of consuming projects | SessionStart only (auto-sync + permission sanity); no PreToolUse entry | the only versioned settings route into downstream projects, currently carrying no staging control |
 
-Deferral: `docs/repo-architecture.md` § Symlink topology does not yet document the new local-exclude invariant. Not done now because no documented statement became false (the brief bounds doc edits to that case); worth one rule line once the mechanism survives assessment. Design note, not implemented: a stale generated symlink whose canonical source was later removed drops out of the block and becomes visible to git — intentionally, so `/fix-symlinks` cleanup can see it.
+Q2 — `.claude/hooks/pre-commit` deployment truth: git executes `.git/hooks/pre-commit`; nothing versioned installs it. The header's claim "Or: create `.claude/hooks/pre-commit` and Claude Code picks it up" has **no versioned consumer** — searched settings layers and docs; `docs/harness-and-permission-troubleshooting.md:199-205` documents only the `.git/hooks/` route and warns the hook's success message is not evidence the skill check ran. User-level wiring described in `docs/commit-discipline.md` treated as machine-local per brief; not read.
+
+Q3 — `check-foreign-staging.sh` contract (from its body + `docs/commit-discipline.md:39-57`): gates commits and wide adds against the session footprint; **deliberately does not gate explicit-path `git add`** (body line 36, "explicit, low-risk"); the commit arm sees the **pre-command index**, so combined `git add <path> && git commit` passes ungated (verified by execution 2026-08-01 per commit-discipline.md:57) — and this repo's own single-step commit convention prescribes exactly that shape; already-staged paths are judged against the session footprint, not generated-ness. Its monotonic fail-open/P3 concurrent-session contract is orthogonal to this task; not proposed for weakening.
+
+Q4 — generated-path reuse seam (verified): the generator exposes its exact set in precisely one durable place — the marked block between `EXCL_BEGIN`/`EXCL_END` in the file `git rev-parse --git-path info/exclude`, rewritten each SessionStart in lockstep with link creation. The hook has no argument/query interface (no positional-parameter handling in the body). Reading the block is side-effect-free and duplicates no manifest/exclusion logic; both marker strings are static single-line literal assignments in the hook, so a consumer can sed-extract them exactly as `/fix-symlinks` re-reads `EXCLUDE_COMMANDS` (same format contract). If block-reading were rejected, the smallest needed interface would be a read-only `--list-generated` query mode added to the hook; not required by the recommendation below.
+
+Q5 — guarantee split (grounded by scratchpad experiment in a throwaway fixture, 2026-08-17): with a block-covered symlink, plain `git add <path>` is already **refused by git** (exit 1, "paths are ignored", nothing staged) and wide adds skip it — Unit 1 closed the ordinary routes. `git add -f <path>` stages it and `git commit` **succeeds today** (exit 0, symlink in the commit). Staging-time enforcement is not achievable by any versioned git surface (git has no pre-add hook; PreToolUse covers only Claude-issued commands and is unregistered). The minimum guarantee — block-covered destinations cannot be **committed** — is enforceable at pre-commit. **Narrowest failure case: `git add -f <block-covered path> && git commit` exits 0 today; after implementation the commit must fail naming the path.**
+
+Recommendation (design, not fact) — Unit 3, Implementation mode: extend the tracked `.claude/hooks/pre-commit` integrity-guards section with Guard 3 — reject any staged path listed in the managed block of `git rev-parse --git-path info/exclude`, marker strings sed-extracted from the canonical `auto-sync-shared.sh` (no duplicated literals or path logic). Files: `.claude/hooks/pre-commit`, new `logs/scripts/pre-commit-generated-guard.test.sh` (reuse the Unit-1 fixture family), plus re-install of the local `.git/hooks/pre-commit` copy in this checkout. Evidence: the red/green case above plus normal-commit non-interference and `bash -n`. Deployment reach: enforced wherever the body is installed — today ai-resources and workspace root on this machine; downstream distribution needs an install/refresh route that does not exist versioned (candidate owners: `auto-sync-shared.sh` SessionStart install step or `/sync-workflow`) — that is a separate decision for a later unit, named as a known limit, not smuggled in. Known limits: `git commit --no-verify` bypasses (consistent with every existing guard, OP-5 advisory-enforcement posture); tracked legacy symlinks unaffected (excludes never affect tracked files — the excluded later rollout). Preferable to the nearest alternative — registering/extending `check-foreign-staging.sh` — because that surface enforces nothing today (wiring it is a harness-config change, an operator-gated class), covers only Claude-issued commands, deliberately exempts explicit-path adds, and is structurally blind to the narrowest failure case (combined add-and-commit); extending it would also strain the monotonic contract the brief protects.
+
+Deferral candidates recorded, not acted on: (a) `docs/commit-discipline.md` § Foreign-staging tripwire and the hook's own header present the tripwire as a registered, live control while it is wired nowhere — stale-doc correction worth one line in a later unit; (b) the pre-commit header's unsupported "Claude Code picks it up" install claim, same class.
+
+Evidence: the table rows, seam, and guarantee split above each name the file, line, or search that settles them; the searches that establish absence name surface and pattern; the failure-case experiment output could have read differently (a guard firing today would have failed the commit). State-file-only commit id: in the commit carrying this hand-back (no other file changed; `git diff` across brief-named surfaces is empty).
 
 ## Blocker
 
@@ -81,4 +82,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 1 — the managed local-exclude block in `auto-sync-shared.sh` against the required outcome and evidence list; decide close, continue (staging protection / health checks remain under the task objective), or correct once.
+Codex: assess the Unit 2 discovery — confirm the boundary resolution and either open Unit 3 (pre-commit generated-destination guard as recommended), reframe, or stop.
