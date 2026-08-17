@@ -20,14 +20,14 @@ Checks whether a chapter follows the rules for how report prose should be writte
 
 ## Inputs
 
-All required unless noted. Content is passed directly for inputs 1–6 (not file paths). Input 7 is passed by path — the subagent reads it at runtime per per-chapter token economy (FX-C1).
+All required unless noted. Transport is stated per input rather than in one blanket rule, because the invoking workflow passes some of these as content and others by path. Where an input is passed by path, read the complete file at that path before applying any criterion; never treat the path itself as the artifact.
 
-1. **Chapter draft** — the prose content produced at Step 4.2a
-2. **Review findings** — the chapter-prose-reviewer output from Step 4.2b
-3. **Report architecture** — from `/report/architecture/{section}/{section}-architecture.md`
-4. **Style reference** — from `/report/style-reference/{section}/{section}-style-reference.md`
-5. **Scarcity register** — from `/execution/scarcity-register/{section}/{section}-scarcity-register.md` (if it exists)
-6. **Section directive** — the directive for this chapter from `/analysis/section-directives/{section}/`
+1. **Chapter draft** — the draft produced at Step 4.2a. **Passed by PATH** (`/report/chapters/{section}/{section}-chapter-NN-draft.md`); read the complete draft at that path. Halt if the file is absent or empty.
+2. **Review findings** — the chapter-prose-reviewer output from Step 4.2b. Passed as content.
+3. **Report architecture** — **passed by PATH** (`/report/architecture/{section}/{section}-architecture.md`); read the complete approved architecture file at that path before applying the compliance criteria.
+4. **Style reference** — from `/report/style-reference/{section}/{section}-style-reference.md`. Passed as content.
+5. **Scarcity register** — from `/execution/scarcity-register/{section}/{section}-scarcity-register.md` (if it exists). Passed as content.
+6. **Section directive** — the directive for this chapter from `/analysis/section-directives/{section}/`. Passed as content.
 7. **Project reference doc PATH** — `reference/quality-standards.md` (claim-permission classes, evidence-calibration rules, no-source-substitution rule). Passed by PATH, not content; subagent reads at runtime. Halt if the file is absent at the named path.
 
 **Missing input protocol:** If the section directive is not available, note that directive compliance was not checked and flag this as an issue — the directive should exist before report prose is produced. If the scarcity register doesn't exist, note that scarcity compliance was not applicable. All other inputs are required; if missing, halt and report which input is absent.

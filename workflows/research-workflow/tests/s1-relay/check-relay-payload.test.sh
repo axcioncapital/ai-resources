@@ -147,6 +147,37 @@ else
   bad 'T5b a generous cap should clear the cap finding'
 fi
 
+# T5c — AMBIGUITY CONTROL. Unit 12 settled the last `ambiguous` manifest row, so the real workflow no
+# longer exercises that branch at all. Without a synthetic row the control would sit unproven and
+# could rot silently — and an ambiguity finding that can no longer fire is exactly the failure the
+# `ambiguous` classification exists to prevent. This asserts on the synthetic surface instead, in
+# both directions: an ambiguous isolation reports and counts, and settling it clears the finding and
+# nothing else.
+cp -R "$TMP/bad" "$TMP/amb"
+# awk, not sed: BSD sed does not expand \t in the pattern, and these are tab-separated fields.
+awk -F'\t' -v OFS='\t' '$1 == "S-02" { $13 = "ambiguous" } { print }' \
+  "$TMP/bad/manifest.tsv" > "$TMP/amb/manifest.tsv"
+amb_count() { printf '%s' "$1" | sed -n 's/^  ambiguous (unsettled) *: //p'; }
+viol_count() { printf '%s' "$1" | sed -n 's/^  measured violations *: //p'; }
+run_synthetic "$TMP/amb"; amb_out="$OUT"
+run_synthetic "$TMP/bad"; set_out="$OUT"
+if printf '%s' "$amb_out" | grep -q 'AMBIGUOUS S-02 — the isolation contract does not settle' &&
+   [ "$(amb_count "$amb_out")" -ge 1 ] 2>/dev/null; then
+  ok "T5c an ambiguous isolation contract is reported and counted ($(amb_count "$amb_out"))"
+else
+  bad 'T5c an ambiguous isolation should be reported and counted' \
+      "ambiguous=$(amb_count "$amb_out")"
+fi
+if [ "$(amb_count "$set_out")" = '0' ] &&
+   ! printf '%s' "$set_out" | grep -q 'AMBIGUOUS S-02' &&
+   [ -n "$(viol_count "$set_out")" ] &&
+   [ "$(viol_count "$set_out")" = "$(viol_count "$amb_out")" ]; then
+  ok 'T5d settling that isolation clears the ambiguity finding and moves nothing else'
+else
+  bad 'T5d settling an isolation should clear only the ambiguity finding' \
+      "ambiguous=$(amb_count "$set_out") viol=$(viol_count "$set_out") vs $(viol_count "$amb_out")"
+fi
+
 # T6 — the REAL workflow is the expected red baseline: resolvable everywhere, violations measured.
 OUT="$(bash "$CHECK" --workflow "$WORKFLOW" 2>&1)"; RC=$?
 real_viol="$(printf '%s' "$OUT" | sed -n 's/^  measured violations     : //p')"
@@ -233,6 +264,30 @@ flip_back() { flip_dir "$1" "$2" "$3" "$4" COMPLIANT VIOLATION; }
 flip_back H1-01 .claude/commands/run-report.md \
   's|Return: chapter draft path (the exact output path above) plus a factual handoff|Return: chapter draft content|' \
   'run-report 4.2a returns the full draft again instead of its path'
+
+flip_back H1-02 .claude/commands/run-report.md \
+  's|the chapter draft from step (a) by PATH `/report/chapters/{section}/{section}-chapter-NN-draft.md`|the chapter draft from step (a) as content|' \
+  'run-report 4.2b takes the full draft back into the relay'
+
+flip_back H1-03 .claude/commands/run-report.md \
+  's|the chapter draft by PATH `/report/chapters/{section}/{section}-chapter-NN-draft.md`|the chapter draft as content|' \
+  'run-report 4.2c takes the full draft back into the relay'
+
+# T9c — the two 4.2 draft relays must be INDEPENDENTLY live. Unit 12 converted them together, and a
+# single edit that moved both would look identical to two working conversions. Each flip above is
+# built on its own copy, so this control asserts the other seam — and the two settled content
+# exemptions, plus H2-03 and H2-05 — did not move with it.
+for pair in 'H1-02 H1-03' 'H1-03 H1-02'; do
+  set -- $pair
+  moved=''
+  for other in "$2" H3-04 H3-09 H2-04 H2-03 H2-05; do
+    b="$(bash "$CHECK" --workflow "$TMP/live" --format tsv 2>&1 | awk -F'\t' -v s="$other" '$1 == s { print $6 }')"
+    a="$(bash "$CHECK" --workflow "$TMP/flip-$1" --format tsv 2>&1 | awk -F'\t' -v s="$other" '$1 == s { print $6 }')"
+    [ -n "$b" ] && [ "$b" = "$a" ] || moved="$moved $other($b->$a)"
+  done
+  [ -z "$moved" ] && ok "T9c reverting $1 alone moves no other seam" \
+                  || bad "T9c reverting $1 moved an unrelated seam" "$moved"
+done
 
 flip_back H4-01 .claude/commands/run-cluster.md \
   's|^2\. Identify the project reference docs the two skills consume by PATH|2. Read the project reference docs the two skills consume as content|' \

@@ -27,7 +27,7 @@ effort: high
 
 ### 1. Chapter Draft (required)
 
-The chapter to evaluate. Strip any internal traceability layers — evaluate only the reader-facing prose. If a traceability layer or claim IDs are present, they may be referenced for coverage checks but are not assessed for prose quality.
+The chapter to evaluate. It arrives either as content or as an absolute file path, whichever the invoking workflow states; when it arrives as a path, read the complete chapter at that path before evaluating, and halt if the file is absent or empty. Strip any internal traceability layers — evaluate only the reader-facing prose. If a traceability layer or claim IDs are present, they may be referenced for coverage checks but are not assessed for prose quality.
 
 **Degraded input:** If the chapter arrives without a traceability layer or claim IDs (e.g., produced outside the standard workflow), proceed with all five evaluation sections. Skip claim-level traceability checks. Note missing provenance in summary assessment.
 

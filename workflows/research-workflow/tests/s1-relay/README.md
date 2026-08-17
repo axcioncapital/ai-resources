@@ -160,17 +160,36 @@ current per-seam figures rather than quoting numbers from here.
      longer writes the draft from a return payload — it verifies the file the writer wrote, and
      still writes the review report and checkpoint. `H1-01` was the last cap violation in the
      measured set; **no cap violation remains.**
-   - **Nothing is pending in this group.** `H1-02` and `H1-03` are unchanged and sit under item 4
-     below as two of the ambiguous five. St4.2b and St4.2c still receive the draft as content — the
-     main session now reads it back from the St4.2a output path, an explicit read recorded here
-     rather than counted as path-passing, and their transport and classification are untouched.
-4. **Hand the ambiguous five back before touching them.** `H3-04`, `H2-04`, `H1-02`, `H1-03`, `H2-05`
-   need the isolation contract settled — including the extract-class contradiction between
-   `docs/required-reference-files.md`, `run-report` St4.0 and `run-cluster` St2.3. `H1-02`/`H1-03`
-   additionally needed the 4.2 write reordered ahead of the review; **Unit 10 landed that reorder**
-   (the writer writes the draft at St4.2a), so their remaining blocker is the isolation decision
-   alone. That decision is still theirs to make in their own bounded unit — Unit 10 changed neither
-   seam's transport nor its classification.
+   - ~~Nothing is pending~~ **— `H1-02` and `H1-03` LANDED in Unit 12:** St4.2b and St4.2c now pass
+     the exact St4.2a draft path, and each sub-agent reads the identical complete draft itself. The
+     main session no longer reads the draft in order to relay it, so the explicit read Unit 10
+     disclosed here is gone. **The whole W4-H1 group is now compliant.**
+4. ~~Hand the ambiguous five back before touching them~~ **— all five were settled by the Unit 11
+   discovery (commit `17c39803`) and encoded in the manifest by Unit 12. No manifest row is
+   `ambiguous` any more, and the check's ambiguity control is now proved on the synthetic surface
+   (T5c/T5d) rather than by a live unsettled row.**
+   - `H1-02`, `H1-03`, `H2-05` → **path-safe**, `operand-path-ok`. Carried by live precedent, not
+     analogy: `H3-05` (a general-purpose sub-agent already reads chapter drafts by path), `H3-07`
+     (a qc-gate already receives draft paths "in place of chapter draft content") and `H3-24` (the
+     same St4.2c qc-gate already reads the architecture operand by path). `H1-02`/`H1-03` are
+     implemented; **`H2-05` is ruled path-safe but not yet implemented**, so it stays a measured
+     violation — the classification is not being used to manufacture completion.
+   - `H2-04` → **`intentional-content` / `content-required`.** Its extracts become the evidence-table
+     half of the `verify-chapter` St2.3 GPT-5 prompt body. `execution-agent` *receives* the user
+     message and may not modify it, and an external model has no filesystem, so a path cannot be a
+     prompt body. A capability fact, not an implementation difficulty.
+   - `H3-04` → **`intentional-content` / `content-required`, derived.** It is the only load feeding
+     `H3-09`, the already-authorized per-chapter content contract; the main session cannot hand a
+     sub-agent content it does not hold. It creates no new exception.
+   - **The extract-class contradiction dissolves.** `required-reference-files.md` § Path-passing
+     convention is scoped to *per-chapter* inputs; `run-cluster` St1.2/St2.3 path-passes extracts
+     *per cluster*. The two never collide. Note for later: `run-report` St4.0.1 already carries the
+     carve-out that would free St4.0.5 — "a cross-chapter bulk operand, not a per-chapter input" —
+     so if `H3-09` were ever reclassified, `H3-04` would become path-safe by that precedent. Nothing
+     here proposes that.
+   - **Still open, and deliberately not decided here:** `H2-03` is `operand-path-ok` and unchanged,
+     but its chapter feeds the *same* St2.3 prompt body as `H2-04`'s extracts. Re-examine it before
+     scheduling its implementation unit.
 
 Summaries added anywhere in step 3 are capped at **20 lines and 4 KB**; the check enforces both.
 
