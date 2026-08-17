@@ -8330,6 +8330,277 @@ else
       "matched ${M28_HITS:-0} lines, want exactly 1; differs=$M28_DIFFERS parses=$M28_PARSES — the control cannot run"
 fi
 
+# ==================================================================== case 61
+# THE THIRD TRUST QUESTION, and the gap cases 51-54 leave open by design.
+#
+# WHAT WAS MISSING. The accepted composition answers path safety, structure and
+# task/checkout/run identity. All three can pass on a record whose `outcome` and
+# `code` describe a DIFFERENT ending than the one the caller is finalizing: a
+# genuine record of another terminal, structurally perfect and correctly
+# addressed. 61b asserts that gap directly — the same fixtures the semantic
+# boundary rejects are shown being ACCEPTED by the three-gate composition, so the
+# assertion below is evidence about what identity does not cover rather than a
+# claim that it is broken.
+#
+# THE EXPECTATION IS ESTABLISHED WITHOUT THE ARTIFACT, and 61a proves it by
+# deriving the pair while the record is moved out of the way. Reading either
+# expected value out of the record under test would compare it with itself, which
+# is the one comparison a forgery passes by construction.
+#
+# NO SECOND TABLE. The expected symbol comes from the dispatcher's own
+# `result_outcome()`, lifted as production text, driven by the exit status this
+# harness OBSERVED from the producing process. The boundary itself knows no
+# symbols — 61c asserts that against its shipped text.
+#
+# STILL NOT A CONSUMER. Nothing below makes a validated result advance a loop,
+# release a lease, choose a route or wait for a record. Integration into
+# `consume_terminal_result()` is a later unit.
+#
+# SAME EXERCISE ROUTE as cases 51-54: the marker-delimited region is lifted out of
+# the dispatcher under test and sourced, so the text executed here is dispatch.sh's
+# own production text, and 61d proves it by mutating dispatch.sh and watching these
+# assertions go green.
+
+# The four checks in the one order that is correct, in a single subshell, for the
+# reason ident_run() states: the boundaries hand each other state through globals
+# that a command substitution would discard.
+sem_run() { # lib artifact task checkout run root want-outcome want-code -> "<rc> <token>"
+  ( . "$1" >/dev/null 2>&1 || { printf '99 lib-unsourceable\n'; exit 0; }
+    t="$SANDBOX_ROOT/.sem-token"
+    validate_terminal_result_path "$2" "$3" "$4" "$5" "$6" >"$t" 2>/dev/null; rc=$?
+    [ "$rc" -eq 0 ] || { printf '%s %s\n' "$rc" "$(cat "$t")"; exit 0; }
+    validate_terminal_result "$2" >"$t" 2>/dev/null; rc=$?
+    [ "$rc" -eq 0 ] || { printf '%s %s\n' "$rc" "$(cat "$t")"; exit 0; }
+    validate_terminal_result_identity "$2" "$3" "$4" "$5" "$6" >"$t" 2>/dev/null; rc=$?
+    [ "$rc" -eq 0 ] || { printf '%s %s\n' "$rc" "$(cat "$t")"; exit 0; }
+    validate_terminal_result_semantics "$2" "$7" "$8" >"$t" 2>/dev/null; rc=$?
+    printf '%s %s\n' "$rc" "$(cat "$t")" )
+}
+
+sem_expect() { # lib artifact task checkout run root want-outcome want-code want-rc want-token label
+  local got; got="$(sem_run "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8")"
+  if [ "$got" = "${9} ${10}" ]; then ok "${11}"; else bad "${11}" "expected '${9} ${10}', got '$got'"; fi
+}
+
+echo
+echo "Case 61a — the expected pair is established WITHOUT the artifact, and the real result is accepted"
+V61D="$(new_sandbox)"; state_file "$V61D" "semantic-task" "codex"
+V61="$SANDBOX_ROOT/v61"; mkdir -p "$V61"
+run_dispatch "$V61D" semantic-task --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "61a — the producing run reaches a nonzero terminal (22)" "$OUT"
+# THE OBSERVED PROCESS FACT, not a field. This is the exit status the producing
+# run really returned to this harness, captured before anything opened the record.
+X_CODE61="$RC"
+RID61="$(run_id_of "$OUT")"
+CO61="$(cd "$V61D" && pwd -P)"
+ROOT61="$(cd "$V61D/runs" && pwd -P)"
+REAL61="$ROOT61/$RID61.result"
+if [ -f "$REAL61" ]; then
+  ok "61a — the producing run left a terminal result at its promised path"
+else
+  bad "61a — the producing run left a terminal result at its promised path" \
+      "missing $REAL61; runs/ holds: $(ls "$ROOT61" 2>&1 | tr '\n' ' ')"
+fi
+
+# THE SOLE CODE-TO-SYMBOL OWNER, lifted as production text rather than restated.
+# A symbol table written here would be a second authority on what an exit code
+# means, and the two would drift the first time either changed.
+OUTFN61="$SANDBOX_ROOT/wl2-outcome-fn.sh"
+sed -n '/^result_outcome() {/,/^}/p' "$DISPATCH_BIN" >"$OUTFN61" 2>/dev/null
+if [ -s "$OUTFN61" ] && [ "$(grep -c '^result_outcome() {' "$DISPATCH_BIN")" = 1 ]; then
+  ok "61a — the dispatcher still defines exactly one code-to-outcome map, and it was lifted"
+else
+  bad "61a — the dispatcher still defines exactly one code-to-outcome map, and it was lifted" \
+      "definitions: $(grep -c '^result_outcome() {' "$DISPATCH_BIN"), lifted bytes: $(wc -c <"$OUTFN61" 2>/dev/null)"
+fi
+
+# INDEPENDENCE, PROVED RATHER THAN ASSERTED. The pair is derived with the record
+# moved out of the way entirely: a derivation that read the artifact could not
+# survive its absence. Restored immediately, so every assertion below runs against
+# the unchanged producer artifact at its promised path.
+mv "$REAL61" "$V61/hidden.result" 2>/dev/null
+X_OUTCOME61="$( . "$OUTFN61" >/dev/null 2>&1; result_outcome "$X_CODE61" )"
+X_ABSENT61="$([ -f "$REAL61" ] && printf 'present' || printf 'absent')"
+mv "$V61/hidden.result" "$REAL61" 2>/dev/null
+if [ -n "$X_OUTCOME61" ] && [ "$X_ABSENT61" = absent ]; then
+  ok "61a — the expected outcome/code pair is derived with the artifact absent ($X_OUTCOME61/$X_CODE61)"
+else
+  bad "61a — the expected outcome/code pair is derived with the artifact absent ($X_OUTCOME61/$X_CODE61)" \
+      "outcome='$X_OUTCOME61' artifact-was='$X_ABSENT61'"
+fi
+
+sem_expect "$VAL_LIB" "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" "$X_OUTCOME61" "$X_CODE61" \
+  0 ok "61a — the unchanged real producer result is accepted for the terminal the caller expected"
+
+echo
+echo "Case 61b — a structurally valid, correctly ADDRESSED record is rejected when its meaning disagrees"
+# ONE FIELD APART FROM THE GENUINE RECORD, and placed at the promised path of an
+# evidence root of its own so task, checkout, run and path all still match. Only
+# the meaning differs, which is what makes these the sharp fixtures rather than
+# soft ones: no other boundary has anything left to object to.
+WRONG_OUT61="$SANDBOX_ROOT/v61-outroot"; mkdir -p "$WRONG_OUT61"
+WRONG_OUT61="$(cd "$WRONG_OUT61" && pwd -P)"
+sed 's/^outcome=.*/outcome=COMPLETED/' "$REAL61" >"$WRONG_OUT61/$RID61.result" 2>/dev/null
+WRONG_CODE61="$SANDBOX_ROOT/v61-coderoot"; mkdir -p "$WRONG_CODE61"
+WRONG_CODE61="$(cd "$WRONG_CODE61" && pwd -P)"
+sed 's/^code=.*/code=0/' "$REAL61" >"$WRONG_CODE61/$RID61.result" 2>/dev/null
+
+sem_expect "$VAL_LIB" "$WRONG_OUT61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_OUT61" \
+  "$X_OUTCOME61" "$X_CODE61" 1 outcome-mismatch \
+  "61b — a record claiming another terminal's OUTCOME is rejected"
+sem_expect "$VAL_LIB" "$WRONG_CODE61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_CODE61" \
+  "$X_OUTCOME61" "$X_CODE61" 1 code-mismatch \
+  "61b — a record claiming another terminal's CODE is rejected with a DISTINCT token"
+
+# THE GAP, ASSERTED IN SO MANY WORDS. If path, structure and identity could catch
+# either fixture, this whole boundary would be redundant — and these two
+# assertions are what would say so.
+ident_expect "$VAL_LIB" "$WRONG_OUT61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_OUT61" 0 ok \
+  "61b — the wrong-outcome record passes path, structure and identity, so only meaning can reject it"
+ident_expect "$VAL_LIB" "$WRONG_CODE61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_CODE61" 0 ok \
+  "61b — the wrong-code record passes path, structure and identity, so only meaning can reject it"
+
+echo
+echo "Case 61c — the comparison is bound to the one parse, and the boundary owns no table"
+
+# ASKED COLD. No gate decision and no parse, so there is nothing to compare and it
+# names the earlier of the two missing preconditions.
+COLD61="$( . "$VAL_LIB" >/dev/null 2>&1
+           tok="$(validate_terminal_result_semantics "$REAL61" "$X_OUTCOME61" "$X_CODE61" 2>/dev/null)"
+           printf '%s %s\n' "$?" "$tok" )"
+if [ "$COLD61" = "1 path-unchecked" ]; then
+  ok "61c — the semantic check refuses an artifact whose path the safety gate never cleared"
+else
+  bad "61c — the semantic check refuses an artifact whose path the safety gate never cleared" \
+      "expected '1 path-unchecked', got '$COLD61'"
+fi
+
+# THE PARSE RAN ON A DIFFERENT FILE. The ordering precondition is satisfied and
+# fields ARE published — they just belong to something else, which is exactly the
+# stale-field reuse this refusal exists to prevent.
+OTHER61="$WRONG_OUT61/$RID61.result"
+UNVAL61="$( . "$VAL_LIB" >/dev/null 2>&1
+            validate_terminal_result_path "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" >/dev/null 2>&1
+            validate_terminal_result "$OTHER61" >/dev/null 2>&1
+            tok="$(validate_terminal_result_semantics "$REAL61" "$X_OUTCOME61" "$X_CODE61" 2>/dev/null)"
+            printf '%s %s\n' "$?" "$tok" )"
+if [ "$UNVAL61" = "1 unvalidated" ]; then
+  ok "61c — the semantic check refuses when the parse that ran read a different file"
+else
+  bad "61c — the semantic check refuses when the parse that ran read a different file" \
+      "expected '1 unvalidated', got '$UNVAL61'"
+fi
+
+# REPLACED AFTER THE PARSE. A different file at the same promised path, carrying
+# the wrong-outcome record: without the file-identity pin the comparison would
+# answer from the first record's captured outcome and ACCEPT it.
+SWAP61="$( . "$VAL_LIB" >/dev/null 2>&1
+           cp "$REAL61" "$V61/original.result"
+           validate_terminal_result_path "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" >/dev/null 2>&1
+           validate_terminal_result "$REAL61" >/dev/null 2>&1
+           rm -f "$REAL61"; cp "$OTHER61" "$REAL61"
+           tok="$(validate_terminal_result_semantics "$REAL61" "$X_OUTCOME61" "$X_CODE61" 2>/dev/null)"
+           rc=$?
+           rm -f "$REAL61"; cp "$V61/original.result" "$REAL61"
+           printf '%s %s\n' "$rc" "$tok" )"
+if [ "$SWAP61" = "1 artifact-replaced" ]; then
+  ok "61c — a record replaced after the parse is refused, not answered from captured fields"
+else
+  bad "61c — a record replaced after the parse is refused, not answered from captured fields" \
+      "expected '1 artifact-replaced', got '$SWAP61'"
+fi
+
+# REWRITTEN IN PLACE. Same file, different bytes — which the identity pin cannot
+# see and the digest can. Both are required, and each names its own event.
+APPEND61="$( . "$VAL_LIB" >/dev/null 2>&1
+             cp "$REAL61" "$V61/original2.result"
+             validate_terminal_result_path "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" >/dev/null 2>&1
+             validate_terminal_result "$REAL61" >/dev/null 2>&1
+             printf 'next_action=appended\n' >>"$REAL61"
+             tok="$(validate_terminal_result_semantics "$REAL61" "$X_OUTCOME61" "$X_CODE61" 2>/dev/null)"
+             rc=$?
+             cp "$V61/original2.result" "$REAL61"
+             printf '%s %s\n' "$rc" "$tok" )"
+if [ "$APPEND61" = "1 artifact-changed" ]; then
+  ok "61c — a record rewritten in place after the parse is refused"
+else
+  bad "61c — a record rewritten in place after the parse is refused" \
+      "expected '1 artifact-changed', got '$APPEND61'"
+fi
+
+# AN UNSUPPLIED EXPECTATION IS NOT A WILDCARD, the same rule the two accepted
+# boundaries state.
+sem_expect "$VAL_LIB" "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" "" "$X_CODE61" \
+  1 no-expectation "61c — an unsupplied expected outcome is refused rather than treated as any outcome"
+sem_expect "$VAL_LIB" "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" "$X_OUTCOME61" "" \
+  1 no-expectation "61c — an unsupplied expected code is refused rather than treated as any code"
+
+# THE BOUNDARY KNOWS NO SYMBOLS. A code-to-outcome table here would be a second
+# authority on what an exit code means. Whole-line comments are stripped first,
+# for the reason 51b gives: a comment cannot execute, so prose naming a symbol
+# would be a false positive about the one thing this control exists to catch.
+SEM_CODE="$SANDBOX_ROOT/wl2-semantic-code.sh"
+awk '/^validate_terminal_result_semantics\(\)/{f=1} f' "$VAL_LIB" 2>/dev/null |
+  sed 's/^[[:space:]]*#.*$//' >"$SEM_CODE" 2>/dev/null
+TABLE_RE='NO_TRANSITION|COMPLETED|OPERATOR_TAKEOVER|UNCLASSIFIED|result_outcome|^[[:space:]]*case '
+if [ -s "$SEM_CODE" ] && ! grep -nE "$TABLE_RE" "$SEM_CODE" >/dev/null 2>&1; then
+  ok "61c — the semantic boundary's text carries no outcome symbols and no second mapping"
+else
+  bad "61c — the semantic boundary's text carries no outcome symbols and no second mapping" \
+      "${SEM_CODE} empty, or: $(grep -nE "$TABLE_RE" "$SEM_CODE" 2>/dev/null | head -3 | tr '\n' ';')"
+fi
+
+# READ-ONLY ACROSS THE WHOLE CHECKOUT, on the argument case 51b makes: the claim
+# covers state files, leases, ownership, logs and captures, not just the artifact.
+BEFORE61="$(tree_manifest "$V61D")"
+sem_run "$VAL_LIB" "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" "$X_OUTCOME61" "$X_CODE61" >/dev/null 2>&1
+sem_run "$VAL_LIB" "$WRONG_OUT61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_OUT61" \
+  "$X_OUTCOME61" "$X_CODE61" >/dev/null 2>&1
+AFTER61="$(tree_manifest "$V61D")"
+if [ "$BEFORE61" = "$AFTER61" ]; then
+  ok "61c — semantic validation changes nothing in the checkout"
+else
+  bad "61c — semantic validation changes nothing in the checkout" \
+      "$(printf '%s\n' "$BEFORE61" >"$V61/before"; printf '%s\n' "$AFTER61" >"$V61/after"
+         diff "$V61/before" "$V61/after" | head -4 | tr '\n' ';')"
+fi
+
+echo
+echo "Case 61d — mutation control: remove ONLY the two semantic comparisons and both mismatches are accepted"
+MUT61="$SANDBOX_ROOT/mutants61"; mkdir -p "$MUT61"
+
+# M32 — delete exactly the two comparison lines from the DISPATCHER, leaving path
+# safety, structure, identity and every precondition above them untouched. Without
+# them the records one field apart from the genuine one are ACCEPTED, which is the
+# pre-edit behaviour 61b exists to catch. Fails closed: unless the selector matched
+# exactly one of each line, the mutant differs and still parses, the control does
+# not run and says so.
+sed "/printf 'outcome-mismatch/d; /printf 'code-mismatch/d" "$DISPATCH_BIN" >"$MUT61/m32.sh" 2>/dev/null
+# `|| true` INSIDE the substitution, not a `printf` fallback after it: `grep -c`
+# already prints its count and exits 1 when that count is zero, so a fallback
+# appends a SECOND zero and the comparison below can never match.
+M32_HITS="$(grep -c "printf 'outcome-mismatch\|printf 'code-mismatch" "$DISPATCH_BIN" 2>/dev/null || true)"
+M32_LEFT="$(grep -c "printf 'outcome-mismatch\|printf 'code-mismatch" "$MUT61/m32.sh" 2>/dev/null || true)"
+M32_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT61/m32.sh" || M32_DIFFERS=yes
+M32_PARSES=no; bash -n "$MUT61/m32.sh" 2>/dev/null && M32_PARSES=yes
+if [ "$M32_HITS" = 2 ] && [ "$M32_LEFT" = 0 ] && [ "$M32_DIFFERS" = yes ] && [ "$M32_PARSES" = yes ]; then
+  ok "61d — M32 matched exactly the two comparisons, differs from the dispatcher, and still parses"
+  if extract_validator "$MUT61/m32.sh" "$MUT61/m32.lib"; then
+    sem_expect "$MUT61/m32.lib" "$WRONG_OUT61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_OUT61" \
+      "$X_OUTCOME61" "$X_CODE61" 0 ok \
+      "61d — M32: without the comparisons the wrong-outcome record is accepted (61b is fail-capable)"
+    sem_expect "$MUT61/m32.lib" "$WRONG_CODE61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_CODE61" \
+      "$X_OUTCOME61" "$X_CODE61" 0 ok \
+      "61d — M32: without the comparisons the wrong-code record is accepted (61b is fail-capable)"
+  else
+    bad "61d — M32: without the comparisons both mismatched records are accepted (61b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "61d — M32 matched exactly the two comparisons, differs from the dispatcher, and still parses" \
+      "matched=$M32_HITS left=$M32_LEFT differs=$M32_DIFFERS parses=$M32_PARSES — the control cannot run"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

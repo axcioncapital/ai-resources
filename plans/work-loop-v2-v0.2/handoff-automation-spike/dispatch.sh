@@ -940,6 +940,18 @@ TR_SOURCE=''
 TR_TASK=''
 TR_CHECKOUT=''
 TR_RUN=''
+# THE TWO SEMANTIC FIELDS, captured by that SAME single pass and consumed by the
+# semantic boundary below. They are held here for one reason: the record is parsed
+# once, and a boundary that needed them later would otherwise have to open the
+# artifact a second time — two readers over one artifact being the exact failure
+# the identity note above records.
+#
+# CAPTURED IS NOT COMPARED. Holding what the record SAYS its outcome and code are
+# settles nothing about whether either is true; that is the semantic boundary's
+# question, and it answers it against values the caller established elsewhere.
+# Nothing in this file derives an expectation from these two.
+TR_OUTCOME=''
+TR_CODE=''
 # THE SNAPSHOT THE ACCEPTED FIELDS CAME FROM, not merely the pathname they were
 # read through. A pathname is not an artifact: a structurally valid record can be
 # parsed and then REPLACED at that same path by another structurally valid one,
@@ -1059,8 +1071,10 @@ validate_terminal_result_path() { # artifact task checkout run evidence-root -> 
 validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded reason token
   local f="${1-}" bytes line key val n=0 seen=' ' last='' k
   local got_task='' got_checkout='' got_run='' sha_before='' sha_after=''
+  local got_outcome='' got_code=''
   local fid_before='' fid_after=''
   TR_SOURCE=''; TR_TASK=''; TR_CHECKOUT=''; TR_RUN=''; TR_SHA=''; TR_FID=''
+  TR_OUTCOME=''; TR_CODE=''
   # Read, never written, at the first instruction of the parse. TR_PATH_CLEARED
   # belongs to the gate and is deliberately not reset here: clearing it would make
   # this function able to invalidate a gate decision it does not own.
@@ -1151,6 +1165,8 @@ validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded 
       task)     got_task="$val" ;;
       checkout) got_checkout="$val" ;;
       run)      got_run="$val" ;;
+      outcome)  got_outcome="$val" ;;
+      code)     got_code="$val" ;;
     esac
     last="$line"
   done <"$f"
@@ -1176,6 +1192,7 @@ validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded 
   # set of bytes in one file.
   TR_SOURCE="$f"; TR_TASK="$got_task"; TR_CHECKOUT="$got_checkout"; TR_RUN="$got_run"
   TR_SHA="$sha_after"; TR_FID="$fid_after"
+  TR_OUTCOME="$got_outcome"; TR_CODE="$got_code"
   printf 'ok\n'
   return 0
 }
@@ -1259,6 +1276,80 @@ validate_terminal_result_identity() { # artifact task checkout run evidence-root
   [ "$TR_TASK" = "$x_task" ]         || { printf 'task-mismatch\n';     return 1; }
   [ "$TR_CHECKOUT" = "$x_checkout" ] || { printf 'checkout-mismatch\n'; return 1; }
   [ "$TR_RUN" = "$x_run" ]           || { printf 'run-mismatch\n';      return 1; }
+
+  printf 'ok\n'
+  return 0
+}
+
+# ------------------------------- the terminal result's expected-MEANING reader
+#
+# THE THIRD QUESTION, and the one the two boundaries above deliberately leave
+# open. The parser asks "is this the shape this dispatcher writes". Identity asks
+# "is this the result promised for THIS task, THIS checkout and THIS run". Both
+# can pass on a record whose `outcome` and `code` say something other than the
+# terminal the caller was expecting — a genuine record of a DIFFERENT ending,
+# structurally perfect and correctly addressed, is the case that gap admits.
+#
+# EVERY EXPECTATION COMES FROM THE CALLER, on the same argument the identity
+# boundary makes and for a sharper reason here. The caller knows which terminal it
+# is finalizing; the artifact merely asserts one. Deriving either expected value
+# from the record under test would compare it with itself, which is a check a
+# forged record passes by construction.
+#
+# NO SECOND CODE-TO-OUTCOME TABLE. `result_outcome()` is the sole owner of that
+# mapping and stays the sole owner: this function compares two values it is given
+# and knows no symbols of its own. A table here would be a second authority on
+# what an exit code means, and the two would drift the first time one changed.
+#
+# IT REOPENS NOTHING. The comparison is against what the single structural pass
+# captured, re-pinned to that pass's exact artifact snapshot — so a caller cannot
+# parse one record and ask about another, and a record replaced or rewritten after
+# the parse is refused rather than answered from stale captured fields.
+#
+# THE EXPECTED VALUES ARE COMPARED, NEVER USED AS PATHS, which is why they carry
+# no traversal or control-character refusal of their own. Identity screens its
+# arguments because they build a promised path; nothing here opens, resolves or
+# executes anything, so a hostile expectation can only fail to match.
+validate_terminal_result_semantics() { # artifact expected-outcome expected-code -> 0 and ok, or 1 and one bounded token
+  local f="${1-}" x_outcome="${2-}" x_code="${3-}"
+  local sha_now fid_now
+
+  [ -n "$f" ] || { printf 'no-path\n'; return 1; }
+  # AN UNSUPPLIED EXPECTATION IS NOT A WILDCARD, exactly as at the two boundaries
+  # above. A caller that has not established what ending it expects is refused,
+  # never matched against whatever the record happens to claim.
+  [ -n "$x_outcome" ] && [ -n "$x_code" ] || { printf 'no-expectation\n'; return 1; }
+
+  # THE SAME TWO PRECONDITIONS, IN THE SAME ORDER, and for the same reason the
+  # identity boundary states: the gate must have cleared this path BEFORE the
+  # parse opened it, and the parse that ran must have read THIS artifact.
+  [ "${TR_PARSE_GATED:-}" = "$f" ] || { printf 'path-unchecked\n'; return 1; }
+  [ "${TR_SOURCE:-}" = "$f" ]      || { printf 'unvalidated\n';    return 1; }
+
+  # A regular file that has become a link since the gate cleared it is a changed
+  # path, and checked first so it is named as one.
+  if [ ! -L "$f" ]; then :; else printf 'symlinked-path\n'; return 1; fi
+
+  # WHICH FILE, then WHICH BYTES — the snapshot binding, re-established here
+  # rather than inherited from whether identity happened to run. This boundary is
+  # callable on its own, so it defends its own answer: without this, a record
+  # could be validated and then replaced at the same name, and the comparison
+  # below would report the first record's outcome for the second record's bytes.
+  fid_now="$(wl2_tr_fid "$f")"
+  [ -n "$fid_now" ] || { printf 'unidentifiable\n'; return 1; }
+  [ "$fid_now" = "${TR_FID:-}" ] || { printf 'artifact-replaced\n'; return 1; }
+
+  sha_now="$(wl2_tr_sha "$f")"
+  [ -n "$sha_now" ] || { printf 'unhashable\n'; return 1; }
+  [ "$sha_now" = "${TR_SHA:-}" ] || { printf 'artifact-changed\n'; return 1; }
+
+  # Artifact against caller, one field per line and one token each, so a mutation
+  # control can remove exactly one comparison and prove the other is not standing
+  # in for it. The two are distinct on purpose: a record carrying the right symbol
+  # for the wrong code and one carrying the wrong symbol for the right code are
+  # different failures, and a shared token would hide which one happened.
+  [ "$TR_OUTCOME" = "$x_outcome" ] || { printf 'outcome-mismatch\n'; return 1; }
+  [ "$TR_CODE" = "$x_code" ]       || { printf 'code-mismatch\n';    return 1; }
 
   printf 'ok\n'
   return 0
