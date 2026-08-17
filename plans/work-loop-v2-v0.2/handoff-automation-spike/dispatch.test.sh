@@ -7501,6 +7501,117 @@ else
 fi
 unset WL60H_SF WL60H_CO
 
+echo
+echo "Case 60i — mutation control: neutralize ONLY the launched-actor publication"
+# Unit 20, and it is the half Unit 19 deliberately left out. 60h proves the
+# carried terminal REPORTS `default`; on its own it cannot prove that
+# LAUNCHED_ACTOR is what makes it do so — a producer that had simply been
+# hard-coded to `default` for live Claude would satisfy every row above.
+#
+# THE PUBLICATION, NOT THE READ, is the site. Neutralizing the read would delete
+# the guard and make the function answer `default` for Codex too, which fails 60h
+# for a reason that is not the one under test. Removing the one line that records
+# WHICH actor was forked leaves every other guard standing and reverts exactly the
+# Unit 19 behaviour: the fact is never published, so the producer's third guard
+# sees an empty value and falls to `none` — the pre-unit answer.
+#
+# MATCHED WHOLE AND COUNTED, the M1 discipline. A seam that moved, changed shape,
+# or appears twice stops the control rather than silently mutating something else
+# or testing a script that was never changed. The three conditions are separate
+# variables and are reported separately, so a control that could not run is never
+# confused with one that ran and found nothing.
+MUT60I="$SANDBOX_ROOT/mutants60i"; mkdir -p "$MUT60I"
+M28_LINE='  LAUNCHED_ACTOR="${CUR_ACTOR:-}"'
+M28_HITS="$(grep -Fxc -- "$M28_LINE" "$DISPATCH_BIN" 2>/dev/null)"
+awk -v want="$M28_LINE" '$0 == want { print "  :"; next } { print }' "$DISPATCH_BIN" >"$MUT60I/m28.sh"
+M28_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT60I/m28.sh" || M28_DIFFERS=yes
+M28_PARSES=no; bash -n "$MUT60I/m28.sh" 2>/dev/null && M28_PARSES=yes
+
+# THE GUARD'S OWN FALSIFIABILITY, three one-shot checks before the control runs.
+# Each shows one of the three conditions above actually rejects something, so a
+# later edit cannot leave the control passing vacuously against an unmutated,
+# doubly-mutated or unparseable script. They are cheap: no dispatcher runs.
+M28_NOOP_LINE='  LAUNCHED_ACTOR="${CUR_ACTOR:-}" # a suffix the dispatcher does not carry'
+M28_NOOP_HITS="$(grep -Fxc -- "$M28_NOOP_LINE" "$DISPATCH_BIN" 2>/dev/null || true)"
+awk -v want="$M28_NOOP_LINE" '$0 == want { print "  :"; next } { print }' \
+    "$DISPATCH_BIN" >"$MUT60I/m28-noop.sh"
+if [ "${M28_NOOP_HITS:-0}" = "0" ] && cmp -s "$DISPATCH_BIN" "$MUT60I/m28-noop.sh"; then
+  ok "60i — a selector matching nothing yields an UNMUTATED script, which hits==1 and differs==yes both reject"
+else
+  bad "60i — a selector matching nothing yields an UNMUTATED script" \
+      "hits=${M28_NOOP_HITS:-0}, and the 'mutant' $(cmp -s "$DISPATCH_BIN" "$MUT60I/m28-noop.sh" && echo 'is' || echo 'is not') identical"
+fi
+awk -v want="$M28_LINE" '{ print } $0 == want { print }' "$DISPATCH_BIN" >"$MUT60I/m28-dup.sh"
+[ "$(grep -Fxc -- "$M28_LINE" "$MUT60I/m28-dup.sh" 2>/dev/null)" = "2" ] \
+  && ok "60i — a duplicated seam counts 2, which the hits==1 test rejects (the counter is real)" \
+  || bad "60i — a duplicated seam counts 2, which the hits==1 test rejects" \
+         "counted $(grep -Fxc -- "$M28_LINE" "$MUT60I/m28-dup.sh" 2>/dev/null)"
+awk -v want="$M28_LINE" '$0 == want { print "  if"; next } { print }' \
+    "$DISPATCH_BIN" >"$MUT60I/m28-broken.sh"
+bash -n "$MUT60I/m28-broken.sh" 2>/dev/null \
+  && bad "60i — an unparseable replacement is rejected by the parses test" "bash -n accepted a dangling 'if'" \
+  || ok "60i — an unparseable replacement is rejected by the parses test, separately from any behaviour"
+
+if [ "$M28_HITS" = "1" ] && [ "$M28_DIFFERS" = yes ] && [ "$M28_PARSES" = yes ]; then
+  ok "60i — M28 mutant matched the publication exactly once, differs, and still parses"
+
+  # The fixture is 60h row 1 verbatim: a live fake-Claude fork, no external model
+  # request, carried to the post-hop terminal 60h asserts.
+  M28FAKE="$SANDBOX_ROOT/fake-claude-60i.sh"
+  cat >"$M28FAKE" <<'M28EOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.220 (Claude Code)"; exit 0; fi
+sf="$WL60I_SF"
+awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+git -C "$WL60I_CO" add "$sf" >/dev/null 2>&1
+git -C "$WL60I_CO" commit -qm "fake claude hop" >/dev/null 2>&1
+exit 0
+M28EOF
+  chmod +x "$M28FAKE"
+
+  V60I="$(new_sandbox)"; state_file "$V60I" carry-mut claude
+  export WL60I_SF="$V60I/logs/work-loop/carry-mut.md"
+  export WL60I_CO="$V60I"
+  OUT="$(bash "$MUT60I/m28.sh" --checkout "$V60I" --task carry-mut --log-dir "$V60I/runs" \
+        --carry-one --claude-bin "$M28FAKE" 2>&1)"; RC=$?
+  R60I="$V60I/runs/$(run_id_of "$OUT").result"
+  # CAUSAL FAILURE, NOT FIXTURE BREAKAGE. Asserted as one condition so the control
+  # cannot pass on a mutant that merely crashed: the run must still carry the hop
+  # and still finalize a live, post-hop, carried record — everything 60h's
+  # precondition assertion checks — and differ from it in the ONE field under test.
+  if [ "$RC" -eq 0 ] &&
+     [ "$(res_field "$R60I" mode)" = live ] &&
+     [ "$(res_field "$R60I" outcome)" = CARRY_ONE_COMPLETE ] &&
+     [ "$(res_field "$R60I" stage)" = post-hop ] &&
+     [ "$(res_field "$R60I" actor_launched)" = yes ] &&
+     [ "$(res_field "$R60I" permission_mode_requested)" = none ]; then
+    ok "60i — M28: the carried terminal still runs, and reports none instead of default (60h is fail-capable)"
+  else
+    bad "60i — M28: the carried terminal still runs, and reports none instead of default" \
+        "rc=$RC mode=$(res_field "$R60I" mode) outcome=$(res_field "$R60I" outcome) stage=$(res_field "$R60I" stage) launched=$(res_field "$R60I" actor_launched) perm=$(res_field "$R60I" permission_mode_requested)"
+  fi
+
+  # THE PAIRED UNMUTATED RUN, same fixture, same flags, one line of source apart.
+  # Without it the row above would be satisfied by a fixture that reports `none`
+  # for some reason of its own, and the mutation would be proving nothing.
+  V60IC="$(new_sandbox)"; state_file "$V60IC" carry-mut-control claude
+  export WL60I_SF="$V60IC/logs/work-loop/carry-mut-control.md"
+  export WL60I_CO="$V60IC"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$V60IC" --task carry-mut-control --log-dir "$V60IC/runs" \
+        --carry-one --claude-bin "$M28FAKE" 2>&1)"; RC=$?
+  R60IC="$V60IC/runs/$(run_id_of "$OUT").result"
+  if [ "$RC" -eq 0 ] && [ "$(res_field "$R60IC" permission_mode_requested)" = default ]; then
+    ok "60i — and the unmodified dispatcher reports default on the identical fixture"
+  else
+    bad "60i — and the unmodified dispatcher reports default on the identical fixture" \
+        "rc=$RC perm=$(res_field "$R60IC" permission_mode_requested)"
+  fi
+  unset WL60I_SF WL60I_CO
+else
+  bad "60i — M28 mutant matched the publication exactly once, differs, and still parses" \
+      "matched ${M28_HITS:-0} lines, want exactly 1; differs=$M28_DIFFERS parses=$M28_PARSES — the control cannot run"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
