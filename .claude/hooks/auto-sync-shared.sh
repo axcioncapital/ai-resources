@@ -110,6 +110,85 @@ matches_glob() {
   return 1
 }
 
+# Generated destinations are checkout-local products, not repository content:
+# every symlink this hook manages is covered by one marked block in the
+# repository's LOCAL exclude file (info/exclude — never .gitignore), rewritten
+# exactly on each run. The exclude set is derived inside the same sync loops
+# that generate the links, so there is no second generated-path interpretation
+# to drift. Fail open throughout: a project outside any Git repository, or a
+# hand-mangled block, skips maintenance rather than risking content loss.
+EXCL_BEGIN="# BEGIN auto-sync-shared generated symlinks — managed block, do not edit"
+EXCL_END="# END auto-sync-shared generated symlinks"
+repo_top=$(git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null)
+exclude_file=$(git -C "$PROJECT_DIR" rev-parse --git-path info/exclude 2>/dev/null)
+case "$exclude_file" in
+  '') ;;
+  /*) ;;
+  *) exclude_file="$PROJECT_DIR/$exclude_file" ;;
+esac
+managed_excludes=""
+
+note_generated() {
+  # Record $1 for the managed block when it is a symlink at a managed name —
+  # the observable mark of a generated product. A regular file at the same
+  # name is project-owned (drift detection reports it) and stays unlisted.
+  local dest rel
+  dest="$1"
+  [ -n "$repo_top" ] && [ -L "$dest" ] || return 0
+  case "$dest" in
+    "$repo_top"/*) rel="${dest#"$repo_top"/}" ;;
+    *)
+      # PROJECT_DIR may reach the same tree through symlinked path components
+      # (e.g. /var vs /private/var); retry against the physical path.
+      dest="$(cd "$(dirname "$dest")" 2>/dev/null && pwd -P)/$(basename "$dest")"
+      case "$dest" in
+        "$repo_top"/*) rel="${dest#"$repo_top"/}" ;;
+        *) return 0 ;;
+      esac
+      ;;
+  esac
+  managed_excludes="${managed_excludes}/${rel}
+"
+}
+
+write_exclude_block() {
+  [ -n "$repo_top" ] && [ -n "$exclude_file" ] || return 0
+  local tmp begins ends
+  if [ -f "$exclude_file" ]; then
+    begins=$(grep -cxF "$EXCL_BEGIN" "$exclude_file" 2>/dev/null || true)
+    ends=$(grep -cxF "$EXCL_END" "$exclude_file" 2>/dev/null || true)
+    begins=${begins:--1}; ends=${ends:--1}
+    # Maintain only a well-formed file: no block, or exactly one balanced
+    # block. Anything else was hand-edited — leave the file untouched.
+    if ! { [ "$begins" -eq 0 ] && [ "$ends" -eq 0 ]; } &&
+       ! { [ "$begins" -eq 1 ] && [ "$ends" -eq 1 ]; }; then
+      return 0
+    fi
+  fi
+  tmp=$(mktemp) || return 0
+  if [ -f "$exclude_file" ]; then
+    awk -v b="$EXCL_BEGIN" -v e="$EXCL_END" '
+      $0 == b {inblock=1; next}
+      $0 == e {inblock=0; next}
+      !inblock {print}
+    ' "$exclude_file" >"$tmp"
+  fi
+  if [ -n "$managed_excludes" ]; then
+    {
+      printf '%s\n' "$EXCL_BEGIN"
+      printf '%s' "$managed_excludes" | LC_ALL=C sort -u
+      printf '%s\n' "$EXCL_END"
+    } >>"$tmp"
+  fi
+  if [ -f "$exclude_file" ] && cmp -s "$tmp" "$exclude_file"; then
+    rm -f "$tmp"
+  elif mkdir -p "$(dirname "$exclude_file")" 2>/dev/null; then
+    mv -f "$tmp" "$exclude_file" 2>/dev/null || rm -f "$tmp"
+  else
+    rm -f "$tmp"
+  fi
+}
+
 synced=""
 failed=""
 unknown=""
@@ -130,6 +209,7 @@ for src in "$AI_RESOURCES"/.claude/commands/*.md; do
   if [ "$IS_WORKSPACE_ROOT" -eq 0 ] && in_list "$name" "$EXCLUDE_COMMANDS"; then continue; fi
   in_list "$name" "$LOCAL_COMMANDS" && continue
   target="$PROJECT_DIR/.claude/commands/${name}.md"
+  note_generated "$target"
   [ -e "$target" ] || [ -L "$target" ] && continue
   mkdir -p "$PROJECT_DIR/.claude/commands"
   if ! rel_src=$(python3 -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$src" "$(dirname "$target")" 2>/dev/null) || [ -z "$rel_src" ]; then
@@ -137,6 +217,7 @@ for src in "$AI_RESOURCES"/.claude/commands/*.md; do
     continue
   fi
   ln -s "$rel_src" "$target"  # relative target — see header comment above
+  note_generated "$target"
   synced="$synced ${name}.md"
 done
 
@@ -147,6 +228,7 @@ for src in "$AI_RESOURCES"/.claude/agents/*.md; do
   if [ "$IS_WORKSPACE_ROOT" -eq 0 ] && matches_glob "$name" "$EXCLUDE_AGENT_GLOBS"; then continue; fi
   in_list "$name" "$LOCAL_AGENTS" && continue
   target="$PROJECT_DIR/.claude/agents/${name}.md"
+  note_generated "$target"
   [ -e "$target" ] || [ -L "$target" ] && continue
   mkdir -p "$PROJECT_DIR/.claude/agents"
   if ! rel_src=$(python3 -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$src" "$(dirname "$target")" 2>/dev/null) || [ -z "$rel_src" ]; then
@@ -154,6 +236,7 @@ for src in "$AI_RESOURCES"/.claude/agents/*.md; do
     continue
   fi
   ln -s "$rel_src" "$target"  # relative target — see header comment above
+  note_generated "$target"
   synced="$synced ${name}.md"
 done
 
@@ -168,6 +251,7 @@ for name in $SHARED_SKILLS; do
     continue
   fi
   target="$PROJECT_DIR/.agents/skills/$name"
+  note_generated "$target"
   [ -e "$target" ] || [ -L "$target" ] && continue
   mkdir -p "$PROJECT_DIR/.agents/skills"
   if ! rel_src=$(python3 -c 'import os, sys; print(os.path.relpath(sys.argv[1], sys.argv[2]))' "$src" "$(dirname "$target")" 2>/dev/null) || [ -z "$rel_src" ]; then
@@ -175,8 +259,13 @@ for name in $SHARED_SKILLS; do
     continue
   fi
   ln -s "$rel_src" "$target"  # relative target — see header comment above
+  note_generated "$target"
   synced="$synced skills/$name"
 done
+
+# Rewrite the managed local-exclude block from what the loops above actually
+# generated (or found already generated) this run.
+write_exclude_block
 
 # Drift detection: targets that exist as regular files (not symlinks) but differ
 # from the canonical source. Uses "AI-RESOURCES DRIFT:" prefix to distinguish from
