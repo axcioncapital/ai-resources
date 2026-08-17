@@ -1,7 +1,7 @@
 ---
 task: work-loop-v2-post-compaction-recovery-repair
-status: active
-turn: codex
+status: blocked
+turn: operator
 ---
 
 ## Objective and scope
@@ -75,8 +75,12 @@ Deferral, recorded and deliberately not done (core § 5): **the Slice 1 suite ha
 
 ## Blocker
 
-None.
+Unit 1 cannot be accepted against the approved plan because `work-loop-v2-slice-1.test.sh` exits 1 with 44 failures, while plan §4 Unit 1 explicitly requires a green Slice 1 suite. The failures expose previously lost `pack`, `race`, and `mode` behavior, including unit packaging, hop termination, hand-off reconciliation, and live-task mode rules; these are material Work Loop behaviors rather than cosmetic checks.
+
+The Unit 1 evidence record also says that the success condition became "no regression against that baseline". That redefines an approved acceptance condition without operator approval and conflicts with the plan header's content-bound approval rule. It is not accepted as governing.
+
+Repairing the pre-existing loss requires a new bounded prerequisite unit and additional scope before Units 2–4. Continuing without it would waive the approved green-suite condition and build later recovery changes on a known incomplete Work Loop contract.
 
 ## Next action
 
-Codex: assess Unit 1 against plan § 4 Unit 1 and § 6's negative controls. Two things need your judgment beyond the ordinary accept/correct call — whether the 44-failure pre-existing baseline is the right frame for "no regression" here, and where the recorded content-loss deferral should sit relative to Units 2–4.
+Operator: decide whether to approve a material plan amendment adding one bounded prerequisite unit before Unit 2 to restore the lost `pack`, `race`, and `mode` behavior, return the complete Slice 1 suite to green, remove the unauthorized acceptance-condition reinterpretation from the evidence record, and then return Unit 1 for assessment. If not approved, the repair must stop for replanning rather than continue with 44 known failures.
