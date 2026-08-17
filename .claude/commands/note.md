@@ -12,6 +12,8 @@ Parse $ARGUMENTS for a prefix:
 
 ## Step A: Friction routing
 
+> **FROZEN (2026-08-17).** The friction log is frozen workspace-wide until further notice — write nothing to it. Reply: "The friction log is frozen (2026-08-17, operator decision) — entry not logged. Say `/note` without the `friction:` prefix if you want it in workflow-observations instead." Then stop. The steps below resume only when the freeze is lifted (workspace `CLAUDE.md` § Friction Log — FROZEN).
+
 1. Read `/logs/friction-log.md` (last 30 lines). If the file doesn't exist, create it with `# Friction Log` as the first line.
 2. If no `### Friction Events` section exists in the last 30 lines, append a new session block — the **canonical block** below. It is byte-identical to what `/friction-log` writes and what the `friction-log-auto.sh` hook writes; the three writers emit the same `## Session —` / `### Friction Events` / `#### Write Activity` block, and detection keys reliably on every header. Do not invent a `/note`-specific header:
    ```

@@ -1,4 +1,7 @@
 #!/bin/bash
+# FRICTION-LOG FREEZE (2026-08-17): all friction-log writes are paused workspace-wide
+# until further notice (operator decision). Remove these three lines to unfreeze.
+exit 0
 # Log file write/edit activity to the friction log
 # Triggered by: PostToolUse hook on Write and Edit matchers
 # Recursion guard: skips friction-log.md and improvement-log.md

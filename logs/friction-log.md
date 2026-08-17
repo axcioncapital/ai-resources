@@ -1,5 +1,7 @@
 # Friction Log
 
+> **FROZEN — 2026-08-17, until further notice.** No writes to this file by any mechanism (commands, hooks, agents, manual edits). The file is set read-only. Signals that would have been logged here are surfaced in chat instead. See workspace `CLAUDE.md` § Friction Log — FROZEN for the unfreeze steps.
+
 ## Schema
 
 Applies to entries dated **2026-07-03 onward**. Existing entries below, dated before 2026-07-03, are not retrofitted.
@@ -353,6 +355,9 @@ Applies to entries dated **2026-07-03 onward**. Existing entries below, dated be
   - **Owner artifact:** (none identified) — this is a reasoning discipline, not a component. It is deliberately **not** proposed as a new gate: the operating rule adopted this same day (`logs/decisions.md` 2026-07-13 S2) is *"build no checker, register or review process around it."* Logged as a lesson, not as machinery.
 
 #### Write Activity
+- 14:17 — /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/CLAUDE.md
+- 14:17 — .claude/agents/session-feedback-collector.md
+- 14:17 — .claude/commands/note.md
 - 23:24 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/bb326ec5-d6b6-4037-b1d3-481283533af5/scratchpad/falsify.sh
 - 23:24 — logs/scripts/work-loop-capability.test.sh
 - 23:23 — /private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources/bb326ec5-d6b6-4037-b1d3-481283533af5/scratchpad/step0-proof.sh
