@@ -6222,10 +6222,14 @@ echo
 echo "Case 55d — mutation controls: the terminal seam and its distinction are fail-capable"
 MUT55="$SANDBOX_ROOT/mutants55"; mkdir -p "$MUT55"
 
-# M18 — remove the finalization call from the operator block. The run then exits 0
-# with no result, which is the pre-unit behaviour exactly. Addressed by its marker
-# comment: deleting by function name would also remove die()'s call and prove
-# something else entirely.
+# M18 — remove the finalization call from the operator block. Before Unit 10 the
+# run then exited 0 with no result — the pre-unit behaviour exactly. The consumer
+# now stands between that hole and release_lock: the promised result is absent at
+# consumption, so the run refuses at 38 and the only record left is die()'s own
+# code-38 one. 55a stays fail-capable either way — no code-0 completion with a
+# valid completion result can come out of a seam with no finalization in it.
+# Addressed by its marker comment: deleting by function name would also remove
+# die()'s call and prove something else entirely.
 sed "/# operator terminal finalization/d" "$DISPATCH_BIN" >"$MUT55/m18.sh"
 chmod +x "$MUT55/m18.sh"
 if ! cmp -s "$DISPATCH_BIN" "$MUT55/m18.sh" && bash -n "$MUT55/m18.sh" 2>/dev/null; then
@@ -6234,11 +6238,11 @@ if ! cmp -s "$DISPATCH_BIN" "$MUT55/m18.sh" && bash -n "$MUT55/m18.sh" 2>/dev/nu
   OUT="$(bash "$MUT55/m18.sh" --checkout "$V55M" --task closed-task \
         --log-dir "$V55M/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCM=$?
   RIDM="$(run_id_of "$OUT")"
-  if [ "$RCM" -eq 0 ] && [ ! -f "$V55M/runs/$RIDM.result" ]; then
-    ok "55d — M18: without the seam the CLOSED path exits 0 with no result (55a is fail-capable)"
+  if [ "$RCM" -eq 38 ] && [ "$(res_field "$V55M/runs/$RIDM.result" code)" = 38 ]; then
+    ok "55d — M18: without the finalization call the consumer refuses the absent result at 38 (55a is fail-capable)"
   else
-    bad "55d — M18: without the seam the CLOSED path exits 0 with no result (55a is fail-capable)" \
-        "rc=$RCM result=$([ -f "$V55M/runs/$RIDM.result" ] && echo present || echo absent)"
+    bad "55d — M18: without the finalization call the consumer refuses the absent result at 38 (55a is fail-capable)" \
+        "rc=$RCM code=$(res_field "$V55M/runs/$RIDM.result" code)"
   fi
 else
   bad "55d — M18 mutant differs from the dispatcher and is valid bash" \
@@ -6396,6 +6400,194 @@ if [ ! -d "$(task_lock_for "$V55B" blocked-task)" ] && [ ! -d "$(checkout_lock_f
 else
   bad "55f — the BLOCKED_OPERATOR terminal released both leases once its result existed" \
       "task=$([ -d "$(task_lock_for "$V55B" blocked-task)" ] && echo present || echo absent) checkout=$([ -d "$(checkout_lock_for "$V55B")" ] && echo present || echo absent)"
+fi
+
+# ============================== case 56: the operator terminal CONSUMES first
+#
+# Unit 10. Finalization proves a record was written; it does not prove the record
+# at the promised path is the one this run wrote. Before this seam consumed, a
+# swap or removal landing between finalize_terminal_result and release_lock — the
+# exact window the forcing fixtures below occupy — still exited 0, released both
+# leases and admitted the next dispatcher: a lease release bought with evidence
+# nothing checked. The consumer composes the three accepted boundaries (path gate,
+# structural reader, identity) at the release seam; every refusal takes the
+# existing exit-38 retention route with the gate's bounded token as its cause.
+#
+# THE FIXTURES FORCE, THE DISPATCHER DECIDES — same technique as 55e's forcing
+# mutant: awk appends one hostile line after the finalization marker, inside the
+# window under test, and everything asserted afterwards is the unmodified seam's
+# own behaviour.
+
+echo
+echo "Case 56a — valid completion and takeover results pass the consumer and release normally"
+# 55a/55b already proved exit 0 and one finalized result each; what is new here is
+# that the SAME paths now run through the consumer gate — so a regression that
+# refused valid evidence would surface as a 38 here — and that the released lease
+# really admits a subsequent dispatcher.
+V56A="$(new_sandbox)"; state_file "$V56A" closed-task operator
+run_dispatch "$V56A" closed-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "56a — a valid CLOSED result passes the composed consumer and still exits 0" "$OUT"
+ROOT56A="$(cd "$V56A/runs" && pwd -P)"
+if [ "$(res_count "$ROOT56A")" = 1 ] && [ "$(part_count "$ROOT56A")" = 0 ] &&
+   [ "$(ls "$ROOT56A"/*.consume 2>/dev/null | wc -l | tr -d ' ')" = 0 ]; then
+  ok "56a — exactly one finalized result, no partial, and no consumer scratch left behind"
+else
+  bad "56a — exactly one finalized result, no partial, and no consumer scratch left behind" \
+      "results=$(res_count "$ROOT56A") partials=$(part_count "$ROOT56A") scratch=$(ls "$ROOT56A"/*.consume 2>&1 | tr '\n' ' ')"
+fi
+if [ ! -d "$(task_lock_for "$V56A" closed-task)" ] && [ ! -d "$(checkout_lock_for "$V56A")" ]; then
+  ok "56a — the accepted CLOSED terminal released both leases"
+else
+  bad "56a — the accepted CLOSED terminal released both leases" "a lease survived"
+fi
+run_dispatch "$V56A" closed-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "56a — a subsequent dispatcher is admitted after the verified release" "$OUT"
+
+V56B="$(new_sandbox)"; state_file "$V56B" blocked-task operator blocked-task blocked
+run_dispatch "$V56B" blocked-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "56a — a valid BLOCKED_OPERATOR result passes the composed consumer and still exits 0" "$OUT"
+if [ ! -d "$(task_lock_for "$V56B" blocked-task)" ] && [ ! -d "$(checkout_lock_for "$V56B")" ]; then
+  ok "56a — the accepted takeover terminal released both leases"
+else
+  bad "56a — the accepted takeover terminal released both leases" "a lease survived"
+fi
+
+echo
+echo "Case 56b — a wrong-identity result at the promised path is refused BEFORE release"
+MUT56="$SANDBOX_ROOT/mutants56"; mkdir -p "$MUT56"
+# The unit's red fixture: a structurally flawless record whose run identity is
+# another run's, swapped in after successful finalization. Structure cannot see
+# it (52c proved that in so many words); only the identity boundary can.
+awk '{print} /# operator terminal finalization/ {print "    sed \047s/^run=.*/run=20990101T000000-deadbeef-1-swapped/\047 \"$RESULT_FILE\" >\"$RESULT_FILE.swapped\" && mv -f \"$RESULT_FILE.swapped\" \"$RESULT_FILE\" # harness identity swap"}' \
+  "$DISPATCH_BIN" >"$MUT56/swap.sh"
+chmod +x "$MUT56/swap.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT56/swap.sh" && bash -n "$MUT56/swap.sh" 2>/dev/null; then
+  ok "56b — the swap-forcing fixture differs from the dispatcher and is valid bash"
+  V56S="$(new_sandbox)"; state_file "$V56S" closed-task operator
+  OUT="$(bash "$MUT56/swap.sh" --checkout "$V56S" --task closed-task \
+        --log-dir "$V56S/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC56=$?
+  expect_rc 38 "$RC56" "56b — the wrong-identity result is refused with exit 38, never 0" "$OUT"
+  # NO COMPLETION IS CLAIMED. The refused artifact is deliberately not advertised
+  # as this run's terminal result — that line names the run's own evidence, and
+  # this run just proved it has none it can trust.
+  out_lacks "  terminal result:" "$OUT" "56b — the refused artifact is not advertised as this run's result"
+  TL56="$(task_lock_for "$V56S" closed-task)"; CL56="$(checkout_lock_for "$V56S")"
+  if [ -d "$TL56" ] && [ -d "$CL56" ]; then
+    ok "56b — BOTH leases survived die() and the EXIT trap"
+  else
+    bad "56b — BOTH leases survived die() and the EXIT trap" \
+        "task=$([ -d "$TL56" ] && echo present || echo absent) checkout=$([ -d "$CL56" ] && echo present || echo absent)"
+  fi
+  # The truthful cause, with the IDENTITY token — not a finalization story and
+  # not a teardown story: the record finalized fine and no descendant survived.
+  if grep -q '^terminal result unprovable: ' "$TL56/survivors" 2>/dev/null &&
+     grep -q 'run-mismatch' "$TL56/survivors" 2>/dev/null &&
+     grep -q 'run-mismatch' "$CL56/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL56/survivors" 2>/dev/null &&
+     ! grep -q '^descendants still running:' "$TL56/survivors" 2>/dev/null; then
+    ok "56b — both pins carry the bounded identity token as their truthful cause"
+  else
+    bad "56b — both pins carry the bounded identity token as their truthful cause" \
+        "task: $(cat "$TL56/survivors" 2>&1 | tr '\n' '|'); checkout: $(cat "$CL56/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V56S" closed-task --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "56b — the next dispatcher is refused by the retained lease" "$OUT"
+else
+  bad "56b — the swap-forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+echo
+echo "Case 56c — a MISSING promised result is refused the same way"
+awk '{print} /# operator terminal finalization/ {print "    rm -f \"$RESULT_FILE\" # harness result removal"}' \
+  "$DISPATCH_BIN" >"$MUT56/gone.sh"
+chmod +x "$MUT56/gone.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT56/gone.sh" && bash -n "$MUT56/gone.sh" 2>/dev/null; then
+  ok "56c — the removal-forcing fixture differs from the dispatcher and is valid bash"
+  V56G="$(new_sandbox)"; state_file "$V56G" closed-task operator
+  OUT="$(bash "$MUT56/gone.sh" --checkout "$V56G" --task closed-task \
+        --log-dir "$V56G/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC56=$?
+  expect_rc 38 "$RC56" "56c — a missing promised result is refused with exit 38, never 0" "$OUT"
+  TL56G="$(task_lock_for "$V56G" closed-task)"; CL56G="$(checkout_lock_for "$V56G")"
+  # `unreadable` is the structural reader's bounded token for a path it cannot
+  # open — which is what "missing" is to a reader that never goes looking for
+  # substitutes. The gate passes the name; the read refuses; the cause records it.
+  if [ -d "$TL56G" ] && [ -d "$CL56G" ] &&
+     grep -q '^terminal result unprovable: ' "$TL56G/survivors" 2>/dev/null &&
+     grep -q 'unreadable' "$TL56G/survivors" 2>/dev/null; then
+    ok "56c — both leases retained, with the bounded missing-result cause recorded"
+  else
+    bad "56c — both leases retained, with the bounded missing-result cause recorded" \
+        "task=$([ -d "$TL56G" ] && echo present || echo absent) checkout=$([ -d "$CL56G" ] && echo present || echo absent) cause: $(cat "$TL56G/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V56G" closed-task --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "56c — the next dispatcher is refused by the retained lease" "$OUT"
+else
+  bad "56c — the removal-forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+echo
+echo "Case 56d — mutation control: remove ONLY the consumer call and the wrong-identity path releases again"
+# Addressed by its own marker, exactly like M18/M21: deleting by function name
+# would take the definition too and prove something else. With the one call gone,
+# the swap that 56b refused must sail through — exit 0, both leases released, the
+# next dispatcher admitted — which is what proves the consumer gate alone, not
+# some other part of the seam, is doing the refusing.
+sed '/# operator terminal consumption/d' "$DISPATCH_BIN" >"$MUT56/noconsume.sh"
+awk '{print} /# operator terminal finalization/ {print "    sed \047s/^run=.*/run=20990101T000000-deadbeef-1-swapped/\047 \"$RESULT_FILE\" >\"$RESULT_FILE.swapped\" && mv -f \"$RESULT_FILE.swapped\" \"$RESULT_FILE\" # harness identity swap"}' \
+  "$MUT56/noconsume.sh" >"$MUT56/m22.sh"
+chmod +x "$MUT56/m22.sh"
+if ! cmp -s "$MUT56/swap.sh" "$MUT56/m22.sh" && bash -n "$MUT56/m22.sh" 2>/dev/null; then
+  ok "56d — M22 mutant differs from the swap fixture and is valid bash"
+  V56M="$(new_sandbox)"; state_file "$V56M" closed-task operator
+  OUT="$(bash "$MUT56/m22.sh" --checkout "$V56M" --task closed-task \
+        --log-dir "$V56M/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCM=$?
+  TL56M="$(task_lock_for "$V56M" closed-task)"; CL56M="$(checkout_lock_for "$V56M")"
+  if [ "$RCM" -eq 0 ] && [ ! -d "$TL56M" ] && [ ! -d "$CL56M" ]; then
+    ok "56d — M22: without the consumer call the wrong-identity result exits 0 and releases (56b is fail-capable)"
+  else
+    bad "56d — M22: without the consumer call the wrong-identity result exits 0 and releases (56b is fail-capable)" \
+        "rc=$RCM task=$([ -d "$TL56M" ] && echo present || echo absent) checkout=$([ -d "$CL56M" ] && echo present || echo absent)"
+  fi
+  run_dispatch "$V56M" closed-task --actor-cmd "$NOOP"
+  expect_rc 0 "$RC" "56d — M22: the next dispatcher is admitted after the unverified release" "$OUT"
+else
+  bad "56d — M22 mutant differs from the swap fixture and is valid bash" \
+      "the consumption marker was not found, or the mutant does not parse"
+fi
+
+echo
+echo "Case 56e — the production composition is the three accepted boundaries, in order, one call each"
+# Structural, against the shipped text — the same style as 51a's key-set check.
+# The behavioural half lives in 56a-d; this half pins the SHAPE the brief
+# requires: gate -> parse -> identity, one production call site, no second
+# parser and no waiting.
+BODY56="$(sed -n '/^consume_terminal_result()/,/^}/p' "$DISPATCH_BIN")"
+N_GATE="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result_path "')"
+N_PARSE="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result "')"
+N_IDENT="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result_identity "')"
+L_GATE="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result_path "' | cut -d: -f1 | head -1)"
+L_PARSE="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result "' | cut -d: -f1 | head -1)"
+L_IDENT="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result_identity "' | cut -d: -f1 | head -1)"
+if [ "$N_GATE" = 1 ] && [ "$N_PARSE" = 1 ] && [ "$N_IDENT" = 1 ] &&
+   [ -n "$L_GATE" ] && [ "$L_GATE" -lt "$L_PARSE" ] && [ "$L_PARSE" -lt "$L_IDENT" ]; then
+  ok "56e — path gate, structural reader and identity boundary: one call each, in that order"
+else
+  bad "56e — path gate, structural reader and identity boundary: one call each, in that order" \
+      "gate=$N_GATE@$L_GATE parse=$N_PARSE@$L_PARSE identity=$N_IDENT@$L_IDENT"
+fi
+if [ "$(grep -c '# operator terminal consumption' "$DISPATCH_BIN")" = 1 ]; then
+  ok "56e — exactly one production consumer call sits at the operator-terminal seam"
+else
+  bad "56e — exactly one production consumer call sits at the operator-terminal seam" \
+      "marker count: $(grep -c '# operator terminal consumption' "$DISPATCH_BIN")"
+fi
+if ! printf '%s\n' "$BODY56" | grep -q 'sleep' &&
+   ! printf '%s\n' "$BODY56" | grep -q 'ls '; then
+  ok "56e — the consumer neither waits nor searches: no sleep, no listing"
+else
+  bad "56e — the consumer neither waits nor searches: no sleep, no listing" "$BODY56"
 fi
 
 # ==================================================================== done

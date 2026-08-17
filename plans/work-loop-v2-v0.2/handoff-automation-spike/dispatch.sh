@@ -1735,9 +1735,14 @@ pin_lock() { # survivor-pids, unknown-reason
 # (wl_lease_pin_terminal); what lives here is this dispatcher's wording and its
 # exit 17, exactly as with pin_lock above. Same three library outcomes, same
 # three answers, for the same reasons.
-pin_lock_terminal() { # -> 0 always; pins every owned lease with the truthful cause
-  local rc=0 msg
-  wl_lease_pin_terminal "the run could not finalize its terminal result under ${LOG_DIR:-<no log dir>}" "$TASK"; rc=$?
+pin_lock_terminal() { # [cause] -> 0 always; pins every owned lease with the truthful cause
+  local rc=0 msg cause
+  # The default is the finalization-failure cause this function was born with;
+  # the consumer gate below passes its own, because "could not finalize" would be
+  # FALSE there — the record was finalized and then failed this run's own trust
+  # boundary. One emitter, two truthful causes, still one lease writer.
+  cause="${1:-the run could not finalize its terminal result under ${LOG_DIR:-<no log dir>}}"
+  wl_lease_pin_terminal "$cause" "$TASK"; rc=$?
   case "$rc" in
     0)
       msg="  the task lock is PINNED at $LOCK_DIR (and this checkout's lock at $CHECKOUT_LOCK_DIR) — this run could not prove how it ended, so a second dispatcher is refused (exit 17) until the cause is fixed and you clear them by hand." ;;
@@ -1765,6 +1770,60 @@ pin_lock_terminal() { # -> 0 always; pins every owned lease with the truthful ca
 die_terminal_unprovable() {
   pin_lock_terminal # operator terminal retention
   die 38 "the run reached a real operator terminal (state_class=${ST_CLASS:-unavailable}) but its terminal result could not be finalized under $LOG_DIR — refusing to exit 0, because a run that cannot prove how it ended must not report that it ended well."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
+}
+
+# The CONSUMER's fail-closed exit — same shape, same pin-first order, same exit
+# code as die_terminal_unprovable, for the same reason: a run that cannot prove
+# its terminal result is its own must not buy a lease release with it. What
+# differs is the truthful cause: here the record finalized successfully and then
+# failed the consumer gate, so the pin carries the gate's bounded refusal token
+# rather than a finalization story.
+die_terminal_untrusted() { # bounded-refusal-token
+  pin_lock_terminal "the promised terminal result under ${LOG_DIR:-<no log dir>} was refused before release: ${1:-refused}" # operator consumer retention
+  # RESULT_FILE is cleared so die() does not print "terminal result:" pointing at
+  # the very artifact this run just refused to trust — advertising it as this
+  # run's evidence would be the false claim the refusal exists to prevent. The
+  # artifact itself is left in place, untouched, as evidence of what was found.
+  RESULT_FILE=""
+  die 38 "the run reached a real operator terminal (state_class=${ST_CLASS:-unavailable}) and finalized its terminal result, but the promised artifact at $LOG_DIR_ABS/$RUN_ID.result failed this run's own consumer gate (${1:-refused}) — refusing to exit 0, because a result this run cannot prove is its own must not be reported as how it ended."$'\n'"Recoverable next action: inspect that path against the run log $RUN_LOG, remove or repair the interfering artifact, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
+}
+
+# --------------------------------------- the operator terminal's consumer gate
+#
+# THE FIRST PRODUCTION CONSUMER of the terminal result, at the one seam where
+# release is the real advance decision (Unit 9's evidence map). The promised
+# path is DERIVED from two values this dispatcher already owns — the canonical
+# evidence root and this run's id — never accepted from an argument, a scan, or
+# the artifact itself; and every expectation handed to the validators below is a
+# live dispatcher variable. Nothing here reads an expectation out of the record,
+# a state file, Git or a log, and nothing goes looking: no directory listing, no
+# newest-file pick, no wait — the producer's atomic rename completed before this
+# function is reached, so the read is zero-wait by construction.
+#
+# THE THREE CHECKS IN THE ONE ORDER THAT IS CORRECT: gate the path while nothing
+# is open, parse the bytes exactly once, then compare identity against that
+# pinned snapshot. These are the accepted validators, not a second reader — the
+# composition adds no parser and no lifecycle read. They are called in the
+# CURRENT shell because they hand each other their state through globals
+# (TR_PATH_CLEARED, TR_SOURCE) that a $(...) subshell would discard, so each
+# refusal token travels through a scratch file beside the run log instead —
+# the same mechanic, for the same reason, as the harness's own ident_run.
+#
+# ACCEPTANCE IS THE ONLY RETURN. Every refusal — missing, path-refused,
+# structurally refused, identity-refused — leaves through die_terminal_untrusted
+# with the first bounded token the composed boundary produced.
+consume_terminal_result() { # -> 0 on acceptance; a refusal never returns
+  local promised cap tok
+  promised="$LOG_DIR_ABS/$RUN_ID.result"
+  cap="$RUN_LOG.consume"
+  validate_terminal_result_path "$promised" "$TASK" "$CHECKOUT" "$RUN_ID" "$LOG_DIR_ABS" >"$cap" 2>/dev/null \
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-path-refused}"; }
+  validate_terminal_result "$promised" >"$cap" 2>/dev/null \
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-structure-refused}"; }
+  validate_terminal_result_identity "$promised" "$TASK" "$CHECKOUT" "$RUN_ID" "$LOG_DIR_ABS" >"$cap" 2>/dev/null \
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-identity-refused}"; }
+  rm -f "$cap"
+  return 0
 }
 
 # Pinned beats owned, and that check lives inside the library rather than at each
@@ -3514,6 +3573,12 @@ while :; do
     # control can delete the seam whole rather than leave an orphaned `fi` that
     # proves nothing.
     finalize_terminal_result 0 || die_terminal_unprovable # operator terminal finalization
+    # CONSUMED BEFORE RELEASED. Finalization proves a record was written;
+    # consumption proves the record at the promised path is the one this run
+    # wrote — path-gated, structurally valid, and identity-bound to this task,
+    # checkout and run — before that record is allowed to buy the lease release.
+    # One line, its own marker, same reason as the seam above.
+    consume_terminal_result # operator terminal consumption
     [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
     release_lock
     exit 0
