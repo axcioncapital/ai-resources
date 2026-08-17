@@ -107,10 +107,11 @@ Five projects carry a copy of every seam-bearing surface: `axcion-content-progra
 `research-pe-regime-shift-advisory-gap`.
 
 They are **regular file copies, not symlinks**, so a canonical edit does *not* take live effect in
-them — propagation needs `/sync-workflow`, which is S0's territory and outside this task. Two copies
-(`axcion-content-programme`, `axcion-sector-intelligence`) are currently byte-identical to canonical;
-three have already diverged. The next unit's edits therefore land canonically only, and the divergence
-must be reckoned with before any propagation is claimed.
+them — propagation needs `/sync-workflow`, which is S0's territory and outside this task. **None of
+the five received Unit 2's canonical change, so all five copies now diverge from canonical**: the two
+command bodies Unit 2 edited, `run-cluster.md` and `run-execution.md`, differ from canonical in every
+one of the five. Unit 2's edits therefore landed canonically only, and the accumulated divergence must
+be reckoned with before any propagation is claimed.
 
 ## The bounded edit map for the next unit
 
