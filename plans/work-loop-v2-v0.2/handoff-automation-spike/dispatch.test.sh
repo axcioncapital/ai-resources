@@ -7015,6 +7015,258 @@ else
       "a mode branch was not found, or the mutant does not parse"
 fi
 
+# ========= case 60: a carried --carry-one hop publishes its own terminal result
+#
+# Unit 16. Cases 55 and 58 closed the two pre-hop code-zero terminals; this was
+# the remaining one, and it is the only POST-hop terminal in the dispatcher that
+# released its lease and exited 0 with nothing on disk. Every nonzero post-hop
+# terminal funnels through die() and finalizes; a carried hop — the outcome a
+# courier exists to produce — left only prose in the run log.
+#
+# THE OUTCOME NAMES THE RUN, NOT THE TASK, for exactly the reason case 59 gives
+# one seam over. Read through the lifecycle first, a carried hop wore three
+# symbols: UNCLASSIFIED when it handed on to an active actor, and — worse —
+# COMPLETED or OPERATOR_TAKEOVER when it handed on to the operator, which are the
+# full loop's words for a run that drove the task to its end. The task's own
+# lifecycle is not lost: state_class and turn_at_terminal are required fields and
+# carry it exactly.
+#
+# NEXT ACTION STAYS SPLIT, because the required action genuinely differs. A hop
+# that handed on to an actor needs that actor named; one that handed on to a
+# blocked task must still say a person owns an unanswered question. Collapsing
+# all four into one completion token would re-hide precisely what code 0 was
+# split to protect.
+#
+# BOTH HALVES OF THE CONDITION ARE LOAD-BEARING. --carry-one over a task that is
+# ALREADY operator-terminal carries no hop at all: it reaches the accepted
+# pre-hop operator terminal before any actor starts. Keying on the flag alone
+# would relabel that as a carried hop, which is why 60c is a control and not a
+# courtesy.
+
+# A handback that blocks on the operator. The mirror of FLIP_TO_OPERATOR above:
+# that one closes, this one stops for a question, and the two produce the two
+# different operator-terminal classes the next-action split turns on.
+FLIP_TO_BLOCKED='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
+      d=$(sed -n "s/^task: //p" "$WL_STATE_FILE" | head -1);
+      printf -- "---\ntask: %s\nstatus: blocked\nturn: operator\n---\n\n## Objective and scope\nSandbox fixture for the dispatcher harness. No real work.\n\n## Lane and unit\nStandard. Unit 1 — harness fixture.\n\n## Latest result\nNot started.\n\n## Blocker\nThe fixture actor raised a question the operator owns.\n\n## Next action\nThe operator decides.\n" "$d" > "$WL_STATE_FILE.tmp";
+      mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'"$COMMIT_IF_CLAUDE"
+
+# Reads the record a carried hop leaves, through the run id the dispatcher
+# printed. Same shape as dry_pair above, one flag over.
+carry_pair() { # sandbox task start-turn actor -> "<outcome> <next_action>"
+  local d="$1" t="$2" turn="$3" a="$4" r
+  state_file "$d" "$t" "$turn"
+  run_dispatch "$d" "$t" --carry-one --actor-cmd "$a"
+  r="$d/runs/$(run_id_of "$OUT").result"
+  printf '%s %s' "$(res_field "$r" outcome)" "$(res_field "$r" next_action)"
+}
+
+echo
+echo "Case 60a — a validated carried hop publishes, consumes, reports, and releases"
+V60A="$(new_sandbox)"; state_file "$V60A" carry-pub claude
+run_dispatch "$V60A" carry-pub --carry-one --actor-cmd "$FLIP"
+expect_rc 0 "$RC" "60a — the carried hop still exits 0" "$OUT"
+out_has "carry-one: the turn moved claude -> codex" "$OUT" \
+  "60a — the operator-visible carry report is preserved"
+RID60="$(run_id_of "$OUT")"
+CO60="$(cd "$V60A" && pwd -P)"
+ROOT60="$(cd "$V60A/runs" && pwd -P)"
+REAL60="$ROOT60/$RID60.result"
+# THE TARGETED FAILING CASE. Before this unit the seam released and exited 0 with
+# runs/ holding only the hop capture, the process-tree marker and the run log.
+if [ -f "$REAL60" ]; then
+  ok "60a — a terminal result exists at the run-bound path"
+else
+  bad "60a — a terminal result exists at the run-bound path" \
+      "missing $REAL60; runs/ holds: $(ls "$ROOT60" 2>&1 | tr '\n' ' ')"
+fi
+if [ "$(res_count "$ROOT60")" = 1 ] && [ "$(part_count "$ROOT60")" = 0 ] &&
+   [ "$(ls "$ROOT60"/*.consume 2>/dev/null | wc -l | tr -d ' ')" = 0 ]; then
+  ok "60a — exactly one finalized result, no partial, no consumer scratch"
+else
+  bad "60a — exactly one finalized result, no partial, no consumer scratch" \
+      "results=$(res_count "$ROOT60") partials=$(part_count "$ROOT60")"
+fi
+val_expect   "$VAL_LIB" "$REAL60" 0 ok "60a — the carry-one result is structurally valid v1"
+ident_expect "$VAL_LIB" "$REAL60" carry-pub "$CO60" "$RID60" "$ROOT60" 0 ok \
+  "60a — the carry-one result is identity-valid for this task, checkout, run and promised path"
+# TRUTHFUL POST-HOP FACTS. An actor really ran, so this record must carry the
+# post-hop story — the mirror of 58a's no-model assertions.
+#
+# `actor` IS `none` HERE, AND THAT IS THE FIELD'S OWN MEANING, not a gap this
+# case papers over. It names the actor IN FLIGHT, and the hop-over line clears it
+# once no process is running — the same line that keeps a signal arriving between
+# hops from claiming a process group it could not terminate. What proves an actor
+# ran is asserted below instead: post-hop stage, actor_launched, hop 1, and the
+# capture path the record names. That this seam is the first terminal to produce
+# the pair `actor=none` with `actor_launched=yes` is recorded as a deferral, not
+# repaired here: moving the clear would trade this reading for a false one in the
+# signal handler, which is an accepted invariant.
+if [ "$(res_field "$REAL60" code)" = 0 ] &&
+   [ "$(res_field "$REAL60" stage)" = post-hop ] &&
+   [ "$(res_field "$REAL60" actor)" = none ] &&
+   [ "$(res_field "$REAL60" actor_launched)" = yes ] &&
+   [ "$(res_field "$REAL60" hop)" = 1 ] &&
+   [ "$(res_field "$REAL60" turn_at_terminal)" = codex ] &&
+   [ "$(res_field "$REAL60" state_class)" = ACTIVE_CODEX ]; then
+  ok "60a — the record truthfully carries code 0, post-hop, a launched actor, hop 1, and the validated post-hop turn"
+else
+  bad "60a — the record truthfully carries code 0, post-hop, a launched actor, hop 1, and the validated post-hop turn" \
+      "code=$(res_field "$REAL60" code) stage=$(res_field "$REAL60" stage) actor=$(res_field "$REAL60" actor) launched=$(res_field "$REAL60" actor_launched) hop=$(res_field "$REAL60" hop) turn=$(res_field "$REAL60" turn_at_terminal) class=$(res_field "$REAL60" state_class)"
+fi
+if [ ! -d "$(task_lock_for "$V60A" carry-pub)" ] && [ ! -d "$(checkout_lock_for "$V60A")" ]; then
+  ok "60a — both leases released once the result was consumed"
+else
+  bad "60a — both leases released once the result was consumed" "a lease survived"
+fi
+run_dispatch "$V60A" carry-pub --dry-run
+expect_rc 0 "$RC" "60a — the next dispatcher is admitted after the verified release" "$OUT"
+
+echo
+echo "Case 60b — all four reachable carried transitions publish one outcome, with the next action keyed on the validated post-hop class"
+V60B1="$(new_sandbox)"; P60B1="$(carry_pair "$V60B1" carry-cc claude "$FLIP")"
+V60B2="$(new_sandbox)"; P60B2="$(carry_pair "$V60B2" carry-xc codex  "$FLIP")"
+V60B3="$(new_sandbox)"; P60B3="$(carry_pair "$V60B3" carry-cl claude "$FLIP_TO_OPERATOR")"
+V60B4="$(new_sandbox)"; P60B4="$(carry_pair "$V60B4" carry-xb codex  "$FLIP_TO_BLOCKED")"
+for row in "claude->codex:$P60B1" "codex->claude:$P60B2" \
+           "claude->operator/CLOSED:$P60B3" "codex->operator/BLOCKED:$P60B4"; do
+  lbl="${row%%:*}"; got="${row#*:}"
+  case "$got" in
+    "CARRY_ONE_COMPLETE "*) ok "60b — $lbl reports CARRY_ONE_COMPLETE" ;;
+    *) bad "60b — $lbl reports CARRY_ONE_COMPLETE" "got: ${got:-<no record>}" ;;
+  esac
+done
+# The next action is the half that must NOT collapse. Four rows, four required
+# meanings: two naming the actor that owns the next move, and the two accepted
+# operator tokens kept verbatim so a blocked task still announces its question.
+if [ "$P60B1" = "CARRY_ONE_COMPLETE operator-carry-turn-to-codex" ] &&
+   [ "$P60B2" = "CARRY_ONE_COMPLETE operator-carry-turn-to-claude" ] &&
+   [ "$P60B3" = "CARRY_ONE_COMPLETE none-task-closed" ] &&
+   [ "$P60B4" = "CARRY_ONE_COMPLETE operator-answer-the-blocking-question" ]; then
+  ok "60b — each row's next action names the validated next owner"
+else
+  bad "60b — each row's next action names the validated next owner" \
+      "cc='$P60B1' xc='$P60B2' cl='$P60B3' xb='$P60B4'"
+fi
+# NOT THE UNMAPPED FALLBACK, the same "mapped, not merely present" distinction
+# 55c and 59a draw: a branch printing the catch-all would satisfy a laxer check.
+case "$P60B1$P60B2" in
+  *UNCLASSIFIED*|*operator-read-run-log*)
+    bad "60b — the carried rows are real classifications, not the unmapped fallback" "$P60B1 / $P60B2" ;;
+  *) ok "60b — the carried rows are real classifications, not the unmapped fallback" ;;
+esac
+
+echo
+echo "Case 60c — the carry-one classification does not over-fire"
+# THE CONTROL THAT JUSTIFIES THE SECOND HALF OF THE CONDITION. --carry-one over a
+# task already at an operator terminal carries nothing: it stops pre-hop, and it
+# must keep the accepted loop-terminal meaning rather than claim a hop it never ran.
+V60C="$(new_sandbox)"; state_file "$V60C" carry-already operator
+run_dispatch "$V60C" carry-already --carry-one --actor-cmd "$FLIP"
+R60C="$V60C/runs/$(run_id_of "$OUT").result"
+if [ "$(calls "$V60C")" = 0 ] &&
+   [ "$(res_field "$R60C" outcome)" = COMPLETED ] &&
+   [ "$(res_field "$R60C" next_action)" = none-task-closed ] &&
+   [ "$(res_field "$R60C" stage)" = pre-hop ] &&
+   [ "$(res_field "$R60C" actor_launched)" = no ]; then
+  ok "60c — --carry-one with no hop to carry keeps the pre-hop operator terminal"
+else
+  bad "60c — --carry-one with no hop to carry keeps the pre-hop operator terminal" \
+      "calls=$(calls "$V60C") outcome=$(res_field "$R60C" outcome) next=$(res_field "$R60C" next_action) stage=$(res_field "$R60C" stage) launched=$(res_field "$R60C" actor_launched)"
+fi
+# And the dry-run branch still wins over the carry-one one — case 26 launches
+# nothing, so there is no carried hop for this unit to claim.
+V60D="$(new_sandbox)"; state_file "$V60D" carry-dry codex
+run_dispatch "$V60D" carry-dry --carry-one --dry-run
+R60D="$V60D/runs/$(run_id_of "$OUT").result"
+if [ "$(calls "$V60D")" = 0 ] &&
+   [ "$(res_field "$R60D" outcome)" = DRY_RUN_COMPLETE ] &&
+   [ "$(res_field "$R60D" next_action)" = none-dry-run-preflight-complete ]; then
+  ok "60c — --carry-one --dry-run still reports the accepted dry-run terminal (Unit 14 unchanged)"
+else
+  bad "60c — --carry-one --dry-run still reports the accepted dry-run terminal (Unit 14 unchanged)" \
+      "calls=$(calls "$V60D") outcome=$(res_field "$R60D" outcome) next=$(res_field "$R60D" next_action)"
+fi
+
+echo
+echo "Case 60e — a carried hop whose publication FAILS pins both leases and exits 38, naming its own terminal"
+# Induced AFTER the hop, by the actor itself: it hands the turn on and then makes
+# the evidence directory refuse new entries, so the run log stays appendable and
+# only the producer's temporary cannot be created. A codex actor, so no commit and
+# no permission-denial probe stands between the hop and the seam under test.
+V60E="$(new_sandbox)"; state_file "$V60E" carry-fail codex
+run_dispatch "$V60E" carry-fail --carry-one \
+  --actor-cmd "$FLIP_BODY"'; chmod a-w "$WL_CHECKOUT/runs"'
+expect_rc 38 "$RC" "60e — the unprovable carried hop exits 38, never 0" "$OUT"
+out_lacks "  terminal result:" "$OUT" "60e — no terminal result is advertised"
+# FINDING F1. The accepted fail-closed exit hardcoded "a real operator terminal",
+# which is false here: this run carried a hop between two actors. The wording has
+# to name the terminal it actually reached, and the operator seam's own default
+# has to be untouched — 55d and 58b assert that half.
+out_lacks "reached a real operator terminal" "$OUT" \
+  "60e — the failure does not falsely claim an operator terminal"
+out_has "carry-one terminal" "$OUT" \
+  "60e — the failure names the carry-one terminal it actually reached"
+TL60="$(task_lock_for "$V60E" carry-fail)"; CL60="$(checkout_lock_for "$V60E")"
+if [ -d "$TL60" ] && [ -d "$CL60" ] &&
+   grep -q '^terminal result unprovable: ' "$TL60/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$TL60/survivors" 2>/dev/null; then
+  ok "60e — both leases retained with the truthful finalization-failure cause"
+else
+  bad "60e — both leases retained with the truthful finalization-failure cause" \
+      "task=$([ -d "$TL60" ] && echo present || echo absent) checkout=$([ -d "$CL60" ] && echo present || echo absent) cause: $(cat "$TL60/survivors" 2>&1 | tr '\n' '|')"
+fi
+chmod u+w "$V60E/runs" 2>/dev/null
+run_dispatch "$V60E" carry-fail --dry-run
+expect_rc 17 "$RC" "60e — the next dispatcher is refused by the retained lease" "$OUT"
+
+echo
+echo "Case 60f — mutation control: remove ONLY the carry-one vocabulary branches"
+MUT60="$SANDBOX_ROOT/mutants60"; mkdir -p "$MUT60"
+# Addressed by their own markers, exactly like M25/M26. The lifecycle cases below
+# them are untouched, so the mutant reverts to the pre-unit derivation and nothing
+# else: the seam that publishes the record stays in place, which is what makes
+# this a control on the VOCABULARY rather than on the boundary.
+sed -e '/# carry-one code-zero outcome/d' -e '/# carry-one code-zero next action/d' \
+  "$DISPATCH_BIN" >"$MUT60/m27.sh"
+chmod +x "$MUT60/m27.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT60/m27.sh" && bash -n "$MUT60/m27.sh" 2>/dev/null &&
+   grep -q '# carry-one terminal finalization' "$MUT60/m27.sh"; then
+  ok "60f — M27 mutant differs, parses, and leaves the carry-one publication seam intact"
+  SAVE60="$DISPATCH_BIN"; DISPATCH_BIN="$MUT60/m27.sh"
+  V60M1="$(new_sandbox)"; M60A="$(carry_pair "$V60M1" carry-cc claude "$FLIP")"
+  V60M3="$(new_sandbox)"; M60C="$(carry_pair "$V60M3" carry-cl claude "$FLIP_TO_OPERATOR")"
+  DISPATCH_BIN="$SAVE60"
+  if [ "$M60A" = "UNCLASSIFIED operator-read-run-log" ] &&
+     [ "$M60C" = "COMPLETED none-task-closed" ]; then
+    ok "60f — M27: without the branches the carried hop falls back and borrows the loop terminal again (60b is fail-capable)"
+  else
+    bad "60f — M27: without the branches the carried hop falls back and borrows the loop terminal again (60b is fail-capable)" \
+        "active='$M60A' closed='$M60C'"
+  fi
+else
+  bad "60f — M27 mutant differs, parses, and leaves the carry-one publication seam intact" \
+      "a carry-one marker was not found, or the mutant does not parse"
+fi
+
+echo
+echo "Case 60g — the seam reuses the accepted owners, one call site each"
+for m in 'carry-one terminal finalization' 'carry-one terminal consumption' \
+         'carry-one code-zero outcome' 'carry-one code-zero next action'; do
+  n="$(grep -c "# $m" "$DISPATCH_BIN")"
+  [ "$n" = 1 ] && ok "60g — exactly one '$m' site" \
+                || bad "60g — exactly one '$m' site" "found $n"
+done
+# The seams closed by units 8, 12 and 14 keep their own markers: four separately
+# addressable boundaries, which is what makes each one separately fail-capable.
+if [ "$(grep -c '# operator terminal finalization' "$DISPATCH_BIN")" = 1 ] &&
+   [ "$(grep -c '# dry-run terminal finalization' "$DISPATCH_BIN")" = 1 ]; then
+  ok "60g — the operator and dry-run seams are untouched and still separately addressable"
+else
+  bad "60g — the operator and dry-run seams are untouched and still separately addressable" \
+      "operator: $(grep -c '# operator terminal finalization' "$DISPATCH_BIN"); dry-run: $(grep -c '# dry-run terminal finalization' "$DISPATCH_BIN")"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

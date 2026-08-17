@@ -524,9 +524,26 @@ result_outcome() { # code -> symbol
     # state, re-derives no lifecycle, and adds no second owner — it is one branch
     # ahead of the existing one. `live` falls through unchanged, which is what
     # keeps the two real loop terminals exactly as accepted.
+    #
+    # AND A CARRIED HOP IS ITS OWN CLASS TOO, for the same reason one branch on.
+    # --carry-one stops after one validated hop BY DESIGN, so reading the task's
+    # lifecycle here made it wear three symbols as well: UNCLASSIFIED when it
+    # handed on to an active actor, and COMPLETED or OPERATOR_TAKEOVER when it
+    # handed on to the operator — the full loop's words for a run that drove the
+    # task to its end. Nothing is lost by naming the run instead: `state_class`
+    # and `turn_at_terminal` are required fields and carry the lifecycle exactly.
+    #
+    # BOTH HALVES ARE LOAD-BEARING. `CARRY_ONE` alone is true of a --carry-one
+    # invocation over a task that is ALREADY operator-terminal, which carries no
+    # hop at all — it stops at the pre-hop operator terminal before any actor
+    # starts. `ACTOR_PROCESS_STARTED` is the fork this run really performed, the
+    # same fact the record's `stage` is derived from, so the pair says "carrying
+    # mode, and a hop actually happened". Ordered AFTER the dry-run branch: a
+    # --carry-one --dry-run launches nothing and stays a preflight.
     0)  case "${MODE:-}" in
           dry-run) printf 'DRY_RUN_COMPLETE'; return 0 ;;
         esac
+        [ "${CARRY_ONE:-0}" -eq 1 ] && [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] && { printf 'CARRY_ONE_COMPLETE'; return 0; } # carry-one code-zero outcome
         case "${ST_CLASS:-}" in
           CLOSED)           printf 'COMPLETED' ;;
           BLOCKED_OPERATOR) printf 'OPERATOR_TAKEOVER' ;;
@@ -565,9 +582,20 @@ result_next_action() { # code -> token
     # to preview a launch, and one over an active task sent them to read a log
     # that says the preflight passed. Neither is the action a completed preflight
     # actually calls for, which is none.
+    # A carried hop, same condition and same position as the outcome above — but
+    # NOT one collapsed token, and that asymmetry is deliberate. The outcome names
+    # one terminal class; the next action is an instruction, and the instruction
+    # genuinely differs. Handing on to an actor needs that actor NAMED, which is
+    # what the courier does next. Handing on to the operator keeps the two
+    # accepted tokens verbatim, because "the task is closed" and "a person owes an
+    # answer" are exactly what a full loop would say and are the distinction code
+    # 0 was split to protect — a single completion token would re-hide the
+    # unanswered question. So only the two active classes branch here; CLOSED and
+    # BLOCKED_OPERATOR fall through to the lifecycle case below, unchanged.
     0)  case "${MODE:-}" in
           dry-run) printf 'none-dry-run-preflight-complete'; return 0 ;;
         esac
+        [ "${CARRY_ONE:-0}" -eq 1 ] && [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] && case "${ST_CLASS:-}" in ACTIVE_CLAUDE) printf 'operator-carry-turn-to-claude'; return 0 ;; ACTIVE_CODEX) printf 'operator-carry-turn-to-codex'; return 0 ;; esac # carry-one code-zero next action
         case "${ST_CLASS:-}" in
           CLOSED)           printf 'none-task-closed' ;;
           BLOCKED_OPERATOR) printf 'operator-answer-the-blocking-question' ;;
@@ -1797,9 +1825,17 @@ pin_lock_terminal() { # [cause] -> 0 always; pins every owned lease with the tru
 # result where the filesystem still permits one. The retention line carries its
 # own marker comment so a mutation control can delete exactly it and prove the
 # EXIT path releases without it.
-die_terminal_unprovable() {
+#
+# WHICH TERMINAL IT WAS is a parameter, defaulted to the wording this function was
+# born with. Three code-zero seams now share it, and the sentence names the one
+# that was reached: telling an operator their run "reached a real operator
+# terminal" about a hop carried between two actors is a false statement in the
+# one message they read when nothing else can be trusted. A second copy of this
+# function per seam would duplicate the pin-and-exit owner instead, which is the
+# thing that must stay single.
+die_terminal_unprovable() { # [terminal-label]
   pin_lock_terminal # operator terminal retention
-  die 38 "the run reached a real operator terminal (state_class=${ST_CLASS:-unavailable}) but its terminal result could not be finalized under $LOG_DIR — refusing to exit 0, because a run that cannot prove how it ended must not report that it ended well."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
+  die 38 "the run reached ${1:-a real operator terminal} (state_class=${ST_CLASS:-unavailable}) but its terminal result could not be finalized under $LOG_DIR — refusing to exit 0, because a run that cannot prove how it ended must not report that it ended well."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
 }
 
 # The CONSUMER's fail-closed exit — same shape, same pin-first order, same exit
@@ -1808,14 +1844,17 @@ die_terminal_unprovable() {
 # differs is the truthful cause: here the record finalized successfully and then
 # failed the consumer gate, so the pin carries the gate's bounded refusal token
 # rather than a finalization story.
-die_terminal_untrusted() { # bounded-refusal-token
+# The terminal label is the SECOND argument here, for the same reason and with the
+# same default as the finalization exit above; the refusal token stays first
+# because every existing caller passes it there.
+die_terminal_untrusted() { # bounded-refusal-token [terminal-label]
   pin_lock_terminal "the promised terminal result under ${LOG_DIR:-<no log dir>} was refused before release: ${1:-refused}" # operator consumer retention
   # RESULT_FILE is cleared so die() does not print "terminal result:" pointing at
   # the very artifact this run just refused to trust — advertising it as this
   # run's evidence would be the false claim the refusal exists to prevent. The
   # artifact itself is left in place, untouched, as evidence of what was found.
   RESULT_FILE=""
-  die 38 "the run reached a real operator terminal (state_class=${ST_CLASS:-unavailable}) and finalized its terminal result, but the promised artifact at $LOG_DIR_ABS/$RUN_ID.result failed this run's own consumer gate (${1:-refused}) — refusing to exit 0, because a result this run cannot prove is its own must not be reported as how it ended."$'\n'"Recoverable next action: inspect that path against the run log $RUN_LOG, remove or repair the interfering artifact, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
+  die 38 "the run reached ${2:-a real operator terminal} (state_class=${ST_CLASS:-unavailable}) and finalized its terminal result, but the promised artifact at $LOG_DIR_ABS/$RUN_ID.result failed this run's own consumer gate (${1:-refused}) — refusing to exit 0, because a result this run cannot prove is its own must not be reported as how it ended."$'\n'"Recoverable next action: inspect that path against the run log $RUN_LOG, remove or repair the interfering artifact, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
 }
 
 # The SHARED FUNNEL's own failure transfer. die() publishes the terminal result
@@ -1884,16 +1923,20 @@ die_funnel_unprovable() { # original-code -> returns 0 only where the transfer m
 # ACCEPTANCE IS THE ONLY RETURN. Every refusal — missing, path-refused,
 # structurally refused, identity-refused — leaves through die_terminal_untrusted
 # with the first bounded token the composed boundary produced.
-consume_terminal_result() { # -> 0 on acceptance; a refusal never returns
-  local promised cap tok
+#
+# The optional terminal label is CARRIED, not re-derived: this function knows
+# which of its three refusals fired, and only its caller knows which terminal it
+# was called from. Passing nothing keeps the accepted operator-terminal wording.
+consume_terminal_result() { # [terminal-label] -> 0 on acceptance; a refusal never returns
+  local promised cap tok label="${1:-}"
   promised="$LOG_DIR_ABS/$RUN_ID.result"
   cap="$RUN_LOG.consume"
   validate_terminal_result_path "$promised" "$TASK" "$CHECKOUT" "$RUN_ID" "$LOG_DIR_ABS" >"$cap" 2>/dev/null \
-    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-path-refused}"; }
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-path-refused}" "$label"; }
   validate_terminal_result "$promised" >"$cap" 2>/dev/null \
-    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-structure-refused}"; }
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-structure-refused}" "$label"; }
   validate_terminal_result_identity "$promised" "$TASK" "$CHECKOUT" "$RUN_ID" "$LOG_DIR_ABS" >"$cap" 2>/dev/null \
-    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-identity-refused}"; }
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-identity-refused}" "$label"; }
   rm -f "$cap"
   return 0
 }
@@ -3907,6 +3950,17 @@ while :; do
       say "carry-one: turn is now operator — automation is terminal there (core § 7)."
     fi
     say "carry-one: read turn: from $STATE_FILE. Neither this exit code nor any screen is authoritative over the file (core § 4)."
+    # THE LAST SUCCESSFUL END WITH NO DURABLE EVIDENCE, and the only POST-hop one.
+    # Every nonzero post-hop terminal funnels through die() and finalizes; the two
+    # pre-hop code-zero ends were closed at units 8 and 12. This one — the outcome
+    # a courier exists to produce — said its piece on screen, released the lease
+    # and exited 0 leaving nothing a later reader could point at. Same boundary,
+    # same order, same fail-closed behaviour as the operator seam above: finalize,
+    # then consume the exact promised artifact, and only then release. One line
+    # each with its own marker, so a mutation control can delete either half.
+    finalize_terminal_result 0 || die_terminal_unprovable "the carry-one terminal after one carried hop" # carry-one terminal finalization
+    consume_terminal_result "the carry-one terminal after one carried hop" # carry-one terminal consumption
+    [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
     release_lock
     exit 0
   fi
