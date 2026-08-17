@@ -1,7 +1,7 @@
 # Canonical Research Workflow — Near-Term Strategic Improvements
 
 **Date:** 2026-08-17  
-**Revised:** 2026-08-17 after operator feedback  
+**Revised:** 2026-08-17 after operator feedback and repository-reality QC  
 **Decision horizon:** next ~8 weeks  
 **Status:** revised proposal  
 **Decision question:** What is the smallest set of canonical Research Workflow (RW) changes that will create the most value during Axcíon's next two months of work without over-engineering the system?
@@ -10,18 +10,18 @@
 
 Do **not** implement any of the three source reports wholesale and do not rebuild RW into a general research platform. Build a two-surface canonical RW focused explicitly on **high-volume macro, sector and trend intelligence**:
 
-1. **Strengthen the retrieval foundation first.** Ship a narrow public-source registry for Nordic/European macro, sector structure and dynamics, structural trends, regulation/policy, M&A and private-capital activity. Add reliable source-access behavior and direct Eurostat/Statistics Finland pulls.
-2. **Add one very small, consumer-neutral Targeted Research contract.** The abstraction is: `bounded question + scope + authorization + intended use → evidence + interpretation`. The caller owns planning and routing; canonical RW executes the approved scope. Content Programme is the first consumer, not the owner of the interface.
-3. **Add a minimum sufficient canonical judgment layer immediately.** Every relevant Targeted output should explain what is happening, why, why it matters, implications for Nordic sectors/M&A/private capital, confidence and counterevidence. Founder authority remains required before an important proposed interpretation becomes an Axcíon House View.
-4. **Add lightweight research reuse.** Before material retrieval, search existing Axcíon research, reuse still-valid evidence and retrieve only the gaps. Outputs carry enough metadata to support later discovery. This is a workflow behavior, not a memory platform.
-5. **Apply the already-specified path-passing refactor to Deep Research** and preserve its load-bearing evidence controls. Do not disrupt the active Sector Intelligence batch with a broader structural rewrite.
+1. **Strengthen the retrieval foundation first, but implement only the missing delta.** Ship a narrow Nordic/European macro-sector-trend source seed, canonize the Perplexity-lead rule and authoritative-domain check, and add direct Eurostat/Statistics Finland pulls with mechanical access logging. Do not rebuild source-access controls that already exist in the canonical executor and verifier.
+2. **Add one very small, consumer-neutral Targeted Research contract.** The abstraction is: `bounded question + scope + authorization + intended use → evidence + interpretation`. Implement it as an Axcíon contract that composes with the existing user-scoped `$research` capability rather than creating a second generic `/research` router. The caller owns planning and routing; Content Programme is the first consumer, not the owner of the interface.
+3. **Split judgment by research surface and adopt both forms now.** Targeted outputs use a compact proposed-interpretation section. Deep Research generalizes the already-built Sector Intelligence Unit Judgment Brief instead of creating a second, weaker judgment mechanism. The next real Sector unit is the first production rollout of the local Deep lane; independent QC must be wired before broad canonical deployment. Founder authority remains required before an important proposed interpretation becomes an Axcíon House View.
+4. **Add lightweight, authority-aware research reuse.** Before material retrieval, consult caller-approved inventories or reuse roots, distinguish completed evidence from leads and decision context, reuse still-valid evidence and retrieve only the gaps. Targeted carries a compact reuse record; Deep uses the existing `reference/source-map.md` seam. This is workflow behavior, not a memory platform or broad workspace crawl.
+5. **Reduce Deep content relay with explicit safety boundaries.** Pass bulky reports, extracts, memos and drafts by path and have producers return paths, while continuing to deliver compact load-bearing authorities as content unless the dispatch can prove it read the path. Preserve the approved judgment and evidence-control inputs. Do not disrupt active Sector work with a broader structural rewrite.
 6. **Defer monitoring, paid-data work, API-platform expansion, auto-routing and multi-agent machinery.** None is needed to increase research throughput during the launch period.
 7. **Revisit the Deep artifact chain at a safe operating boundary.** Do not treat the current chain as permanent, but do not create a pre-deployment experiment or benchmarking programme. Deploy obvious low-risk improvements, observe real use and correct defects.
 
 The two canonical surfaces are therefore:
 
-- **Targeted Research:** bounded, reusable macro/sector/trend research with evidence and judgment; and
-- **Deep Research:** the existing multi-stage report workflow, with stronger retrieval foundations and lower relay cost.
+- **Targeted Research:** bounded, reusable macro/sector/trend research with evidence and a lean proposed interpretation; and
+- **Deep Research:** the existing multi-stage report workflow, with stronger retrieval foundations, authority-aware reuse, an approved Unit Judgment Brief and lower relay cost.
 
 The objective is not merely more evidence. It is a high volume of reliable research whose interpretation is useful to Axcíon and visibly stronger than generic AI research.
 
@@ -46,11 +46,11 @@ The June strategic review expected August to begin intelligence-building after a
 
 | Active demand | What the live evidence says | Capability genuinely needed in the next ~8 weeks | Implication for canonical RW |
 |---|---|---|---|
-| **Sector Intelligence Phase A** | Ten sector units have been committed; gathering is designed to run across the slate before analysis and reporting are rationed ([batch slate](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/roadmap/phase-a-batch-slate-v1.md:16>); [phased model](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/roadmap/parallelisation-plan-v3.md:29>)). | High-throughput evidence retrieval on sector structure, dynamics, demand drivers, regulation, M&A activity and investment relevance; strong interpretation; low relay overhead. | Make macro/sector/trend retrieval and judgment the core near-term optimization target. Do not redesign the active Deep analysis/report chain mid-batch. |
+| **Sector Intelligence Phase A** | Ten sector units have been committed; gathering is designed to run across the slate before analysis and reporting are rationed ([batch slate](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/roadmap/phase-a-batch-slate-v1.md:16>); [phased model](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/roadmap/parallelisation-plan-v3.md:29>)). | High-throughput evidence retrieval on sector structure, dynamics, demand drivers, regulation, M&A activity and investment relevance; strong interpretation; low relay overhead. | Make macro/sector/trend retrieval and judgment the core near-term optimization target. Generalize the existing local judgment lane deliberately; do not otherwise redesign the active Deep analysis/report chain mid-batch. |
 | **Sector execution-tool reality** | The current plan uses Codex as the flat-cost primary gatherer and Perplexity only as supplementary/high-stakes gap-fill; Codex concurrency has passed at ≥10 sessions ([cost model](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/roadmap/parallelisation-plan-v3.md:170>); [Gate 6b](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/roadmap/parallelisation-plan-v3.md:134>)). | Better source routing, direct-source access, reusable evidence and path-based handoffs for the proven gather path. | A broad Perplexity API runtime is not the first bottleneck. |
 | **Launch macro/sector narratives** | A 2026-08-17 Content proposal sequences Finland's economic context → Europe's strategic reconfiguration → sector/company resolution → M&A implications and requires research execution outside the Content repository ([progression](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-content-programme/workflow/launch-content-programme-amendment-plan.md:113>); [external seam](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-content-programme/workflow/launch-content-programme-amendment-plan.md:402>)). It remains proposed, not approved authority. | Fast official statistics, policy/regulatory evidence, sector/trend evidence and an evidence-to-interpretation handoff. | Design the canonical Targeted contract around general research needs, then let Content consume it. Do not inherit Content's brief schema. |
 | **Content execution seam** | The live editorial workflow already decides READY TO DRAFT, TARGETED RESEARCH or FULL RW and can produce a bounded approved brief ([route gate](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-content-programme/workflow/article-workflow.md:113>); [brief contract](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-content-programme/workflow/article-workflow.md:151>)). | A reusable executor for bounded research—not another planning, editorial or routing layer. | Content is a first consumer and test case, not the canonical interface authority. |
-| **Overlapping launch themes** | Sector and content work repeatedly touch the same macro conditions, sector structures, transaction evidence and public-source ladders. The Content evidence standard already says to search reusable internal knowledge before external research ([reuse rule](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-content-programme/reference/evidence-standard.md:126>)). | Prior-research discovery, validity checking and gap-only retrieval. | Make reuse a small canonical pre-retrieval step and make outputs findable through basic metadata. |
+| **Overlapping launch themes** | Sector and content work repeatedly touch the same macro conditions, sector structures, transaction evidence and public-source ladders. Content already uses a curated inventory and shared source pack ([reuse rule](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-content-programme/reference/evidence-standard.md:126>)); Sector already distinguishes completed reusable research, leads and decision context in `reference/source-map.md` ([Sector reuse map](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/reference/source-map.md:1>)). | Authority-aware prior-research discovery, validity checking and gap-only retrieval. | Generalize the existing curated patterns. Do not introduce a broad workspace crawl or imply that metadata alone creates cross-repository discovery. |
 | **Website, LinkedIn and company-level work** | The website is in implementation/test closure rather than operating as a research programme ([pipeline state](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-website/pipeline/pipeline-state.md:7>)). LinkedIn remains a potential downstream consumer, not a reason to shape the canonical interface now. | No company-level or Buyer Fit research architecture justified in this horizon. | Optimize for macro, sectors and trends. Other needs can use the generic bounded contract later if they qualify. |
 
 ### Demand-to-change conclusion
@@ -58,8 +58,8 @@ The June strategic review expected August to begin intelligence-building after a
 The next eight weeks require three things:
 
 1. **repeatable public-source retrieval** for Nordic/European macro, sectors, trends, regulation and M&A/private-capital activity;
-2. **bounded Targeted Research** that turns approved questions into evidence and interpretation; and
-3. **efficient Deep work** for the Sector Intelligence batch.
+2. **bounded Targeted Research** that turns approved questions into evidence and a lean proposed interpretation; and
+3. **efficient Deep work** for the Sector Intelligence batch, including the already-built local judgment lane and lower bulk-relay cost.
 
 Company-level research and Buyer Fit research may occur, but they do not drive the canonical design. The system also does not yet need monitoring, paid data, an autonomous router, a knowledge graph or a general multi-agent research organization.
 
@@ -69,15 +69,16 @@ The canonical template is a five-stage report workflow: Preparation → Executio
 
 Its strongest controls remain proportionate for consequential Deep work: source classes, facts before synthesis, claim IDs, permission classes, scarcity records, independent verification and explicit evidence/inference separation. The lean report also identifies these as load-bearing ([lean report](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/lean-research-workflow/proposal.md:51>)).
 
-The near-term gaps are narrower and concrete:
+The near-term gaps are narrower and concrete. Some controls already exist and should be extended rather than rebuilt:
 
-- source intelligence still ships mainly as placeholders instead of a strong Nordic/European macro/sector/trend starting registry ([retrieval report](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/research-retrieval-layer-improvement-plan.md:38>));
+- source intelligence still ships mainly as project-fillable placeholders instead of an optional Nordic/European macro/sector/trend starting seed ([retrieval report](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/research-retrieval-layer-improvement-plan.md:38>));
 - official statistical evidence has no direct structured path ([retrieval report](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/research-retrieval-layer-improvement-plan.md:32>));
-- Perplexity lead handling and scarcity evidence are not canonicalized ([retrieval report](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/research-retrieval-layer-improvement-plan.md:41>));
-- no consumer-neutral Targeted Research executor exists;
-- no canonical lightweight reuse behavior exists;
-- Targeted outputs have no required analytical judgment contract; and
-- Deep still pays a known content-relay token penalty ([lean report](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/lean-research-workflow/proposal.md:40>)).
+- the executor SOP already says snippets are not accessed evidence and already requires a Source Access Log ([executor SOP](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/reference/sops/research-executor-gpt.md:35>)); what is missing is the canonical Perplexity-supplementary lead rule, authoritative-domain precheck and mechanical logging for scripted pulls;
+- the user-scoped `$research` skill already provides consumer-neutral primary-source research into one Markdown file ([research skill](</Users/patrik.lindeberg/.codex/skills/research/SKILL.md:1>)), but no Axcíon-owned Targeted contract adds authorization, reuse, source-access and interpretation behavior;
+- reuse exists locally in Sector and Content, but no small canonical contract generalizes their authority/provenance rules;
+- Targeted outputs have no required analytical judgment contract;
+- Deep judgment already exists as a local Sector implementation with 82 passing structural regression assertions, but independent editorial/compliance QC and a representative live operating run remain open ([integration outcome](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/logs/work-loop/judgment-layer-workflow-integration.md:8>); [accepted limitations](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/logs/work-loop/judgment-layer-workflow-integration.md:33>)); and
+- Deep still pays a known content-relay token penalty, while the old path-passing recommendation conflicts with the newer context-isolation and judgment-propagation contracts and therefore needs an explicit carve-out ([token audit](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/token-audit-2026-05-18-research-workflow.md:45>); [current path convention](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/docs/required-reference-files.md:72>)).
 
 The current Deep artifact chain may ultimately contain unnecessary intermediate transformations. This proposal does **not** declare it permanent. It defers structural simplification until the active Sector batch reaches a safe boundary, and it rejects a formal comparison programme as a prerequisite to obvious improvements.
 
@@ -89,20 +90,27 @@ The three improvement documents are dated 2026-08-17 but do not self-identify th
 - [Judgment, Insight, Depth and Parallel Research Plan](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/canonical-research-workflow-judgment-and-insight-plan.md:1>)
 - [Data Retrieval Layer Improvement Plan](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/research-retrieval-layer-improvement-plan.md:1>)
 
+### Implementation-source caveat
+
+The evidence and implementation substrates do not all live on the same landed branch:
+
+- the three source reports live in the `ai-resources-research-workflow-fixes` worktree on `session/2026-08-17-research-workflow-fixes`; they are decision evidence, not a second implementation owner;
+- the accepted judgment implementation lives in Sector Intelligence on `codex/florian-demo-continue`, not on that repository's `main`; and
+- this proposal lives in `ai-resources` `main`, which remains the canonical implementation owner.
+
+Before implementation, inventory the portable judgment files and tests from the Sector branch and classify each as canonical, project-specific or obsolete. Do not independently recreate the mechanism from the reports, and do not assume a canonical change automatically updates deployed project copies.
+
 ## 3. Recommendation decision matrix
 
 ### Adopt now
 
-| Recommendation | Why it fits the next 8 weeks | Minimum near-term scope |
+| Work package | Why it fits the next 8 weeks | Minimum near-term scope |
 |---|---|---|
-| **A1. Macro/sector/trend retrieval foundation** | It directly serves the Sector batch and likely launch narratives, while improving quality before adding orchestration. | Filled registry covering Nordic/European macro, sector structure/dynamics, trends, regulation/policy, PE/M&A activity and public transaction evidence. Official, statistical, regulatory, association and high-quality free public sources first. No company-research or paid-data track. |
-| **A2. Source-access and false-scarcity rules** | False scarcity is a demonstrated failure mode, and batch research multiplies systematic retrieval errors. | Unopened retrieval result = `[LEAD]`, not evidence; no claim ID or coverage movement. Search failure never proves absence. Log URL/source, access state, direct attempt, date and result. Resolve the authoritative domain before scarcity. |
-| **A3. Minimal structured-statistics lane** | Macro and sector work repeatedly need official series and NACE structure data. | Eurostat and Statistics Finland first, emitting raw CSV/JSON, table/series identity, retrieval date and source pointer. Add other Nordic providers only when live work requires them. |
-| **A4. Consumer-neutral Targeted Research executor** | A bounded execution seam is missing, while callers already know when research is needed. | Accept a small canonical request containing question, scope, authorization and intended use. Return evidence, source/access record, gaps and interpretation. No new planning artifact, queue, deployment profile or auto-router. Adapt caller formats at the edge. |
-| **A5. Minimum canonical judgment layer** | Reliable retrieval alone produces generic research. Axcíon's differentiator is disciplined interpretation. | Every relevant output answers: What is happening? Why? Why does it matter? What does it imply for Nordic sectors, M&A or private capital? Confidence? What weakens the interpretation? Mark the result `proposed interpretation`; consequential House Views require founder approval. Do not import the full Unit Judgment Brief machinery by default. |
-| **A6. Lightweight research reuse** | Launch themes overlap; repeated rediscovery wastes time and fragments the evidence base. | Before material retrieval, search nominated existing Axcíon research locations, assess relevance/freshness, reuse still-valid sources and retrieve gaps only. Each output records topic, geography, period, retrieval/as-of date, intended use and source references. No vector database, graph or new research-memory service. |
-| **A7. Deep path-passing refactor** | Sector's multi-unit batch compounds the known relay/token penalty; the fix is already specified. | Apply only the existing path-passing change and verify output equivalence. Sync to active Sector consumers at a safe boundary; do not bundle QC/gate restructuring. |
-| **A8. Preserve Deep evidence controls** | The Deep lane supports consequential sector reports; weakening the controls would create hidden quality risk. | Keep source classes, facts-only extraction, claim IDs, permission classes, sufficiency, scarcity records, evidence/inference separation and independent verification. |
+| **A1. Retrieval delta for macro, sectors and trends** | It directly serves the Sector batch and launch narratives while correcting the highest-confidence retrieval gaps. | Add an optional Nordic/European source seed covering macro, sector structure/dynamics, trends, regulation/policy and public PE/M&A evidence. Canonize the Perplexity-supplementary lead rule and authoritative-domain precheck. Add Eurostat and Statistics Finland pulls that emit raw data, exact query/filters, unit, selected dimensions, table/dataset identity, retrieval timestamp, source URL and mechanical access-log rows. Do not replace the existing generic project source hierarchy or rebuild its opened-source and false-scarcity controls. |
+| **A2. One lean Targeted Research capability plus the minimum reusable-evidence contract** | Callers already decide when bounded research is needed, the user-scoped `$research` skill already supplies a generic primary-source execution primitive, and both live consumers already use curated reuse patterns. | Add one Axcíon-owned request/output contract that composes with `$research` or the environment's equivalent retrieval capability. Request: question, scope, authorization, intended use/consequence and caller-approved reuse roots. Single output: authority-aware reuse record, evidence, access record, gaps, metadata and lean proposed interpretation. For Deep, add the smallest project-fillable `source-map` template/contract that distinguishes completed reusable evidence, leads requiring validation and decision context; the runtime already expects this seam but canonical deployment provides no template. No central catalog, router, queue, deployment profile or new planning artifact. |
+| **A3. Deep judgment graduation** | Judgment is strategically urgent and the active Sector branch already proves the core artifact, approval, fail-closed and propagation mechanics. Rebuilding a second judgment layer would waste the strongest existing work. | Generalize the local Unit Judgment Brief and analyst standard by removing Sector-specific verdict vocabulary and document-architecture assumptions; keep proposed/approved forms and explicit founder authority; wire independent editorial/compliance QC. Use the next real Sector unit as the first production rollout before broad deployment to other projects. Do not add the larger external-insight ladder or a separate House View artifact now. |
+| **A4. Bounded Deep relay reduction** | Sector's multi-unit work compounds the known relay/token penalty, but path-only propagation can silently drop load-bearing authorities. | Path-pass bulky raw reports, extracts, memos, architectures and drafts; producers write to disk and return paths. Continue content-passing compact governing inputs such as the approved Unit Judgment Brief unless the dispatch has a tested read-and-attestation contract. Verify evidence, judgment and output equivalence. Sync active Sector consumers only at a safe boundary. |
+| **Standing constraint: preserve Deep evidence controls** | The Deep lane supports consequential sector reports; weakening controls would create hidden quality risk. | Keep source classes, facts-only extraction, claim IDs, permission classes, sufficiency, scarcity records, evidence/inference separation and independent verification. This constrains A1–A4; it is not a fifth implementation project. |
 
 ### Defer with explicit trigger
 
@@ -111,7 +119,7 @@ The three improvement documents are dated 2026-08-17 but do not self-identify th
 | **Full Light/Standard/Deep platform and auto-classification** | Defer. Revisit only if 5–10 real Targeted runs and two Deep units show recurring ownership ambiguity that callers cannot resolve. |
 | **Perplexity Agent API relay** | Defer. Sector already uses Codex as primary gatherer. Revisit only if manual Perplexity relay becomes a repeated material bottleneck and required API behavior is proven by execution. |
 | **Broad Deep-pipeline simplification** | Defer until the current Sector batch reaches a safe boundary. Then inspect whether Task Plan, Research Plan, Answer Specs, Extracts, Cluster Memos and Directives can be collapsed without weakening evidence, judgment or traceability. Implement sensible units directly; do not require competing workflow variants or a formal benchmark programme. |
-| **Full Unit Judgment Brief / House View architecture** | Defer the machinery, **not judgment**. The lean canonical questions ship now. Revisit the larger architecture only if real use shows a need for proposal/approval promotion artifacts, downstream fail-closed enforcement or a shared House View object. |
+| **Expanded House View and external-insight architecture** | Defer the larger machinery: candidate-interpretation sets, formal insight ladder, publication-readiness object and separate content handoff. The proven Deep Unit Judgment Brief core ships; the broader expansion waits for recurring evidence that the lean Targeted output and approved Deep brief are insufficient. |
 | **All-Nordic provider and local-language tooling expansion** | Defer until an approved macro/sector/trend brief cannot be answered reliably through the initial official/public routes. Then add the specific missing country/provider, not a platform. |
 | **Monitoring systems, watchlists, release calendars and periodic retrieval** | Defer explicitly. Revisit only after recurring operations demonstrate missed releases or repeated rediscovery; none belongs in the immediate build. |
 
@@ -121,7 +129,7 @@ The three improvement documents are dated 2026-08-17 but do not self-identify th
 |---|---|
 | **Content-specific canonical input contract** | Content is the first consumer, not the owner. Canonical RW must accept the smaller consumer-neutral request contract and use a thin adapter if needed. |
 | **A second planning/routing layer inside RW** | Callers own the decision to research and the approved scope. Another router or planning artifact would duplicate authority and ceremony. |
-| **Pre-deployment workflow experiments or formal comparison programme** | They delay obvious low-risk improvements. The operating rule is deploy sensible changes quickly, observe real use and correct where necessary. |
+| **Pre-deployment workflow experiments or formal comparison programme** | They delay obvious low-risk improvements. The operating rule is deploy sensible changes quickly, use the next real assignment as the first production rollout, observe and correct. A real operating run of the already-integrated local judgment lane is rollout evidence, not a parallel-variant experiment. |
 | **Paid-data exploration, benchmarking or procurement** | There is no near-term budget. Spend no implementation or investigation time on specialist paid M&A databases or subscriptions during this phase. |
 | **General agent swarm, autonomous coordinator or shared agent memory** | Existing Codex concurrency already supports the batch. No named consumer justifies more coordination infrastructure. |
 | **Monitoring infrastructure now** | Useful later, but unnecessary for immediate throughput. |
@@ -134,29 +142,29 @@ Impact and urgency use `High / Medium / Low`; effort uses `S` (one bounded sessi
 
 | Order | Change | Impact | Effort | Urgency | Completion evidence |
 |---|---|---:|---:|---:|---|
-| **1** | Ship the macro/sector/trend public-source registry, Perplexity-lead/scarcity rule, Source Access Log and domain precheck. | High | M | **Now** | One macro query and one sector/trend query route to named first-party sources before general search; unopened leads cannot support claims; failed direct attempts are recorded. |
-| **2** | Add Eurostat and Statistics Finland structured pulls. | High | M | **Now** | One reproducible table/series from each provider includes raw data, identity, retrieval date and source pointer. |
-| **3** | Build the lean consumer-neutral Targeted Research executor. | High | M | **Now** | A generic authorized request runs without importing caller planning logic; out-of-scope or unauthorized requests stop; output contains evidence, access record, gaps and interpretation. |
-| **4** | Implement the minimum canonical judgment layer in Targeted outputs. | High | S–M | **Now** | Output answers the six analytical questions, separates evidence from interpretation, states confidence/counterevidence and cannot become an approved House View without founder authority. |
-| **5** | Add lightweight reuse discovery and metadata. | High efficiency | S–M | **Now** | A run locates relevant prior research, records what was reused and why still valid, then retrieves only named gaps. A later search can find the output by topic/geography/period/date. |
-| **6** | Implement and verify Deep content-relay → path-passing. | High cost reduction | M | Before heavy Sector Stage 3/4 work | Representative output is unchanged in substance; affected command tests pass; main-session relay falls. |
+| **0** | Reconcile the implementation sources and ownership boundary. | High risk reduction | S | **Before edits** | The local Sector judgment branch is identified as the source substrate; its project-specific pieces and canonical candidates are listed. The separate research-fixes worktree remains evidence, not a second implementation owner. No canonical implementation assumes either branch has already landed on project or `ai-resources` main. |
+| **1** | Ship the retrieval delta: optional macro/sector/trend source seed, missing Perplexity-lead/domain rules and Eurostat/Statistics Finland pulls with mechanical access logging. | High | M | **Now** | One macro query and one sector/trend query route to named first-party sources before general search. One reproducible pull from each statistics provider records query, filters, unit, dimensions, identity, raw response, retrieval time and source. A single retrieval negative cannot establish absence; existing evidenced-negative rules still apply. |
+| **2** | Build one lean Targeted Research capability, including authority-aware reuse and the lean proposed-interpretation section in the same output; add the minimal Deep `source-map` template/contract. | High | M | **Now** | An authorized generic request runs through the existing `$research` capability or an equivalent environment adapter without importing caller planning logic. It consults only caller-approved reuse roots, distinguishes evidence/leads/context, retrieves named gaps, answers the six analytical questions where material and returns one artifact. Consequential interpretations remain proposed until explicitly approved. A fresh Deep deployment can instantiate the same three-way reuse classification without recreating Sector's large project-specific register. |
+| **3** | Generalize and complete the existing Deep Unit Judgment Brief lane. | High | M | **Now, at the next safe Sector boundary** | Canonical artifacts contain no Sector-specific verdict or chapter assumptions; proposed/approved identity and founder authority remain fail-closed; independent QC consumes the brief and standard. The next real Sector unit completes the path without an invented thesis or unacceptable review/token burden before deployment widens. |
+| **4** | Reduce Deep bulk relay with the judgment/evidence carve-out in place. | High cost reduction | M | Before heavy subsequent Sector Stage 3/4 work | Bulky inputs are read from tested paths and large outputs return by path; compact governing authorities still reach each consumer reliably; evidence and judgment propagation tests pass; representative output is unchanged in substance and main-session relay falls. |
 
 ### Implementation rules
 
 - Implement the sequence as small deployable units; do not wait for a parallel-variant test.
-- Use real work as the operating proof. Observe, log defects and correct them.
-- Keep judgment generation immediate, but keep founder approval explicit for consequential House Views.
+- Use real work as the operating proof. The next genuine Targeted assignment and next real Sector unit are production rollouts, not benchmark programmes. Observe, log defects and correct them.
+- Keep Targeted judgment generation immediate. For Deep, generalize the existing Unit Judgment Brief rather than adding the six-question Targeted section to the report pipeline. Keep founder approval explicit for consequential House Views.
+- Treat a single retrieval-tool negative as non-evidence. Preserve the canonical evidenced-negative path where documented direct-source and ladder exhaustion genuinely support a zero.
+- Search only caller-approved reuse inventories or roots. Never broad-crawl the workspace by default, and never treat an internal synthesis, lead or strategy statement as external evidence merely because it is relevant.
 - Do not add a new reusable artifact unless an existing file or a small output section cannot carry the required information.
 - Do not add a source, provider or integration without a named macro/sector/trend use case.
 
 ### Eight-week operating sequence
 
-- **Week 1:** land orders 1–2 and validate them on real macro/sector questions.
-- **Weeks 1–2:** define the tiny canonical request/output contract and build order 3.
-- **Week 2:** add order 4 to the same Targeted output path; do not create a separate judgment workflow.
-- **Weeks 2–3:** add order 5 using existing repository search and metadata—no indexing service.
-- **Weeks 2–4:** land order 6 and sync active Sector consumers only at a safe boundary.
-- **Weeks 4–8:** operate at volume; fix observed defects. Record Deep-chain simplification candidates without opening the larger refactor during Sector Phase A.
+- **Week 1:** reconcile the branch/ownership boundary, then land the retrieval delta and validate it on real macro and sector questions.
+- **Weeks 1–2:** build the one-file Targeted capability with reuse and lean judgment already inside it. Do not create separate reuse or judgment workflows.
+- **Weeks 2–4:** generalize the existing Deep Unit Judgment Brief, wire independent QC and run the next real Sector unit through it at the next safe boundary.
+- **Weeks 3–5:** land bounded bulk path-passing after the judgment input/output carve-out is explicit; sync active Sector consumers only at a safe boundary.
+- **Weeks 4–8:** operate both surfaces at volume and fix observed defects. Record Deep-chain simplification candidates without opening the larger refactor during Sector Phase A.
 
 ## 5. Target-state canonical RW after these changes
 
@@ -165,17 +173,19 @@ CALLING PROJECT OWNS NEED, SCOPE AND AUTHORIZATION
     |
     |-- bounded canonical request --------------------------+
     |   question | scope | authorization | intended use    |
+    |   consequence | approved reuse roots                 |
     |                                                       |
     |                                               TARGETED RESEARCH
     |                                               1. validate request
-    |                                               2. find prior Axcíon research
-    |                                               3. reuse valid evidence
-    |                                               4. identify retrieval gaps
-    |                                               5. source-registry routing
-    |                                               6. direct/public retrieval
-    |                                               7. structured stats if needed
-    |                                               8. evidence + access record
-    |                                               9. judgment + counterevidence
+    |                                               2. consult approved inventory/roots
+    |                                               3. classify evidence / lead / context
+    |                                               4. reuse valid evidence
+    |                                               5. identify retrieval gaps
+    |                                               6. route through Nordic source seed
+    |                                               7. execute via $research / adapter
+    |                                               8. structured stats if needed
+    |                                               9. evidence + access record
+    |                                              10. proposed interpretation
     |                                                       |
     |<-------------- evidence and proposed interpretation --+
     |
@@ -184,8 +194,10 @@ CALLING PROJECT OWNS NEED, SCOPE AND AUTHORIZATION
                                                       DEEP RESEARCH
                                                       current evidence controls
                                                       shared retrieval foundation
-                                                      reuse before new retrieval
-                                                      path-based handoffs
+                                                      source-map reuse before retrieval
+                                                      proposed → approved judgment brief
+                                                      bulk path-based handoffs
+                                                      compact authority delivery
                                                       existing stages for now
 ```
 
@@ -196,8 +208,9 @@ The request is the smallest stable contract that can be expressed in an existing
 1. bounded research question(s);
 2. scope and exclusions;
 3. explicit authorization to execute;
-4. intended use and consequence level; and
-5. optional required geography/time period or named existing research locations.
+4. intended use and consequence level;
+5. optional required geography/time period; and
+6. caller-approved reuse inventory or roots, where reuse is authorized.
 
 It is **not** a new mandatory planning document. A caller's approved brief can supply these fields through an adapter or direct mapping.
 
@@ -206,7 +219,7 @@ It is **not** a new mandatory planning document. A caller's approved brief can s
 The output contains:
 
 1. request identity, scope and authorization status;
-2. reuse record: prior research found, relevance/freshness decision, evidence reused and remaining gaps;
+2. reuse record: approved locations checked; prior research found; completion/authority, provenance, scope, geography, freshness and intended-use decision; evidence reused; leads/context retained separately; and remaining gaps;
 3. answer/evidence by approved question;
 4. evidence table: finding → opened direct source → source class → retrieval/as-of date → permitted wording;
 5. facts / interpretation / inference separation;
@@ -218,23 +231,26 @@ The output contains:
    - How confident are we?
    - What challenges or weakens this interpretation?
 7. named gaps and direct attempts;
-8. Source Access Log; and
+8. Source Access Log; structured-stat rows also record exact query/filters, unit, dimensions, dataset/table identity and raw-response path; and
 9. discovery metadata: topic, geography, time period, retrieval/as-of date, intended use and source references.
 
-The judgment is labelled **proposed interpretation** until the relevant founder/consumer authority approves it. Judgment generation is mandatory where the request concerns material macro, sector, trend, regulation or M&A implications; creating a separate House View artifact is not.
+The judgment is labelled **proposed interpretation** until the relevant founder/consumer authority approves it. Judgment generation is mandatory where the request concerns material macro, sector, trend, regulation or M&A implications; creating a separate Targeted House View artifact is not. External publication, advisory use or a consequential strategic decision requires explicit approval before the interpretation is presented as an Axcíon view. Internal orientation may retain the `proposed interpretation` label without an approval ceremony.
 
-The Deep lane retains its current stages for now. The target is not to preserve every intermediate artifact forever—it is to avoid destabilizing the active batch while immediately improving retrieval, reuse, judgment and relay efficiency.
+The Deep lane retains its current stages for now and adds the generalized Unit Judgment Brief at the already-proven Stage 3→4 seam. Deep uses the existing proposed/approved artifact distinction and fail-closed founder authority because its report-bound outputs need a durable analytical spine; it does not reuse the lighter Targeted approval treatment. The target is not to preserve every intermediate artifact forever—it is to avoid destabilizing active work while immediately improving retrieval, reuse, judgment and relay efficiency.
 
 ## 6. Non-goals and stop conditions
 
 ### Non-goals
 
 - No general research platform or third independent workflow.
+- No second generic `/research` router alongside the existing user-scoped `$research` capability.
 - No Content-specific canonical interface.
 - No new planning artifact, queue or auto-router.
 - No monitoring, watchlist, release-calendar or recurring-retrieval system.
 - No paid-data exploration, benchmarking or procurement.
 - No vector database, research-memory platform, knowledge graph or semantic index.
+- No broad workspace research crawl by default; reuse is caller-authorized and authority-aware.
+- No Nordic-specific hardwiring of the generic project source hierarchy; the Nordic registry is an optional domain seed.
 - No general agent swarm or autonomous coordinator.
 - No company-level or Buyer Fit research optimization in this phase.
 - No broad Deep rewrite during Sector Phase A.
@@ -244,13 +260,16 @@ The Deep lane retains its current stages for now. The target is not to preserve 
 
 Stop and narrow the implementation if:
 
-1. the Targeted contract starts absorbing caller-specific planning or editorial rules—move that logic back to the consumer;
-2. reuse requires a new storage/indexing service—use repository search and basic metadata instead;
-3. judgment requires importing the full Unit Judgment Brief architecture—ship the six-question output section first and add machinery only after observed need;
-4. a statistics integration exceeds two bounded sessions or cannot emit reproducible table identity—use a direct/manual pull and defer the wrapper;
-5. path-passing changes research substance, permission outcomes or citation behavior—separate the optimization from workflow semantics;
-6. a proposed provider, artifact or automation has no named macro/sector/trend consumer in the next eight weeks—defer it; or
-7. a Deep simplification would require active Sector worktrees to migrate mid-phase—record it and wait for a safe boundary.
+1. the Targeted contract starts absorbing caller-specific planning, editorial rules or a second routing decision—move that logic back to the consumer;
+2. the Targeted implementation duplicates the generic `$research` entry point instead of composing with it—stop and settle capability ownership;
+3. reuse requires a new storage/indexing service or a default broad workspace crawl—use caller-approved inventories/roots, existing `source-map.md`/source-pack patterns, repository search and basic metadata instead;
+4. reused material cannot be classified as completed evidence, lead or decision context, or lacks adequate provenance/scope/freshness information—retrieve the gap rather than silently promote it;
+5. the Targeted judgment section starts acquiring proposed/approved duplicate files, promotion scripts or Deep report orchestration—keep the six-question section in the single Targeted output;
+6. Deep judgment implementation begins from scratch rather than generalizing the accepted local Unit Judgment Brief, or carries Sector-specific verdict/chapter language into canonical files—stop and narrow to the portable core;
+7. a statistics integration exceeds two bounded sessions or cannot emit query, filters, unit, dimensions, reproducible table identity and raw response—use a direct/manual pull and defer the wrapper;
+8. path-passing causes a consumer to miss an approved judgment, permission input or other compact governing authority, or changes research substance, citation behavior or permission outcomes—restore content delivery for that authority and separate optimization from semantics;
+9. a proposed provider, artifact or automation has no named macro/sector/trend consumer in the next eight weeks—defer it; or
+10. a Deep simplification or propagation change would require active Sector worktrees to migrate mid-phase—record it and wait for a safe boundary.
 
 ## 7. Cited source inventory
 
@@ -269,6 +288,11 @@ Stop and narrow the implementation if:
 - [Sector Intelligence CLAUDE.md](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/CLAUDE.md:1>)
 - [Sector Phase-A batch slate](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/roadmap/phase-a-batch-slate-v1.md:1>)
 - [Sector parallelisation plan v3](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/roadmap/parallelisation-plan-v3.md:1>)
+- [Sector authority-aware source map](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/reference/source-map.md:1>)
+- [Sector judgment local-pilot outcome](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/logs/work-loop/analyst-judgment-layer-local-pilot.md:6>)
+- [Sector judgment workflow integration outcome](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/logs/work-loop/judgment-layer-workflow-integration.md:6>)
+- [Sector Unit Judgment Brief template](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/reference/templates/unit-judgment-brief-template.md:1>)
+- [Sector analyst/judgment standard](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence/reference/analyst-judgment-standard.md:1>)
 - [Content evidence standard](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-content-programme/reference/evidence-standard.md:126>)
 - [Content article workflow](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-content-programme/workflow/article-workflow.md:113>)
 - [Content launch amendment proposal](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-content-programme/workflow/launch-content-programme-amendment-plan.md:1>)
@@ -279,12 +303,16 @@ Stop and narrow the implementation if:
 - [Canonical RW template](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/CLAUDE.md.template:1>)
 - [Canonical stage instructions](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/reference/stage-instructions.md:1>)
 - [Canonical setup/deploy contract](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/SETUP.md:1>)
+- [Canonical Research Executor SOP](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/reference/sops/research-executor-gpt.md:1>)
+- [Canonical required-reference/path-passing contract](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/workflows/research-workflow/docs/required-reference-files.md:1>)
+- [Existing user-scoped research skill](</Users/patrik.lindeberg/.codex/skills/research/SKILL.md:1>)
+- [Research Workflow token audit](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources/audits/token-audit-2026-05-18-research-workflow.md:1>)
 - [Lean RW proposal](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/lean-research-workflow/proposal.md:1>)
 - [Judgment and insight plan](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/canonical-research-workflow-judgment-and-insight-plan.md:1>)
 - [Retrieval-layer plan](</Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-research-workflow-fixes/plans/research-retrieval-layer-improvement-plan.md:1>)
 
 ## Final decision
 
-**Build the public-source retrieval foundation for macro, sectors and trends first; add a tiny consumer-neutral Targeted executor; make judgment and reuse mandatory in their leanest useful form; reduce Deep relay cost; defer everything else.**
+**Build only the missing public-retrieval delta for macro, sectors and trends; add one tiny Targeted contract over the existing research capability with authority-aware reuse and lean proposed interpretation; graduate the proven Deep Unit Judgment Brief; reduce bulk relay without dropping governing authorities; defer everything else.**
 
 This is the smallest package that can materially increase launch-period research volume without sacrificing the analytical interpretation that should distinguish Axcíon research.
