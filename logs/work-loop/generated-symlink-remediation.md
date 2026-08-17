@@ -90,11 +90,3 @@ None.
 Codex: assess Unit 3 — the commit-boundary generated-link guard against the required outcome and evidence list; decide close, continue (health validation / installation route remain), or correct once.
 
 Current task position: Unit 1 implementation and Unit 2 discovery are accepted. Unit 3 now implements the canonical guard body only. Remaining adjacent scope after this unit: choose and implement a versioned downstream installation/refresh route, then health validation and any warranted one-line invariant/stale-doc correction. Local `main` was ahead 11 and behind 1 of `origin/main` at this handoff and remains unreconciled.
-
-## Blocker
-
-None.
-
-## Next action
-
-Claude: verify the Unit 3 premises, implement and prove the commit-boundary generated-link guard within scope, commit, and hand back to Codex.
