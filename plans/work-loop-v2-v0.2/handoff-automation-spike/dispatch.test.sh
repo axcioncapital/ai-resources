@@ -7286,24 +7286,44 @@ else
 fi
 
 echo
-echo "Case 56e — the production composition is the three accepted boundaries, in order, one call each"
+echo "Case 56e — the production composition is the four accepted boundaries, in order, one call each"
 # Structural, against the shipped text — the same style as 51a's key-set check.
 # The behavioural half lives in 56a-d; this half pins the SHAPE the brief
-# requires: gate -> parse -> identity, one production call site, no second
-# parser and no waiting.
+# requires: gate -> parse -> identity -> meaning, one production call site, no
+# second parser and no waiting.
+#
+# THE FOURTH IS ASSERTED HERE, IN THE COMPOSITION, AND NOWHERE ELSE. It is
+# present in this function for every caller; whether a given terminal seam is
+# SUBJECT to it depends on that seam supplying an expected pair, which is a
+# call-site fact and is asserted at 62c. Reading this assertion as "every
+# terminal is now semantically gated" is exactly the overclaim 62c exists to
+# prevent — the deferred seams supply no pair and are unchanged.
 BODY56="$(sed -n '/^consume_terminal_result()/,/^}/p' "$DISPATCH_BIN")"
 N_GATE="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result_path "')"
 N_PARSE="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result "')"
 N_IDENT="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result_identity "')"
+N_SEM="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result_semantics "')"
 L_GATE="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result_path "' | cut -d: -f1 | head -1)"
 L_PARSE="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result "' | cut -d: -f1 | head -1)"
 L_IDENT="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result_identity "' | cut -d: -f1 | head -1)"
-if [ "$N_GATE" = 1 ] && [ "$N_PARSE" = 1 ] && [ "$N_IDENT" = 1 ] &&
-   [ -n "$L_GATE" ] && [ "$L_GATE" -lt "$L_PARSE" ] && [ "$L_PARSE" -lt "$L_IDENT" ]; then
-  ok "56e — path gate, structural reader and identity boundary: one call each, in that order"
+L_SEM="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result_semantics "' | cut -d: -f1 | head -1)"
+if [ "$N_GATE" = 1 ] && [ "$N_PARSE" = 1 ] && [ "$N_IDENT" = 1 ] && [ "$N_SEM" = 1 ] &&
+   [ -n "$L_GATE" ] && [ "$L_GATE" -lt "$L_PARSE" ] && [ "$L_PARSE" -lt "$L_IDENT" ] &&
+   [ "$L_IDENT" -lt "$L_SEM" ]; then
+  ok "56e — path gate, structural reader, identity and meaning: one call each, in that order"
 else
-  bad "56e — path gate, structural reader and identity boundary: one call each, in that order" \
-      "gate=$N_GATE@$L_GATE parse=$N_PARSE@$L_PARSE identity=$N_IDENT@$L_IDENT"
+  bad "56e — path gate, structural reader, identity and meaning: one call each, in that order" \
+      "gate=$N_GATE@$L_GATE parse=$N_PARSE@$L_PARSE identity=$N_IDENT@$L_IDENT meaning=$N_SEM@$L_SEM"
+fi
+# THE COMPOSED BOUNDARY OWNS NO MAPPING EITHER. 61c proves the semantic boundary
+# itself knows no symbols; this proves the function that now calls it did not
+# acquire a second table on the way — the expected pair passes straight through
+# from the caller's arguments.
+if ! printf '%s\n' "$BODY56" | sed 's/^[[:space:]]*#.*$//' | grep -qE 'COMPLETED|OPERATOR_TAKEOVER|result_outcome'; then
+  ok "56e — the consumer carries no outcome symbols and no second code-to-outcome mapping"
+else
+  bad "56e — the consumer carries no outcome symbols and no second code-to-outcome mapping" \
+      "$(printf '%s\n' "$BODY56" | sed 's/^[[:space:]]*#.*$//' | grep -nE 'COMPLETED|OPERATOR_TAKEOVER|result_outcome' | head -3 | tr '\n' ';')"
 fi
 if [ "$(grep -c '# operator terminal consumption' "$DISPATCH_BIN")" = 1 ]; then
   ok "56e — exactly one production consumer call sits at the operator-terminal seam"
@@ -8599,6 +8619,229 @@ if [ "$M32_HITS" = 2 ] && [ "$M32_LEFT" = 0 ] && [ "$M32_DIFFERS" = yes ] && [ "
 else
   bad "61d — M32 matched exactly the two comparisons, differs from the dispatcher, and still parses" \
       "matched=$M32_HITS left=$M32_LEFT differs=$M32_DIFFERS parses=$M32_PARSES — the control cannot run"
+fi
+
+# ==================================================================== case 62
+# THE FIRST PRODUCTION CONSUMER OF THE THIRD TRUST QUESTION.
+#
+# WHAT WAS MISSING. Case 61 proved the semantic boundary works standalone and
+# proved, at 61b, that path/structure/identity cannot see a one-field meaning
+# change. Nothing consumed it: the loop-mode operator terminal — the one seam
+# where release IS the advance decision — composed only the three, so a record
+# altered after finalization in `outcome` alone or in `code` alone still bought
+# the lease release. Measured before this unit's edit, on the fixtures below:
+# both exited 0, released both leases, and were advertised as the run's terminal
+# result.
+#
+# THE FIXTURES FORCE, THE DISPATCHER DECIDES — case 56's technique unchanged.
+# awk appends one altering line after the finalization marker, inside the window
+# between publication and consumption, and everything asserted afterwards is the
+# unmodified seam's own behaviour.
+#
+# ONE SEAM, AND THE CASE SAYS SO. 62c asserts that the dry-run, interruption,
+# carry-one and funnel terminals supply no expected pair and are therefore
+# unchanged. That is the deferral this unit agreed to, asserted rather than
+# assumed.
+
+MUT62="$SANDBOX_ROOT/mutants62"; mkdir -p "$MUT62"
+
+# One altering injection, parameterised by the sed script it plants. Written as a
+# builder rather than four copies so the four fixtures below cannot drift apart
+# in anything except the field they alter.
+mk_alter62() { # outfile sed-script marker -> 0 when the fixture differs and parses
+  awk -v s="$2" -v m="$3" '{print} /# operator terminal finalization/ {
+    printf "    sed %c%s%c \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\" # %s\n", 39, s, 39, m }' \
+    "${4:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${4:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# The full refusal contract for one forced mismatch, asserted the same way 56b
+# asserts the identity refusal: exit 38, nothing advertised, both leases retained
+# with the bounded token as their truthful cause, next dispatcher refused.
+expect_sem_refusal62() { # fixture task expected-token label-prefix
+  local V O R TL CL
+  V="$(new_sandbox)"; state_file "$V" "$2" operator
+  [ "$2" = blocked-task ] && state_file "$V" "$2" operator "$2" blocked
+  O="$(bash "$1" --checkout "$V" --task "$2" --log-dir "$V/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; R=$?
+  expect_rc 38 "$R" "$4 — refused with exit 38, never 0" "$O"
+  out_lacks "  terminal result:" "$O" "$4 — the refused artifact is not advertised as this run's result"
+  TL="$(task_lock_for "$V" "$2")"; CL="$(checkout_lock_for "$V")"
+  if [ -d "$TL" ] && [ -d "$CL" ] &&
+     grep -q '^terminal result unprovable: ' "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$CL/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL/survivors" 2>/dev/null; then
+    ok "$4 — both leases retained, both pins carrying the bounded '$3' cause"
+  else
+    bad "$4 — both leases retained, both pins carrying the bounded '$3' cause" \
+        "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V" "$2" --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "$4 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+echo
+echo "Case 62a — real CLOSED and BLOCKED_OPERATOR results still pass the composed consumer and release"
+# 56a already proved this for the three-boundary composition; what is new is that
+# the SAME two real producer artifacts now also have to agree with the ending the
+# caller independently expected. A regression that derived the expectation wrongly
+# — or derived it from the record and then compared it back — would surface here
+# as a 38 on a run that did nothing wrong.
+V62A="$(new_sandbox)"; state_file "$V62A" closed-task operator
+run_dispatch "$V62A" closed-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "62a — a real CLOSED result passes the semantic boundary and still exits 0" "$OUT"
+RID62A="$(run_id_of "$OUT")"
+ROOT62A="$(cd "$V62A/runs" && pwd -P)"
+if [ "$(res_field "$ROOT62A/$RID62A.result" outcome)" = COMPLETED ] &&
+   [ "$(res_field "$ROOT62A/$RID62A.result" code)" = 0 ] &&
+   [ ! -d "$(task_lock_for "$V62A" closed-task)" ] && [ ! -d "$(checkout_lock_for "$V62A")" ]; then
+  ok "62a — the accepted CLOSED terminal carries COMPLETED/0 and released both leases"
+else
+  bad "62a — the accepted CLOSED terminal carries COMPLETED/0 and released both leases" \
+      "outcome=$(res_field "$ROOT62A/$RID62A.result" outcome) code=$(res_field "$ROOT62A/$RID62A.result" code) leases held"
+fi
+run_dispatch "$V62A" closed-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "62a — a subsequent dispatcher is admitted after the verified release" "$OUT"
+
+V62B="$(new_sandbox)"; state_file "$V62B" blocked-task operator blocked-task blocked
+run_dispatch "$V62B" blocked-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "62a — a real BLOCKED_OPERATOR result passes the semantic boundary and still exits 0" "$OUT"
+RID62B="$(run_id_of "$OUT")"
+ROOT62B="$(cd "$V62B/runs" && pwd -P)"
+# THE SECOND CANONICAL ENDING, AND THE REASON ONE CALL COVERS BOTH. The seam
+# passes result_outcome's answer for code 0; ST_CLASS is what makes that answer
+# OPERATOR_TAKEOVER here and COMPLETED above, with no symbol at the call site.
+if [ "$(res_field "$ROOT62B/$RID62B.result" outcome)" = OPERATOR_TAKEOVER ] &&
+   [ "$(res_field "$ROOT62B/$RID62B.result" code)" = 0 ] &&
+   [ ! -d "$(task_lock_for "$V62B" blocked-task)" ] && [ ! -d "$(checkout_lock_for "$V62B")" ]; then
+  ok "62a — the accepted takeover terminal carries OPERATOR_TAKEOVER/0 and released both leases"
+else
+  bad "62a — the accepted takeover terminal carries OPERATOR_TAKEOVER/0 and released both leases" \
+      "outcome=$(res_field "$ROOT62B/$RID62B.result" outcome) code=$(res_field "$ROOT62B/$RID62B.result" code) leases held"
+fi
+
+echo
+echo "Case 62b — a record altered ONLY in outcome, or ONLY in code, is refused before release"
+# The unit's red. Each fixture leaves task, checkout, run, path and structure
+# exactly as the producer wrote them — 61b already proved the other three
+# boundaries accept precisely this — so only meaning can reject it, and the two
+# rejections must be distinguishable.
+if mk_alter62 "$MUT62/outonly.sh" 's/^outcome=.*/outcome=OPERATOR_TAKEOVER/' 'harness outcome-only alteration'; then
+  ok "62b — the outcome-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_sem_refusal62 "$MUT62/outonly.sh" closed-task outcome-mismatch \
+    "62b — a CLOSED run whose record claims OPERATOR_TAKEOVER"
+else
+  bad "62b — the outcome-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+if mk_alter62 "$MUT62/codeonly.sh" 's/^code=.*/code=22/' 'harness code-only alteration'; then
+  ok "62b — the code-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_sem_refusal62 "$MUT62/codeonly.sh" closed-task code-mismatch \
+    "62b — a CLOSED run whose record claims code 22"
+else
+  bad "62b — the code-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+# THE OTHER CANONICAL ENDING IS GATED TOO, not merely the one the fixtures were
+# written against. A takeover record claiming COMPLETED is the mirror image of
+# 62b's first fixture, and it is the one an operator would most be misled by:
+# "finished" printed over a task still waiting on them.
+if mk_alter62 "$MUT62/outonly-blocked.sh" 's/^outcome=.*/outcome=COMPLETED/' 'harness outcome-only alteration'; then
+  ok "62b — the takeover outcome-only fixture differs from the dispatcher and is valid bash"
+  expect_sem_refusal62 "$MUT62/outonly-blocked.sh" blocked-task outcome-mismatch \
+    "62b — a BLOCKED_OPERATOR run whose record claims COMPLETED"
+else
+  bad "62b — the takeover outcome-only fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+echo
+echo "Case 62c — the expectation is the caller's, and ONLY this seam supplies one"
+# Structural, against the shipped text, and it carries the unit's scope claim.
+#
+# INDEPENDENCE FIRST. The call site must derive its expected symbol through the
+# sole mapping owner and state its expected code as a literal — never read either
+# from the artifact. A call site that passed a field out of the record would
+# compare it with itself, and 62b would go green on a forgery.
+CALL62="$(grep -n '# operator terminal consumption' "$DISPATCH_BIN" | cut -d: -f2-)"
+if printf '%s\n' "$CALL62" | grep -q 'result_outcome 0' &&
+   ! printf '%s\n' "$CALL62" | grep -qE 'RESULT_FILE|TR_OUTCOME|TR_CODE|res_field|\.result'; then
+  ok "62c — the seam derives its expected pair through result_outcome and reads nothing from the artifact"
+else
+  bad "62c — the seam derives its expected pair through result_outcome and reads nothing from the artifact" \
+      "call site: $CALL62"
+fi
+# ONE MIGRATED CONSUMER. Every consume_terminal_result call site is enumerated
+# from the shipped text and each is classified by whether it supplies a pair.
+# Exactly one must, and it must be the operator terminal — anything else means
+# either the deferral was broken or the integration landed at the wrong seam.
+SUPPLY62=0; NOSUPPLY62=0; WHICH62=''
+while IFS= read -r l; do
+  case "$l" in
+    *'consume_terminal_result()'*) continue ;;
+  esac
+  if printf '%s\n' "$l" | grep -q 'result_outcome'; then
+    SUPPLY62=$((SUPPLY62+1)); WHICH62="$WHICH62 $(printf '%s\n' "$l" | sed 's/.*# //')"
+  else
+    NOSUPPLY62=$((NOSUPPLY62+1))
+  fi
+done <<EOF
+$(grep -n 'consume_terminal_result' "$DISPATCH_BIN" | grep -v 'consume_terminal_result()')
+EOF
+if [ "$SUPPLY62" = 1 ] && [ "$NOSUPPLY62" -ge 3 ] &&
+   [ "$(printf '%s' "$WHICH62" | tr -d ' ')" = "operatorterminalconsumption" ]; then
+  ok "62c — exactly one call site supplies an expected pair, and it is the operator terminal ($NOSUPPLY62 deferred seams unchanged)"
+else
+  bad "62c — exactly one call site supplies an expected pair, and it is the operator terminal" \
+      "supplying=$SUPPLY62 ($WHICH62) not-supplying=$NOSUPPLY62"
+fi
+# THE DEFERRED SEAMS, BEHAVIOURALLY. The structural count above says they pass no
+# pair; this says a real one of them still ends exactly as accepted. The dry-run
+# terminal is the representative: it is the other code-zero consumer, so a
+# semantic gate leaking into the shared function would show up here as a 38.
+V62D="$(new_sandbox)"; state_file "$V62D" closed-task operator
+run_dispatch "$V62D" closed-task --dry-run --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "62c — the deferred dry-run terminal still exits 0 and releases, unchanged" "$OUT"
+
+echo
+echo "Case 62d — mutation control: remove ONLY the expected pair and both mismatches release again"
+# M33 — strip exactly the two expectation arguments from the operator-terminal
+# call, leaving the consume call, the path gate, the structural parse and the
+# identity boundary all in place. That is the narrowest possible removal of THIS
+# integration: with no pair supplied, the composed semantic boundary is skipped
+# and the pre-edit behaviour returns. Fails closed — unless the selector matched
+# exactly once and the mutant differs and parses, the control does not run.
+sed 's/ "" "$(result_outcome 0)" 0 # operator terminal consumption/ # operator terminal consumption/' \
+  "$DISPATCH_BIN" >"$MUT62/m33.sh" 2>/dev/null
+M33_HITS="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$DISPATCH_BIN" 2>/dev/null || true)"
+M33_LEFT="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$MUT62/m33.sh" 2>/dev/null || true)"
+M33_KEPT="$(grep -c '# operator terminal consumption' "$MUT62/m33.sh" 2>/dev/null || true)"
+M33_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT62/m33.sh" || M33_DIFFERS=yes
+M33_PARSES=no; bash -n "$MUT62/m33.sh" 2>/dev/null && M33_PARSES=yes
+if [ "$M33_HITS" = 1 ] && [ "$M33_LEFT" = 0 ] && [ "$M33_KEPT" = 1 ] &&
+   [ "$M33_DIFFERS" = yes ] && [ "$M33_PARSES" = yes ]; then
+  ok "62d — M33 removed exactly the expected pair, kept the consumer call, differs, and parses"
+  for f in outonly:OPERATOR_TAKEOVER:outcome codeonly:22:code; do
+    m="${f%%:*}"; rest="${f#*:}"; v="${rest%%:*}"; fld="${rest##*:}"
+    if mk_alter62 "$MUT62/m33-$m.sh" "s/^$fld=.*/$fld=$v/" "harness $fld-only alteration" "$MUT62/m33.sh"; then
+      V62M="$(new_sandbox)"; state_file "$V62M" closed-task operator
+      OUT="$(bash "$MUT62/m33-$m.sh" --checkout "$V62M" --task closed-task \
+            --log-dir "$V62M/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCM=$?
+      if [ "$RCM" -eq 0 ] && [ ! -d "$(task_lock_for "$V62M" closed-task)" ] &&
+         [ ! -d "$(checkout_lock_for "$V62M")" ]; then
+        ok "62d — M33: without the expected pair the $fld-only mismatch exits 0 and releases (62b is fail-capable)"
+      else
+        bad "62d — M33: without the expected pair the $fld-only mismatch exits 0 and releases (62b is fail-capable)" \
+            "rc=$RCM leases: task=$([ -d "$(task_lock_for "$V62M" closed-task)" ] && echo present || echo absent)"
+      fi
+    else
+      bad "62d — M33: the $fld-only fixture over the mutant differs and parses" \
+          "the injection matched nothing, or the fixture does not parse — the control cannot run"
+    fi
+  done
+else
+  bad "62d — M33 removed exactly the expected pair, kept the consumer call, differs, and parses" \
+      "matched=$M33_HITS left=$M33_LEFT kept=$M33_KEPT differs=$M33_DIFFERS parses=$M33_PARSES — the control cannot run"
 fi
 
 # ==================================================================== done

@@ -2045,24 +2045,46 @@ die_funnel_unprovable() { # original-code -> returns 0 only where the transfer m
 # newest-file pick, no wait — the producer's atomic rename completed before this
 # function is reached, so the read is zero-wait by construction.
 #
-# THE THREE CHECKS IN THE ONE ORDER THAT IS CORRECT: gate the path while nothing
-# is open, parse the bytes exactly once, then compare identity against that
-# pinned snapshot. These are the accepted validators, not a second reader — the
-# composition adds no parser and no lifecycle read. They are called in the
-# CURRENT shell because they hand each other their state through globals
-# (TR_PATH_CLEARED, TR_SOURCE) that a $(...) subshell would discard, so each
-# refusal token travels through a scratch file beside the run log instead —
-# the same mechanic, for the same reason, as the harness's own ident_run.
+# THE CHECKS IN THE ONE ORDER THAT IS CORRECT: gate the path while nothing is
+# open, parse the bytes exactly once, compare identity against that pinned
+# snapshot, and — where the caller has stated what ending it is finalizing —
+# compare meaning against that same snapshot. These are the accepted validators,
+# not a second reader — the composition adds no parser and no lifecycle read.
+# They are called in the CURRENT shell because they hand each other their state
+# through globals (TR_PATH_CLEARED, TR_SOURCE, TR_OUTCOME, TR_CODE) that a
+# $(...) subshell would discard, so each refusal token travels through a scratch
+# file beside the run log instead — the same mechanic, for the same reason, as
+# the harness's own ident_run.
 #
 # ACCEPTANCE IS THE ONLY RETURN. Every refusal — missing, path-refused,
-# structurally refused, identity-refused — leaves through die_terminal_untrusted
-# with the first bounded token the composed boundary produced.
+# structurally refused, identity-refused, meaning-refused — leaves through
+# die_terminal_untrusted with the first bounded token the composed boundary
+# produced.
 #
 # The optional terminal label is CARRIED, not re-derived: this function knows
-# which of its three refusals fired, and only its caller knows which terminal it
-# was called from. Passing nothing keeps the accepted operator-terminal wording.
-consume_terminal_result() { # [terminal-label] -> 0 on acceptance; a refusal never returns
-  local promised cap tok label="${1:-}"
+# which of its refusals fired, and only its caller knows which terminal it was
+# called from. Passing nothing keeps the accepted operator-terminal wording.
+#
+# THE EXPECTED PAIR IS THE CALLER'S, AND IT IS OPTIONAL HERE ON PURPOSE. A caller
+# that states which outcome and which code it is finalizing gets the semantic
+# boundary as well; a caller that states neither gets exactly the accepted
+# three-boundary composition it had before. That is what lets the first consumer
+# be migrated on its own without changing the release behaviour of any terminal
+# seam still to come — the alternative, making the pair mandatory, would migrate
+# every caller at once and silently change four terminals in a unit that agreed
+# to change one.
+#
+# IT DERIVES NOTHING. The pair arrives as two arguments the caller established
+# from dispatcher-owned facts. Nothing here reads an expectation out of the
+# artifact, and nothing here knows a code-to-outcome mapping — `result_outcome()`
+# remains the sole owner of that, on the argument the semantic boundary states.
+#
+# HALF AN EXPECTATION IS STILL AN EXPECTATION. The guard is "either was stated",
+# not "both were", so a caller that supplies one and loses the other is refused
+# by the boundary's own `no-expectation` rather than quietly skipping the check —
+# which is what an "and" here would do, at exactly the seam where it matters.
+consume_terminal_result() { # [terminal-label] [expected-outcome] [expected-code] -> 0 on acceptance; a refusal never returns
+  local promised cap tok label="${1:-}" x_outcome="${2:-}" x_code="${3:-}"
   promised="$LOG_DIR_ABS/$RUN_ID.result"
   cap="$RUN_LOG.consume"
   validate_terminal_result_path "$promised" "$TASK" "$CHECKOUT" "$RUN_ID" "$LOG_DIR_ABS" >"$cap" 2>/dev/null \
@@ -2071,6 +2093,8 @@ consume_terminal_result() { # [terminal-label] -> 0 on acceptance; a refusal nev
     || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-structure-refused}" "$label"; }
   validate_terminal_result_identity "$promised" "$TASK" "$CHECKOUT" "$RUN_ID" "$LOG_DIR_ABS" >"$cap" 2>/dev/null \
     || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-identity-refused}" "$label"; }
+  [ -n "$x_outcome" ] || [ -n "$x_code" ] && { validate_terminal_result_semantics "$promised" "$x_outcome" "$x_code" >"$cap" 2>/dev/null \
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-semantics-refused}" "$label"; }; } # composed semantic boundary
   rm -f "$cap"
   return 0
 }
@@ -3983,10 +4007,33 @@ while :; do
     finalize_terminal_result 0 || die_terminal_unprovable # operator terminal finalization
     # CONSUMED BEFORE RELEASED. Finalization proves a record was written;
     # consumption proves the record at the promised path is the one this run
-    # wrote — path-gated, structurally valid, and identity-bound to this task,
-    # checkout and run — before that record is allowed to buy the lease release.
+    # wrote — path-gated, structurally valid, identity-bound to this task,
+    # checkout and run, AND carrying the ending this run is actually finalizing —
+    # before that record is allowed to buy the lease release.
     # One line, its own marker, same reason as the seam above.
-    consume_terminal_result # operator terminal consumption
+    #
+    # THE EXPECTED PAIR COMES FROM THIS CALLER, NOT FROM THE RECORD, and both
+    # halves are facts this seam owns before anything is read back. The code is
+    # the literal 0 the finalization above published under and the `exit 0` below
+    # returns — one value, written once on each line, so a reader can see they
+    # are the same ending. The symbol is `result_outcome()`'s answer for that
+    # code, the sole code-to-outcome owner, evaluated here from ST_CLASS and the
+    # dispatcher's own mode flags — which is what makes ONE call cover both
+    # canonical endings this branch serves: CLOSED yields COMPLETED and
+    # BLOCKED_OPERATOR yields OPERATOR_TAKEOVER, without this seam knowing either
+    # symbol or holding a second table.
+    #
+    # WITHOUT THIS, THE GAP WAS REAL AND MEASURED: a record altered after
+    # finalization in `outcome` alone, or in `code` alone, still passed the path,
+    # structure and identity boundaries — it is a genuine, correctly addressed
+    # record of a DIFFERENT ending — exited 0, released both leases and was
+    # advertised as this run's terminal result.
+    #
+    # THE LABEL IS DELIBERATELY EMPTY, not a new wording. It is the same absent
+    # label this call always passed; it is written out only because the expected
+    # pair has to follow it positionally, and die_terminal_untrusted's own
+    # default is what keeps the accepted operator-terminal sentence unchanged.
+    consume_terminal_result "" "$(result_outcome 0)" 0 # operator terminal consumption
     [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
     release_lock
     exit 0
