@@ -5137,6 +5137,75 @@ else
       "the sed matched nothing — the control cannot run"
 fi
 
+echo
+echo "Case 50g — a lease whose HOLDER cannot be established is not reported as another holder"
+# The residual half of the observed-lease contract. wl_lease__read_holder() `cat`s
+# the holder files and returns empty for any it cannot read, so an absent or
+# unreadable pid record reaches the classifier looking exactly like a pid that is
+# not ours. Falling through to `held-by-other` would assert a second holder that
+# nothing observed — the same class of unobserved claim as the `held` constant
+# this whole field replaced, one branch further in.
+#
+# The condition is staged the way M5 stages its own: only the REPORTED task-lease
+# path is redirected, at a directory this case creates with no holder metadata in
+# it. Acquisition and release still run through the library's own variables, so
+# the run is otherwise an ordinary one.
+sed 's|^LOCK_DIR="\$WL_LEASE_TASK_DIR"$|LOCK_DIR="$WL_LEASE_TASK_DIR.holderless"|' \
+    "$DISPATCH_BIN" >"$MUT_DIR/m7.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m7.sh"; then
+  ok "50g — M7 mutant differs from the dispatcher (the reported lease path was found)"
+  d="$(new_sandbox)"; state_file "$d" "m7-task" "codex"
+  # An existing lease directory with NO pid file — the observable shape of holder
+  # metadata that cannot be established. `-p` because the lease root is created by
+  # the library on acquire and does not exist yet.
+  HOLDERLESS="$(task_lock_for "$d" m7-task).holderless"
+  mkdir -p "$HOLDERLESS"
+  [ -d "$HOLDERLESS" ] && [ ! -e "$HOLDERLESS/pid" ] \
+    && ok "50g — the staged lease directory exists and carries no holder record" \
+    || bad "50g — the staged lease directory exists and carries no holder record" "$HOLDERLESS"
+  OUT="$(bash "$MUT_DIR/m7.sh" --checkout "$d" --task m7-task --log-dir "$d/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+  RIDM7="$(run_id_of "$OUT")"
+  G7="$(res_field "$d/runs/$RIDM7.result" lease_task_at_finalization)"
+  [ "$G7" = "held-holder-unavailable" ] \
+    && ok "50g — an unreadable holder is reported as explicitly unavailable" \
+    || bad "50g — an unreadable holder is reported as explicitly unavailable" "rc=$RC got: ${G7:-<absent>}"
+  # Stated as its own assertion rather than left implied by the one above: the two
+  # values this must never take are the two that would each assert a fact — that
+  # someone else holds it, or that this run does.
+  case "$G7" in
+    held-by-other|held-by-this-run)
+      bad "50g — it is neither 'held-by-other' nor 'held-by-this-run'" "got: $G7" ;;
+    *)
+      ok "50g — it is neither 'held-by-other' nor 'held-by-this-run'" ;;
+  esac
+
+  # M8 — the same staged directory with the unavailable branch removed, which is
+  # the classification as it stood before this fix. It reports another holder for
+  # a lease whose holder was never read, so 50g's assertions are fail-capable.
+  sed "s|^  if \[ -z \"\$pid\" \]; then printf 'held-holder-unavailable'; return 0; fi\$|  :|" \
+      "$MUT_DIR/m7.sh" >"$MUT_DIR/m8.sh"
+  if ! cmp -s "$MUT_DIR/m7.sh" "$MUT_DIR/m8.sh"; then
+    ok "50g — M8 mutant differs from M7 (the unavailable branch was found)"
+    d="$(new_sandbox)"; state_file "$d" "m8-task" "codex"
+    HOLDERLESS8="$(task_lock_for "$d" m8-task).holderless"
+    mkdir -p "$HOLDERLESS8"
+    OUT="$(bash "$MUT_DIR/m8.sh" --checkout "$d" --task m8-task --log-dir "$d/runs" \
+          --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+    RIDM8="$(run_id_of "$OUT")"
+    [ "$(res_field "$d/runs/$RIDM8.result" lease_task_at_finalization)" = "held-by-other" ] \
+      && ok "50g — M8: without the branch it claims another holder it never read (50g is fail-capable)" \
+      || bad "50g — M8: without the branch it claims another holder it never read" \
+             "rc=$RC got: $(res_field "$d/runs/$RIDM8.result" lease_task_at_finalization)"
+  else
+    bad "50g — M8 mutant differs from M7 (the unavailable branch was found)" \
+        "the sed matched nothing — the control cannot run"
+  fi
+else
+  bad "50g — M7 mutant differs from the dispatcher (the reported lease path was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

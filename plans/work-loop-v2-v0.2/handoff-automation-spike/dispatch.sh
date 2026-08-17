@@ -607,6 +607,15 @@ result_lease_status() { # lease-dir owned-flag -> one bounded token
   pid="${WL_LEASE_HOLDER_PID:-}"
   WL_LEASE_HOLDER_PID="$s_pid";          WL_LEASE_HOLDER_TASK="$s_task"
   WL_LEASE_HOLDER_CHECKOUT="$s_co";      WL_LEASE_HOLDER_PROGRAM="$s_prog"
+  # AN UNESTABLISHED HOLDER IS NOT ANOTHER HOLDER. wl_lease__read_holder() `cat`s
+  # the four metadata files and returns empty for any it cannot read, so an
+  # absent, unreadable or empty pid file arrives here indistinguishable from a
+  # pid that simply is not ours — and falling through would report `held-by-other`,
+  # which asserts a second holder nothing observed. The lease directory's
+  # existence IS established, so this is not `free` either: what is unavailable is
+  # who holds it. Checked before the ownership comparison, unconditionally: a run
+  # that believes it owns the lease still cannot read a holder record that is gone.
+  if [ -z "$pid" ]; then printf 'held-holder-unavailable'; return 0; fi
   if [ "$owned" -eq 1 ] && [ "$pid" = "$$" ]; then printf 'held-by-this-run'; return 0; fi
   printf 'held-by-other'
 }
