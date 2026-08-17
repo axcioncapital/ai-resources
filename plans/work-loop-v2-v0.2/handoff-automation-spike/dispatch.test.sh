@@ -6787,6 +6787,133 @@ else
       "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
 fi
 
+# ===================== case 58: --dry-run finalizes and consumes before release
+#
+# Unit 12. A dry-run is an ADMITTED run — both leases held, run evidence
+# initialized — and it was the last N-family success that released and exited 0
+# leaving no run-bound terminal result. It now goes through the same accepted
+# boundary as the operator terminal: finalize exactly one truthful no-model
+# code-0 record, consume that exact promised artifact (path gate -> one
+# structural parse -> expected identity), and only then release. Failure takes
+# the accepted exit-38 pin routes unchanged.
+
+echo
+echo "Case 58a — a valid admitted --dry-run publishes, consumes, reports, and releases"
+V58A="$(new_sandbox)"; state_file "$V58A" dry-task codex
+run_dispatch "$V58A" dry-task --dry-run
+expect_rc 0 "$RC" "58a — the admitted dry-run still exits 0" "$OUT"
+out_has "dry-run: would launch actor 'codex'" "$OUT" "58a — the operator-visible dry-run report is preserved"
+if [ "$(calls "$V58A")" = 0 ]; then
+  ok "58a — no actor launched"
+else
+  bad "58a — no actor launched" "calls=$(calls "$V58A")"
+fi
+RID58="$(run_id_of "$OUT")"
+CO58="$(cd "$V58A" && pwd -P)"
+ROOT58="$(cd "$V58A/runs" && pwd -P)"
+REAL58="$ROOT58/$RID58.result"
+if [ "$(res_count "$ROOT58")" = 1 ] && [ "$(part_count "$ROOT58")" = 0 ] &&
+   [ "$(ls "$ROOT58"/*.consume 2>/dev/null | wc -l | tr -d ' ')" = 0 ]; then
+  ok "58a — exactly one finalized result, no partial, no consumer scratch"
+else
+  bad "58a — exactly one finalized result, no partial, no consumer scratch" \
+      "results=$(res_count "$ROOT58") partials=$(part_count "$ROOT58")"
+fi
+val_expect   "$VAL_LIB" "$REAL58" 0 ok "58a — the dry-run result is structurally valid v1"
+ident_expect "$VAL_LIB" "$REAL58" dry-task "$CO58" "$RID58" "$ROOT58" 0 ok \
+  "58a — the dry-run result is identity-valid for this task, checkout, run and promised path"
+# TRUTHFUL NO-MODEL FACTS, from the dispatcher's own state: nothing was launched
+# and nothing spoke to a model, and the record must say so rather than inherit a
+# post-hop story.
+if [ "$(res_field "$REAL58" code)" = 0 ] && [ "$(res_field "$REAL58" mode)" = dry-run ] &&
+   [ "$(res_field "$REAL58" actor_launched)" = no ] &&
+   [ "$(res_field "$REAL58" model_request_started)" = no ] &&
+   [ "$(res_field "$REAL58" stage)" = pre-hop ]; then
+  ok "58a — the record truthfully carries code 0, mode dry-run, no actor, no model request, pre-hop"
+else
+  bad "58a — the record truthfully carries code 0, mode dry-run, no actor, no model request, pre-hop" \
+      "code=$(res_field "$REAL58" code) mode=$(res_field "$REAL58" mode) launched=$(res_field "$REAL58" actor_launched) model=$(res_field "$REAL58" model_request_started) stage=$(res_field "$REAL58" stage)"
+fi
+if [ ! -d "$(task_lock_for "$V58A" dry-task)" ] && [ ! -d "$(checkout_lock_for "$V58A")" ]; then
+  ok "58a — both leases released once the result was consumed"
+else
+  bad "58a — both leases released once the result was consumed" "a lease survived"
+fi
+run_dispatch "$V58A" dry-task --dry-run
+expect_rc 0 "$RC" "58a — the next dispatcher is admitted after the verified release" "$OUT"
+
+echo
+echo "Case 58b — a dry-run whose publication FAILS pins both leases and exits 38"
+# Induction is environmental, before the run starts: the evidence directory
+# exists but refuses new entries, so the run log and the producer's temporary
+# both fail to create. No actor exists in this mode to induce anything later.
+V58B="$(new_sandbox)"; mkdir -p "$V58B/runs"; chmod a-w "$V58B/runs"
+state_file "$V58B" dry-task codex
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V58B" --task dry-task \
+      --log-dir "$V58B/runs" --timeout 20 --dry-run 2>&1)"; RC58=$?
+expect_rc 38 "$RC58" "58b — the unprovable dry-run exits 38, never 0" "$OUT"
+out_lacks "  terminal result:" "$OUT" "58b — no terminal result is advertised"
+TL58="$(task_lock_for "$V58B" dry-task)"; CL58="$(checkout_lock_for "$V58B")"
+if [ -d "$TL58" ] && [ -d "$CL58" ] &&
+   grep -q '^terminal result unprovable: ' "$TL58/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$TL58/survivors" 2>/dev/null; then
+  ok "58b — both leases retained across the EXIT trap with the truthful finalization-failure cause"
+else
+  bad "58b — both leases retained across the EXIT trap with the truthful finalization-failure cause" \
+      "task=$([ -d "$TL58" ] && echo present || echo absent) checkout=$([ -d "$CL58" ] && echo present || echo absent) cause: $(cat "$TL58/survivors" 2>&1 | tr '\n' '|')"
+fi
+chmod u+w "$V58B/runs" 2>/dev/null
+run_dispatch "$V58B" dry-task --dry-run
+expect_rc 17 "$RC" "58b — the next dispatcher is refused by the retained lease" "$OUT"
+
+echo
+echo "Case 58c — mutation control: remove ONLY the dry-run boundary and the result-less release returns"
+MUT58="$SANDBOX_ROOT/mutants58"; mkdir -p "$MUT58"
+# Both marked lines go, and only them — the operator-terminal seam keeps its own
+# markers, which is what proves the two seams are separately fail-capable.
+sed -e '/# dry-run terminal finalization/d' -e '/# dry-run terminal consumption/d' \
+  "$DISPATCH_BIN" >"$MUT58/m25.sh"
+chmod +x "$MUT58/m25.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT58/m25.sh" && bash -n "$MUT58/m25.sh" 2>/dev/null &&
+   grep -q '# operator terminal finalization' "$MUT58/m25.sh"; then
+  ok "58c — M25 mutant differs, parses, and leaves the operator-terminal seam intact"
+  V58M="$(new_sandbox)"; state_file "$V58M" dry-task codex
+  OUT="$(bash "$MUT58/m25.sh" --checkout "$V58M" --task dry-task \
+        --log-dir "$V58M/runs" --timeout 20 --dry-run 2>&1)"; RCM=$?
+  if [ "$RCM" -eq 0 ] && [ "$(res_count "$V58M/runs")" = 0 ] &&
+     [ ! -d "$(task_lock_for "$V58M" dry-task)" ]; then
+    ok "58c — M25: without the boundary the dry-run releases result-less again (58a is fail-capable)"
+  else
+    bad "58c — M25: without the boundary the dry-run releases result-less again (58a is fail-capable)" \
+        "rc=$RCM results=$(res_count "$V58M/runs") task-lock=$([ -d "$(task_lock_for "$V58M" dry-task)" ] && echo present || echo absent)"
+  fi
+else
+  bad "58c — M25 mutant differs, parses, and leaves the operator-terminal seam intact" \
+      "a dry-run marker was not found, or the mutant does not parse"
+fi
+
+echo
+echo "Case 58d — the boundary reuses the accepted owners and --status stays read-only"
+if [ "$(grep -c '# dry-run terminal finalization' "$DISPATCH_BIN")" = 1 ] &&
+   [ "$(grep -c '# dry-run terminal consumption' "$DISPATCH_BIN")" = 1 ]; then
+  ok "58d — exactly one dry-run finalization and one dry-run consumption call site"
+else
+  bad "58d — exactly one dry-run finalization and one dry-run consumption call site" \
+      "finalize markers: $(grep -c '# dry-run terminal finalization' "$DISPATCH_BIN"); consume markers: $(grep -c '# dry-run terminal consumption' "$DISPATCH_BIN")"
+fi
+# Behavioural read-only proof for --status, the same observable the contract
+# names: it publishes no terminal result and holds no lease afterwards.
+V58S="$(new_sandbox)"; state_file "$V58S" dry-task codex
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V58S" --task dry-task \
+      --log-dir "$V58S/runs" --timeout 20 --status 2>&1)"; RCS=$?
+if [ "$RCS" -eq 0 ] && [ "$(res_count "$V58S/runs" 2>/dev/null)" = 0 ] &&
+   [ ! -d "$(task_lock_for "$V58S" dry-task)" ]; then
+  ok "58d — --status still exits 0, writes no terminal result, and holds no lease"
+else
+  bad "58d — --status still exits 0, writes no terminal result, and holds no lease" \
+      "rc=$RCS results=$(res_count "$V58S/runs" 2>/dev/null)"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

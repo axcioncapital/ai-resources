@@ -3565,6 +3565,20 @@ if [ "$DRY_RUN" -eq 1 ]; then
   # the platform check and the profile write have all already run above, so
   # reaching this line means the contained profile is deliverable on this host.
   [ "$UNATTENDED" -eq 1 ] && say "dry-run: the contained profile passed its gate and was written; a live run would launch under it."
+  # PROVEN BEFORE RELEASED — the same producer/consumer boundary as the operator
+  # terminal, at the other successful end of a run. A dry-run is an ADMITTED run:
+  # it holds both leases and owns run evidence, and until Unit 12 it was the last
+  # N-family success that released and exited 0 leaving nothing behind. The
+  # record it publishes truthfully carries mode=dry-run, stage=pre-hop,
+  # actor_launched=no and model_request_started=no from this dispatcher's own
+  # facts — nothing launched, and the record says so. Failure takes the accepted
+  # routes unchanged: unprovable publication pins and exits 38 via
+  # die_terminal_unprovable, an untrusted promised artifact via the consumer's
+  # own die_terminal_untrusted. Each line carries its own marker so a mutation
+  # control can delete exactly one seam and prove the other is not covering it.
+  finalize_terminal_result 0 || die_terminal_unprovable # dry-run terminal finalization
+  consume_terminal_result # dry-run terminal consumption
+  [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
   release_lock
   exit 0
 fi
