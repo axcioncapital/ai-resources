@@ -41,13 +41,14 @@ Present the plan: target document part, draft inventory, what will run (skip / P
 
 > **Condition:** Only runs if `{prose_output_dir}/architecture.md` does not exist AND 2+ sections are available. If skipped, proceed to Phase 3 (which will skip if QC PASS already exists).
 
-1. Read all section drafts identified in Phase 1 step 5 (highest-numbered draft per section, or approved/ fallback)
+1. Resolve all section drafts identified in Phase 1 step 5 (highest-numbered draft per section, or approved/ fallback) to project-root-relative paths only — do not read their contents into the main session
 2. Read `context/project-brief.md` (document purpose + audience)
 3. Read `context/content-architecture.md` (section specs + dependency sequence)
 4. Read `/ai-resources/skills/research-structure-creator/SKILL.md`
 5. Launch a general-purpose sub-agent. Pass it:
    - The skill content
-   - All section draft content (labeled by section ID)
+   - All section draft paths, project-root-relative (labeled by section ID)
+   - Draft-reading responsibility: read each section draft at its given path before the Content Inventory phase; the drafts are not embedded in this prompt
    - Document purpose and audience statement (extracted from project-brief.md)
    - The content architecture's Part 2 (or Part 3) section showing dependency sequence and content type per section
    - Adaptation notes:
@@ -57,7 +58,7 @@ Present the plan: target document part, draft inventory, what will run (skip / P
    - Output path: `{prose_output_dir}/architecture.md`
    - Task: Execute the full 3-phase workflow of the research-structure-creator skill. Produce the complete architecture specification including: section hierarchy, depth allocation with must-land content, cross-reference map, front/back matter decisions, traceability table with seam notes, and structural override log. Write to output path. Return: section count, processing order, flagged overlaps/conflicts/gaps, word count allocations per section.
 6. Write a brief Phase 2 handoff note: architecture file path, section count, processing order, any flags.
-7. ▸ /compact — skill content and raw draft content no longer needed in main session.
+7. ▸ /compact — skill content no longer needed in main session.
 
 ---
 
@@ -67,11 +68,12 @@ Present the plan: target document part, draft inventory, what will run (skip / P
 
 1. Read `/ai-resources/skills/architecture-qc/SKILL.md`
 2. Read the architecture at `{prose_output_dir}/architecture.md`
-3. Read all section drafts (same set as Phase 2 — needed for traceability verification)
+3. Resolve all section drafts (same set as Phase 2 — needed for traceability verification) to project-root-relative paths only — do not read their contents into the main session
 4. Launch a qc-gate sub-agent. Pass it:
    - The skill content
    - The architecture content
-   - All section draft content
+   - All section draft paths
+   - Draft-reading responsibility: read each section draft at its given project-root-relative path before verifying traceability; the drafts are not embedded in this prompt
    - Adaptation notes for absent Part 2/3 inputs:
      - "Input 2 (Scarcity register): N/A for Part 2/3 sections. These do not go through the research pipeline. No scarcity register exists. Mark criterion 11 (Scarcity register coverage) as N/A."
      - "Input 3 (Section directives): N/A. Part 2/3 sections are designed in Chat and transferred as decision documents. No section directives exist from a section-directive-drafter skill. However, the content architecture at `context/content-architecture.md` contains section-level output specs and dependency information. Use these as a proxy for criterion 13 (Section directives alignment). Compare the architecture's depth allocation against the content architecture's section descriptions for reasonableness, but do not expect word count ranges to match since none were specified."
@@ -82,7 +84,7 @@ Present the plan: target document part, draft inventory, what will run (skip / P
 5. Route on verdict:
    - **PASS:** Note architecture summary + QC result. Proceed to Phase 4 (handoff).
    - **FAIL with critical findings:** PAUSE — present failures to the operator. Architecture must be fixed before prose conversion can begin. Options: fix specific items in the architecture and re-run QC (delete `{prose_output_dir}/architecture-qc.md` and re-run `/produce-architecture {part}`; Phase 1 will detect the architecture exists and skip Phase 2, but Phase 3 will re-run because the QC file is absent), or override and proceed.
-6. ▸ /compact — skill content and draft content no longer needed.
+6. ▸ /compact — skill content and architecture content no longer needed.
 
 ---
 
