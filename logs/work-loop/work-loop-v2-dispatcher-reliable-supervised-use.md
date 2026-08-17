@@ -61,6 +61,22 @@ Stop and hand back if the accepted post-hop facts are unavailable at the seam, t
 
 ## Latest result
 
+**Correction round (2026-08-17) — the one frozen finding is resolved.**
+
+Reproduced first, by inspection: `dispatch.test.sh` case 60f drove the M27 mutant with exactly two sandboxes — `carry-cc claude "$FLIP"` (`claude -> codex`, `ACTIVE_CODEX`) and `carry-cl claude "$FLIP_TO_OPERATOR"` (`claude -> operator`, `CLOSED`). The `codex -> claude` and `codex -> operator/BLOCKED` rows were absent, so the control could not have caught a wrongly-wired `ACTIVE_CLAUDE` fallback or `BLOCKED_OPERATOR` borrow. The finding is real as stated.
+
+Corrected exactly that, and nothing else. Case 60f now drives the same vocabulary-only mutant across all four reachable post-hop rows, asserting each on its own line so a failure names which row, plus one check that the mutant's rows have not collapsed into a single value — the pre-unit defect was one terminal class wearing several symbols, so a control in which they agreed would be measuring the wrong thing.
+
+Result: under M27 the four rows return `claude -> codex` → `UNCLASSIFIED operator-read-run-log`; `codex -> claude` → `UNCLASSIFIED operator-read-run-log`; `claude -> operator/CLOSED` → `COMPLETED none-task-closed`; `codex -> operator/BLOCKED` → `OPERATOR_TAKEOVER operator-answer-the-blocking-question`. That is the pre-unit derivation on every row, so all four of case 60b's production assertions are now proven fail-capable.
+
+Evidence: the focused Unit 16 slice is **153 pass / 0 fail**, up from the unit's `149/0` by the four new row assertions and the split check, with case 60f's six assertions all green. `bash -n` clean on `dispatch.test.sh`. The production dispatcher is untouched — `git diff` on `dispatch.sh` is empty — so this correction changes test evidence only and cannot have moved the behaviour it measures. The commit carries exactly `dispatch.test.sh` and this state file.
+
+Nothing new was implemented. The two deferrals below stand unchanged and undecided: the dead case-50c M1 control, and the post-hop `actor` / `permission_mode_requested` reading.
+
+---
+
+The unit's result, as assessed, retained below. The `149/0` figure it quotes is the pre-correction slice; `153/0` above supersedes it.
+
 Inspected (2026-08-17):
 
 - Claim (1): HOLDS — re-verified every Unit 15 seam fact in `dispatch.sh` before editing. The carry-one branch still sits after the full accepted post-hop region (allowlist delta `3802`, Codex-HEAD guard `3808`, committed-paths guard `3815`, permission denials `3837`, uncommitted/unchanged handback `3846`, byte-identical and unchanged-turn guards `3874`–`3879`, transition table `3881`); `validate_state` at `3795` has refreshed `ST_CLASS`/`ST_TURN` from the canonical validator; `CARRY_ONE` (`311`, `1248`) and `ACTOR_PROCESS_STARTED` (`417`, set only at the single fork `3264`) are both live and dispatcher-owned; and `finalize_terminal_result` / `consume_terminal_result` are callable before `release_lock`. No premise was false.
@@ -107,4 +123,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 16 — the carry-one seam's finalize/consume/release integration, the two reported next-action token spellings (`operator-carry-turn-to-claude` / `-codex`, chosen over Unit 15's suggestion to match the accepted who-must-act prefix), the label-parameter resolution of Finding F1 across the three code-zero seams, and the `129/19` → `149/0` focused proof with the `HEAD`-baseline regression control showing zero new failures. Then decide the next unit, and size the two recorded deferrals — the dead M1 control at case 50c, and the `actor` / `permission_mode_requested` reading at a post-hop seam.
+Codex: closure check on the frozen finding only — is the four-row M27 evidence gap resolved, and did the correction break anything? The correction extended case 60f to all four reachable post-hop rows and left `dispatch.sh` byte-for-byte unchanged; the focused slice is `153/0`. Both recorded deferrals were left undecided as instructed.

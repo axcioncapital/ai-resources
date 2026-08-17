@@ -7233,16 +7233,37 @@ chmod +x "$MUT60/m27.sh"
 if ! cmp -s "$DISPATCH_BIN" "$MUT60/m27.sh" && bash -n "$MUT60/m27.sh" 2>/dev/null &&
    grep -q '# carry-one terminal finalization' "$MUT60/m27.sh"; then
   ok "60f — M27 mutant differs, parses, and leaves the carry-one publication seam intact"
+  # ALL FOUR ROWS, because all four are what 60b asserts. A control covering two
+  # of them leaves the other two proven by nothing: the ACTIVE_CLAUDE fallback and
+  # the BLOCKED_OPERATOR borrow are separate branches of the pre-unit derivation,
+  # and a mutant that only ever reaches ACTIVE_CODEX and CLOSED would stay green
+  # with either of them wired wrong. Each row is asserted on its own so a failure
+  # names which one, and the four expectations are exactly the pre-unit behaviour:
+  # both active classes fall through to the unmapped pair, and the two operator
+  # classes borrow the loop terminals 60b proves they no longer wear.
   SAVE60="$DISPATCH_BIN"; DISPATCH_BIN="$MUT60/m27.sh"
   V60M1="$(new_sandbox)"; M60A="$(carry_pair "$V60M1" carry-cc claude "$FLIP")"
+  V60M2="$(new_sandbox)"; M60B="$(carry_pair "$V60M2" carry-xc codex  "$FLIP")"
   V60M3="$(new_sandbox)"; M60C="$(carry_pair "$V60M3" carry-cl claude "$FLIP_TO_OPERATOR")"
+  V60M4="$(new_sandbox)"; M60D="$(carry_pair "$V60M4" carry-xb codex  "$FLIP_TO_BLOCKED")"
   DISPATCH_BIN="$SAVE60"
-  if [ "$M60A" = "UNCLASSIFIED operator-read-run-log" ] &&
-     [ "$M60C" = "COMPLETED none-task-closed" ]; then
-    ok "60f — M27: without the branches the carried hop falls back and borrows the loop terminal again (60b is fail-capable)"
+  for mrow in "claude->codex/ACTIVE_CODEX:$M60A:UNCLASSIFIED operator-read-run-log" \
+              "codex->claude/ACTIVE_CLAUDE:$M60B:UNCLASSIFIED operator-read-run-log" \
+              "claude->operator/CLOSED:$M60C:COMPLETED none-task-closed" \
+              "codex->operator/BLOCKED:$M60D:OPERATOR_TAKEOVER operator-answer-the-blocking-question"; do
+    mlbl="${mrow%%:*}"; mrest="${mrow#*:}"; mgot="${mrest%%:*}"; mwant="${mrest#*:}"
+    [ "$mgot" = "$mwant" ] \
+      && ok "60f — M27: $mlbl falls back to '$mwant' without the branches" \
+      || bad "60f — M27: $mlbl falls back to '$mwant' without the branches" "got: ${mgot:-<no record>}"
+  done
+  # And the mutant's four rows are not all the same value — the pre-unit defect
+  # was precisely that ONE terminal class produced several symbols, so a control
+  # in which they had collapsed would be measuring something else.
+  if [ "$M60A" != "$M60C" ] && [ "$M60C" != "$M60D" ]; then
+    ok "60f — M27: the mutant splits one terminal class across lifecycle symbols again (60b is fail-capable)"
   else
-    bad "60f — M27: without the branches the carried hop falls back and borrows the loop terminal again (60b is fail-capable)" \
-        "active='$M60A' closed='$M60C'"
+    bad "60f — M27: the mutant splits one terminal class across lifecycle symbols again (60b is fail-capable)" \
+        "cc='$M60A' xc='$M60B' cl='$M60C' xb='$M60D'"
   fi
 else
   bad "60f — M27 mutant differs, parses, and leaves the carry-one publication seam intact" \
