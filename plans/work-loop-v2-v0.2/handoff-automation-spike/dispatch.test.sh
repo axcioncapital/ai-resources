@@ -722,6 +722,50 @@ esac
 [ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
   && ok "no commit was made with the check unavailable" \
   || bad "no commit was made with the check unavailable"
+# THE DURABLE RESULT, which this case did not assert at all before this unit. Both
+# code-35 branches are raised from the ownership block (dispatch.sh, `die 35`), which
+# sits AFTER run identity, after the evidence location and after both leases — so
+# each is an admitted-run terminal, not a pre-admission refusal, and the approved plan
+# requires it to "Atomically finalize exactly one terminal result for … invalid state
+# or ownership". Exit 35 and a silent run directory would have satisfied every
+# assertion above this line.
+#
+# `owner_check` IS THE HALF THAT SEPARATES THE TWO BRANCHES. Absent helper reports
+# `unavailable`; the broken helper below reports `check-failed`. They share the
+# outcome token because the operator's situation is the same — ownership is
+# unestablished — but the observed verdict is not, and a record that collapsed them
+# would be reporting the code path rather than what was seen.
+RID12DA="$(run_id_of "$OUT")"
+[ -n "$RID12DA" ] && ok "  and the run announced a run id" \
+                  || bad "  and the run announced a run id" "$OUT"
+R12DA="$d/runs/$RID12DA.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  and exactly one finalized result, with no unfinalized temporary beside it" \
+  || bad "  and exactly one finalized result, with no unfinalized temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs"): $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(tail -1 "$R12DA" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  and the record is complete to its sentinel" \
+  || bad "  and the record is complete to its sentinel" "last line: $(tail -1 "$R12DA" 2>/dev/null)"
+for pair in "outcome:OWNERSHIP_UNAVAILABLE" "code:35" "stage:pre-hop" \
+            "owner_check:unavailable" "actor:none" "actor_launched:no" \
+            "model_request_started:no" "hop:0" \
+            "next_action:operator-resolve-ownership" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R12DA" "$k")"
+  [ "$got" = "$want" ] && ok "  absent-helper result: $k=$want" \
+                       || bad "  absent-helper result: $k=$want" "got: ${got:-<absent>}"
+done
+# HELD AT FINALIZATION AND GONE AFTERWARDS — the ordering Change set A states, read
+# from the filesystem rather than inferred from the two fields above.
+LT12DA="$(res_field "$R12DA" lease_task_dir)"; LC12DA="$(res_field "$R12DA" lease_checkout_dir)"
+if [ -n "$LT12DA" ] && [ -n "$LC12DA" ] && [ ! -d "$LT12DA" ] && [ ! -d "$LC12DA" ]; then
+  ok "  and both leases it reported holding were released on the way out"
+else
+  bad "  and both leases it reported holding were released on the way out" \
+      "task=${LT12DA:-<absent>} ($([ -d "$LT12DA" ] && echo present || echo gone)) checkout=${LC12DA:-<absent>} ($([ -d "$LC12DA" ] && echo present || echo gone))"
+fi
 
 # The control. Same fixture recipe, same command, helper PRESENT — it must
 # proceed and must launch. Without it, case 12d would pass just as well for a
@@ -751,6 +795,91 @@ expect_rc 35 "$RC" "a BROKEN ownership helper refuses with exit 35 too" "$OUT"
 [ -s "$d.calls" ] && bad "no actor was launched with a broken check" \
                          "actors ran: $(tr '\n' ';' <"$d.calls")" \
                       || ok "no actor was launched with a broken check"
+# The same durable-result proof for the second branch, and the same reason for it.
+# What must differ from the branch above is `owner_check`: the helper RAN here and
+# returned an exit the dispatcher does not recognise, which is `check-failed`, not
+# `unavailable`. If both branches reported one value, the record would be naming the
+# exit code it produced instead of the check it observed.
+RID12DB="$(run_id_of "$OUT")"
+[ -n "$RID12DB" ] && ok "  and the broken-helper run announced a run id" \
+                  || bad "  and the broken-helper run announced a run id" "$OUT"
+R12DB="$d/runs/$RID12DB.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  and exactly one finalized result for the broken helper, no temporary beside it" \
+  || bad "  and exactly one finalized result for the broken helper, no temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs"): $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(tail -1 "$R12DB" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  and that record is complete to its sentinel" \
+  || bad "  and that record is complete to its sentinel" "last line: $(tail -1 "$R12DB" 2>/dev/null)"
+for pair in "outcome:OWNERSHIP_UNAVAILABLE" "code:35" "stage:pre-hop" \
+            "owner_check:check-failed" "actor:none" "actor_launched:no" \
+            "model_request_started:no" "hop:0" \
+            "next_action:operator-resolve-ownership" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R12DB" "$k")"
+  [ "$got" = "$want" ] && ok "  broken-helper result: $k=$want" \
+                       || bad "  broken-helper result: $k=$want" "got: ${got:-<absent>}"
+done
+# THE TWO BRANCHES REALLY DID OBSERVE DIFFERENT THINGS, asserted against each other
+# rather than only against their own literals — the check a shared constant of the
+# right shape would pass.
+[ "$(res_field "$R12DA" owner_check)" != "$(res_field "$R12DB" owner_check)" ] \
+  && ok "  and the two branches recorded DIFFERENT owner_check verdicts" \
+  || bad "  and the two branches recorded DIFFERENT owner_check verdicts" \
+         "both: $(res_field "$R12DB" owner_check)"
+LT12DB="$(res_field "$R12DB" lease_task_dir)"; LC12DB="$(res_field "$R12DB" lease_checkout_dir)"
+if [ -n "$LT12DB" ] && [ -n "$LC12DB" ] && [ ! -d "$LT12DB" ] && [ ! -d "$LC12DB" ]; then
+  ok "  and the broken-helper run released both leases it reported holding"
+else
+  bad "  and the broken-helper run released both leases it reported holding" \
+      "task=${LT12DB:-<absent>} ($([ -d "$LT12DB" ] && echo present || echo gone)) checkout=${LC12DB:-<absent>} ($([ -d "$LC12DB" ] && echo present || echo gone))"
+fi
+
+# M41 — the mutation control for every ownership-result assertion above, and for
+# case 50e's code-33 assertions, which rest on the same guarantee. ONE mutation, not
+# a matrix: the ownership stops publish through the shared die funnel, so removing
+# that one action is what falsifies the claim for all three ownership codes at once.
+#
+# It is M1's construction reused verbatim rather than a new technique — same marker
+# line, matched whole, occurrences counted, mutant required to differ and to parse —
+# because the seam under test is the same one and a second way of cutting it would
+# only add a way for the two controls to disagree.
+MUTOWN="$SANDBOX_ROOT/mutants-ownership"; mkdir -p "$MUTOWN"
+M41_LINE='  finalize_terminal_result "$code" || die_funnel_unprovable "$code" # die funnel failure transfer'
+M41_HITS="$(grep -Fxc -- "$M41_LINE" "$DISPATCH_BIN" 2>/dev/null)"
+awk -v want="$M41_LINE" '$0 == want { print "  :"; next } { print }' "$DISPATCH_BIN" >"$MUTOWN/m41.sh"
+M41_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUTOWN/m41.sh" || M41_DIFFERS=yes
+M41_PARSES=no; bash -n "$MUTOWN/m41.sh" 2>/dev/null && M41_PARSES=yes
+if [ "$M41_HITS" = "1" ] && [ "$M41_DIFFERS" = yes ] && [ "$M41_PARSES" = yes ]; then
+  ok "  M41 mutant differs from the dispatcher and still parses (the one funnel call site was found)"
+  dm="$(new_sandbox)"; state_file "$dm" "fc-mut" "codex"
+  git -C "$dm" rm -q --cached logs/scripts/work-loop-owner.sh >/dev/null 2>&1
+  rm -f "$dm/logs/scripts/work-loop-owner.sh"
+  git -C "$dm" commit -qm "remove the ownership helper" >/dev/null 2>&1
+  OUTM="$(bash "$MUTOWN/m41.sh" --checkout "$dm" --task fc-mut --log-dir "$dm/runs" \
+        --timeout 20 --actor-cmd "$FLIP_TO_OPERATOR" 2>&1)"; RCM=$?
+  # THE EXIT CODE IS UNCHANGED AT 35, and that is the point of the control: a case
+  # asserting only the code would have passed against this mutant and proved nothing
+  # about the record. What disappears is the record itself.
+  if [ "$RCM" -eq 35 ] && [ "$(res_count "$dm/runs")" = "0" ]; then
+    ok "  M41: the ownership stop still exits 35 but publishes NO result (the assertions above are fail-capable)"
+  else
+    bad "  M41: the ownership stop still exits 35 but publishes NO result" \
+        "rc=$RCM results=$(res_count "$dm/runs")"
+  fi
+  # And with no record, every field assertion above has nothing to read — shown on
+  # the one field a supervised-use claim leans on hardest.
+  RIDM41="$(run_id_of "$OUTM")"
+  [ -z "$(res_field "$dm/runs/$RIDM41.result" model_request_started)" ] \
+    && ok "  M41: and model_request_started reads as absent, not as 'no'" \
+    || bad "  M41: and model_request_started reads as absent, not as 'no'" \
+           "got: $(res_field "$dm/runs/$RIDM41.result" model_request_started)"
+else
+  bad "  M41 mutant differs from the dispatcher and still parses (the one funnel call site was found)" \
+      "matched ${M41_HITS:-0} lines, want exactly 1; differs=$M41_DIFFERS parses=$M41_PARSES — the control cannot run"
+fi
 
 # ---------------------------------------------------------------- case 12e
 # CROSS-TRANSPORT CONTENTION — the attended carrier against the unattended
@@ -5973,6 +6102,43 @@ LTD="$(res_field "$R50E" lease_task_dir)"
 [ -n "$LTD" ] && [ ! -d "$LTD" ] \
   && ok "50e — and the lease it reported holding was released on the way out" \
   || bad "50e — and the lease it reported holding was released on the way out" "still present: $LTD"
+# COMPLETING THE CODE-33 RESULT PROOF. Everything above asserts what the record
+# SAYS; these assert that there is exactly one record and that it is whole. The
+# approved plan asks for both — "Atomically finalize exactly one terminal result
+# for … invalid state or ownership" — and "a result exists" is the weakest of those
+# claims: an appending or double-publishing producer satisfies it. Counted the three
+# ways 67a counts them for code 34, so the two ownership siblings prove the same
+# thing about their own terminals.
+[ "$(res_count "$d/runs")" = "1" ] \
+  && ok "50e — exactly one finalized result" \
+  || bad "50e — exactly one finalized result" "found $(res_count "$d/runs"): $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(part_count "$d/runs")" = "0" ] \
+  && ok "50e — no unfinalized temporary artifact was left behind" \
+  || bad "50e — no unfinalized temporary artifact was left behind" "$(ls "$d/runs"/*.result.partial 2>&1)"
+NV50E="$(grep -c '^terminal_result_version=' "$R50E" 2>/dev/null || printf '0')"
+[ "$NV50E" = "1" ] && ok "50e — the artifact carries exactly one version line" \
+                   || bad "50e — the artifact carries exactly one version line" "found $NV50E"
+[ "$(tail -1 "$R50E" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "50e — the last line is the completeness sentinel" \
+  || bad "50e — the last line is the completeness sentinel" "$(tail -1 "$R50E" 2>/dev/null)"
+# The two fields the refusal's own semantics turn on that this case did not pin.
+# `model_request_started=no` is the one a supervised-use claim rests on — an
+# ownership refusal must not have reached the model — and it is a separate fact from
+# `actor_launched`, which 50e already had. `next_action` is the bounded token, shared
+# with codes 34 and 35 (`result_next_action()` maps 33|34|35 to one instruction).
+for pair in "model_request_started:no" "next_action:operator-resolve-ownership"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50E" "$k")"
+  [ "$got" = "$want" ] && ok "50e — $k=$want" || bad "50e — $k=$want" "got: ${got:-<absent>}"
+done
+# BOTH leases, not one. The record above says both were held at finalization; the
+# assertion above this only proved the TASK lease was released afterwards, so the
+# checkout lease could have survived and nothing here would have noticed.
+LCD="$(res_field "$R50E" lease_checkout_dir)"
+[ -n "$LCD" ] && [ ! -d "$LCD" ] \
+  && ok "50e — and the CHECKOUT lease it reported holding was released too" \
+  || bad "50e — and the CHECKOUT lease it reported holding was released too" \
+         "reported: ${LCD:-<absent>} ($([ -d "$LCD" ] && echo present || echo gone))"
 
 echo
 echo "Case 50f — mutation controls for the corrected launch and lease observations"
