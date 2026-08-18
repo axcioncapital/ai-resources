@@ -23,13 +23,15 @@ Lifecycle decision: **adopt for a limited internal pilot only.** No consumer dep
 
 Deterministic proof: commits `00283026e00b3f0c5d369ba0785581ceb538a96a` (Unit 1 — shared entry, Light vertical slice) and `0a74c2f59a6cf43bcb0bb109c278392520ce92dc` (Unit 2 — Standard evidence-controlled slice). Both harnesses green at `14 passed, 0 failed` and `18 passed, 0 failed`; `research-route-memo-check.sh` passed on its first run.
 
-Representative operating proof (Unit 3), accepted by Codex on 2026-08-18 from the operator-supplied transcript at `/Users/patrik.lindeberg/.codex/attachments/dc9584c0-7a80-4904-9e67-5d2cfbe35a32/pasted-text.txt`:
+Representative operating proof (Unit 3), accepted by Codex on 2026-08-18 and preserved at `audits/l3-representative-operating-proof-2026-08-18.md`:
 
 - **Light** — resolved from the base floor; answered with separately marked evidence, inference and gaps.
 - **Standard** — resolved from `output=analysis` (also `load_bearing_claim=yes` and `thesis_judgment=yes`); produced a six-claim evidence-controlled pilot-readiness memo.
 - **Deep** — resolved from `output=report` and independently from `scope=broad`; verified the intended Sector Intelligence target against the deployed workflow's setup markers, disclosed its later-stage configuration gaps, returned the deployed-workflow handoff, and ran no pipeline stage.
 
 Together these are the plan-required operator-run Light question, genuine Standard assignment and Deep handoff. The closing record is committed in this task's final commit.
+
+Post-closure independent review found four material control gaps. Commits `a306db36` and `041f224b` corrected them by making malformed signal vectors fail closed, requiring executable route resolution, enforcing the Standard memo's claim/source/role structure, binding Answer verbs to cited claims, and conservatively closing the House View output seam. The corrected harnesses pass at `14 passed, 0 failed` and `33 passed, 0 failed`; the final genuine Standard invocation and its accepted boundary are recorded in the repository-owned proof above.
 
 ## Accepted limitations
 
@@ -40,3 +42,4 @@ Together these are the plan-required operator-run Light question, genuine Standa
 - The Unit 3 proof does not establish serial orchestration or consumer-facing command UX.
 - The Deep target is ready for Stage 1 but still lacks `reference/stage-5-paths.md`, a resolved confidentiality boundary and a task plan for this topic.
 - The Standard-route House View adapter is intentionally unbuilt, pending L2's stable authority contract.
+- Instruction adherence and the semantic assessment of the five routing signals remain model judgments; the executable classifier guarantees the route only for the vector it receives.
