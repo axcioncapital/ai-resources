@@ -3504,6 +3504,35 @@ fi
 STATE_BIN_REL='logs/scripts/work-loop-state.sh'
 
 validate_state() { # sets ST_TURN and ST_CLASS; dies on any failure. Never mutates.
+  # THIS OBSERVATION HAS NOT BEEN MADE YET. Cleared on entry rather than left
+  # standing, so a stop in any of the die() paths below cannot answer with the
+  # PREVIOUS call's reading. Exactly the move launch_actor() already makes with
+  # LAUNCHED_ACTOR one function over, and for the same reason: a fact about an
+  # event that has not happened must not be carried by a variable that still
+  # holds the last time it did.
+  #
+  # WHAT IT FIXES. This function is called before the loop, again at the top of
+  # every iteration, and again after each actor exits. Only the first of those
+  # can fail with nothing behind it. When a LATER call failed — an actor that
+  # corrupted the turn on its way out is the ordinary case — ST_TURN and ST_CLASS
+  # still held the successful pre-hop reading, and the terminal record published
+  # it: a BAD_TURN/15 result stating `turn_at_terminal=claude` and
+  # `state_class=ACTIVE_CLAUDE`, which is a legal turn and a valid classification
+  # reported by the very stop whose meaning is that neither was obtained. Reached
+  # before a hop the same terminal recorded both as `unavailable`, so one producer
+  # gave two opposite answers to "what did you observe".
+  #
+  # `unavailable` IS THE TRUTHFUL VALUE, not a blanking. The validator is the only
+  # lifecycle authority here and a failed call returns no classification to carry;
+  # the record's job is to say that it could not observe one.
+  #
+  # THE ONE PLACE A VALUE SURVIVES is deliberate and is not stale: the
+  # unrecognised-classification die() below fires AFTER `ST_CLASS="$out"`, so it
+  # still reports what this call's own validator actually printed. That is a fresh
+  # failed observation, and the record should keep it.
+  ST_TURN=""
+  ST_CLASS=""
+
   [ -f "$STATE_FILE" ] || die 13 "state file missing: $STATE_FILE"
   [ -r "$STATE_FILE" ] || die 13 "state file unreadable: $STATE_FILE"
 

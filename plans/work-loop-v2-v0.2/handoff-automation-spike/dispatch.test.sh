@@ -6126,6 +6126,7 @@ R49="$d/runs/$RID49.result"
   || bad "  post-hop code 15 — the record is complete to its sentinel" "last line: $(tail -1 "$R49" 2>/dev/null)"
 for pair in "outcome:BAD_TURN" "code:15" "stage:post-hop" "actor:claude" \
             "actor_launched:yes" "model_request_started:no" "hop:1" \
+            "turn_at_terminal:unavailable" "state_class:unavailable" \
             "state_sha256_before:$SB49" "state_sha256_after:unavailable" \
             "head_before:$HB49" "head_after:unavailable" \
             "worktree_foreign_paths:0" "worktree_allowlisted_dirty_paths:2" \
@@ -6147,23 +6148,20 @@ LT49="$(res_field "$R49" lease_task_dir)"; LC49="$(res_field "$R49" lease_checko
   && ok "  post-hop code 15 — and both leases it reported holding were released on the way out" \
   || bad "  post-hop code 15 — and both leases it reported holding were released on the way out" \
          "task=${LT49:-<absent>} checkout=${LC49:-<absent>}"
-# TWO FIELDS ARE DELIBERATELY LEFT UNASSERTED HERE, and the omission is the
-# finding this unit hands back rather than an oversight.
+# THE TWO UNAVAILABLE FIELDS IN THE LIST ABOVE ARE THIS CASE'S SHARPEST PAIR, and
+# they are the reason validate_state clears ST_TURN and ST_CLASS on entry. Both are
+# set only by a SUCCESSFUL validator return, and this terminal is a validator that
+# did not return one. Without the clear they held the PRE-hop call's reading, so
+# the record said `turn_at_terminal=claude` and `state_class=ACTIVE_CLAUDE` — a
+# legal turn and a valid classification, published by the very stop whose meaning
+# is that neither was obtained.
 #
-# `turn_at_terminal` and `state_class` are set by validate_state and are never
-# cleared, so at THIS terminal they still hold the reading the PRE-hop call
-# returned: `claude` and `ACTIVE_CLAUDE`. The post-hop call did not return a
-# classification — refusing to return one is exactly why this run exits 15 — and
-# the pre-hop code 15 in case 4 says so out loud, recording both as `unavailable`.
-# One producer, one failure, two opposite answers: the same terminal reports a
-# legal turn and a valid classification when it happens to be reached after a hop,
-# and reports neither when it is reached before one. The value that is stale is
-# also the one the exit code contradicts.
-#
-# NOT ASSERTED EITHER WAY ON PURPOSE. Pinning today's values would make a record
-# that contradicts its own exit code into a guarded contract; asserting
-# `unavailable` would be asserting a production change this unit is not making.
-# Codex decides which, and the assertion is added with that decision.
+# THIS IS WHERE THAT IS CAUGHT AND NOWHERE ELSE IN THE SUITE. The pre-hop code 15
+# in case 4 asserts the same two values and passes either way: nothing has ever run
+# there, so there is no earlier reading to carry. Only a terminal reached AFTER a
+# successful validation can tell a cleared variable from an uncleared one, which is
+# what makes these two lines the regression protection for that clear rather than
+# two more fields in a list.
 
 # ==================================================================== case 50
 #
