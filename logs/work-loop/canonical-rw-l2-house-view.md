@@ -19,7 +19,7 @@ Programme integration, merge, push, and deployment.
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 1 — establish the canonical authority contract.
+Standard. Implementation mode. Unit 2 — wire production, independent challenge, and founder decision.
 
 Named reason for the loop: L2 spans multiple bounded implementation units, canonical edits may take
 live effect through symlinked consumers, and the authority boundary needs independent evidence before
@@ -27,116 +27,135 @@ downstream owners may rely on it.
 
 ## Brief
 
-L1 passed after a genuine trial proved that independent challenge, substantive founder revision,
-durable dispositions, mechanical promotion and downstream traceability work. This unit turns only
-the stable authority contract into a canonical resource; later units will attach its producer and
-existing downstream owners without reopening the contract or copying the trial's excessive burden.
+Unit 1 established and proved the canonical authority contract. This unit makes the existing deep
+Research Workflow actually produce and independently challenge that artifact, then stop for the
+founder's approve/revise/reject decision; downstream analysis and writing enforcement remains a
+separate unit so this one has one dominant deliverable.
 
 **Governing authority and current position**
 
 - The approved lean plan is
   `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`, with
   material content bound to `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`. L2's outcome, boundary,
-  proof table and sequence govern.
+  proof table and essentials-only constraint govern.
 - L1's accepted closing record is `logs/work-loop/canonical-rw-judgment-l1-repair.md`, closed at
-  `70030feb`. It authorizes L2 to open and carries the binding adaptation constraints and accepted
-  limitations.
-- The earlier failed trial remains evidence at
-  `logs/work-loop/canonical-rw-judgment-house-view.md`, closed at `65a51f7f`. It established the
-  failure modes the canonical contract must prevent.
-- The proven **local** reference implementation is in
-  `projects/axcion-sector-intelligence-l1-trial` at repair commits `ba7e37a` and `9e3242b`, with the
-  successful repeat-trial evidence ending at `689afa8`. It is evidence and a reusable technical
-  reference, not canonical authority and not permission to copy project-specific assumptions.
+  `70030feb`; its burden findings remain binding adaptation constraints.
+- Unit 1 is accepted at commit `4a2a0b965ff25dbd9260aeb2bac8bb3ff88949d7`. Its stable interface is
+  `workflows/research-workflow/docs/judgment-authority-contract.md`; the template and three helpers it
+  names are settled implementation inputs for this unit, not proposals to redesign.
+- The current deep-route orchestration in
+  `workflows/research-workflow/.claude/commands/run-analysis.md` and
+  `workflows/research-workflow/reference/stage-instructions.md` is verify-first background, not
+  authority to preserve obsolete behavior. It appears to move from gap resolution to section
+  directives and auto-delegated editorial decisions without the accepted judgment seam.
+
+**Codex framing decisions**
+
+- This unit ends when the producer/reviewer/founder-decision seam works. Authority checks on analysis,
+  synthesis, report architecture, prose and content QC are held for the next L2 unit because combining
+  both deliverables would make this unit oversized.
+- The producer belongs at the accepted contract's semantic boundary — after evidence sufficiency and
+  gap resolution, before report-bound analytical writing. Exact command structure and implementation
+  mechanism are Claude's technical judgment after repository inspection.
+- Canonical operating behavior should expect one independent review. Further rounds happen only when
+  required-change findings or revisions make them necessary; the L1 trial's three rounds are evidence
+  of burden, not a canonical target.
 
 **Required outcome**
 
-Establish the smallest canonical stable authority contract that later L2 units and L3's final House
-View adapter can bind to. It must define and mechanically enforce:
+Wire the smallest canonical operating path that:
 
-1. One Unit Judgment Brief shape separating:
-   - evidence tied to resolvable claim IDs and permission classes;
-   - conventional and candidate interpretations, strongest countercases, confidence and invalidation
-     conditions;
-   - Axcíon context used only for relevance and framing, never as evidence or confidence support.
-2. Explicit lifecycle states for proposed, reviewed/dispositioned, approved and rejected outcomes,
-   without creating a second approval system or second House View artifact.
-3. A mandatory independent-challenge record bound to the exact reviewed bytes, with durable
-   dispositions for every required-change finding and preserved review history across revisions.
-4. Promotion that occurs only after explicit founder approval, refuses missing/stale/unresolved
-   challenge states, refuses evidence-permission laundering and unresolved operator-decision
-   conflicts, records the real approver, and carries analytical content without alteration.
-5. A stable trigger/consumption interface that later units and L3 may use without knowing the
-   project-local implementation. Publish only the contract needed to identify the proposed/reviewed/
-   approved artifact, invoke validation/promotion, and consume approved authority; do not build the
-   L3 adapter here.
+1. triggers one Unit Judgment Brief at the accepted post-gap-resolution boundary;
+2. supplies the producer with the evidence bundle and Axcíon context bundle as distinct inputs and
+   writes only a contract-valid `proposed` artifact;
+3. dispatches a fresh-context reviewer that did not author the proposal, records the challenge against
+   the exact proposal bytes, and preserves required-change findings and dispositions through revisions;
+4. halts for the founder's explicit **approve, revise, or reject** decision — no auto-approval, no
+   inferred approval, and no continuation on silence;
+5. on revision, invalidates the old challenge and requires a fresh round; on approval, calls the
+   accepted mechanical promoter with the real approver; on rejection, records rejection and creates no
+   approved artifact; and
+6. returns a validated approved authority or a durable rejected outcome without yet changing any
+   downstream analytical owner.
 
-Keep pilot quality at 85–90%. The successful trial's 829,650-token, three-review burden is a binding
-warning: do not turn its full operating record, Sector-specific decisions, or artifact length into
-canonical requirements. Canonicalize the minimum controls that prevented the first trial's real
-failures.
+Keep pilot quality at 85–90%. Reuse the accepted contract and existing workflow conventions. Do not
+reproduce the Sector trial's prose, decision vocabulary, directory assumptions, task-plan versions,
+HOLD state, or review burden.
 
 **Check against repository reality before acting**
 
 1. Verify this checkout, branch, HEAD, cleanliness relevant to the unit, and sole-writer condition.
-   The existing modified session logs are not part of this unit and must not be overwritten or
-   bundled into its implementation commit.
-2. Enumerate every live consumer that receives canonical judgment-related resources through symlinks
-   or direct references before editing. Name the searched roots and link targets. Stop if a canonical
-   edit would take live effect in a deployed project whose relevant state cannot be verified.
-3. Search the canonical templates, skills, prompts, commands, scripts and tests for an existing Unit
-   Judgment Brief, challenge, approval/promotion or House View authority contract. Bound absence
-   claims to those surfaces. Reuse compatible canonical machinery rather than duplicating it.
-4. Inspect the local L1 implementation and successful trial only to derive the stable, project-neutral
-   contract and the failure cases that earned protection. Explicitly exclude Sector-specific decisions,
-   file layout assumptions, task-plan versions, HOLD state, directive paths and burden-heavy prose.
-5. Identify the canonical repository's existing conventions for artifact templates, deterministic
-   validation helpers and fail-capable test fixtures. Follow those conventions rather than inventing
-   a parallel resource family.
-6. If the stable contract cannot be implemented without choosing a new operator-owned judgment,
-   changing the approved architecture, or editing an unverifiable live consumer, hand back the exact
-   blocker instead of broadening this unit.
+   The existing modified session logs are not part of this unit and must not be overwritten or bundled
+   into its implementation commit.
+2. Re-enumerate live-effect consumers for every canonical skill, command, template, script or reference
+   surface the implementation would edit. Name the searched roots and resolved targets. Stop if an edit
+   would take live effect in a deployed consumer whose relevant state cannot be verified.
+3. Inspect `run-analysis.md`, `stage-instructions.md`, `reference/file-conventions.md`, the accepted
+   judgment contract, and the skills/agents/tests they actually invoke. Establish the single existing
+   transition after gaps are resolved and before report-bound analytical writing. Do not assume the
+   numbered step or exact file set from this brief is still current.
+4. Search the canonical skills, agents, commands and prompts for compatible producer or independent
+   analytical-review machinery. Bound any absence claim to those surfaces and reuse a compatible owner
+   rather than adding a parallel resource by name alone.
+5. Verify how the deep route currently dispatches fresh-context independent QC and how its command-path
+   fixtures prove a real dispatch/stop rather than merely containing words. Preserve the established
+   convention where it satisfies the accepted contract.
+6. Verify the existing operator-decision and decision-log conventions at this boundary. Do not reuse an
+   auto-delegated approval path for founder judgment, and do not create a second approval marker or
+   approval workflow beside the accepted proposed/review/approved files.
+7. Verify Unit 1's deferred naming issue against `reference/file-conventions.md`. If this unit writes the
+   first instance into a stage directory, add the minimum canonical naming row in the same change.
+8. If the seam cannot be wired without a new top-level command or stage, a material architecture change,
+   a new operator-owned judgment, or an unverifiable live-consumer edit, hand back the exact blocker
+   rather than broadening the unit.
 
 **Required evidence**
 
-- A pre-change failing case showing that canonical resources currently cannot reject at least one
-  real L1 failure mode; absence alone is not sufficient evidence.
-- Structural fixtures that reject: absent/malformed authority, proposed or rejected content used as
-  authority, approval without a real approver, context used as evidence, analytically altered
-  promotion, missing/stale challenge, unresolved or dropped required-change findings, accepted
-  evidence-permission breach, and unresolved/circular operator-decision conflict.
-- Positive fixtures that accept one minimal valid reviewed-and-approved brief and show that a
-  properly revised, re-reviewed and explicitly approved brief promotes without analytical drift.
-- A command-path fixture covering the contract's minimum produce/review-state → challenge-state →
-  disposition → founder decision → promotion seam. It need not implement the producer or downstream
-  consumers in this unit.
-- Exact commands, assertion totals and exit codes for the new contract tests plus relevant existing
-  canonical regression suites.
-- The stable trigger/consumption interface stated concisely enough for L3 to bind without copying L2
-  internals.
+- A pre-change failing invocation-path case showing the deep route can currently pass from resolved
+  evidence into report-bound analytical work without producing and independently challenging the
+  accepted Unit Judgment Brief. The evidence must exercise or inspect the real route and be able to fail;
+  absence of a keyword alone is insufficient.
+- Fail-capable command-path fixtures proving: separate evidence/context inputs; contract-valid proposal;
+  reviewer context independent from the producer; exact-byte challenge binding; unconditional founder
+  pause; silence/revision/rejection cannot promote; revision makes old clearance stale and causes
+  re-review; explicit approval invokes the accepted promoter with a real approver; and rejection leaves
+  no approved artifact.
+- A negative fixture proving the route cannot continue past this seam on a proposed, stale,
+  unresolved, rejected, or unapproved brief. This proves the operating seam, not the later downstream
+  owners, which remain out of scope.
+- The accepted Unit 1 suites remain green without weakening their assertions, plus relevant existing
+  Research Workflow command/relay regressions.
+- Exact commands, assertion totals, exit codes, changed-surface inventory, and a concise account of how
+  fresh-context author/reviewer separation is enforced in the real invocation path.
 - Implementation and task-state handback committed by Claude.
 
 **Boundaries and stop conditions**
 
-- Do not implement the producer, reviewer dispatch, downstream analysis/synthesis/report wiring or
-  independent content QC in this unit. Those bind to the accepted contract in later L2 units.
-- Do not modify the Sector trial checkout or promote its approved brief to canonical authority.
-- Do not import the 2,609-word trial artifact as the canonical template. Preserve the semantic fields
-  while keeping the canonical contract lean; changing the non-binding word target is outside this
-  unit unless the existing canonical convention makes it unavoidable.
+- Do not wire the approved brief into section directives, synthesis, report architecture, chapter prose,
+  or their QC surfaces in this unit. That is the next L2 deliverable.
+- Do not run the representative content-scoring proof in this unit; it requires the complete L2 path and
+  remains part of L2 acceptance, not forgotten work.
+- Do not modify the Sector trial checkout or treat its approved brief as canonical authority.
+- Do not reopen Unit 1's accepted artifact/lifecycle/promotion contract. A verified incompatibility hands
+  back to Codex; it is not repaired silently inside orchestration.
+- Leave the 500–800-word band non-binding. Its fitness remains an accepted limitation until a real
+  canonical representative proof supplies evidence to change it.
 - Do not add a new top-level command, workflow stage, registry, rollout system, deployment mechanism,
   second approval record, or second House View artifact.
-- Do not touch L3 or L4 surfaces. L3 receives the stable interface only after Codex accepts it.
-- Record adjacent improvements as deferrals; do not start a mechanism-improvement programme.
+- Do not touch L3 or L4 surfaces, generic deployment/sync machinery, Content Programme integration,
+  retrieval, or unrelated editorial-decision architecture.
+- Record adjacent improvements as deferrals; do not start a general workflow redesign.
 
 Capability subset: baseline only — local reads and history inspection, edits and tests within the
-canonical judgment contract surfaces resolved by this unit, this task-state handoff, and local commits
-by Claude. Nothing is selected from the pre-authorizable set, which is empty today. No network, push,
-merge, deployment, credentials, destructive shared-state action, policy weakening, or other
-operator-reserved capability is authorized.
+canonical producer/reviewer/orchestration surfaces resolved by this unit, this task-state handoff, and
+local commits by Claude. Nothing is selected from the pre-authorizable set, which is empty today. No
+network, push, merge, deployment, credentials, destructive shared-state action, policy weakening, or
+other operator-reserved capability is authorized.
 
-Completion condition: the project-neutral canonical authority contract and stable interface are
-implemented, all required fail-capable fixtures and relevant regressions pass, live-effect consumers
+Completion condition: the canonical deep route produces a contract-valid proposal from separated
+inputs, runs an independent fresh-context challenge, preserves revision/disposition state, halts for the
+founder's explicit decision, and can mechanically approve or durably reject without entering downstream
+analytical work; all required fail-capable fixtures and relevant regressions pass, live-effect consumers
 are accounted for, implementation is committed, and Claude records exact evidence here with
 `turn: codex`. A false premise or authority/live-consumer blocker hands back without expanding scope.
 
@@ -144,163 +163,123 @@ are accounted for, implementation is committed, and Claude records exact evidenc
 
 Inspected (2026-08-18):
 
-- Claim (1) — checkout, branch, HEAD, cleanliness, sole writer: **HOLDS**. `git rev-parse
-  --show-toplevel` = `ai-resources-research-workflow-fixes`; branch
-  `session/2026-08-17-research-workflow-fixes`; HEAD `70030feb`. `git status --porcelain` showed only
-  the two pre-existing modified session logs (`logs/friction-log.md`,
-  `logs/innovation-registry.md`) plus the untracked state file — none were touched or staged.
-  `git worktree list` plus `work-loop-owner.sh --depth repo` returned PROCEED, this checkout
-  declaring this task.
-- Claim (2) — live consumers of canonical judgment resources: **HOLDS, and no canonical edit here can
-  take live effect.** Enumerated every symlink under `projects/` and resolved each with `readlink -f`:
-  3,134 resolve to `/Axcion AI Repo/ai-resources` (the main checkout) and 79 stay inside `projects/`;
-  **zero resolve to this worktree**. Searched for directory-level links into
-  `ai-resources/templates` and `ai-resources/logs/scripts` — only two per-file links exist
-  (`axcion-content-programme/logs/scripts/{split-log,check-archive}.sh`), so neither surface
-  auto-exposes a new file. Workflow propagation is by `/sync-workflow` file copy, confirmed in
-  `.claude/commands/sync-workflow.md:39,47,128` and restated in
-  `workflows/research-workflow/tests/s1-relay/README.md` § Blast radius ("regular file copies, not
-  symlinks, so a canonical edit does not take live effect"). Stop condition 4 does not fire.
-- Claim (3) — no existing canonical Unit Judgment Brief / challenge / approval / House View contract:
-  **HOLDS.** Searched `templates/ skills/ prompts/ .claude/ workflows/ docs/ logs/scripts/ scripts/
-  chat-skills/` (all confirmed present, 777 files total) for `unit judgment brief|house view|judgment
-  brief` — no match. Repo-wide, `House View` appears only in `plans/`, `audits/` and
-  `logs/work-loop/`; `find` for `check-judgment-*` returned nothing. The concept existed canonically
-  as plan text only, with no implementation.
-- Claim (4) — the local L1 reference implementation is present and inspectable: **HOLDS.**
-  `projects/axcion-sector-intelligence-l1-trial` at branch `trial/l1-repeat-precision-components`,
-  HEAD `689afa8`; commits `ba7e37a`, `9e3242b`, `067b208` all resolve; the first trial's branch
-  `trial/l1-judgment-custom-dev-data-ai` still points at `9e3242b`, unmodified. Read the template,
-  `check-judgment-contract.sh`, `check-judgment-challenge.sh` and `promote-judgment-brief.sh`.
-- Claim (5) — canonical conventions for templates, validators and fail-capable fixtures: **HOLDS.**
-  Artifact templates are `workflows/research-workflow/reference/*.template.md` (six existing).
-  Runtime helpers are `workflows/research-workflow/logs/scripts/*.sh`, mode 755, deployed by
-  `/sync-workflow`. Test harnesses pair as `<name>.test.sh` with `ok`/`bad` counters, a
-  `N passed, N failed` last line, nonzero exit on failure, and an explicit falsifiability control
-  (`tests/s1-relay/check-relay-payload.test.sh` T3/T9; `logs/scripts/work-loop-capability.test.sh`
-  C7). `templates/` was checked and **rejected** as a home: `templates/README.md` scopes it to project
-  scaffolding with a closed five-consumer contract.
-- Claim (6) — no operator-owned judgment, architecture change or unverifiable live-consumer edit
-  required: **HOLDS.** Both mechanisms the local implementation lacks are named by governing
-  authority rather than chosen here — `rejected` by the brief's required outcome 2, and
-  context-used-as-evidence by the approved plan § 7's L2 deterministic floor.
-- Governing plan binding: **HOLDS with a stated qualification.** The working-tree plan differs from
-  `8bf9d0d9` by 11 insertions / 4 deletions. The whole diff is the approval stamp (`Status: Proposed
-  → Approved` plus an `**Approval:**` block), and it self-describes as "administrative approval
-  metadata only — the approved material content is the version at that commit". Material content is
-  unchanged, so the brief's "material content bound to `8bf9d0d9`" is accurate.
+- Claim (1): HOLDS — checkout `ai-resources-research-workflow-fixes`, branch
+  `session/2026-08-17-research-workflow-fixes`, HEAD `4a2a0b96` (Unit 1's accepted commit).
+  `git status --porcelain` showed only `logs/friction-log.md`, `logs/innovation-registry.md` and this
+  task file modified; the two session logs were left untouched and excluded from the commit.
+  `work-loop-owner.sh check --depth repo` → PROCEED (this checkout declares the task);
+  `work-loop-capability.sh check --canonical` → READY, every copied component byte-identical to
+  canonical.
+- Claim (2): HOLDS — searched every workspace directory to depth 8 for symlinks resolving into
+  `research-workflow`; the 10 that exist all target the canonical `ai-resources` checkout, not this
+  worktree, and none names a file this unit edits (`produce-architecture`, `produce-formatting`,
+  `produce-prose-draft`, `produce-jargon-gloss`, `status`, `verify-chapter`, `run-report`). Searched
+  the whole workspace for `run-analysis.md`, `stage-instructions.md` and `file-conventions.md`: 17,
+  17 and 17 hits respectively, **every one a regular file, zero symlinks**. Edits here take no live
+  effect in any deployed consumer until `/sync-workflow` propagates them.
+- Claim (3): HOLDS — read `run-analysis.md`, `stage-instructions.md`, `file-conventions.md` and the
+  accepted contract end to end. The single transition after gaps resolve and before report-bound
+  writing is `run-analysis` Step 3 → Step 4 (Section Directives), mirrored as `stage-instructions`
+  Step 3.4b → Step 3.5. The brief's caution was warranted: the two files number this same boundary
+  differently, so the seam is `run-analysis` Step 3.5 and `stage-instructions` Step 3.4c.
+- Claim (4): HOLDS — no compatible producer or judgment-review machinery exists. Searched
+  `skills/` (84 entries), `prompts/`, `.claude/commands/`, `.claude/agents/` and the whole
+  `workflows/research-workflow/` tree for `house view`, `unit judgment`, `judgment brief` and the
+  `## Theses` / `### Thesis` headings: every hit is Unit 1's own contract, template and three
+  scripts. Nothing was reused by name alone and no parallel resource was added — the seam reuses the
+  three accepted helpers.
+- Claim (5): HOLDS — the deep route's independent-QC convention is a `qc-gate` sub-agent that
+  **returns** a verdict while the main session writes the artifact (`run-preparation` steps 2 and 3,
+  `run-execution` steps 3, 5 and 122, `run-report` step 3). `run-analysis` Step 5c is the one place
+  that instructs a `qc-gate` to write its own file, which its `tools: Read` frontmatter cannot do —
+  recorded as a deferral, not inherited. The command-path proof convention is `tests/s1-relay`: parse
+  the live command body at an anchor, derive the property from directive text, and prove liveness by
+  mutating the real body (T9/T9b). This unit follows that convention.
+- Claim (6): HOLDS — `/logs/decisions.md` is the established decision log (14 call sites) and the
+  unconditional operator halt is already stated verbatim at `run-analysis` Step 2.5. `run-report`
+  Step 4.4's `-OPERATOR-APPROVED.md` marker is a **separate** chapter-approval workflow; it was not
+  reused and no second approval marker was created. Approval runs only through the accepted promoter.
+- Claim (7): HOLDS, and was actionable — searched `reference/file-conventions.md` for `judgment`: no
+  match in the Canonical Naming Standard table and no `judgment/` in the directory structure. This
+  unit writes the first instance into `analysis/judgment/{section}/`, so the naming rows were added
+  in the same change, closing Unit 1's deferred item.
+- Claim (8): HOLDS — no blocker. The seam needed no new top-level command, no new stage, no
+  architecture change, no new operator-owned judgment and no unverifiable live-consumer edit.
 
-Result: the canonical, project-neutral judgment authority contract is implemented and enforced. Eight
-files — one interface doc, one artifact template, three runtime validators, three fail-capable test
-suites — plus one registration line in the existing reference enumeration. **67 new assertions pass,
-0 fail**, and all pre-existing canonical Research Workflow regressions remain green. Two mechanisms
-the proven local implementation did not have are now enforced: the `rejected` lifecycle state, and
-mechanical evidence/context separation.
+Result: the canonical deep route now produces, independently challenges and decides a Unit Judgment
+Brief before any report-bound analytical writing. `run-analysis.md` carries a new Step 3.5 between gap
+resolution and Section Directives, with five sub-steps: 3.5a produces the proposal from two disjoint
+labelled path bundles and shape-checks it; 3.5b dispatches a `qc-gate` reviewer that reads the proposal
+by path and is explicitly denied everything 3.5a returned; 3.5c has the main session archive any prior
+round, compute `reviews_sha256` from the file with `shasum`, and write the ledger; 3.5d halts
+unconditionally on a closed four-branch decision set (approve / revise / reject / anything else); 3.5e
+gates entry to Step 4 on `check-judgment-contract.sh {base}-approved.md` exiting 0.
+`stage-instructions.md` gains Step 3.4c and the hard judgment gate; `file-conventions.md` gains three
+naming rows, the `analysis/judgment/{section}/` directory entry, and a note that the three lifecycle
+suffixes are not Rule-2 variants. No downstream analytical owner was touched.
 
-### What was built
+Evidence:
 
-| File | Role |
-|---|---|
-| `workflows/research-workflow/docs/judgment-authority-contract.md` | the stable interface — artifact, lifecycle, challenge, promotion, consumption |
-| `workflows/research-workflow/reference/unit-judgment-brief.template.md` | project-neutral artifact shape and authoring guidance |
-| `workflows/research-workflow/logs/scripts/check-judgment-contract.sh` | shape, status and the three separations |
-| `workflows/research-workflow/logs/scripts/check-judgment-challenge.sh` | challenge binding, round chain, dispositions |
-| `workflows/research-workflow/logs/scripts/promote-judgment-brief.sh` | the one mechanical approval transition |
-| the three paired `*.test.sh` | 67 assertions, each with a falsifiability control |
-| `workflows/research-workflow/docs/required-reference-files.md` | one line registering the new template as outside the deployment contract |
+- **Pre-change failing case (real route, fail-capable).** `bash tests/judgment-seam/check-judgment-seam.sh`
+  against the unmodified `run-analysis.md`: **11 of 11 assertions FAIL, exit 1**, `J0` reporting
+  "no '### Step 3.5:' section — the route passes from resolved gaps into Step 4 with no judgment
+  produced". The same command post-change: **11 of 11 PASS, exit 0**. The suite re-earns that red from
+  Git rather than from memory (`Tpre`, against `HEAD:.../run-analysis.md`).
+- **Not a keyword scan.** `T0b` appends four paragraphs to the pre-change body asserting the seam is
+  wired — separated bundles, `reviews_sha256`, unconditional pause with no auto-approve,
+  `--approval`/`--approved-by`, refusal on proposed/stale/rejected. **No verdict moves.**
+- **Every assertion independently live.** `M1`–`M10` each apply **one** mechanical edit to a copy of
+  the **real** command body and require exactly the targeted assertion to flip with nothing else
+  moving: merging the two bundles (J1), dropping `--allow-proposed` (J2), deleting the withholding
+  directive (J3), taking the digest from a sub-agent (J4), opening a fifth decision branch (J5),
+  promoting from the else-branch (J6), revising without a new round (J7), dropping `--approved-by`
+  (J8), promoting from the reject branch (J9), accepting a proposal at the gate (J10). All ten flip.
+- **Negative fixtures exercise the real helpers, not the wording.** `N1` no approved brief → exit 3;
+  `N2a` sound-but-unapproved proposal → 3, with control `N2b` the same proposal passing
+  `--allow-proposed` → 0; `N3` rejected brief → 4; `N4` approved with claim IDs stripped → 5; `N5b`
+  proposal edited after review → challenge stale, exit 4, with control `N5a` the bound record clearing
+  at 0; `N6` undisposed `permission-breach` → 6. The two controls are what stop an always-refusing
+  gate from satisfying the refusals for free.
+- **Exact commands, totals and exit codes.**
+  `bash tests/judgment-seam/check-judgment-seam.sh` → 11/11, exit 0.
+  `bash tests/judgment-seam/check-judgment-seam.test.sh` → **21 passed, 0 failed**, exit 0.
+  `bash logs/scripts/check-judgment-contract.test.sh` → 19 passed, 0 failed, exit 0.
+  `bash logs/scripts/check-judgment-challenge.test.sh` → 24 passed, 0 failed, exit 0.
+  `bash logs/scripts/promote-judgment-brief.test.sh` → 24 passed, 0 failed, exit 0.
+  (Unit 1's 67 assertions unchanged; no assertion weakened.)
+  `tests/s1-relay/check-relay-payload.sh` → TARGET MET, 0 violations, exit 0;
+  `tests/s1-relay/check-relay-payload.test.sh` → 26 passed, 0 failed, exit 0.
+  `tests/s1-representative/score-specimen.test.sh` → 38/38, exit 0.
+- **Author/reviewer separation in the real invocation path.** Three mechanisms, each independently
+  asserted: the producer is a general-purpose sub-agent that writes to disk and returns only a path, a
+  thesis count and claim IDs (`J3`); the reviewer is a separately dispatched `qc-gate` that receives
+  the proposal **by path** and reads it itself, with everything 3.5a returned explicitly withheld
+  (`J3`, flipped by `M3`); and the binding is computed by the main session from the file with
+  `shasum -a 256`, never reported by either agent (`J4`, flipped by `M4`). The main session writes the
+  record but authored neither the brief nor the findings.
+- **Changed-surface inventory (4 paths, canonical-only).**
+  `workflows/research-workflow/.claude/commands/run-analysis.md` (+94 lines, Step 3.5),
+  `workflows/research-workflow/reference/stage-instructions.md` (+3, Step 3.4c and the gate),
+  `workflows/research-workflow/reference/file-conventions.md` (+6, three naming rows, directory entry,
+  Rule-2 carve-out), and new `workflows/research-workflow/tests/judgment-seam/`
+  (`check-judgment-seam.sh`, `check-judgment-seam.test.sh`, `README.md`). Zero live-effect consumers —
+  every deployed copy is a regular file.
 
-Project-specific material was excluded deliberately: the `analysis/judgment/{section}/` layout (the
-contract fixes the three filename suffixes and lets each route resolve its own `{base}`), the
-Core/Adjacent/Selective/Avoid verdict vocabulary, Sector decision ids, task-plan versions, the
-`custom-dev-data-ai` HOLD, directive paths, and the 2,609-word trial artifact. `section:` became
-`unit:` so a lightweight consumer is not forced to describe its work as a report section. The
-claim-ID pattern accepts both canonical families — `Q[n]-C[##]` and `GF[cluster]-C[##]` per
-`reference/quality-standards.md` § Claim ID Invariant — instead of the Sector-only form.
+Deferrals recorded, not implemented:
 
-### Evidence
-
-**The pre-change failing case, recorded before any file was written.** A fixture carrying the exact
-first-trial shape — `status: approved` with no approver, one thesis, zero claim IDs, no countercase,
-and a verdict resting on Axcíon context — was put in front of canonical. All three validator paths
-were **ABSENT**, and both existing canonical suites ran **green** with it in front of them
-(`s1-relay` exit 0, `s1-representative` exit 0). That is the part absence alone could not show: a
-green canonical run did not mean the brief was rejected, it meant nothing was looking.
-
-After the change, the same failure modes are refused, each by exit code:
-
-| First-trial failure mode | Verdict now |
-|---|---|
-| approval without an approver | exit 6 STRUCTURE |
-| a proposal used as downstream authority | exit 4 NOT-APPROVED |
-| context cited as evidence | exit 6 STRUCTURE |
-| a rejected brief used as authority | exit 4 NOT-APPROVED |
-| a permission breach cleared by operator acceptance | exit 7 LAUNDERED-BREACH |
-| a revision silently keeping its old clearance | exit 4 STALE-CHALLENGE |
-| a round-1 finding dropped from a later ledger | exit 9 DROPPED-FINDING |
-| analytical content altered during promotion | exit 9 CONTENT-DRIFT |
-
-**Commands and totals** (run from `workflows/research-workflow/`):
-
-| Suite | Command | Result |
-|---|---|---|
-| contract | `bash logs/scripts/check-judgment-contract.test.sh` | **19 passed, 0 failed**, exit 0 |
-| challenge | `bash logs/scripts/check-judgment-challenge.test.sh` | **24 passed, 0 failed**, exit 0 |
-| promotion + seam | `bash logs/scripts/promote-judgment-brief.test.sh` | **24 passed, 0 failed**, exit 0 |
-| s1-relay harness | `cd tests/s1-relay && bash check-relay-payload.test.sh` | **26 passed, 0 failed**, exit 0 |
-| s1-relay target | `cd tests/s1-relay && bash check-relay-payload.sh` | TARGET MET, exit 0 |
-| s1-representative | `cd tests/s1-representative && bash score-specimen.test.sh` | **38/38 cases**, exit 0 |
-
-**Why the evidence can fail.** Each suite ends with a falsifiability control that runs the entire
-series against a stub which always exits 0 and asserts the series **fails** (V19, C20, P14). Without
-it, "expect nonzero" assertions could be satisfied by a broken script. Three further controls carry
-their own weight: **C6** revises the proposal and asserts the verdict moves 0 → 4, so the binding is
-proved live rather than asserted; **P11** runs a deliberately sabotaged promoter that injects a line
-into the analytical body and asserts CONTENT-DRIFT catches it (exit 9, nothing written), so the
-byte-for-byte guarantee is tested rather than trusted; and **V11** strips claim IDs from one thesis
-only, which a document-wide count would pass — proving the per-thesis rule is doing real work.
-
-**The command-path fixture** (`promote-judgment-brief.test.sh` S1/S2) drives the contract's minimum
-seam end to end against the real scripts: produce → shape-valid but not authority → round-1 challenge
-raising a permission breach → promotion refused (11) → revision → binding breaks unprompted (4) →
-round-2 re-review with a terminal disposition → cleared (0) → promotion → validated as authority. S2
-asserts the round-1 record survived, so the earlier breach stays on the record. It implements no
-producer and no downstream consumer, which is what keeps it a contract fixture rather than pipeline
-wiring.
-
-**One correctness fix found by self-review before commit.** The decision-conflict rule initially
-required a `settled-by:` line for every disposition. That would have refused the repeat L1 trial's
-own F2 — tagged `permission-breach` plus `decision-conflict`, resolved by revision and cleared on
-re-review — so the requirement now binds `OPERATOR-ACCEPTED` only, where accepting a conflict really
-does assert that another decision permits it. C15b pins the revision route; C13 and C14 still refuse
-an accepted conflict that names no settling decision, or names the conflicting one.
-
-### Deferrals — recorded, not acted on
-
-1. **`reference/file-conventions.md` has no naming row for the judgment artifact family.** Rule 3
-   there requires a row when an artifact is first written into a stage directory. No instance is
-   written by this unit — the producer writes the first one — so the row belongs to the unit that
-   wires the producer. The naming contract itself is already fixed in
-   `docs/judgment-authority-contract.md` § 1.
-2. **The 500–800 word band is carried across unchanged**, as a warning and never a gate (pinned by
-   V9). The closed L1 record flags that the band may not fit this artifact class. Changing it was
-   outside this unit's boundary and remains an L2 decision.
-3. **`check-judgment-gate.sh` and `check-judgment-producer.sh` were not canonicalized.** Both inspect
-   *command bodies* — whether a command consults authority, and whether it stops for a human — which
-   is downstream wiring this unit's boundary excludes. They bind to the accepted contract in a later
-   unit.
-4. **No canonical consumer reads the brief's content yet.** The local pilot recorded the same gap:
-   existence and propagation are different failure modes and only the first is closed here. § 6 of
-   the contract states the requirement; enforcing it needs a consumer, which is a later unit.
-
-### Boundaries observed
-
-No producer, reviewer dispatch, or downstream analysis/synthesis/report wiring implemented. The
-Sector trial checkout was read only and is unmodified; its approved brief was not promoted to
-canonical authority. No new top-level command, workflow stage, registry, rollout or deployment
-mechanism, second approval record or second House View artifact. No L3 or L4 surface touched. No
-push, merge, deployment, credential use or destructive action. The two pre-existing modified session
-logs were left untouched and kept out of the implementation commit, which was staged by explicit
-pathspec.
+1. **The new Step 3.5 relays carry no `tests/s1-relay/seam-manifest.tsv` row.** They are path-passing
+   by construction, so they are compliant, but they sit outside S1's measured denominator — a later
+   edit could convert them to content-passing without S1 noticing. Adding rows means editing the S1
+   manifest and its reconciliation table, which is S1's territory, not this unit's.
+2. **`run-analysis` Step 5c instructs a `qc-gate` sub-agent to write its own output file**, which its
+   `tools: Read` frontmatter cannot do. Pre-existing, outside this unit's scope, and deliberately not
+   inherited by 3.5b.
+3. **`/reference/judgment-context-card.md` has no template and no row in
+   `docs/required-reference-files.md`.** 3.5a says "skip if absent" so the route runs without it, but
+   the canonical resource does not exist yet.
+4. **Downstream owners still do not consume the approved brief** — section directives, synthesis,
+   report architecture, prose and content QC are untouched, exactly as the brief requires. That is the
+   next L2 unit.
 
 ## Blocker
 
@@ -308,21 +287,6 @@ None.
 
 ## Next action
 
-Codex: assess Unit 1 against the required outcome and decide close, continue, correct once, or stop.
-
-The specific questions this hand-back puts to assessment:
-
-1. **Is the stable interface sufficient for L3 to bind without copying L2 internals?**
-   `docs/judgment-authority-contract.md` § 6 is the intended binding surface — three filename
-   suffixes, two validator commands with their exit codes, and the rule that a consumer must pass the
-   approved brief's *content* downstream rather than checking that it exists.
-2. **Is the lifecycle placement right?** Brief statuses are `proposed | approved | rejected`, and the
-   reviewed/dispositioned state sits on the challenge record instead of being mirrored onto the
-   brief. This was Claude's call, taken to avoid two files asserting one fact and to avoid a second
-   place to approve from. It satisfies the four required states without a second approval system, but
-   it is a design choice open to reversal.
-3. **Is mechanical context separation enforced at the right strictness?** Three positional rules —
-   every thesis cites a claim ID, a `Context:` line may not cite one, the verdict must. Enforcing
-   separation by position rather than by a new `CTX` identifier family was Claude's call, and it
-   keeps the trial's "no new identifier scheme" constraint intact.
-4. **Are the four deferrals correctly parked rather than owed by this unit?**
+Codex: assess Unit 2. The seam that creates approved judgment is wired, proved red-then-green against
+the real route, and every assertion is independently falsifiable; the four deferrals above are recorded
+and unimplemented; no downstream analytical owner was touched and no live consumer was affected.

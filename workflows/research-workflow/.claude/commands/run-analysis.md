@@ -53,6 +53,103 @@ The gate-clearance verdict is the load-bearing contract between Pass 3 and Pass 
 
 ---
 
+### Step 3.5: Unit Judgment Brief — produce, challenge, decide
+
+Gaps are resolved and no report-bound analytical writing has started. This is the one point where combined research becomes a stated Axcíon view, and that view is the single analytical authority for everything downstream.
+
+The authority rules — artifact shape, lifecycle, challenge record, promotion, consumption — are `docs/judgment-authority-contract.md`. The shape and authoring guidance are `reference/unit-judgment-brief.template.md`. This step **wires** them into the route; it does not restate them, and it does not add a second approval path or a second judgment artifact.
+
+**Base path for this section.** `{base}` = `/analysis/judgment/{section}/{section}-unit-judgment-brief`. The three suffixes — `-proposed.md`, `-review.md`, `-approved.md` — are fixed by the contract and are not a caller's choice. Create `/analysis/judgment/{section}/` if it does not exist.
+
+#### Step 3.5a: Produce the proposal [delegate]
+
+1. Read `reference/unit-judgment-brief.template.md`.
+2. Launch a general-purpose sub-agent. Pass it the template content, the output path `{base}-proposed.md`, and the two input bundles **as two separately labelled lists**. Keeping them apart is the thing the challenge checks, so the separation is carried in the dispatch itself and the lists never merge:
+
+   **Evidence bundle:** — determines what can be concluded. Passed as paths; the sub-agent reads each itself.
+   - `/analysis/cluster-memos/{section}/` — every refined cluster memo
+   - `/analysis/claim-permission/{section}/` — the per-cluster permission tables from Pass 3 Phase A
+   - `/analysis/gate-clearance/{section}/{section}-gate-clearance.md` — verdict and any caveats
+   - `/analysis/gap-assessment/{section}/{section}-gap-assessment.md` — the resolved gap inventory
+   - `/execution/scarcity-register/{section}/{section}-scarcity-register.md` — confirmed scarcity
+
+   **Axcíon context bundle:** — determines why a conclusion matters and how it is framed. Passed as paths; the sub-agent reads each itself.
+   - `/reference/judgment-context-card.md` — where the project keeps one; skip if absent
+   - `/preparation/task-plans/` — the approved unit task plan
+   - `/preparation/research-plans/` — the approved research plan
+   - `/logs/decisions.md` — unit-specific operator decisions made after those plans
+
+   Standing constraints on the sub-agent: every thesis cites at least one existing claim ID; context may never strengthen an evidence grade, close a gap, turn a hypothesis into a market fact, or convert a failed search into proof of absence; write `status: proposed` and no other status. Do NOT run git / do not commit / do not push.
+
+   **Return (withheld from the reviewer):** the output path, the thesis count, and the claim IDs cited. Nothing else — no reasoning, no defence of the theses.
+
+3. Shape-check the proposal before any reviewer is dispatched against it:
+   ```bash
+   bash "$CLAUDE_PROJECT_DIR/logs/scripts/check-judgment-contract.sh" "{base}-proposed.md" --allow-proposed
+   ```
+   Exit 0 → continue to 3.5b. Any other exit → the proposal is malformed (`5` no claim IDs, `6` structural or separation failure); return it to this step with the reported failure. Do not dispatch a reviewer against a proposal that fails its own shape check.
+
+#### Step 3.5b: Independent challenge [delegate-qc]
+
+The reviewer must not be the agent that wrote the brief, and must not inherit what that agent said about it.
+
+1. Launch a qc-gate sub-agent. Pass it: the proposal by PATH `{base}-proposed.md` — the sub-agent reads the complete file itself — the same evidence-bundle and context-bundle paths passed at 3.5a, and the five challenge questions from `reference/unit-judgment-brief.template.md` § What the challenge asks.
+2. **Withheld from the reviewer:** everything 3.5a returned — the thesis count, the cited claim IDs and any producer summary, reasoning or transcript. The reviewer reads the file and forms its own view; a reviewer briefed on the producer's account is reviewing that account, not the brief.
+3. Return: an overall verdict, and for each required-change finding one line stating the finding plus its tag where one applies — `permission-breach` (an evidence-permission overreach) or `decision-conflict: {id}` (a conflict with an operator decision). A reviewer that raised nothing returns exactly that; silence and omission read identically and only one of them is a review.
+
+#### Step 3.5c: Record the challenge
+
+The main session writes this record. It did not author the brief, and writing the binding here rather than in the reviewer is what makes the binding mechanical.
+
+1. If `{base}-review.md` already exists, archive it first to `{base}-review-round-{N}.md`, where `{N}` is its own `review_round:`. Rounds are kept, never overwritten.
+2. Compute the binding from the proposal file itself:
+   ```bash
+   shasum -a 256 "{base}-proposed.md" | cut -d' ' -f1
+   ```
+   Write that value as `reviews_sha256:`. **Never copy a digest from a sub-agent's return** — a digest a model reports is a claim about the file; this one is the file.
+3. Write `{base}-review.md`: `unit:`, `artifact: unit-judgment-brief-review`, `reviews:` (the proposal path), `reviews_sha256:` (from step 2), `review_round:` (1, or the previous round + 1), `status: findings-only`, `as_of:`.
+4. Ledger: one `finding: F{n}` / `tags:` / `disposition: PENDING` / `reason:` entry per required-change finding, carrying forward every finding id any earlier round raised. Where the reviewer raised nothing, write the explicit empty ledger `findings: none`.
+5. Verify the record's shape and binding:
+   ```bash
+   bash "$CLAUDE_PROJECT_DIR/logs/scripts/check-judgment-challenge.sh" "{base}-proposed.md" --shape-only
+   ```
+   Exit 0 → continue. Any other exit → fix the record; do not present a malformed challenge to the founder.
+
+#### Step 3.5d: Founder decision
+
+**PAUSE. The halt is unconditional — no timeout, no auto-approve, no inferred approval, and no continuation on silence.**
+
+Present, in one message: the proposal path, the challenge record path, the finding ledger with each finding's current disposition, and the fact that the proposed brief is not authority. Then accept exactly one of:
+
+- **approve** — every required-change finding must first carry a terminal disposition (`REVISED-AND-RE-REVIEWED`, or `OPERATOR-ACCEPTED` with its reasons). Then run the one mechanical transition, never authoring `{base}-approved.md` by hand:
+    ```bash
+    bash "$CLAUDE_PROJECT_DIR/logs/scripts/promote-judgment-brief.sh" "{base}-proposed.md" \
+      --approval "<the founder's verbatim reply>" \
+      --approved-by "<the founder's identity>"
+    ```
+    Exit 0 → continue to 3.5e. Any other exit → report the refusal and return to this pause; it refuses exactly the promotions that should not happen.
+- **revise** — return to Step 3.5a in revision mode with the founder's instruction and the open findings. The revision changes the proposal's bytes, so the recorded challenge goes stale by construction; run Step 3.5b again as the next review round and rebuild the record at 3.5c, carrying every earlier finding id forward. Then return to this pause.
+- **reject** — set `status: rejected` and `rejected_by: {founder identity}` on `{base}-proposed.md`. Nothing is promoted, no authority is created, and the rejection is the durable outcome. `/run-analysis` stops here; it does not continue to Step 4.
+- **anything else** — silence, a question, a partial reply, an edit request or an ambiguous acknowledgement is **not a decision**. Re-present and wait. Nothing runs, nothing is written, and the route does not advance.
+
+Log the decision and its one-line rationale to `/logs/decisions.md`.
+
+#### Step 3.5e: Authority gate
+
+Nothing past this seam runs on anything but a validated approved brief:
+
+```bash
+bash "$CLAUDE_PROJECT_DIR/logs/scripts/check-judgment-contract.sh" "{base}-approved.md"
+```
+
+Exit 0 → proceed to Step 4. Any other exit → halt and report the code: `3` no approved brief (the founder has not approved), `4` present but not approved (still proposed, or rejected), `5` approved with no evidence basis, `6` structural failure. Branch on the code, never on the prose, and never regenerate over a present-but-invalid authority.
+
+Write checkpoint to `/analysis/checkpoints/{section}/{section}-step-3.5-judgment-checkpoint.md`. Include: the approved brief path, thesis count, review rounds run, and each finding's terminal disposition.
+
+▸ /compact — the template and the bundle content are no longer needed; the approved brief and the checkpoint carry forward.
+
+---
+
 ### Step 4: Section Directives [delegate]
 
 1. Read `/ai-resources/skills/section-directive-drafter/SKILL.md`.
