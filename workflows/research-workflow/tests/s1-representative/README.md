@@ -26,7 +26,7 @@ check and asserts the matching failure; it is the evidence that the scorer can f
 
 | Path | What it is |
 |---|---|
-| `rubric.md` | Part A — the eight deterministic checks the scorer decides. Part B — what the fresh evaluator judges about analytical meaning, kept out of the scorer on purpose. |
+| `rubric.md` | Part A — the eight deterministic checks the scorer decides. Part B — what the fresh evaluator judges about analytical meaning at the S1 relay boundary, kept out of the scorer on purpose. |
 | `corpus/1.1-chapter-01.md` | The chapter under verification. Ten claim IDs, evidence separated from interpretation, three planted defects for the verification pass to find. |
 | `corpus/1.1-Q1-extract.md`, `corpus/1.1-Q2-extract.md` | Pass-2 research extracts: evidence tables carrying the `Q[n]-C[##]` IDs, coverage trackers, gaps. |
 | `corpus/1.1-gap-extract-pass-1.md` | The Step 3.S3 gap-fill extract carrying `GF1-C01`, recorded undated on purpose. |
@@ -36,7 +36,7 @@ check and asserts the matching failure; it is the evidence that the scorer can f
 | `expected/claim-ids.txt` | The ten claim IDs the chapter must still carry. |
 | `expected/required-artifacts.txt` | Role → path for the four artifacts a scored run must leave behind. |
 | `score-specimen.sh` | The deterministic scorer. |
-| `score-specimen.test.sh` | Thirty negative controls plus the valid-specimen case. |
+| `score-specimen.test.sh` | Thirty-six negative controls plus two positive cases — the valid reference specimen, and the decorated summary form the current-HEAD run emitted. |
 
 ## The pre-S1 baseline
 

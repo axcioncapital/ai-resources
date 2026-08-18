@@ -181,6 +181,61 @@ expect_fail 'T29 baseline revision recorded without derivation' A0 "$d"
 d="$(scratch 30)"; : > "$d/expected/baseline-revision.txt"
 expect_fail 'T30 baseline revision file empty' A0 "$d"
 
+# ---- the decorated summary form observed in the current-HEAD run ---------------------
+#
+# `execution-agent.md` fixes the handoff summary's fields and its hard cap, not a value
+# grammar. The current-HEAD arm emitted the same substance in a second surface form: the path
+# inside a Markdown code span followed by an explanatory parenthetical, and numbered,
+# `Claim ID …`/`Issue type: …`-labelled per-discrepancy lines. T31 asserts the scorer accepts
+# it; T32-T36 assert that accepting it cost none of A3's and A7's substantive failures.
+
+REPORT_PATH=/report/chapters/1.1/1.1-chapter-01-verification.md
+
+# write_decorated_summary <file> [path-inside-the-code-span] [third-pair-line, empty to omit]
+write_decorated_summary() {
+  local f="$1" p="${2-$REPORT_PATH}" third="${3-3. Claim ID GF1-C01 — Issue type: Undated}"
+  { printf 'Output file path: `%s` (relative to project root `/tmp/scratch/workflows/research-workflow`)\n' "$p"
+    printf '\n'
+    printf 'Handoff summary:\n'
+    printf -- '- Response status: OK\n'
+    printf -- '- Verdict: DISCREPANCIES FOUND\n'
+    printf -- '- Discrepancy count: 3\n'
+    printf '  1. Claim ID Q1-C02 — Issue type: Overstated\n'
+    printf '  2. Claim ID Q1-C04 — Issue type: Category-leakage\n'
+    [ -n "$third" ] && printf '  %s\n' "$third"
+  } > "$f"
+}
+
+d="$(scratch 31)"; write_decorated_summary "$d/specimen/$SUMMARY"
+expect_pass 'T31 decorated path and labelled pair lines pass' "$d"
+
+d="$(scratch 32)"
+write_decorated_summary "$d/specimen/$SUMMARY" /report/chapters/1.1/1.1-chapter-02-verification.md
+expect_fail 'T32 decorated path names a different file' A3 "$d"
+
+d="$(scratch 33)"
+write_decorated_summary "$d/specimen/$SUMMARY" /report/checkpoints/1.1/1.1-chapter-01-verification-checkpoint.md
+edit "$d/specimen/$CHECKPOINT" -e 's|^- Output file path: .*|- Output file path: /report/checkpoints/1.1/1.1-chapter-01-verification-checkpoint.md|'
+expect_fail 'T33 decorated path names the wrong artifact' A3 "$d"
+
+d="$(scratch 34)"; write_decorated_summary "$d/specimen/$SUMMARY" ''
+expect_fail 'T34 decoration with no path inside it' A3 "$d"
+
+d="$(scratch 35)"; write_decorated_summary "$d/specimen/$SUMMARY" "$REPORT_PATH" ''
+expect_fail 'T35 decorated summary drops one pair line' A7 "$d"
+
+d="$(scratch 36)"
+write_decorated_summary "$d/specimen/$SUMMARY" "$REPORT_PATH" '3. Claim ID GF1-C01 — Issue type: Unsupported'
+expect_fail 'T36 decorated summary restates an issue type' A7 "$d"
+
+d="$(scratch 37)"
+write_decorated_summary "$d/specimen/$SUMMARY" "$REPORT_PATH" '3. Claim ID Q2-C03 — Issue type: Undated'
+expect_fail 'T37 decorated summary swaps in an unflagged claim ID' A7 "$d"
+
+d="$(scratch 38)"
+write_decorated_summary "$d/specimen/$SUMMARY" "$REPORT_PATH" '3. Claim ID GF1-C01 — Issue type:'
+expect_fail 'T38 decorated pair line states no issue type' A7 "$d"
+
 # ---- result -------------------------------------------------------------------------
 printf '\n'
 if [ "$BAD" -eq 0 ]; then

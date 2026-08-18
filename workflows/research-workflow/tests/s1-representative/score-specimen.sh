@@ -74,6 +74,65 @@ field_values() {
 
 count_lines() { awk 'END { print NR }' "$1"; }
 
+# Reduce a relayed `Output file path:` value to the path itself, reading it on stdin.
+#
+# `execution-agent.md` requires the field ("The output file path") and fixes no value grammar,
+# so a Markdown code span or a trailing explanatory parenthetical is contract-permitted
+# decoration, not a defect. This strips **representation only**. It never supplies a path that
+# is absent: an empty value, or decoration with nothing inside it, normalizes to the empty
+# string, which A3 still reports as a missing path.
+normalize_path() {
+  awk '
+    {
+      v = $0
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
+      if (substr(v, 1, 1) == "`") {
+        # Markdown code span: the path is what the first backtick pair encloses.
+        rest = substr(v, 2)
+        i = index(rest, "`")
+        v = (i > 0) ? substr(rest, 1, i - 1) : rest
+      } else {
+        # Bare value: drop a trailing explanatory parenthetical.
+        sub(/[[:space:]]+\(.*\)[[:space:]]*$/, "", v)
+      }
+      gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
+      print v
+    }'
+}
+
+# Extract the summary's per-discrepancy `(Claim ID, Issue type)` pairs, reading the summary
+# path from $1 and printing `id<TAB>issue` per accepted line.
+#
+# `execution-agent.md` requires "one line per discrepancy giving its Claim ID and Issue type
+# exactly as written" and fixes no line grammar. Two forms have been observed in real runs and
+# both are accepted here: the compact `- Q1-C02 — Overstated`, and the numbered, labelled
+# `1. Claim ID Q1-C02 — Issue type: Overstated`. Only the list marker and the two field labels
+# are optional decoration — the claim ID, the em-dash separator and a non-empty issue type must
+# all be literally present, so a line missing any of them is not counted rather than repaired.
+summary_pairs() {
+  awk -v idre='^(Q[0-9]+|GF[0-9]+)-C[0-9][0-9]' -v dash='—' '
+    function trim(s) { gsub(/^[[:space:]]+|[[:space:]]+$/, "", s); return s }
+    {
+      line = $0
+      sub(/^[[:space:]]+/, "", line)
+      sub(/^([-*]|[0-9]+[.)])[[:space:]]*/, "", line)   # one list marker, bullet or ordered
+      sub(/^[Cc]laim ID:?[[:space:]]*/, "", line)       # optional label before the ID
+      if (match(line, idre) != 1) next
+      id = substr(line, 1, RLENGTH)
+      rest = substr(line, RLENGTH + 1)
+      n = index(rest, dash)
+      if (n == 0) next                                  # no separator: not a discrepancy line
+      if (trim(substr(rest, 1, n - 1)) != "") next       # the dash must be the next thing
+      rest = substr(rest, n + length(dash))
+      m = index(rest, dash)
+      if (m > 0) rest = substr(rest, 1, m - 1)           # trailing detail is not the issue type
+      sub(/^[[:space:]]*[Ii]ssue type:?[[:space:]]*/, "", rest)
+      rest = trim(rest)
+      if (rest == "") next                               # no issue type stated: not counted
+      print id "\t" rest
+    }' "$1"
+}
+
 # ---------------------------------------------------------------- A0 baseline revision
 
 check_baseline() {
@@ -187,13 +246,15 @@ fi
 report_base="$(basename "$REPORT")"
 field_values "$SUMMARY" 'Output file path' > "$TMP/sum-path"
 field_values "$CHECKPOINT" 'Output file path' > "$TMP/ckp-path"
-sum_path="$(head -n 1 "$TMP/sum-path")"
-ckp_path="$(head -n 1 "$TMP/ckp-path")"
+sum_path_raw="$(head -n 1 "$TMP/sum-path")"
+ckp_path_raw="$(head -n 1 "$TMP/ckp-path")"
+sum_path="$(printf '%s\n' "$sum_path_raw" | normalize_path)"
+ckp_path="$(printf '%s\n' "$ckp_path_raw" | normalize_path)"
 
 if [ -z "$sum_path" ] || [ -z "$ckp_path" ]; then
-  fail A3 "output path missing — summary: '${sum_path:-<none>}', checkpoint: '${ckp_path:-<none>}'"
+  fail A3 "output path missing — summary: '${sum_path_raw:-<none>}', checkpoint: '${ckp_path_raw:-<none>}'"
 elif [ "$sum_path" != "$ckp_path" ]; then
-  fail A3 "summary and checkpoint name different report paths — '$sum_path' vs '$ckp_path'"
+  fail A3 "summary and checkpoint name different report paths — '$sum_path' vs '$ckp_path' (as stated: '$sum_path_raw' vs '$ckp_path_raw')"
 elif [ "$(basename "$sum_path")" != "$report_base" ]; then
   fail A3 "relayed path '$sum_path' does not name the report artifact '$report_base'"
 else
@@ -316,11 +377,7 @@ rep_count="$(field_values "$REPORT" 'Discrepancy count' | head -n 1)"
 sum_count="$(field_values "$SUMMARY" 'Discrepancy count' | head -n 1)"
 ckp_count="$(field_values "$CHECKPOINT" 'Discrepancy count' | head -n 1)"
 
-awk -F' — ' 'NF >= 2 {
-  id = $1; sub(/^[[:space:]]*[-*][[:space:]]*/, "", id); gsub(/[[:space:]]+$/, "", id)
-  v = $2; gsub(/^[[:space:]]+|[[:space:]]+$/, "", v)
-  print id "\t" v
-}' "$SUMMARY" | grep -E "^$CLAIM_ID_RE$(printf '\t')" > "$TMP/summary-pairs" || true
+summary_pairs "$SUMMARY" > "$TMP/summary-pairs"
 sum_lines="$(awk 'END { print NR }' "$TMP/summary-pairs")"
 
 a7_detail=''

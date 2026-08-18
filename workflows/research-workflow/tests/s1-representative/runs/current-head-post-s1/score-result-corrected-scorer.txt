@@ -1,0 +1,33 @@
+# Rescore of runs/current-head-post-s1/raw under the Unit 20 corrected scorer.
+#
+# The raw run artifacts were NOT touched. score-result.txt beside this file is the original
+# Unit 19 verdict (A3 and A7 FAIL) and is preserved byte-for-byte; this file is the separate
+# result of running the corrected scorer over the same unchanged directory.
+#
+# scored: 2026-08-18, Unit 20
+# repository revision at scoring time: c227411505b51c93ac7fa5e7cf7d717dda58debc (Unit 19 hand-back;
+#   the corrected scorer was uncommitted at scoring time and lands in the Unit 20 commit)
+# scorer blob:  9df190e38ec0aaeba5ed22c694601af497c2d4f0  score-specimen.sh (corrected)
+# was:          f0bde015e9b1f6ea730431bde90f7a94bbde6c5a  score-specimen.sh at c2274115
+# harness blob: 529594c17f45b4b2720b79f0a135bea99cc0e99b  score-specimen.test.sh (38/38 green)
+#
+# What changed in the scorer, and only this: A3 now reduces the relayed `Output file path:`
+# value to the path itself before comparing (Markdown code span, trailing explanatory
+# parenthetical), and A7 now accepts a list marker and the `Claim ID`/`Issue type:` field
+# labels around the per-discrepancy pair. Both are representation-only; neither infers a
+# field that is absent. execution-agent.md requires these fields and the hard cap and fixes
+# no value grammar, so the former parser was stricter than the contract it enforced.
+
+$ bash score-specimen.sh --specimen runs/current-head-post-s1/raw
+specimen: runs/current-head-post-s1/raw
+check A0: PASS — pre-S1 baseline f18ed58d6c96b0f97fc677fb7c90073336f310e4 recorded with 3 derivation line(s); resolves to a commit in this repository
+check A1: PASS — all four required artifacts present and non-empty
+check A2: PASS — verification report is byte-identical to the frozen response
+check A3: PASS — report path relayed intact: report/chapters/1.1/1.1-chapter-01-verification.md
+check A4: PASS — chapter carries exactly the 10 expected claim IDs
+check A5: PASS — verdict 'DISCREPANCIES FOUND' stated once and quoted consistently; 3 discrepancy block(s)
+check A6: PASS — 3 discrepancy block(s) carry all four SOP fields with a known issue type and a known claim ID
+check A7: PASS — count 3 agrees across report, summary and checkpoint; claim-ID/issue-type pairs match
+check A8: PASS — handoff summary within cap: 10/20 lines, 609/4096 bytes
+verdict: PASS
+exit=0
