@@ -10289,6 +10289,11 @@ RID65B="$(run_id_of "$OUT")"
 [ -z "$(git -C "$d" diff --cached --name-only 2>/dev/null)" ] \
   && ok "  and nothing of run A's was staged on the way past" \
   || bad "  and nothing of run A's was staged" "$(git -C "$d" diff --cached --name-only)"
+# SAID OUT LOUD, not silently dropped. A path removed from the gate's view
+# without a word is indistinguishable to the operator from a gate that stopped
+# working, and this is the one line that tells them which paths were excused.
+out_has "prior_run_evidence=1 path(s)" "$OUT" "  and run B announced what it excused"
+out_has "  runs-a/"                    "$OUT" "  and named it"
 rm -rf "$(task_lock_for "$d" sequential-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
 # =================================================================== case 65b
@@ -10324,8 +10329,14 @@ OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task foreign-control-task \
 expect_rc 18 "$RC" "the unrelated untracked path still stops the run at 18" "$OUT"
 [ "$(calls "$d")" = "0" ] \
   && ok "  and no actor was launched over it" || bad "  and no actor was launched over it" "calls=$(calls "$d")"
-out_has   "actor-scratch" "$OUT" "  and the stop names the foreign path"
-out_lacks "runs-a"        "$OUT" "  and does NOT name the prior run's evidence directory"
+# THE STOP MESSAGE, not the whole run. The run legitimately announces which paths
+# it recognised as earlier evidence and excluded, so a negative assertion over the
+# entire output would fail on the dispatcher telling the operator the truth. What
+# must not name runs-a is the list of paths the operator is being sent to commit,
+# stash or revert.
+STOP65B="$(printf '%s\n' "$OUT" | awk '/^STOP \[18\]/{f=1} f{print} /^Recoverable next action/{f=0}')"
+out_has   "actor-scratch" "$STOP65B" "  and the stop names the foreign path"
+out_lacks "runs-a"        "$STOP65B" "  and the stop does NOT send the operator at the prior run's evidence"
 rm -rf "$(task_lock_for "$d" foreign-control-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
 # =================================================================== case 65c
@@ -10386,6 +10397,96 @@ expect_rc 18 "$RC" "a modified TRACKED file in the evidence directory still stop
 [ "$(calls "$d")" = "0" ] \
   && ok "  and no actor was launched over it" || bad "  and no actor was launched over it" "calls=$(calls "$d")"
 rm -rf "$(task_lock_for "$d" tracked-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# =================================================================== case 66a
+# THE RECEIPT IS ACTOR-WRITABLE, SO IT CANNOT BE TRUSTED WHILE AN ACTOR IS RUNNING.
+#
+# 65a recognises a prior run's evidence by reading the run log's own
+# "run=<id> ..." header. That header is a file in the working tree, and the actor
+# has write access to the working tree — so an actor can mint the receipt itself:
+# one directory, one lookalike log naming an id it invented, and every other file
+# named "<that id>.something". Under 65a's rule alone the whole directory is then
+# excused, and the post-hop delta that stops a run at 24 for touching paths
+# outside the allowlist sees nothing at all.
+#
+# THIS IS THE HOLE THAT MATTERS. The pre-hop gate refuses to run OVER somebody
+# else's work; the post-hop delta is what catches the actor DOING something it
+# was not allowed to. A recognition rule the actor can satisfy converts the
+# second one into a blind spot, and the first one inherits it on the next run.
+echo
+echo "Case 66a — an actor that MINTS dispatcher-shaped evidence mid-hop is still caught"
+d="$(new_sandbox)"; state_file "$d" "forged-evidence-task" "codex"
+rm -f "$d.calls"
+FORGE66='mkdir -p "$WL_CHECKOUT/runs-forged";
+      printf "run=20260101T000000-forged mode=simulated task=forged\n" > "$WL_CHECKOUT/runs-forged/20260101T000000-forged.log";
+      printf "work the operator was never shown\n" > "$WL_CHECKOUT/runs-forged/20260101T000000-forged.out";'
+run_dispatch "$d" forged-evidence-task --max-hops 1 --actor-cmd "$FORGE66$FLIP"
+expect_rc 24 "$RC" "the run stops at 24 when the actor mints a dispatcher-shaped directory" "$OUT"
+[ "$(calls "$d")" = "1" ] \
+  && ok "  and the actor really ran, so the stop is about what it did" \
+  || bad "  and the actor really ran" "calls=$(calls "$d")"
+out_has "runs-forged" "$OUT" "  and the stop names the minted directory"
+[ -f "$d/runs-forged/20260101T000000-forged.out" ] \
+  && ok "  and the minted files are left in place for the operator to look at" \
+  || bad "  and the minted files are left in place" "$(ls -a "$d/runs-forged" 2>&1 | tr '\n' ' ')"
+rm -rf "$(task_lock_for "$d" forged-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# =================================================================== case 66b
+# AN EXCUSED DIRECTORY IS NOT A HIDING PLACE EITHER.
+#
+# 66a is the case where the actor builds the excuse from nothing. This is the
+# case where a REAL one already exists and the actor writes into it — which
+# `git status --porcelain` reports as the same single "?? runs-a/" line whatever
+# is underneath, so a rule that excused the line would never see the difference.
+# Under 65a's requirement the directory is legitimately excused before the hop;
+# the actor's write must take it back out.
+echo
+echo "Case 66b — an actor writing INSIDE a legitimately excused evidence directory is still caught"
+d="$(new_sandbox)"; state_file "$d" "tamper-evidence-task" "codex"
+rm -f "$d.calls"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task tamper-evidence-task \
+      --log-dir "$d/runs-a" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+[ "$(res_count "$d/runs-a")" = "1" ] \
+  && ok "66b setup — run A left genuine evidence under directory A" \
+  || bad "66b setup — run A left genuine evidence under directory A" "rc=$RC"
+rm -rf "$(task_lock_for "$d" tamper-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+rm -f "$d.calls"
+TAMPER66='for f in "$WL_CHECKOUT"/runs-a/*.log; do printf "appended by the actor\n" >> "$f"; done;'
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task tamper-evidence-task \
+      --log-dir "$d/runs-b" --timeout 20 --max-hops 1 --actor-cmd "$TAMPER66$FLIP" 2>&1)"; RC=$?
+expect_rc 24 "$RC" "the run stops at 24 when the actor edits a file inside the excused directory" "$OUT"
+[ "$(calls "$d")" = "1" ] \
+  && ok "  and the actor really ran" || bad "  and the actor really ran" "calls=$(calls "$d")"
+out_has "runs-a" "$OUT" "  and the stop names the directory it wrote into"
+rm -rf "$(task_lock_for "$d" tamper-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# =================================================================== case 66c
+# THE POSITIVE CONTROL for both of the above. 66a and 66b are satisfied by a
+# dispatcher that has simply stopped excusing anything — which is 65a's defect
+# back again — so the same two-run, two-directory sequence must still pass when
+# the actor behaves. This is 65a's claim re-asserted with the tamper removed, and
+# it is the assertion that fails if the correction over-corrects.
+echo
+echo "Case 66c — with the actor behaving, the same excused directory still lets the run through"
+d="$(new_sandbox)"; state_file "$d" "untampered-evidence-task" "codex"
+rm -f "$d.calls"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task untampered-evidence-task \
+      --log-dir "$d/runs-a" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+[ "$(res_count "$d/runs-a")" = "1" ] \
+  && ok "66c setup — run A left genuine evidence under directory A" \
+  || bad "66c setup — run A left genuine evidence under directory A" "rc=$RC"
+rm -rf "$(task_lock_for "$d" untampered-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+rm -f "$d.calls"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task untampered-evidence-task \
+      --log-dir "$d/runs-b" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+if [ "$RC" -ne 18 ] && [ "$RC" -ne 24 ]; then
+  ok "run B is neither refused as foreign (18) nor blamed for the prior evidence (24) — exit $RC"
+else
+  bad "run B is neither refused as foreign (18) nor blamed for the prior evidence (24)" "exited $RC: $OUT"
+fi
+[ "$(calls "$d")" = "1" ] \
+  && ok "  and its actor launched and completed" || bad "  and its actor launched" "calls=$(calls "$d")"
+rm -rf "$(task_lock_for "$d" untampered-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
