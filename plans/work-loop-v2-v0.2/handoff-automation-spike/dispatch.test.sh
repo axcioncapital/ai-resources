@@ -8182,28 +8182,198 @@ run_dispatch "$V58A" dry-task --dry-run
 expect_rc 0 "$RC" "58a — the next dispatcher is admitted after the verified release" "$OUT"
 
 echo
-echo "Case 58b — a dry-run whose publication FAILS pins both leases and exits 38"
-# Induction is environmental, before the run starts: the evidence directory
-# exists but refuses new entries, so the run log and the producer's temporary
-# both fail to create. No actor exists in this mode to induce anything later.
+echo "Case 58b — an unwritable evidence directory is refused BEFORE admission: no lease, no evidence, exit 10"
+# WHY THIS CASE CHANGED ITS SUBJECT, and why that is not a weakening. Until the
+# 2026-08-18 revision this fixture was the dry-run's PUBLICATION-FAILURE case: it
+# expected the run to be admitted, take both leases, fail to write its result and
+# exit 38. That expectation was correct under the plan content approved
+# 2026-08-16, whose terminal classes owing one durable result included `usage or
+# argument refusal`. The revised plan (blob c7857d5f, approved 2026-08-18) DELETED
+# that class and moved the evidence location into the admission boundary: "a run
+# exists only after argument parsing has supplied syntactically valid task,
+# checkout and evidence-location inputs … Such a refusal is not a run terminal
+# class and needs no durable result."
+#
+# So this exact input is now a PRE-ADMISSION refusal, and the case asserts that
+# contract instead. The publication-failure invariant it used to carry did not go
+# with it — 58g below reaches that branch after admission, which is the only place
+# the revised plan still puts it.
+#
+# THE INPUT IS UNCHANGED ON PURPOSE: an existing directory that refuses new
+# entries is the one `check_evidence_location()` branch (`[ -w "$want" ]`) that no
+# other case reaches — 63a and 63a(2) both drive the ancestor-not-a-directory
+# branch instead. Keeping the fixture keeps that branch covered.
+#
+# The old `out_lacks "  terminal result:"` assertion is deliberately NOT carried
+# forward. It passed under both contracts — an exit-10 refusal advertises nothing
+# either way — so it could not fail for the right reason and was proving nothing.
 V58B="$(new_sandbox)"; mkdir -p "$V58B/runs"; chmod a-w "$V58B/runs"
 state_file "$V58B" dry-task codex
+rm -f "$V58B.calls"
+LR58B="$(lock_root_for "$V58B")"
+HEAD58B="$(git -C "$V58B" rev-parse HEAD)"
+TREE58B="$(tree_manifest "$V58B")"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$V58B" --task dry-task \
       --log-dir "$V58B/runs" --timeout 20 --dry-run 2>&1)"; RC58=$?
-expect_rc 38 "$RC58" "58b — the unprovable dry-run exits 38, never 0" "$OUT"
-out_lacks "  terminal result:" "$OUT" "58b — no terminal result is advertised"
-TL58="$(task_lock_for "$V58B" dry-task)"; CL58="$(checkout_lock_for "$V58B")"
-if [ -d "$TL58" ] && [ -d "$CL58" ] &&
-   grep -q '^terminal result unprovable: ' "$TL58/survivors" 2>/dev/null &&
-   grep -q 'could not finalize' "$TL58/survivors" 2>/dev/null; then
-  ok "58b — both leases retained across the EXIT trap with the truthful finalization-failure cause"
+expect_rc 10 "$RC58" "58b — the unwritable evidence directory is refused as usage, never admitted" "$OUT"
+out_has "STOP [10]" "$OUT" "58b — the refusal names itself on stderr"
+out_has "not writable" "$OUT" "58b — the refusal names writability as the reason"
+out_has "$V58B/runs" "$OUT" "58b — the refusal names the location it refused"
+# THE PRE-ADMISSION CONTRACT, asserted as the four absences the revised plan
+# names: no owner or lease, no evidence, no actor, no mutation.
+[ ! -e "$LR58B" ] \
+  && ok "58b — no lease was ever acquired: the shared lease root was never created" \
+  || bad "58b — no lease was ever acquired: the shared lease root was never created" \
+         "$(ls -a "$LR58B" 2>&1 | tr '\n' ' ')"
+if [ "$(res_count "$V58B/runs")" = 0 ] && [ "$(part_count "$V58B/runs")" = 0 ] &&
+   [ "$(ls -1 "$V58B/runs" 2>/dev/null | wc -l | tr -d ' ')" = 0 ]; then
+  ok "58b — it wrote no evidence at all into the location it refused"
 else
-  bad "58b — both leases retained across the EXIT trap with the truthful finalization-failure cause" \
-      "task=$([ -d "$TL58" ] && echo present || echo absent) checkout=$([ -d "$CL58" ] && echo present || echo absent) cause: $(cat "$TL58/survivors" 2>&1 | tr '\n' '|')"
+  bad "58b — it wrote no evidence at all into the location it refused" \
+      "$(ls -a "$V58B/runs" 2>&1 | tr '\n' ' ')"
 fi
+[ "$(calls "$V58B")" = "0" ] \
+  && ok "58b — no actor was launched" || bad "58b — no actor was launched" "calls=$(calls "$V58B")"
+[ "$(git -C "$V58B" rev-parse HEAD)" = "$HEAD58B" ] \
+  && ok "58b — it committed nothing" || bad "58b — it committed nothing" "HEAD moved from $HEAD58B"
+[ "$TREE58B" = "$(tree_manifest "$V58B")" ] \
+  && ok "58b — every byte of the checkout's working tree is unchanged" \
+  || bad "58b — every byte of the checkout's working tree is unchanged" "the tree moved"
+# THE SUCCESSOR IS ADMITTED, and this is the half that makes the four absences
+# above mean something. A refusal that had quietly half-acquired a lease would
+# refuse the next run at 17 for a reason that never existed — which is exactly
+# what this case asserted, correctly, under the old contract.
 chmod u+w "$V58B/runs" 2>/dev/null
 run_dispatch "$V58B" dry-task --dry-run
-expect_rc 17 "$RC" "58b — the next dispatcher is refused by the retained lease" "$OUT"
+expect_rc 0 "$RC" "58b — the next dispatcher is admitted: the refusal left no lease behind" "$OUT"
+
+echo
+echo "Case 58g — an ADMITTED dry-run whose publication fails pins both leases and exits 38"
+# THE INVARIANT 58b USED TO CARRY, at the boundary the revised plan still puts it
+# behind. Gate SA requires that "every terminal path after run admission produces
+# one durable atomic result", and Change set A's durable ordering requires that a
+# lease be released "only after the terminal result exists and teardown is proven
+# safe", with uncertain teardown pinning it. The dry-run terminal has its OWN
+# finalization call site — `finalize_terminal_result 0 || die_terminal_unprovable
+# # dry-run terminal finalization` — so the proof at the other three sites (27s
+# interruption, 57b die funnel, 60e carry-one) does not reach it, and 58c's M25
+# control deletes the finalizer call TOGETHER WITH its failure handoff, so it
+# cannot see the handoff go missing on its own. 58h below is that missing control.
+#
+# THE INDUCTION IS DETERMINISTIC AND HAS NO ACTOR TO USE. 57b and 60e break
+# publication from inside the actor's own command; a dry-run launches nothing, so
+# that door does not exist here, and an external chmod raced against the run would
+# be a coin toss rather than a case. The one point where test-controlled code runs
+# at a FIXED place in an admitted dry-run's control flow is the checkout's own
+# ownership helper (dispatch.sh 4047-4049), which the dispatcher invokes after run
+# evidence and BOTH leases exist and roughly fifty lines above the seam. Cases 27u
+# and 31 already substitute that helper for their own timing; this one substitutes
+# it to remove write permission and then hands straight on to the real helper, so
+# the ownership answer under test is still the shipped helper's own.
+#
+# It is COMMITTED in the sandbox, like case 12f's removal, because the tracked
+# helper is outside the dispatcher's allowlist and an uncommitted rewrite would be
+# a foreign working-tree change rather than a fixture.
+V58G="$(new_sandbox)"; state_file "$V58G" dry-fail-task codex
+REAL58G="$SANDBOX_ROOT/owner58g-real.sh"
+cp "$V58G/logs/scripts/work-loop-owner.sh" "$REAL58G"
+cat >"$V58G/logs/scripts/work-loop-owner.sh" <<BREAK58G
+#!/bin/bash
+chmod a-w "$V58G/runs" 2>/dev/null
+exec bash "$REAL58G" "\$@"
+BREAK58G
+chmod +x "$V58G/logs/scripts/work-loop-owner.sh"
+git -C "$V58G" commit -qam "fixture: the evidence directory refuses new entries at the ownership check" >/dev/null 2>&1
+if [ -z "$(git -C "$V58G" status --porcelain)" ]; then
+  ok "58g — the fixture is committed, so the run sees a clean tree and not a foreign change"
+else
+  bad "58g — the fixture is committed, so the run sees a clean tree and not a foreign change" \
+      "$(git -C "$V58G" status --porcelain | tr '\n' '|')"
+fi
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V58G" --task dry-fail-task \
+      --log-dir "$V58G/runs" --timeout 20 --dry-run 2>&1)"; RC58G=$?
+expect_rc 38 "$RC58G" "58g — the unprovable admitted dry-run exits 38, never 0" "$OUT"
+out_lacks "  terminal result:" "$OUT" "58g — no terminal result is advertised"
+out_has "could not be finalized" "$OUT" \
+  "58g — the operator is told the ending could not be proved, not that it ended well"
+if [ "$(res_count "$V58G/runs")" = 0 ] && [ "$(part_count "$V58G/runs")" = 0 ]; then
+  ok "58g — no result and no half-written partial survive the failed publication"
+else
+  bad "58g — no result and no half-written partial survive the failed publication" \
+      "results=$(res_count "$V58G/runs") partials=$(part_count "$V58G/runs")"
+fi
+# IT REACHED THE SEAM RATHER THAN A REFUSAL BEFORE IT. Only an ADMITTED run owns
+# these, so their presence is what separates this case from 58b above.
+TL58G="$(task_lock_for "$V58G" dry-fail-task)"; CL58G="$(checkout_lock_for "$V58G")"
+if [ -d "$TL58G" ] && [ -d "$CL58G" ]; then
+  ok "58g — both leases were held and survived die() and the EXIT trap"
+else
+  bad "58g — both leases were held and survived die() and the EXIT trap" \
+      "task=$([ -d "$TL58G" ] && echo present || echo absent) checkout=$([ -d "$CL58G" ] && echo present || echo absent)"
+fi
+# THE CAUSE IS THE DISCRIMINATOR, not the exit code — 57b's distinction exactly.
+# Dropping the failure handoff still exits 38, via the consumer gate one line
+# below, so a case that asserted only the code could not tell the two apart. The
+# finalization story and the consumer-refusal story are different sentences, and
+# 58h proves this assertion flips to the other one.
+if grep -q '^terminal result unprovable: ' "$TL58G/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$TL58G/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$CL58G/survivors" 2>/dev/null &&
+   ! grep -q 'was refused before release' "$TL58G/survivors" 2>/dev/null; then
+  ok "58g — both pins carry the truthful FINALIZATION-failure cause, not a consumer refusal"
+else
+  bad "58g — both pins carry the truthful FINALIZATION-failure cause, not a consumer refusal" \
+      "task: $(cat "$TL58G/survivors" 2>&1 | tr '\n' '|'); checkout: $(cat "$CL58G/survivors" 2>&1 | tr '\n' '|')"
+fi
+chmod u+w "$V58G/runs" 2>/dev/null
+run_dispatch "$V58G" dry-fail-task --dry-run
+expect_rc 17 "$RC" "58g — the next dispatcher is refused by the retained lease" "$OUT"
+
+echo
+echo "Case 58h — mutation control: remove ONLY the dry-run failure handoff and the cause stops being true"
+MUT58H="$SANDBOX_ROOT/mutants58h"; mkdir -p "$MUT58H"
+# REPLACE, NOT DELETE, and only the handoff: `finalize_terminal_result 0` must
+# survive on the same line, or the mutant would prove the absence of finalization
+# — which is M25's job — instead of the absence of the failure transfer. The
+# operator and carry-one seams keep their own handoffs, which is what proves this
+# control addresses the dry-run one alone.
+sed 's/ || die_terminal_unprovable # dry-run terminal finalization/ # dry-run terminal finalization/' \
+  "$DISPATCH_BIN" >"$MUT58H/m30.sh"
+chmod +x "$MUT58H/m30.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT58H/m30.sh" && bash -n "$MUT58H/m30.sh" 2>/dev/null &&
+   grep -q 'finalize_terminal_result 0 # dry-run terminal finalization' "$MUT58H/m30.sh" &&
+   grep -q 'die_terminal_unprovable # operator terminal finalization' "$MUT58H/m30.sh" &&
+   grep -q 'die_terminal_unprovable "the carry-one terminal after one carried hop"' "$MUT58H/m30.sh"; then
+  ok "58h — M30 mutant differs, parses, keeps the dry-run finalizer call, and leaves the other two seams intact"
+  V58H="$(new_sandbox)"; state_file "$V58H" dry-fail-task codex
+  REAL58H="$SANDBOX_ROOT/owner58h-real.sh"
+  cp "$V58H/logs/scripts/work-loop-owner.sh" "$REAL58H"
+  cat >"$V58H/logs/scripts/work-loop-owner.sh" <<BREAK58H
+#!/bin/bash
+chmod a-w "$V58H/runs" 2>/dev/null
+exec bash "$REAL58H" "\$@"
+BREAK58H
+  chmod +x "$V58H/logs/scripts/work-loop-owner.sh"
+  git -C "$V58H" commit -qam "fixture" >/dev/null 2>&1
+  OUT="$(bash "$MUT58H/m30.sh" --checkout "$V58H" --task dry-fail-task \
+        --log-dir "$V58H/runs" --timeout 20 --dry-run 2>&1)"; RCM=$?
+  TL58H="$(task_lock_for "$V58H" dry-fail-task)"
+  # WITHOUT THE HANDOFF the run still exits 38 — the consumer gate one line below
+  # catches the missing artifact — so the exit code alone proves nothing here.
+  # What changes is the sentence the operator and the lease are given: a record
+  # that was never written is reported as one that was written and then refused.
+  if grep -q 'was refused before release' "$TL58H/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL58H/survivors" 2>/dev/null; then
+    ok "58h — M30: the pin now tells the consumer-refusal story instead (58g's cause assertion is fail-capable)"
+  else
+    bad "58h — M30: the pin now tells the consumer-refusal story instead (58g's cause assertion is fail-capable)" \
+        "rc=$RCM cause: $(cat "$TL58H/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  chmod u+w "$V58H/runs" 2>/dev/null
+else
+  bad "58h — M30 mutant differs, parses, keeps the dry-run finalizer call, and leaves the other two seams intact" \
+      "the dry-run handoff marker was not found, or the mutant does not parse"
+fi
 
 echo
 echo "Case 58c — mutation control: remove ONLY the dry-run boundary and the result-less release returns"
