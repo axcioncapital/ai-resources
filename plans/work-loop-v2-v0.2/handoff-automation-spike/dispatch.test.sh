@@ -2181,6 +2181,56 @@ printf '%s' "$OUT" | grep -q 'Recoverable next action' \
   && ok "the stop names a recoverable next action" || bad "the stop names a recoverable next action" "$OUT"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched on the malformed terminal record" \
                           || bad "no actor was launched on the malformed terminal record" "calls=$(calls "$d")"
+# THE DURABLE RESULT for MALFORMED_TERMINAL, on the representative of the four.
+# Code 26 is the validator's BAD_BODY landing on this dispatcher's "neither shape"
+# code, and it is raised INSIDE validate_state — the same funnel as codes 13, 14
+# and the initial 15, below the run id and both leases and above the ownership
+# check. So it is an admitted-run terminal the plan requires to finalize exactly
+# one truthful record, and assert_state_terminal's pre-hop contract is its contract
+# unchanged: nothing was launched, no state hash was taken, the validator returned
+# no classification to carry, and the ownership check never ran.
+RID22="$(run_id_of "$OUT")"
+[ -n "$RID22" ] && ok "  and the malformed-terminal run announced a run id" \
+                || bad "  and the malformed-terminal run announced a run id" "$OUT"
+assert_state_terminal "  code 26" "$d/runs" "$d/runs/$RID22.result" MALFORMED_TERMINAL 26
+[ "$(res_field "$d/runs/$RID22.result" state_file)" = "$(cd "$d" && pwd -P)/logs/work-loop/partial-task.md" ] \
+  && ok "  code 26 — and the record names the half-written file the operator must repair" \
+  || bad "  code 26 — and the record names the half-written file the operator must repair" \
+         "got: $(res_field "$d/runs/$RID22.result" state_file)"
+
+# THE SIBLINGS BELOW ARE CONVERGENCE CONTROLS, NOT FOUR COPIES OF THE BLOCK ABOVE.
+# All four malformations are different fixtures and the same terminal: each is a
+# distinct validator BAD_BODY verdict, and the dispatcher has exactly ONE place
+# that turns that verdict into an exit — so a full record block on each would be
+# the same eighteen assertions about one branch, four times over.
+#
+# The convergence is ASSERTED rather than asserted-in-prose, in two halves, and
+# both are needed. This half pins the branch count: a second `die 26` site would
+# mean the siblings could stop somewhere the representative never proves. The
+# per-sibling half below pins that each fixture really reaches it.
+# NOT ANCHORED AT THE LINE START, and the anchor is what a first cut of this got
+# wrong: the code-26 site sits inside a `case` arm, so the line begins `16) die 26`
+# and an anchored pattern counted zero producers — a control that reports "the
+# branch has moved" about a branch that has not.
+DIE26_HITS="$(grep -cE '(^|[^[:alnum:]_])die(_hop)? 26 ' "$DISPATCH_BIN" 2>/dev/null || printf '0')"
+[ "$DIE26_HITS" = "1" ] \
+  && ok "  code 26 — the dispatcher has exactly one producer for this terminal, so the siblings converge on the block above" \
+  || bad "  code 26 — the dispatcher has exactly one producer for this terminal" \
+         "found $DIE26_HITS call sites; a representative no longer answers for the siblings"
+
+# Two assertions per sibling: it finalized a record at all, and that record carries
+# the SAME pair. A sibling that reached some other terminal fails here rather than
+# passing on its exit code alone.
+assert_26_sibling() { # label runs-dir result-path
+  local lbl="$1" runs="$2" r="$3"
+  [ "$(res_count "$runs")" = "1" ] \
+    && ok "$lbl — finalized exactly one result" \
+    || bad "$lbl — finalized exactly one result" "found $(res_count "$runs")"
+  [ "$(res_field "$r" outcome)/$(res_field "$r" code)" = "MALFORMED_TERMINAL/26" ] \
+    && ok "$lbl — converges on the same outcome/code pair as the representative" \
+    || bad "$lbl — converges on the same outcome/code pair as the representative" \
+           "got: $(res_field "$r" outcome)/$(res_field "$r" code)"
+}
 
 # A closing record whose four headings are present but joined by a FIFTH surviving
 # section is also not a closing record — core § 4 says nothing else survives.
@@ -2211,6 +2261,7 @@ git -C "$d" add logs/work-loop/extra-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: extra-task" >/dev/null 2>&1
 run_dispatch "$d" extra-task
 expect_rc 26 "$RC" "stops 26 when an active field survived the reduction" "$OUT"
+assert_26_sibling "  code 26 sibling (surviving active field)" "$d/runs" "$d/runs/$(run_id_of "$OUT").result"
 
 # The four headings present with nothing else, but SHUFFLED. Core § 4 names the
 # closing record as an exact shape; "the right sections in some order" is a
@@ -2239,6 +2290,7 @@ git -C "$d" add logs/work-loop/shuffled-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: shuffled-task" >/dev/null 2>&1
 run_dispatch "$d" shuffled-task
 expect_rc 26 "$RC" "stops 26 when the four headings are out of core § 4 order" "$OUT"
+assert_26_sibling "  code 26 sibling (out of order)" "$d/runs" "$d/runs/$(run_id_of "$OUT").result"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched on the out-of-order record" \
                           || bad "no actor was launched on the out-of-order record" "calls=$(calls "$d")"
 
@@ -2271,6 +2323,7 @@ git -C "$d" add logs/work-loop/dup-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: dup-task" >/dev/null 2>&1
 run_dispatch "$d" dup-task
 expect_rc 26 "$RC" "stops 26 when a closing section appears twice" "$OUT"
+assert_26_sibling "  code 26 sibling (duplicated section)" "$d/runs" "$d/runs/$(run_id_of "$OUT").result"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched on the duplicated-section record" \
                           || bad "no actor was launched on the duplicated-section record" "calls=$(calls "$d")"
 
@@ -4053,6 +4106,55 @@ printf '%s' "$OUT" | grep -q "THIS IS NOT COMPLETION" \
   && ok "refuses to be read as completion" || bad "refuses to be read as completion" "$OUT"
 printf '%s' "$OUT" | grep -qi "resumable\|re-run this dispatcher" \
   && ok "says the work is resumable" || bad "says the work is resumable" "$OUT"
+# THE DURABLE RESULT for the FIRST of the two budget shapes: the clock ran out
+# WHILE an actor was in flight and the actor was terminated. Everything asserted
+# here is a fact of that shape and not of the other one below — the actor is named
+# because it was still in flight at the stop, and the after-facts are `unavailable`
+# because the run died on the 124 branch before after_hash and after_head were
+# ever taken. Two shapes, one exit code, and neither record proves the other.
+RID28="$(run_id_of "$OUT")"
+[ -n "$RID28" ] && ok "  and the budget stop announced a run id" \
+                || bad "  and the budget stop announced a run id" "$OUT"
+R28="$d/runs/$RID28.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  code 29 (in flight) — exactly one finalized result, no unfinalized temporary beside it" \
+  || bad "  code 29 (in flight) — exactly one finalized result, no unfinalized temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs")"
+[ "$(tail -1 "$R28" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  code 29 (in flight) — the record is complete to its sentinel" \
+  || bad "  code 29 (in flight) — the record is complete to its sentinel" "last line: $(tail -1 "$R28" 2>/dev/null)"
+for pair in "outcome:BUDGET_EXHAUSTED" "code:29" "stage:post-hop" "actor:claude" \
+            "actor_launched:yes" "model_request_started:no" "hop:1" \
+            "state_sha256_after:unavailable" "head_after:unavailable" \
+            "deadline_seconds:3" "deadline_remaining_seconds:0" \
+            "worktree_foreign_paths:0" "worktree_allowlisted_dirty_paths:0" \
+            "changed_paths_since_launch:0" \
+            "next_action:operator-rerun-with-larger-budget" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R28" "$k")"
+  [ "$got" = "$want" ] && ok "  code 29 (in flight) — $k=$want" \
+                       || bad "  code 29 (in flight) — $k=$want" "got: ${got:-<absent>}"
+done
+# The before-facts ARE established here, which is what keeps the four unavailable
+# values above from reading as "this record knows nothing". A killed hop still
+# knows what it started from.
+SB28="$(res_field "$R28" state_sha256_before)"
+{ [ -n "$SB28" ] && [ "$SB28" != unavailable ] && \
+  [ "$SB28" = "$(shasum -a 256 "$d/logs/work-loop/budget-task.md" | cut -d' ' -f1)" ]; } \
+  && ok "  code 29 (in flight) — and the state hash it started from is the file's real hash" \
+  || bad "  code 29 (in flight) — and the state hash it started from is the file's real hash" "got: ${SB28:-<absent>}"
+[ "$(res_field "$R28" head_before)" = "$(git -C "$d" rev-parse HEAD)" ] \
+  && ok "  code 29 (in flight) — and head_before is the real commit, read from Git" \
+  || bad "  code 29 (in flight) — and head_before is the real commit, read from Git" "got: $(res_field "$R28" head_before)"
+LT28="$(res_field "$R28" lease_task_dir)"; LC28="$(res_field "$R28" lease_checkout_dir)"
+{ [ -n "$LT28" ] && [ -n "$LC28" ] && [ ! -d "$LT28" ] && [ ! -d "$LC28" ]; } \
+  && ok "  code 29 (in flight) — and both leases it reported holding were released on the way out" \
+  || bad "  code 29 (in flight) — and both leases it reported holding were released on the way out" \
+         "task=${LT28:-<absent>} checkout=${LC28:-<absent>}"
+# Carried out of this sandbox: `d` is rebound below, and the two shapes are
+# compared against each other after the second one has run.
+ACTOR_29_INFLIGHT="$(res_field "$R28" actor)"
 
 echo
 echo "Case 28b — an expired clock REFUSES the next hop rather than starting it"
@@ -4083,6 +4185,79 @@ fi
 printf '%s' "$OUT" | grep -q "THIS IS NOT COMPLETION" \
   && ok "the refuse branch also refuses to be read as completion" \
   || bad "the refuse branch also refuses to be read as completion" "$OUT"
+# THE DURABLE RESULT for the SECOND budget shape. Same exit code, different
+# lifecycle: no actor is in flight, because this stop is the pre-launch check
+# declining to start the next one. `actor` is the field that says so and it is
+# stable across BOTH ways this branch can be reached — the hop-over line clears
+# CUR_ACTOR when a hop finishes, and nothing has set it when no hop has run.
+#
+# WHAT IS DELIBERATELY NOT ASSERTED HERE is everything the case's own comment
+# above says is timing-dependent: the hop count, and with it whether a hop had
+# completed at all. Pinning those is what made an earlier version of this case
+# fail intermittently. The two admissible shapes are named explicitly further
+# down instead, so a record matching NEITHER still fails.
+RID28B="$(run_id_of "$OUT")"
+[ -n "$RID28B" ] && ok "  and the refuse-to-launch stop announced a run id" \
+                 || bad "  and the refuse-to-launch stop announced a run id" "$OUT"
+R28B="$d/runs/$RID28B.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  code 29 (refused launch) — exactly one finalized result, no unfinalized temporary beside it" \
+  || bad "  code 29 (refused launch) — exactly one finalized result, no unfinalized temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs")"
+[ "$(tail -1 "$R28B" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  code 29 (refused launch) — the record is complete to its sentinel" \
+  || bad "  code 29 (refused launch) — the record is complete to its sentinel" "last line: $(tail -1 "$R28B" 2>/dev/null)"
+for pair in "outcome:BUDGET_EXHAUSTED" "code:29" "actor:none" \
+            "model_request_started:no" \
+            "deadline_seconds:1" "deadline_remaining_seconds:0" \
+            "worktree_foreign_paths:0" \
+            "next_action:operator-rerun-with-larger-budget" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R28B" "$k")"
+  [ "$got" = "$want" ] && ok "  code 29 (refused launch) — $k=$want" \
+                       || bad "  code 29 (refused launch) — $k=$want" "got: ${got:-<absent>}"
+done
+# The two admissible shapes, named rather than skipped. Either a hop completed and
+# the NEXT launch was refused — in which case the after-facts of that hop are
+# recorded — or the clock was already gone at the first check, in which case
+# nothing launched and there is no after-state to record. The first line of the
+# case is the contradiction: a hop that ran and left no after-hash behind.
+case "$(res_field "$R28B" actor_launched):$(res_field "$R28B" stage):$(res_field "$R28B" state_sha256_after)" in
+  yes:post-hop:unavailable)
+    bad "  code 29 (refused launch) — the record matches one of the two admissible shapes" \
+        "it reports a completed hop and no after-hash, which is neither" ;;
+  yes:post-hop:*)
+    ok "  code 29 (refused launch) — a hop had completed and the NEXT launch was refused" ;;
+  no:pre-hop:unavailable)
+    ok "  code 29 (refused launch) — the clock was already gone before any hop began" ;;
+  *)
+    bad "  code 29 (refused launch) — the record matches one of the two admissible shapes" \
+        "launched=$(res_field "$R28B" actor_launched) stage=$(res_field "$R28B" stage) after=$(res_field "$R28B" state_sha256_after)" ;;
+esac
+LT28B="$(res_field "$R28B" lease_task_dir)"; LC28B="$(res_field "$R28B" lease_checkout_dir)"
+{ [ -n "$LT28B" ] && [ -n "$LC28B" ] && [ ! -d "$LT28B" ] && [ ! -d "$LC28B" ]; } \
+  && ok "  code 29 (refused launch) — and both leases it reported holding were released on the way out" \
+  || bad "  code 29 (refused launch) — and both leases it reported holding were released on the way out" \
+         "task=${LT28B:-<absent>} checkout=${LC28B:-<absent>}"
+# THE TWO SHAPES ARE COMPARED AGAINST EACH OTHER, not only against their own
+# literals — the check a producer that reported one constant actor would fail
+# while both per-shape blocks still passed. This is also why neither shape was
+# allowed to stand as proof of the other.
+{ [ -n "${ACTOR_29_INFLIGHT:-}" ] && [ "$ACTOR_29_INFLIGHT" = "claude" ] && \
+  [ "$(res_field "$R28B" actor)" = "none" ]; } \
+  && ok "  code 29 — the two budget shapes record DIFFERENT actors in flight" \
+  || bad "  code 29 — the two budget shapes record DIFFERENT actors in flight" \
+         "in-flight: ${ACTOR_29_INFLIGHT:-<absent>} refused-launch: $(res_field "$R28B" actor)"
+# THE OTHER TWO code-29 SITES ARE RETRY VARIANTS of the in-flight shape above
+# (the deadline expiring before or during a retried hop), not a third lifecycle.
+# Counted so that a genuinely new producer shows up here as a failure rather than
+# as silent uncovered ground.
+DIE29_HITS="$(grep -cE '(^|[^[:alnum:]_])die(_hop)? 29 ' "$DISPATCH_BIN" 2>/dev/null || printf '0')"
+[ "$DIE29_HITS" = "4" ] \
+  && ok "  code 29 — the four producer sites are the two shapes proved above plus their two retry variants" \
+  || bad "  code 29 — the four producer sites are the two shapes proved above plus their two retry variants" \
+         "found $DIE29_HITS; a new budget terminal has appeared and is unproved"
 
 echo
 echo "Case 28c — no --deadline keeps the old unbounded-by-clock behaviour"
@@ -5611,6 +5786,10 @@ echo "Case 43 — O3: a permission denial becomes its own stop, naming tool and 
 d="$(new_sandbox)"; state_file "$d" "denial-task" "claude"
 DENIAL_JSON='{"type":"result","subtype":"success","is_error":false,"permission_denials":[{"tool_name":"Bash","tool_use_id":"toolu_fixture01","tool_input":{"command":"git add logs/work-loop/denial-task.md && git commit -m wip"}},{"tool_name":"Edit","tool_use_id":"toolu_fixture02","tool_input":{"file_path":"/sandbox/logs/work-loop/denial-task.md"}}],"result":"I was denied permission to commit."}'
 printf '%s' "$DENIAL_JSON" > "$SANDBOX_ROOT/denial.json"
+# Read BEFORE the hop, because the hop moves both of them and the record's claim is
+# precisely that it observed the before-state rather than the after-state twice.
+SB43="$(shasum -a 256 "$d/logs/work-loop/denial-task.md" | cut -d' ' -f1)"
+HB43="$(git -C "$d" rev-parse HEAD)"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task denial-task --log-dir "$d/runs" \
       --carry-one \
       --actor-cmd 'awk "/^turn: /&&!d{print \"turn: codex\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial.json"' 2>&1)"; RC=$?
@@ -5627,6 +5806,70 @@ printf '%s' "$OUT" | grep -q "Edit :: " \
 printf '%s' "$OUT" | grep -q "capability question" \
   && ok "the stop frames it as an operator capability decision, not a transport failure" \
   || bad "the stop frames it as an operator capability decision" "$OUT"
+# THE DURABLE RESULT for PERMISSION_DENIED. Everything above is about the stop the
+# operator READS; this is about the record that survives them closing the terminal.
+# The distinguishing half of it is the pair at the end: `next_action` is the only
+# terminal in this dispatcher that sends the operator to a capability decision
+# rather than to a repair, a clean-up or a rerun, and `capture` is the file the
+# stop's own last line points them at. A record naming a capture that is not there
+# would send them to the same dead end exit 37 exists to remove.
+RID43="$(run_id_of "$OUT")"
+[ -n "$RID43" ] && ok "  and the permission stop announced a run id" \
+                || bad "  and the permission stop announced a run id" "$OUT"
+R43="$d/runs/$RID43.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  code 37 — exactly one finalized result, no unfinalized temporary beside it" \
+  || bad "  code 37 — exactly one finalized result, no unfinalized temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs")"
+[ "$(tail -1 "$R43" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  code 37 — the record is complete to its sentinel" \
+  || bad "  code 37 — the record is complete to its sentinel" "last line: $(tail -1 "$R43" 2>/dev/null)"
+# The child exits 0 on a denial, so this is a hop that RAN, FINISHED and moved the
+# file — the record has every post-hop fact, and each of them is the observation
+# that separates 37 from the bare 25 it used to arrive as.
+for pair in "outcome:PERMISSION_DENIED" "code:37" "stage:post-hop" "actor:claude" \
+            "actor_launched:yes" "model_request_started:no" "hop:1" \
+            "turn_at_terminal:codex" "state_class:ACTIVE_CODEX" \
+            "state_sha256_before:$SB43" "head_before:$HB43" "head_after:$HB43" \
+            "worktree_foreign_paths:0" "worktree_allowlisted_dirty_paths:1" \
+            "changed_paths_since_launch:1" \
+            "permission_mode_requested:none" "permission_mode_effective:unavailable" \
+            "owner_check:proceed" "owner_declared:none" \
+            "next_action:operator-decide-capability-grant" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R43" "$k")"
+  [ "$got" = "$want" ] && ok "  code 37 — $k=$want" || bad "  code 37 — $k=$want" "got: ${got:-<absent>}"
+done
+# The denial's whole shape is "the file was edited and could not be committed", so
+# the state hash must have MOVED while HEAD stood still. Asserted as a difference
+# rather than as a literal: the after-value is whatever the child wrote, and
+# pinning it would be pinning the fixture's text instead of the observation.
+SA43="$(res_field "$R43" state_sha256_after)"
+{ [ -n "$SA43" ] && [ "$SA43" != unavailable ] && [ "$SA43" != "$SB43" ]; } \
+  && ok "  code 37 — and the state file really moved across the hop while HEAD did not" \
+  || bad "  code 37 — and the state file really moved across the hop while HEAD did not" \
+         "before=$SB43 after=${SA43:-<absent>}"
+CAP43="$(res_field "$R43" capture)"
+{ [ -f "$CAP43" ] && grep -Fq 'permission_denials' "$CAP43"; } \
+  && ok "  code 37 — and the capture it names is on disk and carries the denials the stop reported" \
+  || bad "  code 37 — and the capture it names is on disk and carries the denials the stop reported" \
+         "capture=${CAP43:-<absent>}"
+LT43="$(res_field "$R43" lease_task_dir)"; LC43="$(res_field "$R43" lease_checkout_dir)"
+{ [ -n "$LT43" ] && [ -n "$LC43" ] && [ ! -d "$LT43" ] && [ ! -d "$LC43" ]; } \
+  && ok "  code 37 — and both leases it reported holding were released on the way out" \
+  || bad "  code 37 — and both leases it reported holding were released on the way out" \
+         "task=${LT43:-<absent>} checkout=${LC43:-<absent>}"
+# 43c and 43d are the SAME terminal reached with a different denial payload — a
+# long target, and a host without a usable jq. Both are parser cases, and the
+# dispatcher has exactly one place that turns a parsed denial into an exit, so the
+# block above answers for them. Counted rather than asserted in prose: a second
+# producer would mean those two could stop somewhere this record never proves.
+DIE37_HITS="$(grep -cE '(^|[^[:alnum:]_])die(_hop)? 37 ' "$DISPATCH_BIN" 2>/dev/null || printf '0')"
+[ "$DIE37_HITS" = "1" ] \
+  && ok "  code 37 — the dispatcher has exactly one producer for this terminal, so 43c and 43d converge on the block above" \
+  || bad "  code 37 — the dispatcher has exactly one producer for this terminal" \
+         "found $DIE37_HITS call sites; the parser cases are no longer covered by this record"
 
 echo
 echo "Case 43c — O3: a target LONGER THAN 200 CHARACTERS is carried whole"
@@ -5846,6 +6089,10 @@ d="$(new_sandbox)"; state_file "$d" "notes-partial-task" "claude"
 printf '# Session Notes\n' >"$d/logs/session-notes.md"
 git -C "$d" add logs/session-notes.md >/dev/null 2>&1
 git -C "$d" commit -qm "seed session notes" >/dev/null 2>&1
+# Read before the hop: the actor corrupts the turn, so the file's pre-hop hash
+# cannot be recovered afterwards.
+SB49="$(shasum -a 256 "$d/logs/work-loop/notes-partial-task.md" | cut -d' ' -f1)"
+HB49="$(git -C "$d" rev-parse HEAD)"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task notes-partial-task --log-dir "$d/runs" \
       --carry-one \
       --allow-path '^logs/work-loop/' --allow-path '^logs/session-notes\.md$' \
@@ -5854,6 +6101,69 @@ expect_rc 15 "$RC" "49 — malformed post-hop state exits 15" "$OUT"
 partial_section "$OUT" | grep -Fq "logs/session-notes.md" \
   && ok "49 — the uncommitted session-notes.md edit is reported as a partial effect" \
   || bad "49 — the uncommitted session-notes.md edit is reported as a partial effect" "$(partial_section "$OUT")"
+# THE DURABLE RESULT for the POST-HOP code 15, and it is a different terminal from
+# the pre-hop code 15 cases 2 and 4 pin — same exit, opposite lifecycle. There the
+# run died inside the FIRST validate_state, before a launch, a hash or a
+# classification existed. Here an actor ran, finished, corrupted the turn on its
+# way out, and the SECOND validate_state refused what it left. So the record has a
+# real before-hash, a real head_before and a real changed-path count, and its
+# after-facts are unavailable because the run died above the line that takes them.
+#
+# CHOSEN OVER CASE 47's fixture, which reaches the same branch: this one carries
+# TWO allowlisted dirty paths rather than one — the corrupted state file and an
+# edit the operator put in scope by hand — so the changed-path count is a count
+# rather than a value that could be a constant.
+RID49="$(run_id_of "$OUT")"
+[ -n "$RID49" ] && ok "49 — the post-hop state failure announced a run id" \
+                || bad "49 — the post-hop state failure announced a run id" "$OUT"
+R49="$d/runs/$RID49.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  post-hop code 15 — exactly one finalized result, no unfinalized temporary beside it" \
+  || bad "  post-hop code 15 — exactly one finalized result, no unfinalized temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs")"
+[ "$(tail -1 "$R49" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  post-hop code 15 — the record is complete to its sentinel" \
+  || bad "  post-hop code 15 — the record is complete to its sentinel" "last line: $(tail -1 "$R49" 2>/dev/null)"
+for pair in "outcome:BAD_TURN" "code:15" "stage:post-hop" "actor:claude" \
+            "actor_launched:yes" "model_request_started:no" "hop:1" \
+            "state_sha256_before:$SB49" "state_sha256_after:unavailable" \
+            "head_before:$HB49" "head_after:unavailable" \
+            "worktree_foreign_paths:0" "worktree_allowlisted_dirty_paths:2" \
+            "changed_paths_since_launch:2" \
+            "owner_check:proceed" "owner_declared:none" \
+            "next_action:operator-repair-state-file-then-rerun" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R49" "$k")"
+  [ "$got" = "$want" ] && ok "  post-hop code 15 — $k=$want" \
+                       || bad "  post-hop code 15 — $k=$want" "got: ${got:-<absent>}"
+done
+[ "$(res_field "$R49" state_file)" = "$(cd "$d" && pwd -P)/logs/work-loop/notes-partial-task.md" ] \
+  && ok "  post-hop code 15 — and the record names the state file the operator must repair" \
+  || bad "  post-hop code 15 — and the record names the state file the operator must repair" \
+         "got: $(res_field "$R49" state_file)"
+LT49="$(res_field "$R49" lease_task_dir)"; LC49="$(res_field "$R49" lease_checkout_dir)"
+{ [ -n "$LT49" ] && [ -n "$LC49" ] && [ ! -d "$LT49" ] && [ ! -d "$LC49" ]; } \
+  && ok "  post-hop code 15 — and both leases it reported holding were released on the way out" \
+  || bad "  post-hop code 15 — and both leases it reported holding were released on the way out" \
+         "task=${LT49:-<absent>} checkout=${LC49:-<absent>}"
+# TWO FIELDS ARE DELIBERATELY LEFT UNASSERTED HERE, and the omission is the
+# finding this unit hands back rather than an oversight.
+#
+# `turn_at_terminal` and `state_class` are set by validate_state and are never
+# cleared, so at THIS terminal they still hold the reading the PRE-hop call
+# returned: `claude` and `ACTIVE_CLAUDE`. The post-hop call did not return a
+# classification — refusing to return one is exactly why this run exits 15 — and
+# the pre-hop code 15 in case 4 says so out loud, recording both as `unavailable`.
+# One producer, one failure, two opposite answers: the same terminal reports a
+# legal turn and a valid classification when it happens to be reached after a hop,
+# and reports neither when it is reached before one. The value that is stale is
+# also the one the exit code contradicts.
+#
+# NOT ASSERTED EITHER WAY ON PURPOSE. Pinning today's values would make a record
+# that contradicts its own exit code into a guarded contract; asserting
+# `unavailable` would be asserting a production change this unit is not making.
+# Codex decides which, and the assertion is added with that decision.
 
 # ==================================================================== case 50
 #
