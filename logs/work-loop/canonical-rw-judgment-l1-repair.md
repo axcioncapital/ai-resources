@@ -1,7 +1,7 @@
 ---
 task: canonical-rw-judgment-l1-repair
-status: blocked
-turn: operator
+status: active
+turn: claude
 ---
 
 ## Objective and scope
@@ -132,11 +132,55 @@ to produce required evidence hands back without expanding scope.
 
 ## Latest result
 
-Unit 2 has **run the genuine trial through to its first operator stop**. The deployed local path
-produced a proposal and put it through one independent fresh-context challenge, which returned
-**seven required-change findings** — two of them evidence-permission breaches that approval cannot
-waive. The task now waits on the operator's substantive revision direction, which is L1 PASS
-condition 3.
+Unit 2 has **run the genuine trial past its first operator stop and into the re-review loop**. The
+deployed local path produced a proposal, put it through one independent fresh-context challenge that
+returned **seven required-change findings** — two of them evidence-permission breaches approval
+cannot waive — and the operator then gave a substantive revision direction covering all seven. The
+revision is applied and challenge round 2 is running against the revised bytes.
+
+**L1 PASS condition 3 is satisfied, and this is the condition the first trial failed.** The operator
+saw the proposal, the complete challenge and every required-change finding, and issued substantive
+revision directions rather than a bare `approved`. Their instruction, recorded verbatim because it is
+the trial's central evidence and existed nowhere in the repository until now:
+
+> This is a substantive revision instruction, not an approval. Revise all seven findings:
+> **F1:** Replace "the operating model works" with the bounded claim that funds demonstrably practise
+> it in Sweden and Norway. State that this cannot be promoted to Finland and that no realized outcomes
+> establish efficacy.
+> **F2:** Separate the two gaps. Valuation is structurally unavailable; the structural-versus-cyclical
+> question remains open with an unrun Path-B route under Decision 21. Do not call it unclosable.
+> **F3:** Describe the FVCA figures as different cuts supporting different claims. Neither settles
+> Finnish PE direction; remove "counter-signal."
+> **F4:** Keep Decision 19's non-parity instruction, but make the C-ceiling uncertainty explicit in the
+> thesis itself. Do not present the comparative confidence as fully settled.
+> **F5:** Remove the sell-side conclusion. The evidence supports a named population to approach, but
+> the retired Context Card row cannot determine whether it is buy-side or sell-side.
+> **F6:** Use one transaction set consistently. Additional Finnish transactions may strengthen the
+> directional reading but cannot clear the pattern threshold, which requires 5+ cases across at least
+> two countries.
+> **F7:** Change "the two strongest-graded findings" to "among the strongest-graded findings," and
+> replace "unusual confidence" with language consistent with an evidence base that has not undergone
+> disconfirmation testing.
+> Preserve round 1, revise the proposal, and run a fresh independent round 2 against the revised bytes.
+> Bring the re-reviewed proposal back to me before any promotion.
+
+**The revision was applied to the proposal in place**, per Step 3b.2's rule that a revision reply is
+not an approval. Claude applied the operator's directions and did not substitute its own judgment for
+theirs, did not dispose of any finding on their behalf, and did not treat the direction as approval.
+
+**The stale-binding mechanism fired on its own, which is a load-bearing trial result.** After the
+revision the proposal hashes to
+`ab5e2ff1bd2d1eb30ba8c3b70a2e4d80754f646f3158b69828dfe3de8fa28b4b`, and
+`check-judgment-challenge.sh --shape-only` returned **`STALE-CHALLENGE` (exit 4)** naming both hashes
+and refusing to let round 1 cover the revised text. Nothing had to remember to ask for a re-review;
+the revision invalidated its own clearance. Round 1 was then archived to
+`precision-components-unit-judgment-brief-review-round-1.md` before round 2 was dispatched, so the
+round-1 ledger cannot be replaced by a cleaner round-2 one — the gate reads every archived round and
+refuses on a hole in the chain (`LOST-ROUND`) or a finding that stops being carried
+(`DROPPED-FINDING`).
+
+Re-run of `check-judgment-contract.sh --allow-proposed` on the revised proposal: **VALID, exit 0**,
+5 theses, 60 distinct claim IDs, 2,423 words, same non-binding length warning.
 
 The premises below were verified in the earlier part-run and re-confirmed by inspection on resume,
 before any trial write: the Sector checkout is on `trial/l1-repeat-precision-components`,
@@ -302,8 +346,16 @@ states the band is a target and not a gate, and it returned VALID. Recorded for 
 
 ## Blocker
 
-**The operator owes a substantive revision direction.** This is the blocking stop the brief requires
-at this point, and it is L1 PASS condition 3. Both artifacts are ready to read.
+**None — this stop is discharged.** The operator gave their substantive revision direction; it is
+recorded verbatim in `## Latest result` and applied. Challenge round 2 is running against the revised
+bytes. The next blocking stop is the explicit approve / revise / reject decision, which opens when
+round 2 returns; until then the task is Claude's move and waits on nothing.
+
+The record below is retained as the round-1 evidence the trial has to carry, not as a live blocker.
+
+---
+
+**Round 1 as presented to the operator.** Both artifacts as they stood:
 
 - Proposal: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md`
 - Challenge: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`
@@ -365,12 +417,12 @@ operator-facing path, not only the gate.
 
 ## Next action
 
-Operator: read the proposal and the complete challenge, then give a **substantive revision direction**
-— and, for any finding you judge needs no change, an explicit disposition with your reasons. F1 and
-F2 must be revised; the gate will not accept them any other way.
+Claude: when challenge round 2 returns, re-run `check-judgment-challenge.sh --shape-only` against the
+revised proposal, then stop for the operator with the re-reviewed proposal, every carried-forward
+finding and its round-2 disposition, any new finding the revision introduced, and the updated burden
+record. Set `status: blocked`, `turn: operator`.
 
-Then Claude, carrying that response back through this same task: apply the revision to the proposal in
-place, re-run `check-judgment-contract.sh --allow-proposed`, return to Step 3b.1 where the broken
-binding will report `STALE-CHALLENGE` (exit 4), archive round 1 before dispatching round 2, and stop
-for the operator again with the re-reviewed proposal for the explicit approve / revise / reject
-decision. Do not promote before that decision.
+That stop is for the explicit **approve / revise / reject** decision. Do not promote before it, do not
+infer approval, and do not dispose of any finding on the operator's behalf. A finding still `PENDING`
+and tagged `permission-breach` cannot be cleared by approval at all — only by a further revision and
+another round.
