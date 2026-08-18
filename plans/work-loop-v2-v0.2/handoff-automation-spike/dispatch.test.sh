@@ -11679,6 +11679,115 @@ else
   bad "67a — both leases it reported holding were released on the way out" \
       "task=$LT67 ($([ -d "$LT67" ] && echo present || echo gone)) checkout=$LC67 ($([ -d "$LC67" ] && echo present || echo gone))"
 fi
+# =================================================================== case 68a
+#
+# THE ARGV ARITY BOUNDARY. A value-taking option passed as the final argument used
+# to leave `shift 2` with nothing to shift — it shifts nothing and returns nonzero,
+# and `set -uo pipefail` carries no `-e`, so `$#` was unchanged and the parse loop
+# repeated forever. The dispatcher never returned: no exit, no stderr, before
+# admission. The approved plan requires every invalid pre-admission invocation to
+# produce clear stderr and a nonzero exit, and a run that does not end produces
+# neither.
+#
+# THE BOUND IS THE ASSERTION, not a convenience. `run_bounded_argv` reports 124
+# when it had to kill the run, so a regression reads as 124 rather than hanging
+# the suite — which is what an unbounded call would do, and a suite that never
+# finishes reports nothing at all.
+#
+# THE OPTION LIST IS READ OUT OF THE PARSER, not copied beside it. A value-taking
+# option added later is picked up here automatically; a list written by hand would
+# leave exactly the new option unproven, which is the shape of the defect this
+# case exists to close.
+run_bounded_argv() { # seconds argv... -> sets RC (124 if it had to be killed) and OUT
+  local secs="$1"; shift
+  local o="$SANDBOX_ROOT/argv68.out" pid i
+  : >"$o"
+  bash "$DISPATCH_BIN" "$@" >"$o" 2>&1 &
+  pid=$!
+  for i in $(seq 1 $((secs * 4))); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill -KILL "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; RC=124
+  else
+    wait "$pid"; RC=$?
+  fi
+  OUT="$(cat "$o")"
+}
+
+echo
+echo "Case 68a — every value-taking option refuses promptly when its value is absent"
+d="$(new_sandbox)"; state_file "$d" "argv-arity-task" "claude"
+rm -f "$d.calls"
+VALOPTS68="$(grep -E '^[[:space:]]+--[a-z-]+\).*shift 2' "$DISPATCH_BIN" | sed -E 's/^[[:space:]]*(--[a-z-]+)\).*/\1/')"
+N68="$(printf '%s\n' "$VALOPTS68" | grep -c .)"
+[ "$N68" -ge 11 ] \
+  && ok "68a setup — the parser's value-taking options were read from the dispatcher ($N68 found)" \
+  || bad "68a setup — the parser's value-taking options were read from the dispatcher" "found $N68"
+HEAD68="$(git -C "$d" rev-parse HEAD)"
+TREE68="$(tree_manifest "$d")"
+STATUS68="$(git -C "$d" status --porcelain)"
+# Each option is passed LAST, which is the whole condition under test. --checkout
+# is given first for the others so the refusal being asserted is the missing value
+# and not the missing-checkout usage error one layer down.
+for OPT68 in $VALOPTS68; do
+  if [ "$OPT68" = "--checkout" ]; then
+    run_bounded_argv 8 "$OPT68"
+  else
+    run_bounded_argv 8 --checkout "$d" "$OPT68"
+  fi
+  if [ "$RC" -eq 124 ]; then
+    bad "68a — $OPT68 with no value refuses promptly" \
+        "the run had to be killed after 8s — the parser is not terminating"
+  else
+    expect_rc 10 "$RC" "68a — $OPT68 with no value refuses promptly" "$OUT"
+  fi
+  out_has "STOP [10]" "$OUT" "68a — $OPT68 names itself on stderr"
+  out_has "$OPT68 requires a value" "$OUT" "68a — $OPT68 names the missing-value condition and the option"
+done
+# THE SIX ABSENCES, ONCE, AFTER ALL OF THEM. Every option above refuses at the
+# same shared boundary before admission, so the absences are a property of the
+# boundary rather than of each option, and asserting them per option would be the
+# same claim repeated N times.
+[ ! -e "$(lock_root_for "$d")" ] \
+  && ok "68a — and no invocation took an owner or lease: the shared lease root was never created" \
+  || bad "68a — and no invocation took an owner or lease: the shared lease root was never created" \
+         "$(ls -a "$(lock_root_for "$d")" 2>&1 | tr '\n' ' ')"
+[ "$(calls "$d")" = "0" ] \
+  && ok "68a — and launched no actor" || bad "68a — and launched no actor" "calls=$(calls "$d")"
+[ ! -d "$d/runs" ] \
+  && ok "68a — and wrote no run evidence" \
+  || bad "68a — and wrote no run evidence" "$(ls -a "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(git -C "$d" rev-parse HEAD)" = "$HEAD68" ] \
+  && ok "68a — and committed nothing" || bad "68a — and committed nothing" "HEAD moved from $HEAD68"
+[ "$TREE68" = "$(tree_manifest "$d")" ] \
+  && ok "68a — and every byte of the checkout's working tree is unchanged" \
+  || bad "68a — and every byte of the checkout's working tree is unchanged" \
+         "$(diff <(printf '%s\n' "$TREE68") <(printf '%s\n' "$(tree_manifest "$d")") | head -10 | tr '\n' ' ')"
+[ "$STATUS68" = "$(git -C "$d" status --porcelain)" ] \
+  && ok "68a — and git status is unchanged" \
+  || bad "68a — and git status is unchanged" "before [$STATUS68] after [$(git -C "$d" status --porcelain)]"
+# THE BOUNDARY OWNS ONLY THE ABSENT ELEMENT. Both of these supply a real argv
+# element, so both must reach the meaning they have today rather than the new
+# refusal — an arity guard that swallowed either would be a silent behaviour
+# change wearing a bug fix's clothes.
+run_bounded_argv 8 --checkout "$d" --task ""
+expect_rc 10 "$RC" "68a — an explicitly EMPTY value is still a value, not a missing one" "$OUT"
+out_has "--task is required" "$OUT" "68a — and reaches the existing required-value refusal, not the arity one"
+run_bounded_argv 8 --checkout "$d" --task -foo
+expect_rc 12 "$RC" "68a — a value beginning with a dash is still a value" "$OUT"
+out_has "task id rejected" "$OUT" "68a — and reaches the existing task-id grammar, not the arity one"
+
+# =================================================================== case 68b
+# The parser's closed default has always refused an unrecognised option name and
+# has never been asserted. One case, not an option-name matrix: the branch is a
+# single `*)` and a matrix would prove the same line N times.
+echo
+echo "Case 68b — an unrecognised option name is refused"
+run_bounded_argv 8 --checkout "$d" --not-an-option
+expect_rc 10 "$RC" "68b — an unknown option is refused as usage" "$OUT"
+out_has "STOP [10]" "$OUT" "68b — the refusal names itself on stderr"
+out_has "unknown argument" "$OUT" "68b — and names the condition"
+out_has "--not-an-option" "$OUT" "68b — and names the rejected option"
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
