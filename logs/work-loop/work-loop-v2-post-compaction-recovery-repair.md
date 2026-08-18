@@ -12,14 +12,18 @@ Scope is Units 0–4 and the completion condition in `plans/work-loop-v2-v0.2/wo
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 4d — final regression matrix and cleanup readiness.
+Standard. Unit 4d — final regression matrix and cleanup readiness — is accepted at `55214371`.
 
-Unit 4c's single correction round is accepted at `63c02624`. No material review finding remains open;
-the final move is evidence-only and changes nothing beyond this state record.
+Units 0–4 are accepted. The implementation and proof are complete; the task is waiting only on the
+operator-owned destructive cleanup decision below before Codex issues the close verdict.
 
 Named reason for the loop: the repair spans multiple bounded implementation and proof units, must survive hand-offs, and requires assessment independent of the implementer before it counts as complete.
 
 ## Latest result
+
+**Unit 4d accepted at `55214371`.** The complete nine-suite matrix is green at 1,176 passed / 0
+failed, the Unit 4 evidence chain is coherent, canonical `main` is restored and clean, no material
+review finding remains, and both disposable cleanup targets are precisely inventoried.
 
 Inspected (2026-08-18):
 
@@ -115,30 +119,35 @@ explicit operator decision.
 
 ## Blocker
 
-None.
+None. The operator authorized the cleanup on 2026-08-18, taking the recommended option: Claude may
+delete both divergent untracked `.unit4-preflight/preflight.sh` copies and remove the two named
+disposable worktrees during the closing move, while branch `disposable/wl2-unit4-case-2026-08-17` and
+every commit on it are preserved. No branch deletion, merge, remote reconciliation or push is
+authorized by this decision.
+
+Nothing has been deleted or removed yet, and this record is the whole of what changed: the cleanup is
+part of the closing move Codex has not yet issued, so recording the decision costs nothing and
+reverses freely if it was read wrongly.
 
 ## Next action
 
-Codex: assess this discovery result and issue the close verdict, or say what remains.
+Codex: the operator-owned decision is recorded, so nothing further is reserved to them. Issue the
+Unit 4 close verdict, or say what remains.
 
-What the assessment has in front of it: the complete nine-suite matrix green at `63c02624` with
-1,176 passed and 0 failed; a coherent Unit 4 evidence chain (accepted Attempt 2 trace → `092a1715`
-rollover → `63c02624` correction); canonical `main` clean at `0d5641b8` with the rejected rewrite
-reachable only from the disposable branch; and a precise cleanup inventory in which the only
-non-reproducible artifact is two **divergent** untracked copies of a self-declared disposable
-preflight script.
+What the verdict has in front of it: Units 0–4 accepted; the complete nine-suite matrix green at
+`63c02624` with 1,176 passed and 0 failed; the Unit 4 evidence chain (accepted Attempt 2 trace →
+`092a1715` rollover → `63c02624` correction); canonical `main` clean at `0d5641b8`; and the cleanup
+decision above.
 
-Three things for the closing record to carry, none of them work for this unit:
+Three things the closing record must carry, per the earlier hand-back and unchanged:
 
-1. Plan § 8's correction subsection does not cite `63c02624` by hash. Adding that pointer is a plan
-   edit this discovery unit is not authorized to make.
+1. Plan § 8's correction subsection does not cite `63c02624` by hash. Whether to add that pointer is
+   a plan edit for the closing move, not something the discovery unit could make.
 2. The two correction deferrals stand, unpromoted: the stale "five separate things" count prose in
    `.claude/commands/work-loop-v2.md` Step 0 and `/sync-workflow`'s five-name remediation list; and
    whether a reference may cite a sibling's path at all.
-3. Worktree removal is authorized at Unit 4 close; deletion of
-   `disposable/wl2-unit4-case-2026-08-17` is not, and that branch is the only ref preserving the
-   rejected history plus the `092a1715` evidence pointer.
+3. Branch `disposable/wl2-unit4-case-2026-08-17` is preserved deliberately — it is the only ref
+   holding the rejected history and the `092a1715` evidence pointer the chain above depends on.
 
-Still deferred and untouched here: the close verdict, the plan § 8 final status update, the closed-record
-write, the approved worktree cleanup, any branch deletion, merge to canonical `main`, remote
-reconciliation and push.
+Still unauthorized and untouched: branch deletion, merge to canonical `main`, remote reconciliation
+and push.
