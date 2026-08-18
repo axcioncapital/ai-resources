@@ -2921,6 +2921,94 @@ fi
 
 git_head() { git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null; }
 
+# Which run ids a directory can PROVE it holds the evidence of.
+#
+# Every artifact this dispatcher writes into an evidence directory is named
+# "$RUN_ID.<suffix>" (the run log, the terminal result and its .partial, the hop
+# captures, the unattended profile), and every run opens "$RUN_ID.log" by
+# printing "run=$RUN_ID ..." into it as its first line. So a run log is a
+# self-identifying receipt: it names the run whose files sit beside it.
+#
+# READ, NOT PARSED FOR SHAPE, and that is deliberate. The obvious alternative was
+# to match the RUN_ID format with a pattern — timestamp, lock-key fragment, pid,
+# task. That pattern would be wrong today: LOCK_KEY is never assigned, so real
+# ids come out as "20260818T152713--99177-task" with the discriminator missing,
+# and it is a recorded deferral to repair. A rule keyed on the format would have
+# to be revised in step with a fix somewhere else in this file, and would fail
+# open or closed depending on which moved first. The header is the contract the
+# artifacts were written under, and it survives that repair untouched.
+run_ids_proven_in() { # directory -> one proven run id per line
+  local f base id first
+  for f in "$1"/*.log; do
+    [ -f "$f" ] && [ ! -L "$f" ] || continue
+    base="${f##*/}"; id="${base%.log}"
+    [ -n "$id" ] || continue
+    IFS= read -r first <"$f" 2>/dev/null || first=''
+    case "$first" in "run=$id "*) printf '%s\n' "$id" ;; esac
+  done
+}
+
+# Is this working-tree path nothing but an EARLIER dispatcher run's own evidence?
+#
+# WHY IT HAS TO EXIST. A dispatcher allowlists only the log directory IT was
+# pointed at (the LOG_REL block below). Two sequential, entirely valid runs that
+# were given different --log-dir values therefore end with the second one reading
+# the first one's evidence as out-of-allowlist litter and stopping at 18 before
+# launching anything. Since Unit 2 that is sharper still: a run refused at the
+# lease is an admitted run and finalizes a real terminal result inside its own
+# evidence directory, so the durable result this dispatcher now guarantees is
+# itself what blocks the next run. Guaranteeing an obstruction is not a guarantee.
+#
+# THE NARROWNESS IS THE WHOLE DESIGN, because the cheap versions of this are all
+# dangerous. Ignoring any directory the operator named, or all untracked content,
+# or a broad parent such as plans/, would turn the evidence directory into a
+# blind spot an actor could write through — and the foreign-work gate exists
+# precisely to see that. So a directory is excused only when EVERY file under it
+# belongs to a run that directory can prove it holds, and one stranger anywhere
+# inside it puts the whole path back in front of the gate.
+#
+# UNTRACKED ONLY. Evidence is never committed by this dispatcher, so a tracked
+# path that is modified or deleted is a real change to repository content and is
+# never excused here, whatever it is called or wherever it sits.
+#
+# THIS HIDES NOTHING FROM THE OPERATOR that they need. The paths it drops are
+# this program's own bookkeeping from a previous run, reported at the time by
+# that run's own terminal result; what the gate is for is work that was not this
+# dispatcher's.
+prior_run_evidence() { # porcelain-line relative-path -> 0 when it is only earlier run evidence
+  local line="$1" p="$2" abs dir ids f id found=0 owned
+  [ "${line:0:2}" = '??' ] || return 1
+  abs="$CHECKOUT/${p%/}"
+  if [ -d "$abs" ] && [ ! -L "$abs" ]; then
+    ids="$(run_ids_proven_in "$abs")"
+    [ -n "$ids" ] || return 1
+    # ! -type d rather than -type f: a symlink, socket or fifo dropped in here is
+    # not a run artifact and must not pass by being the wrong kind of thing to
+    # look for. An empty directory proves nothing and is not excused either.
+    while IFS= read -r f; do
+      [ -n "$f" ] || continue
+      found=1
+      owned=0
+      while IFS= read -r id; do
+        [ -n "$id" ] || continue
+        case "${f##*/}" in "$id".*) owned=1; break ;; esac
+      done <<<"$ids"
+      [ "$owned" -eq 1 ] || return 1
+    done < <(find "$abs" -mindepth 1 ! -type d 2>/dev/null)
+    [ "$found" -eq 1 ] || return 1
+    return 0
+  fi
+  [ -f "$abs" ] && [ ! -L "$abs" ] || return 1
+  dir="${abs%/*}"
+  ids="$(run_ids_proven_in "$dir")"
+  [ -n "$ids" ] || return 1
+  while IFS= read -r id; do
+    [ -n "$id" ] || continue
+    case "${abs##*/}" in "$id".*) return 0 ;; esac
+  done <<<"$ids"
+  return 1
+}
+
 # Working-tree lines NOT covered by the allowlist. Any change here during an
 # actor run is an unexpected repository effect.
 foreign_worktree() {
@@ -2932,6 +3020,10 @@ foreign_worktree() {
     for re in "${ALLOW_PATHS[@]}"; do
       if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
     done
+    # An earlier run's own evidence is this program's bookkeeping, not foreign
+    # work. Asked second, so the allowlist keeps deciding everything it already
+    # decided and this only ever reaches paths that were about to be reported.
+    [ "$allowed" -eq 0 ] && prior_run_evidence "$line" "$p" && allowed=1
     [ "$allowed" -eq 0 ] && printf '%s\n' "$line"
   done | sort
 }
