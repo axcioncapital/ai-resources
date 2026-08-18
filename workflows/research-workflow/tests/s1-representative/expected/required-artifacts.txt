@@ -1,0 +1,20 @@
+# The artifacts a scored chapter run must leave behind, by role.
+#
+# Format: role<TAB>relative path inside the specimen directory.
+# Blank lines and `#` comments are ignored. Roles are fixed — the scorer binds
+# to them by name, so adding a row here without teaching the scorer the role is
+# an error the scorer reports rather than ignores.
+#
+# chapter              the chapter as it stands after the run (/verify-chapter Step 1 input,
+#                      possibly corrected at Step 3)
+# verification-report  the complete verification response written verbatim to the
+#                      caller-specified path (execution-agent.md, final line)
+# verification-summary the execution agent's handoff summary — capped at 20 lines and 4 KB
+#                      (execution-agent.md § handoff summary)
+# verification-checkpoint  /verify-chapter Step 2.5 checkpoint, written from the returned
+#                      path and summary, never from the report body
+
+chapter	1.1-chapter-01.md
+verification-report	1.1-chapter-01-verification.md
+verification-summary	1.1-chapter-01-verification-summary.md
+verification-checkpoint	1.1-chapter-01-verification-checkpoint.md
