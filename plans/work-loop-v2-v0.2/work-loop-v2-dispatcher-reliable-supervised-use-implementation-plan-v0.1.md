@@ -1,8 +1,8 @@
 # Work Loop v2 Dispatcher Reliable Supervised Use Implementation Plan v0.1
 
 **Date:** 2026-08-16  
-**Status:** ACTIVE, **APPROVED BY PATRIK ON 2026-08-16 AGAINST IDENTIFIED CONTENT** — approval is bound to the plan content carried by commit `e9a6fd8bc51992a1ce8f6e09dcf95b273dd07240`, whose blob for this file is `43c44e01703c8622482d93d80407ddc1c83e038a`, against the exact tested integrated baseline `2451e3df5b8616e035a39a679799738a975b642e` recorded in § 3, *Activation record*. All six § 3 prerequisites are now met. What the approval authorizes is dispatcher implementation **only** inside this plan's fixed Gate SA scope and its unchanged exclusions: Gate ST, Gate U, unattended or walk-away release claims, dispatcher rewrite or language migration, merge, push, deployment and destructive cleanup stay excluded under §§ 4 and 7 and reserved to Patrik.  
-**Target claim:** Reliable supervised semi-autonomous dispatcher.  
+**Status:** DRAFT REVISION — **PENDING PATRIK'S CONTENT-BOUND REAPPROVAL**. Patrik's 2026-08-16 approval remains bound to the earlier content at commit `e9a6fd8bc51992a1ce8f6e09dcf95b273dd07240` and blob `43c44e01703c8622482d93d80407ddc1c83e038a`; it does not authorize this material revision. This revision records Patrik's 2026-08-18 `SHRINK` decision by moving the durable terminal-result guarantee to the admitted-run boundary. Gate ST, Gate U, unattended or walk-away release claims, dispatcher rewrite or language migration, merge, push, deployment and destructive cleanup remain excluded under §§ 4 and 7 and reserved to Patrik.  
+**Target claim:** Ready for supervised semi-agentic use — durable terminal results are guaranteed after run admission.  
 **Target user:** Patrik, launching one prepared and bounded repository task on a supported awake host.  
 
 ## 1. Operating outcome
@@ -33,10 +33,11 @@ This plan is the implementation-facing consolidation of:
 
 For the first reliable-use release:
 
-- the complete Gate SA reliability claim is retained;
+- the complete Gate SA reliability claim is retained after run admission;
 - the six Gate ST target-alignment additions are held;
-- Gate U unattended work is held; and
-- no requirement is silently removed from Gate SA.
+- Gate U unattended work is held;
+- invalid pre-admission invocations fail clearly without creating a run or durable run result; and
+- no admitted-run requirement is silently removed from Gate SA.
 
 The two source documents remain historical rationale and future-option material. Once this plan is activated, they are not independent implementation authorities for the reliable-use release.
 
@@ -51,7 +52,7 @@ Implementation may begin only after all of the following are true:
 5. One activation update to this plan records the exact integrated base commit and corrects any premise that changed during merge.
 6. Patrik approves this plan against that exact baseline.
 
-The activation update may reconcile facts and exact file locations. It may not add Gate ST machinery, weaken Gate SA, or treat skipped evidence as passed. Any material scope change requires an explicit operator decision and an updated release claim.
+The activation update may reconcile facts and exact file locations. It may not add Gate ST machinery, weaken the admitted-run Gate SA contract, or treat skipped evidence as passed. Any material scope change requires an explicit operator decision and an updated release claim. Patrik made that decision on 2026-08-18 by choosing `SHRINK`; the revised content and release claim above now require fresh content-bound approval before implementation resumes.
 
 ### Activation record — 2026-08-16
 
@@ -68,9 +69,9 @@ This is the one activation update permitted by item 5. It records facts and corr
 | 3 — one canonical validator, owner helper, shared lease contract, command/skill/core, and attended carrier | **Met.** One tracked validator `logs/scripts/work-loop-state.sh`, one owner helper `logs/scripts/work-loop-owner.sh`, one lease contract `logs/scripts/work-loop-lease.sh`, one command `.claude/commands/work-loop-v2.md`, one skill `.agents/skills/work-loop-v2/SKILL.md`, one core `plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md`, one attended carrier `scripts/axcion-harness-v0.2/carry-turn.sh`. The two deployed template copies under `workflows/research-workflow/logs/scripts/` are byte-identical to their canonical originals, so they are deployments rather than second owners. |
 | 4 — the integrated baseline passes its required state, owner, lease, capability, command, carrier and dispatcher regression suites | **Met at `2451e3df…`, and not at `69838320…`.** State `100/0`, owner `133/0`, lease `136/0`, capability `77/0`, command/skill/core `362/0`, carrier `457/0`, dispatcher `639/0`, Tracer 6 `74/0`, Tracer 7 `120/0`, core-resolver `4/0`. Two of those were red at the rejected intermediate — command/skill/core `315/44` and capability `76/1` — which is what the forward repair closed. |
 | 5 — one activation update recording the exact base commit and correcting changed premises | **This record.** |
-| 6 — Patrik approves this plan against that exact baseline | **Met.** Patrik approved on 2026-08-16, content-bound to commit `e9a6fd8bc51992a1ce8f6e09dcf95b273dd07240`, plan blob `43c44e01703c8622482d93d80407ddc1c83e038a`, against baseline `2451e3df…`. Recorded immediately below. The approval authorizes dispatcher implementation only inside the fixed Gate SA scope and the exclusions in §§ 4 and 7. |
+| 6 — Patrik approves this plan against that exact baseline | **Pending for this revision.** Patrik's 2026-08-16 approval remains content-bound to commit `e9a6fd8bc51992a1ce8f6e09dcf95b273dd07240`, plan blob `43c44e01703c8622482d93d80407ddc1c83e038a`, against baseline `2451e3df…`. Patrik's 2026-08-18 `SHRINK` decision authorizes preparing this narrower draft but is not approval of unseen revised content. Implementation remains paused until Patrik approves the revised content against its new commit and blob. |
 
-**Patrik's content-bound approval, recorded — bound to identified content rather than to a description of it.** On 2026-08-16 Patrik approved the plan content carried by commit `e9a6fd8bc51992a1ce8f6e09dcf95b273dd07240`, whose blob for this file is `43c44e01703c8622482d93d80407ddc1c83e038a`, against the exact tested integrated baseline `2451e3df5b8616e035a39a679799738a975b642e`. That commit's content is what this record was written into, and this entry adds the approval alone: it changes no objective, scope, exclusion, settled decision, sequence, acceptance condition or authority relationship of the approved content, and therefore requires no reapproval of its own. **What is authorized is dispatcher implementation inside this plan's fixed Gate SA scope and nothing beyond it.** Gate ST, Gate U, unattended or walk-away release claims, dispatcher rewrite or language migration, merge, push, deployment and destructive cleanup remain excluded under §§ 4 and 7 and reserved to Patrik. The *Baseline catch-up evidence* dispositions below are unchanged by the approval, and so is the carried deferral in the next paragraph — approval records authority, not fixes.
+**Patrik's prior content-bound approval, retained as historical authority for the earlier content.** On 2026-08-16 Patrik approved the plan content carried by commit `e9a6fd8bc51992a1ce8f6e09dcf95b273dd07240`, whose blob for this file is `43c44e01703c8622482d93d80407ddc1c83e038a`, against the exact tested integrated baseline `2451e3df5b8616e035a39a679799738a975b642e`. That approval does not transfer to this material revision. The baseline evidence and exclusions remain authoritative inputs; the revised admitted-run acceptance boundary and narrower release claim remain draft until separately approved against identified content.
 
 **One adjacent defect is carried as a recorded deferral, not as a fixed item.** The `$diagnose-and-fix` / `$realign` routing migration is half-landed across the repository: at this baseline `.agents/skills/work-loop-v2/references/routing-index.md` still indexes the pre-rename commands, and `SKILL.md` still points at a `references/repository-problem-resolution-sop.md` that the merge deleted — a live dangling reference. It is adjacent repository work rather than a Gate SA activation prerequisite established by this plan, it is unfixed at this baseline, and this record does not treat it as fixed.
 
@@ -140,10 +141,11 @@ Each change set must produce focused fail-capable evidence, one coherent impleme
 
 #### Required behavior
 
-1. Create one run identity and initialize its external evidence location before any model request or mutating action.
-2. Define one versioned, bounded, machine-readable terminal-result schema used by every terminal dispatcher path.
+**Admission boundary:** a run exists only after argument parsing has supplied syntactically valid task, checkout and evidence-location inputs and the dispatcher has established their trusted canonical values. Before that point, invalid usage or arguments must launch no actor, acquire no owner or lease, mutate nothing, write no evidence, print a clear error to stderr and exit nonzero. Such a refusal is not a run terminal class and needs no durable result.
+
+1. After admission, create one run identity and initialize its external evidence location before any model request or mutating action.
+2. Define one versioned, bounded, machine-readable terminal-result schema used by every terminal path of an admitted run.
 3. Atomically finalize exactly one terminal result for:
-   - usage or argument refusal;
    - missing runtime or authentication;
    - invalid state or ownership;
    - lease refusal;
@@ -211,7 +213,8 @@ Uncertain teardown pins the applicable lease. A crash immediately before or afte
 
 #### Change-set acceptance
 
-- Every terminal class produces exactly one valid result.
+- Every admitted-run terminal class produces exactly one valid result.
+- Every invalid pre-admission invocation produces clear stderr and a nonzero exit while launching no actor, taking no owner or lease, mutating nothing and writing no evidence.
 - A missing result, injected fake result, or actor mutation of an unowned field cannot advance the dispatcher.
 - Crash injection at each named boundary produces no duplicate model request, duplicate commit, false completion, unsafe owner clear, or premature lease release.
 - Adversarial protocol/path fixtures execute nothing and write nowhere outside admitted roots.
@@ -388,17 +391,18 @@ No required verification may remain detached after the implementing actor return
 
 An independent review compares the integrated implementation and evidence against this plan and returns one of:
 
-- **ADOPT:** every Gate SA statement is proven;
+- **ADOPT:** every revised Gate SA statement is proven;
 - **SHRINK:** Patrik explicitly accepts a narrower operating envelope and release label; or
 - **STOP:** a material reliability or feasibility failure remains.
 
-Only ADOPT permits the label **Reliable supervised semi-autonomous dispatcher**.
+Only ADOPT permits the label **Ready for supervised semi-agentic use**. The unqualified label **Reliable supervised semi-autonomous dispatcher** remains unauthorized by this plan.
 
 ## 6. Gate SA — final acceptance contract
 
 The release passes only when all of the following are proven:
 
-- every exit produces one durable atomic result with truthful actor-start and before/after facts;
+- every terminal path after run admission produces one durable atomic result with truthful actor-start and before/after facts;
+- invalid pre-admission invocations fail through clear stderr and a nonzero exit while launching no actor, taking no owner or lease, mutating nothing and writing no evidence;
 - missing evidence and zero-without-transition block rather than complete;
 - actor-writable semantic state and trusted control facts obey one enforced ownership contract;
 - an actor transition advances only after lifecycle, role, Git, proof, path, owner, lease, and transport validation;
