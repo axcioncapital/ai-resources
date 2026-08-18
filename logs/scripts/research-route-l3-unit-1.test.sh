@@ -155,17 +155,26 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# A12 — Standard stops honestly at its next-unit seam
+# A12 — Standard never fabricates output
+#
+# REVISED at Unit 2, transparently. This assertion originally required the Standard
+# section to state a "not yet implemented" boundary — the honest stop Unit 1 shipped.
+# Unit 2 was briefed to REPLACE that stop with a real Standard route, so the old
+# expectation would now fail on correct behaviour. It is not deleted: what Unit 1
+# actually owned here was the safety property behind the stop — that Standard never
+# emits output its evidence does not support — and that is what this now asserts, in a
+# form the implemented route must also satisfy. The implemented route's own structure
+# is asserted by the Unit 2 harness (B16, B17).
 # ---------------------------------------------------------------------------
 std_sec="$(section 'Standard')"
 if [ -z "$std_sec" ]; then
-  no "A12 Standard stops honestly" "no '## Standard' section in the entry"
-elif ! printf '%s' "$std_sec" | grep -qi 'not.*implemented'; then
-  no "A12 Standard stops honestly" "Standard section states no not-yet-implemented boundary"
-elif ! printf '%s' "$std_sec" | grep -qi 'do not produce\|produce no\|does not produce'; then
-  no "A12 Standard stops honestly" "Standard section does not forbid fabricated Standard output"
+  no "A12 Standard never fabricates output" "no '## Standard' section in the entry"
+elif ! printf '%s' "$std_sec" | grep -qiE 'never invented|not invent|fabricat|may not be asserted'; then
+  no "A12 Standard never fabricates output" "Standard section does not forbid unsupported output"
+elif ! printf '%s' "$std_sec" | grep -qiE 'escalat'; then
+  no "A12 Standard never fabricates output" "Standard section names no escalation out of under-controlled work"
 else
-  ok "A12 Standard section stops at an explicit not-yet-implemented boundary"
+  ok "A12 Standard section forbids unsupported output and names its escalation"
 fi
 
 # ---------------------------------------------------------------------------

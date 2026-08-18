@@ -60,6 +60,7 @@ Escalation is **one way**: nothing lowers the floor.
 <!-- route-rules:start -->
 FLOOR deep output=report
 FLOOR deep scope=broad
+FLOOR deep thesis_judgment=yes consequence=external
 FLOOR standard output=analysis
 FLOOR standard consequence=external
 FLOOR standard load_bearing_claim=yes
@@ -73,9 +74,16 @@ BASE light
 <!-- route-rules:end -->
 ```
 
-Read as prose: **Deep** when the ask is a report or the scope is broad. **Standard** when the ask
-is an analysis, the result goes outside the firm, a load-bearing claim is in play, a thesis-grade
-judgment is wanted, or any signal is unclear. **Light** only when none of that is true.
+Read as prose: **Deep** when the ask is a report, the scope is broad, or a thesis-grade judgment
+is wanted *and* the result leaves the firm. **Standard** when the ask is an analysis, the result
+goes outside the firm, a load-bearing claim is in play, a thesis-grade judgment is wanted, or any
+signal is unclear. **Light** only when none of that is true.
+
+A rule with two conditions fires only when **both** match. That is the point of the
+consequential-thesis rule: an internal thesis question belongs on Standard, and an external
+result belongs on Standard, but a thesis-grade judgment that *leaves the firm* is a selection no
+lightweight route may make on its own — it goes to Deep, where the workflow pauses twice for the
+operator.
 
 That block is the single source of the routing rules. `logs/scripts/research-route-classify.sh`
 parses it out of this file rather than holding its own copy, so the rules cannot drift apart.
@@ -148,28 +156,111 @@ one-way escalation as Step 3, applied after work has started.
 
 ---
 
-## Standard — not yet implemented
+## Standard — produce the evidence-controlled memo
 
-Standard is the middle route: an evidence-controlled analysis that is heavier than a note and
-lighter than the five-stage workflow. **It is not implemented yet.** It is the next unit of this
-lane's work.
+Standard is the middle route: a bounded analysis that needs more control than a note and does not
+need the five-stage report workflow. It works from evidence reachable **through this project and
+this session** — the repository, what the operator supplied, files you can open. Standard does not
+fetch, search the web, call an API or start a retrieval run. Where the evidence is not reachable
+that way, the answer is a named unknown or an escalation to Deep. It is never invented support.
 
-Say exactly that, and stop:
+Produce one memo in exactly this shape:
 
+```markdown
+# {question, restated in one line}
+
+## Claims
+
+### C1 — {the claim, stated so it can be true or false}
+Class: SUPPORTED | PROXY-SUPPORTED | ILLUSTRATIVE-ONLY | NOT-SUPPORTED
+Roles: {n} — {evidentiary role; evidentiary role}
+Source: {what you actually opened} — Date: {source's date, or `undated`} — Role: {role} — Fit: direct | proxy
+Rationale: {why this class, and any ceiling you applied with its cap}
+
+### C2 — {…}
+
+## Answer
+{the analysis. Verbs constrained by the weakest load-bearing claim — see the verb rule below.}
+
+## Inference
+- [INFERENCE] {what you concluded beyond what the sources state, naming the claim IDs it rests on}
+
+## Unknowns
+- {what is not known and would change the answer}
+
+## Completion
+Status: COMPLETE | ESCALATED-TO-DEEP
+Deep triggers: none | {the trigger that fired}
 ```
-Route: Standard. The Standard route is not yet implemented — it is the next unit of the
-lightweight Research Workflow lane. Your options now: narrow the question until it is genuinely
-answerable from evidence at hand (Light), or run it through the deployed Research Workflow
-(Deep). Say which and I will take it from there.
+
+### Grading a claim
+
+Grade the **evidence**, on one ordered axis, before considering anything about the claim's ambition:
+
+| Class | When | Verbs you may use |
+|---|---|---|
+| `SUPPORTED` | two or more independent evidentiary roles, evidence direct and in scope | shows / confirms / establishes / demonstrates / records |
+| `PROXY-SUPPORTED` | two or more independent roles, but the evidence is a proxy needing downgrade | suggests / is consistent with / points to / indicates |
+| `ILLUSTRATIVE-ONLY` | exactly one independent role. It can attest what it saw; it cannot be triangulated | illustrates / shows in one named case / reports (single-sourced) |
+| `NOT-SUPPORTED` | zero roles — no direct and no proxy evidence found | none — the claim may not be asserted |
+
+Four rules make that grading honest:
+
+- **Count roles, not documents.** Three write-ups of the same underlying release are **one** role.
+  Independence is about the evidentiary role a source plays, not how many files you opened.
+- **A ceiling caps a class; it never raises one.** If a claim generalizes across a class of actors
+  or periods and you have fewer than three same-pattern instances and no population-level source,
+  cap it at `ILLUSTRATIVE-ONLY` and **write the cap in the Rationale**. A cap that is not recorded
+  is indistinguishable from an evidence verdict.
+- **`NOT-SUPPORTED` never means false.** It means unsupported. The claim and its negation are both
+  unstateable — never invert an unsupported claim into an assertion of the opposite. Finding no
+  evidence that X happens is not evidence that X does not happen.
+- **An evidenced negative is an ordinary finding.** A source that looked and recorded a true zero is
+  evidence, and a negative claim resting on two such roles is `SUPPORTED` like any other.
+
+### The verb rule
+
+The `## Answer` may not use a `SUPPORTED` verb over evidence that never reached `SUPPORTED`. If no
+claim in the memo is `SUPPORTED`, the words *establishes*, *confirms* and *demonstrates* are not
+available to you. Say what the evidence actually licenses.
+
+### Refusing completion
+
+Run the memo through the checker before treating it as done:
+
+```bash
+bash logs/scripts/research-route-memo-check.sh --memo <path-to-memo>
 ```
 
-Then do nothing further on this request. Do not produce a Standard analysis, do not approximate
-one from the Light template, and do not label partial output as complete — an honest stop is the
-deliverable here, and a fabricated analysis would be worse than no route at all.
+It rejects a memo that launders an unsupported claim: a load-bearing claim with no mapped source, a
+source with no date or `undated` marker, evidence and inference collapsed together, a `COMPLETE`
+status over a live Deep trigger, a `COMPLETE` status over a `NOT-SUPPORTED` claim, a promotion of
+one interpretation to governing authority, and a `SUPPORTED` verb over non-`SUPPORTED` evidence.
+The checker is a floor on the memo's structure. It does not judge whether the analysis is any good.
 
-**No House View, judgment, approval or authority mechanism belongs on this route.** That contract
-is owned elsewhere and is not settled yet. Do not invent it, do not stub it, and do not reference
-one as though it existed.
+**Set `Status: ESCALATED-TO-DEEP`, not `COMPLETE`,** when any of these is true — this is the same
+one-way escalation as Step 3, applied after the work has started:
+
+- a load-bearing claim finished at `NOT-SUPPORTED`;
+- the question turned out to need a broad or multi-section report;
+- a thesis-grade selection is being asked for and the result leaves the firm;
+- the control the question needs is beyond what Standard has.
+
+Then take the Deep section below. A memo is never marked complete on the strength of what you
+intended to find.
+
+### Comparing interpretations, and the line you do not cross
+
+Standard **may** set two or more readings of the evidence side by side, each with its own claims and
+classes, and say plainly which the evidence supports better and why.
+
+Standard **may not promote any of them to a governing judgment.** No House View, no founder-authorized
+thesis, no approval step, no authority artifact. That contract is owned by the canonical judgment
+layer and has not been published yet, so there is nothing here to bind to. Do not invent it, do not
+stub it, and do not write as though a selection had been authorized. Where a request genuinely needs
+an authorized thesis rather than a comparison, that is a Deep trigger and an honest escalation —
+which is what "stopping cleanly at the seam" means. The seam stays closed until the authority
+contract exists.
 
 ---
 
