@@ -58,7 +58,15 @@ Stop and hand back if the current parser claim is false, if a shared repair woul
 
 ## Latest result
 
-Inspected (2026-08-18):
+Reproduced (2026-08-18): finding 1 holds by inspection, and is worse in production than the finding states. The Unit 17 addition to `dispatch.sh` was 27 lines — 25 comment, 0 blank, 2 executable — so the ratio was 12.5:1, not the "four executable lines surrounded by roughly twenty-three" the finding estimated. The two executable lines are `wl2_argc_before=$#` and the guard. `dispatch.test.sh` added 109 lines — 34 comment, 3 blank, 72 code — with the same defect history and plan rationale restated across the case banners.
+
+Result: the frozen finding is corrected, and nothing else. Six comment sites were rewritten or removed and no executable line was touched. In `dispatch.sh` the 22-line banner became 7 lines and the 3-line note at the guard became 1. In the tests the case-68a banner lost the defect history, the plan-requirement recital and the suite-hang argument; the six-absences, preserved-meaning and case-68b banners were each cut to the one thing they carry. Retained exactly as the finding directs: the failed-`shift 2` semantic, the `124` meaning, and why the option set is derived from the parser rather than copied — the last moved to sit on the line it explains. The net addition is now 10 lines in `dispatch.sh` (8 comment, 2 code — down from 12.5:1 to 4:1) and 89 in `dispatch.test.sh` (14 comment, 3 blank, 72 code).
+
+Evidence: a code-only before/after view of both files against `c234dd14` (comments and blank lines stripped) diffs **empty** — `dispatch.sh` at 1666 executable lines, `dispatch.test.sh` at 7770 — and that is whole-file scope, not just the new block, so the guard, every assertion, the wall-clock bound and all option semantics are provably byte-identical. Line reduction: `dispatch.sh` 4612 → 4595 (−17), `dispatch.test.sh` 11795 → 11775 (−20); 37 narrative lines removed. `bash -n` is clean on both. The same focused slice, rebuilt from the corrected file, returns `pass=48 fail=0` — unchanged. No other file was touched, the full suite was not run, and `logs/friction-log.md` remains unstaged.
+
+Nothing newly noticed during the correction. The wall-clock-bound deferral from Unit 17 stands as recorded and was not acted on here.
+
+Inspected (2026-08-18), from the unit itself and unchanged by this correction:
 
 - Claim (1): HOLDS — `2f1cb67e` exists and touched only this state file (1 file, +51/−27). In `dispatch.sh`, all eleven value-taking branches read `${2:-}` and then `shift 2` inside the `while [ $# -gt 0 ]` loop at 1435–1457; `grep -nE '^set '` returns exactly one line, `set -uo pipefail` at 287, so there is no `-e` and a failed shift's nonzero return is discarded.
 - Claim (2): HOLDS — the value-taking set was re-derived from the parser, not copied: `grep -E '^[[:space:]]+--[a-z-]+\).*shift 2'` returns exactly eleven — `--checkout --task --max-hops --timeout --deadline --codex-bin --claude-bin --allow-path --claude-deny --log-dir --actor-cmd`. Four flag branches (`--dry-run --status --carry-one --unattended`) take no value, plus `-h|--help` and the `*)` default. The new permanent case reads this same list out of the dispatcher at run time rather than restating it.
@@ -86,4 +94,4 @@ None.
 
 ## Next action
 
-Codex: assess Unit 17. Three questions. (1) Is the progress-measuring guard accepted as the right shared boundary, given it deliberately avoids a second list of value-taking option names and therefore also covers options added later — or is a named list preferred despite the drift it reintroduces? (2) Is the evidence sufficient: red under a bounded watchdog before the edit, `48/0` after, and a one-line mutation control returning `15/48` that leaves case 68b and both preserved-meaning assertions green? (3) Accept or reject the recorded deferral that the new case bounds runs by wall clock, because this host has no `timeout` binary. Change set A's hostile-input boundary now has no known open behavior gap; the next unmet clause is Codex's call.
+Codex: closure check on frozen finding 1 only — is the disproportionate commentary resolved, and did the trim break anything? The second question is answered by the empty whole-file code-only diff on both files plus the unchanged `48/0` slice.

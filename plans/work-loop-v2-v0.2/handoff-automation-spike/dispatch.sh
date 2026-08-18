@@ -1432,28 +1432,13 @@ say() {
 
 # ---------------------------------------------------------------- arguments
 
-# EVERY ITERATION MUST CONSUME AT LEAST ONE ARGUMENT, and the loop below says so
-# rather than assuming it. `shift 2` does not fail loudly: when fewer than two
-# arguments remain it shifts NOTHING and returns nonzero, and `set -uo pipefail`
-# carries no `-e`, so the return is discarded. A value-taking option passed as the
-# final argument therefore left `$#` unchanged and this loop ran forever — no
-# refusal, no exit, nothing on stderr, before admission and before any actor,
-# lease or evidence existed. The approved plan requires every invalid
-# pre-admission invocation to produce clear stderr and a nonzero exit; a run that
-# never ends produces neither.
-#
-# ONE SHARED DECISION, NOT ELEVEN GUARDS, and deliberately not a list of the
-# value-taking option names either. A second list would have to be kept in step
-# with the branches by hand, and the first option added without updating it would
-# bring the hang straight back for that option alone. Measuring progress instead
-# states the invariant the branches already satisfy — every one of them shifts, or
-# exits — so a future branch that forgets to consume its argument is caught by the
-# same three lines that catch this one, with no list to drift.
-#
-# IT OWNS ONLY THE ABSENT ELEMENT. An explicitly supplied empty value and a value
-# that merely begins with `-` are both real argv elements: `shift 2` succeeds and
-# the branch keeps exactly the meaning it has today. What is refused is the case
-# where the element is not there at all.
+# `shift 2` with fewer than two arguments left shifts NOTHING and returns nonzero,
+# and there is no `set -e` here — so a value-taking option passed as the final
+# argument used to leave `$#` unchanged and loop this parser forever. Measuring
+# progress states the invariant every branch already satisfies (each shifts, or
+# exits), so an option added later stays covered with no second list to keep in
+# step. Only the absent element is refused: an empty value, or one beginning with
+# `-`, is a real argv element and keeps its current meaning.
 while [ $# -gt 0 ]; do
   wl2_argc_before=$#
   case "$1" in
@@ -1477,9 +1462,7 @@ while [ $# -gt 0 ]; do
     -h|--help)     awk 'NR==1{next} /^#/{print; next} {exit}' "${BASH_SOURCE[0]}"; exit 0 ;;
     *)             printf 'STOP [10] unknown argument: %s\n' "$1" >&2; exit 10 ;;
   esac
-  # `$1` is still the offending option here, because the failed shift consumed
-  # nothing — so the refusal can name it. One line, its own marker, so a mutation
-  # control can delete exactly this decision and watch the hang return.
+  # `$1` is still the offending option: the failed shift consumed nothing.
   [ $# -lt "$wl2_argc_before" ] || { printf 'STOP [10] %s requires a value, and no argument followed it\n' "$1" >&2; exit 10; } # argv arity boundary
 done
 
