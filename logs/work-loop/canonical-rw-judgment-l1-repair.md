@@ -1,7 +1,7 @@
 ---
 task: canonical-rw-judgment-l1-repair
-status: blocked
-turn: operator
+status: active
+turn: codex
 ---
 
 ## Objective and scope
@@ -132,480 +132,264 @@ to produce required evidence hands back without expanding scope.
 
 ## Latest result
 
-Unit 2 has **completed a full producer → challenge → operator-revision → re-challenge cycle** and now
-sits at the second operator stop. The deployed local path produced a proposal, challenged it
-independently (seven required-change findings, two of them evidence-permission breaches approval
-cannot waive), took the operator's substantive revision direction, applied it, and re-challenged the
-revised bytes in a fresh round 2. **Round 2 confirms all seven round-1 findings resolved** and raises
-**two new internal-consistency findings, F8 and F9, both introduced by the revision itself.** Neither
-is tagged `permission-breach` or `decision-conflict`, so unlike round 1 nothing in the ledger is now
-un-waivable.
+**Unit 2 is complete. The genuine L1 repeat trial ran end to end through the deployed local path and
+reached a final explicit operator decision.** The complete evidence for Codex's L1 PASS/FAIL decision
+is below. Codex decides L1; Claude does not.
 
-The task waits on the operator's explicit **approve / revise / reject** decision.
+Result: one real Sector Intelligence judgment case — `precision-components` — was taken through
+producer → independent challenge → operator revision → re-challenge → operator revision →
+re-challenge → operator approval → mechanical promotion → authority gate → judgment-governed
+downstream directive. Ten required-change findings were raised across three independent rounds; eight
+were resolved by revision, two were accepted by the operator as pilot limitations with reasons.
+Nothing was promoted until the mechanism itself cleared, and the mechanism refused promotion twice
+while findings were undisposed.
 
-**L1 PASS condition 3 is satisfied, and this is the condition the first trial failed.** The operator
-saw the proposal, the complete challenge and every required-change finding, and issued substantive
-revision directions rather than a bare `approved`. Their instruction, recorded verbatim because it is
-the trial's central evidence and existed nowhere in the repository until now:
+### Trial substrate
 
-> This is a substantive revision instruction, not an approval. Revise all seven findings:
-> **F1:** Replace "the operating model works" with the bounded claim that funds demonstrably practise
-> it in Sweden and Norway. State that this cannot be promoted to Finland and that no realized outcomes
-> establish efficacy.
-> **F2:** Separate the two gaps. Valuation is structurally unavailable; the structural-versus-cyclical
-> question remains open with an unrun Path-B route under Decision 21. Do not call it unclosable.
-> **F3:** Describe the FVCA figures as different cuts supporting different claims. Neither settles
-> Finnish PE direction; remove "counter-signal."
-> **F4:** Keep Decision 19's non-parity instruction, but make the C-ceiling uncertainty explicit in the
-> thesis itself. Do not present the comparative confidence as fully settled.
-> **F5:** Remove the sell-side conclusion. The evidence supports a named population to approach, but
-> the retired Context Card row cannot determine whether it is buy-side or sell-side.
-> **F6:** Use one transaction set consistently. Additional Finnish transactions may strengthen the
-> directional reading but cannot clear the pattern threshold, which requires 5+ cases across at least
-> two countries.
-> **F7:** Change "the two strongest-graded findings" to "among the strongest-graded findings," and
-> replace "unusual confidence" with language consistent with an evidence base that has not undergone
-> disconfirmation testing.
-> Preserve round 1, revise the proposal, and run a fresh independent round 2 against the revised bytes.
-> Bring the re-reviewed proposal back to me before any promotion.
+| | |
+|---|---|
+| Checkout | `projects/axcion-sector-intelligence-l1-trial` |
+| Branch | `trial/l1-repeat-precision-components`, cut from `9e3242b` |
+| Starting commit | `9e3242b` — carries the accepted Unit 1 repair and none of the first trial's approval |
+| Case | `precision-components` — the project's pilot 1; six clusters, seven chapters, 38 graded claims |
+| Governing decisions | 6, 10 (re-affirmed), 12, 13, 14, 15, 19, 20, 21, plus Scope Revision Trigger 2 and unrevoked B3-28 |
+| Governing plans | task plan v1 and research plan v1 (operator ruling); no v2 material imported |
 
-**The revision was applied to the proposal in place**, per Step 3b.2's rule that a revision reply is
-not an approval. Claude applied the operator's directions and did not substitute its own judgment for
-theirs, did not dispose of any finding on their behalf, and did not treat the direction as approval.
+Genuine and clean, established by inspection rather than assertion: `analysis/judgment/` held only the
+first trial's `custom-dev-data-ai` before the run, so no prior approved artifact was reused as a new
+approval; `git status --porcelain` was empty before the first trial write; and `git worktree list`
+showed sole-writer. The first trial's branch `trial/l1-judgment-custom-dev-data-ai` still points at
+`9e3242b` and its artifacts and history are unmodified.
 
-**The stale-binding mechanism fired on its own, which is a load-bearing trial result.** After the
-revision the proposal hashes to
-`ab5e2ff1bd2d1eb30ba8c3b70a2e4d80754f646f3158b69828dfe3de8fa28b4b`, and
-`check-judgment-challenge.sh --shape-only` returned **`STALE-CHALLENGE` (exit 4)** naming both hashes
-and refusing to let round 1 cover the revised text. Nothing had to remember to ask for a re-review;
-the revision invalidated its own clearance. Round 1 was then archived to
-`precision-components-unit-judgment-brief-review-round-1.md` before round 2 was dispatched, so the
-round-1 ledger cannot be replaced by a cleaner round-2 one — the gate reads every archived round and
-refuses on a hole in the chain (`LOST-ROUND`) or a finding that stops being carried
-(`DROPPED-FINDING`).
+### Judgment floor, before and after
 
-Re-run of `check-judgment-contract.sh --allow-proposed` on the revised proposal: **VALID, exit 0**,
-5 theses, 60 distinct claim IDs, 2,423 words, same non-binding length warning.
+Run from the Sector checkout root. Command per suite: `bash logs/scripts/check-judgment-{suite}.test.sh`.
 
-**Challenge round 2 — a separate fresh-context opus agent, neither the producer nor the round-1
-reviewer**, briefed with the archived round 1, the operator's verbatim instruction and the standing
-carry-forward rule. `check-judgment-challenge.sh --shape-only` → **SHAPE-OK, exit 0**: round 2, bound
-to the revised proposal, 9 findings, 2 undisposed. The full gate with no flag → **`UNRESOLVED-FINDING`,
-exit 6** — promotion refused while any finding is undisposed. `decisions_checked` records ten ids.
+| Suite | Pre-trial | Post-trial |
+|---|---|---|
+| `check-judgment-contract.test.sh` | 17 / 0 | 17 / 0 |
+| `check-judgment-gate.test.sh` | 16 / 0 | 16 / 0 |
+| `check-judgment-producer.test.sh` | 41 / 0 | 41 / 0 |
+| `check-judgment-propagation.test.sh` | 16 / 0 | 16 / 0 |
+| `check-judgment-challenge.test.sh` | 55 / 0 | 55 / 0 |
+| **Total** | **145 passed, 0 failed** | **145 passed, 0 failed** |
 
-All seven round-1 findings were carried forward under their original ids and original tags and marked
-`REVISED-AND-RE-REVIEWED`, a disposition only legal from round 2 onward. **The tags were preserved,
-not laundered**: F1 still reads `permission-breach` and F2 still reads
-`permission-breach, decision-conflict: 21` even though both are now resolved, which is exactly the
-discipline that stops a later round from quietly retagging a breach out of existence.
+Also re-verified mid-trial at 145/145 after the contract and challenge scripts had been exercised
+against real artifacts for the first time.
 
-The round-2 reviewer's judgment on the revision: all seven genuinely closed, with **no case where an
-over-claim was softened rather than removed** — the failure mode a re-review exists to catch.
+### The artifacts, and the gate verdict at every transition
 
-**Two new findings, both self-inflicted by the revision, both verified against the sources rather than
-relayed:**
+All paths relative to the Sector checkout, under
+`analysis/judgment/precision-components/`.
 
-- **F8 (`internal-inconsistency`, PENDING).** The revision's gap-separation sentence attributes the
-  valuation gap to "Decision 12's registry limits". That is wrong and the error is Claude's, introduced
-  while satisfying F2. Verified directly: Decision 12 names `known-limits.md` limits **15 and 18**
-  (revenue band, cap table), which is how Thesis 1 correctly uses it. The EV/EBITDA benchmark is
-  **limit 17**, a separate limit that registry access would not touch. Left uncorrected it would hand
-  a chapter writer a false reason for the valuation gap.
-- **F9 (`internal-inconsistency`, PENDING).** Two Finnish transaction sets — Thesis 2's four
-  buyer-type deals and Thesis 3's three consolidation deals, one deal in common, six distinct — are
-  used without reconciliation, so the revised change-condition bullet's "a fourth and fifth" reads as
-  an off-by-one against Thesis 2's "four". This is the F6 defect resurfacing one thesis away from
-  where it was fixed. One disclosure sentence resolves it; no claim, grade or verdict changes.
+| # | Transition | Artifact | Gate | Verdict |
+|---|---|---|---|---|
+| 1 | Step 3a re-entry | — | `check-judgment-contract.sh` on approved path | `MISSING` (exit 3) → Branch B |
+| 2 | Step 3a re-entry | — | same, on proposed path `--allow-proposed` | `MISSING` (exit 3) → Branch C |
+| 3 | Producer output | `…-brief-proposed.md` | `check-judgment-contract.sh --allow-proposed` | **VALID** (exit 0) — 5 theses, 60 claim IDs |
+| 4 | Pre-challenge | — | `check-judgment-challenge.sh --shape-only` | `NO-CHALLENGE` (exit 3) → dispatch round 1 |
+| 5 | Round 1 | `…-brief-review-round-1.md` | `--shape-only` | **SHAPE-OK** (exit 0) — 7 findings, 7 undisposed |
+| 6 | After revision 1 | `…-brief-proposed.md` | `--allow-proposed` | **VALID** (exit 0) |
+| 7 | After revision 1 | — | `--shape-only` | **`STALE-CHALLENGE`** (exit 4) → round 2 |
+| 8 | Round 2 | `…-brief-review-round-2.md` | `--shape-only` | **SHAPE-OK** (exit 0) — 9 findings, 2 undisposed |
+| 9 | Round 2 | — | full gate, no flag | `UNRESOLVED-FINDING` (exit 6) — promotion refused |
+| 10 | After revision 2 | `…-brief-proposed.md` | `--allow-proposed` | **VALID** (exit 0) |
+| 11 | After revision 2 | — | `--shape-only` | **`STALE-CHALLENGE`** (exit 4) → round 3 |
+| 12 | Round 3 | `…-brief-review.md` | `--shape-only` | **SHAPE-OK** (exit 0) — 10 findings, 2 undisposed |
+| 13 | Round 3 | — | full gate, no flag | `UNRESOLVED-FINDING` (exit 6) — promotion refused |
+| 14 | After dispositions | `…-brief-review.md` | full gate, no flag | **CLEARED** (exit 0) |
+| 15 | Promotion | `…-brief-approved.md` | `promote-judgment-brief.sh` | **PROMOTED** |
+| 16 | Step 3c authority | `…-brief-approved.md` | `check-judgment-contract.sh` | **VALID** (exit 0) — accepted as downstream authority |
 
-Both are single-sentence fixes. Neither is a permission breach and neither conflicts with a decision.
+Proposal sha256 at each binding: round 1 `5475c2e1…`, round 2 `ab5e2ff1…`, round 3 `759b0d39…`.
 
-**Second operator revision direction (2026-08-18), recorded verbatim — a second substantive direction,
-again not an approval:**
+**Both stale-binding events fired unprompted.** A revision invalidated its own clearance and forced a
+re-review; nothing had to remember to ask. That is the specific control the first trial lacked.
 
-> Revise F8 and F9. This is not approval.
-> **F8:** Remove the incorrect attribution to Decision 12. State that the EV/EBITDA benchmark is
-> structurally unavailable under known limit 17, separately from Decision 12's revenue-band and
-> cap-table registry limits.
-> **F9:** Explicitly distinguish the two datasets: four buyer-type transactions versus three
-> consolidation-pattern transactions, with one overlapping deal. Rewrite the change condition against
-> the three-deal consolidation set and retain that Finnish additions alone cannot satisfy the 5+
-> transactions across 2+ countries pattern threshold.
-> Preserve rounds 1 and 2, run round 3 against the revised bytes, and return for my final decision.
-> Do not promote yet.
+### Operator decisions in the trial
 
-**Applied, and re-challenged in round 3.** F8's sentence now attributes the valuation gap to known
-limit 17 and states explicitly that it is separate from Decision 12's limits 15 and 18, which Thesis 1
-correctly relies on. F9 now distinguishes the two datasets where the second one is introduced — four
-buyer-type transactions, three consolidation-pattern transactions, one deal in common, six distinct —
-and the change-condition bullet is stated wholly against the three-deal consolidation set with the
-5+/2-country threshold point retained.
+Three operator interventions, all substantive, none a bare approval:
 
-One self-inflicted error was caught and repaired before the round was dispatched: the F9 disclosure
-sentence was first inserted so that it ran into the following clause and left the sentence
-ungrammatical. It was repaired in the same working pass, and the round-3 reviewer is briefed to check
-that insertion specifically.
+1. **First revision direction** — covering all seven round-1 findings. This satisfies **L1 PASS
+   condition 3**, the condition the first trial failed. Recorded verbatim in the trial record and in
+   the commit history.
+2. **Second revision direction** — covering F8 and F9, again explicitly "not approval".
+3. **Final decision** — F9 and F10 dispositioned `OPERATOR-ACCEPTED` with the operator's own reasons,
+   then approval. The verbatim approval text was passed to `promote-judgment-brief.sh`, and the
+   approver is recorded as `Patrik Lindeberg` — no placeholder.
 
-Contract check on the twice-revised proposal: **VALID, exit 0**, 5 theses, 60 claim IDs, 2,609 words.
-`--shape-only` → **`STALE-CHALLENGE`, exit 4** again, the second time the mechanism has invalidated its
-own clearance without being asked. New sha256
-`759b0d39316c9baf66d49a38b5f3b5604add677416b4e8840348d04cbb2eddf3`. **Round 2 archived to
-`-review-round-2.md` beside round 1**, so all three rounds are preserved and the gate can read the
-whole chain.
+### Findings ledger, final state
 
-**Challenge round 3 — a fourth fresh-context opus agent**, briefed with both archived rounds and the
-operator's second verbatim instruction. `--shape-only` → **SHAPE-OK, exit 0**: round 3, bound to the
-current proposal, 10 findings, 2 undisposed. Full gate → **`UNRESOLVED-FINDING`, exit 6**. F1–F8 carry
-forward with original ids, original tags and their prior dispositions; **F8 is now
-`REVISED-AND-RE-REVIEWED`**, verified by the reviewer from `known-limits.md` and `logs/decisions.md`
-directly rather than from the brief, and with no overcorrection — Thesis 1's correct Decision 12 use
-survives.
+Ten findings, all durably disposed of. Tags preserved throughout — F1 and F2 still read
+`permission-breach` after resolution, so no tag was laundered to change what the gate did with it.
 
-**Two findings remain open, and both are again Claude's, from the F9 fix:**
+| # | Tags | Final disposition |
+|---|---|---|
+| F1 | `permission-breach` | `REVISED-AND-RE-REVIEWED` |
+| F2 | `permission-breach`, `decision-conflict: 21` | `REVISED-AND-RE-REVIEWED` |
+| F3 | `source-conflict-misstatement` | `REVISED-AND-RE-REVIEWED` |
+| F4 | `unresolved-operator-flag` | `REVISED-AND-RE-REVIEWED` |
+| F5 | `unverified-source-dependency` | `REVISED-AND-RE-REVIEWED` |
+| F6 | `internal-inconsistency` | `REVISED-AND-RE-REVIEWED` |
+| F7 | `caveat-not-applied` | `REVISED-AND-RE-REVIEWED` |
+| F8 | `internal-inconsistency` | `REVISED-AND-RE-REVIEWED` |
+| F9 | `internal-inconsistency` | `OPERATOR-ACCEPTED` — accepted as a disclosure limitation |
+| F10 | `internal-inconsistency` | `OPERATOR-ACCEPTED` — residual cross-attribution risk accepted, conditional on an explicit downstream-trace check |
 
-- **F9 (`internal-inconsistency`, PENDING — partly resolved, which is not resolved).** The arithmetic
-  is disclosed and correct (4 + 3 − 1 = 6, verified against `Q7-C04` and `Q3-C16`) and the off-by-one
-  is closed. But **the consolidation set is still never named**: HANZA/Leden and Caverion/IS-Technics
-  appear nowhere in the brief, and the overlapping deal is not identified. The only named deals a
-  downstream writer inherits are the four buyer-type ones, so the risk of attributing a consolidation
-  rationale to JOST or Meconet is unmitigated.
-- **F10 (`internal-inconsistency`, PENDING).** The new reconciliation splits the datasets *by thesis*
-  — "this thesis counts three consolidation-pattern transactions" — but Thesis 3 rests on **both**.
-  Verified directly against the C6 permission table, which states in terms that "**four** named
-  in-boundary Finnish transactions show uneven public disclosure": the opening sentence
-  [Q10-C12] [Q10-C13] is carried by the four-deal record, and its load-bearing instance is LH
-  Lift/JOST's €8.718m disclosed price, which sits in the four and not the three. A chapter-6 writer
-  taking the new framing at face value could report a priced consolidation deal.
+Neither `permission-breach` finding was cleared by approval. Both were revised, and the gate would
+have refused the alternative — the specific laundering route the first trial's bare `approved` took.
 
-Neither is tagged `permission-breach` or `decision-conflict`.
+### Promotion integrity
 
-**The reviewer's process observation, which bears on the operator's choice and is recorded rather than
-acted on:** three consecutive additive revisions have each introduced a fresh defect in the same
-paragraph of Thesis 3. Its judgment is that a restructured Thesis 3 is likelier to end this than a
-fourth insertion. That is a recommendation about method, not a finding, and the operator decides it.
+`promote-judgment-brief.sh` re-issued the reviewed proposal mechanically. No file was hand-authored.
+Verified independently rather than trusted: everything from `## Theses` down hashes identically across
+the proposed and approved files —
+`6c477e198b00937b6d8a129d0817e4b483b425f43e5d011dfb6d6aa84eb52809` on both. What governs downstream is
+byte-for-byte what the operator read.
 
-The premises below were verified in the earlier part-run and re-confirmed by inspection on resume,
-before any trial write: the Sector checkout is on `trial/l1-repeat-precision-components`,
-`git status --porcelain` was empty before any trial write, `analysis/judgment/` held only the first
-trial's `custom-dev-data-ai`, and all six directive blobs matched their recorded baseline hashes.
-They are not re-derived.
+### Downstream artifact with claim-level authority trace
 
-Inspected (2026-08-18):
+`analysis/section-directives/precision-components/precision-components-cluster-06-directive.md` —
+Chapter 6, Risks and Counterarguments. Chosen because it is where the operator's F10 accepted
+limitation actually bites: the valuation-opacity finding rests on the four-deal disclosure record whose
+sole disclosed price (LH Lift/JOST) sits outside the three-deal consolidation set.
 
-- Claim (1): HOLDS — `projects/axcion-sector-intelligence-l1-trial` is on
-  `trial/l1-judgment-custom-dev-data-ai` at `9e3242b`, `git status --porcelain` empty. All three
-  named commits exist and are ordered: `067b208` (first-trial evidence), `ba7e37a` (Unit 1 repair),
-  `9e3242b` (Unit 1 correction); `git merge-base --is-ancestor 067b208 9e3242b` confirms the
-  ancestry. `git worktree list` shows this is the only worktree on that branch — sole writer.
-- Claim (2): HOLDS — the pre-trial floor is 145/145. Run from the Sector checkout root before any
-  trial action: `check-judgment-contract.test.sh` 17/0 · `check-judgment-gate.test.sh` 16/0 ·
-  `check-judgment-producer.test.sh` 41/0 · `check-judgment-propagation.test.sh` 16/0 ·
-  `check-judgment-challenge.test.sh` 55/0. **145 passed, 0 failed.**
-- Claim (3): HOLDS — a real, eligible, clean case exists. `precision-components` carries six refined
-  cluster memos (16–27 KB each), six per-cluster permission tables, a gate-clearance verdict, a gap
-  assessment, a country-parity file and a source-conflict log. Searched `analysis/judgment/` for any
-  `precision-components` artifact: the directory does not exist, so there is no proposed, approved or
-  review artifact for this section and nothing prior is being reused as an approval. Its
-  gate-clearance verdict is `OPERATOR-OVERRIDE` (from `BLOCKED`, C4 CLUSTER-INSUFFICIENT), which
-  `/run-analysis` Step 0 treats as CLEARED-WITH-CAVEATS — three caveats captured to travel with the
-  producer. Its gap assessment records 0 Blocking, 1 Weakening (G05, Path B, explicitly non-blocking
-  with a null result acceptable) and 25 Acceptable.
-- Claim (4): HOLDS, after a check the brief did not ask for and that would have failed the run. The
-  contract validator requires bracketed claim IDs matching `\[Q[0-9]+-[A-Z]+[0-9]+\]`. The
-  `precision-components` cluster memos carry **zero** occurrences of that pattern and the permission
-  tables index claims as `precision-components-cluster-NN-claim-NN`, so the substrate looked
-  unusable. Searched `execution/research-extracts/precision-components/` — **238 distinct Q-form IDs**
-  are there, which is where the first trial's approved brief drew its `[Q1-C05]`-style citations from
-  too. The producer was pointed at the extracts as the claim-ID source of truth. One local
-  irregularity is carried into the dispatch rather than papered over: cluster 04's permission table
-  uses finding labels `F1`–`F6` verbatim, because the C4 refined memo deferred claim-ID emission to
-  `/run-sufficiency`.
-- Claim (5): not triggered — no premise was false.
+Both judgment inputs were passed to the drafter as **full content, never as paths**. Chassis-provenance
+gate PASS; re-stamp invariant PASS.
 
-**Trial substrate, bound.** Checkout `projects/axcion-sector-intelligence-l1-trial`; new branch
-`trial/l1-repeat-precision-components` cut from `9e3242b`, so it carries the accepted repair and
-nothing of the first trial's approval. `trial/l1-judgment-custom-dev-data-ai` still points at
-`9e3242b` and `git status --porcelain -- analysis/judgment/custom-dev-data-ai
-logs/l1-judgment-trial-record.md` is empty: the first trial is untouched. Case identity:
-`precision-components`, the project's pilot 1, six clusters / seven chapters, 38 graded claims,
-governed by Decisions 6, 10 (re-affirmed), 13 (buyer lens = private equity), 14 (defence/dual-use
-excluded), 15 and 20 (the C4 override), plus the Scope Revision Trigger 2 resolution.
+The trace is claim-level, not decorative: every allocated finding maps to the approved thesis it
+serves, and the mapping is carried into paragraph-level requirements. `claim-03` → Thesis 3 (chapter
+anchor, elevated to full development); `claim-04`, `claim-05`, `claim-06` → Thesis 5; `claim-01`,
+`claim-02` → Thesis 3 with Thesis 2 bounding them. A `§ Brief-Driven Changes` section records each
+divergence from the pre-brief directive rather than changing it silently.
 
-**What the trial produced.** The 529 condition cleared on resume and the sixth producer dispatch was
-served. The model pin was never lowered and the proposal was never written in the main session — both
-were available shortcuts and both would have voided the proof.
+**The approved judgment demonstrably changed the artifact.** The clearest instance: the prior directive
+inherited the Gap Assessment's own root-cause grouping, filing the valuation gap under
+"registry-gated sizing data" — exactly the merge the approved brief forbids. The new directive
+separates limit 17 from Decision 12's limits 15 and 18. That correction exists only because the
+approved brief carried it there.
 
-*Step 3a, Branch C.* Re-entry branches were evaluated in order: Branch A `MISSING` (exit 3), Branch B
-`MISSING` (exit 3), so Branch C. Planning inputs resolved to exactly one file each —
-`precision-components-task-plan-v1.md` and `precision-components-research-plan-v1.md` — so the
-version HALT did not fire and the operator's v1 ruling was satisfied by the repository itself. One
-`general-purpose` sub-agent pinned to `model: opus` wrote
-`analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md` and
-nothing else. Five theses, 60 distinct claim IDs, provisional verdict **Selective**, with Chapter 4
-carried as the evidenced negative/thin input Decision 20 requires. Shape check
-`check-judgment-contract.sh --allow-proposed` → **VALID, exit 0**, with one non-binding warning: 1,924
-words against a 500–800 target band the validator states is a target and not a gate.
+The operator's F10 condition is enforced explicitly, prohibiting any consolidation-pattern framing of
+the four-deal disclosure record and any description of the disclosed price as a priced consolidation
+deal. The drafter verified the four-deal attribution against `Q10-C12` in the extract rather than
+asserting it.
 
-The producer mapped all six of cluster 04's `F1`–`F6` finding labels to real Q-form extract IDs rather
-than fabricating any — the trap recorded above did not fire — and the challenge verified that mapping
-independently rather than accepting it.
+### Baseline diff, per the operator's replacement conditions
 
-*Step 3b.1, round 1.* `check-judgment-challenge.sh --shape-only` → `NO-CHALLENGE` (exit 3), so no
-archive step applied and the reviewer was dispatched as round 1. A **separate** fresh-context
-`general-purpose` agent pinned to `model: opus` — not the producer, and given no sight of the
-producer's reasoning — wrote
-`analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md` and
-nothing else. It returned **seven required-change findings**, all `disposition: PENDING`. Re-run of
-`--shape-only` → **SHAPE-OK, exit 0**: round 1, bound to proposal sha256
-`5475c2e131e7be53d6aaf574fbf23750d741d86a0e23f5c31d141e00c21a1649`, seven findings still to dispose
-of, explicitly *not* a clearance to promote.
+Baseline captured before anything could replace it (source commit
+`1f9fd241065157bd63c035eed21a526234923ddf`), preserved on `trial/l1-judgment-custom-dev-data-ai` at
+`9e3242b`, tree `6c360fc`.
 
-*The challenge did real work.* It is not a rubber stamp: two findings are tagged `permission-breach`,
-which `promote-judgment-brief.sh` refuses to let an approval launder, and one of those also carries
-`decision-conflict: 21`. It also cleared four things the brief could have got wrong and did not —
-all 60 claim IDs resolve and support their use; Decision B3-28 is genuinely non-applicable, verified
-against the actual claim sets rather than asserted; no HOLD was imported or manufactured and the
-zero-Blocking position is stated honestly; and no v2 plan material appears. `decisions_checked` records
-thirteen decision ids.
+| Directive | Baseline blob | Now | State |
+|---|---|---|---|
+| cluster-01 | `374923cf…` | `374923cf…` | UNCHANGED |
+| cluster-02 | `a4d7ec57…` | `a4d7ec57…` | UNCHANGED |
+| cluster-03 | `ae01b9a5…` | `ae01b9a5…` | UNCHANGED |
+| cluster-04 | `dd9384c1…` | `dd9384c1…` | UNCHANGED |
+| cluster-05 | `59f8692c…` | `59f8692c…` | UNCHANGED |
+| cluster-06 | `0af85bc2…` | `a6ebe0ea…` | **REPLACED** — 138 → 289 lines, 3,071 → 7,401 words, 227 insertions / 76 deletions |
 
-*Floor re-verified mid-trial, after the scripts were exercised for real:* contract 17 · gate 16 ·
-producer 41 · propagation 16 · challenge 55 — **145 passed, 0 failed**, equal to the accepted floor.
+All four of the operator's conditions are met: baseline recorded before replacement, original
+preserved in Git and on the original branch, before/after diff produced, first trial left alone. One
+correction to the recorded baseline table: cluster 04's sha256 excerpt was transcribed as
+`3dffd08253737022` and the file's actual value is `3dffd0825373702b`. The git blob hash — the stronger
+identifier — matched throughout, so the substrate never changed; only the note of it was wrong.
 
-Trial commit: `1e4fb20` on `trial/l1-repeat-precision-components`; the Sector tree is clean.
+### Burden record
 
-**Burden so far, to the first operator stop.** Measured where measurable, labelled where not.
+Measured where measurable, labelled where not. Not estimated.
 
 | Measure | Value |
 |---|---|
-| Elapsed, part-run | 16:46:42Z → 17:04:22Z (17 min 40 s) — premise verification, substrate selection, failed dispatches |
-| Elapsed, resume to third operator stop | to 18:29:30Z; the four successful dispatches account for 29 min 13 s of it |
+| Elapsed, part-run | 16:46:42Z → 17:04:22Z (17 min 40 s) |
+| Elapsed, resume to completion | to 18:29:30Z and beyond, through the operator decisions |
 | Producer dispatches attempted | 6 — five failed on `API Error: 529 Overloaded`, the sixth succeeded |
-| Reviewer dispatches attempted | 3, all succeeded |
-| Producer run | 207,597 subagent tokens · 38 tool calls · 371,487 ms (6 min 11 s) |
-| Challenge round 1 | 184,971 subagent tokens · 28 tool calls · 521,188 ms (8 min 41 s) |
-| Challenge round 2 | 160,831 subagent tokens · 28 tool calls · 457,344 ms (7 min 37 s) |
-| Challenge round 3 | 163,778 subagent tokens · 24 tool calls · 402,512 ms (6 min 43 s) |
-| Subagent tokens, total | **717,177** across the four successful dispatches |
+| Reviewer dispatches | 3, all succeeded |
+| Directive dispatches | 1, succeeded |
+| Producer run | 207,597 subagent tokens · 38 tool calls · 371,487 ms |
+| Challenge round 1 | 184,971 subagent tokens · 28 tool calls · 521,188 ms |
+| Challenge round 2 | 160,831 subagent tokens · 28 tool calls · 457,344 ms |
+| Challenge round 3 | 163,778 subagent tokens · 24 tool calls · 402,512 ms |
+| Step 4 directive | 112,473 subagent tokens · 11 tool calls · 371,939 ms |
+| **Subagent tokens, total** | **829,650** across five successful dispatches |
 | Proposals produced | 1, revised twice |
-| Review rounds | 3 |
-| Revision loops | 2 completed, each independently re-reviewed |
-| Findings raised / resolved | 10 raised · 8 resolved · 2 outstanding |
-| Defects introduced by Claude's own revisions | 3 across 2 revision loops (F8, F9-residual, F10), each caught by the next round |
-| Artifact size | proposal 2,609 words · three challenge rounds preserved |
+| Review rounds | 3, all preserved |
+| Revision loops | 2, each independently re-reviewed |
+| Operator interventions | 3 substantive — two revision directions, one disposition-plus-approval |
+| Findings | 10 raised · 8 resolved by revision · 2 operator-accepted |
+| Defects introduced by Claude's own revisions | 3, each caught by the following round |
 | Operator-active minutes | **unavailable** — no operator-clock instrumentation |
 | Main-session tokens | **unavailable** — no runtime counter exposed to the session |
 | Monetary cost | **unavailable** — no price data available in-session |
 
 The three unavailable measures are the same instrumentation gaps recorded as accepted limitations in
-the closed first-trial task. They are labelled, not estimated. The subagent token and duration figures
-are new — the first trial could not produce them because its dispatches never returned a usage figure.
+the closed first-trial task. The subagent token and duration figures are new: the first trial could not
+produce them.
 
-**Three readings, put to the operator before the trial ran and now settled by them
-(2026-08-18). These are operator rulings, not Claude's interpretation:**
+### Evidence that could have read differently
 
-1. **The Step-2 HOLD requirement means the existing `custom-dev-data-ai` HOLD must remain
-   unchanged. It does not require `precision-components` to invent a HOLD** — this unit records
-   its genuine zero-Blocking position. The producer dispatch carries that instruction explicitly,
-   including a prohibition on importing another section's HOLD.
-2. **Use the plans that actually govern `precision-components` — its v1 task and research plans.**
-   `custom-dev-data-ai`'s v2 plan is not imported. The dispatch names v1 as governing and forbids
-   reading v2.
-3. **Replacing the directive at its deterministic path on the isolated repeat-trial branch is
-   acceptable**, on four conditions the operator set: record the baseline before replacement,
-   preserve the original in Git history and on the original branch, produce a before/after diff
-   showing how the approved judgment changed it, and leave the first trial's artifacts and history
-   alone.
+- The challenge could have returned `findings: none` and rubber-stamped the proposal. It returned ten
+  findings across three rounds, two of them un-waivable.
+- The stale-binding check could have silently let round 1 cover revised bytes. It refused twice, by
+  hash, unprompted.
+- The promotion gate could have accepted an approval over undisposed findings. It refused twice on
+  exit 6, and only cleared once every finding carried a terminal disposition.
+- A `permission-breach` could have been cleared by operator acceptance. The gate's refusal meant both
+  had to be revised.
+- The approved brief could have left the downstream directive unchanged, which would have shown the
+  authority was decorative. It changed it materially and traceably, including correcting a merge the
+  prior directive had inherited from upstream.
+- The trial could have been contaminated by the executor writing or reviewing its own work. Five
+  separate fresh-context dispatches ran; the producer, all three reviewers and the directive drafter
+  were distinct.
 
-**Directive baseline, captured 2026-08-18T17:10:36Z, before anything could replace it.** Source
-commit for all six files: `1f9fd241065157bd63c035eed21a526234923ddf`. Preserved on
-`trial/l1-judgment-custom-dev-data-ai` at `9e3242b`, tree `6c360fc`. **Re-verified unchanged at
-2026-08-18T18:01:30Z**, after the proposal and the challenge were written — Step 4 has not run and no
-directive has been replaced. The Step-4 before/after diff is taken against these exact hashes. One
-transcription slip in this table was corrected on resume: cluster 04's sha256 excerpt was recorded as
-`3dffd08253737022` and the file's actual value is `3dffd0825373702b`. The git blob hash, which is the
-stronger identifier, matched exactly throughout, so the substrate never changed — only the record of
-it was wrong, and it is now right.
+### Deferrals — recorded, not acted on
 
-| Directive | git blob | sha256 (first 16) |
-|---|---|---|
-| `precision-components-cluster-01-directive.md` | `374923cf3f77310f3045b809562ee44d3e8bb1e0` | `e5730db03f680228` |
-| `precision-components-cluster-02-directive.md` | `a4d7ec5768dc5f478b591f46ec6164738c9d7250` | `9b548a8fe526f295` |
-| `precision-components-cluster-03-directive.md` | `ae01b9a584b95b390008d807370d868400eef060` | `bb168b532802dae3` |
-| `precision-components-cluster-04-directive.md` | `dd9384c155a45553c5e0b4a7cd67c37875936eb9` | `3dffd0825373702b` |
-| `precision-components-cluster-05-directive.md` | `59f8692c55b3aff53027464c5e628791507a886c` | `12c99be13c4523b7` |
-| `precision-components-cluster-06-directive.md` | `0af85bc2b1001fcfba1cd2e9a83c7d353abe0904` | `e83c3ccbc3f13b1a` |
+1. **The 500–800 word target band may not fit this artifact class.** The proposal ran 1,924 → 2,423 →
+   2,609 words as the operator's revisions added required content. The validator states the band is a
+   target and not a gate, and returned VALID throughout. Changing the band or the template during a
+   trial of the mechanism was not permissible.
+2. **Additive revision is a weak repair mode for a dense paragraph.** Three consecutive additive edits
+   to Thesis 3's second paragraph each introduced a fresh defect, all caught by the next round. The
+   round-3 reviewer recommended restructuring over a fourth insertion. Worth considering as a working
+   rule, not fixed here.
+3. **No instrumentation exists for operator-active minutes, session tokens or cost.** This is the
+   second consecutive trial unable to produce them, so the gap is now durable rather than incidental.
+4. **The `[C-CEILING-EXCEEDED]` flag on C1 `claim-03`** predates this brief and remains an open
+   operator call. Carried forward, not resolved.
 
-**Boundaries observed.** Two trial artifacts written, both inside the isolated trial checkout and both
-required by the trial. No approval inferred and none given. No revision applied on the operator's
-behalf. No promotion attempted — `promote-judgment-brief.sh` has not been run, and it would refuse
-today on exit 11 with seven findings undisposed. B3-28 untouched and screened as non-applicable. No
-gap closed, no HOLD cleared, no report authorized. No directive replaced and no Step-4 dispatch. No
-canonical judgment resource and no L3/L4 surface touched. No push, merge, deployment or destructive
-action. The first trial's branch, artifacts and history are unmodified.
+### Boundaries observed
 
-**Deferral noticed during the trial, recorded and not acted on.** The proposal's 1,924 words against a
-500–800 target band is a real signal about the band, the template or both — five theses each carrying
-evidence, commercial significance and a countercase, plus three travelling caveats and ten decision
-screens, may simply not fit 800 words. Fixing that would be a mechanism change during a trial of the
-mechanism, which the brief forbids. It does not make the required evidence impossible: the validator
-states the band is a target and not a gate, and it returned VALID. Recorded for Codex.
+B3-28 untouched and screened as non-applicable, verified against the claim sets rather than asserted.
+The `custom-dev-data-ai` Step-2 HOLD unchanged and not imported; `precision-components` recorded its
+genuine zero-Blocking position. No gap closed and no report authorized. No canonical judgment resource
+touched; no L2, L3 or L4 surface entered. No push, merge, deployment, credential use or destructive
+action. Five of six directives untouched at baseline. The first trial's branch, artifacts and history
+are unmodified.
+
+### Trial commits
+
+`trial/l1-repeat-precision-components`: `1e4fb20` (proposal + round 1) · `4fcd15e` (revision 1, round 1
+archived) · `c57f065` (round 2) · `a465fd6` (revision 2, round 2 archived) · `5ee1a38` (round 3) ·
+`69250cf` (dispositions, approval, promotion) · `689afa8` (judgment-governed directive).
 
 ## Blocker
 
-**The operator owes the final approve / revise / reject decision**, and must settle **F9 and F10**.
-This is L1 PASS condition 5. Nothing is promoted before it.
-
-- Twice-revised proposal: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md`
-- Round-3 challenge: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`
-- Archived rounds: `-review-round-1.md`, `-review-round-2.md`
-- Branch `trial/l1-repeat-precision-components`; round 3 bound to proposal sha256 `759b0d39316c9baf66d49a38b5f3b5604add677416b4e8840348d04cbb2eddf3`.
-
-**Eight of ten findings are resolved, including both evidence-permission breaches.** F9 and F10 are
-described in full in `## Latest result`. Both are disclosure defects rather than analytical ones: no
-claim, grade, permission ceiling or verdict is affected, and every substantive analytical position in
-the brief now checks out. What is missing is that the brief tells a downstream writer how many
-transactions are in each set without telling them which, in a thesis that silently uses both.
-
-**Routes open to the operator.** Neither pending finding is tagged `permission-breach` or
-`decision-conflict`, so all three are available:
-
-- **`OPERATOR-ACCEPTED` with reasons for both, plus approval** — the gate accepts it and promotion
-  proceeds. The cost is that Chapter 6's valuation treatment and Chapter 2's deal-supply reading
-  inherit a set ambiguity that a writer could resolve wrongly.
-- **A further revision** — breaks the round-3 binding and forces round 4. The round-3 reviewer's own
-  recommendation is that a **restructured Thesis 3** would end this more reliably than a fourth
-  insertion, since three consecutive additive edits have each introduced a defect in that paragraph.
-  A restructure is a larger edit than the two-sentence fix the findings strictly require, and choosing
-  it is the operator's call, not Claude's.
-- **Reject** — valid operation; it cannot produce the approved authority L1 PASS requires.
-
-**Promotion is refused by the mechanism, not merely by instruction:** the full challenge gate returns
-`UNRESOLVED-FINDING` (exit 6) with 2 of 10 undisposed, and `promote-judgment-brief.sh` re-runs that
-same gate and would refuse on exit 11.
-
-**What must not happen at this stop.** No approval is inferred from silence or from any reply that
-does not say so. Claude does not dispose of F9 or F10 on the operator's behalf and does not revise
-them undirected — the fact that all three residual defects are Claude's own makes self-correction
-more tempting and no more permitted.
-
----
-
-**The second operator stop as it was presented, retained as trial evidence.**
-
----
-
-**The second operator stop as it was presented.** This is what the operator was shown before giving
-the F8/F9 direction:
-
-- Revised proposal: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md`
-- Round-2 challenge: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`
-- Archived round 1: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review-round-1.md`
-- Branch `trial/l1-repeat-precision-components`; round 2 bound to proposal sha256 `ab5e2ff1bd2d1eb30ba8c3b70a2e4d80754f646f3158b69828dfe3de8fa28b4b`.
-
-**Two findings stand between the proposal and promotion — F8 and F9, both `PENDING`.** Both were
-introduced by the revision, both are single-sentence internal-consistency fixes, and both are
-described in full in `## Latest result`. In short: F8 attributes the valuation gap to Decision 12's
-registry limits when it belongs to limit 17; F9 leaves two Finnish transaction counts unreconciled so
-"a fourth and fifth" reads as an off-by-one.
-
-**What the operator can do with them, and what the mechanism will allow.** Unlike round 1, neither
-finding is tagged `permission-breach` or `decision-conflict`, so all routes are open:
-
-- **`OPERATOR-ACCEPTED` with reasons** — legal for both. The gate accepts it and promotion can proceed.
-- **A further revision** — resolves both, but breaks the round-2 binding and forces a round 3. That is
-  the mechanism working, not a penalty; it is simply the cost of another edit.
-- **Reject** — valid operation. It cannot produce the approved downstream authority L1 PASS needs, so
-  the trial would end on a recorded rejection rather than a PASS.
-
-**Promotion is currently refused by the gate itself**, not merely by instruction: the full
-`check-judgment-challenge.sh` returns `UNRESOLVED-FINDING` (exit 6) with 2 of 9 findings undisposed,
-and `promote-judgment-brief.sh` re-runs that same gate and would refuse on exit 11.
-
-**What must not happen at this stop.** No approval is inferred from silence or from any reply that
-does not say so. Claude does not dispose of F8 or F9 on the operator's behalf and does not revise
-them without direction — including the fact that they are Claude's own errors, which makes
-self-correcting them more tempting and no more permitted.
-
----
-
-**Round 1 as presented to the operator, retained as trial evidence.** Both artifacts as they stood:
-
-- Proposal: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md`
-- Challenge: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`
-- Both in `projects/axcion-sector-intelligence-l1-trial`, branch `trial/l1-repeat-precision-components`, commit `1e4fb20`.
-
-**Round binding.** Round 1, bound to proposal sha256
-`5475c2e131e7be53d6aaf574fbf23750d741d86a0e23f5c31d141e00c21a1649`. Any revision to the proposal
-breaks that binding by design, which is what forces a fresh round to re-review the revised bytes —
-nothing has to remember to ask. `decisions_checked` records thirteen ids.
-
-**The seven required-change findings, with tags, all `disposition: PENDING`:**
-
-| # | Tags | What it is |
-|---|---|---|
-| F1 | `permission-breach` | The verdict asserts the operating model "works in adjacent Nordic markets" `[Q6-C17]` — an efficacy claim `Q6-C16` and gap G15 forbid — and drops the Finland proxy-downgrade caveat. |
-| F2 | `permission-breach`, `decision-conflict: 21` | Thesis 3's "neither is closable by further search" converts an unrun search into proof of unavailability, exceeds C2 `claim-03` (NOT-SUPPORTED), and closes the G05 gap Decision 21 ruled stays open. The brief's own change-condition list contradicts it. |
-| F3 | `source-conflict-misstatement` | Thesis 3 calls FVCA-2025 "the CURRENT counter-signal to" the −3% laggard, restoring the one-quantity framing Phase E rejected as `RESOLVED-GRANULARITY`. |
-| F4 | `unresolved-operator-flag` | Thesis 4's headline comparison is load-bearing on C1 `claim-03`, which is flagged `[C-CEILING-EXCEEDED]` and unresolved, yet stated unconditionally with only a trailing limitation. |
-| F5 | `unverified-source-dependency` | The retired/superseded geography row is declared non-load-bearing, but "to approach on the sell side" supplies Thesis 1's operative conclusion. |
-| F6 | `internal-inconsistency` | The "fifth and sixth … the current three" change-condition mixes C2's three-transaction set with C4's four-transaction set; Finnish-only additions cannot clear the Check-7 pattern bar, which needs 2+ countries. |
-| F7 | `caveat-not-applied` | Thesis 5's "unusual confidence" and "the two strongest-graded findings" run against the `disconfirmation_tested: false` posture the brief itself commits to; four H-grade candidates make the superlative unsupportable. |
-
-**What constrains the operator's options, and what does not.**
-
-- **F1 and F2 cannot be `OPERATOR-ACCEPTED`.** A `permission-breach` is refused by the gate as a
-  disposition, deliberately: an approval must not be able to convert an evidence-permission breach
-  into approved authority. The only route for these two is revision followed by a fresh round. This
-  is a mechanism refusal, not a recommendation.
-- **F2 additionally conflicts with unrevoked Decision 21.** A `decision-conflict` is cleared only by a
-  decision that supersedes the one it conflicts with, never by citing that same decision and never by
-  the fact that an approval followed.
-- **F3 and F5–F7 may be dispositioned `OPERATOR-ACCEPTED`** with reasons in the operator's own words,
-  if the operator judges no change is needed.
-- **F4 was deliberately left untagged as a breach** because Decision 19 gives the operator a live
-  route other than revision. That is the reviewer's judgment, and the operator may disagree with it.
-
-**Three things the trial itself surfaced, which the operator should see before deciding:**
-
-1. **The C1 `[C-CEILING-EXCEEDED]` flag is an open operator call, not a defect of this brief.**
-   `precision-components-cluster-01-claim-03` was assigned SUPPORTED against a tier-C ceiling of
-   PROXY-SUPPORTED, and the upstream permission table deliberately did not downgrade it. It predates
-   this trial. F4 is where it surfaces.
-2. **A Context Card row would materially strengthen the Selective verdict, and is not usable as it
-   stands.** "Sweden is the primary buy-side market; Finland is the relationship base and primary
-   sell-side source" lines up closely with the evidence, but traces to a retired/superseded project
-   file that Register C says must be operator-verified before it governs a verdict. It should not be
-   adopted silently. F5 is where it surfaces.
-3. **The length overrun is a signal about the band, not about this brief.** Cutting to 500–800 words
-   means dropping a thesis, not trimming prose. Recorded as a deferral above.
-
-**What must not happen at this stop.** No approval is inferred from silence or from any reply that
-does not say so. A revision reply is not an approval. Claude does not revise on the operator's behalf
-and does not dispose of a finding for them. Nothing is promoted until the operator has seen a
-re-reviewed proposal and explicitly decided.
-
-**A bare `approved` here is an L1 FAIL** even though the mechanism would refuse it — condition 3
-requires at least one substantive revision direction before approval, and the trial is measuring the
-operator-facing path, not only the gate.
+None. The trial is complete, the operator's final decision is recorded and executed, and no operator
+decision is outstanding.
 
 ## Next action
 
-Operator: give the final **approve / revise / reject** decision, and settle **F9 and F10** — either an
-`OPERATOR-ACCEPTED` disposition with your reasons for each, or a direction to fix them. If the
-direction is to fix, say whether Thesis 3's second paragraph should be **restructured** rather than
-extended again.
+Codex: assess the complete L1 evidence above and decide **L1 PASS or FAIL** under the approved lean
+plan's proof table and terminal rule. The decision is Codex's; Claude has not made it and does not
+state a verdict here.
 
-Then Claude, carrying that response back through this same task:
+The material question is whether this trial satisfies the plan's L1 conditions — in particular
+condition 3 (a substantive operator revision direction before any approval), condition 4 (durable
+terminal disposition of every required-change finding with no laundered permission breach and no
+unresolved conflict with an unrevoked decision), and condition 6 (approved authority visibly shaping a
+genuine downstream artifact with claim-level traceability).
 
-- **On a fix direction** — apply it, re-run the contract check, return to Step 3b.1 where the binding
-  will again report `STALE-CHALLENGE`, archive round 2, run round 3, and stop here again.
-- **On `OPERATOR-ACCEPTED` for both plus an approval** — write the dispositions and reasons into the
-  round-2 ledger beside the findings they answer, set `status: dispositioned`, then promote
-  mechanically with `promote-judgment-brief.sh --approval "<verbatim reply>" --approved-by "<the
-  approving operator>"`. Do not hand-author the approved file. Then Step 3c re-validates it as
-  authority, and only that permits Step 4 — where the directive before/after diff runs against the
-  baseline hash table above.
-- **On rejection** — record it, produce the proof that no approved authority or downstream use was
-  created, and hand back to Codex with the L1 evidence as it stands.
-
-Whichever way it goes, the unit then hands back to Codex with the complete trial record for the L1
-PASS/FAIL decision. Codex decides L1, not Claude.
+If PASS, L2 may reopen under the approved lean plan — that is a separate authorization and not part of
+this unit. If FAIL, judgment canonicalization stops again. Either way the four deferrals above want a
+disposition, and the task then moves to closure.
