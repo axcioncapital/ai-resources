@@ -1030,6 +1030,72 @@ check_preserved "S8    \$reorient stays read-only" \
   "$REORIENT_F" 'Keep this skill instruction-only and read-only.'
 
 # --------------------------------------------------------------------------
+# THE MANDATORY RECOVERY READS ARE UNCONDITIONAL — and phrase presence cannot
+# see that. Every check_clause above stayed green against disposable commit
+# a0f4f6ec, which reversed the approved contract while keeping the words: it
+# demoted the complete Work Loop skill read and the core read below a trigger
+# ("read anything below only when this pass goes on to a Work-Loop-owned
+# action") and dropped the requirement to read the resolved core at all. A guard
+# that only asks whether a sentence is somewhere in the file passes a file that
+# says the opposite of what it used to.
+#
+# Two properties separate the approved contract from that reversal, and each is
+# paired with a wrong fixture built from the LIVE file. Building the fixture
+# rather than checking out a0f4f6ec is deliberate: that commit lives on a
+# disposable branch scheduled for removal, and a control that disappears with it
+# is a control that silently stops running.
+#
+# NEITHER CHECK EDITS THE CONTRACT. Both read wording that is already there.
+# --------------------------------------------------------------------------
+
+# (i) No conditional gate stands between Step 3's heading and the first
+# mandatory read. That span is the reversal's entire mechanism. It stops AT the
+# skill read on purpose: "you read a reference only when its stated condition is
+# met" sits immediately below and is a legitimate conditional about references,
+# so a whole-step scan would flag the approved file.
+recovery_gate() { # file; prints each trigger word gating the first mandatory read
+  command sed -n '/^### 3\. Read the minimum authoritative context$/,/Read the complete `work-loop-v2` skill/p' \
+    "$1" 2>/dev/null \
+    | command grep -oiE 'mandatory set|conditional|only when|read anything below'
+}
+if [ -z "$(recovery_gate "$REORIENT_F")" ]; then
+  ok "S8    \$reorient's mandatory recovery reads carry no conditional gate"
+else
+  bad "S8    \$reorient's mandatory recovery reads carry no conditional gate" \
+      "gated by: $(recovery_gate "$REORIENT_F" | tr '\n' ' ')"
+fi
+S8GATED="$S8FIX/reorient-gated.md"
+awk -v skill='Read the complete `work-loop-v2` skill' '
+  index($0, skill) && !done {
+    print "**Read anything below only when this pass goes on to a Work-Loop-owned action.**"
+    print ""
+    done = 1
+  }
+  { print }' "$REORIENT_F" >"$S8GATED" 2>/dev/null
+if [ -s "$S8GATED" ] && [ -n "$(recovery_gate "$S8GATED")" ]; then
+  ok "S8    control: a conditional gate on the mandatory reads is rejected"
+else
+  bad "S8    control: a conditional gate on the mandatory reads is rejected" \
+      "the gated fixture passed — every phrase check above passes it too"
+fi
+
+# (ii) The resolved core is READ COMPLETE, not merely resolved. a0f4f6ec kept
+# `references/core-resolution.md` and the resolver, and replaced the read of what
+# it prints with "do with what it prints exactly what that reference directs" —
+# which the clause check above cannot distinguish from the approved wording.
+S8CORE_READ='read the complete core file that resolver prints'
+check_preserved "S8    \$reorient reads the COMPLETE core the resolver prints" \
+  "$REORIENT_F" "$S8CORE_READ"
+S8NOCORE="$S8FIX/reorient-core-not-read.md"
+command grep -vF 'the complete core file that resolver prints' "$REORIENT_F" >"$S8NOCORE" 2>/dev/null
+if [ -s "$S8NOCORE" ] && ! has_flat "$S8NOCORE" "$S8CORE_READ"; then
+  ok "S8    control: dropping the complete-core read is rejected"
+else
+  bad "S8    control: dropping the complete-core read is rejected" \
+      "the fixture without that requirement still read as present"
+fi
+
+# --------------------------------------------------------------------------
 # (d) THE RECOVERY ROUTE under Unit 2's five named controls, executed.
 # One checkout, THREE open task files, exactly one declared. No hook runs here
 # at all — that is the "explicit $reorient still works" control, and it is a

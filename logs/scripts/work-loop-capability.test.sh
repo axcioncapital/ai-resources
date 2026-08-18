@@ -5,19 +5,19 @@
 # TWO THINGS ARE PROVED HERE, and they are deliberately different in kind:
 #
 #   Part A  the SHARED RULE — work-loop-capability.sh itself, against one
-#           complete deployment fixture and the five fixtures derived from it by
+#           complete deployment fixture and the six fixtures derived from it by
 #           removing exactly one component each, plus drift, applicability and
 #           read-only cases.
 #   Part B  the WIRING — that the Work Loop entry command, the two deployment
 #           commands, the generic SessionStart sweep and the research workflow
 #           template actually carry that rule.
 #
-# WHY THE FIVE FIXTURES ARE DERIVED, NOT WRITTEN. Each one is the complete
-# checkout minus a single component. That is what makes the failure attributable:
+# WHY THE FIXTURES ARE DERIVED, NOT WRITTEN. Each one is the complete checkout
+# minus a single component. That is what makes the failure attributable:
 # if a fixture missing only the Reorient skill reports the compact hook instead,
 # the diagnostic is wrong in the one way that matters, because the operator would
-# fix the wrong thing. Writing six independent fixtures would let a shared typo
-# hide exactly that.
+# fix the wrong thing. Writing independent fixtures per case would let a shared
+# typo hide exactly that.
 #
 # WHAT PART B CAN AND CANNOT SHOW. It is a mechanical check over instruction
 # text and one shell script: it proves the call is present and, for the entry
@@ -64,12 +64,37 @@ expect_no_grep() { # pattern output label
 
 # ------------------------------------------------------------------ fixtures
 
-# A checkout carrying all five components and the command that makes them
+# The Work Loop skill body plus the direct references it links. Written here
+# rather than copied from the real skill on purpose: the component under test is
+# the RULE "every reference the body links is present", and a fixture that
+# borrowed the real body would drift with it and would stop being a fixture the
+# day the reference set changed. Two references, so a case that removes one can
+# show the other is untouched.
+install_work_loop_skill() { # dir
+  mkdir -p "$1/.agents/skills/work-loop-v2/references"
+  cat >"$1/.agents/skills/work-loop-v2/SKILL.md" <<'EOF'
+---
+name: "work-loop-v2"
+---
+
+# work-loop-v2 — fixture body
+
+| Reference | Read it when |
+|---|---|
+| [Core resolution](references/core-resolution.md) | when the Work Loop owns the move |
+| [Unit framing](references/unit-framing.md) | when preparing a unit |
+EOF
+  printf '# Core resolution\n'  >"$1/.agents/skills/work-loop-v2/references/core-resolution.md"
+  printf '# Unit framing\n'     >"$1/.agents/skills/work-loop-v2/references/unit-framing.md"
+}
+
+# A checkout carrying all six components and the command that makes them
 # applicable. Everything else is derived from this by removing one thing.
 complete_checkout() { # -> path
   local d; d="$(mktemp -d "$SANDBOX_ROOT/co.XXXXXX")"
   mkdir -p "$d/.claude/commands" "$d/logs/scripts" "$d/logs/work-loop" \
-           "$d/.agents/skills/reorient" "$d/.codex/hooks"
+           "$d/.agents/skills/reorient" "$d/.codex/hooks" \
+           "$d/.agents/skills/work-loop-v2/references"
   git -C "$d" init -q
   git -C "$d" config user.email harness@example.invalid
   git -C "$d" config user.name harness
@@ -78,6 +103,7 @@ complete_checkout() { # -> path
   cp "$STATE_BIN" "$d/logs/scripts/work-loop-state.sh"
   cp "$OWNER_BIN" "$d/logs/scripts/work-loop-owner.sh"
   printf -- '---\nname: reorient\n---\n\n# Reorient\n' >"$d/.agents/skills/reorient/SKILL.md"
+  install_work_loop_skill "$d"
   cp "$HOOK_SRC" "$d/.codex/hooks/work-loop-reorient.sh"
   cat >"$d/.codex/hooks.json" <<'EOF'
 {
@@ -145,8 +171,37 @@ remove_and_check() { # label component-name removal-command...
 remove_and_check 'A2   ' 'state-validator' 'rm logs/scripts/work-loop-state.sh'
 remove_and_check 'A3   ' 'owner-helper' 'rm logs/scripts/work-loop-owner.sh'
 remove_and_check 'A4   ' 'reorient-skill' 'rm -rf .agents/skills/reorient'
+# The reference case is the one the 2026-08-18 correction added. Before it, this
+# exact fixture — a checkout whose Work Loop skill directs a move to a file that
+# is not there — reported READY and exit 0, so a unit could open in a checkout
+# that could not finish it. Removing the file the resolver lives behind is not a
+# hypothetical: it is the reproduction the independent review returned.
+remove_and_check 'A4b  ' 'work-loop-references' \
+  'rm .agents/skills/work-loop-v2/references/core-resolution.md'
+# The skill body itself. Without this case the derivation could fail open: no
+# body, no links, an empty set, and nothing reported for the checkout least able
+# to run a unit.
+remove_and_check 'A4c  ' 'work-loop-references' \
+  'rm .agents/skills/work-loop-v2/SKILL.md'
 remove_and_check 'A5   ' 'compact-recovery-hook' 'rm .codex/hooks/work-loop-reorient.sh'
 remove_and_check 'A6   ' 'owner-ignore-rule' "printf '.DS_Store\n' >.gitignore"
+
+# A body that links nothing is the third way the derived set can be empty, and it
+# is not the same fault as a missing body: the file is there and says nothing.
+CO="$(complete_checkout)"
+( cd "$CO" && printf -- '---\nname: "work-loop-v2"\n---\n\n# no references linked\n' \
+    >.agents/skills/work-loop-v2/SKILL.md )
+OUT="$(run_check "$CO")"; RC=$?
+expect_rc 3 "$RC" "A4d   a Work Loop skill body linking no reference is INCOMPLETE" "$OUT"
+expect_grep '^missing: work-loop-references' "$OUT" "A4d   the diagnostic names work-loop-references"
+
+# Attribution downward: removing ONE reference must not implicate the other.
+CO="$(complete_checkout)"
+( cd "$CO" && rm .agents/skills/work-loop-v2/references/unit-framing.md )
+OUT="$(run_check "$CO")"; RC=$?
+expect_rc 3 "$RC" "A4e   removing one reference is INCOMPLETE" "$OUT"
+expect_grep 'unit-framing\.md is absent' "$OUT" "A4e   the diagnostic names the reference that is gone"
+expect_no_grep 'core-resolution\.md is absent' "$OUT" "A4e   and does not implicate the one still present"
 
 # --- A7 the hook file without its registration is still missing --------------
 # The component is the hook PLUS the wiring that makes it fire. A checkout
@@ -177,12 +232,12 @@ expect_no_grep '^missing:' "$OUT" "A8    nothing is reported missing — not app
 # these two would be indistinguishable.
 CO="$(complete_checkout)"
 ( cd "$CO" && rm -f logs/scripts/work-loop-state.sh logs/scripts/work-loop-owner.sh \
-    .codex/hooks/work-loop-reorient.sh && rm -rf .agents/skills/reorient && printf '\n' >.gitignore )
+    .codex/hooks/work-loop-reorient.sh && rm -rf .agents/skills && printf '\n' >.gitignore )
 OUT="$(run_check "$CO")"; RC=$?
 expect_rc 3 "$RC" "A8    command-only checkout is INCOMPLETE, not NOT_APPLICABLE" "$OUT"
-[ "$(printf '%s' "$OUT" | grep -cE '^missing:')" = 5 ] \
-  && ok "A8    all five components are named" \
-  || bad "A8    all five components are named" "$OUT"
+[ "$(printf '%s' "$OUT" | grep -cE '^missing:')" = 6 ] \
+  && ok "A8    all six components are named" \
+  || bad "A8    all six components are named" "$OUT"
 
 # The command installed as a SYMLINK exposes Work Loop exactly as a copy does.
 CO="$(complete_checkout)"
@@ -208,6 +263,17 @@ expect_grep '^drifted: owner-helper' "$OUT" "A9    the diagnostic names the drif
 # inventing one: presence-only is a weaker answer, not a wrong one.
 OUT="$(run_check "$CO")"; RC=$?
 expect_rc 0 "$RC" "A9    without --canonical the same checkout is READY on presence" "$OUT"
+
+# A reference is present and wrong. Instructions drift more quietly than scripts
+# do — a stale reference reads as authoritative and fails nothing — so the
+# reference set is compared like the other copied components, not just counted.
+CANON="$(complete_checkout)"
+CO="$(complete_checkout)"
+( cd "$CO" && printf '\n<!-- local edit -->\n' \
+    >>.agents/skills/work-loop-v2/references/core-resolution.md )
+OUT="$(run_check "$CO" "$CANON")"; RC=$?
+expect_rc 3 "$RC" "A9    a drifted reference copy is INCOMPLETE" "$OUT"
+expect_grep '^drifted: work-loop-references' "$OUT" "A9    the diagnostic names the drifted reference set"
 
 # --- A10 read-only ----------------------------------------------------------
 # A checker that installed or repaired anything would make "is this ready?"
@@ -426,7 +492,7 @@ printf '\n--- Part C: the remedies preserve project content --------------------
 # looks at what is left.
 
 # A project that owns real content in all three merge-only files and has none of
-# the five Work Loop components.
+# the six Work Loop components.
 project_with_own_content() { # -> path
   local d; d="$(mktemp -d "$SANDBOX_ROOT/proj.XXXXXX")"
   mkdir -p "$d/.claude/commands" "$d/logs/scripts" "$d/logs/work-loop" "$d/.codex/hooks"
@@ -459,13 +525,17 @@ EOF
   printf '%s' "$d"
 }
 
-# The three components that ARE plain file copies. Correct for both remediations.
+# The components that ARE plain file copies. Correct for both remediations. The
+# two skills arrive by the same manifest-symlink route, so the Work Loop skill
+# and its references land here beside Reorient rather than through the merge-only
+# path Part C is about.
 copy_the_file_components() { # dir
   cp "$TEMPLATE_DIR/logs/scripts/work-loop-state.sh" "$1/logs/scripts/"
   cp "$TEMPLATE_DIR/logs/scripts/work-loop-owner.sh" "$1/logs/scripts/"
   cp "$TEMPLATE_DIR/.codex/hooks/work-loop-reorient.sh" "$1/.codex/hooks/"
   mkdir -p "$1/.agents/skills/reorient"
   printf -- '---\nname: reorient\n---\n' >"$1/.agents/skills/reorient/SKILL.md"
+  install_work_loop_skill "$1"
 }
 
 # The documented remedy: append the ignore line, add ONE manifest array entry,
@@ -515,9 +585,9 @@ sentinels_present() { # dir -> 0 if all three project-owned sentinels survive
 BASE="$(project_with_own_content)"
 OUT="$(run_check "$BASE")"; RC=$?
 expect_rc 3 "$RC" "C1    the fixture starts INCOMPLETE" "$OUT"
-[ "$(printf '%s' "$OUT" | grep -cE '^missing:')" = 5 ] \
-  && ok "C1    all five components are named as the proposed additions" \
-  || bad "C1    all five components are named as the proposed additions" "$OUT"
+[ "$(printf '%s' "$OUT" | grep -cE '^missing:')" = 6 ] \
+  && ok "C1    all six components are named as the proposed additions" \
+  || bad "C1    all six components are named as the proposed additions" "$OUT"
 sentinels_present "$BASE" && ok "C1    the project's own content is present to begin with" \
   || bad "C1    the project's own content is present to begin with"
 GITIGNORE_BEFORE="$(cat "$BASE/.gitignore")"

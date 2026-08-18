@@ -855,6 +855,103 @@ finding is resolved, Unit 4 is not accepted, and § 9 is unmet. The task is bloc
 choice between restoring the local pre-merge pointer and continuing corrected Unit 4 from the bound
 implementation checkout, or retaining the merge and authorizing a separate correction.
 
+### Correction round — the six frozen findings
+
+**Implemented 2026-08-18** in checkout `ai-resources-work-loop-fix-17-8`, branch
+`session/2026-08-17-work-loop-fix-17-8`, after the operator restored canonical `main` to its
+pre-merge pointer `0d5641b8`. This is the one bounded correction core § 3 permits, frozen to the
+findings the failed review named. It resolves them on this feature branch and imports nothing from
+the disposable case: `4510cb0a` and `a0f4f6ec` stay unmerged, and no fixture file was copied across.
+
+**Finding 1 — capability presence did not cover the direct references. RESOLVED.**
+`work-loop-capability.sh` gains a sixth component, `work-loop-references`: the Work Loop skill body
+plus every `references/*.md` file that body links directly. The set is **derived from the skill's own
+links**, not listed in the script, so a reference added to the contract is covered the day it is
+added. The derivation's own fail-open is closed first — an absent or unreadable skill body, and a
+body that links nothing, are both reported rather than resolving to an empty set.
+*Red:* with `core-resolution.md` removed, the pre-correction checker printed
+`verdict: READY … all five Work Loop v2 components are present` and exited 0.
+*Green:* the same removal now prints
+`missing: work-loop-references — .agents/skills/work-loop-v2/references/core-resolution.md is absent
+or unreadable`, exit 3; the untouched checkout is `READY` on all six against canonical
+`ai-resources`. `work-loop-capability.test.sh` exits 0 with **94 passed, 0 failed**, and gains cases
+A4b (a reference removed), A4c (the body removed), A4d (a body linking nothing), A4e (attribution —
+one reference gone does not implicate the other) and an A9 drift case naming `work-loop-references`.
+
+**Finding 2 — a backticked sibling loading chain, invisible to the guard. RESOLVED.**
+`routing-and-admission.md` carried three sibling `references/…` paths presented as things to go and
+read. All three are removed; the semantic routing steps are unchanged and the main skill remains the
+one owner of the direct links and their read conditions. The Slice 1 `chain_hits` guard now
+recognises the backticked shape as well as the Markdown-link shape.
+*Red:* against the pre-edit file the old guard returned no hits (green) while the new guard returns
+`` `references/routing-index.md` ``, `` `references/core-resolution.md` ``,
+`` `references/routing-index.md` ``.
+*Green:* all five live references return no hits under the new guard.
+A bare ownership citation — `(§ Size the unit against the clock, in `references/unit-framing.md`)` in
+`courier-operation.md` — is deliberately **not** flagged, and a CONTROL case asserts that: the chain
+is created by the instruction to load, not by a path appearing in prose, and a guard that could not
+tell them apart would demand edits it cannot justify. `work-loop-v2-slice-1.test.sh` exits 0 with
+**407 passed, 0 failed**.
+
+**Finding 3 — Tracer 7 S8 could not see the conditional reversal. RESOLVED.**
+S8's clause checks test phrase presence, and disposable commit `a0f4f6ec` kept every phrase while
+reversing the contract. Two properties now separate the approved contract from that reversal, and
+neither edits the contract:
+
+- **No conditional gate** stands between Step 3's heading and the first mandatory read. The span
+  stops at the skill read on purpose — "you read a reference only when its stated condition is met"
+  sits immediately below and is a legitimate conditional about references.
+- **The resolved core is read complete**, not merely resolved. `a0f4f6ec` kept the resolver and
+  replaced the read of what it prints.
+
+*Red:* run against `a0f4f6ec`'s `reorient/SKILL.md`, all seven present S8 clause and order checks
+returned green; the new pair returns `mandatory set / conditional / Read anything below only when`
+for the first and `ABSENT` for the second. *Green:* the live file returns no gate words and carries
+the complete-core read. Each is paired with a wrong fixture **built from the live file** — a trigger
+line inserted above the skill read, and the complete-core clause deleted — so the control does not
+depend on the disposable branch surviving its scheduled removal. `work-loop-v2-tracer-7.test.sh`
+exits 0 with **167 passed, 0 failed**, all nine scenarios PASS.
+
+**Finding 4 — fixture authority and the byte ceiling stay out. CONFIRMED ABSENT.**
+`git cat-file -t aa11bb22` returns `Not a valid object name`, so the fixture plan's claimed
+content-bound approval anchors to no commit and governs nothing. Bounded to this feature branch's
+**tracked** tree: `git ls-files` matches no `u4-live-case`, `u4-live-case-governing-plan` or
+`unit4-operator-prompt` path; `git grep` finds neither of `a0f4f6ec`'s distinctive strings
+("The mandatory set is two reads and no more", "Read anything below only when one of these holds")
+anywhere. The only tracked occurrence of 5,541 across `.agents`, `logs/scripts`, `.claude`, `.codex`
+and `plans` is this section's own review prose recording the rejected number; it is not a gate, and
+repository-read volume remains diagnostic under § 4.
+
+**Finding 5 — the accepted semantic trace stays tied to the semantics it exercised. RECORDED.**
+The trace accepted above is Attempt 2, which exercised the **unconditional** contract: the complete
+lean Work Loop skill and the complete core once each, targeted plan sections, no courier, routing,
+routing-index or unit-framing reference. The later disposable semantic rewrite invoked `$reorient`
+directly under the reversed contract and is **rejected**, not treated as a post-change proof. Nothing
+from it is imported here.
+
+**Finding 6 — only the rollover portion of `092a1715` is accepted. VERIFIED, BOUNDED.**
+Checked at that exact revision: the commit exists; `logs/work-loop/u4-live-case.md` contains
+`U4-OLD-RESULT` **0** times; it carries exactly **one** `## Latest result` heading; its frontmatter is
+`status: active` / `turn: codex`; and the validator, run against that revision materialised into a
+scratch checkout, prints `ACTIVE_CODEX` at exit 0. That is the rollover behaviour and all this
+commit is accepted for. Its byte-ceiling verdict is **non-governing and not imported**.
+
+**Deferred at this correction, not done here** (core § 3 — newly noticed work is a deferral, never a
+second correction round):
+
+- `.claude/commands/work-loop-v2.md` Step 0 prose still says Work Loop needs "five separate things";
+  `/sync-workflow`'s remediation still enumerates the five original component names. Both are
+  count-only staleness in files outside this correction's implementation boundary. Neither changes
+  behaviour: the checker names the missing file and its path, and the references travel the same
+  manifest-symlink route as the Reorient skill, which that remediation already covers.
+- `courier-operation.md` names a sibling path as an ownership citation. The guard's CONTROL case
+  fixes that as permitted rather than overlooked; whether references should cite siblings by path at
+  all is a contract question, not this correction's.
+
+Still deferred by the brief and unchanged: the final complete Work Loop regression matrix, the
+correction closure check, the task-close verdict, and destructive removal of the disposable
+worktree and branch.
+
 ## 9. Completion condition
 
 This plan is implemented when Units 0–4 are complete, every focused and existing regression is green,

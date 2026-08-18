@@ -1844,8 +1844,27 @@ check "split the resolver marker pair moved whole to its reference" \
 # A reference that links another reference makes the second reachable only by
 # loading the first, which is the chain plan § 3.1 forbids. The repaired tree
 # cannot exhibit this, so the check is proved against a wrong fixture.
-chain_hits() {  # $1 = file; prints each references/ link it contains
+#
+# TWO SHAPES, ONE RULE — the second added by the 2026-08-18 correction. A
+# Markdown link is a loading affordance by construction. A backticked sibling
+# path is one whenever the reader is told to go there, and that is the shape the
+# link-only guard could not see: `routing-and-admission.md` carried three of them
+# — "Read the routing index — `references/routing-index.md`", "run the resolver
+# that `references/core-resolution.md` owns", "The route inventories are one
+# file: `references/routing-index.md` … Read that file complete" — and the
+# independent review found them while this check stayed green.
+#
+# A bare ownership citation is NOT a route and is deliberately not flagged:
+# naming which owner holds a section, as "(§ Size the unit against the clock, in
+# `references/unit-framing.md`)" does, tells the reader where something lives
+# without sending them there through this file. Flagging it would force every
+# cross-citation to be laundered into vagueness, which costs precision and buys
+# no protection — the chain is created by the instruction to load, not by the
+# path appearing in prose.
+chain_hits() {  # $1 = file; prints each sibling-reference LOADING affordance
   command grep -oE '\(references/[A-Za-z0-9._-]+\)' "$1" 2>/dev/null
+  command sed -e 's/, in `references\/[A-Za-z0-9._-]*`//g' "$1" 2>/dev/null \
+    | command grep -oE '`references/[A-Za-z0-9._-]+`'
 }
 for ref in "$CORERES_F" "$COURIER_F" "$ROUTADM_F" "$UNITFR_F"; do
   check "split no loading chain out of $(basename "$ref")" \
@@ -1858,6 +1877,20 @@ if [ -n "$SPLIT_TMP" ]; then
     > "$SPLIT_TMP/chained.md"
   check "split NEGATIVE: the chain check rejects a reference that links a reference" \
     "[ -n \"\$(chain_hits '$SPLIT_TMP/chained.md')\" ]"
+  # The shape the link-only guard passed. This is the review's finding written
+  # as a fixture: the same instruction, spelled with backticks instead of a link.
+  printf '# x\n\nRead the routing index — `references/routing-index.md` — complete first.\n' \
+    > "$SPLIT_TMP/chained-backtick.md"
+  check "split NEGATIVE: the chain check rejects a BACKTICKED sibling loading instruction" \
+    "[ -n \"\$(chain_hits '$SPLIT_TMP/chained-backtick.md')\" ]"
+  # And the control that keeps the guard from being merely broad: a citation
+  # naming where a section lives is not a route, and must stay green. Without
+  # this, a guard that flagged every occurrence of the string would look equally
+  # good here and would be demanding edits it cannot justify.
+  printf '# x\n\nOne dominant deliverable (§ Size the unit against the clock, in `references/unit-framing.md`).\n' \
+    > "$SPLIT_TMP/cited.md"
+  check "split CONTROL: a bare ownership citation is not a loading chain" \
+    "[ -z \"\$(chain_hits '$SPLIT_TMP/cited.md')\" ]"
 fi
 
 # --- a long reference carries a table of contents ---------------------------

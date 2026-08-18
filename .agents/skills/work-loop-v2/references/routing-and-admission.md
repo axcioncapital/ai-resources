@@ -18,10 +18,11 @@ The operator describes what they want in ordinary language and rarely names a ca
 
 1. **Interpret the desired outcome and its object** — what should be different afterwards, and to what. Not the remedy they proposed; the outcome behind it.
 2. **Choose one owner** — the single capability whose purpose covers that outcome. Read
-   the routing index — `references/routing-index.md`, which the main skill links directly alongside
-   this file — complete before you name it; the inventories are there and this file carries no copy
+   the routing index — which the main skill links directly alongside this file — complete before you
+   name it; the inventories are there and this file carries no copy
    of them (§ The routing index below).
-3. **If the Work Loop is the owner** — and only then — **run the resolver that `references/core-resolution.md` owns — the main skill links it directly — and read
+3. **If the Work Loop is the owner** — and only then — **run the resolver the core-resolution
+   reference owns — the main skill links it directly — and read
    exactly the absolute file it returns now, before your first Work-Loop-owned move.** Then apply the
    Direct-versus-Standard admission test (Admission below). Where any other capability owns it,
    admission does not arise and the core is not resolved or read.
@@ -76,8 +77,8 @@ The index names triggers, boundaries and hand-offs — never a capability's meth
 
 ### The routing index
 
-The route inventories are one file: `references/routing-index.md`, linked directly from the main
-skill. **Read that file
+The route inventories are one file, the routing index, linked directly from the main
+skill and reached from there. **Read that file
 complete at step 2 above, before you name an owner** — the five route classes, the names that are not
 routes, the collision table and the Claude-side-only rule live there and nowhere else. Do not route
 from memory of it, and do not copy an entry back into this file: one route entry, one owner.

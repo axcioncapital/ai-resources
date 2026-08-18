@@ -3,10 +3,11 @@
 # or is it visibly unavailable?
 #
 # THE PROBLEM THIS CLOSES. `/work-loop-v2` is not one file. Running a unit needs
-# five separate things to be present in the same checkout, and they arrive by
-# four different routes: two helpers copied from a workflow template, one skill
-# symlinked through a manifest opt-in, one Codex hook plus its registration, and
-# one `.gitignore` rule. Nothing checked them together. A project could pick up
+# six separate things to be present in the same checkout, and they arrive by
+# four different routes: two helpers copied from a workflow template, two skills
+# symlinked through a manifest opt-in — one of which carries the direct
+# references its own body was thinned into — one Codex hook plus its
+# registration, and one `.gitignore` rule. Nothing checked them together. A project could pick up
 # the command through the generic SessionStart symlink sweep, report itself
 # "fully in sync", and then fail at a different seam on every invocation — a
 # missing validator here, an unregistered compact hook there, an `.owner` file
@@ -27,11 +28,23 @@
 # (`/sync-workflow`, `/deploy-workflow`, or the operator) decide. A checker that
 # fixed things on the way past would make "is this ready?" unanswerable.
 #
-# THE FIVE COMPONENTS, and the exact name each is reported under:
+# THE SIX COMPONENTS, and the exact name each is reported under:
 #
 #   state-validator        logs/scripts/work-loop-state.sh
 #   owner-helper           logs/scripts/work-loop-owner.sh
 #   reorient-skill         .agents/skills/reorient/SKILL.md
+#   work-loop-references   .agents/skills/work-loop-v2/SKILL.md AND every
+#                          references/*.md file that body links directly. The
+#                          skill body is lean on purpose: the detail an admitted
+#                          move needs — the core resolver, routing, admission,
+#                          unit framing, courier operation — was moved out into
+#                          direct references, each read when its stated condition
+#                          is met. A checkout missing one is not degraded, it is
+#                          stopped at whichever seam reaches it first, and the
+#                          move cannot substitute memory of the file. The set is
+#                          DERIVED from the skill's own links rather than listed
+#                          here, so a reference added to the contract is covered
+#                          the day it is added.
 #   compact-recovery-hook  .codex/hooks/work-loop-reorient.sh, AND a SessionStart
 #                          entry in .codex/hooks.json whose matcher is `compact`
 #                          and whose command runs that script. The file alone is
@@ -53,7 +66,7 @@
 # APPLICABILITY. A checkout that does not carry `.claude/commands/work-loop-v2.md`
 # is not exposing Work Loop v2, so the capability is NOT_APPLICABLE — not broken,
 # not missing, not a finding. That distinction is the whole point of the third
-# verdict: without it, every ordinary project in the workspace would report five
+# verdict: without it, every ordinary project in the workspace would report six
 # missing components forever, and the report would be worth nothing.
 #
 # Usage:
@@ -62,7 +75,7 @@
 #   --checkout   the checkout to assess. Defaults to the Git top level of the
 #                current directory.
 #   --canonical  optional. A checkout or workflow template holding the canonical
-#                copies. When given, the three COPIED components are additionally
+#                copies. When given, the COPIED components are additionally
 #                compared byte-for-byte against it and any difference is reported
 #                as `drifted:`. Omit it to check presence only. There is no
 #                discovery mechanism here on purpose: a script that went looking
@@ -70,7 +83,7 @@
 #                the deployment contract does not give it.
 #
 # Exit codes:
-#   0   READY           all five components present (and byte-identical, if
+#   0   READY           all six components present (and byte-identical, if
 #                       --canonical was given).
 #   2   NOT_APPLICABLE  the checkout does not expose /work-loop-v2.
 #   3   INCOMPLETE      at least one component is missing or drifted. Every one
@@ -85,6 +98,8 @@ CMD_REL='.claude/commands/work-loop-v2.md'
 VALIDATOR_REL='logs/scripts/work-loop-state.sh'
 OWNER_REL='logs/scripts/work-loop-owner.sh'
 SKILL_REL='.agents/skills/reorient/SKILL.md'
+WL_SKILL_REL='.agents/skills/work-loop-v2/SKILL.md'
+WL_SKILL_DIR='.agents/skills/work-loop-v2'
 HOOK_REL='.codex/hooks/work-loop-reorient.sh'
 HOOKS_JSON_REL='.codex/hooks.json'
 OWNER_DECL_REL='logs/work-loop/.owner'
@@ -168,7 +183,47 @@ if [ ! -f "$CHECKOUT/$SKILL_REL" ] || [ ! -r "$CHECKOUT/$SKILL_REL" ]; then
   note "missing: reorient-skill — $SKILL_REL is absent or unreadable. A compacted Codex session cannot re-establish the active task from disk and would continue from its summary."
 fi
 
-# ------------------------------------------- 4. the compact hook AND its wiring
+# ------------------------------------ 4. the Work Loop skill and its references
+# Presence of the entry command says Work Loop is EXPOSED here; it says nothing
+# about whether the instructions an admitted move actually reads are present.
+# The skill body is lean by contract and every conditional detail — the core
+# resolver, routing, admission, unit framing, courier operation — lives in a
+# direct reference read when its condition is met. Remove one and the checkout
+# still passes every other check in this file while the first move that reaches
+# that condition stops dead, which is precisely the partial exposure this script
+# exists to refuse.
+#
+# DERIVED, NOT LISTED. The set comes from the skill's own direct links. A list
+# here would be a second copy of the contract, free to fall behind the day a
+# reference is added — and a checker that is behind the thing it checks reports
+# READY for exactly the gap it was written to catch.
+#
+# The derivation's own fail-open is closed FIRST. With no skill body there is
+# nothing to derive from, and an empty derived set would report READY for the
+# checkout least able to run a unit. That case is named, not skipped.
+if [ ! -f "$CHECKOUT/$WL_SKILL_REL" ] || [ ! -r "$CHECKOUT/$WL_SKILL_REL" ]; then
+  note "missing: work-loop-references — $WL_SKILL_REL is absent or unreadable, so the direct references an admitted Work Loop move reads can neither be loaded nor enumerated."
+else
+  WL_REFS="$(grep -oE '\]\(references/[A-Za-z0-9._-]+\.md\)' "$CHECKOUT/$WL_SKILL_REL" 2>/dev/null \
+              | sed -e 's/^](//' -e 's/)$//' | sort -u)"
+  if [ -z "$WL_REFS" ]; then
+    note "missing: work-loop-references — $WL_SKILL_REL links no direct reference. The lean body carries no conditional detail of its own, so a move needing the core resolver, routing, unit framing or courier operation has nowhere to read it."
+  else
+    while IFS= read -r WL_REF; do
+      [ -n "$WL_REF" ] || continue
+      WL_REF_REL="$WL_SKILL_DIR/$WL_REF"
+      if present "$WL_REF_REL"; then
+        compare_copy 'work-loop-references' "$WL_REF_REL"
+      else
+        note "missing: work-loop-references — $WL_REF_REL is absent or unreadable, and $WL_SKILL_REL directs an admitted Work Loop move to read it when its condition is met."
+      fi
+    done <<WL_REF_EOF
+$WL_REFS
+WL_REF_EOF
+  fi
+fi
+
+# ------------------------------------------- 5. the compact hook AND its wiring
 HOOK_FILE_OK=0
 if present "$HOOK_REL"; then
   HOOK_FILE_OK=1
@@ -199,7 +254,7 @@ if [ "$HOOK_FILE_OK" -eq 1 ]; then
   fi
 fi
 
-# ------------------------------------------------------- 5. the live ignore rule
+# ------------------------------------------------------- 6. the live ignore rule
 if ! git -C "$CHECKOUT" rev-parse --git-dir >/dev/null 2>&1; then
   note "missing: owner-ignore-rule — $CHECKOUT is not a Git checkout, so no ignore rule can be established for $OWNER_DECL_REL."
 elif ! git -C "$CHECKOUT" check-ignore -q "$OWNER_DECL_REL" 2>/dev/null; then
@@ -211,9 +266,9 @@ if [ -z "$FINDINGS" ]; then
   printf 'verdict: READY\n'
   printf 'checkout: %s\n' "$CHECKOUT"
   if [ -n "$CANONICAL" ]; then
-    printf 'reason: all five Work Loop v2 components are present, and every copied component is byte-identical to %s.\n' "$CANONICAL"
+    printf 'reason: all six Work Loop v2 components are present, and every copied component is byte-identical to %s.\n' "$CANONICAL"
   else
-    printf 'reason: all five Work Loop v2 components are present in this checkout.\n'
+    printf 'reason: all six Work Loop v2 components are present in this checkout.\n'
   fi
   exit 0
 fi
@@ -222,5 +277,5 @@ COUNT="$(printf '%s' "$FINDINGS" | grep -c '^')"
 printf 'verdict: INCOMPLETE\n'
 printf 'checkout: %s\n' "$CHECKOUT"
 printf '%s' "$FINDINGS"
-printf 'reason: this checkout exposes /work-loop-v2 but the capability is incomplete — %s of the five components are missing or drifted. Work Loop must not begin here until every one is resolved.\n' "$COUNT"
+printf 'reason: this checkout exposes /work-loop-v2 but the capability is incomplete — %s finding(s) across the six components. Work Loop must not begin here until every one is resolved.\n' "$COUNT"
 exit 3
