@@ -4130,3 +4130,50 @@ durably recorded somewhere.
 
 **Target files:** `logs/scripts/split-log.sh` (~L91–110, the `SKIP_APPEND` block and the unconditional
 rewrite immediately after it).
+
+### 2026-08-18 — `dispatch.sh`'s `RUN_ID` checkout discriminator has been silently empty since `0d9e3355`
+
+- **Status:** logged (pending)
+- **Severity:** medium — the field exists specifically to prevent two runs of the same task, started in
+  the same second from different checkouts, from silently overwriting each other's run log, hop captures
+  and unattended profile. That collision protection has been dead since the commit that introduced it, in
+  a script whose own header still reads "SPIKE, not production." No incident has been observed yet.
+- **Category:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` — run identity.
+- **Source:** `/work-loop-v2 work-loop-v2-dispatcher-reliable-supervised-use` Unit 36 discovery, 2026-08-18.
+
+**What happened.** `dispatch.sh:3141` composes `RUN_ID="$(date '+%Y%m%dT%H%M%S')-${LOCK_KEY:0:8}-$$-$TASK"`.
+`LOCK_KEY` is meant to be `sha256(checkout|task)` — the discriminator that separates two same-second,
+same-task runs from *different* checkouts, since the pid alone does not (a same-checkout collision is
+already refused earlier at exit 17 by the lease). `grep -rn 'LOCK_KEY=' --include='*.sh' .` finds no
+assignment anywhere in `dispatch.sh`; the only two matches repo-wide are unrelated local variables in
+`plans/work-loop-v2-v0.2/handoff-automation-spike/runs/probes/*.sh`. Commit `0d9e3355` ("land
+work-loop-v2 concurrent-task-isolation mechanism") both introduced the `${LOCK_KEY:0:8}` reference and
+removed the prior inline lease implementation (and its `LOCK_KEY` assignment) when the lease moved into
+`logs/scripts/work-loop-lease.sh` — that library exposes `WL_LEASE_TASK_DIR`, `WL_LEASE_CHECKOUT_DIR` etc.
+but no `LOCK_KEY` equivalent, and nothing at the call site (`dispatch.sh:1706-1708`, where `LOCK_ROOT` /
+`LOCK_DIR` / `CHECKOUT_LOCK_DIR` are aliased from the library) fills the gap. Under `set -uo pipefail`,
+`${LOCK_KEY:0:8}` on an unset variable expands to an empty string rather than erroring — confirmed live:
+`bash -c 'set -uo pipefail; TASK=demo; printf "%s\n" "$(date "+%Y%m%dT%H%M%S")-${LOCK_KEY:0:8}-$$-$TASK"'`
+prints `20260818T114719--51274-demo`, the empty field visible between two dashes. Committed run logs from
+before `0d9e3355` (e.g. `20260811T100947-d571444e-81459-…`) carry a populated field, so the regression is
+real and dated to that commit, not an artifact of the isolated check.
+
+**Consequence.** Two dispatcher runs of the same task, launched in the same second from two different
+checkouts against a shared `--log-dir`, would currently collide on `RUN_ID` and silently overwrite each
+other's run log, hop captures and unattended-settings file — exactly the failure `0d9e3355`'s own commit
+message says it fixed. Nothing in the existing 299-passing `dispatch.test.sh` suite exercises this path
+(searched for `LOCK_KEY` and cross-checkout same-second collision cases; none found), so the regression
+was invisible to the accepted regression gate.
+
+**Shape of the fix (not built; explicitly deferred by Unit 36, out of that unit's discovery scope).**
+Either restore a `LOCK_KEY`-equivalent computed at the same point the library resolves `WL_LEASE_ROOT`
+(`sha256(checkout|task)`, matching the pre-`0d9e3355` semantics), or expose one from
+`logs/scripts/work-loop-lease.sh` itself (e.g. as part of `wl_lease_init`'s output) so both the dispatcher
+and any other consumer of the shared library compose `RUN_ID` from the same value rather than each
+re-deriving it. Add a focused test asserting the field is non-empty and distinguishes two different
+checkouts for the same task.
+
+**Target files:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` (~L3141, and
+~L1706-1708 where the library's values are aliased); `logs/scripts/work-loop-lease.sh` (if the fix adds a
+library-exposed key); `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` (new focused
+case).
