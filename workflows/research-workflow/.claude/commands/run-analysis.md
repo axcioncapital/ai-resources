@@ -94,8 +94,9 @@ The authority rules — artifact shape, lifecycle, challenge record, promotion, 
 The reviewer must not be the agent that wrote the brief, and must not inherit what that agent said about it.
 
 1. Launch a qc-gate sub-agent. Pass it: the proposal by PATH `{base}-proposed.md` — the sub-agent reads the complete file itself — the same evidence-bundle and context-bundle paths passed at 3.5a, and the five challenge questions from `reference/unit-judgment-brief.template.md` § What the challenge asks.
-2. **Withheld from the reviewer:** everything 3.5a returned — the thesis count, the cited claim IDs and any producer summary, reasoning or transcript. The reviewer reads the file and forms its own view; a reviewer briefed on the producer's account is reviewing that account, not the brief.
-3. Return: an overall verdict, and for each required-change finding one line stating the finding plus its tag where one applies — `permission-breach` (an evidence-permission overreach) or `decision-conflict: {id}` (a conflict with an operator decision). A reviewer that raised nothing returns exactly that; silence and omission read identically and only one of them is a review.
+2. **On every round after the first:** also pass the existing challenge record by PATH `{base}-review.md` — the sub-agent reads it itself — and require, on top of the ordinary challenge, an explicit **resolved** or **unresolved** verdict for every carried finding id in that ledger, each with a one-line reason. Re-running a reviewer that has not seen the prior ledger proves fresh review of the revised brief; it proves nothing about whether the earlier findings were resolved, and those are two different claims. Round 1 has no prior ledger and this clause does not apply to it.
+3. **Withheld from the reviewer:** everything 3.5a returned — the thesis count, the cited claim IDs and any producer summary, reasoning or transcript. The reviewer reads the file and forms its own view; a reviewer briefed on the producer's account is reviewing that account, not the brief. The prior ledger passed at item 2 is not an exception: it is the reviewer's own predecessor record, not the producer's account of the brief.
+4. Return: an overall verdict, and for each required-change finding one line stating the finding plus its tag where one applies — `permission-breach` (an evidence-permission overreach) or `decision-conflict: {id}` (a conflict with an operator decision). A reviewer that raised nothing returns exactly that; silence and omission read identically and only one of them is a review. On rounds after the first, return the per-carried-id resolved/unresolved verdicts from item 2 as well.
 
 #### Step 3.5c: Record the challenge
 
@@ -109,7 +110,8 @@ The main session writes this record. It did not author the brief, and writing th
    Write that value as `reviews_sha256:`. **Never copy a digest from a sub-agent's return** — a digest a model reports is a claim about the file; this one is the file.
 3. Write `{base}-review.md`: `unit:`, `artifact: unit-judgment-brief-review`, `reviews:` (the proposal path), `reviews_sha256:` (from step 2), `review_round:` (1, or the previous round + 1), `status: findings-only`, `as_of:`.
 4. Ledger: one `finding: F{n}` / `tags:` / `disposition: PENDING` / `reason:` entry per required-change finding, carrying forward every finding id any earlier round raised. Where the reviewer raised nothing, write the explicit empty ledger `findings: none`.
-5. Verify the record's shape and binding:
+5. **Who may write a terminal disposition:** `REVISED-AND-RE-REVIEWED` goes on a carried finding **only** where this round's reviewer explicitly returned it resolved at 3.5b item 2. Every carried finding this round did not confirm stays `PENDING`, every earlier finding id stays in the current ledger, and the archived round file is never edited. The main session **never decides** that a finding is resolved — it transcribes what the reviewer returned, and a disposition it wrote on its own judgment would assert an independent confirmation that never happened. `OPERATOR-ACCEPTED` is the founder's act at 3.5d, not this step's, and the contract refuses it outright for a `permission-breach` finding.
+6. Verify the record's shape and binding:
    ```bash
    bash "$CLAUDE_PROJECT_DIR/logs/scripts/check-judgment-challenge.sh" "{base}-proposed.md" --shape-only
    ```

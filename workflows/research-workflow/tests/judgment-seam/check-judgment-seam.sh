@@ -90,6 +90,19 @@ branch_block() {  # $1 = branch name; reads 3.5d block on stdin
 # Backticked project-absolute path tokens inside a bullet list.
 path_tokens() { grep -o '`/[^`]*`' | tr -d '`' | sort -u; }
 
+# The numbered item introduced by a bold label, up to the next numbered item or
+# the next sub-step heading. Used where an assertion has to read one clause
+# rather than the whole sub-step: a directive that satisfies the assertion from
+# some OTHER item is not the same wiring.
+labelled_clause() {  # $1 = the bold label, regex-safe
+  awk -v pat="$1" '
+    $0 ~ pat { inb = 1; print; next }
+    inb && /^[0-9]+\. / { inb = 0 }
+    inb && /^#### / { inb = 0 }
+    inb { print }
+  '
+}
+
 # The bullet list introduced by a bold label, up to the next blank-line-separated
 # non-bullet. Used to prove the two producer bundles are disjoint.
 labelled_list() {  # $1 = the bold label, regex-safe
@@ -135,7 +148,7 @@ if [ -z "$SEAM" ]; then
   for id in J1-separated-inputs J2-proposal-validated J3-reviewer-independent \
             J4-byte-binding J5-decision-branches J6-silence-cannot-promote \
             J7-revision-restales J8-approval-mechanical J9-rejection-no-approved \
-            J10-authority-gate; do
+            J10-authority-gate J11-later-round-ledger J12-disposition-needs-reviewer; do
     record "$id" FAIL "unreachable — the seam section is absent"
   done
 else
@@ -292,6 +305,46 @@ else
     record J10-authority-gate PASS "approved-only gate at 3.5e, before Step 4 (line $seam_ln < $step4_ln)"
   else
     record J10-authority-gate FAIL "${j10%; }"
+  fi
+
+  # -------------------------------------------------------------------------
+  # J11 — a later round can actually dispose of the earlier round's findings.
+  # Re-running a reviewer on the revised brief proves the revised brief was
+  # freshly reviewed. It proves nothing about whether F1 was resolved, because
+  # the reviewer was never shown F1. Two different claims, and the ledger asserts
+  # the second one. So the prior record has to reach the reviewer, and the
+  # reviewer has to return a per-id verdict.
+  # -------------------------------------------------------------------------
+  later="$(printf '%s\n' "$B" | labelled_clause '[*][*]On every round after the first:[*][*]')"
+  j11=""
+  [ -n "$later" ] || j11="${j11}3.5b must carry an **On every round after the first:** clause; "
+  has "$later" '\-review\.md' || j11="${j11}the later-round clause must pass the existing challenge record; "
+  has "$later" 'by path|PATH' || j11="${j11}the challenge record must reach the reviewer by path; "
+  has "$later" 'resolved' && has "$later" 'unresolved' || j11="${j11}the reviewer must return a resolved/unresolved verdict; "
+  has "$later" 'every carried finding' || j11="${j11}the verdict must cover every carried finding id; "
+  if [ -z "$j11" ]; then
+    record J11-later-round-ledger PASS "rounds after the first pass the prior ledger and demand a per-id verdict"
+  else
+    record J11-later-round-ledger FAIL "${j11%; }"
+  fi
+
+  # -------------------------------------------------------------------------
+  # J12 — the terminal disposition records a confirmation that happened. Without
+  # this, the main session could write REVISED-AND-RE-REVIEWED on its own reading
+  # of the revision, which asserts an independent re-review nobody performed —
+  # and that assertion is exactly what the contract lets promotion rely on.
+  # -------------------------------------------------------------------------
+  who="$(printf '%s\n' "$C" | labelled_clause '[*][*]Who may write a terminal disposition:[*][*]')"
+  j12=""
+  [ -n "$who" ] || j12="${j12}3.5c must carry a **Who may write a terminal disposition:** clause; "
+  has "$who" 'REVISED-AND-RE-REVIEWED' || j12="${j12}the clause must govern REVISED-AND-RE-REVIEWED; "
+  has "$who" "this round's reviewer" || j12="${j12}the disposition must rest on this round's reviewer; "
+  has "$who" 'PENDING' || j12="${j12}unconfirmed carried findings must stay PENDING; "
+  has "$who" '[Nn]ever decides' || j12="${j12}the main session must be barred from deciding resolution itself; "
+  if [ -z "$j12" ]; then
+    record J12-disposition-needs-reviewer PASS "terminal disposition requires this round's explicit confirmation"
+  else
+    record J12-disposition-needs-reviewer FAIL "${j12%; }"
   fi
 fi
 

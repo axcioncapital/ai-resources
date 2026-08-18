@@ -51,14 +51,25 @@ fi
 
 printf '\n=== the check was red before the seam was wired ===\n'
 
+# The baseline is PINNED, not `HEAD`. `HEAD` was the pre-seam body only until the
+# seam was committed, after which this case would have compared the post-seam body
+# against itself and passed for the wrong reason — the failure mode a moving
+# baseline always has, and one that gets quieter as the work goes on. 4a2a0b96 is
+# Unit 1's accepted commit: the last state of this command before Step 3.5 existed.
+PRE_REF=4a2a0b96
 PRE="$TMP/run-analysis.pre.md"
-if git -C "$WF" show HEAD:workflows/research-workflow/.claude/commands/run-analysis.md > "$PRE" 2>/dev/null; then
+if git -C "$WF" show "$PRE_REF:workflows/research-workflow/.claude/commands/run-analysis.md" > "$PRE" 2>/dev/null; then
+  # Self-check on the pin: if the baseline already carries the seam, it is not a
+  # baseline. Fail loudly here rather than reporting a red that was never earned.
+  if grep -q '^### Step 3\.5:' "$PRE"; then
+    bad "Tpre the pinned baseline $PRE_REF predates the seam" 'the pinned commit already contains Step 3.5 — the pin is wrong'
+  fi
   pre_fail="$(failing "$PRE")"
   n_pre="$(printf '%s' "$pre_fail" | tr ',' '\n' | grep -c .)"
-  if [ "$n_pre" -eq 11 ]; then
-    ok "Tpre the pre-seam body fails all 11 assertions"
+  if [ "$n_pre" -eq 13 ]; then
+    ok "Tpre the pre-seam body fails all 13 assertions"
   else
-    bad "Tpre the pre-seam body fails all 11 assertions" "failed $n_pre: $pre_fail"
+    bad "Tpre the pre-seam body fails all 13 assertions" "failed $n_pre: $pre_fail"
   fi
 
   # T0b — the falsifiability control. Prose asserting compliance is not compliance.
@@ -76,7 +87,7 @@ if git -C "$WF" show HEAD:workflows/research-workflow/.claude/commands/run-analy
     bad 'T0b  prose asserting the seam is wired moves no verdict' "moved to: $(failing "$CLAIMY")"
   fi
 else
-  bad 'Tpre the pre-seam body fails all 11 assertions' 'could not read the pre-seam body from HEAD'
+  bad 'Tpre the pre-seam body fails all 13 assertions' "could not read the pre-seam body from $PRE_REF"
   bad 'T0b  prose asserting the seam is wired moves no verdict' 'skipped — no pre-seam body'
 fi
 
@@ -145,6 +156,17 @@ mutate 'M9  promoting from the reject branch fails J9' J9-rejection-no-approved 
 # M10 — let the downstream gate accept a proposal as authority.
 m10() { sed 's|"{base}-approved.md"$|"{base}-approved.md" --allow-proposed|'; }
 mutate 'M10 accepting a proposal at the gate fails J10' J10-authority-gate m10
+
+# M11 — re-review the revised brief without showing the reviewer what the last
+#       round raised. The round still happens; it just cannot dispose of F1.
+m11() { sed '/On every round after the first:/d'; }
+mutate 'M11 withholding the prior ledger from a later round fails J11' J11-later-round-ledger m11
+
+# M12 — let the main session decide that a revision resolved a finding. Every
+#       other word of the clause survives, so only the source of the confirmation
+#       moves — which is the whole substance of the assertion.
+m12() { sed "s/this round's reviewer explicitly returned it resolved at 3.5b item 2/the main session judges the revision sufficient/"; }
+mutate 'M12 self-assigned terminal disposition fails J12' J12-disposition-needs-reviewer m12
 
 printf '\n=== the route cannot continue past the seam on a bad brief ===\n'
 

@@ -35,6 +35,8 @@ usage or input error. It takes an optional path so an older or mutated command b
 | `J8` | approve invokes the promoter with `--approval` **and** `--approved-by` | an approved file authored by hand, whose theses can drift from what the founder read |
 | `J9` | reject sets `status: rejected` + `rejected_by:` and creates no approved path | a rejection that leaves something downstream can rely on |
 | `J10` | the gate validates `-approved.md` and never accepts a proposal | downstream work running on a brief nobody approved |
+| `J11` | rounds after the first pass the prior ledger and demand a per-id verdict | a re-review that proves the revised brief was read, while the ledger claims it proved each earlier finding resolved — two different claims |
+| `J12` | `REVISED-AND-RE-REVIEWED` requires this round's explicit confirmation | the main session marking a finding resolved on its own reading, asserting an independent re-review nobody performed |
 
 ## What makes it trustworthy rather than a keyword scan
 
@@ -42,11 +44,15 @@ Every assertion is derived from the **structure** of the live command body — w
 directive sits in, which decision branch it sits in, whether two labelled lists share a path — never
 from a word being present somewhere in the file. Three controls hold that honest:
 
-- **`Tpre`** runs the check against the pre-seam command body taken from Git and requires all eleven
-  assertions to fail. An always-green check is indistinguishable from a working one without it.
+- **`Tpre`** runs the check against the pre-seam command body taken from Git and requires all thirteen
+  assertions to fail. An always-green check is indistinguishable from a working one without it. The
+  baseline is **pinned** to `4a2a0b96` — Unit 1's accepted commit, the last state of this command
+  before Step 3.5 existed — and not to `HEAD`, which stopped being the pre-seam body the moment the
+  seam was committed. The case self-checks the pin: a baseline that already contains Step 3.5 fails
+  loudly rather than reporting a red it never earned.
 - **`T0b`** appends paragraphs to that same pre-seam body asserting the seam is wired. No verdict may
   move. Prose cannot buy a pass.
-- **`M1`–`M10`** each apply **one** mechanical edit to a copy of the **real** command body and require
+- **`M1`–`M12`** each apply **one** mechanical edit to a copy of the **real** command body and require
   exactly the targeted assertion to flip, with nothing else moving. A check that degraded wholesale on
   any edit would fail these rather than pass them.
 

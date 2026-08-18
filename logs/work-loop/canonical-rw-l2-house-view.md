@@ -161,125 +161,77 @@ are accounted for, implementation is committed, and Claude records exact evidenc
 
 ## Latest result
 
-Inspected (2026-08-18):
+Reproduced (2026-08-18), by inspection before correcting:
 
-- Claim (1): HOLDS — checkout `ai-resources-research-workflow-fixes`, branch
-  `session/2026-08-17-research-workflow-fixes`, HEAD `4a2a0b96` (Unit 1's accepted commit).
-  `git status --porcelain` showed only `logs/friction-log.md`, `logs/innovation-registry.md` and this
-  task file modified; the two session logs were left untouched and excluded from the commit.
-  `work-loop-owner.sh check --depth repo` → PROCEED (this checkout declares the task);
-  `work-loop-capability.sh check --canonical` → READY, every copied component byte-identical to
-  canonical.
-- Claim (2): HOLDS — searched every workspace directory to depth 8 for symlinks resolving into
-  `research-workflow`; the 10 that exist all target the canonical `ai-resources` checkout, not this
-  worktree, and none names a file this unit edits (`produce-architecture`, `produce-formatting`,
-  `produce-prose-draft`, `produce-jargon-gloss`, `status`, `verify-chapter`, `run-report`). Searched
-  the whole workspace for `run-analysis.md`, `stage-instructions.md` and `file-conventions.md`: 17,
-  17 and 17 hits respectively, **every one a regular file, zero symlinks**. Edits here take no live
-  effect in any deployed consumer until `/sync-workflow` propagates them.
-- Claim (3): HOLDS — read `run-analysis.md`, `stage-instructions.md`, `file-conventions.md` and the
-  accepted contract end to end. The single transition after gaps resolve and before report-bound
-  writing is `run-analysis` Step 3 → Step 4 (Section Directives), mirrored as `stage-instructions`
-  Step 3.4b → Step 3.5. The brief's caution was warranted: the two files number this same boundary
-  differently, so the seam is `run-analysis` Step 3.5 and `stage-instructions` Step 3.4c.
-- Claim (4): HOLDS — no compatible producer or judgment-review machinery exists. Searched
-  `skills/` (84 entries), `prompts/`, `.claude/commands/`, `.claude/agents/` and the whole
-  `workflows/research-workflow/` tree for `house view`, `unit judgment`, `judgment brief` and the
-  `## Theses` / `### Thesis` headings: every hit is Unit 1's own contract, template and three
-  scripts. Nothing was reused by name alone and no parallel resource was added — the seam reuses the
-  three accepted helpers.
-- Claim (5): HOLDS — the deep route's independent-QC convention is a `qc-gate` sub-agent that
-  **returns** a verdict while the main session writes the artifact (`run-preparation` steps 2 and 3,
-  `run-execution` steps 3, 5 and 122, `run-report` step 3). `run-analysis` Step 5c is the one place
-  that instructs a `qc-gate` to write its own file, which its `tools: Read` frontmatter cannot do —
-  recorded as a deferral, not inherited. The command-path proof convention is `tests/s1-relay`: parse
-  the live command body at an anchor, derive the property from directive text, and prove liveness by
-  mutating the real body (T9/T9b). This unit follows that convention.
-- Claim (6): HOLDS — `/logs/decisions.md` is the established decision log (14 call sites) and the
-  unconditional operator halt is already stated verbatim at `run-analysis` Step 2.5. `run-report`
-  Step 4.4's `-OPERATOR-APPROVED.md` marker is a **separate** chapter-approval workflow; it was not
-  reused and no second approval marker was created. Approval runs only through the accepted promoter.
-- Claim (7): HOLDS, and was actionable — searched `reference/file-conventions.md` for `judgment`: no
-  match in the Canonical Naming Standard table and no `judgment/` in the directory structure. This
-  unit writes the first instance into `analysis/judgment/{section}/`, so the naming rows were added
-  in the same change, closing Unit 1's deferred item.
-- Claim (8): HOLDS — no blocker. The seam needed no new top-level command, no new stage, no
-  architecture change, no new operator-owned judgment and no unverifiable live-consumer edit.
+- Frozen finding (1): REPRODUCES — searched `run-analysis.md` Step 3.5b for `review.md`: **0 matches**.
+  The reviewer received the proposal, the two bundles and the five challenge questions, and nothing
+  else. Step 3.5c item 4 nevertheless instructed the main session to carry every earlier finding id
+  forward. Searched the whole command for `REVISED-AND-RE-REVIEWED`: **one match**, at Step 3.5d's
+  approve gate, which requires the terminal disposition but names nobody who must confirm it. So the
+  main session could write a disposition asserting an independent re-review that no reviewer performed,
+  and promotion is entitled to rely on exactly that assertion.
 
-Result: the canonical deep route now produces, independently challenges and decides a Unit Judgment
-Brief before any report-bound analytical writing. `run-analysis.md` carries a new Step 3.5 between gap
-resolution and Section Directives, with five sub-steps: 3.5a produces the proposal from two disjoint
-labelled path bundles and shape-checks it; 3.5b dispatches a `qc-gate` reviewer that reads the proposal
-by path and is explicitly denied everything 3.5a returned; 3.5c has the main session archive any prior
-round, compute `reviews_sha256` from the file with `shasum`, and write the ledger; 3.5d halts
-unconditionally on a closed four-branch decision set (approve / revise / reject / anything else); 3.5e
-gates entry to Step 4 on `check-judgment-contract.sh {base}-approved.md` exiting 0.
-`stage-instructions.md` gains Step 3.4c and the hard judgment gate; `file-conventions.md` gains three
-naming rows, the `analysis/judgment/{section}/` directory entry, and a note that the three lifecycle
-suffixes are not Rule-2 variants. No downstream analytical owner was touched.
+Result: the later-round seam now carries the prior ledger and the disposition now records a
+confirmation that happened. Three changes, all inside the frozen finding:
+
+- **`run-analysis.md` Step 3.5b item 2 (new).** On every round after the first, the existing challenge
+  record is passed to the fresh reviewer by PATH `{base}-review.md`, and the reviewer must return an
+  explicit **resolved** or **unresolved** verdict for every carried finding id, each with a one-line
+  reason, on top of the ordinary challenge. Round 1 has no prior ledger and is excluded. Item 3's
+  withholding rule is unchanged and now says why the prior ledger is not an exception to it: it is the
+  reviewer's own predecessor record, not the producer's account of the brief. Item 4 returns the
+  per-id verdicts alongside the ordinary findings.
+- **`run-analysis.md` Step 3.5c item 5 (new).** `REVISED-AND-RE-REVIEWED` goes on a carried finding
+  only where this round's reviewer explicitly returned it resolved at 3.5b item 2. Every carried
+  finding this round did not confirm stays `PENDING`; every earlier id stays in the current ledger;
+  the archived round file is never edited; the main session never decides resolution itself.
+  `OPERATOR-ACCEPTED` is left where it was — the founder's act at 3.5d, refused for a
+  `permission-breach` finding by the contract.
+- **`tests/judgment-seam/` gains `J11` and `J12`** plus a `labelled_clause` extractor, so each new
+  assertion reads its own clause rather than the whole sub-step: a directive satisfying it from some
+  other item is not the same wiring.
+
+The accepted contract, the three Unit 1 helpers, all other Unit 2 behaviour, every boundary and all
+four recorded deferrals are unchanged. No downstream analytical owner was touched.
 
 Evidence:
 
-- **Pre-change failing case (real route, fail-capable).** `bash tests/judgment-seam/check-judgment-seam.sh`
-  against the unmodified `run-analysis.md`: **11 of 11 assertions FAIL, exit 1**, `J0` reporting
-  "no '### Step 3.5:' section — the route passes from resolved gaps into Step 4 with no judgment
-  produced". The same command post-change: **11 of 11 PASS, exit 0**. The suite re-earns that red from
-  Git rather than from memory (`Tpre`, against `HEAD:.../run-analysis.md`).
-- **Not a keyword scan.** `T0b` appends four paragraphs to the pre-change body asserting the seam is
-  wired — separated bundles, `reviews_sha256`, unconditional pause with no auto-approve,
-  `--approval`/`--approved-by`, refusal on proposed/stale/rejected. **No verdict moves.**
-- **Every assertion independently live.** `M1`–`M10` each apply **one** mechanical edit to a copy of
-  the **real** command body and require exactly the targeted assertion to flip with nothing else
-  moving: merging the two bundles (J1), dropping `--allow-proposed` (J2), deleting the withholding
-  directive (J3), taking the digest from a sub-agent (J4), opening a fifth decision branch (J5),
-  promoting from the else-branch (J6), revising without a new round (J7), dropping `--approved-by`
-  (J8), promoting from the reject branch (J9), accepting a proposal at the gate (J10). All ten flip.
-- **Negative fixtures exercise the real helpers, not the wording.** `N1` no approved brief → exit 3;
-  `N2a` sound-but-unapproved proposal → 3, with control `N2b` the same proposal passing
-  `--allow-proposed` → 0; `N3` rejected brief → 4; `N4` approved with claim IDs stripped → 5; `N5b`
-  proposal edited after review → challenge stale, exit 4, with control `N5a` the bound record clearing
-  at 0; `N6` undisposed `permission-breach` → 6. The two controls are what stop an always-refusing
-  gate from satisfying the refusals for free.
+- **The new coverage is fail-capable, and both new assertions are independently live.** `M11` deletes
+  the later-round clause from a copy of the **real** command body — the round still runs, it simply
+  cannot dispose of the prior ledger — and exactly `J11` flips, nothing else. `M12` replaces "this
+  round's reviewer explicitly returned it resolved" with "the main session judges the revision
+  sufficient", leaving every other word of the clause intact, and exactly `J12` flips. `M12` is the
+  precise failure the finding named, so the assertion fails on it and on nothing adjacent.
+- **The red is re-earned, not asserted.** `Tpre` runs the check against the pre-seam command body and
+  now requires **13 of 13** assertions to fail; `T0b` still shows that prose asserting the seam is
+  wired moves no verdict.
+- **A defect the required regressions surfaced, and how it was handled.** `Tpre` read its baseline
+  from `HEAD`. That was correct while it was written and became wrong the moment Unit 2 committed —
+  `HEAD` then *was* the post-seam body, so the case compared it against itself and reported 2 failures
+  instead of 13. The baseline is now **pinned** to `4a2a0b96` (Unit 1's accepted commit, the last state
+  before Step 3.5 existed), with a self-check that fails loudly if the pinned blob already contains
+  Step 3.5. This was not named in the frozen finding; it is reported here rather than deferred because
+  it is the Unit 2 suite failing, and a correction whose own required regression is red is not
+  resolved. It adds no behaviour and changes no assertion — only where the baseline is read from.
 - **Exact commands, totals and exit codes.**
-  `bash tests/judgment-seam/check-judgment-seam.sh` → 11/11, exit 0.
-  `bash tests/judgment-seam/check-judgment-seam.test.sh` → **21 passed, 0 failed**, exit 0.
+  `bash tests/judgment-seam/check-judgment-seam.sh` → **13/13, exit 0** (was 11/11 before this round).
+  `bash tests/judgment-seam/check-judgment-seam.test.sh` → **23 passed, 0 failed**, exit 0 (was 21).
   `bash logs/scripts/check-judgment-contract.test.sh` → 19 passed, 0 failed, exit 0.
   `bash logs/scripts/check-judgment-challenge.test.sh` → 24 passed, 0 failed, exit 0.
   `bash logs/scripts/promote-judgment-brief.test.sh` → 24 passed, 0 failed, exit 0.
-  (Unit 1's 67 assertions unchanged; no assertion weakened.)
-  `tests/s1-relay/check-relay-payload.sh` → TARGET MET, 0 violations, exit 0;
-  `tests/s1-relay/check-relay-payload.test.sh` → 26 passed, 0 failed, exit 0.
-  `tests/s1-representative/score-specimen.test.sh` → 38/38, exit 0.
-- **Author/reviewer separation in the real invocation path.** Three mechanisms, each independently
-  asserted: the producer is a general-purpose sub-agent that writes to disk and returns only a path, a
-  thesis count and claim IDs (`J3`); the reviewer is a separately dispatched `qc-gate` that receives
-  the proposal **by path** and reads it itself, with everything 3.5a returned explicitly withheld
-  (`J3`, flipped by `M3`); and the binding is computed by the main session from the file with
-  `shasum -a 256`, never reported by either agent (`J4`, flipped by `M4`). The main session writes the
-  record but authored neither the brief nor the findings.
-- **Changed-surface inventory (4 paths, canonical-only).**
-  `workflows/research-workflow/.claude/commands/run-analysis.md` (+94 lines, Step 3.5),
-  `workflows/research-workflow/reference/stage-instructions.md` (+3, Step 3.4c and the gate),
-  `workflows/research-workflow/reference/file-conventions.md` (+6, three naming rows, directory entry,
-  Rule-2 carve-out), and new `workflows/research-workflow/tests/judgment-seam/`
-  (`check-judgment-seam.sh`, `check-judgment-seam.test.sh`, `README.md`). Zero live-effect consumers —
-  every deployed copy is a regular file.
+  `tests/s1-relay/check-relay-payload.sh` → TARGET MET, exit 0; `check-relay-payload.test.sh` → 26/0.
+  `tests/s1-representative/score-specimen.test.sh` → 38/38.
+  No assertion in any suite was weakened; the three Unit 1 suites are untouched.
+- **Changed surfaces (3 paths).** `workflows/research-workflow/.claude/commands/run-analysis.md`
+  (3.5b items 2-4, 3.5c item 5, renumbering), `tests/judgment-seam/check-judgment-seam.sh` (+`J11`,
+  `J12`, `labelled_clause`), `tests/judgment-seam/check-judgment-seam.test.sh` (+`M11`, `M12`, pinned
+  baseline). `tests/judgment-seam/README.md` records the two new assertions and the pin. Still
+  canonical-only: every deployed copy is a regular file, so nothing took live effect.
 
-Deferrals recorded, not implemented:
-
-1. **The new Step 3.5 relays carry no `tests/s1-relay/seam-manifest.tsv` row.** They are path-passing
-   by construction, so they are compliant, but they sit outside S1's measured denominator — a later
-   edit could convert them to content-passing without S1 noticing. Adding rows means editing the S1
-   manifest and its reconciliation table, which is S1's territory, not this unit's.
-2. **`run-analysis` Step 5c instructs a `qc-gate` sub-agent to write its own output file**, which its
-   `tools: Read` frontmatter cannot do. Pre-existing, outside this unit's scope, and deliberately not
-   inherited by 3.5b.
-3. **`/reference/judgment-context-card.md` has no template and no row in
-   `docs/required-reference-files.md`.** 3.5a says "skip if absent" so the route runs without it, but
-   the canonical resource does not exist yet.
-4. **Downstream owners still do not consume the approved brief** — section directives, synthesis,
-   report architecture, prose and content QC are untouched, exactly as the brief requires. That is the
-   next L2 unit.
+Deferrals — the four from Unit 2 stand unchanged and unimplemented (no `s1-relay` manifest row for the
+new relays; `run-analysis` Step 5c's `qc-gate` write instruction against `tools: Read`;
+`judgment-context-card.md` has no canonical template; downstream owners still do not consume the
+approved brief). Nothing was added to that list in this round.
 
 ## Blocker
 
@@ -287,6 +239,12 @@ None.
 
 ## Next action
 
-Codex: assess Unit 2. The seam that creates approved judgment is wired, proved red-then-green against
-the real route, and every assertion is independently falsifiable; the four deferrals above are recorded
-and unimplemented; no downstream analytical owner was touched and no live consumer was affected.
+Codex: run the closure check on the frozen finding only — is the later-round disposition seam resolved,
+and did the correction break anything? The finding reproduced by inspection before it was corrected;
+3.5b now passes the prior ledger by path on every round after the first and demands a per-id
+resolved/unresolved verdict; 3.5c now permits `REVISED-AND-RE-REVIEWED` only on this round's explicit
+confirmation and leaves everything else `PENDING`; `J11`/`J12` prove both and are each flipped by one
+mechanical edit to the real command body. One defect outside the frozen finding is reported in
+`## Latest result` rather than deferred — `Tpre`'s baseline was reading `HEAD`, which the Unit 2 commit
+turned into the post-seam body; it is now pinned to `4a2a0b96` with a self-check. All Unit 1 and Unit 2
+suites are green and none was weakened.
