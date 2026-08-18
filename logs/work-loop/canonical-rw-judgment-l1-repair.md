@@ -1,7 +1,7 @@
 ---
 task: canonical-rw-judgment-l1-repair
-status: active
-turn: claude
+status: blocked
+turn: operator
 ---
 
 ## Objective and scope
@@ -252,6 +252,37 @@ own clearance without being asked. New sha256
 `-review-round-2.md` beside round 1**, so all three rounds are preserved and the gate can read the
 whole chain.
 
+**Challenge round 3 — a fourth fresh-context opus agent**, briefed with both archived rounds and the
+operator's second verbatim instruction. `--shape-only` → **SHAPE-OK, exit 0**: round 3, bound to the
+current proposal, 10 findings, 2 undisposed. Full gate → **`UNRESOLVED-FINDING`, exit 6**. F1–F8 carry
+forward with original ids, original tags and their prior dispositions; **F8 is now
+`REVISED-AND-RE-REVIEWED`**, verified by the reviewer from `known-limits.md` and `logs/decisions.md`
+directly rather than from the brief, and with no overcorrection — Thesis 1's correct Decision 12 use
+survives.
+
+**Two findings remain open, and both are again Claude's, from the F9 fix:**
+
+- **F9 (`internal-inconsistency`, PENDING — partly resolved, which is not resolved).** The arithmetic
+  is disclosed and correct (4 + 3 − 1 = 6, verified against `Q7-C04` and `Q3-C16`) and the off-by-one
+  is closed. But **the consolidation set is still never named**: HANZA/Leden and Caverion/IS-Technics
+  appear nowhere in the brief, and the overlapping deal is not identified. The only named deals a
+  downstream writer inherits are the four buyer-type ones, so the risk of attributing a consolidation
+  rationale to JOST or Meconet is unmitigated.
+- **F10 (`internal-inconsistency`, PENDING).** The new reconciliation splits the datasets *by thesis*
+  — "this thesis counts three consolidation-pattern transactions" — but Thesis 3 rests on **both**.
+  Verified directly against the C6 permission table, which states in terms that "**four** named
+  in-boundary Finnish transactions show uneven public disclosure": the opening sentence
+  [Q10-C12] [Q10-C13] is carried by the four-deal record, and its load-bearing instance is LH
+  Lift/JOST's €8.718m disclosed price, which sits in the four and not the three. A chapter-6 writer
+  taking the new framing at face value could report a priced consolidation deal.
+
+Neither is tagged `permission-breach` or `decision-conflict`.
+
+**The reviewer's process observation, which bears on the operator's choice and is recorded rather than
+acted on:** three consecutive additive revisions have each introduced a fresh defect in the same
+paragraph of Thesis 3. Its judgment is that a restructured Thesis 3 is likelier to end this than a
+fourth insertion. That is a recommendation about method, not a finding, and the operator decides it.
+
 The premises below were verified in the earlier part-run and re-confirmed by inspection on resume,
 before any trial write: the Sector checkout is on `trial/l1-repeat-precision-components`,
 `git status --porcelain` was empty before any trial write, `analysis/judgment/` held only the first
@@ -346,18 +377,20 @@ Trial commit: `1e4fb20` on `trial/l1-repeat-precision-components`; the Sector tr
 | Measure | Value |
 |---|---|
 | Elapsed, part-run | 16:46:42Z → 17:04:22Z (17 min 40 s) — premise verification, substrate selection, failed dispatches |
-| Elapsed, resume to second operator stop | to 18:18:09Z; the three successful dispatches account for 22 min 30 s of it |
+| Elapsed, resume to third operator stop | to 18:29:30Z; the four successful dispatches account for 29 min 13 s of it |
 | Producer dispatches attempted | 6 — five failed on `API Error: 529 Overloaded`, the sixth succeeded |
-| Reviewer dispatches attempted | 2, both succeeded |
+| Reviewer dispatches attempted | 3, all succeeded |
 | Producer run | 207,597 subagent tokens · 38 tool calls · 371,487 ms (6 min 11 s) |
 | Challenge round 1 | 184,971 subagent tokens · 28 tool calls · 521,188 ms (8 min 41 s) |
 | Challenge round 2 | 160,831 subagent tokens · 28 tool calls · 457,344 ms (7 min 37 s) |
-| Subagent tokens, total | **553,399** across the three successful dispatches |
-| Proposals produced | 1, revised once |
-| Review rounds | 2 |
-| Revision loops | 1 completed — operator direction applied and independently re-reviewed |
-| Findings raised / resolved | 9 raised · 7 resolved · 2 outstanding |
-| Artifact size | proposal 2,423 words · round-1 challenge 2,876 words · round-2 challenge written |
+| Challenge round 3 | 163,778 subagent tokens · 24 tool calls · 402,512 ms (6 min 43 s) |
+| Subagent tokens, total | **717,177** across the four successful dispatches |
+| Proposals produced | 1, revised twice |
+| Review rounds | 3 |
+| Revision loops | 2 completed, each independently re-reviewed |
+| Findings raised / resolved | 10 raised · 8 resolved · 2 outstanding |
+| Defects introduced by Claude's own revisions | 3 across 2 revision loops (F8, F9-residual, F10), each caught by the next round |
+| Artifact size | proposal 2,609 words · three challenge rounds preserved |
 | Operator-active minutes | **unavailable** — no operator-clock instrumentation |
 | Main-session tokens | **unavailable** — no runtime counter exposed to the session |
 | Monetary cost | **unavailable** — no price data available in-session |
@@ -418,12 +451,45 @@ states the band is a target and not a gate, and it returned VALID. Recorded for 
 
 ## Blocker
 
-**None — this stop is discharged.** The operator gave a second substantive revision direction rather
-than an approval; it is recorded verbatim in `## Latest result` and applied, and challenge round 3 is
-running against the twice-revised bytes. The next blocking stop is the operator's final decision,
-which opens when round 3 returns. Until then the task is Claude's move and waits on nothing.
+**The operator owes the final approve / revise / reject decision**, and must settle **F9 and F10**.
+This is L1 PASS condition 5. Nothing is promoted before it.
 
-The record below is retained as trial evidence, not as a live blocker.
+- Twice-revised proposal: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md`
+- Round-3 challenge: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`
+- Archived rounds: `-review-round-1.md`, `-review-round-2.md`
+- Branch `trial/l1-repeat-precision-components`; round 3 bound to proposal sha256 `759b0d39316c9baf66d49a38b5f3b5604add677416b4e8840348d04cbb2eddf3`.
+
+**Eight of ten findings are resolved, including both evidence-permission breaches.** F9 and F10 are
+described in full in `## Latest result`. Both are disclosure defects rather than analytical ones: no
+claim, grade, permission ceiling or verdict is affected, and every substantive analytical position in
+the brief now checks out. What is missing is that the brief tells a downstream writer how many
+transactions are in each set without telling them which, in a thesis that silently uses both.
+
+**Routes open to the operator.** Neither pending finding is tagged `permission-breach` or
+`decision-conflict`, so all three are available:
+
+- **`OPERATOR-ACCEPTED` with reasons for both, plus approval** — the gate accepts it and promotion
+  proceeds. The cost is that Chapter 6's valuation treatment and Chapter 2's deal-supply reading
+  inherit a set ambiguity that a writer could resolve wrongly.
+- **A further revision** — breaks the round-3 binding and forces round 4. The round-3 reviewer's own
+  recommendation is that a **restructured Thesis 3** would end this more reliably than a fourth
+  insertion, since three consecutive additive edits have each introduced a defect in that paragraph.
+  A restructure is a larger edit than the two-sentence fix the findings strictly require, and choosing
+  it is the operator's call, not Claude's.
+- **Reject** — valid operation; it cannot produce the approved authority L1 PASS requires.
+
+**Promotion is refused by the mechanism, not merely by instruction:** the full challenge gate returns
+`UNRESOLVED-FINDING` (exit 6) with 2 of 10 undisposed, and `promote-judgment-brief.sh` re-runs that
+same gate and would refuse on exit 11.
+
+**What must not happen at this stop.** No approval is inferred from silence or from any reply that
+does not say so. Claude does not dispose of F9 or F10 on the operator's behalf and does not revise
+them undirected — the fact that all three residual defects are Claude's own makes self-correction
+more tempting and no more permitted.
+
+---
+
+**The second operator stop as it was presented, retained as trial evidence.**
 
 ---
 
@@ -523,9 +589,10 @@ operator-facing path, not only the gate.
 
 ## Next action
 
-Operator: give the explicit **approve / revise / reject** decision on the re-reviewed proposal, and
-settle F8 and F9 — either an `OPERATOR-ACCEPTED` disposition with your reasons for each, or a
-direction to fix them.
+Operator: give the final **approve / revise / reject** decision, and settle **F9 and F10** — either an
+`OPERATOR-ACCEPTED` disposition with your reasons for each, or a direction to fix them. If the
+direction is to fix, say whether Thesis 3's second paragraph should be **restructured** rather than
+extended again.
 
 Then Claude, carrying that response back through this same task:
 
