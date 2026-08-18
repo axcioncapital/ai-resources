@@ -1,7 +1,7 @@
 ---
 task: canonical-rw-judgment-l1-repair
-status: active
-turn: claude
+status: blocked
+turn: operator
 ---
 
 ## Objective and scope
@@ -132,10 +132,17 @@ to produce required evidence hands back without expanding scope.
 
 ## Latest result
 
-Unit 2 opened and is **part-run**. Every premise the brief asked for was checked and holds, the trial
-substrate is verified and bound, and the pre-trial floor is recorded. The trial itself did not start:
-the Step 3a producer dispatch failed four consecutive times on `API Error: 529 Overloaded`, a
-server-side capacity condition. Nothing was written, and nothing was worked around.
+Unit 2 has **run the genuine trial through to its first operator stop**. The deployed local path
+produced a proposal and put it through one independent fresh-context challenge, which returned
+**seven required-change findings** — two of them evidence-permission breaches that approval cannot
+waive. The task now waits on the operator's substantive revision direction, which is L1 PASS
+condition 3.
+
+The premises below were verified in the earlier part-run and re-confirmed by inspection on resume,
+before any trial write: the Sector checkout is on `trial/l1-repeat-precision-components`,
+`git status --porcelain` was empty before any trial write, `analysis/judgment/` held only the first
+trial's `custom-dev-data-ai`, and all six directive blobs matched their recorded baseline hashes.
+They are not re-derived.
 
 Inspected (2026-08-18):
 
@@ -178,27 +185,70 @@ logs/l1-judgment-trial-record.md` is empty: the first trial is untouched. Case i
 governed by Decisions 6, 10 (re-affirmed), 13 (buyer lens = private equity), 14 (defence/dual-use
 excluded), 15 and 20 (the C4 override), plus the Scope Revision Trigger 2 resolution.
 
-**What stopped it.** Five `general-purpose` producer dispatches pinned to `model: opus` — two
-foreground, three background — each terminated on `API Error: 529 Overloaded` between 16:47Z and
-17:14Z. No partial artifact was left: `analysis/judgment/precision-components/` does not exist and
-the Sector tree is clean. The model pin was not lowered to get a dispatch through. It is enforced by
-`check-judgment-producer.sh` (exit 7, UNPINNED-PRODUCER) and by workspace `CLAUDE.md` § Model Tier,
-and a producer run at an unpinned tier would not be the deployed path this trial exists to test. The
-brief was not written in the main session either: PASS condition 2 requires the deployed path's own
-fresh-context challenge, and a proposal authored here would make the challenge a review of this
-session's own work.
+**What the trial produced.** The 529 condition cleared on resume and the sixth producer dispatch was
+served. The model pin was never lowered and the proposal was never written in the main session — both
+were available shortcuts and both would have voided the proof.
 
-This is an infrastructure condition, not a false premise and not an operator decision, so the task
-stays `active` with `turn: claude`. The next invocation resumes at `/run-analysis` Step 3a Branch C
-on the bound branch; everything above is verified and does not need redoing.
+*Step 3a, Branch C.* Re-entry branches were evaluated in order: Branch A `MISSING` (exit 3), Branch B
+`MISSING` (exit 3), so Branch C. Planning inputs resolved to exactly one file each —
+`precision-components-task-plan-v1.md` and `precision-components-research-plan-v1.md` — so the
+version HALT did not fire and the operator's v1 ruling was satisfied by the repository itself. One
+`general-purpose` sub-agent pinned to `model: opus` wrote
+`analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md` and
+nothing else. Five theses, 60 distinct claim IDs, provisional verdict **Selective**, with Chapter 4
+carried as the evidenced negative/thin input Decision 20 requires. Shape check
+`check-judgment-contract.sh --allow-proposed` → **VALID, exit 0**, with one non-binding warning: 1,924
+words against a 500–800 target band the validator states is a target and not a gate.
 
-**Burden so far (partial, and labelled as such).** Elapsed 16:46:42Z → 17:04:22Z, 17 min 40 s, all of
-it premise verification, substrate selection and four failed dispatches. Proposals produced: 0. Review
-rounds: 0. Revision loops: 0. Producer dispatches attempted: 4, all failed on 529. Subagent tokens:
-**unavailable** — every dispatch died before returning a usage figure. Main-session tokens, monetary
-cost and operator-active minutes: **unavailable** for the same instrumentation reasons recorded as
-accepted limitations in the closed first-trial task — no runtime token counter, no price data, no
-operator-clock instrumentation. These are not estimated.
+The producer mapped all six of cluster 04's `F1`–`F6` finding labels to real Q-form extract IDs rather
+than fabricating any — the trap recorded above did not fire — and the challenge verified that mapping
+independently rather than accepting it.
+
+*Step 3b.1, round 1.* `check-judgment-challenge.sh --shape-only` → `NO-CHALLENGE` (exit 3), so no
+archive step applied and the reviewer was dispatched as round 1. A **separate** fresh-context
+`general-purpose` agent pinned to `model: opus` — not the producer, and given no sight of the
+producer's reasoning — wrote
+`analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md` and
+nothing else. It returned **seven required-change findings**, all `disposition: PENDING`. Re-run of
+`--shape-only` → **SHAPE-OK, exit 0**: round 1, bound to proposal sha256
+`5475c2e131e7be53d6aaf574fbf23750d741d86a0e23f5c31d141e00c21a1649`, seven findings still to dispose
+of, explicitly *not* a clearance to promote.
+
+*The challenge did real work.* It is not a rubber stamp: two findings are tagged `permission-breach`,
+which `promote-judgment-brief.sh` refuses to let an approval launder, and one of those also carries
+`decision-conflict: 21`. It also cleared four things the brief could have got wrong and did not —
+all 60 claim IDs resolve and support their use; Decision B3-28 is genuinely non-applicable, verified
+against the actual claim sets rather than asserted; no HOLD was imported or manufactured and the
+zero-Blocking position is stated honestly; and no v2 plan material appears. `decisions_checked` records
+thirteen decision ids.
+
+*Floor re-verified mid-trial, after the scripts were exercised for real:* contract 17 · gate 16 ·
+producer 41 · propagation 16 · challenge 55 — **145 passed, 0 failed**, equal to the accepted floor.
+
+Trial commit: `1e4fb20` on `trial/l1-repeat-precision-components`; the Sector tree is clean.
+
+**Burden so far, to the first operator stop.** Measured where measurable, labelled where not.
+
+| Measure | Value |
+|---|---|
+| Elapsed, part-run | 16:46:42Z → 17:04:22Z (17 min 40 s) — premise verification, substrate selection, failed dispatches |
+| Elapsed, resume to operator stop | to 18:01:30Z; the two successful dispatches account for 14 min 53 s of it |
+| Producer dispatches attempted | 6 — five failed on `API Error: 529 Overloaded`, the sixth succeeded |
+| Reviewer dispatches attempted | 1, succeeded |
+| Producer run | 207,597 subagent tokens · 38 tool calls · 371,487 ms (6 min 11 s) |
+| Challenge round 1 | 184,971 subagent tokens · 28 tool calls · 521,188 ms (8 min 41 s) |
+| Subagent tokens, total | **392,568** across the two successful dispatches |
+| Proposals produced | 1 |
+| Review rounds | 1 |
+| Revision loops | 0 — the operator has not yet given a revision direction |
+| Artifact size | proposal 2,074 words · challenge 2,876 words |
+| Operator-active minutes | **unavailable** — no operator-clock instrumentation |
+| Main-session tokens | **unavailable** — no runtime counter exposed to the session |
+| Monetary cost | **unavailable** — no price data available in-session |
+
+The three unavailable measures are the same instrumentation gaps recorded as accepted limitations in
+the closed first-trial task. They are labelled, not estimated. The subagent token and duration figures
+are new — the first trial could not produce them because its dispatches never returned a usage figure.
 
 **Three readings, put to the operator before the trial ran and now settled by them
 (2026-08-18). These are operator rulings, not Claude's interpretation:**
@@ -218,36 +268,109 @@ operator-clock instrumentation. These are not estimated.
 
 **Directive baseline, captured 2026-08-18T17:10:36Z, before anything could replace it.** Source
 commit for all six files: `1f9fd241065157bd63c035eed21a526234923ddf`. Preserved on
-`trial/l1-judgment-custom-dev-data-ai` at `9e3242b`, tree `6c360fc`. Re-verified unchanged at
-17:14:41Z after the fifth failed dispatch. The Step-4 before/after diff is taken against these exact
-hashes:
+`trial/l1-judgment-custom-dev-data-ai` at `9e3242b`, tree `6c360fc`. **Re-verified unchanged at
+2026-08-18T18:01:30Z**, after the proposal and the challenge were written — Step 4 has not run and no
+directive has been replaced. The Step-4 before/after diff is taken against these exact hashes. One
+transcription slip in this table was corrected on resume: cluster 04's sha256 excerpt was recorded as
+`3dffd08253737022` and the file's actual value is `3dffd0825373702b`. The git blob hash, which is the
+stronger identifier, matched exactly throughout, so the substrate never changed — only the record of
+it was wrong, and it is now right.
 
 | Directive | git blob | sha256 (first 16) |
 |---|---|---|
 | `precision-components-cluster-01-directive.md` | `374923cf3f77310f3045b809562ee44d3e8bb1e0` | `e5730db03f680228` |
 | `precision-components-cluster-02-directive.md` | `a4d7ec5768dc5f478b591f46ec6164738c9d7250` | `9b548a8fe526f295` |
 | `precision-components-cluster-03-directive.md` | `ae01b9a584b95b390008d807370d868400eef060` | `bb168b532802dae3` |
-| `precision-components-cluster-04-directive.md` | `dd9384c155a45553c5e0b4a7cd67c37875936eb9` | `3dffd08253737022` |
+| `precision-components-cluster-04-directive.md` | `dd9384c155a45553c5e0b4a7cd67c37875936eb9` | `3dffd0825373702b` |
 | `precision-components-cluster-05-directive.md` | `59f8692c55b3aff53027464c5e628791507a886c` | `12c99be13c4523b7` |
 | `precision-components-cluster-06-directive.md` | `0af85bc2b1001fcfba1cd2e9a83c7d353abe0904` | `e83c3ccbc3f13b1a` |
 
-**Boundaries observed.** No trial artifact written. No genuine trial run. B3-28 untouched. No gap
-closed, no HOLD cleared, no report authorized. No canonical judgment resource and no L3/L4 surface
-touched. No push, merge, deployment or destructive action. The first trial's branch, artifacts and
-history are unmodified.
+**Boundaries observed.** Two trial artifacts written, both inside the isolated trial checkout and both
+required by the trial. No approval inferred and none given. No revision applied on the operator's
+behalf. No promotion attempted — `promote-judgment-brief.sh` has not been run, and it would refuse
+today on exit 11 with seven findings undisposed. B3-28 untouched and screened as non-applicable. No
+gap closed, no HOLD cleared, no report authorized. No directive replaced and no Step-4 dispatch. No
+canonical judgment resource and no L3/L4 surface touched. No push, merge, deployment or destructive
+action. The first trial's branch, artifacts and history are unmodified.
+
+**Deferral noticed during the trial, recorded and not acted on.** The proposal's 1,924 words against a
+500–800 target band is a real signal about the band, the template or both — five theses each carrying
+evidence, commercial significance and a countercase, plus three travelling caveats and ten decision
+screens, may simply not fit 800 words. Fixing that would be a mechanism change during a trial of the
+mechanism, which the brief forbids. It does not make the required evidence impossible: the validator
+states the band is a target and not a gate, and it returned VALID. Recorded for Codex.
 
 ## Blocker
 
-None. The task is not waiting on the operator: the three readings that were open have been settled by
-them and are recorded above. What remains is a server-side `529 Overloaded` condition on the Step 3a
-producer dispatch, which no operator decision resolves. The operator's standing instruction is to
-retry the pinned Opus producer, never to lower the tier or hand-write the proposal, and to pause
-cleanly if the 529 persists — which is what this record is.
+**The operator owes a substantive revision direction.** This is the blocking stop the brief requires
+at this point, and it is L1 PASS condition 3. Both artifacts are ready to read.
+
+- Proposal: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md`
+- Challenge: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`
+- Both in `projects/axcion-sector-intelligence-l1-trial`, branch `trial/l1-repeat-precision-components`, commit `1e4fb20`.
+
+**Round binding.** Round 1, bound to proposal sha256
+`5475c2e131e7be53d6aaf574fbf23750d741d86a0e23f5c31d141e00c21a1649`. Any revision to the proposal
+breaks that binding by design, which is what forces a fresh round to re-review the revised bytes —
+nothing has to remember to ask. `decisions_checked` records thirteen ids.
+
+**The seven required-change findings, with tags, all `disposition: PENDING`:**
+
+| # | Tags | What it is |
+|---|---|---|
+| F1 | `permission-breach` | The verdict asserts the operating model "works in adjacent Nordic markets" `[Q6-C17]` — an efficacy claim `Q6-C16` and gap G15 forbid — and drops the Finland proxy-downgrade caveat. |
+| F2 | `permission-breach`, `decision-conflict: 21` | Thesis 3's "neither is closable by further search" converts an unrun search into proof of unavailability, exceeds C2 `claim-03` (NOT-SUPPORTED), and closes the G05 gap Decision 21 ruled stays open. The brief's own change-condition list contradicts it. |
+| F3 | `source-conflict-misstatement` | Thesis 3 calls FVCA-2025 "the CURRENT counter-signal to" the −3% laggard, restoring the one-quantity framing Phase E rejected as `RESOLVED-GRANULARITY`. |
+| F4 | `unresolved-operator-flag` | Thesis 4's headline comparison is load-bearing on C1 `claim-03`, which is flagged `[C-CEILING-EXCEEDED]` and unresolved, yet stated unconditionally with only a trailing limitation. |
+| F5 | `unverified-source-dependency` | The retired/superseded geography row is declared non-load-bearing, but "to approach on the sell side" supplies Thesis 1's operative conclusion. |
+| F6 | `internal-inconsistency` | The "fifth and sixth … the current three" change-condition mixes C2's three-transaction set with C4's four-transaction set; Finnish-only additions cannot clear the Check-7 pattern bar, which needs 2+ countries. |
+| F7 | `caveat-not-applied` | Thesis 5's "unusual confidence" and "the two strongest-graded findings" run against the `disconfirmation_tested: false` posture the brief itself commits to; four H-grade candidates make the superlative unsupportable. |
+
+**What constrains the operator's options, and what does not.**
+
+- **F1 and F2 cannot be `OPERATOR-ACCEPTED`.** A `permission-breach` is refused by the gate as a
+  disposition, deliberately: an approval must not be able to convert an evidence-permission breach
+  into approved authority. The only route for these two is revision followed by a fresh round. This
+  is a mechanism refusal, not a recommendation.
+- **F2 additionally conflicts with unrevoked Decision 21.** A `decision-conflict` is cleared only by a
+  decision that supersedes the one it conflicts with, never by citing that same decision and never by
+  the fact that an approval followed.
+- **F3 and F5–F7 may be dispositioned `OPERATOR-ACCEPTED`** with reasons in the operator's own words,
+  if the operator judges no change is needed.
+- **F4 was deliberately left untagged as a breach** because Decision 19 gives the operator a live
+  route other than revision. That is the reviewer's judgment, and the operator may disagree with it.
+
+**Three things the trial itself surfaced, which the operator should see before deciding:**
+
+1. **The C1 `[C-CEILING-EXCEEDED]` flag is an open operator call, not a defect of this brief.**
+   `precision-components-cluster-01-claim-03` was assigned SUPPORTED against a tier-C ceiling of
+   PROXY-SUPPORTED, and the upstream permission table deliberately did not downgrade it. It predates
+   this trial. F4 is where it surfaces.
+2. **A Context Card row would materially strengthen the Selective verdict, and is not usable as it
+   stands.** "Sweden is the primary buy-side market; Finland is the relationship base and primary
+   sell-side source" lines up closely with the evidence, but traces to a retired/superseded project
+   file that Register C says must be operator-verified before it governs a verdict. It should not be
+   adopted silently. F5 is where it surfaces.
+3. **The length overrun is a signal about the band, not about this brief.** Cutting to 500–800 words
+   means dropping a thesis, not trimming prose. Recorded as a deferral above.
+
+**What must not happen at this stop.** No approval is inferred from silence or from any reply that
+does not say so. A revision reply is not an approval. Claude does not revise on the operator's behalf
+and does not dispose of a finding for them. Nothing is promoted until the operator has seen a
+re-reviewed proposal and explicitly decided.
+
+**A bare `approved` here is an L1 FAIL** even though the mechanism would refuse it — condition 3
+requires at least one substantive revision direction before approval, and the trial is measuring the
+operator-facing path, not only the gate.
 
 ## Next action
 
-Claude: resume the trial at `/run-analysis` Step 3a Branch C on `trial/l1-repeat-precision-components`
-once opus subagent dispatches are being served again — the producer, then Step 3b.1's independent
-challenge, then the operator stop carrying the proposal, the complete challenge, every required-change
-finding, the round binding and the burden record. The premises, the substrate and the 145/145
-pre-trial floor recorded above are verified and are not re-run.
+Operator: read the proposal and the complete challenge, then give a **substantive revision direction**
+— and, for any finding you judge needs no change, an explicit disposition with your reasons. F1 and
+F2 must be revised; the gate will not accept them any other way.
+
+Then Claude, carrying that response back through this same task: apply the revision to the proposal in
+place, re-run `check-judgment-contract.sh --allow-proposed`, return to Step 3b.1 where the broken
+binding will report `STALE-CHALLENGE` (exit 4), archive round 1 before dispatching round 2, and stop
+for the operator again with the re-reviewed proposal for the explicit approve / revise / reject
+decision. Do not promote before that decision.
