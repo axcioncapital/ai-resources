@@ -11014,6 +11014,200 @@ else
 fi
 rm -rf "$(task_lock_for "$d4" evidence-default-task)" "$(checkout_lock_for "$d4")" 2>/dev/null
 
+# =============================================================== cases 63c-63e
+# THE REMAINING THREE REFUSAL BRANCHES OF check_evidence_location(), and why they
+# are one family rather than three units.
+#
+# The function has FIVE ways to refuse (dispatch.sh 1598-1628). Two are already
+# pinned: 58b drives the existing-directory-is-not-writable branch, and 63a and
+# 63a(2) drive the nearest-existing-ancestor-is-not-a-directory branch. The other
+# three — a symlink that does not resolve to a directory, an exact existing path
+# that is not a directory, and a missing location whose nearest existing ancestor
+# is not writable — had never been reached by a permanent case, so the only thing
+# standing between them and a silent regression was that they happen to sit
+# beside two branches that are covered.
+#
+# ONE CALL SITE, SO ONE CONTRACT. All five are reached from dispatch.sh 1635,
+# which runs before RUN_ID exists (3221), before acquire_lock (3312), before the
+# evidence directory is created (3174), before the ownership helper is consulted
+# (4125) and before launch_actor (4370). Gate SA requires every invalid
+# pre-admission invocation to fail clearly and launch no actor, take no owner or
+# lease, mutate nothing and write no evidence. That shared contract is what makes
+# these three a family — the same absences asserted against three different
+# hostile inputs — and what makes three separate units ceremony.
+#
+# EACH ASSERTS ITS OWN BRANCH WORDING, read off the live producer rather than a
+# shared string. All five branches print `STOP [10]`, and two of the five say
+# "is not a directory" while two say "is not writable", so a case asserting only
+# the code — or only half a phrase — would pass while reaching one of the two
+# branches that are ALREADY covered. That is the exact way this family could look
+# proven and prove nothing, and it is why the distinguishing clause is asserted
+# in every one of the three.
+#
+# WHAT IS NOT REPEATED HERE. 63a(2) already proves the lease-held half of this
+# boundary — that a pre-admission refusal files no refusal record even when a
+# real second dispatcher holds the lease. It is an ordering fact about the one
+# call site, not about any single branch, so it is not re-run three times.
+
+# The six absences the pre-admission contract names, written once because they
+# are the same six for all three inputs below. This generalizes nothing: it is
+# not an admission matrix, a branch table or a schema checker — it is the block
+# 58b and 63a already write inline, named once so that three copies cannot drift
+# apart. The before-values are passed in because they must be read before the
+# run, and the caller is the only one that can do that.
+evidence_refusal_invariants() { # sandbox label want-log-dir head-before tree-before status-before
+  local d="$1" lab="$2" want="$3" head_b="$4" tree_b="$5" status_b="$6" lease_root
+  lease_root="$(lock_root_for "$d")"
+  # THE LEASE ROOT, not the two lease directories — 63a's reason exactly: release
+  # removes the directories, so their absence is true whether a lease was taken
+  # or not, while the root is created by acquire and never removed.
+  [ ! -e "$lease_root" ] \
+    && ok "$lab — and took no owner or lease: the shared lease root was never created" \
+    || bad "$lab — and took no owner or lease: the shared lease root was never created" \
+           "$(ls -a "$lease_root" 2>&1 | tr '\n' ' ')"
+  [ "$(calls "$d")" = "0" ] \
+    && ok "$lab — and launched no actor" \
+    || bad "$lab — and launched no actor" "calls=$(calls "$d")"
+  # NO EVIDENCE, asserted as the directory never coming into existence. Every one
+  # of the three inputs is a path that is not a directory now, and a run that had
+  # been admitted would have had to make it one before it could write a byte.
+  [ ! -d "$want" ] \
+    && ok "$lab — and wrote no run evidence: the location never became a directory" \
+    || bad "$lab — and wrote no run evidence: the location never became a directory" \
+           "$(ls -a "$want" 2>&1 | tr '\n' ' ')"
+  [ "$(git -C "$d" rev-parse HEAD)" = "$head_b" ] \
+    && ok "$lab — and committed nothing" \
+    || bad "$lab — and committed nothing" "HEAD moved from $head_b"
+  if [ "$tree_b" = "$(tree_manifest "$d")" ]; then
+    ok "$lab — and every byte of the checkout's working tree is unchanged"
+  else
+    bad "$lab — and every byte of the checkout's working tree is unchanged" \
+        "$(diff <(printf '%s\n' "$tree_b") <(printf '%s\n' "$(tree_manifest "$d")") | head -10 | tr '\n' ' ')"
+  fi
+  [ "$status_b" = "$(git -C "$d" status --porcelain)" ] \
+    && ok "$lab — and git status is unchanged" \
+    || bad "$lab — and git status is unchanged" \
+           "before [$status_b] after [$(git -C "$d" status --porcelain)]"
+}
+
+# =================================================================== case 63c
+# A SYMLINK THAT DOES NOT RESOLVE TO A DIRECTORY. This branch is first in the
+# function for a reason the fixture reproduces: `-e` is FALSE for a dangling
+# link, so without it the ancestor walk climbs straight past the link to a
+# perfectly good parent, calls the location usable, admits the run — and mkdir -p
+# then fails on the dangling name, after both leases are already held.
+echo
+echo "Case 63c — an evidence location that is a symlink resolving to nothing is refused BEFORE admission"
+d="$(new_sandbox)"; state_file "$d" "evidence-symlink-task" "codex"
+rm -f "$d.calls"
+LINKTGT63C="$d/no-such-target"
+LINK63C="$d/linked-runs"
+ln -s "$LINKTGT63C" "$LINK63C"
+if [ -L "$LINK63C" ] && [ ! -e "$LINK63C" ]; then
+  ok "63c setup — the evidence location is a symlink and it resolves to nothing"
+else
+  bad "63c setup — the evidence location is a symlink and it resolves to nothing" \
+      "$(ls -la "$LINK63C" 2>&1 | tr '\n' ' ')"
+fi
+HEAD63C="$(git -C "$d" rev-parse HEAD)"
+TREE63C="$(tree_manifest "$d")"
+STATUS63C="$(git -C "$d" status --porcelain)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task evidence-symlink-task \
+      --log-dir "$LINK63C" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "63c — the dangling symlink is refused as usage, never admitted" "$OUT"
+out_has "STOP [10]" "$OUT" "63c — the refusal names itself on stderr"
+out_has "is a symlink that does not resolve to a directory" "$OUT" \
+  "63c — and names THIS branch's reason, not one of the four others"
+out_has "$LINK63C" "$OUT" "63c — and names the location it refused"
+evidence_refusal_invariants "$d" "63c" "$LINK63C" "$HEAD63C" "$TREE63C" "$STATUS63C"
+if [ -L "$LINK63C" ] && [ "$(readlink "$LINK63C")" = "$LINKTGT63C" ] && [ ! -e "$LINKTGT63C" ]; then
+  ok "63c — and the link it refused is untouched: same link, same target, target still absent"
+else
+  bad "63c — and the link it refused is untouched: same link, same target, target still absent" \
+      "$(ls -la "$LINK63C" "$LINKTGT63C" 2>&1 | tr '\n' ' ')"
+fi
+
+# =================================================================== case 63d
+# AN EXACT EXISTING PATH THAT IS NOT A DIRECTORY. 63a plants a regular file at an
+# ANCESTOR of the requested location and reaches the ancestor branch; this plants
+# one at the requested location itself, which is a different branch with a
+# different message. The two are one character apart in the fixture and a long
+# way apart in the code, which is why both are named here.
+echo
+echo "Case 63d — an evidence location that exists and is not a directory is refused BEFORE admission"
+d="$(new_sandbox)"; state_file "$d" "evidence-file-task" "codex"
+rm -f "$d.calls"
+FILE63D="$d/runs-is-a-file"
+printf 'not a directory\n' >"$FILE63D"
+if [ -e "$FILE63D" ] && [ ! -d "$FILE63D" ] && [ ! -L "$FILE63D" ]; then
+  ok "63d setup — the evidence location exists, is not a directory, and is not a link"
+else
+  bad "63d setup — the evidence location exists, is not a directory, and is not a link" \
+      "$(ls -la "$FILE63D" 2>&1 | tr '\n' ' ')"
+fi
+HEAD63D="$(git -C "$d" rev-parse HEAD)"
+TREE63D="$(tree_manifest "$d")"
+STATUS63D="$(git -C "$d" status --porcelain)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task evidence-file-task \
+      --log-dir "$FILE63D" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "63d — the non-directory evidence location is refused as usage, never admitted" "$OUT"
+out_has "STOP [10]" "$OUT" "63d — the refusal names itself on stderr"
+out_has "exists and is not a directory" "$OUT" \
+  "63d — and names THIS branch's reason, not the ancestor branch's 'cannot be created'"
+out_has "$FILE63D" "$OUT" "63d — and names the location it refused"
+evidence_refusal_invariants "$d" "63d" "$FILE63D" "$HEAD63D" "$TREE63D" "$STATUS63D"
+if [ -f "$FILE63D" ] && [ "$(cat "$FILE63D")" = "not a directory" ]; then
+  ok "63d — and the file standing at that path is byte-identical"
+else
+  bad "63d — and the file standing at that path is byte-identical" \
+      "$(ls -la "$FILE63D" 2>&1 | tr '\n' ' ')"
+fi
+
+# =================================================================== case 63e
+# A MISSING LOCATION WHOSE NEAREST EXISTING ANCESTOR IS NOT WRITABLE. This is the
+# fifth branch, and it is the one the ancestor walk exists to reach: mkdir -p
+# would build every level below that ancestor, so the ancestor is the honest
+# thing to test and testing it leaves nothing behind. 63a's ancestor is not a
+# DIRECTORY; this one is a directory that will not accept a new entry.
+echo
+echo "Case 63e — a missing evidence location under an unwritable ancestor is refused BEFORE admission"
+d="$(new_sandbox)"; state_file "$d" "evidence-ancestor-task" "codex"
+rm -f "$d.calls"
+RO63E="$d/readonly-parent"
+WANT63E="$RO63E/deeper/runs"
+mkdir -p "$RO63E"
+chmod a-w "$RO63E"
+# THE SETUP IS ASSERTED, and the assertion is not decoration: run as a user who
+# can write anywhere — root in a container is the ordinary case — chmod a-w does
+# not bite, the dispatcher would be right to admit the run, and every absence
+# below would pass for a reason that has nothing to do with the branch.
+if [ -d "$RO63E" ] && [ ! -w "$RO63E" ] && [ ! -e "$WANT63E" ]; then
+  ok "63e setup — the nearest existing ancestor is a directory this user cannot write to"
+else
+  bad "63e setup — the nearest existing ancestor is a directory this user cannot write to" \
+      "$(ls -lad "$RO63E" 2>&1 | tr '\n' ' ') want-exists=$([ -e "$WANT63E" ] && echo yes || echo no)"
+fi
+HEAD63E="$(git -C "$d" rev-parse HEAD)"
+TREE63E="$(tree_manifest "$d")"
+STATUS63E="$(git -C "$d" status --porcelain)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task evidence-ancestor-task \
+      --log-dir "$WANT63E" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "63e — the uncreatable evidence location is refused as usage, never admitted" "$OUT"
+out_has "STOP [10]" "$OUT" "63e — the refusal names itself on stderr"
+out_has "cannot be created" "$OUT" \
+  "63e — and names THIS branch's reason: the location could not be created"
+out_has "$RO63E is not writable" "$OUT" \
+  "63e — and names the ANCESTOR that blocked it, not 58b's already-existing directory"
+out_has "$WANT63E" "$OUT" "63e — and names the location it refused"
+evidence_refusal_invariants "$d" "63e" "$WANT63E" "$HEAD63E" "$TREE63E" "$STATUS63E"
+if [ -d "$RO63E" ] && [ ! -w "$RO63E" ] && [ -z "$(ls -A "$RO63E" 2>/dev/null)" ]; then
+  ok "63e — and the ancestor it refused is unchanged: still a directory, still unwritable, still empty"
+else
+  bad "63e — and the ancestor it refused is unchanged: still a directory, still unwritable, still empty" \
+      "$(ls -lad "$RO63E" 2>&1 | tr '\n' ' ') contents=$(ls -A "$RO63E" 2>&1 | tr '\n' ' ')"
+fi
+chmod u+w "$RO63E" 2>/dev/null
+
 # =================================================================== case 64a
 # A LEASE REFUSAL IS A TERMINAL OF AN ADMITTED RUN, AND OWES ONE RESULT.
 #
