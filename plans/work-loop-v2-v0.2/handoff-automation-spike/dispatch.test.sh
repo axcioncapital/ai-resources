@@ -6122,6 +6122,192 @@ else
       "definitions=$M30_DEFS after=$M30_STILL differs=$M30_DIFFERS parses=$M30_PARSES — the control cannot run"
 fi
 
+# =================================================================== case 50k
+#
+# THE FIFTH AND LAST PRODUCTION CONSUMER (Unit 32), and the one that covers the
+# most terminals: the shared nonzero die() funnel. 50a and 50b proved it
+# FINALIZES a truthful run-bound record at a post-hop 22 and a pre-hop 18; 57b
+# proved a failed publication transfers instead of falling through. Nothing
+# proved the artifact it goes on to advertise still says what this run did.
+# Measured on the fixtures below before the edit: a record altered after
+# successful finalization to `outcome=COMPLETED` still exited 22, was advertised
+# as this run's terminal result and released both leases, and so did one altered
+# to `code=0` at the pre-hop 18. Path, structure and identity have nothing to
+# object to; only meaning does.
+#
+# SAME FORCING TECHNIQUE, SAME WINDOW as 56b, 58e, 60j, 62b and 27w: one altering
+# line injected after this seam's own finalization marker, between publication and
+# consumption. It is GUARDED on RESULT_FILE, like 27w's and for the same reason —
+# die() is also reached from terminals outside the run-evidence coverage guard,
+# where no record exists and an unguarded fixture would act outside the window.
+#
+# BOTH HALVES OF THE FUNNEL ARE EXERCISED, because they are different runs and
+# not two spellings of one: the post-hop 22 has a launched actor and observed
+# state hashes behind it, the pre-hop 18 stops before any launch with its
+# unavailable fields explicit. One consumer covers both without a per-code call
+# site, which is the claim these two fixtures together carry.
+echo
+echo "Case 50k — a nonzero funnel record altered ONLY in outcome, or ONLY in code, is refused before release"
+MUT50K="$SANDBOX_ROOT/mutants50k"; mkdir -p "$MUT50K"
+
+mk_funnel_alter50() { # outfile sed-script [source] -> 0 when the fixture differs and parses
+  awk -v s="$2" '{print} /# die funnel failure transfer/ {
+    printf "  [ -n \"$RESULT_FILE\" ] && { sed %c%s%c \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\"; } # harness die-funnel alteration\n", 39, s, 39 }' \
+    "${3:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${3:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# One run through a forcing fixture at whichever half of the funnel the caller
+# names. `foreign` is what separates them: a path outside the allowlist stops the
+# run at the pre-hop 18 before any launch, and its absence lets the simulated
+# actor run and reach the post-hop 22.
+funnel_run50() { # fixture task foreign? -> sets V50K and O50K
+  V50K="$(new_sandbox)"; state_file "$V50K" "$2" codex
+  [ "${3:-no}" = yes ] && printf 'out of allowlist\n' >>"$V50K/other.txt"
+  O50K="$(bash "$1" --checkout "$V50K" --task "$2" --log-dir "$V50K/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC50K=$?
+}
+
+# The full refusal contract for one forced funnel mismatch, asserted exactly as
+# the four migrated seams assert theirs — plus the one assertion only this seam
+# needs. The refusal re-enters die() to exit 38, so "it refused" is not enough:
+# it has to have refused ONCE.
+expect_funnel_refusal50() { # fixture task expected-token label-prefix original-code foreign?
+  local TL CL N
+  funnel_run50 "$1" "$2" "${6:-no}"
+  expect_rc 38 "$RC50K" "$4 — refused with exit 38, never $5" "$O50K"
+  out_lacks "  terminal result:" "$O50K" "$4 — the refused artifact is not advertised as this run's result"
+  out_has "reached the shared nonzero terminal for code $5" "$O50K" \
+    "$4 — the refusal names the shared nonzero terminal it actually reached, and the code it was ending with"
+  out_lacks "reached a real operator terminal" "$O50K" \
+    "$4 — the refusal claims no operator terminal"
+  # TERMINATION, and this is the assertion the other four seams do not need. They
+  # refuse from a terminal that exits directly; this one refuses from INSIDE the
+  # funnel, and the refusal's own `die 38` re-enters it. A consumer that ran again
+  # on re-entry would refuse the same artifact against TERMINAL_UNPROVABLE/38 and
+  # never stop. Counted rather than reasoned about: exactly one STOP [38] line.
+  N="$(printf '%s\n' "$O50K" | grep -c '^STOP \[38\]' || true)"
+  [ "$N" = 1 ] && ok "$4 — the refusal fired exactly once and did not re-enter the consumer" \
+               || bad "$4 — the refusal fired exactly once and did not re-enter the consumer" \
+                      "STOP [38] lines: $N"
+  TL="$(task_lock_for "$V50K" "$2")"; CL="$(checkout_lock_for "$V50K")"
+  # NOT a finalization story: the record published perfectly well (57b owns the
+  # publication failure). What failed here is what it says.
+  if [ -d "$TL" ] && [ -d "$CL" ] &&
+     grep -q '^terminal result unprovable: ' "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$CL/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL/survivors" 2>/dev/null; then
+    ok "$4 — both leases retained, both pins carrying the bounded '$3' cause"
+  else
+    bad "$4 — both leases retained, both pins carrying the bounded '$3' cause" \
+        "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V50K" "$2" --dry-run
+  expect_rc 17 "$RC" "$4 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+if mk_funnel_alter50 "$MUT50K/outonly.sh" 's/^outcome=.*/outcome=COMPLETED/'; then
+  ok "50k — the outcome-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_funnel_refusal50 "$MUT50K/outonly.sh" funnel-out-task outcome-mismatch \
+    "50k — a post-hop 22 whose record claims COMPLETED" 22
+else
+  bad "50k — the outcome-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+if mk_funnel_alter50 "$MUT50K/codeonly.sh" 's/^code=.*/code=0/'; then
+  ok "50k — the code-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_funnel_refusal50 "$MUT50K/codeonly.sh" funnel-code-task code-mismatch \
+    "50k — a pre-hop 18 whose record claims code 0" 18 yes
+else
+  bad "50k — the code-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+# THE CLEAN CONTROLS, on the same two halves and through the same runner. Without
+# these the refusals above could be satisfied by a seam that refuses everything,
+# which would break every ordinary nonzero terminal in the dispatcher.
+for c50 in 22:funnel-clean-post-task:NO_TRANSITION:no 18:funnel-clean-pre-task:FOREIGN_UNSTAGED:yes; do
+  WANT50="${c50%%:*}"; REST50="${c50#*:}"
+  T50K="${REST50%%:*}"; REST50="${REST50#*:}"
+  SYM50="${REST50%%:*}"; FGN50="${REST50##*:}"
+  funnel_run50 "$DISPATCH_BIN" "$T50K" "$FGN50"
+  RID50K="$(run_id_of "$O50K")"
+  R50K="$V50K/runs/$RID50K.result"
+  if [ "$RC50K" = "$WANT50" ] && [ "$(res_count "$V50K/runs")" = 1 ] &&
+     [ "$(res_field "$R50K" outcome)" = "$SYM50" ] && [ "$(res_field "$R50K" code)" = "$WANT50" ] &&
+     [ "$(tail -1 "$R50K" 2>/dev/null)" = "result_complete=yes" ] &&
+     printf '%s\n' "$O50K" | grep -qF "  terminal result: $R50K" &&
+     [ ! -d "$(task_lock_for "$V50K" "$T50K")" ] && [ ! -d "$(checkout_lock_for "$V50K")" ]; then
+    ok "50k — a clean $WANT50 still exits $WANT50, advertises its one complete $SYM50 result, and releases both leases"
+  else
+    bad "50k — a clean $WANT50 still exits $WANT50, advertises its one complete $SYM50 result, and releases both leases" \
+        "rc=$RC50K results=$(res_count "$V50K/runs") outcome=$(res_field "$R50K" outcome) code=$(res_field "$R50K" code) task-lease=$([ -d "$(task_lock_for "$V50K" "$T50K")" ] && echo held || echo released)"
+  fi
+done
+
+# INDEPENDENCE, structurally, the same assertion 60j, 62c and 27w make for their
+# own seams: this call site must derive its expected symbol through the sole
+# mapping owner and state its expected code from the funnel's own dispatcher-owned
+# parameter. A call site that passed a field out of the record would compare it
+# with itself, and both refusals above would go green on a forgery.
+CALL50K="$(grep -n '# die-funnel terminal consumption' "$DISPATCH_BIN" | grep -v ':[[:space:]]*#' | cut -d: -f2-)"
+if printf '%s\n' "$CALL50K" | grep -q 'result_outcome "\$code"' &&
+   ! printf '%s\n' "$CALL50K" | grep -qE 'RESULT_FILE|TR_OUTCOME|TR_CODE|res_field|\.result'; then
+  ok "50k — the funnel seam derives its expected pair through result_outcome and the funnel's own code, and reads nothing from the artifact"
+else
+  bad "50k — the funnel seam derives its expected pair through result_outcome and the funnel's own code, and reads nothing from the artifact" \
+      "call site: $CALL50K"
+fi
+
+# =================================================================== case 50L
+echo
+echo "Case 50L — mutation control: remove ONLY the new funnel consumer and both mismatches release again"
+# M39 — the fifth in the M33/M34/M36/M37 line, and the first that addresses the
+# funnel itself. It strips exactly the consumer call, leaving the finalization
+# line, its failure transfer, the advertisement, the release and the exit in
+# place, AND leaving the other four consumers untouched — which is what proves
+# this seam is separately fail-capable rather than sharing a switch with them.
+# Fails closed: unless the selector matched exactly once and the mutant differs
+# and parses, the control does not run.
+sed '/# die-funnel terminal consumption$/d' "$DISPATCH_BIN" >"$MUT50K/m39.sh" 2>/dev/null
+M39_HITS="$(grep -c '# die-funnel terminal consumption$' "$DISPATCH_BIN" 2>/dev/null || true)"
+M39_LEFT="$(grep -c '# die-funnel terminal consumption$' "$MUT50K/m39.sh" 2>/dev/null || true)"
+M39_FINAL="$(grep -c '# die funnel failure transfer$' "$MUT50K/m39.sh" 2>/dev/null || true)"
+M39_OTHERS=0
+for m39 in operator dry-run carry-one interruption; do
+  M39_OTHERS=$((M39_OTHERS + $(grep -c "# $m39 terminal consumption\$" "$MUT50K/m39.sh" 2>/dev/null || true)))
+done
+M39_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT50K/m39.sh" || M39_DIFFERS=yes
+M39_PARSES=no; bash -n "$MUT50K/m39.sh" 2>/dev/null && M39_PARSES=yes
+if [ "$M39_HITS" = 1 ] && [ "$M39_LEFT" = 0 ] && [ "$M39_FINAL" = 1 ] && [ "$M39_OTHERS" = 4 ] &&
+   [ "$M39_DIFFERS" = yes ] && [ "$M39_PARSES" = yes ]; then
+  ok "50L — M39 removed exactly the funnel consumer, kept its finalization transfer and the other four consumers, differs, and parses"
+  for f50 in out:22:funnel-m39-out-task:no code:18:funnel-m39-code-task:yes; do
+    FLD50="${f50%%:*}"; REST39="${f50#*:}"
+    WANT39="${REST39%%:*}"; REST39="${REST39#*:}"
+    T39="${REST39%%:*}"; FGN39="${REST39##*:}"
+    if [ "$FLD50" = out ]; then S39='s/^outcome=.*/outcome=COMPLETED/'; else S39='s/^code=.*/code=0/'; fi
+    if mk_funnel_alter50 "$MUT50K/m39-$FLD50.sh" "$S39" "$MUT50K/m39.sh"; then
+      funnel_run50 "$MUT50K/m39-$FLD50.sh" "$T39" "$FGN39"
+      if [ "$RC50K" = "$WANT39" ] &&
+         printf '%s\n' "$O50K" | grep -q '  terminal result: ' &&
+         [ ! -d "$(task_lock_for "$V50K" "$T39")" ] && [ ! -d "$(checkout_lock_for "$V50K")" ]; then
+        ok "50L — M39: without the consumer the $FLD50-only mismatch exits $WANT39, advertises the altered artifact and releases (50k is fail-capable)"
+      else
+        bad "50L — M39: without the consumer the $FLD50-only mismatch exits $WANT39, advertises the altered artifact and releases (50k is fail-capable)" \
+            "rc=$RC50K advertised=$(printf '%s\n' "$O50K" | grep -c '  terminal result: ') task-lease=$([ -d "$(task_lock_for "$V50K" "$T39")" ] && echo held || echo released)"
+      fi
+    else
+      bad "50L — M39: the $FLD50-only fixture over the mutant differs and parses" \
+          "the injection matched nothing, or the fixture does not parse — the control cannot run"
+    fi
+  done
+else
+  bad "50L — M39 removed exactly the funnel consumer, kept its finalization transfer and the other four consumers, differs, and parses" \
+      "matched=$M39_HITS left=$M39_LEFT finalization=$M39_FINAL others=$M39_OTHERS differs=$M39_DIFFERS parses=$M39_PARSES — the control cannot run"
+fi
+
 # ==================================================================== case 51
 # THE STANDALONE STRUCTURAL VALIDATOR for the v1 terminal result case 50 proves
 # the dispatcher produces. Case 50 read that artifact with harness `sed`/`grep`
@@ -9368,11 +9554,12 @@ else
 fi
 # WHICH CONSUMERS ARE MIGRATED, NAMED RATHER THAN COUNTED LOOSELY. Every
 # consume_terminal_result call site is enumerated from the shipped text and
-# classified by whether it supplies a pair. Three must — the operator terminal
-# (Unit 27), the dry-run terminal (Unit 28) and the post-hop carry-one terminal
-# (Unit 29, case 60j) — and the interruption consumer must not. Asserting the
-# exact NAMES, not just a count, is what stops a later unit migrating one seam
-# while silently dropping another and still satisfying "three".
+# classified by whether it supplies a pair. All five must now — the operator
+# terminal (Unit 27), the dry-run terminal (Unit 28), the post-hop carry-one
+# terminal (Unit 29, case 60j), the interruption terminal (Unit 30, case 27w) and
+# the shared nonzero die() funnel (Unit 32, case 50k). Asserting the exact NAMES,
+# not just a count, is what stops a later unit migrating one seam while silently
+# dropping another and still satisfying "five".
 #
 # COMPARED AS SORTED SETS, because the enumeration follows the order the call
 # sites happen to appear in the dispatcher. Spelling out every permutation was
@@ -9380,9 +9567,12 @@ fi
 # claimed is which seams, not where they sit in the file.
 #
 # THE DEFERRED SIDE IS THE HALF THAT MATTERS HERE. This assertion is the honest
-# limit on 56e: the composed boundary exists for every caller, but only the two
-# named below are subject to it, and this case says which. It makes no claim
-# whatever about the shared nonzero die() funnel, which consumes nothing.
+# limit on 56e: the composed boundary exists for every caller, and this case says
+# which callers are actually subject to it. With Unit 32 that list includes the
+# shared nonzero die() funnel, so no marked consumer remains deferred. It still
+# makes no claim about the direct pre-run exits that never reach the funnel, or
+# about the finalization-failure transfer, which exits without an artifact to
+# consume — neither is a call site here.
 SUPPLY62=''; NOSUPPLY62=''
 # CALL SITES ONLY, and the selection is deliberately narrow twice over. Comment
 # lines are dropped because prose that names the function is not a call — the
@@ -9405,25 +9595,20 @@ $(grep -n 'consume_terminal_result' "$DISPATCH_BIN" |
   grep ' terminal consumption$')
 EOF
 sort62() { printf '%s' "$1" | tr ';' '\n' | grep -v '^$' | LC_ALL=C sort | tr '\n' ';'; }
-if [ "$(sort62 "$SUPPLY62")" = 'carry-one;dry-run;interruption;operator;' ]; then
-  ok "62c — all four call sites supply an expected pair: the operator, dry-run, carry-one and interruption terminals"
+if [ "$(sort62 "$SUPPLY62")" = 'carry-one;die-funnel;dry-run;interruption;operator;' ]; then
+  ok "62c — all five call sites supply an expected pair: the operator, dry-run, carry-one, interruption and shared nonzero die() funnel terminals"
 else
-  bad "62c — all four call sites supply an expected pair: the operator, dry-run, carry-one and interruption terminals" \
+  bad "62c — all five call sites supply an expected pair: the operator, dry-run, carry-one, interruption and shared nonzero die() funnel terminals" \
       "supplying='$SUPPLY62'"
 fi
 # THE EMPTY SIDE IS ASSERTED, NOT DROPPED. With the last consumer migrated this
 # list must be empty, and saying so is a different claim from deleting the
-# assertion: a fifth call site added later without a pair would land here, and a
+# assertion: a sixth call site added later without a pair would land here, and a
 # case that had stopped looking would not see it.
-#
-# AND IT IS NOT A CLAIM ABOUT THE FUNNEL. `consume_terminal_result` is what this
-# enumeration ranges over; the shared nonzero `die()` funnel finalizes without
-# consuming at all, so it is not a call site here, is not covered by "none
-# remains deferred", and remains its own separate deliverable.
 if [ -z "$(sort62 "$NOSUPPLY62")" ]; then
-  ok "62c — no consumer call site is left without an expected pair (this says nothing about the nonzero die() funnel, which consumes none)"
+  ok "62c — no consumer call site is left without an expected pair"
 else
-  bad "62c — no consumer call site is left without an expected pair (this says nothing about the nonzero die() funnel, which consumes none)" \
+  bad "62c — no consumer call site is left without an expected pair" \
       "not-supplying='$NOSUPPLY62'"
 fi
 # THE MIGRATED SEAM, BEHAVIOURALLY. This line predates Unit 29, when it asserted

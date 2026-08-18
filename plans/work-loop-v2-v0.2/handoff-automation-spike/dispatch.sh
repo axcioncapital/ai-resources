@@ -499,6 +499,12 @@ LOG_REL=""
 TERMINAL_RESULT_VERSION=1
 RESULT_FILE=""
 RESULT_FINALIZED=0
+# THE FUNNEL'S CONSUMPTION IS ONE-SHOT, and this flag is what makes it so. It is
+# a separate fact from RESULT_FINALIZED, which answers "was a record written";
+# this answers "has the funnel already checked one". The four terminal seams that
+# consume do not set it, and must not: they exit directly and never re-enter
+# die(), so nothing they do can be undone by a flag they never read.
+RESULT_CONSUMED=0
 
 # Bound one value to a single line. Newlines, carriage returns and tabs become
 # spaces and the value is truncated. This is what makes the grammar safe: a path,
@@ -1377,6 +1383,40 @@ die() { # code, message
   # marker, so the mutation control can remove exactly the transfer and prove
   # the unsafe fall-through comes back without it.
   finalize_terminal_result "$code" || die_funnel_unprovable "$code" # die funnel failure transfer
+  # THE FIFTH AND LAST CONSUMER, and the one that covers the most terminals. Every
+  # ordinary nonzero ending leaves through here, and until now this funnel
+  # published a record and then advertised and released against it without ever
+  # asking whether the artifact still said what this run did. The gap was real and
+  # measured: a record altered after finalization in `outcome` alone, or in `code`
+  # alone, still returned the original 22 or 18, was advertised as this run's
+  # terminal result and released both leases. Path, structure and identity have
+  # nothing to object to; only meaning does.
+  #
+  # THE EXPECTED PAIR IS THE FUNNEL'S OWN, not the artifact's. `$code` is the
+  # parameter this call was made with and the value `exit "$code"` below returns —
+  # one value, so a reader can see the record is being checked against the ending
+  # actually being reported — and the symbol is `result_outcome()`'s answer for
+  # that same code, the sole code-to-outcome owner. One call therefore covers every
+  # nonzero terminal in the funnel without a per-code call site or a second table.
+  #
+  # RESULT_FILE IS THE COVERAGE GUARD, and it is the right one. It is set only
+  # inside finalize_terminal_result, after that function's own run-evidence check,
+  # and cleared again if the write fails — so a non-empty value means precisely
+  # "this run finalized a record just now". Terminals outside the coverage guard
+  # (argument refusals, lease-infrastructure failures) reach die() with it empty
+  # and are skipped, exactly as they are skipped by the advertisement below.
+  #
+  # AND THE REFUSAL RE-ENTERS THIS FUNNEL, which is why the one-shot flag is not
+  # decoration. die_terminal_untrusted exits through `die 38`, so control arrives
+  # back here with the record already finalized; a consumer that ran again would
+  # compare the same artifact against TERMINAL_UNPROVABLE/38, refuse again, and
+  # never terminate. The flag is set BEFORE the call, not after, because the call
+  # does not return on a refusal. Case 50k counts the STOP [38] lines to prove the
+  # bound holds rather than assuming it.
+  if [ "$RESULT_CONSUMED" -eq 0 ] && [ -n "$RESULT_FILE" ]; then
+    RESULT_CONSUMED=1
+    consume_terminal_result "the shared nonzero terminal for code $code" "$(result_outcome "$code")" "$code" # die-funnel terminal consumption
+  fi
   if [ -n "$RESULT_FILE" ]; then
     printf '  terminal result: %s\n' "$RESULT_FILE" >&2
     printf '  terminal result: %s\n' "$RESULT_FILE" >>"$RUN_LOG"
