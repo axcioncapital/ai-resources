@@ -1,7 +1,7 @@
 ---
 task: canonical-rw-judgment-l1-repair
-status: blocked
-turn: operator
+status: active
+turn: claude
 ---
 
 ## Objective and scope
@@ -219,6 +219,39 @@ relayed:**
 
 Both are single-sentence fixes. Neither is a permission breach and neither conflicts with a decision.
 
+**Second operator revision direction (2026-08-18), recorded verbatim — a second substantive direction,
+again not an approval:**
+
+> Revise F8 and F9. This is not approval.
+> **F8:** Remove the incorrect attribution to Decision 12. State that the EV/EBITDA benchmark is
+> structurally unavailable under known limit 17, separately from Decision 12's revenue-band and
+> cap-table registry limits.
+> **F9:** Explicitly distinguish the two datasets: four buyer-type transactions versus three
+> consolidation-pattern transactions, with one overlapping deal. Rewrite the change condition against
+> the three-deal consolidation set and retain that Finnish additions alone cannot satisfy the 5+
+> transactions across 2+ countries pattern threshold.
+> Preserve rounds 1 and 2, run round 3 against the revised bytes, and return for my final decision.
+> Do not promote yet.
+
+**Applied, and re-challenged in round 3.** F8's sentence now attributes the valuation gap to known
+limit 17 and states explicitly that it is separate from Decision 12's limits 15 and 18, which Thesis 1
+correctly relies on. F9 now distinguishes the two datasets where the second one is introduced — four
+buyer-type transactions, three consolidation-pattern transactions, one deal in common, six distinct —
+and the change-condition bullet is stated wholly against the three-deal consolidation set with the
+5+/2-country threshold point retained.
+
+One self-inflicted error was caught and repaired before the round was dispatched: the F9 disclosure
+sentence was first inserted so that it ran into the following clause and left the sentence
+ungrammatical. It was repaired in the same working pass, and the round-3 reviewer is briefed to check
+that insertion specifically.
+
+Contract check on the twice-revised proposal: **VALID, exit 0**, 5 theses, 60 claim IDs, 2,609 words.
+`--shape-only` → **`STALE-CHALLENGE`, exit 4** again, the second time the mechanism has invalidated its
+own clearance without being asked. New sha256
+`759b0d39316c9baf66d49a38b5f3b5604add677416b4e8840348d04cbb2eddf3`. **Round 2 archived to
+`-review-round-2.md` beside round 1**, so all three rounds are preserved and the gate can read the
+whole chain.
+
 The premises below were verified in the earlier part-run and re-confirmed by inspection on resume,
 before any trial write: the Sector checkout is on `trial/l1-repeat-precision-components`,
 `git status --porcelain` was empty before any trial write, `analysis/judgment/` held only the first
@@ -385,9 +418,17 @@ states the band is a target and not a gate, and it returned VALID. Recorded for 
 
 ## Blocker
 
-**The operator owes the explicit approve / revise / reject decision** on the re-reviewed proposal.
-This is the second blocking stop the brief requires, and it is L1 PASS condition 5. Nothing is
-promoted before it.
+**None — this stop is discharged.** The operator gave a second substantive revision direction rather
+than an approval; it is recorded verbatim in `## Latest result` and applied, and challenge round 3 is
+running against the twice-revised bytes. The next blocking stop is the operator's final decision,
+which opens when round 3 returns. Until then the task is Claude's move and waits on nothing.
+
+The record below is retained as trial evidence, not as a live blocker.
+
+---
+
+**The second operator stop as it was presented.** This is what the operator was shown before giving
+the F8/F9 direction:
 
 - Revised proposal: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md`
 - Round-2 challenge: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`
