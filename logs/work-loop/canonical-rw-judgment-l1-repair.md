@@ -178,9 +178,9 @@ logs/l1-judgment-trial-record.md` is empty: the first trial is untouched. Case i
 governed by Decisions 6, 10 (re-affirmed), 13 (buyer lens = private equity), 14 (defence/dual-use
 excluded), 15 and 20 (the C4 override), plus the Scope Revision Trigger 2 resolution.
 
-**What stopped it.** Four `general-purpose` producer dispatches pinned to `model: opus` — two
-foreground, two background — each terminated on `API Error: 529 Overloaded` between 16:47Z and
-17:04Z. No partial artifact was left: `analysis/judgment/precision-components/` does not exist and
+**What stopped it.** Five `general-purpose` producer dispatches pinned to `model: opus` — two
+foreground, three background — each terminated on `API Error: 529 Overloaded` between 16:47Z and
+17:14Z. No partial artifact was left: `analysis/judgment/precision-components/` does not exist and
 the Sector tree is clean. The model pin was not lowered to get a dispatch through. It is enforced by
 `check-judgment-producer.sh` (exit 7, UNPINNED-PRODUCER) and by workspace `CLAUDE.md` § Model Tier,
 and a producer run at an unpinned tier would not be the deployed path this trial exists to test. The
@@ -200,25 +200,36 @@ cost and operator-active minutes: **unavailable** for the same instrumentation r
 accepted limitations in the closed first-trial task — no runtime token counter, no price data, no
 operator-clock instrumentation. These are not estimated.
 
-**Three readings recorded, none resolved unilaterally, all for the operator at the first gate:**
+**Three readings, put to the operator before the trial ran and now settled by them
+(2026-08-18). These are operator rulings, not Claude's interpretation:**
 
-1. PASS condition 1 asks for the proposal to be produced "while the existing Step-2 HOLD remains
-   explicit and unchanged". `precision-components` has no Step-2 HOLD — it has zero Blocking gaps.
-   The only HOLD-bound unit is `custom-dev-data-ai`, and it already holds an approved brief that
-   cannot be re-run without destroying first-trial evidence, which the brief forbids. Read literally,
-   the two requirements cannot both be met by any unit in this repository. The reading taken: the
-   `custom-dev-data-ai` Step-2 HOLD is a constraint to preserve untouched, not a property this
-   unit must exhibit, and `precision-components` carries its own gap position honestly instead.
-2. "The governing Task Plan v2" is `custom-dev-data-ai`'s plan. For `precision-components` only
-   `-task-plan-v1.md` exists, so v1 governs; the command's glob matched exactly one file and did not
-   HALT. Same for the research plan.
-3. PASS condition 6 requires the approved authority to visibly shape a downstream artifact. All six
-   `precision-components` cluster directives **already exist** from the pre-judgment pipeline, and
-   the unit is frozen mid-Stage-4 with Chapter 1 drafted. Producing a judgment-governed directive
-   writes to the same deterministic path. On the new branch the pre-judgment version stays intact on
-   `trial/l1-judgment-custom-dev-data-ai` and in history, so nothing is destroyed — but whether that
-   satisfies "do not overwrite prior evidence" is the operator's call, not mine, and it is cheaper to
-   settle it before the trial reaches approval than after.
+1. **The Step-2 HOLD requirement means the existing `custom-dev-data-ai` HOLD must remain
+   unchanged. It does not require `precision-components` to invent a HOLD** — this unit records
+   its genuine zero-Blocking position. The producer dispatch carries that instruction explicitly,
+   including a prohibition on importing another section's HOLD.
+2. **Use the plans that actually govern `precision-components` — its v1 task and research plans.**
+   `custom-dev-data-ai`'s v2 plan is not imported. The dispatch names v1 as governing and forbids
+   reading v2.
+3. **Replacing the directive at its deterministic path on the isolated repeat-trial branch is
+   acceptable**, on four conditions the operator set: record the baseline before replacement,
+   preserve the original in Git history and on the original branch, produce a before/after diff
+   showing how the approved judgment changed it, and leave the first trial's artifacts and history
+   alone.
+
+**Directive baseline, captured 2026-08-18T17:10:36Z, before anything could replace it.** Source
+commit for all six files: `1f9fd241065157bd63c035eed21a526234923ddf`. Preserved on
+`trial/l1-judgment-custom-dev-data-ai` at `9e3242b`, tree `6c360fc`. Re-verified unchanged at
+17:14:41Z after the fifth failed dispatch. The Step-4 before/after diff is taken against these exact
+hashes:
+
+| Directive | git blob | sha256 (first 16) |
+|---|---|---|
+| `precision-components-cluster-01-directive.md` | `374923cf3f77310f3045b809562ee44d3e8bb1e0` | `e5730db03f680228` |
+| `precision-components-cluster-02-directive.md` | `a4d7ec5768dc5f478b591f46ec6164738c9d7250` | `9b548a8fe526f295` |
+| `precision-components-cluster-03-directive.md` | `ae01b9a584b95b390008d807370d868400eef060` | `bb168b532802dae3` |
+| `precision-components-cluster-04-directive.md` | `dd9384c155a45553c5e0b4a7cd67c37875936eb9` | `3dffd08253737022` |
+| `precision-components-cluster-05-directive.md` | `59f8692c55b3aff53027464c5e628791507a886c` | `12c99be13c4523b7` |
+| `precision-components-cluster-06-directive.md` | `0af85bc2b1001fcfba1cd2e9a83c7d353abe0904` | `e83c3ccbc3f13b1a` |
 
 **Boundaries observed.** No trial artifact written. No genuine trial run. B3-28 untouched. No gap
 closed, no HOLD cleared, no report authorized. No canonical judgment resource and no L3/L4 surface
@@ -227,10 +238,11 @@ history are unmodified.
 
 ## Blocker
 
-None. The task is not waiting on the operator: the Step 3a producer dispatch is failing on a
-server-side `529 Overloaded` condition, which no operator decision resolves. The three readings
-recorded above go to the operator at the first trial gate, once there is a proposal and a challenge
-to put beside them.
+None. The task is not waiting on the operator: the three readings that were open have been settled by
+them and are recorded above. What remains is a server-side `529 Overloaded` condition on the Step 3a
+producer dispatch, which no operator decision resolves. The operator's standing instruction is to
+retry the pinned Opus producer, never to lower the tier or hand-write the proposal, and to pause
+cleanly if the 529 persists — which is what this record is.
 
 ## Next action
 
