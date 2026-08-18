@@ -395,6 +395,61 @@ done
 [ "$untouched" -eq 1 ] && ok "all three decoy files still hold their original turn" \
                        || bad "all three decoy files still hold their original turn"
 
+# ------------------------- shared by cases 2 and 4: initial state-validation
+# THE THREE INITIAL STATE-VALIDATION TERMINALS ARE ADMITTED RUNS. `validate_state`
+# is first called well below the point where the run id, the evidence location and
+# BOTH leases already exist, and above the ownership check — so codes 13, 14 and the
+# initial 15 are post-admission terminals, and the approved plan requires each to
+# "atomically finalize exactly one terminal result" with truthful facts. Until this
+# helper, cases 2 and 4 proved only the exit and the absence of a launch, which a
+# dispatcher that published nothing at all would satisfy.
+#
+# ONE LOCAL HELPER, and the two conditions for having one are met: these fifteen
+# assertions genuinely repeat across three fixtures, and it introduces no contract —
+# it asserts only the half the three SHARE and takes the half that distinguishes
+# them (outcome, code) as arguments. Anything a fixture must prove on its own stays
+# at its own call site.
+#
+# `unavailable` AND `unchecked` ARE THE TRUTHFUL VALUES HERE, not placeholders, and
+# they are the reason this helper asserts them rather than skipping them. The run
+# died inside `validate_state` before `ST_TURN` or `ST_CLASS` was assigned, so the
+# dispatcher genuinely does not know the turn or the classification — and production
+# says so out loud one branch further down, refusing to guess at state. `owner_check`
+# is `unchecked` because the ownership check runs BELOW this terminal; dispatch.sh
+# marks that value as deliberately NOT a synonym for `unavailable`, which is reserved
+# for the check being unrunnable. What is being pinned is that the record reports
+# what it could not observe as unobserved, instead of inventing it.
+assert_state_terminal() { # label runs-dir result-path want-outcome want-code
+  local lbl="$1" runs="$2" r="$3" want_outcome="$4" want_code="$5" pair k want got lt lc
+  [ "$(res_count "$runs")" = "1" ] && [ "$(part_count "$runs")" = "0" ] \
+    && ok "$lbl — exactly one finalized result, no unfinalized temporary beside it" \
+    || bad "$lbl — exactly one finalized result, no unfinalized temporary beside it" \
+           "results=$(res_count "$runs") partials=$(part_count "$runs"): $(ls "$runs" 2>&1 | tr '\n' ' ')"
+  [ "$(tail -1 "$r" 2>/dev/null)" = "result_complete=yes" ] \
+    && ok "$lbl — the record is complete to its sentinel" \
+    || bad "$lbl — the record is complete to its sentinel" "last line: $(tail -1 "$r" 2>/dev/null)"
+  for pair in "outcome:$want_outcome" "code:$want_code" "stage:pre-hop" "actor:none" \
+              "actor_launched:no" "model_request_started:no" "hop:0" \
+              "next_action:operator-repair-state-file-then-rerun" \
+              "turn_at_terminal:unavailable" "state_class:unavailable" \
+              "state_sha256_before:unavailable" "state_sha256_after:unavailable" \
+              "owner_check:unchecked" \
+              "lease_task_at_finalization:held-by-this-run" \
+              "lease_checkout_at_finalization:held-by-this-run"; do
+    k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$r" "$k")"
+    [ "$got" = "$want" ] && ok "$lbl — $k=$want" || bad "$lbl — $k=$want" "got: ${got:-<absent>}"
+  done
+  # HELD AT FINALIZATION AND GONE AFTERWARDS, read from the filesystem rather than
+  # inferred from the two fields above.
+  lt="$(res_field "$r" lease_task_dir)"; lc="$(res_field "$r" lease_checkout_dir)"
+  if [ -n "$lt" ] && [ -n "$lc" ] && [ ! -d "$lt" ] && [ ! -d "$lc" ]; then
+    ok "$lbl — and both leases it reported holding were released on the way out"
+  else
+    bad "$lbl — and both leases it reported holding were released on the way out" \
+        "task=${lt:-<absent>} ($([ -d "$lt" ] && echo present || echo gone)) checkout=${lc:-<absent>} ($([ -d "$lc" ] && echo present || echo gone))"
+  fi
+}
+
 # ================================================================== case 2
 echo
 echo "Case 2 — filename / frontmatter identity mismatch is rejected read-only"
@@ -406,6 +461,19 @@ after="$(shasum -a 256 "$d/logs/work-loop/decoy-mismatch.md" | cut -d' ' -f1)"
 [ "$before" = "$after" ] && ok "the mismatched file is byte-identical afterwards" \
                          || bad "the mismatched file is byte-identical afterwards"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched" || bad "no actor was launched" "calls=$(calls "$d")"
+# THE DURABLE RESULT. Read-only toward the state file is what the assertions above
+# prove; this proves the run still said, durably and once, how it ended. A mutant
+# that suppresses the funnel still exits 14 and still leaves the file byte-identical,
+# so every assertion above it passes while the record is gone.
+RID2="$(run_id_of "$OUT")"
+[ -n "$RID2" ] && ok "  and the run announced a run id" || bad "  and the run announced a run id" "$OUT"
+assert_state_terminal "  case 2" "$d/runs" "$d/runs/$RID2.result" IDENTITY_MISMATCH 14
+# The record points at the file the operator has to repair — the fact that makes
+# `operator-repair-state-file-then-rerun` actionable rather than merely correct.
+[ "$(res_field "$d/runs/$RID2.result" state_file)" = "$(cd "$d" && pwd -P)/logs/work-loop/decoy-mismatch.md" ] \
+  && ok "  case 2 — and the record names the mismatched state file itself" \
+  || bad "  case 2 — and the record names the mismatched state file itself" \
+         "got: $(res_field "$d/runs/$RID2.result" state_file)"
 
 # ================================================================== case 3
 echo
@@ -517,10 +585,52 @@ echo "Case 4 — missing and malformed state"
 d="$(new_sandbox)"
 run_dispatch "$d" no-such-task --actor-cmd "$FLIP"
 expect_rc 13 "$RC" "exits 13 when the state file is missing" "$OUT"
+# ASSERTED HERE, BEFORE THE SANDBOX IS REUSED. The next line rebinds `d`, so the
+# missing-state record has to be read now or it becomes unreachable.
+RID4A="$(run_id_of "$OUT")"
+[ -n "$RID4A" ] && ok "  and the missing-state run announced a run id" \
+                || bad "  and the missing-state run announced a run id" "$OUT"
+assert_state_terminal "  code 13" "$d/runs" "$d/runs/$RID4A.result" STATE_MISSING 13
+# A MISSING FILE STILL HAS A PATH, and naming it is the whole content of the repair
+# instruction: the record has to say which file was not there.
+[ "$(res_field "$d/runs/$RID4A.result" state_file)" = "$(cd "$d" && pwd -P)/logs/work-loop/no-such-task.md" ] \
+  && ok "  code 13 — and the record names the state file that was missing" \
+  || bad "  code 13 — and the record names the state file that was missing" \
+         "got: $(res_field "$d/runs/$RID4A.result" state_file)"
+# CARRIED OUT OF THIS SANDBOX BEFORE `d` IS REBOUND, so the two branches can be
+# compared against each other further down. Read now, or not at all.
+OUTCOME_13="$(res_field "$d/runs/$RID4A.result" outcome)"
+CODE_13="$(res_field "$d/runs/$RID4A.result" code)"
 d="$(new_sandbox)"; state_file "$d" "bad-turn" "robot"
 run_dispatch "$d" bad-turn --actor-cmd "$FLIP"
 expect_rc 15 "$RC" "exits 15 on an out-of-domain turn: value" "$OUT"
 [ "$(calls "$d")" = "0" ] && ok "no actor launched for malformed state" || bad "no actor launched for malformed state"
+# The third of the three, and the one that shows `state_class=unavailable` is a real
+# observation rather than a constant: here the file EXISTS and is readable, and the
+# dispatcher still refuses to name a classification, because the validator never
+# returned one it recognises.
+RID4B="$(run_id_of "$OUT")"
+[ -n "$RID4B" ] && ok "  and the malformed-turn run announced a run id" \
+                || bad "  and the malformed-turn run announced a run id" "$OUT"
+assert_state_terminal "  code 15" "$d/runs" "$d/runs/$RID4B.result" BAD_TURN 15
+[ "$(res_field "$d/runs/$RID4B.result" state_file)" = "$(cd "$d" && pwd -P)/logs/work-loop/bad-turn.md" ] \
+  && ok "  code 15 — and the record names the malformed state file" \
+  || bad "  code 15 — and the record names the malformed state file" \
+         "got: $(res_field "$d/runs/$RID4B.result" state_file)"
+# THE TWO BRANCHES ARE DISTINCT, compared against each other rather than only against
+# their own literals — the check a producer emitting one constant outcome would fail
+# while both per-fixture assertions still passed. Both values must also be non-empty,
+# or two absent reads would compare equal and this would report distinctness for a
+# pair of records that were never written.
+OUTCOME_15="$(res_field "$d/runs/$RID4B.result" outcome)"
+CODE_15="$(res_field "$d/runs/$RID4B.result" code)"
+if [ -n "$OUTCOME_13" ] && [ -n "$OUTCOME_15" ] &&
+   [ "$OUTCOME_13" != "$OUTCOME_15" ] && [ "$CODE_13" != "$CODE_15" ]; then
+  ok "  and the two case-4 branches recorded DIFFERENT outcomes and codes"
+else
+  bad "  and the two case-4 branches recorded DIFFERENT outcomes and codes" \
+      "missing-state: ${OUTCOME_13:-<absent>}/${CODE_13:-<absent>} malformed-turn: ${OUTCOME_15:-<absent>}/${CODE_15:-<absent>}"
+fi
 
 # ================================================================== case 5
 echo
