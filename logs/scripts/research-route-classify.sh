@@ -44,6 +44,52 @@ case "$preference" in
   *) die "--preference must be light, standard, deep or none (got: $preference)" ;;
 esac
 
+required_signal_keys=(output consequence scope load_bearing_claim thesis_judgment)
+
+signal_key_known() {
+  case "$1" in
+    output|consequence|scope|load_bearing_claim|thesis_judgment) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+signal_value_allowed() {
+  case "$1:$2" in
+    output:note|output:analysis|output:report|output:unclear) return 0 ;;
+    consequence:internal|consequence:external|consequence:unclear) return 0 ;;
+    scope:bounded|scope:broad|scope:unclear) return 0 ;;
+    load_bearing_claim:yes|load_bearing_claim:no|load_bearing_claim:unclear) return 0 ;;
+    thesis_judgment:yes|thesis_judgment:no|thesis_judgment:unclear) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# The safety vector is a closed contract. Malformed input must never fall through to the
+# Light base route: every key is required exactly once and every value is enumerated.
+seen_signal_keys=()
+for signal in ${signals+"${signals[@]}"}; do
+  case "$signal" in
+    *=*) ;;
+    *) die "signal is not key=value: $signal" ;;
+  esac
+  key="${signal%%=*}"
+  value="${signal#*=}"
+  signal_key_known "$key" || die "unknown signal: $key"
+  signal_value_allowed "$key" "$value" || die "invalid value for signal '$key': $value"
+  for seen in ${seen_signal_keys+"${seen_signal_keys[@]}"}; do
+    [ "$seen" != "$key" ] || die "duplicate signal: $key"
+  done
+  seen_signal_keys+=("$key")
+done
+
+for required in "${required_signal_keys[@]}"; do
+  present=0
+  for seen in ${seen_signal_keys+"${seen_signal_keys[@]}"}; do
+    [ "$seen" = "$required" ] && { present=1; break; }
+  done
+  [ "$present" -eq 1 ] || die "missing required signal: $required"
+done
+
 rank() {
   case "$1" in
     light) printf '1\n' ;;
@@ -82,6 +128,7 @@ while IFS= read -r line; do
     BASE)
       [ $# -eq 2 ] || die "malformed BASE rule: $line"
       [ "$(rank "$2")" != 0 ] || die "BASE names an unknown route: $line"
+      [ -z "$base" ] || die "route-rules block declares more than one BASE route"
       base="$2"
       ;;
     FLOOR)
@@ -96,6 +143,11 @@ while IFS= read -r line; do
       matched_all=1
       for cond in $conds; do
         case "$cond" in *=*) ;; *) die "FLOOR condition is not key=value: $line" ;; esac
+        cond_key="${cond%%=*}"
+        cond_value="${cond#*=}"
+        signal_key_known "$cond_key" || die "FLOOR condition names an unknown signal '$cond_key': $line"
+        signal_value_allowed "$cond_key" "$cond_value" \
+          || die "FLOOR condition has an invalid value '$cond_value' for '$cond_key': $line"
         matched_one=0
         for s in ${signals+"${signals[@]}"}; do
           [ "$s" = "$cond" ] && { matched_one=1; break; }

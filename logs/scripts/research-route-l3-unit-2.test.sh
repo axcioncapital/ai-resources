@@ -1,20 +1,18 @@
 #!/usr/bin/env bash
 # Acceptance harness — canonical-rw-lightweight-l3, Unit 2: Standard evidence-controlled slice.
 #
-#   B1 – B6   ROUTING. The real entry and classifier, exercised for a bounded Standard
-#             analysis and for every safety-driven escalation this unit adds or preserves.
-#             B5/B6 cover the new consequential-thesis floor; B3/B4 prove a stated Light
-#             preference cannot lower the floor.
-#   B7 – B14  MEMO CONTROL. The Standard memo checker must REJECT each way a memo can
-#             launder an unsupported claim, and ACCEPT one minimal valid memo. A checker
-#             that only accepted would prove nothing, so every rejection is asserted by
-#             its own fixture and by the reason it must give.
-#   B15 – B17 STRUCTURE. The entry's Standard section actually specifies the memo, the
-#             completion refusal and the closed House View seam.
+#   ROUTING. The real entry and classifier are exercised for bounded Standard analysis,
+#            safety-driven escalation, and malformed signal vectors that must fail closed.
+#   MEMO CONTROL. The Standard checker must reject every structurally under-controlled
+#            memo represented here and accept both a minimal valid memo and an honest
+#            escalation. Rejections assert verdict text, reason and exit status.
+#   STRUCTURE. The entry's Standard section specifies the memo, completion refusal and
+#            closed House View seam.
 #
 # What this CANNOT prove is stated rather than implied: no automated check executes a
-# model-produced Standard memo or judges its analytical quality. B7–B14 prove the checker
-# rejects malformed memos; they say nothing about whether a real memo is any good. That
+# model-produced Standard memo or judges its analytical quality. The memo fixtures prove
+# the checker rejects represented malformations; they say nothing about whether a real memo
+# is any good. That
 # evidence is owed by the plan's later operator-run assignment.
 #
 # Run BEFORE the Standard route exists (must fail) and AFTER (must pass).
@@ -30,14 +28,34 @@ pass=0; fail=0
 ok() { printf 'PASS  %s\n' "$1"; pass=$((pass + 1)); }
 no() { printf 'FAIL  %s — %s\n' "$1" "$2"; fail=$((fail + 1)); }
 
-WORK="${TMPDIR:-/tmp}/rr-unit2-$$"
-mkdir -p "$WORK"
+WORK="$(mktemp -d "${TMPDIR:-/tmp}/rr-unit2.XXXXXX")"
 trap 'rm -rf "$WORK"' EXIT
 
 # Fixture project: the entry is reached the way a deployed project reaches it.
 mkdir -p "$WORK/proj/.claude/commands"
 ln -s "$ENTRY_REAL" "$WORK/proj/.claude/commands/research-route.md" 2>/dev/null
 ENTRY="$WORK/proj/.claude/commands/research-route.md"
+
+resolve_consumer_checker() {
+  cd "$WORK/proj" || exit 1
+  research_entry=.claude/commands/research-route.md
+  while [ -L "$research_entry" ]; do
+    research_target="$(readlink "$research_entry")" || exit 1
+    case "$research_target" in
+      /*) research_entry="$research_target" ;;
+      *)  research_entry="$(dirname "$research_entry")/$research_target" ;;
+    esac
+  done
+  research_root="$(git -C "$(dirname "$research_entry")" rev-parse --show-toplevel 2>/dev/null)" || exit 1
+  printf '%s/logs/scripts/research-route-memo-check.sh\n' "$research_root"
+}
+
+if resolved_checker="$(resolve_consumer_checker)" && [ "$resolved_checker" = "$MEMOCHECK" ]; then
+  ok "B-P1 the documented consumer path resolves the canonical memo checker"
+else
+  no "B-P1 the documented consumer path resolves the canonical memo checker" \
+    "resolved '$resolved_checker', expected '$MEMOCHECK'"
+fi
 
 section() {
   awk -v want="$1" '
@@ -92,25 +110,66 @@ route "B6 a consequential thesis selection escalates one way to Deep" \
   deep yes standard output=analysis consequence=external scope=bounded \
   load_bearing_claim=no thesis_judgment=yes
 
+route_reject() {
+  local label="$1" want_reason="$2"; shift 2
+  local args=() s out rc
+  for s in "$@"; do args+=(--signal "$s"); done
+  out="$(bash "$CLASSIFY" --entry "$ENTRY" --preference none "${args[@]}" 2>&1)"
+  rc=$?
+  if [ "$rc" -ne 2 ]; then
+    no "$label" "exit=$rc, expected 2 ($(printf '%s' "$out" | tr '\n' ';'))"
+  elif ! printf '%s' "$out" | grep -qF -- "$want_reason"; then
+    no "$label" "error did not name '$want_reason': $(printf '%s' "$out" | tr '\n' ';')"
+  else
+    ok "$label"
+  fi
+}
+
+route_reject "B-R1 a missing safety signal fails closed" "missing required signal" \
+  output=note consequence=internal scope=bounded thesis_judgment=no
+
+route_reject "B-R2 an invalid signal value fails closed" "invalid value" \
+  output=note consequence=internal scope=bounded load_bearing_claim=maybe thesis_judgment=no
+
+route_reject "B-R3 a duplicate signal fails closed" "duplicate signal" \
+  output=note consequence=internal scope=bounded load_bearing_claim=no \
+  load_bearing_claim=yes thesis_judgment=no
+
+route_reject "B-R4 an unknown signal key fails closed" "unknown signal" \
+  output=note consequence=internal scope=bounded load_bearing_claim=no \
+  thesis_judgment=no audience=internal
+
 # ---------------------------------------------------------------------------
-# B7 – B14 — memo control
+# Memo control
 # ---------------------------------------------------------------------------
 # memo <label> <expect PASS|REJECT> <reason-substring-or-empty> <<< body on stdin
 memo() {
   local label="$1" want="$2" want_reason="$3"
-  local f="$WORK/memo-$((pass + fail)).md" out verdict
+  local f="$WORK/memo-$((pass + fail)).md" out verdict rc want_rc
   cat > "$f"
   if [ ! -r "$MEMOCHECK" ]; then no "$label" "memo checker absent: $MEMOCHECK"; return; fi
   out="$(bash "$MEMOCHECK" --memo "$f" 2>&1)"
+  rc=$?
+  if [ "$want" = "PASS" ]; then want_rc=0; else want_rc=1; fi
   verdict="$(printf '%s\n' "$out" | sed -n 's/^verdict: //p')"
   if [ "$verdict" != "$want" ]; then
     no "$label" "verdict=$verdict, expected $want ($(printf '%s' "$out" | tr '\n' ';'))"
+  elif [ "$rc" -ne "$want_rc" ]; then
+    no "$label" "exit=$rc, expected $want_rc ($(printf '%s' "$out" | tr '\n' ';'))"
   elif [ -n "$want_reason" ] && ! printf '%s' "$out" | grep -qF -- "$want_reason"; then
     no "$label" "verdict correct but reason did not name '$want_reason': $(printf '%s' "$out" | tr '\n' ';')"
   else
     ok "$label"
   fi
 }
+
+usage_out="$(bash "$MEMOCHECK" 2>&1)"
+usage_rc=$?
+if [ "$usage_rc" -eq 2 ] && printf '%s' "$usage_out" | grep -qF -- '--memo is required'; then
+  ok "B-P2 memo-checker usage errors exit 2"
+else
+  no "B-P2 memo-checker usage errors exit 2" "exit=$usage_rc output=$usage_out"
+fi
 
 memo "B7 a minimal valid Standard memo is accepted" PASS "" <<'EOF'
 # Does the sweep reach this lane?
@@ -125,7 +184,7 @@ Source: projects/ai-development-lab/.claude/commands/ — Date: undated — Role
 Rationale: Two independent roles, both direct and in scope. No ceiling applies; the claim does not generalize.
 
 ## Answer
-The sweep resolves to the canonical directory, so this lane is not a sync source.
+- [C1] The sweep resolves to the canonical directory, so this lane is not a sync source.
 
 ## Inference
 - [INFERENCE] A command added here therefore takes no live effect in any consumer (rests on C1).
@@ -149,10 +208,10 @@ Roles: 2 — a; b
 Rationale: asserted.
 
 ## Answer
-It is true.
+- [C1] It is true.
 
 ## Inference
-- [INFERENCE] none.
+- None.
 
 ## Unknowns
 - None material.
@@ -175,10 +234,10 @@ Source: Other report — Date: 2025-01-02 — Role: b — Fit: direct
 Rationale: two roles.
 
 ## Answer
-It is true.
+- [C1] It is true.
 
 ## Inference
-- [INFERENCE] none.
+- None.
 
 ## Unknowns
 - None material.
@@ -202,10 +261,10 @@ Source: Other report — Date: 2025-03-04 — Role: b — Fit: direct
 Rationale: two roles.
 
 ## Answer
-It is true.
+- [C1] It is true.
 
 ## Inference
-- [INFERENCE] none.
+- None.
 
 ## Unknowns
 - None material.
@@ -228,10 +287,10 @@ Source: Other report — Date: 2025-03-04 — Role: b — Fit: direct
 Rationale: two roles.
 
 ## Answer
-It is true.
+- [C1] It is true.
 
 ## Inference
-- [INFERENCE] none.
+- None.
 
 ## Unknowns
 - None material.
@@ -252,10 +311,10 @@ Roles: 0 —
 Rationale: searched the register and the filings; found neither direct nor proxy evidence.
 
 ## Answer
-It is probably true anyway.
+- [C1] It is probably true anyway.
 
 ## Inference
-- [INFERENCE] none.
+- None.
 
 ## Unknowns
 - None material.
@@ -278,10 +337,10 @@ Source: Other report — Date: 2025-03-04 — Role: b — Fit: direct
 Rationale: two roles.
 
 ## Answer
-Adopt interpretation B as the House View going forward.
+- [C1] Adopt interpretation B as the House View going forward.
 
 ## Inference
-- [INFERENCE] none.
+- None.
 
 ## Unknowns
 - None material.
@@ -304,17 +363,17 @@ Source: Other adjacent report — Date: 2025-03-04 — Role: b — Fit: proxy
 Rationale: two roles, both proxy and requiring downgrade.
 
 ## Answer
-The evidence confirms that the practice occurs in this market.
+- [C1] The evidence confirms that the practice occurs in this market.
 
 ## Inference
-- [INFERENCE] none.
+- None.
 
 ## Unknowns
 - None material.
 
 ## Completion
 Status: ESCALATED-TO-DEEP
-Deep triggers: none
+Deep triggers: C1 remains proxy-supported for a load-bearing conclusion
 EOF
 
 memo "B15 an honest escalation with an unsupported claim is accepted" PASS "" <<'EOF'
@@ -328,10 +387,10 @@ Roles: 0 —
 Rationale: searched the register and the filings; found neither direct nor proxy evidence. This records a failed search, not an established negative.
 
 ## Answer
-This cannot be settled at Standard control.
+- [C1] This cannot be settled at Standard control.
 
 ## Inference
-- [INFERENCE] none.
+- None.
 
 ## Unknowns
 - Whether a non-public filing would settle C1.
@@ -341,8 +400,188 @@ Status: ESCALATED-TO-DEEP
 Deep triggers: C1 is load-bearing and NOT-SUPPORTED
 EOF
 
+memo "B-M1 SUPPORTED with one role and one source is rejected" REJECT "requires at least 2" <<'EOF'
+# Q
+
+## Claims
+
+### C1 — One source proves the general claim.
+Class: SUPPORTED
+Roles: 1 — one report
+Source: One report — Date: 2026-08-18 — Role: one report — Fit: direct
+Rationale: One direct source.
+
+## Answer
+- [C1] The report confirms the general claim.
+
+## Inference
+- None.
+
+## Unknowns
+- None material.
+
+## Completion
+Status: COMPLETE
+Deep triggers: none
+EOF
+
+memo "B-M2 a memo missing required Standard sections is rejected" REJECT "required section" <<'EOF'
+# Q
+
+## Claims
+
+### C1 — Two sources support the claim.
+Class: SUPPORTED
+Roles: 2 — a; b
+Source: One report — Date: 2026-08-18 — Role: a — Fit: direct
+Source: Two report — Date: 2026-08-18 — Role: b — Fit: direct
+Rationale: Two roles.
+
+## Answer
+- [C1] The reports confirm the claim.
+
+## Completion
+Status: COMPLETE
+Deep triggers: none
+EOF
+
+memo "B-M3 mixed negation cannot bypass the House View seam" REJECT "House View" <<'EOF'
+# Q
+
+## Claims
+
+### C1 — Two sources support interpretation B.
+Class: SUPPORTED
+Roles: 2 — a; b
+Source: One report — Date: 2026-08-18 — Role: a — Fit: direct
+Source: Two report — Date: 2026-08-18 — Role: b — Fit: direct
+Rationale: Two roles.
+
+## Answer
+- [C1] Do not delay; adopt interpretation B as the House View going forward.
+
+## Inference
+- None.
+
+## Unknowns
+- None material.
+
+## Completion
+Status: COMPLETE
+Deep triggers: none
+EOF
+
+memo "B-M4 a supported claim cannot license a proxy claim's verb" REJECT "C2" <<'EOF'
+# Q
+
+## Claims
+
+### C1 — The source register exists.
+Class: SUPPORTED
+Roles: 2 — implementation; test
+Source: Implementation — Date: 2026-08-18 — Role: implementation — Fit: direct
+Source: Test — Date: 2026-08-18 — Role: test — Fit: direct
+Rationale: Two direct roles.
+
+### C2 — The adjacent-market pattern holds here.
+Class: PROXY-SUPPORTED
+Roles: 2 — adjacent report; expert comparison
+Source: Adjacent report — Date: 2026-08-18 — Role: adjacent report — Fit: proxy
+Source: Expert comparison — Date: 2026-08-18 — Role: expert comparison — Fit: proxy
+Rationale: Two proxy roles.
+
+## Answer
+- [C2] The evidence confirms that the pattern holds here.
+
+## Inference
+- None.
+
+## Unknowns
+- None material.
+
+## Completion
+Status: COMPLETE
+Deep triggers: none
+EOF
+
+memo "B-M5 an escalation must name a live Deep trigger" REJECT "ESCALATED-TO-DEEP" <<'EOF'
+# Q
+
+## Claims
+
+### C1 — The claim is unresolved.
+Class: NOT-SUPPORTED
+Roles: 0 —
+Rationale: No evidence found in the named search surfaces.
+
+## Answer
+- [C1] This cannot be settled at Standard control.
+
+## Inference
+- None.
+
+## Unknowns
+- Whether unavailable evidence would resolve C1.
+
+## Completion
+Status: ESCALATED-TO-DEEP
+Deep triggers: none
+EOF
+
+memo "B-M6 every mapped source must declare role and fit" REJECT "malformed Source" <<'EOF'
+# Q
+
+## Claims
+
+### C1 — Two sources support the claim.
+Class: SUPPORTED
+Roles: 2 — a; b
+Source: One report — Date: 2026-08-18
+Source: Two report — Date: 2026-08-18 — Role: b — Fit: direct
+Rationale: Two purported roles.
+
+## Answer
+- [C1] The reports confirm the claim.
+
+## Inference
+- None.
+
+## Unknowns
+- None material.
+
+## Completion
+Status: COMPLETE
+Deep triggers: none
+EOF
+
+memo "B-M7 every Answer assertion must bind to claim IDs" REJECT "material assertion" <<'EOF'
+# Q
+
+## Claims
+
+### C1 — Two sources support the claim.
+Class: SUPPORTED
+Roles: 2 — a; b
+Source: One report — Date: 2026-08-18 — Role: a — Fit: direct
+Source: Two report — Date: 2026-08-18 — Role: b — Fit: direct
+Rationale: Two direct roles.
+
+## Answer
+The reports confirm the claim.
+
+## Inference
+- None.
+
+## Unknowns
+- None material.
+
+## Completion
+Status: COMPLETE
+Deep triggers: none
+EOF
+
 # ---------------------------------------------------------------------------
-# B16 – B18 — the entry's Standard section actually specifies this
+# The entry's Standard section actually specifies this
 # ---------------------------------------------------------------------------
 std="$(section 'Standard')"
 if [ -z "$std" ]; then

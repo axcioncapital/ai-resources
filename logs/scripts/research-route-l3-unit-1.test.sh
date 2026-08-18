@@ -6,13 +6,13 @@
 #   A1        the entry surface LOADS through a real non-RW project invocation path
 #             (a fixture project whose .claude/commands/ symlink has the same shape the
 #             SessionStart sweep produces), and carries a parseable route-decision block.
-#   A2 – A8   BEHAVIOUR. The classifier resolves representative signal sets to routes,
+#   A2 – A10  BEHAVIOUR. The classifier resolves representative signal sets to routes,
 #             reading its rules out of the real entry file through the fixture symlink.
 #             These fail if the entry's decision table is wrong, missing or edited.
-#   A9 – A13  STRUCTURE. The three dispatch sections carry the elements that make each
+#   A11 – A14 STRUCTURE. The three dispatch sections carry the elements that make each
 #             route real work rather than a printed label.
 #
-# A2–A8 are behavioural assertions over an executable surface. A9–A13 are structural
+# A2–A10 are behavioural assertions over an executable surface. A11–A14 are structural
 # conformance assertions over instruction prose — the entry is a Claude Code command, so
 # no automated check can execute its Light note production. That split is stated rather
 # than blurred: see the unit's Latest result.
@@ -73,7 +73,7 @@ else
 fi
 
 # ---------------------------------------------------------------------------
-# A2 – A8 — behaviour: signals resolve to routes, one way only
+# A2 – A10 — behaviour: signals resolve to routes, one way only
 # ---------------------------------------------------------------------------
 # route <label> <expected-route> <expected-overridden> <preference> <signal>...
 route() {

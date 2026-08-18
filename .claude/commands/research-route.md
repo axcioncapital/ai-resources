@@ -180,7 +180,8 @@ Rationale: {why this class, and any ceiling you applied with its cap}
 ### C2 — {…}
 
 ## Answer
-{the analysis. Verbs constrained by the weakest load-bearing claim — see the verb rule below.}
+- [C1] {one material assertion licensed by C1}
+- [C1,C2] {one material assertion licensed by both claims}
 
 ## Inference
 - [INFERENCE] {what you concluded beyond what the sources state, naming the claim IDs it rests on}
@@ -220,23 +221,40 @@ Four rules make that grading honest:
 
 ### The verb rule
 
-The `## Answer` may not use a `SUPPORTED` verb over evidence that never reached `SUPPORTED`. If no
-claim in the memo is `SUPPORTED`, the words *establishes*, *confirms* and *demonstrates* are not
-available to you. Say what the evidence actually licenses.
+Put every material `## Answer` assertion on its own bullet and begin it with the claim IDs that
+license it: `- [C1] ...` or `- [C1,C2] ...`. A `SUPPORTED` claim elsewhere in the memo cannot
+license stronger language for a weaker claim. The words *establishes*, *confirms* and
+*demonstrates* are available only when **every claim ID on that assertion** is `SUPPORTED`.
+Say what those claims actually license.
 
 ### Refusing completion
 
-Run the memo through the checker before treating it as done:
+Resolve the checker through this command's real path, then run the memo through it before treating
+the memo as done. This works when the command is symlinked from the canonical resource repository;
+if the command was copied without its helper, Standard cannot truthfully complete and must stop:
 
 ```bash
-bash logs/scripts/research-route-memo-check.sh --memo <path-to-memo>
+research_entry=.claude/commands/research-route.md
+while [ -L "$research_entry" ]; do
+  research_target="$(readlink "$research_entry")" || break
+  case "$research_target" in
+    /*) research_entry="$research_target" ;;
+    *)  research_entry="$(dirname "$research_entry")/$research_target" ;;
+  esac
+done
+research_root="$(git -C "$(dirname "$research_entry")" rev-parse --show-toplevel 2>/dev/null)"
+research_checker="$research_root/logs/scripts/research-route-memo-check.sh"
+[ -r "$research_checker" ] || { printf 'Standard checker unavailable: %s\n' "$research_checker" >&2; exit 2; }
+bash "$research_checker" --memo <path-to-memo>
 ```
 
-It rejects a memo that launders an unsupported claim: a load-bearing claim with no mapped source, a
-source with no date or `undated` marker, evidence and inference collapsed together, a `COMPLETE`
-status over a live Deep trigger, a `COMPLETE` status over a `NOT-SUPPORTED` claim, a promotion of
-one interpretation to governing authority, and a `SUPPORTED` verb over non-`SUPPORTED` evidence.
-The checker is a floor on the memo's structure. It does not judge whether the analysis is any good.
+It rejects a memo that launders an unsupported claim: missing required sections or claim fields;
+role/source counts inconsistent with the selected permission class; sources without date, role or
+fit; evidence and inference collapsed together; unbound Answer assertions; a `COMPLETE` status over
+a live Deep trigger or `NOT-SUPPORTED` claim; an escalation with no live trigger; the reserved
+authority term appearing in Standard output; and a `SUPPORTED` verb attached to a non-`SUPPORTED`
+claim. The checker is a floor on the memo's declared structure. It does not judge whether roles are
+truly independent or whether the analysis is any good.
 
 **Set `Status: ESCALATED-TO-DEEP`, not `COMPLETE`,** when any of these is true — this is the same
 one-way escalation as Step 3, applied after the work has started:
@@ -258,7 +276,10 @@ Standard **may not promote any of them to a governing judgment.** No House View,
 thesis, no approval step, no authority artifact. That contract is owned by the canonical judgment
 layer and has not been published yet, so there is nothing here to bind to. Do not invent it, do not
 stub it, and do not write as though a selection had been authorized. Where a request genuinely needs
-an authorized thesis rather than a comparison, that is a Deep trigger and an honest escalation —
+the reserved authority concept discussed in the output, escalate rather than placing that term in a
+Standard memo; until L2 publishes a structured contract the checker rejects the term conservatively.
+Where a request genuinely needs an authorized thesis rather than a comparison, that is a Deep
+trigger and an honest escalation —
 which is what "stopping cleanly at the seam" means. The seam stays closed until the authority
 contract exists.
 
