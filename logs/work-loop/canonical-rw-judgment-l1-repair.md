@@ -1,7 +1,7 @@
 ---
 task: canonical-rw-judgment-l1-repair
-status: active
-turn: claude
+status: blocked
+turn: operator
 ---
 
 ## Objective and scope
@@ -132,11 +132,16 @@ to produce required evidence hands back without expanding scope.
 
 ## Latest result
 
-Unit 2 has **run the genuine trial past its first operator stop and into the re-review loop**. The
-deployed local path produced a proposal, put it through one independent fresh-context challenge that
-returned **seven required-change findings** — two of them evidence-permission breaches approval
-cannot waive — and the operator then gave a substantive revision direction covering all seven. The
-revision is applied and challenge round 2 is running against the revised bytes.
+Unit 2 has **completed a full producer → challenge → operator-revision → re-challenge cycle** and now
+sits at the second operator stop. The deployed local path produced a proposal, challenged it
+independently (seven required-change findings, two of them evidence-permission breaches approval
+cannot waive), took the operator's substantive revision direction, applied it, and re-challenged the
+revised bytes in a fresh round 2. **Round 2 confirms all seven round-1 findings resolved** and raises
+**two new internal-consistency findings, F8 and F9, both introduced by the revision itself.** Neither
+is tagged `permission-breach` or `decision-conflict`, so unlike round 1 nothing in the ledger is now
+un-waivable.
+
+The task waits on the operator's explicit **approve / revise / reject** decision.
 
 **L1 PASS condition 3 is satisfied, and this is the condition the first trial failed.** The operator
 saw the proposal, the complete challenge and every required-change finding, and issued substantive
@@ -181,6 +186,38 @@ refuses on a hole in the chain (`LOST-ROUND`) or a finding that stops being carr
 
 Re-run of `check-judgment-contract.sh --allow-proposed` on the revised proposal: **VALID, exit 0**,
 5 theses, 60 distinct claim IDs, 2,423 words, same non-binding length warning.
+
+**Challenge round 2 — a separate fresh-context opus agent, neither the producer nor the round-1
+reviewer**, briefed with the archived round 1, the operator's verbatim instruction and the standing
+carry-forward rule. `check-judgment-challenge.sh --shape-only` → **SHAPE-OK, exit 0**: round 2, bound
+to the revised proposal, 9 findings, 2 undisposed. The full gate with no flag → **`UNRESOLVED-FINDING`,
+exit 6** — promotion refused while any finding is undisposed. `decisions_checked` records ten ids.
+
+All seven round-1 findings were carried forward under their original ids and original tags and marked
+`REVISED-AND-RE-REVIEWED`, a disposition only legal from round 2 onward. **The tags were preserved,
+not laundered**: F1 still reads `permission-breach` and F2 still reads
+`permission-breach, decision-conflict: 21` even though both are now resolved, which is exactly the
+discipline that stops a later round from quietly retagging a breach out of existence.
+
+The round-2 reviewer's judgment on the revision: all seven genuinely closed, with **no case where an
+over-claim was softened rather than removed** — the failure mode a re-review exists to catch.
+
+**Two new findings, both self-inflicted by the revision, both verified against the sources rather than
+relayed:**
+
+- **F8 (`internal-inconsistency`, PENDING).** The revision's gap-separation sentence attributes the
+  valuation gap to "Decision 12's registry limits". That is wrong and the error is Claude's, introduced
+  while satisfying F2. Verified directly: Decision 12 names `known-limits.md` limits **15 and 18**
+  (revenue band, cap table), which is how Thesis 1 correctly uses it. The EV/EBITDA benchmark is
+  **limit 17**, a separate limit that registry access would not touch. Left uncorrected it would hand
+  a chapter writer a false reason for the valuation gap.
+- **F9 (`internal-inconsistency`, PENDING).** Two Finnish transaction sets — Thesis 2's four
+  buyer-type deals and Thesis 3's three consolidation deals, one deal in common, six distinct — are
+  used without reconciliation, so the revised change-condition bullet's "a fourth and fifth" reads as
+  an off-by-one against Thesis 2's "four". This is the F6 defect resurfacing one thesis away from
+  where it was fixed. One disclosure sentence resolves it; no claim, grade or verdict changes.
+
+Both are single-sentence fixes. Neither is a permission breach and neither conflicts with a decision.
 
 The premises below were verified in the earlier part-run and re-confirmed by inspection on resume,
 before any trial write: the Sector checkout is on `trial/l1-repeat-precision-components`,
@@ -276,16 +313,18 @@ Trial commit: `1e4fb20` on `trial/l1-repeat-precision-components`; the Sector tr
 | Measure | Value |
 |---|---|
 | Elapsed, part-run | 16:46:42Z → 17:04:22Z (17 min 40 s) — premise verification, substrate selection, failed dispatches |
-| Elapsed, resume to operator stop | to 18:01:30Z; the two successful dispatches account for 14 min 53 s of it |
+| Elapsed, resume to second operator stop | to 18:18:09Z; the three successful dispatches account for 22 min 30 s of it |
 | Producer dispatches attempted | 6 — five failed on `API Error: 529 Overloaded`, the sixth succeeded |
-| Reviewer dispatches attempted | 1, succeeded |
+| Reviewer dispatches attempted | 2, both succeeded |
 | Producer run | 207,597 subagent tokens · 38 tool calls · 371,487 ms (6 min 11 s) |
 | Challenge round 1 | 184,971 subagent tokens · 28 tool calls · 521,188 ms (8 min 41 s) |
-| Subagent tokens, total | **392,568** across the two successful dispatches |
-| Proposals produced | 1 |
-| Review rounds | 1 |
-| Revision loops | 0 — the operator has not yet given a revision direction |
-| Artifact size | proposal 2,074 words · challenge 2,876 words |
+| Challenge round 2 | 160,831 subagent tokens · 28 tool calls · 457,344 ms (7 min 37 s) |
+| Subagent tokens, total | **553,399** across the three successful dispatches |
+| Proposals produced | 1, revised once |
+| Review rounds | 2 |
+| Revision loops | 1 completed — operator direction applied and independently re-reviewed |
+| Findings raised / resolved | 9 raised · 7 resolved · 2 outstanding |
+| Artifact size | proposal 2,423 words · round-1 challenge 2,876 words · round-2 challenge written |
 | Operator-active minutes | **unavailable** — no operator-clock instrumentation |
 | Main-session tokens | **unavailable** — no runtime counter exposed to the session |
 | Monetary cost | **unavailable** — no price data available in-session |
@@ -346,16 +385,42 @@ states the band is a target and not a gate, and it returned VALID. Recorded for 
 
 ## Blocker
 
-**None — this stop is discharged.** The operator gave their substantive revision direction; it is
-recorded verbatim in `## Latest result` and applied. Challenge round 2 is running against the revised
-bytes. The next blocking stop is the explicit approve / revise / reject decision, which opens when
-round 2 returns; until then the task is Claude's move and waits on nothing.
+**The operator owes the explicit approve / revise / reject decision** on the re-reviewed proposal.
+This is the second blocking stop the brief requires, and it is L1 PASS condition 5. Nothing is
+promoted before it.
 
-The record below is retained as the round-1 evidence the trial has to carry, not as a live blocker.
+- Revised proposal: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md`
+- Round-2 challenge: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`
+- Archived round 1: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review-round-1.md`
+- Branch `trial/l1-repeat-precision-components`; round 2 bound to proposal sha256 `ab5e2ff1bd2d1eb30ba8c3b70a2e4d80754f646f3158b69828dfe3de8fa28b4b`.
+
+**Two findings stand between the proposal and promotion — F8 and F9, both `PENDING`.** Both were
+introduced by the revision, both are single-sentence internal-consistency fixes, and both are
+described in full in `## Latest result`. In short: F8 attributes the valuation gap to Decision 12's
+registry limits when it belongs to limit 17; F9 leaves two Finnish transaction counts unreconciled so
+"a fourth and fifth" reads as an off-by-one.
+
+**What the operator can do with them, and what the mechanism will allow.** Unlike round 1, neither
+finding is tagged `permission-breach` or `decision-conflict`, so all routes are open:
+
+- **`OPERATOR-ACCEPTED` with reasons** — legal for both. The gate accepts it and promotion can proceed.
+- **A further revision** — resolves both, but breaks the round-2 binding and forces a round 3. That is
+  the mechanism working, not a penalty; it is simply the cost of another edit.
+- **Reject** — valid operation. It cannot produce the approved downstream authority L1 PASS needs, so
+  the trial would end on a recorded rejection rather than a PASS.
+
+**Promotion is currently refused by the gate itself**, not merely by instruction: the full
+`check-judgment-challenge.sh` returns `UNRESOLVED-FINDING` (exit 6) with 2 of 9 findings undisposed,
+and `promote-judgment-brief.sh` re-runs that same gate and would refuse on exit 11.
+
+**What must not happen at this stop.** No approval is inferred from silence or from any reply that
+does not say so. Claude does not dispose of F8 or F9 on the operator's behalf and does not revise
+them without direction — including the fact that they are Claude's own errors, which makes
+self-correcting them more tempting and no more permitted.
 
 ---
 
-**Round 1 as presented to the operator.** Both artifacts as they stood:
+**Round 1 as presented to the operator, retained as trial evidence.** Both artifacts as they stood:
 
 - Proposal: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md`
 - Challenge: `analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`
@@ -417,12 +482,22 @@ operator-facing path, not only the gate.
 
 ## Next action
 
-Claude: when challenge round 2 returns, re-run `check-judgment-challenge.sh --shape-only` against the
-revised proposal, then stop for the operator with the re-reviewed proposal, every carried-forward
-finding and its round-2 disposition, any new finding the revision introduced, and the updated burden
-record. Set `status: blocked`, `turn: operator`.
+Operator: give the explicit **approve / revise / reject** decision on the re-reviewed proposal, and
+settle F8 and F9 — either an `OPERATOR-ACCEPTED` disposition with your reasons for each, or a
+direction to fix them.
 
-That stop is for the explicit **approve / revise / reject** decision. Do not promote before it, do not
-infer approval, and do not dispose of any finding on the operator's behalf. A finding still `PENDING`
-and tagged `permission-breach` cannot be cleared by approval at all — only by a further revision and
-another round.
+Then Claude, carrying that response back through this same task:
+
+- **On a fix direction** — apply it, re-run the contract check, return to Step 3b.1 where the binding
+  will again report `STALE-CHALLENGE`, archive round 2, run round 3, and stop here again.
+- **On `OPERATOR-ACCEPTED` for both plus an approval** — write the dispositions and reasons into the
+  round-2 ledger beside the findings they answer, set `status: dispositioned`, then promote
+  mechanically with `promote-judgment-brief.sh --approval "<verbatim reply>" --approved-by "<the
+  approving operator>"`. Do not hand-author the approved file. Then Step 3c re-validates it as
+  authority, and only that permits Step 4 — where the directive before/after diff runs against the
+  baseline hash table above.
+- **On rejection** — record it, produce the proof that no approved authority or downstream use was
+  created, and hand back to Codex with the L1 evidence as it stands.
+
+Whichever way it goes, the unit then hands back to Codex with the complete trial record for the L1
+PASS/FAIL decision. Codex decides L1, not Claude.
