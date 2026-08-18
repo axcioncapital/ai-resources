@@ -1,0 +1,129 @@
+#!/usr/bin/env bash
+# research-route-classify.sh — resolve a route from assessed signals.
+#
+# The shared entry `.claude/commands/research-route.md` owns the routing rules. This script
+# holds NO copy of them: it parses the delimited `route-rules` block out of the entry file it
+# is pointed at. That is deliberate — a second copy is how the executable check and the
+# instruction a human reads come to disagree, and the entry must stay complete on its own so a
+# project that has only the command file can still route by reading it.
+#
+# Usage:
+#   research-route-classify.sh --entry <path> [--preference light|standard|deep|none]
+#                              --signal <key>=<value> [--signal <key>=<value> ...]
+#
+# Prints, on success (exit 0):
+#   route: light|standard|deep
+#   preference-overridden: yes|no
+#   floor-set-by: <rule, or "base">
+#
+# Exits 2 on a usage or rule-file error. Escalation is one way: a preference may raise the
+# route above the floor, never lower it below.
+
+set -u
+
+die() { printf 'ERROR: %s\n' "$1" >&2; exit 2; }
+
+entry=""
+preference="none"
+signals=()
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --entry)      [ $# -ge 2 ] || die "--entry needs a path"; entry="$2"; shift 2 ;;
+    --preference) [ $# -ge 2 ] || die "--preference needs a value"; preference="$2"; shift 2 ;;
+    --signal)     [ $# -ge 2 ] || die "--signal needs key=value"; signals+=("$2"); shift 2 ;;
+    *)            die "unknown argument: $1" ;;
+  esac
+done
+
+[ -n "$entry" ] || die "--entry is required"
+[ -r "$entry" ] || die "entry file is not readable: $entry"
+
+case "$preference" in
+  light|standard|deep|none) ;;
+  *) die "--preference must be light, standard, deep or none (got: $preference)" ;;
+esac
+
+rank() {
+  case "$1" in
+    light) printf '1\n' ;;
+    standard) printf '2\n' ;;
+    deep) printf '3\n' ;;
+    *) printf '0\n' ;;
+  esac
+}
+label() {
+  case "$1" in
+    1) printf 'light\n' ;;
+    2) printf 'standard\n' ;;
+    3) printf 'deep\n' ;;
+    *) printf 'unknown\n' ;;
+  esac
+}
+
+# --- parse the rules out of the entry ---------------------------------------
+rules="$(awk '
+  /<!-- route-rules:start -->/ { inside = 1; next }
+  /<!-- route-rules:end -->/   { inside = 0; next }
+  inside && NF                 { print }
+' "$entry")"
+
+[ -n "$rules" ] || die "no route-rules block found in $entry"
+
+base=""
+floor_rank=0
+floor_by="base"
+
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  # shellcheck disable=SC2086
+  set -- $line
+  case "$1" in
+    BASE)
+      [ $# -eq 2 ] || die "malformed BASE rule: $line"
+      [ "$(rank "$2")" != 0 ] || die "BASE names an unknown route: $line"
+      base="$2"
+      ;;
+    FLOOR)
+      [ $# -eq 3 ] || die "malformed FLOOR rule: $line"
+      r="$(rank "$2")"
+      [ "$r" != 0 ] || die "FLOOR names an unknown route: $line"
+      cond="$3"
+      case "$cond" in *=*) ;; *) die "FLOOR condition is not key=value: $line" ;; esac
+      for s in ${signals+"${signals[@]}"}; do
+        if [ "$s" = "$cond" ]; then
+          if [ "$r" -gt "$floor_rank" ]; then
+            floor_rank="$r"
+            floor_by="$cond"
+          fi
+          break
+        fi
+      done
+      ;;
+    *)
+      die "unknown rule verb: $line"
+      ;;
+  esac
+done <<< "$rules"
+
+[ -n "$base" ] || die "route-rules block declares no BASE route"
+
+base_rank="$(rank "$base")"
+[ "$floor_rank" -ge "$base_rank" ] || { floor_rank="$base_rank"; floor_by="base"; }
+
+pref_rank="$(rank "$preference")"   # 0 when preference=none
+
+if [ "$pref_rank" -gt "$floor_rank" ]; then
+  final_rank="$pref_rank"
+  overridden="no"
+elif [ "$pref_rank" -gt 0 ] && [ "$pref_rank" -lt "$floor_rank" ]; then
+  final_rank="$floor_rank"
+  overridden="yes"
+else
+  final_rank="$floor_rank"
+  overridden="no"
+fi
+
+printf 'route: %s\n' "$(label "$final_rank")"
+printf 'preference-overridden: %s\n' "$overridden"
+printf 'floor-set-by: %s\n' "$floor_by"
