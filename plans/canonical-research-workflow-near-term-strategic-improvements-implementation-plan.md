@@ -1,18 +1,25 @@
 # Canonical Research Workflow — Near-Term Strategic Improvements
 
-**Status:** Proposed — pending content-bound operator approval of this exact committed content
+**Status:** Approved — content-bound operator approval recorded 2026-08-18
 **Date:** 2026-08-18 (rescoped; supersedes the 2026-08-17 twelve-slice proposal in place)
 **Author:** Claude (Work Loop v2 task `canonical-rw-lean-plan`, Unit 1)
 **Method:** Axcíon Repository Development Operating Standard (`skills/axcion-repository-development/SKILL.md` + `references/operating-standard.md`)
+**Approval:** The operator gave content-bound approval on 2026-08-18. It binds the **material content
+committed at `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`**, and it carries both § 6 authority
+conditions: (1) for L3 only, this approval supersedes the deploy-fitness mission's earlier
+research-tier prohibition, leaving every other mission thread unchanged; and (2) founder
+revise/approve/reject remains operator-owned, with no judgment content pre-approved. Everything written
+into this file after that commit is **administrative approval metadata only** — the approved material
+content is the version at that commit.
 
 This document replaces the previous twelve-slice, six-gate proposal. That programme was rejected by the
 operator on 2026-08-18 as non-viable at an estimated 250–410 remaining hours. What remains is one small
 plan serving the operator's two stated priorities — a **lightweight Research Workflow** and a
 **canonical judgment layer / House View** — running as two concurrent lanes that meet once.
 
-Nothing here is authority yet. The operator approved the lean *direction* and the outcome set; the
-governing plan is this file only once its commit is presented and the operator gives **content-bound
-approval**. Until then no lean outcome opens.
+This is now the governing plan. The operator's content-bound approval of the commit named above closed
+the pending-approval condition, so the lean outcomes may open under the sequence and gates in § 7.
+Approval covers this plan's scope only; it grants no authority over anything in § 8.
 
 ---
 
