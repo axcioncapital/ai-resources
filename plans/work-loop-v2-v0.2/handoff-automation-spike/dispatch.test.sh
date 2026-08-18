@@ -11015,52 +11015,24 @@ fi
 rm -rf "$(task_lock_for "$d4" evidence-default-task)" "$(checkout_lock_for "$d4")" 2>/dev/null
 
 # =============================================================== cases 63c-63e
-# THE REMAINING THREE REFUSAL BRANCHES OF check_evidence_location(), and why they
-# are one family rather than three units.
+# The three refusal branches of check_evidence_location() (dispatch.sh 1598-1628)
+# that no permanent case reached. 58b covers existing-directory-not-writable;
+# 63a and 63a(2) cover ancestor-not-a-directory; these three cover the rest.
 #
-# The function has FIVE ways to refuse (dispatch.sh 1598-1628). Two are already
-# pinned: 58b drives the existing-directory-is-not-writable branch, and 63a and
-# 63a(2) drive the nearest-existing-ancestor-is-not-a-directory branch. The other
-# three — a symlink that does not resolve to a directory, an exact existing path
-# that is not a directory, and a missing location whose nearest existing ancestor
-# is not writable — had never been reached by a permanent case, so the only thing
-# standing between them and a silent regression was that they happen to sit
-# beside two branches that are covered.
-#
-# ONE CALL SITE, SO ONE CONTRACT. All five are reached from dispatch.sh 1635,
-# which runs before RUN_ID exists (3221), before acquire_lock (3312), before the
-# evidence directory is created (3174), before the ownership helper is consulted
-# (4125) and before launch_actor (4370). Gate SA requires every invalid
-# pre-admission invocation to fail clearly and launch no actor, take no owner or
-# lease, mutate nothing and write no evidence. That shared contract is what makes
-# these three a family — the same absences asserted against three different
-# hostile inputs — and what makes three separate units ceremony.
-#
-# EACH ASSERTS ITS OWN BRANCH WORDING, read off the live producer rather than a
-# shared string. All five branches print `STOP [10]`, and two of the five say
-# "is not a directory" while two say "is not writable", so a case asserting only
-# the code — or only half a phrase — would pass while reaching one of the two
-# branches that are ALREADY covered. That is the exact way this family could look
-# proven and prove nothing, and it is why the distinguishing clause is asserted
-# in every one of the three.
-#
-# WHAT IS NOT REPEATED HERE. 63a(2) already proves the lease-held half of this
-# boundary — that a pre-admission refusal files no refusal record even when a
-# real second dispatcher holds the lease. It is an ordering fact about the one
-# call site, not about any single branch, so it is not re-run three times.
+# All five share one call site (dispatch.sh 1635), above the evidence directory,
+# the lease, the ownership check and the actor — so all three assert the same
+# pre-admission absences, and 63a(2)'s lease-held ordering is not repeated here.
+# All five also print `STOP [10]`, so each case asserts its own branch wording:
+# on the code alone a case would pass while reaching an already-covered branch.
 
-# The six absences the pre-admission contract names, written once because they
-# are the same six for all three inputs below. This generalizes nothing: it is
-# not an admission matrix, a branch table or a schema checker — it is the block
-# 58b and 63a already write inline, named once so that three copies cannot drift
-# apart. The before-values are passed in because they must be read before the
-# run, and the caller is the only one that can do that.
+# The six absences all three inputs share. Before-values are passed in because
+# the caller is the only place that can read them before the run.
 evidence_refusal_invariants() { # sandbox label want-log-dir head-before tree-before status-before
   local d="$1" lab="$2" want="$3" head_b="$4" tree_b="$5" status_b="$6" lease_root
   lease_root="$(lock_root_for "$d")"
-  # THE LEASE ROOT, not the two lease directories — 63a's reason exactly: release
-  # removes the directories, so their absence is true whether a lease was taken
-  # or not, while the root is created by acquire and never removed.
+  # The lease ROOT, not the two lease directories — 63a's reason: release removes
+  # the directories, so their absence is true whether a lease was taken or not,
+  # while the root is created by acquire and never removed.
   [ ! -e "$lease_root" ] \
     && ok "$lab — and took no owner or lease: the shared lease root was never created" \
     || bad "$lab — and took no owner or lease: the shared lease root was never created" \
@@ -11068,9 +11040,6 @@ evidence_refusal_invariants() { # sandbox label want-log-dir head-before tree-be
   [ "$(calls "$d")" = "0" ] \
     && ok "$lab — and launched no actor" \
     || bad "$lab — and launched no actor" "calls=$(calls "$d")"
-  # NO EVIDENCE, asserted as the directory never coming into existence. Every one
-  # of the three inputs is a path that is not a directory now, and a run that had
-  # been admitted would have had to make it one before it could write a byte.
   [ ! -d "$want" ] \
     && ok "$lab — and wrote no run evidence: the location never became a directory" \
     || bad "$lab — and wrote no run evidence: the location never became a directory" \
@@ -11091,11 +11060,8 @@ evidence_refusal_invariants() { # sandbox label want-log-dir head-before tree-be
 }
 
 # =================================================================== case 63c
-# A SYMLINK THAT DOES NOT RESOLVE TO A DIRECTORY. This branch is first in the
-# function for a reason the fixture reproduces: `-e` is FALSE for a dangling
-# link, so without it the ancestor walk climbs straight past the link to a
-# perfectly good parent, calls the location usable, admits the run — and mkdir -p
-# then fails on the dangling name, after both leases are already held.
+# Distinct from 63a's ancestor branch: `-e` is false for a dangling link, so
+# without this branch the ancestor walk climbs past it to a usable parent.
 echo
 echo "Case 63c — an evidence location that is a symlink resolving to nothing is refused BEFORE admission"
 d="$(new_sandbox)"; state_file "$d" "evidence-symlink-task" "codex"
@@ -11128,11 +11094,8 @@ else
 fi
 
 # =================================================================== case 63d
-# AN EXACT EXISTING PATH THAT IS NOT A DIRECTORY. 63a plants a regular file at an
-# ANCESTOR of the requested location and reaches the ancestor branch; this plants
-# one at the requested location itself, which is a different branch with a
-# different message. The two are one character apart in the fixture and a long
-# way apart in the code, which is why both are named here.
+# Distinct from 63a: 63a plants the regular file at an ANCESTOR of the requested
+# location; this plants it at the requested location itself.
 echo
 echo "Case 63d — an evidence location that exists and is not a directory is refused BEFORE admission"
 d="$(new_sandbox)"; state_file "$d" "evidence-file-task" "codex"
@@ -11164,11 +11127,9 @@ else
 fi
 
 # =================================================================== case 63e
-# A MISSING LOCATION WHOSE NEAREST EXISTING ANCESTOR IS NOT WRITABLE. This is the
-# fifth branch, and it is the one the ancestor walk exists to reach: mkdir -p
-# would build every level below that ancestor, so the ancestor is the honest
-# thing to test and testing it leaves nothing behind. 63a's ancestor is not a
-# DIRECTORY; this one is a directory that will not accept a new entry.
+# Distinct from 63a and from 58b: 63a's ancestor is not a DIRECTORY and 58b's
+# unwritable path already EXISTS; here the ancestor is a directory that exists
+# and will not accept a new entry.
 echo
 echo "Case 63e — a missing evidence location under an unwritable ancestor is refused BEFORE admission"
 d="$(new_sandbox)"; state_file "$d" "evidence-ancestor-task" "codex"
@@ -11177,10 +11138,9 @@ RO63E="$d/readonly-parent"
 WANT63E="$RO63E/deeper/runs"
 mkdir -p "$RO63E"
 chmod a-w "$RO63E"
-# THE SETUP IS ASSERTED, and the assertion is not decoration: run as a user who
-# can write anywhere — root in a container is the ordinary case — chmod a-w does
-# not bite, the dispatcher would be right to admit the run, and every absence
-# below would pass for a reason that has nothing to do with the branch.
+# The setup assertion is load-bearing: run as a user who can write anywhere —
+# root in a container — chmod a-w does not bite, the run is rightly admitted, and
+# every absence below would pass for a reason unrelated to the branch.
 if [ -d "$RO63E" ] && [ ! -w "$RO63E" ] && [ ! -e "$WANT63E" ]; then
   ok "63e setup — the nearest existing ancestor is a directory this user cannot write to"
 else
