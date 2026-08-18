@@ -47,6 +47,25 @@ built from it.
 | `--status` | off — read-only report; takes no lock, writes nothing; answers IN FLIGHT / STALE LOCK / UNKNOWN — CANNOT INSPECT |
 | `--actor-cmd CMD` | none |
 
+### One stable evidence location per checkout
+
+**Use the default `--log-dir`, or one chosen directory, and keep using it.** The run's own evidence
+location is allowlisted for that run, so sequential runs aimed at the same location are the ordinary
+supported path: each writes its own run log, hop captures and terminal result there, and none of them
+reads the others' files as foreign work.
+
+**Switching a checkout to a different evidence directory is a one-off operator step, not something
+the dispatcher does for you.** The old directory is untracked content the new run was not pointed at,
+so it is out-of-allowlist exactly like any other untracked path, and the run stops at exit `18`
+before launching anything, naming the old path. Resolve that path first — commit it, move it out of
+the checkout, or delete it — then run against the new location.
+
+That refusal is deliberate. Recognising a directory as "an earlier run's own evidence" would mean
+trusting a receipt that lives in the working tree, and anything with write access to the checkout can
+write one — including a killed previous hop. There is no secret this dispatcher holds and an actor
+cannot forge, and the approved plan excludes the persistent authority store that would be one. So the
+guard stays strict and the operating rule carries the convenience instead.
+
 ### The two locks, and the declaration they do not replace
 
 The dispatcher takes **two** locks, both under the repository's **Git common directory**

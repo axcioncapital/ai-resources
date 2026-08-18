@@ -1467,11 +1467,12 @@ rm -rf "$(task_lock_for "$d" record-task)" "$(checkout_lock_for "$d")" 2>/dev/nu
 # rather than incidental. The refused run legitimately created its evidence
 # directory inside this checkout, and a dispatcher only allowlists the log
 # directory IT was pointed at — so a following run aimed at a DIFFERENT --log-dir
-# read the first one's evidence as out-of-allowlist litter and stopped at 18
-# before launching. That consequence was real and was recorded here as a deferral;
-# case 65a is where it is now fixed and proven, and 65b-65d are what keep the
-# repair from becoming a blind spot. It was never what this control measures:
-# pointing both runs at one evidence location is also what an operator does.
+# reads the first one's evidence as out-of-allowlist litter and stops at 18
+# before launching. That consequence is real and is now the DOCUMENTED CONTRACT
+# rather than a deferral: one stable evidence location per checkout, proven by
+# case 65a, with 65c the refusal that fires when a run is aimed somewhere else.
+# Pointing both runs at one evidence location is what an operator does, and it is
+# what this control has always measured.
 echo
 echo "Case 12h-ok — an ADMITTED run still creates and uses the requested run log"
 rm -f "$d.calls"
@@ -10214,33 +10215,38 @@ RID64B="$(run_id_of "$OUT")"
   || bad "  and both leases were released on the way out" \
          "task=$([ -d "$(task_lock_for "$d5" lease-clear-task)" ] && echo present || echo absent) checkout=$([ -d "$(checkout_lock_for "$d5")" ] && echo present || echo absent)"
 rm -rf "$(task_lock_for "$d5" lease-clear-task)" "$(checkout_lock_for "$d5")" 2>/dev/null
-
 # =================================================================== case 65a
-# A PRIOR RUN'S OWN EVIDENCE IS NOT THE NEXT RUN'S FOREIGN WORK.
+# ONE STABLE EVIDENCE LOCATION IS THE SUPPORTED PATH, AND IT MUST NOT BE BROKEN
+# BY KEEPING THE FOREIGN-WORK GATE STRICT.
 #
-# Case 12h-ok recorded this as a deferral and named it exactly: a dispatcher
-# allowlists only the log directory IT was pointed at, so a later run aimed at a
-# DIFFERENT --log-dir reads the earlier run's evidence as out-of-allowlist litter
-# and stops at 18 before launching anything. Nothing an operator did was wrong in
-# that sequence — both runs were valid, both wrote only where they were told —
-# and the second one was refused for the first one's bookkeeping.
+# THE HISTORY MATTERS HERE, because this case used to assert the opposite claim.
+# Case 12h-ok recorded a deferral: a dispatcher allowlists only the log directory
+# IT was pointed at, so a later run aimed at a DIFFERENT --log-dir read the
+# earlier run's evidence as out-of-allowlist litter and stopped at 18 before
+# launching anything. The first repair taught the gate to recognise a prior run's
+# own evidence by reading the run log header its artifacts were written under.
+# That recognition was removed: the receipt lives in the working tree, anything
+# with write access to the checkout can write one, and freezing the answer before
+# the first launch closes the hole against THIS run's actors but not against
+# content that was already there (case 65d). What replaces it is an operating
+# rule — one stable evidence location per checkout — and this case is the half
+# that proves the rule actually works.
 #
-# THE FIRST RUN IS A LEASE-REFUSED RUN, which is the sharpest form of the
-# sequence rather than an arbitrary one. Since Unit 2 a refusal at the lease is a
-# terminal of an ADMITTED run and finalizes a real result inside its own evidence
-# directory (case 64a) — so the very artifact Unit 2 made the dispatcher write is
-# what makes the next run stop. A dispatcher that guaranteed durable terminal
-# results and then blocked on them would be guaranteeing an obstruction.
+# THE SHARPEST FORM OF THE SEQUENCE IS A LEASE-REFUSED FIRST RUN. Since Unit 2 a
+# refusal at the lease is a terminal of an ADMITTED run and finalizes a real
+# result inside its own evidence directory (case 64a) — so the very artifact
+# Unit 2 made the dispatcher write is the one most likely to obstruct the next
+# run. Pointed at the same stable location, it must not: that directory is this
+# run's allowlisted evidence location too, so the gate never sees it.
 #
 # WHAT THIS CASE MUST NOT BECOME. "The second run no longer exits 18" is
 # satisfied by deleting the foreign-work gate, so it is not the claim on its own:
-# 65b and 65c below are the other half, and they must still stop.
+# 65b, 65c and 65d below are the other half, and they must still stop.
 echo
-echo "Case 65a — a prior admitted run's evidence under directory A does not stop the next run using directory B"
+echo "Case 65a — two sequential runs sharing ONE stable evidence location both reach their intended terminal"
 d="$(new_sandbox)"; state_file "$d" "sequential-evidence-task" "codex"
 rm -f "$d.calls" "$d.holder"
-DIR_A65="$d/runs-a"                        # the FIRST run's evidence location, INSIDE the checkout
-DIR_B65="$d/runs-b"                        # the SECOND run's, also inside it and deliberately different
+DIR65="$d/runs-stable"                     # the ONE evidence location, INSIDE the checkout, used by both runs
 HOLDER65="$SANDBOX_ROOT/65a-holder-runs"   # the lease holder's, OUTSIDE it, so only run A's evidence lands in the tree
 ( bash "$DISPATCH_BIN" --checkout "$d" --task sequential-evidence-task --log-dir "$HOLDER65" \
     --timeout 90 \
@@ -10252,20 +10258,22 @@ for _ in $(seq 1 120); do [ -f "$d.holder" ] && break; sleep 0.5; done
   && ok "65a setup — the holding dispatcher is admitted and inside its actor" \
   || bad "65a setup — the holding dispatcher is admitted and inside its actor" "no $d.holder marker"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task sequential-evidence-task \
-      --log-dir "$DIR_A65" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+      --log-dir "$DIR65" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
 expect_rc 17 "$RC" "65a setup — run A is refused at the lease and is therefore an admitted run" "$OUT"
-[ "$(res_count "$DIR_A65")" = "1" ] \
-  && ok "65a setup — run A left exactly one terminal result under directory A" \
-  || bad "65a setup — run A left exactly one terminal result under directory A" \
-         "count=$(res_count "$DIR_A65") in $(ls -a "$DIR_A65" 2>&1 | tr '\n' ' ')"
+[ "$(res_count "$DIR65")" = "1" ] \
+  && ok "65a setup — run A left exactly one terminal result in the stable location" \
+  || bad "65a setup — run A left exactly one terminal result in the stable location" \
+         "count=$(res_count "$DIR65") in $(ls -a "$DIR65" 2>&1 | tr '\n' ' ')"
 wait "$holder65" 2>/dev/null
 rm -rf "$(task_lock_for "$d" sequential-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
-# NOW THE SECOND RUN. Nothing contends with it, the state file is untouched and
-# committed, and the only thing standing in the working tree is run A's evidence.
+# NOW THE SECOND RUN, aimed at the SAME location. Nothing contends with it, the
+# state file is untouched and committed, and the only dispatcher-written thing in
+# the working tree is run A's evidence — sitting in the directory run B was
+# itself pointed at, which is why the gate never has an opinion about it.
 rm -f "$d.calls"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task sequential-evidence-task \
-      --log-dir "$DIR_B65" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+      --log-dir "$DIR65" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
 if [ "$RC" -ne 18 ]; then
   ok "run B is not refused as foreign work (exit $RC, not 18)"
 else
@@ -10277,142 +10285,156 @@ fi
   && ok "  and its actor really launched past the pre-hop gate" \
   || bad "  and its actor really launched past the pre-hop gate" "calls=$(calls "$d")"
 RID65B="$(run_id_of "$OUT")"
-[ -n "$RID65B" ] && [ -f "$DIR_B65/$RID65B.result" ] \
-  && ok "  and run B wrote its own evidence under directory B, not directory A" \
-  || bad "  and run B wrote its own evidence under directory B" \
-         "expected $DIR_B65/$RID65B.result; B holds $(ls -a "$DIR_B65" 2>&1 | tr '\n' ' ')"
-# Run A's directory is untouched by run B. The fix must make the earlier evidence
-# invisible to the gate, never tidy it away.
-[ "$(res_count "$DIR_A65")" = "1" ] \
-  && ok "  and run A's evidence is still sitting there, unmoved and uncommitted" \
-  || bad "  and run A's evidence is still sitting there" "count=$(res_count "$DIR_A65")"
+[ -n "$RID65B" ] && [ -f "$DIR65/$RID65B.result" ] \
+  && ok "  and run B wrote its own run-bound result into the same stable location" \
+  || bad "  and run B wrote its own run-bound result into the same stable location" \
+         "expected $DIR65/$RID65B.result; it holds $(ls -a "$DIR65" 2>&1 | tr '\n' ' ')"
+# BOTH RESULTS, not one overwritten by the other. Sharing a location is only a
+# supported path if the earlier run's durable terminal survives the later run.
+[ "$(res_count "$DIR65")" = "2" ] \
+  && ok "  and run A's terminal result is still there beside it — two results, neither overwritten" \
+  || bad "  and run A's terminal result is still there beside it" "count=$(res_count "$DIR65")"
 [ -z "$(git -C "$d" diff --cached --name-only 2>/dev/null)" ] \
   && ok "  and nothing of run A's was staged on the way past" \
   || bad "  and nothing of run A's was staged" "$(git -C "$d" diff --cached --name-only)"
-# SAID OUT LOUD, not silently dropped. A path removed from the gate's view
-# without a word is indistinguishable to the operator from a gate that stopped
-# working, and this is the one line that tells them which paths were excused.
-out_has "prior_run_evidence=1 path(s)" "$OUT" "  and run B announced what it excused"
-out_has "  runs-a/"                    "$OUT" "  and named it"
+# NOTHING IS EXCUSED ANY MORE, and this is the line that says so. The removed
+# mechanism announced every path it dropped from the gate's view; a run that
+# still printed that announcement would still be carrying the mechanism.
+out_lacks "prior_run_evidence" "$OUT" "  and no path was excused from the gate to achieve it"
 rm -rf "$(task_lock_for "$d" sequential-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
 # =================================================================== case 65b
 # THE NEGATIVE CONTROL: A GENUINELY FOREIGN PATH STILL STOPS THE RUN.
 #
 # 65a is satisfied by any change that stops looking at the working tree, so this
-# is the half that keeps it honest. Run A's evidence is present exactly as in
-# 65a, and an unrelated untracked path sits beside it — the pre-hop gate must
-# still take exit 18, and the message must name the foreign path rather than the
-# evidence directory, or an operator sent to "commit, stash or revert the paths
-# above" is sent to the wrong files.
+# is the half that keeps it honest. A prior run's evidence sits in the shared
+# stable location exactly as in 65a, and an unrelated untracked path sits beside
+# it — the pre-hop gate must still take exit 18, and the message must name the
+# foreign path rather than the run's own evidence directory, or an operator sent
+# to "commit, stash or revert the paths above" is sent to the wrong files.
 #
 # Run A here is an ORDINARY admitted run rather than a lease-refused one. What
 # 65b needs is real dispatcher evidence in the tree, which either shape produces;
 # the refused shape is 65a's subject and costs a live holder to arrange.
 echo
-echo "Case 65b — an unrelated untracked path beside a prior run's evidence still stops the next run"
+echo "Case 65b — an unrelated untracked path beside the stable evidence location still stops the next run"
 d="$(new_sandbox)"; state_file "$d" "foreign-control-task" "codex"
 rm -f "$d.calls"
-DIR_A65B="$d/runs-a"; DIR_B65B="$d/runs-b"
+DIR65B="$d/runs-stable"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task foreign-control-task \
-      --log-dir "$DIR_A65B" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
-[ "$(res_count "$DIR_A65B")" = "1" ] \
-  && ok "65b setup — run A left its evidence under directory A" \
-  || bad "65b setup — run A left its evidence under directory A" \
-         "rc=$RC count=$(res_count "$DIR_A65B") in $(ls -a "$DIR_A65B" 2>&1 | tr '\n' ' ')"
+      --log-dir "$DIR65B" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+[ "$(res_count "$DIR65B")" = "1" ] \
+  && ok "65b setup — run A left its evidence in the stable location" \
+  || bad "65b setup — run A left its evidence in the stable location" \
+         "rc=$RC count=$(res_count "$DIR65B") in $(ls -a "$DIR65B" 2>&1 | tr '\n' ' ')"
 rm -rf "$(task_lock_for "$d" foreign-control-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 mkdir -p "$d/actor-scratch"
 printf 'notes an actor left behind\n' >"$d/actor-scratch/notes.md"
 rm -f "$d.calls"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task foreign-control-task \
-      --log-dir "$DIR_B65B" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+      --log-dir "$DIR65B" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
 expect_rc 18 "$RC" "the unrelated untracked path still stops the run at 18" "$OUT"
 [ "$(calls "$d")" = "0" ] \
   && ok "  and no actor was launched over it" || bad "  and no actor was launched over it" "calls=$(calls "$d")"
-# THE STOP MESSAGE, not the whole run. The run legitimately announces which paths
-# it recognised as earlier evidence and excluded, so a negative assertion over the
-# entire output would fail on the dispatcher telling the operator the truth. What
-# must not name runs-a is the list of paths the operator is being sent to commit,
-# stash or revert.
+# THE STOP MESSAGE, not the whole run — the same scoping the earlier revision
+# used, kept because the assertion below is a negative one and the run log
+# legitimately mentions its own evidence directory elsewhere.
 STOP65B="$(printf '%s\n' "$OUT" | awk '/^STOP \[18\]/{f=1} f{print} /^Recoverable next action/{f=0}')"
 out_has   "actor-scratch" "$STOP65B" "  and the stop names the foreign path"
-out_lacks "runs-a"        "$STOP65B" "  and the stop does NOT send the operator at the prior run's evidence"
+out_lacks "runs-stable"   "$STOP65B" "  and the stop does NOT send the operator at this run's own evidence location"
 rm -rf "$(task_lock_for "$d" foreign-control-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
 # =================================================================== case 65c
-# THE SHARPER CONTROL: THE EVIDENCE DIRECTORY ITSELF IS NOT A BLIND SPOT.
+# THE CONTRACT ITSELF: AIMING A LATER RUN SOMEWHERE ELSE IS A REFUSAL, NOT A
+# MIGRATION.
 #
-# 65b would pass against a fix that ignored the whole of any directory holding a
-# run log — which is the cheap version of this change and the dangerous one,
-# because an actor writing into that directory would then be invisible. So the
-# foreign file here is placed INSIDE run A's evidence directory. The directory
-# must stop being excused the moment it holds something that is not one of those
-# runs' own artifacts.
+# This is the case that states the price of removing the recognition mechanism,
+# and it is written as an assertion rather than left implicit so that nobody
+# reintroduces the mechanism believing this behaviour was an accident. Run A used
+# directory A. Run B is pointed at directory B while A is still untracked, so A
+# is out-of-allowlist content run B was not pointed at — indistinguishable, from
+# inside the checkout, from anything else somebody left lying there.
+#
+# THE REFUSAL HAS TO BE ACTIONABLE, which is the second half of the assertion.
+# Naming the path and giving the existing recoverable-next-action guidance is
+# what makes this a one-off operator step rather than a dead end.
 echo
-echo "Case 65c — a NON-artifact file inside the prior evidence directory still stops the next run"
-d="$(new_sandbox)"; state_file "$d" "evidence-dir-control-task" "codex"
+echo "Case 65c — a run aimed at a DIFFERENT evidence directory stops at 18 and names the old one"
+d="$(new_sandbox)"; state_file "$d" "switched-evidence-task" "codex"
 rm -f "$d.calls"
 DIR_A65C="$d/runs-a"; DIR_B65C="$d/runs-b"
-OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task evidence-dir-control-task \
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task switched-evidence-task \
       --log-dir "$DIR_A65C" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
 [ "$(res_count "$DIR_A65C")" = "1" ] \
   && ok "65c setup — run A left its evidence under directory A" \
   || bad "65c setup — run A left its evidence under directory A" \
          "rc=$RC count=$(res_count "$DIR_A65C") in $(ls -a "$DIR_A65C" 2>&1 | tr '\n' ' ')"
-rm -rf "$(task_lock_for "$d" evidence-dir-control-task)" "$(checkout_lock_for "$d")" 2>/dev/null
-printf 'an actor wrote this into the evidence directory\n' >"$DIR_A65C/actor-notes.md"
+rm -rf "$(task_lock_for "$d" switched-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 rm -f "$d.calls"
-OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task evidence-dir-control-task \
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task switched-evidence-task \
       --log-dir "$DIR_B65C" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
-expect_rc 18 "$RC" "a stranger inside the evidence directory still stops the run at 18" "$OUT"
+expect_rc 18 "$RC" "switching evidence directories while the old one is untracked stops at 18" "$OUT"
 [ "$(calls "$d")" = "0" ] \
   && ok "  and no actor was launched over it" || bad "  and no actor was launched over it" "calls=$(calls "$d")"
-out_has "runs-a" "$OUT" "  and the stop names the directory holding it"
-rm -rf "$(task_lock_for "$d" evidence-dir-control-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+STOP65C="$(printf '%s\n' "$OUT" | awk '/^STOP \[18\]/{f=1} f{print} /^Recoverable next action/{f=0}')"
+out_has "runs-a"                   "$STOP65C" "  and the stop names the old evidence directory"
+out_has "Recoverable next action"  "$STOP65C" "  and gives the operator the existing actionable guidance"
+# THE OLD DIRECTORY IS LEFT ALONE. A refusal that tidied the path away would be
+# doing the migration it just refused to do, and silently.
+[ "$(res_count "$DIR_A65C")" = "1" ] \
+  && ok "  and directory A is untouched — refused, not tidied away" \
+  || bad "  and directory A is untouched" "count=$(res_count "$DIR_A65C")"
+rm -rf "$(task_lock_for "$d" switched-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
 # =================================================================== case 65d
-# TRACKED IS NEVER EXCUSED, whatever the file is called. A committed artifact
-# that is then modified is a real change to the repository's content, and no
-# name-shaped or directory-shaped rule may hide it — otherwise "the evidence
-# directory" becomes a place to smuggle edits through the gate.
+# THE CASE THAT DECIDED THE DESIGN: CONTENT ALREADY IN THE TREE CANNOT BE TRUSTED.
+#
+# The removed mechanism recognised a directory as an earlier run's own evidence
+# by reading the run log header its artifacts were written under. That header is
+# a file in the working tree, and this case writes one — a directory, a lookalike
+# log naming an id it invented, and a payload file named after that id — BEFORE
+# the dispatcher starts. No actor of this run existed, so freezing the answer
+# before the first launch cannot help: at the moment of the freeze the forgery is
+# already there and satisfies the classifier exactly as a real receipt would.
+#
+# THIS IS NOT A HYPOTHETICAL SHAPE. A hop killed mid-write, a crashed previous
+# run, or any other process with write access to the checkout can leave content
+# behind, and the dispatcher restarts into a tree it did not write. Trusting it
+# would let actor-writable content change what the foreign-work gate believes on
+# the next start, which is the one thing the gate exists to prevent.
+#
+# Red before the removal: the run was excused, announced "prior_run_evidence=1",
+# and launched its actor. Green after it: the path is out-of-allowlist like any
+# other, and the run stops before anything is launched.
 echo
-echo "Case 65d — a TRACKED file inside a prior evidence directory is still foreign when modified"
-d="$(new_sandbox)"; state_file "$d" "tracked-evidence-task" "codex"
+echo "Case 65d — evidence-shaped content already in the tree before the run starts is not trusted"
+d="$(new_sandbox)"; state_file "$d" "pre-existing-forgery-task" "codex"
 rm -f "$d.calls"
-DIR_A65D="$d/runs-a"; DIR_B65D="$d/runs-b"
-OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task tracked-evidence-task \
-      --log-dir "$DIR_A65D" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
-[ "$(res_count "$DIR_A65D")" = "1" ] \
-  && ok "65d setup — run A left its evidence under directory A" \
-  || bad "65d setup — run A left its evidence under directory A" "rc=$RC"
-rm -rf "$(task_lock_for "$d" tracked-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
-git -C "$d" add -f -- runs-a >/dev/null 2>&1
-git -C "$d" commit -qm "somebody committed the evidence directory" >/dev/null 2>&1
-A65D_LOG="$(ls "$DIR_A65D"/*.log 2>/dev/null | head -1)"
-printf 'edited after the commit\n' >>"$A65D_LOG"
-rm -f "$d.calls"
-OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task tracked-evidence-task \
-      --log-dir "$DIR_B65D" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
-expect_rc 18 "$RC" "a modified TRACKED file in the evidence directory still stops the run at 18" "$OUT"
+FID65D='20260101T000000-forged'
+mkdir -p "$d/runs-preexisting"
+printf 'run=%s mode=simulated task=forged\n' "$FID65D" >"$d/runs-preexisting/$FID65D.log"
+printf 'payload the operator was never shown\n'        >"$d/runs-preexisting/$FID65D.out"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task pre-existing-forgery-task \
+      --log-dir "$d/runs" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 18 "$RC" "content that merely LOOKS like a prior run's evidence still stops the run at 18" "$OUT"
 [ "$(calls "$d")" = "0" ] \
   && ok "  and no actor was launched over it" || bad "  and no actor was launched over it" "calls=$(calls "$d")"
-rm -rf "$(task_lock_for "$d" tracked-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+STOP65D="$(printf '%s\n' "$OUT" | awk '/^STOP \[18\]/{f=1} f{print} /^Recoverable next action/{f=0}')"
+out_has "runs-preexisting" "$STOP65D" "  and the stop names the forged path"
+out_lacks "prior_run_evidence" "$OUT" "  and nothing in the run claims to have recognised it as earlier evidence"
+rm -rf "$(task_lock_for "$d" pre-existing-forgery-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
 # =================================================================== case 66a
-# THE RECEIPT IS ACTOR-WRITABLE, SO IT CANNOT BE TRUSTED WHILE AN ACTOR IS RUNNING.
+# THE POST-HOP HALF: AN ACTOR THAT MINTS DISPATCHER-SHAPED EVIDENCE IS CAUGHT.
 #
-# 65a recognises a prior run's evidence by reading the run log's own
-# "run=<id> ..." header. That header is a file in the working tree, and the actor
-# has write access to the working tree — so an actor can mint the receipt itself:
-# one directory, one lookalike log naming an id it invented, and every other file
-# named "<that id>.something". Under 65a's rule alone the whole directory is then
-# excused, and the post-hop delta that stops a run at 24 for touching paths
-# outside the allowlist sees nothing at all.
+# 65a-65d are all about the PRE-HOP gate — refusing to run OVER somebody else's
+# work. This is the post-hop delta, which catches the actor DOING something it
+# was not allowed to, and it is the assertion that would have gone quiet first if
+# the recognition mechanism had been kept: an actor that could mint the receipt
+# could put its own work somewhere the delta no longer looked.
 #
-# THIS IS THE HOLE THAT MATTERS. The pre-hop gate refuses to run OVER somebody
-# else's work; the post-hop delta is what catches the actor DOING something it
-# was not allowed to. A recognition rule the actor can satisfy converts the
-# second one into a blind spot, and the first one inherits it on the next run.
+# It is unchanged by the removal and must stay green either way — which is the
+# point. The mechanism was never what made this work; the allowlist is.
 echo
 echo "Case 66a — an actor that MINTS dispatcher-shaped evidence mid-hop is still caught"
 d="$(new_sandbox)"; state_file "$d" "forged-evidence-task" "codex"
@@ -10431,62 +10453,20 @@ out_has "runs-forged" "$OUT" "  and the stop names the minted directory"
   || bad "  and the minted files are left in place" "$(ls -a "$d/runs-forged" 2>&1 | tr '\n' ' ')"
 rm -rf "$(task_lock_for "$d" forged-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
-# =================================================================== case 66b
-# AN EXCUSED DIRECTORY IS NOT A HIDING PLACE EITHER.
+# ------------------------------------------------------------- 66b, 66c: gone
+# RETIRED WITH THE MECHANISM THEY POLICED, and named here rather than deleted
+# silently so the gap is a decision on the record.
 #
-# 66a is the case where the actor builds the excuse from nothing. This is the
-# case where a REAL one already exists and the actor writes into it — which
-# `git status --porcelain` reports as the same single "?? runs-a/" line whatever
-# is underneath, so a rule that excused the line would never see the difference.
-# Under 65a's requirement the directory is legitimately excused before the hop;
-# the actor's write must take it back out.
-echo
-echo "Case 66b — an actor writing INSIDE a legitimately excused evidence directory is still caught"
-d="$(new_sandbox)"; state_file "$d" "tamper-evidence-task" "codex"
-rm -f "$d.calls"
-OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task tamper-evidence-task \
-      --log-dir "$d/runs-a" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
-[ "$(res_count "$d/runs-a")" = "1" ] \
-  && ok "66b setup — run A left genuine evidence under directory A" \
-  || bad "66b setup — run A left genuine evidence under directory A" "rc=$RC"
-rm -rf "$(task_lock_for "$d" tamper-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
-rm -f "$d.calls"
-TAMPER66='for f in "$WL_CHECKOUT"/runs-a/*.log; do printf "appended by the actor\n" >> "$f"; done;'
-OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task tamper-evidence-task \
-      --log-dir "$d/runs-b" --timeout 20 --max-hops 1 --actor-cmd "$TAMPER66$FLIP" 2>&1)"; RC=$?
-expect_rc 24 "$RC" "the run stops at 24 when the actor edits a file inside the excused directory" "$OUT"
-[ "$(calls "$d")" = "1" ] \
-  && ok "  and the actor really ran" || bad "  and the actor really ran" "calls=$(calls "$d")"
-out_has "runs-a" "$OUT" "  and the stop names the directory it wrote into"
-rm -rf "$(task_lock_for "$d" tamper-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
-
-# =================================================================== case 66c
-# THE POSITIVE CONTROL for both of the above. 66a and 66b are satisfied by a
-# dispatcher that has simply stopped excusing anything — which is 65a's defect
-# back again — so the same two-run, two-directory sequence must still pass when
-# the actor behaves. This is 65a's claim re-asserted with the tamper removed, and
-# it is the assertion that fails if the correction over-corrects.
-echo
-echo "Case 66c — with the actor behaving, the same excused directory still lets the run through"
-d="$(new_sandbox)"; state_file "$d" "untampered-evidence-task" "codex"
-rm -f "$d.calls"
-OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task untampered-evidence-task \
-      --log-dir "$d/runs-a" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
-[ "$(res_count "$d/runs-a")" = "1" ] \
-  && ok "66c setup — run A left genuine evidence under directory A" \
-  || bad "66c setup — run A left genuine evidence under directory A" "rc=$RC"
-rm -rf "$(task_lock_for "$d" untampered-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
-rm -f "$d.calls"
-OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task untampered-evidence-task \
-      --log-dir "$d/runs-b" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
-if [ "$RC" -ne 18 ] && [ "$RC" -ne 24 ]; then
-  ok "run B is neither refused as foreign (18) nor blamed for the prior evidence (24) — exit $RC"
-else
-  bad "run B is neither refused as foreign (18) nor blamed for the prior evidence (24)" "exited $RC: $OUT"
-fi
-[ "$(calls "$d")" = "1" ] \
-  && ok "  and its actor launched and completed" || bad "  and its actor launched" "calls=$(calls "$d")"
-rm -rf "$(task_lock_for "$d" untampered-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+# 66b asserted that an actor writing INSIDE a legitimately excused evidence
+# directory was still caught at 24. 66c was its positive control: with the actor
+# behaving, the same excused directory still let the run through. Both sentences
+# begin "the excused directory", and after this unit no directory is excused —
+# 66b's setup now stops at 18 before the actor it needs is ever launched, and
+# 66c's claim is 65a's claim with a second directory it no longer needs.
+#
+# WHAT COVERS THEM NOW. 66a keeps the post-hop delta honest against an actor that
+# builds evidence shapes from nothing, which is 66b's real subject once the
+# excuse is gone; 65a keeps the sequential path working, which is 66c's.
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

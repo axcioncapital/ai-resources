@@ -460,14 +460,6 @@ OWNER_STATUS=unchecked
 # so the dispatcher's own evidence is not reported back as the actor's work (O2).
 LOG_REL=""
 
-# Earlier dispatcher runs' own evidence directories, recognised ONCE before any
-# actor of this run exists and pinned to the bytes they held at that moment.
-# Written only by freeze_prior_evidence(), read only by prior_run_evidence(); the
-# flag is separate from the manifest because "frozen and empty" and "not frozen
-# yet" are different states and only the first one is an answer.
-PRIOR_EVIDENCE_FROZEN=0
-PRIOR_EVIDENCE_MANIFEST=""
-
 # --------------------------------------------------- terminal result (set A)
 #
 # ONE bounded, versioned, run-bound, machine-readable record per terminal stop,
@@ -2929,208 +2921,34 @@ fi
 
 git_head() { git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null; }
 
-# Which run ids a directory can PROVE it holds the evidence of.
-#
-# Every artifact this dispatcher writes into an evidence directory is named
-# "$RUN_ID.<suffix>" (the run log, the terminal result and its .partial, the hop
-# captures, the unattended profile), and every run opens "$RUN_ID.log" by
-# printing "run=$RUN_ID ..." into it as its first line. So a run log is a
-# self-identifying receipt: it names the run whose files sit beside it.
-#
-# READ, NOT PARSED FOR SHAPE, and that is deliberate. The obvious alternative was
-# to match the RUN_ID format with a pattern — timestamp, lock-key fragment, pid,
-# task. That pattern would be wrong today: LOCK_KEY is never assigned, so real
-# ids come out as "20260818T152713--99177-task" with the discriminator missing,
-# and it is a recorded deferral to repair. A rule keyed on the format would have
-# to be revised in step with a fix somewhere else in this file, and would fail
-# open or closed depending on which moved first. The header is the contract the
-# artifacts were written under, and it survives that repair untouched.
-run_ids_proven_in() { # directory -> one proven run id per line
-  local f base id first
-  for f in "$1"/*.log; do
-    [ -f "$f" ] && [ ! -L "$f" ] || continue
-    base="${f##*/}"; id="${base%.log}"
-    [ -n "$id" ] || continue
-    IFS= read -r first <"$f" 2>/dev/null || first=''
-    case "$first" in "run=$id "*) printf '%s\n' "$id" ;; esac
-  done
-}
-
-# One line standing for everything under a path: every non-directory file below
-# it, sorted, each paired with its content hash. Content, not names and not
-# mtimes — a name list cannot see an edit to a file that was already there, and a
-# timestamp comparison reports changes that are not one.
-#
-# ! -type d rather than -type f, for the same reason as in the classifier below:
-# a symlink or fifo dropped in here is a change to the path, and looking only for
-# regular files would let it move without moving this line.
-evidence_fingerprint() { # absolute path -> one hash, or empty when unreadable
-  if [ -d "$1" ] && [ ! -L "$1" ]; then
-    ( cd "$1" 2>/dev/null || exit 0
-      find . -mindepth 1 ! -type d 2>/dev/null | LC_ALL=C sort |
-        while IFS= read -r f; do printf '%s  %s\n' "$(file_hash "$f")" "$f"; done
-    ) | shasum -a 256 2>/dev/null | cut -d' ' -f1
-    return 0
-  fi
-  if [ -f "$1" ] && [ ! -L "$1" ]; then file_hash "$1"; return 0; fi
-  printf ''
-}
-
-# Is this working-tree path nothing but an EARLIER dispatcher run's own evidence?
-#
-# WHY IT HAS TO EXIST. A dispatcher allowlists only the log directory IT was
-# pointed at (the LOG_REL block below). Two sequential, entirely valid runs that
-# were given different --log-dir values therefore end with the second one reading
-# the first one's evidence as out-of-allowlist litter and stopping at 18 before
-# launching anything. Since Unit 2 that is sharper still: a run refused at the
-# lease is an admitted run and finalizes a real terminal result inside its own
-# evidence directory, so the durable result this dispatcher now guarantees is
-# itself what blocks the next run. Guaranteeing an obstruction is not a guarantee.
-#
-# THE NARROWNESS IS THE WHOLE DESIGN, because the cheap versions of this are all
-# dangerous. Ignoring any directory the operator named, or all untracked content,
-# or a broad parent such as plans/, would turn the evidence directory into a
-# blind spot an actor could write through — and the foreign-work gate exists
-# precisely to see that. So a directory is excused only when EVERY file under it
-# belongs to a run that directory can prove it holds, and one stranger anywhere
-# inside it puts the whole path back in front of the gate.
-#
-# UNTRACKED ONLY. Evidence is never committed by this dispatcher, so a tracked
-# path that is modified or deleted is a real change to repository content and is
-# never excused here, whatever it is called or wherever it sits.
-#
-# THIS HIDES NOTHING FROM THE OPERATOR that they need. The paths it drops are
-# this program's own bookkeeping from a previous run, reported at the time by
-# that run's own terminal result; what the gate is for is work that was not this
-# dispatcher's.
-#
-# IT IS NEVER CONSULTED WHILE AN ACTOR IS RUNNING, and that restriction is not a
-# refinement of this function — it is what makes it safe to have at all. The
-# receipt it reads is a file in the working tree, and the actor has write access
-# to the working tree, so an actor can mint one: a directory, a lookalike log
-# naming an id it invented, and every other file named after that id. Nothing
-# inside this function can tell that apart from the real thing, because there is
-# nothing to tell it apart BY — no secret the dispatcher holds and the actor
-# cannot write, and the brief excludes the persistent registry that would be one.
-# So this classifier runs exactly once, at freeze_prior_evidence() below, before
-# any actor of this run has existed; from then on foreign_worktree() consults the
-# frozen answer and re-verifies it by content. See that function for the rest.
-classify_prior_evidence() { # porcelain-line relative-path -> 0 when it is only earlier run evidence
-  local line="$1" p="$2" abs dir ids f id found=0 owned
-  [ "${line:0:2}" = '??' ] || return 1
-  abs="$CHECKOUT/${p%/}"
-  if [ -d "$abs" ] && [ ! -L "$abs" ]; then
-    ids="$(run_ids_proven_in "$abs")"
-    [ -n "$ids" ] || return 1
-    # ! -type d rather than -type f: a symlink, socket or fifo dropped in here is
-    # not a run artifact and must not pass by being the wrong kind of thing to
-    # look for. An empty directory proves nothing and is not excused either.
-    while IFS= read -r f; do
-      [ -n "$f" ] || continue
-      found=1
-      owned=0
-      while IFS= read -r id; do
-        [ -n "$id" ] || continue
-        case "${f##*/}" in "$id".*) owned=1; break ;; esac
-      done <<<"$ids"
-      [ "$owned" -eq 1 ] || return 1
-    done < <(find "$abs" -mindepth 1 ! -type d 2>/dev/null)
-    [ "$found" -eq 1 ] || return 1
-    return 0
-  fi
-  [ -f "$abs" ] && [ ! -L "$abs" ] || return 1
-  dir="${abs%/*}"
-  ids="$(run_ids_proven_in "$dir")"
-  [ -n "$ids" ] || return 1
-  while IFS= read -r id; do
-    [ -n "$id" ] || continue
-    case "${abs##*/}" in "$id".*) return 0 ;; esac
-  done <<<"$ids"
-  return 1
-}
-
-# THE ANSWER IS TAKEN ONCE, BEFORE ANY ACTOR EXISTS, AND NEVER REOPENED.
-#
-# Called from the top level below, after the allowlist is final and before the
-# dry-run advisory and the hop loop — so at the moment it runs, no actor of this
-# run has been launched and nothing in the working tree can have been written by
-# one. That is the only unforgeable fact available here, and the whole design
-# rests on it: whatever an actor writes later cannot get into this set, because
-# the set is closed before the actor exists.
-#
-# NOT A CACHE, AND NOT AN OPTIMISATION. Re-running the classifier after each hop
-# would hand the actor the recognition rule and let it mint its own excuse
-# (case 66a). Freezing the set is what keeps foreign_worktree()'s post-hop delta
-# — the check that stops a run at 24 for touching paths outside the allowlist —
-# able to see everything the actor did.
-#
-# THE FINGERPRINT IS THE SECOND HALF, and without it the first half is a hiding
-# place rather than a fix. `git status --porcelain` collapses an untracked
-# directory to one line whatever is underneath it, so a frozen set of PATHS would
-# excuse "?? runs-a/" identically before and after an actor wrote its payload
-# inside (case 66b). Freezing a content fingerprint alongside each path means the
-# excuse survives only while the directory holds exactly the bytes it held before
-# the first launch; one edit, one added file, one removed file takes it back out
-# of the set and straight back in front of the gate.
-#
-# WHAT THIS DOES NOT ESTABLISH, stated rather than implied: it is provenance
-# against THIS RUN'S ACTORS, not provenance in general. Content that already
-# satisfied the classifier when the dispatcher started is trusted, and no rule
-# reading the working tree can do better — a process with write access to the
-# checkout before this program starts can write anything this program can read.
-# What bounds that residue is composition rather than this function: a forgery
-# left by a previous hop's actor was already outside ITS run's frozen set, so
-# that run stopped at 24 and said so.
-freeze_prior_evidence() {
-  local line p abs allowed re fp
-  PRIOR_EVIDENCE_MANIFEST=''
-  while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    p="${line:3}"; p="${p%\"}"; p="${p#\"}"
-    allowed=0
-    for re in "${ALLOW_PATHS[@]}"; do
-      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
-    done
-    [ "$allowed" -eq 1 ] && continue
-    classify_prior_evidence "$line" "$p" || continue
-    abs="$CHECKOUT/${p%/}"
-    fp="$(evidence_fingerprint "$abs")"
-    # A path that cannot be fingerprinted is not excused. Fails closed: the
-    # alternative is an empty expectation that every later reading matches.
-    [ -n "$fp" ] || continue
-    PRIOR_EVIDENCE_MANIFEST="${PRIOR_EVIDENCE_MANIFEST}${fp}	${p}"$'\n'
-  done < <(git -C "$CHECKOUT" status --porcelain 2>/dev/null)
-  PRIOR_EVIDENCE_FROZEN=1
-  if [ -n "$PRIOR_EVIDENCE_MANIFEST" ]; then
-    say "prior_run_evidence=$(printf '%s' "$PRIOR_EVIDENCE_MANIFEST" | grep -c . ) path(s) recognised as earlier dispatcher runs' own evidence and excluded from the foreign-work gate, pinned by content as of now:"
-    printf '%s' "$PRIOR_EVIDENCE_MANIFEST" | while IFS=$'\t' read -r fp p; do
-      [ -n "$p" ] && say "  $p"
-    done
-  fi
-}
-
-# Is this path in the frozen set, and does it still hold the bytes it held then?
-#
-# Both halves, every time. Membership alone would excuse a directory an actor has
-# since written into; the fingerprint alone has nothing to compare against. An
-# unfrozen run excuses nothing at all — a terminal reached before the freeze
-# (an argument refusal, a lease refusal, a state error) reports prior evidence as
-# out-of-allowlist, which is true and is the fail-closed direction.
-prior_run_evidence() { # porcelain-line relative-path -> 0 when excused
-  local line="$1" p="$2" fp path want=''
-  [ "${PRIOR_EVIDENCE_FROZEN:-0}" -eq 1 ] || return 1
-  [ "${line:0:2}" = '??' ] || return 1
-  [ -n "$PRIOR_EVIDENCE_MANIFEST" ] || return 1
-  while IFS=$'\t' read -r fp path; do
-    [ -n "$path" ] || continue
-    if [ "$path" = "$p" ]; then want="$fp"; break; fi
-  done <<<"$PRIOR_EVIDENCE_MANIFEST"
-  [ -n "$want" ] || return 1
-  [ "$(evidence_fingerprint "$CHECKOUT/${p%/}")" = "$want" ]
-}
-
 # Working-tree lines NOT covered by the allowlist. Any change here during an
 # actor run is an unexpected repository effect.
+#
+# THE ALLOWLIST IS THE ONLY THING THAT EXCUSES A PATH, and that is the whole
+# contract rather than a simplification of one. Between 2026-08-18 and this
+# revision a second question was asked here: is this untracked path nothing but
+# an EARLIER dispatcher run's own evidence, recognised by reading the run log
+# header the artifacts were written under? It was built so that a run aimed at a
+# new --log-dir would not stop over the previous run's evidence, and it was
+# removed because nothing in the working tree can answer it safely.
+#
+# WHY IT CANNOT BE MADE SAFE. The receipt it read is a file in the checkout, and
+# anything with write access to the checkout can write one. Freezing the answer
+# before the first launch closes it against THIS run's actors, and that much
+# worked; it cannot close it against content that was already there — a killed
+# previous hop, another process, or anyone else — because there is nothing to
+# tell a real receipt from a forged one BY. A secret the dispatcher holds and an
+# actor cannot write would be one, and that is the persistent authority store the
+# approved plan excludes.
+#
+# WHAT REPLACES IT IS AN OPERATING RULE, NOT A MECHANISM: one stable evidence
+# location per checkout. Reuse the default, or one chosen --log-dir; that
+# location is allowlisted for the run at the LOG_REL block, so sequential runs
+# aimed at it are the ordinary supported path and never meet this function.
+# Aiming a later run at a different directory while the old one is still
+# untracked stops at 18 and names the old path, which is a safe, actionable
+# refusal the operator resolves once — not an automatic migration. See the
+# README's "One stable evidence location per checkout".
 foreign_worktree() {
   local line p
   git -C "$CHECKOUT" status --porcelain 2>/dev/null | while IFS= read -r line; do
@@ -3140,10 +2958,6 @@ foreign_worktree() {
     for re in "${ALLOW_PATHS[@]}"; do
       if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
     done
-    # An earlier run's own evidence is this program's bookkeeping, not foreign
-    # work. Asked second, so the allowlist keeps deciding everything it already
-    # decided and this only ever reaches paths that were about to be reported.
-    [ "$allowed" -eq 0 ] && prior_run_evidence "$line" "$p" && allowed=1
     [ "$allowed" -eq 0 ] && printf '%s\n' "$line"
   done | sort
 }
@@ -4257,22 +4071,6 @@ if state_dirty; then
       die 25 "the state file is uncommitted with turn: $ST_TURN — Claude commits, so a previous run died between editing and committing, or its commit was refused."$'\n'"Recoverable next action: read \`git diff -- logs/work-loop/$TASK.md\`. If the edit is complete, commit it and re-run this dispatcher; if it is partial, discard it and re-run." ;;
   esac
 fi
-
-# CLOSE THE PRIOR-EVIDENCE SET HERE, and nowhere later.
-#
-# This line is the boundary the whole mechanism rests on: everything above it
-# happened before any actor of this run could exist, and everything below it
-# either launches one or reports on one. Taking the answer here is what makes
-# "the actor cannot mint its own excuse" a property of the control flow rather
-# than a rule some later caller has to remember.
-#
-# ABOVE THE DRY-RUN BLOCK so the advisory below reports the same foreign paths a
-# real run would stop on — a dry run that named a different set would be
-# describing a run nobody can perform. Not called inside foreign_worktree() on
-# first use: that function is always read through $( ), which is a subshell, so
-# the freeze would be discarded on the way out and retaken — post-hop, with the
-# actor's writes already in the tree — on the next call.
-freeze_prior_evidence
 
 if [ "$DRY_RUN" -eq 1 ]; then
   if [ "$CARRY_ONE" -eq 1 ]; then
