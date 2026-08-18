@@ -1596,6 +1596,97 @@ fi
   || bad "  and an admitted run files no refusal record" "refusal count moved from $n_ref_before"
 rm -rf "$(task_lock_for "$d" record-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
+# ---------------------------------------------------------------- case 12i
+echo
+echo "Case 12i — the run id's checkout discriminator is populated, stable per checkout/task, and different across checkouts"
+# WHAT THE SECOND FIELD IS FOR. A run id is
+# <timestamp>-<discriminator>-<pid>-<task>, and every piece of run evidence is that
+# id plus a suffix. Two runs of the SAME task, started in the SAME second, from
+# DIFFERENT checkouts, writing into ONE shared --log-dir agree on the timestamp and
+# on the task — so without the second field they compute the same id and silently
+# overwrite each other's run log, hop captures and unattended profile. Case 12h
+# proved evidence lands in the log dir it was asked for; this case proves two
+# checkouts sharing one log dir stay distinguishable inside it.
+#
+# WHY IT NEEDED RESTORING, and why this is a regression rather than a new feature.
+# The discriminator was computed in the original spike (94b440b2) as
+# sha256("$CHECKOUT|$TASK") and deleted by 0d9e3355 (2026-08-11), the two-lease
+# refactor. That deletion was right about the LOCK key — a composite enforces
+# neither resource on its own, which is why there are now two independent leases —
+# but RUN_ID was left still reading ${LOCK_KEY:0:8}, of a variable nothing assigned
+# any more. The run logs on disk from before that refactor carry a populated field
+# (`-d571444e-`, `-bb64bbd9-`); every run id produced after it carried two adjacent
+# hyphens instead.
+#
+# THE FIELD IS READ OUT OF A REAL RUN ID, never reconstructed by this harness. It is
+# field 2 on "-", which is unambiguous: the timestamp, the discriminator and the pid
+# contain no hyphen, and the task id is last.
+disc_of() { # dispatcher output -> the run id's discriminator field
+  printf '%s' "$(run_id_of "$1")" | cut -d- -f2
+}
+DA="$(new_sandbox)"; DB="$(new_sandbox)"
+SHARED12I="$SANDBOX_ROOT/shared-evidence-12i"; mkdir -p "$SHARED12I"
+state_file "$DA" disc-task codex
+state_file "$DB" disc-task codex
+# --dry-run is the narrowest mode that still claims a run id and publishes evidence,
+# and it launches no actor. The SAME task id and the SAME shared log dir are used
+# throughout: the checkout is the only thing that varies, which is the only way the
+# distinction assertion can be about the checkout.
+run12i() { # checkout -> writes $OUT/$RC
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$1" --task disc-task \
+        --log-dir "$SHARED12I" --timeout 20 --dry-run 2>&1)"; RC=$?
+}
+run12i "$DA"; expect_rc 0 "$RC" "12i — checkout A is admitted" "$OUT"
+RID_A1="$(run_id_of "$OUT")"; DISC_A1="$(disc_of "$OUT")"
+run12i "$DA"; expect_rc 0 "$RC" "12i — checkout A is admitted a second time" "$OUT"
+RID_A2="$(run_id_of "$OUT")"; DISC_A2="$(disc_of "$OUT")"
+run12i "$DB"; expect_rc 0 "$RC" "12i — checkout B is admitted for the same task" "$OUT"
+RID_B1="$(run_id_of "$OUT")"; DISC_B1="$(disc_of "$OUT")"
+
+# (1) POPULATED, and within the bounded grammar the field reserves. Eight lowercase
+# hex characters — the width the run-id format allots and the alphabet a truncated
+# sha256 can produce. This is the assertion that was red while nothing assigned it.
+if printf '%s' "$DISC_A1" | grep -qE '^[0-9a-f]{8}$'; then
+  ok "12i — the discriminator is populated and within its bounded 8-hex grammar ($DISC_A1)"
+else
+  bad "12i — the discriminator is populated and within its bounded 8-hex grammar" \
+      "got '${DISC_A1}' from run id '${RID_A1}'"
+fi
+# (2) STABLE for one canonical checkout/task pair. Derived identity, not a nonce: two
+# runs from the same checkout for the same task must agree, or evidence from one
+# checkout could not be recognised as a set.
+[ -n "$DISC_A1" ] && [ "$DISC_A1" = "$DISC_A2" ] \
+  && ok "12i — the same checkout/task pair yields the same discriminator across runs" \
+  || bad "12i — the same checkout/task pair yields the same discriminator across runs" \
+         "A1='$DISC_A1' A2='$DISC_A2'"
+# (3) DIFFERENT when the canonical checkout changes and the task does not. This is
+# the collision the field exists to prevent, and it is proved without manufacturing
+# a same-second/same-pid coincidence: if the field itself differs, the ids cannot
+# collide whatever the clock and the pid do.
+[ -n "$DISC_A1" ] && [ -n "$DISC_B1" ] && [ "$DISC_A1" != "$DISC_B1" ] \
+  && ok "12i — a different checkout running the SAME task yields a different discriminator" \
+  || bad "12i — a different checkout running the SAME task yields a different discriminator" \
+         "A='$DISC_A1' B='$DISC_B1'"
+# (4) AND THE EVIDENCE REALLY IS SEPARATE in the one shared directory: three distinct
+# run ids, three run logs, three results. Overwriting would show up as a short count.
+if [ "$RID_A1" != "$RID_A2" ] && [ "$RID_A1" != "$RID_B1" ] && [ "$RID_A2" != "$RID_B1" ]; then
+  ok "12i — all three runs claimed distinct run ids"
+else
+  bad "12i — all three runs claimed distinct run ids" "A1='$RID_A1' A2='$RID_A2' B1='$RID_B1'"
+fi
+N_LOG12I="$(ls -1 "$SHARED12I"/*.log 2>/dev/null | wc -l | tr -d ' ')"
+[ "$N_LOG12I" = 3 ] && [ "$(res_count "$SHARED12I")" = 3 ] \
+  && ok "12i — the shared log dir holds all three runs' evidence, none overwritten" \
+  || bad "12i — the shared log dir holds all three runs' evidence, none overwritten" \
+         "logs=$N_LOG12I results=$(res_count "$SHARED12I")"
+# (5) THE TASK-LAST LOOKUP CONTRACT IS UNCHANGED. --status globs "*-$TASK.log", and
+# the discriminator sits in field 2, so populating it must not hide a run from the
+# lookup. Asserted through the real --status, not by re-globbing here.
+OUT="$(bash "$DISPATCH_BIN" --checkout "$DA" --task disc-task \
+      --log-dir "$SHARED12I" --status 2>&1)"; RC=$?
+expect_rc 0 "$RC" "12i — --status still exits 0 over the shared evidence dir" "$OUT"
+out_has "logs: $SHARED12I/" "$OUT" "12i — --status still finds a run log by the task-last glob"
+out_lacks "no run log for this task" "$OUT" "12i — and it does not report the task as unseen"
 # ================================================================= case 13
 # Regression for the gap the 2026-08-05 live run exposed: a Claude hop killed
 # between editing and committing left a partial state file, and nothing stopped.

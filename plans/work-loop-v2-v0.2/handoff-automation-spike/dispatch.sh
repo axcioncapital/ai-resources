@@ -3191,15 +3191,34 @@ fi
 # unattended profile. The same-checkout case is not the concern — the lock
 # refuses that at exit 17, and this change does not touch the lock.
 #
-# The discriminator is the one already computed: LOCK_KEY is sha256(checkout|task),
-# so within a single task it varies exactly when the checkout does. The pid
-# separates two runs that somehow share both. No new concept is introduced.
+# The discriminator is sha256(checkout|task) over the CANONICAL checkout, so within
+# a single task it varies exactly when the checkout does. The pid separates two runs
+# that somehow share both. No new concept is introduced.
+#
+# COMPUTED HERE, BESIDE ITS ONLY CONSUMER, AND NAMED FOR WHAT IT IS — both of which
+# are the fix for how this field silently emptied. It used to read ${LOCK_KEY:0:8},
+# borrowing the value from the old single composite lock key computed ~1700 lines
+# above. 0d9e3355 (2026-08-11) then replaced that one lock with two independent
+# leases, correctly: a composite checkout|task key enforces neither resource on its
+# own (see the locks block above). The composite was deleted with it — but this line
+# still asked for it, and `${LOCK_KEY:0:8}` on an unset variable is not an error, it
+# is the empty string. So every run id from that commit until this one carried an
+# empty second field, two adjacent hyphens, and the collision the field exists to
+# prevent was unguarded except by pid.
+#
+# A composite remains exactly right HERE while remaining wrong as a lease key, and
+# the distinction is the whole reason this is not a revert: a lease must enforce one
+# named resource, whereas this field only has to DISTINGUISH one checkout's runs
+# from another's. Keeping the derivation next to the format it feeds, under a name
+# that says run identity rather than locking, is what stops a future change to the
+# leases from quietly emptying it again.
+RUN_DISCRIMINATOR="$(printf '%s|%s' "$CHECKOUT" "$TASK" | shasum -a 256 | cut -c1-8)"
 #
 # Field order is load-bearing, both ends:
 #   timestamp FIRST — the directory still sorts chronologically by name;
 #   task id LAST    — --status globs "*-$TASK.log", which stays an exact match
 #                     and keeps matching run logs written before this change.
-RUN_ID="$(date '+%Y%m%dT%H%M%S')-${LOCK_KEY:0:8}-$$-$TASK"
+RUN_ID="$(date '+%Y%m%dT%H%M%S')-$RUN_DISCRIMINATOR-$$-$TASK"
 RUN_LOG="$LOG_DIR/$RUN_ID.log"
 : >"$RUN_LOG"
 
