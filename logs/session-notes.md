@@ -464,3 +464,35 @@ Operator's landing decision on `session/2026-08-14-durable-state` is still the n
 
 ### Open Questions
 None.
+
+## 2026-08-18 — Work Loop v2: post-compaction-recovery-repair closed
+
+### Summary
+Ran Claude's half of one Work Loop v2 unit on task `work-loop-v2-post-compaction-recovery-repair`. The
+task was already accepted through Unit 4d and waiting only on the operator-owned destructive-cleanup
+decision at the state file's `Close the task:` hand-off. Executed the two operator-authorized worktree
+removals under the audited `AXCION_LIVENESS_OVERRIDE=1` override, completed the plan's evidence record,
+and reduced the state file to the closed record.
+
+### Decisions Made
+- None this session — the closing decision, the cleanup authorization, and the correction-round
+  dispositions were all made in prior sessions/turns. This session executed the already-authorized
+  close.
+
+### Risky actions
+Ran `git worktree remove --force` twice under `AXCION_LIVENESS_OVERRIDE=1` against
+`ai-resources-wl2-unit4-case` and `ai-resources-wl2-unit4-cleanctl`, bypassing
+`check-destructive-liveness.sh`'s guard. This was explicit, pre-recorded operator authorization
+(confirmed idle, override documented in the state file's `## Blocker` before this invocation) — every
+precondition (HEAD, owner declaration, sole-untracked-path) was reconfirmed by inspection immediately
+before each removal, and both removals are logged in `logs/destructive-override.log`. No other
+destructive or irreversible action was taken; canonical `main` was untouched.
+
+### Next Steps
+Task is closed. Merge readiness: NOT READY for automatic action — READY FOR OPERATOR-AUTHORIZED MERGE
+INTO MAIN. `session/2026-08-17-work-loop-fix-17-8` is 17 commits ahead of `main` and not yet merged; no
+merge, push, remote reconciliation or branch deletion was authorized this session. If a new Work Loop v2
+task is wanted, run `/work-loop-v2 {new-task-id}`.
+
+### Open Questions
+None.
