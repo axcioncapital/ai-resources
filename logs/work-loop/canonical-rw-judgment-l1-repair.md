@@ -117,116 +117,90 @@ the verified blocker or false premise without expanding scope.
 
 ## Latest result
 
-Inspected (2026-08-18):
+Correction round (2026-08-18). Scope was frozen to Codex's two findings; both reproduced by
+inspection before anything was changed, and both are resolved. Nothing else was implemented.
 
-- Claim (1): HOLDS — `git -C projects/axcion-sector-intelligence-l1-trial rev-parse` returns branch
-  `trial/l1-judgment-custom-dev-data-ai` at `067b208`, matching the recorded evidence state;
-  `git status --porcelain` was empty, so nothing was staged or in flight. `git worktree list` shows
-  five worktrees on this object store and **only this one is on that branch** — the other four are
-  `codex/florian-demo-continue` (`d0cb658`) and three detached Codex worktrees (`15ffb11`, `3a3bbc1`,
-  `8ac3149`). No other active writer owns it, and no later legitimate work needed preserving.
-- Claim (2): HOLDS — the prior finding is confirmed. Read `.claude/commands/run-analysis.md` end to
-  end: the live sequence is Step 3a (producer dispatch → `--allow-proposed` shape check) → Step 3b
-  (operator approval → `promote-judgment-brief.sh`) → Step 3c (`check-judgment-contract.sh` on the
-  approved path). Nothing runs between production and the operator's decision. Searched
-  `.claude/commands/run-{analysis,synthesis,report}.md`, the four `check-judgment-*.sh` helpers,
-  `promote-judgment-brief.sh`, their four test suites,
-  `reference/templates/unit-judgment-brief-template.md` and `reference/analyst-judgment-standard.md`
-  for `judgment.challenge|independent (semantic )?challenge|challenge (agent|review|record|pass)|
-  fresh.context challenge`; **no match**. Repo-wide, `judgment.challeng|challenge.judgment` matches
-  nothing outside the preserved trial artifacts under `analysis/` and `logs/l1-judgment-*`. The
-  trial's reviewer existed only as a granted capability; its own provenance note says so.
-- Claim (3): HOLDS as four bounded absences, over the same fourteen surfaces listed above.
-  `required.change|disposition` — no match. `re.review|rereview` — no match.
-  `unrevoked|decision.conflict|conflicting operator decision|B3-[0-9]` — no match.
-  `permission.breach|breach` — no match. So the deployed path carried no durable required-change
-  disposition, no re-review state, no unresolved-decision-conflict handling, and no
-  evidence-permission enforcement.
-- Claim (4): HOLDS — the 90/90 floor is confirmed exactly. Before any edit, run from the Sector
-  checkout: `check-judgment-contract.test.sh` 17/0, `check-judgment-gate.test.sh` 16/0,
-  `check-judgment-producer.test.sh` 41/0, `check-judgment-propagation.test.sh` 16/0. Total
-  **90 passed, 0 failed**, all four exit 0.
-- Claim (5): not triggered — no premise was false, so the unit proceeded.
+**Finding 1 — a later round could forget an earlier finding. Reproduced, then closed.**
 
-Result: the five required behaviors are enforced in the deployed local path. `/run-analysis` Step 3b
-now runs an independent fresh-context challenge (3b.1) before the operator halt (3b.2), records a
-durable disposition per required-change finding (3b.3), and promotes only after that (3b.4). A new
-`logs/scripts/check-judgment-challenge.sh` is the gate, and `promote-judgment-brief.sh` calls it as a
-hard precondition — new verdict `CHALLENGE-UNCLEARED`, exit 11 — so the refusal sits at the single
-transition that creates downstream authority rather than in prose. The template's "what is wired"
-note is corrected; it previously described the pre-repair sequence. Committed in the Sector checkout
-at `ba7e37a`. The prior trial artifacts are byte-unchanged: `git status --porcelain -- analysis/
-logs/l1-judgment-trial-record.md` is empty.
+Reproduced: built a proposal, wrote a round-1 challenge raising `F1` tagged `permission-breach` and
+left it `PENDING` (gate correctly refused, exit 6), revised the proposal, then wrote a round-2
+record — same sole `-review.md`, as `/run-analysis` instructed — carrying `findings: none`. The gate
+returned `CLEARED` exit 0 and `promote-judgment-brief.sh` wrote the approved brief. The round-1
+breach left the record with no disposition and nothing saw it go.
 
-**Behavior → enforcing surface → failing fixture**
+Closed by keeping the rounds. Before a new round is written, the current record is archived at
+`{base}-review-round-{N}.md`; `/run-analysis` Step 3b.1 carries the archiving command, and the
+reviewer is now told to open the ledger with every finding earlier rounds raised, under its original
+id and tags. The gate reads the whole chain: it walks rounds 1..N-1, refuses `LOST-ROUND` (12) if any
+archive is missing or its `review_round:` disagrees with its filename, collects every finding id
+those rounds raised, and refuses `DROPPED-FINDING` (9) if the current ledger no longer carries one.
+A carried-forward finding then meets the ordinary disposition rules, so nothing new was invented to
+resolve it. Deleting the archive is not a way out — an unreadable round is refused, never read as
+having raised nothing.
 
-| # | Required behavior | Enforcing surface | Fixture that fails without it |
-|---|---|---|---|
-| 1 | Independent challenge is mandatory | `check-judgment-challenge.sh` exit 3 `NO-CHALLENGE`; `/run-analysis` Step 3b.1; promotion hook | J1, J26, J29–J32 (live), J34/J35 control pair |
-| 2 | Durable disposition per finding | ledger grammar + exit 6 `UNRESOLVED-FINDING` | J14 (`PENDING`), J15 (no reason), J16 (undeclared status) |
-| 3 | Promotion refused while unresolved | promote exit 11, delegating to the gate | J25 (undisposed breach), J27 (post-clearance revision), J18 (B3-28 conflict, no decision named) |
-| 4 | Revise-and-re-review **or** operator disposition with reasons | `reviews_sha256` binding + the two terminal dispositions | J2 (revision breaks the binding), J13 (round 1 cannot re-review), J19 (accepted with `decision-ref`), J20 (revised, confirmed round 2) |
-| 5 | Bare approval cannot launder a breach | exit 7 `LAUNDERED-BREACH` | J17, and J25 end to end |
+**Finding 2 — a decision could clear a conflict with itself. Reproduced, then closed.**
 
-Re-review is mechanical rather than promised: each challenge round binds to the sha256 of the bytes
-it reviewed, so revising the proposal invalidates its own clearance and the next round must run. J2
-and J27 are what prove it.
+Reproduced: a finding tagged `decision-conflict: B3-28`, disposed `OPERATOR-ACCEPTED` with
+`decision-ref: B3-28` and a one-line reason, cleared at exit 0 and promoted — while B3-28 remained
+unrevoked. The gate had only checked that `decision-ref:` was non-empty.
+
+Closed at the smallest enforceable point. `decision-ref:` must now name at least one decision
+identifier, and at least one that is **not** among the decisions named in that finding's
+`decision-conflict:` tag. The explicit reason requirement is unchanged. Deliberately bounded: this is
+a circularity check on the reference, not a judgment that the named decision actually settles the
+conflict — that stays with the operator and the written reason, and the gate's message says so. No
+operator decision was invented, revoked or interpreted; B3-28 appears only as fixture text.
 
 Evidence:
 
-- **Pre-fix failing case, on the real trial artifacts** — the L1 failure reproduced before any edit.
-  Copied `analysis/judgment/custom-dev-data-ai/…-proposed.md` and its preserved `…-review.md` (8
-  findings requiring change; its own bottom line reads *"it should not be approved in its current
-  form … Those three are permission breaches"*) to a scratch directory and ran the then-current
-  `promote-judgment-brief.sh` with `--approval "approved"`. Result: `verdict: PROMOTED`, exit 0, the
-  approved brief written. A second case with the review removed entirely: also `PROMOTED`, exit 0.
-  Neither the presence of the challenge nor its findings changed anything, which is the missing
-  control, not a restatement of the brief.
-- **Post-fix, same real artifacts, three variants** — (a) proposal with no conforming challenge →
-  exit 11, reason `no readable independent challenge …`; (b) the real review with its eight findings
-  transcribed into the ledger, undisposed → exit 11, reason `8 of 8 required-change finding(s) … are
-  still 'PENDING'`; (c) all eight accepted by fiat, exactly what the trial did → exit 11, reason
-  `finding F1 is tagged 'permission-breach' and disposed 'OPERATOR-ACCEPTED' — an approval cannot
-  convert an evidence-permission breach into approved authority`. Nothing was written in any of the
-  three. The trial's own approved brief was never regenerated; these ran on copies.
-- **The evidence can fail, shown two ways.** J34 removes the promotion hook from a copy of the script
-  and the identical unchallenged proposal promotes at exit 0 again; J35 restores it and the same
-  proposal is refused at 11. J28 is the positive control — a proposal whose breach was revised and
-  confirmed in round 2 promotes normally, so the gate is not one that refuses everything.
-- **Regression floor, green, run from the Sector checkout root** —
-  `bash logs/scripts/check-judgment-contract.test.sh` 17/0 ·
-  `check-judgment-gate.test.sh` 16/0 · `check-judgment-producer.test.sh` 41/0 ·
-  `check-judgment-propagation.test.sh` 16/0 · `check-judgment-challenge.test.sh` 40/0.
-  **Total 130 passed, 0 failed**, every suite exit 0. Pre-fix total was 90/90; the four original
-  suites hold their exact prior counts, and the 40 new assertions are the fifth suite.
-  `check-judgment-producer.test.sh` gained fixture setup only — a `write_cleared_challenge` helper,
-  because promotion now legitimately requires a cleared challenge — and lost no assertion.
-- **Commits** — implementation `ba7e37a` on `trial/l1-judgment-custom-dev-data-ai` in
-  `projects/axcion-sector-intelligence-l1-trial`, touching six files:
-  `.claude/commands/run-analysis.md`, `logs/scripts/check-judgment-challenge.sh` (new),
-  `logs/scripts/check-judgment-challenge.test.sh` (new),
-  `logs/scripts/check-judgment-producer.test.sh`, `logs/scripts/promote-judgment-brief.sh`,
-  `reference/templates/unit-judgment-brief-template.md`. This handback is the commit carrying this
-  file.
+- **Pre-correction reproductions, both promoting.** `f1`: round 1 raises the breach → exit 6; revise;
+  round 2 writes `findings: none` → `verdict: CLEARED` exit 0 → approved brief written. `f2`:
+  `decision-ref: B3-28` against `decision-conflict: B3-28` → `verdict: CLEARED` exit 0 → approved
+  brief written. Both ran against the then-committed `ba7e37a` mechanism.
+- **Post-correction, the same two fixtures.** `f1` → `verdict: DROPPED-FINDING`, *"earlier round(s)
+  raised F1 and round 2's ledger does not carry it"*; with the archive deleted instead →
+  `verdict: LOST-ROUND`. `f2` → `verdict: UNRESOLVED-DECISION-CONFLICT`, *"finding F1 cites B3-28 as
+  what resolves a conflict tagged against B3-28 — a decision cannot clear a conflict with itself."*
+  Promotion refused in both, nothing written.
+- **The fixtures Codex asked for, each paired with its control.** J36 — round 1 raises it, the
+  proposal is revised, round 2 omits it → 9, and J36b/J36c show promotion refused with nothing
+  written. J37 — the identical two rounds with the finding carried forward and resolved by the
+  re-review → 0, and promotion proceeds. J38 (archive deleted) and J39 (archive mislabelled) → 12.
+  J40 — the conflicting decision cited as its own resolution → 8, promotion refused, nothing written;
+  J41 (prose padded around the same id) and J42 (a reference naming no decision) → 8; J44 (a conflict
+  against two decisions, one of them cited) → 8. J43 is the control: a superseding decision, plus the
+  reason, clears at 0. Each refusal has a positive control, so neither new rule is a gate that
+  refuses everything.
+- **Nothing broke.** Full judgment floor, run from the Sector checkout root:
+  `check-judgment-contract.test.sh` 17/0 · `check-judgment-gate.test.sh` 16/0 ·
+  `check-judgment-producer.test.sh` 41/0 · `check-judgment-propagation.test.sh` 16/0 ·
+  `check-judgment-challenge.test.sh` 55/0. **Total 145 passed, 0 failed**, every suite exit 0. Prior
+  floor was 130/130; the four original suites hold their exact counts and the challenge suite went
+  40 → 55. Three of its existing fixtures (J20, J28, and the round-2 half of the chain cases) gained
+  a round-1 archive, which is the new contract applying to them, not an assertion relaxed.
+- **Scope.** Three files changed: `.claude/commands/run-analysis.md`,
+  `logs/scripts/check-judgment-challenge.sh`, `logs/scripts/check-judgment-challenge.test.sh`. The
+  Unit 1 implementation is preserved — `promote-judgment-brief.sh`, the producer suite and the
+  template are untouched this round. `git status --porcelain -- analysis/
+  logs/l1-judgment-trial-record.md` is empty, so the prior trial artifacts remain unmodified. No
+  genuine L1 trial run, no canonical or L3/L4 surface touched, no research gap, HOLD or operator
+  decision resolved, no push or merge.
+- **Commits.** Correction `9e3242b` on `trial/l1-judgment-custom-dev-data-ai` in
+  `projects/axcion-sector-intelligence-l1-trial`, on top of Unit 1's `ba7e37a`. This handback is the
+  commit carrying this file.
 
-**Deferrals — recorded, not implemented.** Three adjacent improvements were noticed and left alone
-because none is required by this unit's completion condition:
+**Newly noticed, recorded as candidate deferrals, not implemented** (correction scope was frozen):
 
-- `promote-judgment-brief.sh`'s CONTENT-DRIFT guard still covers only `## Theses` downward, leaving
-  the pre-thesis HOLD preamble unguarded. This was already a deferral in the closed task, and the new
-  `reviews_sha256` binding now covers the *challenge*'s view of the whole file, which narrows the
-  exposure without closing it. Widening the drift guard is a separate change to a surface this unit
-  was not asked to alter.
-- The template's *"Still not wired"* note at line 133 remains stale — a recorded deferral from the
-  closed task. Only the "what is wired" note, which this unit made actively false, was corrected.
-- The challenge dispatch is specified as instruction text rather than an agent definition. A named
-  reviewer agent would make independence a property of the harness instead of the dispatch, but that
-  is a new resource and the brief's smallest-implementation constraint rules it out here.
+- The round archives are ordinary files in the working tree. The gate proves a round exists and is
+  labelled correctly; it cannot prove an archive was not edited after the fact. Git history records
+  any such edit, and a hash chain across rounds would close it inside the gate — a change to the
+  record format, well outside two frozen findings.
+- `decisions_checked:` is not cross-checked against the decisions the findings actually tag. A
+  reviewer could tag `decision-conflict: B3-28` while listing only `B3-1` as screened. Cheap to add,
+  but it is a third rule and this round is frozen to two.
 
-**Boundaries observed.** No genuine L1 trial was run. No trial artifact was rewritten. Nothing was
-touched in the 47 research gaps, Q15/Q16/GAP-03/GAP-04, GAP-17, the Step-2 HOLD or B3-28 — B3-28
-appears only as a fixture tag in the new suite and as an example in documentation. No canonical
-judgment resource and no L3/L4 surface was modified. No push, merge or deployment.
+The three deferrals recorded in Unit 1 — the `## Theses`-down drift guard, the template's stale
+line-133 note, and the reviewer being dispatch text rather than a named agent — stand unchanged.
 
 ## Blocker
 
@@ -234,8 +208,8 @@ None.
 
 ## Next action
 
-Codex: assess whether this mechanism and its evidence justify opening the repeat genuine L1 trial as
-Unit 2 — in particular whether the five behaviors are enforced where it matters rather than only
-described, whether the sha-binding re-review route is a sound reading of the closed task's "either
-substantive revision followed by re-review, or an explicit operator disposition with reasons", and
-whether the three recorded deferrals are correctly held back rather than trial-blocking.
+Codex: run the closure check on the two frozen findings only — are finding 1 (an earlier
+required-change finding can no longer be dropped by a later round) and finding 2 (a decision cannot
+clear a conflict with itself) resolved, and did the correction break anything? The floor answers the
+second: 145/145 green, the four pre-existing suites at their exact prior counts. Two newly noticed
+items are recorded above as candidate deferrals and were not implemented.
