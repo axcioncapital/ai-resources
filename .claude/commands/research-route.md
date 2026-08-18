@@ -87,15 +87,31 @@ operator.
 
 That block is the single source of the routing rules. `logs/scripts/research-route-classify.sh`
 parses it out of this file rather than holding its own copy, so the rules cannot drift apart.
-You may run it to check your own resolution, but it is not required — the table above is
-complete on its own, which is what lets this command work in a project that has only this file:
+After assessing all five safety signals and the preference, **you must run the executable classifier**.
+Resolve it through this command's real path so a consuming project's symlink reaches the canonical
+helper. If the helper is unavailable or rejects the signal vector, you cannot safely resolve a route:
+stop and report that failure rather than calculating the table by hand or falling back to Light.
 
 ```bash
-bash logs/scripts/research-route-classify.sh --entry .claude/commands/research-route.md \
+research_entry=.claude/commands/research-route.md
+while [ -L "$research_entry" ]; do
+  research_target="$(readlink "$research_entry")" || break
+  case "$research_target" in
+    /*) research_entry="$research_target" ;;
+    *)  research_entry="$(dirname "$research_entry")/$research_target" ;;
+  esac
+done
+research_root="$(git -C "$(dirname "$research_entry")" rev-parse --show-toplevel 2>/dev/null)"
+research_classifier="$research_root/logs/scripts/research-route-classify.sh"
+[ -r "$research_classifier" ] || { printf 'Cannot safely resolve a route: classifier unavailable: %s\n' "$research_classifier" >&2; exit 2; }
+bash "$research_classifier" --entry "$research_entry" \
   --preference none \
   --signal output=note --signal consequence=internal --signal scope=bounded \
   --signal load_bearing_claim=no --signal thesis_judgment=no
 ```
+
+Replace the example values with the assessment from Steps 1–2. Use the script's printed route,
+preference override and floor-setting rule as the resolution; do not silently reinterpret it.
 
 **Announce the resolution in one line before dispatching**, naming the route, the rule that set
 the floor, and — when a preference was overridden — that it was, and why:

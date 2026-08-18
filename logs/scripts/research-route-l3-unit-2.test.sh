@@ -36,7 +36,8 @@ mkdir -p "$WORK/proj/.claude/commands"
 ln -s "$ENTRY_REAL" "$WORK/proj/.claude/commands/research-route.md" 2>/dev/null
 ENTRY="$WORK/proj/.claude/commands/research-route.md"
 
-resolve_consumer_checker() {
+resolve_consumer_helper() {
+  helper_name="$1"
   cd "$WORK/proj" || exit 1
   research_entry=.claude/commands/research-route.md
   while [ -L "$research_entry" ]; do
@@ -47,14 +48,21 @@ resolve_consumer_checker() {
     esac
   done
   research_root="$(git -C "$(dirname "$research_entry")" rev-parse --show-toplevel 2>/dev/null)" || exit 1
-  printf '%s/logs/scripts/research-route-memo-check.sh\n' "$research_root"
+  printf '%s/logs/scripts/%s\n' "$research_root" "$helper_name"
 }
 
-if resolved_checker="$(resolve_consumer_checker)" && [ "$resolved_checker" = "$MEMOCHECK" ]; then
+if resolved_checker="$(resolve_consumer_helper research-route-memo-check.sh)" && [ "$resolved_checker" = "$MEMOCHECK" ]; then
   ok "B-P1 the documented consumer path resolves the canonical memo checker"
 else
   no "B-P1 the documented consumer path resolves the canonical memo checker" \
     "resolved '$resolved_checker', expected '$MEMOCHECK'"
+fi
+
+if resolved_classifier="$(resolve_consumer_helper research-route-classify.sh)" && [ "$resolved_classifier" = "$CLASSIFY" ]; then
+  ok "B-P3 the documented consumer path resolves the canonical classifier"
+else
+  no "B-P3 the documented consumer path resolves the canonical classifier" \
+    "resolved '$resolved_classifier', expected '$CLASSIFY'"
 fi
 
 section() {
@@ -64,6 +72,16 @@ section() {
     inside { print }
   ' "$ENTRY" 2>/dev/null
 }
+
+step3="$(section 'Step 3')"
+if printf '%s' "$step3" | grep -qF 'must run the executable classifier' &&
+   printf '%s' "$step3" | grep -qF 'cannot safely resolve a route' &&
+   ! printf '%s' "$step3" | grep -qF 'it is not required'; then
+  ok "B-P4 Step 3 requires executable classification and fails closed when unavailable"
+else
+  no "B-P4 Step 3 requires executable classification and fails closed when unavailable" \
+    "mandatory fail-closed classifier instruction is missing or still optional"
+fi
 
 # ---------------------------------------------------------------------------
 # B1 – B6 — routing

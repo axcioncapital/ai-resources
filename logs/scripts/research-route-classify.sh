@@ -4,8 +4,8 @@
 # The shared entry `.claude/commands/research-route.md` owns the routing rules. This script
 # holds NO copy of them: it parses the delimited `route-rules` block out of the entry file it
 # is pointed at. That is deliberate — a second copy is how the executable check and the
-# instruction a human reads come to disagree, and the entry must stay complete on its own so a
-# project that has only the command file can still route by reading it.
+# instruction a human reads come to disagree. The entry remains human-readable, but runtime route
+# resolution is fail-closed: the shared command requires this helper and stops when it is absent.
 #
 # Usage:
 #   research-route-classify.sh --entry <path> [--preference light|standard|deep|none]
