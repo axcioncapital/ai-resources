@@ -10467,6 +10467,124 @@ rm -rf "$(task_lock_for "$d" forged-evidence-task)" "$(checkout_lock_for "$d")" 
 # WHAT COVERS THEM NOW. 66a keeps the post-hop delta honest against an actor that
 # builds evidence shapes from nothing, which is 66b's real subject once the
 # excuse is gone; 65a keeps the sequential path working, which is 66c's.
+
+# =================================================================== case 67a
+#
+# THE LAST ADMITTED TERMINAL WITH NO TEST AT ALL. Every other nonzero code in this
+# dispatcher has at least an `expect_rc` pinning its exit; code 34
+# OWNERSHIP_AMBIGUOUS had nothing — not a result assertion, not an exit assertion,
+# nothing. It is reachable (work-loop-owner.sh returns AMBIGUOUS at exit 4, and
+# dispatch.sh branches on that), it is post-admission, and the approved plan's
+# Change set A requires exactly one atomically finalized terminal result for the
+# invalid-state-or-ownership class it belongs to. So the gap was release proof,
+# not polish.
+#
+# THE SIBLING IS 50e, which does the same job for OWNERSHIP_REFUSED (33) — a
+# checkout declaring a DIFFERENT open task. This case is the other verdict the
+# same helper can return, and it is a different route: 33 is a decision the helper
+# reached, 34 is the helper reporting it could not reach one.
+#
+# THROUGH THE REAL HELPER, and that is the point of the fixture rather than an
+# incidental detail. The declaration is made genuinely ambiguous — two task ids in
+# one `.owner` file, which is the helper's own documented "holds more than one
+# task id" row — so the AMBIGUOUS verdict is produced by the shipped helper's own
+# logic. Nothing here calls finalize_terminal_result directly, stubs the helper,
+# or plants a verdict.
+echo
+echo "Case 67a — an admitted OWNERSHIP_AMBIGUOUS refusal finalizes exactly one complete run-bound result"
+d="$(new_sandbox)"; state_file "$d" "owner-ambiguous-task" "codex"
+# TWO ids, one declaration. `marker_holder` collapses any multi-id or unreadable
+# declaration to `?`, which check_local turns into AMBIGUOUS.
+printf 'owner-ambiguous-task\nsome-other-task\n' >"$d/logs/work-loop/.owner"
+# THE FIXTURE PROVES ITSELF FIRST. Without this, a case that stopped reaching the
+# ambiguity route would keep asserting against whatever terminal it reached
+# instead, and the ownership half of the claim would quietly stop being tested.
+bash "$OWNER_BIN" check --checkout "$d" --task owner-ambiguous-task --depth repo >/dev/null 2>&1
+expect_rc 4 "$?" "67a — the real ownership helper returns AMBIGUOUS for this declaration" ""
+run_dispatch "$d" owner-ambiguous-task --actor-cmd "$NOOP"
+expect_rc 34 "$RC" "67a — exits 34 when ownership is ambiguous" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "67a — nothing was launched" \
+                          || bad "67a — nothing was launched" "calls=$(calls "$d")"
+# The refusal has to be THIS one. Exit 34 has a single production site, but the
+# wording is what shows the helper's own verdict reached the operator.
+out_has "ownership is AMBIGUOUS for task owner-ambiguous-task" "$OUT" \
+  "67a — the stop names the ambiguity the helper reported"
+RID67="$(run_id_of "$OUT")"
+[ -n "$RID67" ] && ok "67a — the run announced a run id" \
+                || bad "67a — the run announced a run id" "$OUT"
+R67="$d/runs/$RID67.result"
+[ -f "$R67" ] && ok "67a — a terminal result exists at the run-bound path" \
+              || bad "67a — a terminal result exists at the run-bound path" \
+                     "missing $R67; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+# EXACTLY ONE, counted three ways, because "a result exists" is the weakest of the
+# claims Change set A makes: one file, no unfinalized temporary beside it, and one
+# version line inside it (an appending producer would carry two).
+[ "$(res_count "$d/runs")" = "1" ] \
+  && ok "67a — exactly one finalized result" \
+  || bad "67a — exactly one finalized result" "found $(res_count "$d/runs"): $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(part_count "$d/runs")" = "0" ] \
+  && ok "67a — no unfinalized temporary artifact was left behind" \
+  || bad "67a — no unfinalized temporary artifact was left behind" "$(ls "$d/runs"/*.result.partial 2>&1)"
+NV67="$(grep -c '^terminal_result_version=' "$R67" 2>/dev/null || printf '0')"
+[ "$NV67" = "1" ] && ok "67a — the artifact carries exactly one version line" \
+                  || bad "67a — the artifact carries exactly one version line" "found $NV67"
+# PROTOCOL COMPLETENESS, the same three checks 50a makes: the recognized version
+# first, the completeness sentinel last, and the bounded grammar throughout.
+[ "$(head -1 "$R67" 2>/dev/null)" = "terminal_result_version=1" ] \
+  && ok "67a — the first line is the recognized schema version" \
+  || bad "67a — the first line is the recognized schema version" "$(head -1 "$R67" 2>/dev/null)"
+[ "$(tail -1 "$R67" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "67a — the last line is the completeness sentinel" \
+  || bad "67a — the last line is the completeness sentinel" "$(tail -1 "$R67" 2>/dev/null)"
+if [ -z "$(grep -vE '^[a-z][a-z0-9_]*=' "$R67" 2>/dev/null)" ]; then
+  ok "67a — every line matches the bounded key=value grammar"
+else
+  bad "67a — every line matches the bounded key=value grammar" \
+      "$(grep -vnE '^[a-z][a-z0-9_]*=' "$R67" | head -3 | tr '\n' ';')"
+fi
+# THE SEMANTICS OF THIS TERMINAL. `owner_check:ambiguous` is the ownership fact —
+# the observed verdict, not the fact that the code got here — and the launch and
+# stage fields are what keep this a refusal that stopped before any actor rather
+# than a failure after one.
+for pair in "outcome:OWNERSHIP_AMBIGUOUS" "code:34" "task:owner-ambiguous-task" \
+            "owner_check:ambiguous" "stage:pre-hop" "actor:none" \
+            "actor_launched:no" "model_request_started:no" "hop:0" \
+            "next_action:operator-resolve-ownership" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R67" "$k")"
+  [ "$got" = "$want" ] && ok "67a — $k=$want" || bad "67a — $k=$want" "got: ${got:-<absent>}"
+done
+# RUN-BINDING, asserted from inside the artifact as well as from its name: the
+# path proves where it was written, these prove what it says about itself.
+[ "$(res_field "$R67" run)" = "$RID67" ] \
+  && ok "67a — the result names its own run id" \
+  || bad "67a — the result names its own run id" "got: $(res_field "$R67" run)"
+[ "$(res_field "$R67" checkout)" = "$(cd "$d" && pwd -P)" ] \
+  && ok "67a — the result names the canonical checkout" \
+  || bad "67a — the result names the canonical checkout" "got: $(res_field "$R67" checkout)"
+# owner_declared IS ASSERTED NON-EMPTY AND NOT PINNED TO A VALUE, deliberately.
+# owner_declaration() reports the first non-empty line, so a two-id declaration
+# reports one of the two ids beside `owner_check=ambiguous`. That pairing is
+# defensible — the field's contract is "a declaration that exists" and the stop
+# message carries the helper's full reason — but it is arguably a field that
+# should read `unavailable` when the declaration cannot be resolved to one owner.
+# That question is open and is recorded as a deferral, so pinning the current
+# value here would freeze one side of it into a regression.
+[ -n "$(res_field "$R67" owner_declared)" ] \
+  && ok "67a — owner_declared records the observed declaration" \
+  || bad "67a — owner_declared records the observed declaration" "empty"
+# THE LEASE ORDER, which is the durable-ordering rule Change set A states: the
+# record above says both leases were held AT finalization, and both are gone
+# afterwards — so release happened after a valid result existed, not before.
+LT67="$(res_field "$R67" lease_task_dir)"; LC67="$(res_field "$R67" lease_checkout_dir)"
+if [ -n "$LT67" ] && [ -n "$LC67" ] && [ ! -d "$LT67" ] && [ ! -d "$LC67" ]; then
+  ok "67a — both leases it reported holding were released on the way out"
+else
+  bad "67a — both leases it reported holding were released on the way out" \
+      "task=$LT67 ($([ -d "$LT67" ] && echo present || echo gone)) checkout=$LC67 ($([ -d "$LC67" ] && echo present || echo gone))"
+fi
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

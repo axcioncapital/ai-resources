@@ -14,89 +14,101 @@ Task exit condition: one integrated candidate has passed the revised Gate SA and
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 5 — re-verify the remaining terminal-result proof gaps
+Standard. Implementation mode. Unit 6 — prove the ownership-ambiguity terminal result
 
 Named reason for the loop: the approved objective spans multiple bounded implementation, proof and operating-trial units, must survive session boundaries, needs its scope held against overengineering, and requires independent Codex assessment before it counts as complete.
 
 ## Brief
 
-Unit 4 is accepted at `b8bfd30a5425e9ef96d9f43a5924ce191895f6e6`: missing-runtime behavior and committed proof already existed, while authentication readiness has no current route and belongs to Change set B. The discovery also falsified Unit 35's search method: it searched one assertion form and missed the `for pair in "code:N"` form already used by cases 50d, 50h and 50i. The only remaining Unit 35 `GAP (proof)` rows — invalid state/ownership, permission denial and budget exhaustion — were produced by that same incomplete search, so implementing from them before one bounded correction would be waste.
+Unit 5 is accepted at `61ee46a6a63ba186e24dbc1d079fabda01679f9d`. It established that code 34 `OWNERSHIP_AMBIGUOUS` is a reachable post-admission route required by Change set A and is the only route in the bounded set with no committed test of any kind. This unit closes only that real proof gap; it does not create a general matrix, helper, selector or proof framework.
 
-Dominant deliverable: replace Unit 35's unreliable proof-gap findings for invalid state/ownership, permission denial and budget exhaustion with one current, assertion-form-complete adjudication.
-Evidence required in this hop: a compact route-and-proof mapping for only those three grouped classes, searching every committed result-assertion form currently used and identifying the earliest genuine remaining gap.
-Evidence explicitly deferred: implementation or new permanent tests for any confirmed gap; terminal classes Unit 4 or Unit 35 already established as covered; Change set A clauses beyond terminal-result coverage; complete runtime/authentication preflight from Change set B; the dead `RUN_ID` discriminator; Unit 1's fixture limitation; the focused-case selector; Change sets B–D; live trials; final regression; adoption review; merge, push, deployment and destructive cleanup.
+Dominant deliverable: add one permanent fail-capable regression proving that an admitted ownership-ambiguity refusal produces exactly one complete, run-bound and semantically correct terminal result.
+Evidence required in this hop: the focused code-34 case green on the real dispatcher, plus a bounded negative control showing that the case fails when its terminal result is absent or invalid; the narrowest existing dispatcher regression that can safely include the new case.
+Evidence explicitly deferred: result proof for codes `13`, `14`, `15`, `26`, `35`, `37` and `29`; strengthening case 50e/code 33 for uniqueness and `result_complete=yes`; re-adjudicating the nine sibling codes in Unit 5's note; every Change set A clause beyond this one route; the focused-case selector; Change sets B–D; live trials; final regression; adoption review; merge, push, deployment and destructive cleanup.
+Primary edit begins after: a focused ownership-ambiguity case is made red by the narrowest temporary mutation or existing prove-failure mechanism that suppresses or invalidates its terminal result. The temporary mutation must not survive the unit; do not add a mutation framework.
 
 Required outcome:
 
-- Re-adjudicate only these Unit 35 rows against the current dispatcher and committed tests: invalid state/ownership (`13`, `14`, `15`, `26`, `33`, `34`, `35`); permission denial (`37`); and budget exhaustion (`29`). Do not rebuild the full terminal-class matrix.
-- For every currently reachable code in those rows, cite the production route into terminal finalization and the exact committed assertion or mutation control that can fail if the route stops producing exactly one valid run-bound result.
-- Search all assertion shapes actually present in `dispatch.test.sh`, including direct `res_field` comparisons and loop/table forms such as `"code:N"`; do not infer absence from one grep shape.
-- Classify each reachable code as `COVERED`, `BEHAVIOR GAP`, `PROOF GAP`, or `UNKNOWN`. A shared `die()` funnel, exit-code assertion, aggregate pass count or prose comment alone is not result proof.
-- Identify the earliest genuine non-covered code in approved-plan order as the next bounded implementation target, or state that these three rows are covered. Do not design or implement a repair.
-- Change no production, test or documentation file and run no broad suite. Existing committed fail-capable proof is preferred; if a bounded route cannot be adjudicated from it, return `UNKNOWN` rather than constructing a new fixture.
+- In `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`, add the smallest permanent case that reaches the dispatcher's current post-admission `OWNERSHIP_AMBIGUOUS` route through the real ownership helper. Do not simulate success by calling the finalizer directly.
+- Prove exit `34`, no actor launch, and exactly one result at the path bound to the dispatcher-advertised run id.
+- Prove the result is complete and semantically correct for this route, including at minimum protocol/version completeness, `outcome:OWNERSHIP_AMBIGUOUS`, `code:34`, the ownership ambiguity fact, truthful actor/stage facts, and the applicable lease state before and after finalization. Follow the existing result assertion vocabulary rather than introducing an abstraction for one case.
+- Keep production code unchanged if the current route satisfies the contract. If the case exposes a behavior defect, stop and hand back the failing evidence; do not turn this proof unit into a combined test-and-production repair.
+- Do not touch case 50e/code 33 or add coverage for another code. Do not implement a focused-case selector, general table-driven matrix, new helper, schema change or documentation expansion.
 
 Check against the repository:
 
-1. Verify Unit 4 commit `b8bfd30a…` proved Unit 35's row-2 search missed existing `code:20` / `code:31` loop assertions and that no source or test changed in Unit 4. If that premise differs, hand back.
-2. Verify Unit 35 commit `f8efcd70…` names only rows 3, 5 and 9 as the remaining `GAP (proof)` rows after the now-corrected row 2, and record its exact production-code set rather than relying on this brief's copy.
-3. Inspect the current `dispatch.sh` and `dispatch.test.sh` at the Unit 4 baseline plus only the accepted history needed to understand an existing assertion or mutation. Bound searches to codes `13|14|15|26|33|34|35|37|29`, their outcome symbols and the terminal-result helper/assertion forms.
-4. Apply the approved plan's actual bar: every admitted terminal path must produce one durable atomic result. Pre-admission routes are outside this result contract and must be identified rather than counted as gaps.
+1. Verify Unit 5 commit `61ee46a6…` changed only this state file and established that code 34 is post-admission, reachable from the owner helper's `AMBIGUOUS` result, and has no exit-code or result assertion in the committed dispatcher tests. If any premise is false, hand back before editing.
+2. Verify the approved plan at blob `c7857d5fb7956533c1047a8f449ba09f43186f9e` requires every admitted invalid-state-or-ownership terminal path to produce exactly one valid durable result. This is why the test is release proof rather than optional polish.
+3. Inspect the current ownership and result-test fixtures before constructing anything. Reuse their established linked-worktree/owner setup and result readers where sufficient; do not create a second fixture system.
+4. Verify that the negative control actually makes the new result assertion fail, then restore the real dispatcher before the green run and before commit.
 
 Required fail-capable evidence:
 
-- Return one compact table with one row per reachable code: production symbol/site, admission status, result producer/consumer path, actor-start fact, lease disposition, exact committed test/assertion or mutation, and verdict.
-- For every `COVERED` verdict, explain in one line how its cited evidence would read differently if the result were missing, duplicated, malformed, unbound or semantically wrong. If it proves only some of those properties, say exactly which and do not overclaim.
-- For every non-covered verdict, quote the precise missing route or assertion and state the complete searched surfaces and patterns. Identify the earliest one without proposing a repair.
-- Confirm no production, test or documentation file changed; only this state file may be committed. Leave pre-existing `logs/friction-log.md` noise unstaged.
+- Quote the red negative-control command or bounded procedure and the failing assertion/output. State exactly what was temporarily changed and prove it was restored.
+- Quote the green focused-case result, including the asserted result count and the fields that establish completeness, binding and semantics.
+- Run the narrowest existing regression surface that safely exercises the committed case. If no focused execution route exists, run the existing dispatcher suite; do not build a selector in this unit. Report exact pass/fail counts.
+- Confirm the final diff contains only this state file and the focused dispatcher test change, with no surviving production mutation and the pre-existing `logs/friction-log.md` noise unstaged.
 
-Capability subset: baseline only — read the approved plan, accepted Unit 35 and Unit 4 evidence, current dispatcher, focused tests and necessary accepted history; update and commit only this task state. The five baseline deny rules and four mandatory nested-actor rules are required in full. Nothing is selected from the pre-authorizable set, which is empty today. No test execution, source mutation, model launch, authentication attempt, network, external service or operator-reserved capability is permitted.
+Capability subset: baseline only — read the approved plan, Unit 5 handback, dispatcher, ownership helper and existing dispatcher fixtures; temporarily mutate only the dispatcher surface needed for the negative control, restore it, edit the focused dispatcher test, run local tests, and commit the test plus this task state. The five baseline deny rules and four mandatory nested-actor rules are required in full. Nothing is selected from the pre-authorizable set, which is empty today. No model launch, authentication attempt, network, external service or operator-reserved capability is permitted.
 
-Completion condition: one committed discovery handback supplies a trustworthy current adjudication for the three remaining Unit 35 proof-gap rows, identifies the earliest genuine next target or establishes coverage, changes only this state file, and returns with `turn: codex`.
+Completion condition: one committed implementation handback adds permanent fail-capable code-34 terminal-result proof, leaves production behavior unchanged unless it stops on a discovered defect, reports red and green evidence plus the narrow regression result, and returns with `turn: codex`.
 
-Stop and hand back if the three rows cannot be bounded without rebuilding the whole matrix; if current behavior differs materially from the approved plan; if existing evidence cannot distinguish a required property; or if resolving an `UNKNOWN` would require constructing a fixture. Challenge the brief rather than widening it.
+Stop and hand back if code 34 is pre-admission or unreachable; if reaching it requires changing production behavior; if no bounded negative control can show the new assertion can fail; if the fixture requires a new general framework; or if the current route fails the terminal-result contract. Challenge the brief rather than widening it.
 
 ## Latest result
 
 Inspected (2026-08-18):
 
-- Claim (1): HOLDS — `git show --stat b8bfd30a` changes exactly one file, this state file (58 insertions, 45 deletions); no production, test or documentation file is in the commit. Its committed record does establish the row-2 miss, and I re-confirmed the underlying fact independently: `git show f8efcd70:…/dispatch.test.sh` carries `"code:20"` at 5692 and `"code:31"` at 5961 and 6058.
-- Claim (2): HOLDS — read Unit 35's table at `f8efcd70`. Exactly four rows carry **GAP (proof)**: rows 2, 3, 5 and 9. With row 2 corrected by Unit 4, rows 3, 5 and 9 remain, and no other row carries that verdict. Its production code set, recorded from the table rather than from this brief's copy: row 3 `die 13/14/15/26` at `3407-3433` and `die 33/34/35` at `4004-4010`; row 5 `die_hop 37` at `4345`; row 9 `die_hop 29` at `4219,4251,4272,4282`. Two matters this brief's copy does not carry, recorded because they bound the verdicts below: rows 6, 7 and 8 are **partially** covered ("COVERED by 28 / 22 / 18; the rest unproven"), so nine further codes sit outside this unit's scope and outside any covered claim; and code **26 appears in row 3 and again in row 7**, unproven in both, so adjudicating it here does not double-count it.
-- Claim (3): HOLDS — inspected the current `dispatch.sh` (4507 lines) and `dispatch.test.sh` (10474 lines) at the Unit 4 baseline. Searched `dispatch.sh` for `die N`/`die_hop N` for each of `13|14|15|26|33|34|35|37|29`, and read `result_outcome()` for each code's outcome symbol rather than assuming one. Searched `dispatch.test.sh` in **every assertion form present in it**, established by enumerating the forms rather than assuming them: the loop form `"code:N"` (8 sites total, all listed below), direct comparison `res_field … code)" = N`, the `case "$(res_field … outcome):$(res_field … code)" in` form at 5564, the variable-parametrised form `= "$WANT50"` at 6282, plus each code's outcome symbol as a bare string and `expect_rc N`. The complete set of codes carrying a committed **result** assertion in any form is `0, 18, 20, 22, 28, 31, 33, 38`.
-- Claim (4): HOLDS — plan lines 145-160. The admission-boundary paragraph puts pre-admission refusals outside the result contract; item 3 lists "invalid state or ownership", "permission denial" and "budget exhaustion" among the classes owing exactly one atomically finalized result. Every one of the nine codes below is post-admission, so none is excused by that paragraph and all nine are inside the contract.
+- Claim (1): HOLDS — `git show --stat 61ee46a6` changes exactly one file, this state file. Its three established facts re-verified independently rather than read back from the handback: code 34 is post-admission (`die 34` at `dispatch.sh:4056`, below `RUN_ID` 3172 and `acquire_lock` 3263); it is reachable through the real helper (`logs/scripts/work-loop-owner.sh:89` maps verdict `AMBIGUOUS` to exit 4, and `marker_holder` at 592-607 returns `?` for a declaration holding more than one non-empty line); and it had no assertion of any kind — searched all of `dispatch.test.sh` for `expect_rc 34`, `"code:34"`, `res_field … code)" = 34` and `OWNERSHIP_AMBIGUOUS`, all four returning nothing.
+- Claim (2): HOLDS, and the blob pin is exact rather than stale — I checked, because HEAD's blob for the plan is `af0f1efd…`, not the pinned `c7857d5f…`. `c7857d5f` is the blob at commit `849d0800`, and the plan's own approval record binds Patrik's 2026-08-18 approval to precisely that commit and blob. The later commit `b6a20ed0` only records that approval and states it "changes no objective, boundary, exclusion, sequence, acceptance condition or authority relationship". Verified by diff: `### Change set A` is **byte-identical** between the two blobs. In the approved blob, item 3 requires "Atomically finalize exactly one terminal result for … invalid state or ownership", which is code 34's class. The brief's pin is right and my first reading of it was wrong.
+- Claim (3): HOLDS — inspected the existing fixtures before building anything. The new case reuses `new_sandbox`, `state_file`, `run_dispatch`, `$NOOP`, `calls`, `run_id_of`, `res_count`, `part_count`, `res_field`, `out_has` and `expect_rc`, and follows case 50a's assertion vocabulary and case 50e's ownership setup. No second fixture system, no helper, no selector, no schema change.
+- Claim (4): HOLDS — the negative control did make the new assertions fail, and nothing needed restoring because nothing tracked was mutated. Evidence below.
 
-Result: **the three rows are `1 COVERED, 8 PROOF GAP, 0 BEHAVIOR GAP, 0 UNKNOWN`.** No behavior defect was found. Unit 35's three surviving rows were directionally right — proof really is missing for eight of the nine codes — but wrong in detail on code 33, which case 50e already covers.
+Result: **case 67a added to `dispatch.test.sh`, 28/28 green, production code unchanged.** The route already satisfied the contract, so no production edit was made or needed. One pre-existing suite failure unrelated to this unit was surfaced by the required full regression and is reported below rather than fixed.
 
-Shared facts, true of all nine and so not repeated per row: every site is post-admission (`LOG_DIR` 3143, `RUN_ID` 3172, `acquire_lock` 3263 all precede the earliest site at 3458), so `finalize_terminal_result()`'s own guard at 769 is satisfied at each; every one reaches `die()` at 1365, which finalizes, consumes through the four validators, advertises the path, then `release_lock` at 1424 and exits — so the lease is released only after a valid result, and `die_hop` (3074) is a one-line alias for `die`, adding no separate path.
+What the case does. `Case 67a — an admitted OWNERSHIP_AMBIGUOUS refusal finalizes exactly one complete run-bound result`, appended at `dispatch.test.sh:10470-10587`. It writes two task ids into one `logs/work-loop/.owner`, which is the helper's own documented "holds more than one task id" row, so the `AMBIGUOUS` verdict is produced by the shipped helper's logic — nothing stubs the helper, plants a verdict or calls `finalize_terminal_result` directly. The case first asserts the real helper returns exit 4 for that declaration, so a fixture that stopped reaching the ambiguity route would fail loudly instead of quietly asserting against some other terminal.
 
-| Code / symbol | Production site(s) | Actor started | Committed result assertion | Verdict |
-|---|---|---|---|---|
-| 13 `STATE_MISSING` | `3458, 3459, 3463, 3474` (`validate_state`, called 4021/4143/4349) | no | none — only `expect_rc 13` at test `424` | **PROOF GAP** |
-| 14 `IDENTITY_MISMATCH` | `3469` | no | none — only `expect_rc 14` at test `404, 1882` | **PROOF GAP** |
-| 15 `BAD_TURN` | `3475, 3484` (validator), `3985` (unknown actor name, in `launch_actor`) | no fork | none — only `expect_rc 15` at test `427, 5349, 5428` | **PROOF GAP** |
-| 26 `MALFORMED_TERMINAL` | `3473` | no | none — only `expect_rc 26` at test `1751, 1788, 1816, 1848` | **PROOF GAP** |
-| 33 `OWNERSHIP_REFUSED` | `4055` | no | **case 50e**, test `5764-5790` | **COVERED** (limits below) |
-| 34 `OWNERSHIP_AMBIGUOUS` | `4056` | no | **none of any kind — not even an exit-code assertion** | **PROOF GAP** (worst of the eight) |
-| 35 `OWNERSHIP_UNAVAILABLE` | `4057` (helper failed), `4061` (helper absent/unreadable) | no | none — only `expect_rc 35` at test `619, 655` | **PROOF GAP** |
-| 37 `PERMISSION_DENIED` | `4396` via `die_hop` | yes — hop ran, denials in capture | none — only `expect_rc 37` at test `5192, 5228, 5258` | **PROOF GAP** |
-| 29 `BUDGET_EXHAUSTED` | `4270, 4302, 4323, 4333` via `die_hop` | 4270 no; 4302/4333 yes (actor terminated); 4323 no | none — only `expect_rc 29` at test `2222, 3606, 3650` | **PROOF GAP** |
+Green — the full existing dispatcher suite, `bash dispatch.test.sh`: **`pass=1319 fail=3`**. All 28 of case 67a's assertions pass:
 
-The single `COVERED` verdict, with exactly what its evidence does and does not prove — stated per the brief rather than claimed whole. Case 50e seeds `logs/work-loop/.owner` with a different task, runs to exit 33, then reads `R50E="$d/runs/$(run_id_of "$OUT").result"`.
+- exit `34`; `calls=0`; the stop text names the helper's own ambiguity verdict.
+- exactly one finalized result, counted three ways — one `.result` file, zero `.result.partial`, and exactly one `terminal_result_version=` line inside it (an appending producer would carry two).
+- protocol completeness — first line `terminal_result_version=1`, last line `result_complete=yes`, every line matching the bounded `key=value` grammar.
+- semantics — `outcome=OWNERSHIP_AMBIGUOUS`, `code=34`, `task=owner-ambiguous-task`, `owner_check=ambiguous`, `stage=pre-hop`, `actor=none`, `actor_launched=no`, `model_request_started=no`, `hop=0`, `next_action=operator-resolve-ownership`.
+- binding, from inside the artifact as well as from its name — `run` equals the announced run id, `checkout` equals the canonical checkout.
+- lease order — both leases recorded `held-by-this-run` at finalization and both directories gone afterwards, so release happened after a valid result existed.
 
-- **Missing** — proven. `[ -f "$R50E" ]` is asserted directly.
-- **Unbound** — proven. The path is derived from the run id the dispatcher printed, not composed by the harness, so a result written anywhere else fails the `-f` test.
-- **Semantically wrong** — proven. `outcome:OWNERSHIP_REFUSED`, `code:33`, `owner_check:refused`, `owner_declared:decoy-alpha`, `actor_launched:no`, `stage:pre-hop`, and the two lease fields at `held-by-this-run`, plus the released lease directory afterwards.
-- **Duplicated** — **NOT proven.** Case 50e makes no `res_count` assertion, so a second result finalized into the same directory would not be detected.
-- **Malformed** — **partially proven only.** It asserts individual fields but never `result_complete=yes`, so a record truncated after the fields it happens to read would still pass.
+Red — the negative control. **Nothing in the tracked tree was mutated**, so "restored" is trivially satisfied and verifiable: the mutant is a scratchpad copy of `dispatch.sh` carrying one added line, `[ "$code" = 34 ] && return 1`, injected after `local code="$1"` in `finalize_terminal_result()`, and the suite was pointed at it through the harness's own existing `DISPATCH_BIN=` mechanism. Command: `DISPATCH_BIN=<scratch>/mutant-no34.sh REPO_ROOT=<checkout> bash <scratch>/frozen.test.sh`. That mutation suppresses the result for code 34 and nothing else, so the red run stays legible. Result: **`pass=1296 fail=26`**, and **22 of the 26 failures are case 67a's**, including:
 
-Those two omissions are real and are named here rather than smoothed into the verdict; 33 is covered against the failures the case can see, not against all five.
+```
+FAIL  67a — exits 34 when ownership is ambiguous
+      expected exit 34, got 38
+FAIL  67a — a terminal result exists at the run-bound path
+      missing …/20260818T190406--42276-owner-ambiguous-task.result
+FAIL  67a — exactly one finalized result
+      found 0
+FAIL  67a — the last line is the completeness sentinel
+FAIL  67a — outcome=OWNERSHIP_AMBIGUOUS
+FAIL  67a — both leases it reported holding were released on the way out
+```
 
-For the eight `PROOF GAP` verdicts, the precise missing thing and the searched surface: **no assertion anywhere in `dispatch.test.sh` reads a `.result` file for any of codes 13, 14, 15, 26, 34, 35, 37, 29.** Searched surfaces and patterns, complete: all 10474 lines of `dispatch.test.sh` for `"code:N"` (found only 28, 28, 22, 18, 20, 33, 31, 31 — at 2984, 3125, 5516, 5598, 5729, 5770, 5998, 6095), for every `res_field … code` comparison line (found only 0, 22, 38), for each of the nine outcome symbols as a bare string (`STATE_MISSING`, `IDENTITY_MISMATCH`, `BAD_TURN`, `MALFORMED_TERMINAL`, `OWNERSHIP_AMBIGUOUS`, `OWNERSHIP_UNAVAILABLE`, `PERMISSION_DENIED`, `BUDGET_EXHAUSTED` — no hits; `OWNERSHIP_REFUSED` hits only 50e), and the ±14-line neighbourhood of all 18 `expect_rc` sites for those codes for any `.result`, `res_count` or `res_field` use — none present.
+Three of 67a's assertions correctly stayed green under the mutant — nothing was launched, no partial artifact survived, and the stop still named the ambiguity — which is right: the mutation removes the result, not the refusal. `git diff --quiet dispatch.sh` confirms the production file is byte-identical to HEAD, and the whole test diff is a single insertion hunk, `@@ -10469,0 +10470,118 @@`, with zero deleted or modified lines, so no pre-existing case was touched.
 
-**What the verdict does and does not assert.** `PROOF GAP` here says the route is citable and the proof is absent. It does **not** assert the behavior is correct: no code below was executed, because this unit's capability subset forbids test execution and fixture construction. The behavior expectation rests on inspection — call order placing every site inside the finalizer's guard, plus case 50k's structural independence assertion that the funnel is one generic call site deriving its expected symbol through `result_outcome "$code"` with no per-code branch, plus Unit 4's empirical confirmation of that same funnel at codes 31 and 20. That is why none is `BEHAVIOR GAP` and none is `UNKNOWN`: both halves — route and proof-absence — were established, and only execution is missing.
+**Pre-existing failure found by the required regression, not caused by this unit — reported, not fixed.** The 3 green failures are all **case 58b** ("a dry-run whose publication FAILS pins both leases and exits 38"), and they appear identically in the red run, so they are independent of the mutant too:
 
-Earliest genuine non-covered target, in approved-plan order: **plan class 3, invalid state or ownership** (row 3 precedes rows 5 and 9). Its lowest-numbered uncovered code is **13 `STATE_MISSING`**. One item deserves separating from plan order, though: **code 34 `OWNERSHIP_AMBIGUOUS` is the only one of the nine with no test of any kind** — the other seven at least pin their exit code. It is reachable (`work-loop-owner.sh:89` exits 4 on `AMBIGUOUS`, and the dispatcher branches on that at 4056), and it is the route that fires when one task is replicated across checkouts with none declaring it — the case core § 7 reserves to the operator. Nothing currently proves the dispatcher stops there at all.
+```
+FAIL  58b — the unprovable dry-run exits 38, never 0
+      expected exit 38, got 10 — STOP [10] run evidence directory is not writable
+FAIL  58b — both leases retained across the EXIT trap with the truthful finalization-failure cause
+FAIL  58b — the next dispatcher is refused by the retained lease
+```
 
-No production, test or documentation file changed and no suite was run: `git status --porcelain` shows only this state file and the pre-existing unstaged `logs/friction-log.md`. Only this state file is staged.
+58b forces a publication failure by making the run-evidence directory unwritable. That is now refused earlier, at exit 10, by `check_evidence_location()` — which **Unit 1 added** (`git log -S"check_evidence_location"` → `48d0459d`). Units 1, 2 and 3 each reported only focused slices (`52/0`, `208/0`, `233/0`) and no full-suite run, so this has been red for three accepted units without being seen. It admits two readings and I am deliberately not choosing between them: either 58b's forcing technique is simply obsolete and the case needs a different way to reach the publication-failure path, or Unit 1's pre-admission check has made that post-admission failure mode unreachable by this route, which would be a Change set A question rather than a test question. Fixing either is outside this unit's dominant deliverable and outside the brief's scope.
+
+Deferral recorded, not implemented (core § 5): `owner_declared` reports the **first** non-empty line of the declaration, so this terminal records `owner_declared=owner-ambiguous-task` beside `owner_check=ambiguous` — one of the two ids that made it ambiguous. It is defensible, because the field's stated contract is "a declaration that exists" and the stop message carries the helper's full reason, but arguably it should read `unavailable` when the declaration cannot be resolved to one owner. Case 67a therefore asserts `owner_declared` is **non-empty and does not pin its value**, with the reason written at the assertion, so a future decision either way does not have to fight a regression this unit froze.
+
+One process note. The first baseline run was started before the test edit and was still executing when the edit landed; bash reads a script lazily, so that run would have picked up the new case mid-flight. I terminated it (exit 144) and discarded its partial output rather than report a baseline it could not honestly carry. The red and green runs above were both started after the edit was complete, and the red run used a frozen copy of the test file so that no later edit could affect it. Also disclosed: red and green were run in parallel, and under that contention case 28's timing assertion failed in the red run ("took 728s, bound is 14s"); it passes in the green run, which is why green is the reported regression result.
+
+Final scope: `git status --porcelain` shows the test file, this state file, and the pre-existing unstaged `logs/friction-log.md`. Only the test file and this state file are staged; `dispatch.sh` is identical to HEAD.
 
 ## Blocker
 
@@ -104,4 +116,4 @@ None.
 
 ## Next action
 
-Codex: scope the next unit against a corrected picture — proof is genuinely missing for eight codes, but the gap is narrower than Unit 35 recorded (33 is covered) and wider in one place than plan order suggests (34 has no test at all). Decide (a) whether one implementation unit adds result assertions across the eight, or whether it is bounded to plan class 3 first, starting at code 13; (b) whether code 34 is pulled forward out of plan order on the ground that it is wholly unexercised and its class is operator-reserved; and (c) whether case 50e's two named omissions — no `res_count` uniqueness check, no `result_complete=yes` completeness check — are folded into that unit or recorded as a deferral. Note for sizing, not for action now: rows 6, 7 and 8 carry nine further unproven codes (`16, 19, 21, 24, 25, 26, 30, 36`, and `20` at `die_hop`) that no unit has yet re-adjudicated in every assertion form.
+Codex: assess Unit 6 — code 34 now has permanent fail-capable terminal-result proof and the production route was found already correct. Then decide three things. (a) **Case 58b is red and has been for three accepted units.** Decide whether it is a test-fixture obsolescence or a Change set A finding about Unit 1's pre-admission check closing a post-admission failure path, and whether it becomes the next unit — it is a regression in the accepted baseline, so it likely outranks the remaining proof gaps. (b) Whether a full-suite run becomes required evidence at the end of each unit rather than a focused slice, since three units in a row missed this. (c) Whether the `owner_declared` deferral above is scoped into the eventual ownership work or accepted as written. The remaining terminal-result proof gaps (`13, 14, 15, 26, 35, 37, 29`) and the case 50e strengthening stay deferred exactly as this brief left them.
