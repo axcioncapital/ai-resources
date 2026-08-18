@@ -1,7 +1,7 @@
 ---
 task: work-loop-v2-post-compaction-recovery-repair
-status: active
-turn: codex
+status: blocked
+turn: operator
 ---
 
 ## Objective and scope
@@ -21,7 +21,21 @@ Named reason for the loop: the repair spans multiple bounded implementation and 
 
 ## Latest result
 
-**Unit 4d accepted at `55214371`.** The complete nine-suite matrix is green at 1,176 passed / 0
+**The close was started and stopped at the cleanup step. The task is NOT closed.** Every precondition
+in the close verdict's step 1 reconfirmed exactly: both worktrees present at `4510cb0a` on
+`disposable/wl2-unit4-case-2026-08-17` and detached `7b130cd1`, both owner declarations empty, the
+only untracked path in each its inventoried `.unit4-preflight/preflight.sh`, the disposable branch tip
+`4510cb0a` with `092a1715` reachable, canonical `main` clean at `0d5641b8`.
+
+`git worktree remove --force` was then refused by the repository's own
+`check-destructive-liveness.sh` SessionStart guard, which reads the untracked path as evidence the
+target may be occupied and requires the operator to confirm the checkout is idle. **Nothing was
+removed, deleted, pruned or reset**, no branch was touched, and no plan or closed record was written.
+The guard's demand is not the authorization already given: the operator authorized destroying the two
+known scripts, and the guard asks the separate question of whether a session is running in those
+checkouts right now — a fact core § 7 reserves to the operator and no repository scan can establish.
+
+**Unit 4d remains accepted at `55214371`.** The complete nine-suite matrix is green at 1,176 passed / 0
 failed, the Unit 4 evidence chain is coherent, canonical `main` is restored and clean, no material
 review finding remains, and both disposable cleanup targets are precisely inventoried.
 
@@ -119,35 +133,41 @@ explicit operator decision.
 
 ## Blocker
 
-None. The operator authorized the cleanup on 2026-08-18, taking the recommended option: Claude may
-delete both divergent untracked `.unit4-preflight/preflight.sh` copies and remove the two named
-disposable worktrees during the closing move, while branch `disposable/wl2-unit4-case-2026-08-17` and
-every commit on it are preserved. No branch deletion, merge, remote reconciliation or push is
-authorized by this decision.
+**Operator liveness confirmation required before the close can finish.** The repository's
+`check-destructive-liveness.sh` guard refused `git worktree remove --force` on both targets. It reads
+the untracked `.unit4-preflight/preflight.sh` in each as evidence the checkout may be occupied, and it
+will not accept a `git status` as proof of idleness — a clean status is a reading of a moving system,
+and only the operator can say whether a session is running in those checkouts right now.
 
-Nothing has been deleted or removed yet, and this record is the whole of what changed: the cleanup is
-part of the closing move Codex has not yet issued, so recording the decision costs nothing and
-reverses freely if it was read wrongly.
+This is a different question from the one already answered. The operator authorized **destroying the
+two known scripts and removing the two worktrees**; the guard asks whether either checkout is
+**live at this moment**. Nothing in the repository can establish that.
+
+The two targets, unchanged since the Unit 4d inventory:
+
+- `…/ai-resources-wl2-unit4-case` — `4510cb0a` on `disposable/wl2-unit4-case-2026-08-17`, owner
+  declaration empty, sole untracked path `.unit4-preflight/preflight.sh` (9,868 bytes, mtime
+  2026-08-17 23:44).
+- `…/ai-resources-wl2-unit4-cleanctl` — detached `7b130cd1`, owner declaration empty, sole untracked
+  path `.unit4-preflight/preflight.sh` (9,065 bytes, mtime 2026-08-17 23:41).
+
+If the operator confirms both are idle, the same command re-runs with the guard's documented
+`AXCION_LIVENESS_OVERRIDE=1` prefix, which writes an audit line to `logs/destructive-override.log`.
+The guard's marker files are not to be deleted to get past it.
 
 ## Next action
 
-Codex: the operator-owned decision is recorded, so nothing further is reserved to them. Issue the
-Unit 4 close verdict, or say what remains.
+Operator: confirm whether a session is running in either
+`…/ai-resources-wl2-unit4-case` or `…/ai-resources-wl2-unit4-cleanctl` right now.
 
-What the verdict has in front of it: Units 0–4 accepted; the complete nine-suite matrix green at
-`63c02624` with 1,176 passed and 0 failed; the Unit 4 evidence chain (accepted Attempt 2 trace →
-`092a1715` rollover → `63c02624` correction); canonical `main` clean at `0d5641b8`; and the cleanup
-decision above.
+- **Both idle** → Claude re-runs the two removals with the documented override, completes the plan
+  § 8 update, writes the closed record and commits once. Nothing else changes.
+- **Either live** → the close waits until that session wraps and commits. Everything else is already
+  done, so the wait costs only the close.
 
-Three things the closing record must carry, per the earlier hand-back and unchanged:
+A third option exists and is Codex's to weigh, not the operator's to be asked for: close the task now
+and leave the two worktrees for a separate cleanup. The close verdict explicitly says a failed
+cleanup stops the close, so that would need Codex to reframe rather than Claude to decide.
 
-1. Plan § 8's correction subsection does not cite `63c02624` by hash. Whether to add that pointer is
-   a plan edit for the closing move, not something the discovery unit could make.
-2. The two correction deferrals stand, unpromoted: the stale "five separate things" count prose in
-   `.claude/commands/work-loop-v2.md` Step 0 and `/sync-workflow`'s five-name remediation list; and
-   whether a reference may cite a sibling's path at all.
-3. Branch `disposable/wl2-unit4-case-2026-08-17` is preserved deliberately — it is the only ref
-   holding the rejected history and the `092a1715` evidence pointer the chain above depends on.
-
-Still unauthorized and untouched: branch deletion, merge to canonical `main`, remote reconciliation
-and push.
+Nothing else is authorized or attempted: no branch deletion, no prune, no reset, no merge, no remote
+reconciliation, no push.
