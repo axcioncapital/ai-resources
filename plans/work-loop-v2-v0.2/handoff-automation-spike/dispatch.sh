@@ -1981,6 +1981,19 @@ die_terminal_unprovable() { # [terminal-label]
 # The terminal label is the SECOND argument here, for the same reason and with the
 # same default as the finalization exit above; the refusal token stays first
 # because every existing caller passes it there.
+#
+# THE SENTENCE IS TERMINAL-NEUTRAL, and must stay that way. Four consumers share
+# it and they do not share an intended exit code: three were ending at 0, the
+# interruption at 28. Until Unit 31 it named the exit-0 ending as the one being
+# withheld, which is simply false for the interruption — and the nonzero die()
+# funnel that becomes the fifth consumer is nonzero by definition. It also called
+# the gate this run's OWN, which reads as though passing it had established
+# ownership; the gate is the check that FAILED, and offering it as provenance is
+# the very claim this refusal exists to withhold. Neither phrasing may come back,
+# and this sentence must not branch on the code: a per-code branch would make it
+# one message owner per terminal, which is the duplication the single
+# pin-and-exit owner exists to avoid. Case 58f's M38 is the control that holds
+# this, and 58e/27w are the two consumers it is asserted over.
 die_terminal_untrusted() { # bounded-refusal-token [terminal-label]
   pin_lock_terminal "the promised terminal result under ${LOG_DIR:-<no log dir>} was refused before release: ${1:-refused}" # operator consumer retention
   # RESULT_FILE is cleared so die() does not print "terminal result:" pointing at
@@ -1988,7 +2001,7 @@ die_terminal_untrusted() { # bounded-refusal-token [terminal-label]
   # run's evidence would be the false claim the refusal exists to prevent. The
   # artifact itself is left in place, untouched, as evidence of what was found.
   RESULT_FILE=""
-  die 38 "the run reached ${2:-a real operator terminal} (state_class=${ST_CLASS:-unavailable}) and finalized its terminal result, but the promised artifact at $LOG_DIR_ABS/$RUN_ID.result failed this run's own consumer gate (${1:-refused}) — refusing to exit 0, because a result this run cannot prove is its own must not be reported as how it ended."$'\n'"Recoverable next action: inspect that path against the run log $RUN_LOG, remove or repair the interfering artifact, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
+  die 38 "the run reached ${2:-a real operator terminal} (state_class=${ST_CLASS:-unavailable}) and finalized its terminal result, but the promised artifact at $LOG_DIR_ABS/$RUN_ID.result did not pass the consumer gate (${1:-refused}) — so it is refused as this run's reported ending, because a result this run cannot prove is its own must not be reported as how it ended."$'\n'"Recoverable next action: inspect that path against the run log $RUN_LOG, remove or repair the interfering artifact, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
 }
 
 # The SHARED FUNNEL's own failure transfer. die() publishes the terminal result

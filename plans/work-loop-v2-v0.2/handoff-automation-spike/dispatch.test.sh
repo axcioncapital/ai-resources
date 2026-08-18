@@ -3433,6 +3433,19 @@ expect_int_refusal27() { # fixture task expected-token label-prefix
     "$4 — the refusal names the launched-actor interruption terminal it actually reached"
   out_lacks "reached a real operator terminal" "$O27W" \
     "$4 — the refusal claims no operator terminal"
+  # THE SAME TERMINAL-NEUTRAL SENTENCE (Unit 31), asserted over the consumer that
+  # makes the old wording plainly false: this run was ending at code 28, so
+  # "refusing to exit 0" describes an ending it was never going to have. 58e
+  # asserts the identical phrases over a code-0 consumer; one clause has to be
+  # true for both, which is why neither assertion may be code-specific.
+  out_has "did not pass the consumer gate" "$O27W" \
+    "$4 — the refusal says the promised artifact did not pass the consumer gate"
+  out_has "refused as this run's reported ending" "$O27W" \
+    "$4 — the refusal refuses the artifact as this run's reported ending"
+  out_lacks "failed this run's own consumer gate" "$O27W" \
+    "$4 — the refusal does not offer the gate as proof of the artifact's provenance"
+  out_lacks "refusing to exit 0" "$O27W" \
+    "$4 — the refusal assumes no exit-0 ending"
   TL="$(task_lock_for "$V27W" "$2")"; CL="$(checkout_lock_for "$V27W")"
   # NOT a finalization story and NOT a teardown story: the record published
   # perfectly well (27s owns the publication failure) and the teardown was clean
@@ -7855,6 +7868,22 @@ expect_dry_refusal58() { # fixture expected-token label-prefix
     "$3 — the refusal names the preflight terminal it actually reached"
   out_lacks "reached a real operator terminal" "$O" \
     "$3 — the refusal claims no operator terminal"
+  # THE SENTENCE IS TERMINAL-NEUTRAL (Unit 31). One shared clause is read by
+  # consumers whose run was ending at code 0 and by consumers whose run was
+  # ending at code 28, so it may not assume the ending it interrupted was exit 0
+  # — for the interruption that is simply false. Nor may it offer the gate as
+  # proof of the artifact's provenance: the gate is the check that FAILED, and
+  # calling it "this run's own" reads as though passing it had established
+  # ownership. Both halves are asserted here and in 27w, over the two consumers
+  # that differ in exactly that intended code.
+  out_has "did not pass the consumer gate" "$O" \
+    "$3 — the refusal says the promised artifact did not pass the consumer gate"
+  out_has "refused as this run's reported ending" "$O" \
+    "$3 — the refusal refuses the artifact as this run's reported ending"
+  out_lacks "failed this run's own consumer gate" "$O" \
+    "$3 — the refusal does not offer the gate as proof of the artifact's provenance"
+  out_lacks "refusing to exit 0" "$O" \
+    "$3 — the refusal assumes no exit-0 ending"
   TL="$(task_lock_for "$V" dry-task)"; CL="$(checkout_lock_for "$V")"
   # NOT a finalization story, and that distinction is the point: the record
   # published perfectly well. What failed is what it says.
@@ -7990,6 +8019,71 @@ if [ "$M35_HITS" = 1 ] && [ "$M35_LEFT" = 0 ] && [ "$M35_PAIR" = 1 ] &&
 else
   bad "58f — M35 restored the empty label, kept the expected pair, differs, and parses" \
       "matched=$M35_HITS left=$M35_LEFT pair=$M35_PAIR differs=$M35_DIFFERS parses=$M35_PARSES — the control cannot run"
+fi
+
+# M38 — the SHARED SENTENCE's own control, and the third distinct thing this seam
+# can get wrong. M34 proves the semantic refusal is real; M35 proves the terminal
+# LABEL is; this proves the rest of the sentence is. It restores exactly the two
+# clauses the wording carried before Unit 31 — "failed this run's own consumer
+# gate" and "refusing to exit 0" — and changes nothing else: the consumer call,
+# its expected pair, the dynamic labels, the bounded token, the pin-first order,
+# exit 38 and the recovery paragraph all stay as they are. So the run must still
+# refuse exactly as before, while the wording assertions in 58e AND 27w go red.
+#
+# ONE CONTROL COVERS BOTH CASES because there is one production clause: 27w
+# asserts the identical phrases over the code-28 consumer, and a per-case control
+# would only re-prove the same line twice. The exit-0 count is asserted at 2 in
+# the mutant rather than 1, which is what shows die_terminal_unprovable's own
+# separate sentence was left alone and the restored phrase went into this one.
+# Fails closed: unless both selectors matched exactly once and the mutant differs
+# and parses, the control does not run.
+sed -e "s/did not pass the consumer gate/failed this run's own consumer gate/" \
+    -e "s/so it is refused as this run's reported ending/refusing to exit 0/" \
+  "$DISPATCH_BIN" >"$MUT58E/m38.sh" 2>/dev/null
+M38_A="$(grep -cF 'did not pass the consumer gate' "$DISPATCH_BIN" 2>/dev/null || true)"
+M38_B="$(grep -cF "so it is refused as this run's reported ending" "$DISPATCH_BIN" 2>/dev/null || true)"
+M38_A_LEFT="$(grep -cF 'did not pass the consumer gate' "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_B_LEFT="$(grep -cF "so it is refused as this run's reported ending" "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_OLD="$(grep -cF "failed this run's own consumer gate" "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_ZERO="$(grep -cF 'refusing to exit 0' "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_PAIRS=0
+for m38 in operator dry-run carry-one interruption; do
+  M38_PAIRS=$((M38_PAIRS + $(grep -cF "# $m38 terminal consumption" "$MUT58E/m38.sh" 2>/dev/null || true)))
+done
+M38_LABEL="$(grep -cF 'consume_terminal_result "the admitted dry-run preflight terminal" ' "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_RECOVERY="$(grep -cF 'remove or repair the interfering artifact' "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT58E/m38.sh" || M38_DIFFERS=yes
+M38_PARSES=no; bash -n "$MUT58E/m38.sh" 2>/dev/null && M38_PARSES=yes
+if [ "$M38_A" = 1 ] && [ "$M38_B" = 1 ] && [ "$M38_A_LEFT" = 0 ] && [ "$M38_B_LEFT" = 0 ] &&
+   [ "$M38_OLD" = 1 ] && [ "$M38_ZERO" = 2 ] && [ "$M38_PAIRS" = 4 ] && [ "$M38_LABEL" = 1 ] &&
+   [ "$M38_RECOVERY" = 1 ] && [ "$M38_DIFFERS" = yes ] && [ "$M38_PARSES" = yes ]; then
+  ok "58f — M38 restored exactly the former shared clause, left the four consumers, labels, token and recovery text intact, differs, and parses"
+  if mk_dry_alter58 "$MUT58E/m38-out.sh" 's/^outcome=.*/outcome=COMPLETED/' "$MUT58E/m38.sh"; then
+    V58H="$(new_sandbox)"; state_file "$V58H" dry-task codex
+    OUT="$(bash "$MUT58E/m38-out.sh" --checkout "$V58H" --task dry-task \
+          --log-dir "$V58H/runs" --timeout 20 --dry-run 2>&1)"; RCM=$?
+    # The BEHAVIOURAL half must stay green — that is what makes this a wording
+    # control rather than a second copy of M34. Same exit, same retention, same
+    # truthful terminal label; only the shared clause moved.
+    if [ "$RCM" -eq 38 ] && [ -d "$(task_lock_for "$V58H" dry-task)" ] &&
+       [ -d "$(checkout_lock_for "$V58H")" ] &&
+       printf '%s\n' "$OUT" | grep -qF 'reached the admitted dry-run preflight terminal' &&
+       printf '%s\n' "$OUT" | grep -qF "failed this run's own consumer gate" &&
+       printf '%s\n' "$OUT" | grep -qF 'refusing to exit 0' &&
+       ! printf '%s\n' "$OUT" | grep -qF 'did not pass the consumer gate' &&
+       ! printf '%s\n' "$OUT" | grep -qF "refused as this run's reported ending"; then
+      ok "58f — M38: with the former clause restored the refusal still refuses, and the shared sentence claims provenance and an exit-0 ending again (58e's and 27w's wording is fail-capable)"
+    else
+      bad "58f — M38: with the former clause restored the refusal still refuses, and the shared sentence claims provenance and an exit-0 ending again (58e's and 27w's wording is fail-capable)" \
+          "rc=$RCM task-lease=$([ -d "$(task_lock_for "$V58H" dry-task)" ] && echo held || echo released) message: $(printf '%s\n' "$OUT" | grep -m1 '^STOP')"
+    fi
+  else
+    bad "58f — M38: the outcome-only fixture over the mutant differs and parses" \
+        "the injection matched nothing, or the fixture does not parse — the control cannot run"
+  fi
+else
+  bad "58f — M38 restored exactly the former shared clause, left the four consumers, labels, token and recovery text intact, differs, and parses" \
+      "neutral-a=$M38_A neutral-b=$M38_B left-a=$M38_A_LEFT left-b=$M38_B_LEFT restored=$M38_OLD exit0=$M38_ZERO pairs=$M38_PAIRS label=$M38_LABEL recovery=$M38_RECOVERY differs=$M38_DIFFERS parses=$M38_PARSES — the control cannot run"
 fi
 
 echo
