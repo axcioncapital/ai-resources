@@ -721,9 +721,11 @@ No fixture was retained; the control lived outside the repository and was remove
 
 ### Unit 4 preparation (Unit 4b) — the representative case, prepared and unrun
 
-Prepared 2026-08-17. Execution packaging inside approved Unit 4: it builds the case and does **not**
-run it, so Unit 4 itself stays pending below and its required live proof and independent review are
-untouched.
+**Status: ACCEPTED 2026-08-18** at disposable fixture commit `d99e7eda`. Execution packaging inside
+approved Unit 4: it builds the case and does **not** run it, so Unit 4 itself stays pending below and
+its required live proof and independent review are untouched. Codex accepted the self-reported read
+trace with its recorded completeness limit because § 4 defines the byte count as a diagnostic proxy;
+correct reconstruction and the permitted-source set remain the pass/fail conditions.
 
 **The case.** Disposable linked worktree at
 `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-wl2-unit4-case`, branch
@@ -781,20 +783,77 @@ than overridden. Both it and the case checkout are removed at Unit 4's close.
 
 ### Unit 4 — live post-compaction case
 
-Pending. Record:
+**Attempt 1 — incomplete transport, 2026-08-18.** At the operator's request, the canonical prompt was
+run in a context-isolated Codex subagent with no inherited conversation turns. The subagent's runtime
+skill catalog did not expose `$realign`, although the repository carries `.agents/skills/realign/`,
+so it fell back directly to `$reorient`. This attempt therefore cannot establish trace item 1 and is
+not accepted as the representative live proof.
 
-- checkout and disposable task id;
-- exact preserved path;
-- hidden facts recovered;
-- sources opened, read count and bytes returned;
-- whether any read widened and why;
-- final recovery output and actor-correct `Next:`;
-- rollover assertion output; and
-- comparison with the 205,922-byte incident baseline.
+The `$reorient` portion supplied useful evidence: it selected `u4-live-case`, classified it
+`ACTIVE_CLAUDE`, rejected the misleading task/lifecycle/turn summary, read the lean Work Loop skill
+and core once each, avoided routing/courier/unit-framing references, read only 1,465 bytes from the
+79,995-byte governing plan, and returned the actor-correct Claude `Next:`. Its trace total was
+**85,026 bytes across 8 reads**, 41.3% of the 205,922-byte incident refill. The first response omitted
+the two marker strings, but a no-read postmortem confirmed that it had encountered and retained both
+`NA-U4-EXACT-TASK-FACT` and `DURABLE-FACT-U4-ROLLOVER`; it identified their omission as a reporting
+judgment error. No Claude hand-back or rollover followed this incomplete attempt.
+
+**Attempt 2 — semantic live-recovery trace accepted, 2026-08-18.** The operator requested another
+context-isolated subagent. Because collaboration subagents inherit the parent runtime catalog, this
+run used an explicit transport override to load the repository's complete
+`.agents/skills/realign/SKILL.md`; the override tests the skill boundary but does **not** establish
+automatic catalog discovery. `$realign` detected degraded context before Work Loop governance,
+delegated to `$reorient`, ended without a realignment verdict, and changed no repository state.
+
+`$reorient` selected the exact `u4-live-case`, rejected the summary's decoy identity and false
+lifecycle/turn, recovered `NA-U4-EXACT-TASK-FACT` from the task and
+`DURABLE-FACT-U4-ROLLOVER` from named plan § 7, and never encountered
+`DECOY-FACT-U4-TRANSPORT`. The two authoritative markers were compressed out of the first rendered
+summary; a no-read postmortem from retained context established both and identified that omission as
+a reporting judgment error. The trace read each required source once, opened no courier, routing,
+routing-index or unit-framing reference, read 830 bytes of the 79,995-byte plan without widening, and
+returned the actor-correct Claude `Next:`.
+
+**Budget:** 7 reads / **94,966 bytes**, 46.1% of the 205,922-byte incident refill (110,956 bytes,
+53.9%, lower). This passes as the plan's diagnostic proxy because reconstruction and the permitted
+source set passed; it is not evidence that an unreported read is impossible.
+
+The semantic recovery portion is accepted. Automatic runtime discovery of `$realign` remains outside
+what a collaboration subagent can prove and is covered only by repository deployment/regression
+evidence. Still pending from this case:
+
+- the real Claude hand-back;
+- its resulting task classification and commit; and
+- rollover assertion output proving `U4-OLD-RESULT` was replaced rather than retained.
 
 ### Independent review
 
-Pending.
+**FAIL — correction required, 2026-08-18.** The required two-axis review ran against
+`d72cf199...4510cb0a` after the disposable case branch had already been fast-forwarded into canonical
+`main`.
+
+**Spec — four material blockers.** Commit `a0f4f6ec` makes the complete Work Loop skill and executable
+core conditional during `$reorient`, contradicting §§ 1 and 4. The fixture plan used to authorize
+that redesign claims approval at nonexistent object `aa11bb22` and cannot override this content-bound
+plan. The case converts diagnostic read volume into a 5,541-byte pass ceiling, contrary to § 1 outcome
+5 and § 4's diagnostic-only budget rule. The accepted `$realign` trace predates the semantic change;
+the post-change proof invokes `$reorient` directly and omits the two reads this plan requires, while
+Tracer 7 checks only that relevant phrases remain present rather than that those reads stay mandatory.
+
+**Standards — two material findings.** The capability checker still returns READY when
+`core-resolution.md` is removed, although § 5 requires the new reference siblings to be part of full
+capability presence. `routing-and-admission.md` directs readers to sibling references, violating the
+one-level/no-reference-chain rule; the guard misses the defect because it recognizes Markdown links
+but not backticked sibling paths.
+
+**Cleanup finding.** The synthetic fixture plan, decoy state, audit and root operator prompt remain in
+canonical paths despite the case's cleanup contract. Full reviewer notes are in
+`audits/working/u4-case-spec-review.md` and `audits/working/u4-case-standards-review.md`.
+
+Canonical `main` was fast-forwarded from `0d5641b8` to `4510cb0a` before this review completed. No
+finding is resolved, Unit 4 is not accepted, and § 9 is unmet. The task is blocked for the operator's
+choice between restoring the local pre-merge pointer and continuing corrected Unit 4 from the bound
+implementation checkout, or retaining the merge and authorizing a separate correction.
 
 ## 9. Completion condition
 
