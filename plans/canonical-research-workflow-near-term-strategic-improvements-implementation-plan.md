@@ -1,279 +1,240 @@
 # Canonical Research Workflow — Near-Term Strategic Improvements
 
-**Status:** Proposed
-**Date:** 2026-08-17
-**Author:** Claude (Work Loop v2 task `canonical-rw-near-term-implementation-plan`, Unit 1)
+**Status:** Proposed — pending content-bound operator approval of this exact committed content
+**Date:** 2026-08-18 (rescoped; supersedes the 2026-08-17 twelve-slice proposal in place)
+**Author:** Claude (Work Loop v2 task `canonical-rw-lean-plan`, Unit 1)
 **Method:** Axcíon Repository Development Operating Standard (`skills/axcion-repository-development/SKILL.md` + `references/operating-standard.md`)
-**Independent review:** Corrected first against `audits/2026-08-17-canonical-research-workflow-near-term-plan-review.md` and then against the fresh primary-source audit `audits/2026-08-17-canonical-research-workflow-near-term-plan-fresh-audit.md`; approval is still required.
 
-This plan reconciles the three 2026-08-17 proposals — `plans/lean-research-workflow/proposal.md`, `plans/research-retrieval-layer-improvement-plan.md`, and `plans/canonical-research-workflow-judgment-and-insight-plan.md` — into one sequenced, repository-grounded near-term implementation path for the canonical Research Workflow (RW). All three sources are **proposed, not approved**; nothing in this plan converts a proposal into authority. Choices that require the operator are collected in § 7 and gate the slices that depend on them.
+This document replaces the previous twelve-slice, six-gate proposal. That programme was rejected by the
+operator on 2026-08-18 as non-viable at an estimated 250–410 remaining hours. What remains is one small
+plan serving the operator's two stated priorities — a **lightweight Research Workflow** and a
+**canonical judgment layer / House View** — running as two concurrent lanes that meet once.
+
+Nothing here is authority yet. The operator approved the lean *direction* and the outcome set; the
+governing plan is this file only once its commit is presented and the operator gives **content-bound
+approval**. Until then no lean outcome opens.
 
 ---
 
 ## 1. Operating outcome
 
-During the launch period, Axcíon needs **substantially more research output at unchanged evidence standards, with substantially less operator and AI effort**. Concretely, the improved canonical RW must make four things possible that are not possible today:
+Two capabilities, and nothing else:
 
-1. **Fast and standard research has a canonical home.** Today a one-question fact check and a ten-chapter report enter the identical deep pipeline, and the recorded consequence is that fast research bypasses the system entirely (3 of 8 candidate projects never adopted RW; 2 of 5 deployments built lighter parallel pipelines; zero fast research has ever run through RW — `plans/lean-research-workflow/proposal.md` § 1.3, evidence in `audits/working/rw-lean-usage-evidence.md`).
-2. **The retrieval layer has a runtime.** Today every external fact arrives by the operator manually running browser sessions and pasting output back, with recurring mojibake repair — the workflow decides *what to ask* well and has no machinery for *getting it* (`plans/research-retrieval-layer-improvement-plan.md` § 1.1).
-3. **False scarcity is mechanically resisted.** The dominant recorded retrieval failure mode is "we didn't find it" hardening into "it isn't there"; the best existing control reads a self-reported access log (`plans/research-retrieval-layer-improvement-plan.md` § 1.3).
-4. **Consequential writing begins from approved Axcíon judgment, not evidence alone.** Serious report or content work must convert evidence into an independently challenged, founder-approved House View before directives, synthesis, architecture, argument mapping, or prose can treat that view as authority. The approved artifact must preserve the separation of evidence, interpretation, and Axcíon context; expose the useful insight and its earned insight-ladder level; and prevent downstream agents from inventing an unapproved thesis (`plans/canonical-research-workflow-judgment-and-insight-plan.md` §§ Operating outcome–Downstream behavior).
+1. **A lightweight research entry capability** with Light, Standard and Deep behavior, so fast and
+   standard research has a home instead of bypassing the workflow entirely. Recorded evidence for the
+   gap: 3 of 8 candidate projects never adopted the RW, 2 of 5 deployments built lighter parallel
+   pipelines, and zero fast research has ever run through the RW
+   (`plans/lean-research-workflow/proposal.md` § 1.3; `audits/working/rw-lean-usage-evidence.md`).
+2. **One founder-authorized judgment / House View contract** that governs consequential analysis and
+   writing — evidence, interpretation and Axcíon context kept separate; independently challenged;
+   approved by the founder before any downstream agent may treat a thesis as authority.
 
-For whom: the operator (less relay and gate labour per unit of research) and the consuming projects (Sector Intelligence, Content Programme, and tactical questions that currently have no home). Why now: launch-period research volume is the binding constraint, and a project-local source ruling plus several high-cost relay seams are sitting unapplied.
+**Explicitly not part of this plan:** retrieval runtimes, external API retrieval, official-statistics
+ingestion, source products or profiles, general deployment/propagation infrastructure, and Content
+Programme integration. See § 8.
 
-## 2. Verified current substrate
+## 2. Completed foundation — not reopened
 
-Load-bearing current-state claims, each checked by inspection on 2026-08-17 in this checkout. Reuse decisions follow each finding.
+**Slice S1 (content-relay → path-passing refactor) is complete.** It is finished foundation, not an
+open slice, is not renumbered as lean work, and counts zero remaining effort.
 
-| # | Finding | Evidence (inspected) | Disposition |
-|---|---|---|---|
-| 1 | The canonical RW is a deep-report pipeline: 5 stages, no fast path, no top-level `scripts/` runtime directory; command count is ref-sensitive | At plan commit `52841b17`, the checkout has 30 tracked command entries; fetched `origin/main` at `3e7789cd` has 29 after retiring `inject-dependency.md`; `workflows/research-workflow/scripts/` does not exist | Reconcile latest `origin/main` before implementation; keep the deep route and do not slim it in the near term (deferred, § 8) |
-| 2 | `execution-agent` exists and is wired **only** into chapter verification, not Stage-2 retrieval | `workflows/research-workflow/.claude/agents/execution-agent.md` exists; `grep -rln "execution-agent" workflows/research-workflow/.claude/commands/` → only `verify-chapter.md` | Reuse as the seed of the retrieval runtime **if** gate G2 approves (§ 7) |
-| 3 | Four high-severity content-relay classes remain open; their live scope is broader than the May estimate and some relays may be intentional | `audits/token-audit-2026-07-03-ai-resources.md:253-291` (W4-H1–H4); the May audit explicitly lacked execution telemetry | Bound and instrument the live relay seams before changing them — Slice S1 |
-| 4 | The canonical Perplexity merge step has no lead-vs-source precondition | `workflows/research-workflow/reference/stage-instructions.md:77` (Step 2.S4) merges QC-approved supplementary results and tags `[SUPPLEMENTARY]`; no `LEAD` handling found (searched `stage-instructions.md` for `lead, not` / `LEAD]` — no match) | Canonize the 2026-08-14 operator ruling — Slice S2 |
-| 5 | The canonical source-intelligence template is deliberately project-instantiated and currently contains 22 placeholder occurrences / 21 distinct literal spellings | `workflows/research-workflow/reference/source-class-hierarchy.template.md`; `workflows/research-workflow/docs/required-reference-files.md:13-18,72-78` | Keep the generic template generic; provide an optional deploy-time domain profile only if G5 approves — Slice S3 |
-| 6 | There is no measured quality baseline | `workflows/research-workflow/logs/research-quality-log.md`: header and column definitions only, zero data rows | Start writing rows as part of S4/S5 acceptance evidence |
-| 7 | The Sector Intelligence judgment-layer pilot exists in a separate workspace checkout with passing regression suites, and canonical adoption was explicitly deferred pending separate authority and representative proof | Workspace sibling `projects/axcion-sector-intelligence` at inspected commit `d0cb658b9266c4af553ad224181d942e473a61cd`; its `reports/analyst-judgment-layer-implementation-research-v1.md` and two judgment Work Loop logs | Re-bind that checkout and its four named test suites for S6; only a passing trial plus G6 may open conditional canonical S7–S10 |
-| 8 | Canonical skill edits take **live effect** in deployed projects | `logs/missions/research-workflow-deploy-fitness.md` § Pre-deployment corrections: two live projects symlink canonical skills; the mission's S11/S13/S14 record documents live blast radius | Every canonical slice enumerates live consumers before editing (risk R4, § 9) |
-| 9 | The deploy-fitness mission is **active** and carries an operator "explicitly not to be built" list including **research tiers** and **Stage-2 execution automation** | `logs/missions/research-workflow-deploy-fitness.md` frontmatter `status: active`; § In/Out of scope, operator S10 list | Live authority conflict with the lean and retrieval proposals — gates G1/G2 (§ 7) |
-| 10 | No more current approved canonical RW plan or authoritative current-state record supersedes the above in this reviewed repository checkout | Searched `plans/`, `logs/missions/`, and `logs/work-loop/`; current remote-main delta was separately inspected after `git fetch origin` | The active mission and three proposals are the plan's identified authority surface; each slice re-checks current refs and adjacent active records before implementation |
-| 11 | Existing `/sync-workflow` cannot propagate the reference and runtime surfaces the new retrieval and judgment capabilities need | `.claude/commands/sync-workflow.md:30-54`; `audits/2026-08-13-workflow-sync-reconciliation-ruling.md:76-85` | Repair propagation semantics before any existing-project propagation claim — Slice S0 |
+- Closing record: `logs/work-loop/canonical-rw-near-term-improvements.md`, closed at commit
+  `16b3cd5803fc11617247e159b54eef90897def18`.
+- Accepted evidence: 40/40 named W4-H1–H4 seams accounted for (27 converted, 13 justified exemptions),
+  99.82% relay-payload reduction against an 80% target, deterministic checker `TARGET MET`,
+  representative Part-A scorer 38/38, and a fresh context-isolated Part-B evaluator returning
+  `PRESERVED` on all eight judgments and overall. Evidence commits `5035a379` and `2b9770fa`.
+- Its recorded limitations and deferrals stand as written in that closing record and are not reopened
+  here.
 
-## 3. Reconciling the three proposals into one sequence
+## 3. Substrate that still governs the lean work
 
-The three proposals are not three roadmaps to append; they occupy three layers of one system, plus one collision that must be resolved once:
+Findings from the 2026-08-17 inspection that remain load-bearing. Everything else in the former § 2
+concerned removed programmes and is dropped.
 
-- **The lean proposal** is the *shape* layer: route research by consequence (R1 Rapid / R2 Standard / R3 Deep), automate the relay, slim the deep pipeline later.
-- **The retrieval plan** is the *runtime* layer: it explicitly subordinates itself to the lean plan's Wave 1 ("this plan should be sequenced inside the lean plan's Wave 1, not run as a third competing track" — its § Relationship note) and details the execution relay, source registry, and anti-false-scarcity mechanics.
-- **The judgment plan** is the *output-quality* layer: House View approval before content, insight extraction, and Light/Standard/Deep research modes. Its own sequence already begins with a **local, non-canonical operating trial** (Unit 1) and forbids canonical rollout before that trial.
-- **The collision:** the lean plan's R1/R2/R3 routes and the judgment plan's Light/Standard/Deep modes address the same assignment-level axis ("how much workflow machinery does this assignment need") but prescribe different controls, especially for Standard/R2. Neither proposal cites the other (verified: `grep` for each sibling's name in the other two files matches only in the retrieval plan). Building both independently would create the "three unrelated research workflows" the judgment plan itself lists as a non-goal. Gate G1 therefore settles one behavioral control matrix first; vocabulary follows that decision.
-
-**Cross-source disposition of the major themes:**
-
-| Theme | Source(s) | Disposition |
+| Finding | Evidence | Why it still governs |
 |---|---|---|
-| Reference/runtime propagation contract | independent review; existing sync reconciliation ruling | **Near-term prerequisite** (S0), gated on G5 — distinguish canonical immutable references, instantiated project references, and runtime files before existing-project propagation |
-| Content-relay → path-passing refactor | lean § 2.4.2; July token audit W4-H1–H4 | **Near-term implementation** (S1) — instrument and bound the four live relay classes before editing |
-| Perplexity lead-not-source ruling canonization | retrieval C5 | **Near-term implementation** (S2) only when G4 explicitly authorizes canonical propagation; the 2026-08-14 project-local ruling supplies substantive evidence, not canonical authority |
-| Filled source registry | retrieval C2, P2 | **Near-term implementation** (S3), gated on G5 — an optional deploy-time macro/sector/trend profile outside the generic template, not hard-coded country choices or a canonical runtime fallback |
-| Tiered routes / research modes (R1-R3 and Light/Standard/Deep) | lean § 2.1, judgment § modes | **Prerequisite decision gate** (G1) — same effort axis but different controls; conflicts with the active mission's S10 rejection of research tiers |
-| Execution relay + verified-access log + statistical lane | lean § 2.4.1; retrieval C1, C3, C4, P1, P4 | **Prerequisite decision gate** (G2) — conflicts with the mission's S10 "Stage-2 execution automation" rejection; build only after reopening |
-| Shared research entry capability (R1+R2 behavior) | lean Wave 1.1 | **Near-term implementation after G1** (S5); mechanism remains command/skill/extension/no-build until `/develop-ai-resource` qualifies it |
-| Judgment layer: representative local operating trial | judgment Unit 1 | **Near-term evidence gate** (S6) — local project only; a pass opens the already-bounded conditional adoption sequence, while a fail stops it |
-| Judgment layer canonical contract, approval, orchestration, propagation, deployment, and first consumers | judgment Units 2–7 | **Conditional near-term implementation** (S7–S10), gated on S6 evidence + G6 authority; no rollout precedes the trial |
-| Deep-pipeline slimming (quality-standards compression, QC merge, gate consolidation) | lean Wave 2 | **Deferral** — real value, but horizontal refactor of a working pipeline; do after the volume unlock lands |
-| Deployment/lifecycle leaning (opt-in Work Loop bundle, manifest, hooks) | lean Wave 3 | **Deferral** |
-| Paid subscription (Nordic Financial News) + monitoring watchlist | retrieval P5 | **Prerequisite decision gate** (G3) — recurring spend is operator-owned; recommend deferring the spend until S4 operates |
-| Bounded multi-agent experiment | lean; judgment Unit 9 | **Later experiment** — owned by the judgment plan's sequence, after mode calibration |
-| Structured official-statistics lane (C3) | retrieval C3, P4 | **Bounded near-term implementation** (S11) after S4 — one PxWeb v2 and one Eurostat path, not a general data platform |
-| Local-language pilot (C6), half-wired controls (C7), Nordic hardcoding (C8) | retrieval | **Deferral** — retrieval plan itself defers these beyond launch months |
-| Research-mode empirical calibration (judgment Unit 8) | judgment | **Later experiment** — needs the routes/modes to exist first |
-| Deploy-fitness threads 3–8, F-7, deferred cleanups | active mission | **Not absorbed.** They remain owned by `logs/missions/research-workflow-deploy-fitness.md`. Overlap note: mission thread 6 (scarcity search record) is directly strengthened by S4's verified-access log; coordinate at the gate session (G5) rather than double-owning |
+| The judgment-layer pilot lives in a separate workspace checkout with passing regression suites; canonical adoption was deferred pending authority and representative proof | `projects/axcion-sector-intelligence` at inspected commit `d0cb658b`; its four `logs/scripts/check-judgment-*.test.sh` suites (82 assertions at the inspected record) | L1 binds that checkout; L4 uses it as the single integration consumer |
+| Canonical skills take **live effect** in deployed projects through symlinks | `logs/missions/research-workflow-deploy-fitness.md` § Pre-deployment corrections | Every canonical edit in L2/L3 enumerates live consumers before editing |
+| `/sync-workflow` cannot truthfully propagate reference and runtime surfaces | `.claude/commands/sync-workflow.md:30-54`; `audits/2026-08-13-workflow-sync-reconciliation-ruling.md:76-85` | Why L4 is a deliberate manual install/reconcile rather than generic propagation |
+| The deploy-fitness mission is **active** and lists **research tiers** on the operator's explicitly-not-to-be-built set | `logs/missions/research-workflow-deploy-fitness.md` frontmatter `status: active`; § In/Out of scope, line 41 | A live authority conflict with L3 — see § 6 |
+| Fast/standard research has no canonical home; the RW is a five-stage deep pipeline | `plans/lean-research-workflow/proposal.md` § 1.3 and its usage evidence | The reason L3 exists |
 
-## 4. Operating mode, specification, and ticket split
+## 4. Before / after scope map
 
-**Mode: Normal** (operating standard § 3). The remaining planning uncertainty — which slices, in what order, behind which gates — is resolvable in one effective planning context, and this document is that context. The work is not Small/Clear (material product decisions exist: tiers, automation reopening, spend), and it is not Foggy: the open decisions are enumerable, separable, and all route to the same operator session rather than forming a dependent decision web. Escalate to `/wayfinder` only if a gate resolves in a form none of this plan's stated paths covers (§ 9, stop condition 2).
+Old labels appear in this table and in § 8 only. They are historical references, not obligations.
 
-**Specification: not useful now.** The corrected slices below carry the implementation-facing decisions this plan needs; source plans remain design evidence, not authority. Per-slice detail lands in each slice's Work Loop brief, and any mechanism that `/develop-ai-resource` leaves materially unsettled returns to planning rather than being invented during build.
-
-**Ticket split: no separate artifact.** Each slice below runs as one Work Loop v2 unit (or a short unit sequence) whose state-file brief carries the ticket contract — objective, boundary, claims, evidence, stop conditions. This uses the repository's existing integration machinery (standard § 9) instead of creating a parallel ticket system. Neither artifact is created in this unit.
-
-## 5. Implementation slices
-
-Sequencing principles: reusable substrate first, earliest real operating proof before broad rollout, and no slice starts before its authority exists.
-
-**Authority baseline.** Every slice below derives from proposed, unapproved sources, so technical readiness and authority are distinct: **no slice begins until the operator approves this plan (gate G4) or separately authorizes that slice.** Within that baseline, S1 and S6 need no additional operator decision; S2 needs G4 to say canonical adoption explicitly; S0 and S3 wait for G5; S4 and S5 are decision-gated (G2, G1); S7–S10 wait for both S6's evidence and G6; and S11 waits for the S4 runtime seam. "Gate" lines below name what must clear beyond the plan-approval baseline.
-
-### S0 — Make reference and runtime propagation truthful *(gated on G5)*
-- **Observable outcome:** `/deploy-workflow` and `/sync-workflow` inventory every reference/runtime surface the approved S2–S4 and S7–S11 slices can change and distinguish three classes: canonical immutable references, canonical templates whose deployed counterparts are project-instantiated, and canonical runtime files. Existing projects can no longer be reported current while an immutable reference or required runtime file is missing or stale; instantiated project references are never blindly overwritten.
-- **Acceptance evidence / proof seam:** pre-fix fixture = a deployed project with stale `reference/stage-instructions.md`, a legitimately specialized `reference/source-class-hierarchy.md`, and a missing runtime file is incorrectly reported current or invisible. Post-fix = immutable drift and missing runtime are offered for sync, the instantiated hierarchy is classified for conflict-aware/manual reconciliation, and fresh deploy coverage includes the selected runtime directory. Tests cover addition, update, project specialization, deletion/absence, and paths containing spaces. A risk-aware Codex review of cross-project write, overwrite, deletion, rollback, and conflict-classification behavior must clear **before** implementation.
-- **Boundary:** propagation mechanics only; no evidence policy, source-profile content, retrieval behavior, or judgment behavior. No automatic overwrite of project-owned instantiated references.
-- **Dependencies:** latest `origin/main` reconciled before the slice opens. **Gate:** G5 must authorize this adjacency to the active mission and name the successor/supersession record that permits it.
-
-### S1 — Content-relay → path-passing refactor
-- **Observable outcome:** the July audit's W4-H1–H4 seams use disk-write-and-return-path or path-plus-capped-summary where the existing isolation contract allows it: full draft returns, duplicate verification responses, large operand relays, and repeated large-reference relays are removed from main-session payloads.
-- **Acceptance evidence / proof seam:** before editing, instrument a fixed artifact fixture and enumerate the exact W4-H1–H4 seams in scope. Deterministic pass = 100% of those named seams pass paths plus summaries capped at 20 lines / 4 KB, with at least an 80% reduction in relayed payload bytes across the fixture and no unapproved full-content exception. Representative pass = one end-to-end chapter regression preserves required artifacts, claim IDs, verdicts, and analytical meaning under an explicit semantic/schema rubric. Record actual tokens if the harness exposes them, but do not treat the May 10k–50k estimate as an acceptance threshold or require byte identity from AI-authored prose.
-- **Boundary:** W4-H1–H4 only, after reconciling any intentionally isolated relay against `workflows/research-workflow/docs/required-reference-files.md`; no compaction, model, or output-policy redesign.
-- **Dependencies:** none. **Gate:** plan approval only (§ 5 authority baseline) — no additional operator decision. Live-consumer check (risk R4) applies.
-
-### S2 — Canonize the Perplexity lead-not-source ruling
-- **Observable outcome:** canonical `stage-instructions.md` Step 2.S4 (and the adjudication surfaces it feeds) require a source to have been actually opened before it grades as accessed; unopened Perplexity citations merge as `[SUPPLEMENTARY — LEAD]` with no claim ID and no coverage movement; a retrieval-tool negative is never evidence of absence.
-- **Acceptance evidence / proof seam:** failing cases = current Step 2.S4 permits an unopened citation to merge normally and does not prevent a retrieval-tool negative from supporting absence. Pass = (1) an unopened citation cannot acquire a claim ID or move a coverage verdict, and (2) a negative-result fixture cannot create/upgrade a scarcity or non-existence verdict without the required direct-access record; quote the changed rule against what it replaced.
-- **Boundary:** the ruling only — no Source Access Log automation (that is S4), no scarcity-record redesign (mission thread 6 territory).
-- **Dependencies:** none for the canonical rule; S0 is required only before claiming or performing propagation into an existing project. **Gate:** G4's approval record must explicitly authorize canonical adoption of the Perplexity lead-not-source rule; general plan approval without that sentence is insufficient. Locate the 2026-08-14 project-local ruling as evidence of the substantive rule, but do not treat that project-local record as canonical authority.
-
-### S3 — Add an optional deploy-time macro/sector/trend source profile *(gated on G5)*
-- **Observable outcome:** a reusable, explicitly selected source profile instantiates the project-owned `reference/source-class-hierarchy.md` for macro/sector/trend work. The profile lives outside the generic workflow template; the template remains placeholder-based and byte-identical, and projects can specialize the generated file. No profile acts as a hidden runtime fallback.
-- **Acceptance evidence / proof seam:** deterministic = generic deploy without the profile leaves every `.template.md` byte-identical; profile-selected deploy creates one filled project file with zero unresolved profile-owned placeholders; sync classifies later project specialization as a conflict/manual reconciliation, not an overwrite. Judgment = a labeled question set spanning macro, sector, trend, and out-of-domain cases is mapped by `source-class-mapper`; an independent rubric checks class/ladder correctness and that out-of-domain questions fail or request specialization rather than receiving Nordic defaults.
-- **Affected consumers:** `/deploy-workflow`, `/sync-workflow`, `source-class-mapper`, `research-prompt-creator`, `execution-manifest-creator`, `research-extract-verifier`, `country-parity-checker`, `transaction-table-builder`, and the `run-execution` / `run-cluster` / `run-sufficiency` paths named by `docs/required-reference-files.md`.
-- **Boundary:** optional profile + instantiation/reconciliation contract only; no country choice enters the generic template, no retrieval scripts or subscriptions, and no automatic claim that one domain profile fits company or other research.
-- **Dependencies:** S0 landed; at least two intended consumers are confirmed before generalization. **Gate:** G5 must approve the profile architecture, explicitly reconcile it with the mission's genericness and no-country-hardcoding rules, and confirm it is not rejected source-memory infrastructure. A negative G5 decision records S3 as a non-build disposition.
-
-### S4 — Retrieval runtime: safe execution relay + verified-access log *(gated on G2)*
-- **Observable outcome:** a script under the canonical workflow takes a session prompt file, previews request count and a defensible maximum spend, checks the prompt against the project's confidentiality/routing policy, and only then calls the Perplexity **Agent API** relay after explicit live-dispatch approval. It reads `PERPLEXITY_API_KEY` from the environment, never stores or logs the key, writes an atomic UTF-8 raw report, and records URL state separately as `attempted`, `retrieved`, `usable`, and `opened`. A Perplexity citation or search result is always a lead and never sets `opened`. The assigned external tool still executes the research; automation replaces the relay, not the work. The Research Execution GPT lane remains manual unless a first-party supported programmatic path is separately established.
-- **Bounded compatibility proof before build:** against the current Agent API `/v1/agent`/Responses-compatible contract, fix one explicit model or preset, `max_output_tokens`, `max_tool_calls`, report schema, response fields used for search/fetch provenance, and the usage fields used for actual cost. Prove domain, recency, and language filtering plus direct URL fetch behavior with a disposable request. The slice stops before implementation if the request cannot expose a calculable worst-case spend or an auditable distinction between surfaced search results and directly fetched content. Do not add a multi-provider abstraction or automatic model fallback.
-- **Safety and failure contract:** redact secrets and confidential prompt content from logs; cap retries at two with backoff for retryable errors; fail closed on auth, budget, policy, malformed output, or partial-write errors; make reruns idempotent; and require direct fetch evidence for `retrieved` plus downstream read confirmation for `opened`. The domain-resolution precheck and verified-access record must guard every scarcity writer in Stage-2 supplementary and Stage-3 gap/sufficiency paths.
-- **Acceptance evidence / proof seam:** pre-fix = no runtime exists. Deterministic = dry-run/spend gate, request-ceiling calculation, missing-key, denied-confidentiality, redaction, retry ceiling, atomic-write/idempotency, redirect, paywall, bot challenge, empty/partial body, unfetchable URL, citation-only, and surfaced-search-result-only fixtures; no fixture may promote a citation/search result to `retrieved` or `opened`. Command-path tests prove every scarcity-emission route consumes the precheck/log. Representative = one approved live research session end-to-end, raw report graded by existing extraction/QC, first quality-log row written, estimated-versus-actual spend recorded without sensitive content. Domain/recency/language and structured-output semantics are verified by execution against current [Agent API documentation](https://docs.perplexity.ai/docs/agent-api/quickstart), [filter documentation](https://docs.perplexity.ai/docs/agent-api/filters/domain-filters), and [tool documentation](https://docs.perplexity.ai/docs/agent-api/tools/web-search); unsupported parameters stop the slice rather than silently becoming prompt prose. The [Sonar quickstart](https://docs.perplexity.ai/docs/sonar/quickstart) remains live and the [official changelog](https://docs.perplexity.ai/docs/resources/changelog) provides no reviewed 2026-09-27 retirement notice, so no deadline drives this slice.
-- **Boundary:** Perplexity lane + log emission only. The statistical lane (retrieval C3) is a named follow-on slice, not part of S4.
-- **Dependencies:** G2 cleared; S2 landed; S0 landed before the representative run in an existing project. **Gate:** G2 plus a risk-aware Codex review of credential, confidentiality, spend, egress, and logging contracts **before** implementation.
-
-### S5 — Shared research entry capability with two light routes *(gated on G1)*
-- **Observable outcome:** one qualified shared entry surface classifies an incoming question and runs the two light behaviors G1 approved; the deep route hands off to the deployed RW. This plan does not pre-decide whether the surface is a command, skill, or extension of an existing resource. "Zero deployment" means no full RW template deployment; any command still requires normal shared-command sync/installation into the consuming project's `.claude/commands/`.
-- **Acceptance evidence / proof seam:** deterministic = real invocation-path tests prove the selected entry surface loads in a non-RW project, classifies defaults/overrides, and dispatches the correct downstream behavior rather than merely printing a label. Representative = labeled route-classification evals; one genuine R2/Standard memo judged against G1's control matrix; one operator-run R1/Light question without workflow-mechanics intervention; escalation cases prove a load-bearing claim cannot stay on an under-controlled route.
-- **Mechanism qualification and complexity budget:** run `/develop-ai-resource`, which chooses the mechanism and builds commands/scripts directly (only a new skill routes to `/create-skill`). Record: (1) recurring failure — fast/standard work bypasses RW; (2) observed frequency — 3/8 candidate projects did not adopt it, 2/5 deployments built lighter paths, zero fast runs used RW; (3) cost — one on-demand surface, its sync/install footprint, and measured per-run context; (4) conditionality — only fires on an explicit research need and escalates by consequence; (5) reuse — extend an existing resource if qualification finds an 80% owner. If a new command remains necessary, name what it replaces or why separate, wire a discoverable invocation path, and clear `docs/ai-resource-creation.md` rule 7 before build. If qualification selects a new command or skill, its structural risk-aware Codex review clears before implementation; reuse or a non-artifact operating change follows its own proportionate review class.
-- **Boundary:** the qualified entry mechanism + R1/Light and R2/Standard behaviors only; no deep-pipeline change.
-- **Dependencies:** G1 cleared **and G5's named successor/supersession record has made that reopening authoritative**. G1 must settle behavior, not merely vocabulary: the Light/R1 and Standard/R2 control matrix, load-bearing-claim escalation, evidence extraction and permission/sufficiency requirements, House-View trigger, default, and one-way escalation. S3 is useful but not required. **S5 remains independent of S4:** use S4 after it lands; otherwise use the manual batched execution model and record relay burden. Until S7–S9 are live, any Standard/R2 output that triggers a House View may produce evidence but must escalate to the existing deep/local approved-judgment path before consequential writing; S5 may not invent a second lightweight House-View mechanism. **Gate:** G1 + the G5 authority record.
-
-### S6 — Judgment-layer representative local operating trial
-- **Observable outcome:** one genuine Sector Intelligence unit runs through the existing local judgment implementation (judgment plan Unit 1): a real proposed Unit Judgment Brief from live evidence; at least one substantive founder revision before explicit approval; approved judgment demonstrably shaping directives, synthesis or architecture, and prose; no downstream component inventing an unapproved thesis; and review, token, elapsed-time, and operator-minute burden recorded. A separate evidence memo maps the local contract against every expanded canonical requirement (external insight fields, insight ladder, evidence/context separation, independent QC, approve/revise/reject, re-entry, and downstream consumers).
-- **Acceptance evidence / proof seam:** operator-workflow and AI-judgment proof by design — the trial *is* the evidence. Deterministic floor: the four existing regression suites stay green (82 tests at the inspected record), and a bounded additional fixture proves a rejected decision cannot be promoted or used downstream. Semantic pass = an independent reviewer finds every material judgment permitted by evidence, the countercase fairly represented, confidence/invalidation conditions credible, and every downstream thesis traceable to the approved brief. Burden pass = the evidence memo reports actual review/token/time costs and finds no unusable operator or per-chapter load; any material burden is a named design input, never omitted.
-- **Boundary:** entirely inside the separate workspace checkout `projects/axcion-sector-intelligence/`; **no canonical file changes**. This trial proves the existing mechanism and exposes adaptation requirements; it does not itself approve canonical adoption.
-- **Dependencies:** a live Sector Intelligence research unit; at slice open, bind the exact checkout/commit and run `logs/scripts/check-judgment-{contract,gate,producer,propagation}.test.sh` (82 assertions at the inspected record) before and after the trial. **Gate:** plan approval only (§ 5 authority baseline) — the trial needs no additional decision; founder participation is inherent to the trial, not a blocking pre-decision. **Terminal rule:** a pass opens S7 after G6; a fail stops S7–S10 and the memo names the smallest contract that needs another local trial.
-
-### S7 — Canonical judgment artifact, independent QC, and founder authority *(gated on S6 + G6)*
-- **Observable outcome:** the canonical workflow has one generalized Unit Judgment Brief as its analytical authority. The proposed form visibly separates (a) evidence tied to claim IDs, (b) conventional and candidate interpretations with countercases, and (c) Axcíon context used only for relevance/framing. It carries company/investor implications, the required external-insight extraction, an earned Level-1–5 insight-ladder judgment, proposed House View, confidence, and observable invalidation conditions. A fresh-context judgment reviewer challenges it before founder review. The founder may approve, require revision and receive a new proposal, or reject; only an explicit approval mechanically promotes the reviewed analytical content unchanged.
-- **Acceptance evidence / proof seam:** structural fixtures reject absent, malformed, proposed-as-authority, rejected, approval-without-approver, no-claim-ID, missing insight/House-View fields, context-used-as-evidence, malformed insight ladder, and analytically altered promotion states; accept one minimal valid approved brief. Command-path fixtures exercise produce → independent QC → revise → re-present → approve, plus a persistent rejection that blocks downstream use. A representative judgment eval scores evidence permission, alternatives/countercase, House View selection, confidence, invalidation, insight-ladder level, and specific bounded implications.
-- **Boundary:** canonical artifact/reference/template, producer, validator/promotion helper, independent judgment QC, and approval state only. No new stage, top-level command, ID system, House View report, semantic hook, or Sector-specific vocabulary. `/run-analysis` remains the owner; orchestration changes wait for S8.
-- **Dependencies:** S6 PASS evidence memo; G6 authorization; S0's classification contract defined for any new reference/template/runtime surfaces before existing-project deployment. **Gate:** G6 + one risk-aware Codex review of the canonical authority, approval, re-entry, and live-consumer contracts before implementation.
-
-### S8 — Canonical orchestration, propagation, and independent content QC *(gated on S7)*
-- **Observable outcome:** after gap resolution, `/run-analysis` produces and independently reviews the proposed brief, halts for founder authority, and refuses to draft directives without the approved form. Every report-bound re-entry in `/run-analysis`, `/run-synthesis`, and `/run-report` validates authority independently. The approved brief and canonical judgment standard cross the isolation boundary as operative inputs to section directives, cluster synthesis, architecture, and prose. Architecture, chapter, and compliance QC test actual thesis traceability, citations/permission, surviving counterevidence/caveats, context/evidence separation, exhibit interpretation, reader work, and that conclusions consolidate rather than originate judgment.
-- **Acceptance evidence / proof seam:** real command-path tests fail on absent/proposed/rejected/malformed authority and pass on the approved state; propagation tests reject existence-only gates, path-only or inert attachments, missing standards, wrong-role instructions, new downstream theses, dropped caveats, exceeded permission, and Axcíon context presented as external fact. A representative pre/post section is independently scored under the judgment plan's semantic rubric; every material judgment maps to the approved brief and permitted evidence, and no new implication appears downstream.
-- **Boundary:** existing Stage 3→4 owners and existing QC surfaces only. No separate judgment workflow, duplicate editorial authority, auto-approval, semantic enforcement hook, or project-specific conclusion rule.
-- **Dependencies:** S7 green. **Gate:** G6 authority remains in force; live-consumer inventory and a risk-aware Codex review clear before canonical command/skill edits.
-
-### S9 — Deploy canonical judgment to Sector Intelligence and prove a genuine unit *(gated on S0 + S8)*
-- **Observable outcome:** the generalized S7–S8 contract is propagated through the S0 classification path into the bound Sector Intelligence checkout without overwriting project-owned specialization. One new genuine unit runs evidence → independently reviewed proposal → founder revision/approval or rejection → approved House View → directives → synthesis/architecture → prose → independent content QC. The result and burden are compared with S6, and no local M&A vocabulary or Chapter-7 rule has leaked canonically.
-- **Acceptance evidence / proof seam:** pre/post deployment inventory; deliberate diff/reconciliation of every instantiated reference; all canonical and project regression suites green; one operator-workflow record; one independent semantic/content-QC verdict; and a burden comparison covering operator minutes, review loops, tokens/cost, elapsed time, and artifact count. Failure to preserve a project specialization or failure of real prose to remain inside the approved view stops rollout.
-- **Boundary:** first canonical consumer only; no Content Programme change and no broad project propagation.
-- **Dependencies:** S0, S7, and S8 green; an available genuine unit; exact checkout/commit bound. **Gate:** G6; founder participation is runtime authority, not pre-approved content.
-
-### S10 — Adapt the approved House View into the live Content Programme full-research handoff *(gated on S9)*
-- **Observable outcome:** the live Editorial V2 full-research route consumes the approved Unit Judgment Brief after research/evidence assessment and before Stage 10 finalises `brief.md`'s argument map or Stage 11 drafts prose. The Unit Judgment Brief governs what Axcíon may believe from the research; `brief.md` governs the article's editorial proposition and structure within that approved view. A material contradiction or new thesis returns to founder judgment rather than being settled in the argument map or draft. The existing Checkpoint A/B/C/D decisions are reused; no second House View artifact or duplicate approval queue is created.
-- **Acceptance evidence / proof seam:** path tests against the current `workflow/article-workflow-v2.md` route prove full-research re-entry cannot reach Stage 10/11 with absent, proposed, rejected, or contradicted analytical authority; targeted/light routes remain unchanged unless G1's House-View trigger says otherwise. One real Content Programme case passes approved-House-View → argument map → draft → cold independent review; every material article thesis maps to the approved view and public-evidence rules, and no working research artifact is treated as publishable evidence merely because it informed judgment.
-- **Boundary:** current live Editorial V2 adapter and one representative case only. Do not revive superseded Editorial V1, duplicate its evidence standard, change publication approval, or copy the research workflow into the content repository.
-- **Dependencies:** S9 proves the canonical contract; current Content Programme workflow/ref bound at slice open. **Gate:** G6's Content Programme adoption decision; if the live editorial workflow has materially changed, stop and update only this adapter contract.
-
-### S11 — Add a bounded official-statistics retrieval lane *(after S4)*
-- **Observable outcome:** the retrieval runtime accepts a structured request file and retrieves one current PxWebApi v2 dataset path and one Eurostat SDMX 3.0 or Statistics/JSON-stat path into raw + normalized CSV/JSON evidence files. Every artifact records provider, dataset/table/series identity, exact query and filters, retrieval time, response metadata, checksum, and Source Access Log state. This is a source retrieval lane, not an analysis or charting platform.
-- **Acceptance evidence / proof seam:** deterministic fixtures cover schema discovery, valid/invalid dimension selection, empty result, provider error/rate limit, oversized response, changed metadata, atomic write, idempotent rerun, and provenance completeness. Representative proof performs one real Nordic PxWeb v2 pull and one real Eurostat pull, independently checks values and units against the provider response, and routes the resulting evidence through existing extraction/permission QC. The current first-party anchors are [SCB PxWebApi v2](https://www.scb.se/en/services/open-data-api/pxwebapi/pxwebapi-2.0) and [Eurostat SDMX 3.0](https://ec.europa.eu/eurostat/web/user-guides/data-browser/api-data-access/api-getting-started/sdmx3.0); re-verify them at build time.
-- **Boundary:** one provider per grammar, no monitoring service, database, registry framework, provider plug-in architecture, charting, or general statistical platform. Expand only after a second live provider need demonstrates reuse.
-- **Dependencies:** S4's access-log/runtime seam and S0 before existing-project propagation. **Gate:** plan approval plus one risk-aware review of external fetch, response-size, provenance, and deployment behavior before implementation; no credential or recurring-spend decision is required for the selected public endpoints.
-
-**Sequence:** the G-session (§ 7) comes first. Reconcile latest `origin/main` and freeze the § 6 baseline before any affected slice; then run S0 if G5 approves. S1 can run independently after G4 and its baseline capture. S2 may land canonically after explicit G4 authority; only its existing-project propagation waits for S0. S3 follows S0 and G5. S6 opens in its separately bound checkout when a real unit exists; a PASS plus G6 opens S7 → S8 → S9 → S10, while a FAIL stops that chain. S4 follows S0+S2 if G2 approves; S11 follows S4. S5 follows G1 plus G5's authority record and never waits for S4, but it may not improvise a House View while S7–S9 are absent. Existing-project propagation never precedes S0. Broad adoption stays behind the first real S4/S5/S9/S10 operating evidence and the programme benchmark in § 6.
-
-## 6. Proof strategy
-
-**Deterministic proof** (must fail before, pass after; runnable without judgment):
-- S0 conflict-aware inventory/deploy fixtures for immutable references, instantiated templates, and runtime files.
-- S1 instrumented handoff-payload fixture: every scoped W4-H1–H4 seam path-based/capped, ≥80% payload-byte reduction.
-- S2 fixture merge run (unopened citation cannot gain a claim ID).
-- S3 generic/profile-selected scratch deploys, placeholder/template invariants, and conflict-aware resync.
-- S4 safety, failure, access-state, scarcity-path, and API-parity tests stated in the slice.
-- S5 real loading/invocation and dispatch-path tests for the mechanism `/develop-ai-resource` selects.
-- S6 the four existing regression suites plus rejected-authority coverage.
-- S7 the full proposed/revised/rejected/approved artifact and promotion matrix.
-- S8 real command-path and operative propagation tests across authoring and QC consumers.
-- S9 deployment/reconciliation and project regression suites.
-- S10 current Editorial V2 full-research re-entry tests.
-- S11 PxWeb/Eurostat response, failure, size, atomicity, and provenance fixtures.
-- Every canonical edit: the existing deploy validation (placeholder registry, template byte-identity) stays green.
-
-**Representative AI-judgment / operator-workflow proof** (evaluated, not asserted):
-- S1: one end-to-end chapter regression scored for schema and analytical equivalence.
-- S3: labeled in-domain/out-of-domain source-mapping eval.
-- S4: one real research session through the runtime, graded by the existing QC layer.
-- S5: route-classification and escalation eval set; one real R2/Standard memo; one operator-run R1/Light question.
-- S6: the local judgment trial and explicit gap/burden memo.
-- S7: one expanded brief independently scored for evidence, interpretation, insight, House View, and authority quality.
-- S8: one pre/post section scored for actual approved-thesis propagation and content quality.
-- S9: one genuine Sector Intelligence unit through the canonical contract.
-- S10: one genuine Content Programme full-research case through approved House View, argument map, prose, and cold review.
-- S11: one real PxWeb v2 pull and one real Eurostat pull verified against provider responses.
-
-**Programme outcome benchmark** (separate operability from improvement): before **S1, S4, or S5** changes any measured path, freeze a small comparable set of two Light/R1 questions, two Standard/R2 assignments, and one Deep/R3 section and record the current method. Capture the Deep relay-payload baseline before S1; capture current Light/Standard operator effort before S5; and capture current manual execution relay before S4. Measure accepted outputs per operator hour, elapsed time, operator active minutes, relay events, total model/API cost or tokens, main-session payload bytes, artifact count, load-bearing-claim source validity, evidence/inference violations, and disclosed unresolved gaps. The programme earns **DELIVERED** only when the approved routes show: at least 50% fewer operator relay events; at least 30% lower operator active minutes and median wall-clock time for R1/R2; at least 40% more accepted benchmark outputs per operator hour; at least 30% lower main-session payload bytes for the S1-affected Deep seam; no more than a 10% increase in total model/API cost or tokens for a comparable accepted output; 100% of load-bearing claims sourced or explicitly withheld; zero evidence/inference violations; and no undisclosed increase in unresolved gaps. Record source-validity as a rate and require no regression from baseline; with no existing quality-log rows, do not invent a historical percentage. G4 approves or amends these thresholds before baseline capture—implementation does not weaken them after seeing results. If the benchmark is too small for a stable throughput, cost, or turnaround conclusion, label the result provisional and extend real use before claiming "substantial" improvement.
-
-**Review and integration:** each slice gets one independent review proportional to consequence per the workspace Independent Review rule (Codex is the reviewer); material slices route through `code-review`, and S0, S4, S7–S9, and S11 receive risk-aware review before their high-consequence edits. Integration uses the existing Work Loop v2 machinery. S0 must prove `/deploy-workflow` / `/sync-workflow` can carry the relevant surfaces before any slice claims existing-project propagation; canonical and deployed copies are assessed separately. Commits are local; push stays gated to session wrap.
-
-## 7. Operator decisions required (authority and cost)
-
-None of these is decided by this plan. **G4 — approval of this plan, its cutoff, and its benchmark — is the baseline authorization without which no slice starts at all** (§ 5); G1, G2, G3, G5, and G6 gate their named slices on top of it. Recommended handling: one decision session covering G1–G6.
-
-- **G1 — Reopen the research-tiers rejection and settle route behavior.** The active mission records "Research tiers" on the operator's S10 explicitly-not-to-be-built list, with re-litigation "without new pilot evidence" named as an off-mission signal. New usage evidence now exists. Decision: keep the rejection, or approve differentiated routes and settle their actual control matrix: Light/R1 and Standard/R2 evidence artifacts, extraction/permission/sufficiency controls, House-View trigger, load-bearing-claim escalation, default route, and one-way escalation. Vocabulary is secondary; R1/R2/R3 and Light/Standard/Deep are not behaviorally equivalent until this matrix is decided. **Recommendation (Claude, attributed): reopen and settle the matrix.** Blocks S5.
-- **G2 — Reopen the Stage-2 execution-automation rejection.** The same S10 list records "Stage-2 execution automation (the manual model is confirmed; `execution-agent` stays unwired for Stage 2)". The retrieval plan's entire runtime (C1/C4/P1) contradicts it. Decision: reopen for the relay-only automation (Cross-Model Rule preserved) or keep the manual model. **Recommendation: reopen for the relay only.** Blocks S4.
-- **G3 — Paid source adoption.** The proposed retrieval plan estimates Nordic Financial News at ~€290–790/yr and later Dealroom consideration at ~€12k/yr; verify current first-party pricing and terms at the decision. **Recommendation: defer both; adopt nothing paid until S4 operates and demonstrates the free stack's limits.** Blocks nothing near-term.
-- **G4 — Approve this plan, its near-term cutoff, and its outcome benchmark.** Repository authority does not determine the exact near-term boundary or quantitative meaning of "substantial"; § 6/§ 8 therefore need operator approval (or amendment) before baseline capture. The approval record must separately state whether it **authorizes canonical adoption of the Perplexity lead-not-source rule**; that sentence is S2's authority. General plan approval authorizes S1 and S6 but does not silently manufacture S2 or S7–S10 authority.
-- **G5 — Mission successor/supersession and adjacency.** `/mission update` now exists, but it may revise only `## Open threads`; the deploy-fitness mission's Goal/scope/validation contract remains frozen. Reopening its G1/G2 rejections or its genericness/no-hardcoded-country rule therefore requires a named successor decision or explicit supersession record, not a silent mission edit. The same record decides whether S0's sync/deploy expansion and S3's optional external profile are permitted, confirms S3 is not source-memory infrastructure, preserves mission-thread-6 ownership while allowing S4's verified-access log to strengthen it, and states that any approved S7–S11 adjacency is sequenced by this plan rather than absorbed into the old mission.
-- **G6 — Conditional canonical judgment adoption and first-consumer rollout.** Decide whether a passing S6 trial may open the generalized Unit Judgment Brief/House View contract and its S7→S10 rollout. Approval must cover: one proposed/approved authority artifact; independent judgment QC; explicit founder revise/approve/reject; the evidence/interpretation/context boundary; required insight extraction and insight ladder; fail-closed re-entry; propagation into directives, synthesis, architecture, and prose; independent content QC; Sector Intelligence as the first canonical consumer; and the live Content Programme Editorial V2 full-research handoff as the second proof. **Recommendation: approve conditionally on S6 PASS, with S9 before S10 and no broad rollout before both proofs.** Blocks S7–S10.
-
-**Gate dispositions are terminal and explicit:**
-
-| Gate outcome | Slice disposition | Programme meaning |
+| Old item | Disposition | Lands in |
 |---|---|---|
-| G1 approved | S5 may open after its control matrix **and G5's successor/supersession authority** are recorded | Required for the fast/standard-home outcome |
-| G1 rejected | S5 closes as operator-declined; do not build a disguised route | Programme may be operator-closed, but not called DELIVERED against § 1 |
-| G2 approved | S4 may open after S0+S2 and pre-build risk review | Required for the retrieval-runtime outcome |
-| G2 rejected | S4 closes as operator-declined; manual relay remains | Programme may be operator-closed, but not called DELIVERED against § 1 |
-| G4 omits S2 canonization | S2 closes as unauthorized until separately decided | No proposal paraphrase substitutes for authority |
-| G5 approves S0/S3 architecture | S0 opens, then S3 may open after two-consumer confirmation | Existing-project propagation becomes available |
-| G5 rejects either item | The named slice closes as operator-declined; no hidden fallback | A rejected S3 does not leave completion impossible; a rejected S0 means no existing-project propagation is claimed, but an authorized canonical S2 rule may still land for future deployments |
-| G6 approved conditionally | S7 opens only after S6 PASS; S8→S10 remain sequentially evidence-gated | Required for the approved-House-View outcome |
-| G6 rejected, or S6 FAIL | S7–S10 close as operator-declined or evidence-blocked; do not build a disguised judgment path | Programme may be operator-closed, but not called DELIVERED against § 1 |
+| S1 — content-relay refactor | **Completed** | § 2 (foundation, closed) |
+| S6 — judgment local operating trial | **Retained, reduced** | **L1** |
+| S7 — canonical judgment artifact + founder authority | **Combined, essentials only** | **L2** |
+| S8 — canonical orchestration + independent content QC | **Combined into L2's essentials**; the separate rollout/propagation programme does not survive | **L2** |
+| S5 — shared research entry capability | **Retained, reduced** | **L3** |
+| S9 — deploy canonical judgment and prove a genuine unit | **Retained, reduced to one manual pilot** | **L4** |
+| S0 — propagation truthfulness | **Removed — not authorized, not scheduled** | § 8 |
+| S2 — Perplexity lead-not-source canonization | **Removed — not authorized, not scheduled** | § 8 |
+| S3 — deploy-time source profile | **Removed — not authorized, not scheduled** | § 8 |
+| S4 — retrieval runtime / execution relay | **Removed — not authorized, not scheduled** | § 8 |
+| S10 — Content Programme House View adapter | **Removed — not authorized, not scheduled** | § 8 |
+| S11 — official-statistics retrieval lane | **Removed — not authorized, not scheduled** | § 8 |
+| The six-gate matrix (G1–G6) | **Removed.** Content-bound approval of this file plus the two authority conditions in § 6 replace it; the lean plan's actual gates are in § 7 | § 6, § 7 |
+| Programme-wide outcome benchmark and its DELIVERED thresholds | **Removed.** Replaced by per-outcome proof in § 7 | § 7 |
 
-An approved gate changes the *authority*, not the scope discipline: post-gate slices still carry their stated boundaries.
+The old standalone S7, S8 and S9 shapes do not survive as separate obligations. L2 is one combined
+capability, and L4 is one manual pilot.
 
-## 8. Near-term boundary (proposed cutoff — gate G4)
+## 5. The four lean outcomes
 
-**In:** S0–S11 and the G-session, with conditional paths rather than an assumption that every gate clears. That is: truthful propagation (S0), the relay refactor (S1), the explicitly authorized lead-not-source canonization (S2), the optional profile (S3), the gated volume unlocks (S4, S5), the local judgment evidence gate (S6), the conditionally authorized canonical judgment/House-View path and two first-consumer proofs (S7–S10), and the bounded official-statistics lane (S11). A gate rejection or trial failure yields a recorded non-build/evidence-blocked disposition, not permission to substitute a nearby shape.
+### L1 — Genuine local judgment trial
+- **Outcome:** one real Sector Intelligence unit runs through the **existing local** judgment
+  implementation: a proposed Unit Judgment Brief from live evidence, **at least one substantive
+  operator revision** before explicit approval, approved judgment visibly shaping downstream work, and
+  a recorded burden (review loops, operator minutes, tokens/cost, elapsed time).
+- **Boundary:** entirely inside the bound `projects/axcion-sector-intelligence` checkout. **No
+  canonical file changes.** The trial proves the existing mechanism and exposes adaptation
+  requirements; it does not itself approve canonical adoption.
+- **Binding:** bind the exact checkout and commit at open, and run the four
+  `check-judgment-*.test.sh` suites before and after.
+- **Terminal rule:** **PASS opens L2. FAIL stops judgment canonicalization** and the trial memo names
+  the smallest local contract that needs another trial.
 
-**Out, with reasons:**
-- **Deep-pipeline slimming (lean Wave 2)** — horizontal refactor of a working pipeline; its ROI is real but not launch-blocking, and doing it while the route/runtime layers are moving multiplies drift risk.
-- **Deployment/lifecycle leaning (lean Wave 3)** — depends on Wave-2 shape decisions.
-- **Research-mode calibration and the multi-agent experiment (judgment Units 8–9)** — need routes/modes to exist first.
-- **Retrieval C6–C8 and provider expansion beyond S11** — C6–C8 are deferred by the retrieval plan itself; S11 expands only after a second demonstrated provider need.
-- **Deploy-fitness threads 3–8, F-7, and its deferred cleanups** — owned by the active mission; absorbing them here would create a second authority over the same files.
-- **Broad consuming-project propagation beyond S9/S10** — Sector Intelligence and the current Content Programme full-research path are the bounded first proofs; all other consumers wait on both.
-- **The R1 citation-fidelity-audit subagent (deferred 2026-04-24)** — disposition falls due at the next `/deploy-workflow`/`/sync-workflow` touch, per its standing reminder; it is not silently absorbed here.
+### L2 — Canonical judgment layer and House View
+- **Outcome:** one canonical **Unit Judgment Brief** that separates (a) evidence tied to claim IDs,
+  (b) conventional and candidate interpretations with countercases, and (c) Axcíon context used only
+  for relevance and framing. A fresh-context reviewer challenges it; the founder may **approve, require
+  revision, or reject**; only explicit approval mechanically promotes the reviewed content, and the
+  approved authority then governs analysis, synthesis, report architecture, prose and the relevant QC
+  surfaces.
+- **Boundary:** the artifact, its producer, its validator/promotion helper, the independent judgment
+  QC, and the authority checks on existing owners. **No separate rollout programme, no duplicate
+  approval system, no second House View artifact, no new stage or top-level command.**
+- **Publishes:** the **stable authority contract** — the artifact shape and the trigger/consumption
+  interface that L3's House View adapter binds to.
 
-## 9. Risks and stop conditions
+### L3 — Lightweight Research Workflow
+- **Outcome:** one shared entry capability that classifies an incoming question and runs **Light**,
+  **Standard** and **Deep** behavior. Evidence standards and one-way escalation are preserved: a
+  load-bearing claim cannot remain on an under-controlled route, and the deep route hands off to the
+  existing deployed RW.
+- **Concurrency:** classification, Light/Standard behavior, evidence and escalation controls, the deep
+  handoff and its tests **may be built concurrently with L1 and L2**. The Standard-route **House View
+  trigger and adapter cannot be finalized** until L2 publishes its stable authority contract. L3 may
+  not invent that contract, and may not build a second lightweight House View mechanism.
+- **Boundary:** the entry mechanism and its three route behaviors only. No deep-pipeline redesign, no
+  retrieval work, no propagation machinery.
 
-**Risks:**
-- **R1 — False-scarcity regression.** Any retrieval change that makes scarcity verdicts easier to reach without evidence of actual access re-opens the dominant recorded failure mode. S2 and S4 are sequenced so the ruling and the mechanical log land together-ish (S2 first).
-- **R2 — Duplicated/competing authority.** Three proposals + one active mission + this plan all touch the same files. Mitigation: this plan's § 3 dispositions; on operator approval of this plan, each source proposal gets a one-line pointer to this plan as the sequencing authority (their content stays as design reference); the mission keeps its threads (G5).
-- **R3 — Premature general automation.** The runtime automates the *relay* only; judgment steps (source-class review, grading, sufficiency, House View) stay with the existing/canonically adopted skill/QC layer and the founder. No agent swarm; the multi-agent question stays in its bounded, deferred experiment.
-- **R4 — Canonical-versus-deployed drift.** Canonical skills are live-symlinked into deployed projects (§ 2 finding 8), while references are project-owned copies that current sync cannot see. Every canonical slice: enumerate live consumers first, respect chassis-version/lockstep guards, verify runtime behaviour by execution, and propagate reference/runtime changes only through the S0-proven classification path.
-- **R5 — Big build before first proof.** The earliest representative proofs (S6 trial; S4's real session) are sequenced before any broad rollout. Judgment adoption proceeds S7→S10 with a genuine Sector Intelligence case before Content Programme adaptation. S5 ships with two real uses, not a programme-wide adoption mandate.
-- **R6 — External API drift.** Perplexity's [API platform](https://www.perplexity.ai/api-platform) favors Agent API migration while its [Sonar quickstart](https://docs.perplexity.ai/docs/sonar/quickstart) still documents Sonar; no reviewed first-party source supports the previously claimed 2026-09-27 retirement date. S4 pins no schedule to that claim and verifies endpoint/filter/output behavior at build time.
-- **R7 — Credentialed paid egress.** S4 can leak confidential prompts, overspend, or convert partial retrieval into false access. Its pre-call policy/spend gate, environment-only credential, redacted logs, bounded retries, atomic writes, four-state access model, and pre-build risk review are acceptance requirements, not implementation details.
-- **R8 — Competing analytical/editorial authority.** The Unit Judgment Brief owns the evidence-grounded House View; Sector directives and the Content Programme `brief.md` own downstream execution within it. If either downstream artifact contradicts or originates a material thesis, work returns to founder judgment. No second House View or silent precedence rule is permitted.
-- **R9 — Judgment ceremony overwhelms the gain.** S6 and S9 measure review loops, operator minutes, tokens/cost, and elapsed time. S7–S10 stop if the full contract becomes unusable in ordinary work; the remedy is to reduce duplication inside the one artifact/approval path, not remove explicit founder authority or evidence controls.
+### L4 — One manual integrated operating proof
+- **Outcome:** the canonical L2 capability is **deliberately installed and reconciled by hand** into
+  one bound Sector Intelligence consumer, and one genuine integrated case runs end to end: evidence →
+  independently reviewed proposal → founder revision/approval or rejection → approved House View →
+  downstream analysis and prose → independent content QC. The same pilot exercises **L3's handoff and
+  escalation behavior with real representative uses** before adoption.
+- **Boundary:** one consumer, by hand. **Do not build generic propagation first.** A project-owned
+  specialization must not be overwritten; failure to preserve one stops the pilot.
+- **Reconsideration trigger:** a **second concrete consumer** is what reopens the question of generic
+  deploy/sync machinery. Nothing before that.
 
-**Stop conditions (any of these stops the affected slice and hands back):**
-1. A slice's load-bearing premise fails at execution time (the standing Work Loop rule — including S2's ruling-record-and-authorization premise).
-2. An operator gate resolves in a form none of this plan's stated paths covers (every G1×G2 combination is covered by design — no tiers / runtime routes / manual-model routes — so this fires only on a conditioned or partial approval that neither the runtime nor the manual execution model can serve) — return to planning; escalate mode per § 4.
-3. A slice cannot produce its named failing case (evidence that cannot fail is not evidence).
+## 6. Two-lane execution model
+
+Two isolated lanes, branched from the same approved lean-plan commit.
+
+| | **Judgment lane** | **Lightweight-RW lane** |
+|---|---|---|
+| Checkout | this worktree / branch (`session/2026-08-17-research-workflow-fixes`) | a **new** worktree and branch, created **only** from the approved lean-plan commit |
+| Owns | L1 evidence intake, L2 canonical judgment / House View | L3 |
+| Allowed surfaces | the judgment artifact, its producer/validator, judgment QC, and the authority checks on existing analysis/synthesis/report owners; the bound Sector Intelligence checkout for L1 | the entry capability and its route behaviors, its own tests, and its handoff to the deployed RW |
+| Forbidden surfaces | the lightweight entry capability and its route behaviors | the judgment artifact, its authority contract, and any House View mechanism it did not receive from L2 |
+
+Surfaces are named by outcome rather than by guessed file paths; each lane resolves exact files at its
+own unit open.
+
+**State isolation.** Each lane runs **its own Work Loop task with its own state file and its own
+`.owner` declaration**. A state file is never copied between checkouts. No branch or path named for the
+lightweight lane exists today (checked against the registered worktrees and every local and remote
+branch on 2026-08-18), so its name is free — but this unit creates nothing.
+
+**No third lane.** There is no Daniel lane in this plan.
+
+**Two authority conditions the approval record must carry**, because both are live conflicts rather
+than plan-internal choices:
+
+1. **Research tiers.** The active deploy-fitness mission lists research tiers as explicitly not to be
+   built. L3 cannot open until the approval record states the successor or supersession that reopens
+   that entry. The mission's other threads stay owned by the mission.
+2. **Founder judgment stays operator-owned.** L1's revision and L2's approve/revise/reject are the
+   operator's own acts. Neither lane may auto-approve, and no plan approval pre-approves any judgment
+   content.
+
+## 7. Sequence, gates and stop conditions
+
+```
+L1 (judgment trial) ──PASS──> L2 (canonical judgment + House View) ──┐
+                                          │ stable authority contract │
+L3 core (lightweight RW) ─────────────────┴──> L3 House View adapter ─┴──> L4 (manual integrated pilot)
+```
+
+- **L1 and L3's core run concurrently.** Neither waits for the other.
+- **L1 PASS precedes L2.** An L1 FAIL stops judgment canonicalization; L3 may continue on its own.
+- **L2's stable authority contract precedes L3's final House View adapter.** L3 finishes everything
+  else first and stops at that seam rather than inventing the interface.
+- **Accepted L2 and accepted L3 precede L4.** L4 is a separate integration unit after both lanes are
+  accepted, not a tail of either.
+
+**Proof, per outcome** — one deterministic floor that can fail, plus one proportionate representative
+proof. Nothing broader.
+
+| Outcome | Deterministic floor | Representative proof |
+|---|---|---|
+| L1 | the four `check-judgment-*.test.sh` suites green before and after; a fixture proving a rejected decision cannot be promoted or used downstream | the trial itself: one real unit, one substantive operator revision, an independent semantic review, and a burden record |
+| L2 | structural fixtures reject absent, malformed, proposed-as-authority, rejected, approval-without-approver, context-used-as-evidence and analytically altered promotion states, and accept one minimal valid approved brief; command-path fixtures exercise produce → challenge → revise → approve | one brief independently scored for evidence permission, countercase, House View selection, confidence and invalidation conditions |
+| L3 | real invocation-path tests prove the entry surface loads in a non-RW project, classifies correctly, dispatches actual behavior rather than printing a label, and cannot leave a load-bearing claim on an under-controlled route | one genuine Standard assignment and one operator-run Light question, plus one deep handoff |
+| L4 | pre/post install inventory; all canonical and project regression suites green; every instantiated project reference deliberately reconciled | one genuine integrated case scored by independent content QC, with a burden comparison against L1 |
+
+**Stop conditions.** Any of these stops the affected lane and hands back; none of them expands scope:
+
+1. The L1 trial fails its semantic or burden bar.
+2. L2's authority contract cannot be settled, or L3 would have to invent it.
+3. A material evidence-standard regression — Light/Standard output failing to carry the same
+   evidence-versus-inference discipline and per-claim sourcing as the deep route.
 4. A canonical edit would take live effect in a deployed project whose state cannot be verified first.
-5. Scope pressure to absorb a deferred item (Wave 2/3, judgment Units 8–9, mission threads, provider expansion beyond S11) mid-slice — record the deferral, do not implement.
-6. Evidence standards would drop anywhere: R1/R2 outputs carry the same evidence-vs-inference discipline and per-claim sourcing as the deep route, in table form; any slice that cannot preserve that stops.
-7. S6 cannot meet its semantic/burden bar, or S9/S10 reveals that the canonical House View does not govern real downstream work — stop S7–S10 or the rollout at that point and revise the smallest failed contract; do not call structural tests sufficient operating proof.
+5. Scope pressure to restore a removed programme (§ 8) mid-unit — record the deferral, do not
+   implement.
 
-## 10. Terminal conditions and first slice
+## 8. Explicit non-commitments
 
-The plan distinguishes **administrative closure** from **operating-outcome delivery**.
+The following are **not authorized and not scheduled**. They are not deferred obligations of this plan
+and carry no owner, trigger or sequence position here:
 
-**The near-term programme is decision-complete / operator-closed when:**
-1. the G-session records G1–G6 outcomes, G4's benchmark thresholds, and the successor/supersession record each approved conflict requires;
-2. every approved slice has landed with its named proof, while every rejected slice has a recorded non-build disposition and no disguised substitute;
-3. S6's genuine-unit trial and evidence memo exist if G4 approved it and a live unit was available; otherwise the absence and trigger are recorded rather than called a pass, and S7–S10 remain closed;
-4. the three source proposals carry disposition pointers; and
-5. every deferred item has a named owner or trigger.
+- Former **S0** (reference/runtime propagation truthfulness) and **generic propagation machinery**.
+- Former **S2** (Perplexity lead-not-source canonization).
+- Former **S3** (deploy-time source profiles) and **source products** generally.
+- Former **S4** (retrieval runtime, execution relay, verified-access log) and **API retrieval**.
+- Former **S10** (**Content Programme integration** / Editorial V2 House View adapter).
+- Former **S11** (**official-statistics ingestion**).
+- **Broad rollout** to any consumer beyond L4's single bound pilot.
+- Deep-pipeline slimming, deployment/lifecycle leaning, research-mode calibration, the multi-agent
+  experiment, and paid source subscriptions.
 
-**The programme may be called DELIVERED against the § 1 operating outcome only when:**
-1. S1 is green; S5 is approved and has passed its R1/Light and R2/Standard operating cases; S4 is approved and has passed its safe live runtime case; S11 has passed both official-statistics pulls; S0/S2 are green wherever existing-project propagation is claimed; and S3 is either green or explicitly shown unnecessary for the benchmark assignments;
-2. S6 has passed on a genuine local unit; G6 is approved; S7 and S8 are green; S9 has passed one genuine Sector Intelligence unit; and S10 has passed one genuine Content Programme full-research case through approved House View and independent content review;
-3. the § 6 programme benchmark meets its numeric throughput, turnaround, operator-effort, total-AI-effort, and quality non-regression rules; and
-4. no completion claim depends on the unsupported Sonar deadline, an unbound external checkout, a project-local ruling treated as canonical authority, or structural tests substituted for representative judgment proof.
+Any of these may return **only through a fresh business case and a new operator decision**. Accepting
+this plan does not queue them.
 
-If G1, G2, or G6 is rejected—or S6 fails—the programme can close cleanly but **cannot** claim that the corresponding fast/standard-home, retrieval-runtime, or approved-House-View outcome was delivered. If an approved slice misses the benchmark, return to the smallest relevant slice or re-plan; do not weaken the threshold after seeing the result.
+## 9. Effort and terminal condition
 
-**First executable slice: S1 (content-relay → path-passing refactor), beginning once G4 approves this plan and latest `origin/main` is reconciled.** It needs no decision beyond that approval, but it begins with the July W4-H1–H4 seam inventory and baseline instrumentation; the old claim that no design work remains is retired. S0 may run in parallel only if G5 has supplied its explicit successor/supersession authority. Nothing is implemented by this planning unit.
+**Estimates, not promises.** Both figures are labelled estimates for pilot-quality delivery of L1–L4:
+
+- **50–80 hours** — the strict pilot-quality target.
+- **70–120 hours** — the safer range if the L1 trial needs a second pass or L2's authority contract
+  takes more than one revision.
+
+Neither figure includes the removed programmes, and neither is a commitment the plan can be held to
+without a re-estimate at the point it is missed.
+
+**Terminal condition.** This plan ends when **L4 is accepted**. At that point the two priorities are
+delivered at pilot quality with their limitations written down. The plan does not silently reopen a
+removed programme, and it does not roll forward into a broader rollout: any further work is a new
+plan with its own operator decision.
+
+**First action after approval.** With this shared baseline committed and content-approved, the next
+routed action is creating the lightweight-RW worktree from the approved commit so both lanes start
+from identical authority. That creation is not part of this planning unit.
