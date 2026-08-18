@@ -820,11 +820,15 @@ source set passed; it is not evidence that an unreported read is impossible.
 
 The semantic recovery portion is accepted. Automatic runtime discovery of `$realign` remains outside
 what a collaboration subagent can prove and is covered only by repository deployment/regression
-evidence. Still pending from this case:
+evidence.
 
-- the real Claude hand-back;
-- its resulting task classification and commit; and
-- rollover assertion output proving `U4-OLD-RESULT` was replaced rather than retained.
+**Unit 4 is complete.** The three items left pending above are discharged at revision `092a1715`,
+which carries the real Claude hand-back and its committed classification: at that exact revision
+`logs/work-loop/u4-live-case.md` contains `U4-OLD-RESULT` **0** times, carries exactly **one**
+`## Latest result` heading, is `status: active` / `turn: codex`, and the validator prints
+`ACTIVE_CODEX` at exit 0. That is the rollover assertion — the old result was replaced, not retained.
+Only that rollover behaviour is accepted from `092a1715`; its byte-ceiling verdict is non-governing
+(Finding 6 above).
 
 ### Independent review
 
@@ -857,7 +861,7 @@ implementation checkout, or retaining the merge and authorizing a separate corre
 
 ### Correction round — the six frozen findings
 
-**Implemented 2026-08-18** in checkout `ai-resources-work-loop-fix-17-8`, branch
+**Implemented 2026-08-18 at commit `63c02624`** in checkout `ai-resources-work-loop-fix-17-8`, branch
 `session/2026-08-17-work-loop-fix-17-8`, after the operator restored canonical `main` to its
 pre-merge pointer `0d5641b8`. This is the one bounded correction core § 3 permits, frozen to the
 findings the failed review named. It resolves them on this feature branch and imports nothing from
@@ -948,9 +952,56 @@ second correction round):
   fixes that as permitted rather than overlooked; whether references should cite siblings by path at
   all is a contract question, not this correction's.
 
-Still deferred by the brief and unchanged: the final complete Work Loop regression matrix, the
-correction closure check, the task-close verdict, and destructive removal of the disposable
-worktree and branch.
+The two deferrals above are non-behavioral and remain open at close. Everything else the brief
+deferred — the final complete Work Loop regression matrix, the correction closure check, the
+task-close verdict, and the authorized worktree removal — is discharged in Unit 4d below.
+
+### Unit 4d — final regression matrix and cleanup
+
+**Accepted at `55214371`, 2026-08-18.** A discovery unit: it changed no implementation, plan,
+worktree, branch or Git topology, and returned the final matrix plus a read-only cleanup inventory.
+
+**The complete Work Loop matrix, one run each at corrected HEAD `63c02624`, sequential:**
+
+| Suite | Exit | Result |
+|---|---|---|
+| `work-loop-capability.test.sh` | 0 | 94 passed, 0 failed |
+| `work-loop-lease.test.sh` | 0 | 136 passed, 0 failed |
+| `work-loop-owner.test.sh` | 0 | 133 passed, 0 failed |
+| `work-loop-session-preflight.test.sh` | 0 | 60 passed, 0 failed |
+| `work-loop-state.test.sh` | 0 | 100 passed, 0 failed |
+| `work-loop-v2-core-resolver.test.sh` | 0 | 5 passed, 0 failed |
+| `work-loop-v2-slice-1.test.sh` | 0 | 407 passed, 0 failed |
+| `work-loop-v2-tracer-6.test.sh` | 0 | 74 passed, 0 failed |
+| `work-loop-v2-tracer-7.test.sh` | 0 | 167 passed, 0 failed |
+
+Nine suites, **1,176 passed, 0 failed**, every exit 0, no rerun. Every count was parsed from the
+suite's own summary line; none was missing or unparseable. `ls logs/scripts/work-loop*.test.sh`
+returns exactly these nine and no tenth, so the matrix is not widened. `grep` for a `FAIL` line
+across all nine captured outputs returns none, and `git status --porcelain` after the run listed
+only the task-state file, so no suite left residue.
+
+**Cleanup — executed 2026-08-18 under explicit operator authorization.** The operator confirmed both
+named worktrees idle and authorized removing them together with their two divergent untracked
+`.unit4-preflight/preflight.sh` scripts (9,868 and 9,065 bytes; `cmp` reports them different, and
+neither is tracked on any branch). The repository's `check-destructive-liveness.sh` guard had
+previously refused the removal because it cannot establish whether a session occupies a checkout —
+a fact core § 7 reserves to the operator. Both removals then ran under the documented
+`AXCION_LIVENESS_OVERRIDE=1` audited override, in the exact guarded `git worktree remove --force`
+form, scoped to these two paths only:
+
+- `…/ai-resources-wl2-unit4-case` — was `4510cb0a` on `disposable/wl2-unit4-case-2026-08-17`
+- `…/ai-resources-wl2-unit4-cleanctl` — was detached `7b130cd1`, a commit on this feature branch
+
+Preconditions were reconfirmed immediately before each removal and held exactly: both worktrees at
+their recorded HEADs, neither carrying a `logs/work-loop/.owner` declaration, and `.unit4-preflight/`
+the only untracked path in each.
+
+**The disposable branch is preserved, deliberately.** `disposable/wl2-unit4-case-2026-08-17` remains
+at `4510cb0a`, and `092a1715`, `a0f4f6ec` and `d99e7eda` all remain reachable objects — `092a1715` is
+the live rollover evidence pointer above. Deleting that branch is a separate act, was never
+authorized, and was not performed. No broad prune, no marker deletion, no branch deletion, no reset.
+Canonical `main` is untouched at `0d5641b8`.
 
 ## 9. Completion condition
 
@@ -962,3 +1013,20 @@ Implementation success is not “the files are smaller.” It is: the same Work 
 available at the moment each rule is needed, recovery reads only the authority required for the current
 move, skill boundaries remain intact, and the next real hand-off preserves current truth rather than
 history.
+
+**Satisfied — 2026-08-18.** Units 0–4 are complete and accepted (§ 8, with Unit 4 discharged at
+`092a1715` and the correction at `63c02624`). Every focused and existing regression is green: the
+complete nine-suite matrix returns **1,176 passed, 0 failed** at corrected HEAD `63c02624` (Unit 4d).
+The independent review's six frozen findings each carry a disposition and no unresolved material
+finding remains. The representative live case (Attempt 2) proves correct recovery — `$realign`
+detecting degraded context and delegating to `$reorient`, the exact task selected against a
+misleading summary, both authoritative markers recovered, no courier/routing/routing-index/
+unit-framing reference opened, 830 bytes of the 79,995-byte plan read without widening — plus
+current-result rollover at `092a1715`, and does so well inside the incident's read set.
+
+Two accepted limitations stand: automatic runtime discovery of `$realign` was not proved by the
+collaboration-subagent trace and rests on repository deployment and regression evidence instead; and
+read-volume figures are self-reported, so they cannot independently prove no read was omitted. Two
+non-behavioral deferrals remain open (§ 8, correction round): the "five components" count staleness
+in `.claude/commands/work-loop-v2.md` Step 0 and `/sync-workflow`, and whether references should
+cite sibling paths at all.
