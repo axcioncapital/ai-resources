@@ -225,65 +225,17 @@ closed, no HOLD cleared, no report authorized. No canonical judgment resource an
 touched. No push, merge, deployment or destructive action. The first trial's branch, artifacts and
 history are unmodified.
 
-## Blocker`. Commit and stop. The operator's response must
-be carried back through this same task.
-
-After the revision is applied and independently re-reviewed, stop for the operator again for the
-explicit approve/revise/reject decision. Do not promote before that decision.
-
-**Required final evidence**
-
-- Exact trial substrate: checkout, branch, starting commit, case identity, and why it is genuine and
-  clean.
-- Pre/post commands and exact totals for all five judgment suites.
-- Proposal, every archived/current challenge round, operator revision direction, revised proposal,
-  final operator decision, and the gate verdicts at each transition.
-- If approved: promotion-integrity comparison and one real downstream artifact with a claim-level
-  authority trace. If rejected: proof that no approved authority or downstream use was created.
-- The burden record with unavailable measures labelled rather than invented.
-- Trial commits in the Sector checkout and the task-state handback commit here.
-
-**Boundaries and stop conditions**
-
-- B3-28 remains unrevoked unless the operator explicitly makes a new decision that says otherwise.
-- The Step-2 HOLD remains; no gap is closed and no report is authorized.
-- Do not implement L2, touch canonical judgment resources, or enter L3/L4.
-- Do not fix newly noticed mechanism issues during the trial. Record them as deferrals unless they
-  make the required evidence impossible or the control unsafe, in which case hand back.
-- No push, merge, deployment, credential access, destructive history change, or shared-state action.
-
-Capability subset: baseline local reads, history inspection, the deployed local workflow and its
-fresh-context reviewer, trial-scoped artifact writes and tests inside the isolated Sector trial
-checkout, this task-state handoff, and local commits by Claude. The operator's authorization of the
-repeat trial includes the independent reviewer required by the approved L1 proof. Nothing is selected
-from the pre-authorizable set, which is empty today. No network, push, merge, deployment, credentials,
-destructive action, policy weakening, or other operator-reserved capability is authorized.
-
-Completion condition: the genuine trial reaches a final explicit operator decision and returns the
-complete evidence needed for Codex to decide L1 PASS or FAIL, with repository changes committed and
-`turn: codex`. Operator-owned decisions use the two blocking stops above; a false premise or inability
-to produce required evidence hands back without expanding scope.
-
-## Latest result
-
-Unit 1 accepted. The local mechanism was implemented at Sector commit `ba7e37a` and its one frozen
-correction at `9e3242b`. The original missing-control failure was reproduced, both correction bypasses
-were reproduced and closed, and the complete floor is 145 passed / 0 failed across five suites.
-
-Accepted deferrals, not trial blockers: round archives are not hash-chained; `decisions_checked:` is
-not mechanically cross-checked against every conflict tag; the promotion drift guard still begins at
-`## Theses`; one template note remains stale; reviewer independence is specified by the deployed
-dispatch rather than a named agent definition.
-
 ## Blocker
 
-None.
+None. The task is not waiting on the operator: the Step 3a producer dispatch is failing on a
+server-side `529 Overloaded` condition, which no operator decision resolves. The three readings
+recorded above go to the operator at the first trial gate, once there is a proposal and a challenge
+to put beside them.
 
 ## Next action
 
 Claude: resume the trial at `/run-analysis` Step 3a Branch C on `trial/l1-repeat-precision-components`
 once opus subagent dispatches are being served again — the producer, then Step 3b.1's independent
-challenge, then the operator stop with the proposal, the complete challenge, every required-change
-finding, the round binding and the burden record. The premises, substrate and 145/145 pre-trial floor
-above are verified and are not re-run. The three readings recorded in `## Latest result` go to the
-operator at that stop, alongside the required substantive revision decision.
+challenge, then the operator stop carrying the proposal, the complete challenge, every required-change
+finding, the round binding and the burden record. The premises, the substrate and the 145/145
+pre-trial floor recorded above are verified and are not re-run.
