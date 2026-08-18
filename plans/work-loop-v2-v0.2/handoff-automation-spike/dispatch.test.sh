@@ -416,6 +416,101 @@ expect_rc 12 "$RC" "exits 12 on a traversal task id" "$OUT"
 run_dispatch "$d" "live task" --actor-cmd "$FLIP"
 expect_rc 12 "$RC" "exits 12 on an illegal-character task id" "$OUT"
 
+# ================================================================= case 3a
+echo
+echo "Case 3a — a task id longer than the derived maximum is refused BEFORE admission; the maximum itself stays legal"
+# WHY A LENGTH BOUND EXISTS AT ALL. Case 3 above proves the CHARACTER grammar, and
+# until this case that was the whole of it: an id built only from legal characters
+# was accepted at ANY length. The task id is the LAST field of the run id
+# (dispatch.sh, RUN_ID), and every piece of run evidence is that run id plus a
+# suffix — so a long enough id did not produce a refusal, it produced an ADMITTED
+# run that could not name its own artifacts. Measured against the unmodified
+# dispatcher, a 129-character id ran all four hops, launched four actors, took both
+# leases, mutated the working tree and published a terminal result. The approved
+# plan's hostile-input boundary asks for "strict length and character grammars to
+# task IDs"; this case is the length half of it.
+#
+# THE DERIVATION, from the current naming formats and nothing else:
+#   run id            <timestamp 15> "-" <lock key <=8> "-" <pid> "-" <task>
+#   longest filename  <run id> ".unattended-settings.json"        (25 bytes)
+#   NAME_MAX          255
+# The fixed prefix is 15+1+8+1+7+1 = 33 bytes at the widest pid Linux allots, so
+# the hard ceiling is 255-33-25 = 197. The enforced maximum is 128, which keeps 69
+# bytes in hand: the hop-capture suffixes ".hop<N>.<actor>.out" and ".tree" grow
+# with the caller's --max-hops digits, and bounds for the other token classes are
+# deferred, so the margin is what keeps one fixed number safe while that stays
+# true. 128 is also more than twice the longest task id this repository has ever
+# committed (54 characters), so the bound relabels nothing legal.
+#
+# THE TWO IDS ARE GENERATED AND DIFFER BY EXACTLY ONE CHARACTER. A 129-character
+# literal could not be checked by eye, and building the over-length id as "the
+# legal one plus one 'a'" is what makes the pair a boundary rather than two
+# unrelated strings.
+ID3A_OK="L$(printf '%*s' 127 '' | tr ' ' 'a')"
+ID3A_BAD="${ID3A_OK}a"
+[ "${#ID3A_OK}" -eq 128 ] && [ "${#ID3A_BAD}" -eq 129 ] \
+  && ok "3a — the fixture ids are exactly the maximum and the maximum plus one" \
+  || bad "3a — the fixture ids are exactly the maximum and the maximum plus one" \
+         "ok=${#ID3A_OK} bad=${#ID3A_BAD}"
+
+D3A="$(new_sandbox)"
+# BOTH state files exist, so "it was refused" cannot be explained away by a missing
+# record. The refusal has to come from the id itself.
+state_file "$D3A" "$ID3A_BAD" codex
+state_file "$D3A" "$ID3A_OK"  codex
+rm -f "$D3A.calls"
+LR3A="$(lock_root_for "$D3A")"
+HEAD3A="$(git -C "$D3A" rev-parse HEAD)"
+TREE3A="$(tree_manifest "$D3A")"
+# --actor-cmd, not --dry-run, and that is deliberate: a dry-run launches nothing
+# whatever the verdict, so "no actor was launched" could not fail. With a simulated
+# actor available, an admitted run WOULD call it — and against the unmodified
+# dispatcher it called it four times.
+run_dispatch "$D3A" "$ID3A_BAD" --actor-cmd "$FLIP"
+expect_rc 12 "$RC" "3a — the over-length task id is refused as an invalid task id" "$OUT"
+out_has "STOP [12]" "$OUT" "3a — the refusal names itself on stderr"
+out_has "too long: 129 characters, maximum 128" "$OUT" \
+  "3a — the refusal names LENGTH and both numbers, not characters"
+# THE PRE-ADMISSION CONTRACT, as the four absences the approved plan names: no owner
+# or lease, no evidence, no actor, no mutation.
+[ ! -e "$LR3A" ] \
+  && ok "3a — no lease was ever acquired: the shared lease root was never created" \
+  || bad "3a — no lease was ever acquired: the shared lease root was never created" \
+         "$(ls -a "$LR3A" 2>&1 | tr '\n' ' ')"
+[ ! -e "$D3A/runs" ] \
+  && ok "3a — it wrote no run evidence: the evidence directory was never created" \
+  || bad "3a — it wrote no run evidence: the evidence directory was never created" \
+         "$(ls -a "$D3A/runs" 2>&1 | tr '\n' ' ')"
+[ "$(calls "$D3A")" = "0" ] \
+  && ok "3a — no actor was launched" || bad "3a — no actor was launched" "calls=$(calls "$D3A")"
+[ "$(git -C "$D3A" rev-parse HEAD)" = "$HEAD3A" ] \
+  && ok "3a — it committed nothing" || bad "3a — it committed nothing" "HEAD moved from $HEAD3A"
+[ "$TREE3A" = "$(tree_manifest "$D3A")" ] \
+  && ok "3a — every byte of the checkout's working tree is unchanged" \
+  || bad "3a — every byte of the checkout's working tree is unchanged" "the tree moved"
+
+# THE POSITIVE CONTROL, through the narrowest safe mode. Without it the bound could
+# be satisfied by refusing everything, and an off-by-one would be invisible.
+run_dispatch "$D3A" "$ID3A_OK" --dry-run
+expect_rc 0 "$RC" "3a — an otherwise identical id at exactly the maximum is still admitted" "$OUT"
+# AND THE BOUND'S ARITHMETIC, CHECKED AGAINST THE RUN THIS CASE JUST PRODUCED
+# rather than against the comment above it. Take the result filename the admitted
+# run actually wrote, swap its 7-byte ".result" for the 25-byte longest suffix the
+# dispatcher builds, and require the answer to still fit NAME_MAX. This is the
+# assertion that would go red if the maximum were ever raised past what the naming
+# formats can carry. Exactly ONE result is required in the same breath, because the
+# refusal above must have published none — the two runs share this sandbox.
+if [ "$(res_count "$D3A/runs")" = 1 ]; then
+  N3A="$(basename "$(ls "$D3A/runs"/*.result)")"
+  W3A=$(( ${#N3A} - 7 + 25 ))
+  [ "$W3A" -le 255 ] \
+    && ok "3a — at the maximum, even the longest run-evidence filename fits NAME_MAX ($W3A <= 255)" \
+    || bad "3a — at the maximum, even the longest run-evidence filename fits NAME_MAX" "$W3A > 255"
+else
+  bad "3a — the admitted run at the maximum published exactly one result, and the refusal published none" \
+      "results=$(res_count "$D3A/runs")"
+fi
+
 # ================================================================== case 4
 echo
 echo "Case 4 — missing and malformed state"

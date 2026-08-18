@@ -1507,6 +1507,36 @@ esac
 if ! printf '%s' "$TASK" | grep -qE '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
   printf 'STOP [12] task id rejected (illegal characters): %s\n' "$TASK" >&2; exit 12
 fi
+# LENGTH IS A SEPARATE GRAMMAR FROM CHARACTERS, and only the second one was here.
+# The task id is the LAST field of the run id (see RUN_ID below) and every piece of
+# run evidence is that run id plus a suffix — so an id of legal characters but
+# unbounded length was not refused, it was ADMITTED, and the run then could not
+# name its own artifacts. A clear refusal here replaces an admitted run that cannot
+# publish. This is the task-id half of the approved plan's hostile-input boundary,
+# which asks for "strict length and character grammars to task IDs".
+#
+# WHERE 128 COMES FROM, derived from the naming formats this script already uses
+# and from nothing else:
+#   run id            <timestamp 15> "-" <lock key <=8> "-" <pid> "-" <task>
+#   longest filename  <run id> ".unattended-settings.json"        (25 bytes)
+#   NAME_MAX          255
+# The fixed prefix is 15+1+8+1+7+1 = 33 bytes, taking the widest pid Linux allots
+# and the full lock-key field, so the hard ceiling is 255-33-25 = 197. The maximum
+# enforced below is 128, which keeps 69 bytes in hand deliberately: the hop-capture
+# suffixes ".hop<N>.<actor>.out" and ".tree" grow with the caller's --max-hops
+# digits, and bounds for the other token classes (run ids, outcomes, reason codes,
+# protocol versions, control tokens) are not in place yet. The longest task id this
+# repository has ever used is 54 characters, so nothing legal is relabelled.
+#
+# AFTER THE CHARACTER CHECK, NOT BEFORE IT, and that order is load-bearing:
+# ${#TASK} counts characters, not bytes. The grammar above admits only single-byte
+# ASCII, so once it has passed, characters and bytes are the same number and the
+# arithmetic against NAME_MAX is sound. Reversed, a multi-byte id could pass a
+# character count it would exceed in bytes.
+TASK_ID_MAX=128
+if [ "${#TASK}" -gt "$TASK_ID_MAX" ]; then
+  printf 'STOP [12] task id rejected (too long: %s characters, maximum %s): %s\n' "${#TASK}" "$TASK_ID_MAX" "$TASK" >&2; exit 12
+fi
 
 [ -d "$CHECKOUT" ] || { printf 'STOP [11] checkout is not a directory: %s\n' "$CHECKOUT" >&2; exit 11; }
 CHECKOUT="$(cd "$CHECKOUT" && pwd -P)" || { printf 'STOP [11] cannot canonicalize checkout\n' >&2; exit 11; }
