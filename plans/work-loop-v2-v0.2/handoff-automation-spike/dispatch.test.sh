@@ -9843,6 +9843,199 @@ else
       "matched=$M33_HITS left=$M33_LEFT kept=$M33_KEPT differs=$M33_DIFFERS parses=$M33_PARSES — the control cannot run"
 fi
 
+
+# =================================================================== case 63a
+# THE ADMISSION BOUNDARY REACHES THE EVIDENCE LOCATION, NOT ONLY THE TASK AND
+# THE CHECKOUT.
+#
+# The approved plan admits a run only once task, checkout AND the evidence
+# location have been supplied and established as trusted; before that point an
+# invalid invocation must launch no actor, take no owner or lease, mutate
+# nothing and write no evidence. Task and checkout already cleared that bar
+# (dispatch.sh, the task-id and checkout blocks). The evidence location did not:
+# its directory was created and canonicalized far BELOW acquire_lock, so an
+# invocation naming a location it could never write to still took both leases
+# first — and, where another run already held one, filed a refusal record — for
+# a run that was never admissible in the first place.
+#
+# THE DETECTOR IS THE LEASE ROOT, and it is chosen because the leases themselves
+# are released by the EXIT trap. Once the process is gone, "no lease directory"
+# is true whether the lease was taken or not, so asserting on the two lease
+# directories alone would pass against the very defect under test. The lease
+# ROOT is created by wl_lease_acquire (logs/scripts/work-loop-lease.sh) and is
+# NOT removed by release, which removes only the two lease directories — so in a
+# sandbox that has never admitted a run, its existence is a durable one-way
+# record that acquire_lock ran. That is the assertion that is red before the fix
+# and green after it.
+echo
+echo "Case 63a — an unusable evidence location is refused BEFORE admission: no lease, no evidence, no actor"
+d="$(new_sandbox)"; state_file "$d" "evidence-loc-task" "codex"
+rm -f "$d.calls"
+# Unusable because a REGULAR FILE sits where a parent directory would have to
+# be: mkdir -p can never succeed under it, so this invocation could never have
+# written one line of its own run evidence.
+printf 'not a directory\n' >"$d/blocked-runs"
+BAD_LOGS="$d/blocked-runs/inside"
+LEASE_ROOT="$(lock_root_for "$d")"
+[ ! -e "$LEASE_ROOT" ] \
+  && ok "63a setup — this sandbox has never admitted a run (no shared lease root yet)" \
+  || bad "63a setup — this sandbox has never admitted a run (no shared lease root yet)" \
+         "$(ls -a "$LEASE_ROOT" 2>&1 | tr '\n' ' ')"
+BEFORE="$(git -C "$d" rev-parse HEAD)"
+TREE_BEFORE="$(tree_manifest "$d")"
+STATUS_BEFORE="$(git -C "$d" status --porcelain)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task evidence-loc-task \
+      --log-dir "$BAD_LOGS" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+TREE_AFTER="$(tree_manifest "$d")"
+STATUS_AFTER="$(git -C "$d" status --porcelain)"
+expect_rc 10 "$RC" "the unusable evidence location is refused as usage" "$OUT"
+out_has "STOP [10]" "$OUT" "  and the refusal names itself on stderr"
+out_has "$BAD_LOGS" "$OUT" "  and names the location it refused"
+# THE ASSERTION THAT FAILS AGAINST THE DEFECT.
+[ ! -e "$LEASE_ROOT" ] \
+  && ok "  and no lease was ever acquired — the shared lease root was never created" \
+  || bad "  and no lease was ever acquired — the shared lease root was never created" \
+         "$(ls -a "$LEASE_ROOT" 2>&1 | tr '\n' ' ')"
+[ ! -e "$BAD_LOGS" ] \
+  && ok "  and the evidence location itself was not created" \
+  || bad "  and the evidence location itself was not created" "$BAD_LOGS exists"
+[ -f "$d/blocked-runs" ] && [ "$(cat "$d/blocked-runs")" = "not a directory" ] \
+  && ok "  and the file standing in its way is byte-identical" \
+  || bad "  and the file standing in its way is byte-identical" \
+         "$(ls -la "$d/blocked-runs" 2>&1 | tr '\n' ' ')"
+if [ "$TREE_BEFORE" = "$TREE_AFTER" ]; then
+  ok "  and every byte of the checkout's working tree is unchanged"
+else
+  bad "  and every byte of the checkout's working tree is unchanged" \
+      "$(diff <(printf '%s\n' "$TREE_BEFORE") <(printf '%s\n' "$TREE_AFTER") | head -10 | tr '\n' ' ')"
+fi
+[ "$STATUS_BEFORE" = "$STATUS_AFTER" ] \
+  && ok "  and git status is unchanged" \
+  || bad "  and git status is unchanged" "before [$STATUS_BEFORE] after [$STATUS_AFTER]"
+[ "$(calls "$d")" = "0" ] \
+  && ok "  and no actor was launched" || bad "  and no actor was launched" "calls=$(calls "$d")"
+[ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "  and committed nothing" || bad "  and committed nothing" "HEAD moved from $BEFORE"
+
+# ------------------------------------------------------------ case 63a, part 2
+# THE OTHER HALF OF THE SAME BOUNDARY: writes no evidence for a non-run.
+#
+# Part 1 proves no lease is taken when no lease is contended. It cannot prove
+# the evidence half, because with nothing holding the lease there is no refusal
+# record to write either way. So this half puts a REAL second dispatcher on the
+# lease, and the two outcomes are then distinguishable:
+#
+#   before the fix — the invalid invocation reaches acquire_lock, loses, exits
+#                    17, and files a refusal record for a run that was never
+#                    admissible;
+#   after  the fix — it never reaches the lease at all, exits 10 over its own
+#                    unusable evidence location, and files nothing.
+#
+# The lease is HELD BY A REAL DISPATCHER rather than planted, for the reason
+# case 12h gives: what is under test is an ORDERING, and only a live holder puts
+# the acquisition path where the ordering can be observed.
+echo
+echo "Case 63a (2) — the same refusal files no evidence, even with the lease already held"
+d2="$(new_sandbox)"; state_file "$d2" "evidence-held-task" "codex"
+rm -f "$d2.calls" "$d2.holder"
+HOLDER2_LOGS="$SANDBOX_ROOT/63a-holder-runs"   # OUTSIDE the checkout, so only the loser can move its bytes
+BAD_LOGS2="$d2/blocked-runs/inside"
+REFUSALS2="$(lock_root_for "$d2")/refusals"
+( bash "$DISPATCH_BIN" --checkout "$d2" --task evidence-held-task --log-dir "$HOLDER2_LOGS" \
+    --timeout 90 \
+    --actor-cmd 'printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.holder"; sleep 30; exit 0' \
+    >/dev/null 2>&1 ) &
+holder2=$!
+# Waited on the ACTOR, not on the lease — case 12h's reason exactly: the holder
+# still touches the checkout between taking the lease and launching.
+for _ in $(seq 1 120); do [ -f "$d2.holder" ] && break; sleep 0.5; done
+[ -f "$d2.holder" ] \
+  && ok "63a(2) setup — the holding dispatcher is admitted and inside its actor" \
+  || bad "63a(2) setup — the holding dispatcher is admitted and inside its actor" "no $d2.holder marker"
+# PLANTED ONLY NOW, and the ordering is load-bearing: an untracked file present
+# before the holder launched would stop the HOLDER at 18 (out-of-allowlist
+# working-tree changes) and there would be no held lease to test against.
+printf 'not a directory\n' >"$d2/blocked-runs"
+n_ref_before="$(ls -1 "$REFUSALS2" 2>/dev/null | wc -l | tr -d ' ')"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task evidence-held-task \
+      --log-dir "$BAD_LOGS2" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "  it refuses on its own evidence location, not at the held lease (17)" "$OUT"
+[ "$n_ref_before" = "$(ls -1 "$REFUSALS2" 2>/dev/null | wc -l | tr -d ' ')" ] \
+  && ok "  and filed no refusal record — a non-run leaves no durable record" \
+  || bad "  and filed no refusal record — a non-run leaves no durable record" \
+         "refusal count moved from $n_ref_before to $(ls -1 "$REFUSALS2" 2>/dev/null | wc -l | tr -d ' ')"
+[ ! -e "$BAD_LOGS2" ] \
+  && ok "  and still created no evidence directory" \
+  || bad "  and still created no evidence directory" "$BAD_LOGS2 exists"
+[ "$(calls "$d2")" = "0" ] \
+  && ok "  and still launched no actor" || bad "  and still launched no actor" "calls=$(calls "$d2")"
+wait "$holder2" 2>/dev/null
+rm -rf "$(task_lock_for "$d2" evidence-held-task)" "$(checkout_lock_for "$d2")" 2>/dev/null
+
+# =================================================================== case 63b
+# THE POSITIVE CONTROL, and without it 63a passes against a dispatcher that
+# refuses every evidence location it is given. Everything asserted above is an
+# absence — no lease, no directory, no record, no actor — and a boundary that
+# had simply become "refuse always" would satisfy all of it. This is the
+# ORDINARY invocation, and it must still reach the admitted-run path.
+#
+# The requested directory DELIBERATELY DOES NOT EXIST. That is what a first run
+# looks like, and it is the case a naive "the directory must already be there"
+# check would break — so it is the one the control has to make.
+echo
+echo "Case 63b — a legitimate invocation still reaches the admitted-run path, requested and default"
+d3="$(new_sandbox)"; state_file "$d3" "evidence-ok-task" "codex"
+rm -f "$d3.calls"
+FRESH_LOGS="$d3/fresh-runs"
+[ ! -e "$FRESH_LOGS" ] \
+  && ok "63b setup — the requested evidence directory does not exist yet" \
+  || bad "63b setup — the requested evidence directory does not exist yet" "$FRESH_LOGS already exists"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d3" --task evidence-ok-task \
+      --log-dir "$FRESH_LOGS" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+if [ "$RC" -ne 10 ]; then
+  ok "the boundary did not refuse a creatable evidence location (exit $RC, not 10)"
+else
+  bad "the boundary did not refuse a creatable evidence location" "exited 10: $OUT"
+fi
+AL3="$(ls -t "$FRESH_LOGS"/*.log 2>/dev/null | head -1)"
+if [ -n "$AL3" ] && grep -q '^run=' "$AL3"; then
+  ok "  and the admitted run created the requested directory and wrote its own header into it"
+else
+  bad "  and the admitted run created the requested directory and wrote its own header into it" \
+      "$(ls -a "$FRESH_LOGS" 2>&1 | tr '\n' ' ')"
+fi
+[ "$(calls "$d3")" = "1" ] \
+  && ok "  and the actor really launched — this is an admitted run, not another refusal" \
+  || bad "  and the actor really launched" "calls=$(calls "$d3")"
+rm -rf "$(task_lock_for "$d3" evidence-ok-task)" "$(checkout_lock_for "$d3")" 2>/dev/null
+# THE DEFAULT LOCATION IS COVERED TOO. The boundary validates the requested
+# location OR the default one, and only an invocation that passes no --log-dir
+# exercises the second.
+#
+# This leg asserts the run's own header rather than a completed hop. The default
+# location sits under plans/, which new_sandbox creates and never commits, so
+# `git status` reports the whole `plans/` directory as untracked and the pre-hop
+# gate stops at 18 for a reason that has nothing to do with this boundary. The
+# header is written by the run-evidence block itself, so it is the exact fact
+# this leg needs: the default location was accepted and used.
+d4="$(new_sandbox)"; state_file "$d4" "evidence-default-task" "codex"
+rm -f "$d4.calls"
+DEF_LOGS="$d4/plans/work-loop-v2-v0.2/handoff-automation-spike/runs"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d4" --task evidence-default-task \
+      --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+if [ "$RC" -ne 10 ]; then
+  ok "  and the DEFAULT evidence location is not refused either (exit $RC, not 10)"
+else
+  bad "  and the DEFAULT evidence location is not refused either" "exited 10: $OUT"
+fi
+AL4="$(ls -t "$DEF_LOGS"/*.log 2>/dev/null | head -1)"
+if [ -n "$AL4" ] && grep -q '^run=' "$AL4"; then
+  ok "  and the default directory received the run's own header"
+else
+  bad "  and the default directory received the run's own header" \
+      "$(ls -a "$DEF_LOGS" 2>&1 | tr '\n' ' ')"
+fi
+rm -rf "$(task_lock_for "$d4" evidence-default-task)" "$(checkout_lock_for "$d4")" 2>/dev/null
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

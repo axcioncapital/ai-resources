@@ -1540,6 +1540,71 @@ if [ -e "$STATE_FILE" ]; then
     || { printf 'STOP [12] resolved state file escapes logs/work-loop/\n' >&2; exit 12; }
 fi
 
+# --------------------------------- run-evidence location, BEFORE admission
+#
+# ADMISSION, NOT SETUP. The approved plan admits a run only once task, checkout
+# AND the evidence location have been supplied and established as trusted;
+# before that point an invalid invocation must launch no actor, take no owner or
+# lease, mutate nothing and write no evidence. Task and checkout already cleared
+# that bar, immediately above. The evidence location did not: its directory is
+# created and canonicalized far below, AFTER acquire_lock, so an invocation
+# naming a location it could never write to still took both leases first — and,
+# where another run already held one, filed a refusal record — for a run that
+# was never admissible. Those are effects taken by something that is not a run.
+#
+# CHECKED HERE, CREATED THERE. This block does not move the creation, and must
+# not: a dispatcher that has not won both leases is not entitled to a byte
+# inside the checkout, which is the whole finding case 12h pins. So the question
+# asked here is only whether the location COULD be used, answered from paths
+# that already exist. mkdir -p would build every missing level below the nearest
+# existing ancestor, so that ancestor is the honest thing to test — and testing
+# it costs nothing and leaves nothing behind.
+#
+# --status IS EXCLUDED, for the same reason it skips acquire_lock below: it is a
+# read-only query rather than a run, it never writes evidence, and refusing it
+# over a directory it would never touch would be answering a question nobody
+# asked. --dry-run is NOT excluded — it takes both leases, so it is an admitted
+# run and it is held to the admitted run's boundary.
+check_evidence_location() { # requested-or-default path -> 0, or exits 10
+  local want="$1" probe parent
+  # A symlink that does not resolve to a directory is refused before anything
+  # else. `-e` is false for a broken one, so the ancestor walk below would climb
+  # straight past it to a perfectly good parent and call the location usable,
+  # while mkdir -p would still fail on the dangling name.
+  if [ -L "$want" ] && [ ! -d "$want" ]; then
+    printf 'STOP [10] run evidence location is a symlink that does not resolve to a directory: %s\n' "$want" >&2
+    exit 10
+  fi
+  if [ -e "$want" ]; then
+    [ -d "$want" ] || {
+      printf 'STOP [10] run evidence location exists and is not a directory: %s\n' "$want" >&2; exit 10; }
+    [ -w "$want" ] || {
+      printf 'STOP [10] run evidence directory is not writable: %s\n' "$want" >&2; exit 10; }
+    return 0
+  fi
+  probe="$want"
+  while [ ! -e "$probe" ]; do
+    parent="$(dirname "$probe")"
+    [ "$parent" = "$probe" ] && break
+    probe="$parent"
+  done
+  [ -d "$probe" ] || {
+    printf 'STOP [10] run evidence location cannot be created — %s is not a directory: %s\n' "$probe" "$want" >&2
+    exit 10; }
+  [ -w "$probe" ] || {
+    printf 'STOP [10] run evidence location cannot be created — %s is not writable: %s\n' "$probe" "$want" >&2
+    exit 10; }
+  return 0
+}
+if [ "$STATUS_MODE" -ne 1 ]; then
+  # The same resolution line 3112 makes below, and deliberately the same one: a
+  # boundary that validated the request while the run used the default would be
+  # checking a path nothing writes to.
+  LOG_DIR_WANTED="$LOG_DIR"
+  [ -n "$LOG_DIR_WANTED" ] || LOG_DIR_WANTED="$DEFAULT_LOG_DIR"
+  check_evidence_location "$LOG_DIR_WANTED"
+fi
+
 # ------------------------------------------- state file reading (read-only)
 # Defined here rather than below the lock because --status uses them and --status
 # runs before any lock is taken. Pure readers; they mutate nothing.
@@ -3109,6 +3174,14 @@ remaining_seconds() {
 # contract case 30 and case 12h assert is now a property of the control flow.
 # `--dry-run` is NOT excluded: it takes both leases, so it is an admitted run and
 # its evidence belongs where every admitted run's does.
+#
+# WHETHER THIS LOCATION IS USABLE WAS SETTLED AT ADMISSION, above
+# check_evidence_location, which refuses an unusable or untrusted one before any
+# lease is asked for. The two lines below are the CREATION, which stays here
+# because only an admitted run may write inside the checkout. The mkdir guard is
+# kept even so: admission proved the location was usable then, and this is where
+# it is actually used — a check that cannot fail is not a check (§ 6 rule 5), and
+# the interval between the two is real.
 [ -n "$LOG_DIR" ] || LOG_DIR="$DEFAULT_LOG_DIR"
 mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
 # The dispatcher's own evidence directory is not "foreign work". When --log-dir
