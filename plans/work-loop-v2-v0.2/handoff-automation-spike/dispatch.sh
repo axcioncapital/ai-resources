@@ -2035,13 +2035,35 @@ die_terminal_unprovable() { # [terminal-label]
 # pin-and-exit owner exists to avoid. Case 58f's M38 is the control that holds
 # this, and 58e/27w are the two consumers it is asserted over.
 die_terminal_untrusted() { # bounded-refusal-token [terminal-label]
-  pin_lock_terminal "the promised terminal result under ${LOG_DIR:-<no log dir>} was refused before release: ${1:-refused}" # operator consumer retention
+  # FIRST CAUSE WINS, because the lease record outlives the run and the operator
+  # reads it long after both messages have scrolled away. This refusal is not
+  # always the first thing that went wrong: where a terminal-specific
+  # finalization already failed, die_terminal_unprovable pinned the real
+  # initiating cause and re-entered die 38, that retry succeeded, and the funnel
+  # consumer then refuses the record the retry wrote. Pinning again there
+  # overwrote the finalization failure with a mismatch — and the two have
+  # different recoveries, so the surviving record sent the operator to repair an
+  # interfering artifact when a write had failed. `wl_lease_pin_terminal` writes
+  # one durable cause per lease rather than a history, so precedence has to be
+  # decided here; it is the same first-cause rule die_funnel_unprovable already
+  # applies below, not a second pin store or a cause stack.
+  #
+  # THE LATER REFUSAL IS NOT LOST, and that is the other half. It still reaches
+  # stderr and the run log in full, with its own bounded token — what changes is
+  # only which cause survives on the leases, and the sentence stops claiming this
+  # refusal's cause was written there when it was not.
+  local held='are retained with that cause recorded'
+  if [ "${WL_LEASE_PINNED:-0}" -eq 0 ]; then # consumer retention precedence
+    pin_lock_terminal "the promised terminal result under ${LOG_DIR:-<no log dir>} was refused before release: ${1:-refused}" # operator consumer retention
+  else
+    held='remain retained under the cause recorded before this refusal — that earlier evidence is preserved unchanged, and this message and the run log are where this refusal is recorded'
+  fi
   # RESULT_FILE is cleared so die() does not print "terminal result:" pointing at
   # the very artifact this run just refused to trust — advertising it as this
   # run's evidence would be the false claim the refusal exists to prevent. The
   # artifact itself is left in place, untouched, as evidence of what was found.
   RESULT_FILE=""
-  die 38 "the run reached ${2:-a real operator terminal} (state_class=${ST_CLASS:-unavailable}) and finalized its terminal result, but the promised artifact at $LOG_DIR_ABS/$RUN_ID.result did not pass the consumer gate (${1:-refused}) — so it is refused as this run's reported ending, because a result this run cannot prove is its own must not be reported as how it ended."$'\n'"Recoverable next action: inspect that path against the run log $RUN_LOG, remove or repair the interfering artifact, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
+  die 38 "the run reached ${2:-a real operator terminal} (state_class=${ST_CLASS:-unavailable}) and finalized its terminal result, but the promised artifact at $LOG_DIR_ABS/$RUN_ID.result did not pass the consumer gate (${1:-refused}) — so it is refused as this run's reported ending, because a result this run cannot prove is its own must not be reported as how it ended."$'\n'"Recoverable next action: inspect that path against the run log $RUN_LOG, remove or repair the interfering artifact, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases $held, so a second dispatcher is refused (exit 17) until you clear them."
 }
 
 # The SHARED FUNNEL's own failure transfer. die() publishes the terminal result

@@ -6203,6 +6203,13 @@ expect_funnel_refusal50() { # fixture task expected-token label-prefix original-
     bad "$4 — both leases retained, both pins carrying the bounded '$3' cause" \
         "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
   fi
+  # THE ACCEPTED CAUSE-RECORDED WORDING, on the ordinary path where no earlier pin
+  # exists. Unit 34 makes this sentence conditional, so the unpinned case has to
+  # keep saying it — otherwise "preserve the first cause" would have been
+  # implemented as "stop recording consumer causes at all", which is the opposite
+  # failure and would look identical from the exit code alone.
+  out_has "Both run leases are retained with that cause recorded" "$O50K" \
+    "$4 — with no earlier pin, the refusal still states that its own cause was recorded"
   run_dispatch "$V50K" "$2" --dry-run
   expect_rc 17 "$RC" "$4 — the next dispatcher is refused by the retained lease" "$OUT"
 }
@@ -6306,6 +6313,179 @@ if [ "$M39_HITS" = 1 ] && [ "$M39_LEFT" = 0 ] && [ "$M39_FINAL" = 1 ] && [ "$M39
 else
   bad "50L — M39 removed exactly the funnel consumer, kept its finalization transfer and the other four consumers, differs, and parses" \
       "matched=$M39_HITS left=$M39_LEFT finalization=$M39_FINAL others=$M39_OTHERS differs=$M39_DIFFERS parses=$M39_PARSES — the control cannot run"
+fi
+
+# =================================================================== case 50m
+#
+# THE DURABLE CAUSE OUTLIVES THE RUN, and that is what makes this a defect rather
+# than a wording preference. Unit 33 measured the nested path with a temporary
+# probe: a terminal-specific finalization fails, die_terminal_unprovable pins the
+# finalization-failure cause and re-enters `die 38`, that retry SUCCEEDS, and the
+# funnel consumer added at Unit 32 then refuses an altered artifact and pins
+# again. Measured on the fixture below before the edit: both leases stayed held,
+# but their surviving cause said only `outcome-mismatch` — the finalization
+# failure that actually started the incident was gone, and the later refusal told
+# the operator its own cause had been recorded on both leases when it had just
+# overwritten the one that mattered. The recovery actions differ: the surviving
+# record sent the operator to repair an interfering artifact when the real cause
+# was a write that failed.
+#
+# WHY THE OPERATOR TERMINAL. It is the seam whose finalization failure is already
+# an accepted case (55e/57), and it reaches the funnel with no actor, no signal
+# and no carried hop to confound what is being observed.
+#
+# THE FIXTURE FORCES BY CODE, NOT BY COUNTER, which is what keeps it readable and
+# fail-closed at the same time: the operator terminal finalizes at code 0 and the
+# re-entry finalizes at code 38, so failing exactly the code-0 attempt forces the
+# first failure and lets the retry through without any counter state to get wrong.
+# RESULT_FILE is cleared exactly as the production failure paths clear it.
+echo
+echo "Case 50m — a consumer refusal that arrives AFTER an earlier pin does not overwrite the first durable cause"
+MUT50M="$SANDBOX_ROOT/mutants50m"; mkdir -p "$MUT50M"
+
+mk_nested_alter50() { # outfile [source] -> 0 when the fixture differs and parses
+  awk '
+    {print}
+    index($0, "[ \"$RESULT_FINALIZED\" -eq 1 ] && return 0") {
+      print "  [ \"$1\" = 0 ] && { RESULT_FILE=\"\"; return 1; } # harness nested first-finalization failure" }
+    /# die funnel failure transfer/ {
+      print "  [ -n \"$RESULT_FILE\" ] && { sed '\''s/^outcome=.*/outcome=COMPLETED/'\'' \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\"; } # harness nested retry-result alteration" }
+  ' "${2:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${2:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# Both selectors must have matched, or the fixture is not modelling the nested
+# path at all and every assertion below would be vacuous.
+if mk_nested_alter50 "$MUT50M/nested.sh"; then
+  NEST_FIN="$(grep -c '# harness nested first-finalization failure$' "$MUT50M/nested.sh" 2>/dev/null || true)"
+  NEST_ALT="$(grep -c '# harness nested retry-result alteration$' "$MUT50M/nested.sh" 2>/dev/null || true)"
+else
+  NEST_FIN=0; NEST_ALT=0
+fi
+if [ "$NEST_FIN" = 1 ] && [ "$NEST_ALT" = 1 ]; then
+  ok "50m — the nested forcing fixture injected both the first-finalization failure and the retry alteration, differs, and parses"
+else
+  bad "50m — the nested forcing fixture injected both the first-finalization failure and the retry alteration, differs, and parses" \
+      "finalization-injections=$NEST_FIN alteration-injections=$NEST_ALT — the case cannot run"
+fi
+
+nested_probe50() { # fixture task -> sets V50M and O50M
+  V50M="$(new_sandbox)"; state_file "$V50M" "$2" operator
+  O50M="$(bash "$1" --checkout "$V50M" --task "$2" --log-dir "$V50M/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC50M=$?
+}
+
+expect_nested_preservation50() { # fixture task label-prefix
+  local TL CL S T U REC LOG
+  nested_probe50 "$1" "$2"
+  expect_rc 38 "$RC50M" "$3 — the nested refusal still exits 38" "$O50M"
+  # THE RETRY-SUCCESS PATH IS STILL THE ONE UNDER TEST. Unit 33's counters are not
+  # available here, so the observable stands in for them: the record on disk is the
+  # code-38 one the RETRY wrote, which only exists if the first attempt failed and
+  # the second succeeded.
+  REC="$V50M/runs/$(run_id_of "$O50M").result"
+  [ "$(res_field "$REC" code)" = 38 ] \
+    && ok "$3 — the surviving record is the retry's own code-38 result" \
+    || bad "$3 — the surviving record is the retry's own code-38 result" "code=$(res_field "$REC" code)"
+  # ONE OF EACH REFUSAL, NOT ONE REPEATED. Two distinct sentences, one nested in
+  # the other; a third of either would be the recursion Unit 32's one-shot bound
+  # exists to prevent.
+  U="$(printf '%s\n' "$O50M" | grep -cF 'could not be finalized under' || true)"
+  T="$(printf '%s\n' "$O50M" | grep -cF 'did not pass the consumer gate' || true)"
+  if [ "$U" = 1 ] && [ "$T" = 1 ]; then
+    ok "$3 — both refusals are reported exactly once, and neither recurred"
+  else
+    bad "$3 — both refusals are reported exactly once, and neither recurred" \
+        "finalization-failure sentences=$U consumer-gate sentences=$T"
+  fi
+  out_lacks "  terminal result:" "$O50M" "$3 — the refused artifact is not advertised as this run's result"
+  # THE LATER REFUSAL IS STILL VISIBLE where the operator reads this run — both
+  # channels. Preserving the earlier cause must not cost the later evidence.
+  LOG="$V50M/runs/$(run_id_of "$O50M").log"
+  if grep -qF 'did not pass the consumer gate' "$LOG" 2>/dev/null &&
+     grep -qF 'outcome-mismatch' "$LOG" 2>/dev/null; then
+    ok "$3 — the later mismatch is still recorded in the run log, not only on stderr"
+  else
+    bad "$3 — the later mismatch is still recorded in the run log, not only on stderr" \
+        "run log: $(tr '\n' '|' <"$LOG" 2>&1 | tail -c 200)"
+  fi
+  # THE DURABLE HALF. Both leases must still carry the FIRST cause, byte-for-byte,
+  # and must not carry the later one.
+  TL="$(task_lock_for "$V50M" "$2")"; CL="$(checkout_lock_for "$V50M")"
+  S=ok
+  for d50 in "$TL" "$CL"; do
+    [ -d "$d50" ] || { S="missing $d50"; break; }
+    grep -q 'could not finalize its terminal result' "$d50/survivors" 2>/dev/null \
+      || { S="first cause absent in $d50"; break; }
+    grep -q 'was refused before release' "$d50/survivors" 2>/dev/null \
+      && { S="later cause overwrote $d50"; break; }
+  done
+  [ "$S" = ok ] \
+    && ok "$3 — both leases are retained still carrying the FIRST finalization-failure cause, not the later mismatch" \
+    || bad "$3 — both leases are retained still carrying the FIRST finalization-failure cause, not the later mismatch" \
+           "$S; task cause: $(tr '\n' '|' <"$TL/survivors" 2>&1)"
+  # THE WORDING HALF, and it is a separate claim: the durable record can be right
+  # while the message still tells the operator this refusal's cause was written to
+  # the leases. Counted rather than matched, because the FIRST refusal says the
+  # accepted sentence legitimately — exactly one of them may.
+  S="$(printf '%s\n' "$O50M" | grep -cF 'Both run leases are retained with that cause recorded' || true)"
+  if [ "$S" = 1 ] &&
+     printf '%s\n' "$O50M" | grep -qF 'remain retained under the cause recorded before this refusal'; then
+    ok "$3 — only the earlier refusal claims its cause was recorded; the later one says the earlier evidence is preserved"
+  else
+    bad "$3 — only the earlier refusal claims its cause was recorded; the later one says the earlier evidence is preserved" \
+        "cause-recorded claims=$S preserved-wording=$(printf '%s\n' "$O50M" | grep -cF 'remain retained under the cause recorded before this refusal' || true)"
+  fi
+  run_dispatch "$V50M" "$2" --dry-run
+  expect_rc 17 "$RC" "$3 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+if [ "$NEST_FIN" = 1 ] && [ "$NEST_ALT" = 1 ]; then
+  expect_nested_preservation50 "$MUT50M/nested.sh" nested-pin-task \
+    "50m — a consumer refusal after a finalization-failure pin"
+fi
+
+# =================================================================== case 50n
+echo
+echo "Case 50n — mutation control: remove ONLY the pin precedence and the first durable cause is overwritten again"
+# M40 — it neutralizes exactly the new precedence test and nothing else: the pin
+# call, its bounded cause, the cleared RESULT_FILE, the exit, the retention and
+# the refusal sentence all stay. So the run must still refuse identically, while
+# the durable record goes back to carrying only the later mismatch AND the later
+# message goes back to claiming that cause was recorded. Both halves are asserted,
+# because the defect was both. Fails closed: unless the selector matched exactly
+# once and the mutant differs and parses, the control does not run.
+sed 's/if \[ "${WL_LEASE_PINNED:-0}" -eq 0 \]; then # consumer retention precedence/if true; then # consumer retention precedence/' \
+  "$DISPATCH_BIN" >"$MUT50M/m40.sh" 2>/dev/null
+M40_HITS="$(grep -c '# consumer retention precedence$' "$DISPATCH_BIN" 2>/dev/null || true)"
+M40_LEFT="$(grep -c 'WL_LEASE_PINNED:-0.*# consumer retention precedence$' "$MUT50M/m40.sh" 2>/dev/null || true)"
+M40_KEPT="$(grep -c '# consumer retention precedence$' "$MUT50M/m40.sh" 2>/dev/null || true)"
+M40_PIN="$(grep -c '# operator consumer retention$' "$MUT50M/m40.sh" 2>/dev/null || true)"
+M40_FUNNEL="$(grep -c 'WL_LEASE_PINNED:-0' "$MUT50M/m40.sh" 2>/dev/null || true)"
+M40_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT50M/m40.sh" || M40_DIFFERS=yes
+M40_PARSES=no; bash -n "$MUT50M/m40.sh" 2>/dev/null && M40_PARSES=yes
+if [ "$M40_HITS" = 1 ] && [ "$M40_LEFT" = 0 ] && [ "$M40_KEPT" = 1 ] && [ "$M40_PIN" = 1 ] &&
+   [ "$M40_FUNNEL" = 1 ] && [ "$M40_DIFFERS" = yes ] && [ "$M40_PARSES" = yes ]; then
+  ok "50n — M40 neutralized exactly the consumer pin precedence, kept the pin call and the funnel's own precedence, differs, and parses"
+  if mk_nested_alter50 "$MUT50M/m40-nested.sh" "$MUT50M/m40.sh"; then
+    nested_probe50 "$MUT50M/m40-nested.sh" nested-m40-task
+    TL40="$(task_lock_for "$V50M" nested-m40-task)"
+    if [ "$RC50M" -eq 38 ] && [ -d "$TL40" ] &&
+       grep -q 'was refused before release' "$TL40/survivors" 2>/dev/null &&
+       ! grep -q 'could not finalize its terminal result' "$TL40/survivors" 2>/dev/null &&
+       [ "$(printf '%s\n' "$O50M" | grep -cF 'Both run leases are retained with that cause recorded' || true)" = 2 ]; then
+      ok "50n — M40: without the precedence the later cause overwrites the first and the refusal claims it was recorded (50m is fail-capable)"
+    else
+      bad "50n — M40: without the precedence the later cause overwrites the first and the refusal claims it was recorded (50m is fail-capable)" \
+          "rc=$RC50M claims=$(printf '%s\n' "$O50M" | grep -cF 'Both run leases are retained with that cause recorded' || true) cause: $(tr '\n' '|' <"$TL40/survivors" 2>&1 | head -c 160)"
+    fi
+  else
+    bad "50n — M40: the nested fixture over the mutant differs and parses" \
+        "the injection matched nothing, or the fixture does not parse — the control cannot run"
+  fi
+else
+  bad "50n — M40 neutralized exactly the consumer pin precedence, kept the pin call and the funnel's own precedence, differs, and parses" \
+      "matched=$M40_HITS left=$M40_LEFT kept=$M40_KEPT pin=$M40_PIN funnel-precedence=$M40_FUNNEL differs=$M40_DIFFERS parses=$M40_PARSES — the control cannot run"
 fi
 
 # ==================================================================== case 51
