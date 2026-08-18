@@ -694,3 +694,29 @@ Operator's landing decision on `session/2026-08-14-durable-state` is the next re
 
 ### Open Questions
 None.
+
+## 2026-08-18 — Closed Work Loop task canonical-rw-near-term-improvements: S1 accepted on a PRESERVED Part-B verdict
+
+### Summary
+Ran Claude's half of Work Loop v2 Unit 21 for task `canonical-rw-near-term-improvements` — the fresh independent Part-B semantic evaluation of the S1 verification relay — then, on Codex's close verdict, wrote and committed the task's closing record. One fresh context-isolated `general-purpose` subagent (opus-pinned, agent `a4a6379fa49fff7c7`), briefed on rubric Part B plus twelve absolute artifact paths and nothing else, returned `PRESERVED` on all eight judgments and overall. Slice S1 of the near-term Research Workflow plan is complete: 40/40 W4-H1–H4 seams accounted for (27 converted, 13 justified exemptions), 0 violations, 99.824469% relay payload reduction against an 80% target, checker `TARGET MET`, and representative Part A passing A0–A8 on the untouched post-S1 arm. No `/prime` or `/session-start` ran; the session began directly at `/work-loop-v2`.
+
+### Decisions Made
+- **Evaluator input boundary held rather than widened.** Rubric judgment 6 cites `reference/quality-standards.md` as its standard, but Part B's permitted artifact set excludes that file. Resolved by instructing the evaluator to judge on the term's ordinary meaning and answer UNCLEAR if the supplied artifacts could not settle it — not by adding the file. The brief forbade adjusting the rubric after seeing the result, so the inconsistency was recorded as a deferral for Codex instead.
+- **Codex closed the task** on Unit 21's acceptance, judging S1 complete; Claude wrote and committed the closing record without re-judging the verdict, per the executable core's split of close-verdict (Codex) from closing-write (Claude).
+- **Closing order followed as contract:** valid `CLOSED` state committed first, checkout owner declaration cleared second — never the reverse.
+- **Archive trim reverted rather than committed** (this wrap, Step 3): `check-archive.sh` reported archiving 4 entries but wrote no archive file, so `logs/session-notes.md` was restored from HEAD and this note re-appended. See `### Risky actions`.
+- Routine: the operator's two `y` replies carried the turn under Work Loop operator shorthand; no scope or intent decision was taken by the operator this session.
+
+### Risky actions
+**A wrap-step data-loss event was caught before it committed.** Step 3's `check-archive.sh` printed `Auto-archived session-notes.md → session-notes-archive-2026-08.md (archived 4 entries, kept 10)`, but no archive file was modified — all five `session-notes-archive-*.md` files still carry an Aug 17 mtime and are byte-identical to HEAD. Meanwhile `session-notes.md` lost 247 lines and 4 entries (`2026-08-12` bounded-execution closure, `2026-08-12` harness v0.2 live trial, `2026-08-13` harness v0.2 go-live, `2026-08-13` compaction-survivability repair). Staging was stopped, `logs/session-notes.md` was restored from HEAD via `git show HEAD:... >` (a redirect, not a `git checkout` of a path) and this note re-appended, so nothing was lost and nothing shipped. **This is the third recorded occurrence of an already-`high`-severity pending defect** — `logs/improvement-log.md` `2026-08-15 — split-log.sh's archive step silently drops entries on a false idempotency match`. No new entry was filed, because `docs/commit-discipline.md` § Maintenance-owned in-place mutations bars an ordinary work session from editing an existing entry in these logs.
+
+Otherwise none. Both Work Loop commits touched only `logs/work-loop/canonical-rw-near-term-improvements.md`. The pre-existing uncommitted `logs/friction-log.md` change was left untouched throughout (friction log frozen workspace-wide). No merge, push, propagation or deploy was performed. One subagent was dispatched — read-only, bounded to twelve named paths, barred from `git` and from directory-wide search.
+
+### Findings Declined
+None — both new findings this session were queued, and the archive defect was matched to an existing open entry rather than duplicated.
+
+### Next Steps
+The next real action is the operator's, not a Claude command: decide whether to push the unpushed commits on `session/2026-08-17-research-workflow-fixes`, and whether to authorize a merge into main (the branch is not on main; neither actor merges or authorizes its own work). `logs/session-notes.md` remains over the archive threshold and will re-trigger Step 3 next wrap — the `split-log.sh` defect should be fixed before then, or the same silent trim will recur. After that, the highest-value carried item is the `/verify-chapter` Step 3a Evidence Pack gap, now queued at `high` — it halted the correction stage in a real attended run. S0 and S2–S11 of the near-term plan remain unopened.
+
+### Open Questions
+None.

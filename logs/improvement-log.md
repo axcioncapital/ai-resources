@@ -4154,3 +4154,27 @@ rewrite immediately after it).
 **Also unassessed:** the Independent Review Rule sizes this change as consequential (a model-invocable governing router now reachable from every Claude session in the workspace). Codex is the reviewer and could not run in this session, so the change is recorded `unassessed` per `docs/qc-independence.md`.
 
 **Target files:** `skills/axcion-repository-development/SKILL.md`, `skills/CATALOG.md` (§ Project Infrastructure note), workspace `CLAUDE.md` § Model Tier.
+
+## 2026-08-18 — `/verify-chapter` Step 3a does not pass the Evidence Pack that `evidence-prose-fixer` declares a blocking required input, and an attended run halted on it (PENDING)
+
+- **Severity:** high — the correction stage halted and applied zero corrections in a real attended current-HEAD run of the canonical Research Workflow. This is a demonstrated live stop, not a theoretical mismatch, and it affects every chapter that reaches the correction pass.
+
+**What was observed.** The S1 representative regression ran the same chapter through two attended arms. At Step 3a the two behaved differently: the pre-S1 baseline arm proceeded anyway and applied three corrections; the current-HEAD post-S1 arm halted and applied none. The cause is not S1 — `/verify-chapter` Step 3a does not pass the Evidence Pack, and `evidence-prose-fixer` declares that pack a blocking required input. The divergence is pre-existing and was inherited by both arms.
+
+**Why it surfaced here.** It forced the S1 semantic proof to be bounded at the verification relay: both arms' post-correction chapters and correction artifacts had to be excluded from Part B because the halt made them causally incomparable. That exclusion was a causal boundary, not a verdict — the correction stage was not tested and has not passed.
+
+**Why it is being queued now rather than assumed handled.** The gap was described in `workflows/research-workflow/tests/s1-representative/rubric.md` as "a live, separately recorded defect", but the only record is in `logs/friction-log.md`, which is frozen workspace-wide and is not a surface `/prime` builds its task menu from. Grep confirms it appears in neither `logs/improvement-log.md` nor `logs/next-up.md`. It was accurately diagnosed and structurally unreachable — exactly the failure mode `/wrap-session` Step 12e exists to end.
+
+**Target files:** `workflows/research-workflow/.claude/commands/verify-chapter.md` (Step 3a — pass the Evidence Pack), `workflows/research-workflow/.claude/agents/evidence-prose-fixer.md` (confirm the required-input contract is the one to satisfy).
+
+## 2026-08-18 — S1 representative rubric Part B cites a standard its own permitted-input set forbids the evaluator from reading (PENDING)
+
+- **Severity:** low — it does not invalidate the completed S1 evaluation (the allowed chapter and verification report directly settled the judgment), and it bites only if Part B is re-run. Recorded so a future evaluator does not have to re-derive the workaround.
+
+**The inconsistency.** `workflows/research-workflow/tests/s1-representative/rubric.md` Part B judgment 6 asks whether sourced findings remain distinguishable from inference "per `reference/quality-standards.md`". That file is not in the section headed "The artifacts the evaluator receives, and no others", and the rubric closes by requiring that a judgment the supplied artifacts cannot settle be answered UNCLEAR rather than from anything outside them. A strictly-bounded evaluator therefore cannot apply the standard the judgment names.
+
+**How Unit 21 handled it.** The evaluator was told the file was outside its permitted set, instructed not to read it, and directed to judge on the ordinary meaning of evidence/interpretation separation — answering UNCLEAR if the supplied artifacts could not settle it. It returned PRESERVED, citing § 1.2's standing interpretation notice and the verification report's own separation finding. The input set was not widened, and the rubric was not edited after the result was seen (the unit's brief forbade both).
+
+**The two resolutions, neither applied.** Either add `reference/quality-standards.md` to Part B's permitted artifact table, or drop the citation from judgment 6 and state the standard inline. Codex accepted this as a non-blocking deferral at S1 closure.
+
+**Target files:** `workflows/research-workflow/tests/s1-representative/rubric.md` (Part B — the artifact table and judgment 6).
