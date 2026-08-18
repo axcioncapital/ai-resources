@@ -12,11 +12,10 @@ Scope is Units 0–4 and the completion condition in `plans/work-loop-v2-v0.2/wo
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 4c — resolve the frozen independent-review findings once.
+Standard. Discovery mode. Unit 4d — final regression matrix and cleanup readiness.
 
-The unsafe fast-forward is reversed and the operator chose to continue from this bound implementation
-checkout. The correction round is frozen to the material findings already recorded; it is not a new
-general review or a reopening of Units 0–3.
+Unit 4c's single correction round is accepted at `63c02624`. No material review finding remains open;
+the final move is evidence-only and changes nothing beyond this state record.
 
 Named reason for the loop: the repair spans multiple bounded implementation and proof units, must survive hand-offs, and requires assessment independent of the implementer before it counts as complete.
 
@@ -24,106 +23,122 @@ Named reason for the loop: the repair spans multiple bounded implementation and 
 
 Inspected (2026-08-18):
 
-- Claim (1): HOLDS — read `.agents/skills/reorient/SKILL.md` Step 3 in full. Items 1 and 2 of the
-  ordered read list are "Read the complete `work-loop-v2` skill available in the current scope" and
-  "Read `references/core-resolution.md`, run the resolver it carries, and read the complete core file
-  that resolver prints", both unconditional. Searched the Step 3 span from its heading to the skill
-  read for `mandatory set|conditional|only when|read anything below`: no match. `.agents/skills/
-  work-loop-v2/SKILL.md` line 38 names the core-resolution read condition as "when the Work Loop owns
-  the move … and during `$reorient` recovery". No `a0f4f6ec` conditional semantics are present here.
-- Claim (2): HOLDS — `logs/scripts/work-loop-capability.sh` enumerated exactly five components and
-  no `.agents/skills/work-loop-v2/references/` path; `work-loop-capability.test.sh` line 319 listed
-  the same five. Reproduced live: with `core-resolution.md` moved aside the checker printed
-  `verdict: READY … all five Work Loop v2 components are present` at exit 0. `SKILL.md` links five
-  direct references, each with a read condition an admitted move can meet, so the smallest complete
-  component is the body plus the set it links — derived, not listed.
-- Claim (3): HOLDS — searched `routing-and-admission.md` for `` `references/…` ``: three hits, at the
-  routing-index read (step 2), the core-resolver run (step 3) and § The routing index. Searched it
-  for the old `chain_hits` pattern `\(references/…\)`: no match, so the guard was green on all three.
-- Claim (4): HOLDS — ran the seven present S8 order and clause predicates against
-  `git show a0f4f6ec:.agents/skills/reorient/SKILL.md`: all seven returned green, including the
-  order check and the `references/core-resolution.md` clause.
-- Claim (5): HOLDS — `git ls-files` matches no `u4-live-case`, `u4-live-case-governing-plan` or
-  `unit4-operator-prompt` path. `git grep` for `a0f4f6ec`'s two distinctive strings returns nothing.
-  Searched `.agents`, `logs/scripts`, `.claude`, `.codex` and `plans` for `5,?541`: one hit, plan
-  § 8 review prose naming the rejected number, which the brief permits as evidence and not a gate.
-- Claim (6): HOLDS — `092a1715` exists; at that revision `logs/work-loop/u4-live-case.md` contains
-  `U4-OLD-RESULT` 0 times, carries one `## Latest result`, is `status: active` / `turn: codex`, and
-  the validator prints `ACTIVE_CODEX` at exit 0 against that revision in a scratch checkout.
+- Claim (1): HOLDS — feature HEAD is `63c02624` on `session/2026-08-17-work-loop-fix-17-8`;
+  `git rev-parse --show-toplevel` is `…/ai-resources-work-loop-fix-17-8`; `logs/work-loop/.owner`
+  reads `work-loop-v2-post-compaction-recovery-repair` and `--depth repo` returns PROCEED; the
+  validator returned `ACTIVE_CLAUDE` on entry; `git status --porcelain` listed exactly one path,
+  this state file.
+- Claim (2): HOLDS — `ls logs/scripts/work-loop*.test.sh` returns exactly the nine suites the brief
+  names and no tenth. The matrix is not widened.
+- Claim (3): HOLDS — plan § 8 still carries all four, none erased: "Unit 4 — live post-compaction
+  case" (the accepted Attempt 2 semantic trace), the `092a1715` rollover evidence, "Independent
+  review" (`FAIL — correction required, 2026-08-18`), and "Correction round — the six frozen
+  findings". Noted for the closing record: that last subsection does **not** cite the correction
+  commit `63c02624` by hash — searched § 8 onward for it, 0 matches.
+- Claim (4): HOLDS — canonical `main` is `0d5641b8` with `git status --porcelain` empty. `git ls-files`
+  on this branch matches no `u4-live-case`, `unit4-operator-prompt` or `governing-plan` path.
+  `git branch -a --contains a0f4f6ec` returns only `disposable/wl2-unit4-case-2026-08-17`, and
+  `git merge-base --is-ancestor` puts it on neither this feature HEAD nor `main`.
+- Claim (5): HOLDS — both named worktrees exist and are inventoried below.
+- Claim (6): HOLDS — all six frozen findings carry a disposition in plan § 8's correction subsection.
+  The only open items are the two recorded non-behavioral deferrals, final evidence, closing
+  mechanics and cleanup.
 
-Result: the six frozen findings are resolved on this feature branch, with approved recovery semantics
-and the diagnostic-only byte treatment untouched. `$reorient`, `$realign`, the Work Loop main skill,
-the executable core and the resolver were not edited. Findings 1–3 were repaired in
-`work-loop-capability.sh` + its test, `routing-and-admission.md` + the Slice 1 chain guard, and the
-Tracer 7 S8 controls. Findings 4–6 are dispositions supported by repository evidence, not edits.
-Nothing was merged, cherry-picked or copied from the disposable branch, and the disposable
-worktree and branch are untouched.
+Result: the corrected feature branch is evidenced as ready to close. The complete Work Loop matrix is
+green at the exact feature HEAD, the Unit 4 evidence chain is coherent, and both cleanup targets are
+inventoried with their exact data-loss exposure. This unit changed nothing but this state record: no
+implementation, plan, worktree, branch or Git topology was touched.
 
-Evidence: each repaired control accepts its wrong fixture before and rejects it after.
-(1) Capability — before: `core-resolution.md` removed gave `READY` / exit 0; after: `missing:
-work-loop-references — … core-resolution.md is absent or unreadable` / exit 3, while the untouched
-checkout is `READY` on all six against canonical `ai-resources`. `work-loop-capability.test.sh`
-exits 0, 94 passed / 0 failed, with new cases for a removed reference, a removed body, a body linking
-nothing, per-reference attribution and reference drift.
-(2) Chain guard — before: the old pattern returned no hits on the pre-edit
-`routing-and-admission.md`; after: the new pattern returns its three backticked sibling paths on that
-same pre-edit file and none on any of the five live references. `work-loop-v2-slice-1.test.sh`
-exits 0, 407 passed / 0 failed, including a backticked negative fixture and a CONTROL asserting a
-bare ownership citation is not flagged.
-(3) Recovery contract — before: all seven present S8 predicates were green against `a0f4f6ec`; after,
-against that same content, the gate check returns `mandatory set / conditional / Read anything below
-only when` and the complete-core check returns absent, while the live file returns no gate words and
-carries the read. Both wrong fixtures are built from the live file, so the controls survive the
-disposable branch's scheduled removal. `work-loop-v2-tracer-7.test.sh` exits 0, 167 passed /
-0 failed, all nine scenarios PASS.
-Full correction record, including findings 4–6 and the deferrals, is in plan § 8
-"Correction round — the six frozen findings".
+Evidence — the complete matrix, one run each at HEAD `63c02624`, sequential:
 
-Deferred, recorded and not done (core § 3): `.claude/commands/work-loop-v2.md` Step 0 prose still
-says "five separate things", and `/sync-workflow`'s remediation still enumerates the five original
-component names — both count-only staleness in files outside this correction's implementation
-boundary, neither changing behaviour. Separately, `courier-operation.md` names a sibling path as an
-ownership citation; the guard's CONTROL fixes that as permitted, and whether references should cite
-siblings by path at all is a contract question rather than this correction's.
+| Suite | Exit | Result |
+|---|---|---|
+| `work-loop-capability.test.sh` | 0 | 94 passed, 0 failed |
+| `work-loop-lease.test.sh` | 0 | 136 passed, 0 failed |
+| `work-loop-owner.test.sh` | 0 | 133 passed, 0 failed |
+| `work-loop-session-preflight.test.sh` | 0 | 60 passed, 0 failed |
+| `work-loop-state.test.sh` | 0 | 100 passed, 0 failed |
+| `work-loop-v2-core-resolver.test.sh` | 0 | 5 passed, 0 failed |
+| `work-loop-v2-slice-1.test.sh` | 0 | 407 passed, 0 failed |
+| `work-loop-v2-tracer-6.test.sh` | 0 | 74 passed, 0 failed |
+| `work-loop-v2-tracer-7.test.sh` | 0 | 167 passed, 0 failed |
 
-Standing conditions this correction ran under, unchanged by it: canonical `main` remains at its
-pre-merge pointer `0d5641b8` after the operator's option-A restore; `4510cb0a` and `a0f4f6ec` stay
-reachable only on `disposable/wl2-unit4-case-2026-08-17`; and this remains the bound implementation
-checkout for corrected Unit 4. The failed review itself is recorded in plan § 8 and is not erased.
+Nine suites, **1,176 passed, 0 failed**, every exit 0, no rerun. Every count was parsed from the
+suite's own summary line; none was missing or unparseable. `grep` for a `FAIL` line across all nine
+captured outputs returns none. `git status --porcelain` after the run lists only this state file, so
+no suite left residue in the tree.
+
+Evidence — the Unit 4 chain, consolidated pointers:
+
+- **Accepted recovery trace:** plan § 8, "Unit 4 — live post-compaction case", Attempt 2 (2026-08-18).
+  It exercised the unconditional contract — complete lean Work Loop skill and complete core once each,
+  830 bytes of the 79,995-byte plan without widening, no courier/routing/routing-index/unit-framing
+  reference, actor-correct Claude `Next:`.
+- **Rollover revision:** `092a1715`. At that revision `logs/work-loop/u4-live-case.md` contains
+  `U4-OLD-RESULT` 0 times, carries exactly one `## Latest result`, is `status: active` / `turn: codex`,
+  and validates `ACTIVE_CODEX` at exit 0. Accepted for that behaviour alone; its byte-ceiling verdict
+  is non-governing.
+- **Resolved review findings:** correction commit `63c02624`, recorded in plan § 8 "Correction round
+  — the six frozen findings" with per-finding red/green.
+
+Evidence — cleanup readiness. Read-only inventory; nothing was removed, cleaned, reset or edited.
+
+**Target 1 — `…/ai-resources-wl2-unit4-case`.** Branch `disposable/wl2-unit4-case-2026-08-17`,
+HEAD `4510cb0a`. That commit is reachable from its own branch, so removing the **worktree** loses no
+committed history. `logs/work-loop/.owner` is empty — the checkout holds no task lease. Its
+`logs/work-loop/` carries 14 non-terminal records, and every one is tracked and preserved by the
+branch: 12 are `fixture-*` regression fixtures, one is `u4-context-refill-audit` (ACTIVE_CODEX,
+created by `d99e7eda` "fixture: Unit 4 representative live case — disposable, prepared but unrun",
+tracked on the disposable branch only), and one is a stale replica of **this** task at an older
+revision, which this checkout does not declare. `u4-live-case` there validates `CLOSED`.
+Untracked, and therefore the only thing a worktree removal destroys: `.unit4-preflight/preflight.sh`
+(9,868 bytes).
+
+**Target 2 — `…/ai-resources-wl2-unit4-cleanctl`.** Detached HEAD `7b130cd1`, which is a commit on
+**this** feature branch, so it holds no unique history at all. `.owner` empty; 13 non-terminal
+records, the same fixtures plus the same stale replica of this task. Untracked, and the only loss on
+removal: `.unit4-preflight/preflight.sh` (9,065 bytes).
+
+**The two untracked scripts are not the same file** — 9,868 vs 9,065 bytes, and `cmp` reports them
+different. Neither is tracked on any branch. The script's own header states it is "UNTRACKED AND
+DISPOSABLE ON PURPOSE … committed to no branch", so on its own account it is fixture-only; but it is
+the sole non-reproducible artifact in either target, and the two copies having diverged means
+removing both discards two distinct versions, not one file twice. That is the operator's call to
+make knowingly rather than an inference this unit is entitled to draw.
+
+**Worktree removal and branch deletion are separate, and only the first is authorized.** Removing
+both worktrees loses no committed history: Target 1's history survives on its branch, Target 2's on
+this one. Deleting `disposable/wl2-unit4-case-2026-08-17` is a different act — it is the only ref
+holding `4510cb0a`, `a0f4f6ec`, `092a1715` and `d99e7eda`, and `092a1715` is a live evidence pointer
+in the chain above. No separate authority for deleting it was found in the plan, so it stays for an
+explicit operator decision.
 
 ## Blocker
 
-None. The operator's decision resolved it.
+None.
 
 ## Next action
 
-Codex: run the correction closure check on the six frozen findings only — are findings 1–6 resolved,
-and did the correction break anything? Nothing else re-opens this unit.
+Codex: assess this discovery result and issue the close verdict, or say what remains.
 
-What the closure check has to work with:
+What the assessment has in front of it: the complete nine-suite matrix green at `63c02624` with
+1,176 passed and 0 failed; a coherent Unit 4 evidence chain (accepted Attempt 2 trace → `092a1715`
+rollover → `63c02624` correction); canonical `main` clean at `0d5641b8` with the rejected rewrite
+reachable only from the disposable branch; and a precise cleanup inventory in which the only
+non-reproducible artifact is two **divergent** untracked copies of a self-declared disposable
+preflight script.
 
-1. Capability presence now covers the direct references. Red/green above; `work-loop-capability.sh`
-   reports six components and derives the reference set from the skill's own links.
-2. The three backticked sibling loading instructions are gone from `routing-and-admission.md`, and
-   the Slice 1 chain guard now catches that shape while a CONTROL keeps a bare ownership citation
-   green.
-3. Tracer 7 S8 gains two predicates that reject the `a0f4f6ec` conditional shape, each paired with a
-   wrong fixture built from the live file rather than from the disposable branch.
-4–6. Dispositions, not edits: fixture authority and the byte ceiling are confirmed absent from the
-   tracked tree, the accepted semantic trace stays the pre-reversal one, and `092a1715` is accepted
-   for its rollover behaviour alone.
+Three things for the closing record to carry, none of them work for this unit:
 
-Did the correction break anything: `work-loop-capability.test.sh` 94/0 exit 0,
-`work-loop-v2-slice-1.test.sh` 407/0 exit 0, `work-loop-v2-tracer-7.test.sh` 167/0 exit 0 with all
-nine scenarios PASS. `$reorient`, `$realign`, the Work Loop main skill, the executable core and the
-resolver are unedited; the diagnostic-only byte treatment is unchanged; nothing entered this branch
-from the disposable one, whose worktree and branch are untouched.
+1. Plan § 8's correction subsection does not cite `63c02624` by hash. Adding that pointer is a plan
+   edit this discovery unit is not authorized to make.
+2. The two correction deferrals stand, unpromoted: the stale "five separate things" count prose in
+   `.claude/commands/work-loop-v2.md` Step 0 and `/sync-workflow`'s five-name remediation list; and
+   whether a reference may cite a sibling's path at all.
+3. Worktree removal is authorized at Unit 4 close; deletion of
+   `disposable/wl2-unit4-case-2026-08-17` is not, and that branch is the only ref preserving the
+   rejected history plus the `092a1715` evidence pointer.
 
-Two deferrals are recorded above and in plan § 8 and are for the closure check to accept or route,
-not to implement here: the "five separate things" count prose in `.claude/commands/work-loop-v2.md`
-Step 0 and `/sync-workflow`'s five-name remediation list, both outside this correction's
-implementation boundary; and whether a reference may cite a sibling's path at all, which is a
-contract question raised by `courier-operation.md`.
-
-Still deferred by the brief: the final complete Work Loop regression matrix, the task-close verdict,
-and destructive removal of the disposable worktree and branch.
+Still deferred and untouched here: the close verdict, the plan § 8 final status update, the closed-record
+write, the approved worktree cleanup, any branch deletion, merge to canonical `main`, remote
+reconciliation and push.
