@@ -474,7 +474,7 @@ LOG_REL=""
 # effect/commit, permission denial, and missing-handback/no-transition). It does
 # NOT cover the families that exit by another route: usage and argument refusal
 # and checkout/lease-infrastructure failure exit directly before a run id exists;
-# lease refusal has its own producer (refuse_17); on_signal() exits on its own
+# on_signal() exits on its own
 # path; and the five zero-exit sites are not this producer's terminals. Wiring
 # those is separate work with its own evidence — quietly extending the funnel here
 # would claim coverage that has not been proven.
@@ -1374,8 +1374,8 @@ die() { # code, message
   # Ordered deliberately: after the human message is on both channels, so the run
   # log the record points at already carries the wording; and BEFORE release_lock,
   # because a lease may only be released once the terminal result exists.
-  # THE PATH IS PRINTED — evidence nobody can find is not evidence, the same
-  # lesson refuse_17() records one directory over.
+  # THE PATH IS PRINTED — evidence nobody can find is not evidence. That lesson
+  # was learned by the lease refusal, which now leaves through this funnel too.
   #
   # THE RETURN IS HONORED. A failed publication transfers to the funnel's own
   # unprovability exit — pin, 38, no release — instead of continuing to the
@@ -1816,156 +1816,77 @@ holder_label() { # -> a phrase naming who holds the lease
   esac
 }
 
-# EXIT 17 IS THE ONE REFUSAL THAT USED TO LEAVE NOTHING BEHIND.
+# EXIT 17 NO LONGER KEEPS A DURABLE RECORD OF ITS OWN, and the apparatus that
+# wrote one is gone with it. What stood here — REFUSAL_DIR, open_refusal_record(),
+# r17() and refuse_17() — existed for one reason: exit 17 was taken before this
+# run owned a run identity or an evidence location, so finalize_terminal_result()
+# could not write for it and the refusal would otherwise have reached stderr and
+# nowhere else. That was a real gap, met live on 2026-08-14, and the standalone
+# `.refusal` sibling of the lease directories was the only place a run entitled
+# to nothing could put its evidence.
 #
-# It is taken before this run owns anything, so the refusal reached stderr and
-# nowhere else. That is invisible to an unattended dispatcher whose terminal
-# nobody is watching, which is exactly what the live cross-transport hop of
-# 2026-08-14 met: the dispatcher refused correctly at 17 while the attended
-# carrier held the lease, and the requested --log-dir was never even created, so
-# the losing transport left no evidence at all. The refusal was right and
-# unprovable, which for this spike is the same as missing.
+# THE REVISED PLAN REMOVES THE CONDITION, so it removes the workaround. A lease
+# refusal is now a terminal of an ADMITTED run: task, checkout and evidence
+# location were established and trusted long before the lease was asked for, and
+# run identity and the run log are opened above the lease call. So the refusal
+# writes the ordinary versioned terminal result, through the ordinary funnel,
+# into the run's own evidence location — and Change set A's "exactly one" is met
+# by there being exactly one producer, not two records that must agree.
 #
-# THE FIRST FIX PUT THE RECORD IN THE WRONG PLACE. It moved the run-evidence
-# block above acquire_lock, so the refusal had a run log to write into — inside
-# the checkout the operator had pointed --log-dir at. But a dispatcher that has
-# LOST admission owns neither lease, and a run that owns neither lease is not
-# entitled to a single byte of that working tree. Two runs racing for one
-# checkout would each leave marks in the other's tree, and the whole meaning of
-# losing admission is that the loser changes nothing. It also broke the next run
-# for real: an unstaged `refused-runs/` is an out-of-allowlist change, so the
-# following admitted dispatcher stopped at 18 over litter the refusal left.
-#
-# SO THE RECORD LIVES UNDER THE SHARED LEASE ROOT, in the Git common directory.
-# That location is not a convenience — it is the only one this process is already
-# entitled to write to before it owns anything, because taking a lease means
-# creating a directory there, and it is the one place EVERY linked worktree of
-# the repository can read. No new state store and no new command surface: this is
-# a `refusals/` sibling of the lease directories the same run would have created
-# had it won.
-#
-# Nothing globs the lease root expecting only `*.lock`, so a sibling is additive
-# (logs/scripts/work-loop-lease.sh addresses its two lease directories by exact
-# path; --status does the same).
-REFUSAL_DIR="$WL_LEASE_ROOT/refusals"
-REFUSAL_LOG=""
-REFUSAL_UNAVAILABLE=0
-
-# OPENED LAZILY, on the first line that needs it. An admitted run must file no
-# refusal record at all — a `refusals/` entry from a run that was never refused
-# is a false one, and the harness reads the absence as part of the contract.
-#
-# The name carries timestamp, pid and task, and DELIBERATELY NOT the lock key:
-# LOCK_KEY is unassigned on this path since the lease moved into the shared
-# library, and a name built from it would silently collapse to an empty field.
-# The pid is the discriminator that actually varies, and it is the one a refused
-# run can state about itself without asking the lease for anything.
-#
-# A FAILURE HERE IS ANNOUNCED, never swallowed. Silence would leave the operator
-# reading a refusal that names no record, with no way to tell "no record was
-# written" from "the record is somewhere I did not look".
-open_refusal_record() { # -> 0 with REFUSAL_LOG set, 1 otherwise
-  [ -n "$REFUSAL_LOG" ] && return 0
-  [ "$REFUSAL_UNAVAILABLE" -eq 1 ] && return 1
-  local cand
-  if ! mkdir -p "$REFUSAL_DIR" 2>/dev/null; then
-    REFUSAL_UNAVAILABLE=1
-    printf 'WARNING: cannot create the refusal-record directory %s — this refusal reaches the terminal only.\n' \
-      "$REFUSAL_DIR" >&2
-    return 1
-  fi
-  cand="$REFUSAL_DIR/$(date '+%Y%m%dT%H%M%S')-$$-$TASK.refusal"
-  if ! : >"$cand" 2>/dev/null; then
-    REFUSAL_UNAVAILABLE=1
-    printf 'WARNING: cannot open a refusal record at %s — this refusal reaches the terminal only.\n' \
-      "$cand" >&2
-    return 1
-  fi
-  REFUSAL_LOG="$cand"
-  return 0
-}
-
-# Two functions carry the fix. r17() writes one already-formatted line to BOTH
-# operator channels — the stderr wording below is unchanged, and what is new is
-# that the same bytes also reach the refusal record. refuse_17() writes the
-# machine-readable end of the record, names its path, and exits.
-r17() { # one already-formatted line or block
-  printf '%s\n' "$1" >&2
-  open_refusal_record && printf '%s\n' "$1" >>"$REFUSAL_LOG"
-  return 0
-}
-
-# The machine-readable half. The lines above are what an operator reads; this one
-# is what a later reader — a harness, a grep, the next unit's evidence — can match
-# without parsing prose. Written LAST, so its presence also says the refusal ran
-# to the end rather than dying halfway through reporting itself.
-#
-# `actor_launched=no` is STATED, not left to be inferred. The value of this record
-# is that it is written on a path which provably never reaches launch_actor(), and
-# a reader should not have to know where it came from to know that. Nothing else
-# in this script writes the `terminal-record` prefix, so a match is unambiguous.
-#
-# Empty holder fields render as "unrecorded", never as a free lease — the same
-# rule holder_label() follows, for the same reason.
-#
-# THE PATH IS PRINTED. The record no longer sits where the operator asked for
-# their logs, so a refusal that did not say where it went would be evidence
-# nobody can find — the same defect one directory over.
-refuse_17() { # -> never returns
-  if [ -n "$REFUSAL_LOG" ]; then
-    printf 'terminal-record outcome=refused code=17 task=%s resource=%s refusal=%s holder_program=%s holder_pid=%s holder_task=%s holder_checkout=%s actor_launched=no\n' \
-      "$TASK" \
-      "${WL_LEASE_RESOURCE:-unrecorded}" \
-      "${WL_LEASE_REFUSAL:-unrecorded}" \
-      "${WL_LEASE_HOLDER_PROGRAM:-unrecorded}" \
-      "${WL_LEASE_HOLDER_PID:-unrecorded}" \
-      "${WL_LEASE_HOLDER_TASK:-unrecorded}" \
-      "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}" \
-      >>"$REFUSAL_LOG"
-    printf '  refusal record: %s\n' "$REFUSAL_LOG" >&2
-    printf '  the requested --log-dir was NOT created: this run lost admission and wrote nothing into the checkout.\n' >&2
-  fi
-  exit 17
-}
-
+# DO NOT REINSTATE A SECOND STORE. Two durable records for one ending is the
+# failure this deletion closes: they can disagree, and a reader then has to
+# decide which is authoritative, which is a judgment no consumer of this spike
+# is allowed to make.
 acquire_lock() {
   wl_lease_acquire dispatch "$$"
   case "$?" in
     0) return 0 ;;
+    # STILL A DIRECT EXIT, and deliberately not a die(). An uncreatable lease root
+    # is lease INFRASTRUCTURE failing, not a lease being refused: it is exit 11,
+    # it is not one of Change set A's enumerated terminal classes, and routing it
+    # through the funnel would invent a terminal result for a class the plan does
+    # not list. The four refusals below are the class that moved.
     1) printf 'STOP [11] cannot create the lock root %s\n' "$LOCK_ROOT" >&2; exit 11 ;;
   esac
 
-  local who surv; who="$(holder_label)"
+  # THE FOUR REFUSALS LEAVE THROUGH die 17, the one funnel every other nonzero
+  # terminal already uses, so a lease-refused run finalizes exactly one run-bound
+  # terminal result through the single producer/consumer contract and files no
+  # second durable record of its own. die() prefixes `STOP [17] `, which is why
+  # the wording below no longer carries it; every operator-facing sentence is
+  # otherwise unchanged, and the continuation lines are joined into the one
+  # message so they reach stderr, the run log and the record together.
+  local who surv msg; who="$(holder_label)"
 
   if [ "$WL_LEASE_RESOURCE" = task ]; then
     # The PINNED lines are left program-agnostic on purpose. "the previous run"
     # is true whichever transport pinned it, so there is nothing false to fix
     # here, and the survivor pids inside the lease are what the operator acts on.
     if [ "$WL_LEASE_REFUSAL" = pinned ]; then
-      r17 "$(printf 'STOP [17] the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)' "$TASK" "$LOCK_DIR")"
+      msg="$(printf 'the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)' "$TASK" "$LOCK_DIR")"
       surv="$(sed 's/^/  /' "$WL_LEASE_SURVIVORS" 2>/dev/null)"
-      [ -n "$surv" ] && r17 "$surv"
-      refuse_17
+      [ -n "$surv" ] && msg="$msg"$'\n'"$surv"
+      die 17 "$msg"
     fi
-    r17 "$(printf 'STOP [17] %s holds task %s (%s)' "$who" "$TASK" "$LOCK_DIR")"
-    r17 "$(printf '  it is running in checkout: %s' "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}")"
-    refuse_17
+    msg="$(printf '%s holds task %s (%s)' "$who" "$TASK" "$LOCK_DIR")"
+    msg="$msg"$'\n'"$(printf '  it is running in checkout: %s' "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}")"
+    die 17 "$msg"
   fi
 
   if [ "$WL_LEASE_REFUSAL" = pinned ]; then
-    r17 "$(printf 'STOP [17] a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)' "$CHECKOUT_LOCK_DIR")"
+    msg="$(printf 'a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)' "$CHECKOUT_LOCK_DIR")"
     surv="$(sed 's/^/  /' "$WL_LEASE_SURVIVORS" 2>/dev/null)"
-    [ -n "$surv" ] && r17 "$surv"
-    refuse_17
+    [ -n "$surv" ] && msg="$msg"$'\n'"$surv"
+    die 17 "$msg"
   fi
-  r17 "$(printf 'STOP [17] %s is already running in this checkout (%s)' "$who" "$CHECKOUT")"
-  r17 "$(printf '  it is running task: %s' "${WL_LEASE_HOLDER_TASK:-an unrecorded task}")"
+  msg="$(printf '%s is already running in this checkout (%s)' "$who" "$CHECKOUT")"
+  msg="$msg"$'\n'"$(printf '  it is running task: %s' "${WL_LEASE_HOLDER_TASK:-an unrecorded task}")"
   # "two Work Loop runs", not "two dispatchers": the hazard is one working tree
   # and one index with two live writers in it, and that is the same hazard
   # whichever transport the other writer arrived by.
-  r17 '  two Work Loop runs in one checkout share a working tree and index, so either could'
-  r17 '  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.'
-  refuse_17
+  msg="$msg"$'\n''  two Work Loop runs in one checkout share a working tree and index, so either could'
+  msg="$msg"$'\n''  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.'
+  die 17 "$msg"
 }
 
 # A pinned lock is NOT released, by anything, including the EXIT trap. It is the
@@ -2795,16 +2716,11 @@ trap 'release_lock' EXIT
 trap 'on_signal INT'  INT
 trap 'on_signal TERM' TERM
 
-# --status is read-only by contract: it must not take the lock, because its whole
-# purpose is to be safe to run while another dispatcher holds it.
-#
-# EVERY WRITE THIS RUN MAKES INTO THE CHECKOUT IS BELOW THIS LINE. The run
-# evidence used to be opened above it, so that a refusal at 17 had somewhere to
-# write; that record now goes under the shared lease root instead (see
-# open_refusal_record above), which frees this ordering to say the thing it
-# should always have said — a dispatcher that has not won BOTH leases writes
-# nothing into the working tree it did not win.
-[ "$STATUS_MODE" -eq 1 ] || acquire_lock
+# THE LEASE IS NO LONGER ASKED FOR HERE. It is asked for BELOW the run-evidence
+# block, and the move is the whole of this unit — see the marked call site there
+# for why. What stays true at this point is the --status contract: the read-only
+# branch immediately below exits before any of it, so it still takes no lease,
+# creates no log directory and writes nothing.
 
 # ----------------------------------------------------------------- --status
 # Answers "is it still going?" without touching anything: no lock, no log dir, no
@@ -3161,17 +3077,33 @@ remaining_seconds() {
 
 # ------------------------------------------------------------ run evidence
 #
-# OPENED ONLY ONCE BOTH LEASES ARE HELD, and the position is the whole point.
-# Everything above this line is admission: argument parsing, the lease library,
-# acquire_lock and the read-only --status branch. Not one of them creates,
-# truncates, allowlists or writes a path inside the requested --log-dir, so a run
-# that is refused at 17 leaves the checkout byte-identical. Its evidence goes to
-# the shared lease root instead (open_refusal_record, above acquire_lock).
+# OPENED BEFORE THE LEASE IS ASKED FOR, and the position is the whole point.
 #
-# `--status` NEEDS NO GUARD HERE, and its absence is stronger than the flag it
-# replaces. The branch above exits 0 on every path, so this block is structurally
+# IT USED TO SIT BELOW acquire_lock, and that was right under the old boundary
+# and wrong under the approved one. The old reading was that winning the lease IS
+# admission, so a run refused at 17 had "lost admission" and was entitled to
+# nothing inside the checkout; its evidence went to a standalone `.refusal` record
+# under the shared lease root instead. The revised plan moves the boundary: a run
+# exists once task, checkout and evidence location are supplied and trusted, all
+# of which happened far above this line. A lease refusal is therefore a terminal
+# of an ADMITTED run, and Change set A requires exactly one run-bound terminal
+# result for it — which cannot exist while run identity and the evidence location
+# are created only after the lease is won. So the lease call moved down past this
+# block rather than this block moving up past the lease: same ordering, expressed
+# as one move, with the read-only --status branch still above both.
+#
+# WHAT IS DELIBERATELY NOT REOPENED. The old arrangement's second reason was
+# real and remains respected: a run must not scribble in a working tree on
+# somebody else's account. It does not apply to a refused run's own evidence
+# location, because that location is this run's, was named by the operator, and
+# is allowlisted below exactly as an admitted run's always was.
+#
+# `--status` NEEDS NO GUARD HERE, and its absence is still stronger than a flag.
+# The branch above exits 0 on every path, so this block stays structurally
 # unreachable in status mode rather than conditionally skipped — the read-only
-# contract case 30 and case 12h assert is now a property of the control flow.
+# contract case 30 and case 12h assert is still a property of the control flow,
+# and it is now the ONLY thing standing between --status and a log directory,
+# since the lease call no longer sits above it.
 # `--dry-run` is NOT excluded: it takes both leases, so it is an admitted run and
 # its evidence belongs where every admitted run's does.
 #
@@ -3283,6 +3215,26 @@ elif python3 -c 'import json' >/dev/null 2>&1; then
 else
   say "denial_parser=none — neither jq nor python3 is usable here, so a permission stop (37) CANNOT name the denied tool and target; it will say so rather than guess"
 fi
+
+# ------------------------------------------------------------- the two leases
+#
+# ASKED FOR HERE, once run identity and the evidence location exist, and that
+# order is this seam's whole content. A lease refusal is a terminal of an
+# admitted run under the approved plan, so it owes exactly one run-bound terminal
+# result — and finalize_terminal_result() refuses to write one without RUN_ID and
+# LOG_DIR (see its guard). Asking for the lease first made that guard fire on
+# every refusal, which is why the refusal used to need a durable record of its
+# own. It no longer does: acquire_lock's refusals leave through die 17, the same
+# single funnel every other nonzero terminal uses.
+#
+# STILL ABOVE EVERY MUTATING ACTION. The unattended profile below writes into the
+# run's evidence directory, launch_actor forks a child, and the state file is
+# read and written after that — none of it is reached without both leases. What
+# moved above this line is exactly the run's own identity and its own evidence
+# location, and nothing else.
+#
+# `--status` never reaches here: its branch exits 0 far above.
+[ "$STATUS_MODE" -eq 1 ] || acquire_lock
 
 # ------------------------------------------------- unattended contained profile
 #
