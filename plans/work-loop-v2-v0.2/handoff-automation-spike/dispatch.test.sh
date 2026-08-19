@@ -11928,6 +11928,74 @@ partial_section "$OUT" | grep -Fq -- "-note.md" \
          "the mutant still reported it, so case 70 is not testing the terminator" \
   || ok "70a — without \`--\` the actor's edit to the dash-named path goes UNREPORTED"
 
+# ================================================================== case 69b
+# THE ORDERING, NOT THE SPELLING.
+#
+# Case 69 proved the evidence directory ends up as one canonical value. It did
+# not constrain WHEN that value is chosen, and the answer used to be "after the
+# first filesystem effect": check_evidence_location() judged the raw operand,
+# `mkdir -p` created from that same raw operand, and only then did `cd && pwd -P`
+# work out what had been created.
+#
+# `ghost/../runs` is the smallest operand that tells those two apart. Its
+# canonical target is `<cwd>/runs` and nothing else, but mkdir -p walks the
+# SPELLING and creates `ghost` on the way through — a directory inside the
+# checkout, written by an invocation that had not been admitted, and never used
+# by the run that created it. The approved admission boundary says an invalid
+# pre-admission invocation mutates nothing, and a stray directory is a mutation.
+#
+# ASSERTED ON THE STRAY PATH, not only on the exit code. A refusal that still
+# created `ghost` would pass an exit-code-only test while leaving exactly the
+# effect this case exists to remove.
+echo
+echo "Case 69b — a non-canonical evidence operand creates nothing before it is normalized"
+d="$(new_sandbox)"; state_file "$d" "ghostdir-task" "claude"
+OUT="$( cd "$d" && bash "$DISPATCH_BIN" --checkout "$d" --task ghostdir-task \
+        --log-dir ghost/../runs --carry-one --actor-cmd "$FLIP" 2>&1 )"; RC=$?
+expect_rc 10 "$RC" "69b — the unresolvable spelling is refused as usage" "$OUT"
+out_has "STOP [10]" "$OUT" "69b — the refusal names itself on stderr"
+out_has "run evidence location" "$OUT" "69b — and names the boundary it was refused at"
+[ -e "$d/ghost" ] \
+  && bad "69b — no stray directory was created on the way to the refusal" \
+         "a directory named 'ghost' exists at $d/ghost" \
+  || ok "69b — no stray directory was created on the way to the refusal"
+[ -e "$d/runs" ] \
+  && bad "69b — and the resolved target was not created either" "$d/runs exists" \
+  || ok "69b — and the resolved target was not created either"
+[ -e "$d/.git/work-loop-dispatch-locks" ] \
+  && bad "69b — no lease was taken" "a lease root exists" \
+  || ok "69b — no lease was taken"
+[ -e "$d.calls" ] \
+  && bad "69b — no actor was launched" "the actor recorded a call" \
+  || ok "69b — no actor was launched"
+
+# THE OTHER HALF, and it is what keeps 69b from being a blanket ban on `..`.
+# When every component exists the kernel resolves the whole path, so the same
+# spelling is admitted and normalized to the one directory it names.
+echo
+echo "Case 69c — the same spelling is ADMITTED once its components exist"
+d="$(new_sandbox)"; state_file "$d" "ghostreal-task" "claude"
+mkdir -p "$d/ghost" "$d/runs"
+OUT="$( cd "$d" && bash "$DISPATCH_BIN" --checkout "$d" --task ghostreal-task \
+        --log-dir ghost/../runs --carry-one --actor-cmd "$FLIP" 2>&1 )"; RC=$?
+expect_rc 0 "$RC" "69c — the run completes when the spelling resolves" "$OUT"
+R69C="$d/runs/$(run_id_of "$OUT").result"
+[ -f "$R69C" ] \
+  && ok "69c — its evidence went to the resolved directory" \
+  || bad "69c — its evidence went to the resolved directory" \
+         "missing $R69C; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+# The `..` is gone from the reported path: normalized, not merely accepted.
+case "$(res_field "$R69C" run_log)" in
+  *..*) bad "69c — the reported path carries no unresolved \`..\`" \
+            "got: $(res_field "$R69C" run_log)" ;;
+  /*/runs/*) ok "69c — the reported path carries no unresolved \`..\`" ;;
+  *) bad "69c — the reported path carries no unresolved \`..\`" \
+         "got: $(res_field "$R69C" run_log)" ;;
+esac
+[ -e "$d/ghost/runs" ] \
+  && bad "69c — and nothing was created under the traversed component" "$d/ghost/runs exists" \
+  || ok "69c — and nothing was created under the traversed component"
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

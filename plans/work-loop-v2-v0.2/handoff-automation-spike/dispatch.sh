@@ -306,6 +306,11 @@ DEADLINE=""
 CODEX_BIN="/Applications/ChatGPT.app/Contents/Resources/codex"
 CLAUDE_BIN=""
 LOG_DIR=""
+# The one canonical absolute evidence directory, chosen read-only at admission by
+# check_evidence_location() and copied into LOG_DIR/LOG_DIR_ABS there. Declared
+# beside LOG_DIR because it replaces it: after admission the two are the same
+# value, and this one is where that value is decided.
+LOG_DIR_SELECTED=""
 DRY_RUN=0
 STATUS_MODE=0
 CARRY_ONE=0
@@ -1605,8 +1610,8 @@ fi
 # over a directory it would never touch would be answering a question nobody
 # asked. --dry-run is NOT excluded — it takes both leases, so it is an admitted
 # run and it is held to the admitted run's boundary.
-check_evidence_location() { # requested-or-default path -> 0, or exits 10
-  local want="$1" probe parent
+check_evidence_location() { # requested-or-default path -> sets LOG_DIR_SELECTED, or exits 10
+  local want="$1" probe parent tail base probe_abs
   # `-` IS THE ONE OPERAND THAT CANNOT BE MADE INTO A PATH.
   #
   # Every other leading-dash value below is a legal directory name that only
@@ -1638,17 +1643,44 @@ check_evidence_location() { # requested-or-default path -> 0, or exits 10
     printf 'STOP [10] run evidence location is a symlink that does not resolve to a directory: %s\n' "$want" >&2
     exit 10
   fi
+  # THE SELECTION IS MADE HERE, READ-ONLY, AND NOTHING IS CREATED BY IT.
+  #
+  # It used to be made two ways in two places: this function judged the raw
+  # spelling, `mkdir -p` then took the FIRST FILESYSTEM EFFECT from that same raw
+  # spelling, and only afterwards did `cd … && pwd -P` work out what the location
+  # actually was. So the run created a path derived from text nobody had
+  # normalized. `--log-dir ghost/../runs` is the small discriminator: mkdir -p
+  # walks the spelling and creates BOTH `ghost` and `runs`, while the canonical
+  # target is only `…/runs` — a stray directory inside the checkout, written by
+  # an invocation that had not yet been admitted. The approved plan's admission
+  # boundary asks for the evidence location to be a trusted value BEFORE a run
+  # exists, and a value that has already had a side effect is not that.
   if [ -e "$want" ]; then
     [ -d "$want" ] || {
       printf 'STOP [10] run evidence location exists and is not a directory: %s\n' "$want" >&2; exit 10; }
     [ -w "$want" ] || {
       printf 'STOP [10] run evidence directory is not writable: %s\n' "$want" >&2; exit 10; }
+    # The whole path exists, so the kernel resolves every `..` and every symlink
+    # in it. Nothing is left for this function to reason about.
+    LOG_DIR_SELECTED="$(cd -- "$want" && pwd -P)" || {
+      printf 'STOP [10] run evidence directory cannot be resolved: %s\n' "$want" >&2; exit 10; }
     return 0
   fi
-  probe="$want"
+  # WALKED WITH PARAMETER EXPANSION, NOT `dirname`. The old walk shelled out, and
+  # `dirname -runs` is `dirname: illegal option -- r` on BSD — the same
+  # leading-dash-in-option-position defect this slice is about, in the very code
+  # that is supposed to be judging the operand. It recovered by accident (the
+  # failed call returned empty, and `dirname ""` is `.`), which is not a property
+  # to keep. These expansions are shell builtins and cannot misread an operand.
+  probe="$want"; tail=""
   while [ ! -e "$probe" ]; do
-    parent="$(dirname "$probe")"
+    case "$probe" in
+      */*) parent="${probe%/*}"; [ -n "$parent" ] || parent="/" ;;
+      *)   parent="." ;;
+    esac
     [ "$parent" = "$probe" ] && break
+    base="${probe##*/}"
+    [ -n "$base" ] && tail="$base${tail:+/$tail}"
     probe="$parent"
   done
   [ -d "$probe" ] || {
@@ -1657,15 +1689,46 @@ check_evidence_location() { # requested-or-default path -> 0, or exits 10
   [ -w "$probe" ] || {
     printf 'STOP [10] run evidence location cannot be created — %s is not writable: %s\n' "$probe" "$want" >&2
     exit 10; }
+  # `.` and `..` BEYOND THE LAST EXISTING DIRECTORY ARE REFUSED, because they
+  # cannot be resolved without inventing the components they refer to. Every such
+  # component is by construction one the filesystem does not have, so there is
+  # nothing to ask and no honest answer to compute — and resolving them lexically
+  # here would be this dispatcher deciding what a path means, which is the path
+  # framework this slice is explicitly not building. Note where this does NOT
+  # bite: `ghost/../runs` with a real `ghost` is fully resolved by the branch
+  # above, and a leading `./` is consumed by the ancestor rather than the tail,
+  # so `./runs` and the documented `./-` escape hatch are unaffected.
+  case "/$tail/" in
+    */../*|*/./*)
+      printf 'STOP [10] run evidence location contains a "." or ".." below the last existing directory (%s), which cannot be resolved without creating the components it refers to: %s\n' "$probe" "$want" >&2
+      exit 10 ;;
+  esac
+  probe_abs="$(cd -- "$probe" && pwd -P)" || {
+    printf 'STOP [10] run evidence location cannot be resolved: %s\n' "$want" >&2; exit 10; }
+  # `/` needs no separator of its own; every other parent does.
+  case "$probe_abs" in
+    /) LOG_DIR_SELECTED="/$tail" ;;
+    *) LOG_DIR_SELECTED="$probe_abs${tail:+/$tail}" ;;
+  esac
   return 0
 }
 if [ "$STATUS_MODE" -ne 1 ]; then
-  # The same resolution line 3112 makes below, and deliberately the same one: a
-  # boundary that validated the request while the run used the default would be
-  # checking a path nothing writes to.
+  # The same resolution the run-evidence block makes below, and deliberately the
+  # same one: a boundary that validated the request while the run used the
+  # default would be checking a path nothing writes to.
   LOG_DIR_WANTED="$LOG_DIR"
   [ -n "$LOG_DIR_WANTED" ] || LOG_DIR_WANTED="$DEFAULT_LOG_DIR"
   check_evidence_location "$LOG_DIR_WANTED"
+  # ONE VALUE, FROM ADMISSION ONWARD — the point the correction moves.
+  #
+  # Unit 20 collapsed the two forms into one but did it at the creation site,
+  # which left the raw spelling live across run identity, both leases and the
+  # first mkdir. Assigning here means no code between admission and the run ever
+  # sees the unnormalized text — including the die paths, which name $LOG_DIR in
+  # their "check that … is writable" advice and would otherwise quote a path the
+  # run was not using.
+  LOG_DIR="$LOG_DIR_SELECTED"
+  LOG_DIR_ABS="$LOG_DIR_SELECTED"
 fi
 
 # ------------------------------------------- state file reading (read-only)
@@ -3210,24 +3273,14 @@ remaining_seconds() {
 # kept even so: admission proved the location was usable then, and this is where
 # it is actually used — a check that cannot fail is not a check (§ 6 rule 5), and
 # the interval between the two is real.
-[ -n "$LOG_DIR" ] || LOG_DIR="$DEFAULT_LOG_DIR"
-# `--` ON BOTH, because this is the one dispatcher value that reaches a command
-# in option position while still being operator-supplied free text. Everything
-# else handed to an external command is a canonical absolute path, a commit
-# hash, or a task id already bounded to `^[A-Za-z0-9][A-Za-z0-9._-]*$` — none of
-# which can begin with a dash. Without the terminators, `--log-dir -runs` was
-# consumed as `mkdir: illegal option -- r` and a legal directory name was
-# refused as syntax.
-mkdir -p -- "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
-# The dispatcher's own evidence directory is not "foreign work". When --log-dir
-# points inside the checkout, the run log this process is about to write would
-# otherwise register as an out-of-allowlist change made by the dispatcher itself,
-# and the pre-hop gate below would stop on it.
-LOG_DIR_ABS="$(cd -- "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canonicalize log dir\n' >&2; exit 10; }
-# ONE VALUE FROM HERE ON, and this line is the whole point of the block.
+# CREATION ONLY. The value was selected, canonicalized and made the single
+# LOG_DIR/LOG_DIR_ABS at admission, above check_evidence_location — so by the
+# time control reaches this line there is nothing left to normalize and no raw
+# spelling to normalize it from. What used to sit here was the reverse order:
+# create from the raw text, then find out what had been created.
 #
-# The two forms used to be kept side by side with DIFFERENT CONSUMERS, which is
-# a divergence waiting for an operand where they disagree:
+# The two forms this block used to reconcile had DIFFERENT CONSUMERS, which is
+# what made the ordering matter rather than being a tidiness point:
 #
 #   raw LOG_DIR       -> $RUN_LOG, the hop captures, the unattended profile,
 #                        $final in finalize_terminal_result(), and every
@@ -3237,12 +3290,15 @@ LOG_DIR_ABS="$(cd -- "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canoni
 #
 # So an admitted run could write its durable terminal result to one path and
 # then look for it at another — the exact failure the Gate SA claim is about.
-# Collapsing them here rather than rewriting each consumer keeps the fix to one
-# line and makes the divergence unreachable instead of merely unlikely: there is
-# no longer a second value for a later edit to pick the wrong one of.
 #
-# AFTER the canonicalization and BEFORE the first consumer, which is RUN_LOG.
-LOG_DIR="$LOG_DIR_ABS"
+# `--` IS KEPT even though LOG_DIR can no longer begin with a dash here. It
+# costs nothing and it keeps this site's safety local, rather than resting on an
+# assignment fifteen hundred lines away that a later edit could move.
+mkdir -p -- "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
+# The dispatcher's own evidence directory is not "foreign work". When --log-dir
+# points inside the checkout, the run log this process is about to write would
+# otherwise register as an out-of-allowlist change made by the dispatcher itself,
+# and the pre-hop gate below would stop on it.
 if [ "$LOG_DIR_ABS" != "$CHECKOUT" ] && [ "${LOG_DIR_ABS#"$CHECKOUT"/}" != "$LOG_DIR_ABS" ]; then
   # Assigns the global declared near LAST_CAPTURE — allowlisted_dirty() reads it
   # to keep this directory out of the partial-effect report (O2).
