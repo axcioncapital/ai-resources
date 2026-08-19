@@ -17,19 +17,22 @@ evidence, and an honest burden comparison against L1.
 
 Scope is the integration checkout
 `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-rw-l4-integration` and exactly one
-consumer, `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence`.
-Manual reconciliation only. Preserve every project-owned specialization; inability to do so stops the
-pilot. Excluded: a second consumer, generic rollout or propagation/sync machinery, Content Programme
-integration, retrieval/API/statistics work, source products, deep-pipeline redesign, push, merge to
-`main`, production deployment, and any reopening of accepted L1, L2 or L3.
+consumer checkout,
+`/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence-l1-trial`,
+on the accepted L1 branch `trial/l1-repeat-precision-components` at `689afa8`. The ordinary
+`projects/axcion-sector-intelligence` checkout is not a second consumer and is not an implementation
+target; it is historical comparison evidence only. Manual reconciliation only. Preserve every
+project-owned specialization; inability to do so stops the pilot.
 
-Founder revise/approve/reject is operator-owned. No plan approval, prior trial, test fixture or agent
-verdict pre-approves the L4 case's judgment content; a later unit must stop at that decision seam for
-the operator.
+Excluded: a second consumer, generic rollout or propagation/sync machinery, Content Programme
+integration, retrieval/API/statistics work, source products, deep-pipeline redesign, push, merge to
+`main`, production deployment, and any reopening of accepted L1, L2 or L3. Founder
+revise/approve/reject is operator-owned: no plan approval, prior trial, fixture or agent verdict
+pre-approves the L4 case's judgment content, and the later operating unit must stop at that seam.
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 1 — freeze the L4 pre-install baseline.
+Standard. Discovery mode. Unit 2 — bind the accepted L1 consumer.
 
 Named reason for the loop: the task spans a manual cross-repository integration, a genuine operating
 case and an operator-owned founder gate; its scope must stay bounded, and the result must be assessed
@@ -37,358 +40,336 @@ independently of the executor before it counts as the plan's terminal proof.
 
 ## Brief
 
-L4 is the approved plan's terminal outcome: accepted L2 and L3 are integrated at `26ee26d4`, so the
-next justified move is to establish the one-consumer pre-install baseline before editing. This unit
-exists because the consumer's live checkout, instantiated references, project-owned specializations
-and regression state must be verified rather than inferred. It advances the operator's requested
-manual pilot by fixing the exact reconciliation boundary and fail-capable before-state; it does not
-install anything or run the genuine case.
+Unit 1 established the canonical regression floor but falsified Codex's assumed consumer checkout:
+accepted L1 and L2 representative evidence bind the clean Sector trial at `689afa8`, not the older
+82/82 checkout at `d0cb658b`. This unit re-establishes the complete pre-install reconciliation map on
+that accepted checkout before any edit, preserving the approved L4 sequence and one-consumer boundary.
+It does not install, repair or run the genuine case.
 
-**Operator objective preserved:** manually reconcile the combined capability into one bound Sector
-Intelligence consumer and prove one genuine end-to-end use through routing, evidence, independent
-judgment challenge, founder revision/approval or rejection, approved House View, downstream analysis
-and prose, and independent content QC, including pre/post inventories, canonical and project
-regressions, reference reconciliation, and burden comparison against L1.
+**Plan justification and current position:** the content-bound approved plan at `8bf9d0d9` places L4
+after accepted L2 and L3 and requires a deliberate manual install into one Sector Intelligence
+consumer, project-specialization preservation, pre/post inventories, green canonical and project
+regressions, and one genuine operating proof. Unit 1 is accepted at handback commit `609b5547`:
+integrated L2 reproduced **125/125**, accepted L3 reproduced **88/88**, the older consumer reproduced
+only four suites at **82/82**, and the accepted L1 trial checkout reproduced its five suites at
+**145/145** with `challenge` — not `promotion` — as the fifth suite. Those results and the frozen L1
+burden comparator are settled evidence and must not be rerun in this unit.
+
+**Material reclassification, attributed to Codex:** the exact ordinary-consumer path in Unit 1 was
+Codex's preparation assumption, not an operator decision or a requirement of the approved plan.
+Repository evidence falsified it. Rebinding to the accepted L1 trial checkout is a disclosed
+technical framing correction inside the approved solution envelope: it remains the same Sector
+Intelligence repository and exactly one consumer, while making the L4 comparison like-for-like with
+accepted L1 and L2 evidence. It does not authorize a merge between consumer branches or any change to
+the older checkout.
 
 **Governing sources and dispositions:**
 
-- The current operator decision governs the exact integration checkout, branch and integrated commit;
-  accepted L2/L3 prerequisites; the one-consumer/manual-only boundary; the no-push/no-merge exclusions;
-  and the evidence clarification below.
-- `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md` is the
-  canonical operator-approved plan. Its material content is bound to
-  `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`; later changes are governing only as administrative
-  approval metadata unless a diff proves otherwise. Sections 5–9 justify L4, its proof, its stop
-  conditions, its exclusions and the terminal condition.
-- `logs/work-loop/canonical-rw-l2-house-view.md` is authoritative accepted L2 state at `e16cf206`,
-  subject to the evidence classification below; it is not reopened.
-- `logs/work-loop/canonical-rw-lightweight-l3-adapter.md` is authoritative accepted L3 state at
-  `5cc6d105`; it is not reopened.
-- `logs/work-loop/canonical-rw-judgment-l1-repair.md` is historical accepted L1 operating evidence and
-  the burden comparator, not the current integrated L2 baseline.
-- Current files in both checkouts are verify-first repository reality. Existing consumer files,
-  specializations, dirty changes and historical trial artifacts are not authority to widen the unit
-  or overwrite project-owned content.
+- The operator-approved material plan at
+  `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`, bound
+  to `8bf9d0d9`, governs outcome, sequence, proof and exclusions.
+- `logs/work-loop/canonical-rw-judgment-l1-repair.md` governs accepted L1 outcome, repair commits,
+  trial branch, evidence and burden comparator.
+- `logs/work-loop/canonical-rw-l2-house-view.md` governs the accepted canonical authority contract
+  and binds its representative specimen to Sector trial commit `689afa8`; its 145/145 reference is
+  historical L1 evidence, not current integrated L2 evidence.
+- `logs/work-loop/canonical-rw-lightweight-l3-adapter.md` governs the accepted L3 adapter and its
+  integration constraints.
+- Unit 1's accepted result is authoritative current state for the baseline and the discovered
+  binding conflict. Current bytes in both repositories remain verify-first reality.
 
-**Evidence classification that must survive this task:** the current integrated L2 five-suite total
-is **125/125**. The **145/145** figure quoted in the L2 closing record is explicitly labelled there as
-L1's five-suite floor and remains historical L1 evidence; it is not the current integrated L2
-baseline. Verify the current suites, record the distinction, and do not reinterpret a mismatch as
-permission to reopen or repair L2 — hand it back as a false premise or regression instead.
+**Dominant deliverable:** one complete, fail-capable pre-install reconciliation map and safe later-edit
+boundary for the accepted L1 consumer checkout at `689afa8`.
 
-**Dominant deliverable:** one verified, reproducible pre-install integration baseline for the bound
-Sector Intelligence consumer, including the complete deliberate reconciliation map that a later
-manual-install unit can act on without guessing.
+**Evidence required in this hop:** exact checkout/repository/ownership identity; proof that the trial
+checkout is the accepted L1 state and the same single Sector Intelligence repository; a complete
+canonical-to-trial delta inventory for every L2/L3 surface and instantiated project reference; an
+explicit repository-grounded disposition for `reference/stage-5-paths.md`; and a minimal later-install
+allowlist plus preservation list that could fail if any specialization or unrelated state were
+touched.
 
-**Evidence required in this hop:** checkout/authority identity; exact clean/dirty pre-state for both
-repositories; complete canonical-to-consumer surface and instantiated-reference inventory with a
-preserve/reconcile/add/not-applicable disposition for every relevant item; individually reported
-canonical L2, canonical L3 and project-local regression results with totals; and the fixed L1 burden
-facts plus the L4 measurements that can and cannot be captured honestly from existing evidence.
+**Evidence explicitly deferred:** all installation edits; targeted failing install cases; post-install
+canonical and project regressions; real Light/Standard use and Deep handoff/escalation; the genuine
+integrated case; independent judgment challenge; founder decision; approved-authority downstream
+analysis/prose; independent content QC; completed burden comparison; and the final L4 verdict.
 
-**Evidence explicitly deferred:** all consumer edits and installation; post-install inventory and
-regressions; real Light and Standard uses and the Deep handoff/escalation; the genuine integrated case;
-independent judgment challenge; the founder decision; approved-authority downstream analysis/prose;
-independent content QC; the completed L1 burden comparison; and the final L4 adoption verdict.
+**Check against the repositories:**
 
-**Required inspection and evidence:**
+1. Validate this task and its owning integration checkout at repository depth. Verify that the
+   integration checkout remains on `session/2026-08-19-rw-l4-integration` and that its current HEAD
+   contains handback commit `609b5547`; record any unrelated dirt and stop if it overlaps this task.
+2. Bind
+   `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence-l1-trial`
+   with `git rev-parse --show-toplevel`, `--git-common-dir`, branch, exact HEAD, registered-worktree
+   identity, complete staged/unstaged/untracked state, and its local Work Loop ownership declaration.
+   The claim to verify is: branch `trial/l1-repeat-precision-components`, HEAD
+   `689afa840294bf0972e797d50d795163b8ef67f5`, clean tree, no conflicting active task.
+3. Establish from Git common-directory identity that the trial checkout and the older
+   `projects/axcion-sector-intelligence` checkout are two checkouts of the same repository, not two
+   consumers. Verify `ba7e37a` and `9e3242b` are ancestors of `689afa8`, and that the five accepted
+   project suites and the L2-scored `precision-components` approved specimen are present at the exact
+   paths cited in Unit 1. Do not rerun the five suites.
+4. Reconcile the accepted canonical L2/L3 surfaces at integration HEAD against the trial checkout,
+   not against `d0cb658b`. Bound searches to the L2 authority contract, producer/challenge/promotion
+   helpers, judgment seam/consumption checks, authority-consuming command/QC bodies, L3 entry,
+   classifier, Standard adapter, memo checker, Deep handoff, their tests, and the Research Workflow's
+   required reference inventory. For every item report: canonical path, trial path or bounded absence,
+   symlink/regular status, byte identity where meaningful, project ownership/specialization, and
+   later disposition `ADD`, `DELIBERATE MERGE`, `PRESERVE`, or `NOT APPLICABLE`.
+5. Re-check every project-owned reference and authority-consuming command identified in Unit 1 on the
+   trial checkout. Report only material deltas from the accepted Unit 1 map, but return a final map
+   complete enough that an install unit need not consult the superseded `d0cb658b` map. Do not treat
+   same role or filename as permission to overwrite instantiated content.
+6. Resolve the `reference/stage-5-paths.md` unknown by inspecting the canonical template/contract and
+   the trial checkout's existing project configuration and actual analysis, synthesis, architecture,
+   prose and QC paths. If one exact valid instantiation is mechanically determined by repository
+   reality, state the values and later disposition without creating the file. If more than one
+   materially different valid behavior remains, hand back the precise choice; do not invent project
+   intent. Also identify the fail-capable check that will prove Stage 5 no longer halts after a later
+   install.
+7. Return a task-scoped later-install allowlist and a separate preservation list. The allowlist must
+   contain only files required to manually reconcile L2/L3 into this one checkout; the preservation
+   list must include existing approved/proposed judgment artifacts, instantiated references,
+   project-only specializations and any unrelated dirty state. Do not prescribe an implementation
+   mechanism where the governing sources have not settled one.
 
-1. Validate this task and ownership at repository depth before anything else. Then verify the
-   integration checkout with `pwd -P`, `git branch --show-current`, `git rev-parse HEAD`,
-   `git status --short`, and ancestry checks showing `e16cf206` and `5cc6d105` are ancestors of
-   `26ee26d4`. Expected branch: `session/2026-08-19-rw-l4-integration`; expected HEAD:
-   `26ee26d46b6aa76e353f07f1babcc4667ef44d03`.
-2. Verify plan authority by comparing the plan at `8bf9d0d9` with the current file. The only permitted
-   material difference is administrative approval metadata identifying that same content-bound
-   approval. If objective, scope, exclusions, sequence, evidence or authority relationships differ,
-   stop.
-3. Bind the single consumer path above to its canonical repository root, current branch, exact HEAD,
-   registered-worktree identity and complete staged/unstaged/untracked state. Codex observed branch
-   `codex/florian-demo-continue`, HEAD `d0cb658b9266c4af553ad224181d942e473a61cd`, a modified
-   `logs/friction-log.md`, and an untracked
-   `reports/analyst-judgment-layer-implementation-research-v1.md`; treat all four as claims to check,
-   not permission to edit, move, discard or absorb those changes. State whether later integration can
-   safely use this checkout or requires an isolated checkout of the same consumer; do not create one
-   in this discovery unit.
-4. Inventory the accepted canonical L2 contract, producer/challenge/promotion helpers, authority
-   consumers, QC seams, templates/references and their tests under `workflows/research-workflow/`.
-   Inventory the accepted L3 entry command, classifier, Standard House View adapter, memo checker,
-   Deep handoff/escalation behavior and their tests under `.claude/commands/research-route.md` and
-   `logs/scripts/research-route-*`. Record symlink versus regular-file status and exact path/byte
-   identity where that distinction affects live behavior.
-5. Inventory the consumer's corresponding `.claude/`, `logs/scripts/`, `reference/`, `docs/`,
-   `analysis/judgment/`, analysis, synthesis, architecture, prose and content-QC surfaces. Use
-   `workflows/research-workflow/docs/required-reference-files.md`, the accepted L2 authority contract,
-   the L3 adapter contract and the consumer's own instructions/configuration to enumerate every
-   instantiated reference that must receive an explicit disposition. Mark project-owned
-   specializations as preserve or deliberate merge; never classify an instantiated project reference
-   as overwrite merely because a canonical template has the same role.
-6. Run and report separately the five current integrated L2 suites: contract, challenge, promotion,
-   judgment seam and judgment consumption. The expected aggregate is **125 passed, 0 failed**. Quote
-   each suite's own terminal count/output and the aggregate; do not substitute L1's 145/145.
-7. Run and report separately the three accepted L3 suites
-   `research-route-l3-unit-1.test.sh`, `research-route-l3-unit-2.test.sh`, and
-   `research-route-l3-adapter-unit-1.test.sh`. Record each total and their aggregate; do not infer
-   success from exit code alone.
-8. Run and report separately the consumer's five L1-era judgment suites: contract, producer, gate,
-   propagation and promotion. Label their result **project-local/L1-derived pre-install evidence**,
-   not integrated L2 evidence, even if the aggregate is 145/145. Also identify the project regression
-   commands that later installation must rerun; do not broaden into unrelated whole-project tests
-   without a cited integration dependency.
-9. Freeze the burden comparator without inventing unavailable values: L1 recorded 829,650 subagent
-   tokens, three review rounds, two revision loops and a 2,609-word approved artifact; operator-active
-   minutes, main-session tokens and monetary cost were unavailable. Record the L4 start as
-   `2026-08-19 11:32:55 EEST`, name the existing evidence surfaces that can capture elapsed time,
-   review/revision loops, artifact count and any actual token/cost data, and preserve `unavailable`
-   where evidence does not exist. Do not build instrumentation or propagation machinery.
+For every absence, name the searched surface and matching rule. Create no second inventory, context,
+run-log or planning artifact: place the compact complete map and evidence in `## Latest result`.
 
-For every inventory, name the searched surface and matching rule so absence claims remain bounded.
-Return a compact reconciliation table in `## Latest result`: canonical item, consumer item or absence,
-ownership/specialization, pre-state, and later disposition. It may point to command output already
-tracked by Git, but create no second context, inventory, run-log or planning artifact.
+**Capability subset:** baseline only — read, search, inspect history and update/commit this task state
+file. No canonical or consumer edit, branch creation, checkout switch, worktree creation or test rerun
+is authorized in this unit. Nothing is selected from the empty pre-authorizable set; no network,
+remote service, push, PR, merge, deployment, credential access, destructive operation or policy
+change is needed.
 
-**Capability subset:** baseline only — read, search, inspect history, run local tests, and update and
-commit this task state file. No canonical or consumer implementation edit is authorized in this unit.
-Nothing is selected from the pre-authorizable set, which is empty; no network, dependency resolution,
-remote service, push, PR, merge, deployment, credential access, destructive operation or policy change
-is needed.
+**Stop and hand back if:** identity, same-repository, accepted-commit or ownership claims fail; the
+trial tree is not clean; the L1 repair/specimen cannot be tied to `689afa8`; the trial map leaves a
+project specialization without a safe deliberate disposition; Stage 5 paths require unresolved
+product intent; the later install cannot be bounded to one consumer and a precise allowlist; or work
+would require an edit, a second consumer, generic propagation machinery, an excluded surface or an
+operator-reserved capability. A false premise is a valid result; report it rather than repairing it.
 
-**Stop and hand back to Codex if:** any identity, ancestry or approval-binding premise is false; task
-ownership or the consumer binding is ambiguous; a baseline suite fails or its evidence cannot be
-produced; integrated L2 does not reproduce 125/125; the consumer's existing changes cannot be cleanly
-distinguished from L4; an instantiated reference or project specialization cannot receive a safe
-deliberate disposition; the work would need a second consumer, generic propagation machinery, a
-consumer/canonical edit, an excluded surface, external access, or an operator-reserved capability.
-Do not repair, install, clean, stash, switch, create a worktree, or broaden the search in this unit.
-
-**Completion condition:** without changing anything except this state file, return the verified
-pre-install baseline and reconciliation map with exact commands/results, clear later-install safety
-conditions, the evidence classification above, and a recommendation to proceed or stop. Set
-`status: active`, `turn: codex`, commit the handback, and stop.
+**Completion condition:** without changing anything except this state file, return the verified trial
+binding, complete corrected reconciliation map, Stage 5 path disposition, later-install allowlist and
+preservation list, plus a recommendation to proceed or stop. Set `status: active`, `turn: codex`,
+commit the handback and stop.
 
 ## Latest result
 
 Inspected (2026-08-19):
 
-- Claim (1) integration checkout identity: **HOLDS** — `pwd -P` =
-  `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-rw-l4-integration`;
-  `git branch --show-current` = `session/2026-08-19-rw-l4-integration`; `git rev-parse HEAD` =
-  `26ee26d46b6aa76e353f07f1babcc4667ef44d03`. `git status --short` shows exactly one entry,
-  `?? logs/work-loop/canonical-rw-l4-integrated-pilot.md` (this file). No other dirt.
-- Claim (1b) ancestry: **HOLDS** — `git merge-base --is-ancestor e16cf206 26ee26d4` exit 0;
-  `git merge-base --is-ancestor 5cc6d105 26ee26d4` exit 0. Both accepted commits are ancestors.
-- Claim (2) plan authority: **HOLDS** — `git diff 8bf9d0d9 -- plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`
-  returns 11 insertions / 4 deletions confined to the header block: `Status:` flipped
-  Proposed→Approved, a new `**Approval:**` paragraph binding material content to `8bf9d0d9`, and the
-  "Nothing here is authority yet" paragraph replaced by its approved counterpart. Objective, scope,
-  exclusions, sequence, evidence and authority relationships are byte-identical. Administrative
-  approval metadata only, identifying that same content-bound approval.
-- Claim (3) consumer binding: **HOLDS on all four observations** — `git rev-parse --show-toplevel` =
-  `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence`,
-  `--git-common-dir` = `.git` (a primary checkout, not a linked worktree); branch
-  `codex/florian-demo-continue`; HEAD `d0cb658b9266c4af553ad224181d942e473a61cd`;
-  `git status --short` = exactly ` M logs/friction-log.md` and
-  `?? reports/analyst-judgment-layer-implementation-research-v1.md`, and nothing else. Nothing was
-  edited, moved, discarded or absorbed.
-- Claim (6) integrated L2 five suites = 125/125: **HOLDS** — see the per-suite table below.
-- Claim (7) accepted L3 three suites: **HOLDS** — 14 + 33 + 41 = 88/88, matching the L3 record.
-- Claim (8) "the consumer's five L1-era judgment suites: contract, producer, gate, propagation and
-  **promotion**": **FALSE** — searched `projects/axcion-sector-intelligence` with
-  `find . -path ./.git -prune -o -name '*.test.sh' -print` and `git ls-files '*.test.sh'`. Both return
-  exactly four files: `check-judgment-contract.test.sh`, `check-judgment-gate.test.sh`,
-  `check-judgment-producer.test.sh`, `check-judgment-propagation.test.sh`. There is **no promotion
-  test suite** in that checkout (`git ls-files '*promote*'` returns only
-  `.claude/commands/promote-workflow.md` and `logs/scripts/promote-judgment-brief.sh` — the helper,
-  untested locally). The four that exist aggregate **82/82**, not 145/145. See `## Blocker`.
-- Claim (9) L1 burden facts: **HOLDS** — all four verified in
-  `logs/work-loop/canonical-rw-judgment-l1-repair.md` (line 15 five-suite floor 145/145; lines 28–29
-  829,650 subagent tokens, three review rounds, two revision loops; line 33 the 2,609-word artifact;
-  line 65 operator-active minutes, main-session tokens and monetary cost unavailable).
+- **Claim (1) integration checkout:** **HOLDS** — `git rev-parse --show-toplevel` =
+  `.../ai-resources-rw-l4-integration`; `--git-common-dir` = `.../ai-resources/.git`; branch
+  `session/2026-08-19-rw-l4-integration`; HEAD `609b5547d2e4bf8104df4fbb924e6f41e95bc80a`;
+  `git merge-base --is-ancestor 609b5547 HEAD` exit 0. `git status --porcelain` returns exactly one
+  entry, ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md` — this file, carrying Codex's Unit 2
+  brief (138 insertions / 352 deletions, confined to frontmatter, `## Objective and scope`,
+  `## Lane and unit`, `## Brief`). **No unrelated dirt**, so none overlaps this task.
+- **Claim (2) trial consumer binding:** **HOLDS on all six observations** —
+  `--show-toplevel` = `.../projects/axcion-sector-intelligence-l1-trial`; `--git-common-dir` =
+  `.../projects/axcion-sector-intelligence/.git`; `--git-dir` =
+  `.../axcion-sector-intelligence/.git/worktrees/axcion-sector-intelligence-l1-trial` (a **registered
+  linked worktree**, confirmed in `git worktree list`); branch
+  `trial/l1-repeat-precision-components`; HEAD `689afa840294bf0972e797d50d795163b8ef67f5`;
+  `git status --porcelain --untracked-files=all` returns **nothing** — no staged, unstaged or
+  untracked state. Ownership: **no `logs/work-loop/` directory exists in the trial checkout at all**
+  (searched with `ls -la logs/work-loop/` and `cat logs/work-loop/.owner`), so **no conflicting active
+  task** and no declaration to displace.
+- **Claim (3) same repository, not a second consumer:** **HOLDS** — both checkouts report the same
+  `--git-common-dir` (`projects/axcion-sector-intelligence/.git`), and `git worktree list` in that
+  store lists the primary at `d0cb658` plus the trial at `689afa8`. Two checkouts, one repository.
+  `git merge-base --is-ancestor ba7e37a 689afa8` exit 0 ("Enforce the local judgment challenge and
+  promotion contract"); `9e3242b` exit 0 ("Close two holes in the judgment challenge contract"). Five
+  accepted suites present and tracked — `git ls-files '*.test.sh'` and
+  `find . -path ./.git -prune -o -name '*.test.sh' -print` both return exactly
+  `check-judgment-{contract,producer,gate,propagation,challenge}.test.sh` under `logs/scripts/`,
+  five files, no sixth. L2-scored specimen present at
+  `analysis/judgment/precision-components/precision-components-unit-judgment-brief-approved.md`,
+  sha256 `fbca709c…`, **byte-matching the hash Unit 1 recorded for the trial checkout**. The five
+  suites were **not** rerun.
 
-Result: the pre-install baseline is frozen and the reconciliation map is complete, but **one brief
-premise is false and it is load-bearing for the L4 consumer binding**. The bound consumer is not the
-checkout that carries L1's accepted 145/145 evidence, and the missing fifth suite is `challenge`, not
-`promotion`. Recommendation: **hand back for Codex to re-bind the consumer before any install unit
-opens.** Everything else needed for the install is established below.
+Result: the trial binding is verified, the corrected reconciliation map is complete, and
+`reference/stage-5-paths.md` resolves to **exactly one mechanically-determined instantiation** — no
+product intent had to be invented. **Recommendation: proceed to an install unit.** Nothing was
+installed, edited, cleaned, stashed, switched or created; the trial tree is still empty under
+`git status --porcelain --untracked-files=all`, and the integration checkout still lists only this
+file.
 
-**Where L1's 145/145 actually lives.** The five-suite floor is in a *different* checkout —
-`/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence-l1-trial`,
-branch `trial/l1-repeat-precision-components`, HEAD `689afa840294bf0972e797d50d795163b8ef67f5`, clean
-tree. Its fifth suite is `check-judgment-challenge.test.sh`. Verified by running all five there:
+### Corrected reconciliation map — canonical @ `609b5547` → trial @ `689afa8`
 
-| Suite (trial @ `689afa8`) | Exit | Result |
-|---|---|---|
-| `check-judgment-contract.test.sh` | 0 | `V1..V8: 17 passed, 0 failed` |
-| `check-judgment-producer.test.sh` | 0 | `passed 41, failed 0` |
-| `check-judgment-gate.test.sh` | 0 | `passed 16, failed 0` |
-| `check-judgment-propagation.test.sh` | 0 | `passed 16, failed 0` |
-| `check-judgment-challenge.test.sh` | 0 | `passed 55, failed 0` |
-| **Aggregate** | | **145 passed, 0 failed** |
+Searched surfaces: canonical `git ls-files | grep -iE 'research-route|judgment'` plus
+`find workflows/research-workflow -name …`; trial `git ls-files`, `ls -la reference/ docs/ logs/scripts/
+.claude/commands/`, and `find .claude reference/skills -type l`. Matching rule: same filename **and**
+same functional role; a canonical template facing an instantiated project file is not an overwrite
+match. `c:`/`t:` are sha256 prefixes.
 
-The two consumer checkouts have diverged: `git merge-base --is-ancestor 689afa8 d0cb658b` exits
-non-zero, merge-base `052eaded`, and `git rev-list --count d0cb658b..689afa8` = **171** commits on the
-trial branch absent from the bound consumer. Those 171 include `ba7e37a` "Enforce the local judgment
-challenge and promotion contract" and `9e3242b` "Close two holes in the judgment challenge contract" —
-the L1 repair itself. The producer suite shows the gap numerically: 41 assertions on the trial branch
-versus 33 on the bound consumer. The L2 closing record's scored specimen is also bound to
-`689afa8`, and the two checkouts' copies of
-`analysis/judgment/precision-components/precision-components-unit-judgment-brief-approved.md` differ in
-bytes (`53e9946d…` bound consumer vs `fbca709c…` trial).
-
-**Bound consumer regression baseline (project-local / L1-derived pre-install evidence, NOT integrated
-L2 evidence)** — `projects/axcion-sector-intelligence` @ `d0cb658b`:
-
-| Suite | Exit | Result |
-|---|---|---|
-| `logs/scripts/check-judgment-contract.test.sh` | 0 | `V1..V8: 17 passed, 0 failed` |
-| `logs/scripts/check-judgment-producer.test.sh` | 0 | `passed 33, failed 0` |
-| `logs/scripts/check-judgment-gate.test.sh` | 0 | `passed 16, failed 0` |
-| `logs/scripts/check-judgment-propagation.test.sh` | 0 | `passed 16, failed 0` |
-| **Aggregate** | | **82 passed, 0 failed** |
-
-These four are the project regression commands a later install must rerun. No unrelated whole-project
-test was run; no other `.test.sh` exists in that checkout.
-
-**Canonical integrated L2 — `ai-resources-rw-l4-integration` @ `26ee26d4`:**
-
-| Suite | Exit | Result |
-|---|---|---|
-| `workflows/research-workflow/logs/scripts/check-judgment-contract.test.sh` | 0 | `19 passed, 0 failed` |
-| `workflows/research-workflow/logs/scripts/check-judgment-challenge.test.sh` | 0 | `24 passed, 0 failed` |
-| `workflows/research-workflow/logs/scripts/promote-judgment-brief.test.sh` | 0 | `24 passed, 0 failed` |
-| `workflows/research-workflow/tests/judgment-seam/check-judgment-seam.test.sh` | 0 | `23 passed, 0 failed` |
-| `workflows/research-workflow/tests/judgment-seam/check-judgment-consumption.test.sh` | 0 | `35 passed, 0 failed` |
-| **Aggregate** | | **125 passed, 0 failed** — matches the brief's expected figure |
-
-**Canonical accepted L3 — same checkout:**
-
-| Suite | Exit | Result |
-|---|---|---|
-| `logs/scripts/research-route-l3-unit-1.test.sh` | 0 | `14 passed, 0 failed` |
-| `logs/scripts/research-route-l3-unit-2.test.sh` | 0 | `33 passed, 0 failed` |
-| `logs/scripts/research-route-l3-adapter-unit-1.test.sh` | 0 | `41 passed, 0 failed` |
-| **Aggregate** | | **88 passed, 0 failed** |
-
-The adapter harness's declared weak-evidence fallback **did not fire**: it prints
-`NOTE  L2 validator object …is unreachable — D1–D6 fall back to exit-code stubs` when it does
-(harness line 62), and `grep -inE 'fallback|stub|real.?validator|degrad|disclos'` over the full run
-output returned no line. `e16cf206` is reachable here, so D1–D6 ran against the real L2 validator.
-
-**Reconciliation map** — canonical item → consumer item → ownership → pre-state → later disposition.
-Searched surfaces: `find workflows/research-workflow -type f -o -type l` (canonical, 200 entries);
-`ls -la reference/ logs/scripts/ .claude/commands/ docs/`, `find . -path ./.git -prune -o -name … -print`
-and `git ls-files` (consumer). Matching rule: same filename **and** same functional role; a canonical
-template with the same role as an instantiated project file is *not* an overwrite match.
-
-| Canonical item | Consumer item | Ownership | Pre-state | Disposition |
+| Canonical item | Trial item | Ownership | Pre-state | Disposition |
 |---|---|---|---|---|
-| `docs/judgment-authority-contract.md` (L2 authority contract) | **absent** — `find … -name 'judgment-authority-contract.md'` returns nothing | canonical | missing | **ADD** (regular file copy) |
-| `logs/scripts/check-judgment-contract.sh` | `logs/scripts/check-judgment-contract.sh` | **collision** | present, bytes differ (`a699e043…` vs `8baf5670…`) | **DELIBERATE RECONCILE** — never blind overwrite; consumer copy is L1-era and its own 17-assertion suite binds to it |
-| `logs/scripts/check-judgment-challenge.sh` | **absent** in bound consumer (present in trial @ `689afa8`) | canonical | missing | **ADD**, or resolved by re-binding the consumer |
-| `logs/scripts/promote-judgment-brief.sh` | `logs/scripts/promote-judgment-brief.sh` | **collision** | present, bytes differ (`4ac380f7…` vs `e2607286…`) | **DELIBERATE RECONCILE**; consumer copy has no local test |
-| `tests/judgment-seam/check-judgment-seam.sh` + `.test.sh` | absent | canonical | missing | **ADD** |
-| `tests/judgment-seam/check-judgment-consumption.sh` + `.test.sh` | absent | canonical | missing | **ADD** |
-| `reference/unit-judgment-brief.template.md` | `reference/templates/unit-judgment-brief-template.md` (different path *and* filename) | **project-owned** | present, project-specialized | **PRESERVE** or deliberate merge — not a path match |
-| `.claude/commands/research-route.md` (L3 entry) | absent | canonical | missing | **ADD** |
-| `logs/scripts/research-route-judgment-authority.sh`, `research-route-memo-check.sh`, and the three `research-route-l3-*.test.sh` | absent (`ls logs/scripts/ \| grep research-route` → none) | canonical | missing | **ADD** |
-| `reference/source-class-hierarchy.md` (required file 1) | present, project-instantiated | **project-owned** | instantiated | **PRESERVE** |
-| `reference/quality-standards.md` (required file 2) | present (71 KB, project copy) | project copy of canonical | instantiated | **PRESERVE** |
-| `reference/known-limits.md` (required file 3) | present, project-instantiated | **project-owned** | instantiated | **PRESERVE** |
-| `reference/style-guide.md` (required file 4) | present | project copy of canonical | instantiated | **PRESERVE** |
-| `reference/claim-permission.md` (required file 6, soft) | present, filled | **project-owned** | instantiated | **PRESERVE** |
-| `reference/stage-5-paths.md` (required file 5, **hard blocker**) | **absent** — only `stage-5-paths.template.md` present | canonical contract | **missing (pre-existing L1-era gap, not caused by L4)** | **OPERATOR/CODEX DECISION** — see `## Blocker` note 2 |
-| `reference/source-map.md`, `executor-routing-guide.md`, `unit-lifecycle.md`, `analyst-judgment-standard.md`, `axcion-judgment-context.md`, `report-architecture-template.md`, `language-search-blocks.md` | consumer-only, no canonical counterpart | **project-owned specialization** | present | **PRESERVE — not applicable to install** |
-| `.claude/commands/run-analysis.md`, `run-report.md`, `run-synthesis.md`, `produce-*.md` (L2 authority consumers) | present as **regular files**, project-specialized | **project-owned** | `run-analysis.md` and `run-report.md` last touched 2026-08-13 | **DELIBERATE MERGE** — L2 consumption wiring must be merged into the project bodies, never overwritten |
-| `logs/scripts/work-loop-owner.sh` | present; `.gitignore:11` correctly ignores `logs/work-loop/.owner` | verbatim canonical | deployed | **NOT APPLICABLE** — already correct |
-| `analysis/judgment/{precision-components,germany-wfm}/*` | present (proposed + approved briefs) | **project-owned artifacts** | present | **PRESERVE** |
+| `workflows/research-workflow/docs/judgment-authority-contract.md` `c:09533be7` | **absent** — searched `docs/` and `git ls-files` | canonical | missing | **ADD** (regular file) |
+| `…/logs/scripts/check-judgment-contract.sh` `c:a699e043` | `logs/scripts/check-judgment-contract.sh` `t:8baf5670` | **collision** | present, **157 differing lines** | **DELIBERATE MERGE — the sharpest install risk**, see note 1 |
+| `…/logs/scripts/check-judgment-contract.test.sh` `c:4ee40b9e` | `logs/scripts/check-judgment-contract.test.sh` `t:631dcea3` | **collision** | present (17 assertions, binds the trial copy) | **PRESERVE** unless its subject is merged; then merge in the same edit |
+| `…/logs/scripts/check-judgment-challenge.sh` `c:87f7cae5` | `logs/scripts/check-judgment-challenge.sh` `t:eaf5c118` | **collision** | **present** (L1 repair `ba7e37a`) | **DELIBERATE MERGE** — *material delta from Unit 1, which recorded this as absent* |
+| `…/logs/scripts/check-judgment-challenge.test.sh` `c:27006646` | `logs/scripts/check-judgment-challenge.test.sh` `t:9792099e` | **collision** | **present** (55 assertions) | **PRESERVE**; merge only alongside its subject |
+| `…/logs/scripts/promote-judgment-brief.sh` `c:4ac380f7` | `logs/scripts/promote-judgment-brief.sh` `t:df057d96` | **collision** | present, bytes differ | **DELIBERATE MERGE**; no local test binds it |
+| `…/logs/scripts/promote-judgment-brief.test.sh` `c:51d097f7` | **absent** | canonical | missing | **ADD** |
+| `…/tests/judgment-seam/check-judgment-seam.sh` + `.test.sh` | **absent** — `tests/` does not exist in the trial | canonical | missing | **ADD** (creates `tests/judgment-seam/`) |
+| `…/tests/judgment-seam/check-judgment-consumption.sh` + `.test.sh` | **absent** | canonical | missing | **ADD** |
+| `…/tests/judgment-seam/README.md` `c:e1b5da88` | **absent** | canonical | missing | **ADD** |
+| `…/reference/unit-judgment-brief.template.md` `c:1c86354f` | `reference/templates/unit-judgment-brief-template.md` — different directory **and** filename | **project-owned** | instantiated | **PRESERVE** — not a path match, never an overwrite target |
+| `.claude/commands/research-route.md` `c:67f4768d` (L3 entry + Deep handoff) | **absent** | canonical | missing | **ADD** (regular file) |
+| `logs/scripts/research-route-classify.sh` `c:b561af90` | **absent** | canonical | missing | **ADD** — *added to Unit 1's list, which omitted the classifier* |
+| `logs/scripts/research-route-judgment-authority.sh` `c:55d3c8b5` (Standard adapter) | **absent** | canonical | missing | **ADD** |
+| `logs/scripts/research-route-memo-check.sh` `c:dcbaed28` | **absent** | canonical | missing | **ADD** |
+| `logs/scripts/research-route-l3-{unit-1,unit-2,adapter-unit-1}.test.sh` | **absent** | canonical | missing | **ADD** (3 files) |
+| `reference/{quality-standards,style-guide}.md` | present, bytes differ from canonical | project copies | instantiated | **PRESERVE** |
+| `reference/{source-class-hierarchy,known-limits,claim-permission}.md` | present, filled | **project-owned** (canonical holds only `.template.md`) | instantiated | **PRESERVE** |
+| `reference/{source-map,executor-routing-guide,unit-lifecycle,analyst-judgment-standard,axcion-judgment-context,report-architecture-template,language-search-blocks,file-conventions,stage-instructions,stage-5-common-phases}.md` | present, no canonical overwrite counterpart | **project-owned specialization** | present | **NOT APPLICABLE** to install — preserve |
+| `reference/stage-5-paths.md` (required file 5, **hard blocker**) | **absent** — only `stage-5-paths.template.md`; searched `ls -la reference/` and the presence loop | canonical contract | **missing (pre-existing L1-era gap, not caused by L4)** | **ADD**, values resolved below |
+| `.claude/commands/{run-analysis,run-report,run-synthesis,produce-*}.md` (L2 authority consumers) | present as **regular files**, project-specialized (`run-analysis.md` mtime 2026-08-18 19:37) | **project-owned** | forked | **DELIBERATE MERGE** — wire L2 consumption into the project bodies, never overwrite |
+| `logs/scripts/work-loop-owner.sh` `c:0da1f786` | `logs/scripts/work-loop-owner.sh` `t:dbb4bab0` | verbatim-deploy contract | **drifted (pre-Tracer-3)** | **NOT APPLICABLE to L2/L3** — recorded as a deferral, note 3 |
+| `analysis/judgment/{precision-components,custom-dev-data-ai}/*` | present (proposed / review / approved) | **project-owned artifacts** | present | **PRESERVE** |
 
-**Symlink versus regular file — a decisive later-install safety condition.** The consumer holds **102
-symlinks under `.claude/`** and 78 under `reference/skills/`, all of the form
-`../../../../ai-resources/.claude/…` — they resolve to the canonical **main** checkout
-`/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources` @ `2bfb82d1`, **not** to this L4
-integration checkout. Verified: on that main checkout `.claude/commands/research-route.md` does not
-exist, `ls logs/scripts/ | grep research-route` returns nothing,
-`workflows/research-workflow/docs/judgment-authority-contract.md` does not exist, and
-`git merge-base --is-ancestor` returns non-zero for `e16cf206`, `5cc6d105` and `26ee26d4` against
-`2bfb82d1`. **Consequence:** no L2 or L3 surface can reach the consumer through symlink resolution.
-Every L2/L3 item marked ADD above must be installed as a **regular file copy taken from this
-integration checkout**. The alternative — merging to `main` — is an excluded action in this task.
-Separately, the research-workflow command bodies (`run-*.md`, `produce-*.md`) are already regular
-files, so merging L2 wiring into them does not fight the symlink sweep.
+**Note 1 — the contract checker is the one load-bearing collision.**
+`research-route-judgment-authority.sh:102` resolves its validator as
+`checker="$root/logs/scripts/check-judgment-contract.sh"` — **the deployed project's copy**, never
+canonical's — and branches on its **exit code only** (exit 0 is the sole valid-authority result;
+anything else prints `authority: UNAVAILABLE` and `escalate: deep`). The trial's L1-era copy differs
+from canonical L2's over 157 lines. Both document the same verdict vocabulary (`exit 6` = structural
+failure, `exit 10` = bad usage, `0` = valid), so the shapes are compatible in principle, but canonical
+runs a strictly larger check set. Whether the L1-era copy returns exit 0 on the approved specimen was
+**not** established here: running it is a test execution, which this unit's capability subset
+withholds. That is the install unit's targeted failing case, and it is already covered by
+`Evidence explicitly deferred:`.
 
-**Can later integration use this consumer checkout?** Yes on cleanliness, **no as currently bound**.
-The two dirty items are cleanly distinguishable from L4 and need no action: ` M logs/friction-log.md`
-is +130 lines only (`git diff --stat`), consistent with HEAD `d0cb658b` "update: freeze friction-log
-hooks", and the untracked `reports/analyst-judgment-layer-implementation-research-v1.md` is a 140-line
-report. Neither touches any surface in the reconciliation map, so an install can proceed around them
-without stashing, cleaning or switching. No isolated checkout is needed **for dirt reasons**. The open
-question is the consumer *binding*, not the checkout's hygiene — `## Blocker`.
+**Note 2 — symlink resolution still cannot deliver L2 or L3, and the trial's topology is worse than
+the older checkout's.** The trial holds **12 tracked symlinks under `.claude/` (mode `120000`), and
+every one of them is broken** — six use a 5-level prefix (`../../../../../ai-resources/…`, which
+resolves to the non-existent `/Users/patrik.lindeberg/Claude Code/ai-resources`) and two point at
+`refinement-deep.md` / `qc-reviewer.md`, retired from canonical on 2026-07-30. `reference/skills/`
+holds 78 symlinks, 77 resolving and 1 broken, all absolute into
+`/Users/…/Axcion AI Repo/ai-resources` — the **main** checkout at `2bfb82d1`, where
+`.claude/commands/research-route.md`, `logs/scripts/research-route-*` and
+`workflows/research-workflow/docs/judgment-authority-contract.md` are all absent and `e16cf206`,
+`5cc6d105`, `26ee26d4` and `609b5547` are **none of them ancestors**. **Consequence, unchanged from
+Unit 1 and now verified on the accepted checkout: every ADD must be a regular-file copy taken from
+this integration checkout.** Merging to `main` is excluded by this task.
 
-**Burden comparator, frozen.** L1 (fixed, verified above): 829,650 subagent tokens; three review
-rounds; two revision loops; 2,609-word approved artifact. Operator-active minutes, main-session tokens
-and monetary cost: **unavailable** — preserved as unavailable, not estimated. L4 start recorded as
-`2026-08-19 11:32:55 EEST`. Existing surfaces that can capture L4 measurements without new
-instrumentation:
+**The sweep will not fight the install.** `ai-resources/.claude/hooks/auto-sync-shared.sh` is
+registered at SessionStart in the trial's `.claude/settings.json:128` and resolves to the main
+checkout. Its command/agent loops guard with `[ -e "$target" ] || [ -L "$target" ] && continue`
+(line 538) — it **never overwrites an existing regular file** — and its drift pass (lines 605–618)
+only *reports* `AI-RESOURCES DRIFT:`, it does not act. `research-route.md` does not exist on main, so
+the sweep will not even attempt it. Installed regular files are safe from it.
 
-| Measurement | Surface | Can capture? |
-|---|---|---|
-| Elapsed time | `git log --format=%aI` on this task's commits in this checkout | **yes** |
-| Review / revision loops | this state file's Codex assessments and correction rounds, in Git history | **yes** |
-| Artifact count and word count | the L4 case's produced files, `wc -w` | **yes** |
-| Subagent tokens | `ai-resources-rw-l4-integration/logs/usage-log.md` (present, 231 KB) — but only if `/usage-analysis` is run for the L4 sessions | **conditional** |
-| Consumer-side tokens | `projects/axcion-sector-intelligence/logs/usage-log.md` — **does not exist** | **no — unavailable** |
-| Operator-active minutes | no surface | **no — unavailable** |
-| Monetary cost | no surface | **no — unavailable** |
+### `reference/stage-5-paths.md` — one exact instantiation, mechanically determined
 
-No instrumentation or propagation machinery was built. Nothing outside this state file was changed:
-`git status --short` in the integration checkout still lists only this file, and in the consumer still
-lists only the two pre-existing dirty items.
+`docs/required-reference-files.md` § 5 (present in the trial, line 45) classes it a **hard blocker**:
+Phase 0 of `produce-prose-draft`, `produce-formatting`, `produce-jargon-gloss` and `run-report` halts
+loudly when it is missing, placeholder, or `Mode:`-mismatched. `CLAUDE.md` `## Project Config` declares
+`**Document model:** "report"` → the **report-mode** schema. The four forked `produce-*` commands are
+Path-A parameterized and carry **no hard-coded path patterns**, so the template's
+"existing-project migration" clause does not apply; the values come from the project's own conventions:
+`reference/file-conventions.md` lines 58, 61–64 and 132–133, and `reference/stage-instructions.md`
+lines 165, 167, 169, 174–175. Every value is fixed by those two project-owned files:
+
+```
+## Stage 5 Path Roots
+
+**Mode:** report
+**Compiled-source root:** "report/compiled/{section}"
+**Compiled-source filename:** "{section}-R{N}-compiled-v2.md"
+**Prose-output root:** "report/produced/{section}/R{N}"
+**Prose-output filename:** "R{N}-prosed.md"
+**Formatted-output filename:** "R{N}-formatted.md"
+**Style-reference path:** "report/style-reference/{section}/{section}-style-reference.md"
+**Decontamination-log filename:** "decontamination-log.md"
+**Gloss-log filename:** "gloss-additions-log.md"
+**Working-dir name:** "working"
+```
+
+`Mechanical trigger threshold:` is **omitted** — the template's own default-value table makes absence
+mean the canonical `"5+"`, and no project source names a different value. The `v2` in
+`Compiled-source filename` is not a guess: `file-conventions.md:61` gives the pattern
+`{section}-R{N}-compiled-v[M].md` with example `1.1-R1-compiled-v2.md`, the template's v1 placeholder
+set has no `{M}` so the instance must carry a literal, and `produce-prose-draft.md:51` reads the
+**post-fix** compiled source (`Run Stage 5.2 … first`) — which Step 5.2 produces as v2. **No product
+intent was invented and no file was created.** Disposition: **ADD**, in the install unit.
+
+**The fail-capable check that proves Stage 5 no longer halts.** No automated checker for this gate
+exists — searched canonical `logs/scripts/`, `workflows/research-workflow/logs/scripts/`,
+`.claude/commands/sync-workflow.md` and the trial's `logs/scripts/` and `audit-structure.md`; the gate
+lives only in command prose. So the check mirrors Phase 0's own documented parse
+(`stage-5-paths.template.md` § *How Phase 0 reads this doc*) as four assertions: **A** file present;
+**B** the `## Stage 5 Path Roots` block parses to ≥ 8 `^\*\*label:\*\* value` lines; **C** exactly one
+`**Mode:** report`, matching `Document model`; **D** no unfilled `{{PLACEHOLDER}}` token. Run today,
+read-only, in the trial checkout:
+
+| Target | A | B | C | D | Verdict |
+|---|---|---|---|---|---|
+| `reference/stage-5-paths.md` (current state) | **FAIL** | — | — | — | **HALT** |
+| `reference/stage-5-paths.template.md` (falsifiability control — must not pass) | PASS | PASS (21 values) | PASS | **FAIL** | **HALT** |
+
+The control is what makes it evidence rather than ceremony: the template satisfies A, B and C and is
+still refused on D, so B and C are not vacuous and D discriminates a filled instance from a template.
+The check **fails now** and passes only once the file above exists and is filled.
+
+### Later-install allowlist (task-scoped) and preservation list
+
+**Allowlist — the only files an install unit may create or modify in the trial checkout.** 20 entries,
+all paths relative to `projects/axcion-sector-intelligence-l1-trial`:
+
+*ADD (16, regular-file copies from this integration checkout):* `docs/judgment-authority-contract.md`;
+`logs/scripts/promote-judgment-brief.test.sh`; `tests/judgment-seam/check-judgment-seam.sh`,
+`check-judgment-seam.test.sh`, `check-judgment-consumption.sh`, `check-judgment-consumption.test.sh`,
+`README.md`; `.claude/commands/research-route.md`; `logs/scripts/research-route-classify.sh`,
+`research-route-judgment-authority.sh`, `research-route-memo-check.sh`,
+`research-route-l3-unit-1.test.sh`, `research-route-l3-unit-2.test.sh`,
+`research-route-l3-adapter-unit-1.test.sh`; `reference/stage-5-paths.md`; and `tests/judgment-seam/`
+as a new directory.
+
+*DELIBERATE MERGE (4 collision sets, never blind overwrite):*
+`logs/scripts/check-judgment-contract.sh` (+ its `.test.sh` only if the subject changes);
+`logs/scripts/check-judgment-challenge.sh` (+ its `.test.sh` on the same condition);
+`logs/scripts/promote-judgment-brief.sh`; and the L2-consuming command bodies
+`.claude/commands/{run-analysis,run-report,run-synthesis,produce-architecture,produce-formatting,produce-jargon-gloss,produce-knowledge-file,produce-prose-draft}.md`.
+
+**Preservation list — must be byte-unchanged unless the merge above names it explicitly:** every
+`analysis/judgment/**` artifact (proposed, review, review-round-N and approved, both
+`precision-components` and `custom-dev-data-ai`); the instantiated references
+`reference/{source-class-hierarchy,known-limits,claim-permission,quality-standards,style-guide}.md`;
+the project-only specializations `reference/{source-map,executor-routing-guide,unit-lifecycle,`
+`analyst-judgment-standard,axcion-judgment-context,report-architecture-template,language-search-blocks,`
+`file-conventions,stage-instructions,stage-5-common-phases}.md` and
+`reference/templates/unit-judgment-brief-template.md`; the five accepted `logs/scripts/check-judgment-*.test.sh`
+suites; `logs/scripts/work-loop-owner.sh` and the `.gitignore:11` rule for `logs/work-loop/.owner`
+(`git check-ignore -v` confirms it fires); the whole of `docs/`, `report/`, `knowledge-base/`,
+`preparation/`, `execution/`, `final/`, `output/`, `roadmap/`, `usage/`, `reports/`; and `CLAUDE.md`.
+**Unrelated dirty state to preserve: none — the trial tree is clean.** No implementation mechanism is
+prescribed for the four merge sets: the governing sources have not settled one.
+
+**Note 3 — two deferrals, recorded and not done.** (a) `logs/scripts/work-loop-owner.sh` in the trial
+is the **pre-Tracer-3** helper (`t:dbb4bab0`), while both canonical checkouts carry `0da1f786`; the
+diff shows the trial copy still accepts the retired `{task-id} {YYYY-MM-DD}` declaration shape and
+lacks the stale-declaration hardening. `docs/required-reference-files.md:101` calls a deployed copy
+that differs from canonical "drift, not customization". It is outside L2/L3 scope and L4's loop runs
+in the integration checkout, so it is **not** in the allowlist — but a Work Loop unit run *inside* the
+trial would use the drifted helper. (b) `## Project Config` declares
+`Section IDs: [custom-dev-data-ai]` while the trial branch's report artifacts on disk sit under
+`report/{architecture,chapters,checkpoints}/precision-components/`. `{section}` interpolates from
+Section IDs, so a Stage 5 run would resolve paths against `custom-dev-data-ai` while the content is
+`precision-components`. This does not block the install — the path *patterns* above are correct either
+way — but the operating unit must reconcile it before Stage 5 output can land. Neither was fixed here.
 
 ## Blocker
 
-**The brief's item 8 rests on a false premise, and it is load-bearing for the L4 consumer binding.**
-
-1. **The fifth suite is `challenge`, not `promotion`, and it is not in the bound consumer.** Searched
-   `projects/axcion-sector-intelligence` with `find . -path ./.git -prune -o -name '*.test.sh' -print`
-   and `git ls-files '*.test.sh'`; both return exactly four suites and no promotion test.
-   `git ls-files '*promote*'` returns only `.claude/commands/promote-workflow.md` and the untested
-   helper `logs/scripts/promote-judgment-brief.sh`. The bound consumer's aggregate is **82/82**.
-
-2. **The 145/145 five-suite floor belongs to a different checkout.** It reproduces exactly — 145
-   passed, 0 failed — at `projects/axcion-sector-intelligence-l1-trial` @ `689afa8`
-   (`trial/l1-repeat-precision-components`), whose fifth suite is `check-judgment-challenge.test.sh`.
-   That branch is **not** an ancestor of the bound consumer's `d0cb658b`; 171 commits separate them,
-   including the L1 challenge/promotion repair commits `ba7e37a` and `9e3242b`. The producer suite
-   differs numerically as a result (41 vs 33). The L2 closing record's scored specimen is bound to
-   `689afa8` as well, and the approved-brief bytes differ between the two checkouts.
-
-**What Codex must decide — this is a binding question, not a repair:** whether L4's one bound consumer
-is `projects/axcion-sector-intelligence` @ `d0cb658b` (82/82, no challenge contract, no L1 repair) or
-`projects/axcion-sector-intelligence-l1-trial` @ `689afa8` (145/145, carries the accepted L1 repair and
-the L2 specimen). The scope paragraph names the former; the accepted L1 and L2 evidence both rest on
-the latter. Installing L2's challenge/promotion seams onto a consumer that never received L1's is a
-materially different integration from the one the plan's proof assumes, and the burden comparison
-against L1 would not be like-for-like. Choosing a second consumer, or merging the trial branch, are
-both outside this task's scope and would need the operator.
-
-**Note, not a blocker:** `reference/stage-5-paths.md` is absent from the bound consumer while
-`docs/required-reference-files.md` § 5 classes it a **hard blocker** that halts every Stage 5
-`produce-*` command and `run-report` Phase 0. Only `stage-5-paths.template.md` is present. This is a
-pre-existing L1-era gap, not caused by L4, but L4's completion condition requires downstream analysis
-and prose — so an install unit that reaches Stage 5 will halt on it. It needs a disposition before the
-genuine case runs. Nothing was changed.
-
-Nothing was installed, repaired, cleaned, stashed, switched or created. No worktree was made. No
-canonical or consumer file was edited.
+None.
 
 ## Next action
 
-Codex: re-bind L4's one consumer before any install unit opens. Decide between
-`projects/axcion-sector-intelligence` @ `d0cb658b` (82/82, four suites, no L1 challenge/promotion
-contract) and `projects/axcion-sector-intelligence-l1-trial` @ `689afa8` (145/145, five suites,
-carries the accepted L1 repair and the L2 scored specimen), or escalate the choice to the operator if
-it requires changing the scope paragraph's named consumer. Then correct item 8's suite list
-(`challenge`, not `promotion`) and its expected aggregate to match the checkout chosen, and give
-`reference/stage-5-paths.md` an explicit disposition before any unit that reaches Stage 5. The
-reconciliation map, both canonical regression baselines (L2 125/125, L3 88/88) and the frozen burden
-comparator above stand and need no rework.
+Codex: assess this discovery result and, if accepted, open the install unit against the allowlist and
+preservation list above. Three items need a Codex framing decision before that unit is briefed —
+(1) how the four DELIBERATE MERGE collision sets are to be reconciled, given note 1 makes the trial's
+own `check-judgment-contract.sh` the validator the L3 adapter actually executes; (2) whether the two
+recorded deferrals in note 3 stay deferred or enter scope; and (3) that the install unit's targeted
+failing case is the Stage 5 four-assertion check above plus the adapter's exit-code path against the
+approved specimen, neither of which was run here.
