@@ -221,6 +221,9 @@ Evidence:
   `logs/scripts/research-route-l3-adapter-unit-1.test.sh`, and this state file. Nothing under
   `workflows/`, no L2 helper, no copy, cherry-pick or merge. The operator's unrelated modifications
   to `logs/friction-log.md` and `logs/innovation-registry.md` are left uncommitted.
+- Implementation commit: `550f47e89c1b2b3f9d0a82efd3d87a5ff5d650e1` on
+  `session/2026-08-18-lightweight-rw`. This pointer was added in the follow-on commit, because a
+  commit cannot record its own hash.
 
 Deferrals noticed and not done, with the reason:
 
