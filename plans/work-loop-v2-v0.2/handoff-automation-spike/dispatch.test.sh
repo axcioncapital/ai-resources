@@ -2000,24 +2000,60 @@ grep -q '^turn: claude$' "$d/logs/work-loop/approval-task.md" \
   && ok "the state file did not move" || bad "the state file did not move"
 
 # ================================================================= case 15
-# Cluster 2. A crash BEFORE the actor changed anything is retried once from
-# repository truth. A crash AFTER it changed something is not.
+# Cluster 2. NO AUTOMATIC REPLAY ONCE AN ACTOR HAS LAUNCHED.
+#
+# This cluster used to say the opposite for the pre-edit shape: a crash that left
+# the repository provably unchanged was relaunched once. The premise under that
+# was that an unchanged repository proves no model request started, and it does
+# not. Repository immutability, a nonzero exit and a missing capture are all
+# equally consistent with a request that ran, cost money, and left no effect —
+# and this dispatcher does not read the child's stream events, which is the only
+# place the answer lives. Its own terminal record says so in the field:
+# `model_request_started=unavailable` on every live launch.
+#
+# So the rule is now the launch, not the diff. Once launch_actor() has forked,
+# any nonzero exit ends the run. 15 covers the pre-edit crash (which used to be
+# replayed), 15b the partial effect (which never was), and 15c proves the
+# operator's own explicit re-run is still the recovery — a separate admitted run,
+# not something the stopped run does for itself.
 echo
-echo "Case 15 — a pre-edit crash is retried exactly once"
+echo "Case 15 — a pre-edit crash is NOT replayed: exactly one launch"
 d="$(new_sandbox)"; state_file "$d" "retry-task" "claude"
-RETRY_ONCE='if [ ! -f "$WL_CHECKOUT.attempt" ]; then touch "$WL_CHECKOUT.attempt"; exit 7; fi;
+# Counts EVERY launch, before deciding whether to crash. `.calls` cannot do this
+# job: the flip that writes it is never reached by a crashing attempt, so a
+# replay of one is invisible to it — which is why the old case could assert
+# "exactly one successful actor call" while two actors had run.
+NO_REPLAY='printf "%s\n" "$WL_HOP" >> "$WL_CHECKOUT.launches";
+      if [ ! -f "$WL_CHECKOUT.attempt" ]; then touch "$WL_CHECKOUT.attempt"; exit 7; fi;
       '"$FLIP_TO_OPERATOR"
-run_dispatch "$d" retry-task --actor-cmd "$RETRY_ONCE"
-expect_rc 0 "$RC" "the retried hop completes and reaches turn: operator" "$OUT"
+run_dispatch "$d" retry-task --actor-cmd "$NO_REPLAY"
+expect_rc 20 "$RC" "the crashed hop ends the run instead of replaying it" "$OUT"
+launches15="$(wc -l <"$d.launches" 2>/dev/null | tr -d ' ')"; launches15="${launches15:-0}"
+[ "$launches15" = "1" ] && ok "the actor was launched exactly once" \
+                        || bad "the actor was launched exactly once" "launches=$launches15"
 printf '%s' "$OUT" | grep -q "retrying this hop once" \
-  && ok "the run log says it retried, and why" || bad "the run log says it retried, and why"
-if [ "$(ls "$d/runs/" 2>/dev/null | grep -c '\.hop1r\.claude\.out$')" = "1" ]; then
-  ok "the first attempt's output was kept as separate evidence"
-else
-  bad "the first attempt's output was kept as separate evidence" "no hop1r capture in $d/runs/"
-fi
-[ "$(calls "$d")" = "1" ] && ok "exactly one successful actor call was recorded" \
-                          || bad "exactly one successful actor call was recorded" "calls=$(calls "$d")"
+  && bad "the run log claims no retry" "$OUT" \
+  || ok "the run log claims no retry"
+printf '%s' "$OUT" | grep -q "NOT retried" \
+  && ok "the stop says the request was not retried, and why" \
+  || bad "the stop says the request was not retried, and why" "$OUT"
+[ "$(ls "$d/runs/" 2>/dev/null | grep -c '\.hop1r\.')" = "0" ] \
+  && ok "no retry capture was written" \
+  || bad "no retry capture was written" "a hop1r capture is present in $d/runs/"
+[ "$(calls "$d")" = "0" ] && ok "nothing ran after the crash — the flip was never reached" \
+                          || bad "nothing ran after the crash — the flip was never reached" "calls=$(calls "$d")"
+grep -q '^turn: claude$' "$d/logs/work-loop/retry-task.md" \
+  && ok "the turn is exactly where the actor left it" \
+  || bad "the turn is exactly where the actor left it"
+R15="$(ls "$d/runs"/*.result 2>/dev/null | head -1)"
+{ [ "$(res_field "$R15" actor_launched)" = "yes" ] && [ "$(res_field "$R15" stage)" = "post-hop" ]; } \
+  && ok "the terminal result records the single launch that did happen" \
+  || bad "the terminal result records the single launch that did happen" \
+         "launched=$(res_field "$R15" actor_launched) stage=$(res_field "$R15" stage)"
+# Held for case 15c, which re-enters THIS sandbox. Captured here rather than
+# there because case 15b reassigns $d to a fresh one in between, and reading $d
+# after it would have silently pointed 15c at the wrong checkout.
+D15C="$d"; R15C_FIRST="$(res_field "$R15" run)"
 
 echo
 echo "Case 15b — a crash AFTER a repository change is not retried"
@@ -2029,6 +2065,35 @@ printf '%s' "$OUT" | grep -q "not retried" \
   && ok "the stop names the partial effect as the reason" || bad "the stop names the partial effect as the reason"
 [ "$(calls "$d")" = "1" ] && ok "the failed actor was launched once, not twice" \
                           || bad "the failed actor was launched once, not twice" "calls=$(calls "$d")"
+
+echo
+echo "Case 15c — recovery after a no-replay stop is an explicit NEW run"
+# The other half of case 15, and the half that keeps "no replay" from meaning
+# "no recovery". Removing the automatic retry must not remove the operator's way
+# back in — it moves it to where the plan puts it: a separate invocation, through
+# the ordinary admission path, with its own run identity. The sandbox from case
+# 15 is reused deliberately — $D15C and $R15C_FIRST were captured there — so this
+# starts from exactly the repository the stopped run left behind.
+run_dispatch "$D15C" retry-task --actor-cmd "$NO_REPLAY"
+expect_rc 0 "$RC" "the explicitly started second run completes the hop" "$OUT"
+launches15c="$(wc -l <"$D15C.launches" 2>/dev/null | tr -d ' ')"
+[ "$launches15c" = "2" ] && ok "two launches in total — one per run, never two in one run" \
+                         || bad "two launches in total — one per run, never two in one run" "launches=$launches15c"
+[ "$(res_count "$D15C/runs")" = "2" ] \
+  && ok "and two terminal results: the stop and the recovery are separate runs" \
+  || bad "and two terminal results: the stop and the recovery are separate runs" "count=$(res_count "$D15C/runs")"
+R15C_SECOND=''
+for f in "$D15C/runs"/*.result; do
+  [ "$(res_field "$f" run)" = "$R15C_FIRST" ] || R15C_SECOND="$f"
+done
+{ [ -n "$R15C_SECOND" ] && [ -n "$R15C_FIRST" ] \
+  && [ "$(res_field "$R15C_SECOND" run)" != "$R15C_FIRST" ]; } \
+  && ok "the recovery carries a distinct run identity — not a replay of the failed request" \
+  || bad "the recovery carries a distinct run identity — not a replay of the failed request" \
+         "first=${R15C_FIRST:-<none>} second=$(res_field "${R15C_SECOND:-/dev/null}" run)"
+grep -q '^turn: operator$' "$D15C/logs/work-loop/retry-task.md" \
+  && ok "and it moved the turn, continuing from the state the stopped run left" \
+  || bad "and it moved the turn, continuing from the state the stopped run left"
 
 # ================================================================= case 16
 # Cluster 3. Foreign work that was ALREADY in the working tree. The before/after
@@ -4270,14 +4335,16 @@ LT28B="$(res_field "$R28B" lease_task_dir)"; LC28B="$(res_field "$R28B" lease_ch
   && ok "  code 29 — the two budget shapes record DIFFERENT actors in flight" \
   || bad "  code 29 — the two budget shapes record DIFFERENT actors in flight" \
          "in-flight: ${ACTOR_29_INFLIGHT:-<absent>} refused-launch: $(res_field "$R28B" actor)"
-# THE OTHER TWO code-29 SITES ARE RETRY VARIANTS of the in-flight shape above
-# (the deadline expiring before or during a retried hop), not a third lifecycle.
-# Counted so that a genuinely new producer shows up here as a failure rather than
-# as silent uncovered ground.
+# THE TWO SHAPES ABOVE ARE NOW THE WHOLE OF code 29. There used to be four sites:
+# these two plus their retry variants, the deadline expiring before or during a
+# replayed hop. Case 15 removed the replay, and with it the only two budget
+# terminals a second launch could reach. Counted so that a genuinely new producer
+# — or a returning retry branch — shows up here as a failure rather than as
+# silent uncovered ground.
 DIE29_HITS="$(grep -cE '(^|[^[:alnum:]_])die(_hop)? 29 ' "$DISPATCH_BIN" 2>/dev/null || printf '0')"
-[ "$DIE29_HITS" = "4" ] \
-  && ok "  code 29 — the four producer sites are the two shapes proved above plus their two retry variants" \
-  || bad "  code 29 — the four producer sites are the two shapes proved above plus their two retry variants" \
+[ "$DIE29_HITS" = "2" ] \
+  && ok "  code 29 — the two producer sites are exactly the two shapes proved above" \
+  || bad "  code 29 — the two producer sites are exactly the two shapes proved above" \
          "found $DIE29_HITS; a new budget terminal has appeared and is unproved"
 
 echo

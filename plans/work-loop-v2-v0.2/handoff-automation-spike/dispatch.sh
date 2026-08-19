@@ -174,7 +174,9 @@
 #                              not necessarily another dispatcher.
 #   18  FOREIGN_UNSTAGED       out-of-allowlist working-tree changes already present
 #   19  GIT_HAZARD             index.lock held, or a merge/rebase/cherry-pick in progress
-#   20  ACTOR_FAILED           non-zero exit (retried once when nothing changed)
+#   20  ACTOR_FAILED           non-zero exit. NEVER retried: the actor had
+#                              already launched, and nothing readable from here
+#                              proves the model request did not start.
 #   21  ACTOR_TIMEOUT
 #   22  NO_TRANSITION          state did not move in an allowed direction
 #   23  HOP_LIMIT
@@ -4523,7 +4525,9 @@ EOF
 #
 # v0.1 only refused to START an actor past the deadline, which is not a bound: an
 # actor launched at minute 39 with a 900s timeout runs to minute 54. Clamping the
-# per-actor timeout to whatever is left bounds the overrun.
+# per-actor timeout to whatever is left bounds the overrun. It is applied once
+# per hop, before the single launch that hop gets — there is no second launch to
+# re-clamp for, because no hop is replayed after its actor has started.
 #
 # THE HONEST BOUND, since a deadline is only worth what its worst case is:
 #
@@ -4553,10 +4557,12 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
   local actor="$1" hop="$2" limit="$3"
   local out="$LOG_DIR/$RUN_ID.hop$hop.$actor.out"
   : >"$out"
-  # Published so the post-hop checks read the capture that was ACTUALLY written.
-  # Recomputing the path at the call site was the available alternative and it is
-  # wrong on the retry branch, where the hop suffix is "${hop}r" — the denial
-  # check would have silently read the first attempt's capture.
+  # Published so the post-hop checks read the capture that was ACTUALLY written,
+  # rather than a path recomputed at the call site from the hop number. The
+  # difference mattered visibly while a retry branch existed and appended an "r"
+  # to the hop suffix: the denial check would silently have read the first
+  # attempt's capture. That branch is gone, and this stays — the call site should
+  # not have to know how this function names its file.
   LAST_CAPTURE="$out"
   # THIS ATTEMPT HAS NOT FORKED YET. Cleared here rather than left standing, so a
   # stop in the four pre-fork die() paths below cannot answer with the PREVIOUS
@@ -5033,44 +5039,44 @@ while :; do
     die_hop 21 "actor '$before_turn' exceeded ${eff_timeout}s and was killed (hop $hop)"
   fi
 
-  # A crash BEFORE the actor changed anything is retried exactly once, from what
-  # the repository says rather than from anything this process remembers. "Before
-  # edits" is proven, not assumed: the state file, HEAD, the foreign working tree
-  # and the state file's committed-ness must all be byte-for-byte where they were.
-  # Any doubt and this is a partial side effect, which stops (rc 20 / 25) instead.
-  # One retry only — a second failure is a real failure, not a transient one.
+  # NO AUTOMATIC REPLAY ONCE AN ACTOR HAS LAUNCHED (minimum release contract
+  # item 2). A nonzero exit ends the run here, whatever the repository looks like.
+  #
+  # THIS REPLACED A ONE-SHOT RETRY, and the reason is a premise, not a policy
+  # preference. That retry fired when the state file, HEAD, the foreign working
+  # tree and the state file's committed-ness were all byte-for-byte where they
+  # were — reading repository immutability as proof that no model request had
+  # started. It is not proof. A request that ran to completion and produced no
+  # edit looks identical from here, and so does one killed after it was billed.
+  # The only place the answer lives is the child's own stream events, and this
+  # dispatcher does not read them: its own terminal record says so in the field,
+  # publishing `model_request_started=unavailable` on every live launch. Retrying
+  # on the strength of a fact this process has already recorded as unavailable is
+  # the shape of the defect, and no exit status or absent capture repairs it.
+  #
+  # A retry would still be permissible for a condition mechanically PROVEN to
+  # occur before any model request — but that proof has to come from before the
+  # fork, and every such condition here already exits by another path: the four
+  # pre-fork die() sites inside launch_actor(), and the pre-launch guards above.
+  # Nothing that reaches this branch qualifies, so zero automatic retries is the
+  # whole of the correct behaviour rather than a conservative approximation of it.
+  #
+  # Recovery is unchanged and is the operator's: re-running this dispatcher is a
+  # NEW run with its own identity, which revalidates everything and continues
+  # from the state file. That is deliberately not implemented as a replay inside
+  # this stopped run — see the takeover wording below, and case 15c.
+  #
+  # The two branches differ only in what the operator is told to inspect. Both
+  # stop, and both stop on the first failure.
   if [ "$rc" -ne 0 ]; then
     now_dirty=0; state_dirty && now_dirty=1
     if [ "$(file_hash "$STATE_FILE")" = "$before_hash" ] \
        && [ "$(git_head)" = "$before_head" ] \
        && [ "$(foreign_worktree)" = "$before_foreign" ] \
        && [ "$now_dirty" -eq "$before_dirty" ]; then
-      # The retry is a launch like any other, so it obeys the same clock. Without
-      # re-clamping, a hop that failed at minute 39 would get a fresh full-length
-      # timeout and walk straight through the deadline.
-      if [ -n "$DEADLINE_AT" ] && [ "$(remaining_seconds)" -le 0 ]; then
-        die_hop 29 "budget exhausted — the ${DEADLINE}s deadline expired before hop $hop could be retried. THIS IS NOT COMPLETION."$'\n'"The repository was unchanged by the failed attempt, so re-running this dispatcher resumes cleanly from $STATE_FILE."
-      fi
-      eff_timeout="$(effective_timeout)"
-      say "  exit=$rc after ${duration}s, and the repository is unchanged (state sha256, HEAD, working tree, committed-ness all identical) — retrying this hop once."
-      started="$(date '+%s')"
-      launch_actor "$before_turn" "${hop}r" "$eff_timeout"   # separate .out — the first attempt's output is evidence
-      rc=$?
-      duration=$(( $(date '+%s') - started ))
-      if [ "$rc" -eq 124 ]; then
-        if [ -n "$DEADLINE_AT" ] && [ "$(remaining_seconds)" -le 0 ]; then
-          die_hop 29 "budget exhausted — the ${DEADLINE}s deadline expired during the retry of hop $hop and actor '$before_turn' was terminated. THIS IS NOT COMPLETION."$'\n'"Not retried again. Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\`, then re-run this dispatcher."
-        fi
-        die_hop 21 "actor '$before_turn' exceeded ${eff_timeout}s and was killed on the retry (hop $hop)"
-      fi
-      [ "$rc" -eq 0 ] && say "  retry succeeded"
-    else
-      die_hop 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop) AFTER changing the repository — not retried, because a retry would run over a partial effect; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
+      die_hop 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop) and the repository is unchanged (state sha256, HEAD, working tree, committed-ness all identical)."$'\n'"NOT retried: the actor had already launched, and an unchanged repository does not prove the model request never started — a request that ran and left no edit looks exactly like this from here. This dispatcher does not read the child's stream events, so it records that as model_request_started=unavailable rather than guessing."$'\n'"CANONICAL TASK STATE IS UNTOUCHED: this stopped run and its terminal result ARE the takeover."$'\n'"Recoverable next action: read $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out for why the actor exited $rc, then re-run this dispatcher — that starts a NEW run, which revalidates everything and continues from $STATE_FILE."
     fi
-  fi
-
-  if [ "$rc" -ne 0 ]; then
-    die_hop 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop), and the retry failed too; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
+    die_hop 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop) AFTER changing the repository — not retried, because a retry would run over a partial effect; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
   fi
   say "  exit=0 duration=${duration}s"
 
@@ -5137,7 +5143,8 @@ while :; do
     # "Claude edited the state file" about a file that was byte-identical before
     # and after, and had been dirty before the hop even launched. before_dirty
     # was already being computed here — it was just never consulted outside the
-    # crash-retry guard, so the evidence that would have settled it was in a
+    # nonzero-exit guard above (then a crash-retry, now the no-replay stop), so
+    # the evidence that would have settled it was in a
     # variable the classification did not read.
     #
     # 36 requires BOTH halves: dirty before launch AND byte-identical after. If
