@@ -7,7 +7,11 @@
 # and that a memo cannot mark itself complete over an unresolved claim or a live Deep
 # trigger. It does NOT judge whether the analysis is any good; nothing automated can.
 #
-# Usage:  research-route-memo-check.sh --memo <path>
+# Usage:  research-route-memo-check.sh --memo <path> [--authority-root <dir>]
+#
+#   --authority-root  the deployed project root that carries the judgment artifacts and
+#                     L2's validator. Only consulted when the memo binds to governing
+#                     judgment. Defaults to the memo's own git top level, else its directory.
 #
 # Prints `verdict: PASS` (exit 0) or `verdict: REJECT` (exit 1) followed by one
 # `reason:` line per failure. Exits 2 on a usage error.
@@ -17,14 +21,23 @@ set -u
 die() { printf 'ERROR: %s\n' "$1" >&2; exit 2; }
 
 memo=""
+authority_root=""
 while [ $# -gt 0 ]; do
   case "$1" in
     --memo) [ $# -ge 2 ] || die "--memo needs a path"; memo="$2"; shift 2 ;;
+    --authority-root)
+      [ $# -ge 2 ] || die "--authority-root needs a directory"; authority_root="$2"; shift 2 ;;
     *) die "unknown argument: $1" ;;
   esac
 done
 [ -n "$memo" ] || die "--memo is required"
 [ -r "$memo" ] || die "memo is not readable: $memo"
+
+if [ -z "$authority_root" ]; then
+  authority_root="$(git -C "$(dirname "$memo")" rev-parse --show-toplevel 2>/dev/null)" \
+    || authority_root=""
+  [ -n "$authority_root" ] || authority_root="$(cd "$(dirname "$memo")" && pwd -P)"
+fi
 
 reasons=()
 add() { reasons+=("$1"); }
@@ -154,6 +167,81 @@ for id in $claim_ids; do
   fi
 done
 
+# --- bound judgment authority ----------------------------------------------
+# The one way a Standard memo may represent a governing view. The rules the authority itself
+# must satisfy are NOT restated here: they belong to the published contract
+# (workflows/research-workflow/docs/judgment-authority-contract.md), and the adapter asks
+# that contract's own validator. What this section checks is the BINDING — that the memo
+# names one unit and one approved artifact, and that the adapter returns valid authority for
+# them. An adapter that cannot run is a rejection, never a pass: an unestablished binding and
+# a valid one must not read the same.
+authority_adapter="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/research-route-judgment-authority.sh"
+authority_heads="$(grep -cE '^## Judgment authority *$' "$memo" || true)"
+authority_bound=0
+authority_theses=0
+
+if [ "$authority_heads" -gt 1 ]; then
+  add "the memo carries $authority_heads '## Judgment authority' sections — a memo binds to exactly one approved judgment"
+elif [ "$authority_heads" -eq 1 ]; then
+  authority_block="$(awk '
+    /^```/ { fence = !fence }
+    !fence && /^## / { inside = (index($0, "## Judgment authority") == 1); next }
+    inside { print }
+  ' "$memo")"
+
+  unit_lines="$(printf '%s\n' "$authority_block" | grep -c '^Unit: ' || true)"
+  brief_lines="$(printf '%s\n' "$authority_block" | grep -c '^Approved brief: ' || true)"
+  authority_unit="$(printf '%s\n' "$authority_block" | sed -n 's/^Unit: *//p' | head -1)"
+  authority_brief="$(printf '%s\n' "$authority_block" | sed -n 's/^Approved brief: *//p' | head -1)"
+
+  # A closed line schema. Free prose here is how a memo comes to assert its own verification
+  # — "Verified: yes, I checked it" reads exactly like a result and is not one.
+  schema_ok=1
+  while IFS= read -r authority_line; do
+    case "$authority_line" in
+      ""|Unit:\ *|Approved\ brief:\ *) ;;
+      *) schema_ok=0 ;;
+    esac
+  done <<< "$authority_block"
+  [ "$schema_ok" -eq 1 ] || add "the '## Judgment authority' block carries content outside its closed schema — it holds exactly one 'Unit:' line and one 'Approved brief:' line, and nothing that could be mistaken for a verification the memo performed on itself"
+
+  [ "$unit_lines" -eq 1 ] || add "the '## Judgment authority' block must carry exactly one 'Unit:' line (found $unit_lines)"
+  [ "$brief_lines" -eq 1 ] || add "the '## Judgment authority' block must carry exactly one 'Approved brief:' line (found $brief_lines)"
+
+  case "$authority_brief" in
+    *-approved.md) ;;
+    "") add "the '## Judgment authority' block names no approved brief" ;;
+    *) add "judgment authority binds only to a '{base}-approved.md' artifact — '$authority_brief' is not one, and a proposed or rejected brief never becomes authority" ;;
+  esac
+
+  if [ "$schema_ok" -eq 1 ] && [ "$unit_lines" -eq 1 ] && [ "$brief_lines" -eq 1 ] \
+     && [ -n "$authority_unit" ]; then
+    case "$authority_brief" in
+      *-approved.md)
+        case "$authority_brief" in
+          /*) authority_path="$authority_brief" ;;
+          *)  authority_path="$authority_root/$authority_brief" ;;
+        esac
+        if [ ! -r "$authority_adapter" ]; then
+          add "the judgment-authority adapter is unavailable at $authority_adapter — the binding cannot be established (contract-exit: none)"
+        else
+          adapter_out="$(bash "$authority_adapter" \
+            --root "$authority_root" --unit "$authority_unit" \
+            --base "${authority_path%-approved.md}" 2>&1)"
+          adapter_rc=$?
+          if [ "$adapter_rc" -eq 0 ]; then
+            authority_bound=1
+            authority_theses="$(printf '%s\n' "$adapter_out" | sed -n 's/^theses: //p' | head -1)"
+            [ -n "$authority_theses" ] || authority_theses=0
+          else
+            add "the bound judgment authority is not contract-valid: $(printf '%s\n' "$adapter_out" | sed -n 's/^reason: //p' | head -1) ($(printf '%s\n' "$adapter_out" | grep '^contract-exit: ' | head -1))"
+          fi
+        fi
+        ;;
+    esac
+  fi
+fi
+
 # --- completion -------------------------------------------------------------
 status_lines="$(grep -c '^Status: ' "$memo" || true)"
 trigger_lines="$(grep -c '^Deep triggers: ' "$memo" || true)"
@@ -192,6 +280,12 @@ fi
 # --- answer-to-claim binding and verb permission ---------------------------
 # Every material Answer line cites the claim IDs that license it. This makes the verb
 # check claim-local: a SUPPORTED claim elsewhere cannot launder a stronger verb over C2.
+#
+# A line may also cite thesis IDs (T1, T2 ...) when the memo binds to approved judgment.
+# The two reference families do different jobs and neither substitutes for the other: a C
+# reference is an evidence permission, a T reference is the authorized thesis the assertion
+# serves. So an assertion still needs a C reference to say anything factual, and under bound
+# authority it also needs a T reference to say what governs it.
 answer_lines="$(awk '
   /^```/ { fence = !fence }
   !fence && /^## / { inside = (index($0, "## Answer") == 1); next }
@@ -201,12 +295,26 @@ answer_assertions=0
 while IFS= read -r line; do
   [ -n "$line" ] || continue
   answer_assertions=$((answer_assertions + 1))
-  if [[ ! "$line" =~ ^-\ \[C[0-9]+(,[[:space:]]*C[0-9]+)*\][[:space:]]+.+ ]]; then
+  if [[ ! "$line" =~ ^-\ \[[CT][0-9]+(,[[:space:]]*[CT][0-9]+)*\][[:space:]]+.+ ]]; then
     add "the Answer must put each material assertion on one line as '- [C1]' or '- [C1,C2]' so its evidence permission is checkable"
     continue
   fi
-  refs="$(printf '%s\n' "$line" | sed -E 's/^- \[([^]]+)\].*/\1/' | grep -oE 'C[0-9]+')"
+  refs="$(printf '%s\n' "$line" | sed -E 's/^- \[([^]]+)\].*/\1/' | grep -oE '[CT][0-9]+')"
+  claim_refs=0
+  thesis_refs=0
   for ref in $refs; do
+    case "$ref" in
+      T*)
+        thesis_refs=$((thesis_refs + 1))
+        if [ "$authority_bound" -ne 1 ]; then
+          add "the Answer cites thesis $ref without contract-valid bound judgment authority — a thesis reference means nothing except against an approved Unit Judgment Brief"
+        elif [ "${ref#T}" -lt 1 ] || [ "${ref#T}" -gt "$authority_theses" ]; then
+          add "the Answer cites thesis $ref, which the approved brief does not carry (it holds $authority_theses)"
+        fi
+        continue
+        ;;
+    esac
+    claim_refs=$((claim_refs + 1))
     if ! printf '%s\n' $claim_ids | grep -qx "$ref"; then
       add "the Answer cites undeclared claim $ref"
       continue
@@ -217,6 +325,14 @@ while IFS= read -r line; do
         || add "the Answer uses a SUPPORTED-only verb for $ref, which is $ref_class"
     fi
   done
+  # Authority frames a conclusion; it never supplies the evidence for one. An assertion
+  # resting on a thesis alone has no evidence permission at all, and bound authority must not
+  # become the way a memo says something no source supports.
+  [ "$claim_refs" -ge 1 ] \
+    || add "an Answer assertion citing only judgment authority carries no evidence permission — a thesis frames a conclusion, it never licenses a factual assertion"
+  if [ "$authority_bound" -eq 1 ] && [ "$thesis_refs" -lt 1 ]; then
+    add "the Answer assertion cites no thesis — under bound judgment authority every consequential assertion names the thesis it serves"
+  fi
 done <<< "$answer_lines"
 [ "$answer_assertions" -ge 1 ] || add "the Answer contains no claim-bound assertion"
 
@@ -249,12 +365,16 @@ unknown_lines="$(awk '
 printf '%s\n' "$unknown_lines" | grep -qE '^- ' \
   || add "the Unknowns section must contain at least one bullet, including '- None material.' when appropriate"
 
-# --- the closed seam --------------------------------------------------------
-# Until L2 publishes the authority contract, Standard output has no structured authority
-# field to validate. The safe mechanical rule is therefore conservative: the output may
-# compare interpretations, but it may not contain the reserved authority term at all.
-if grep -qiE 'house[ -]?view' "$memo"; then
-  add "the memo contains the reserved House View term — Standard may compare readings but cannot represent or discuss governing authority before L2 publishes its contract"
+# --- the reserved authority term -------------------------------------------
+# This rule used to be a blanket rejection, because there was no published contract to
+# validate against and a conservative refusal was the only safe mechanical rule. L2's
+# contract is now published, so the refusal is replaced by a BINDING — and only that far.
+# Unbound, the answer is unchanged: the term may not appear. What changed is that a memo
+# now has a way to earn it, not that the seam opened.
+names_reserved_term=0
+grep -qiE 'house[ -]?view' "$memo" && names_reserved_term=1  # only '## Judgment authority' binds it
+if [ "$names_reserved_term" -eq 1 ] && [ "$authority_bound" -ne 1 ]; then
+  add "the memo names the reserved House View term without contract-valid bound judgment authority — Standard may compare readings, but it cannot represent a governing view except through an approved Unit Judgment Brief consumed under '## Judgment authority'"
 fi
 
 # --- verdict ----------------------------------------------------------------

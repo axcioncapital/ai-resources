@@ -185,6 +185,12 @@ Produce one memo in exactly this shape:
 ```markdown
 # {question, restated in one line}
 
+<!-- Omit this whole section unless governing judgment is bound — see "Binding to
+     approved judgment" below. Two lines exactly; nothing else may appear here. -->
+## Judgment authority
+Unit: {the unit the approved brief covers}
+Approved brief: {base}-approved.md
+
 ## Claims
 
 ### C1 — {the claim, stated so it can be true or false}
@@ -198,6 +204,7 @@ Rationale: {why this class, and any ceiling you applied with its cap}
 ## Answer
 - [C1] {one material assertion licensed by C1}
 - [C1,C2] {one material assertion licensed by both claims}
+- [C1,T2] {only under bound authority: an assertion licensed by C1 and serving Thesis 2}
 
 ## Inference
 - [INFERENCE] {what you concluded beyond what the sources state, naming the claim IDs it rests on}
@@ -261,8 +268,12 @@ done
 research_root="$(git -C "$(dirname "$research_entry")" rev-parse --show-toplevel 2>/dev/null)"
 research_checker="$research_root/logs/scripts/research-route-memo-check.sh"
 [ -r "$research_checker" ] || { printf 'Standard checker unavailable: %s\n' "$research_checker" >&2; exit 2; }
-bash "$research_checker" --memo <path-to-memo>
+bash "$research_checker" --memo <path-to-memo> --authority-root <deployed-project-root>
 ```
+
+`--authority-root` matters only when the memo binds to governing judgment; it names the
+deployed project that carries the judgment artifacts and the contract's validator. Omit it
+and the checker falls back to the memo's own checkout.
 
 It rejects a memo that launders an unsupported claim: missing required sections or claim fields;
 role/source counts inconsistent with the selected permission class; sources without date, role or
@@ -288,16 +299,66 @@ intended to find.
 Standard **may** set two or more readings of the evidence side by side, each with its own claims and
 classes, and say plainly which the evidence supports better and why.
 
-Standard **may not promote any of them to a governing judgment.** No House View, no founder-authorized
-thesis, no approval step, no authority artifact. That contract is owned by the canonical judgment
-layer and has not been published yet, so there is nothing here to bind to. Do not invent it, do not
-stub it, and do not write as though a selection had been authorized. Where a request genuinely needs
-the reserved authority concept discussed in the output, escalate rather than placing that term in a
-Standard memo; until L2 publishes a structured contract the checker rejects the term conservatively.
-Where a request genuinely needs an authorized thesis rather than a comparison, that is a Deep
-trigger and an honest escalation —
-which is what "stopping cleanly at the seam" means. The seam stays closed until the authority
-contract exists.
+Standard **may not promote any of them to a governing judgment on its own.** It authors no thesis,
+runs no approval step and creates no authority artifact. The one way it may represent a governing
+view is by consuming a judgment somebody else already authorized, through the interface published in
+`workflows/research-workflow/docs/judgment-authority-contract.md`. Anything else — inventing the
+selection, stubbing it, or writing as though one had been authorized — is the failure this section
+exists to prevent, and the memo checker rejects it.
+
+### Binding to approved judgment
+
+**When this applies.** Only when the assignment genuinely needs an *authorized thesis* rather than a
+comparison of interpretations — the `thesis_judgment=yes` signal where the resolved route is still
+Standard, and the same need when it surfaces during the work. Ordinary analysis does not become
+judgment because a conclusion is confident, and widening the trigger would put the whole Standard
+lane behind an approval it does not need.
+
+**How.** Resolve the unit and its artifact base path, then run the adapter. It is the only path to
+governing judgment this route has:
+
+```bash
+bash "$research_root/logs/scripts/research-route-judgment-authority.sh" \
+  --root <deployed-project-root> --unit <unit-id> --base <artifact-base-path>
+```
+
+The adapter validates `{base}-approved.md` through the contract's own
+`check-judgment-contract.sh` and branches on its **exit code**, never on its prose. **Exit 0 is the
+sole valid-authority result.** On exit 0 it hands back the approved brief's content and its numbered
+theses; on anything else it prints `authority: UNAVAILABLE` with the contract exit code and
+`escalate: deep`.
+
+Four rules govern what you may then do:
+
+- **Work from the content, not the fact that a file exists.** The adapter prints the approved brief
+  because reading it is the point — a memo that confirms an approved brief exists and then reasons
+  from something else has proved nothing.
+- **Trace every consequential assertion to the thesis it serves.** Under bound authority each
+  `## Answer` bullet carries its claim IDs *and* the thesis IDs it serves: `- [C1,T2] ...`. The
+  checker enforces both directions.
+- **Authority never raises an evidence class.** A thesis frames a conclusion; it does not license a
+  factual assertion. Every claim-level permission still binds, the verb rule is unchanged, and an
+  assertion citing only a thesis is rejected.
+- **Never create, approve, promote or simulate the authority.** Do not author an approved brief, do
+  not edit one, do not treat a proposed or rejected brief as authority because it is the only one on
+  disk, and do not open a second approval path. The producer, the independent challenge and the
+  approval seam belong to the canonical judgment layer, not here.
+- **Gated, not freed.** A memo that does not bind above may never write the words *House View*.
+  The blanket refusal became a binding; a binding is not permission.
+
+**When valid authority is unavailable, the memo does not complete.** Missing validator, missing
+brief, a proposed or rejected state, no claim IDs, a malformed artifact, a brief for another unit —
+all of it fails closed the same way. Set `Status: ESCALATED-TO-DEEP` and name the authority failure
+in `Deep triggers:` precisely enough for the next route to act on it, including the contract exit
+code:
+
+```
+Deep triggers: an authorized thesis is required and no contract-valid approved judgment is
+available (contract-exit 3 — no approved brief at the resolved base path)
+```
+
+That is the same one-way escalation as everywhere else in this route. Not completing is the correct
+outcome, and manufacturing the missing authority is never one.
 
 ---
 
