@@ -1607,6 +1607,29 @@ fi
 # run and it is held to the admitted run's boundary.
 check_evidence_location() { # requested-or-default path -> 0, or exits 10
   local want="$1" probe parent
+  # `-` IS THE ONE OPERAND THAT CANNOT BE MADE INTO A PATH.
+  #
+  # Every other leading-dash value below is a legal directory name that only
+  # LOOKED like syntax, and the option terminators added at the creation and
+  # canonicalization sites settle those. This one is different in kind: bash's
+  # `cd -` means OLDPWD however the argument is quoted, so `mkdir -p -- -`
+  # creates a directory here while `cd -- -`... does not reach it by the same
+  # name at all. The run would create one directory and canonicalize onto
+  # another — or, where OLDPWD is unset, create the directory and then stop,
+  # having already written inside the checkout for a run that never started.
+  #
+  # REFUSED HERE, which is before admission, so the invocation takes no lease,
+  # launches no actor and leaves no directory behind. That is the approved
+  # plan's own bar for an invalid pre-admission invocation, and the pre-change
+  # behaviour missed it by exactly one stray directory.
+  #
+  # `./-` is offered rather than a flat refusal because a directory genuinely
+  # named `-` is legal and the operator may mean it. The prefix is what removes
+  # the ambiguity, and it is the ordinary shell answer to this exact problem.
+  if [ "$want" = '-' ]; then
+    printf 'STOP [10] run evidence location may not be the single character "-": that is the shell'"'"'s previous-directory token rather than a path, so the directory created and the directory canonicalized would not be the same one. Pass ./- if a directory named "-" is genuinely wanted.\n' >&2
+    exit 10
+  fi
   # A symlink that does not resolve to a directory is refused before anything
   # else. `-e` is false for a broken one, so the ancestor walk below would climb
   # straight past it to a perfectly good parent and call the location usable,
@@ -2912,12 +2935,19 @@ EOF
     "$(git -C "$CHECKOUT" rev-parse --abbrev-ref HEAD 2>/dev/null)"
 
   st_logdir="$LOG_DIR"; [ -n "$st_logdir" ] || st_logdir="$DEFAULT_LOG_DIR"
-  st_last="$(ls -t "$st_logdir"/*-"$TASK".log 2>/dev/null | head -1)"
+  # `--` HERE TOO, and for the same value. --status runs before the block that
+  # canonicalizes LOG_DIR, deliberately — it takes no lease and creates nothing,
+  # so it must not canonicalize by entering a directory it may not be entitled
+  # to. That leaves the operator's relative operand intact, so a run filed under
+  # `--log-dir -runs` expands this glob to `-runs/...log` and every read below
+  # would otherwise be parsed as options. Terminating is what keeps --status
+  # strictly read-only AND able to find the evidence a real run just wrote.
+  st_last="$(ls -t -- "$st_logdir"/*-"$TASK".log 2>/dev/null | head -1)"
   if [ -n "$st_last" ]; then
     printf 'logs: %s\n' "$st_last"
-    st_hop="$(grep -E '^hop=[0-9]+ actor=' "$st_last" 2>/dev/null | tail -1)"
+    st_hop="$(grep -E '^hop=[0-9]+ actor=' -- "$st_last" 2>/dev/null | tail -1)"
     [ -n "$st_hop" ] && printf '  last hop line: %s\n' "$st_hop"
-    st_stop="$(grep -E '^STOP \[' "$st_last" 2>/dev/null | tail -1)"
+    st_stop="$(grep -E '^STOP \[' -- "$st_last" 2>/dev/null | tail -1)"
     [ -n "$st_stop" ] && printf '  last stop line: %s\n' "$st_stop"
   else
     printf 'logs: no run log for this task under %s\n' "$st_logdir"
@@ -3181,12 +3211,38 @@ remaining_seconds() {
 # it is actually used — a check that cannot fail is not a check (§ 6 rule 5), and
 # the interval between the two is real.
 [ -n "$LOG_DIR" ] || LOG_DIR="$DEFAULT_LOG_DIR"
-mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
+# `--` ON BOTH, because this is the one dispatcher value that reaches a command
+# in option position while still being operator-supplied free text. Everything
+# else handed to an external command is a canonical absolute path, a commit
+# hash, or a task id already bounded to `^[A-Za-z0-9][A-Za-z0-9._-]*$` — none of
+# which can begin with a dash. Without the terminators, `--log-dir -runs` was
+# consumed as `mkdir: illegal option -- r` and a legal directory name was
+# refused as syntax.
+mkdir -p -- "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
 # The dispatcher's own evidence directory is not "foreign work". When --log-dir
 # points inside the checkout, the run log this process is about to write would
 # otherwise register as an out-of-allowlist change made by the dispatcher itself,
 # and the pre-hop gate below would stop on it.
-LOG_DIR_ABS="$(cd "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canonicalize log dir\n' >&2; exit 10; }
+LOG_DIR_ABS="$(cd -- "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canonicalize log dir\n' >&2; exit 10; }
+# ONE VALUE FROM HERE ON, and this line is the whole point of the block.
+#
+# The two forms used to be kept side by side with DIFFERENT CONSUMERS, which is
+# a divergence waiting for an operand where they disagree:
+#
+#   raw LOG_DIR       -> $RUN_LOG, the hop captures, the unattended profile,
+#                        $final in finalize_terminal_result(), and every
+#                        operator-facing "check that ... is writable" message
+#   LOG_DIR_ABS       -> $promised in consume_terminal_result(), the path and
+#                        identity validators, and the LOG_REL allowlist below
+#
+# So an admitted run could write its durable terminal result to one path and
+# then look for it at another — the exact failure the Gate SA claim is about.
+# Collapsing them here rather than rewriting each consumer keeps the fix to one
+# line and makes the divergence unreachable instead of merely unlikely: there is
+# no longer a second value for a later edit to pick the wrong one of.
+#
+# AFTER the canonicalization and BEFORE the first consumer, which is RUN_LOG.
+LOG_DIR="$LOG_DIR_ABS"
 if [ "$LOG_DIR_ABS" != "$CHECKOUT" ] && [ "${LOG_DIR_ABS#"$CHECKOUT"/}" != "$LOG_DIR_ABS" ]; then
   # Assigns the global declared near LAST_CAPTURE — allowlisted_dirty() reads it
   # to keep this directory out of the partial-effect report (O2).

@@ -1728,8 +1728,15 @@ else
   bad "    and it records the refusal's own exit code" "record: ${RR:-none}"
 fi
 # EVIDENCE NOBODY CAN FIND IS NOT EVIDENCE.
+#
+# Matched in the CANONICAL form since case 69 collapsed the evidence directory to
+# one value. The file assertions above still use $LOSER_LOGS because opening a
+# path follows symlinks and the two forms name the same file; only the printed
+# STRING has to agree with what the dispatcher now reports, and on a host whose
+# sandbox root is reached through a symlink the raw form is not what it prints.
+RR_SHOWN="$(cd "$LOSER_LOGS" && pwd -P)/$RID12.result"
 if [ -f "$RR" ]; then
-  out_has "$RR" "$OUT" "  and the refusal prints the record's path on the terminal"
+  out_has "$RR_SHOWN" "$OUT" "  and the refusal prints the record's path on the terminal"
 else
   bad "  and the refusal prints the record's path on the terminal" "no record to name"
 fi
@@ -3621,7 +3628,14 @@ printf '%s\n' "$OUT27U" | grep -q 'terminating actor descendant tree' \
 # path, the run id parsed from the dispatcher's own first line, the state file it
 # was pointed at, the declaration the sandbox does NOT carry, and the two lease
 # directories this harness computed before the run started.
-for pair in "checkout:$CO27U" "run:$RID27U" "run_log:$d/runs/$RID27U.log" \
+# run_log is expected in the CANONICAL form, like checkout and state_file beside
+# it. The dispatcher used to report this one path in whatever form the operator
+# typed while reporting the promised result path canonically; case 69 is why
+# there is now one evidence-directory value and it is the canonical one. On a
+# host where the sandbox root is reached through a symlink — macOS /var, most
+# obviously — $d and $CO27U differ, and that difference is exactly what this
+# expectation used to encode.
+for pair in "checkout:$CO27U" "run:$RID27U" "run_log:$CO27U/runs/$RID27U.log" \
             "state_file:$CO27U/logs/work-loop/sig-prelaunch-task.md" \
             "owner_declared:none" "owner_check:unchecked" \
             "lease_task_dir:$LK27U" "lease_checkout_dir:$CL27U" \
@@ -11767,6 +11781,152 @@ expect_rc 10 "$RC" "68b — an unknown option is refused as usage" "$OUT"
 out_has "STOP [10]" "$OUT" "68b — the refusal names itself on stderr"
 out_has "unknown argument" "$OUT" "68b — and names the condition"
 out_has "--not-an-option" "$OUT" "68b — and names the rejected option"
+
+# =================================================================== case 69
+# THE EVIDENCE DIRECTORY IS ONE VALUE, AND IT IS DATA.
+#
+# Two separate defects share this seam, which is why they share a case rather
+# than getting a punctuation patch each:
+#
+#   1. `--log-dir -runs` was not a path at all. `mkdir -p "$LOG_DIR"` handed a
+#      leading-dash operand straight into option position, so a perfectly legal
+#      directory name was refused as an illegal option.
+#   2. The value was then kept TWICE. `LOG_DIR` stayed exactly as typed while
+#      `LOG_DIR_ABS` held the canonical form, and the two had different
+#      consumers: finalize_terminal_result() wrote `$LOG_DIR/$RUN_ID.result`
+#      while consume_terminal_result() validated `$LOG_DIR_ABS/$RUN_ID.result`.
+#      Any operand where those two forms differ makes an admitted run write its
+#      durable result to one path and look for it at another.
+#
+# RUN FROM INSIDE THE SANDBOX, deliberately. An absolute --log-dir can never
+# begin with a dash, so the defect is unreachable without a relative operand,
+# and a test that passed an absolute path would be green against the old code.
+echo
+echo "Case 69 — a leading-dash evidence directory is admitted and used as ONE canonical location"
+d="$(new_sandbox)"; state_file "$d" "dashdir-task" "claude"
+OUT="$( cd "$d" && bash "$DISPATCH_BIN" --checkout "$d" --task dashdir-task \
+        --log-dir -runs --carry-one --actor-cmd "$FLIP" 2>&1 )"; RC=$?
+expect_rc 0 "$RC" "69 — the run completes with a leading-dash evidence directory" "$OUT"
+# Not blanket-rejected: a legal directory name that happens to start with `-` is
+# a path, per the clause. This is the half that must NOT become a refusal.
+[ -d "$d/-runs" ] \
+  && ok "69 — the operand was treated as a directory name, not as an option" \
+  || bad "69 — the operand was treated as a directory name, not as an option" \
+         "no directory at $d/-runs"
+# rc 0 already proves the write path and the consume path agree — a divergence
+# stops at 38 or at the untrusted-result funnel — but the artifacts are asserted
+# co-located as well, because "exit 0" alone would not say WHERE.
+R69="$d/-runs/$(run_id_of "$OUT").result"
+[ -f "$R69" ] && ok "69 — the terminal result was finalized inside that directory" \
+              || bad "69 — the terminal result was finalized inside that directory" \
+                     "missing $R69; -runs/ holds: $(ls "$d/-runs" 2>&1 | tr '\n' ' ')"
+[ -f "$d/-runs/$(run_id_of "$OUT").log" ] \
+  && ok "69 — and so was the run log" \
+  || bad "69 — and so was the run log" "-runs/ holds: $(ls "$d/-runs" 2>&1 | tr '\n' ' ')"
+[ -f "$d/-runs/$(run_id_of "$OUT").hop1.claude.out" ] \
+  && ok "69 — and so was the hop capture" \
+  || bad "69 — and so was the hop capture" "-runs/ holds: $(ls "$d/-runs" 2>&1 | tr '\n' ' ')"
+# THE DIVERGENCE ASSERTION PROPER. `run_log` is written from the same variable
+# the hop captures and the result file are named from, so an absolute value here
+# is what says the raw form is gone rather than merely canonicalized alongside.
+case "$(res_field "$R69" run_log)" in
+  /*-runs/*) ok "69 — the operator-facing run_log path is the canonical absolute one" ;;
+  *) bad "69 — the operator-facing run_log path is the canonical absolute one" \
+         "got: $(res_field "$R69" run_log)" ;;
+esac
+[ -d "$d/plans/work-loop-v2-v0.2/handoff-automation-spike/runs" ] \
+  && bad "69 — the default location was NOT used as well" "the default runs/ directory was created too" \
+  || ok "69 — the default location was NOT used as well"
+
+# ================================================================== case 69a
+# THE ONE OPERAND THAT IS NOT A PATH.
+#
+# `-` is refused rather than terminated, because `--` does not settle it: bash's
+# `cd -` means OLDPWD whatever quoting it is given, so a directory genuinely
+# named `-` and the shell's previous-directory token are the same eight bits at
+# every consumer. That ambiguity cannot be resolved downstream, only refused up
+# front — and up front means BEFORE admission, so the refusal takes no lease,
+# launches no actor and leaves no evidence behind. Asserted as effects, not just
+# as an exit code: the pre-change code created the directory before failing.
+echo
+echo "Case 69a — the exact operand \`-\` is refused BEFORE admission, with no effects"
+d="$(new_sandbox)"; state_file "$d" "dashonly-task" "claude"
+OUT="$( cd "$d" && bash "$DISPATCH_BIN" --checkout "$d" --task dashonly-task \
+        --log-dir - --carry-one --actor-cmd "$FLIP" 2>&1 )"; RC=$?
+expect_rc 10 "$RC" "69a — the run is refused as usage" "$OUT"
+out_has "STOP [10]" "$OUT" "69a — the refusal names itself on stderr"
+out_has "run evidence location" "$OUT" "69a — and names the boundary it was refused at"
+[ -e "$d/-" ] \
+  && bad "69a — no evidence directory was created" "a directory named '-' exists at $d/-" \
+  || ok "69a — no evidence directory was created"
+[ -e "$d/plans/work-loop-v2-v0.2/handoff-automation-spike/runs" ] \
+  && bad "69a — and the default location was not created either" "the default runs/ directory exists" \
+  || ok "69a — and the default location was not created either"
+[ -e "$d/.git/work-loop-dispatch-locks" ] \
+  && bad "69a — no task or checkout lease was taken" "a lease root exists at $d/.git/work-loop-dispatch-locks" \
+  || ok "69a — no task or checkout lease was taken"
+[ -e "$d.calls" ] \
+  && bad "69a — no actor was launched" "the actor recorded a call at $d.calls" \
+  || ok "69a — no actor was launched"
+
+# =================================================================== case 70
+# THE ONE ACTOR-CONTROLLED OPERAND IN THE WHOLE DISPATCHER.
+#
+# Every other non-literal operand comes from strict task grammar, a canonical
+# checkout, or a commit hash. `$p` in allowlisted_dirty_snapshot() comes from
+# `git status --porcelain`, which means the actor names it by creating the file.
+# `git hash-object -- "$p"` already terminates options there; nothing proved it.
+#
+# WHY THE ASSERTION IS ABOUT THE HASH AND NOT ABOUT THE PATH APPEARING. The file
+# is dirty BEFORE the hop and dirty AFTER it, so its porcelain line is
+# byte-identical at both snapshots. Only the blob hash changes. If hash-object
+# refuses the operand, both snapshots read `UNHASHABLE`, the two lines match,
+# and comm -13 drops the path — the actor's edit becomes invisible. That is the
+# failure this case detects, and the mutation control below is what proves the
+# case can detect it.
+echo
+echo "Case 70 — an actor-controlled path beginning with a dash is hashed as data"
+dash_case() { # dispatcher-binary -> writes $OUT, sets $RC
+  DASH_D="$(new_sandbox)"; state_file "$DASH_D" "dashpath-task" "claude"
+  # Dirty before launch, and untracked so its porcelain line stays `?? -note.md`
+  # across the hop. Same line before and after is the whole point.
+  printf 'before\n' >"$DASH_D/-note.md"
+  OUT="$(bash "$1" --checkout "$DASH_D" --task dashpath-task --log-dir "$DASH_D/runs" \
+        --carry-one \
+        --allow-path '^logs/work-loop/' --allow-path '^-note\.md$' \
+        --actor-cmd 'printf "after\n" >> "$WL_CHECKOUT/-note.md"; printf "out-of-scope\n" >> "$WL_CHECKOUT/other.txt"' 2>&1)"
+  RC=$?
+}
+dash_case "$DISPATCH_BIN"
+expect_rc 24 "$RC" "70 — the out-of-allowlist edit still stops the run" "$OUT"
+printf '%s' "$OUT" | grep -q "PARTIAL FILE EFFECTS" \
+  && ok "70 — the stop carries a partial-effects section" \
+  || bad "70 — the stop carries a partial-effects section" "$OUT"
+partial_section "$OUT" | grep -Fq -- "-note.md" \
+  && ok "70 — the dash-named path the actor edited is named inside that section" \
+  || bad "70 — the dash-named path the actor edited is named inside that section" "$OUT"
+
+# --- the mutation control ----------------------------------------------------
+# A green case is not evidence until the thing it is about can be taken away.
+# ONLY the option terminator is removed, and the diff is asserted to be exactly
+# that one line — a mutation that failed to apply would otherwise "pass" by
+# reproducing the unmutated result.
+echo
+echo "Case 70a — CONTROL: case 70 fails when only the \`--\` is removed"
+MUT70="$SANDBOX_ROOT/dispatch-no-optterm.sh"
+sed 's|hash-object -- "\$p"|hash-object "$p"|' "$DISPATCH_BIN" >"$MUT70"
+MUT70_DELTA="$(diff "$DISPATCH_BIN" "$MUT70" | grep -c '^[<>]')"
+[ "$MUT70_DELTA" = "2" ] \
+  && ok "70a — the mutation changed exactly one line" \
+  || bad "70a — the mutation changed exactly one line" "changed-line markers: $MUT70_DELTA"
+grep -q 'hash-object -- "\$p"' "$MUT70" \
+  && bad "70a — the option terminator is gone from the mutant" "it is still present" \
+  || ok "70a — the option terminator is gone from the mutant"
+dash_case "$MUT70"
+partial_section "$OUT" | grep -Fq -- "-note.md" \
+  && bad "70a — without \`--\` the actor's edit to the dash-named path goes UNREPORTED" \
+         "the mutant still reported it, so case 70 is not testing the terminator" \
+  || ok "70a — without \`--\` the actor's edit to the dash-named path goes UNREPORTED"
 
 # ==================================================================== done
 echo
