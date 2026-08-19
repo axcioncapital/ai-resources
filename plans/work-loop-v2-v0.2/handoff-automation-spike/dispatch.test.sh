@@ -12255,6 +12255,163 @@ printf '%s\n' "$OUT" | grep -qE '^d\.md' \
   || ok "70g — no raw control byte leaked into operator output"
 unset WL_C1 WL_C2
 
+# ==================================== Case 71 — attended permission selection
+#
+# Unit 24, Change set B. The attended Claude launch passed the LITERAL
+# `--permission-mode default`, so there was no way to request `acceptEdits` for
+# one invocation, and `permission_mode_requested` restated the same literal
+# rather than reporting what the argv carried.
+#
+# WHAT MUST NOT CHANGE, and is asserted here rather than assumed: the mode is
+# still EXPLICIT on every attended launch. P0-F's finding was never about the
+# word `default` — it was that an inherited mode let a child run under this
+# checkout's `defaultMode: bypassPermissions`. A selection whose two values are
+# both fixed before admission keeps that property; a selection that fell back to
+# "whatever settings say" would silently undo it.
+#
+# These cases reuse FAKE2 and argv_has() rather than adding a harness: FAKE2 is
+# already the attended-capable stub with an argv recorder, which is exactly the
+# nearest existing mechanism.
+
+echo
+echo "Case 71a — omitting the flag still requests default, on the argv and in the record"
+d="$(new_sandbox)"; state_file "$d" "perm-default-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-perm-default.txt"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-perm-default.txt"
+export WL_SF="$d/logs/work-loop/perm-default-task.md"
+export WL_CO="$d"
+export WL_FAKE_VERSION="2.1.220 (Claude Code)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-default-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "71a — the hop completes with no --permission-mode flag" "$OUT"
+argv_has "$WL_ARGV_FILE" "--permission-mode" \
+  && ok "71a — the attended argv still states a permission mode explicitly" \
+  || bad "71a — the attended argv still states a permission mode explicitly" \
+         "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE" 2>/dev/null)"
+argv_has "$WL_ARGV_FILE" "default" \
+  && ok "71a — and the stated mode is default" \
+  || bad "71a — and the stated mode is default" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE" 2>/dev/null)"
+R71A="$d/runs/$(run_id_of "$OUT").result"
+[ "$(res_field "$R71A" permission_mode_requested)" = "default" ] \
+  && ok "71a — permission_mode_requested=default" \
+  || bad "71a — permission_mode_requested=default" "got: $(res_field "$R71A" permission_mode_requested)"
+
+echo
+echo "Case 71b — an explicit acceptEdits selection reaches the argv and the record"
+d="$(new_sandbox)"; state_file "$d" "perm-accept-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-perm-accept.txt"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-perm-accept.txt"
+export WL_SF="$d/logs/work-loop/perm-accept-task.md"
+export WL_CO="$d"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-accept-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --permission-mode acceptEdits 2>&1)"; RC=$?
+expect_rc 0 "$RC" "71b — the hop completes with --permission-mode acceptEdits" "$OUT"
+argv_has "$WL_ARGV_FILE" "acceptEdits" \
+  && ok "71b — the child's argv carries acceptEdits" \
+  || bad "71b — the child's argv carries acceptEdits" \
+         "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE" 2>/dev/null)"
+R71B="$d/runs/$(run_id_of "$OUT").result"
+[ "$(res_field "$R71B" permission_mode_requested)" = "acceptEdits" ] \
+  && ok "71b — permission_mode_requested=acceptEdits" \
+  || bad "71b — permission_mode_requested=acceptEdits" "got: $(res_field "$R71B" permission_mode_requested)"
+# THE HONEST HALF. Requesting a mode is not observing one, and this unit adds no
+# reader for the child's system/init event. A record that promoted the request to
+# an effective grant would be the single most tempting false statement here.
+[ "$(res_field "$R71B" permission_mode_effective)" = "unavailable" ] \
+  && ok "71b — permission_mode_effective stays honestly unavailable" \
+  || bad "71b — permission_mode_effective stays honestly unavailable" \
+         "got: $(res_field "$R71B" permission_mode_effective)"
+
+echo
+echo "Case 71c — explicit default is accepted and behaves exactly like omission"
+d="$(new_sandbox)"; state_file "$d" "perm-explicit-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-perm-explicit.txt"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-perm-explicit.txt"
+export WL_SF="$d/logs/work-loop/perm-explicit-task.md"
+export WL_CO="$d"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-explicit-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --permission-mode default 2>&1)"; RC=$?
+expect_rc 0 "$RC" "71c — the hop completes with an explicit default" "$OUT"
+R71C="$d/runs/$(run_id_of "$OUT").result"
+[ "$(res_field "$R71C" permission_mode_requested)" = "default" ] \
+  && ok "71c — permission_mode_requested=default" \
+  || bad "71c — permission_mode_requested=default" "got: $(res_field "$R71C" permission_mode_requested)"
+
+echo
+echo "Case 71d — invalid modes are refused BEFORE admission, with no effect of any kind"
+# The no-effect half is the point, not the exit code. A refusal that had already
+# taken a lease or written evidence would be a run that happened for an authority
+# request the dispatcher then rejected.
+for bad_mode in bypassPermissions sudo '' ; do
+  d="$(new_sandbox)"; state_file "$d" "perm-refuse-task" "claude"
+  HB="$(git -C "$d" rev-parse HEAD)"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-refuse-task --log-dir "$d/runs" \
+        --carry-one --claude-bin "$FAKE2" --permission-mode "$bad_mode" 2>&1)"; RC=$?
+  label="${bad_mode:-<empty>}"
+  expect_rc 10 "$RC" "71d — --permission-mode $label is refused as usage (10)" "$OUT"
+  [ ! -d "$d/runs" ] \
+    && ok "71d — $label: no evidence directory was created" \
+    || bad "71d — $label: no evidence directory was created" "$(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+  [ "$(git -C "$d" rev-parse HEAD)" = "$HB" ] && [ -z "$(git -C "$d" status --porcelain)" ] \
+    && ok "71d — $label: the repository is untouched" \
+    || bad "71d — $label: the repository is untouched" "$(git -C "$d" status --porcelain)"
+  [ ! -e "$d/logs/work-loop/.owner" ] \
+    && ok "71d — $label: no ownership declaration was taken" \
+    || bad "71d — $label: no ownership declaration was taken" "$(cat "$d/logs/work-loop/.owner" 2>/dev/null)"
+done
+# bypassPermissions is named in its own message, because it is the value an
+# operator actually reaches for and a generic "unknown mode" would bury it.
+d="$(new_sandbox)"; state_file "$d" "perm-bypass-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-bypass-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --permission-mode bypassPermissions 2>&1)"
+printf '%s' "$OUT" | grep -q 'never requests bypass authority' \
+  && ok "71d — bypassPermissions is refused by name, not as a generic unknown token" \
+  || bad "71d — bypassPermissions is refused by name" "$OUT"
+
+echo
+echo "Case 71e — a mode the launch cannot carry is refused, not silently dropped"
+# --unattended and --actor-cmd both pass NO permission mode to anything. Accepting
+# acceptEdits alongside either would let the operator request an elevation that is
+# then quietly not applied, which is the same falsification the existing
+# --unattended/--actor-cmd guard refuses one flag over.
+d="$(new_sandbox)"; state_file "$d" "perm-unatt-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-unatt-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --unattended --permission-mode acceptEdits 2>&1)"; RC=$?
+expect_rc 10 "$RC" "71e — --unattended with acceptEdits is refused (10)" "$OUT"
+d="$(new_sandbox)"; state_file "$d" "perm-sim-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-sim-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd "$FLIP" --permission-mode acceptEdits 2>&1)"; RC=$?
+expect_rc 10 "$RC" "71e — --actor-cmd with acceptEdits is refused (10)" "$OUT"
+# The compatible pairing still works: `default` changes nothing, so it must not
+# be caught by the guard above.
+d="$(new_sandbox)"; state_file "$d" "perm-sim-ok-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-sim-ok-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd "$FLIP" --permission-mode default 2>&1)"; RC=$?
+expect_rc 0 "$RC" "71e — --actor-cmd with an explicit default is still allowed" "$OUT"
+
+echo
+echo "Case 71f — mutation control: hard-code the launch back to default and 71b fails"
+MUT71="$SANDBOX_ROOT/mut71"; mkdir -p "$MUT71"
+sed 's|--permission-mode "$PERMISSION_MODE" \\|--permission-mode default \\|' "$DISPATCH_BIN" >"$MUT71/m17.sh"
+if ! cmp -s "$MUT71/m17.sh" "$DISPATCH_BIN"; then
+  ok "71f — M17 mutant differs from the dispatcher (the launch reads the selection)"
+  d="$(new_sandbox)"; state_file "$d" "perm-accept-task" "claude"
+  export WL_ARGV_FILE="$SANDBOX_ROOT/argv-perm-mut.txt"
+  export WL_ENV_FILE="$SANDBOX_ROOT/env-perm-mut.txt"
+  export WL_SF="$d/logs/work-loop/perm-accept-task.md"
+  export WL_CO="$d"
+  OUT="$(bash "$MUT71/m17.sh" --checkout "$d" --task perm-accept-task --log-dir "$d/runs" \
+        --carry-one --claude-bin "$FAKE2" --permission-mode acceptEdits 2>&1)"
+  argv_has "$WL_ARGV_FILE" "acceptEdits" \
+    && bad "71f — M17: the child's argv falls back to default (71b is fail-capable)" \
+           "the mutant still carried acceptEdits" \
+    || ok "71f — M17: the child's argv falls back to default (71b is fail-capable)"
+else
+  bad "71f — M17 mutant differs from the dispatcher (the launch reads the selection)" \
+      "sed matched nothing; the launch argv site was renamed or removed"
+fi
+unset WL_ARGV_FILE WL_ENV_FILE WL_SF WL_CO WL_FAKE_VERSION
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

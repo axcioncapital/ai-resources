@@ -49,9 +49,23 @@
 #                       It does NOT buy network isolation: denying WebFetch just
 #                       sends the child to curl. See the same record.
 #
-# ATTENDED PERMISSION POLICY (P0-F, 2026-08-09). Every attended Claude hop is
-# launched with `--permission-mode default`, with or without --claude-deny. It is
-# not an option and there is no flag to turn it off. Before this, the child
+#   --permission-mode M attended permission mode for THIS invocation only:
+#                       `default` (the default) or `acceptEdits`. Nothing else is
+#                       accepted, `bypassPermissions` least of all. It is not
+#                       inherited from settings, environment or a previous run,
+#                       and it is refused before admission — so an invalid or
+#                       over-broad request launches nothing and takes no lease.
+#                       Incompatible with --unattended and --actor-cmd, neither
+#                       of which can carry a mode: requesting an elevation those
+#                       paths would silently drop is refused, not dropped.
+#                       Recorded as permission_mode_requested. The EFFECTIVE mode
+#                       stays `unavailable` — only the child's own system/init
+#                       event establishes that, and nothing here reads it yet.
+#
+# ATTENDED PERMISSION POLICY (P0-F, 2026-08-09; selection added 2026-08-19).
+# Every attended Claude hop is launched with an EXPLICIT `--permission-mode`,
+# with or without --claude-deny, and the value is stated on this dispatcher's own
+# command line rather than inherited. Before this, the child
 # INHERITED this checkout's `defaultMode: bypassPermissions` — measured off the
 # runtime's own system/init event — so the dispatcher was handing an actor bypass
 # authority nobody had asked for. Stating the mode at launch fixes that without
@@ -311,6 +325,12 @@ LOG_DIR=""
 # beside LOG_DIR because it replaces it: after admission the two are the same
 # value, and this one is where that value is decided.
 LOG_DIR_SELECTED=""
+# The permission mode requested for THIS invocation's attended Claude hops, and
+# nothing wider. `default` unless the operator names the other value on this
+# command line: there is no settings key, no environment variable, no state-file
+# prose and no memory of a previous run that can raise it, because an authority
+# that can be inherited is one nobody decided to grant.
+PERMISSION_MODE="default"
 DRY_RUN=0
 STATUS_MODE=0
 CARRY_ONE=0
@@ -664,9 +684,10 @@ result_next_action() { # code -> token
 }
 
 # The permission mode this dispatcher REQUESTED for the launch this terminal
-# relates to. It is a constant of the launch path, read back here rather than
-# stored at launch, because no variable holds it — the attended Claude branch
-# passes the literal `--permission-mode default`.
+# relates to. It is fixed before admission and read back here rather than stored
+# at launch, because PERMISSION_MODE is the single value that both this field and
+# the attended Claude argv read — so the record cannot name a mode the child was
+# not asked for.
 #
 # THE EFFECTIVE MODE IS NEVER DERIVED FROM THIS. Only the child's own system/init
 # event establishes what it actually ran under, and nothing in this dispatcher
@@ -695,7 +716,12 @@ result_permission_mode_requested() {
   [ "${LAUNCHED_ACTOR:-}" = "claude" ] || { printf 'none'; return 0; }
   # The contained profile deliberately carries no permission mode of its own.
   [ "$UNATTENDED" -eq 1 ] && { printf 'none'; return 0; }
-  printf 'default'
+  # THE VALUE THAT WAS ACTUALLY ON THE ARGV, not a literal restated here. Both
+  # this line and the launch read one variable fixed before admission, so the
+  # record cannot claim a mode the child was not asked for — which is the only
+  # way this field earns its place next to the honest `unavailable` effective
+  # mode below.
+  printf '%s' "$PERMISSION_MODE"
 }
 
 # Count lines without letting an empty string count as one. `grep -c .` rather
@@ -1457,6 +1483,7 @@ while [ $# -gt 0 ]; do
     --allow-path)  ALLOW_PATHS+=("${2:-}"); shift 2 ;;
     --claude-deny) CLAUDE_DENY+=("${2:-}"); shift 2 ;;
     --log-dir)     LOG_DIR="${2:-}"; shift 2 ;;
+    --permission-mode) PERMISSION_MODE="${2:-}"; shift 2 ;;
     --actor-cmd)   ACTOR_CMD="${2:-}"; shift 2 ;;
     --dry-run)     DRY_RUN=1; shift ;;
     --status)      STATUS_MODE=1; shift ;;
@@ -1506,6 +1533,48 @@ fi
 # warning.
 if [ "$UNATTENDED" -eq 1 ] && [ -n "$ACTOR_CMD" ]; then
   printf 'STOP [10] --unattended and --actor-cmd are incompatible: a simulated actor cannot be contained, and labelling an uncontained run "unattended" would falsify its evidence\n' >&2; exit 10
+fi
+
+# ------------------------------------------------- attended permission mode
+# REFUSED HERE, WHICH IS BEFORE ADMISSION. Task, checkout and evidence location
+# are established below; this sits with the other usage checks so an invalid or
+# over-broad authority request launches no actor, takes no owner or lease,
+# writes no evidence and mutates nothing. An authority question answered after
+# the leases are held has already had effects taken on its behalf.
+#
+# A CLOSED SET OF TWO, NOT A DENY-LIST. `bypassPermissions` gets its own message
+# because it is the value an operator is most likely to reach for and the one
+# this spike most needs to refuse out loud — but the refusal does not depend on
+# naming it. Anything that is not one of the two accepted values is refused by
+# the same branch, so a third mode invented upstream cannot arrive here as an
+# unrecognised token and be passed through to the child.
+#
+# THE EMPTY VALUE IS REFUSED BY THE SAME CASE. `--permission-mode` followed by
+# nothing at the end of the command line is caught earlier, by the argv arity
+# boundary in the parser; `--permission-mode ''` is a real argv element and
+# reaches here, where it is not one of the two and is refused as such.
+case "$PERMISSION_MODE" in
+  default|acceptEdits) ;;
+  bypassPermissions)
+    printf 'STOP [10] --permission-mode bypassPermissions is refused: this dispatcher never requests bypass authority for a child, on any path. Pass `default` or `acceptEdits`\n' >&2; exit 10 ;;
+  *)
+    printf 'STOP [10] --permission-mode must be `default` or `acceptEdits`, got: %s\n' "$PERMISSION_MODE" >&2; exit 10 ;;
+esac
+
+# A MODE THE LAUNCH CANNOT CARRY IS REFUSED, NOT DROPPED. Neither of these
+# branches passes a permission mode to anything: --actor-cmd replaces the product
+# launch entirely, and the contained --unattended profile deliberately carries no
+# mode of its own. Accepting `acceptEdits` alongside either would let the operator
+# request an authority elevation that is then silently not applied — the same
+# falsification the --unattended/--actor-cmd guard above exists to refuse, one
+# flag over. `default` is compatible with both because it changes nothing.
+if [ "$PERMISSION_MODE" != "default" ]; then
+  if [ "$UNATTENDED" -eq 1 ]; then
+    printf 'STOP [10] --permission-mode %s cannot be honoured under --unattended: the contained profile carries no permission mode, so the elevation would be requested and silently not applied\n' "$PERMISSION_MODE" >&2; exit 10
+  fi
+  if [ -n "$ACTOR_CMD" ]; then
+    printf 'STOP [10] --permission-mode %s cannot be honoured with --actor-cmd: a simulated actor receives no permission mode, so the elevation would be requested and silently not applied\n' "$PERMISSION_MODE" >&2; exit 10
+  fi
 fi
 
 MODE="live"
@@ -3487,11 +3556,11 @@ else
   # own base denies — so the old wording ("no tool denied beyond the child's own
   # policy") became false on both paths and is deliberately not restored.
   # Beyond those sets the child's own policy applies, which is no longer this
-  # checkout's bypassPermissions on an attended hop — P0-F states
-  # --permission-mode default at launch — but a permission mode only makes the
+  # checkout's bypassPermissions on an attended hop — P0-F states an explicit
+  # --permission-mode at launch — but a permission mode only makes the
   # child ASK, and network is not coverable this way in any case:
   # runs/probe-unattended-authority-2026-08-07.md.
-  say "claude_deny=none — no EXTRA deny rule was supplied by the operator; this does NOT mean nothing is denied (see the nested_actor_deny line below, and the contained profile's own denies under --unattended). Beyond those, the child's own policy applies (attended hops run --permission-mode default)"
+  say "claude_deny=none — no EXTRA deny rule was supplied by the operator; this does NOT mean nothing is denied (see the nested_actor_deny line below, and the contained profile's own denies under --unattended). Beyond those, the child's own policy applies (attended hops run the explicit --permission-mode this invocation selected)"
 fi
 # Recorded separately from claude_deny, and always. claude_deny is the
 # OPERATOR's set and may legitimately be empty; this one is the dispatcher's own.
@@ -4202,8 +4271,9 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
       [ -n "$cb" ] && [ -x "$cb" ] || die 20 "claude binary not resolvable"
       local vv; vv="$("$cb" --version 2>&1 | head -1)"
       say "  launch: mode=live actor=claude timeout=${limit}s bin=$cb version=$vv"
-      # No --dangerously-skip-permissions, on any path. The attended child asks
-      # for --permission-mode default instead — the opposite flag.
+      # No --dangerously-skip-permissions, on any path. The attended child is
+      # asked for an explicit --permission-mode instead — the opposite flag, and
+      # never wider than acceptEdits.
       #
       # Why the request is explicit (P0-F, 2026-08-09). This checkout's own
       # settings.json declares defaultMode: bypassPermissions, and an attended
@@ -4293,10 +4363,15 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
         # composition rule the unattended path already used.
         local -a a_deny=("${NESTED_ACTOR_DENY[@]}")
         [ "${#CLAUDE_DENY[@]}" -gt 0 ] && a_deny+=("${CLAUDE_DENY[@]}")
-        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default --disallowedTools ${a_deny[*]} (cwd=<checkout>)"
+        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode $PERMISSION_MODE --disallowedTools ${a_deny[*]} (cwd=<checkout>)"
         say "  note: the nested-actor denies are requested policy, NOT containment — a child with shell access can construct paths these rules do not name (see NESTED_ACTOR_DENY)"
+        # STILL EXPLICIT, and that is the property P0-F bought rather than the
+        # literal `default` that used to sit here. The point was never the word:
+        # it was that the mode is STATED at launch instead of inherited from
+        # whatever settings.json this checkout happens to declare. A variable
+        # whose only two values were fixed before admission keeps that intact.
         run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
-          --permission-mode default \
+          --permission-mode "$PERMISSION_MODE" \
           --disallowedTools "${a_deny[@]}"
       fi
       rc_claude=$?
