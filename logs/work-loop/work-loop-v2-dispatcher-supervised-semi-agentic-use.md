@@ -14,161 +14,112 @@ Task exit condition: one integrated candidate has passed the revised Gate SA and
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 22 — make Git path accounting lossless
+Standard. Discovery mode. Unit 23 — adjudicate remaining hostile protocol inputs
 
 Named reason for the loop: the approved objective spans multiple bounded implementation, proof and operating-trial units, must survive session boundaries, needs its scope held against overengineering, and requires independent Codex assessment before it counts as complete.
 
 ## Brief
 
-Unit 21 is accepted at `02c1f747b5faa0dec82b21e36b6304a1ccaf3409`. It established that checkout, derived state-file and capture/result paths already have canonical identity and containment, and that the lease helper correctly re-anchors a relative Git common directory. The one real gap is Git-reported changed/dirty paths: production reads line-delimited, possibly C-quoted output and strips only outer quotes. This can false-stop allowed committed work and, more importantly, can hide an actor's second edit to an already-dirty path from partial-effect and `changed_paths_since_launch` evidence.
+Unit 22 is accepted through implementation `4730569b5703833ddc042496edec7b66b59c32b2` and correction `44496eca7dc0954b029882799f6e43fbf45c5a76`. Git path ingestion is now raw and NUL-delimited; allowlist and rename decisions are preserved; operator-facing control bytes are rendered inert; and internal snapshots carry a bounded raw-path digest so two same-display filenames cannot cancel each other through a content swap. The 16-hex digest is accepted as proportionate collision resistance for this supervised local threat model; a reversible filename encoder would add machinery without practical Gate SA value.
 
-The approved plan requires hostile paths not to hide effects or change routing. This unit replaces that lossy boundary using Git's standard raw NUL-delimited path interfaces. It does not create a decoder, general path abstraction or new policy layer.
+The path-canonicalization clause is therefore met. The next hostile-input requirement is rejection of traversal, control/newline injection, unsafe symlinks, leading-option attacks, outside-root values, duplicate singleton fields, unknown versions, malformed encodings, oversized values and fake control lines. Prior units already settled many path and framing cases; this discovery isolates what remains in the trusted terminal-result/protocol boundary rather than reopening accepted path work.
 
-Dominant deliverable: lossless Git path ingestion for every dispatcher decision that classifies changed, dirty or committed paths.
-Evidence required in this hop: one targeted failing hostile-path case before the edit; the corrected partial-effect and committed-allowlist behavior; one narrow mutation/control that removes the raw NUL-delimited property or restores the lossy reader and makes the case fail; focused tests only.
-Evidence explicitly deferred: unrelated path canonicalization already adjudicated as covered; the default-evidence-location end-to-end coverage gap; broad filename matrices; the experimental `--unattended` stream-json denial proof; `too-many-lines` defence-in-depth proof; Change set B execution budgets; the full dispatcher suite; Change sets B–D; live trials; final regression; adoption review; historical cleanup; merge, push, deployment and destructive cleanup.
-Primary edit begins after: a focused case shows an already-dirty allowlisted path containing a Git-quoted byte is edited by the actor but omitted from partial-effect or changed-path evidence under the current reader.
+Dominant deliverable: an adjudication of the remaining non-path hostile protocol and terminal-result inputs.
+Evidence required in this hop: one compact map of duplicate fields, versions/tokens, encoding, size bounds and fake control-line handling across the one terminal-result producer/consumer boundary, with exact proof and verdict; then one earliest genuine target only if a gap exists.
+Evidence explicitly deferred: implementation or test changes; accepted path, argv and actor-handback work; the default-evidence-location end-to-end coverage gap; Unit 22's unrelated untracked-mode asymmetry; the experimental `--unattended` stream-json denial proof; `too-many-lines` defence-in-depth proof unless it is the exact active size boundary; Change set B execution budgets; full dispatcher regression; Change sets B–D; live trials; final regression; adoption review; historical cleanup; merge, push, deployment and destructive cleanup.
 
 Required outcome:
 
-- Replace every production use of line-delimited Git path output in `foreign_worktree`, `allowlisted_dirty`/`allowlisted_dirty_snapshot`, and `committed_foreign` with lossless raw path ingestion. Use Git's NUL-delimited interfaces and shell reads that preserve each path as one value; do not write a C-quote decoder.
-- Preserve the existing semantics: foreign dirty work stops before launch; allowed dirty work is fingerprinted so a second actor edit is visible; staged work is detected; committed paths are checked against the same allowlist; and terminal-result counts and partial-effect reporting remain truthful.
-- Handle Git rename output deliberately. Do not carry a line-oriented `orig -> dest` assumption into the NUL-delimited form, and ensure a rename whose relevant path is foreign cannot disappear from classification.
-- Render any operator-facing hostile pathname in a bounded, non-injecting form. A newline or control byte in a filename must not create a fake `STOP`, `RESULT`, `PARTIAL FILE EFFECTS` or other control line.
-- Use one combined hostile fixture where practical to cover quote/backslash/non-ASCII/control-byte handling. Do not add an exhaustive per-character matrix unless one combined case cannot distinguish the required behavior.
-- Keep the change inside existing dispatcher functions and focused tests. Add no helper script, parser, path-policy abstraction, configuration switch or dependency.
+- Inspect the single terminal-result producer and its structural, path, identity and meaning consumers. Map duplicate singleton fields, schema/version/outcome/reason/control tokens, malformed bytes or encodings, per-field and whole-record size, and fake `RESULT`/control lines.
+- Determine whether each input can enter trusted routing, terminal classification, lease release, operator handoff or status output. Raw actor output and experimental unattended stream parsing stay out unless bytes from them cross this trusted result boundary.
+- Credit accepted proof rather than rerunning it. Distinguish behavior coverage from missing regression proof, and conservative refusal from a value that can advance or misreport a run.
+- Classify each category `COVERED`, `BEHAVIOR GAP`, `PROOF GAP`, `NOT APPLICABLE`, or `UNKNOWN`. For every non-covered verdict, name the exact parser/consumer position, wrong decision, and one smallest discriminator without executing it.
+- Identify one earliest necessary implementation target or state that this hostile-input requirement is behaviorally met and name the next unmet Change set A requirement. Do not propose a second parser, generalized validation framework or richer Gate ST schema.
 
 Check against the repository:
 
-1. Verify Unit 21 commit `02c1f747b5faa0dec82b21e36b6304a1ccaf3409` and its state-only scope without rerunning discovery.
-2. Verify the current lossy transformations and all consumers named by Unit 21 before editing; if any consumer already receives raw lossless paths, stop and hand back the false premise.
-3. Verify the exact installed Git output contract used for status, diff and rename paths from local Git documentation/help or executable behavior inside a disposable fixture; no network is needed.
-4. Preserve `staged_paths` and `state_dirty` behavior even where their current emptiness-only checks make quoting not applicable.
+1. Verify Unit 22's two commits and bounded file scope without rerunning tests.
+2. Verify the approved plan's hostile-input bullet and preserve the supervised release exclusions.
+3. Inspect `finalize_terminal_result`, the one structural reader and every production consumer of its verdict/value fields, plus focused tests for duplicates, unknown versions, malformed/binary bytes, size limits and fake control lines.
+4. Treat raw captures and logs as untrusted display/audit material unless current executable code promotes a value from them into trusted terminal routing.
 
 Required fail-capable evidence:
 
-- Quote the pre-edit failure for an already-dirty allowlisted hostile path changed during the actor hop: the path is absent from partial-effect/changed-path evidence despite the content change.
-- After the edit, show that the same path is classified as allowed, its before/after content fingerprint differs, and it appears exactly once in bounded operator-facing partial-effect evidence without creating a fake control line.
-- Show an allowed committed hostile path no longer false-stops as committed foreign, while a genuinely foreign hostile path still stops.
-- Show one rename case exercises the NUL-delimited rename shape and preserves foreign/allowed classification.
-- Provide a narrow mutation/control proving the hostile-path test fails when the lossless boundary is removed or bypassed.
-- Run only new and directly affected focused cases. Report exact commands and counts; defer the full suite.
-- Report the implementation commit and confirm only `dispatch.sh`, `dispatch.test.sh` and this state file were committed. Leave `logs/friction-log.md` unstaged.
+- Return one compact table: hostile category, producer/trust, validation/bound, trusted consumer, smallest discriminator, exact permanent proof, verdict.
+- State whether duplicate singleton fields can be accepted, whether an unknown schema/version/outcome/control token can route, whether invalid UTF-8 or embedded NUL/control bytes can be trusted, and what exact whole-record/per-field size limits exist.
+- For any absent bound, say whether the consequence is only resource consumption or can alter trusted meaning; do not label all missing limits equally.
+- For fake control lines, distinguish raw actor/log text from a terminal artifact that the consumer actually opens and validates.
+- Confirm no production, test, plan or documentation file changed and no test suite ran; only this state file may be committed. Leave `logs/friction-log.md` unstaged.
 
-Capability subset: baseline only — read Unit 21 evidence and current dispatcher/tests; inspect local Git help or disposable local fixtures; edit `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, its existing test file and this task state; run focused local shell tests; and make local commits. The five baseline deny rules and four mandatory nested-actor rules are required in full. Nothing is selected from the pre-authorizable set, which is empty today. No live model launch, authentication attempt, network, external service, full-suite run, merge, push, deployment, destructive cleanup or other operator-reserved capability is permitted.
+Capability subset: baseline only — read the approved plan, accepted Unit 22 evidence, current terminal-result producer/consumers and focused committed tests; inspect necessary accepted history; and commit only this task state. The five baseline deny rules and four mandatory nested-actor rules are required in full. Nothing is selected from the pre-authorizable set, which is empty today. No test execution, source mutation, model launch, authentication attempt, network, external service or operator-reserved capability is permitted.
 
-Completion condition: one committed implementation handback makes every trusted Git path decision lossless and control-line-safe, proves the hidden-effect and false-stop cases with focused fail-capable evidence, changes only the bounded files, and returns with `turn: codex`.
+Completion condition: one committed discovery handback establishes which remaining hostile protocol inputs are rejected before trusted use, identifies one justified next target or next plan clause without implementing anything, changes only this state file, and returns with `turn: codex`.
 
-Stop and hand back if Bash cannot preserve the required raw paths without a new parser/helper, if NUL-delimited rename semantics cannot be established locally, if operator-facing safety requires a new result schema, or if the focused change expands into general path policy.
+Stop and hand back if adjudication requires designing a new result schema, if more than one independent behavior gap prevents a bounded next target, or if the trusted consumer boundary is not singular as the approved plan requires.
 
 ## Latest result
 
-### Correction round — finding 1: RESOLVED
-
-**Reproduced first, both ways.** By inspection: `worktree_entries()` emitted `<oid>` as field 2 and `<XY> <display path>` as field 4, and `allowlisted_dirty_snapshot()` projected exactly those two into the record it compares across a hop — so the record's identity was the display form, and `disp_path()` maps every control byte to the same `?`. By execution, new case 70g against the accepted Unit 22 commit `4730569b`:
-
-```
-  PASS  70g — the actor really did swap the two files' contents
-  FAIL  70g — both swapped paths are reported as partial effects
-        partial block: PARTIAL FILE EFFECTS — since launch, the hop changed these ALLOWED paths and left them modified and uncommitted:
-  FAIL  70g — changed_paths_since_launch counts both swaps plus the state file
-        got: 1
-```
-
-Two allowed files, `logs/hostile-c<TAB>d.md` and `logs/hostile-c<NEWLINE>d.md`, both rendering as `logs/hostile-c?d.md`, both already dirty at launch, contents swapped by the actor. The swap demonstrably happened, and the run reported the state file alone.
-
-**Why a swap and not an edit.** Each file's oid does move, so neither path looks unchanged on its own. The comparison is `comm(1)` over the **sorted** records, and swapping two contents between two same-display paths permutes that multiset back onto itself — before and after compare equal, and two real content changes vanish from the partial-effect block and from `changed_paths_since_launch`.
-
-**The correction, one seam.** Field 2 of the snapshot record now carries `<oid>.<16-hex digest of the RAW pathname>`. A digest, not an encoding: bounded, line-safe by construction, one-way, so it keys the comparison without putting a raw control byte anywhere a person or a parser reads. `shasum -a 256` is already this script's hashing primitive (`RUN_DISCRIMINATOR`), so no dependency is added. It is carried **inside** field 2 rather than as a new column because both consumers project the record with `cut -f2-` and never parse the first field — verified at `dispatch.sh:3247` and `:3282`/`:3284` — so no consumer, no operator-facing output and no terminal-result field changes.
-
-The display form is untouched and still does all matching and all printing. Nothing else was opened: NUL ingestion, allowlist policy, rename handling, the untracked-mode asymmetry and every other deferral are as they were.
-
-**Evidence.**
-
-| Check | Pre-correction (`4730569b`) | Corrected |
-|---|---|---|
-| Focused cases 70a–70g | `pass=21 fail=2` | **`pass=23 fail=0`** |
-| Directly affected legacy cases 40–50b | `pass=157 fail=6` | **`pass=157 fail=6`, `diff`-identical failure set** |
-
-Both closure questions:
-
-1. **Finding 1 resolved** — 70g's two failing assertions now pass: both swapped paths appear in the partial-effect block, and `changed_paths_since_launch` reports `3` (the pair plus the state file) rather than `1`. A fourth assertion confirms no raw control byte reached operator output through the new identity.
-2. **Nothing already accepted broke** — every Unit 22 case 70a–70f still passes, including the M16 mutation control, which continues to hide 70a's evidence when the fingerprint is taken from the display path. The legacy extract's six failures are the same six as at Unit 22 acceptance (cases 40/40b, nested-actor deny and fake `claude` binary — extract artifacts, no path-accounting assertion among them), compared line by line rather than by count.
-
-Newly noticed during the correction and **not implemented**, recorded as a candidate deferral: the digest bounds the identity at 16 hex characters, so distinct raw pathnames could in principle collide there. It is a 64-bit space against filenames the actor would have to author deliberately, and widening it is a one-character change if Codex judges it worth doing — but it is outside the frozen finding, so it was left alone.
-
-Only `dispatch.sh`, `dispatch.test.sh` and this state file changed. `logs/friction-log.md` left unstaged.
-
----
-
-### Unit 22 implementation record (accepted at `4730569b`, retained for context)
-
 Inspected (2026-08-19):
 
-- Claim (1): HOLDS — `git show --stat --name-only 02c1f747b5faa0dec82b21e36b6304a1ccaf3409` lists exactly one file, `logs/work-loop/work-loop-v2-dispatcher-supervised-semi-agentic-use.md`. State-only, as Unit 21 reported; discovery not rerun.
-- Claim (2): HOLDS, and no consumer already receives raw paths — so the false-premise stop did **not** fire. Re-read before editing: `dispatch.sh:3087` (`status --porcelain`, line-delimited) and `:3089`, `:3136`, `:3158` (the three `p="${p%\"}"; p="${p#\"}"` pairs), plus `:3837` (`diff --name-only`, no strip at all). All four consumers named by Unit 21 were still reading the line-delimited forms.
-- Claim (3): HOLDS — verified by executing the installed Git in a disposable fixture outside the checkout, not from memory. `git version 2.50.1 (Apple Git-155)`; `git config --get core.quotePath` unset, so quoting defaults to on. Findings: `status --porcelain` emits `"logs/work-loop/t\303\245sk.md"` where `status --porcelain -z` emits the raw bytes; a rename is `R  "old" -> "new"` in the line form but **`R  <new>NUL<old>NUL` in the `-z` form — the extra path moves to its own record and the order reverses**; `diff --name-only -z` is raw; and with rename detection on (the default) `diff --name-only` prints **only the destination**, while `--no-renames` restores both sides.
-- Claim (4): HOLDS — `staged_paths` (`dispatch.sh:3200`) and `state_dirty` (`:3856`) both consume only emptiness (`:4446-4448`, and `state_dirty`'s own `[ -n ... ]`). Both left unchanged; a comment now records why converting them would add risk without gain.
+- Claim (1): HOLDS — `git show --stat --name-only` on `4730569b` and `44496eca`; both exist, both bounded to the same three files (this state file, `dispatch.sh`, `dispatch.test.sh`). Tests not rerun.
+- Claim (2): HOLDS — the hostile-input bullet is `plan:213`; the adjacent framing bullets are `:209`–`:214` and the change-set acceptance list `:218`–`:223`. Supervised release exclusions (plan §§ 4 and 7) unchanged and preserved.
+- Claim (3): HOLDS — inspected the one producer `finalize_terminal_result()` (all 41 field writes), the one structural reader `validate_terminal_result()` (`dispatch.sh:1082`–`1209`), the identity reader (`:1288`) and semantics reader (`:1324`–`:1367`), their single composed consumer `consume_terminal_result()` (`:2274`–`:2287`), and the committed cases per refusal token.
+- Claim (4): HOLDS — no production consumer opens a run log or hop capture and promotes a value from it into trusted routing. `--status` reads the owner declaration, lease-holder metadata and run-log *names*; it never opens a `.result`. Searched `dispatch.sh` for `.result` outside the producer/consumer pair: the only occurrences are the promised-path derivations at `:777`, `:1062`, `:2275` and one operator message at `:2178`.
 
-### Pre-edit failure, quoted (the `Primary edit begins after:` condition)
+### The trusted boundary is singular, and that is what makes this adjudicable
 
-New case 70a, unchanged, run against the dispatcher at `HEAD` (`git show HEAD:...dispatch.sh`). An allowlisted path named with a quote, a backslash, a tab and a non-ASCII byte is already dirty at launch; the actor edits it again:
+One producer writes the record; one gate clears its path; one structural reader parses it; identity and semantics readers compare it; one function composes all four. The brief's stop condition on a non-singular consumer boundary did not fire.
 
-```
-  FAIL  70a — the actor's edit to the hostile path IS reported as a partial effect
-        partial block: PARTIAL FILE EFFECTS — since launch, the hop changed these ALLOWED paths and left them modified and uncommitted:
-  FAIL    70a — changed_paths_since_launch=2
-        got: 1
-```
+### Adjudication
 
-The block header prints and **the path is absent from it**; the machine record counts 1 where 2 changed. The same run confirms classification was never the problem — `worktree_allowlisted_dirty_paths=2` passes. Case 70c returned exit 30 on legitimate in-allowlist committed work: the false stop, reproduced.
+| Hostile category | Producer / trust | Validation and bound | Trusted consumer | Smallest discriminator | Permanent proof | Verdict |
+|---|---|---|---|---|---|---|
+| Duplicate singleton field | artifact at the promised path, untrusted | `seen` accumulator; second occurrence of any key → `duplicate-field` (`:1171`) | parse aborts before any TR_* is published | a record repeating `outcome=` | 2 committed cases | **COVERED** |
+| Unknown / misdeclared version | untrusted | line 1 **must** be `terminal_result_version`, else `bad-version-line`; value must be exactly `1`, else `unknown-version` (`:1160`–`:1163`) | parse aborts | version declared on line 2 with a matching string buried below | 1 case each token | **COVERED** |
+| Unknown schema | untrusted | exact string compare against `TERMINAL_RESULT_SCHEMA` (`:1164`) | parse aborts | any other schema value | 1 case | **COVERED** |
+| Unknown / extra field | untrusted | key must appear in the 41-item `TERMINAL_RESULT_REQUIRED` (`:1170`) | parse aborts | one appended `x_note=` line | 1 case | **COVERED** |
+| Outcome / reason-code token | untrusted | **not parsed for meaning at all** — `TR_OUTCOME`/`TR_CODE` are only compared against the outcome and code the dispatcher itself supplies (`:1362`–`:1363`) | comparison only | a record claiming a different outcome | `outcome-mismatch` / `code-mismatch`, separate tokens with mutation controls | **COVERED** |
+| Malformed encoding, embedded control bytes | untrusted | key charset `[a-z0-9_]` (`:1152`); tab and CR in a value → `malformed-line` (`:1156`); newline cannot occur (line-delimited read) | none — only 8 TR_* globals are published, every one compared against a dispatcher-supplied expectation, and **none is ever printed** | invalid UTF-8 in a non-compared field | none needed; there is no consumer to mislead | **NOT APPLICABLE** |
+| Fake control line **inside the record** | dispatcher, trusted | every one of the 41 fields is written through `tr_kv`/`tr_kv_or` → `tr_val`, which maps `\n`, `\r`, `\t` to spaces and truncates at 512. **No direct `printf` writes into the record** — all 41 writes read and confirmed | n/a | a lease-holder or path value carrying a newline, which `tr_val` flattens before it can forge a `key=value` line | the encoder is unconditional | **COVERED** |
+| Fake control line in raw actor output / run log | actor, untrusted | kept out of the record entirely | none | n/a | claim (4) | **NOT APPLICABLE** |
+| Whole-record size | untrusted | `wc -c` **before a single line is read**; > 65536 → `too-large` (`:1124`–`:1127`) | parse aborts at one stat | a planted 100 KB artifact | 1 case | **COVERED** |
+| Per-value size | untrusted | > 512 → `value-too-long` (`:1153`); the producer independently truncates at 512 | parse aborts | one 600-character value | 1 case | **COVERED** |
+| Line count | untrusted | > 200 → `too-many-lines` (`:1148`) | — | **none exists** | **0 cases** | **NOT APPLICABLE — unreachable** |
+| Artifact rewritten or swapped mid-parse | untrusted | content digest **and** device/inode identity taken before and after the read, both required to match (`:1139`–`:1142`, `:1193`–`:1198`) | parse aborts | replacing the file between its first and last line | 5 cases each | **COVERED** |
 
-Focused RED baseline against `HEAD`: **`pass=12 fail=6`**.
+### The one non-obvious result: `too-many-lines` is dead, not unproven
 
-### Result
+It has zero committed cases, and no honest case can be written for it. Reaching line 201 requires 200 lines that all passed `unknown-field` and `duplicate-field` first — but `TERMINAL_RESULT_REQUIRED` holds **41** distinct keys and a repeat is refused, so the parse cannot survive past roughly line 42. The bound sits behind two strictly tighter gates and can never fire.
 
-Every trusted Git path decision now reads raw bytes through Git's own NUL-delimited interfaces. No decoder was written — the hand-rolled quote-stripping was deleted, not replaced.
+The brief deferred this proof "unless it is the exact active size boundary". It is not: the active whole-record boundary is `too-large`, which is reachable precisely because it is a `stat` taken **before** parsing, on arbitrary planted bytes. So the deferral stands, and on its own terms. The honest disposition is deletion rather than a test — a case asserting `too-many-lines` would have to construct a record the parser rejects for a different reason, and would then be proving the wrong refusal.
 
-- One new scanner, `worktree_entries()`, reads `status --porcelain -z` once and emits classified entries. `foreign_worktree()`, `allowlisted_dirty_snapshot()` and (now derived from the snapshot) `allowlisted_dirty()` are consumers of that one scan, so they can no longer disagree about which paths are allowed.
-- `committed_foreign()` reads `diff --name-only -z --no-renames`. `--no-renames` is not about quoting: with detection on, a commit that renamed a foreign path *into* the allowlist showed only the allowed destination and the foreign origin vanished from classification entirely.
-- Renames are handled in their `-z` shape at both readers, and an entry is allowed only when **both** sides are — so a foreign origin cannot be laundered by renaming into the allowlist.
-- `disp_path()` renders any operator-facing or allowlist-matched path with control bytes replaced by `?`. This pays two costs that reading raw newly incurs and that Git's quoting used to cover for free: a raw newline would forge a `STOP`/`RESULT`/`PARTIAL FILE EFFECTS` line, and — less obvious — `grep -E '^...'` is line-oriented, so a raw newline would offer a **second line to anchor `^` against**, letting `foreign/x⏎logs/work-loop/y` match `^logs/work-loop/` and be admitted as allowed work.
+### Whether each input can enter a trusted decision — stated directly
 
-The split is the whole design: **raw bytes decide and fingerprint, the display form matches and prints.**
+- **Duplicate fields:** no. Refused before any value is published.
+- **Unknown schema / version / outcome / control token:** no, and by a stronger mechanism than a grammar — the closed required-key set plus exact-match version and schema. The outcome and code are never *read for meaning*; they are only checked to agree with what this run already decided, so a record cannot select a terminal class.
+- **Invalid UTF-8, embedded NUL or control bytes:** cannot be trusted, because nothing consumes them. The 8 published globals are all compared to expectations; a hostile byte can only cause a mismatch, which is a refusal. Nothing prints a record value, so there is no display path either.
+- **Exact size limits:** whole record 65536 bytes (pre-parse, active); per value 512 bytes (active, and mirrored at the producer); 200 lines (unreachable).
 
-### Evidence
+### Missing bounds, distinguished rather than lumped
 
-| Check | Before | After |
-|---|---|---|
-| Focused new cases 70a–70f | `pass=12 fail=6` | **`pass=18 fail=0`** |
-| Directly affected legacy cases 40–50b | `pass=157 fail=6` | **`pass=157 fail=6`, identical failure set** |
+Only one bound is absent in effect — the line ceiling — and its consequence is **neither resource consumption nor altered meaning**: it is unreachable, so it consumes nothing and decides nothing. There is no category here where a missing limit could alter trusted meaning. That is the material difference from a merely unproven bound, and the reason this returns no behavior gap.
 
-Exact commands (extracts built into the scratchpad; `REPO_ROOT`/`OWNER_BIN`/`LEASE_BIN`/`STATE_BIN` pinned to this checkout, `DISPATCH_BIN` selecting the version under test):
+### Two adjacent observations, recorded and not acted on
 
-```
-DISPATCH_BIN=<HEAD copy>  bash case70.test.sh   -> pass=12 fail=6
-DISPATCH_BIN=<implemented> bash case70.test.sh  -> pass=18 fail=0
-DISPATCH_BIN=<HEAD copy>  bash legacy.test.sh   -> pass=157 fail=6
-DISPATCH_BIN=<implemented> bash legacy.test.sh  -> pass=157 fail=6
-```
+- `dispatch.sh:4068` and `:4083` use `eval`, and `:1880` uses `.` — the plan forbids `eval`/`source` of **actor content**. Neither is: the `eval`s interpolate `TREE_MARKER_FD`, a dispatcher-set integer, and the `.` sources the tracked lease library from the checkout. Not a finding; recorded so a later reader does not re-raise it.
+- The refusal token reaching an operator message is `head -1` of `$RUN_LOG.consume`, a transient file inside the allowlisted evidence directory. The validators only ever emit fixed one-word literals, and the token reaches a message rather than a decision, so a race there cannot change routing.
 
-The legacy six were `diff`-compared line by line and are **the same six**, all inside cases 40/40b (nested-actor deny set, fake `claude` binary). They are extract artifacts — those cases depend on stub setup defined outside the extracted range — and are untouched by this unit: no path-accounting assertion is among them.
+### Earliest target, and the next unmet clause
 
-**Mutation control (case 70f), narrow by construction.** One substitution, `hash-object -- "$p"` → `hash-object -- "$d_p"`: fingerprint the display path instead of the raw one, leaving the `-z` reads and every allowlist verdict exactly as shipped. `disp_path` differs from the raw path for precisely the bytes this unit is about — the tab in the fixture name — so the mutant reproduces the original defect: the oid becomes a constant on both sides of the hop, the snapshots compare equal, and 70a's evidence disappears. Both mutant assertions pass, including `changed_paths_since_launch` dropping back to `1`. 70a is fail-capable.
+**This hostile-input requirement is behaviorally met at the terminal-result boundary.** No `BEHAVIOR GAP` and no `PROOF GAP` was found: every category is either actively refused with committed proof, or has no consumer to mislead.
 
-The remaining cases are controls rather than discriminators, and are labelled as such: 70d (a genuinely foreign hostile commit still stops at 30) prevents 70c being satisfied by a `committed_foreign()` that stopped classifying anything; 70e's exit 24 holds before and after, its display-form assertion being the half that moves.
+The only concrete change this discovery justifies is a **removal** — delete the unreachable `too-many-lines` bound and its constant — which is the brief's stated preference for removal over new machinery, and is a one-unit change with no behavior consequence to prove.
 
-### Deferral noticed mid-unit, recorded and not done
-
-`foreign_worktree()` scans with `--untracked-files=normal` while `allowlisted_dirty()` uses `all`, so an untracked file inside an untracked directory is reported as the collapsed `dir/` by one reader and individually by the other. This predates the unit, is unrelated to quoting, and is not part of the lossless boundary — implementing it here would be the scope expansion the brief's stop condition names.
-
-### Accepted limitation
-
-The display form is lossy on purpose, so two different names can render identically in operator-facing output. It never decides anything: classification runs on the display form only for line-anchoring safety, and the content fingerprint that distinguishes files runs on the raw path.
+The next unmet Change set A item is therefore not in this boundary but in the **change-set acceptance sweep** (plan `:218`–`:223`): the end-to-end assertions that every admitted-run terminal class produces exactly one valid result, that crash injection at each named durable boundary (plan `:194`–`:199`) yields no duplicate model request, duplicate commit, false completion, unsafe owner clear or premature lease release, and that adversarial fixtures write nowhere outside admitted roots. Substantial crash and signal proof already exists in the committed suite, so the honest next unit is to establish which of those acceptance clauses lack an end-to-end assertion rather than to assume any of them do.
 
 ### Bounded-scope confirmation
 
-Only `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`, `.../dispatch.test.sh` and this state file were committed. No plan or documentation file changed. The full dispatcher suite was not run and stays deferred. `logs/friction-log.md` left unstaged.
+No production, test, plan or documentation file changed and no test suite ran. Only this state file is staged; `logs/friction-log.md` left unstaged.
 
 ## Blocker
 
@@ -176,12 +127,4 @@ None.
 
 ## Next action
 
-Codex: closure check on frozen finding 1 only — the snapshot record now carries a lossless digest of the raw pathname alongside the oid, the collision case 70g is red at `4730569b` and green after, and the accepted Unit 22 cases plus the legacy extract are unchanged at an identical failure set. One out-of-scope observation (the 16-hex identity bound) is recorded as a candidate deferral, not implemented.
-
-<!-- superseded — the frozen findings this round answered are kept below for the closure check -->
-
-Correct once — frozen findings:
-
-1. The internal snapshot identity is still lossy even though Git ingestion is now raw. `worktree_entries()` fingerprints file contents from raw `$p`, but emits only `<oid> + <lossy display path>` into `allowlisted_dirty_snapshot`; `disp_path()` maps every control byte to the same `?`. Two distinct allowed filenames that differ only by control byte can therefore produce identical snapshot identities. If their contents are swapped during a hop, the sorted before/after snapshots can be identical and the effect disappears from `partial_effect_paths()` and `changed_paths_since_launch`. Correct this one seam by carrying a bounded, line-safe, lossless identity derived from the raw pathname in the internal snapshot comparison while retaining the deliberately lossy display form only for matching and operator output. Do not print raw control bytes, write a general encoder/parser, change the terminal-result schema, or reopen NUL ingestion, allowlist policy, rename handling, untracked-mode asymmetry, or other deferred work. Add one focused collision case with two allowed paths whose display forms are identical but raw names differ, and a content swap (or equally small discriminator) that is invisible under the current `<oid> + display>` representation and visible after the correction.
-
-Closure check: answer only whether finding 1 is resolved and whether its correction broke any already-accepted Unit 22 behavior. Report the correction commit, focused before/after evidence and exact focused counts; set `turn: codex` and stop.
+Codex: assess Unit 23 — the terminal-result hostile-input boundary is behaviorally met with committed proof in every reachable category, the one bound without proof (`too-many-lines`) is unreachable dead code behind two tighter gates rather than a gap, and no category has a missing limit that could alter trusted meaning. Decide whether to open the one-unit removal of that dead bound, or to move to establishing which change-set acceptance clauses lack an end-to-end assertion.
