@@ -36,7 +36,7 @@ built from it.
 | `--carry-one` | off — carry exactly one hop, then exit `0` (see below) |
 | `--max-hops N` | `4` — absolute hop limit; forced to `1` by `--carry-one` |
 | `--timeout S` | `900` — per-actor wall-clock seconds |
-| `--deadline S` | none — whole-run wall-clock budget (see below) |
+| `--deadline S` | none — whole-run wall-clock budget, **required for a live multi-hop run** and optional for every other shape (see below) |
 | `--codex-bin PATH` | `/Applications/ChatGPT.app/Contents/Resources/codex` |
 | `--claude-bin PATH` | `claude` resolved from `PATH` |
 | `--allow-path RE` | `^logs/work-loop/` and `^plans/work-loop-v2-v0\.2/handoff-automation-spike/` (repeatable; supplying any replaces both defaults) |
@@ -201,6 +201,26 @@ a walk-away invocation of `--max-hops 12 --timeout 900` makes it **three hours**
 for someone expecting to be back in forty minutes, so the dispatcher now prints the bound it is
 actually running under at startup either way.
 
+**It is required for a live multi-hop run.** A live run (`--max-hops` above `1`, no `--actor-cmd`, no
+`--dry-run`, no `--status`) with no `--deadline` is refused with exit `10` before admission — no
+actor, no run id, no lease, no evidence, nothing written. Printing the three-hour figure at startup
+turned out not to be enough: it told the operator the bound only once they were already committed to
+it, and the invocation most in need of a clock is the one whose operator forgot the flag.
+
+Four shapes stay exempt, because none of them can burn an afternoon:
+
+| Shape | Why no deadline is required |
+|---|---|
+| `--carry-one`, or `--max-hops 1` | one hop, already bounded by `--timeout` |
+| `--actor-cmd` | simulated: no model is launched |
+| `--dry-run` | a preflight, run precisely to find out what a run *would* do |
+| `--status` | a read-only query, not a run |
+
+The refusal is an **invocation-input** refusal, decided from the command line alone, so it sits with
+the other usage checks above the admission boundary and deliberately files no terminal result — the
+durable record belongs to admitted runs. Test case `28e` asserts both halves; `28c` holds the
+simulated no-deadline path unchanged, and the two together are what pin where the boundary is.
+
 `--deadline` is a deadline, not a start gate. The clock starts at the **first statement of the
 script**, before argument parsing or any setup. Before every launch — including a retry — the actor's
 effective timeout is clamped to `min(--timeout, time remaining)`, and an actor still running when the
@@ -266,8 +286,11 @@ the mechanism were settled and proven first, in `runs/probe-contained-authority-
 flag is the part that ships them.
 
 ```
-dispatch.sh --checkout <abs-path> --task <task-id> --unattended
+dispatch.sh --checkout <abs-path> --task <task-id> --unattended --deadline <seconds>
 ```
+
+`--deadline` appears here because this shape is a live multi-hop run and is refused without one; it
+is not part of what `--unattended` itself delivers.
 
 What the child gets:
 
@@ -595,7 +618,7 @@ where the code's meaning actually differs.
 | Code | Name | Modes | Meaning |
 |---|---|---|---|
 | `0` | — | all three | See the note below — it does **not** mean one thing. |
-| `10` | `BAD_USAGE` | all after `--help` | Unknown argument, missing `--checkout`/`--task`, non-integer or `< 1` `--max-hops`, non-integer `--timeout`, or the log directory could not be created. |
+| `10` | `BAD_USAGE` | all after `--help` | Unknown argument, missing `--checkout`/`--task`, non-integer or `< 1` `--max-hops`, non-integer `--timeout`, a missing `--deadline` on a live multi-hop run, or the log directory could not be created. |
 | `11` | `BAD_CHECKOUT` | dry-run, loop | `--checkout` is not a directory, cannot be canonicalized, or is not a Git checkout. |
 | `12` | `BAD_TASK_ID` | dry-run, loop | Task id contains a path separator, traversal or illegal characters; or the resolved state file does not sit directly inside `logs/work-loop/`. |
 | `13` | `STATE_MISSING` | dry-run, loop | The state file is absent or unreadable. |

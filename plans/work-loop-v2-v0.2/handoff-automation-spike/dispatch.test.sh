@@ -2179,7 +2179,14 @@ Unit 1 pro
 EOF
 git -C "$d" add logs/work-loop/partial-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: partial-task" >/dev/null 2>&1
-run_dispatch "$d" partial-task
+# --deadline 300 IS NOT WHAT THIS CASE IS ABOUT, and it is required anyway: this
+# is a live run (no --actor-cmd) at the default hop ceiling of 4, so it is a live
+# multi-hop invocation and case 28e's requirement binds it. 300s against
+# run_dispatch's --timeout 20 clamps nothing, so the behaviour under test is
+# unchanged — the flag is here to satisfy the new usage gate, not to bound
+# anything. The same one-line addition appears at every other live multi-hop call
+# site in this suite, for the same reason.
+run_dispatch "$d" partial-task --deadline 300
 expect_rc 26 "$RC" "stops 26 on a turn: operator file that is neither shape" "$OUT"
 printf '%s' "$OUT" | grep -q 'CLOSED' \
   && bad "a malformed record is not announced as closed" "it printed CLOSED for a partial file" \
@@ -2266,7 +2273,7 @@ This active field should not have survived the reduction.
 EOF
 git -C "$d" add logs/work-loop/extra-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: extra-task" >/dev/null 2>&1
-run_dispatch "$d" extra-task
+run_dispatch "$d" extra-task --deadline 300
 expect_rc 26 "$RC" "stops 26 when an active field survived the reduction" "$OUT"
 assert_26_sibling "  code 26 sibling (surviving active field)" "$d/runs" "$d/runs/$(run_id_of "$OUT").result"
 
@@ -2295,7 +2302,7 @@ None.
 EOF
 git -C "$d" add logs/work-loop/shuffled-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: shuffled-task" >/dev/null 2>&1
-run_dispatch "$d" shuffled-task
+run_dispatch "$d" shuffled-task --deadline 300
 expect_rc 26 "$RC" "stops 26 when the four headings are out of core § 4 order" "$OUT"
 assert_26_sibling "  code 26 sibling (out of order)" "$d/runs" "$d/runs/$(run_id_of "$OUT").result"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched on the out-of-order record" \
@@ -2328,7 +2335,7 @@ None.
 EOF
 git -C "$d" add logs/work-loop/dup-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: dup-task" >/dev/null 2>&1
-run_dispatch "$d" dup-task
+run_dispatch "$d" dup-task --deadline 300
 expect_rc 26 "$RC" "stops 26 when a closing section appears twice" "$OUT"
 assert_26_sibling "  code 26 sibling (duplicated section)" "$d/runs" "$d/runs/$(run_id_of "$OUT").result"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched on the duplicated-section record" \
@@ -4288,6 +4295,100 @@ run_dispatch "$d" badbudget --deadline abc --actor-cmd "$FLIP"
 expect_rc 10 "$RC" "rejects a non-numeric --deadline" "$OUT"
 run_dispatch "$d" badbudget --deadline 0 --actor-cmd "$FLIP"
 expect_rc 10 "$RC" "rejects --deadline 0" "$OUT"
+
+echo
+echo "Case 28e — a LIVE multi-hop run REQUIRES --deadline, refused before admission"
+# The approved plan's minimum release contract item 2: "Require a finite whole-run
+# deadline for every live multi-hop run." Case 28c above proves the OLD behaviour
+# — no deadline, run proceeds — and it stays green, because it is simulated. That
+# is not an oversight: the requirement binds the live path only, so 28c and this
+# case together are what say where the boundary is.
+#
+# THE REFUSAL IS AN INVOCATION-INPUT REFUSAL, and this case asserts the boundary
+# as hard as it asserts the exit code. Deadline presence is decided from argv, so
+# it belongs with the other usage checks — above admission, where the accepted
+# Change set A contract requires an invalid invocation to launch no actor, take no
+# owner or lease, create no run identity, mutate nothing and write no evidence. A
+# check that produced exit 10 while filing a terminal result would satisfy the
+# code and break the contract, so the code alone is not the assertion.
+#
+# LIVE, NOT SIMULATED, is the discriminator that makes this case possible at all.
+# --actor-cmd sets MODE=simulated, so it cannot exercise the requirement; the
+# sanctioned route to the live path without a real model is a stub binary passed
+# with --claude-bin, which is how case 50i reaches the same seam.
+d="$(new_sandbox)"; state_file "$d" "needs-deadline" "claude"
+FK28E="$SANDBOX_ROOT/fake-claude-28e.sh"
+cat >"$FK28E" <<'FK28EEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.219 (Claude Code)"; exit 0; fi
+printf '%s\n' "$@" >> "$WL28E_ARGV"
+exit 0
+FK28EEOF
+chmod +x "$FK28E"
+export WL28E_ARGV="$SANDBOX_ROOT/argv-28e.txt"; rm -f "$WL28E_ARGV"
+
+# The whole checkout before the refusal, so "mutated nothing" is proved against
+# every file rather than against the two this case happened to think of.
+M28E_BEFORE="$(tree_manifest "$d")"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task needs-deadline --log-dir "$d/runs" \
+      --timeout 20 --max-hops 2 --claude-bin "$FK28E" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "28e — a live run with --max-hops 2 and no --deadline is refused" "$OUT"
+printf '%s' "$OUT" | grep -q -- '--deadline' \
+  && ok "28e — the refusal names the missing option" \
+  || bad "28e — the refusal names the missing option" "$OUT"
+[ -f "$WL28E_ARGV" ] \
+  && bad "28e — no actor was launched" "the child ran: $(tr '\n' ' ' <"$WL28E_ARGV")" \
+  || ok "28e — no actor was launched"
+[ -z "$(run_id_of "$OUT")" ] \
+  && ok "28e — no run identity was created" \
+  || bad "28e — no run identity was created" "run=$(run_id_of "$OUT")"
+[ -d "$d/runs" ] \
+  && bad "28e — the evidence directory was never created" "$d/runs exists" \
+  || ok "28e — the evidence directory was never created"
+if [ -d "$(task_lock_for "$d" needs-deadline)" ] || [ -d "$(checkout_lock_for "$d")" ]; then
+  bad "28e — neither lease was taken" "a lock directory survives the refusal"
+else
+  ok "28e — neither lease was taken"
+fi
+[ "$(tree_manifest "$d")" = "$M28E_BEFORE" ] \
+  && ok "28e — the checkout is byte-for-byte unchanged" \
+  || bad "28e — the checkout is byte-for-byte unchanged" \
+         "$(diff <(printf '%s\n' "$M28E_BEFORE") <(tree_manifest "$d") | head -5)"
+
+# THE CONTROLS. Without them every assertion above is equally satisfied by a
+# dispatcher that refuses everything with exit 10, which would be the same green.
+# Each control asserts only `not 10`: what happens after the usage gate is other
+# cases' business, and pinning an exact downstream code here would make this case
+# fail whenever unrelated behaviour moved.
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task needs-deadline --log-dir "$d/runs" \
+      --timeout 20 --max-hops 2 --deadline 60 --claude-bin "$FK28E" 2>&1)"; RC=$?
+[ "$RC" -ne 10 ] \
+  && ok "28e — control: the same live multi-hop run WITH a deadline clears the gate (exit $RC)" \
+  || bad "28e — control: the same live multi-hop run WITH a deadline clears the gate" "$OUT"
+# Single-hop live carry is outside "multi-hop" and must be untouched — the two
+# spellings of one hop are asserted separately because they are set in different
+# places: --carry-one pins MAX_HOPS after validation, --max-hops 1 is the operator
+# saying it directly.
+d2="$(new_sandbox)"; state_file "$d2" "carry-nodeadline" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task carry-nodeadline --log-dir "$d2/runs" \
+      --timeout 20 --carry-one --claude-bin "$FK28E" 2>&1)"; RC=$?
+[ "$RC" -ne 10 ] \
+  && ok "28e — control: --carry-one is single-hop, so it still needs no deadline (exit $RC)" \
+  || bad "28e — control: --carry-one is single-hop, so it still needs no deadline" "$OUT"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task carry-nodeadline --log-dir "$d2/runs" \
+      --timeout 20 --max-hops 1 --claude-bin "$FK28E" 2>&1)"; RC=$?
+[ "$RC" -ne 10 ] \
+  && ok "28e — control: an explicit --max-hops 1 is single-hop too (exit $RC)" \
+  || bad "28e — control: an explicit --max-hops 1 is single-hop too" "$OUT"
+# A preflight is not a run. --dry-run launches no actor, so requiring a whole-run
+# clock of it would refuse the one invocation an operator makes precisely to find
+# out what a run WOULD do before committing to it.
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task carry-nodeadline --log-dir "$d2/runs" \
+      --timeout 20 --max-hops 2 --dry-run --claude-bin "$FK28E" 2>&1)"; RC=$?
+[ "$RC" -ne 10 ] \
+  && ok "28e — control: --dry-run is a preflight, not a live run (exit $RC)" \
+  || bad "28e — control: --dry-run is a preflight, not a live run" "$OUT"
+unset WL28E_ARGV
 
 # ================================================================= case 29
 # Phase 1c. Established fact 5 of the plan: foreign_worktree() reads
@@ -6471,7 +6572,7 @@ echo "Case 50d — a die() BEFORE any child is forked reports no launch and no m
 # executed, no model is contacted, and the case is controller evidence like every
 # other one here.
 d="$(new_sandbox)"; state_file "$d" "pre-fork-task" "codex"
-run_dispatch "$d" pre-fork-task --codex-bin "$d/no-such-codex-binary"
+run_dispatch "$d" pre-fork-task --codex-bin "$d/no-such-codex-binary" --deadline 300
 expect_rc 20 "$RC" "50d — exits 20 when the actor binary is not executable" "$OUT"
 [ "$(calls "$d")" = "0" ] && ok "50d — no actor process ran" || bad "50d — no actor process ran" "calls=$(calls "$d")"
 RIDD="$(run_id_of "$OUT")"
@@ -6501,7 +6602,7 @@ done
 # never forked one requested nothing — reporting the launch path's constant here
 # would be the same false-launch claim wearing a different field name.
 d="$(new_sandbox)"; state_file "$d" "pre-fork-claude-task" "claude"
-run_dispatch "$d" pre-fork-claude-task --claude-bin "$d/no-such-claude-binary"
+run_dispatch "$d" pre-fork-claude-task --claude-bin "$d/no-such-claude-binary" --deadline 300
 expect_rc 20 "$RC" "50d — exits 20 when the claude binary is not resolvable" "$OUT"
 RIDD2="$(run_id_of "$OUT")"
 R50D2="$d/runs/$RIDD2.result"
@@ -6600,8 +6701,14 @@ sed 's|^  if \[ "\$ACTOR_PROCESS_STARTED" -eq 1 \]; then$|  if [ "${HOP_BASELINE
 if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m4.sh"; then
   ok "50f — M4 mutant differs from the dispatcher (the observed-fork branch was found)"
   d="$(new_sandbox)"; state_file "$d" "m4-task" "codex"
+  # --deadline 300 for case 28e's requirement, which the MUTANT inherits: m4.sh is
+  # a copy of the dispatcher with one unrelated branch rewritten, so it is a live
+  # multi-hop program too and refuses without a clock. Without this the mutant
+  # would stop at the usage gate, publish no result, and the control would report
+  # "the correction is not fail-capable" when what actually happened is that the
+  # mutant never ran. 300s against --timeout 20 clamps nothing.
   OUT="$(bash "$MUT_DIR/m4.sh" --checkout "$d" --task m4-task --log-dir "$d/runs" \
-        --timeout 20 --codex-bin "$d/no-such-codex-binary" 2>&1)"; RC=$?
+        --timeout 20 --deadline 300 --codex-bin "$d/no-such-codex-binary" 2>&1)"; RC=$?
   RIDM4="$(run_id_of "$OUT")"
   [ "$(res_field "$d/runs/$RIDM4.result" actor_launched)" = "yes" ] \
     && ok "50f — M4: with the intent flag restored, a pre-fork stop claims a launch (50d is fail-capable)" \
@@ -10049,7 +10156,7 @@ V60HP="$(new_sandbox)"; state_file "$V60HP" prefork-after-fork codex
 export WL60H_SF="$V60HP/logs/work-loop/prefork-after-fork.md"
 export WL60H_CO="$V60HP"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$V60HP" --task prefork-after-fork --log-dir "$V60HP/runs" \
-      --max-hops 3 --codex-bin "$FAKE60HX" --claude-bin "$V60HP/no-such-claude-binary" 2>&1)"; RC=$?
+      --max-hops 3 --deadline 300 --codex-bin "$FAKE60HX" --claude-bin "$V60HP/no-such-claude-binary" 2>&1)"; RC=$?
 expect_rc 20 "$RC" "60h — hop 2 stops on the unresolvable claude binary" "$OUT"
 R60HP="$V60HP/runs/$(run_id_of "$OUT").result"
 if [ "$(res_field "$R60HP" hop)" = 2 ] &&

@@ -22,7 +22,14 @@
 #   --max-hops N        absolute hop limit (default 4)
 #   --timeout S         per-actor wall-clock seconds (default 900)
 #   --deadline S        WHOLE-RUN wall-clock budget in seconds, measured from
-#                       startup. Unset by default. This is a real deadline, not a
+#                       startup. REQUIRED for a live multi-hop run — a live run
+#                       with a hop ceiling above 1 is refused (exit 10) before
+#                       admission when it is absent, because max_hops * timeout
+#                       is a consequence rather than a budget. Still optional,
+#                       and unset by default, for the shapes that cannot burn an
+#                       afternoon: --carry-one or --max-hops 1 (bounded by
+#                       --timeout), --actor-cmd, --dry-run and --status.
+#                       This is a real deadline, not a
 #                       start gate: before every launch the actor's effective
 #                       timeout is clamped to min(--timeout, time remaining), and
 #                       a run still going when the clock expires has its actor
@@ -1863,6 +1870,55 @@ if [ -e "$STATE_FILE" ]; then
   RESOLVED_DIR="$(cd "$(dirname "$STATE_FILE")" && pwd -P)"
   [ "$RESOLVED_DIR" = "$(cd "$STATE_DIR" && pwd -P)" ] \
     || { printf 'STOP [12] resolved state file escapes logs/work-loop/\n' >&2; exit 12; }
+fi
+
+# --------------------------------------- the whole-run deadline is REQUIRED
+#
+# The approved plan's minimum release contract: a finite whole-run deadline for
+# every live multi-hop run. It used to be optional, and `--max-hops * --timeout`
+# was the only thing bounding a run — one hour on the defaults, three on a
+# walk-away shape. That is not a bound anyone can plan around, and the operator
+# who most needs one is exactly the operator least likely to remember the flag.
+#
+# STILL BEFORE ADMISSION, and the position is the contract rather than a
+# convenience. Whether a deadline was supplied is decided from argv alone, so
+# this is an invocation-input question of the same kind as --max-hops or
+# --permission-mode, and the accepted Change set A boundary requires an invalid
+# invocation to launch no actor, take no owner or lease, create no run identity,
+# mutate nothing and write no evidence. That is also why this refusal
+# deliberately produces NO durable terminal result: the terminal record is the
+# post-admission producer's, and reaching it would mean answering an argv
+# question only after both leases were held — the precise defect the admission
+# boundary immediately below was written to remove.
+#
+# WHY IT SITS HERE AND NOT BESIDE THE --deadline SYNTAX CHECK. The syntax of
+# --deadline can be judged the moment it is parsed; whether one is REQUIRED
+# cannot, because it depends on two values settled later — MODE, and MAX_HOPS,
+# which --carry-one pins to 1 after its own validation. Testing it up there would
+# mean recomputing both, and a second definition of "live" or of the hop ceiling
+# is how the two come to disagree.
+#
+# WHY IT SITS BELOW THE TASK-ID GRAMMAR, which is the narrower question of the
+# two orderings. Path safety refuses a hostile task id at 12 before any path is
+# built from it, and a run that supplies both a traversal id and no deadline must
+# still hear about the id: that refusal is about what the invocation could reach,
+# and this one is only about how long it could take. Placing this check above it
+# turned `--task -foo` into a 10, which is the wrong answer to the more dangerous
+# question — case 68a asserts the 12 and is what caught it.
+#
+# "LIVE MULTI-HOP" IS READ FROM THIS SCRIPT'S OWN TWO VALUES, and it is narrow on
+# purpose. A simulated run (--actor-cmd) launches no model; --dry-run is the
+# preflight an operator runs precisely to see what a run WOULD do; --status is a
+# read-only query. None of them can burn an afternoon, so requiring a clock of
+# them would refuse invocations that have nothing to bound. One hop is excluded
+# for the same reason in a different shape: --carry-one and --max-hops 1 are
+# already bounded by --timeout, which IS their whole-run clock. The requirement
+# starts where the second hop does.
+if [ "$MODE" = "live" ] && [ "$MAX_HOPS" -gt 1 ] && [ -z "$DEADLINE" ]; then
+  printf 'STOP [10] --deadline is required for a live multi-hop run (mode=%s, max_hops=%s): without it the only bound is max_hops * timeout = %ss, which is a consequence rather than a budget.\n' \
+    "$MODE" "$MAX_HOPS" "$(( MAX_HOPS * ACTOR_TIMEOUT ))" >&2
+  printf '  Pass --deadline S (whole-run wall-clock seconds), or run a single hop with --carry-one, which --timeout already bounds.\n' >&2
+  exit 10
 fi
 
 # --------------------------------- run-evidence location, BEFORE admission
@@ -3797,7 +3853,13 @@ if [ -n "$DEADLINE_AT" ]; then
 else
   # Worth saying out loud. Without a deadline the real upper bound is
   # max_hops * timeout, which is where the plan's three-hour surprise came from.
-  say "deadline=none — upper bound is max_hops * timeout = $(( MAX_HOPS * ACTOR_TIMEOUT ))s"
+  #
+  # ONLY THE EXEMPT SHAPES REACH THIS LINE now that a live multi-hop run is
+  # refused without a deadline: a single hop, a simulated actor, a dry-run
+  # preflight. The figure below is still the honest upper bound for those, and it
+  # is still NOT a whole-run deadline — it is what you get instead of one, which
+  # is the distinction the requirement above exists to enforce.
+  say "deadline=none (not required for this shape: mode=$MODE max_hops=$MAX_HOPS) — no whole-run clock is running; the upper bound is max_hops * timeout = $(( MAX_HOPS * ACTOR_TIMEOUT ))s"
 fi
 say "allow_paths=${ALLOW_PATHS[*]}"
 if [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
