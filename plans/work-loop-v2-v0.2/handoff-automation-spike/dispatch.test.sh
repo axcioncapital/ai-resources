@@ -11996,6 +11996,206 @@ esac
   && bad "69c — and nothing was created under the traversed component" "$d/ghost/runs exists" \
   || ok "69c — and nothing was created under the traversed component"
 
+# ============================================== Case 70 — lossless Git paths
+#
+# Unit 22. Git reports paths in two shapes and the dispatcher used to read the
+# wrong one. In the LINE-delimited forms Git C-quotes any name containing `"`,
+# `\`, a control byte or (default core.quotePath) a non-ASCII byte; the readers
+# stripped the outer quotes and never decoded what was inside, so
+# `logs/work-loop/tåsk.md` arrived as the literal text
+# `logs/work-loop/t\303\245sk.md`. That text is not a path, which broke two
+# separate decisions in opposite directions:
+#
+#   allowlisted_dirty_snapshot()  `[ -e ]` on the escaped text is false, so the
+#                                 fingerprint was ABSENT before AND after a hop.
+#                                 Two equal snapshots means no delta, so an
+#                                 actor's second edit to an ALREADY-DIRTY file
+#                                 vanished from the partial-effect block and
+#                                 from changed_paths_since_launch. It HID work.
+#   committed_foreign()           stripped nothing, so the leading `"` defeated
+#                                 its own `^`-anchored allowlist and legitimate
+#                                 in-allowlist commits FALSE-STOPPED at 30.
+#
+# ONE COMBINED HOSTILE NAME rather than a per-character matrix: it carries a
+# double quote, a backslash, a tab and a non-ASCII byte at once, so a single
+# fixture exercises every class Git quotes for. The tab matters twice over — it
+# is what makes the display form differ from the raw form, which is what the
+# mutation control at 70f pivots on.
+#
+# THE ALLOWLIST VERDICT IS DELIBERATELY STABLE ACROSS THE FIX. `^logs/hostile-`
+# matches the escaped text and the raw path alike, so classification is NOT the
+# variable under test here; the fingerprint and the reporting are. A fixture
+# whose allowlist verdict also moved could not tell the two apart.
+
+echo
+echo "Case 70a — an already-dirty allowlisted hostile path, edited again by the actor, is REPORTED"
+d="$(new_sandbox)"; state_file "$d" "hostile-path-task" "claude"
+H70=$'logs/hostile-a"b\\c\tdåe.md'
+D70='logs/hostile-a"b\c?dåe.md'
+printf 'seed\n' >"$d/$H70"
+git -C "$d" add -- "$H70" >/dev/null 2>&1
+git -C "$d" commit -qm "seed hostile path" >/dev/null 2>&1
+# ALREADY DIRTY BEFORE LAUNCH. This is the whole condition: a file that is clean
+# at launch gets a brand-new snapshot entry either way and is reported even by
+# the broken reader, so only a pre-existing dirty path can expose the hiding.
+printf 'pre-existing operator edit\n' >>"$d/$H70"
+SB70="$(shasum -a 256 "$d/logs/work-loop/hostile-path-task.md" | cut -d' ' -f1)"
+HB70="$(git -C "$d" rev-parse HEAD)"
+# Passed through the environment, not interpolated into --actor-cmd: the name
+# contains a double quote and a backslash, and quoting it into a shell string
+# would be testing the harness's escaping rather than the dispatcher's reading.
+export WL_H70="$H70"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task hostile-path-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+      --actor-cmd 'printf "actor edit\n" >> "$WL_CHECKOUT/$WL_H70"; awk "/^turn: /&&!d{print \"turn: broken\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+expect_rc 15 "$RC" "70a — malformed post-hop state exits 15" "$OUT"
+partial_section "$OUT" | grep -Fq "$D70" \
+  && ok "70a — the actor's edit to the hostile path IS reported as a partial effect" \
+  || bad "70a — the actor's edit to the hostile path IS reported as a partial effect" \
+         "partial block: $(partial_section "$OUT")"
+R70A="$d/runs/$(run_id_of "$OUT").result"
+for pair in "worktree_foreign_paths:0" "worktree_allowlisted_dirty_paths:2" \
+            "changed_paths_since_launch:2" \
+            "state_sha256_before:$SB70" "head_before:$HB70"; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R70A" "$k")"
+  [ "$got" = "$want" ] && ok "  70a — $k=$want" \
+                       || bad "  70a — $k=$want" "got: ${got:-<absent>}"
+done
+unset WL_H70
+
+echo
+echo "Case 70b — a newline in a filename cannot forge a control line, and is still reported"
+# The second cost of reading raw bytes. Git's quoting used to make this
+# impossible for free; `-z` gives that up, so disp_path() takes it back. The
+# forged text is the dispatcher's OWN report header, which is the worst case:
+# a reader slicing on it would be reading the actor's filename as a section.
+d="$(new_sandbox)"; state_file "$d" "forged-line-task" "claude"
+NL70=$'logs/hostile-x\nPARTIAL FILE EFFECTS — forged by a filename'
+DL70='logs/hostile-x?PARTIAL FILE EFFECTS — forged by a filename'
+printf 'seed\n' >"$d/$NL70"
+git -C "$d" add -- "$NL70" >/dev/null 2>&1
+git -C "$d" commit -qm "seed forged-line path" >/dev/null 2>&1
+printf 'pre-existing operator edit\n' >>"$d/$NL70"
+export WL_H70="$NL70"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task forged-line-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+      --actor-cmd 'printf "actor edit\n" >> "$WL_CHECKOUT/$WL_H70"; awk "/^turn: /&&!d{print \"turn: broken\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+expect_rc 15 "$RC" "70b — malformed post-hop state exits 15" "$OUT"
+partial_section "$OUT" | grep -Fq "$DL70" \
+  && ok "70b — the hostile path is reported with its newline neutralised to '?'" \
+  || bad "70b — the hostile path is reported with its newline neutralised to '?'" \
+         "partial block: $(partial_section "$OUT")"
+# The forged header must never begin a line of its own anywhere in the output.
+printf '%s\n' "$OUT" | grep -qE '^PARTIAL FILE EFFECTS — forged by a filename' \
+  && bad "70b — the filename did not forge a control line" \
+         "$(printf '%s\n' "$OUT" | grep -nE '^PARTIAL FILE EFFECTS — forged')" \
+  || ok "70b — the filename did not forge a control line"
+unset WL_H70
+
+echo
+echo "Case 70c — an ALLOWED committed hostile path no longer false-stops as committed-foreign"
+d="$(new_sandbox)"; state_file "$d" "hostile-commit-task" "claude"
+printf 'seed\n' >"$d/$H70"
+git -C "$d" add -- "$H70" >/dev/null 2>&1
+git -C "$d" commit -qm "seed hostile path" >/dev/null 2>&1
+export WL_H70="$H70"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task hostile-commit-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+      --actor-cmd 'printf "actor edit\n" >> "$WL_CHECKOUT/$WL_H70"; git -C "$WL_CHECKOUT" add -A >/dev/null 2>&1; '"$FLIP" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "70c — the hop completes; an in-allowlist hostile commit is not foreign" "$OUT"
+printf '%s' "$OUT" | grep -q 'COMMITTED paths outside the allowlist' \
+  && bad "70c — no committed-foreign stop was raised" "$OUT" \
+  || ok "70c — no committed-foreign stop was raised"
+unset WL_H70
+
+echo
+echo "Case 70d — a genuinely FOREIGN committed hostile path still stops at 30"
+# The control for 70c. Without it, 70c would be satisfied by a committed_foreign()
+# that had simply stopped classifying anything.
+d="$(new_sandbox)"; state_file "$d" "hostile-foreign-task" "claude"
+F70=$'outside-a"b\\c\tdåe.md'
+printf 'seed\n' >"$d/$F70"
+git -C "$d" add -- "$F70" >/dev/null 2>&1
+git -C "$d" commit -qm "seed foreign hostile path" >/dev/null 2>&1
+export WL_H70="$F70"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task hostile-foreign-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' \
+      --actor-cmd 'printf "actor edit\n" >> "$WL_CHECKOUT/$WL_H70"; git -C "$WL_CHECKOUT" add -A >/dev/null 2>&1; '"$FLIP" 2>&1)"; RC=$?
+expect_rc 30 "$RC" "70d — a foreign hostile commit still stops at 30" "$OUT"
+unset WL_H70
+
+echo
+echo "Case 70e — a staged rename is read in its NUL shape and its FOREIGN origin is still classified"
+# `-z` moves the rename's second path into its own record AND REVERSES THE ORDER:
+# the line form was `R  old -> new`, the -z form is `R  new<NUL>old<NUL>`. A
+# reader that kept the line-form assumption would read the origin as the next
+# entry's status line. Here the ORIGIN is foreign and the DESTINATION is allowed,
+# so a reader that classified only the destination would call this allowed work
+# and let a foreign path be laundered into the allowlist by renaming it.
+d="$(new_sandbox)"; state_file "$d" "hostile-rename-task" "claude"
+printf 'seed\n' >"$d/$F70"
+git -C "$d" add -- "$F70" >/dev/null 2>&1
+git -C "$d" commit -qm "seed foreign hostile path" >/dev/null 2>&1
+#
+# FLIP_BODY, NOT FLIP, and that is the point of the case rather than a detail:
+# the committed variant would commit the rename, which routes it to
+# committed_foreign() — a different reader that runs `--no-renames` and never
+# sees a rename record at all. Leaving it STAGED is what puts it in front of
+# worktree_entries(), which is where the `R  new<NUL>old<NUL>` shape is read.
+# The post-hop foreign check (24) runs before the uncommitted-state guards, so
+# the deliberately uncommitted handback does not pre-empt it.
+export WL_H70="$F70" WL_D70="$H70"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task hostile-rename-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+      --actor-cmd 'git -C "$WL_CHECKOUT" mv -- "$WL_H70" "$WL_D70" >/dev/null 2>&1; '"$FLIP_BODY" 2>&1)"; RC=$?
+expect_rc 24 "$RC" "70e — the rename's foreign origin still stops the hop at 24" "$OUT"
+printf '%s' "$OUT" | grep -Fq "$D70" \
+  && ok "70e — the reported entry names the rename destination" \
+  || bad "70e — the reported entry names the rename destination" "$OUT"
+unset WL_H70 WL_D70
+
+echo
+echo "Case 70f — mutation control: fingerprint the DISPLAY path and 70a's evidence disappears"
+# The narrowest possible mutation of the repair. `disp_path` differs from the raw
+# path for exactly the bytes this unit is about — the tab in the fixture name —
+# so hashing the display form puts the pre-change failure back: hash-object fails,
+# the oid becomes a constant on BOTH sides of the hop, the snapshots compare equal,
+# and the actor's edit vanishes again. Everything else about the dispatcher,
+# including the -z reads and the allowlist verdict, is left exactly as shipped.
+MUT70="$SANDBOX_ROOT/mut70"; mkdir -p "$MUT70"
+sed 's|hash-object -- "$p"|hash-object -- "$d_p"|' "$DISPATCH_BIN" >"$MUT70/m16.sh"
+if ! cmp -s "$MUT70/m16.sh" "$DISPATCH_BIN"; then
+  ok "70f — M16 mutant differs from the dispatcher (the raw-path fingerprint was found)"
+  d="$(new_sandbox)"; state_file "$d" "hostile-path-task" "claude"
+  printf 'seed\n' >"$d/$H70"
+  git -C "$d" add -- "$H70" >/dev/null 2>&1
+  git -C "$d" commit -qm "seed hostile path" >/dev/null 2>&1
+  printf 'pre-existing operator edit\n' >>"$d/$H70"
+  export WL_H70="$H70"
+  OUT="$(bash "$MUT70/m16.sh" --checkout "$d" --task hostile-path-task --log-dir "$d/runs" \
+        --carry-one \
+        --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+        --actor-cmd 'printf "actor edit\n" >> "$WL_CHECKOUT/$WL_H70"; awk "/^turn: /&&!d{print \"turn: broken\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"
+  partial_section "$OUT" | grep -Fq "$D70" \
+    && bad "70f — M16: the hostile path's edit is hidden again (70a is fail-capable)" \
+           "the mutant still reported it: $(partial_section "$OUT")" \
+    || ok "70f — M16: the hostile path's edit is hidden again (70a is fail-capable)"
+  R70F="$d/runs/$(run_id_of "$OUT").result"
+  [ "$(res_field "$R70F" changed_paths_since_launch)" = "1" ] \
+    && ok "70f — M16: changed_paths_since_launch drops back to 1" \
+    || bad "70f — M16: changed_paths_since_launch drops back to 1" \
+           "got: $(res_field "$R70F" changed_paths_since_launch)"
+  unset WL_H70
+else
+  bad "70f — M16 mutant differs from the dispatcher (the raw-path fingerprint was found)" \
+      "sed matched nothing; the fingerprint site was renamed or removed"
+fi
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

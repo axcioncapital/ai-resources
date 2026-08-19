@@ -3054,6 +3054,117 @@ fi
 
 git_head() { git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null; }
 
+# ----------------------------------------------------------- Git path ingestion
+#
+# Every path Git reports is needed in TWO shapes, and they are not interchangeable:
+#
+#   RAW      the actual bytes of the name. Only this may be handed to the
+#            filesystem or to `git hash-object`. Git emits it only through the
+#            `-z` interfaces used below.
+#   DISPLAY  the same name with every byte that could forge a control line
+#            replaced by `?`. Only this may be matched against the allowlist or
+#            printed to the operator.
+#
+# WHAT WAS WRONG. These functions used to read the LINE-delimited forms, where
+# Git C-quotes any path containing `"`, `\`, a control byte, or — under the
+# default core.quotePath — a non-ASCII byte. The reader stripped the outer quotes
+# and never decoded the escapes inside, so `logs/work-loop/tåsk.md` arrived as the
+# literal text `logs/work-loop/t\303\245sk.md`. That text is not a path. `[ -e ]`
+# on it is false and `hash-object` on it fails, so allowlisted_dirty_snapshot()
+# recorded ABSENT both BEFORE and AFTER a hop, the two snapshots compared equal,
+# and the actor's second edit to an already-dirty file disappeared from the
+# partial-effect block and from changed_paths_since_launch — the single thing that
+# accounting exists to make visible. committed_foreign() had the mirror fault: it
+# stripped nothing, so a quoted in-allowlist path arrived with a leading `"`,
+# failed its own `^`-anchored allowlist, and false-stopped legitimate work at 30.
+#
+# THIS IS A REMOVAL, NOT A PARSER. Reversing Git's quoting in shell would be a
+# decoder for hostile input, which is the last thing this spike is entitled to
+# write. The `-z` interfaces hand over the raw bytes, so there is nothing left to
+# decode and the hand-rolled quote-stripping goes away with the ambiguity.
+#
+# WHY DISPLAY HAS TO EXIST, given RAW is the true value. Both reasons are new
+# costs of reading raw, not pre-existing ones — Git's quoting used to cover them
+# for free, and this pays for them deliberately:
+#
+#   1. A raw newline printed into a stop message forges a control line. An actor
+#      that names a file `x<newline>PARTIAL FILE EFFECTS — ...` writes the
+#      operator's own report format into the operator's own report.
+#   2. The allowlist is matched with `grep -E` anchored at `^`, and grep is
+#      line-oriented. A raw newline offers grep a SECOND line to anchor against,
+#      so `foreign/x<newline>logs/work-loop/y` would match `^logs/work-loop/` and
+#      be admitted as allowed work. Matching the display form, which has no
+#      control byte left to break a line on, closes that.
+#
+# DISPLAY IS AN ENCODER AND IS LOSSY ON PURPOSE. It is never fed back to the
+# filesystem, and it never decides anything the raw path should have decided: two
+# different names can render alike, but by then classification has already run and
+# the content fingerprint below still tells them apart. Non-ASCII bytes pass
+# through untouched — they cannot start a line, and the operator gets a filename
+# they can actually read.
+disp_path() { printf '%s' "${1-}" | LC_ALL=C tr '\000-\037\177' '?'; }
+
+# Does the allowlist cover this DISPLAY path? One reader, so the working-tree and
+# committed checks cannot drift into two different answers about one path.
+path_allowed() { # display-path -> 0 when allowed
+  local re
+  for re in "${ALLOW_PATHS[@]}"; do
+    printf '%s' "$1" | grep -qE "$re" && return 0
+  done
+  return 1
+}
+
+# One NUL-delimited scan of the working tree, classified against the allowlist.
+#
+# Emits one line per entry, tab-separated:
+#   <allowed 0|1> <TAB> <oid or -> <TAB> <display path> <TAB> <XY display>
+#
+# THE TABULAR FORM IS SAFE ONLY BECAUSE FIELD 3 AND 4 ARE DISPLAY FORMS. Tab and
+# newline are control bytes, so disp_path() has already replaced both; a raw path
+# carrying either would otherwise have forged a field or a record boundary in this
+# very stream. Raw paths never leave this function.
+#
+# RENAME AND COPY CARRY A SECOND PATH, and `-z` places it in its own record rather
+# than inline. The line form was `R  old -> new`; the `-z` form is
+# `R  new<NUL>old<NUL>` — the delimiter changed AND THE ORDER REVERSED. A reader
+# that kept the line-form assumption would read `old` as the next entry's status
+# line and misclassify both paths. Both sides are classified here, and an entry is
+# allowed only when BOTH are: a rename is a change to the origin as much as to the
+# destination, so a foreign origin cannot be laundered by renaming into the
+# allowlist.
+worktree_entries() { # untracked-mode want-oid
+  local utmode="${1:-normal}" want_oid="${2:-0}"
+  local rec xy p old d_p d_old disp allowed oid
+  while IFS= read -r -d '' rec; do
+    xy="${rec:0:2}"
+    p="${rec:3}"
+    old=''
+    case "$xy" in R?|C?|?R|?C) IFS= read -r -d '' old || old='' ;; esac
+    d_p="$(disp_path "$p")"
+    disp="$xy $d_p"
+    allowed=1
+    path_allowed "$d_p" || allowed=0
+    if [ -n "$old" ]; then
+      d_old="$(disp_path "$old")"
+      disp="$xy $d_old -> $d_p"
+      path_allowed "$d_old" || allowed=0
+    fi
+    oid='-'
+    if [ "$want_oid" -eq 1 ]; then
+      # THE RAW PATH, and this is the whole repair. The display form would fail
+      # `[ -e ]` for exactly the names this unit is about, putting ABSENT back on
+      # both sides of the comparison.
+      if [ -e "$CHECKOUT/$p" ] || [ -L "$CHECKOUT/$p" ]; then
+        oid="$(git -C "$CHECKOUT" hash-object -- "$p" 2>/dev/null || true)"
+        [ -n "$oid" ] || oid="UNHASHABLE"
+      else
+        oid="ABSENT"
+      fi
+    fi
+    printf '%s\t%s\t%s\t%s\n' "$allowed" "$oid" "$d_p" "$disp"
+  done < <(git -C "$CHECKOUT" status --porcelain --untracked-files="$utmode" -z 2>/dev/null)
+}
+
 # Working-tree lines NOT covered by the allowlist. Any change here during an
 # actor run is an unexpected repository effect.
 #
@@ -3083,18 +3194,17 @@ git_head() { git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null; }
 # refusal the operator resolves once — not an automatic migration. See the
 # README's "One stable evidence location per checkout".
 foreign_worktree() {
-  local line p
-  git -C "$CHECKOUT" status --porcelain 2>/dev/null | while IFS= read -r line; do
-    p="${line:3}"
-    p="${p%\"}"; p="${p#\"}"
-    local allowed=0 re
-    for re in "${ALLOW_PATHS[@]}"; do
-      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
-    done
-    [ "$allowed" -eq 0 ] && printf '%s\n' "$line"
-  done | sort
+  worktree_entries normal 0 | awk -F'\t' '$1 == 0 { print $4 }' | sort
 }
 
+# DELIBERATELY STILL LINE-DELIMITED, and it is the one reader this unit left
+# alone. Its only consumer asks whether the output is EMPTY (the pre-launch
+# staged-work guard), and emptiness is the one question no amount of quoting can
+# change. The line form is also strictly SAFER for its second job: the guard
+# prints this straight to the operator, and Git's C-quoting already renders a
+# control byte inert there, so converting it to raw bytes would take on the
+# forged-control-line risk disp_path() exists to answer — for no gain. Nothing
+# downstream compares these strings to a path.
 staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort; }
 
 # Working-tree lines that ARE covered by the allowlist — the exact complement of
@@ -3129,21 +3239,12 @@ staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort
 # than the fix. It is not in the allowlist either, so it reaches this function
 # only when the operator passed it explicitly — in which case reporting it is
 # exactly right.
-allowlisted_dirty() {
-  local line p
-  git -C "$CHECKOUT" status --porcelain --untracked-files=all 2>/dev/null | while IFS= read -r line; do
-    p="${line:3}"
-    p="${p%\"}"; p="${p#\"}"
-    if [ -n "$LOG_REL" ]; then
-      case "$p" in "$LOG_REL"/*|"$LOG_REL") continue ;; esac
-    fi
-    local allowed=0 re
-    for re in "${ALLOW_PATHS[@]}"; do
-      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
-    done
-    [ "$allowed" -eq 1 ] && printf '%s\n' "$line"
-  done | sort
-}
+#
+# DERIVED FROM THE SNAPSHOT NOW, rather than scanning a second time. The two used
+# to run separate loops over separate `git status` invocations and were required
+# to agree about which paths are allowed; one scan with the oid column dropped
+# makes them agree by construction instead of by inspection.
+allowlisted_dirty() { allowlisted_dirty_snapshot | cut -f2-; }
 
 # Fingerprint every currently dirty allowed path. The porcelain status alone is
 # not enough: if a file was already dirty before launch and the actor edits it
@@ -3151,19 +3252,12 @@ allowlisted_dirty() {
 # with the worktree blob hash makes the actor's additional edit observable while
 # leaving untouched pre-existing handoffs out of the report.
 allowlisted_dirty_snapshot() {
-  local line p oid
-  allowlisted_dirty | while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    p="${line:3}"
-    p="${p%\"}"; p="${p#\"}"
-    if [ -e "$CHECKOUT/$p" ] || [ -L "$CHECKOUT/$p" ]; then
-      oid="$(git -C "$CHECKOUT" hash-object -- "$p" 2>/dev/null || true)"
-      [ -n "$oid" ] || oid="UNHASHABLE"
-    else
-      oid="ABSENT"
-    fi
-    printf '%s\t%s\n' "$oid" "$line"
-  done | sort
+  worktree_entries all 1 \
+  | awk -F'\t' -v logrel="${LOG_REL:-}" '
+      $1 != 1 { next }
+      logrel != "" && ($3 == logrel || index($3, logrel "/") == 1) { next }
+      { print $2 "\t" $4 }
+    ' | sort
 }
 
 # The partial-effect block appended to every post-launch stop (O2).
@@ -3830,18 +3924,23 @@ permission_denials_in() { # capture-path -> one "tool :: target" line per denial
 # describe what the UNIT may legitimately touch, which makes it a per-task input
 # Codex derives when it writes the brief. Too narrow and correct work gets a false
 # stop; too wide and this check means nothing.
+#
+# `--no-renames` IS LOAD-BEARING, and it is not about quoting. With rename
+# detection on — the default — `--name-only` prints ONLY the destination of a
+# rename, so a commit that renamed a foreign path INTO the allowlist showed the
+# allowed destination and the foreign origin vanished from classification
+# altogether. Turning detection off restores both sides as an ordinary delete and
+# add, which is exactly the pair this check has to see. Measured against the
+# installed Git, not assumed.
 committed_foreign() { # before-head after-head
-  local before="$1" after="$2" p re allowed
+  local before="$1" after="$2" p d_p
   [ -n "$before" ] && [ -n "$after" ] || return 0
   [ "$before" = "$after" ] && return 0
-  git -C "$CHECKOUT" diff --name-only "$before" "$after" 2>/dev/null | while IFS= read -r p; do
+  while IFS= read -r -d '' p; do
     [ -n "$p" ] || continue
-    allowed=0
-    for re in "${ALLOW_PATHS[@]}"; do
-      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
-    done
-    [ "$allowed" -eq 0 ] && printf '%s\n' "$p"
-  done | sort
+    d_p="$(disp_path "$p")"
+    path_allowed "$d_p" || printf '%s\n' "$d_p"
+  done < <(git -C "$CHECKOUT" diff --name-only -z --no-renames "$before" "$after" 2>/dev/null) | sort
 }
 
 # Is the state file itself uncommitted right now?
