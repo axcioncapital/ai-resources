@@ -32,7 +32,7 @@ pre-approves the L4 case's judgment content, and the later operating unit must s
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 13 — make downstream authority regression durable.
+Standard. Implementation mode. Unit 14 — manually install and reconcile the accepted L3 entry.
 
 Named reason for the loop: the task spans a manual cross-repository integration, a genuine operating
 case and an operator-owned founder gate; its scope must stay bounded, and the result must be assessed
@@ -40,250 +40,285 @@ independently of the executor before it counts as the plan's terminal proof.
 
 ## Brief
 
-The four authoring dispatches now carry the approved verdict, change conditions and authority-conflict
-halt, but the project checker that owns those dispatches still proves only content transfer, the
-standard and the older role contract. Extend that existing regression now so deleting any of the
-three installed semantics fails before the genuine case, without widening the checker into compliance
-QC or Stage 5.
+The accepted L3 entry and House View adapter are absent from the bound consumer, while L2's local
+authority checker and the project's flattened Deep entry already exist there. Install the accepted
+L3 snapshot by hand and deliberately reconcile its canonical repository references to this one
+consumer's deployed layout, so Light, Standard, Deep handoff and Standard-to-L2 authority binding have
+a real project-local execution surface before the broader regression and operating proofs.
 
-**Plan justification and current position:** the approved material plan at `8bf9d0d9` requires a
-green project regression floor and deliberate reconciliation before L4's representative proof.
-Units 1–12 are accepted. The integration checkout is reported at
-`4fd1c17a25545029ff321e49632167b2f0904305`; the consumer is reported clean at
-`81d645cb7d309bf7ac64c57269576b0365651927`. L2 judgment production, founder decision, downstream
-authoring and independent compliance-QC wiring are installed; this unit makes the accepted Unit 11
-authoring contract durable under the checker Unit 9 already selected for that purpose.
+**Plan justification and current position:** the approved material plan at `8bf9d0d9` requires one
+manual L4 install with every instantiated project reference reconciled, followed by deterministic and
+representative proof. Units 1–13 are accepted. L2's producer, review, founder decision, authoring,
+content-QC and durable downstream-authority surfaces are installed; Unit 13 is accepted at consumer
+`40e12d4d388a987e133c06c3aebebea84847ac59` and integration handback
+`00d7e57667c09ca71904a9fe63c128b0cca9084e`. The next unmet integration dependency is the L3
+consumer surface itself; full matrices and real use are later proof units, not part of this install.
 
 **Governing sources and dispositions:**
 
 - The operator-approved plan
   `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`, material
-  content bound to `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`, governs the one-consumer manual
-  reconciliation, project-regression floor, L4 proof and exclusions.
-- Accepted Unit 9 state commit `9600d6f09c63f366d263c63675984b040687a7b0` governs the checker
-  disposition: extend the project's own `check-judgment-propagation.sh` role contract to require the
-  verdict and change conditions and add authority-conflict enforcement; do not install the canonical
-  subject checkers.
-- Accepted Unit 11 consumer commit `49b5d8b0972d3d30a31d1836a31097afb3035009` governs the semantics to
-  enforce across `section-directive-drafter`, `cluster-synthesis-drafter`,
-  `research-structure-creator` and `evidence-to-report-writer`: provisional verdict and
-  `unresolved` behavior, operative change conditions, and halt/surface-both authority conflicts.
-- Accepted Unit 12 commits `81d645cb7d309bf7ac64c57269576b0365651927` in the consumer and
-  `4fd1c17a25545029ff321e49632167b2f0904305` here govern the clean starting points and independent
-  compliance-QC contract.
-- The current consumer
-  `logs/scripts/check-judgment-propagation.sh` and `check-judgment-propagation.test.sh` govern the
-  project's existing content-transfer verdicts, exit codes, dispatch roles and 16-case regression
-  shape. They are extension targets, not replacement targets.
+  content bound to `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`, governs L3's three route behaviors,
+  the one-way escalation/evidence discipline, the manual one-consumer L4 reconciliation and the
+  project-specialization stop.
+- Closed L3 records `logs/work-loop/canonical-rw-lightweight-l3.md` and
+  `logs/work-loop/canonical-rw-lightweight-l3-adapter.md` govern the accepted capability and its
+  limitations: `/research-route`; Light/Standard/Deep; fail-closed escalation; Standard's exclusive
+  binding to contract-valid `{base}-approved.md`; no second judgment mechanism; and no Deep redesign.
+- Accepted L3 source commit `137e4f62701e06569919365a5291c141d8e6da93` governs the seven runtime and
+  regression files listed below. Closing commit `5cc6d105` changes only the L3 adapter state record,
+  not those files; verify that claim before using the snapshot.
+- The consumer's current L2 contract and deployed workflow surfaces govern project reconciliation.
+  In particular, the pre-brief read found local `logs/scripts/check-judgment-contract.sh`,
+  `docs/judgment-authority-contract.md`, and `.claude/commands/run-preparation.md`, while the accepted
+  L3 snapshot names canonical `workflows/research-workflow/...` locations and its adapter harness
+  expects history object `e16cf206`, which is not reachable from the consumer. These are verify-first
+  repository claims, not permission to copy canonical paths blindly.
+- Unit 13's accepted handback governs both clean starting commits and preservation of the unrelated
+  integration edit at `logs/innovation-registry.md`.
 
 **Codex framing decisions:**
 
-1. This unit adds durable enforcement for the Unit 11 authoring contract only. It preserves the
-   checker's one job: whether a report-bound authoring dispatch receives and operatively uses approved
-   judgment.
-2. Keep all new semantic losses inside the existing `INERT-ATTACHMENT` exit-7 class. A dispatch that
-   receives the inputs but lacks the verdict, change conditions or conflict rule is another inert
-   contract, not a new failure category.
-3. Do not make `report-compliance-qc` a supported dispatch here. It is an independent QC consumer,
-   not an authoring dispatch, it does not require `analyst-judgment-standard.md`, and overloading this
-   checker would weaken its one-job boundary. Unit 12's structural proof remains accepted; its
-   representative proof is the genuine content-QC run.
-4. Do not add a new checker. No new file is needed: extend the two existing project files and leave
-   Stage 5, L3 and the full regression matrix outside this hop.
+1. This is one integration deliverable: the accepted L3 runtime plus its own focused regression floor
+   installed as one project-local capability. It does not operate a representative case and does not
+   run the full L4 regression matrix.
+2. Because all seven target paths are reported absent, there is no same-path project specialization
+   to merge. Project specialization lives in the references those files instantiate: deliberately map
+   each runtime/test reference to the consumer's flattened deployed paths, or retain it only with an
+   explicit reason that it is canonical provenance rather than a runtime lookup.
+3. The adapter harness must exercise the consumer's installed L2 validator. Do not accept its
+   canonical-history fallback as L4 integration evidence when `e16cf206` is unreachable here; reconcile
+   the harness minimally so a missing or unusable local validator fails rather than silently downgrading
+   to stubs. Preserve the accepted adapter behavior and negative cases.
+4. Deep remains a handoff to the existing `.claude/commands/run-preparation.md`. Do not execute a Deep
+   stage, redesign that workflow, add deployment machinery, or configure Stage 5 in this unit.
+5. Do not import either L3 Work Loop state file into the consumer and do not create an integration
+   manifest. The post-edit reconciliation table belongs in this task handback; Git holds the diff.
 
-**Dominant deliverable:** one durable project regression that refuses any of the four protected
-authoring dispatches when the provisional-verdict behavior, operative change conditions or
-authority-conflict halt is absent.
+**Dominant deliverable:** one manually installed, project-reconciled L3 entry capability in the bound
+consumer, including its Standard-to-installed-L2 adapter and focused L3 regression floor.
 
-**Evidence required in this hop:** one targeted pre-edit false pass; the exact two-file checker/test
-diff; explicit negative cases for each missing semantic; preservation of every existing verdict and
-live dispatch case; the focused updated suite; and both local commits.
+**Evidence required in this hop:** one pre-edit consumer invocation-path failure caused by the absent
+entry/helper; exact source-to-consumer disposition for all seven files and every material instantiated
+repository reference they contain; the focused L3 suites using the consumer's real L2 validator and
+deployed Deep handoff; exact consumer diff and local commits.
 
-**Evidence explicitly deferred:** durable checker coverage for compliance QC; a real compliance-QC
-run; Stage 5 configuration and consumption including `produce-architecture.md`; L3 installation;
-the complete canonical and project regression matrix; post-install inventory; representative
-Light/Standard/Deep uses; the genuine founder decision; downstream prose and independent content-QC
-result; burden comparison; the legacy `section:` rejection mismatch; and the final L4 verdict.
+**Evidence explicitly deferred:** Stage 5 configuration and `produce-architecture.md`; the complete
+canonical/project regression matrix; whole-install post inventory; representative Light/Standard/Deep
+uses; genuine founder revision/approval/rejection; downstream analysis, prose and independent content
+QC; burden comparison; the legacy `section:` rejection mismatch; and the final L4 verdict.
 
-**Primary edit begins after:** create one temporary mutant of a live protected command outside both
-repositories that removes Unit 11's verdict, change-condition and authority-conflict clauses while
-leaving the older content/standard/role contract intact. The unchanged checker must return
-`PROPAGATED` exit 0 on that mutant before editing; that false pass is the targeted failing case.
+**Primary edit begins after:** from the consumer root, demonstrate one real L3 invocation dependency
+fails before editing because `.claude/commands/research-route.md` or its classifier is unavailable.
+Record the command and non-zero/missing result; do not manufacture a broad baseline.
 
 **Check against the repositories:**
 
-1. Validate this task and both checkout bindings at repository depth. The integration checkout must
-   remain on `session/2026-08-19-rw-l4-integration` at exact
-   `4fd1c17a25545029ff321e49632167b2f0904305` before this brief is committed and preserve the
-   unrelated `logs/innovation-registry.md` edit unstaged and uncommitted. The consumer must remain
-   clean at exact `81d645cb7d309bf7ac64c57269576b0365651927` on
-   `trial/l1-repeat-precision-components`, with no conflicting owner. Stop on overlap or drift; do
-   not clean, switch, rebase or repair either checkout.
-2. Read the complete current checker and suite. Verify the checker still has the six settled verdict
-   classes and exit codes `UNPROPAGATED 3`, `PATH-ONLY 4`, `LATE-CONTENT 5`, `NO-STANDARD 6`,
-   `INERT-ATTACHMENT 7`, `NO-DISPATCH 8`, plus bad usage 10 and success 0; confirm its current
-   operative-contract block checks single authority, no invented implication, permission ceiling and
-   one role pattern per recognised authoring dispatch, but nothing in that block enforces
-   `provisional verdict`, `unresolved`, change conditions or authority conflict.
-3. Verify the current suite's twelve synthetic cases and four live cases, including the current
-   P11/P12 successful fixtures. Identify exactly which successful fixture represents the older
-   contract and may be minimally upgraded, and which failure fixtures stop before the operative
-   contract so they need no unrelated wording churn.
-4. Verify the complete live dispatch regions in consumer
-   `.claude/commands/{run-analysis,run-synthesis,run-report}.md` still carry all three Unit 11
-   semantics and that Unit 12 changed only the compliance-QC region. Do not edit or recommit any
-   command body.
+1. Validate this task and both checkout bindings at repository depth. Integration must be on
+   `session/2026-08-19-rw-l4-integration` at exact
+   `00d7e57667c09ca71904a9fe63c128b0cca9084e` before this brief is committed, with only the unrelated
+   `logs/innovation-registry.md` edit plus this Codex brief uncommitted. Consumer must be clean at exact
+   `40e12d4d388a987e133c06c3aebebea84847ac59` on `trial/l1-repeat-precision-components`, with no
+   conflicting owner. Stop on overlap or drift; do not clean, switch, rebase or repair either checkout.
+2. Verify commit `137e4f62` carries the accepted final versions of exactly these L3 files and that
+   `5cc6d105` changes none of them:
+   `.claude/commands/research-route.md`,
+   `logs/scripts/research-route-classify.sh`,
+   `logs/scripts/research-route-memo-check.sh`,
+   `logs/scripts/research-route-judgment-authority.sh`,
+   `logs/scripts/research-route-l3-unit-1.test.sh`,
+   `logs/scripts/research-route-l3-unit-2.test.sh`, and
+   `logs/scripts/research-route-l3-adapter-unit-1.test.sh`.
+3. Verify those seven target paths are absent in the consumer. Search their complete accepted content
+   for repository-path, helper, command, contract, evidence and Deep-handoff references. For each
+   material reference, identify its accepted meaning and its actual consumer counterpart before edit;
+   absence claims must name the searched consumer surface.
+4. Verify the consumer's actual deployed surfaces, including its local L2 contract checker and doc,
+   `.claude/commands/run-preparation.md`, the local evidence/claim conventions the Standard route must
+   preserve, and project instructions governing new commands/scripts. Stop if a required counterpart
+   is absent or if correct reconciliation would change accepted L3 behavior rather than its deployment
+   location.
 
 **Implementation boundary:**
 
-- DELIBERATE MERGE only consumer
-  `logs/scripts/check-judgment-propagation.sh` and
-  `logs/scripts/check-judgment-propagation.test.sh`. No command, helper, reference, artifact or other
-  test is allowlisted.
-- Extend the existing operative-contract assessment so every recognised protected authoring dispatch
-  must state: the approved provisional verdict governs downstream position/confidence; an
-  `unresolved` verdict preserves competing readings rather than silently resolving them; approved
-  change conditions are operative conditions under which the instruction stops holding; and a genuine
-  authority conflict halts and surfaces both authorities rather than choosing or inventing a
-  resolution.
-- Require operative relationships, not free-floating keywords. A glossary or copied prose outside the
-  dispatch region must not pass, and a clause that names `authority conflict` without halt and
-  surface-both behavior must fail.
-- Preserve the existing region boundary, clause handling, content-vs-path checks, standard check,
-  common three-part contract, dispatch-specific role patterns, all existing verdict names/codes and
-  `PROPAGATED` success contract. Do not broaden the supported dispatch set.
-- Extend the existing suite with focused negative coverage for the three semantic loss groups. Reuse
-  the existing fixture vocabulary and helper; do not create a second harness or a broad matrix. A
-  negative fixture should fail as `INERT-ATTACHMENT` exit 7 and name the missing semantic in the
-  reason. Upgrade only successful fixtures that now need the complete accepted contract.
-- Keep all four live cases and prove they remain `PROPAGATED`. Do not edit live command bodies to
-  satisfy the checker; a live failure is a stop and handback because those commands were already
-  accepted.
+- DELIBERATE MERGE only the seven consumer paths listed in check (2). Materialize their accepted
+  `137e4f62` content, then make only the minimum consumer-layout reconciliations supported by check
+  (3). This is not a blind copy: unchanged accepted sections should remain byte-identical where the
+  deployed layout does not require a difference.
+- Preserve the route decision table, Light/Standard/Deep behavior, one-way escalation, per-claim
+  sourcing and evidence-versus-inference discipline, memo structure, thesis traceability, all accepted
+  verdicts/exit behavior and the exclusive approved-brief authority path.
+- Reconcile runtime paths to the consumer's actual deployed surfaces. Deep must hand off to the local
+  deployed preparation command without running it. The Standard adapter must resolve the consumer's
+  local `check-judgment-contract.sh` and consume approved content, never path/existence alone.
+- Reconcile focused tests only where their canonical source-layout assumptions would otherwise make
+  the consumer proof false. In particular, real-validator coverage must exercise the installed local
+  checker with no stub downgrade; the Deep structural check must address the deployed local handoff.
+  Do not weaken, delete or relabel accepted cases merely to make them pass.
+- Do not edit existing L2 files, the deployed Deep command, project evidence, artifacts, configuration,
+  Stage 5, any other command/script, or any canonical L3 source on the integration branch.
 
 **Post-edit evidence:**
 
-1. Show the complete consumer diff contains exactly the two allowlisted checker files and that the
-   implementation change stays inside the existing operative-contract assessment while the suite
-   change stays inside fixtures/cases needed for the new requirements.
-2. Re-run the targeted mutant from the primary failing case: it must now return
-   `INERT-ATTACHMENT` exit 7 and name the missing verdict, change-condition and authority-conflict
-   semantics. Also show one keyword-only control inside the dispatch region still fails when the
-   operative relationships are absent.
-3. Run the updated unchanged-by-invocation
-   `bash logs/scripts/check-judgment-propagation.test.sh`. Report the new exact pass total, zero
-   failures, the three new semantic-negative cases individually, and the four live cases individually.
-   Run `bash -n` on both files. Do not run the full canonical or project regression matrix in this
-   hop.
-4. Show `git diff --check` clean; every pre-existing failure fixture keeps its expected verdict;
-   all verdict names/codes, region extraction, content/path/standard rules and dispatch role patterns
-   are unchanged except the deliberate operative-contract extension; and all non-allowlisted consumer
-   paths including the three command bodies and `analysis/judgment/**` are byte-untouched.
-5. Commit the consumer change locally using the repository convention. Then update and commit only
-   this state handback in the integration checkout by explicit pathspec, preserving the unrelated
+1. Provide a seven-row source-to-consumer disposition in `## Latest result`: source path, consumer path,
+   byte-identical or reconciled, and the exact reason for every difference. Separately list every
+   material repository reference found across the runtime files and tests, its consumer resolution,
+   and whether it is runtime, regression-only or explanatory provenance.
+2. Re-run the pre-edit failing invocation dependency and show it now resolves through the consumer
+   surface. Run all three focused suites from the consumer root and report exact totals and zero
+   failures: `research-route-l3-unit-1.test.sh`, `research-route-l3-unit-2.test.sh`, and
+   `research-route-l3-adapter-unit-1.test.sh`. The adapter run must state that it exercised the local
+   real L2 validator with no fallback/stub downgrade. Run `bash -n` on all six shell files.
+3. Show targeted project-local proof that Deep names and resolves the deployed preparation handoff but
+   executes no pipeline stage, and that a Standard judgment-trigger case reaches the local authority
+   adapter/checker while an absent, proposed, rejected or malformed authority still escalates to Deep.
+4. Show the complete consumer diff contains exactly the seven allowlisted paths; `git diff --check` is
+   clean; all pre-existing consumer files are byte-untouched; and no workflow output, judgment artifact,
+   Stage 5 file or second state system was created.
+5. Commit the consumer change locally using the repository convention. Then update and commit only this
+   state handback in the integration checkout by explicit pathspec, preserving the unrelated
    innovation-registry edit. Record both full commit IDs and final statuses. Do not push or merge.
 
-**Capability subset:** baseline only — read, search, inspect history, run the focused local suite and
-syntax checks, edit only the two named consumer checker files and this existing task state, use safe
-temporary read-only mutants outside both repositories, and make local commits in the two bound
-repositories. Nothing is selected from the empty pre-authorizable set; no network, remote service,
-push, PR, merge, deployment, credential access, destructive operation, branch/worktree creation,
-checkout switch, permission change or policy change is authorized.
+**Capability subset:** baseline only — read, search, inspect history, run focused local suites and
+syntax checks, edit only the seven named consumer paths and this existing task state, use safe
+temporary fixtures outside both repositories, and make local commits in the two bound repositories.
+Nothing is selected from the empty pre-authorizable set; no network, remote service, push, PR, merge,
+deployment, credential access, destructive operation, branch/worktree creation, checkout switch,
+permission change or policy change is authorized.
 
 **Stop and hand back if:** either checkout binding changed; the unrelated integration edit overlaps;
-the consumer is not clean; current checker or suite differs materially from the inspected contract;
-the targeted pre-edit mutant does not false-pass; the three requirements cannot be expressed inside
-the existing `INERT-ATTACHMENT` assessment without changing a verdict/code or supported dispatch set;
-any accepted command fails the stricter checker; an existing fixture changes classification for a
-reason outside the three new semantics; the focused suite or syntax check fails; the consumer cannot
-be left clean after its local commit; or work would cross into compliance-QC checker design, command
-edits, Stage 5, L3, the full matrix, a real case or an operator-reserved capability. A false premise
-is a valid result; report it rather than improvising.
+the consumer is not clean; an L3 target path already exists; the accepted snapshot or closure claim is
+false; a required deployed L2/Deep counterpart is absent; project reconciliation would alter accepted
+L3 behavior or overwrite project specialization; a focused accepted case must be weakened; the local
+real-validator proof cannot run; any focused suite or syntax check fails; the consumer cannot be left
+clean after its local commit; or work would cross into existing L2/Deep edits, Stage 5, full matrices,
+real operating evidence or an operator-reserved capability. A false premise is a valid result; report
+it rather than improvising.
 
-**Completion condition:** install and locally commit the two-file propagation-checker extension,
-produce the focused evidence above, then commit only this state handback with `status: active`,
-`turn: codex`. Preserve the unrelated innovation-registry edit and stop before any other checker,
-integration or operating work.
+**Completion condition:** install and locally commit the seven-file project-reconciled L3 capability,
+produce the focused evidence and reconciliation dispositions above, then commit only this state
+handback with `status: active`, `turn: codex`. Preserve the unrelated innovation-registry edit and stop
+before Stage 5, broad regression or representative operation.
 
 ## Latest result
 
 Inspected (2026-08-19):
 
-- Claim (1): HOLDS — `git -C` on both checkouts. Integration on
-  `session/2026-08-19-rw-l4-integration` at exact `4fd1c17a25545029ff321e49632167b2f0904305`, with
-  `logs/innovation-registry.md` modified-unstaged and the state file modified-unstaged (Codex's
-  uncommitted brief) and nothing else. Consumer clean at exact
-  `81d645cb7d309bf7ac64c57269576b0365651927` on `trial/l1-repeat-precision-components`.
-  `work-loop-owner.sh check --depth repo` returned PROCEED in both: the integration checkout already
-  declares this task; the consumer declares no writer and holds no `.owner`.
-- Claim (2): HOLDS — read all 224 lines of consumer `logs/scripts/check-judgment-propagation.sh`.
-  Six verdict classes at the stated codes (`UNPROPAGATED 3`, `PATH-ONLY 4`, `LATE-CONTENT 5`,
-  `NO-STANDARD 6`, `INERT-ATTACHMENT 7`, `NO-DISPATCH 8`), bad usage 10, `PROPAGATED 0`. The
-  operative-contract block at former lines 186-218 checked single/sole analytical authority, the
-  invented-implication bar, `permission class`, and one role pattern per recognised dispatch, and
-  nothing else. Absence confirmed by
-  `grep -cE 'provisional verdict|unresolved|change condition|authority conflict|halt'` over the whole
-  file: **0**.
-- Claim (3): HOLDS — read all 169 lines of the suite. Twelve synthetic cases (P1-P12, no P16 gap:
-  labels run P1-P12 with no P7 fixture file) and four live cases P13-P16, 16 total. The two
-  successful synthetic fixtures are P11 (`research-structure-creator`) and P12
-  (`section-directive-drafter`); both were written against the older three-clause contract and are
-  the ones needing upgrade. P1-P4, P6-P9 stop at verdicts 3/4/5/6/8/10 before the operative block and
-  need no wording change; P5 and P10 reach it and already expect 7.
-- Claim (4): HOLDS — all three semantics present in all four live dispatch regions, at
-  `run-analysis.md` 284/285/286 (region 279-290), `run-synthesis.md` 92/93/94 (region 87-98),
-  `run-report.md` 67/68/69 (region 63-74) and `run-report.md` 99/100/101 (region 96-104).
-  `git show --stat 81d645cb` is a single file, `+4 −0`, inserted after line 106 — outside the
-  `evidence-to-report-writer` region that ends at 104, so Unit 12 touched only the compliance-QC
-  region.
+- Claim (1) checkout bindings: HOLDS — integration is on `session/2026-08-19-rw-l4-integration` at
+  exact `00d7e57667c09ca71904a9fe63c128b0cca9084e`; `git status --porcelain` listed exactly
+  ` M logs/innovation-registry.md` and ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md`
+  (the unrelated edit plus this Codex brief), nothing else. Consumer is on
+  `trial/l1-repeat-precision-components` at exact `40e12d4d388a987e133c06c3aebebea84847ac59` with
+  empty `git status --porcelain`. `work-loop-owner.sh check --depth repo` returned PROCEED; searched
+  the consumer for `logs/work-loop/` and the directory does not exist, so no conflicting owner.
+- Claim (2) accepted snapshot: HOLDS — `git rev-parse 137e4f62:<path>` returned a blob for all seven
+  files; each blob is identical to `HEAD:<path>`, and `git log 137e4f62..HEAD -- <the seven>` is
+  empty. `git show --name-only 5cc6d105` lists only
+  `logs/work-loop/canonical-rw-lightweight-l3-adapter.md` — searched its file list for
+  `research-route`, no match.
+- Claim (3) target paths absent: HOLDS — tested all seven paths under the consumer root with `[ -e ]`;
+  all ABSENT. Searched `git -C <consumer> ls-files` for `research.route`; no tracked path matched.
+- Claim (4) deployed counterparts: HOLDS — `logs/scripts/check-judgment-contract.sh`,
+  `docs/judgment-authority-contract.md` and `.claude/commands/run-preparation.md` are all present in
+  the consumer. Searched for `workflows/` at the consumer root: absent, confirming the flattened
+  layout. The consumer's installed validator was probed against the adapter suite's own fixture
+  briefs before any edit and returned exactly the exit codes the accepted D-cases branch on:
+  approved 0, missing 3, proposed-at-approved-path 4, rejected 4, no-claim-IDs 5, malformed 6,
+  non-sequential headings 0. Canonical history object `e16cf206` is reachable from the integration
+  checkout and **not** reachable from the consumer (`git cat-file -e` → `invalid object name`), as
+  the brief's fourth governing source stated.
+- Packaging lines: HOLDS — `Dominant deliverable:` names exactly one deliverable;
+  `Evidence required in this hop:`, `Evidence explicitly deferred:` and (Implementation mode)
+  `Primary edit begins after:` are all present and non-empty.
 
-**Primary edit's failing case (pre-edit, unchanged checker).** `sed '284,286d'` on
-`run-analysis.md` into the scratchpad outside both repositories removed exactly the three Unit 11
-clauses and left line 283's content/standard/role contract intact. The unchanged checker returned
-`verdict: PROPAGATED`, exit 0. That false pass is what this unit closes.
+**Pre-edit failing invocation.** From the consumer root, the entry's own Step 3 resolution block was
+run verbatim: `.claude/commands/research-route.md` was not readable and
+`logs/scripts/research-route-classify.sh` was unavailable, so the block printed
+`Cannot safely resolve a route: classifier unavailable: …/logs/scripts/research-route-classify.sh`
+and the guard exited **2**.
 
-Result: consumer commit `40e12d4d388a987e133c06c3aebebea84847ac59` extends the two allowlisted
-checker files only — `+65 −1` and `+71 −1`, both deletions being lines this change rewrote (a header
-comment continuation and the P12 case label). Four requirements are added inside the existing
-`INERT-ATTACHMENT` assessment, gated on the same recognised-dispatch condition as the role clause, so
-the supported dispatch set is unchanged and `report-compliance-qc` is still not a dispatch here: the
-approved provisional verdict fixes the downstream position and confidence; an `unresolved` verdict
-holds the competing readings open rather than resolving them; the change conditions are operative
-conditions under which the instruction stops holding; and a genuine authority conflict halts and
-surfaces both authorities rather than choosing or inventing a resolution.
+Result: the accepted L3 capability is installed and reconciled in the bound consumer at commit
+`231d063f7159c06d83eaf2726c5c05a8b4d00859`, as one project-local capability — the shared entry, the
+classifier, the memo checker, the judgment-authority adapter and the three focused regression suites.
+Every reconciliation is a deployment-location change; no accepted L3 behaviour was altered. Two of the
+seven files needed no difference at all and are byte-identical to the accepted source.
 
-The binding unit is a new `statements()` helper — one markdown bullet, numbered step or bolded
-lead-in with its continuation lines. A clause is too small (the comma after ``unresolved`` tears the
-token from the behaviour it governs) and the region is too large (it would clear a requirement whose
-words sit in four unrelated bullets). Continuations are joined so a rewrapped bullet does not break
-the check.
+Source-to-consumer disposition (source tree `137e4f62`; consumer paths are identical in name):
+
+| Source path | Consumer path | Disposition | Exact reason for the difference |
+|---|---|---|---|
+| `.claude/commands/research-route.md` | same | reconciled (+8/−1) | Standard's published-contract reference repointed from `workflows/research-workflow/docs/judgment-authority-contract.md` to the deployed `docs/judgment-authority-contract.md`; a project-local resolution note added to Deep naming this project's flattened `.claude/commands/run-preparation.md` as the handoff target and marking `workflows/research-workflow/` as canonical provenance rather than a local path. |
+| `logs/scripts/research-route-classify.sh` | same | byte-identical | Holds no repository reference; the entry path arrives through `--entry`. |
+| `logs/scripts/research-route-memo-check.sh` | same | reconciled (+1/−1) | One comment repointed to `docs/judgment-authority-contract.md`. The adapter is resolved as a `BASH_SOURCE` sibling, which is already correct here. |
+| `logs/scripts/research-route-judgment-authority.sh` | same | reconciled (+1/−1) | One header comment repointed to `docs/judgment-authority-contract.md`. The runtime lookup `"$root/logs/scripts/check-judgment-contract.sh"` already matches this layout and is unchanged. |
+| `logs/scripts/research-route-l3-unit-1.test.sh` | same | reconciled (+6/−1) | `DEEP_TARGET` repointed from `$REPO/workflows/research-workflow/.claude/commands/run-preparation.md` to `$REPO/.claude/commands/run-preparation.md`, with the reason recorded in place. The canonical path names a handoff target this project does not have, so A13 would have failed on correct behaviour. |
+| `logs/scripts/research-route-l3-unit-2.test.sh` | same | byte-identical | Every reference is `$REPO`-relative and resolves unchanged. |
+| `logs/scripts/research-route-l3-adapter-unit-1.test.sh` | same | reconciled (+32/−21) | The real-contract fixtures no longer materialise `e16cf206:workflows/research-workflow/logs/scripts/check-judgment-contract.sh` (unreachable here) but copy this project's **installed** validator; the stub fallback is removed and replaced by a new `D0` that fails when the installed validator is absent or unreadable. The `stub:*`, `flagprobe` and `none` fixture kinds are unchanged — they are D10's and D15's deliberate negatives, not downgrades. No accepted case was weakened, deleted or relabelled. |
+
+Material repository references found across the runtime files and tests, and how each resolves here:
+
+| Reference (accepted meaning) | Consumer resolution | Kind |
+|---|---|---|
+| `.claude/commands/research-route.md` (the entry, self-resolved through `readlink`) | same path, installed | runtime |
+| `logs/scripts/research-route-classify.sh` (classifier, fail-closed) | same path, installed | runtime |
+| `logs/scripts/research-route-memo-check.sh` (Standard memo floor) | same path, installed | runtime |
+| `logs/scripts/research-route-judgment-authority.sh` (the only authority path) | same path, installed | runtime |
+| `logs/scripts/check-judgment-contract.sh` (L2's own validator, via `--root`) | already present at that exact path | runtime |
+| `workflows/research-workflow/docs/judgment-authority-contract.md` (published contract) | `docs/judgment-authority-contract.md` | runtime (entry) / explanatory (two script comments) |
+| `workflows/research-workflow/.claude/commands/run-preparation.md` (Deep handoff target) | `.claude/commands/run-preparation.md` | runtime (entry) + regression (`DEEP_TARGET`) |
+| `preparation/task-plans/{section}-task-plan-draft.md` (Deep prerequisite) | unchanged; project-relative and already this project's convention | runtime |
+| `workflows/research-workflow/SETUP.md` (deploy a *new* project) | retained verbatim | explanatory provenance — names the canonical template for another project, never opened here |
+| `workflows/research-workflow/` (pipeline provenance, "not a work surface") | retained, explicitly marked as canonical-repository provenance | explanatory provenance |
+| `e16cf206:workflows/research-workflow/logs/scripts/check-judgment-contract.sh` | replaced by this project's installed validator | regression-only |
+| `logs/scripts/research-route-l3-adapter-unit-1.test.sh` (coverage pointer in the adapter) | same path, installed | explanatory provenance |
+| `.claude/hooks/auto-sync-shared.sh`, `projects/ai-development-lab/.claude/commands/` | none — fixture memo prose inside heredocs, never opened | regression-only fixture text |
 
 Evidence:
 
-1. **The targeted mutant now refuses.** Same file, same invocation: `verdict: INERT-ATTACHMENT`,
-   exit 7, naming all four missing semantics.
-2. **Every single-clause deletion refuses, across all four protected dispatches** — twelve mutants
-   (`run-analysis` 284/285/286, `run-synthesis` 92/93/94, `run-report` 67/68/69, `run-report`
-   99/100/101), each built outside both repositories. All twelve returned exit 7, and each named the
-   semantic actually deleted. This is the durability the unit asked for: no protected dispatch can
-   lose a Unit 11 clause and still pass.
-3. **The keyword-only control fails.** P20 places every new keyword inside the dispatch region with
-   the tokens scattered across separate bullets and a glossary bullet carrying the behaviour words
-   with nothing to govern. Region-level greps clear it on all four requirements; the statement unit
-   refuses it on all four, exit 7.
-4. **Focused suite: `passed 20, failed 0`.** The three new semantic negatives fail individually and
-   each names only its own missing semantic — P17 the verdict and `unresolved` pair, P18 the change
-   conditions, P19 the authority conflict. The four live cases pass individually: P13 `run-analysis`
-   → `section-directive-drafter` 0, P14 `run-synthesis` → `cluster-synthesis-drafter` 0, P15
-   `run-report` → `research-structure-creator` 0, P16 `run-report` → `evidence-to-report-writer` 0.
-   Every pre-existing fixture keeps its expected verdict (P1 3, P2 4, P3 5, P4 6, P5 7, P6 8, P7 10,
-   P8 3, P9 4, P10 7, P11 0, P12 0). `bash -n` clean on both files.
-5. **Scope.** `git status --porcelain` in the consumer showed exactly the two allowlisted paths and
-   nothing under `.claude/`, `analysis/`, `reference/`, `report/` or `execution/`. `git diff --check`
-   clean. No `verdict` call, anchor, content marker, region-extraction rule or `case` branch was
-   added, removed or altered. The consumer is clean at `40e12d4d`; the integration
-   `logs/innovation-registry.md` edit is preserved unstaged.
+- **Pre-edit → post-edit, same invocation.** Before: exit **2**, `classifier unavailable`. After the
+  install, the identical block resolves the entry, finds the classifier and prints
+  `route: light / preference-overridden: no / floor-set-by: base`, rc **0**.
+- **Focused suites, all run from the consumer root, exact totals:**
+  `research-route-l3-unit-1.test.sh` **14 passed, 0 failed** (rc 0);
+  `research-route-l3-unit-2.test.sh` **33 passed, 0 failed** (rc 0);
+  `research-route-l3-adapter-unit-1.test.sh` **42 passed, 0 failed** (rc 0).
+  The adapter run exercised this project's installed real L2 validator with **no fallback or stub
+  downgrade** — its first line reads
+  `PASS  D0 the real-contract fixtures use this project's installed L2 validator (…/logs/scripts/check-judgment-contract.sh)`,
+  and D1–D9 branch on that validator's own exit codes (0/3/4/4/5/6).
+- **That claim can fail.** A mutant of the harness, kept outside both repositories, changed only
+  `L2_INSTALLED` to a non-existent filename. It returned **27 passed, 15 failed**, rc 1: `D0` failed
+  naming the unreadable path, and every real-contract case collapsed with it. The accepted source
+  would have printed a `NOTE` and passed on stubs; the reconciled harness cannot.
+- `bash -n` on all six installed shell files: all six OK.
+- **Deep resolves the deployed handoff and executes nothing.** The Deep section names
+  `/run-preparation`, names `.claude/commands/run-preparation.md`, and that file exists in the
+  consumer; `workflows/research-workflow/` does not exist here. Searched the entry for any invocation
+  of a preparation stage (`^\s*(bash|sh|source|\.)\s.*run-preparation`): no match. The only commands
+  the entry runs are the classifier, the memo checker and the judgment adapter.
+- **A Standard judgment case reaches the local authority chain, and every bad authority escalates.**
+  Signals `output=analysis, thesis_judgment=yes, consequence=internal` resolve to `route: standard`.
+  Run against `--root <consumer>`, the adapter returns `contract-exit: 3` with the consumer's own
+  absolute path in the reason — proving the local checker ran, and discriminated by a control root
+  with no checker, which returns `contract-exit: none` instead. A rejected brief returns
+  `contract-exit: 4`, a malformed one `contract-exit: 6`, this project's real *proposed* brief is
+  refused by its own installed checker as `verdict: NOT-APPROVED`, and aiming the adapter at a
+  proposal is refused as usage (exit 2). All five print `escalate: deep`. The memo checker bound
+  against this project rejects a `COMPLETE` House View memo whose authority is unavailable, naming
+  `contract-exit: 3`.
+- **Diff scope.** `git status --porcelain` in the consumer showed exactly the seven allowlisted paths
+  and nothing else; `git diff --name-only` was empty, so no pre-existing tracked file was modified;
+  `git diff --check` clean. No workflow output, judgment artifact, Stage 5 file or second state system
+  was created — all fixtures were written outside both repositories and deleted. The consumer is clean
+  after its commit `231d063f7159c06d83eaf2726c5c05a8b4d00859`.
 
-No adjacent work was done and nothing was deferred beyond what the brief already lists.
+Deferrals noticed during this unit, recorded and not done: the **legacy `section:` mismatch is now
+demonstrated rather than merely predicted**. This project's two real approved briefs carry
+`section:`, not `unit:`; the installed dual-contract validator passes them at exit 0, and the adapter
+then correctly fails closed because the brief "covers unit '<absent>'". That is honest fail-closed
+behaviour, so nothing was changed — but it means no real on-disk brief in this project can currently
+bind the Standard lane, which the L4 operating case will need. It stays on the deferred list where the
+brief put it.
 
 ## Blocker
 
@@ -291,5 +326,5 @@ None.
 
 ## Next action
 
-Codex: assess Unit 13 — the two-file propagation-checker extension making the Unit 11 authoring
-contract durable across all four protected dispatches, at consumer `40e12d4d38` and this handback.
+Codex: assess Unit 14 — the manually installed, project-reconciled L3 entry capability in the bound
+consumer, its seven-row disposition and reference reconciliation, and the focused evidence above.
