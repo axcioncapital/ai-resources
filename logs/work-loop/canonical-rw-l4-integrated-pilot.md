@@ -32,7 +32,7 @@ pre-approves the L4 case's judgment content, and the later operating unit must s
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 10 — make founder rejection reachable.
+Standard. Implementation mode. Unit 11 — carry verdict, change conditions and authority conflicts.
 
 Named reason for the loop: the task spans a manual cross-repository integration, a genuine operating
 case and an operator-owned founder gate; its scope must stay bounded, and the result must be assessed
@@ -40,231 +40,268 @@ independently of the executor before it counts as the plan's terminal proof.
 
 ## Brief
 
-The consumer can validate and refuse a rejected canonical brief, but its live judgment command gives
-the founder no rejection branch. Install only that missing route now so all three operator-owned L2
-decisions are reachable, while preserving the accepted L1 revision, disposition and approval flow.
+The founder's approved brief already reaches all four protected downstream dispatches, but three
+load-bearing parts of that authority do not yet govern them: the provisional verdict, the conditions
+that would change the view, and what to do when approved judgment conflicts with evidence controls.
+Merge only those semantics now, preserving the consumer's stricter content-passing specialization
+and leaving independent compliance QC to its own unit.
 
 **Plan justification and current position:** the approved material plan at `8bf9d0d9` requires the
-founder to be able to approve, require revision or reject, and L4's bound case must cross the same
-operator-owned seam without auto-approval. Units 1–9 are accepted. The consumer is reported clean at
-`f868581eac21ffdd37cd3c259671345860472b23`; canonical authoring, validation, challenge and promotion
-are installed, and Unit 9 proved rejection is the only helper-supported founder outcome that the
-command path cannot currently create.
+accepted L2 House View to govern downstream analysis, synthesis, report architecture and prose while
+L4 preserves project-owned specialization in one manual consumer. Units 1–10 are accepted. The
+integration checkout is currently at `6ea69aaf05dd1355284e81f6456c8c5a14ff3c40`; the consumer is
+reported clean at `c4f613b1913512c17dd677be8969775d36de0022`, with canonical judgment creation,
+challenge, founder approval/revision/rejection, validation, promotion and existing thesis handoff
+installed. This unit closes the three remaining downstream-use deficiencies identified by accepted
+Unit 9; it does not attempt QC fidelity or the operating proof.
 
 **Governing sources and dispositions:**
 
 - The operator-approved plan
   `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`, material
-  content bound to `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`, governs founder ownership, the
-  one-consumer manual reconciliation, preservation rule, L2 decision set and L4 exclusions.
-- Accepted L2 commit `e16cf206` governs the rejection outcome: a founder `reject` decision changes the
-  proposed brief to `status: rejected`, records `rejected_by:`, creates no approved authority and
-  stops `/run-analysis` before downstream work. It is semantic authority, not permission to overwrite
-  the project's differently structured seam.
-- Accepted Unit 9 state commit `9600d6f09c63f366d263c63675984b040687a7b0` governs the current gap
-  classification, checker disposition and implementation partition. Its live repository claims remain
-  verify-first.
-- The current project `run-analysis.md` governs the accepted five-question founder review, finding
-  disposition ledger, revision/re-challenge loop, unconditional halt and mechanical approval path.
-  These are preservation requirements, not canonical overwrite targets.
+  content bound to `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`, governs the one-consumer manual
+  reconciliation, preservation rule, L2 consumption outcome, L4 proof and exclusions.
+- Accepted L2 commit `e16cf206` governs the semantics: the provisional verdict controls downstream
+  position and confidence; `## What would change the view` remains operative; and a genuine conflict
+  between approved judgment and evidence/permission/operator controls halts for the operator rather
+  than silently preferring either authority. Its path-passing wording is not a deployable mechanism
+  here.
+- Accepted Unit 9 state commit `9600d6f09c63f366d263c63675984b040687a7b0` governs the compatibility
+  ruling and implementation partition. It established that all four dispatches already pass approved
+  brief content and thesis-role instructions under project checkers, while the three named semantics
+  are absent. Its live repository claims remain verify-first.
+- Accepted Unit 10 commits `c4f613b1913512c17dd677be8969775d36de0022` in the consumer and
+  `6ea69aaf05dd1355284e81f6456c8c5a14ff3c40` here govern the clean starting points and reachable
+  founder-rejection outcome. Unit 10's legacy `section:` rejection mismatch remains a recorded
+  deferral: the L4 case is produced from the installed `unit:` template, so it does not block this
+  unit or reopen the accepted rejection branch.
+- The current consumer command bodies and their passing gate/propagation checks govern the preserved
+  project specialization. They are deliberate merge surfaces, not canonical overwrite targets.
 
-**Codex rulings carried from Unit 9:**
+**Codex framing decisions:**
 
-1. Both canonical subject checkers remain external diagnostics and are not installed. Their literal
-   canonical region/path assumptions conflict with the consumer's accepted, regression-protected
-   content-passing specialization.
-2. Unit 9's phrase “four real gaps” was numerically imprecise. The evidence identifies **five semantic
-   deficiencies** — rejection, provisional verdict, change conditions, authority conflict and QC
-   fidelity — grouped into three implementation units. This unit addresses rejection only; the
-   evidence and partition are otherwise accepted.
-3. Stage 5 consumption is deferred within L4, not dismissed from it. The later operating proof still
-   must establish that approved judgment governs the downstream prose and independent QC it actually
-   exercises. No Stage 5 surface enters this unit.
+1. This unit implements one downstream-authority contract across the three command owners and four
+   protected dispatches. The three semantic clauses are inseparable parts of that contract, not three
+   unrelated deliverables: verdict says the approved position, change conditions bound its durability,
+   and the conflict rule prevents either from overriding stronger evidence controls.
+2. Do not install or adapt either canonical subject checker. Unit 9 settled both as external
+   diagnostics because their canonical step anchors and path-passing assumptions conflict with the
+   consumer's accepted structure.
+3. Do not extend `check-judgment-propagation.sh` in this hop. Wiring the contract and expanding the
+   regression helper are separate dominant deliverables; use a bounded structural check for the new
+   instruction semantics and keep the existing checker suites as preservation evidence.
+4. The accepted L2 wording is semantic authority, not literal text to paste. Reconcile it with each
+   command's existing role and evidence controls, and preserve the content-not-path rule.
 
-**Dominant deliverable:** one operator-reachable, durable founder-rejection branch in the existing
-project judgment seam.
+**Dominant deliverable:** one downstream-authority contract under which the approved provisional
+verdict, change conditions and genuine authority-conflict halt govern all four existing protected
+dispatches.
 
-**Evidence required in this hop:** the exact one-file command diff; a structural source check proving
-the rejection branch is distinct, durable and terminal; the two directly relevant project regression
-checks; preservation evidence for every existing founder path; and both local commits.
+**Evidence required in this hop:** the exact three-file command diff; a fail-capable structural check
+showing all four protected dispatches are governed by all three semantics; the existing gate and
+propagation verdicts for each dispatch plus both focused suites; preservation evidence for the
+content-passing and thesis-role clauses; and both local commits.
 
-**Evidence explicitly deferred:** the provisional-verdict/change-condition/authority-conflict merge;
-compliance-QC fidelity; extension of the project propagation checker; Stage 5 configuration and
-consumption; L3 installation; the complete canonical and project regression matrix; post-install
-inventory; representative Light/Standard/Deep uses; the genuine founder decision; downstream prose
-and content QC; burden comparison; and final L4 verdict.
+**Evidence explicitly deferred:** compliance-QC fidelity; extension of the project propagation
+checker to enforce the new semantics; Stage 5 configuration and consumption; L3 installation; the
+complete canonical and project regression matrix; post-install inventory; representative
+Light/Standard/Deep uses; the genuine founder decision; downstream prose and independent content QC;
+burden comparison; the legacy `section:` rejection mismatch; and the final L4 verdict.
 
-**Primary edit begins after:** cite Unit 9's accepted before-state rather than re-running a broad
-baseline: consumer `run-analysis.md` Step 3b.2 offers revision directions, finding disposition or
-`approved`, says “The task stays at this step until the operator approves,” and the bounded search
-`grep -ciE 'rejection|rejected' .claude/commands/run-analysis.md` returned **0**.
+**Primary edit begins after:** cite Unit 9's accepted before-state instead of running a broad
+baseline: across consumer `.claude/commands/{run-analysis,run-synthesis,run-report}.md`, bounded
+case-insensitive searches for `provisional verdict`, `would change the view|change condition`, and
+`authority conflict` each returned **0**, while the four named dispatches were already `GATED` and
+`PROPAGATED` under the project's own checkers.
 
 **Check against the repositories:**
 
 1. Validate this task and both checkout bindings at repository depth. The integration checkout must
-   remain on `session/2026-08-19-rw-l4-integration`, contain `26ee26d4`, and preserve the unrelated
-   `logs/innovation-registry.md` edit unstaged and uncommitted. The consumer must remain clean at exact
-   `f868581eac21ffdd37cd3c259671345860472b23` on
-   `trial/l1-repeat-precision-components`, with no conflicting owner. Stop on overlap or drift; do not
-   clean, switch, rebase or repair either checkout.
-2. Verify the complete current Step 3b.2–3b.4 region in consumer `.claude/commands/run-analysis.md`
-   still matches Unit 9's inspected bytes: the three-option reply menu, five approval questions,
-   unconditional halt, revision/re-challenge loop, disposition ledger and promoter call. Verify the
-   bounded rejection search is still zero before editing.
-3. At accepted L2 commit `e16cf206`, verify the canonical founder-decision region carries the distinct
-   approve/revise/reject/anything-else outcomes and the rejected metadata/terminal behavior stated
-   above. Verify the installed consumer validator and promoter still have the already-accepted
-   rejected-`unit:` outcomes — validator exit 4 and promoter exit 13 — by source and Unit 8 evidence;
-   do not rebuild their fixtures or re-run their settled suites merely to rediscover them.
+   remain on `session/2026-08-19-rw-l4-integration` at exact `6ea69aaf05dd1355284e81f6456c8c5a14ff3c40`
+   before this brief is committed and preserve the unrelated `logs/innovation-registry.md` edit
+   unstaged and uncommitted. The consumer must remain clean at exact
+   `c4f613b1913512c17dd677be8969775d36de0022` on `trial/l1-repeat-precision-components`, with no
+   conflicting owner. Stop on overlap or drift; do not clean, switch, rebase or repair either checkout.
+2. Verify the complete current dispatch regions in consumer `.claude/commands/run-analysis.md`
+   (`section-directive-drafter`), `.claude/commands/run-synthesis.md`
+   (`cluster-synthesis-drafter`) and `.claude/commands/run-report.md`
+   (`research-structure-creator`, `evidence-to-report-writer`). Confirm each still passes approved
+   judgment as content, names it as the single analytical authority, assigns a thesis-based role and
+   is protected by the existing gate and propagation checkers. Reproduce the three bounded zero-hit
+   searches immediately before editing.
+3. At accepted L2 commit `e16cf206`, verify the corresponding downstream-use and authority-conflict
+   regions in canonical `run-analysis.md`, `run-synthesis.md` and `run-report.md`. Establish the
+   semantic requirements for verdict, `unresolved`, change conditions and genuine conflicts; do not
+   import canonical paths, step numbering, checkpoint shapes or path-passing mechanics.
+4. Verify by source and accepted Unit 9 evidence that the project propagation checker refuses
+   path-only handoff and inert content, and that the canonical subject checkers remain inapplicable as
+   installable consumer regressions. Do not rerun the settled canonical diagnostics or copy them.
 
 **Implementation boundary:**
 
-- DELIBERATE MERGE only consumer `.claude/commands/run-analysis.md`. No helper, test, reference,
-  template, artifact or other command is allowlisted.
-- Extend the founder reply menu and its handling with an explicit `reject` outcome, distinct from
-  revision directions, finding disposition and approval.
-- On explicit rejection, instruct the live route to update the existing proposed brief's frontmatter
-  to `status: rejected` and record `rejected_by:` using the real founder identity. Preserve the
-  analytical body; create no approved file; do not call the promoter; stop `/run-analysis` before
-  Step 3c/Step 4; and record the decision and a one-line rationale through the project's existing
-  decision log rather than creating another record type.
-- Keep silence, questions, partial replies and ambiguous acknowledgements non-decisions that write
-  nothing and re-present the pause. Adjust the existing “stays until approval” wording only as needed
-  to acknowledge the terminal rejection outcome.
-- Preserve verbatim unless the new branch requires a local grammatical adjustment: the five review
-  questions; the required-change ledger and its two terminal dispositions; the permission-breach and
-  decision-conflict controls; the unconditional halt/no-auto-approval rule; revision invalidating the
-  old challenge and returning through independent review; mechanical promotion only on explicit
-  approval; and the existing Step 3c fail-closed authority gate.
-- Do not rename or renumber the project seam, adopt canonical path-passing, add a second approval
-  system, or create a new stage, command, helper, artifact or generic mechanism.
+- DELIBERATE MERGE only consumer
+  `.claude/commands/{run-analysis,run-synthesis,run-report}.md`. No helper, test, reference, template,
+  artifact or other command is allowlisted.
+- Make the approved provisional verdict operational for each protected dispatch: downstream output
+  must not contradict or silently sharpen/soften the approved position, and an `unresolved` verdict
+  must preserve the competing readings rather than resolve them by drafting or structure.
+- Make the approved brief's change conditions operational wherever each output states or structures
+  what would revise the view. They are conditions under which the approved instruction stops holding,
+  not optional caveats.
+- Add an authority-conflict rule whose scope unambiguously covers every protected dispatch. The
+  approved brief does not replace claim-permission tables, scarcity instructions, gate-clearance
+  caveats, project evidence controls or operator decisions. Where a thesis genuinely cannot be
+  implemented within those controls, halt and surface both authorities to the operator; never silently
+  prefer one or invent a resolution.
+- Preserve the current content-passing mechanism, exact approved source-path capture, per-item thesis
+  traceability, existing countercase/open-tension and caveat controls, and each command's project-only
+  dispatch structure. Do not adopt canonical path-passing or weaken the existing role clauses.
+- Do not change the founder seam, judgment artifacts or helpers; do not add a second authority system,
+  new stage, new artifact, generic mechanism or Stage 5 behavior.
 
 **Post-edit evidence:**
 
-1. Show the complete consumer diff is exactly the one allowlisted command body and that the change is
-   confined to the founder-decision region plus any directly necessary wording adjustment.
-2. Extract that region and demonstrate all four outcomes are structurally distinct: approval alone
-   invokes `promote-judgment-brief.sh`; revision returns through challenge; rejection writes
-   `status: rejected` plus `rejected_by:`, creates no approved file/promoter call and stops; anything
-   else writes nothing and waits. The check must inspect the branch clauses, not pass merely because
-   the word `reject` appears somewhere in the file.
-3. Run the unchanged project `check-judgment-producer.test.sh` and
-   `check-judgment-gate.test.sh`; expected accepted totals are **41/41** and **16/16**. Also run
-   `check-judgment-gate.sh --dispatch section-directive-drafter` against the live command and require
-   `GATED`. Any regression stops.
-4. Show `git diff --check` clean; the five approval questions, revision/re-challenge logic,
-   disposition grammar, challenge and promotion instructions, Step 3c gate and all non-allowlisted
-   consumer paths unchanged. Existing `analysis/judgment/**` artifacts must remain byte-untouched.
+1. Show the complete consumer diff contains exactly the three allowlisted command bodies and is
+   confined to their approved-judgment consumption/authority regions.
+2. Run a bounded structural extraction over the four exact dispatch regions and show each is governed
+   by the provisional-verdict rule, the `unresolved` behavior, the change-condition rule and the
+   authority-conflict halt. The check must fail on the accepted before-state at `c4f613b`, on a
+   keyword-only control with the terms outside a dispatch's governing region, and on at least one
+   mutant that removes one semantic requirement from one protected dispatch. Temporary controls must
+   stay outside both repositories and be removed afterwards.
+3. For each protected dispatch, run unchanged `check-judgment-gate.sh --dispatch ...` and
+   `check-judgment-propagation.sh --dispatch ...` against its live command, requiring `GATED` and
+   `PROPAGATED`. Run unchanged `check-judgment-gate.test.sh` and
+   `check-judgment-propagation.test.sh`; the accepted totals are **16/16** and **16/16**. Any
+   regression stops.
+4. Show `git diff --check` clean and prove the content-not-path clauses, single-authority wording,
+   thesis-role/traceability instructions, existing caveat and countercase/open-tension controls, gate
+   ordering, dispatch identities and all non-allowlisted consumer paths unchanged except where a
+   directly necessary grammatical merge is shown and justified. Existing `analysis/judgment/**`
+   artifacts must remain byte-untouched.
 5. Commit the consumer change locally using the repository convention. Then update and commit only
    this state handback in the integration checkout by explicit pathspec, preserving the unrelated
    innovation-registry edit. Record both full commit IDs and final statuses. Do not push or merge.
 
 **Capability subset:** baseline only — read, search, inspect history, run focused local checks, edit
-only the named consumer command and this existing task state, use safe temporary read-only extraction
-if needed, and make local commits in the two bound repositories. Nothing is selected from the empty
-pre-authorizable set; no network, remote service, push, PR, merge, deployment, credential access,
-destructive operation, branch/worktree creation, checkout switch, permission change or policy change
-is authorized.
+only the three named consumer commands and this existing task state, use safe temporary read-only
+extractions outside both repositories if needed, and make local commits in the two bound repositories.
+Nothing is selected from the empty pre-authorizable set; no network, remote service, push, PR, merge,
+deployment, credential access, destructive operation, branch/worktree creation, checkout switch,
+permission change or policy change is authorized.
 
 **Stop and hand back if:** either checkout binding changed; the unrelated integration edit overlaps;
-the consumer is not clean; current founder logic differs materially from Unit 9; rejection requires
-changing a helper or artifact contract; the branch cannot preserve the existing revision,
-disposition, approval and challenge behaviors; a focused regression fails; a safe structural check
-cannot distinguish a real branch from a keyword mention; the consumer cannot be left clean after its
-local commit; or work would cross into Units B/C, Stage 5, L3, real founder judgment, propagation or
-an operator-reserved capability. A false premise is a valid result; report it rather than improvising.
+the consumer is not clean; a current dispatch differs materially from Unit 9's accepted map; one of
+the three semantics cannot govern all four dispatches without changing a helper, artifact contract or
+non-allowlisted command; the merge would weaken content-passing, thesis traceability or an existing
+evidence control; a focused regression fails; a safe structural check cannot distinguish governing
+behavior from keyword mentions; the consumer cannot be left clean after its local commit; or work
+would cross into compliance QC, checker extension, Stage 5, L3, the real founder judgment,
+propagation machinery or an operator-reserved capability. A false premise is a valid result; report it
+rather than improvising.
 
-**Completion condition:** install and locally commit the one-file rejection branch, produce the
-focused evidence above, then commit only this state handback with `status: active`, `turn: codex`.
-Preserve the unrelated integration edit and stop before adjacent implementation.
+**Completion condition:** install and locally commit the three-file downstream-authority merge,
+produce the focused evidence above, then commit only this state handback with `status: active`,
+`turn: codex`. Preserve the unrelated innovation-registry edit and stop before compliance QC or any
+adjacent implementation.
 
 ## Latest result
 
 Inspected (2026-08-19):
 
-- Claim (1): HOLDS — integration checkout is on `session/2026-08-19-rw-l4-integration`;
-  `git merge-base --is-ancestor 26ee26d4 HEAD` succeeded; `git status --porcelain` showed only
-  ` M logs/innovation-registry.md` and ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md` — the
-  latter being Codex's uncommitted Unit 10 brief, which this hop commits. The consumer was clean
-  (empty `git status --porcelain`) at exactly `f868581eac21ffdd37cd3c259671345860472b23` on
-  `trial/l1-repeat-precision-components`; `work-loop-owner.sh check --depth repo` returned PROCEED
-  with no conflicting owner.
-- Claim (2): HOLDS — read consumer `.claude/commands/run-analysis.md` lines 122–265 in full. The
-  Step 3b.2–3b.4 region still carries the three-option reply menu (revision directions / explicit
-  disposition / `approved`), the five approval questions verbatim, the unconditional halt with no
-  timeout and no auto-approval, the revision → Step 3b.1 re-challenge loop, the two terminal
-  dispositions with the `permission-breach` refusal, and the mechanical `promote-judgment-brief.sh`
-  call. `grep -ciE 'rejection|rejected' .claude/commands/run-analysis.md` returned **0** immediately
-  before the edit.
-- Claim (3): HOLDS — at `e16cf206`, `workflows/research-workflow/.claude/commands/run-analysis.md`
-  Step 3.5d carries four distinct outcomes (approve / revise / reject / anything else); its reject
-  clause sets `status: rejected` and `rejected_by:`, promotes nothing, creates no authority and stops
-  before Step 4, and Step 3.5e maps a rejected brief to exit `4`. In the consumer,
-  `check-judgment-contract.sh` line 213 returns `NOT-APPROVED 4` on `status: rejected` and line 207
-  refuses a rejection with no `rejected_by:`; `promote-judgment-brief.sh` line 155 returns
-  `REJECTED-PROPOSAL 13`. Both settled suites were run as unchanged baselines, not rebuilt.
+- Claim (1): HOLDS — `git rev-parse` in both checkouts. Integration on
+  `session/2026-08-19-rw-l4-integration` at exact `6ea69aaf05dd1355284e81f6456c8c5a14ff3c40`;
+  `git status --porcelain` returned only ` M logs/innovation-registry.md` and
+  ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md` (this brief), so the unrelated registry edit
+  is unstaged and uncommitted. Consumer on `trial/l1-repeat-precision-components` at exact
+  `c4f613b1913512c17dd677be8969775d36de0022` with empty `git status --porcelain`.
+  `work-loop-owner.sh check --depth repo` returned `PROCEED`; the consumer holds no
+  `logs/work-loop/.owner`, so no conflicting owner exists on either side.
+- Claim (2): HOLDS — read the four dispatch regions in full: `run-analysis.md` lines 279-287
+  (`section-directive-drafter`), `run-synthesis.md` 87-95 (`cluster-synthesis-drafter`),
+  `run-report.md` 63-71 (`research-structure-creator`) and 93-98 (`evidence-to-report-writer`). Each
+  passes the approved brief and `reference/analyst-judgment-standard.md` as **full text** with an
+  explicit content-not-path clause, names the brief the **single analytical authority**, and assigns a
+  role (supports/qualifies/challenges; evidence-led prose; allocation). Unchanged
+  `check-judgment-gate.sh` returned `GATED` and `check-judgment-propagation.sh` returned `PROPAGATED`
+  for all four. The three bounded case-insensitive searches over the three files were rerun
+  immediately before editing and each returned **0** hits: `provisional verdict`;
+  `would change the view|change condition`; `authority conflict` — Unit 9's accepted before-state
+  reproduced exactly.
+- Claim (3): HOLDS — `git show e16cf206:workflows/research-workflow/.claude/commands/{run-analysis,run-synthesis,run-report}.md`.
+  Canonical carries `**Authority conflict:**` blocks (analysis line 167, synthesis 62, report 43) and
+  `**Required use of approved judgment:**` blocks (analysis 165, synthesis 84, report 57 and 88). The
+  semantics recovered: the verdict fixes downstream position and confidence, `unresolved` holds
+  competing readings open rather than resolving them by drafting or arrangement; change conditions are
+  the conditions under which the instruction stops holding; a genuine conflict halts and surfaces both
+  authorities. Canonical step numbering, checkpoint shapes and path-passing mechanics were not imported.
+- Claim (4): HOLDS — read `check-judgment-propagation.sh` source. `PATH-ONLY` (exit 4) is enforced by
+  a clause-level `CONTENT_MARKER` test on both the brief and the standard anchors, so a path-only
+  handoff cannot pass; `INERT-ATTACHMENT` (exit 7) requires the single-authority statement, the
+  invent-bar, the permission ceiling and a per-dispatch role pattern. Unit 9's accepted ruling at
+  `9600d6f0` (§ *Ruling on each subject checker*) settles both canonical subject checkers as external
+  diagnostics only — `check-judgment-seam.sh` is anchored to canonical step numbering, and
+  `check-judgment-consumption.sh` asserts the path-passing shape this project's checker refuses at
+  exit 4. Neither was rerun or copied.
 
-Result: consumer `.claude/commands/run-analysis.md` now carries a reachable, durable and terminal
-founder-rejection branch. Step 3b.2's reply menu gained a fourth `reject` option; a new clause under
-it sets `status: rejected` plus `rejected_by:` on the existing proposal, preserves the body byte for
-byte, forbids `promote-judgment-brief.sh` by name, creates no approved form, stops `/run-analysis`
-before Step 3c and Step 4, and records the decision and one-line rationale in the project's existing
-`/logs/decisions.md`. A companion clause keeps silence, questions, partial and ambiguous replies as
-non-decisions that write nothing and re-present the pause. One existing line was reworded — "the task
-stays at this step until the operator approves" now says approves *or rejects* — which is the only
-before-state line the diff removes.
+Result: the downstream-authority contract is installed and locally committed in the consumer at
+`49b5d8b0972d3d30a31d1836a31097afb3035009`. All four protected dispatches are now governed by all
+three merged semantics — the approved provisional verdict sets position and confidence (and
+`unresolved` preserves the competing readings rather than resolving them by drafting, structure or
+editorial instruction), the change conditions are operative conditions under which the approved
+instruction stops holding, and a genuine conflict with claim-permission tables, the scarcity register,
+gate-clearance caveats, `reference/quality-standards.md` or an operator decision **halts and surfaces
+both authorities** rather than preferring one. Each clause is written inside its own dispatch region
+and closes with "This rule governs this dispatch", so the authority-conflict rule's scope is
+unambiguous per dispatch rather than inherited from file-level prose.
 
 Evidence:
 
-- **Scope.** `git diff --stat` = `.claude/commands/run-analysis.md | 12 +++-`, one file, 11
-  insertions and 1 deletion, entirely inside the Step 3b.2 founder-decision region.
-  `git diff --check` clean. `git status --porcelain analysis/judgment` empty — the two pre-existing
-  judgment artifacts are byte-untouched. No helper, test, reference, template or other command
-  changed.
-- **Structural distinctness, with a failing case.** A read-only extraction check anchored on the four
-  branch clauses (not on the word `reject`) asserts: the four clauses sit at four distinct lines; the
-  approval clause is the only branch that instructs `promote-judgment-brief.sh`; the revision clause
-  returns to Step 3b.1 and promotes nothing; the rejection clause sets `status: rejected`, records
-  `rejected_by:`, names the proposal as its write target, forbids the promoter by name, creates no
-  approved form, stops the command, names Step 3c and Step 4 as not reached, and writes to
-  `/logs/decisions.md` with no second record type; the non-decision clause writes nothing and waits;
-  the unconditional halt survives. It returns `FOUR-OUTCOMES-DISTINCT`, exit 0, on the live command.
-  It fails on three controls: the accepted before-state at `f868581e` (exit 1 — rejection and
-  non-decision clauses absent); a synthetic variant carrying three `reject` keyword mentions in prose
-  and no branch (exit 1 — same two clauses absent, so keyword presence does not pass it); and a
-  mutant of the live command whose rejection clause runs the promoter (exit 1 on both promoter
-  assertions).
-- **Regressions.** Unchanged project suites, run before and after: `check-judgment-producer.test.sh`
-  **41/41** (0 failed), `check-judgment-gate.test.sh` **16/16** (0 failed).
-  `check-judgment-gate.sh --dispatch section-directive-drafter .claude/commands/run-analysis.md`
-  returns `GATED`, exit 0, with the fail-closed ordering intact (gate at line 65, dispatch now at
-  line 279).
-- **Preservation.** `diff` against `HEAD` before the commit removes exactly one line — the reworded
-  "stays until approval" sentence. All five approval questions match verbatim; the two terminal
-  dispositions, the `permission-breach` and `decision-conflict` controls, the revision/re-challenge
-  logic, the promotion instructions and the Step 3c FAIL-CLOSED gate are unchanged.
-- **Commits.** Consumer `c4f613b1913512c17dd677be8969775d36de0022` on
-  `trial/l1-repeat-precision-components`, working tree clean afterwards. This state handback is the
-  commit carrying this file on `session/2026-08-19-rw-l4-integration` — Git holds its id, so it is not
-  restated here. Neither repository was pushed or merged; `logs/innovation-registry.md` remains
-  unstaged and uncommitted.
+- **Diff.** `git diff --numstat` before commit: `3 0 run-analysis.md`, `6 0 run-report.md`,
+  `3 0 run-synthesis.md` — **12 insertions, 0 deletions** across exactly the three allowlisted command
+  bodies and nothing else (`git status --porcelain` listed only those three). Hunks landed at
+  run-analysis 284-286, run-report 67-69 and 99-101, run-synthesis 92-94 — inside the four dispatch
+  regions in every case. Zero deletions is the preservation evidence: the content-not-path clauses,
+  single-authority wording, thesis-role and traceability instructions, existing caveat and
+  countercase/open-tension controls, gate ordering, dispatch identities and the FX-C1 carve-out
+  wording are byte-identical to `c4f613b`. No grammatical merge was needed, so none is claimed.
+  `git diff --check` clean; `git status --porcelain analysis/judgment` empty, so
+  `analysis/judgment/**` is byte-untouched.
+- **Fail-capable structural check.** A temporary extractor reused
+  `check-judgment-propagation.sh`'s own region boundary (next `SKILL.md` reference, next `### `, or
+  next `---`) and required four things *within each dispatch's own region*: the provisional-verdict
+  rule with a governing verb, the `unresolved` behaviour, the change-condition rule stated as
+  operative, and the authority-conflict halt. Results — live branch: `GOVERNED (4/4)`, exit 0.
+  Accepted before-state at `c4f613b`: **FAIL, all four dispatches missing V U C A**, exit 1.
+  Keyword-only control (all four terms appended to each file as a glossary outside every dispatch
+  region): **FAIL, all four missing V U C A**, exit 1 — the check distinguishes governing placement
+  from keyword presence. Mutant (live state with only the authority-conflict sentence removed from
+  `evidence-to-report-writer`): the other three stayed `GOVERNED` and that one failed with
+  `missing: A`, exit 1 — so it localises the loss rather than failing globally. All controls lived in
+  the session scratchpad outside both repositories and were removed afterwards.
+- **Unchanged project regressions.** Per dispatch against its live command:
+  `check-judgment-gate.sh` → `GATED` and `check-judgment-propagation.sh` → `PROPAGATED` for
+  `section-directive-drafter`, `cluster-synthesis-drafter`, `research-structure-creator` and
+  `evidence-to-report-writer`. Suites: `check-judgment-gate.test.sh` **16/16 passed, 0 failed**;
+  `check-judgment-propagation.test.sh` **16/16 passed, 0 failed** — the accepted totals, no
+  regression. Neither checker was modified.
+- **Commits.** Consumer `49b5d8b0972d3d30a31d1836a31097afb3035009` on
+  `trial/l1-repeat-precision-components`, working tree clean after commit. Integration handback: this
+  state file only, by explicit pathspec, with `logs/innovation-registry.md` left modified and
+  uncommitted. Nothing pushed, nothing merged.
 
-**Deferral noticed during the unit, not implemented.** The consumer's two pre-existing judgment
-artifacts (`custom-dev-data-ai`, `precision-components`) are legacy `section:`-keyed briefs, and
-`check-judgment-contract.sh`'s legacy branch treats `status: rejected` as an illegal status (exit 6),
-not as a clean terminal rejection. The rejection route installed here is nevertheless coherent for the
-L4 bound case, because the installed `reference/unit-judgment-brief.template.md` emits `unit:`, so any
-newly produced proposal runs under the canonical branch where rejection maps to exit 4 and the
-promoter to exit 13. Rejecting a legacy-keyed brief would read as malformed rather than as rejected.
-This is out of Unit 10's allowlist (it would change a helper or a fixture) and is recorded rather than
-done.
+Candidate deferrals noticed during this unit, recorded and not implemented:
 
-**Still-live facts carried forward.** Units 1–10 are accepted or delivered; the remaining L4 work is
-the provisional-verdict/change-condition/authority-conflict merge, compliance-QC fidelity, Stage 5
-consumption, L3 installation, the full regression matrix, the genuine founder case, downstream prose
-and content QC, the burden comparison and the L4 verdict. The current integrated L2 five-suite total
-is **125/125**; the **145/145** figure in the L2 closing record is historical L1 evidence, not this
-integration baseline. L2, L3 and L1 remain accepted and were not reopened.
+1. `research-structure-creator` is also dispatched from `.claude/commands/produce-architecture.md`,
+   which is not on this unit's allowlist and therefore carries none of the three semantics. Whether
+   that command is a protected downstream consumer at all is a scoping question Unit 9's four-dispatch
+   map did not settle, so it is surfaced rather than merged.
+2. The propagation checker still enforces only the pre-existing role contract, so the three new
+   semantics have no project-owned regression. Unit 9 already named the extension as the smallest
+   later evidence shape; Codex framing decision 3 held it out of this hop.
+
+Carried forward unchanged from Unit 10: the legacy `section:` rejection mismatch remains a recorded
+deferral and was not touched.
 
 ## Blocker
 
@@ -272,9 +309,10 @@ None.
 
 ## Next action
 
-Codex: assess Unit 10. Judge whether the one-file rejection branch is a real, durable and terminal
-founder outcome rather than a keyword mention, whether the structural check's three failing controls
-are adequate evidence for a prose-and-instruction change, and whether revision, disposition, approval
-and the Step 3c gate are genuinely preserved. Then decide the recorded deferral (rejection on a
-legacy `section:`-keyed brief reads as malformed, not rejected) and open the next unit — the
-provisional-verdict / change-condition / authority-conflict merge, or a different priority.
+Codex: assess Unit 11. The three-file downstream-authority merge is installed and committed at
+`49b5d8b0972d3d30a31d1836a31097afb3035009`; all four protected dispatches are governed by the verdict
+rule, the `unresolved` behaviour, the change conditions and the authority-conflict halt, with the
+structural check failing the before-state, a keyword-only control and a one-semantic mutant, and both
+focused suites green at 16/16. Decide whether that satisfies the unit, and rule on the two candidate
+deferrals — the unallowlisted `produce-architecture.md` dispatch of `research-structure-creator`, and
+the still-deferred propagation-checker extension.
