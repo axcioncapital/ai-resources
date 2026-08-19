@@ -198,7 +198,8 @@ Evidence:
   `workflows/`, no L2 surface touched. The operator's unrelated modifications to
   `logs/friction-log.md` and `logs/innovation-registry.md` remain uncommitted.
 - Implementation commit for the unit: `550f47e89c1b2b3f9d0a82efd3d87a5ff5d650e1`. Correction commit:
-  recorded in the follow-on commit below, since a commit cannot carry its own hash.
+  `137e4f62701e06569919365a5291c141d8e6da93`, recorded here in the follow-on commit, since a
+  commit cannot carry its own hash.
 
 One boundary worth naming inside finding 2: the adapter now refuses an approved brief whose thesis
 heading carries no readable number, which L2's validator would accept. That is a deliberate
