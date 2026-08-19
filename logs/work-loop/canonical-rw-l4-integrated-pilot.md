@@ -32,7 +32,7 @@ pre-approves the L4 case's judgment content, and the later operating unit must s
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 7 — settle the promotion compatibility contract.
+Standard. Implementation mode. Unit 8 — install compatible canonical promotion.
 
 Named reason for the loop: the task spans a manual cross-repository integration, a genuine operating
 case and an operator-owned founder gate; its scope must stay bounded, and the result must be assessed
@@ -40,16 +40,15 @@ independently of the executor before it counts as the plan's terminal proof.
 
 ## Brief
 
-Units 4–6 established canonical validation, proposal authoring and matching reference guidance, but
-the transition from reviewed proposal to approved authority still uses the historical project helper.
-This unit resolves how canonical L2 promotion can be installed without regressing the accepted L1
-challenge, producer and historical-artifact behavior.
+Unit 7 settled the promotion compatibility contract and proved that three behavioral additions can
+install canonical L2 promotion in the consumer without weakening its stricter accepted challenge gate
+or changing legacy `section:` outcomes. This unit implements only that one-file merge.
 
 **Plan justification and current position:** the approved material plan at `8bf9d0d9` requires L4 to
-install and reconcile the accepted L2 House View capability by hand in one consumer before the genuine
-case can create approved authority. Units 1–6 are accepted; the consumer is reported clean at
-`71cd3b5bad623354d4521cd5757d598e10436089`. Promotion remains a named integration gap, not an accepted
-part of proposal authoring.
+install and reconcile accepted L2 by hand in the one consumer before a genuine case can create approved
+House View authority. Units 1–7 are accepted; the consumer is reported clean at
+`71cd3b5bad623354d4521cd5757d598e10436089`, with validation, proposal authoring and reference guidance
+already installed. Promotion is the next nearest unmet L2 seam.
 
 **Governing sources and dispositions:**
 
@@ -57,343 +56,254 @@ part of proposal authoring.
   `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`, material
   content bound to `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`, governs L4's manual one-consumer reconciliation,
   preservation rule, founder gate, proof requirements and exclusions.
-- Accepted L2 commit `e16cf206` governs the canonical authority contract and accepted versions of
-  `workflows/research-workflow/logs/scripts/promote-judgment-brief.sh` and its `.test.sh` suite. Their
-  promotion semantics may not be weakened to preserve legacy behavior.
-- Accepted L1 consumer behavior governs the project helper, its P-series assertions inside
-  `logs/scripts/check-judgment-producer.test.sh`, its challenge coupling in
-  `check-judgment-challenge.test.sh`, and existing `analysis/judgment/**` artifacts. They may not be
-  silently overwritten or reinterpreted.
-- Unit 3's accepted discovery at state commit `01284dc4` established that the canonical promotion
-  suite runs in the consumer but scored **13 passed, 7 failed** against the project helper; it also
-  established that promotion has its own preservation question and must not ride with validator work.
-- Accepted Unit 6 state commit `5779e2537b6451ba0183c866ad91d43b1544e764` and consumer commit
-  `71cd3b5bad623354d4521cd5757d598e10436089` govern current position. Repository bytes and the live
-  13/20 result remain verify-first claims.
+- Accepted L2 commit `e16cf206` governs the canonical promotion semantics and authority contract.
+- Accepted L1 consumer behavior governs the project helper's existing challenge coupling, check order,
+  `section:` outcomes, producer suite and challenge suite.
+- Accepted Unit 7 state commit `94e35ef1c543d8418d8abf8e00d9915b6c969e4a` settles the three-addition compatibility contract,
+  the `unit:`-only REJECTED-PROPOSAL gate, the one-file boundary and the focused evidence set. Its
+  scratch candidate is settled implementation evidence, not repository state; current bytes remain a
+  verify-first claim.
 
-**Codex framing decision:** promotion compatibility is a load-bearing technical unknown, so this is a
-discovery unit. It may build and test a scratch-only candidate, but it may not edit the consumer or
-declare a merge settled without showing both canonical acceptance and L1 preservation.
+**Codex compatibility rulings:**
 
-**Dominant deliverable:** one evidence-backed promotion compatibility contract and recommended bounded
-consumer merge that enforces accepted canonical L2 for `unit:` briefs while preserving accepted L1
-promotion and challenge behavior for `section:` briefs.
+1. Adopt the Unit 7 candidate. A `unit:` proposal at `status: rejected` returns exit 13; the accepted
+   legacy `section:` case remains exit 7. Conditional-approval refusal and canonical-banner support
+   apply to both identities because they remove an unsafe approval path and add no new authority.
+2. Preserve the project's stricter challenge contract. Canonical `P9`, `P10` and `S1` remain red only
+   when the unchanged canonical suite supplies its weaker challenge-record shape; Unit 7 proved the
+   same candidate and canonical helper both score 23/0 when the fixture satisfies the consumer's
+   accepted challenge contract.
+3. Material reclassification from Unit 2: canonical
+   `promote-judgment-brief.test.sh` is canonical regression evidence and a cross-consumer diagnostic,
+   not a deployable consumer test. Do not copy it into the consumer. Its native canonical run must be
+   green later; its override run against the consumer is expected to be 15/3 with exactly the three
+   fixture-shape failures named above. This new evidence supersedes the earlier ADD disposition without
+   reopening L2.
 
-**Evidence required in this hop:** a current caller/behavior map; reproduction and semantic explanation
-of the canonical suite's 13/20 result; a canonical-versus-project promotion table; and one scratch-only
-candidate or falsification measured against the unchanged canonical promotion suite and the directly
-binding unchanged project producer and challenge suites.
+**Dominant deliverable:** a committed one-file promotion helper that enforces canonical promotion for
+`unit:` briefs while preserving accepted L1 promotion and challenge behavior for `section:` briefs.
 
-**Evidence explicitly deferred:** every consumer implementation edit and commit; downstream command
-wiring and seam/consumption proof; judgment-seam subject-checker adoption; Stage 5 configuration and
-operation; L3 installation; the complete post-install regression matrix; representative
-Light/Standard/Deep uses; the genuine case and founder decision; downstream prose/QC; burden comparison;
-and final L4 verdict.
+**Evidence required in this hop:** exact one-file diff; syntax check; the three changed behaviors on
+the live helper; one successful canonical `unit:` round trip through a project-valid challenge;
+the unchanged canonical diagnostic result with only its three known fixture failures; the two directly
+binding project suite totals; preservation evidence; and both local commits.
+
+**Evidence explicitly deferred:** challenge-record backport or relaxation; installation of any
+canonical promotion test in the consumer; downstream command wiring and seam/consumption proof;
+judgment-seam subject-checker adoption; Stage 5 configuration and operation; L3 installation; the
+complete post-install regression matrix; representative Light/Standard/Deep uses; the genuine case and
+founder decision; downstream prose/QC; burden comparison; and final L4 verdict.
+
+**Primary edit begins after:** cite, do not re-run, Unit 7's accepted targeted pre-edit evidence:
+the unchanged consumer helper produced canonical diagnostic **13 passed / 5 failed**; specifically
+conditional approval returned exit 11 instead of 4, a `unit:` rejected proposal returned 7 instead of
+13, and the canonical proposed banner was not swapped. The discovery already established the failing
+case and candidate, so no broad pre-edit baseline is authorized.
 
 **Check against the repositories:**
 
 1. Validate this task and both checkout bindings at repository depth. The integration checkout must
-   remain on `session/2026-08-19-rw-l4-integration` and contain `26ee26d4`; its pre-existing unrelated
-   `logs/innovation-registry.md` edit must be preserved unstaged and uncommitted. The consumer must
-   remain clean at exact `71cd3b5bad623354d4521cd5757d598e10436089` on
-   `trial/l1-repeat-precision-components`, with no conflicting owner. Stop on overlap or drift; do not
-   clean, switch, rebase or repair either checkout.
-2. Bind the canonical side to accepted L2 `e16cf206`: the authority contract, promotion helper and
-   promotion suite. Enumerate the canonical requirements whose accept/refuse behavior differs from
-   the project helper, including approval language, rejected proposals, challenge clearance,
-   approver identity, overwrite refusal, analytical byte preservation, validated output and the
-   command-path seam. Do not reopen their accepted design.
-3. Bind the consumer side to its current dual-contract validator, promotion and challenge helpers,
-   the P-series in `check-judgment-producer.test.sh`, `check-judgment-challenge.test.sh`, every executing
-   caller in `.claude/commands/` and `logs/scripts/`, and existing proposed/review/approved/rejected
-   artifacts. Search those exact surfaces for relied-on exit codes, verdict text, file-pairing rules,
-   challenge calls and identity-key handling; name every bounded absence.
-4. Reproduce the canonical promotion suite against the unchanged project helper using its supported
-   override. Confirm or falsify **13/20**, enumerate the seven failing assertions and explain which
-   semantic difference produces each failure; do not treat the aggregate alone as diagnosis.
-5. Produce a behavior table covering at minimum: unconditional approval; conditional approval;
-   revision and rejection replies; a `status: rejected` proposal; missing/placeholder approver;
-   invalid proposal; absent, stale and uncleared challenge; existing approved pair; successful
-   promotion; analytical drift; validation failure; canonical `unit:` identity; legacy `section:`
-   identity; and the full produce → challenge → revise/re-challenge → founder approval → promote seam.
-   For each row, state the governing expected verdict/exit and the unchanged test or contract that
-   establishes it.
-6. In a safe temporary directory outside both repositories, construct the smallest viable candidate
-   by technical judgment. Run the unchanged canonical `promote-judgment-brief.test.sh` against it via
-   the supported override, plus the unchanged consumer `check-judgment-producer.test.sh` and
-   `check-judgment-challenge.test.sh`; include `bash -n`. Record exact totals, exits and decisive output,
-   and show the suites can fail through their existing controls. Do not broaden to the full five-suite
-   project or canonical regression matrices.
-7. Return the recommended later implementation boundary: exact consumer file or files that must
-   change, files that must remain untouched, the targeted pre-edit failure, focused post-edit tests,
-   any identity-sensitive dispatch or compatibility path, and any atomic coupling with the validator,
-   challenge helper, template or command bodies. Do not implement it.
+   remain on `session/2026-08-19-rw-l4-integration` and contain `26ee26d4`; preserve its unrelated
+   `logs/innovation-registry.md` edit unstaged and uncommitted. The consumer must remain clean at exact
+   `71cd3b5bad623354d4521cd5757d598e10436089` on `trial/l1-repeat-precision-components`, with no
+   conflicting owner. Stop on overlap or drift; do not clean, switch, rebase or repair either checkout.
+2. Verify the consumer promotion helper and its validator/challenge dependencies match the bytes Unit 7
+   inspected. Verify accepted L2 `e16cf206` still contains the canonical conditional-approval,
+   rejected-proposal and banner semantics Unit 7 classified. Cite the accepted discovery evidence for
+   the candidate; do not reconstruct its full comparison before editing.
+3. Verify the three residual canonical diagnostic failures still arise from the canonical suite's
+   challenge fixture omitting the consumer-required `decisions_checked:` and `status: dispositioned`.
+   This is a source inspection claim, not permission to change either challenge contract.
 
-**Capability subset:** baseline only — read, search, inspect history, run focused local suites and
-scratch experiments, and update/commit this existing state file. No consumer or canonical capability
-edit is authorized. Nothing is selected from the empty pre-authorizable set; no network, remote
-service, push, PR, merge, deployment, credential access, destructive operation, branch/worktree
-creation, checkout switch, permission change or policy change is authorized.
+**Implementation boundary:**
 
-**Stop and hand back if:** either checkout binding changed; the unrelated integration edit overlaps
-the state handback; canonical and L1 promotion requirements are irreconcilable without reopening
-accepted work or accepting new residual authority risk; the canonical suite cannot be run against the
-consumer helper; the project preservation suites cannot exercise a scratch candidate; required
-evidence is unavailable; a viable result needs a permanent file outside this state record; or work
-would cross into consumer implementation, downstream wiring, Stage 5, L3, a second consumer, generic
-propagation or an operator-reserved capability. A falsified compatibility hypothesis is a valid result.
+- DELIBERATE MERGE only `logs/scripts/promote-judgment-brief.sh` in the consumer.
+- Add canonical frontmatter reading sufficient to distinguish `unit:` from legacy `section:` and
+  return REJECTED-PROPOSAL exit 13 before reply parsing only for a rejected `unit:` proposal.
+- Refuse conditional or revision-dependent approval language as NOT-AN-APPROVAL exit 4 for both
+  identities, without weakening the existing negation rules.
+- Recognize and replace both the historical project proposed banner and the installed canonical
+  proposed banner with the existing approved banner, while retaining the helper's current no-match
+  behavior.
+- Update only the helper's own explanatory header as necessary to describe these behaviors. Preserve
+  all other check order, challenge coupling, exit codes, paths and analytical byte-preservation logic.
+- Do not edit or add a test, validator, challenge helper, command body, template, reference or
+  `analysis/judgment/**` artifact. No other consumer path is allowlisted.
 
-**Completion condition:** change nothing outside this state file; return the verified behavior table,
-candidate evidence or falsification, and one bounded implementation recommendation, then commit only
-this state handback with `status: active`, `turn: codex`. Preserve the unrelated innovation-registry
-edit and stop before any consumer implementation.
+**Post-edit evidence:**
+
+1. Show `bash -n` succeeds and the complete consumer diff is exactly the one allowlisted helper with
+   only the three behavioral additions and truthful header updates.
+2. Run the unchanged canonical promotion suite from the integration checkout via its supported
+   override against the live consumer helper. Expected diagnostic: **15 passed / 3 failed**, with only
+   `P9`, `P10` and `S1` red for the already-settled challenge-fixture reason. Any other failure stops.
+   Do not label this diagnostic green.
+3. Run unchanged consumer `check-judgment-producer.test.sh` and
+   `check-judgment-challenge.test.sh`; expected **41/41** and **55/55**.
+4. In one safe temporary fixture derived from the installed canonical proposal shape, provide the
+   consumer-valid challenge/disposition record and exercise the live helper. Require PROMOTED exit 0,
+   approved-validator exit 0, the canonical banner replaced, the analytical tail hash identical, and
+   no overwrite. Use the same fixture to show a conditional approval exits 4 and a rejected `unit:`
+   proposal exits 13; a legacy `section:` rejected fixture must retain exit 7. Remove the fixture.
+5. Show `git diff --check` clean, every non-allowlisted preservation target unchanged, all existing
+   judgment artifacts untouched, and no downstream, Stage 5, L3 or propagation surface changed.
+6. Commit the consumer change locally using the repository convention. Then update and commit this
+   state file separately in the integration checkout by explicit pathspec, preserving the unrelated
+   innovation-registry edit. Record both full commit IDs and final statuses. Do not push or merge.
+
+**Capability subset:** baseline only — read, search, inspect history, run focused local tests, edit
+only the named consumer helper and this existing task state, use safe temporary fixtures, and make
+local commits in the two bound repositories. Nothing is selected from the empty pre-authorizable set;
+no network, remote service, push, PR, merge, deployment, credential access, destructive operation,
+branch/worktree creation, checkout switch, permission change or policy change is authorized.
+
+**Stop and hand back if:** either checkout binding changed; the unrelated integration edit overlaps;
+current dependencies differ materially from Unit 7; the helper needs changes beyond the one-file
+boundary; any project suite regresses; the canonical diagnostic has a failure beyond P9/P10/S1;
+the live canonical `unit:` round trip cannot promote and validate through the stricter challenge gate;
+legacy `section:` behavior changes outside the deliberate conditional-approval refusal; the consumer
+cannot be left clean after its local commit; or work would cross into challenge-contract changes,
+downstream wiring, Stage 5, L3, generic propagation or an operator-reserved capability. A false premise
+is a valid result; report it rather than improvising.
+
+**Completion condition:** install and locally commit the one-file compatible promoter, produce the
+focused evidence above, then commit only this state handback with `status: active`, `turn: codex`.
+Preserve the unrelated integration edit and stop before adjacent implementation.
 
 ## Latest result
 
-**Unit 7 resolved, not falsified — and it falsifies one figure it was asked to confirm.** The promotion
-compatibility contract is settled: canonical L2 promotion and accepted L1 promotion differ in exactly
-**three** helper behaviours, all three are closable in one consumer file, and a scratch candidate is
-**behaviourally identical to the canonical promotion helper across every assertion the canonical suite
-makes** — 23 passed / 0 failed for both — while leaving the accepted L1 producer and challenge suites
-untouched at 41/41 and 55/55. Nothing outside this state file changed: the consumer is clean at
-`71cd3b5bad623354d4521cd5757d598e10436089`, and the integration checkout still carries only the
-pre-existing unrelated `logs/innovation-registry.md` edit (unstaged, uncommitted, not reverted) plus
-this file. All candidate work ran in a scratch sandbox outside both repositories.
+**Unit 8 installed. Canonical promotion is live in the one bound consumer, and with it the canonical
+judgment lifecycle is complete end to end for `unit:` briefs — author, validate, challenge, promote —
+while every accepted L1 behaviour for `section:` briefs is unchanged.** One consumer file, three
+behavioural additions.
+
+- **Consumer implementation commit:** `f868581eac21ffdd37cd3c259671345860472b23`
+  (`trial: L4 install — compatible canonical promotion`), on `trial/l1-repeat-precision-components`,
+  parent `71cd3b5bad623354d4521cd5757d598e10436089`.
+- **Consumer status after the commit:** `git status --porcelain --untracked-files=all` returns
+  nothing — clean.
+- **State handback commit:** this commit, made separately in the integration checkout on
+  `session/2026-08-19-rw-l4-integration`. Neither repository was pushed or merged. The unrelated
+  `logs/innovation-registry.md` edit was preserved unstaged and uncommitted throughout;
+  `git diff --cached --name-only` was empty before every stage.
 
 Inspected (2026-08-19):
 
 - **Claim (1) bindings and the unrelated edit: HOLDS.** Integration on
-  `session/2026-08-19-rw-l4-integration`, HEAD `5779e2537b6451ba0183c866ad91d43b1544e764`,
-  `git merge-base --is-ancestor 26ee26d4 HEAD` exit 0; `git status --porcelain` shows exactly
-  ` M logs/innovation-registry.md` and ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md`, and
-  `git diff --cached --name-only` is **empty**, so nothing was staged at any point. The registry edit
-  does not overlap the state handback. Consumer on `trial/l1-repeat-precision-components` at exactly
-  `71cd3b5bad623354d4521cd5757d598e10436089`, `git status --porcelain --untracked-files=all` empty,
-  no `logs/work-loop/.owner`.
-- **Claim (2) canonical side bound to `e16cf206`: HOLDS.** `promote-judgment-brief.sh`, its `.test.sh`
-  and `docs/judgment-authority-contract.md` each `git hash-object`-identical to
-  `git rev-parse e16cf206:<path>`.
-- **Claim (3) consumer side bound: HOLDS.** `promote-judgment-brief.sh`, `check-judgment-challenge.sh`
-  + `.test.sh`, `check-judgment-producer.test.sh` and the dual-contract `check-judgment-contract.sh`
-  all blob-identical to consumer `HEAD`.
+  `session/2026-08-19-rw-l4-integration`, HEAD `94e35ef1c543d8418d8abf8e00d9915b6c969e4a`,
+  `git merge-base --is-ancestor 26ee26d4 HEAD` exit 0, working tree carrying exactly the registry
+  edit and this file, nothing staged. Consumer on `trial/l1-repeat-precision-components` at exactly
+  `71cd3b5bad623354d4521cd5757d598e10436089`, clean, no `logs/work-loop/.owner`.
+- **Claim (2a) the consumer helper and its dependencies match the bytes Unit 7 inspected: HOLDS.**
+  `promote-judgment-brief.sh`, `check-judgment-contract.sh`, `check-judgment-challenge.sh` and the two
+  binding suites all blob-identical to consumer `HEAD`; the helper additionally `cmp`-identical to the
+  untouched baseline copy Unit 7 measured against.
+- **Claim (2b) accepted L2 still carries the three semantics: HOLDS.**
+  `workflows/research-workflow/logs/scripts/promote-judgment-brief.sh` is `hash-object`-identical to
+  `e16cf206`, and that content shows `verdict REJECTED-PROPOSAL 13` at line 128, the conditional
+  refusal list including `once you` / `after you` at line 139, and the approved `BANNER=` at line 191.
+- **Claim (3) the three residual failures are a fixture-shape difference: HOLDS, by source
+  inspection.** `git show e16cf206:<canonical suite>` contains **0** occurrences of
+  `decisions_checked`, and its `clear_challenge()` record carries `status: findings-only`; the
+  consumer's `check-judgment-challenge.sh` names `decisions_checked` **3** times and requires
+  `dispositioned` once findings are disposed of. Neither challenge contract was changed.
 
-### Caller and behaviour map — promotion in the consumer
+### The before-state, cited not re-derived
 
-**Executing callers of `promote-judgment-brief.sh`:** `check-judgment-producer.test.sh` (P-series:
-P6, P11, P12, P15, and the R-series re-entry cases) and `.claude/commands/run-analysis.md` Step 3.4b,
-which invokes it on operator approval. **Bounded absences, searched and named:** `grep -n 'section\|unit:'`
-over the consumer's `promote-judgment-brief.sh` returns **no lines** — it parses no frontmatter at all
-— and over `check-judgment-challenge.sh` returns **one comment line** (`:36 #   section: custom-dev-data-ai`).
-Neither helper is identity-aware today. `check-judgment-gate.sh` and `check-judgment-propagation.sh`
-never invoke promotion.
+Per `Primary edit begins after:`, Unit 7's accepted pre-edit evidence stands and no broad baseline was
+re-run: the unchanged consumer helper scored **13 passed / 5 failed** against the canonical suite, with
+a conditional approval returning **11** where 4 is required, a `unit:` rejected proposal returning **7**
+where 13 is required, and the canonical proposed banner **not** swapped. All three flip below.
 
-**Exit-code vocabularies are already almost identical.** Both helpers document 3 NO-PROPOSAL,
-4 NOT-AN-APPROVAL, 5 NO-APPROVER, 6 ALREADY-APPROVED, 7 INVALID-PROPOSAL, 8 PROMOTION-INVALID,
-9 CONTENT-DRIFT, 11 CHALLENGE-UNCLEARED, 0 PROMOTED, 10 usage. Canonical adds exactly one code the
-project does not have: **13 REJECTED-PROPOSAL**.
+### What was installed
 
-### The 13/20 figure is falsified — and the reason matters
+One file, `logs/scripts/promote-judgment-brief.sh`, **71 insertions and 6 deletions**, no mode change.
+The brief left the concrete edit to Claude; these are the choices inside that boundary:
 
-| Run | Composition | Result |
+- **The frontmatter reader is the validator's, verbatim**, bounded to the first `---` block, so a body
+  line cannot decide which contract governs — the same property the Unit 4 validator relies on.
+- **`REJECTED-PROPOSAL` sits before the reply checks**, matching canonical's placement, so a rejection
+  answers identically whatever reply arrives. It is the **only** gated addition.
+- **The conditional refusal is appended after the existing negation rule, not merged into it.** The
+  two existing rules are untouched, so nothing that was refused before is now refused for a different
+  reason, and the new refusal carries its own message.
+- **The banner block selects between two literal banners** and then runs the existing swap unchanged,
+  so the no-match path — leave the body alone rather than pattern-match at it — still behaves as
+  before.
+- **The header was rewritten to be truthful rather than minimally patched**: it now documents two
+  contracts, four refusals rather than three, the new verdict, and — the part worth stating in the
+  file itself — *why* exactly one of the three additions is identity-gated.
+
+### Post-edit evidence
+
+| # | Check | Result |
 |---|---|---|
-| **B** | canonical suite + canonical helper, in the canonical repo (reference) | **24 passed, 0 failed** |
-| **C0** | canonical suite + **unchanged consumer helper**, current consumer | **13 passed, 5 failed** (18 assertions) |
-| **C1** | canonical suite + candidate | **15 passed, 3 failed** |
-| **A3** | L1-shaped-fixture suite + canonical helper (control) | **23 passed, 0 failed** |
-| **D3** | L1-shaped-fixture suite + **candidate** | **23 passed, 0 failed** |
-| — | canonical suite + rubber-stamp promoter (falsifiability) | **2 passed, 16 failed** |
+| 1 | `bash -n`; complete diff | clean; **1 file, 71 insertions, 6 deletions**; no mode change |
+| 2 | unchanged canonical suite via `PROMOTE_OVERRIDE` | **15 passed, 3 failed** — `P9`, `P10`, `S1` only |
+| 3 | `check-judgment-producer.test.sh` | **41 passed, 0 failed** |
+| 3 | `check-judgment-challenge.test.sh` | **55 passed, 0 failed** |
+| 4 | live round trip, proposal from the installed template's own fence | challenge `CLEARED`; `PROMOTED` **exit 0**; approved brief `VALID` **exit 0** |
+| 4 | canonical banner replaced | `**APPROVED — DOWNSTREAM AUTHORITY.**` present, no `**PROPOSED` line remains |
+| 4 | analytical tail hash, `## Theses` down | `e1388eb219f65e61537f479a4a13bad0b4db7eaa8379aa7f54b49cc8cd46d4f8` **identical before and after** |
+| 4 | second promotion attempt | **exit 6**, no overwrite |
+| 4 | conditional approval, same fixture | **exit 4**, `NOT-AN-APPROVAL` naming the conditional |
+| 4 | rejected `unit:` proposal | **exit 13**, `REJECTED-PROPOSAL` naming the rejecter |
+| 4 | rejected `section:` proposal | **exit 7**, `INVALID-PROPOSAL`, accepted reason text retained |
+| 5 | `git diff --check`; confinement; preservation | clean; one path; twenty targets byte-unchanged |
 
-Unit 3 recorded **13 passed / 7 failed**. Re-measured today it is **13 passed / 5 failed**, and the
-assertion count itself moved from 20 to 18. Both changes have the same cause: Unit 3 measured against
-the **pre-Unit-4 validator**, and Unit 4's dual-contract validator closed the two `P11` drift
-assertions by itself. The aggregate "13" is a coincidence — the *composition* changed underneath it.
-This is why the brief's instruction not to diagnose from the aggregate was the right call: had the
-number alone been trusted, two already-fixed failures would have been re-scoped into this unit.
+**Row 2 is a diagnostic and is deliberately not called green.** The three red assertions are exactly
+the ones Unit 7 settled: the canonical suite supplies a challenge record this project's stricter
+accepted contract refuses, so `P9` cannot promote and `P10` and `S1` cascade from it. No other
+assertion failed, which is the condition the brief set for continuing.
 
-Totals in the table are not directly comparable to each other, because the suite's assertion count is
-**dynamic** — a successful promotion unlocks the P9b–P9f sub-assertions and the S-series, so a helper
-that promotes is scored against more assertions than one that refuses. B (24) versus A3/D3 (23) is
-that effect plus `P14`, the suite's own falsifiability control, which it skips under `PROMOTE_OVERRIDE`
-exactly as the contract suite skips `V19`. The rubber-stamp row is what establishes the suite can fail.
+**The `section:` rejection row is the one that would have caught an ungated change.** It still returns
+exit 7 with the accepted reason `frontmatter 'status:' is 'rejected' — the only legal values are
+'proposed' and 'approved'`, so the identity gate is doing real work rather than being decorative.
 
-### Canonical versus project promotion — behaviour table
+### Scope and preservation
 
-`CANON` = accepted L2 `e16cf206`; `PROJ` = the consumer's current helper; `CAND` = the scratch
-candidate. Every row's governing expectation is named.
+`git status --porcelain --untracked-files=all` in the consumer before the commit returned exactly one
+line, ` M logs/scripts/promote-judgment-brief.sh`. Searched the change set for `research-route`,
+`stage-5`, `tests/judgment-seam`, `.claude/commands`, `reference/`, `analysis/` and `docs/`: **zero
+paths each**. Twenty preservation targets compared blob-for-blob against consumer `HEAD` and all
+unchanged, including both challenge helpers and all five `check-judgment-*` suites, the Unit 4
+validator, both templates, both reconciled reference files, the authority contract and `CLAUDE.md`.
+`git diff --name-only HEAD -- analysis/` is empty and the approved specimen still hashes
+`fbca709c1f9e682013a593cfaee70f7fce1a875a6730d4afadaa2c33795af38d`.
 
-| # | Case | CANON | PROJ | CAND | Established by |
-|---|---|---|---|---|---|
-| 1 | unconditional approval, cleared challenge | 0 | 0 | 0 | canonical P9 / project P6 |
-| 2 | empty reply (silence) | 4 | 4 | 4 | canonical P2 / project P2 |
-| 3 | `"not approved"` | 4 | 4 | 4 | canonical P3 / project P2c |
-| 4 | **conditional — "Approved once you fix Thesis 2"** | **4** | **falls through → 11** | **4** | canonical P4 — **divergence 1** |
-| 5 | revision request | 4 | 4 | 4 | canonical P4b / project P2b |
-| 6 | **`status: rejected` proposal** | **13** | **7** | **13 on `unit:` / 7 on `section:`** | canonical P6 vs project P15/P16 — **divergence 2** |
-| 7 | missing approver | 5 | 5 | 5 | canonical P5 / project P3 |
-| 8 | placeholder approver | 5 | 5 | 5 | canonical P5b/P5c / project P3b |
-| 9 | structurally invalid proposal | 7 | 7 | 7 | canonical P8 / project P12 |
-| 10 | absent challenge | 11 | 11 | 11 | canonical P7 / project fixture setup |
-| 11 | stale challenge (proposal revised after review) | 11 | 11 | 11 | canonical P7b / project challenge suite |
-| 12 | uncleared / laundered finding | 11 | 11 | 11 | canonical P7c / project challenge suite |
-| 13 | existing approved pair | 6 | 6 | 6 | canonical P10 / project P11 |
-| 14 | analytical drift during re-issue | 9 | 9 | 9 | canonical P11 / project P7 |
-| 15 | promoted brief fails validation | 8 | 8 | 8 | both helpers' post-check |
-| 16 | **banner swap on a canonical-template brief** | swapped | **not swapped** | swapped | canonical P9e — **divergence 3** |
-| 17 | banner swap on a project-template brief | n/a | swapped | swapped | project P9 |
-| 18 | full seam: produce → challenge → revise → re-challenge → approve → promote | 0 | fails at the challenge | 0 | canonical S1 |
-| 19 | round-1 archive preserved across a revision | preserved | preserved | preserved | canonical S2 |
+**Codex ruling 3 observed:** `ls logs/scripts/ | grep -i promote` returns only
+`promote-judgment-brief.sh` — no canonical promotion test was copied into the consumer. The temporary
+fixture was removed after use; both repositories are clean of it.
 
-**Only rows 4, 6 and 16 are real divergences.** Everything else already agrees.
+### What this completes, and what it does not
 
-### The three divergences, and why rows 9/13/18 looked like a fourth
+The canonical judgment lifecycle for `unit:` briefs is now installed end to end in the consumer:
+authoring shape (Unit 5), validation including the three separations (Unit 4), independent challenge
+(pre-existing and stricter than canonical), and promotion with its rejection, conditional and banner
+semantics (this unit). The live round trip above exercises all four in sequence.
 
-- **Divergence 1 — conditional approvals.** Canonical refuses any reply matching a conditional or
-  revision phrase (`once you`, `after you`, `revise`, `changes required`, …). The project's helper
-  checks only for the token `approved` plus an explicit negation, so *"Approved once you fix Thesis 2"*
-  passes its approval gate and is stopped later, by the challenge, for the wrong reason.
-- **Divergence 2 — a rejected proposal.** Canonical answers 13 REJECTED-PROPOSAL **before** reading
-  the reply, so a rejection answers the same way whatever is waved at it. The project has no rejected
-  status: its shape check refuses the brief at 7 INVALID-PROPOSAL, and `check-judgment-producer.test.sh`
-  P15/P16 pin exactly that, including the verdict word `INVALID-PROPOSAL`.
-- **Divergence 3 — the banner.** The project swaps one literal banner,
-  `**PROPOSED — FOR EDITORIAL / OPERATOR REVIEW.**`. The canonical template's proposed banner is
-  `**PROPOSED — FOR INDEPENDENT CHALLENGE AND OPERATOR DECISION.**`, so a canonical brief keeps a
-  PROPOSED banner after promotion. Canonical P9e asserts a line beginning `**APPROVED`.
+**It does not complete L2 in the consumer.** Downstream consumption — whether the eight command bodies
+actually let approved judgment govern synthesis, architecture and prose — is untouched and remains the
+largest open unknown. Nothing above depends on it, and nothing above proves it.
 
-**Rows 9, 13 and 18 (`P9`, `P10`, `S1`) are not promotion divergences at all — and this is the finding
-that changes the recommendation.** They fail because the canonical suite's own challenge fixtures are
-*less strict than this project's accepted L1 challenge contract*. Proved directly rather than inferred:
-the canonical `clear_challenge()` record run against the consumer's challenge helper returns
-`MALFORMED-CHALLENGE / frontmatter has no 'decisions_checked:'`, **exit 5**; adding
-`decisions_checked: none` moves it to `UNRESOLVED-FINDING`, **exit 6**, because the project also
-requires `status: dispositioned` once findings are disposed of. Canonical's helper requires neither —
-`grep -c 'decisions_checked'` over it returns **0**. The consumer's challenge helper is 427 lines
-against canonical's 305: **the project is the superset here**, exactly as Unit 2 found for
-`stage-instructions.md`. `P10` and `S1` then cascade, since both depend on a promotion that never
-happens.
+### Limitations and deferrals carried forward, none implemented
 
-Consequence: **those three assertions cannot be made to pass against the unchanged canonical suite
-without weakening the accepted L1 challenge contract**, which `## Objective and scope` forbids. They
-are a property of the fixture, not a gap in the consumer.
+The accepted limitation stands unchanged: legacy `section:` briefs keep the weaker L1 validation path
+and cannot establish L3 authority. Carried forward untouched: the canonical-versus-project challenge
+record shapes (`decisions_checked:` and the `dispositioned` status), recorded in Unit 7 as a
+canonical-backport candidate pointing away from L4; the pre-Tracer-3 consumer ownership-helper drift;
+the `Section IDs` versus on-disk slug mismatch, still required before Stage 5 operation; the canonical
+wiring backport; consumer-portable seam harnesses; placement of the S5/S6 consumption assertions; the
+legacy countercase-pattern difference; downstream command wiring; Stage 5; L3; and the genuine case
+with founder decision, downstream QC and burden proof. Nothing newly noticed in this hop.
 
-### The candidate, and the equivalence proof
-
-**Design: the consumer's promotion helper plus exactly three additions**, keeping its challenge
-coupling, its check order and every other behaviour untouched.
-
-1. A minimal `fm_value` frontmatter reader (the validator's, verbatim) and `P_UNIT="$(fm_value unit)"`.
-2. **REJECTED-PROPOSAL exit 13, gated on the canonical identity key**, checked before the approval
-   reply. Gated for the same reason the validator's lifecycle is: the project's accepted contract pins
-   a `section:`-keyed rejection at 7, and applying 13 to both would overturn it, while applying it to
-   neither would not install the canonical contract.
-3. **Conditional-approval refusal, applied to BOTH contracts, deliberately ungated** — it removes a
-   way to promote rather than adding one, and no accepted L1 behaviour depends on a conditional reply
-   creating authority. Verified: a conditional reply returns exit 4 on both a `unit:` and a `section:`
-   brief.
-4. **A second recognised proposed banner.** Whichever of the two templates' banners is present is
-   swapped for the same approved banner; a brief carrying neither is left alone, as before.
-
-Measured, with `bash -n` clean:
-
-| Suite (unchanged unless stated) | Result |
-|---|---|
-| canonical `promote-judgment-brief.test.sh` via `PROMOTE_OVERRIDE` | **15 passed, 3 failed** — the three fixture-shape rows only |
-| same suite with challenge fixtures shaped to the project's L1 contract, **candidate** | **23 passed, 0 failed** |
-| same suite, same fixtures, **canonical helper** (control) | **23 passed, 0 failed** — identical |
-| project `check-judgment-producer.test.sh` | **41 passed, 0 failed** |
-| project `check-judgment-challenge.test.sh` | **55 passed, 0 failed** |
-| falsifiability: either suite vs a rubber-stamp promoter | **2 passed, 16 failed** |
-
-**The control is the load-bearing row.** Scoring 23/0 alone would prove little; scoring *the same
-23/0 as the canonical helper itself, on the same fixtures, in the same sandbox* is what establishes
-behavioural equivalence rather than a fixture tuned until it passed.
-
-Two measurement artifacts were found and eliminated rather than reported as results. A first
-diagnostic run showed `P11` failing twice; the cause was that `P11` builds its sabotage copy from
-`"$HERE/promote-judgment-brief.sh"` **by name**, and the sandbox held the canonical helper under a
-different filename — a composition error in my harness, not a candidate defect. Renaming it in the
-sandbox removed both failures for the candidate *and* for the canonical control. Separately, one `C0`
-line was measured before its input file existed and read 2/16; the valid re-run in the same block reads
-13/5, and only that figure is reported above.
-
-### Reconstructing the candidate
-
-Deterministic from files already in both repositories; nothing needs to survive this unit.
-
-1. Start from the consumer's current `logs/scripts/promote-judgment-brief.sh` at `71cd3b5b`. Its check
-   order — NO-PROPOSAL, ALREADY-APPROVED, NOT-AN-APPROVAL, NO-APPROVER, INVALID-PROPOSAL,
-   CHALLENGE-UNCLEARED, banner, CONTENT-DRIFT, PROMOTION-INVALID — is preserved exactly.
-2. Insert the validator's `fm_value` reader (bounded to the first `---` block) reading `$PROPOSED`,
-   and `P_UNIT="$(fm_value unit)"`, immediately before the NOT-AN-APPROVAL section.
-3. Directly after it, before any reply check:
-   `if [ -n "$P_UNIT" ] && [ "$(fm_value status)" = "rejected" ]; then verdict REJECTED-PROPOSAL 13 …`.
-4. After the existing negated-token refusal, add a conditional refusal on
-   `(once you|after you|provided you|provided that|as soon as|revise|revision|changes required|subject to)`,
-   word-bounded and case-insensitive, returning NOT-AN-APPROVAL 4. Ungated.
-5. In the banner block, add `CANON_PROPOSED_BANNER='**PROPOSED — FOR INDEPENDENT CHALLENGE AND OPERATOR DECISION.**'`
-   and select it when the project banner is absent and the canonical one present; the existing literal
-   swap then runs unchanged.
-6. Update the header comment to document exit 13 and the dual-banner rule.
-
-### Recommended later implementation boundary — do not implement here
-
-**Exactly one consumer file changes:** `logs/scripts/promote-judgment-brief.sh`.
-
-**Files that must remain untouched, with the reason measured rather than assumed:**
-`check-judgment-challenge.sh` and its `.test.sh` — the project is the **superset** here and the three
-residual canonical assertions are fixture-shape, not capability; `check-judgment-producer.test.sh` —
-stays 41/41 under the candidate, and its P15/P16 are exactly what the identity gate protects;
-`check-judgment-contract.sh` — the Unit 4 validator is unchanged and does the identity work already;
-every command body, template, reference and `analysis/judgment/**` artifact.
-
-**Targeted pre-edit failure:** the canonical suite against the unchanged consumer helper —
-**13 passed, 5 failed**, with `P4` returning 11 where 4 is required and `P6` returning 7 where 13 is
-required. Both are fail-capable and both flip under the candidate.
-
-**Focused post-edit tests:** `bash -n`; the canonical suite via `PROMOTE_OVERRIDE` expecting
-**15/3** with the three residual rows named and explained; project producer **41/41**; project
-challenge **55/55**. The 23/0 equivalence run uses a patched fixture and is diagnostic evidence for
-this decision — it is **not** a post-edit gate, because it depends on a suite copy that will not exist
-in the consumer.
-
-**Identity-sensitive dispatch:** one gate only, on `unit:`, and only for REJECTED-PROPOSAL. The
-conditional refusal and the banner rule apply to both contracts.
-
-**Atomic coupling: none.** The candidate reads the validator's output through exit codes it already
-returns, needs no template change, and touches no command body. It can land alone, in any order
-relative to the remaining L2 work.
-
-### Residual risk, stated rather than resolved
-
-After this merge the consumer's promotion helper would enforce canonical semantics for `unit:` briefs
-and accepted L1 semantics for `section:` briefs — the same split the validator already carries, and no
-wider. The three canonical assertions that remain unmet (`P9`, `P10`, `S1`) do **not** represent
-unenforced promotion behaviour: each is met by the candidate whenever the challenge record satisfies
-this project's own stricter contract. The honest statement is that **canonical and project challenge
-record shapes differ**, and reconciling them is a separate decision — it would mean either relaxing an
-accepted L1 requirement or asking canonical to adopt `decisions_checked:`, which is a backport and
-points away from L4.
-
-Result: the promotion compatibility contract is settled, three divergences are identified and closable
-in one file, and equivalence with the canonical helper is proven against a control. Nothing was
-installed.
-Evidence: the 13/5 re-measurement that falsifies 13/20 and the assertion-count shift that explains it;
-the exit-5 and exit-6 challenge-record probes that locate rows 9/13/18 in the fixture rather than the
-helper; the 427-versus-305 line counts and the zero `decisions_checked` hits establishing which side is
-stricter; the paired 23/0 candidate-and-control runs; 41/41 and 55/55 preservation; and the 2/16
-rubber-stamp control proving the suite could have failed. The producer suite at 41/41 and the identical
-control row are the two that would have caught a candidate that only looked equivalent.
-
-### Deferrals and limitations carried forward, none implemented
-
-Unchanged: the legacy `section:` validation path is the weaker bar and cannot establish L3 authority;
-the pre-Tracer-3 consumer ownership-helper drift; the `Section IDs` versus on-disk slug mismatch,
-still required before Stage 5 operation; the canonical wiring backport; consumer-portable seam
-harnesses; placement of the S5/S6 consumption assertions; the legacy countercase-pattern difference;
-downstream command wiring; Stage 5; L3; and the genuine case with founder decision, downstream QC and
-burden proof. One new candidate deferral, recorded and not implemented: **canonical's challenge record
-omits `decisions_checked:` and accepts `status: findings-only` on a clean ledger, where this project
-requires both** — a canonical-backport candidate, the opposite direction from L4 and outside scope.
+Result: canonical promotion is installed and committed in the one bound consumer, the canonical
+lifecycle is complete for `unit:` briefs, accepted L1 is intact, and the consumer is clean. Nothing
+adjacent was started.
+Evidence: the 15/3 diagnostic with only the three settled rows red, 41/41 and 55/55 on the two binding
+suites, the four-step live round trip with an identical analytical tail hash and an exit-6 no-overwrite
+control, and the three behaviour probes — exit 4, exit 13, and exit 7 on the legacy identity. The
+`section:` exit-7 probe and the tail hash are the two that would have caught an over-broad edit.
 
 ## Blocker
 
@@ -401,21 +311,20 @@ None.
 
 ## Next action
 
-Codex: assess Unit 7 and open the next unit. Two decisions and a sizing:
+Codex: assess Unit 8 and open the next unit. The judgment lifecycle is installed; what remains in L2 is
+configuration and consumption. Candidates, cheapest first:
 
-1. **Adopt or reject the three-addition promotion candidate.** If adopted, record explicitly that
-   canonical `P9`, `P10` and `S1` remain unmet against the unchanged canonical suite, that this is a
-   challenge-record fixture-shape difference in which the project is the stricter side, and that the
-   implementation unit's post-edit gate is therefore **15/3 plus 41/41 plus 55/55**, not 23/0.
-2. **Rule on the identity gate for REJECTED-PROPOSAL.** It is the one place the candidate makes
-   promotion contract-sensitive. The alternative — exit 13 for both contracts — is cleaner to describe
-   and breaks `check-judgment-producer.test.sh` P15/P16, so it would reopen accepted L1.
-3. **Size the implementation unit.** One file, three additions, reconstruction steps already written,
-   pre-edit failure already measured at 13/5. It is comparable to Unit 4 and its evidence is reachable.
+1. **`reference/stage-5-paths.md`**, instantiated to the exact report-mode values Unit 2 resolved.
+   Independent of everything installed so far, before-state already established (absent → Phase 0
+   HALT), four-assertion gate already specified.
+2. **The consumption-wiring question**, still the largest open unknown and still unsized: whether the
+   eight command bodies should satisfy `check-judgment-seam.sh` and `check-judgment-consumption.sh`,
+   given Unit 2 records the trial as the superset at those steps and Unit 3 found the checkers' own
+   harnesses are canonical-repo-bound. A discovery unit is the honest shape for it, as with promotion.
+3. **Whether the two judgment-seam *subject* checkers enter the consumer at all**, which Codex ruling 3
+   has now answered for the promotion suite and which likely resolves the same way.
 
-The remaining L2 surfaces are unchanged and still independent of each other:
-`reference/stage-5-paths.md` (cheapest, before-state already established), and whether the two
-judgment-seam *subject* checkers enter the consumer at all. The consumption-wiring question remains the
-largest open unknown in L4 and is still unsized.
+Worth noting for sequencing: item 2 is the only remaining item that could change what "L2 installed"
+means. Items 1 and 3 are bounded and additive.
 
-Do not read this hand-back as permission to implement; the consumer is unchanged.
+Do not read this hand-back as permission to continue; the next unit is Codex's to frame.
