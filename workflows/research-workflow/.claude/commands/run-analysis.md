@@ -154,9 +154,17 @@ Write checkpoint to `/analysis/checkpoints/{section}/{section}-step-3.5-judgment
 
 ### Step 4: Section Directives [delegate]
 
+Entry validation for this owner is Step 3.5e above, in this same command: Step 4 is not independently invokable, so a second gate here would add ceremony without closing anything. What Step 4 owes is consumption — the gate proves the authority exists, and only these two directives make it govern.
+
 1. Read `/ai-resources/skills/section-directive-drafter/SKILL.md`.
 2. For each cluster, launch a general-purpose sub-agent. Pass it: the skill content, the cluster's refined memo, and the scarcity register (`/execution/scarcity-register/{section}/{section}-scarcity-register.md`) as a required input. Task: execute the skill logic for this cluster. Each directive must reference any scarcity items for its cluster and specify the editorial instruction (HEDGE / SCOPE CAVEAT / PROXY FRAMING). Write to `/analysis/section-directives/{section}/{section}-cluster-NN-directive.md`. Return: output file path, scarcity items referenced, key editorial decisions.
    - Launch sub-agents in parallel for independent clusters.
+
+**Approved judgment (PATH — the sub-agent reads it itself):** `{base}-approved.md`, validated at Step 3.5e. Pass the path, never the prose: the approved brief is the file the founder signed off, and a copy relayed through this command body is a second version of it.
+
+**Required use of approved judgment:** the directive is shaped by the approved brief, not merely written after it. Each directive must carry the theses its cluster serves, must not instruct prose that contradicts the provisional verdict, must carry forward any countercase bearing on its cluster as a prose constraint, and must preserve the change conditions as the conditions under which its instruction stops holding. Open the directive with a `Governing theses:` line naming the thesis N ids it implements, and mark every consequential editorial instruction with the thesis it implements. A directive that names no thesis has not consumed the brief — checking the approved file exists and then drafting from the memo alone is the failure this instruction exists to prevent.
+
+**Authority conflict:** the approved brief governs downstream work; it does not replace the per-cluster permission tables, the scarcity register's editorial instructions, gate-clearance caveats or operator decisions. Where a thesis genuinely cannot be implemented within those controls — most often a thesis whose claim sits below the permission class its instruction would need — **halt and surface the conflict to the operator**, naming both authorities. Do not silently prefer either: the permission class still binds what may be said, and choosing between them is the operator's call.
 3. Write checkpoint to `/analysis/checkpoints/{section}/{section}-step-4-directives-checkpoint.md`. Include: directive file inventory (cluster → file path), scarcity items referenced per directive.
 4. ▸ /compact — skill content no longer needed; checkpoint carries forward.
 

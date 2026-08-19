@@ -47,6 +47,24 @@ Additionally: read the per-cluster permission tables from `/analysis/claim-permi
 
 ---
 
+### Step 0b: Pre-flight — Approved Judgment Check (FAIL-SAFE)
+
+`/run-analysis` gates itself on approved judgment at its Step 3.5e. That gate protects that command and nothing else. **This command is invoked directly, in a fresh session**, so without its own check it will draft chapters from memos and directives while the Unit Judgment Brief is missing, still proposed, or rejected — and every draft it produces will look complete.
+
+`{base}` = `/analysis/judgment/{section}/{section}-unit-judgment-brief`, the same base path `/run-analysis` Step 3.5 uses. The suffixes are fixed by `docs/judgment-authority-contract.md` § 1.
+
+```bash
+bash "$CLAUDE_PROJECT_DIR/logs/scripts/check-judgment-contract.sh" "{base}-approved.md"
+```
+
+Exit 0 → proceed. Any other exit → **halt**; this is fail-safe like Step 0, with no warn-and-proceed mode. Report the code: `3` no approved brief (run `/run-analysis {section}` and take the founder's decision at its Step 3.5d), `4` present but not approved — still proposed, or rejected — `5` approved with no evidence basis, `6` structural failure. Branch on the code, never on the prose, and never regenerate over a present-but-invalid authority.
+
+**Authority conflict:** the approved brief governs what this command's chapters may argue; it does not replace the per-cluster permission tables, the scarcity register, gate-clearance caveats or operator decisions. A NOT-SUPPORTED claim stays unstateable however central it is to a thesis. Where a thesis cannot be drafted within those controls, **halt and surface both authorities to the operator** rather than choosing between them.
+
+**If the helper itself cannot run**, the deployment is incomplete, not the judgment. A missing or unreadable `logs/scripts/check-judgment-contract.sh` exits nonzero like any other failure and halts this command — which is correct and fail-safe — but the remedy is `/sync-workflow` in this project, not a workaround here. Say so explicitly rather than reporting it as a missing brief: a project can hold this command through a symlink while its `logs/scripts/` copies have not been propagated yet.
+
+---
+
 ### Step 1: Load Inputs
 
 1. Read all refined cluster memos from `/analysis/cluster-memos/{section}/`.
@@ -60,7 +78,12 @@ Additionally: read the per-cluster permission tables from `/analysis/claim-permi
 1. Read `/ai-resources/skills/cluster-synthesis-drafter/SKILL.md`.
 2. For each cluster, launch a general-purpose sub-agent. Pass it: the skill content, the cluster's refined memo, the cluster's section directive, and any relevant scarcity register entries. Task: execute the skill logic. Write to `/analysis/chapters/{section}/{section}-cluster-NN-draft.md`. Return: output file path, chapter structure summary, evidence coverage notes.
    - Launch sub-agents in parallel for independent clusters. Run ▸ /compact between clusters if there are more than 3 clusters and running sequentially.
-3. Write checkpoint to `/analysis/checkpoints/{section}/{section}-step-3.7-synthesis-checkpoint.md`. Include: chapter draft file inventory (cluster → file path), completion status.
+
+**Approved judgment (PATH — the sub-agent reads it itself):** `{base}-approved.md`, validated at Step 0b. Pass the path to every cluster's synthesis sub-agent. Do not read it into the main session in order to relay it, and do not paste its theses into this command body.
+
+**Required use of approved judgment:** the chapter argues the approved theses; it does not merely avoid contradicting them. Each consequential claim in the draft implements a thesis, and the draft names which one — `Thesis N` — at the claim, using the same trace convention the claim IDs already follow. The provisional verdict sets the chapter's overall position; where it is `unresolved`, the chapter says what the uncertainty prevents rather than resolving it. Every countercase bearing on the cluster appears in the draft, at the strength the brief gave it, and is not quietly dropped because it complicates the argument. The change conditions carry into the Evidence Limitations back-matter alongside the gate-clearance caveats. A draft that cites the approved brief's existence but argues from the memo alone has not consumed it.
+
+3. Write checkpoint to `/analysis/checkpoints/{section}/{section}-step-3.7-synthesis-checkpoint.md`. Include: chapter draft file inventory (cluster → file path), completion status, and the thesis ids each draft implements.
 4. ▸ /compact — skill content and directive content no longer needed.
 
 ---

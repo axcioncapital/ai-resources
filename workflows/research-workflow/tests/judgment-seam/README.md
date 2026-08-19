@@ -1,19 +1,32 @@
-# Judgment seam — the command-path proof
+# Judgment seam — the command-path proofs
 
-> **When to read this:** before editing `/run-analysis` Step 3.5, and when checking whether the deep
-> route still produces, challenges and decides a Unit Judgment Brief before any report-bound writing.
+> **When to read this:** before editing `/run-analysis` Step 3.5 or any downstream owner's dispatch in
+> `/run-analysis` Step 4, `/run-synthesis` or `/run-report`, and when checking whether the deep route
+> still produces, challenges, decides and then actually *obeys* a Unit Judgment Brief.
+
+Two checks live here, and they prove different things:
+
+| Check | Question it answers |
+|---|---|
+| `check-judgment-seam.sh` | is approved judgment **created** properly — produced from separated inputs, independently challenged, decided by the founder? |
+| `check-judgment-consumption.sh` | does approved judgment then **govern** — do synthesis, report architecture, report prose, section directives and compliance QC validate it, receive it by path, and shape their output from it? |
+
+Passing the first and failing the second is the state the workflow was in after Unit 2: a correctly
+produced authority that nothing downstream was required to obey.
 
 `docs/judgment-authority-contract.md` says what the artifact is and how it is promoted. It
 deliberately does not say **which command produces it, which reviewer challenges it, or where the
 route halts for the founder** — that is wiring, and this directory is the proof that the wiring
 exists.
 
-## Running it
+## Running them
 
 ```bash
 cd workflows/research-workflow
-bash tests/judgment-seam/check-judgment-seam.sh          # the seam check — must be green
-bash tests/judgment-seam/check-judgment-seam.test.sh     # its own fail-capable proof
+bash tests/judgment-seam/check-judgment-seam.sh                 # creation — must be green
+bash tests/judgment-seam/check-judgment-seam.test.sh            # its fail-capable proof
+bash tests/judgment-seam/check-judgment-consumption.sh          # governance — must be green
+bash tests/judgment-seam/check-judgment-consumption.test.sh     # its fail-capable proof
 ```
 
 `check-judgment-seam.sh` exits `0` when every assertion holds, `1` when one or more fail, `2` on a
@@ -65,11 +78,51 @@ its evidence stripped, a challenge bound to bytes that have since changed, an un
 asserting the exact exit code each time. Two of them (`N2b`, `N5a`) are controls that must pass: a
 gate that refused everything would otherwise satisfy the refusals for free.
 
+## The consumption check — one invariant, five owners
+
+`check-judgment-consumption.sh` reads three command bodies and asks the same four things of each
+owner, in that owner's **own dispatch region** — a directive elsewhere in the file does not count:
+
+| Id | Owner | Entry point | Directly invokable? |
+|---|---|---|---|
+| `C1` | section directives | `/run-analysis` Step 4 | no — protected by Step 3.5e in the same command |
+| `C2a`/`C2b` | cluster synthesis | `/run-synthesis` Steps 0b, 2 | **yes**, fresh session |
+| `C3a`/`C3b` | report architecture | `/run-report` Steps 4.0b, 4.1 | **yes**, fresh session |
+| `C4` | chapter prose | `/run-report` Step 4.2a | yes, within `/run-report` |
+| `C5` | compliance QC | `/run-report` Step 4.2c | yes, within `/run-report` |
+| `C6` | all three commands | the authority-conflict rule | — |
+
+**VALIDATE** the entry runs the contract helper and halts on nonzero; **PASS** the brief reaches the
+sub-agent by path; **USE** the sub-agent must shape its output from the theses, verdict, countercases
+and change conditions; **TRACE** the output names the `Thesis N` each consequential claim or structural
+choice implements. `C5` adds two: the QC receives the brief **without** step (a)'s account of what the
+drafter did, and it checks drift beyond the approved view as well as evidence-permission overreach.
+
+`C6` is the limit on all of it. Approved judgment governs downstream work; it does not outrank the
+permission tables, scarcity instructions, gate-clearance caveats or operator decisions. A genuine
+conflict halts and surfaces both — silently preferring either one is a decision no owner here may make.
+
+### Why its proof is built the way it is
+
+The claim splits into two halves that are each satisfiable alone, so each is proved separately: `C2a`
+and `C3a` prove the entry **calls** the helper and halts on nonzero; the `A`-series proves the helper
+**returns** nonzero on missing, proposed, rejected and structurally invalid authority, with `A5` as the
+control that accepts a valid one. Proving only the first gives a command dutifully calling something
+that always says yes; proving only the second gives a correct helper nothing calls.
+
+`U1`–`U5` are the series that matters most. Each reduces one owner's use instruction to *"verify the
+approved brief exists at that path"* — the path handoff survives, so the owner still receives the
+brief and simply stops being told to do anything with it — and requires that owner's assertion to fail.
+An existence-only gate cannot pass this suite for free. `P1`–`P5` remove each path handoff, `G1`/`G2`
+each entry gate, `Q` the compliance QC's independence, and `X` the conflict rule; every one flips
+exactly its own assertion on a copy of the real command bodies.
+
 ## Scope
 
-This proves the seam that **creates** approved judgment. It does not check analytical quality, the
-content of any produced brief, or the downstream owners past the seam — section directives, synthesis,
-report architecture, chapter prose and their QC. Those bind to the approved brief in a later unit.
+Together these prove approved judgment is created properly and is required to govern. Neither checks
+**analytical quality**: whether the theses are any good, and whether a chapter's prose genuinely
+carries the thesis it cites, are judgments for a fresh-context reviewer and the representative
+semantic proof, not for a command-path check.
 
 ## Blast radius
 
