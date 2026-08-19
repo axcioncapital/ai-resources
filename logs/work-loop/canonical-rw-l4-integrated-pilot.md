@@ -32,7 +32,7 @@ pre-approves the L4 case's judgment content, and the later operating unit must s
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 14 — manually install and reconcile the accepted L3 entry.
+Standard. Implementation mode. Unit 15 — instantiate the Stage 5 report-path contract.
 
 Named reason for the loop: the task spans a manual cross-repository integration, a genuine operating
 case and an operator-owned founder gate; its scope must stay bounded, and the result must be assessed
@@ -40,285 +40,248 @@ independently of the executor before it counts as the plan's terminal proof.
 
 ## Brief
 
-The accepted L3 entry and House View adapter are absent from the bound consumer, while L2's local
-authority checker and the project's flattened Deep entry already exist there. Install the accepted
-L3 snapshot by hand and deliberately reconcile its canonical repository references to this one
-consumer's deployed layout, so Light, Standard, Deep handoff and Standard-to-L2 authority binding have
-a real project-local execution surface before the broader regression and operating proofs.
+L2 and L3 are now installed, but all report-mode Stage 5 commands still halt because the one required
+project path contract is absent. Instantiate that contract from the canonical template using this
+consumer's own report-mode naming rules, so later prose and formatting can resolve their inputs and
+outputs without changing any command or producing any report content.
 
-**Plan justification and current position:** the approved material plan at `8bf9d0d9` requires one
-manual L4 install with every instantiated project reference reconciled, followed by deterministic and
-representative proof. Units 1–13 are accepted. L2's producer, review, founder decision, authoring,
-content-QC and durable downstream-authority surfaces are installed; Unit 13 is accepted at consumer
-`40e12d4d388a987e133c06c3aebebea84847ac59` and integration handback
-`00d7e57667c09ca71904a9fe63c128b0cca9084e`. The next unmet integration dependency is the L3
-consumer surface itself; full matrices and real use are later proof units, not part of this install.
+**Plan justification and current position:** the approved material plan at `8bf9d0d9` requires a
+complete deliberate manual install before L4's deterministic and representative proof. Units 1–14
+are accepted. Unit 14 installed L3 at consumer
+`231d063f7159c06d83eaf2726c5c05a8b4d00859` with integration handback
+`dcf304ecaccd30443dad7dc950145bc422492a5c`; the accepted Unit 9 discovery established that
+`reference/stage-5-paths.md` is an independent hard configuration gate, not an L2 judgment consumer.
+This one-file unit closes that remaining installation dependency; full regression and operation stay
+later.
 
 **Governing sources and dispositions:**
 
 - The operator-approved plan
   `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`, material
-  content bound to `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`, governs L3's three route behaviors,
-  the one-way escalation/evidence discipline, the manual one-consumer L4 reconciliation and the
-  project-specialization stop.
-- Closed L3 records `logs/work-loop/canonical-rw-lightweight-l3.md` and
-  `logs/work-loop/canonical-rw-lightweight-l3-adapter.md` govern the accepted capability and its
-  limitations: `/research-route`; Light/Standard/Deep; fail-closed escalation; Standard's exclusive
-  binding to contract-valid `{base}-approved.md`; no second judgment mechanism; and no Deep redesign.
-- Accepted L3 source commit `137e4f62701e06569919365a5291c141d8e6da93` governs the seven runtime and
-  regression files listed below. Closing commit `5cc6d105` changes only the L3 adapter state record,
-  not those files; verify that claim before using the snapshot.
-- The consumer's current L2 contract and deployed workflow surfaces govern project reconciliation.
-  In particular, the pre-brief read found local `logs/scripts/check-judgment-contract.sh`,
-  `docs/judgment-authority-contract.md`, and `.claude/commands/run-preparation.md`, while the accepted
-  L3 snapshot names canonical `workflows/research-workflow/...` locations and its adapter harness
-  expects history object `e16cf206`, which is not reachable from the consumer. These are verify-first
-  repository claims, not permission to copy canonical paths blindly.
-- Unit 13's accepted handback governs both clean starting commits and preservation of the unrelated
+  content bound to `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`, governs the one-consumer manual
+  reconciliation, deterministic floor and genuine L4 proof.
+- Canonical `workflows/research-workflow/reference/stage-5-paths.template.md` governs the instance
+  shape, report/section mode split, placeholder set, mode halt and default-value semantics.
+- Consumer `CLAUDE.md` `## Project Config` governs the deployed values: reported `Document model:
+  "report"`, `Section IDs: [custom-dev-data-ai]`, and one report `r1`; verify these exact live values.
+- Consumer `reference/file-conventions.md` and `reference/stage-instructions.md` govern report-mode
+  Stage 5 roots and filenames. The pre-brief read found `report/compiled/{section}/`,
+  `report/produced/{section}/R{N}/`, `{section}-R{N}-compiled-v2.md`, `R{N}-prosed.md`,
+  `R{N}-formatted.md`, and `report/style-reference/{section}/{section}-style-reference.md`; these are
+  verify-first repository claims.
+- Consumer `.claude/commands/produce-prose-draft.md`, `produce-formatting.md` and
+  `produce-jargon-gloss.md` govern the labels they parse. Unit 9's accepted disposition governs
+  `.claude/commands/produce-architecture.md`: it is section-mode only and not part of this report-mode
+  path contract or an L2 consumer.
+- Unit 14's accepted handback governs the clean starting commits and preservation of the unrelated
   integration edit at `logs/innovation-registry.md`.
 
 **Codex framing decisions:**
 
-1. This is one integration deliverable: the accepted L3 runtime plus its own focused regression floor
-   installed as one project-local capability. It does not operate a representative case and does not
-   run the full L4 regression matrix.
-2. Because all seven target paths are reported absent, there is no same-path project specialization
-   to merge. Project specialization lives in the references those files instantiate: deliberately map
-   each runtime/test reference to the consumer's flattened deployed paths, or retain it only with an
-   explicit reason that it is canonical provenance rather than a runtime lookup.
-3. The adapter harness must exercise the consumer's installed L2 validator. Do not accept its
-   canonical-history fallback as L4 integration evidence when `e16cf206` is unreachable here; reconcile
-   the harness minimally so a missing or unusable local validator fails rather than silently downgrading
-   to stubs. Preserve the accepted adapter behavior and negative cases.
-4. Deep remains a handoff to the existing `.claude/commands/run-preparation.md`. Do not execute a Deep
-   stage, redesign that workflow, add deployment machinery, or configure Stage 5 in this unit.
-5. Do not import either L3 Work Loop state file into the consumer and do not create an integration
-   manifest. The post-edit reconciliation table belongs in this task handback; Git holds the diff.
+1. Add only the required project instance. Do not edit commands, templates, Project Config, file
+   conventions or existing report artifacts; a mismatch is a false-premise handback, not permission
+   to repair another surface.
+2. Use report mode because the consumer's live Project Config declares report. Delete the section
+   schema and all operator notes, as the canonical template requires.
+3. Do not choose a project-specific mechanical-trigger policy in this unit. Omit the optional
+   `Mechanical trigger threshold` field so the canonical graceful default `5+` applies; selecting a
+   different threshold would be a separate behavior decision unsupported by this installation need.
+4. Preserve placeholders only where the template authorizes runtime interpolation: `{section}` and
+   `{N}` (and `{report}` only if a selected field genuinely uses it). No `{{...}}` template token,
+   example value or section-mode placeholder may survive.
+5. `produce-architecture.md` stays untouched and is not invoked. Report architecture remains owned by
+   `/run-report` Step 4.1; this unit records that applicability result rather than forcing a
+   section-mode command into a report-mode case.
 
-**Dominant deliverable:** one manually installed, project-reconciled L3 entry capability in the bound
-consumer, including its Standard-to-installed-L2 adapter and focused L3 regression floor.
+**Dominant deliverable:** one filled, report-mode `reference/stage-5-paths.md` instance whose values
+match the bound consumer's own Stage 5 naming contract.
 
-**Evidence required in this hop:** one pre-edit consumer invocation-path failure caused by the absent
-entry/helper; exact source-to-consumer disposition for all seven files and every material instantiated
-repository reference they contain; the focused L3 suites using the consumer's real L2 validator and
-deployed Deep handoff; exact consumer diff and local commits.
+**Evidence required in this hop:** the absent-file before-state; exact field-to-source reconciliation;
+a fail-capable present/filled/mode/placeholder gate; concrete `custom-dev-data-ai` + `r1` path
+resolution against project conventions; exact one-file diff and both local commits.
 
-**Evidence explicitly deferred:** Stage 5 configuration and `produce-architecture.md`; the complete
-canonical/project regression matrix; whole-install post inventory; representative Light/Standard/Deep
-uses; genuine founder revision/approval/rejection; downstream analysis, prose and independent content
-QC; burden comparison; the legacy `section:` rejection mismatch; and the final L4 verdict.
+**Evidence explicitly deferred:** the complete canonical and project regression matrix; whole-install
+post inventory; representative Light/Standard/Deep uses; any Stage 5 content production; genuine
+founder revision/approval/rejection; downstream analysis, architecture, prose and independent content
+QC; burden comparison; the legacy `section:` mismatch; and the final L4 verdict.
 
-**Primary edit begins after:** from the consumer root, demonstrate one real L3 invocation dependency
-fails before editing because `.claude/commands/research-route.md` or its classifier is unavailable.
-Record the command and non-zero/missing result; do not manufacture a broad baseline.
+**Primary edit begins after:** quote the current consumer before-state showing
+`reference/stage-5-paths.md` absent and the three Stage 5 commands' explicit missing-file halt. No
+ceremonial baseline suite is needed for a one-file configuration instance.
 
 **Check against the repositories:**
 
 1. Validate this task and both checkout bindings at repository depth. Integration must be on
    `session/2026-08-19-rw-l4-integration` at exact
-   `00d7e57667c09ca71904a9fe63c128b0cca9084e` before this brief is committed, with only the unrelated
+   `dcf304ecaccd30443dad7dc950145bc422492a5c` before this brief is committed, with only the unrelated
    `logs/innovation-registry.md` edit plus this Codex brief uncommitted. Consumer must be clean at exact
-   `40e12d4d388a987e133c06c3aebebea84847ac59` on `trial/l1-repeat-precision-components`, with no
+   `231d063f7159c06d83eaf2726c5c05a8b4d00859` on `trial/l1-repeat-precision-components`, with no
    conflicting owner. Stop on overlap or drift; do not clean, switch, rebase or repair either checkout.
-2. Verify commit `137e4f62` carries the accepted final versions of exactly these L3 files and that
-   `5cc6d105` changes none of them:
-   `.claude/commands/research-route.md`,
-   `logs/scripts/research-route-classify.sh`,
-   `logs/scripts/research-route-memo-check.sh`,
-   `logs/scripts/research-route-judgment-authority.sh`,
-   `logs/scripts/research-route-l3-unit-1.test.sh`,
-   `logs/scripts/research-route-l3-unit-2.test.sh`, and
-   `logs/scripts/research-route-l3-adapter-unit-1.test.sh`.
-3. Verify those seven target paths are absent in the consumer. Search their complete accepted content
-   for repository-path, helper, command, contract, evidence and Deep-handoff references. For each
-   material reference, identify its accepted meaning and its actual consumer counterpart before edit;
-   absence claims must name the searched consumer surface.
-4. Verify the consumer's actual deployed surfaces, including its local L2 contract checker and doc,
-   `.claude/commands/run-preparation.md`, the local evidence/claim conventions the Standard route must
-   preserve, and project instructions governing new commands/scripts. Stop if a required counterpart
-   is absent or if correct reconciliation would change accepted L3 behavior rather than its deployment
-   location.
+2. Verify `reference/stage-5-paths.md` is absent by checking that exact consumer path. Read the complete
+   canonical template and confirm the report-mode instance contract: one `## Stage 5 Path Roots`
+   block, `Mode: report`, required report fields, only authorized placeholders, other schema/operator
+   notes removed, and threshold omission resolves to `5+` without halting.
+3. Read the complete consumer Project Config, the Stage 5 rows in `reference/file-conventions.md` and
+   the Stage 5 output-path section in `reference/stage-instructions.md`. Reconcile every proposed field
+   to one of those sources; stop if they conflict or if the active report/section identity is unclear.
+4. Read the Phase 0/path-resolution sections of the three Stage 5 consumer commands. Verify their
+   parsed labels agree with the template and the proposed instance. Verify `produce-architecture.md`
+   is section-mode and `run-report.md` owns report architecture; do not edit or invoke either.
 
 **Implementation boundary:**
 
-- DELIBERATE MERGE only the seven consumer paths listed in check (2). Materialize their accepted
-  `137e4f62` content, then make only the minimum consumer-layout reconciliations supported by check
-  (3). This is not a blind copy: unchanged accepted sections should remain byte-identical where the
-  deployed layout does not require a difference.
-- Preserve the route decision table, Light/Standard/Deep behavior, one-way escalation, per-claim
-  sourcing and evidence-versus-inference discipline, memo structure, thesis traceability, all accepted
-  verdicts/exit behavior and the exclusive approved-brief authority path.
-- Reconcile runtime paths to the consumer's actual deployed surfaces. Deep must hand off to the local
-  deployed preparation command without running it. The Standard adapter must resolve the consumer's
-  local `check-judgment-contract.sh` and consume approved content, never path/existence alone.
-- Reconcile focused tests only where their canonical source-layout assumptions would otherwise make
-  the consumer proof false. In particular, real-validator coverage must exercise the installed local
-  checker with no stub downgrade; the Deep structural check must address the deployed local handoff.
-  Do not weaken, delete or relabel accepted cases merely to make them pass.
-- Do not edit existing L2 files, the deployed Deep command, project evidence, artifacts, configuration,
-  Stage 5, any other command/script, or any canonical L3 source on the integration branch.
+- DELIBERATE MERGE only consumer `reference/stage-5-paths.md`. Instantiate the report-mode block from
+  the canonical template, using values supported by this project's own live conventions.
+- Keep the instance minimal: one roots block, no alternate schema, no operator notes, no examples,
+  no unresolved template tokens and no speculative setting.
+- Preserve the project-relative roots and filenames exactly where consumer authority settles them.
+  Do not create the resolved directories or any Stage 5 output; this unit configures paths only.
+- Do not edit or recommit any command, Project Config, reference authority, L2/L3 surface, report
+  artifact or canonical template.
 
 **Post-edit evidence:**
 
-1. Provide a seven-row source-to-consumer disposition in `## Latest result`: source path, consumer path,
-   byte-identical or reconciled, and the exact reason for every difference. Separately list every
-   material repository reference found across the runtime files and tests, its consumer resolution,
-   and whether it is runtime, regression-only or explanatory provenance.
-2. Re-run the pre-edit failing invocation dependency and show it now resolves through the consumer
-   surface. Run all three focused suites from the consumer root and report exact totals and zero
-   failures: `research-route-l3-unit-1.test.sh`, `research-route-l3-unit-2.test.sh`, and
-   `research-route-l3-adapter-unit-1.test.sh`. The adapter run must state that it exercised the local
-   real L2 validator with no fallback/stub downgrade. Run `bash -n` on all six shell files.
-3. Show targeted project-local proof that Deep names and resolves the deployed preparation handoff but
-   executes no pipeline stage, and that a Standard judgment-trigger case reaches the local authority
-   adapter/checker while an absent, proposed, rejected or malformed authority still escalates to Deep.
-4. Show the complete consumer diff contains exactly the seven allowlisted paths; `git diff --check` is
-   clean; all pre-existing consumer files are byte-untouched; and no workflow output, judgment artifact,
-   Stage 5 file or second state system was created.
-5. Commit the consumer change locally using the repository convention. Then update and commit only this
-   state handback in the integration checkout by explicit pathspec, preserving the unrelated
-   innovation-registry edit. Record both full commit IDs and final statuses. Do not push or merge.
+1. Provide a field table in `## Latest result`: each instance label/value, the exact consumer authority
+   that supports it, and which Stage 5 command consumes it. State explicitly why the optional threshold
+   is absent and what default results.
+2. Run one temporary, non-repository gate that can fail and reports separately: file present; exactly
+   one parseable roots block with the required report-mode value count; `Mode` equals the live Project
+   Config; and no unresolved `{{...}}`, quoted template placeholder, section-mode field or unauthorized
+   placeholder survives. Demonstrate at least one temporary malformed control is refused, then delete
+   the temporary material.
+3. Resolve every configured path for live `section=custom-dev-data-ai`, `report=r1`, `N=1`. Show the
+   exact resulting paths and compare them to `reference/file-conventions.md` and
+   `reference/stage-instructions.md`; any mismatch fails the unit. Do not create or write those paths.
+4. Show the three Stage 5 commands can parse every label they need and would clear only the
+   present/filled/mode/path-resolution portion of Phase 0. Do not claim their later input gates pass.
+   Record that `produce-architecture.md` is inapplicable to report mode and unchanged, while report
+   architecture remains with `run-report`.
+5. Show the complete consumer diff contains exactly `reference/stage-5-paths.md`, `git diff --check`
+   is clean, and no report directory or artifact changed. Commit the consumer change locally using the
+   repository convention. Then update and commit only this state handback in the integration checkout
+   by explicit pathspec, preserving the unrelated innovation-registry edit. Record both full commit IDs
+   and final statuses. Do not push or merge.
 
-**Capability subset:** baseline only — read, search, inspect history, run focused local suites and
-syntax checks, edit only the seven named consumer paths and this existing task state, use safe
-temporary fixtures outside both repositories, and make local commits in the two bound repositories.
-Nothing is selected from the empty pre-authorizable set; no network, remote service, push, PR, merge,
-deployment, credential access, destructive operation, branch/worktree creation, checkout switch,
-permission change or policy change is authorized.
+**Capability subset:** baseline only — read, search, inspect history, run temporary local structural
+and interpolation checks, edit only consumer `reference/stage-5-paths.md` and this existing task state,
+and make local commits in the two bound repositories. Nothing is selected from the empty
+pre-authorizable set; no network, remote service, push, PR, merge, deployment, credential access,
+destructive operation, branch/worktree creation, checkout switch, permission change or policy change
+is authorized.
 
 **Stop and hand back if:** either checkout binding changed; the unrelated integration edit overlaps;
-the consumer is not clean; an L3 target path already exists; the accepted snapshot or closure claim is
-false; a required deployed L2/Deep counterpart is absent; project reconciliation would alter accepted
-L3 behavior or overwrite project specialization; a focused accepted case must be weakened; the local
-real-validator proof cannot run; any focused suite or syntax check fails; the consumer cannot be left
-clean after its local commit; or work would cross into existing L2/Deep edits, Stage 5, full matrices,
-real operating evidence or an operator-reserved capability. A false premise is a valid result; report
-it rather than improvising.
+the consumer is not clean; the target config already exists; Project Config does not unambiguously
+declare report mode; consumer path authorities conflict; a required field cannot be supported by the
+project's own conventions; a command needs an unapproved field or path; correct work would edit any
+non-allowlisted surface or produce Stage 5 content; the temporary gate or concrete interpolation
+fails; the consumer cannot be left clean after its local commit; or work would cross into full
+regression, representative operation or an operator-reserved capability. A false premise is a valid
+result; report it rather than improvising.
 
-**Completion condition:** install and locally commit the seven-file project-reconciled L3 capability,
-produce the focused evidence and reconciliation dispositions above, then commit only this state
-handback with `status: active`, `turn: codex`. Preserve the unrelated innovation-registry edit and stop
-before Stage 5, broad regression or representative operation.
+**Completion condition:** install and locally commit the single filled report-mode path instance,
+produce the reconciliation and fail-capable evidence above, then commit only this state handback with
+`status: active`, `turn: codex`. Preserve the unrelated innovation-registry edit and stop before any
+Stage 5 content, broad regression or real operating case.
 
 ## Latest result
 
 Inspected (2026-08-19):
 
-- Claim (1) checkout bindings: HOLDS — integration is on `session/2026-08-19-rw-l4-integration` at
-  exact `00d7e57667c09ca71904a9fe63c128b0cca9084e`; `git status --porcelain` listed exactly
-  ` M logs/innovation-registry.md` and ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md`
-  (the unrelated edit plus this Codex brief), nothing else. Consumer is on
-  `trial/l1-repeat-precision-components` at exact `40e12d4d388a987e133c06c3aebebea84847ac59` with
-  empty `git status --porcelain`. `work-loop-owner.sh check --depth repo` returned PROCEED; searched
-  the consumer for `logs/work-loop/` and the directory does not exist, so no conflicting owner.
-- Claim (2) accepted snapshot: HOLDS — `git rev-parse 137e4f62:<path>` returned a blob for all seven
-  files; each blob is identical to `HEAD:<path>`, and `git log 137e4f62..HEAD -- <the seven>` is
-  empty. `git show --name-only 5cc6d105` lists only
-  `logs/work-loop/canonical-rw-lightweight-l3-adapter.md` — searched its file list for
-  `research-route`, no match.
-- Claim (3) target paths absent: HOLDS — tested all seven paths under the consumer root with `[ -e ]`;
-  all ABSENT. Searched `git -C <consumer> ls-files` for `research.route`; no tracked path matched.
-- Claim (4) deployed counterparts: HOLDS — `logs/scripts/check-judgment-contract.sh`,
-  `docs/judgment-authority-contract.md` and `.claude/commands/run-preparation.md` are all present in
-  the consumer. Searched for `workflows/` at the consumer root: absent, confirming the flattened
-  layout. The consumer's installed validator was probed against the adapter suite's own fixture
-  briefs before any edit and returned exactly the exit codes the accepted D-cases branch on:
-  approved 0, missing 3, proposed-at-approved-path 4, rejected 4, no-claim-IDs 5, malformed 6,
-  non-sequential headings 0. Canonical history object `e16cf206` is reachable from the integration
-  checkout and **not** reachable from the consumer (`git cat-file -e` → `invalid object name`), as
-  the brief's fourth governing source stated.
-- Packaging lines: HOLDS — `Dominant deliverable:` names exactly one deliverable;
-  `Evidence required in this hop:`, `Evidence explicitly deferred:` and (Implementation mode)
-  `Primary edit begins after:` are all present and non-empty.
+- Claim (1): HOLDS — integration is on `session/2026-08-19-rw-l4-integration` at exact
+  `dcf304ecaccd30443dad7dc950145bc422492a5c`; `git status --porcelain` showed only
+  ` M logs/innovation-registry.md` and ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md`. Consumer
+  is clean (empty `git status --porcelain`) at exact `231d063f7159c06d83eaf2726c5c05a8b4d00859` on
+  `trial/l1-repeat-precision-components`. `work-loop-owner.sh check --depth repo` returned PROCEED;
+  searched the consumer for `logs/work-loop/.owner` — absent, so no conflicting owner.
+- Claim (2): HOLDS — `ls` of the exact path `<consumer>/reference/stage-5-paths.md` returned
+  "No such file or directory", and the `reference/` listing carries `stage-5-paths.template.md` but no
+  instance. Read the complete canonical template: it defines one `## Stage 5 Path Roots` block per
+  instance, `Mode: report`, ten report-mode fields, the four-placeholder set, deletion of the unpicked
+  schema and the operator notes, and `Mechanical trigger threshold` absent → canonical default `"5+"`
+  without halting (§ Default-value semantics).
+- Claim (3): HOLDS — consumer `## Project Config` declares `Document model: "report"`,
+  `Section IDs: [custom-dev-data-ai]` and `Report set: [custom-dev-data-ai]` (one report → `r1`).
+  `reference/file-conventions.md` rows 63/66/69 and its tree at 134–140, plus
+  `reference/stage-instructions.md` lines 158/165/169, supply every root and filename below. No conflict
+  between them; the active report identity is unambiguous.
+- Claim (4): HOLDS — searched the three Stage 5 commands' Phase 0/1 sections for every label they
+  resolve; all agree with the template and the instance (coverage table below).
+  `produce-architecture.md` is section-mode only — it parses `part-2`/`part-3`, resolves `parts/…` and
+  `output/…` roots, still carries unresolved `{{PART_TWO_DIR}}` tokens, and searching it for
+  `stage-5-paths` returned no match, so it is not a consumer of this contract. Report architecture is
+  owned by `run-report.md` Step 4.1 (`/report/architecture/{section}/…`). Neither was edited or invoked.
 
-**Pre-edit failing invocation.** From the consumer root, the entry's own Step 3 resolution block was
-run verbatim: `.claude/commands/research-route.md` was not readable and
-`logs/scripts/research-route-classify.sh` was unavailable, so the block printed
-`Cannot safely resolve a route: classifier unavailable: …/logs/scripts/research-route-classify.sh`
-and the guard exited **2**.
+Packaging lines: all four present and singular; `Primary edit begins after:` was satisfied by the
+Claim (2) absent-file before-state plus the three commands' quoted missing-file halt.
 
-Result: the accepted L3 capability is installed and reconciled in the bound consumer at commit
-`231d063f7159c06d83eaf2726c5c05a8b4d00859`, as one project-local capability — the shared entry, the
-classifier, the memo checker, the judgment-authority adapter and the three focused regression suites.
-Every reconciliation is a deployment-location change; no accepted L3 behaviour was altered. Two of the
-seven files needed no difference at all and are byte-identical to the accepted source.
+Result: consumer `reference/stage-5-paths.md` now exists as a filled report-mode instance — one roots
+block, ten fields, no alternate schema, no operator notes, no examples, no template tokens. Committed at
+consumer `5a8482c959ceaf286fa5601c13d44d25d04a2753`; the consumer is clean afterwards. No Stage 5
+directory or output was created, and no command, Project Config, reference authority, L2/L3 surface,
+report artifact or template was touched.
 
-Source-to-consumer disposition (source tree `137e4f62`; consumer paths are identical in name):
+Field-to-source reconciliation (label → value → consumer authority → consuming command):
 
-| Source path | Consumer path | Disposition | Exact reason for the difference |
+| Label | Value | Consumer authority | Consumed by |
 |---|---|---|---|
-| `.claude/commands/research-route.md` | same | reconciled (+8/−1) | Standard's published-contract reference repointed from `workflows/research-workflow/docs/judgment-authority-contract.md` to the deployed `docs/judgment-authority-contract.md`; a project-local resolution note added to Deep naming this project's flattened `.claude/commands/run-preparation.md` as the handoff target and marking `workflows/research-workflow/` as canonical provenance rather than a local path. |
-| `logs/scripts/research-route-classify.sh` | same | byte-identical | Holds no repository reference; the entry path arrives through `--entry`. |
-| `logs/scripts/research-route-memo-check.sh` | same | reconciled (+1/−1) | One comment repointed to `docs/judgment-authority-contract.md`. The adapter is resolved as a `BASH_SOURCE` sibling, which is already correct here. |
-| `logs/scripts/research-route-judgment-authority.sh` | same | reconciled (+1/−1) | One header comment repointed to `docs/judgment-authority-contract.md`. The runtime lookup `"$root/logs/scripts/check-judgment-contract.sh"` already matches this layout and is unchanged. |
-| `logs/scripts/research-route-l3-unit-1.test.sh` | same | reconciled (+6/−1) | `DEEP_TARGET` repointed from `$REPO/workflows/research-workflow/.claude/commands/run-preparation.md` to `$REPO/.claude/commands/run-preparation.md`, with the reason recorded in place. The canonical path names a handoff target this project does not have, so A13 would have failed on correct behaviour. |
-| `logs/scripts/research-route-l3-unit-2.test.sh` | same | byte-identical | Every reference is `$REPO`-relative and resolves unchanged. |
-| `logs/scripts/research-route-l3-adapter-unit-1.test.sh` | same | reconciled (+32/−21) | The real-contract fixtures no longer materialise `e16cf206:workflows/research-workflow/logs/scripts/check-judgment-contract.sh` (unreachable here) but copy this project's **installed** validator; the stub fallback is removed and replaced by a new `D0` that fails when the installed validator is absent or unreadable. The `stub:*`, `flagprobe` and `none` fixture kinds are unchanged — they are D10's and D15's deliberate negatives, not downgrades. No accepted case was weakened, deleted or relabelled. |
+| `Mode` | `report` | `CLAUDE.md § Project Config` `Document model: "report"` | all three (mode gate) |
+| `Compiled-source root` | `report/compiled/{section}` | file-conventions row 66; stage-instructions L165 | prose-draft |
+| `Compiled-source filename` | `{section}-R{N}-compiled-v2.md` | file-conventions row 66 (example `1.1-R1-compiled-v2.md`); prose-draft L51 | prose-draft |
+| `Prose-output root` | `report/produced/{section}/R{N}` | file-conventions row 69; stage-instructions L169 | all three |
+| `Prose-output filename` | `R{N}-prosed.md` | file-conventions row 69 example | all three |
+| `Formatted-output filename` | `R{N}-formatted.md` | stage-instructions Step 5.3; file-conventions row 69 | formatting |
+| `Style-reference path` | `report/style-reference/{section}/{section}-style-reference.md` | file-conventions row 63; stage-instructions L158 | all three |
+| `Decontamination-log filename` | `decontamination-log.md` | `reference/stage-5-common-phases.md` L43/L112 | formatting |
+| `Gloss-log filename` | `gloss-additions-log.md` | `reference/stage-5-common-phases.md` L76/L167 | jargon-gloss |
+| `Working-dir name` | `working` | file-conventions L140; stage-instructions L165 | prose-draft, formatting |
 
-Material repository references found across the runtime files and tests, and how each resolves here:
+`Mechanical trigger threshold` is deliberately **absent** (Codex framing decision 3): `produce-formatting.md`
+Phase 0 step 6 sets `threshold = "5+"` on absence and does not halt, so omission yields the canonical
+default without this unit taking a project-specific behaviour decision.
 
-| Reference (accepted meaning) | Consumer resolution | Kind |
-|---|---|---|
-| `.claude/commands/research-route.md` (the entry, self-resolved through `readlink`) | same path, installed | runtime |
-| `logs/scripts/research-route-classify.sh` (classifier, fail-closed) | same path, installed | runtime |
-| `logs/scripts/research-route-memo-check.sh` (Standard memo floor) | same path, installed | runtime |
-| `logs/scripts/research-route-judgment-authority.sh` (the only authority path) | same path, installed | runtime |
-| `logs/scripts/check-judgment-contract.sh` (L2's own validator, via `--root`) | already present at that exact path | runtime |
-| `workflows/research-workflow/docs/judgment-authority-contract.md` (published contract) | `docs/judgment-authority-contract.md` | runtime (entry) / explanatory (two script comments) |
-| `workflows/research-workflow/.claude/commands/run-preparation.md` (Deep handoff target) | `.claude/commands/run-preparation.md` | runtime (entry) + regression (`DEEP_TARGET`) |
-| `preparation/task-plans/{section}-task-plan-draft.md` (Deep prerequisite) | unchanged; project-relative and already this project's convention | runtime |
-| `workflows/research-workflow/SETUP.md` (deploy a *new* project) | retained verbatim | explanatory provenance — names the canonical template for another project, never opened here |
-| `workflows/research-workflow/` (pipeline provenance, "not a work surface") | retained, explicitly marked as canonical-repository provenance | explanatory provenance |
-| `e16cf206:workflows/research-workflow/logs/scripts/check-judgment-contract.sh` | replaced by this project's installed validator | regression-only |
-| `logs/scripts/research-route-l3-adapter-unit-1.test.sh` (coverage pointer in the adapter) | same path, installed | explanatory provenance |
-| `.claude/hooks/auto-sync-shared.sh`, `projects/ai-development-lab/.claude/commands/` | none — fixture memo prose inside heredocs, never opened | regression-only fixture text |
+One reconciliation judgment is recorded rather than assumed: file-conventions row 66 states the compiled
+filename family as `{section}-R{N}-compiled-v[M].md`, but `[M]` is not in the template's authorized
+placeholder set (`{section}`, `{report}`, `{N}`, `{part}`), so a literal version is required. `v2` is the
+value both authorities' own examples pin — file-conventions' `1.1-R1-compiled-v2.md` and
+`produce-prose-draft.md` L51's resolution example — and it is the post-bright-line-fix version that command
+expects. `{report}` is unused because no selected field references it.
 
 Evidence:
 
-- **Pre-edit → post-edit, same invocation.** Before: exit **2**, `classifier unavailable`. After the
-  install, the identical block resolves the entry, finds the classifier and prints
-  `route: light / preference-overridden: no / floor-set-by: base`, rc **0**.
-- **Focused suites, all run from the consumer root, exact totals:**
-  `research-route-l3-unit-1.test.sh` **14 passed, 0 failed** (rc 0);
-  `research-route-l3-unit-2.test.sh` **33 passed, 0 failed** (rc 0);
-  `research-route-l3-adapter-unit-1.test.sh` **42 passed, 0 failed** (rc 0).
-  The adapter run exercised this project's installed real L2 validator with **no fallback or stub
-  downgrade** — its first line reads
-  `PASS  D0 the real-contract fixtures use this project's installed L2 validator (…/logs/scripts/check-judgment-contract.sh)`,
-  and D1–D9 branch on that validator's own exit codes (0/3/4/4/5/6).
-- **That claim can fail.** A mutant of the harness, kept outside both repositories, changed only
-  `L2_INSTALLED` to a non-existent filename. It returned **27 passed, 15 failed**, rc 1: `D0` failed
-  naming the unreadable path, and every real-contract case collapsed with it. The accepted source
-  would have printed a `NOTE` and passed on stubs; the reconciled harness cannot.
-- `bash -n` on all six installed shell files: all six OK.
-- **Deep resolves the deployed handoff and executes nothing.** The Deep section names
-  `/run-preparation`, names `.claude/commands/run-preparation.md`, and that file exists in the
-  consumer; `workflows/research-workflow/` does not exist here. Searched the entry for any invocation
-  of a preparation stage (`^\s*(bash|sh|source|\.)\s.*run-preparation`): no match. The only commands
-  the entry runs are the classifier, the memo checker and the judgment adapter.
-- **A Standard judgment case reaches the local authority chain, and every bad authority escalates.**
-  Signals `output=analysis, thesis_judgment=yes, consequence=internal` resolve to `route: standard`.
-  Run against `--root <consumer>`, the adapter returns `contract-exit: 3` with the consumer's own
-  absolute path in the reason — proving the local checker ran, and discriminated by a control root
-  with no checker, which returns `contract-exit: none` instead. A rejected brief returns
-  `contract-exit: 4`, a malformed one `contract-exit: 6`, this project's real *proposed* brief is
-  refused by its own installed checker as `verdict: NOT-APPROVED`, and aiming the adapter at a
-  proposal is refused as usage (exit 2). All five print `escalate: deep`. The memo checker bound
-  against this project rejects a `COMPLETE` House View memo whose authority is unavailable, naming
-  `contract-exit: 3`.
-- **Diff scope.** `git status --porcelain` in the consumer showed exactly the seven allowlisted paths
-  and nothing else; `git diff --name-only` was empty, so no pre-existing tracked file was modified;
-  `git diff --check` clean. No workflow output, judgment artifact, Stage 5 file or second state system
-  was created — all fixtures were written outside both repositories and deleted. The consumer is clean
-  after its commit `231d063f7159c06d83eaf2726c5c05a8b4d00859`.
+1. **Fail-capable structural gate** (temporary, non-repository; deleted after use). Eight checks:
+   presence; exactly one roots block; the ten report-mode fields once each with non-empty values; no
+   unexpected field labels; `Mode` equal to the live `Document model` parsed from `CLAUDE.md` rather than
+   hardcoded; no `{{…}}` tokens; no section-mode field; only `{section}`/`{report}`/`{N}` placeholders;
+   threshold absent/well-formed. Real instance: **PASS, exit 0**. Eight malformed controls were each
+   **refused, exit 1**: surviving `{{PROSE_OUTPUT_ROOT}}` (2 checks fired), `Mode: section`, a dropped
+   `Gloss-log filename`, a leaked `Architecture filename` (2 checks), an unauthorized `{M}`, threshold
+   `"three"`, two roots blocks (3 checks), and an absent file — 8/8 refused. A first gate run reported
+   PASS on check 3b through a `grep: invalid character range` error (BSD grep rejecting `[A-Za-z- ]`);
+   that fail-open was fixed to `[A-Za-z -]` and both the instance run and the control suite were re-run
+   before any result was relied on.
+2. **Concrete interpolation** for live `section=custom-dev-data-ai`, `report=r1`, `N=1`:
+   `report/compiled/custom-dev-data-ai/custom-dev-data-ai-R1-compiled-v2.md`;
+   `report/produced/custom-dev-data-ai/R1/R1-prosed.md`; `…/R1-formatted.md`;
+   `report/style-reference/custom-dev-data-ai/custom-dev-data-ai-style-reference.md`;
+   `…/R1/decontamination-log.md`; `…/R1/gloss-additions-log.md`; `…/R1/working/`. Each matches
+   file-conventions and stage-instructions above. All four resolved directories were asserted **absent**
+   afterwards, proving the unit created nothing.
+3. **Label coverage**: `produce-prose-draft` 7/7, `produce-formatting` 7/7 plus the deliberately absent
+   threshold resolving to its documented default, `produce-jargon-gloss` 5/5. Every label each command
+   resolves is present and interpolates. This clears only the present/filled/mode/path-resolution portion
+   of Phase 0 — their later input gates (a compiled source at Stage 5.2, an existing prose file, a
+   decontamination log) are untested and would still pause, correctly, because no Stage 5 content exists.
+4. **Scope**: consumer `git status --porcelain` showed exactly `?? reference/stage-5-paths.md` before the
+   commit and was empty after; `git diff --cached --stat` was `1 file changed, 22 insertions(+)`;
+   `git diff --check` and `git diff --cached --check` clean; no `report/` path changed.
 
-Deferrals noticed during this unit, recorded and not done: the **legacy `section:` mismatch is now
-demonstrated rather than merely predicted**. This project's two real approved briefs carry
-`section:`, not `unit:`; the installed dual-contract validator passes them at exit 0, and the adapter
-then correctly fails closed because the brief "covers unit '<absent>'". That is honest fail-closed
-behaviour, so nothing was changed — but it means no real on-disk brief in this project can currently
-bind the Standard lane, which the L4 operating case will need. It stays on the deferred list where the
-brief put it.
+Deferral noticed, not implemented: the consumer's copy of `stage-5-paths.template.md` differs from
+canonical on one prose line only — it retains a legacy `/risk-check` reference and a doubled `> >` quote
+marker where canonical reads "a Path A v4-style design plus a risk-aware review". Both schema blocks are
+byte-identical, so it does not affect this instance. Left untouched: editing the template is outside this
+unit's allowlist.
+
+Carried forward: the legacy `section:` mismatch remains deferred and still does not block the L4 case.
 
 ## Blocker
 
@@ -326,5 +289,6 @@ None.
 
 ## Next action
 
-Codex: assess Unit 14 — the manually installed, project-reconciled L3 entry capability in the bound
-consumer, its seven-row disposition and reference reconciliation, and the focused evidence above.
+Codex: assess Unit 15 — the instantiated report-mode Stage 5 path contract, its field-to-source
+reconciliation, the fail-capable gate and control suite, and the concrete `custom-dev-data-ai` / `r1`
+interpolation — then decide whether to accept and open the next unit.
