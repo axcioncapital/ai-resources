@@ -166,99 +166,78 @@ hands back without expanding scope.
 
 ## Latest result
 
-Reproduced (2026-08-19), by inspection before correcting:
+Reproduced (2026-08-19), by inspection before fixing:
 
-- Frozen finding (1): REPRODUCES. Searched all three Stage 5 command bodies for `judgment`:
-  `produce-prose-draft.md` **0**, `produce-formatting.md` **0**, `produce-jargon-gloss.md` **0**. Both
-  named commands are independently invokable and run after every Stage-4 control:
-  `/produce-prose-draft` report-mode Phase 2 runs `prose-refinement-writer` to "develop underdeveloped
-  hardest claims" and explicitly skips Phases 3 and 4, its section-mode QC; `/produce-formatting`
-  Phase 2 changes H3 and structural presentation and Phase 3 runs the merged formatting +
-  `document-integration-qc` that signs the report off. Unit 3's claim that every required downstream
-  owner is governed was incomplete: it stopped at Stage 4.
+- Final fix (1): REPRODUCES, all three seams. Read `/produce-formatting` Phase 3 end to end. The
+  `STAGE 3 — House View fidelity` instruction was present, but: the task summary read "Execute Stage 1
+  then Stage 2 as described" and its required working-file sections listed only Stage 1 and Stage 2
+  groups; the six returned fields covered Stage 1, Stage 2 and transition drafts, with no Stage 3
+  field; and `Route on findings` had four branches, all keyed to Stage 1 or Stage 2, with the
+  proceed-to-handoff branch reading "No SUBSTANTIVE findings in either stage". A reviewer could
+  therefore identify authority drift and the main session would receive nothing machine-readable and
+  proceed to Phase 4 as a clean result.
 
-Result: the report-mode Stage 5 seam is now governed on the same terms as Stage 3-4, and section mode
-is explicitly untouched. Five changes, all inside the frozen finding:
+Result: the House View check's result now reaches the route. Four changes, all inside this fix:
 
-- **`/produce-prose-draft` Phase 0b (new), report-mode only.** Validates `{base}-approved.md` with the
-  contract helper and halts on any nonzero exit, with the same four refusal classes, the same
-  authority-conflict rule and the same helper-cannot-run clause Unit 3 uses. Section-mode skips the
-  phase entirely and acquires no judgment prerequisite.
-- **`/produce-prose-draft` Phase 2, report-mode producer.** Receives `{base}-approved.md` by path and
-  must develop hardest claims without moving them beyond the approved theses, sharpening past the
-  provisional verdict, or exceeding the permission class the thesis rests on; countercases keep their
-  weight, change conditions stay stated, and every existing `Thesis N` trace is preserved. Where
-  developing a claim would require exceeding the approved view, it is flagged rather than developed.
-- **`/produce-formatting` Phase 0b (new), report-mode only.** Same gate, same exemption.
-- **`/produce-formatting` Phase 2.** Receives the brief by path; H3 and section framing may not promote
-  a subordinate point above the verdict, bury a countercase behind a heading that changes its weight,
-  or move a claim away from its trace.
-- **`/produce-formatting` Phase 3 — new STAGE 3, House View fidelity.** The existing final
-  editorial-integration QC gains a third stage checking fidelity, thesis trace continuity and drift
-  (a claim the approved argument does not carry, a sharpened verdict, a dropped countercase, a lost
-  change condition, permission overreach). It judges against the approved brief and the formatted prose
-  **only**: the Phase 2 change log and the Stage 1 fixes-applied log are the producers' accounts and may
-  explain a finding but never satisfy the check, because a producer that dropped a trace will not report
-  having dropped it. Drift and overreach are FAIL findings.
-
-**`/produce-jargon-gloss` — concrete exclusion, not an omission.** Inspected the `jargon-gloss` skill
-rather than the command. Its hard constraint forbids changing argument structure, analytical
-conclusions or voice; Check 2 (analytical-claim protection) refuses to apply a gloss that would alter
-an analytical claim and flags it instead; and its output checklist requires that no analytical claim,
-sourced statement or quoted material has been modified. The pass is additive at the term level, so it
-cannot materially alter report-mode analytical content. Gating it would add ceremony without closing
-anything.
+1. **Task summary** — report-mode executes Stage 1, then Stage 2, then STAGE 3, in that order, and the
+   sentence states plainly that section-mode stays two-stage and does not run STAGE 3.
+2. **Working file** — a distinct Stage 3 House View findings group, split into fidelity /
+   thesis-trace-continuity / drift with a severity on each, plus a distinct `stage_3_verdict`.
+3. **Return contract** — `stage_3_fidelity_count`, `stage_3_trace_count`, `stage_3_drift_count` and
+   `stage_3_verdict` as **separate fields**, not prose inside `verdict`, because the route reads fields
+   and a finding the route cannot read is a finding the route ignores. Where STAGE 3 could not run —
+   the approved brief unreadable at its path — the return is `stage_3_verdict: FAIL` with the reason,
+   never `PASS` and never omission. `verdict` may not read clean while `stage_3_verdict` is `FAIL`.
+4. **Routing** — a new first branch: `stage_3_verdict: FAIL` **halts**, presents the Stage 3 group to
+   the operator with the approved brief path, logs to `logs/decisions.md`, and reaches Phase 4 only
+   after every Stage 3 FAIL finding is resolved by correction or explicit recorded decision. A Stage 3
+   FAIL is never cleared by Stage 1 and Stage 2 being clean. The proceed-to-handoff branch now requires
+   `stage_3_verdict: PASS` wherever report-mode ran STAGE 3.
 
 Evidence:
 
-- **The red is attributable, not just present.** Two pinned baselines. `Tpre` at `06c90e66` (before any
-  owner consumed judgment) fails **all 14** assertions. `Tpre5` at `a8671275` (Unit 3 accepted) fails
-  **exactly the six Stage-5 assertions** — `S1a`, `S1b`, `S2a`, `S2b`, `S3`, `S4` — and passes all six
-  Stage 3-4 assertions. A correction claiming to close a Stage 5 gap should be red on Stage 5 alone,
-  and this one is. Post-change: **14 of 14 PASS, exit 0**.
-- **Ten new mutations, each independently live** on copies of the real command bodies with the other
-  four copied verbatim: `SP1`-`SP3` remove each path handoff; `SU1`-`SU3` reduce each use instruction
-  to *"verify the approved brief exists at that path"* — the existence-only failure, with the path
-  handoff left intact; `SG1`/`SG2` remove each entry gate; `SQ` lets the final QC satisfy fidelity from
-  the producers' change logs while leaving trace, drift and permission checks intact, so the flip is
-  attributable to that alone. All flip exactly their own assertion.
-- **`SM` is the control running the other way.** It deletes the section-mode exemption from a Stage 5
-  gate and requires `S4` to fail. The risk a governance check carries here is imposing a judgment
-  prerequisite on section-mode projects, which have no brief to consume; `SM` keeps that control live.
+- **Two new assertions, deliberately separate.** `S5-stage3-result-returned` covers execution order,
+  the working-file group and the returned fields; `S6-stage3-fail-blocks` covers the routing branch,
+  read from the `Route on findings` region alone. They are split because the two failures are
+  independent: a result can be returned in full and routed nowhere, and a routing branch can exist with
+  no result to read.
+- **Two independent mutations, as the fix required.** `SR` removes the returned Stage 3 result while
+  leaving the routing branch intact → only `S5` fails. `SF` removes the routing branch while leaving
+  the returned result intact → only `S6` fails. Either alone restores the exact state this fix was
+  found in. Building `SF` surfaced and fixed a real defect in the proof itself: its first anchor,
+  `stage_3_verdict: FAIL`, also matched the return contract's could-not-run clause and deleted both
+  lines, collapsing the two mutations into one; the anchor is now text unique to the routing line, and
+  the two are demonstrably independent.
+- **The pinned baselines were re-earned, not adjusted to fit.** `Tpre` at `06c90e66` now fails **all
+  16** assertions; `Tpre5` at `a8671275` (Unit 3 accepted) fails **exactly the eight Stage-5
+  assertions** — the six from the correction plus `S5` and `S6` — and still passes all six Stage 3-4
+  assertions. The new assertions were red at both baselines before this fix.
 - **Exact commands, totals and exit codes.**
-  `bash tests/judgment-seam/check-judgment-consumption.sh` → **14/14, exit 0** (was 8/8 before this
-  round; 6 new assertions).
-  `bash tests/judgment-seam/check-judgment-consumption.test.sh` → **33 passed, 0 failed**, exit 0
-  (was 22).
+  `bash tests/judgment-seam/check-judgment-consumption.sh` → **16/16, exit 0** (was 14/14).
+  `bash tests/judgment-seam/check-judgment-consumption.test.sh` → **35 passed, 0 failed**, exit 0
+  (was 33).
   `check-judgment-seam.sh` → 13/13, exit 0; `check-judgment-seam.test.sh` → 23 passed, 0 failed.
   `check-judgment-contract.test.sh` → 19/0; `check-judgment-challenge.test.sh` → 24/0;
   `promote-judgment-brief.test.sh` → 24/0.
   `tests/s1-relay/check-relay-payload.sh` → TARGET MET, exit 0; `check-relay-payload.test.sh` → 26/0.
-  `tests/s1-representative/score-specimen.test.sh` → 38/38.
-  No assertion was weakened, and every accepted Stage 3-4 change is untouched — proved by `Tpre5`,
-  which requires all six Stage 3-4 assertions to pass at the pre-correction commit and they still pass
-  live. There is no dedicated Stage 5 regression suite in this workflow to run: `tests/` holds only
-  `s1-relay` and `s1-representative`, and both are green.
-- **Live-effect consumers, re-enumerated for the two newly edited files.** `produce-prose-draft.md` and
-  `produce-formatting.md` each have **two symlink consumers** — `projects/buy-side-service-plan` and
-  `archive/nordic-pe-macro-landscape-H1-2026` — both resolving to the canonical `ai-resources` checkout,
-  not this worktree, so no live effect today. **And on merge the exposure is nil for both:**
-  `buy-side-service-plan` declares `Document model: "section"`, so both new gates are report-mode-only
-  no-ops there; the archived project declares no `Document model` line at all and its Phase 0 already
-  halts on that, independently of this change. The section-mode exemption is what makes this true, and
-  `S4`/`SM` are what keep it true. The Unit 3 merge-time precondition on `run-report.md` Step 4.0b is
-  unchanged and still stands — `/run-report` is Stage 4 and has no mode dispatch.
+  No assertion was weakened. `s1-representative` was not re-run: this fix touches only
+  `/produce-formatting` Phase 3 and the consumption harness, and that suite scores `/verify-chapter`
+  specimens, which neither surface reaches — it was green at `701b2884`.
+- **Changed surfaces (3 paths).** `.claude/commands/produce-formatting.md` (Phase 3 task summary,
+  working-file sections, return contract, routing), `tests/judgment-seam/check-judgment-consumption.sh`
+  (+`S5`, `S6`), `tests/judgment-seam/check-judgment-consumption.test.sh` (+`SR`, `SF`, both pinned
+  baselines updated).
 
-Deferrals — carried forward, none added by this round:
+Preserved and re-verified: the section-mode exemption (`S4` green, `SM` still flips it), every accepted
+Stage 3-4 wiring (`Tpre5` requires all six to pass at the pre-fix commit and they pass live), the
+accepted contract, and the representative-proof boundary. Live consumers are unchanged from the
+correction handback: `produce-formatting.md` has two symlink consumers, both resolving to the canonical
+checkout, and `buy-side-service-plan` is section-mode so the report-mode-only path is a no-op there.
 
-1. The Unit 2 four stand: no `s1-relay` manifest row for the judgment relays (now nine, all
-   path-passing by construction and therefore compliant but unmeasured); `/run-analysis` Step 5c's
-   `qc-gate` write/tool mismatch, again verified not load-bearing here; the missing
-   `judgment-context-card.md` template; the representative semantic proof.
-2. `/sync-workflow` propagation of the judgment helpers and now five command bodies to the projects
-   that carry copies or symlinks. Merge and propagation remain outside L2.
-3. From Unit 3, unchanged: `architecture-qc` (Step 4.1b) reviews the architecture without the approved
-   brief. Step 4.2c and now Stage 5's STAGE 3 cover the same drift downstream, so nothing is unguarded.
+Deferrals — carried forward, none added by this fix: the Unit 2 four (no `s1-relay` manifest row for
+the judgment relays; `/run-analysis` Step 5c's `qc-gate` write/tool mismatch; the missing
+`judgment-context-card.md` template; the representative semantic proof); `/sync-workflow` propagation;
+and `architecture-qc` reviewing the architecture without the approved brief.
 
 ## Blocker
 
@@ -266,13 +245,10 @@ None.
 
 ## Next action
 
-Codex: run the closure check on the frozen finding only — is the report-mode Stage 5 seam governed, and
-did the correction break anything? The finding reproduced by inspection (0 judgment hits in all three
-Stage 5 surfaces) before it was corrected. Both report-mode entries now validate approved authority and
-halt fail-safe; both report-mode producers receive the brief by path with a required-use instruction;
-the existing final editorial-integration QC gained a House View fidelity stage that may not rest on the
-producers' accounts; `/produce-jargon-gloss` is excluded on its skill's own analytical-claim protection
-rather than by omission; and section mode is explicitly exempt, with `SM` keeping that control live.
-`Tpre5` pins the red to Stage 5 alone — at Unit 3 accepted, exactly the six new assertions fail and all
-six Stage 3-4 assertions pass. Nothing outside the frozen finding was implemented, no deferral was
-added, and the representative-proof boundary is untouched.
+Codex: closure check limited to this final fix — does the House View result now reach the route, and
+did the fix break anything? All three seams reproduced by inspection before being fixed. Stage 3 is
+executed in report mode, written as its own findings group, returned as four distinct fields, and a
+`stage_3_verdict: FAIL` halts before handoff and reaches the operator. `S5` and `S6` are separate
+assertions with independent mutations `SR` and `SF`, each restoring exactly the state this fix was
+found in. Section mode is untouched and every accepted Stage 3-4 change is preserved, both re-verified
+by `Tpre5`. No newly noticed work was addressed and no deferral was added.

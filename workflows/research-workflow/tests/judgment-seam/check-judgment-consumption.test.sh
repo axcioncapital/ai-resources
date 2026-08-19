@@ -65,10 +65,10 @@ if [ "$pre_ok" -eq 1 ]; then
   fi
   pre_fail="$(failing "$PRE")"
   n_pre="$(printf '%s' "$pre_fail" | tr ',' '\n' | grep -c .)"
-  if [ "$n_pre" -eq 14 ]; then
-    ok 'Tpre all 14 assertions fail on the pre-Unit-3 command bodies'
+  if [ "$n_pre" -eq 16 ]; then
+    ok 'Tpre all 16 assertions fail on the pre-Unit-3 command bodies'
   else
-    bad 'Tpre all 14 assertions fail on the pre-Unit-3 command bodies' "failed $n_pre: $pre_fail"
+    bad 'Tpre all 16 assertions fail on the pre-Unit-3 command bodies' "failed $n_pre: $pre_fail"
   fi
 
   # Tpre5 is the sharper baseline, and it is what makes this correction's red
@@ -81,15 +81,15 @@ if [ "$pre_ok" -eq 1 ]; then
     git -C "$WF" show "a8671275:workflows/research-workflow/.claude/commands/$f.md" > "$PRE5/$f.md" 2>/dev/null || ok5=0
   done
   if [ "$ok5" -eq 1 ]; then
-    want5='S1a-prose-draft-gate,S1b-prose-draft-consume,S2a-formatting-gate,S2b-formatting-consume,S3-final-qc-fidelity,S4-section-mode-exempt'
+    want5='S1a-prose-draft-gate,S1b-prose-draft-consume,S2a-formatting-gate,S2b-formatting-consume,S3-final-qc-fidelity,S4-section-mode-exempt,S5-stage3-result-returned,S6-stage3-fail-blocks'
     got5="$(failing "$PRE5")"
     if [ "$got5" = "$want5" ]; then
-      ok 'Tpre5 at Unit 3 accepted, exactly the six Stage-5 assertions fail and Stage 3-4 passes'
+      ok 'Tpre5 at Unit 3 accepted, exactly the eight Stage-5 assertions fail and Stage 3-4 passes'
     else
-      bad 'Tpre5 at Unit 3 accepted, exactly the six Stage-5 assertions fail and Stage 3-4 passes' "got=[$got5]"
+      bad 'Tpre5 at Unit 3 accepted, exactly the eight Stage-5 assertions fail and Stage 3-4 passes' "got=[$got5]"
     fi
   else
-    bad 'Tpre5 at Unit 3 accepted, exactly the six Stage-5 assertions fail' 'could not read a8671275'
+    bad 'Tpre5 at Unit 3 accepted, exactly the eight Stage-5 assertions fail' 'could not read a8671275'
   fi
 
   CLAIMY="$TMP/claimy"; mkdir -p "$CLAIMY"; cp "$PRE"/*.md "$CLAIMY/"
@@ -104,7 +104,7 @@ if [ "$pre_ok" -eq 1 ]; then
     bad 'T0b  prose asserting the owners consume judgment moves no verdict' "moved to: $(failing "$CLAIMY")"
   fi
 else
-  bad 'Tpre all 14 assertions fail on the pre-Unit-3 command bodies' "could not read the baseline from $PRE_REF"
+  bad 'Tpre all 16 assertions fail on the pre-Unit-3 command bodies' "could not read the baseline from $PRE_REF"
   bad 'T0b  prose asserting the owners consume judgment moves no verdict' 'skipped — no baseline'
 fi
 
@@ -191,6 +191,21 @@ mutate 'SM  a Stage 5 gate loses its section-mode exemption' S4-section-mode-exe
 # producers' account of it.
 sq_prog='index($0, "**Required use of approved judgment:**") > 0 { n++; if (n == 2) { print "**Required use of approved judgment:** add a STAGE 3 — House View fidelity check covering thesis trace continuity, authority drift and evidence-permission overreach."; next } } { print }'
 mutate 'SQ  the final QC may rest on the producers accounts' S3-final-qc-fidelity produce-formatting "$sq_prog"
+
+# --- SR / SF: the House View result must reach the route ------------------
+# Two INDEPENDENT mutations, because the two failures are independent. SR leaves
+# the routing branch intact and removes the result the branch reads; SF leaves the
+# result intact and removes the branch. Either one alone puts the command back in
+# the state the correction was found in: a reviewer identifying authority drift
+# while the main route proceeds to handoff with a clean verdict.
+sr_prog='index($0, "stage_3_verdict") > 0 && index($0, "report-mode only") > 0 { next } { print }'
+mutate 'SR  the Stage 3 result is never returned to the main session' S5-stage3-result-returned produce-formatting "$sr_prog"
+
+# Anchor on text unique to the ROUTING line. `stage_3_verdict: FAIL` also appears
+# in the return contract (the could-not-run clause), and matching that would
+# delete both lines — collapsing two independent mutations into one.
+sf_prog='index($0, "this route does not reach handoff") > 0 { next } { print }'
+mutate 'SF  a Stage 3 FAIL has no routing branch and reaches handoff' S6-stage3-fail-blocks produce-formatting "$sf_prog"
 
 printf '\n=== the helper those gates call refuses the right states ===\n'
 

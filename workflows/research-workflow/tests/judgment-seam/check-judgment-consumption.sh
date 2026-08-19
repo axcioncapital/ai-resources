@@ -240,6 +240,38 @@ else
   record S3-final-qc-fidelity FAIL "final editorial-integration QC: ${s3%; }"
 fi
 
+# S5 — the House View check's RESULT reaches the route. S3 proves the instruction
+# exists. An instruction whose output is not required, whose result is not
+# returned as its own field, and which no routing branch reads, is a reviewer
+# finding drift into a working file nobody acts on — the report reaches handoff
+# as a clean result either way. Two separate seams, because closing one does not
+# close the other.
+s5=""
+has "$fqc" 'Stage 1, then Stage 2, then STAGE 3|Stage 1, then Stage 2, then House View' \
+  || s5="${s5}the task summary must execute Stage 3 in report mode; "
+has "$fqc" 'Stage 3 House View findings' || s5="${s5}the working file must carry a distinct Stage 3 findings group; "
+has "$fqc" 'stage_3_verdict' || s5="${s5}the return must carry a distinct stage_3_verdict field; "
+has "$fqc" 'stage_3_(fidelity|trace|drift)_count' || s5="${s5}the return must carry the Stage 3 finding counts; "
+if [ -z "$s5" ]; then
+  record S5-stage3-result-returned PASS 'Stage 3 is executed, written as its own group and returned as its own fields'
+else
+  record S5-stage3-result-returned FAIL "${s5%; }"
+fi
+
+# S6 — a Stage 3 FAIL cannot reach handoff. Separate from S5: a result can be
+# returned in full and still be routed nowhere.
+route="$(region "$FORMAT_CMD" '^9\. Route on findings:' '^10\. ')"
+s6=""
+has "$route" 'stage_3_verdict' || s6="${s6}the routing must branch on stage_3_verdict; "
+has "$route" 'FAIL' || s6="${s6}the routing must name the FAIL case; "
+has "$route" '[Hh]alt' || s6="${s6}a Stage 3 FAIL must halt rather than proceed; "
+has "$route" 'operator' || s6="${s6}a Stage 3 FAIL must reach the operator; "
+if [ -z "$s6" ]; then
+  record S6-stage3-fail-blocks PASS 'a Stage 3 FAIL halts before handoff and reaches the operator'
+else
+  record S6-stage3-fail-blocks FAIL "${s6%; }"
+fi
+
 # S4 — the section-mode control. Both Stage 5 gates must be explicitly scoped to
 # report mode and must say section mode acquires no judgment prerequisite.
 s4=""
