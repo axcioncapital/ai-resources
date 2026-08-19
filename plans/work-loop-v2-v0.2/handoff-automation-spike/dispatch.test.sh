@@ -5398,17 +5398,28 @@ if [ -f "$WL_ARGV_FILE" ]; then
       && bad "no $f without --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
       || ok "no $f without --unattended"
   done
-  # The stream-json switch is scoped to the contained path and nowhere else.
-  # Attended and courier hops keep the compact single-object capture they have
-  # always had, so required outcome 3 stays true after this change.
-  argv_has "$WL_ARGV_FILE" "json" \
-    && ok "an attended hop still uses --output-format json" \
-    || bad "an attended hop still uses --output-format json" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  # INVERTED AT UNIT 26, and it is a replacement rather than a relaxation. These
+  # three assertions used to read "an attended hop still uses --output-format
+  # json" and "no stream-json / no --verbose without --unattended", and they were
+  # correct while the contained profile was the only reason to pay for a stream.
+  # It is not any more: `system/init` is the only surface carrying the permission
+  # mode the child ACTUALLY ran under, so the attended path needs the same format
+  # for a reason of its own. The opposite claim is now asserted, and the plain
+  # json format must be gone from this argv entirely.
+  #
+  # WHAT THE INVERSION MUST NOT SWALLOW is asserted immediately below: the
+  # contained profile's four flags are still absent here (the loop above), and the
+  # explicit permission request is still present. A format change that also
+  # dragged --settings or --tools onto the attended path would be the widening
+  # case 32 exists to refuse, wearing a capture fix's name.
   for f in "stream-json" "--verbose"; do
     argv_has "$WL_ARGV_FILE" "$f" \
-      && bad "no $f without --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
-      || ok "no $f without --unattended"
+      && ok "an attended hop now uses $f (the capture must carry system/init)" \
+      || bad "an attended hop now uses $f" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
   done
+  argv_has "$WL_ARGV_FILE" "json" \
+    && bad "the plain json output format is gone from the attended launch" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+    || ok "the plain json output format is gone from the attended launch"
   # "Unchanged" now means unchanged EXCEPT the explicit permission mode (P0-F).
   # The attended correction is a Claude permission policy; --unattended is OS
   # containment. This case is where the two are kept distinct, so the attended
@@ -5534,6 +5545,9 @@ echo "Case 32n — the stream-json assertions can actually fail"
 #
 # So this builds a dispatcher that has --unattended and has REGRESSED the output
 # format back to --output-format json, and asserts case 32's three checks flip.
+# Since Unit 26 the sed matches BOTH launch branches, so the mutant regresses the
+# attended path too. That is harmless here — every assertion below reads the
+# UNATTENDED argv — and it is stated rather than left to be rediscovered.
 # That regression matters more than it looks: without stream-json the hop capture
 # carries no system/init event, and the live probe loses the only surface on
 # which the effective tool roster and MCP absence can be measured rather than
@@ -6295,10 +6309,11 @@ HB="$(res_field "$R50" head_before)"
 [ -n "$(res_field "$R50" next_action)" ] \
   && ok "50a — a next required action is recorded" \
   || bad "50a — a next required action is recorded"
-# THE UNAVAILABLE FACTS ARE STATED, NOT OMITTED AND NOT GUESSED. These three are
-# not established anywhere in this dispatcher today. Recording the requested
-# permission mode while leaving the effective one unavailable is the distinction
-# the plan draws between evidence and authorization.
+# THE UNAVAILABLE FACTS ARE STATED, NOT OMITTED AND NOT GUESSED. The first two are
+# not established anywhere in this dispatcher today. The third is establishable
+# since Unit 26 but not HERE: this row is a SIMULATED hop, and a stub's output is
+# not the product's own system/init event, so `unavailable` is the truthful answer
+# rather than a placeholder. Case 72g asserts that same guard deliberately.
 for k in recorded_usage actor_session_id permission_mode_effective; do
   [ "$(res_field "$R50" "$k")" = "unavailable" ] \
     && ok "50a — $k is explicitly unavailable" \
@@ -9941,8 +9956,13 @@ fi
 [ "$(res_field "$R60H" actor)" = none ] \
   && ok "60h — and actor stays none: no process is in flight at the carried terminal" \
   || bad "60h — and actor stays none" "got: $(res_field "$R60H" actor)"
-# Requested is never promoted to effective. Nothing here reads the child's own
-# system/init event, so the effective mode stays the bounded unavailable token.
+# Requested is never promoted to effective. Since Unit 26 the dispatcher DOES read
+# the child's own system/init event — but FAKE60H emits nothing on stdout, so this
+# hop's capture carries no init event and the honest answer is still the bounded
+# unavailable token. That is the assertion: a reader that fell back to the request
+# on an absent event would report `default` here, which is exactly the promotion
+# the field exists to refuse. Case 72d covers the same guard across every
+# unresolvable capture shape.
 [ "$(res_field "$R60H" permission_mode_effective)" = unavailable ] \
   && ok "60h — the effective mode is still unavailable, not derived from the request" \
   || bad "60h — the effective mode is still unavailable" "got: $(res_field "$R60H" permission_mode_effective)"
@@ -12314,9 +12334,11 @@ R71B="$d/runs/$(run_id_of "$OUT").result"
 [ "$(res_field "$R71B" permission_mode_requested)" = "acceptEdits" ] \
   && ok "71b — permission_mode_requested=acceptEdits" \
   || bad "71b — permission_mode_requested=acceptEdits" "got: $(res_field "$R71B" permission_mode_requested)"
-# THE HONEST HALF. Requesting a mode is not observing one, and this unit adds no
-# reader for the child's system/init event. A record that promoted the request to
-# an effective grant would be the single most tempting false statement here.
+# THE HONEST HALF. Requesting a mode is not observing one. FAKE2 emits no stream,
+# so there is no system/init event to read here even after Unit 26 added the
+# reader — and a record that promoted the request to an effective grant would be
+# the single most tempting false statement available. Case 72 is where the reader
+# is exercised against captures that do carry the event.
 [ "$(res_field "$R71B" permission_mode_effective)" = "unavailable" ] \
   && ok "71b — permission_mode_effective stays honestly unavailable" \
   || bad "71b — permission_mode_effective stays honestly unavailable" \
@@ -12411,6 +12433,286 @@ else
       "sed matched nothing; the launch argv site was renamed or removed"
 fi
 unset WL_ARGV_FILE WL_ENV_FILE WL_SF WL_CO WL_FAKE_VERSION
+
+# ============================ Case 72 — the EFFECTIVE attended permission mode
+#
+# Unit 26, Change set B. `permission_mode_requested` became truthful at Unit 24,
+# but `permission_mode_effective` was the literal `unavailable` on every path — so
+# the record could say what was ASKED FOR and never whether it was HONOURED, which
+# is the question a supervised-use claim actually turns on.
+#
+# WHAT THESE CASES PROVE, and the boundary is worth stating because it is narrow:
+# that the dispatcher reads the RUNTIME-AUTHORED `system/init` event out of the hop
+# capture, reports it as the effective mode, and refuses every shape it cannot
+# resolve. They do NOT prove that the real Claude Code runtime reports `acceptEdits`
+# there — that needs a live paid launch and is deferred by the brief. Unit 25's
+# committed evidence is what stands behind the field's meaning; these cases stand
+# behind this dispatcher's handling of it.
+#
+# THE TWO NEGATIVE CONTROLS ARE THE FIXTURE GROUPS THEMSELVES, so no mutation
+# harness is built here:
+#   * a dispatcher that IGNORED system/init fails 72a, 72b and 72c — all three
+#     would report `unavailable` where a mode is present in the stream;
+#   * a dispatcher that FELL BACK to the requested mode fails every row of 72d,
+#     each of which is launched with --permission-mode acceptEdits precisely so
+#     that `unavailable` and the request are distinguishable tokens.
+# 72c is the sharpest of the three: the stream says `default` while the argv says
+# `acceptEdits`, so a record that conflated the two cannot pass it in either
+# direction.
+#
+# The stub is the FAKE60H technique — a live fake BINARY, so MODE stays `live` and
+# a real child is forked while no model is contacted — extended by the one thing
+# these cases need: it emits a stream on stdout, which becomes the hop capture.
+
+FAKE72="$SANDBOX_ROOT/fake-claude-72.sh"
+cat >"$FAKE72" <<'F72EOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.220 (Claude Code)"; exit 0; fi
+printf '%s\n' "$@" > "$WL72_ARGV"
+sf="$WL72_SF"
+awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+git -C "$WL72_CO" add "$sf" >/dev/null 2>&1
+git -C "$WL72_CO" commit -qm "fake claude hop" >/dev/null 2>&1
+# THE CAPTURE. Written last, so it cannot be mistaken for something the dispatcher
+# composed: this is the child's own stdout, exactly as a real stream-json hop
+# produces it, and $WL72_STREAM is the only thing that varies between rows.
+[ -n "${WL72_STREAM:-}" ] && [ -f "$WL72_STREAM" ] && cat "$WL72_STREAM"
+exit 0
+F72EOF
+chmod +x "$FAKE72"
+
+# One `system/init` line in the shape the committed probe recorded — see
+# runs/probes/unattended-effective-policy-2026-08-07.raw.txt line 271, whose key
+# set this mirrors. The argument is the RAW JSON value of permissionMode, so a row
+# can hand it a string, a number, null, an object or nothing at all.
+init72() { printf '{"type":"system","subtype":"init","cwd":"/x","session_id":"s72","model":"claude-x","tools":["Bash","Skill"],"mcp_servers":[],"permissionMode":%s,"uuid":"u72"}\n' "$1"; }
+# The stream's terminal event, key-for-key what --output-format json used to emit
+# as its single object. Its presence in every row is the compatibility claim.
+res72()  { printf '{"type":"result","subtype":"success","is_error":false,"session_id":"s72","result":"done","permission_denials":%s,"usage":{"input_tokens":1}}\n' "${1:-[]}"; }
+
+run72() { # sandbox task stream-file [extra dispatcher args...] -> $OUT, $RC
+  local d="$1" t="$2" s="$3"; shift 3
+  export WL72_SF="$d/logs/work-loop/$t.md" WL72_CO="$d" WL72_STREAM="$s"
+  export WL72_ARGV="$SANDBOX_ROOT/argv72-$t.txt"; rm -f "$WL72_ARGV"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task "$t" --log-dir "$d/runs" \
+        --carry-one --claude-bin "$FAKE72" "$@" 2>&1)"; RC=$?
+}
+eff72() { res_field "$1" permission_mode_effective; }
+
+echo
+echo "Case 72a — a runtime-authored acceptEdits reaches the record as the EFFECTIVE mode"
+# THE TARGETED FAILING CASE the brief names: before the edit this row reported
+# `unavailable` while the stream said `acceptEdits`.
+d="$(new_sandbox)"; state_file "$d" "eff-accept-task" "claude"
+S72A="$SANDBOX_ROOT/stream-72a.jsonl"; { init72 '"acceptEdits"'; res72; } >"$S72A"
+run72 "$d" eff-accept-task "$S72A" --permission-mode acceptEdits
+expect_rc 0 "$RC" "72a — the live attended hop is carried" "$OUT"
+R72A="$d/runs/$(run_id_of "$OUT").result"
+# The preconditions, asserted apart from the field under test so a row that never
+# reached the live attended branch cannot pass for the wrong reason.
+if [ "$(res_field "$R72A" mode)" = live ] &&
+   [ "$(res_field "$R72A" stage)" = post-hop ] &&
+   [ "$(res_field "$R72A" actor_launched)" = yes ]; then
+  ok "72a — the row really is a live, post-hop, attended Claude terminal"
+else
+  bad "72a — the row really is a live, post-hop, attended Claude terminal" \
+      "mode=$(res_field "$R72A" mode) stage=$(res_field "$R72A" stage) launched=$(res_field "$R72A" actor_launched)"
+fi
+[ "$(eff72 "$R72A")" = acceptEdits ] \
+  && ok "72a — permission_mode_effective=acceptEdits, read from system/init" \
+  || bad "72a — permission_mode_effective=acceptEdits, read from system/init" \
+         "got: $(eff72 "$R72A") — the capture at $(res_field "$R72A" capture) carries permissionMode acceptEdits"
+[ "$(res_field "$R72A" permission_mode_requested)" = acceptEdits ] \
+  && ok "72a — and the requested mode is still reported independently" \
+  || bad "72a — and the requested mode is still reported independently" \
+         "got: $(res_field "$R72A" permission_mode_requested)"
+
+echo
+echo "Case 72b — a runtime-authored default reaches the record too"
+d="$(new_sandbox)"; state_file "$d" "eff-default-task" "claude"
+S72B="$SANDBOX_ROOT/stream-72b.jsonl"; { init72 '"default"'; res72; } >"$S72B"
+run72 "$d" eff-default-task "$S72B"
+expect_rc 0 "$RC" "72b — the live attended hop is carried with no --permission-mode" "$OUT"
+R72B="$d/runs/$(run_id_of "$OUT").result"
+[ "$(eff72 "$R72B")" = default ] \
+  && ok "72b — permission_mode_effective=default" \
+  || bad "72b — permission_mode_effective=default" "got: $(eff72 "$R72B")"
+[ "$(res_field "$R72B" permission_mode_requested)" = default ] \
+  && ok "72b — permission_mode_requested=default" \
+  || bad "72b — permission_mode_requested=default" "got: $(res_field "$R72B" permission_mode_requested)"
+
+echo
+echo "Case 72c — the two fields are independently sourced, and disagree when reality does"
+# The load-bearing row. The argv asks for acceptEdits; the runtime reports it ran
+# under default. A dispatcher that derived either field from the other CANNOT pass
+# this in either direction, which is what makes 72a and 72b more than tautologies.
+d="$(new_sandbox)"; state_file "$d" "eff-split-task" "claude"
+S72C="$SANDBOX_ROOT/stream-72c.jsonl"; { init72 '"default"'; res72; } >"$S72C"
+run72 "$d" eff-split-task "$S72C" --permission-mode acceptEdits
+expect_rc 0 "$RC" "72c — the hop is carried" "$OUT"
+R72C="$d/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R72C" permission_mode_requested)" = acceptEdits ] &&
+   [ "$(eff72 "$R72C")" = default ]; then
+  ok "72c — requested=acceptEdits while effective=default: neither field is derived from the other"
+else
+  bad "72c — requested=acceptEdits while effective=default" \
+      "requested=$(res_field "$R72C" permission_mode_requested) effective=$(eff72 "$R72C")"
+fi
+
+echo
+echo "Case 72d — every unresolvable capture shape fails closed to unavailable"
+# EVERY ROW IS LAUNCHED WITH --permission-mode acceptEdits, so `unavailable` and
+# the requested mode are different tokens and a silent fallback is visible.
+# Each shape is a different branch of the reader, not the same one restated.
+i=0
+while IFS='|' read -r label body; do
+  [ -n "$label" ] || continue
+  i=$((i+1))
+  d="$(new_sandbox)"; state_file "$d" "eff-neg-task" "claude"
+  S="$SANDBOX_ROOT/stream-72d-$i.jsonl"
+  case "$label" in
+    absent-init)    res72 >"$S" ;;
+    absent-key)     { printf '{"type":"system","subtype":"init","cwd":"/x","uuid":"u72"}\n'; res72; } >"$S" ;;
+    conflicting)    { init72 '"default"'; init72 '"acceptEdits"'; res72; } >"$S" ;;
+    unparseable)    { printf 'not json at all\n'; res72; } >"$S" ;;
+    empty-capture)  : >"$S" ;;
+    *)              { init72 "$body"; res72; } >"$S" ;;
+  esac
+  run72 "$d" eff-neg-task "$S" --permission-mode acceptEdits
+  R="$d/runs/$(run_id_of "$OUT").result"
+  if [ "$(eff72 "$R")" = unavailable ] &&
+     [ "$(res_field "$R" permission_mode_requested)" = acceptEdits ]; then
+    ok "72d — $label: effective=unavailable while requested stays acceptEdits"
+  else
+    bad "72d — $label: effective=unavailable while requested stays acceptEdits" \
+        "effective=$(eff72 "$R") requested=$(res_field "$R" permission_mode_requested)"
+  fi
+done <<'NEG72'
+absent-init|
+absent-key|
+non-string-number|7
+non-string-null|null
+non-string-bool|true
+non-string-object|{"mode":"acceptEdits"}
+non-string-array|["acceptEdits"]
+empty-string|""
+conflicting|
+unparseable|
+empty-capture|
+NEG72
+
+echo
+echo "Case 72e — the new format preserves denial extraction and the final result"
+# The compatibility claim, and the one the brief says to hand back on if it fails:
+# stream-json is a SUPERSET of the json object the attended path used to capture,
+# so the two things already read out of a capture must still be readable.
+d="$(new_sandbox)"; state_file "$d" "eff-denial-task" "claude"
+S72E="$SANDBOX_ROOT/stream-72e.jsonl"
+{ init72 '"default"'
+  res72 '[{"tool_name":"Bash","tool_use_id":"toolu_72","tool_input":{"command":"git commit -m wip"}}]'
+} >"$S72E"
+run72 "$d" eff-denial-task "$S72E"
+expect_rc 37 "$RC" "72e — a denial in the STREAM's result event still exits 37" "$OUT"
+printf '%s' "$OUT" | grep -Fq "git commit -m wip" \
+  && ok "72e — the exact denied target survives the format change" \
+  || bad "72e — the exact denied target survives the format change" "$OUT"
+R72E="$d/runs/$(run_id_of "$OUT").result"
+[ "$(tail -1 "$R72E" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "72e — the 37 terminal still finalizes a complete record" \
+  || bad "72e — the 37 terminal still finalizes a complete record" "last line: $(tail -1 "$R72E" 2>/dev/null)"
+# And the effective mode is recorded at that terminal too — a stop is still a
+# terminal, and the observation exists by the time it is written.
+[ "$(eff72 "$R72E")" = default ] \
+  && ok "72e — and the denial terminal still records the effective mode" \
+  || bad "72e — and the denial terminal still records the effective mode" "got: $(eff72 "$R72E")"
+# The clean control: without denials the same stream carries the hop normally and
+# the named capture is really on disk.
+d="$(new_sandbox)"; state_file "$d" "eff-clean-task" "claude"
+run72 "$d" eff-clean-task "$S72B"
+expect_rc 0 "$RC" "72e — a clean stream carries the hop with no denial stop" "$OUT"
+R72E2="$d/runs/$(run_id_of "$OUT").result"
+[ -f "$(res_field "$R72E2" capture)" ] \
+  && ok "72e — the record names a capture that exists on disk" \
+  || bad "72e — the record names a capture that exists on disk" "got: $(res_field "$R72E2" capture)"
+
+echo
+echo "Case 72f — the attended argv carries the new format and nothing else moved"
+argv_has "$WL72_ARGV" "stream-json" \
+  && ok "72f — the attended launch uses --output-format stream-json" \
+  || bad "72f — the attended launch uses --output-format stream-json" \
+         "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)"
+argv_has "$WL72_ARGV" "--verbose" \
+  && ok "72f — --verbose accompanies it (required under --print)" \
+  || bad "72f — --verbose accompanies it" "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)"
+argv_has "$WL72_ARGV" "json" \
+  && bad "72f — the plain json output format is gone from the attended launch" \
+         "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)" \
+  || ok "72f — the plain json output format is gone from the attended launch"
+# THE PROPERTIES THE BRIEF SAYS MUST BE PRESERVED. A format change that also
+# dropped the permission request or the nested-actor denies would be a widening
+# wearing a capture fix's name.
+argv_pair "$WL72_ARGV" "--permission-mode" "default" \
+  && ok "72f — the explicit permission request is untouched" \
+  || bad "72f — the explicit permission request is untouched" \
+         "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)"
+argv_has "$WL72_ARGV" "--disallowedTools" \
+  && ok "72f — the nested-actor deny set is untouched" \
+  || bad "72f — the nested-actor deny set is untouched" \
+         "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)"
+grep -q -- "dangerously-skip-permissions" "$WL72_ARGV" \
+  && bad "72f — no bypass flag appears on the new attended argv" \
+         "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)" \
+  || ok "72f — no bypass flag appears on the new attended argv"
+
+echo
+echo "Case 72g — the three guards that keep the observation attended, live and Claude's"
+# Each row is answered by a DIFFERENT guard in result_permission_mode_effective(),
+# so a repair that collapsed the function to a constant is caught by whichever row
+# it stopped answering. All three hand the dispatcher a capture that DOES contain a
+# readable system/init event, so the guard is what produces `unavailable` — not an
+# absent fixture.
+d="$(new_sandbox)"; state_file "$d" "eff-unatt-task" "claude"
+run72 "$d" eff-unatt-task "$S72B" --unattended
+expect_rc 0 "$RC" "72g — the unattended hop is carried" "$OUT"
+R72G1="$d/runs/$(run_id_of "$OUT").result"
+[ "$(eff72 "$R72G1")" = unavailable ] \
+  && ok "72g — unattended: the contained profile is untouched by this unit" \
+  || bad "72g — unattended: the contained profile is untouched by this unit" "got: $(eff72 "$R72G1")"
+d="$(new_sandbox)"; state_file "$d" "eff-sim-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task eff-sim-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd 'awk "/^turn: /&&!d{print \"turn: codex\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; git -C "$WL_CHECKOUT" add -A >/dev/null 2>&1; git -C "$WL_CHECKOUT" commit -qm sim >/dev/null 2>&1; cat "'"$S72B"'"' 2>&1)"; RC=$?
+expect_rc 0 "$RC" "72g — the simulated hop is carried" "$OUT"
+R72G2="$d/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R72G2" mode)" = simulated ] && [ "$(eff72 "$R72G2")" = unavailable ]; then
+  ok "72g — simulated: a stub's stream is not the product's own init event"
+else
+  bad "72g — simulated: a stub's stream is not the product's own init event" \
+      "mode=$(res_field "$R72G2" mode) effective=$(eff72 "$R72G2")"
+fi
+d="$(new_sandbox)"; state_file "$d" "eff-codex-task" "codex"
+export WL72_SF="$d/logs/work-loop/eff-codex-task.md" WL72_CO="$d"
+FAKE72X="$SANDBOX_ROOT/fake-codex-72.sh"
+cat >"$FAKE72X" <<'F72XEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "0.0.0-fake-codex (test double)"; exit 0; fi
+sf="$WL72_SF"
+awk '/^turn: /&&!d{print "turn: claude"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+cat "$WL72_STREAM"
+exit 0
+F72XEOF
+chmod +x "$FAKE72X"
+export WL72_STREAM="$S72B"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task eff-codex-task --log-dir "$d/runs" \
+      --carry-one --codex-bin "$FAKE72X" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "72g — the live Codex hop is carried" "$OUT"
+R72G3="$d/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R72G3" mode)" = live ] && [ "$(eff72 "$R72G3")" = unavailable ]; then
+  ok "72g — live Codex: no permission mode is observed for an actor that has none"
+else
+  bad "72g — live Codex: no permission mode is observed for an actor that has none" \
+      "mode=$(res_field "$R72G3" mode) effective=$(eff72 "$R72G3")"
+fi
+unset WL72_SF WL72_CO WL72_STREAM WL72_ARGV
 
 # ==================================================================== done
 echo

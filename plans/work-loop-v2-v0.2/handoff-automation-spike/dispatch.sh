@@ -59,8 +59,10 @@
 #                       of which can carry a mode: requesting an elevation those
 #                       paths would silently drop is refused, not dropped.
 #                       Recorded as permission_mode_requested. The EFFECTIVE mode
-#                       stays `unavailable` — only the child's own system/init
-#                       event establishes that, and nothing here reads it yet.
+#                       is recorded separately as permission_mode_effective, read
+#                       from the child's own system/init event and NEVER from this
+#                       request; a hop whose capture does not establish it reports
+#                       `unavailable` rather than restating what was asked for.
 #
 # ATTENDED PERMISSION POLICY (P0-F, 2026-08-09; selection added 2026-08-19).
 # Every attended Claude hop is launched with an EXPLICIT `--permission-mode`,
@@ -512,6 +514,15 @@ LOG_REL=""
 # a lookalike file cannot supply the framing, because finalization happens after
 # the actor is gone and replaces whatever is at the run-bound path.
 #
+# ONE FIELD IS READ OUT OF THE HOP CAPTURE, and the sentence above still holds
+# because of what it reads and how. permission_mode_effective comes from the
+# RUNTIME-AUTHORED `system/init` event — a statement the product makes about its
+# own resolved configuration, not prose the model wrote — and the reader accepts
+# only a single short token of a fixed shape, rejecting everything else to
+# `unavailable`. So no capture byte outside that shape can reach the record, and
+# the actor still cannot supply a value of its own choosing. The distinction and
+# its limits are argued at attended_effective_permission_mode().
+#
 # A FACT THAT IS NOT ESTABLISHED IS STATED, NEVER OMITTED AND NEVER GUESSED. Two
 # bounded tokens carry that, and they are not synonyms:
 #   unavailable — this dispatcher cannot establish the fact at this terminal
@@ -690,8 +701,11 @@ result_next_action() { # code -> token
 # not asked for.
 #
 # THE EFFECTIVE MODE IS NEVER DERIVED FROM THIS. Only the child's own system/init
-# event establishes what it actually ran under, and nothing in this dispatcher
-# reads it, so permission_mode_effective is unconditionally `unavailable` below.
+# event establishes what it actually ran under, and the reader that consumes that
+# event (attended_effective_permission_mode(), below) has no path back to this
+# variable, this argv, the settings layers or the terminal `result` event. The two
+# fields are independently sourced, and a hop whose capture does not establish the
+# effective mode reports `unavailable` rather than this value.
 # Promoting a requested property to an effective one is the single most tempting
 # false statement available here, and recording the request is evidence reporting
 # — not authorization, and not Change set B's transport work.
@@ -722,6 +736,169 @@ result_permission_mode_requested() {
   # way this field earns its place next to the honest `unavailable` effective
   # mode below.
   printf '%s' "$PERMISSION_MODE"
+}
+
+# ---------------------------- the EFFECTIVE attended permission mode (Unit 26)
+#
+# WHAT THIS ANSWERS. Which permission mode the attended child's runtime ACTUALLY
+# resolved for the hop — as distinct from the mode this dispatcher asked for one
+# function up. Until now the record stated `unavailable` unconditionally, which was
+# honest and useless: `permission_mode_requested` alone cannot tell an operator
+# whether the request was honoured, and that is the whole question a supervised-use
+# claim turns on.
+#
+# THE ONE ADMISSIBLE SOURCE, and why it is admissible. `permissionMode` is a
+# top-level key of the child's own `system/init` event — the first line the Claude
+# Code runtime emits under `--output-format stream-json`. Two committed proofs make
+# it an observation rather than an echo of our own argv (Unit 25):
+#
+#   * runs/probes/unattended-effective-policy-2026-08-07.raw.txt line 271 reports
+#     `"permissionMode":"default"` on the UNATTENDED branch, which passes no
+#     --permission-mode at all. There was no argv for it to copy.
+#   * The P0-F record read the same field as `bypassPermissions` BEFORE the
+#     explicit flag existed and `default` after it — the red half being the
+#     checkout's inherited settings default, which an argv restatement could not
+#     have produced.
+#
+# WHAT IT MUST NEVER READ, stated as a list because each one is a plausible repair
+# that would silently turn this field back into the request: PERMISSION_MODE, the
+# launch argv, any settings layer, the actor's prose, and the terminal `result`
+# event. The event selector below is `type == "system" and subtype == "init"`, so
+# the terminal result is excluded structurally rather than by convention.
+#
+# IT FAILS CLOSED, IN THE REPORTING DIRECTION. Absent init event, absent key,
+# non-string value, conflicting values across two events, an unreadable capture,
+# no usable parser — every one of them yields `unavailable`. Falling back to the
+# requested mode on any of those paths is the exact promotion the function above
+# forbids, and it is the failure this unit's negative fixtures are aimed at.
+#
+# DEFINED HERE, WITH THE TERMINAL-RESULT DEPENDENCIES, and not beside
+# permission_denials_in() where the other capture reader lives. The reason is the
+# one remaining_seconds() states in full further down: finalize_terminal_result()
+# calls this, and a producer defined below the run-evidence block does not yet
+# exist at the terminals that finalize above it — which sends the field out EMPTY
+# beside `result_complete=yes`, a record certifying itself complete while missing a
+# required field.
+
+# One line per `system/init` event in the capture: the event's `permissionMode`
+# where it is a JSON string, and the single character `-` where the key is absent,
+# null, or any non-string type. `-` cannot be mistaken for a real answer because
+# the resolver below accepts only a value that STARTS WITH A LETTER — so a capture
+# holding one readable and one unreadable init event is two distinct lines, and
+# resolves to `unavailable` rather than to whichever one happened to parse.
+#
+# `jq -s` slurps a one-object capture and a line-per-event stream alike, exactly as
+# denials_via_jq() does, so this reader is not tied to the format of the moment.
+init_modes_via_jq() { # capture -> lines on stdout; NONZERO if jq itself is unusable
+  command -v jq >/dev/null 2>&1 || return 1
+  jq -r -s '
+    .[]
+    | select(type == "object")
+    | select(.type == "system" and .subtype == "init")
+    | if (.permissionMode | type) == "string" then .permissionMode else "-" end
+  ' "$1" 2>/dev/null
+}
+
+# The same extraction without jq. Kept behaviourally identical line for line —
+# including the `-` sentinel and the treatment of a boolean as a non-string — so
+# the two tiers cannot report the same capture differently. Deliberately a real
+# JSON parse rather than a regex: a pattern-matched "mode" read out of a capture
+# that also carries arbitrary tool input would be a worse answer than `unavailable`.
+init_modes_via_python() { # capture -> lines on stdout; NONZERO if python3 is unusable
+  command -v python3 >/dev/null 2>&1 || return 1
+  python3 - "$1" <<'PYEOF' 2>/dev/null
+import json, sys
+
+raw = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+
+docs = []
+try:
+    docs.append(json.loads(raw))                  # --output-format json
+except ValueError:
+    for line in raw.splitlines():                 # --output-format stream-json
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            docs.append(json.loads(line))
+        except ValueError:
+            pass                                  # fails safe, as the jq filter does
+
+for d in docs:
+    if not isinstance(d, dict):
+        continue
+    if d.get("type") != "system" or d.get("subtype") != "init":
+        continue
+    v = d.get("permissionMode")
+    print(v if isinstance(v, str) and not isinstance(v, bool) else "-")
+PYEOF
+}
+
+# The capture -> one bounded token. This is the whole of the trust boundary.
+attended_effective_permission_mode() { # capture-path -> mode | unavailable
+  local cap="${1:-}" raw v
+  [ -n "$cap" ] && [ -f "$cap" ] && [ -r "$cap" ] && [ -s "$cap" ] \
+    || { printf 'unavailable'; return 0; }
+
+  # A parser that FAILS falls through to the next rather than being trusted for
+  # its empty output — the same distinction permission_denials_in() draws, and for
+  # the same reason: jq exits 0 with no output when a capture genuinely holds no
+  # init event, and non-zero when it cannot read the file at all. Reading the
+  # second as the first would report `unavailable` for a broken parser and for a
+  # missing event alike, which is true here but only by accident; when the tiers
+  # differ it matters, so the fall-through is explicit.
+  if raw="$(init_modes_via_jq "$cap")"; then :
+  elif raw="$(init_modes_via_python "$cap")"; then :
+  else printf 'unavailable'; return 0
+  fi
+
+  # ONE CONSISTENT VALUE OR NOTHING. Repeats of the same value are one fact; two
+  # different values are a capture this dispatcher cannot resolve. A first-wins
+  # reading was the available alternative and it is worse: it would let a second
+  # init event disagree with the recorded answer and leave no trace of it.
+  v="$(printf '%s\n' "$raw" | grep -v '^[[:space:]]*$' | LC_ALL=C sort -u)"
+  case "$v" in
+    '')      printf 'unavailable'; return 0 ;;   # no system/init event at all
+    *$'\n'*) printf 'unavailable'; return 0 ;;   # conflicting or multi-line values
+  esac
+
+  # A BOUNDED TOKEN, NOT RAW CAPTURE CONTENT. The record's own contract is that no
+  # capture bytes reach it (see the note above finalize_terminal_result), and this
+  # is what keeps that true while still reading a value: a mode is a short
+  # identifier, so anything that is not one is refused whole rather than truncated
+  # into the record. tr_val() would bound the length anyway; this bounds the SHAPE,
+  # which is the part tr_val cannot judge.
+  case "$v" in
+    [[:alpha:]]*) ;;
+    *) printf 'unavailable'; return 0 ;;
+  esac
+  case "$v" in
+    *[![:alnum:]_-]*) printf 'unavailable'; return 0 ;;
+  esac
+  [ "${#v}" -le 32 ] || { printf 'unavailable'; return 0; }
+
+  printf '%s' "$v"
+}
+
+# The field. Its guards mirror result_permission_mode_requested()'s, deliberately:
+# the two fields must agree about WHICH LAUNCH they are describing, or the record
+# would pair a request from one hop with an observation from another.
+#
+# THE FOUR GUARDS, each answering a different terminal:
+#   no fork          nothing was launched, so nothing ran under any mode
+#   not live         a simulated actor is not the product and emits no init event
+#   not claude       Codex's --json stream has no equivalent field; probing it for
+#                    one would be inventing a contract rather than reading one
+#   unattended       the contained profile is deliberately untouched by this unit.
+#                    Its capture DOES carry system/init, so this guard is the only
+#                    thing keeping the change inside its scope; widening it is a
+#                    separate decision with its own evidence, not a tidy-up.
+result_permission_mode_effective() {
+  [ "$ACTOR_PROCESS_STARTED" -eq 1 ] || { printf 'unavailable'; return 0; }
+  [ "$MODE" = "live" ] || { printf 'unavailable'; return 0; }
+  [ "${LAUNCHED_ACTOR:-}" = "claude" ] || { printf 'unavailable'; return 0; }
+  [ "$UNATTENDED" -eq 1 ] && { printf 'unavailable'; return 0; }
+  attended_effective_permission_mode "${LAST_CAPTURE:-}"
 }
 
 # Count lines without letting an empty string count as one. `grep -c .` rather
@@ -882,13 +1059,18 @@ finalize_terminal_result() { # code -> 0 when a complete record exists
     tr_kv worktree_allowlisted_dirty_paths "$dirty_n"
     tr_kv changed_paths_since_launch      "$delta_n"
     tr_kv permission_mode_requested "$(result_permission_mode_requested)"
-    # Never derived from the requested mode above. See that function's note.
-    tr_kv permission_mode_effective unavailable
+    # Never derived from the requested mode above. See that function's note, and
+    # attended_effective_permission_mode() for the one source this is allowed to
+    # read and the shape it is bounded to.
+    tr_kv permission_mode_effective "$(result_permission_mode_effective)"
     tr_kv_or deadline_seconds     "${DEADLINE:-}"   none
     tr_kv deadline_remaining_seconds "$remaining"
     tr_kv actor_timeout_seconds   "$ACTOR_TIMEOUT"
-    # Never extracted from any capture by this dispatcher — permission_denials_in()
-    # reads only `.permission_denials`. Change set B territory, stated as absent.
+    # Never extracted from any capture by this dispatcher. The three readers that
+    # touch a capture are narrow by construction: permission_denials_in() reads
+    # only `.permission_denials`, and the init pair reads only `system/init`'s
+    # `permissionMode`. Neither goes near usage. Change set B territory, stated as
+    # absent.
     tr_kv recorded_usage          unavailable
     # The legacy session identity was retired at Tracer bullet 4 and nothing
     # replaced it, so there is no identifier to record.
@@ -3880,9 +4062,11 @@ Recoverable next action: this dispatcher no longer classifies state itself, so i
 # that unnamed dead end is what the interactive bypass was reaching around.
 #
 # Reads BOTH capture shapes without the caller knowing which one it is on:
-#   --output-format json         one object                  (attended, courier)
-#   --output-format stream-json  one event per line          (--unattended)
-# `jq -s` slurps either into an array, so one filter covers both.
+#   --output-format json         one object                  (courier)
+#   --output-format stream-json  one event per line          (attended, --unattended)
+# `jq -s` slurps either into an array, so one filter covers both. The attended
+# path moved from the first shape to the second at Unit 26 and this function did
+# not have to change — which is the property the two-shape design was for.
 #
 # Fails SAFE, in the reporting direction: a truncated or unparseable capture
 # yields no denials and the run classifies exactly as it does today. This
@@ -4338,9 +4522,12 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
         # previous capture, not a different one. --verbose is required for
         # stream-json under --print.
         #
-        # Attended and courier hops keep --output-format json. The extra volume
-        # is the price of an auditable roster, and it is only worth paying where
-        # nobody is watching.
+        # The ATTENDED branch below now uses the same format, for a narrower
+        # reason: `system/init` is the only surface on which the permission mode
+        # the child actually ran under can be read. The volume argument that used
+        # to end this paragraph — "only worth paying where nobody is watching" —
+        # was overtaken by that, because an attended hop with an unverifiable
+        # permission mode is exactly what the supervised-use claim cannot rest on.
         say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format stream-json --verbose --settings <profile> --tools Bash,Skill --strict-mcp-config --no-session-persistence --disallowedTools ${u_deny[*]} (cwd=<checkout>, CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1)"
         say "  note: the hop capture's system/init event records the EFFECTIVE tool roster and MCP servers; this log records only what was REQUESTED"
         CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1 \
@@ -4363,14 +4550,26 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
         # composition rule the unattended path already used.
         local -a a_deny=("${NESTED_ACTOR_DENY[@]}")
         [ "${#CLAUDE_DENY[@]}" -gt 0 ] && a_deny+=("${CLAUDE_DENY[@]}")
-        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode $PERMISSION_MODE --disallowedTools ${a_deny[*]} (cwd=<checkout>)"
+        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format stream-json --verbose --permission-mode $PERMISSION_MODE --disallowedTools ${a_deny[*]} (cwd=<checkout>)"
         say "  note: the nested-actor denies are requested policy, NOT containment — a child with shell access can construct paths these rules do not name (see NESTED_ACTOR_DENY)"
+        say "  note: the hop capture's system/init event records the EFFECTIVE permission mode; this log records only what was REQUESTED"
         # STILL EXPLICIT, and that is the property P0-F bought rather than the
         # literal `default` that used to sit here. The point was never the word:
         # it was that the mode is STATED at launch instead of inherited from
         # whatever settings.json this checkout happens to declare. A variable
         # whose only two values were fixed before admission keeps that intact.
-        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
+        #
+        # --output-format stream-json --verbose, CHANGED FROM PLAIN json (Unit 26).
+        # Nothing is lost by it: the stream's final `result` event carries the same
+        # keys the single json object did — `permission_denials`, `result`,
+        # `is_error`, `session_id`, `usage` — measured key-for-key against the
+        # committed probe, so this is a superset of the previous capture rather
+        # than a different one, and permission_denials_in() already reads both
+        # shapes. What is gained is the `system/init` event, which is the only
+        # place the EFFECTIVE permission mode exists. --verbose is required for
+        # stream-json under --print.
+        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" \
+          --output-format stream-json --verbose \
           --permission-mode "$PERMISSION_MODE" \
           --disallowedTools "${a_deny[@]}"
       fi
