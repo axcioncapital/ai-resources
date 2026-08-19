@@ -166,132 +166,99 @@ hands back without expanding scope.
 
 ## Latest result
 
-Inspected (2026-08-19):
+Reproduced (2026-08-19), by inspection before correcting:
 
-- Claim (1): HOLDS — checkout `ai-resources-research-workflow-fixes`, branch
-  `session/2026-08-17-research-workflow-fixes`, HEAD `06c90e66` (Unit 2's accepted correction).
-  `work-loop-owner.sh --depth repo` → PROCEED; `work-loop-capability.sh --canonical` → READY, all
-  copied components byte-identical. `logs/friction-log.md` and `logs/innovation-registry.md` were left
-  untouched and excluded from the commit.
-- Claim (2): HOLDS, with one material fact. Searched the workspace for every file this unit edits.
-  `run-analysis.md` (17 copies) and `run-synthesis.md` (17 copies) are **regular files everywhere, zero
-  symlinks**. `run-report.md` has **one symlink consumer** —
-  `projects/buy-side-service-plan/.claude/commands/run-report.md` → the canonical `ai-resources`
-  checkout, not this worktree. So this edit takes **no live effect today**; it would take effect in that
-  project the moment this branch merges to main. That project's state is verifiable and was verified:
-  `logs/scripts/check-judgment-contract.sh` is **absent** there, and its `run-analysis.md` /
-  `run-synthesis.md` are unpropagated Apr-18 copies. This is not an unverifiable-consumer stop, and
-  merge is excluded from L2, so the unit proceeded — see the merge-time precondition below.
-- Claim (3): HOLDS — traced the route from Step 3.5e forward. Five semantic owners, five real entry
-  points: section directives (`/run-analysis` Step 4, **not** independently invokable — Step 3.5e
-  protects it in the same command); cluster synthesis (`/run-synthesis` Step 2, **directly invokable,
-  fresh session**); report architecture (`/run-report` Step 4.1, **directly invokable, fresh session**);
-  chapter prose (`/run-report` Step 4.2a); compliance QC (`/run-report` Step 4.2c). The brief's caution
-  was exactly right: `/run-synthesis` and `/run-report` are separate commands and Step 3.5e does not
-  reach either.
-- Claim (4): HOLDS — no downstream owner validated, received or used approved judgment. Searched
-  `run-synthesis.md`, `run-report.md`, `produce-architecture.md`, `produce-prose-draft.md`,
-  `review-chapter.md`, `verify-chapter.md` for `judgment`: **0 hits each**. Searched the five named
-  canonical skills: `research-structure-creator`, `evidence-to-report-writer`, `report-compliance-qc`,
-  `chapter-prose-reviewer` → 0; `section-directive-drafter` and `cluster-synthesis-drafter` → 2 each,
-  and all four are the ordinary English word ("analytical judgment beyond what the memo contains",
-  "operator judgment fills the framing"), none referring to the Unit Judgment Brief.
-- Claim (5): HOLDS — the path-passing convention is `docs/required-reference-files.md` § Path-passing,
-  with `run-report` Step 4.0's two carve-outs; the invocation-test convention is `tests/s1-relay`
-  (parse the live body at an anchor, derive the property from directive text, prove liveness by
-  mutating the real body). The approved brief is passed by path at all five owners; no content relay
-  was added and no thesis prose was copied into a command body. `s1-relay` stays green.
-- Claim (6): HOLDS, no collision. `report-compliance-qc` at `/run-report` Step 4.2c is dispatched to a
-  `qc-gate` that **returns** its verdict while the main session writes at Step 4.2d — the dominant
-  convention, and compatible with `qc-gate`'s `tools: Read`. The recorded Step 5c write/tool mismatch
-  is in `/run-analysis`, a different owner, and is **not** load-bearing here; it was neither inherited
-  nor repaired.
-- Claim (7): HOLDS — no new artifact family was needed. Thesis linkage rides existing artifacts: a
-  `Governing theses:` line and per-instruction marks in the section directives, `Thesis N` on each
-  consequential claim in chapter drafts and prose, the thesis behind each structural decision in the
-  architecture, and the same in the Step 4.1 and Step 3.7 checkpoints those artifacts already write.
-  No registry, no new naming row — the `analysis/judgment/{section}/` rows added in Unit 2 remain the
-  only new convention.
-- Claim (8): HOLDS — the accepted contract and Unit 2's `{base}` convention were sufficient for all
-  five owners. Nothing in the contract was reopened.
+- Frozen finding (1): REPRODUCES. Searched all three Stage 5 command bodies for `judgment`:
+  `produce-prose-draft.md` **0**, `produce-formatting.md` **0**, `produce-jargon-gloss.md` **0**. Both
+  named commands are independently invokable and run after every Stage-4 control:
+  `/produce-prose-draft` report-mode Phase 2 runs `prose-refinement-writer` to "develop underdeveloped
+  hardest claims" and explicitly skips Phases 3 and 4, its section-mode QC; `/produce-formatting`
+  Phase 2 changes H3 and structural presentation and Phase 3 runs the merged formatting +
+  `document-integration-qc` that signs the report off. Unit 3's claim that every required downstream
+  owner is governed was incomplete: it stopped at Stage 4.
 
-Result: approved judgment now governs the downstream owners instead of merely preceding them. Two new
-fail-safe entry gates — `/run-synthesis` Step 0b and `/run-report` Step 4.0b — each run
-`check-judgment-contract.sh {base}-approved.md` and halt on any nonzero exit, because each command is
-invoked directly in a fresh session and Step 3.5e reaches neither. Beyond the gates, all five owners
-receive `{base}-approved.md` **by path** and carry a required-use instruction naming the theses, the
-provisional verdict, the countercases and the change conditions, plus the `Thesis N` trace on each
-consequential claim or structural choice. The compliance QC at Step 4.2c additionally receives the
-brief **without** step (a)'s account of what the drafter did, and must report faithful implementation
-and drift — a claim the approved argument does not carry, a sharpened verdict, a dropped countercase,
-or permission overreach — as FAIL findings. All three commands carry an **Authority conflict:** rule:
-judgment governs downstream work but does not outrank the permission tables, scarcity instructions,
-gate-clearance caveats or operator decisions, and a genuine conflict halts and surfaces both.
-`stage-instructions.md` now documents two Pass-4 hard gates rather than one.
+Result: the report-mode Stage 5 seam is now governed on the same terms as Stage 3-4, and section mode
+is explicitly untouched. Five changes, all inside the frozen finding:
+
+- **`/produce-prose-draft` Phase 0b (new), report-mode only.** Validates `{base}-approved.md` with the
+  contract helper and halts on any nonzero exit, with the same four refusal classes, the same
+  authority-conflict rule and the same helper-cannot-run clause Unit 3 uses. Section-mode skips the
+  phase entirely and acquires no judgment prerequisite.
+- **`/produce-prose-draft` Phase 2, report-mode producer.** Receives `{base}-approved.md` by path and
+  must develop hardest claims without moving them beyond the approved theses, sharpening past the
+  provisional verdict, or exceeding the permission class the thesis rests on; countercases keep their
+  weight, change conditions stay stated, and every existing `Thesis N` trace is preserved. Where
+  developing a claim would require exceeding the approved view, it is flagged rather than developed.
+- **`/produce-formatting` Phase 0b (new), report-mode only.** Same gate, same exemption.
+- **`/produce-formatting` Phase 2.** Receives the brief by path; H3 and section framing may not promote
+  a subordinate point above the verdict, bury a countercase behind a heading that changes its weight,
+  or move a claim away from its trace.
+- **`/produce-formatting` Phase 3 — new STAGE 3, House View fidelity.** The existing final
+  editorial-integration QC gains a third stage checking fidelity, thesis trace continuity and drift
+  (a claim the approved argument does not carry, a sharpened verdict, a dropped countercase, a lost
+  change condition, permission overreach). It judges against the approved brief and the formatted prose
+  **only**: the Phase 2 change log and the Stage 1 fixes-applied log are the producers' accounts and may
+  explain a finding but never satisfy the check, because a producer that dropped a trace will not report
+  having dropped it. Drift and overreach are FAIL findings.
+
+**`/produce-jargon-gloss` — concrete exclusion, not an omission.** Inspected the `jargon-gloss` skill
+rather than the command. Its hard constraint forbids changing argument structure, analytical
+conclusions or voice; Check 2 (analytical-claim protection) refuses to apply a gloss that would alter
+an analytical claim and flags it instead; and its output checklist requires that no analytical claim,
+sourced statement or quoted material has been modified. The pass is additive at the term level, so it
+cannot materially alter report-mode analytical content. Gating it would add ceremony without closing
+anything.
 
 Evidence:
 
-- **Pre-change failing case (real route, fail-capable).** `check-judgment-consumption.sh` against the
-  unmodified command bodies: **8 of 8 assertions FAIL, exit 1** — every owner lacking validation, path
-  handoff, use instruction and trace, and all three commands lacking the conflict rule. Post-change:
-  **8 of 8 PASS, exit 0**. `Tpre` re-earns that red from Git against a **pinned** baseline (`06c90e66`,
-  Unit 2's correction — the last commit before any owner consumed judgment), with the same self-check
-  the seam suite carries: a baseline that already consumes judgment fails loudly.
-- **The existence-only failure is what the proof is built around.** `U1`–`U5` reduce each owner's use
-  instruction to *"verify the approved brief exists at that path"* on a copy of the real command
-  bodies — the path handoff survives, so the owner still receives the brief and simply stops being told
-  to do anything with it — and each flips exactly that owner's assertion. An existence-only gate cannot
-  pass this suite for free.
-- **Every owner independently live.** `P1`–`P5` remove one owner's path handoff each; `G1`/`G2` remove
-  an entry gate each; `Q` removes the compliance QC's independence from the drafter while leaving drift
-  and permission-overreach intact, so the flip is attributable to independence alone; `X` removes the
-  conflict rule. All 14 mutations flip exactly their own assertion, with the other two command bodies
-  copied verbatim so a wholesale degradation would fail rather than pass.
-- **Gate and helper proved separately, because each is satisfiable alone.** `C2a`/`C3a` prove the entry
-  calls the helper and halts on nonzero; `A1`–`A4` prove the helper returns `3` missing, `4` proposed,
-  `4` rejected, `6` structurally invalid; `A5` is the control accepting a valid approved brief. Without
-  `A5`, an always-refusing gate would satisfy `A1`–`A4` for free.
-- **`T0b`** appends four paragraphs to the pre-change body asserting the owners validate, path-pass,
-  use theses/verdict/countercases/change conditions and halt on conflict. **No verdict moves.**
+- **The red is attributable, not just present.** Two pinned baselines. `Tpre` at `06c90e66` (before any
+  owner consumed judgment) fails **all 14** assertions. `Tpre5` at `a8671275` (Unit 3 accepted) fails
+  **exactly the six Stage-5 assertions** — `S1a`, `S1b`, `S2a`, `S2b`, `S3`, `S4` — and passes all six
+  Stage 3-4 assertions. A correction claiming to close a Stage 5 gap should be red on Stage 5 alone,
+  and this one is. Post-change: **14 of 14 PASS, exit 0**.
+- **Ten new mutations, each independently live** on copies of the real command bodies with the other
+  four copied verbatim: `SP1`-`SP3` remove each path handoff; `SU1`-`SU3` reduce each use instruction
+  to *"verify the approved brief exists at that path"* — the existence-only failure, with the path
+  handoff left intact; `SG1`/`SG2` remove each entry gate; `SQ` lets the final QC satisfy fidelity from
+  the producers' change logs while leaving trace, drift and permission checks intact, so the flip is
+  attributable to that alone. All flip exactly their own assertion.
+- **`SM` is the control running the other way.** It deletes the section-mode exemption from a Stage 5
+  gate and requires `S4` to fail. The risk a governance check carries here is imposing a judgment
+  prerequisite on section-mode projects, which have no brief to consume; `SM` keeps that control live.
 - **Exact commands, totals and exit codes.**
-  `bash tests/judgment-seam/check-judgment-consumption.sh` → **8/8, exit 0**.
-  `bash tests/judgment-seam/check-judgment-consumption.test.sh` → **22 passed, 0 failed**, exit 0.
-  `bash tests/judgment-seam/check-judgment-seam.sh` → 13/13, exit 0;
-  `check-judgment-seam.test.sh` → 23 passed, 0 failed, exit 0.
+  `bash tests/judgment-seam/check-judgment-consumption.sh` → **14/14, exit 0** (was 8/8 before this
+  round; 6 new assertions).
+  `bash tests/judgment-seam/check-judgment-consumption.test.sh` → **33 passed, 0 failed**, exit 0
+  (was 22).
+  `check-judgment-seam.sh` → 13/13, exit 0; `check-judgment-seam.test.sh` → 23 passed, 0 failed.
   `check-judgment-contract.test.sh` → 19/0; `check-judgment-challenge.test.sh` → 24/0;
   `promote-judgment-brief.test.sh` → 24/0.
   `tests/s1-relay/check-relay-payload.sh` → TARGET MET, exit 0; `check-relay-payload.test.sh` → 26/0.
   `tests/s1-representative/score-specimen.test.sh` → 38/38.
-  No assertion in any existing suite was weakened; the three Unit 1 suites are untouched.
-- **Changed surfaces (6 paths).** `.claude/commands/run-analysis.md` (Step 4 consumption + conflict
-  rule), `.claude/commands/run-synthesis.md` (Step 0b gate + Step 2 consumption),
-  `.claude/commands/run-report.md` (Step 4.0b gate + 4.1, 4.2a, 4.2c consumption),
-  `reference/stage-instructions.md` (two Pass-4 hard gates), `tests/judgment-seam/README.md`, and new
-  `tests/judgment-seam/check-judgment-consumption.sh` + `.test.sh`.
+  No assertion was weakened, and every accepted Stage 3-4 change is untouched — proved by `Tpre5`,
+  which requires all six Stage 3-4 assertions to pass at the pre-correction commit and they still pass
+  live. There is no dedicated Stage 5 regression suite in this workflow to run: `tests/` holds only
+  `s1-relay` and `s1-representative`, and both are green.
+- **Live-effect consumers, re-enumerated for the two newly edited files.** `produce-prose-draft.md` and
+  `produce-formatting.md` each have **two symlink consumers** — `projects/buy-side-service-plan` and
+  `archive/nordic-pe-macro-landscape-H1-2026` — both resolving to the canonical `ai-resources` checkout,
+  not this worktree, so no live effect today. **And on merge the exposure is nil for both:**
+  `buy-side-service-plan` declares `Document model: "section"`, so both new gates are report-mode-only
+  no-ops there; the archived project declares no `Document model` line at all and its Phase 0 already
+  halts on that, independently of this change. The section-mode exemption is what makes this true, and
+  `S4`/`SM` are what keep it true. The Unit 3 merge-time precondition on `run-report.md` Step 4.0b is
+  unchanged and still stands — `/run-report` is Stage 4 and has no mode dispatch.
 
-**Merge-time precondition — operator-facing, not a blocker for this unit.**
-`projects/buy-side-service-plan` holds `run-report.md` by symlink into the canonical checkout, and its
-`logs/scripts/check-judgment-contract.sh` is absent. On merge to main, that project's `/run-report`
-would reach Step 4.0b, fail to run the helper, exit nonzero and **halt** — fail-safe, not unsafe, but
-it would block that project's report production until `/sync-workflow` propagates the helpers. Both new
-gates therefore say so explicitly: a helper that cannot run means the deployment is incomplete and the
-remedy is `/sync-workflow` in that project, not a workaround. Merge and propagation are excluded from
-L2, so this is recorded for whoever authorizes the merge rather than acted on here.
+Deferrals — carried forward, none added by this round:
 
-Deferrals:
-
-1. **The Unit 2 four stand unchanged and unimplemented** — no `s1-relay` manifest row for the Step 3.5
-   relays (nor for the five new ones this unit added, which are path-passing by construction and
-   therefore compliant but unmeasured); `/run-analysis` Step 5c's `qc-gate` write/tool mismatch,
-   verified not load-bearing here and neither inherited nor repaired; the missing
-   `judgment-context-card.md` template; and the representative semantic proof.
-2. **`/sync-workflow` propagation of the judgment helpers and the three command bodies** to the five
-   projects that carry copies, plus the symlinked `buy-side-service-plan`. Deliberate propagation is S0
-   territory and merge is outside L2.
-3. **Newly noticed, not started:** `architecture-qc` (Step 4.1b) reviews the architecture without the
-   approved brief, so it cannot check the structure against the theses the architecture now claims to
-   implement. Step 4.2c covers the same drift at chapter level, so nothing is unguarded; this would be
-   a second, earlier check rather than a gap.
+1. The Unit 2 four stand: no `s1-relay` manifest row for the judgment relays (now nine, all
+   path-passing by construction and therefore compliant but unmeasured); `/run-analysis` Step 5c's
+   `qc-gate` write/tool mismatch, again verified not load-bearing here; the missing
+   `judgment-context-card.md` template; the representative semantic proof.
+2. `/sync-workflow` propagation of the judgment helpers and now five command bodies to the projects
+   that carry copies or symlinks. Merge and propagation remain outside L2.
+3. From Unit 3, unchanged: `architecture-qc` (Step 4.1b) reviews the architecture without the approved
+   brief. Step 4.2c and now Stage 5's STAGE 3 cover the same drift downstream, so nothing is unguarded.
 
 ## Blocker
 
@@ -299,11 +266,13 @@ None.
 
 ## Next action
 
-Codex: assess Unit 3. All five plan-required downstream owners now validate approved authority at their
-own entry point, receive the brief by path, are required to shape output from its theses, verdict,
-countercases and change conditions, and carry `Thesis N` traceability through existing artifacts; the
-independent compliance QC checks fidelity and drift without the drafter's account; all three commands
-halt on a genuine authority conflict. Proved red-then-green against the real command bodies with 14
-mutations and a separated gate/helper proof. One merge-time precondition and three deferrals are
-recorded above; nothing in the accepted contract was reopened and the representative semantic proof
-remains untouched for the final L2 unit.
+Codex: run the closure check on the frozen finding only — is the report-mode Stage 5 seam governed, and
+did the correction break anything? The finding reproduced by inspection (0 judgment hits in all three
+Stage 5 surfaces) before it was corrected. Both report-mode entries now validate approved authority and
+halt fail-safe; both report-mode producers receive the brief by path with a required-use instruction;
+the existing final editorial-integration QC gained a House View fidelity stage that may not rest on the
+producers' accounts; `/produce-jargon-gloss` is excluded on its skill's own analytical-claim protection
+rather than by omission; and section mode is explicitly exempt, with `SM` keeping that control live.
+`Tpre5` pins the red to Stage 5 alone — at Unit 3 accepted, exactly the six new assertions fail and all
+six Stage 3-4 assertions pass. Nothing outside the frozen finding was implemented, no deferral was
+added, and the representative-proof boundary is untouched.

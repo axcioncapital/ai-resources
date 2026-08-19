@@ -41,6 +41,26 @@ Uses `context/prose-quality-standards.md` (section-mode; project-specific) and t
 
 ---
 
+## Phase 0b — Approved Judgment Check [REPORT-MODE ONLY] (main session)
+
+**Section-mode skips this phase entirely.** Section-mode projects do not run the Research Workflow judgment path, have no Unit Judgment Brief to consume, and acquire **no judgment prerequisite** from this phase. Proceed directly to Phase 1.
+
+**Report-mode only.** Stage 4 ended with a cited chapter, but this command runs after every Stage-4 control and can still change what the report says. Without this check it will develop the report's hardest claims while the Unit Judgment Brief is missing, still proposed, or rejected.
+
+`{base}` = `analysis/judgment/{section}/{section}-unit-judgment-brief`, where `{section}` is the section this report covers, resolved from the path-config read in Phase 0. The three suffixes are fixed by `docs/judgment-authority-contract.md` § 1.
+
+```bash
+bash "$CLAUDE_PROJECT_DIR/logs/scripts/check-judgment-contract.sh" "{base}-approved.md"
+```
+
+Exit 0 → proceed, and hold the validated path for the phases below. Any other exit → **halt**; fail-safe, with no warn-and-proceed mode. Report the code: `3` no approved brief, `4` present but not approved — still proposed, or rejected — `5` approved with no evidence basis, `6` structural failure. Branch on the code, never on the prose.
+
+**Authority conflict:** the approved brief governs what the report may argue; it does not replace the style reference, the scarcity register's editorial instructions, the bright-line rule or operator decisions. Where they genuinely conflict, **halt and surface both authorities to the operator** rather than choosing between them.
+
+**If the helper itself cannot run**, the deployment is incomplete, not the judgment. A missing or unreadable `logs/scripts/check-judgment-contract.sh` exits nonzero and halts this command — correct and fail-safe — but the remedy is `/sync-workflow` in this project, not a workaround here.
+
+---
+
 ## Phase 1 — Plan (main session)
 
 Keep this phase lightweight. Do NOT read source files yet.
@@ -123,6 +143,10 @@ Mode-specific. Two skills, two delegation patterns; final output is the same `pr
      3. **This is a targeted intervention, not a rewrite.** Most sentences in any paragraph remain untouched (typically 1–2 changes per paragraph, sometimes none, occasionally 3). If you find yourself rewriting most sentences in a paragraph, stop and re-read this instruction.
      4. Preserve voice. Avoid AI-register smoothing — treat AI-register patterns (tricolons, pseudo-maxims, pivot closings, banned-word instances) as **constraints on your own fixes**, not as the primary target (those are addressed in Phase 5 by `ai-prose-decontamination`).
      5. Write the refined prose file and return: file path, word count, change count by category (logical-linkage fixes, hardest-claim development), any flags.
+**Approved judgment (PATH — the sub-agent reads it itself):** `{base}-approved.md`, validated at Phase 0b. Pass the path alongside the style reference; the sub-agent already reads reference files at their absolute paths.
+
+**Required use of approved judgment:** this phase develops underdeveloped hardest claims, and the hardest claims are exactly the ones an approved House View constrains. Developing a claim may make it clearer; it may not move it beyond the approved theses, sharpen it past the provisional verdict, or push it outside the evidence-permission class the thesis rests on. Every countercase already in the prose stays at the weight it carries — a countercase is not an underdeveloped passage to resolve. The change conditions stay stated wherever the report says what would revise its position. Preserve every `Thesis N` trace already in the text: a refinement that drops a trace has broken the chain the final QC checks. Where developing a claim would require exceeding the approved view, leave it as it stands and flag it rather than developing it.
+
 4. Write a brief status note — do not read the full output yet.
 5. ▸ /compact — skill content and source document no longer needed.
 

@@ -39,6 +39,26 @@ Per-section run: 2 subagent launches, target ~6–10 min wall time.
 
 ---
 
+## Phase 0b — Approved Judgment Check [REPORT-MODE ONLY] (main session)
+
+**Section-mode skips this phase entirely.** Section-mode projects do not run the Research Workflow judgment path, have no Unit Judgment Brief to consume, and acquire **no judgment prerequisite** from this phase. Proceed directly to Phase 1.
+
+**Report-mode only.** Stage 4 ended with a cited chapter, but this command runs after every Stage-4 control and can still change what the report says. Without this check it will restructure the report's presentation and sign it off at the final editorial-integration QC while the Unit Judgment Brief is missing, still proposed, or rejected.
+
+`{base}` = `analysis/judgment/{section}/{section}-unit-judgment-brief`, where `{section}` is the section this report covers, resolved from the path-config read in Phase 0. The three suffixes are fixed by `docs/judgment-authority-contract.md` § 1.
+
+```bash
+bash "$CLAUDE_PROJECT_DIR/logs/scripts/check-judgment-contract.sh" "{base}-approved.md"
+```
+
+Exit 0 → proceed, and hold the validated path for the phases below. Any other exit → **halt**; fail-safe, with no warn-and-proceed mode. Report the code: `3` no approved brief, `4` present but not approved — still proposed, or rejected — `5` approved with no evidence basis, `6` structural failure. Branch on the code, never on the prose.
+
+**Authority conflict:** the approved brief governs what the report may argue; it does not replace the style reference, the scarcity register's editorial instructions, the bright-line rule or operator decisions. Where they genuinely conflict, **halt and surface both authorities to the operator** rather than choosing between them.
+
+**If the helper itself cannot run**, the deployment is incomplete, not the judgment. A missing or unreadable `logs/scripts/check-judgment-contract.sh` exits nonzero and halts this command — correct and fail-safe — but the remedy is `/sync-workflow` in this project, not a workaround here.
+
+---
+
 ## Phase 1 — Plan (main session)
 
 Keep this phase lightweight. Do NOT read source files yet.
@@ -103,6 +123,12 @@ Merged formatting, H3 placement, and H3 refinement in a single sonnet agent. KEE
 
 ---
 
+**Approved judgment (PATH — the sub-agent reads it itself):** `{base}-approved.md`, validated at Phase 0b (report-mode only; section-mode passes nothing here).
+
+**Required use of approved judgment:** presentation carries the argument, so restructuring is not neutral toward it. H3 placement and section framing must leave the approved theses reading as the report's theses, must not promote a subordinate point above the provisional verdict or bury a countercase behind a heading that changes its weight, and must keep the change conditions where the report states what would revise its position. Preserve every `Thesis N` trace in place — moving a claim under a new heading without its trace breaks the chain Phase 3 checks. This phase does not rewrite claims; where a formatting change would alter what a claim says, flag it as a bright-line candidate instead.
+
+---
+
 ## Phase 3 — Merged Formatting + Editorial Integration QC [delegate-qc]
 
 Merged two-stage QC. One qc-gate subagent runs both checks in explicit sequence: formatting-qc first (including any mechanical fixes), then document-integration-qc on the post-fix prose. The merge preserves the editorial pass's dependency on the formatting pass — the editorial pass explicitly receives the formatting pass's output as "already addressed" context.
@@ -128,6 +154,10 @@ Merged two-stage QC. One qc-gate subagent runs both checks in explicit sequence:
      - **STAGE 2 — Editorial Integration QC:** Only begin after Stage 1 is complete and the post-fix prose is written. Read the post-fix prose. Run all four check categories per the document-integration-qc skill (Narrative Structure, Consistency, Redundancy & Contradiction, Completeness). Draft transition passages where transitions are weak. **Do NOT re-flag any item from the Stage 1 findings, Stage 1 fixes applied log, the Phase 2 deferred items list, or the cross-section integration findings.** Focus redundancy/contradiction checks on issues internal to this module only. The `RELEASE ARTIFACT` protocol in the document-integration-qc skill is overridden — produce the full QC report directly.
    - Adaptation notes:
      - "This module has already passed prose quality review and AI prose decontamination via `/produce-prose-draft`, plus formatting + H3 (Phase 2 of this command). Decontamination removed AI-pattern prose (ornamental language, repetition, over-argumentation, flat rhythm) without changing analytical content. If you find an abrupt section ending or a transition that feels missing, check whether it may be a decontamination artifact rather than a pre-existing issue."
+
+**Approved judgment (PATH — the sub-agent reads it itself):** `{base}-approved.md`, validated at Phase 0b. Report-mode only; in section-mode this handoff is omitted and STAGE 3 below does not run.
+
+**Required use of approved judgment:** add a **STAGE 3 — House View fidelity** check, after Stage 2, and report it as its own findings group. This is the last independent look at the report before it is signed off, and it is the only one positioned to see what the whole Stage 5 chain did to the approved argument. Three checks: **fidelity** — the formatted report still argues the approved theses, holds the provisional verdict at its approved strength, and carries each countercase at the weight the brief gave it; **thesis trace continuity** — every `Thesis N` trace that entered Stage 5 is still present and still attached to the claim it belongs to, and no consequential claim has appeared without one; and **drift** — a claim the approved argument does not carry, a verdict sharpened past what was approved, a dropped countercase, a change condition lost in formatting, or wording that exceeds the evidence-permission class of the claims its thesis rests on. Judge all three against the approved brief and the formatted prose **only**. The Phase 2 change log and the Stage 1 fixes-applied log are the producers' accounts of what they did; they may explain a finding but may never satisfy this check, because a producer that dropped a trace will not report having dropped it. Drift and permission overreach are FAIL findings, not notes.
    - Task summary: Execute Stage 1 then Stage 2 as described. **Output-to-disk pattern:** Write the full structured QC report to `{prose_output_dir_abs}/<working-dir-name>/formatting-phase-3-qc-{arg}.md`. Sections of the working file (all required): Stage 1 findings (formatting) with severity, Stage 1 fixes-applied log, Stage 1 bright-line candidates, Stage 2 findings grouped by check category (Narrative Structure / Consistency / Redundancy & Contradiction / Completeness), transition drafts (if any), and overall verdict.
    - **Return to main session (no more than 20 lines):**
      - `working_file`: absolute path to the file just written

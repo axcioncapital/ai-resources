@@ -54,7 +54,7 @@ fi
 printf '\n=== the check was red before this unit ===\n'
 PRE="$TMP/pre"; mkdir -p "$PRE"
 pre_ok=1
-for f in run-analysis run-synthesis run-report; do
+for f in run-analysis run-synthesis run-report produce-prose-draft produce-formatting; do
   git -C "$WF" show "$PRE_REF:workflows/research-workflow/.claude/commands/$f.md" > "$PRE/$f.md" 2>/dev/null || pre_ok=0
 done
 if [ "$pre_ok" -eq 1 ]; then
@@ -65,10 +65,31 @@ if [ "$pre_ok" -eq 1 ]; then
   fi
   pre_fail="$(failing "$PRE")"
   n_pre="$(printf '%s' "$pre_fail" | tr ',' '\n' | grep -c .)"
-  if [ "$n_pre" -eq 8 ]; then
-    ok 'Tpre all 8 assertions fail on the pre-Unit-3 command bodies'
+  if [ "$n_pre" -eq 14 ]; then
+    ok 'Tpre all 14 assertions fail on the pre-Unit-3 command bodies'
   else
-    bad 'Tpre all 8 assertions fail on the pre-Unit-3 command bodies' "failed $n_pre: $pre_fail"
+    bad 'Tpre all 14 assertions fail on the pre-Unit-3 command bodies' "failed $n_pre: $pre_fail"
+  fi
+
+  # Tpre5 is the sharper baseline, and it is what makes this correction's red
+  # attributable. At a8671275 — Unit 3 accepted — Stage 3-4 was already governed
+  # and Stage 5 was not, so exactly the six S-assertions must fail and the six
+  # C-assertions must pass. A correction claiming to close a Stage 5 gap should
+  # be red on Stage 5 alone, not on everything.
+  PRE5="$TMP/pre5"; mkdir -p "$PRE5"; ok5=1
+  for f in run-analysis run-synthesis run-report produce-prose-draft produce-formatting; do
+    git -C "$WF" show "a8671275:workflows/research-workflow/.claude/commands/$f.md" > "$PRE5/$f.md" 2>/dev/null || ok5=0
+  done
+  if [ "$ok5" -eq 1 ]; then
+    want5='S1a-prose-draft-gate,S1b-prose-draft-consume,S2a-formatting-gate,S2b-formatting-consume,S3-final-qc-fidelity,S4-section-mode-exempt'
+    got5="$(failing "$PRE5")"
+    if [ "$got5" = "$want5" ]; then
+      ok 'Tpre5 at Unit 3 accepted, exactly the six Stage-5 assertions fail and Stage 3-4 passes'
+    else
+      bad 'Tpre5 at Unit 3 accepted, exactly the six Stage-5 assertions fail and Stage 3-4 passes' "got=[$got5]"
+    fi
+  else
+    bad 'Tpre5 at Unit 3 accepted, exactly the six Stage-5 assertions fail' 'could not read a8671275'
   fi
 
   CLAIMY="$TMP/claimy"; mkdir -p "$CLAIMY"; cp "$PRE"/*.md "$CLAIMY/"
@@ -83,7 +104,7 @@ if [ "$pre_ok" -eq 1 ]; then
     bad 'T0b  prose asserting the owners consume judgment moves no verdict' "moved to: $(failing "$CLAIMY")"
   fi
 else
-  bad 'Tpre all 8 assertions fail on the pre-Unit-3 command bodies' "could not read the baseline from $PRE_REF"
+  bad 'Tpre all 14 assertions fail on the pre-Unit-3 command bodies' "could not read the baseline from $PRE_REF"
   bad 'T0b  prose asserting the owners consume judgment moves no verdict' 'skipped — no baseline'
 fi
 
@@ -95,7 +116,8 @@ printf '\n=== every owner is independently live ===\n'
 mutate() {
   local label="$1" want="$2" stem="$3" prog="$4"
   local dir="$TMP/m"; rm -rf "$dir"; mkdir -p "$dir"
-  cp "$LIVE"/run-analysis.md "$LIVE"/run-synthesis.md "$LIVE"/run-report.md "$dir/"
+  cp "$LIVE"/run-analysis.md "$LIVE"/run-synthesis.md "$LIVE"/run-report.md \
+     "$LIVE"/produce-prose-draft.md "$LIVE"/produce-formatting.md "$dir/"
   awk "$prog" "$LIVE/$stem.md" > "$dir/$stem.md"
   if cmp -s "$LIVE/$stem.md" "$dir/$stem.md"; then
     bad "$label" "the mutation changed nothing in $stem.md — the anchor is stale"
@@ -144,6 +166,31 @@ mutate 'Q   compliance QC loses its independence from the drafter' C5-qc-checks-
 
 # --- X — the conflict rule disappears -------------------------------------
 mutate 'X   run-analysis loses the authority-conflict rule' C6-conflict-surfaced run-analysis "$(drop_nth '**Authority conflict:**' 1)"
+
+# --- S-series: Stage 5, report mode --------------------------------------
+mutate 'SP1 report-mode prose refinement loses the approved-brief path' S1b-prose-draft-consume produce-prose-draft "$(drop_nth "$P" 1)"
+mutate 'SP2 formatting + H3 loses the approved-brief path'              S2b-formatting-consume  produce-formatting  "$(drop_nth "$P" 1)"
+mutate 'SP3 the final editorial QC loses the approved-brief path'       S3-final-qc-fidelity    produce-formatting  "$(drop_nth "$P" 2)"
+
+mutate 'SU1 report-mode prose refinement checks existence only' S1b-prose-draft-consume produce-prose-draft "$(existence_nth "$U" 1)"
+mutate 'SU2 formatting + H3 checks existence only'              S2b-formatting-consume  produce-formatting  "$(existence_nth "$U" 1)"
+mutate 'SU3 the final editorial QC checks existence only'       S3-final-qc-fidelity    produce-formatting  "$(existence_nth "$U" 2)"
+
+mutate 'SG1 /produce-prose-draft loses its judgment gate' S1a-prose-draft-gate produce-prose-draft "$(drop_nth 'check-judgment-contract.sh' 1)"
+mutate 'SG2 /produce-formatting loses its judgment gate'  S2a-formatting-gate  produce-formatting  "$(drop_nth 'check-judgment-contract.sh' 1)"
+
+# SM — the section-mode exemption disappears from one gate. This is the control
+# running in the direction the others do not: the danger here is a governance
+# check that quietly imposes a judgment prerequisite on section-mode projects,
+# which have no Unit Judgment Brief to consume.
+mutate 'SM  a Stage 5 gate loses its section-mode exemption' S4-section-mode-exempt produce-prose-draft "$(drop_nth 'Section-mode skips this phase entirely' 1)"
+
+# SQ — the final QC may satisfy House View fidelity from the producers' change
+# logs. Trace continuity, drift and permission checks all survive, so the flip is
+# attributable to the one thing removed: judging the report rather than the
+# producers' account of it.
+sq_prog='index($0, "**Required use of approved judgment:**") > 0 { n++; if (n == 2) { print "**Required use of approved judgment:** add a STAGE 3 — House View fidelity check covering thesis trace continuity, authority drift and evidence-permission overreach."; next } } { print }'
+mutate 'SQ  the final QC may rest on the producers accounts' S3-final-qc-fidelity produce-formatting "$sq_prog"
 
 printf '\n=== the helper those gates call refuses the right states ===\n'
 

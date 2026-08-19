@@ -91,6 +91,36 @@ owner, in that owner's **own dispatch region** — a directive elsewhere in the 
 | `C4` | chapter prose | `/run-report` Step 4.2a | yes, within `/run-report` |
 | `C5` | compliance QC | `/run-report` Step 4.2c | yes, within `/run-report` |
 | `C6` | all three commands | the authority-conflict rule | — |
+| `S1a`/`S1b` | report-mode prose refinement | `/produce-prose-draft` Phase 0b, Phase 2 | **yes**, standalone |
+| `S2a`/`S2b` | report-mode formatting + H3 | `/produce-formatting` Phase 0b, Phase 2 | **yes**, standalone |
+| `S3` | final editorial-integration QC | `/produce-formatting` Phase 3 | yes, within `/produce-formatting` |
+| `S4` | both Stage 5 gates | the section-mode exemption | — |
+
+**Stage 4 is not the last thing that touches the report.** `/produce-prose-draft` develops the hardest
+claims — precisely the ones an approved House View constrains — and `/produce-formatting` restructures
+presentation and runs the QC that signs the report off. Both are invoked directly, after every Stage-4
+control. An approved brief governing everything up to Stage 4 and nothing after it is governed where it
+is cheapest to check and unguarded where the last word is written.
+
+`S3` adds the two conditions the final QC needs: it judges House View fidelity, thesis trace continuity
+and drift against the approved brief and the formatted prose **only** — the Phase 2 change log and the
+Stage 1 fixes-applied log may explain a finding but never satisfy the check, because a producer that
+dropped a trace will not report having dropped it.
+
+`S4` runs in the opposite direction from every other assertion. Section-mode projects do not run the
+judgment path and have no brief to consume, so both Stage 5 gates are scoped report-mode-only and must
+say section mode gains no prerequisite. `SM` proves that control is live: a governance check that
+quietly imposed a judgment prerequisite on section-mode would break working projects to satisfy an
+assertion.
+
+### Excluded, with the reason
+
+`/produce-jargon-gloss` is **not** wired, and the reason is its own contract rather than convenience.
+The `jargon-gloss` skill is additive at the term level: its hard constraint forbids changing argument
+structure, analytical conclusions or voice; Check 2 (analytical-claim protection) refuses to apply a
+gloss that would alter an analytical claim and flags it instead; and its output checklist requires that
+no analytical claim, sourced statement or quoted material has been modified. It cannot materially alter
+report-mode analytical content, so gating it would add ceremony without closing anything.
 
 **VALIDATE** the entry runs the contract helper and halts on nonzero; **PASS** the brief reaches the
 sub-agent by path; **USE** the sub-agent must shape its output from the theses, verdict, countercases

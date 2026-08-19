@@ -56,7 +56,9 @@ done
 ANALYSIS="$CMDS/run-analysis.md"
 SYNTH="$CMDS/run-synthesis.md"
 REPORT="$CMDS/run-report.md"
-for f in "$ANALYSIS" "$SYNTH" "$REPORT"; do
+PROSE="$CMDS/produce-prose-draft.md"
+FORMAT_CMD="$CMDS/produce-formatting.md"
+for f in "$ANALYSIS" "$SYNTH" "$REPORT" "$PROSE" "$FORMAT_CMD"; do
   [ -f "$f" ] && [ -r "$f" ] || { echo "not a readable file: $f" >&2; exit 2; }
 done
 
@@ -193,6 +195,65 @@ if [ -z "$c6" ]; then
   record C6-conflict-surfaced PASS 'all three commands halt on a genuine authority conflict'
 else
   record C6-conflict-surfaced FAIL "${c6%; }"
+fi
+
+# ---------------------------------------------------------------------------
+# S-series — Stage 5, report mode. Stage 4 ends with a cited chapter; it is not
+# the last thing that touches the report. `/produce-prose-draft` and
+# `/produce-formatting` are each invoked directly, after every Stage-4 control has
+# run, and between them they develop the hardest claims, restructure H3
+# presentation and run the final editorial-integration QC that signs the report
+# off. An approved House View that governs everything up to Stage 4 and nothing
+# after it is governed where it is cheapest to check and unguarded where the last
+# word is actually written.
+#
+# Report mode only. Section mode does not run the Research Workflow judgment path
+# at all, and S4 exists to keep it that way — a governance check that quietly
+# imposed a judgment prerequisite on a pipeline that has no judgment to consume
+# would break section-mode projects to satisfy an assertion.
+# ---------------------------------------------------------------------------
+
+entry_gate S1a-prose-draft-gate "$(region "$PROSE" '^## Phase 0b ' '^## Phase [0-9]')" '/produce-prose-draft entry'
+owner S1b-prose-draft-consume "$(region "$PROSE" '^[*][*]report-mode [(]Prose Refinement[)]:[*][*]' '^## Phase [0-9]')" 'report-mode prose refinement'
+
+entry_gate S2a-formatting-gate "$(region "$FORMAT_CMD" '^## Phase 0b ' '^## Phase [0-9]')" '/produce-formatting entry'
+owner S2b-formatting-consume "$(region "$FORMAT_CMD" '^## Phase 2 ' '^## Phase 3 ')" 'formatting and H3 pass'
+
+# S3 — the final editorial-integration QC. Two conditions beyond the ordinary
+# owner checks: it must judge House View fidelity against the approved brief and
+# the formatted prose ALONE, never against the producers' change logs it also
+# receives; and drift is a finding, not a note.
+fqc="$(region "$FORMAT_CMD" '^## Phase 3 ' '^## Phase 4')"
+fqc_path="$(printf '%s\n' "$fqc" | clause "$PATH_LABEL")"
+fqc_use="$(printf '%s\n' "$fqc" | clause "$USE_LABEL")"
+s3=""
+[ -n "$fqc_path" ] || s3="${s3}the final QC must receive the approved brief by path; "
+has "$fqc_path" '\-approved\.md' || s3="${s3}the final QC handoff must name {base}-approved.md; "
+[ -n "$fqc_use" ] || s3="${s3}no **Required use of approved judgment:** instruction; "
+has "$fqc_use" 'change log|producers. account|Phase 2 log' || s3="${s3}the fidelity check must be barred from resting on the producers' accounts; "
+has "$fqc_use" '[Tt]hesis trace|trace continuity' || s3="${s3}the final QC must check thesis trace continuity; "
+has "$fqc_use" 'drift' || s3="${s3}the final QC must check authority drift; "
+has "$fqc_use" 'permission' || s3="${s3}the final QC must check evidence-permission drift; "
+if [ -z "$s3" ]; then
+  record S3-final-qc-fidelity PASS 'final editorial-integration QC: independent House View fidelity, trace continuity and drift'
+else
+  record S3-final-qc-fidelity FAIL "final editorial-integration QC: ${s3%; }"
+fi
+
+# S4 — the section-mode control. Both Stage 5 gates must be explicitly scoped to
+# report mode and must say section mode acquires no judgment prerequisite.
+s4=""
+for pair in "produce-prose-draft:$PROSE" "produce-formatting:$FORMAT_CMD"; do
+  nm="${pair%%:*}"; fl="${pair#*:}"
+  g="$(region "$fl" '^## Phase 0b ' '^## Phase [0-9]')"
+  [ -n "$g" ] || { s4="${s4}$nm has no Phase 0b gate; "; continue; }
+  has "$g" '[Rr]eport.mode only|report mode only' || s4="${s4}$nm's gate is not scoped report-mode-only; "
+  has "$g" '[Ss]ection.mode' || s4="${s4}$nm's gate must state section-mode acquires no judgment prerequisite; "
+done
+if [ -z "$s4" ]; then
+  record S4-section-mode-exempt PASS 'both Stage 5 gates are report-mode-only; section mode gains no prerequisite'
+else
+  record S4-section-mode-exempt FAIL "${s4%; }"
 fi
 
 if [ "$FORMAT" = tsv ]; then
