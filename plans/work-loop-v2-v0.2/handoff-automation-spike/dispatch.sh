@@ -694,6 +694,35 @@ result_next_action() { # code -> token
   esac
 }
 
+# ------------------------------------------- the approved restart, as a command
+#
+# Unit 28, minimum-release-contract item 1. The plan asks the takeover to carry
+# "the exact decision and resume action required from Patrik", and until this
+# existed the 37 stop said "grant the capability deliberately and re-run" — which
+# names a decision but not an action. The operator was left to know that
+# `--permission-mode acceptEdits` exists, that this dispatcher honours it, and
+# that a restart is a NEW run rather than a resumed one. That is three pieces of
+# recall standing between a stopped run and the one command that continues it.
+#
+# WHY A COMMAND LINE RATHER THAN A MENU. The plan cut multi-choice recovery menus
+# and recommendation logic on 2026-08-19: choosing among alternatives is the
+# operator's, and the dispatcher's job is to make the chosen one runnable. So
+# there is exactly one line here, and it is the one that grants the capability.
+# Declining is not rendered as an option because declining needs no command.
+#
+# THIS IS NOT AN APPROVAL, and the distinction is the whole safety property. The
+# dispatcher is printing what the operator WOULD run; nothing here elevates the
+# stopped run, retries it, or records a decision. The elevation happens only when
+# a person types it, and it produces a new run identity that revalidates from
+# scratch — which is exactly what makes reprinting it safe.
+#
+# Quoted with %q so a checkout or log directory containing spaces yields a line
+# that can be pasted and run rather than one that looks right and splits.
+approved_restart_invocation() { # log-dir -> one runnable command line
+  printf 'bash %q --checkout %q --task %q --log-dir %q --permission-mode acceptEdits' \
+    "${BASH_SOURCE[0]}" "$CHECKOUT" "$TASK" "$1"
+}
+
 # The permission mode this dispatcher REQUESTED for the launch this terminal
 # relates to. It is fixed before admission and read back here rather than stored
 # at launch, because PERMISSION_MODE is the single value that both this field and
@@ -3267,6 +3296,49 @@ EOF
     printf 'logs: no run log for this task under %s\n' "$st_logdir"
   fi
 
+  # ------------------------------------------ the last terminal, read as a RECORD
+  #
+  # Unit 28. Until this existed, everything --status said about how the previous
+  # run ENDED came from the two greps above: the last `hop=` line and the last
+  # `STOP [` line of the run log. That is raw-log reconstruction, and the plan's
+  # Change set C says status must explain the last result WITHOUT it. The two are
+  # not the same claim: the STOP line is a sentence written for a human mid-run,
+  # while the terminal result is the durable machine-readable record the run
+  # finalized on purpose. Reading the sentence and calling it the outcome is how a
+  # status surface comes to disagree with the evidence it is supposed to render.
+  #
+  # THE RUN LOG LINES STAY. They are not replaced, because they answer a different
+  # question — what the run was doing — and dropping them to make room for this
+  # would trade one gap for another.
+  #
+  # STILL STRICTLY READ-ONLY: `ls` and `sed` over a file the run already wrote.
+  # Same `--` termination as the log glob above, and for the same reason: --status
+  # does not canonicalize LOG_DIR, so a relative operand beginning with `-` must
+  # not be parsed as options.
+  st_res="$(ls -t -- "$st_logdir"/*-"$TASK".result 2>/dev/null | head -1)"
+  if [ -n "$st_res" ] && [ -r "$st_res" ]; then
+    st_outcome="$(sed -n 's/^outcome=//p' -- "$st_res" 2>/dev/null | head -1)"
+    st_code="$(sed -n 's/^code=//p' -- "$st_res" 2>/dev/null | head -1)"
+    st_next="$(sed -n 's/^next_action=//p' -- "$st_res" 2>/dev/null | head -1)"
+    st_started="$(sed -n 's/^model_request_started=//p' -- "$st_res" 2>/dev/null | head -1)"
+    st_complete="$(sed -n 's/^result_complete=//p' -- "$st_res" 2>/dev/null | head -1)"
+    printf 'last terminal: %s [%s]  model_request_started=%s  complete=%s\n' \
+      "${st_outcome:-<unreadable>}" "${st_code:-?}" "${st_started:-unavailable}" "${st_complete:-no}"
+    printf '  result: %s\n' "$st_res"
+    printf '  required action: %s\n' "${st_next:-operator-read-run-log}"
+    # The one outcome whose required action is a specific command rather than an
+    # inspection. Rendered from the RECORD's own outcome field, so status and the
+    # stop that produced it cannot drift into naming different actions.
+    if [ "$st_outcome" = "PERMISSION_DENIED" ]; then
+      printf '  the canonical turn is where the actors left it — this dispatcher wrote no task state.\n'
+      printf '  to grant the capability deliberately and continue in a NEW run:\n'
+      printf '    %s\n' "$(approved_restart_invocation "$st_logdir")"
+      printf '  printing that grants nothing; a denial is never treated as approval.\n'
+    fi
+  else
+    printf 'last terminal: no terminal result for this task under %s\n' "$st_logdir"
+  fi
+
   printf 'status is read-only. It launched nothing and wrote nothing. Read %s for the truth (core § 4).\n' "$STATE_FILE"
   exit 0
 fi
@@ -4988,7 +5060,7 @@ while :; do
     if [ -n "$denials" ]; then
       say "  permission denials reported by the child:"
       printf '%s\n' "$denials" | sed 's/^/    /' | tee -a "$RUN_LOG"
-      die_hop 37 "Claude was DENIED PERMISSION during hop $hop and could not complete the turn."$'\n'"Denied (tool :: target):"$'\n'"$denials"$'\n'"The denial happened at the CHILD's permission layer, not here — this dispatcher requested nothing that would have refused these. The child exits 0 when this happens, which is why it used to surface as exit 25 or 22 with no cause named."$'\n'"NOT retried: the same denial would recur."$'\n'"Operator decision required — this is a capability question, not a transport failure. Either grant the capability deliberately and re-run, or narrow the unit so it does not need it. Full capture: $LAST_CAPTURE"
+      die_hop 37 "Claude was DENIED PERMISSION during hop $hop and could not complete the turn."$'\n'"Denied (tool :: target):"$'\n'"$denials"$'\n'"The denial happened at the CHILD's permission layer, not here — this dispatcher requested nothing that would have refused these. The child exits 0 when this happens, which is why it used to surface as exit 25 or 22 with no cause named."$'\n'"NOT retried: the same denial would recur."$'\n'"CANONICAL TASK STATE IS UNTOUCHED: this dispatcher writes no task state and makes no commit, so the turn is still exactly where the actors left it. This stopped run and its terminal result ARE the takeover."$'\n'"Operator decision required — this is a capability question, not a transport failure. Either narrow the unit so it does not need the capability, or grant it deliberately by running this, which starts a NEW run that revalidates everything and continues from the unchanged turn:"$'\n'"  $(approved_restart_invocation "$LOG_DIR")"$'\n'"That command is what the decision looks like; printing it grants nothing. Full capture: $LAST_CAPTURE"
     fi
   fi
 

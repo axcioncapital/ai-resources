@@ -12714,6 +12714,239 @@ else
 fi
 unset WL72_SF WL72_CO WL72_STREAM WL72_ARGV
 
+# ========= Case 73 — the permission-denial takeover / approved-resume corridor
+#
+# Unit 28, minimum-release-contract item 1. Two dispatcher invocations, and the
+# claim is about the SEAM BETWEEN THEM: a denial must stop read-only and leave a
+# handoff that tells the operator exactly how to restart, and the operator's
+# explicit restart must be a genuinely new run that continues from the unchanged
+# task state rather than a replay of the failed request.
+#
+# READ-ONLY IS THE POINT, not an implementation detail. Unit 27 established that
+# the dispatcher may not write canonical task state, so this corridor has to work
+# with the state file byte-identical across the stop. Every assertion below that
+# looks like bookkeeping — the sha256 pair, the HEAD pair, the launch count — is
+# really asserting that no state writer was smuggled in to make the corridor work.
+#
+# WHAT IS ALREADY TRUE AT UNIT 27, and is therefore asserted as a precondition
+# rather than claimed as this unit's work: exit 37 already fires, already names
+# the denied target, and already finalizes one complete durable result (case 72e).
+# The brief is explicit that already-working pieces must not be re-reported as
+# gaps, so the rows below separate the two.
+#
+# The stub is the FAKE72 technique — a live fake BINARY, so MODE stays `live` and
+# a real child is forked while no model is contacted — with one addition: it
+# behaves differently on the two runs, selected by $WL73_MODE, and it appends to a
+# call file so a second launch inside one process cannot hide.
+
+FAKE73="$SANDBOX_ROOT/fake-claude-73.sh"
+cat >"$FAKE73" <<'F73EOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.220 (Claude Code)"; exit 0; fi
+printf 'launch\n' >> "$WL73_CALLS"
+printf '%s\n' "$@" > "$WL73_ARGV.$(wc -l <"$WL73_CALLS" | tr -d ' ')"
+printf '%s\n' "$@" > "$WL73_ARGV"
+sf="$WL73_SF"
+if [ "${WL73_MODE:-deny}" = approve ]; then
+  # The APPROVED run does the work: it transitions the turn and commits, exactly
+  # as a real Claude hop would once the capability it needed was granted.
+  awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+  git -C "$WL73_CO" add "$sf" >/dev/null 2>&1
+  git -C "$WL73_CO" commit -qm "fake claude hop (approved)" >/dev/null 2>&1
+  printf '{"type":"system","subtype":"init","cwd":"/x","session_id":"s73b","model":"claude-x","tools":["Bash"],"mcp_servers":[],"permissionMode":"acceptEdits","uuid":"u73b"}\n'
+  printf '{"type":"result","subtype":"success","is_error":false,"session_id":"s73b","result":"done","permission_denials":[]}\n'
+else
+  # THE DENIED RUN TOUCHES NOTHING. It could not commit, so it did not edit —
+  # which is the clean half of the brief's two denial shapes and the one that
+  # makes the byte-identical assertions below meaningful.
+  printf '{"type":"system","subtype":"init","cwd":"/x","session_id":"s73a","model":"claude-x","tools":["Bash"],"mcp_servers":[],"permissionMode":"default","uuid":"u73a"}\n'
+  printf '{"type":"result","subtype":"success","is_error":false,"session_id":"s73a","result":"blocked","permission_denials":[{"tool_name":"Bash","tool_use_id":"toolu_73","tool_input":{"command":"git commit -m unit-28"}}]}\n'
+fi
+exit 0
+F73EOF
+chmod +x "$FAKE73"
+
+run73() { # sandbox task [extra dispatcher args...] -> $OUT, $RC
+  local d="$1" t="$2"; shift 2
+  export WL73_SF="$d/logs/work-loop/$t.md" WL73_CO="$d"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task "$t" --log-dir "$d/runs" \
+        --carry-one --claude-bin "$FAKE73" "$@" 2>&1)"; RC=$?
+}
+
+echo
+echo "Case 73a — the denial stops read-only: one result, canonical state untouched"
+d="$(new_sandbox)"; state_file "$d" "denial-corridor" "claude"
+export WL73_CALLS="$SANDBOX_ROOT/calls-73.txt"; : >"$WL73_CALLS"
+export WL73_ARGV="$SANDBOX_ROOT/argv-73.txt"; rm -f "$WL73_ARGV" "$WL73_ARGV".*
+SF73="$d/logs/work-loop/denial-corridor.md"
+SHA73_BEFORE="$(shasum -a 256 "$SF73" | cut -d' ' -f1)"
+HEAD73_BEFORE="$(git -C "$d" rev-parse HEAD)"
+export WL73_MODE=deny
+run73 "$d" denial-corridor
+expect_rc 37 "$RC" "73a — the denied hop stops at 37" "$OUT"
+RID73A="$(run_id_of "$OUT")"
+R73A="$d/runs/$RID73A.result"
+# PRECONDITIONS — already true at Unit 27 (case 72e). Asserted so a row that never
+# reached the live attended denial branch cannot pass for the wrong reason.
+if [ "$(res_field "$R73A" mode)" = live ] &&
+   [ "$(res_field "$R73A" stage)" = post-hop ] &&
+   [ "$(tail -1 "$R73A" 2>/dev/null)" = "result_complete=yes" ]; then
+  ok "73a — precondition: a live post-hop denial terminal with one complete record"
+else
+  bad "73a — precondition: a live post-hop denial terminal with one complete record" \
+      "mode=$(res_field "$R73A" mode) stage=$(res_field "$R73A" stage) last=$(tail -1 "$R73A" 2>/dev/null)"
+fi
+# THE READ-ONLY CLAIM. Three independent witnesses, because one of them alone
+# could be satisfied by a writer that happened to rewrite identical bytes.
+[ "$(shasum -a 256 "$SF73" | cut -d' ' -f1)" = "$SHA73_BEFORE" ] \
+  && ok "73a — canonical task state is byte-identical across the stop" \
+  || bad "73a — canonical task state is byte-identical across the stop" \
+         "before=$SHA73_BEFORE after=$(shasum -a 256 "$SF73" | cut -d' ' -f1)"
+[ "$(git -C "$d" rev-parse HEAD)" = "$HEAD73_BEFORE" ] \
+  && ok "73a — and the dispatcher made no commit" \
+  || bad "73a — and the dispatcher made no commit" "HEAD moved from $HEAD73_BEFORE"
+[ -z "$(git -C "$d" status --porcelain -- "logs/work-loop/denial-corridor.md")" ] \
+  && ok "73a — and it left the state file clean, not half-written" \
+  || bad "73a — and it left the state file clean, not half-written" \
+         "$(git -C "$d" status --porcelain -- "logs/work-loop/denial-corridor.md")"
+[ "$(wc -l <"$WL73_CALLS" | tr -d ' ')" = 1 ] \
+  && ok "73a — exactly one actor launch: the stop launched nothing further" \
+  || bad "73a — exactly one actor launch: the stop launched nothing further" \
+         "launches: $(wc -l <"$WL73_CALLS" | tr -d ' ')"
+[ "$(res_count "$d/runs")" = 1 ] \
+  && ok "73a — exactly one terminal result exists" \
+  || bad "73a — exactly one terminal result exists" "count: $(res_count "$d/runs")"
+[ "$(res_field "$R73A" turn_at_terminal)" = claude ] \
+  && ok "73a — the record says the canonical turn is still claude's" \
+  || bad "73a — the record says the canonical turn is still claude's" \
+         "got: $(res_field "$R73A" turn_at_terminal)"
+
+echo
+echo "Case 73b — the takeover names the EXACT approved restart invocation"
+# THE TARGETED FAILING BEHAVIOUR. Before this unit the 37 message said "grant the
+# capability deliberately and re-run", which is a description of an action rather
+# than the action: it never named --permission-mode acceptEdits, so the operator
+# had to know the flag existed and that this dispatcher would honour it. The plan
+# calls for the exact decision and resume action, and that is a command line.
+printf '%s' "$OUT" | grep -Fq -- "--permission-mode acceptEdits" \
+  && ok "73b — the stop names --permission-mode acceptEdits explicitly" \
+  || bad "73b — the stop names --permission-mode acceptEdits explicitly" "$OUT"
+printf '%s' "$OUT" | grep -Fq -- "--task denial-corridor" \
+  && ok "73b — and the restart line is a runnable invocation for THIS task" \
+  || bad "73b — and the restart line is a runnable invocation for THIS task" "$OUT"
+printf '%s' "$OUT" | grep -Fq "git commit -m unit-28" \
+  && ok "73b — and it still names the exact denied target" \
+  || bad "73b — and it still names the exact denied target" "$OUT"
+# NOT A MENU, and not an inference. The plan cut multi-choice recommendation logic,
+# and a denial must never read as approval.
+printf '%s' "$OUT" | grep -Eqi "option 2|choice 2|recommend(ed|ation)" \
+  && bad "73b — the takeover offers no recovery menu" "$OUT" \
+  || ok "73b — the takeover offers no recovery menu"
+printf '%s' "$OUT" | grep -Fq "NOT retried" \
+  && ok "73b — and it still says the request was not retried" \
+  || bad "73b — and it still says the request was not retried" "$OUT"
+
+echo
+echo "Case 73c — read-only status answers from the terminal result, not the raw log"
+OUT73S="$(bash "$DISPATCH_BIN" --checkout "$d" --task denial-corridor --log-dir "$d/runs" --status 2>&1)"; RC73S=$?
+expect_rc 0 "$RC73S" "73c — status exits 0" "$OUT73S"
+printf '%s' "$OUT73S" | grep -Fq "PERMISSION_DENIED" \
+  && ok "73c — status names the last terminal outcome" \
+  || bad "73c — status names the last terminal outcome" "$OUT73S"
+printf '%s' "$OUT73S" | grep -Fq "$RID73A.result" \
+  && ok "73c — and names the terminal-result path the operator can read" \
+  || bad "73c — and names the terminal-result path the operator can read" "$OUT73S"
+printf '%s' "$OUT73S" | grep -Fq -- "--permission-mode acceptEdits" \
+  && ok "73c — and repeats the exact required operator action" \
+  || bad "73c — and repeats the exact required operator action" "$OUT73S"
+# Status stays read-only across the addition.
+[ "$(shasum -a 256 "$SF73" | cut -d' ' -f1)" = "$SHA73_BEFORE" ] &&
+  [ "$(res_count "$d/runs")" = 1 ] \
+  && ok "73c — status wrote nothing: state and result count unchanged" \
+  || bad "73c — status wrote nothing: state and result count unchanged" \
+         "sha=$(shasum -a 256 "$SF73" | cut -d' ' -f1) results=$(res_count "$d/runs")"
+
+echo
+echo "Case 73d — the operator's explicit acceptEdits restart is a NEW run that continues"
+export WL73_MODE=approve
+run73 "$d" denial-corridor --permission-mode acceptEdits
+expect_rc 0 "$RC" "73d — the approved restart carries the hop" "$OUT"
+RID73B="$(run_id_of "$OUT")"
+R73B="$d/runs/$RID73B.result"
+[ -n "$RID73B" ] && [ "$RID73B" != "$RID73A" ] \
+  && ok "73d — it has a distinct run identity: no replay of the failed request" \
+  || bad "73d — it has a distinct run identity: no replay of the failed request" \
+         "first=$RID73A second=$RID73B"
+[ -f "$R73A" ] && [ -f "$R73B" ] && [ "$(res_count "$d/runs")" = 2 ] \
+  && ok "73d — both terminal results survive: the stopped run's evidence is durable" \
+  || bad "73d — both terminal results survive: the stopped run's evidence is durable" \
+         "count: $(res_count "$d/runs")"
+if [ "$(res_field "$R73B" permission_mode_requested)" = acceptEdits ] &&
+   [ "$(res_field "$R73B" permission_mode_effective)" = acceptEdits ]; then
+  ok "73d — requested AND runtime-observed effective mode are both acceptEdits"
+else
+  bad "73d — requested AND runtime-observed effective mode are both acceptEdits" \
+      "requested=$(res_field "$R73B" permission_mode_requested) effective=$(res_field "$R73B" permission_mode_effective)"
+fi
+argv_pair "$WL73_ARGV" "--permission-mode" "acceptEdits" \
+  && ok "73d — the child was actually asked for acceptEdits" \
+  || bad "73d — the child was actually asked for acceptEdits" \
+         "argv: $(tr '\n' ' ' <"$WL73_ARGV" 2>/dev/null)"
+grep -q -- "dangerously-skip-permissions" "$WL73_ARGV" \
+  && bad "73d — and no interactive bypass was used to get there" \
+         "argv: $(tr '\n' ' ' <"$WL73_ARGV" 2>/dev/null)" \
+  || ok "73d — and no interactive bypass was used to get there"
+# CONTINUATION, not replay: the second run started from the SAME task state the
+# first one left, and moved it on.
+[ "$(res_field "$R73B" state_sha256_before)" = "$SHA73_BEFORE" ] \
+  && ok "73d — it continued from the unchanged state the denial left behind" \
+  || bad "73d — it continued from the unchanged state the denial left behind" \
+         "before=$(res_field "$R73B" state_sha256_before) expected=$SHA73_BEFORE"
+grep -qx "turn: codex" "$SF73" \
+  && ok "73d — and reached a valid handback: turn is now codex" \
+  || bad "73d — and reached a valid handback: turn is now codex" \
+         "got: $(grep -m1 '^turn: ' "$SF73")"
+[ "$(wc -l <"$WL73_CALLS" | tr -d ' ')" = 2 ] \
+  && ok "73d — exactly two launches across the whole corridor, one per run" \
+  || bad "73d — exactly two launches across the whole corridor, one per run" \
+         "launches: $(wc -l <"$WL73_CALLS" | tr -d ' ')"
+
+echo
+echo "Case 73e — the controls: a clean run and a pre-admission refusal are unchanged"
+d2="$(new_sandbox)"; state_file "$d2" "clean-control" "claude"
+export WL73_CALLS="$SANDBOX_ROOT/calls-73e.txt"; : >"$WL73_CALLS"
+export WL73_ARGV="$SANDBOX_ROOT/argv-73e.txt"; rm -f "$WL73_ARGV" "$WL73_ARGV".*
+export WL73_MODE=approve
+run73 "$d2" clean-control
+expect_rc 0 "$RC" "73e — a no-denial run is carried exactly as before" "$OUT"
+R73E="$d2/runs/$(run_id_of "$OUT").result"
+printf '%s' "$OUT" | grep -Fq -- "--permission-mode acceptEdits" \
+  && bad "73e — a successful run does NOT print the denial restart line" "$OUT" \
+  || ok "73e — a successful run does NOT print the denial restart line"
+[ "$(res_field "$R73E" outcome)" != PERMISSION_DENIED ] \
+  && ok "73e — and its outcome is not a denial" \
+  || bad "73e — and its outcome is not a denial" "got: $(res_field "$R73E" outcome)"
+# THE NEGATIVE CONTROL FOR 73c, and the row that makes it more than a tautology.
+# A status branch that printed the restart line unconditionally would pass every
+# 73c assertion while telling an operator whose run succeeded to go and elevate
+# permissions. The line has to be gated on the RECORD's own outcome, so a clean
+# run's status must not carry it — while still rendering its own last terminal.
+OUT73T="$(bash "$DISPATCH_BIN" --checkout "$d2" --task clean-control --log-dir "$d2/runs" --status 2>&1)"
+printf '%s' "$OUT73T" | grep -Fq -- "--permission-mode acceptEdits" \
+  && bad "73e — status after a CLEAN run does not offer the elevation line" "$OUT73T" \
+  || ok "73e — status after a CLEAN run does not offer the elevation line"
+printf '%s' "$OUT73T" | grep -Fq "last terminal:" \
+  && ok "73e — but it still renders that run's own terminal record" \
+  || bad "73e — but it still renders that run's own terminal record" "$OUT73T"
+# The pre-admission boundary is untouched: an invalid task id still refuses before
+# a run exists, writing no evidence at all.
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task "../escape" --log-dir "$d2/runs" --status 2>&1)"; RC=$?
+expect_rc 12 "$RC" "73e — a traversal task id is still refused pre-admission" "$OUT"
+[ "$(res_count "$d2/runs")" = 1 ] \
+  && ok "73e — and the refusal wrote no terminal result" \
+  || bad "73e — and the refusal wrote no terminal result" "count: $(res_count "$d2/runs")"
+unset WL73_SF WL73_CO WL73_MODE WL73_CALLS WL73_ARGV
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"
