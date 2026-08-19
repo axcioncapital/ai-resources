@@ -208,6 +208,7 @@ Rationale: {why this class, and any ceiling you applied with its cap}
 
 ## Inference
 - [INFERENCE] {what you concluded beyond what the sources state, naming the claim IDs it rests on}
+- [INFERENCE] {only under bound authority: the same, also naming the thesis it serves — rests on C1, serves T2}
 
 ## Unknowns
 - {what is not known and would change the answer}
@@ -334,8 +335,13 @@ Four rules govern what you may then do:
   because reading it is the point — a memo that confirms an approved brief exists and then reasons
   from something else has proved nothing.
 - **Trace every consequential assertion to the thesis it serves.** Under bound authority each
-  `## Answer` bullet carries its claim IDs *and* the thesis IDs it serves: `- [C1,T2] ...`. The
-  checker enforces both directions.
+  `## Answer` bullet carries its claim IDs *and* the thesis IDs it serves: `- [C1,T2] ...`. Each
+  declared `## Inference` item does the same — it keeps its claim-ID evidence binding and names the
+  thesis it serves. An inference is the part of the memo that goes furthest beyond the sources, so
+  it is the last place traceability may lapse. `- None.` declares no inference and needs no thesis.
+- **Use the thesis IDs the adapter returned, exactly.** They come from the approved headings, so a
+  brief headed Thesis 2, 3 and 4 gives you `T2`, `T3` and `T4` — not `T1`, `T2`, `T3`. The adapter
+  prints the permitted set as `thesis-ids:`; anything outside it is rejected.
 - **Authority never raises an evidence class.** A thesis frames a conclusion; it does not license a
   factual assertion. Every claim-level permission still binds, the verb rule is unchanged, and an
   assertion citing only a thesis is rejected.

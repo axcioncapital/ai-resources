@@ -32,6 +32,8 @@
 #   approved: <path>
 #   contract-exit: 0
 #   theses: <n>
+#   thesis-ids: T<a> T<b> ...      the exact ID set a consumer may reference; IDs come from
+#                                  the approved headings, never from encounter order
 #   thesis: T<n> — <the thesis line>
 #   --- approved content (begin) ---
 #   <the approved brief, verbatim>
@@ -130,18 +132,41 @@ thesis_count="$(printf '%s\n' "$thesis_lines" | grep -c '^### Thesis ' || true)"
 [ "$thesis_count" -ge 1 ] \
   || fail_closed 1 "$checker_rc" "the approved brief at $approved enumerates no theses to trace downstream assertions to"
 
+# A thesis ID is the number the APPROVED HEADING carries, never this script's encounter
+# order. The contract requires three to five `### Thesis N` headings; it does not require N
+# to run 1..n and does not check uniqueness, so a brief headed Thesis 2, 3, 4 is
+# contract-valid. Renumbering it to T1, T2, T3 would leave every downstream trace pointing
+# at a different thesis than the one it named, which nothing afterwards could detect.
+# Where an ID cannot be read, or is not unique, no reference to it could be resolved — so
+# there is no authority to hand on, and this fails closed like any other unusable brief.
+thesis_ids=""
+thesis_records=""
+while IFS= read -r line; do
+  [ -n "$line" ] || continue
+  thesis_number="$(printf '%s' "$line" | sed -E -n 's/^### Thesis ([0-9]+)([[:space:]].*)?$/\1/p')"
+  [ -n "$thesis_number" ] \
+    || fail_closed 1 "$checker_rc" "the approved brief at $approved carries a thesis heading with no readable number ('$line') — a downstream assertion could not say which thesis it serves"
+  thesis_id="T$((10#$thesis_number))"
+  for seen in $thesis_ids; do
+    [ "$seen" != "$thesis_id" ] \
+      || fail_closed 1 "$checker_rc" "the approved brief at $approved carries $thesis_id more than once — a duplicate thesis number makes every reference to it ambiguous, so no authority is claimed"
+  done
+  thesis_ids="${thesis_ids}${thesis_ids:+ }$thesis_id"
+  thesis_records="${thesis_records}${thesis_records:+
+}$thesis_id — $(printf '%s' "$line" | sed -E 's/^### Thesis [0-9]+[[:space:]]*[—-][[:space:]]*//')"
+done <<< "$thesis_lines"
+
 printf 'authority: VALID\n'
 printf 'unit: %s\n' "$unit"
 printf 'approved: %s\n' "$approved"
 printf 'contract-exit: %s\n' "$checker_rc"
 printf 'theses: %s\n' "$thesis_count"
+printf 'thesis-ids: %s\n' "$thesis_ids"
 
-n=0
-while IFS= read -r line; do
-  [ -n "$line" ] || continue
-  n=$((n + 1))
-  printf 'thesis: T%s — %s\n' "$n" "$(printf '%s' "$line" | sed -E 's/^### Thesis [0-9]+ [—-] *//')"
-done <<< "$thesis_lines"
+while IFS= read -r thesis_record; do
+  [ -n "$thesis_record" ] || continue
+  printf 'thesis: %s\n' "$thesis_record"
+done <<< "$thesis_records"
 
 # The contract is explicit that a consumer which checks a brief EXISTS and then drafts from
 # something else has proved nothing (§ 6). What the author receives is the approved text.

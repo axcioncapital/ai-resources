@@ -141,101 +141,85 @@ surface. Preserve the user's unrelated modifications to `logs/friction-log.md` a
 
 ## Latest result
 
-Inspected (2026-08-19):
+Correction round — the two frozen findings, both reproduced before being corrected.
 
-- Claim (1): HOLDS — `git show e16cf206:logs/work-loop/canonical-rw-l2-house-view.md` reads
-  `status: closed`, `turn: operator`, and `## Outcome` opens `**L2 PASS — ADOPT.**`;
-  `git ls-tree -r --name-only e16cf206 -- workflows/research-workflow/docs/` lists
-  `judgment-authority-contract.md`. Commit `e16cf206` is
-  `e16cf20629c6e6c3e3f867c83b18133cae6f3079`, 2026-08-19, "close: research-workflow — L2 canonical
-  House View capability closed PASS/ADOPT".
-- Claim (2): HOLDS — the contract's § 6 *The consumption interface* names
-  `bash logs/scripts/check-judgment-contract.sh {base}-approved.md`, states "Exit `0` means valid
-  downstream authority. Every other exit means *do not proceed*" with codes 3/4/5/6/10, and requires
-  "Consume the content, not just its existence … trace each downstream claim to the thesis it
-  serves". § 1 fixes `{base}-approved.md` as "The only form a consumer may rely on".
-- Claim (3): HOLDS — `grep -rncE 'check-judgment-contract|judgment-authority-contract|Judgment
-  authority|-approved\.md'` over `.claude/commands/research-route.md`,
-  `logs/scripts/research-route-memo-check.sh` and `logs/scripts/research-route-classify.sh` returned
-  `0` for all three before the change; the memo checker line 257 carried the categorical rejection
-  "the memo contains the reserved House View term … before L2 publishes its contract". Searched
-  `logs/scripts/` for `check-judgment-contract.sh`, `check-judgment-challenge.sh` and
-  `promote-judgment-brief.sh` — none present; searched `workflows/research-workflow/docs/` for
-  `judgment-authority-contract.md` — not present. No L2 surface exists on this branch.
-- Claim (4): HOLDS — the classifier, run against the real entry, returns `route: standard` for
-  `thesis_judgment=yes consequence=internal` and `route: deep`
-  (`floor-set-by: thesis_judgment=yes+consequence=external`) for the external case; the existing
-  invocation-path tests pin both (unit-2 B5 and B6).
+**Finding 1 reproduced.** In `logs/scripts/research-route-memo-check.sh`, the Inference loop
+required only `^- \[INFERENCE\].*C[0-9]+` and then checked each `C` reference against the declared
+claims. No thesis was required under bound authority, and the accepted E3 fixture demonstrated the
+gap directly: `- [INFERENCE] A later intake-side gate would therefore be redundant (rests on C1).`
+passed inside a contract-valid bound memo.
 
-Result: the withheld L3 seam is closed against L2's published contract. A new adapter,
-`logs/scripts/research-route-judgment-authority.sh`, is the Standard route's only path to governing
-judgment: it resolves one unit and one artifact base, reads only `{base}-approved.md`, validates it
-through the contract's own `check-judgment-contract.sh`, branches on that exit code, and on exit `0`
-hands back the approved **content** plus its numbered theses. Every other outcome — missing
-validator, missing brief, proposed or rejected state, no claim IDs, malformed artifact, a brief for
-another unit, bad usage — prints `authority: UNAVAILABLE` with the contract exit code and
-`escalate: deep`. The adapter passes no flags, so `--allow-proposed` can never reach the validator,
-and it writes nothing. `research-route-memo-check.sh` replaces its blanket rejection of the reserved
-term with a binding: the term is still refused unless the memo carries a `## Judgment authority`
-block (closed two-line schema) whose adapter run returns valid authority, and under that binding
-every `## Answer` assertion must cite both its claim IDs and the thesis it serves. Authority raises
-nothing — an assertion citing only a thesis is rejected, and the verb rule is unchanged. The entry's
-Standard section specifies the trigger, the adapter call, the four consumption rules and the
-one-way escalation with the contract exit code named in `Deep triggers:`.
+**Finding 2 reproduced, by inspection and then live.** The adapter numbered theses by encounter
+order (`n=$((n + 1))`), and the memo checker validated a range (`${ref#T}` between 1 and
+`authority_theses`). L2's accepted validator counts `grep -cE '^### Thesis '` and enforces three to
+five headings; searched its source for any sequence or uniqueness rule and found none. A brief
+headed `### Thesis 2 / 3 / 4` was then built and run through L2's real validator from `e16cf206`:
+exit `0`, contract-valid. The adapter returned `thesis: T1 / T2 / T3` for it — so a memo tracing to
+the approved brief's Thesis 4 would have written `T3`, and a memo writing `T4` would have been
+refused as out of range.
+
+Result: both findings are resolved.
+
+- **Finding 1.** Under bound authority each declared `## Inference` item now keeps its claim-ID
+  evidence binding *and* must name at least one valid thesis. Any thesis it cites is checked the
+  same way an Answer reference is: refused without a binding, refused if the approved brief does not
+  carry it. Unbound inference behavior is untouched, and `- None.` still declares no inference and
+  needs no thesis. The entry's memo template and its traceability rule now state this for Inference
+  as well as Answer.
+- **Finding 2.** The adapter takes each thesis ID from the number the approved heading actually
+  carries, normalises it (`10#`), and publishes the permitted set as a new `thesis-ids:` line.
+  A duplicated number fails closed as ambiguous; so does a heading whose number cannot be read.
+  The memo checker validates every thesis reference by membership in that returned set, in both the
+  Answer and the Inference, and no longer computes a range. The entry tells the author to use the
+  returned IDs exactly, with the Thesis 2/3/4 case named.
 
 Evidence:
 
-- Before the change, the seam had no executable valid-authority path at all:
-  `grep -rncE 'check-judgment-contract|judgment-authority-contract|Judgment authority|-approved\.md'`
-  returned `0` on the entry, the memo checker and the classifier, and the checker rejected the
-  reserved term categorically. The new harness
-  `logs/scripts/research-route-l3-adapter-unit-1.test.sh` was written first and run against that
-  state: **0 passed, 35 failed**. After the change: **35 passed, 0 failed**.
-- The harness is fail-capable against the **real** L2 validator, not a mock of it: fixture roots
-  materialise `e16cf206:workflows/research-workflow/logs/scripts/check-judgment-contract.sh` into a
-  temporary directory at run time (nothing enters this branch's tree or any commit), and drive it
-  with purpose-built briefs. D1 proves valid authority; D4/D6/D7/D8/D9 pin contract exits 3, 4, 4, 5
-  and 6 for a missing approved form, a proposed brief on the approved path, a rejected brief, a brief
-  with no claim IDs and a malformed one; D10 pins `contract-exit: none` when the validator is absent;
-  D11–D13 refuse bad usage and a base aimed at a proposal or at the approved file itself; D14 refuses
-  another unit's judgment. D2 fails unless the adapter's output contains a sentence that exists only
-  inside the approved brief's body, which is what distinguishes consuming content from confirming a
-  path. D15 uses a probe validator that exits `0` **only** if handed `--allow-proposed`; the adapter
-  returns `contract-exit: 4`, proving it did not ask. D16 compares a full file-and-checksum signature
-  of the fixture tree before and after both a valid and a failing run and fails on any change.
-  E1–E14 drive the memo checker: an ordinary memo is unchanged, an unbound reserved term is still
-  rejected, a bound and thesis-traced memo passes, and it fails closed on an untraced assertion, an
-  unknown thesis, a proposal-bound block, an invalid authority (`contract-exit: 4`), an absent
-  validator (`contract-exit: none`), a thesis cited without a binding, an assertion with no evidence
-  permission, a raised evidence class and a completion over a live Deep trigger.
-- Both existing L3 harnesses still pass **unaltered** — `research-route-l3-unit-1.test.sh` 14 passed,
-  0 failed; `research-route-l3-unit-2.test.sh` 33 passed, 0 failed (before the change: 14/0 and
-  33/0). No assertion was adjusted. A14 and B18 would have passed vacuously once the entry stopped
-  naming the reserved term, so the entry keeps an explicit negated statement of the gate
-  ("A memo that does not bind above may never write the words *House View*"), which those two
-  assertions still read.
-- `bash -n` is clean on all six shell surfaces: the adapter, the memo checker, the classifier and the
-  three harnesses.
-- Diff scope: `.claude/commands/research-route.md`, `logs/scripts/research-route-memo-check.sh`,
-  new `logs/scripts/research-route-judgment-authority.sh`, new
+- Focused harness `logs/scripts/research-route-l3-adapter-unit-1.test.sh`: **41 passed, 0 failed**
+  (35/35 before this correction; six assertions added). New: D18 drives a contract-valid brief headed
+  Thesis 2, 3, 4 through L2's real validator and requires `thesis-ids: T2 T3 T4`, `thesis: T4 — …`
+  and the *absence* of `T1`; D19 requires a duplicated number to fail closed; E15 requires a bound
+  memo's inference to name a thesis; E16 refuses an inference citing `T9`; E17 refuses `T1` against
+  the Thesis 2/3/4 brief; E18 accepts `T4` against it, in both Answer and Inference.
+- The six new assertions were mutation-tested rather than asserted to be fail-capable. Mutating the
+  adapter to publish a hardcoded `T1 T2 T3` set drops the harness to **38/41** (D18, E17, E18 fail).
+  Mutating `thesis_known()` to accept every ID drops it to **38/41** (E5, E16, E17 fail). Mutating
+  the inference requirement from `-lt 1` to `-lt 0` drops it to **40/41** (E15 fails). Each mutation
+  was reverted from a backup and the restored harness returns to 41/41; `git diff --stat` over the
+  two scripts confirms only the correction remains.
+- Both existing L3 harnesses still pass unaltered: `research-route-l3-unit-1.test.sh` **14 passed,
+  0 failed**; `research-route-l3-unit-2.test.sh` **33 passed, 0 failed**. No assertion in either was
+  adjusted in this round.
+- `bash -n` clean on the adapter, the memo checker and the focused harness.
+- Diff scope unchanged from the unit: `.claude/commands/research-route.md`,
+  `logs/scripts/research-route-judgment-authority.sh`,
+  `logs/scripts/research-route-memo-check.sh`,
   `logs/scripts/research-route-l3-adapter-unit-1.test.sh`, and this state file. Nothing under
-  `workflows/`, no L2 helper, no copy, cherry-pick or merge. The operator's unrelated modifications
-  to `logs/friction-log.md` and `logs/innovation-registry.md` are left uncommitted.
-- Implementation commit: `550f47e89c1b2b3f9d0a82efd3d87a5ff5d650e1` on
-  `session/2026-08-18-lightweight-rw`. This pointer was added in the follow-on commit, because a
-  commit cannot record its own hash.
+  `workflows/`, no L2 surface touched. The operator's unrelated modifications to
+  `logs/friction-log.md` and `logs/innovation-registry.md` remain uncommitted.
+- Implementation commit for the unit: `550f47e89c1b2b3f9d0a82efd3d87a5ff5d650e1`. Correction commit:
+  recorded in the follow-on commit below, since a commit cannot carry its own hash.
 
-Deferrals noticed and not done, with the reason:
+One boundary worth naming inside finding 2: the adapter now refuses an approved brief whose thesis
+heading carries no readable number, which L2's validator would accept. That is a deliberate
+fail-closed narrowing — an ID that cannot be read cannot be referenced — and it escalates to Deep
+like any other unusable authority rather than passing something untraceable through.
 
+Deferrals — recorded, not done, and not widened into this correction:
+
+- **Newly noticed this round: thesis references are matched anywhere on a memo line.** The checker
+  scans a whole Answer or Inference line for `T[0-9]+`, so prose that happens to contain `T4` would
+  read as a thesis reference. Narrow and low-consequence; tightening it to the bracketed reference
+  list plus an explicit `serves T<n>` form is a separate change.
 - **The gate keys on the literal reserved term.** A memo could assert a governing view in other
-  words and never trip it. This is the pre-existing shape of the rule, not something this unit
-  introduced, and widening it to intent detection is a different and much larger mechanism.
+  words and never trip it. Pre-existing shape of the rule; widening it to intent detection is a much
+  larger mechanism.
 - **No content binding between the memo and the brief it read.** The block names the approved
   artifact; nothing binds the memo's text to those exact bytes the way L2's `reviews_sha256:` binds a
   challenge. Real operating evidence should decide whether that is worth the cost.
 - **The harness's real-validator fixtures depend on `e16cf206` staying reachable.** If it ever is
-  not, D1–D6 degrade to exit-code stubs and print a `NOTE`. The degradation is reported rather than
-  silent, but it is a weaker proof when it fires.
+  not, D1–D6 and D18–D19 degrade to exit-code stubs and print a `NOTE`. Reported rather than silent,
+  but a weaker proof when it fires.
 
 ## Blocker
 
@@ -243,8 +227,9 @@ None.
 
 ## Next action
 
-Codex: assess Unit 1 of `canonical-rw-lightweight-l3-adapter`. The seven required behaviors are
-implemented and committed on `session/2026-08-18-lightweight-rw`; the new harness went 0/35 before
-and 35/35 after; both existing L3 harnesses pass unaltered at 14/0 and 33/0; no excluded surface was
-touched. Judge whether the binding, its fail-closed evidence and the recorded deferrals are good
-enough to move on.
+Codex: run the closure check on the frozen findings only — are findings 1 and 2 resolved, and did
+the correction break the focused adapter harness or either existing L3 harness? The answers on
+record: finding 1 resolved (bound inference now requires a valid thesis, mutation-proved), finding 2
+resolved (thesis IDs come from the approved headings, duplicates fail closed, references validated by
+set membership, mutation-proved), and nothing broke — 41/41 focused, 14/0 and 33/0 existing, both
+unaltered.

@@ -104,11 +104,19 @@ PROBE
 }
 
 # write_brief <path> <status> <variant>
-#   good        three evidence-cited theses, cited verdict, a countercase
+#   good        three evidence-cited theses numbered 1, 2, 3
+#   nonseq      the same brief headed Thesis 2, 3, 4 — contract-valid, since L2 requires three
+#               to five '### Thesis N' headings and never requires N to run 1..n
+#   dupnum      the same brief headed Thesis 2, 2, 3 — also contract-valid, and ambiguous
 #   noids       same shape, no claim IDs anywhere
 #   malformed   no frontmatter block at all
 write_brief() {
   local path="$1" status="$2" variant="${3:-good}" decided_by=""
+  local n1=1 n2=2 n3=3
+  case "$variant" in
+    nonseq) n1=2; n2=3; n3=4 ;;
+    dupnum) n1=2; n2=2; n3=3 ;;
+  esac
   mkdir -p "$(dirname "$path")"
   case "$status" in
     approved) decided_by="approved_by: Patrik Lindeberg" ;;
@@ -138,12 +146,12 @@ write_brief() {
       printf '### Thesis 3 — The seam belongs at the memo, not at intake.\n'
       printf 'Countercase: intake-side gating would catch some cases earlier.\n\n'
     else
-      printf '### Thesis 1 — The lightweight lane under-serves load-bearing claims.\n'
+      printf '### Thesis %s — The lightweight lane under-serves load-bearing claims.\n' "$n1"
       printf 'The intake sample [Q1-C05] records repeated under-service of load-bearing asks.\n'
       printf 'Context: this matters because the lane now carries client-facing preparation.\n\n'
-      printf '### Thesis 2 — Escalation is the cheaper failure than a wrong answer.\n'
+      printf '### Thesis %s — Escalation is the cheaper failure than a wrong answer.\n' "$n2"
       printf 'Rework cost [Q1-C06] exceeds the cost of a route that escalated too readily.\n\n'
-      printf '### Thesis 3 — The seam belongs at the memo, not at intake.\n'
+      printf '### Thesis %s — The seam belongs at the memo, not at intake.\n' "$n3"
       printf 'Late-surfacing signals [Q2-A03] are invisible to an intake-time gate.\n'
       printf 'Countercase: intake-side gating would catch a minority of cases earlier.\n\n'
     fi
@@ -205,11 +213,12 @@ if [ -r "$ADAPTER" ]; then
       "the approved brief's own text is absent from the adapter's output"
   fi
   if printf '%s' "$ADAPTER_OUT" | grep -qE '^theses: 3$' &&
+     printf '%s' "$ADAPTER_OUT" | grep -qE '^thesis-ids: T1 T2 T3$' &&
      printf '%s' "$ADAPTER_OUT" | grep -qE '^thesis: T2 '; then
     ok "D3 valid authority enumerates the theses a consumer must trace to"
   else
     no "D3 valid authority enumerates the theses a consumer must trace to" \
-      "no 'theses: 3' / 'thesis: T2' enumeration: $(printf '%s' "$ADAPTER_OUT" | tr '\n' ';')"
+      "no 'theses: 3' / 'thesis-ids: T1 T2 T3' / 'thesis: T2' enumeration: $(printf '%s' "$ADAPTER_OUT" | tr '\n' ';')"
   fi
 else
   no "D2 valid authority hands back the approved CONTENT, not merely its path" "adapter absent"
@@ -285,6 +294,34 @@ else
   no "D16 the adapter writes, approves and promotes nothing on either outcome" "adapter absent"
   no "D17 the adapter opens no promotion path" "adapter absent"
 fi
+
+# A brief headed Thesis 2, 3, 4 is contract-valid — L2 requires three to five '### Thesis N'
+# headings and never requires N to run 1..n. Renumbering it to T1, T2, T3 would point every
+# downstream trace at a different thesis than the one the memo named, undetectably.
+r_nonseq="$(new_root nonseq real)"
+write_brief "$r_nonseq/$BASE_REL-approved.md" approved nonseq
+
+if [ -r "$ADAPTER" ]; then
+  run_adapter --root "$r_nonseq" --unit lane-comparison --base "$BASE_REL"
+  if [ $? -ne 0 ]; then
+    no "D18 non-sequential thesis numbers keep their own identity" \
+      "the adapter refused a contract-valid brief: $(printf '%s' "$ADAPTER_OUT" | tr '\n' ';')"
+  elif printf '%s' "$ADAPTER_OUT" | grep -qE '^thesis-ids: T2 T3 T4$' &&
+       printf '%s' "$ADAPTER_OUT" | grep -qE '^thesis: T4 — The seam belongs at the memo' &&
+       ! printf '%s' "$ADAPTER_OUT" | grep -qE '^thesis: T1 '; then
+    ok "D18 non-sequential thesis numbers keep their own identity"
+  else
+    no "D18 non-sequential thesis numbers keep their own identity" \
+      "IDs were renumbered from encounter order: $(printf '%s' "$ADAPTER_OUT" | tr '\n' ';')"
+  fi
+else
+  no "D18 non-sequential thesis numbers keep their own identity" "adapter absent"
+fi
+
+r_dup="$(new_root dupnum real)"
+write_brief "$r_dup/$BASE_REL-approved.md" approved dupnum
+expect_adapter "D19 a duplicated thesis number is ambiguous and fails closed" 1 "more than once" \
+  --root "$r_dup" --unit lane-comparison --base "$BASE_REL"
 
 # ---------------------------------------------------------------------------
 # E1 – E13 — memo control
@@ -387,7 +424,7 @@ Rationale: Two direct roles, both in scope.
 - [C1,T3] The House View places the control seam at the memo rather than at intake.
 
 ## Inference
-- [INFERENCE] A later intake-side gate would therefore be redundant (rests on C1).
+- [INFERENCE] A later intake-side gate would therefore be redundant (rests on C1, serves T3).
 
 ## Unknowns
 - Whether a quarter without reworked escalations would move the view.
@@ -712,6 +749,129 @@ Rationale: Two direct roles.
 
 ## Inference
 - None.
+
+## Unknowns
+- None material.
+
+## Completion
+Status: COMPLETE
+Deep triggers: none
+EOF
+
+memo "E15 a declared inference must also name the thesis it serves" REJECT "names no thesis" "$r_valid" <<'EOF'
+# Which lane should carry load-bearing preparation?
+
+## Judgment authority
+Unit: lane-comparison
+Approved brief: judgment/lane-comparison-unit-judgment-brief-approved.md
+
+## Claims
+
+### C1 — The intake sample records repeated under-service of load-bearing asks.
+Class: SUPPORTED
+Roles: 2 — intake sample; rework log
+Source: Intake sample — Date: 2026-08-18 — Role: intake sample — Fit: direct
+Source: Rework log — Date: 2026-08-18 — Role: rework log — Fit: direct
+Rationale: Two direct roles.
+
+## Answer
+- [C1,T1] The House View places the seam at the memo.
+
+## Inference
+- [INFERENCE] A later intake-side gate would therefore be redundant (rests on C1).
+
+## Unknowns
+- None material.
+
+## Completion
+Status: COMPLETE
+Deep triggers: none
+EOF
+
+memo "E16 an inference cannot cite a thesis the approved brief does not carry" REJECT "T9" "$r_valid" <<'EOF'
+# Which lane should carry load-bearing preparation?
+
+## Judgment authority
+Unit: lane-comparison
+Approved brief: judgment/lane-comparison-unit-judgment-brief-approved.md
+
+## Claims
+
+### C1 — The intake sample records repeated under-service of load-bearing asks.
+Class: SUPPORTED
+Roles: 2 — intake sample; rework log
+Source: Intake sample — Date: 2026-08-18 — Role: intake sample — Fit: direct
+Source: Rework log — Date: 2026-08-18 — Role: rework log — Fit: direct
+Rationale: Two direct roles.
+
+## Answer
+- [C1,T1] The House View places the seam at the memo.
+
+## Inference
+- [INFERENCE] A later intake-side gate would therefore be redundant (rests on C1, serves T9).
+
+## Unknowns
+- None material.
+
+## Completion
+Status: COMPLETE
+Deep triggers: none
+EOF
+
+# E17/E18 are the memo-side half of D18. The brief behind $r_nonseq is headed Thesis 2, 3, 4.
+# A range check would accept T1 here and refuse T4; membership in the returned ID set does
+# the opposite, which is the only reading that matches what the operator approved.
+memo "E17 a thesis ID outside the returned set is refused, range or not" REJECT "T1" "$r_nonseq" <<'EOF'
+# Which lane should carry load-bearing preparation?
+
+## Judgment authority
+Unit: lane-comparison
+Approved brief: judgment/lane-comparison-unit-judgment-brief-approved.md
+
+## Claims
+
+### C1 — The intake sample records repeated under-service of load-bearing asks.
+Class: SUPPORTED
+Roles: 2 — intake sample; rework log
+Source: Intake sample — Date: 2026-08-18 — Role: intake sample — Fit: direct
+Source: Rework log — Date: 2026-08-18 — Role: rework log — Fit: direct
+Rationale: Two direct roles.
+
+## Answer
+- [C1,T1] The House View places the seam at the memo.
+
+## Inference
+- None.
+
+## Unknowns
+- None material.
+
+## Completion
+Status: COMPLETE
+Deep triggers: none
+EOF
+
+memo "E18 a thesis ID the approved brief really carries is accepted" PASS "" "$r_nonseq" <<'EOF'
+# Which lane should carry load-bearing preparation?
+
+## Judgment authority
+Unit: lane-comparison
+Approved brief: judgment/lane-comparison-unit-judgment-brief-approved.md
+
+## Claims
+
+### C1 — The intake sample records repeated under-service of load-bearing asks.
+Class: SUPPORTED
+Roles: 2 — intake sample; rework log
+Source: Intake sample — Date: 2026-08-18 — Role: intake sample — Fit: direct
+Source: Rework log — Date: 2026-08-18 — Role: rework log — Fit: direct
+Rationale: Two direct roles.
+
+## Answer
+- [C1,T4] The House View places the seam at the memo.
+
+## Inference
+- [INFERENCE] A later intake-side gate would therefore be redundant (rests on C1, serves T4).
 
 ## Unknowns
 - None material.

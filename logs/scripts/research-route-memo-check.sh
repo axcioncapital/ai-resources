@@ -179,6 +179,18 @@ authority_adapter="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/research-rou
 authority_heads="$(grep -cE '^## Judgment authority *$' "$memo" || true)"
 authority_bound=0
 authority_theses=0
+authority_thesis_ids=""
+
+# Membership in the exact ID set the adapter returned, never a 1..count range. The approved
+# headings own the numbering, and a range check would accept T1 against a brief headed
+# Thesis 2, 3, 4 and refuse T4 against the same brief.
+thesis_known() {
+  local want="$1" known
+  for known in $authority_thesis_ids; do
+    [ "$known" = "$want" ] && return 0
+  done
+  return 1
+}
 
 if [ "$authority_heads" -gt 1 ]; then
   add "the memo carries $authority_heads '## Judgment authority' sections — a memo binds to exactly one approved judgment"
@@ -233,6 +245,9 @@ elif [ "$authority_heads" -eq 1 ]; then
             authority_bound=1
             authority_theses="$(printf '%s\n' "$adapter_out" | sed -n 's/^theses: //p' | head -1)"
             [ -n "$authority_theses" ] || authority_theses=0
+            authority_thesis_ids="$(printf '%s\n' "$adapter_out" | sed -n 's/^thesis-ids: //p' | head -1)"
+            [ -n "$authority_thesis_ids" ] \
+              || add "the bound judgment authority returned no thesis ID set — without it no assertion could be traced to the thesis it serves"
           else
             add "the bound judgment authority is not contract-valid: $(printf '%s\n' "$adapter_out" | sed -n 's/^reason: //p' | head -1) ($(printf '%s\n' "$adapter_out" | grep '^contract-exit: ' | head -1))"
           fi
@@ -308,8 +323,8 @@ while IFS= read -r line; do
         thesis_refs=$((thesis_refs + 1))
         if [ "$authority_bound" -ne 1 ]; then
           add "the Answer cites thesis $ref without contract-valid bound judgment authority — a thesis reference means nothing except against an approved Unit Judgment Brief"
-        elif [ "${ref#T}" -lt 1 ] || [ "${ref#T}" -gt "$authority_theses" ]; then
-          add "the Answer cites thesis $ref, which the approved brief does not carry (it holds $authority_theses)"
+        elif ! thesis_known "$ref"; then
+          add "the Answer cites thesis $ref, which the approved brief does not carry (it holds: $authority_thesis_ids)"
         fi
         continue
         ;;
@@ -336,7 +351,11 @@ while IFS= read -r line; do
 done <<< "$answer_lines"
 [ "$answer_assertions" -ge 1 ] || add "the Answer contains no claim-bound assertion"
 
-# Inference is either explicitly absent or marked and bound to the claims it extends.
+# Inference is either explicitly absent or marked and bound to the claims it extends — and,
+# under bound judgment authority, to the thesis it serves. An inference is a consequential
+# assertion: it is the part of the memo that goes beyond what the sources state, so exempting
+# it from traceability would leave the least-supported statements the only untraced ones.
+# `- None.` declares no inference and therefore has nothing to trace.
 inference_lines="$(awk '
   /^```/ { fence = !fence }
   !fence && /^## / { inside = (index($0, "## Inference") == 1); next }
@@ -354,6 +373,19 @@ while IFS= read -r line; do
   for ref in $(printf '%s\n' "$line" | grep -oE 'C[0-9]+'); do
     printf '%s\n' $claim_ids | grep -qx "$ref" || add "the Inference section cites undeclared claim $ref"
   done
+  inference_thesis_refs=0
+  for ref in $(printf '%s\n' "$line" | grep -oE 'T[0-9]+'); do
+    if [ "$authority_bound" -ne 1 ]; then
+      add "the Inference section cites thesis $ref without contract-valid bound judgment authority — a thesis reference means nothing except against an approved Unit Judgment Brief"
+    elif ! thesis_known "$ref"; then
+      add "the Inference section cites thesis $ref, which the approved brief does not carry (it holds: $authority_thesis_ids)"
+    else
+      inference_thesis_refs=$((inference_thesis_refs + 1))
+    fi
+  done
+  if [ "$authority_bound" -eq 1 ] && [ "$inference_thesis_refs" -lt 1 ]; then
+    add "the Inference item names no thesis — under bound judgment authority a declared inference keeps its claim-ID evidence binding and also names the thesis it serves"
+  fi
 done <<< "$inference_lines"
 [ "$inference_items" -ge 1 ] || add "the Inference section must state '- None.' or declare at least one marked inference"
 
