@@ -43,9 +43,11 @@ If missing: Do not proceed.
 
 ### Input 2: Chapter Draft (required — blocking)
 
-The prose chapter containing the flagged passages. Needed to produce context-aware replacements that preserve surrounding narrative flow.
+The prose chapter containing the flagged passages. Needed to produce context-aware replacements that preserve surrounding narrative flow — so whichever way it arrives, you must have the whole chapter, not an extract around each flag.
 
-If missing: Do not proceed.
+It arrives either as content or as an absolute file path, whichever the invoking workflow states. When it arrives as a path, read the complete chapter at that path before generating any correction.
+
+If missing: Do not proceed. A path that does not resolve to a readable, non-empty file counts as missing.
 
 ### Input 3: Evidence Pack (required — blocking)
 

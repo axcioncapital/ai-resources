@@ -1,0 +1,6 @@
+specimen: runs/baseline-pre-s1/raw
+check A0: PASS — pre-S1 baseline f18ed58d6c96b0f97fc677fb7c90073336f310e4 recorded with 3 derivation line(s); resolves to a commit in this repository
+check A1: FAIL — missing required artifact (verification-summary): 1.1-chapter-01-verification-summary.md
+verdict: FAIL (1 check(s))
+note: A2-A8 not run — they read artifacts A1 could not establish.
+exit=1

@@ -1,0 +1,222 @@
+# S1 relay baseline — instrumentation for the W4-H1–H4 path-passing refactor
+
+> **When to read this:** before editing any main-session relay in this workflow, and when checking
+> whether the S1 payload-reduction target has been met.
+
+This directory is the **proof seam** for Slice S1 of
+`plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md` § 5.
+It measures how much delegable content the workflow's relay seams push through the main session,
+against a fixed fixture, and fails while the approved target is unmet. It changes no production
+behaviour: nothing here is read at runtime by any command, agent, or skill.
+
+## Running it
+
+```bash
+cd workflows/research-workflow/tests/s1-relay
+bash check-relay-payload.sh          # the target check — currently RED by design
+bash check-relay-payload.test.sh     # the harness's own regression suite — must be green
+bash make-fixture.sh                 # regenerate the fixture (must stay byte-identical)
+```
+
+`check-relay-payload.sh` exits `0` when the target is met, `1` when it is not, `2` on a usage or
+input error. `--format tsv` emits one machine-readable row per seam for downstream tooling.
+
+## What makes the red baseline trustworthy
+
+The manifest records *where* each relay is and *what it should become*. It never records whether the
+seam currently complies. The check opens the live command or agent body, finds the one relay directive
+line, and derives the current shape — content or path — from that text. So:
+
+- The check cannot fail because a marker, an expected string, or the S1 brief says the workflow is
+  noncompliant. `check-relay-payload.test.sh` T3 proves it: appending prose that asserts
+  noncompliance to a compliant surface leaves the verdict at TARGET MET.
+- The check can go green. T9 takes the **real** command bodies, applies one mechanical edit to a
+  single live directive, and asserts that seam changes state — VIOLATION → COMPLIANT for a seam still
+  relaying content, COMPLIANT → VIOLATION for one already converted. Both directions prove the same
+  thing: the verdict follows the live directive text. T9b confirms an unrelated seam in another file
+  does not move.
+- Reduction is measured against a **fixed baseline** (every in-scope seam's full fixture payload,
+  computed from manifest + fixture alone), not against a live projection. A projection-based figure
+  reads ~98% while nothing has been fixed, then collapses once the refactor lands — failing exactly
+  backwards.
+
+## Reconciliation: every audit-named surface maps to at least one seam row
+
+`audits/token-audit-2026-07-03-ai-resources.md` § 4 named the four HIGH classes. Each named surface
+below carries one or more manifest rows; `check-relay-payload.test.sh` T8/T8b assert the mapping
+holds. Two audit references did not survive re-enumeration and are corrected in the manifest:
+
+| Audit statement | What the live bodies actually show |
+|---|---|
+| `execution-agent` is wired via `/verify-chapter` **St4** | The delegation is at **Step 2, item 4**. Step 4 only logs to `/logs/qc-log.md`. |
+| `evidence-to-report-writer` (listed beside the workflow's agents) | It is a **skill** at `ai-resources/skills/evidence-to-report-writer/SKILL.md`, loaded into a general-purpose subagent by `run-report` 4.2a. The workflow's four agents are `execution-agent`, `improvement-analyst`, `qc-gate`, `verification-agent`. |
+
+| Class | Audit-named surface | Seam rows |
+|---|---|---|
+| W4-H1 | `run-report` St4.2a (full draft return) | `H1-01`, plus the downstream re-relays `H1-02` (4.2b) and `H1-03` (4.2c) |
+| W4-H2 | `execution-agent`, `verify-chapter` | `H2-01` (agent return contract), `H2-03`/`H2-04` (Step 1 inputs), `H2-05` (Step 3 correction relay) |
+| W4-H3 | `run-report` St4.0 (six categories) + St4.1b re-read + the St4.2 per-chapter operands | `H3-01`–`H3-04` (St4.0), `H3-05` (St4.1), `H3-06`/`H3-07` (St4.1b), `H3-08`/`H3-09` (St4.2a operands), `H3-24` (St4.2c architecture operand — not audit-named; the relay repeats the same approved architecture to `report-compliance-qc` four times per section and carried no row until Unit 7 added one) |
+| W4-H3 | `run-analysis` St1 (all memos) | `H3-10`, plus the five content relays it feeds: `H3-11`, `H3-12`, `H3-13`, `H3-14` |
+| W4-H3 | `run-synthesis` St1 | `H3-15`, `H3-16` |
+| W4-H3 | `run-execution` St2.3 (all raw reports) | `H3-17`, `H3-18` |
+| W4-H3 | `run-execution` St2.1 (all approved Answer Specs) | `H3-19` — the St2.1.3 operand read and the onward relay to `research-prompt-creator` on the same directive. This table grouped it under St2.3 until Unit 8; the manifest has always located it at `2.1.3` |
+| W4-H3 | `produce-architecture` Ph2+Ph3 (drafts double-read) | `H3-20`/`H3-21` (Ph2), `H3-22`/`H3-23` (Ph3) |
+| W4-H4 | `run-cluster` St2.2 | `H4-01`, `H4-02` |
+| W4-H4 | `run-execution` St2.1 + St2.3 | `H4-03`/`H4-04` (St2.1), `H4-05`/`H4-06` (St2.3) |
+| W4-H4 | (not audit-named — found by sweep) `run-report` 4.2a/b/c reference docs | `H4-07`, `H4-08`, `H4-09` — **already compliant at the Unit 1 baseline**; `H4-01`–`H4-06` joined them in Unit 2 |
+
+**One deliberate omission.** The audit's W4-H2 also covers `execution-agent`'s
+`Interpret or summarize the response — return it verbatim` prohibition. That line is an **edit target**,
+not a payload relay: the fix deletes or rewrites it, which would leave any seam row anchored there
+permanently UNRESOLVED. It is recorded in the edit map below instead.
+
+## Isolation: what may be path-passed, and what may not
+
+`docs/required-reference-files.md` § Path-passing convention is the governing boundary. It settles two
+cases and leaves a third open, and the manifest's `isolation` column keeps them apart:
+
+- **`reference-path-ok`** — the four reference docs. The convention *already* mandates path-passing for
+  them ("The Stage 2–4 commands pass these reference files to subagents **by path, not by content**").
+  `run-report` 4.2a/b/c complied from the start. `run-cluster` St2.2/2.3 and `run-execution`
+  St2.1/St2.3 did not — they read the docs into main and passed them as content, `run-cluster` once
+  per cluster; **Unit 2 converted all six**. These were the
+  clean conversions: the documented convention is on their side and the consuming agents all hold
+  `Read` (`qc-gate`: `Read`; `verification-agent`: `Read, Glob, Grep`; `execution-agent`: `Read, Bash`;
+  general-purpose: all tools), so every consumer can resolve a path.
+- **`intentional-content`** — cluster memos and section directives. The convention names these as
+  per-chapter inputs "passed by content per the context-isolation rule". Their target is
+  `content-required`; the check measures them and holds them **outside** the reduction accounting
+  rather than scoring them as violations.
+- **`ambiguous` — surfaced, not guessed.** A payload that is neither a reference doc nor a named
+  per-chapter input is not settled by the convention, so the check reports it and fails the run
+  rather than assuming a reading. **No live row carries this classification today** — five did, and
+  the Unit 11 discovery settled all five from repository evidence (see item 4 of the edit map
+  below). Because no live row exercises the branch any more, its falsifiability is proved on the
+  synthetic surface instead: `T5c` asserts the finding fires and counts, `T5d` asserts that settling
+  it clears that finding and moves nothing else. The classification is still live and still fails a
+  run; it simply has nothing to catch at present.
+
+## Blast radius
+
+Five projects carry a copy of every seam-bearing surface: `axcion-content-programme`,
+`axcion-sector-intelligence`, `buy-side-service-plan`, `positioning-research`,
+`research-pe-regime-shift-advisory-gap`.
+
+They are **regular file copies, not symlinks**, so a canonical edit does *not* take live effect in
+them — propagation needs `/sync-workflow`, which is S0's territory and outside this task. **None of
+the five received Unit 2's canonical change, so all five copies now diverge from canonical**: the two
+command bodies Unit 2 edited, `run-cluster.md` and `run-execution.md`, differ from canonical in every
+one of the five. Unit 2's edits therefore landed canonically only, and the accumulated divergence must
+be reckoned with before any propagation is claimed.
+
+## The bounded edit map for the next unit
+
+Ordered by ratio of measured bytes removed to isolation risk. Run `check-relay-payload.sh` for the
+current per-seam figures rather than quoting numbers from here.
+
+1. ~~**Reference docs — no contract question at all**~~ **— LANDED in Unit 2** (`H4-01`, `H4-02`,
+   `H4-03`, `H4-04`, `H4-05`, `H4-06`). The docs are no longer read into main; each seam passes
+   `reference/{name}.md` as a path, matching what `run-report` 4.2a/b/c already did. `H4-02` was the
+   single largest measured seam because the relay repeats per cluster. `run-cluster`'s stage-entry
+   completeness gate is unchanged and still verifies the files are present **and filled** before
+   launching — path-passing makes that gate more load-bearing, not less. `run-execution` has no
+   command-level completeness gate; its Steps 2.1.4 / 2.3.4 now verify presence in place of the
+   content read, so the same fail-fast point survives.
+2. **Bulk operand reads and their onward relays.** All are `operand-path-ok`: the payload is already on
+   disk and the consumer can read it. `produce-architecture` Ph2/Ph3 read the same drafts twice, so
+   one conversion clears both.
+   - ~~Pending~~ **— LANDED in Units 3–8:** `H3-20`–`H3-23` (Unit 3, `produce-architecture` Ph2/Ph3
+     section drafts); `H3-01`, `H3-05`, `H3-06`, `H3-07` (Unit 4, the `run-report` chapter-draft set);
+     `H3-17`, `H3-18` (Unit 5, `run-execution` St2.3 raw reports); `H3-08` (Unit 6, the St4.2a
+     architecture operand); `H3-24` (Unit 7, the St4.2c architecture operand — the row itself did not
+     exist before that unit, so this seam was outside the measured denominator until Unit 7 added it);
+     `H3-19` (Unit 8, the `run-execution` St2.1 Answer Specs operand — St2.1.3 now resolves the
+     section's approved specs to paths only, and the St2.1.6 relay hands those paths to the
+     `research-prompt-creator` sub-agent, which reads every approved spec itself).
+   - **Nothing is pending in this group.** The one remaining W4-H3 measured violation is `H3-04`,
+     which sits under item 4 below as one of the ambiguous five rather than here.
+3. **W4-H1 and W4-H2 returns** (`H1-01`, `H2-01`). Bring 4.2a to the `run-synthesis` St2 pattern —
+   the sibling writes the same artifact class to disk and returns "output file path, chapter structure
+   summary, evidence coverage notes".
+   - ~~Pending~~ **— `H2-01` LANDED in Unit 9:** the response was *already* written to disk, so the
+     verbatim return was pure duplication. `execution-agent` now returns the caller-specified path
+     plus a handoff summary capped at 20 lines and 4 KB, carrying only the output path, response
+     status, error text, the verdict as stated, and the discrepancy count with Claim ID and Issue
+     type per discrepancy — grouped by Issue type if the per-discrepancy lines would breach the cap.
+     The old `Interpret or summarize … verbatim` prohibition was rewritten in the same commit, as
+     this entry required: it still forbids altering, interpreting, analyzing or paraphrasing the
+     response, still forbids handing the body back, and now names the file on disk as the verbatim
+     authoritative copy the summary may never stand in for. `verify-chapter` St2.4/2.5 were updated
+     to consume that contract. `H2-01` was the second of the two cap violations.
+   - ~~Still pending~~ **— `H1-01` LANDED in Unit 10:** St4.2a now hands `evidence-to-report-writer`
+     the canonical `-draft.md` output path, the sub-agent writes the complete draft there before
+     returning, and the return carries the exact path plus chapter structure, scarcity items,
+     evidence-coverage status and warning/failure state, capped at 20 lines and 4 KB. St4.2d no
+     longer writes the draft from a return payload — it verifies the file the writer wrote, and
+     still writes the review report and checkpoint. `H1-01` was the last cap violation in the
+     measured set; **no cap violation remains.**
+   - ~~Nothing is pending~~ **— `H1-02` and `H1-03` LANDED in Unit 12:** St4.2b and St4.2c now pass
+     the exact St4.2a draft path, and each sub-agent reads the identical complete draft itself. The
+     main session no longer reads the draft in order to relay it, so the explicit read Unit 10
+     disclosed here is gone. **The whole W4-H1 group is now compliant.**
+4. ~~Hand the ambiguous five back before touching them~~ **— all five were settled by the Unit 11
+   discovery (commit `17c39803`) and encoded in the manifest by Unit 12. No manifest row is
+   `ambiguous` any more, and the check's ambiguity control is now proved on the synthetic surface
+   (T5c/T5d) rather than by a live unsettled row.**
+   - `H1-02`, `H1-03`, `H2-05` → **path-safe**, `operand-path-ok`. Carried by live precedent, not
+     analogy: `H3-05` (a general-purpose sub-agent already reads chapter drafts by path), `H3-07`
+     (a qc-gate already receives draft paths "in place of chapter draft content") and `H3-24` (the
+     same St4.2c qc-gate already reads the architecture operand by path). `H1-02`/`H1-03` landed in
+     Unit 12; **`H2-05` landed in Unit 13** — St3.7a now passes the exact Step 1 chapter path and
+     `evidence-prose-fixer` reads the complete chapter itself. All three are implemented, and each
+     was proved independently live (`T9c`, `T9d`).
+   - `H2-04` → **`intentional-content` / `content-required`.** Its extracts become the evidence-table
+     half of the `verify-chapter` St2.3 GPT-5 prompt body. `execution-agent` *receives* the user
+     message and may not modify it, and an external model has no filesystem, so a path cannot be a
+     prompt body. A capability fact, not an implementation difficulty.
+   - `H3-04` → **`intentional-content` / `content-required`, derived.** It is the only load feeding
+     `H3-09`, the already-authorized per-chapter content contract; the main session cannot hand a
+     sub-agent content it does not hold. It creates no new exception.
+   - **The extract-class contradiction dissolves.** `required-reference-files.md` § Path-passing
+     convention is scoped to *per-chapter* inputs; `run-cluster` St1.2/St2.3 path-passes extracts
+     *per cluster*. The two never collide. Note for later: `run-report` St4.0.1 already carries the
+     carve-out that would free St4.0.5 — "a cross-chapter bulk operand, not a per-chapter input" —
+     so if `H3-09` were ever reclassified, `H3-04` would become path-safe by that precedent. Nothing
+     here proposes that.
+   - ~~Still open~~ **— `H2-03` was settled by the Unit 14 discovery (commit `02996c0e`) and encoded
+     by Unit 15: `intentional-content` / `content-required`, the same classification as `H2-04`.**
+     The two are the chapter-prose and evidence-table halves of one caller-assembled GPT-5 request,
+     which St2.3 names in a single phrase ("use chapter prose + evidence table as input"). Four live
+     contract statements each independently require the main session to hold the chapter body: the
+     command's pre-dispatch confidentiality check scans the *outbound message* for confidential
+     identifiers, and a path cannot be scanned; `execution-agent` *receives* "a user message to send"
+     and may not modify it; it may not "send any information not explicitly provided in the user
+     message", so reading a passed path and transmitting the file would breach its own
+     confidentiality rule; and St2.6 already states the main session holds "raw chapter content".
+     The external endpoint also cannot resolve a repository path. **No source edit was needed or
+     made** — `verify-chapter` St1.1 is unchanged.
+   - **Deterministic completion is by an accepted exception, not by converting everything.** With
+     `H2-03` encoded, all 40 named seams are either converted (27) or explicitly justified (13), so
+     the check reports `TARGET MET` and exits 0. That the last measured violation became an
+     exemption is exactly the shape that would be metric-gaming if the exemption were weak, so the
+     proof is built to be falsifiable in the narrowest possible way: reverting **only** `H2-03`'s two
+     manifest fields, with the workflow source untouched, restores exactly one violation and
+     `TARGET NOT MET` while all 39 other rows stay put. `T6c` re-earns it from the other direction —
+     putting one real content relay back into a live command body returns the whole run to
+     `TARGET NOT MET`, exit 1.
+   - **Making prompt assembly path-based would be a redesign, not this refactor.** It would move
+     construction and the confidentiality gate into `execution-agent`, changing its stated
+     responsibility from "send what you are given" to "assemble and send" and relocating an
+     operator-facing safety control out of the command that owns it. Outside S1.
+
+Summaries added anywhere in step 3 are capped at **20 lines and 4 KB**; the check enforces both.
+
+## Files
+
+| File | Role |
+|---|---|
+| `seam-manifest.tsv` | the exact live seam surface — one row per (seam, payload), with the anchor the check reads and the target it should reach |
+| `fixture/` | fixed, byte-stable stand-in for one section's artifacts (4 chapters / 4 clusters / 8 questions / 3 sessions / 3 Part-2 drafts) |
+| `make-fixture.sh` | regenerates `fixture/`; regeneration must be byte-identical (T7) |
+| `check-relay-payload.sh` | the target check — per-seam and aggregate measurement, verdict, nonzero exit while unmet |
+| `check-relay-payload.test.sh` | the harness's own regression proof, including the falsifiability controls |

@@ -1,0 +1,13 @@
+# Pre-S1 baseline revision for the representative chapter regression.
+#
+# Recorded here so both comparison runs read the boundary from the substrate
+# rather than re-deriving it — or remembering it — at run time.
+#
+# Format: one `revision:` line carrying a full 40-hex commit SHA, and one or
+# more `derivation:` lines saying how that SHA was established.
+
+revision: f18ed58d6c96b0f97fc677fb7c90073336f310e4
+
+derivation: parent of the first accepted S1 conversion commit, 17cc5726 ("update: research-workflow S1 Unit 2 — path-pass the six W4-H4 reference-document relays"), which is the earliest commit that changed canonical workflow source under S1.
+derivation: the earlier S1 commit 7e2b97a6 ("new: research-workflow S1 relay baseline") is excluded — inspected 2026-08-18, it added only logs/work-loop/canonical-rw-near-term-improvements.md and workflows/research-workflow/tests/s1-relay/**, and converted no relay.
+derivation: f18ed58d is itself a merge of origin/main that removed .claude/commands/inject-dependency.md and its shared-manifest entry; that change is not an S1 conversion, and it is the state the first conversion was applied to.

@@ -1,0 +1,21 @@
+# The claim-ID set the representative chapter carries.
+#
+# Recorded here so the scorer compares a run's chapter against a stored set
+# rather than against whatever that run happened to produce. A dropped ID and
+# an invented ID are both failures, and neither is visible without this file.
+#
+# One ID per line. Blank lines and `#` comments are ignored.
+#
+# Q[n]-C[##] — primary extraction IDs (quality-standards.md § Claim ID Invariant).
+# GF[cluster]-C[##] — gap-fill IDs assigned at Step 3.S3.
+
+Q1-C01
+Q1-C02
+Q1-C03
+Q1-C04
+Q1-C05
+Q2-C01
+Q2-C02
+Q2-C03
+Q2-C04
+GF1-C01

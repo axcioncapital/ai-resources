@@ -37,8 +37,8 @@ Replace `CHAPTER_PATH` with the actual chapter file path from Step 1. Check stde
 ### Step 2: Execute Fact Verification
 
 3. Construct GPT-5 API call: read fact verification prompt from `/reference/sops/`, use chapter prose + evidence table as input.
-4. Delegate to execution-agent. Write verification report to `/report/chapters/{section}/{section}-chapter-NN-verification.md`.
-5. Write checkpoint to `/report/checkpoints/{section}/{section}-chapter-NN-verification-checkpoint.md`. Include: output file path, discrepancy count, discrepancy summary, verdict.
+4. Delegate to execution-agent, specifying `/report/chapters/{section}/{section}-chapter-NN-verification.md` as its output path. It writes the complete verification report there verbatim and returns that path plus a summary capped at 20 lines and 4 KB.
+5. Write checkpoint to `/report/checkpoints/{section}/{section}-chapter-NN-verification-checkpoint.md` from the agent's returned path and summary — the report body is not needed here. Include: output file path, discrepancy count, discrepancy summary, verdict. If the agent reports an API failure or a missing field, record that instead of inferring it.
 6. ▸ /compact — verification prompt, raw chapter content, and evidence table no longer needed; checkpoint carries forward.
 
 ---
@@ -46,7 +46,7 @@ Replace `CHAPTER_PATH` with the actual chapter file path from Step 1. Check stde
 ### Step 3: Apply Corrections (if discrepancies found)
 
 7. If discrepancies found:
-   a. Read `/ai-resources/skills/evidence-prose-fixer/SKILL.md`. Launch a general-purpose sub-agent **[delegate]**. Pass it: the skill content, the verification report, and the chapter prose. Task: generate corrections for each discrepancy. Return: correction list with per-item bright-line metadata.
+   a. Read `/ai-resources/skills/evidence-prose-fixer/SKILL.md`. Launch a general-purpose sub-agent **[delegate]**. Pass it: the skill content, the verification report, and the chapter prose by PATH — the exact chapter path resolved at Step 1, which the sub-agent reads in full before generating any correction; no correction has been applied to that file yet, so it is byte-identical to the chapter verified at Step 2. Task: generate corrections for each discrepancy. Return: correction list with per-item bright-line metadata.
    b. **Bright-line check on EVERY proposed correction:**
       - Does it span more than one paragraph? → Flag.
       - Does it alter an analytical claim or conclusion? → Flag.

@@ -18,6 +18,8 @@ These rules govern all file creation. They take precedence over any implicit con
 
 **Rule 2 — Variant suffix convention.** When a step produces a derived version of an existing artifact, the name is the base canonical pattern plus a variant suffix before the extension. Recognized variant suffixes: `-refined`, `-cited`, `-ctl`, `-verification`. Example: `{section}-cluster-NN-memo.md` → `{section}-cluster-NN-memo-refined.md`. A variant does not need its own row in the canonical table — it inherits from the base pattern.
 
+> **The Unit Judgment Brief's three suffixes are not variants.** `-proposed`, `-review` and `-approved` are lifecycle states fixed by `docs/judgment-authority-contract.md` § 1, not derived versions of one file, and each is listed in its own row below. Rule 2 does not apply to them: a consumer that treated `-approved.md` as an optional variant of `-proposed.md` would be treating a proposal as authority, which is the exact failure the contract exists to prevent.
+
 **Rule 3 — Unknown artifact protocol.** If you are about to write a file and no canonical pattern matches (even with variant suffixes), construct the name from the General File Naming Convention below, write the file, AND add a new row to the Canonical Naming Standard table in this file. The table must stay complete — every artifact type that exists in the repo must have a corresponding pattern.
 
 ## Canonical Naming Standard
@@ -49,6 +51,9 @@ Every artifact follows a predictable pattern so commands and hooks can locate fi
 | Gap Perplexity raw | `analysis/gap-supplementary/` | `cluster-NN-perplexity-raw-pass-[N].md` | `cluster-01-perplexity-raw-pass-1.md` |
 | Gap QC | `analysis/gap-supplementary/` | `cluster-NN-qc-pass-[N].md` | `cluster-01-qc-pass-1.md` |
 | 3.S pass checkpoint | `analysis/checkpoints/{section}/` | `{section}-3S-pass-[N]-checkpoint.md` | `1.1-3S-pass-1-checkpoint.md` |
+| Unit judgment brief | `analysis/judgment/{section}/` | `{section}-unit-judgment-brief-proposed.md`, `{section}-unit-judgment-brief-approved.md` | `1.1-unit-judgment-brief-proposed.md` |
+| Judgment challenge record | `analysis/judgment/{section}/` | `{section}-unit-judgment-brief-review.md` | `1.1-unit-judgment-brief-review.md` |
+| Judgment challenge round archive | `analysis/judgment/{section}/` | `{section}-unit-judgment-brief-review-round-N.md` | `1.1-unit-judgment-brief-review-round-1.md` |
 | Memo review | `analysis/editorial-review/{section}/` | `{section}-memo-review.md` | `1.1-memo-review.md` |
 | Memo review recommendations | `analysis/editorial-review/{section}/` | `{section}-memo-review-recommendations.md` | `1.1-memo-review-recommendations.md` |
 | Editorial recommendations QC | `analysis/editorial-review/{section}/` | `{section}-qc-editorial-decisions.md` | `1.1-qc-editorial-decisions.md` |
@@ -107,6 +112,7 @@ execution/
 
 analysis/
   cluster-memos/{section}/
+  judgment/{section}/
   section-directives/{section}/
   gap-assessment/{section}/
   editorial-review/{section}/

@@ -1,0 +1,80 @@
+# S1 relay-seam manifest — the exact live W4-H1..H4 surface, re-enumerated from the command and
+# agent bodies on 2026-08-17, not copied from audits/token-audit-2026-07-03-ai-resources.md § 4.
+# Two audit step references did not survive re-enumeration and are corrected here: the
+# execution-agent relay is wired at verify-chapter Step 2 (item 4), not Step 4 (which only logs),
+# and evidence-to-report-writer is a SKILL loaded into a general-purpose subagent, not one of the
+# workflow's four agents.
+#
+# One row per (seam, payload) pair. A seam that relays four artifact classes gets four rows, because
+# each class is separately either intentional content or safely path-passable and each carries its
+# own byte weight.
+#
+# The row does NOT record whether the seam currently complies. check-relay-payload.sh derives the
+# current relay shape from the live `surface` file at `anchor`, so the check measures behaviour and
+# reclassifies the moment a command body changes. A row asserting "noncompliant" would make the
+# check unfalsifiable, which is the failure the S1 brief names explicitly.
+#
+# Columns (tab-separated):
+#   seam_id        stable id, {class}-{NN}
+#   class          W4-H1 | W4-H2 | W4-H3 | W4-H4  (audit finding class)
+#   surface        file, relative to the workflow root
+#   step           step/phase label as written in that file
+#   anchor         ERE locating the ONE relay directive line; the matched line alone is the
+#                  directive text the shape classifier reads (no multi-line bleed)
+#   payload_token  literal naming this payload inside the directive text; the classifier reads the
+#                  text immediately before and after the first match
+#   list_intro     ERE locating the line that declares a multi-line relay list's convention, for
+#                  bullet payloads whose own line carries no marker; `-` when not applicable
+#   payload_glob   per-REPETITION fixture path(s), comma-separated, relative to fixture/
+#   reps           repetitions across one section (per-chapter/per-cluster/per-session loops)
+#   producer       who emits the payload
+#   consumer       who receives it
+#   on_disk        yes | no  — does the payload already exist on disk when the relay happens
+#   isolation      reference-path-ok    reference doc; required-reference-files.md § FX-C1 permits path
+#                  operand-path-ok     bulk operand; the consumer can read it and no isolation rule binds it
+#                  intentional-content per-chapter input the isolation contract passes by content
+#                  ambiguous           the contract does not settle it — must not be guessed
+#   blast_radius   live consumers carrying a copy of this surface
+#   target         proposed contract: path | path+capped-summary | content-required
+#
+seam_id	class	surface	step	anchor	payload_token	list_intro	payload_glob	reps	producer	consumer	on_disk	isolation	blast_radius	target
+H1-01	W4-H1	.claude/commands/run-report.md	4.2a	evidence-to-report-writer/SKILL	chapter draft	-	chapters/chapter-01-draft.md	4	evidence-to-report-writer subagent	run-report main session	no	operand-path-ok	5-copy-projects	path+capped-summary
+H1-02	W4-H1	.claude/commands/run-report.md	4.2b	chapter-prose-reviewer/SKILL	the chapter draft from step	-	chapters/chapter-01-draft.md	4	run-report main session	chapter-prose-reviewer subagent	yes	operand-path-ok	5-copy-projects	path
+H1-03	W4-H1	.claude/commands/run-report.md	4.2c	report-compliance-qc/SKILL	the chapter draft	-	chapters/chapter-01-draft.md	4	run-report main session	report-compliance-qc qc-gate subagent	yes	operand-path-ok	5-copy-projects	path
+H2-01	W4-H2	.claude/agents/execution-agent.md	return-contract	^- Return the	full response	-	gpt5-verification-response.md	1	execution-agent	verify-chapter main session	yes	operand-path-ok	5-copy-projects	path+capped-summary
+H2-03	W4-H2	.claude/commands/verify-chapter.md	1.1	^1\. [A-Za-z]+ the chapter from the specified path	the chapter	-	chapters/chapter-01-draft.md	1	disk	verify-chapter main session	yes	intentional-content	5-copy-projects	content-required
+H2-04	W4-H2	.claude/commands/verify-chapter.md	1.2	^2\. [A-Za-z]+ the corresponding research extracts	research extracts	-	research-extracts/Q1-extract.md,research-extracts/Q2-extract.md	1	disk	verify-chapter main session	yes	intentional-content	5-copy-projects	content-required
+H2-05	W4-H2	.claude/commands/verify-chapter.md	3.7a	evidence-prose-fixer/SKILL	the chapter prose	-	chapters/chapter-01-draft.md	1	verify-chapter main session	evidence-prose-fixer subagent	yes	operand-path-ok	5-copy-projects	path
+H3-01	W4-H3	.claude/commands/run-report.md	4.0.1	^1\. [A-Za-z]+ all chapter drafts from	chapter drafts	-	chapters/chapter-01-draft.md,chapters/chapter-02-draft.md,chapters/chapter-03-draft.md,chapters/chapter-04-draft.md	1	disk	run-report main session	yes	operand-path-ok	5-copy-projects	path
+H3-02	W4-H3	.claude/commands/run-report.md	4.0.3	^3\. [A-Za-z]+ all section directives from	section directives	-	section-directives/cluster-01-directive.md,section-directives/cluster-02-directive.md,section-directives/cluster-03-directive.md,section-directives/cluster-04-directive.md	1	disk	run-report main session	yes	intentional-content	5-copy-projects	content-required
+H3-03	W4-H3	.claude/commands/run-report.md	4.0.4	^4\. [A-Za-z]+ all refined cluster memos from	cluster memos	-	cluster-memos/cluster-01-memo-refined.md,cluster-memos/cluster-02-memo-refined.md,cluster-memos/cluster-03-memo-refined.md,cluster-memos/cluster-04-memo-refined.md	1	disk	run-report main session	yes	intentional-content	5-copy-projects	content-required
+H3-04	W4-H3	.claude/commands/run-report.md	4.0.5	^5\. [A-Za-z]+ all research extracts from	research extracts	-	research-extracts/Q1-extract.md,research-extracts/Q2-extract.md,research-extracts/Q3-extract.md,research-extracts/Q4-extract.md,research-extracts/Q5-extract.md,research-extracts/Q6-extract.md,research-extracts/Q7-extract.md,research-extracts/Q8-extract.md	1	disk	run-report main session	yes	intentional-content	5-copy-projects	content-required
+H3-05	W4-H3	.claude/commands/run-report.md	4.1.3	^3\. Launch a general-purpose sub-agent\. Pass it:	all chapter draft	-	chapters/chapter-01-draft.md,chapters/chapter-02-draft.md,chapters/chapter-03-draft.md,chapters/chapter-04-draft.md	1	run-report main session	research-structure-creator subagent	yes	operand-path-ok	5-copy-projects	path
+H3-06	W4-H3	.claude/commands/run-report.md	4.1b.2	^2\. [A-Za-z]+ all inputs needed for the QC	all chapter drafts	-	chapters/chapter-01-draft.md,chapters/chapter-02-draft.md,chapters/chapter-03-draft.md,chapters/chapter-04-draft.md	1	disk	run-report main session	yes	operand-path-ok	5-copy-projects	path
+H3-07	W4-H3	.claude/commands/run-report.md	4.1b.3	^3\. Launch a qc-gate sub-agent\. Pass it:	chapter draft content	-	chapters/chapter-01-draft.md,chapters/chapter-02-draft.md,chapters/chapter-03-draft.md,chapters/chapter-04-draft.md	1	run-report main session	architecture-qc qc-gate subagent	yes	operand-path-ok	5-copy-projects	path
+H3-08	W4-H3	.claude/commands/run-report.md	4.2a	evidence-to-report-writer/SKILL	architecture	-	architecture.md	4	run-report main session	evidence-to-report-writer subagent	yes	operand-path-ok	5-copy-projects	path
+H3-09	W4-H3	.claude/commands/run-report.md	4.2a	evidence-to-report-writer/SKILL	research extracts	-	research-extracts/Q1-extract.md,research-extracts/Q2-extract.md	4	run-report main session	evidence-to-report-writer subagent	yes	intentional-content	5-copy-projects	content-required
+H3-24	W4-H3	.claude/commands/run-report.md	4.2c	report-compliance-qc/SKILL	architecture	-	architecture.md	4	run-report main session	report-compliance-qc qc-gate subagent	yes	operand-path-ok	5-copy-projects	path
+H3-10	W4-H3	.claude/commands/run-analysis.md	1.1	^1\. [A-Za-z]+ all refined cluster memos from	cluster memos	-	cluster-memos/cluster-01-memo-refined.md,cluster-memos/cluster-02-memo-refined.md,cluster-memos/cluster-03-memo-refined.md,cluster-memos/cluster-04-memo-refined.md	1	disk	run-analysis main session	yes	intentional-content	5-copy-projects	content-required
+H3-11	W4-H3	.claude/commands/run-analysis.md	2.2	Task: execute the gap assessment across all memos	all refined cluster memo	-	cluster-memos/cluster-01-memo-refined.md,cluster-memos/cluster-02-memo-refined.md,cluster-memos/cluster-03-memo-refined.md,cluster-memos/cluster-04-memo-refined.md	1	run-analysis main session	gap-assessment-gate subagent	yes	intentional-content	5-copy-projects	content-required
+H3-12	W4-H3	.claude/commands/run-analysis.md	5.2	Task: execute the editorial decision surfacing review	all refined cluster memos	-	cluster-memos/cluster-01-memo-refined.md,cluster-memos/cluster-02-memo-refined.md,cluster-memos/cluster-03-memo-refined.md,cluster-memos/cluster-04-memo-refined.md	1	run-analysis main session	analysis-pass-memo-review subagent	yes	intentional-content	5-copy-projects	content-required
+H3-13	W4-H3	.claude/commands/run-analysis.md	5b.2	Task: generate recommended answers for all editorial decisions	all refined cluster memos	-	cluster-memos/cluster-01-memo-refined.md,cluster-memos/cluster-02-memo-refined.md,cluster-memos/cluster-03-memo-refined.md,cluster-memos/cluster-04-memo-refined.md	1	run-analysis main session	editorial-recommendations-generator subagent	yes	intentional-content	5-copy-projects	content-required
+H3-14	W4-H3	.claude/commands/run-analysis.md	5c.2	Task: independently derive recommendations from the evidence	all refined cluster memos	-	cluster-memos/cluster-01-memo-refined.md,cluster-memos/cluster-02-memo-refined.md,cluster-memos/cluster-03-memo-refined.md,cluster-memos/cluster-04-memo-refined.md	1	run-analysis main session	editorial-recommendations-qc qc-gate subagent	yes	intentional-content	5-copy-projects	content-required
+H3-15	W4-H3	.claude/commands/run-synthesis.md	1.1	^1\. [A-Za-z]+ all refined cluster memos from	cluster memos	-	cluster-memos/cluster-01-memo-refined.md,cluster-memos/cluster-02-memo-refined.md,cluster-memos/cluster-03-memo-refined.md,cluster-memos/cluster-04-memo-refined.md	1	disk	run-synthesis main session	yes	intentional-content	5-copy-projects	content-required
+H3-16	W4-H3	.claude/commands/run-synthesis.md	1.2	^2\. [A-Za-z]+ all section directives from	section directives	-	section-directives/cluster-01-directive.md,section-directives/cluster-02-directive.md,section-directives/cluster-03-directive.md,section-directives/cluster-04-directive.md	1	disk	run-synthesis main session	yes	intentional-content	5-copy-projects	content-required
+H3-17	W4-H3	.claude/commands/run-execution.md	2.3.1	^1\. [A-Za-z]+ all raw reports from	raw reports	-	raw-reports/session-A-raw-report.md,raw-reports/session-B-raw-report.md,raw-reports/session-C-raw-report.md	1	disk	run-execution main session	yes	operand-path-ok	5-copy-projects	path
+H3-18	W4-H3	.claude/commands/run-execution.md	2.3.6	Task: produce one Research Extract per question covered	the raw report	-	raw-reports/session-A-raw-report.md	3	run-execution main session	research-extract-creator subagent	yes	operand-path-ok	5-copy-projects	path
+H3-19	W4-H3	.claude/commands/run-execution.md	2.1.3	^3\. [A-Za-z]+ all approved Answer Specs from	Answer Specs	-	answer-specs/Q1-answer-spec.md,answer-specs/Q2-answer-spec.md,answer-specs/Q3-answer-spec.md,answer-specs/Q4-answer-spec.md,answer-specs/Q5-answer-spec.md,answer-specs/Q6-answer-spec.md,answer-specs/Q7-answer-spec.md,answer-specs/Q8-answer-spec.md	1	disk	run-execution main session	yes	operand-path-ok	5-copy-projects	path
+H3-20	W4-H3	.claude/commands/produce-architecture.md	Ph2.1	^1\. [A-Za-z]+ all section drafts identified in Phase 1	all section drafts	-	section-drafts/section-01-draft.md,section-drafts/section-02-draft.md,section-drafts/section-03-draft.md	1	disk	produce-architecture main session	yes	operand-path-ok	5-copy-projects	path
+H3-21	W4-H3	.claude/commands/produce-architecture.md	Ph2.5	^   - All section draft .* \(labeled by section ID\)$	All section draft	^5\. Launch a general-purpose sub-agent\. Pass	section-drafts/section-01-draft.md,section-drafts/section-02-draft.md,section-drafts/section-03-draft.md	1	produce-architecture main session	research-structure-creator subagent	yes	operand-path-ok	5-copy-projects	path
+H3-22	W4-H3	.claude/commands/produce-architecture.md	Ph3.3	^3\. [A-Za-z]+ all section drafts \(same set as Phase 2	all section drafts	-	section-drafts/section-01-draft.md,section-drafts/section-02-draft.md,section-drafts/section-03-draft.md	1	disk	produce-architecture main session	yes	operand-path-ok	5-copy-projects	path
+H3-23	W4-H3	.claude/commands/produce-architecture.md	Ph3.4	^   - All section draft [a-z]+$	All section draft	^4\. Launch a qc-gate sub-agent\. Pass	section-drafts/section-01-draft.md,section-drafts/section-02-draft.md,section-drafts/section-03-draft.md	1	produce-architecture main session	architecture-qc qc-gate subagent	yes	operand-path-ok	5-copy-projects	path
+H4-01	W4-H4	.claude/commands/run-cluster.md	2.2	^2\. [A-Za-z]+ the project reference docs the two skills consume	project reference docs	-	reference/source-class-hierarchy.md,reference/quality-standards.md,reference/known-limits.md	1	disk	run-cluster main session	yes	reference-path-ok	5-copy-projects	path
+H4-02	W4-H4	.claude/commands/run-cluster.md	2.3	^   - The three project reference docs from Step 2 above	three project reference docs	Pass each sub-agent as	reference/source-class-hierarchy.md,reference/quality-standards.md,reference/known-limits.md	4	run-cluster main session	cluster-analysis-pass subagent	yes	reference-path-ok	5-copy-projects	path
+H4-03	W4-H4	.claude/commands/run-execution.md	2.1.4	^4\. [A-Za-z]+ the project reference docs the skill consumes: .reference/source-class-hierarchy	project reference docs	-	reference/source-class-hierarchy.md,reference/quality-standards.md	1	disk	run-execution main session	yes	reference-path-ok	5-copy-projects	path
+H4-04	W4-H4	.claude/commands/run-execution.md	2.1.6	Task: execute the skill logic to create session prompts	two project reference docs	-	reference/source-class-hierarchy.md,reference/quality-standards.md	1	run-execution main session	research-prompt-creator subagent	yes	reference-path-ok	5-copy-projects	path
+H4-05	W4-H4	.claude/commands/run-execution.md	2.3.4	^4\. [A-Za-z]+ the project reference docs the skill consumes: .reference/quality-standards	project reference docs	-	reference/quality-standards.md,reference/known-limits.md	1	disk	run-execution main session	yes	reference-path-ok	5-copy-projects	path
+H4-06	W4-H4	.claude/commands/run-execution.md	2.3.6	Task: produce one Research Extract per question covered	two project reference docs	-	reference/quality-standards.md,reference/known-limits.md	3	run-execution main session	research-extract-creator subagent	yes	reference-path-ok	5-copy-projects	path
+H4-07	W4-H4	.claude/commands/run-report.md	4.2a	evidence-to-report-writer/SKILL	quality-standards.md	-	reference/quality-standards.md	4	run-report main session	evidence-to-report-writer subagent	yes	reference-path-ok	5-copy-projects	path
+H4-08	W4-H4	.claude/commands/run-report.md	4.2b	chapter-prose-reviewer/SKILL	style-guide.md	-	reference/style-guide.md	4	run-report main session	chapter-prose-reviewer subagent	yes	reference-path-ok	5-copy-projects	path
+H4-09	W4-H4	.claude/commands/run-report.md	4.2c	report-compliance-qc/SKILL	quality-standards.md	-	reference/quality-standards.md	4	run-report main session	report-compliance-qc qc-gate subagent	yes	reference-path-ok	5-copy-projects	path

@@ -1,0 +1,12 @@
+specimen: runs/current-head-post-s1/raw
+check A0: PASS — pre-S1 baseline f18ed58d6c96b0f97fc677fb7c90073336f310e4 recorded with 3 derivation line(s); resolves to a commit in this repository
+check A1: PASS — all four required artifacts present and non-empty
+check A2: PASS — verification report is byte-identical to the frozen response
+check A3: FAIL — summary and checkpoint name different report paths — '`report/chapters/1.1/1.1-chapter-01-verification.md` (relative to project root `/private/tmp/claude-501/-Users-patrik-lindeberg-Claude-Code-Axcion-AI-Repo-ai-resources-research-workflow-fixes/5cf24fcd-2db1-4049-8e4c-7fa003e3d30d/scratchpad/u19-head-run/workflows/research-workflow`)' vs 'report/chapters/1.1/1.1-chapter-01-verification.md'
+check A4: PASS — chapter carries exactly the 10 expected claim IDs
+check A5: PASS — verdict 'DISCREPANCIES FOUND' stated once and quoted consistently; 3 discrepancy block(s)
+check A6: PASS — 3 discrepancy block(s) carry all four SOP fields with a known issue type and a known claim ID
+check A7: FAIL — summary lists 0 per-discrepancy line(s) for 3 block(s)
+check A8: PASS — handoff summary within cap: 10/20 lines, 609/4096 bytes
+verdict: FAIL (2 check(s))
+exit=1
