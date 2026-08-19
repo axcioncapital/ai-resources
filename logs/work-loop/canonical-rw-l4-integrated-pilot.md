@@ -19,8 +19,7 @@ Scope is the integration checkout
 `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-rw-l4-integration` and exactly one
 consumer checkout,
 `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence-l1-trial`,
-on the accepted L1 branch `trial/l1-repeat-precision-components`, whose accepted pre-install base is
-`689afa840294bf0972e797d50d795163b8ef67f5`. The ordinary
+on the accepted L1 branch `trial/l1-repeat-precision-components`. The ordinary
 `projects/axcion-sector-intelligence` checkout is historical comparison evidence only, not a second
 consumer or implementation target. Manual reconciliation only; inability to preserve any
 project-owned specialization stops the pilot.
@@ -33,7 +32,7 @@ pre-approves the L4 case's judgment content, and the later operating unit must s
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 4 — install the dual-contract validator.
+Standard. Implementation mode. Unit 5 — activate canonical proposal authoring.
 
 Named reason for the loop: the task spans a manual cross-repository integration, a genuine operating
 case and an operator-owned founder gate; its scope must stay bounded, and the result must be assessed
@@ -41,131 +40,132 @@ independently of the executor before it counts as the plan's terminal proof.
 
 ## Brief
 
-Unit 3 settled the only load-bearing uncertainty in the validator seam and proved a one-file
-reconciliation against both accepted contracts. This unit installs that one file in the bound
-consumer, establishing canonical enforcement for new `unit:` briefs while leaving historical
-`section:` behavior unchanged.
+Unit 4 installed canonical validation for `unit:` briefs without disturbing historical L1 behavior.
+This unit makes that enforcement useful for new work by installing the canonical authority contract
+and template, then repointing the existing project producer to that template without altering its
+project-specific process.
 
 **Plan justification and current position:** the approved material plan at `8bf9d0d9` requires L4 to
-install canonical L2 by hand while preserving project specialization. Units 1–3 are accepted; the
-consumer remains unchanged and clean at `689afa8`, and Unit 3's accepted discovery at `01284dc4`
-proved a dual-contract candidate against unchanged suites: canonical 18/18, project contract 17/17,
-project producer 41/41, project challenge 55/55, and focused compatibility battery 19/19.
+install canonical L2 deliberately while preserving every project specialization. Units 1–4 are
+accepted; the consumer is clean at implementation commit `93d5a316`, and Unit 4 reproduced the five
+project suites at the historical L1 floor **145/145** after installing the dual-contract validator.
+The current integrated L2 baseline remains **125/125**; these figures are distinct.
 
 **Governing sources and dispositions:**
 
 - The operator-approved plan
   `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`, material
   content bound to `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec`, governs L4's outcome, preservation rule and exclusions.
-- Accepted L2 commit `e16cf206` governs the canonical `unit:` validation semantics; accepted L1 base
-  `689afa8` governs legacy `section:` behavior. Neither may be weakened.
-- Unit 3's accepted result at `01284dc4ca8eada12348841de2019936a5db661f` governs the behavior table,
-  caller/exit-code map, dual-contract dispatch, reconstruction steps, evidence totals and one-file
-  implementation boundary. Current repository bytes remain verify-first claims.
+- Accepted L2 commit `e16cf206` governs
+  `docs/judgment-authority-contract.md` and `reference/unit-judgment-brief.template.md` as the canonical
+  authority and shape sources. Copy their accepted bytes; do not redesign them.
+- Unit 2's corrected reconciliation map governs the three dispositions: ADD both canonical files,
+  PRESERVE `reference/templates/unit-judgment-brief-template.md`, and DELIBERATE MERGE only the Step 3a
+  shape pointer in `.claude/commands/run-analysis.md`.
+- Accepted Unit 4 handback `7182b021d2230f4da1b870988222e1f32e17cc21` and consumer commit
+  `93d5a316c184a42ab178d29504759cda3794d9aa` govern current installed validator behavior and repository
+  position. Current bytes remain verify-first claims.
 
-**Codex decisions on Unit 3:**
+**Codex packaging decision:** contract, template and the producer's one shape-source pointer are one
+observable capability: new proposals are authored to the canonical contract. Promotion semantics,
+downstream consumption, Stage 5 and L3 remain independent and are held back.
 
-1. Adopt the dual-contract dispatch. A `unit:` brief receives the full canonical L2 contract; a
-   `section:` brief receives unchanged accepted L1 behavior; both or neither identity keys fail
-   structurally. The document selects its contract, so callers cannot request the weaker path.
-2. Record, without operator escalation, the weaker historical `section:` path as an unchanged L1
-   limitation. It is not newly accepted risk, and it cannot establish canonical authority through
-   L3 because `research-route-judgment-authority.sh` independently requires `unit:` and fails closed.
-3. Confirm the reduced implementation boundary: only
-   `logs/scripts/check-judgment-contract.sh` changes. Its paired test, promotion/challenge helpers,
-   command bodies, artifacts and references remain untouched.
-4. The Unit 2 template/repoint/checker atomicity is dissolved by the accepted dual contract. The
-   template ADD and `run-analysis.md` repoint become useful only after this validator lands, but they
-   are not required to land in the same commit.
+**Dominant deliverable:** a committed canonical proposal-authoring path in the one bound consumer,
+with historical artifacts and project producer behavior preserved.
 
-**Dominant deliverable:** one locally committed dual-contract judgment validator in the single bound
-consumer.
+**Evidence required in this hop:** the quoted three-part before-state; accepted-byte regular-file
+ADDs; the narrowly repointed producer; one template-derived proposal accepted by the installed
+canonical branch plus a missing-identity negative control; the directly binding project producer
+regression; preservation evidence; and both local commits.
 
-**Evidence required in this hop:** the accepted targeted pre-edit failure, one-file implementation
-diff, unchanged canonical and project suite results plus the focused compatibility battery, syntax
-and round-trip checks, and the consumer and state-handback commits.
+**Evidence explicitly deferred:** promotion-helper reconciliation; independent challenge changes;
+downstream command wiring and seam/consumption proof; `file-conventions.md` and
+`stage-instructions.md` pointer merges; Stage 5 paths; L3 installation; the complete post-install
+regression matrix; representative routes; the genuine case and founder decision; downstream prose/QC;
+burden comparison; and final L4 verdict.
 
-**Evidence explicitly deferred:** canonical template/contract/reference installation; producer shape
-repoint; promotion-helper reconciliation; downstream command wiring and seam/consumption proof;
-Stage 5 paths; L3 installation; the complete post-install regression matrix; representative routes;
-the genuine case and founder decision; downstream prose/QC; burden comparison; and final L4 verdict.
-
-**Primary edit begins after:** cite, without rerunning, Unit 3's accepted fail-capable before-state:
-the canonical minimal-valid `unit:` fixture against the deployed consumer checker returns STRUCTURE,
-`frontmatter has no 'section:'`, exit 6. Unit 3 already established this exact case; re-deriving it
-would duplicate accepted evidence.
+**Primary edit begins after:** quote the current consumer state, without manufacturing an automated
+test for prose paths: `docs/judgment-authority-contract.md` is absent;
+`reference/unit-judgment-brief.template.md` is absent; and `.claude/commands/run-analysis.md` Step 3a
+points to `reference/templates/unit-judgment-brief-template.md`. Unit 2 already established these
+bounded absences and the old pointer; verify they still hold, then edit.
 
 **Check against the repositories:**
 
 1. Validate this task and both checkout bindings at repository depth. The integration checkout must
    remain on `session/2026-08-19-rw-l4-integration` and contain `26ee26d4`; the consumer must remain
-   clean at exact `689afa8` on `trial/l1-repeat-precision-components`, with no conflicting owner.
-   Stop on drift; do not clean, switch, rebase or repair either checkout.
-2. Verify the consumer's `logs/scripts/check-judgment-contract.sh` still matches the version Unit 3
-   inspected and that the canonical source still matches accepted L2 `e16cf206`. Verify the caller
-   surfaces Unit 3 bounded have not changed since `01284dc4`; do not repeat the caller map or behavior
-   analysis when their bytes and bindings hold.
+   clean at exact `93d5a316c184a42ab178d29504759cda3794d9aa` on
+   `trial/l1-repeat-precision-components`, with no conflicting owner. Stop on drift; do not clean,
+   switch, rebase or repair either checkout.
+2. Verify the two canonical source files in the integration checkout are regular files whose bytes
+   match accepted L2 `e16cf206`. Verify the two destination paths are absent by searching the exact
+   consumer paths and tracked-file list. Verify the old project template and `run-analysis.md` match
+   the versions Unit 2 inspected except for no intervening authorized change.
+3. Verify the installed dual-contract checker remains at consumer commit `93d5a316` and accepts the
+   canonical minimal-valid fixture as Unit 4 established. Cite that accepted evidence; do not rerun
+   the full validator matrix before editing.
 
 **Implementation boundary:**
 
-- Modify exactly one consumer file: `logs/scripts/check-judgment-contract.sh`.
-- Implement Unit 3's accepted dual-contract behavior. Preserve canonical check order and outcomes on
-  `unit:` briefs, legacy check order and outcomes on `section:` briefs, shared CLI/exit-code interface,
-  the exact deployed path, and all existing call-site text. Refuse both or neither identity keys with
-  STRUCTURE exit 6.
-- Unit 3's reconstruction is sufficient evidence that the design is implementable, but Claude owns
-  the concrete edit. Do not weaken either branch, alias `unit:` into the legacy branch, or replace the
-  deployed file blindly with canonical.
-- Do not modify `check-judgment-contract.test.sh`, any other script or test, any command body,
-  `analysis/judgment/**`, any reference, or this integration checkout except the existing state file.
-  Temporary fixtures may exist only in a safe temporary directory and must not survive the unit.
+- ADD as regular files copied byte-for-byte from the accepted integration source:
+  `docs/judgment-authority-contract.md` and `reference/unit-judgment-brief.template.md`.
+- DELIBERATE MERGE `.claude/commands/run-analysis.md`: change only the Step 3a shape-source pointer
+  from `reference/templates/unit-judgment-brief-template.md` to
+  `reference/unit-judgment-brief.template.md`. Preserve every surrounding project-specific step,
+  gate, path and instruction.
+- PRESERVE `reference/templates/unit-judgment-brief-template.md` byte-for-byte as the historical L1
+  shape source for existing artifacts. Do not migrate or rewrite any `analysis/judgment/**` file.
+- `logs/scripts/check-judgment-producer.test.sh` is conditionally allowlisted only if it asserts the
+  old pointer literally. If so, update only that expected pointer in the same edit and explain the
+  coupling; otherwise do not modify it. No other consumer path is allowlisted.
 
 **Post-edit evidence:**
 
-1. Run `bash -n` on the installed checker.
-2. Run the unchanged canonical contract suite against the installed consumer checker using its
-   supported override path: expected 18/18. Run the unchanged consumer contract, producer and
-   challenge suites: expected 17/17, 41/41 and 55/55. Record exact commands, totals and exits.
-3. Recreate Unit 3's focused compatibility battery in a temporary directory and prove all 19 rows
-   pass, including the divergent rejection, GF-only, per-thesis, Context and verdict-citation cases,
-   plus both/neither-key refusal. Its fail-capability was accepted in Unit 3; do not add a permanent
-   consumer harness.
-4. Run the canonical proposal → unchanged consumer challenge → unchanged consumer promotion →
-   approved canonical validation round trip, then its stripped-claim-ID negative control. Expected:
-   VALID/CLEARED/PROMOTED/VALID exits 0, then NO-CLAIM-IDS exit 5.
-5. Show the consumer diff contains exactly the one allowlisted file, `git diff --check` is clean,
-   preserved files are unchanged, and no L3, Stage 5, command-body or propagation surface appeared.
+1. Prove both ADDs are regular files and byte-identical to accepted L2 `e16cf206`.
+2. Show the `run-analysis.md` diff is confined to the one pointer. If the conditional producer-test
+   edit was necessary, show its diff is likewise confined to the matching expected pointer.
+3. From the installed canonical template, create one minimal valid proposal only in a safe temporary
+   directory by filling its required fields without changing the template. The installed consumer
+   validator must return VALID exit 0. Remove both `unit:` and `section:` from a paired copy; it must
+   return STRUCTURE exit 6. Record decisive output and exits.
+4. Run the unchanged-or-narrowly-updated `check-judgment-producer.test.sh`; expected **41/41**. Run
+   `check-judgment-contract.test.sh` only if the template-derived fixture exposes a checker regression;
+   do not expand this into the deferred full regression matrix.
+5. Show the complete diff is confined to the allowlist, `git diff --check` is clean, the historical
+   template and all existing judgment artifacts are unchanged, and no promotion, command-consumption,
+   Stage 5, L3 or propagation surface appeared.
 6. Commit the consumer change locally using the repository convention. Then update and commit this
-   state file separately in the integration checkout, recording both full commit IDs, exact evidence
-   and final consumer status. Do not push or merge either repository.
+   state file separately in the integration checkout, recording both full commit IDs, exact focused
+   evidence and final consumer status. Do not push or merge either repository.
 
 **Capability subset:** baseline only — read, search, inspect history, run focused local tests, edit
-only the one named consumer file and this existing task state, and make local commits in the two bound
-repositories. Nothing is selected from the empty pre-authorizable set; no network, remote service,
-push, PR, merge, deployment, credential access, destructive operation, branch/worktree creation,
-checkout switch, permission change or policy change is authorized.
+only the named consumer allowlist and this existing task state, and make local commits in the two
+bound repositories. Nothing is selected from the empty pre-authorizable set; no network, remote
+service, push, PR, merge, deployment, credential access, destructive operation, branch/worktree
+creation, checkout switch, permission change or policy change is authorized.
 
-**Stop and hand back if:** either checkout binding or tree changed; the source bytes no longer match
-Unit 3; implementation needs a second consumer file; any unchanged suite regresses; canonical
-`unit:` enforcement or legacy `section:` behavior differs from the accepted table; the round trip or
-negative control fails; the consumer cannot be left clean after its local commit; or work would cross
-into templates, promotion reconciliation, command wiring, Stage 5, L3, generic propagation or an
-operator-reserved capability. A false premise is a valid result; report it rather than improvising.
+**Stop and hand back if:** either checkout binding or tree changed; canonical sources do not match
+accepted L2; either destination already exists materially; the producer needs changes beyond the
+single shape pointer and its literal test expectation; the template-derived canonical proposal does
+not validate; the producer suite regresses; any historical artifact or project-specific instruction
+cannot be preserved; the consumer cannot be left clean after its local commit; or work would cross
+into promotion, downstream consumption, Stage 5, L3, generic propagation or an operator-reserved
+capability. A false premise is a valid result; report it rather than improvising.
 
-**Completion condition:** install and locally commit the one-file validator, produce the bounded
-fail-to-pass and preservation evidence, then hand back through this state file with `status: active`,
-`turn: codex`. Record both commits and stop before any adjacent L2 or L3 installation.
+**Completion condition:** install and locally commit the bounded canonical proposal-authoring path,
+produce the focused evidence above, then hand back through this state file with `status: active`,
+`turn: codex`. Record both commits and stop before any adjacent L2 or L3 work.
 
 ## Latest result
 
-**Unit 4 installed. The first consumer edit of the L4 pilot is committed: the dual-contract judgment
-validator is live in the one bound Sector Intelligence consumer, canonical enforcement now applies to
-`unit:` briefs, and the accepted L1 regression floor is intact at 145/145.** Exactly one consumer file
-changed.
+**Unit 5 installed. Canonical proposal authoring is live in the one bound consumer: new Unit Judgment
+Briefs are now written to the canonical shape and judged by the canonical contract Unit 4 installed,
+while every historical `section:` artifact and its template are untouched.** Three allowlisted paths
+changed and no others.
 
-- **Consumer implementation commit:** `93d5a316c184a42ab178d29504759cda3794d9aa`
-  (`trial: L4 install — dual-contract judgment validator`), on
-  `trial/l1-repeat-precision-components`, parent `689afa840294bf0972e797d50d795163b8ef67f5`.
+- **Consumer implementation commit:** `275dd462775aee078418558d73188c4262d04101`
+  (`trial: L4 install — canonical authority contract, template, and producer shape repoint`), on
+  `trial/l1-repeat-precision-components`, parent `93d5a316c184a42ab178d29504759cda3794d9aa`.
 - **Consumer status after the commit:** `git status --porcelain --untracked-files=all` returns
   nothing — clean.
 - **State handback commit:** this commit, made separately in the integration checkout on
@@ -174,116 +174,141 @@ changed.
 Inspected (2026-08-19):
 
 - **Claim (1) both bindings: HOLDS.** Integration on `session/2026-08-19-rw-l4-integration`, HEAD
-  `01284dc4ca8eada12348841de2019936a5db661f`, `git merge-base --is-ancestor 26ee26d4 HEAD` exit 0,
+  `7182b021d2230f4da1b870988222e1f32e17cc21`, `git merge-base --is-ancestor 26ee26d4 HEAD` exit 0,
   `git status --porcelain` returning exactly ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md`
-  — this file carrying Codex's uncommitted Unit 4 brief, overlapping no consumer surface. Consumer on
-  `trial/l1-repeat-precision-components` at exactly `689afa840294bf0972e797d50d795163b8ef67f5` with
-  `git status --porcelain --untracked-files=all` empty; `ls logs/work-loop/.owner` absent, so no
+  — this file carrying Codex's uncommitted Unit 5 brief. Consumer on
+  `trial/l1-repeat-precision-components` at exactly `93d5a316c184a42ab178d29504759cda3794d9aa`,
+  `git status --porcelain --untracked-files=all` empty, `ls logs/work-loop/.owner` absent so no
   conflicting owner. Neither checkout was cleaned, switched, rebased or repaired.
-- **Claim (2a) the consumer checker is the file Unit 3 inspected: HOLDS.** `git hash-object` on the
-  worktree file equals `git rev-parse 689afa8:logs/scripts/check-judgment-contract.sh` —
-  `535a2d7093267f4a1764037ea435b6635cba30a7` both sides.
-- **Claim (2b) the canonical source still traces to accepted L2: HOLDS.** `git hash-object` on
-  `workflows/research-workflow/logs/scripts/check-judgment-contract.sh` equals
-  `git rev-parse e16cf206:<same path>`.
-- **Claim (2c) the caller surfaces Unit 3 bounded are unchanged since `01284dc4`: HOLDS.** All ten
-  compared blob-for-blob against consumer `HEAD`: the paired contract test, `check-judgment-producer.sh`
-  + `.test.sh`, `check-judgment-challenge.sh` + `.test.sh`, `check-judgment-gate.sh`,
-  `promote-judgment-brief.sh`, and `run-analysis.md` / `run-synthesis.md` / `run-report.md` — **all
-  identical**. The caller map and behaviour analysis were therefore not repeated, as the brief directs.
+- **Claim (2a) canonical sources are regular files matching accepted L2: HOLDS.** `[ -L ]` then
+  `[ -f ]` on both; `git hash-object` equals `git rev-parse e16cf206:<path>` for
+  `docs/judgment-authority-contract.md` and `reference/unit-judgment-brief.template.md`.
+- **Claim (2b) both destinations absent in the consumer: HOLDS.** Searched the exact paths with
+  `[ -e ] || [ -L ]` — neither exists — and `git ls-files <path>` returns **0 entries** for each.
+  Directory listings corroborate: `ls docs/` returns only `project-config-schema.md` and
+  `required-reference-files.md`; `ls reference/*.md` returns 20 entries and neither destination is
+  among them.
+- **Claim (2c) the old template and `run-analysis.md` are the versions Unit 2 inspected: HOLDS.**
+  `reference/templates/unit-judgment-brief-template.md`, `.claude/commands/run-analysis.md` and
+  `logs/scripts/check-judgment-producer.test.sh` each blob-identical to consumer `HEAD`
+  (`93d5a316`), so no intervening change.
+- **Claim (3) the installed dual-contract checker is unchanged and accepts canonical briefs.**
+  `logs/scripts/check-judgment-contract.sh` is blob-identical to `93d5a316`. Unit 4's accepted
+  evidence is cited, not rerun: canonical suite 18/18, the five project suites at 145/145, focused
+  battery 19/19, canonical round trip at exit 0 with an exit-5 tamper control.
 
-### The before-state, cited not re-derived
+### The before-state, verified then edited
 
-Per `Primary edit begins after:`, Unit 3's accepted fail-capable before-state stands and was not rerun:
-the canonical minimal-valid `unit:`-keyed fixture against the deployed consumer checker returned
-`verdict: STRUCTURE / reason: frontmatter has no 'section:'`, **exit 6**. The same fixture against the
-installed checker now returns **exit 0** (battery row D3, and the round trip below). That is the
-fail-to-pass pair for this unit.
+The brief's three-part before-state was re-verified rather than assumed, and no automated test was
+manufactured for what are prose paths:
 
-### What was installed
+1. `docs/judgment-authority-contract.md` — **absent** (searched the exact path and `git ls-files`).
+2. `reference/unit-judgment-brief.template.md` — **absent** (same two searches).
+3. `.claude/commands/run-analysis.md:95` read
+   `2. **The shape** — `reference/templates/unit-judgment-brief-template.md`. The producer copies the
+   template body from its "copy from here down" fence and fills it.`
 
-One file, `logs/scripts/check-judgment-contract.sh`, rewritten as a dual-contract gate implementing
-Unit 3's accepted design. The brief left the concrete edit to Claude; these are the choices made
-inside that boundary:
+After the edit, line 95 reads the same sentence with `reference/unit-judgment-brief.template.md`. The
+trailing clause stays accurate because the canonical template carries its own
+`## Template — copy from here down` fence at line 24 — checked before editing, so the repoint did not
+silently invalidate the instruction around it.
 
-- **Dispatch is last, on two already-parsed keys.** `unit:` → canonical, `section:` → legacy, both →
-  STRUCTURE 6, neither → STRUCTURE 6. Placing the dispatch after the shared prologue means the MISSING
-  check, the frontmatter-block check and `fm_value` cannot diverge between contracts.
-- **Three checks are hoisted into shared helpers** — the required headings, the 3–5 thesis count and
-  the length warning — because they are byte-identical in both contracts and two copies could drift.
-- **Each contract keeps its own check ORDER, not just its own rules.** The legacy path decides
-  NOT-APPROVED *before* checking the approver; canonical checks the approver first. That difference is
-  preserved deliberately: the project's suites bind exit codes on fixtures differing one line at a
-  time, so reordering would change answers those suites already fixed.
-- **`--help` range updated** from `2,40p` to `2,77p` so it still prints the whole header block.
-- **Interface untouched:** same path, same argument grammar, same exit-code vocabulary
-  (0/3/4/5/6/10), same `verdict:` / `reason:` output shape. No call-site text anywhere changed, which
-  is what keeps the grep-only readers (`check-judgment-gate.sh:74,163`,
-  `check-judgment-producer.sh:178`) valid.
+### The conditional allowlist did not fire
+
+`logs/scripts/check-judgment-producer.test.sh` was searched for a literal assertion of the old pointer
+(`grep -n 'unit-judgment-brief-template\|reference/templates'`) and returns **no lines**. The condition
+the brief attached to it is therefore unmet, and the file was **not modified** — confirmed by an empty
+`git diff --stat` against it.
+
+Bounded search for the same reason across the whole consumer: five files name the old template path.
+One is `run-analysis.md:95`, repointed. The other four are all correctly left alone —
+`reference/analyst-judgment-standard.md:143` is the legacy contract naming the legacy template, which
+is right; `analysis/judgment/custom-dev-data-ai/...-review.md:15` and `logs/l1-judgment-trial-record.md:94`
+are historical records; and `reference/stage-instructions.md:125` is the deferred pointer merge — see
+the deferral below.
+
+`logs/scripts/check-judgment-producer.sh` was also checked for a binding on the template path before
+editing: it anchors its bundle assertions on real input paths (`analysis/cluster-memos`,
+`analysis/claim-permission`, `reference/axcion-judgment-context.md`, `preparation/task-plans`,
+`preparation/research-plans`) and never on the template filename, so the repoint could not break it —
+and the live run below confirms it did not.
 
 ### Post-edit evidence
 
-| # | Check | Command | Result |
-|---|---|---|---|
-| 1 | syntax | `bash -n logs/scripts/check-judgment-contract.sh` | clean; `git diff --summary` shows **no mode change** |
-| 2a | unchanged **canonical** suite | `CHECK_OVERRIDE=<installed> bash <canonical>/logs/scripts/check-judgment-contract.test.sh` | **18 passed, 0 failed** |
-| 2b | unchanged consumer contract suite | `bash logs/scripts/check-judgment-contract.test.sh` | **17 passed, 0 failed** |
-| 2c | unchanged consumer producer suite | `bash logs/scripts/check-judgment-producer.test.sh` | **41 passed, 0 failed** |
-| 2d | unchanged consumer challenge suite | `bash logs/scripts/check-judgment-challenge.test.sh` | **55 passed, 0 failed** |
-| — | *supplementary, not required by the brief* | `check-judgment-gate.test.sh`; `check-judgment-propagation.test.sh` | **16/16** and **16/16** |
-| 3 | focused compatibility battery, rebuilt in a temp dir | 19 rows + rubber-stamp control | **19 passed, 0 failed** |
-| 4 | canonical round trip | proposal → challenge → promotion → authority gate | `VALID` / `CLEARED` / `PROMOTED` / `VALID`, **all exit 0** |
-| 4 | round-trip negative control | same artifact, claim IDs stripped | `NO-CLAIM-IDS`, **exit 5** |
+| # | Check | Result |
+|---|---|---|
+| 1 | both ADDs regular files, byte-identical to `e16cf206` | `docs/judgment-authority-contract.md` blob `c4f9c1e7ba4a4bb4cb6da90da06d4dff393bd87d`; `reference/unit-judgment-brief.template.md` blob `b9e372b9fa26f7acbdf62166cf3aa47f943e54a7` — both match |
+| 2 | `run-analysis.md` diff confined to the one pointer | **1 file changed, 1 insertion, 1 deletion** — the pointer line alone |
+| 2 | conditional producer-test edit | not necessary, not made; diff empty |
+| 3 | template-derived proposal, installed validator | `verdict: VALID`, **exit 0**, reason `... for unit 'precision-components', 3 theses, 4 distinct claim IDs` |
+| 3 | paired negative control, both identity keys removed | `verdict: STRUCTURE`, **exit 6**, `no 'unit:' ... and no 'section:'` |
+| 4 | `check-judgment-producer.test.sh` | **41 passed, 0 failed** |
+| 4 | live `check-judgment-producer.sh` on the edited body | `verdict: SAFE`, **exit 0** |
+| — | *supplementary:* `check-judgment-gate.test.sh`, `check-judgment-propagation.test.sh` | **16/16** and **16/16** |
 
-**The five project suites total 145/145 — the accepted L1 floor Unit 1 froze, reproduced exactly after
-the install.** The brief required three of the five; the other two were run because they grep this
-file's name out of command bodies, and confirming them costs one command and closes the last way the
-edit could have moved something.
+**The proposal fixture is template-derived, not hand-written, and that is what makes row 3 evidence
+rather than decoration.** Its skeleton was extracted mechanically from the installed template's own
+fenced block, guarded by a check that the extraction still carried the `{unit}` placeholder, then
+filled with a script that asserts every one of the 12 placeholders was replaced and that no `{` or `}`
+survived. The template is byte-identical to its source after the run (`cmp` exit 0), so nothing was
+filled by editing the template itself. The reason line naming *`for unit`* rather than *`for section`*
+is what proves the canonical branch ran rather than the legacy one.
 
-**Battery rows 3, 7, 12, 13, 14 and 15 of Unit 3's table are the ones that matter**, because they are
-where the two contracts give different answers on the same document, and each was confirmed to give
-*both* answers correctly: rejected status (canonical 4 / legacy 6, rows S1–S5), GF-only evidence
-(canonical 0 / legacy 5, G1–G2), per-thesis evidence (6 / 0, X3), `Context:` citing evidence (6 / 0,
-X1), verdict citing evidence (6 / 0, X2), and both-keys refusal (6, D1). The battery's rubber-stamp
-control went red, so the 19/19 is earned rather than vacuous.
+`check-judgment-contract.test.sh` was **not** run: the brief scopes it to the case where the
+template-derived fixture exposes a checker regression, and it did not. The gate and propagation suites
+were run beyond the brief's list only because both read the command body that changed; that is one
+command each and it closes the last route by which the pointer edit could have moved something.
 
 ### Scope and preservation
 
-`git status --porcelain --untracked-files=all` in the consumer before the commit returned exactly one
-line, ` M logs/scripts/check-judgment-contract.sh`; `git diff --stat` reports **1 file changed, 260
-insertions, 75 deletions**; `git diff --check` is clean. Searched the change set for
-`research-route`, `stage-5-paths.md`, `tests/judgment-seam`, `judgment-authority-contract` and
-`unit-judgment-brief.template` — **zero paths each**, so no L3, Stage 5, seam or template surface
-appeared.
+`git status --porcelain --untracked-files=all` in the consumer before the commit returned exactly three
+lines — ` M .claude/commands/run-analysis.md`, `?? docs/judgment-authority-contract.md`,
+`?? reference/unit-judgment-brief.template.md` — the complete allowlist and nothing else.
+`git diff --check` is clean. Searched the change set for `promote-judgment`, `research-route`,
+`stage-5-paths.md`, `tests/judgment-seam`, `file-conventions` and `stage-instructions`: **zero paths
+each**, so no promotion, consumption, Stage 5, L3 or propagation surface appeared.
 
-Nineteen preservation targets compared blob-for-blob against consumer `HEAD` and **all unchanged**: the
-paired contract test; all four other `check-judgment-*` subject/test pairs; `promote-judgment-brief.sh`;
-`work-loop-owner.sh`; the three authority-consuming command bodies; `file-conventions.md`;
-`stage-instructions.md`; `stage-5-common-phases.md`; `reference/templates/unit-judgment-brief-template.md`;
-and `CLAUDE.md`. `git diff --name-only HEAD -- analysis/` is empty, and the live approved specimen still
-hashes `fbca709c1f9e682013a593cfaee70f7fce1a875a6730d4afadaa2c33795af38d` — the value Unit 2 recorded.
+Twenty preservation targets compared blob-for-blob against consumer `HEAD` and **all unchanged**,
+including `reference/templates/unit-judgment-brief-template.md` (the historical shape source), the
+Unit 4 validator, all five `check-judgment-*` subject/test pairs, `promote-judgment-brief.sh`,
+`run-synthesis.md`, `run-report.md`, `analyst-judgment-standard.md`, `file-conventions.md`,
+`stage-instructions.md`, `stage-5-common-phases.md` and `CLAUDE.md`. `git diff --name-only HEAD -- analysis/`
+is empty and the live approved specimen still hashes
+`fbca709c1f9e682013a593cfaee70f7fce1a875a6730d4afadaa2c33795af38d`. `git status -- docs/` shows the one
+added file and nothing else.
 
-All fixtures lived in a scratch temporary directory outside both repositories and do not survive the
-unit; no permanent consumer harness was added.
+All fixtures lived in a scratch directory outside both repositories and do not survive the unit.
 
-### Limitations and deferrals — unchanged, none implemented
+### One new deferral, created by this edit and recorded not implemented
 
-The recorded limitation stands as Codex dispositioned it: the legacy `section:` path remains the weaker
-bar, which is unchanged accepted L1 behaviour rather than newly accepted risk, and it cannot establish
-canonical authority through L3 because `research-route-judgment-authority.sh` independently requires
-`unit:` and fails closed. Six deferrals carry forward untouched: the trial's pre-Tracer-3
-`work-loop-owner.sh` drift; the `Section IDs: [custom-dev-data-ai]` versus on-disk `precision-components`
-mismatch, still required before Stage 5 operation; the out-of-scope canonical wiring backport; making
-the canonical seam harnesses consumer-portable; whether consumption assertions S5/S6 belong to L2 wiring
-or Stage 5; and the legacy countercase pattern difference. Nothing newly noticed in this hop.
+`reference/stage-instructions.md:125` (Step 3.4a) still names
+`reference/templates/unit-judgment-brief-template.md` as what the producer sub-agent receives. Until
+its deferred pointer merge lands, the narrative reference and the executable command disagree about
+the shape source. **The behaviour is correct** — `/run-analysis` is what actually dispatches, and it
+now names the canonical template — but the reference is stale, and a reader following
+`stage-instructions.md` alone would brief the producer to the wrong template. The brief defers that
+merge explicitly, so it was not made; this records that the repoint has now *created* the
+inconsistency rather than merely leaving one, which raises the priority of the deferred merge.
 
-Result: the dual-contract validator is installed and committed in the one bound consumer, canonical
-enforcement is live for `unit:` briefs, every accepted project behaviour is preserved, and the consumer
-is clean. Nothing adjacent was started — no template, no repoint, no Stage 5 paths, no L3.
-Evidence: the ten blob comparisons that bound the pre-edit state, the seven suite totals with the
-canonical suite's own rubber-stamp control (2/16) and the battery's, the four-step round trip with its
-exit-5 tamper control, and the one-line `git status` plus nineteen unchanged preservation blobs. The
-producer suite at 41/41 and the specimen hash are the two that most nearly read the other way.
+### Limitations and deferrals carried forward, none implemented
+
+The recorded limitation stands: the legacy `section:` path remains the weaker bar, unchanged accepted
+L1 behaviour rather than newly accepted risk, and unable to establish canonical authority through L3.
+Six deferrals carry forward untouched — the trial's pre-Tracer-3 `work-loop-owner.sh` drift; the
+`Section IDs: [custom-dev-data-ai]` versus on-disk `precision-components` mismatch, still required
+before Stage 5 operation; the out-of-scope canonical wiring backport; making the canonical seam
+harnesses consumer-portable; whether consumption assertions S5/S6 belong to L2 wiring or Stage 5; and
+the legacy countercase pattern difference.
+
+Result: the canonical authority contract and template are installed as accepted bytes, the producer's
+shape source is repointed by one line, and new proposals are canonical-contract-valid end to end.
+Historical artifacts, the legacy template and every project-specific instruction are preserved, and the
+consumer is clean. Nothing adjacent was started.
+Evidence: the two `git ls-files`-backed absences that fixed the before-state, the two blob matches
+against `e16cf206`, the one-line command diff, the template-derived VALID/exit-0 with its paired
+exit-6 control, the producer suite at 41/41 with a live `SAFE` verdict on the edited body, and the
+three-line `git status` with twenty unchanged preservation blobs. The producer suite and the
+`for unit` reason line are the two that most nearly read the other way.
 
 ## Blocker
 
@@ -291,21 +316,20 @@ None.
 
 ## Next action
 
-Codex: assess Unit 4 and open the next unit. The validator seam is closed; the remaining L2 install
-surfaces are now independent of each other, since the atomicity Unit 2 imposed was dissolved in Unit 3
-and this unit confirms it in practice — the canonical contract accepts both brief shapes, so nothing
-forces the template, the repoint and the paths to land together. Candidates, in the order their
-evidence gets cheapest:
+Codex: assess Unit 5 and open the next unit. The judgment-authoring path is now complete end to end —
+canonical contract, canonical template, canonical validation, canonical promotion round trip — so what
+remains in L2 is consumption and configuration rather than authoring. Candidates:
 
-1. **The canonical template ADD plus the `run-analysis.md:95` shape repoint** — now genuinely useful,
-   because a repointed producer emits `unit:`-keyed briefs the installed validator enforces canonically.
-   This is where canonical enforcement starts applying to *new* work rather than merely being available.
-2. **`reference/stage-5-paths.md`**, instantiated to the exact report-mode values Unit 2 resolved. It
-   is independent of the judgment seam entirely, and its four-assertion gate is already specified.
-3. **The remaining ADDs** — `docs/judgment-authority-contract.md`, and whether the two judgment-seam
-   *subject* checkers enter the consumer at all given Unit 3's finding that their harnesses cannot.
+1. **`reference/stage-5-paths.md`**, instantiated to the exact report-mode values Unit 2 resolved. It
+   is fully independent of the judgment seam, its four-assertion gate is already specified, and its
+   before-state (absent → Phase 0 HALT) is already established. Cheapest remaining unit.
+2. **The two deferred pointer merges** — `file-conventions.md` (additive, the five L2 judgment naming
+   items) and `stage-instructions.md` (narrow, the two authority/template pointers into Steps 3.4a and
+   3.4c). The second now also resolves the inconsistency this unit created, which is an argument for
+   taking them sooner rather than later.
+3. **`docs/judgment-authority-contract.md`'s remaining ADD siblings** — whether the two judgment-seam
+   *subject* checkers enter the consumer at all, given Unit 3's finding that their harnesses cannot.
 
-The consumption wiring question from the first Unit 3 handback is still open and still unsized: whether
-the eight command bodies should satisfy `check-judgment-seam.sh` and `check-judgment-consumption.sh` at
-all, given Unit 2 records the trial as the superset at those steps. It is the largest remaining
-unknown in L4 and nothing above depends on it.
+The consumption-wiring question is still the largest open unknown in L4 and still unsized: whether the
+eight command bodies should satisfy `check-judgment-seam.sh` and `check-judgment-consumption.sh`, given
+Unit 2 records the trial as the superset at those steps. Nothing above depends on it.
