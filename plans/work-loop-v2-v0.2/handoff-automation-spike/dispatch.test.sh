@@ -12196,6 +12196,65 @@ else
       "sed matched nothing; the fingerprint site was renamed or removed"
 fi
 
+echo
+echo "Case 70g — two allowed paths with the SAME display form keep separate snapshot identities"
+# Unit 22 correction. Reading raw bytes fixed Git INGESTION, but the snapshot
+# record the dispatcher compares across a hop was still keyed on the display
+# form, and disp_path() maps EVERY control byte to the same `?`. So two distinct
+# allowed filenames differing only by a control byte produced the same snapshot
+# key, and the pair `<oid> + <display>` was not a unique identity.
+#
+# THE FAILURE IS A SWAP, not an edit. Each file's oid still moves, so neither
+# path looks unchanged on its own — but the SORTED multiset of records is what
+# comm(1) compares, and swapping two contents between two same-display paths
+# permutes that multiset back onto itself. Before and after compare equal, the
+# delta is empty, and two real content changes vanish from both the operator's
+# partial-effect block and changed_paths_since_launch.
+#
+# The correction adds a bounded, line-safe, LOSSLESS identity — a digest of the
+# RAW pathname — to the record's first field. The display form is untouched and
+# still does all matching and all printing, so no raw control byte reaches the
+# operator and the terminal-result schema is unchanged.
+d="$(new_sandbox)"; state_file "$d" "collision-task" "claude"
+C1=$'logs/hostile-c\td.md'
+C2=$'logs/hostile-c\nd.md'
+DC='logs/hostile-c?d.md'
+printf 'base\n' >"$d/$C1"; printf 'base\n' >"$d/$C2"
+git -C "$d" add -- "$C1" "$C2" >/dev/null 2>&1
+git -C "$d" commit -qm "seed collision pair" >/dev/null 2>&1
+# BOTH ALREADY DIRTY BEFORE LAUNCH. Clean files would each arrive as a brand-new
+# after-snapshot entry and be reported even by the broken key, so only a
+# pre-existing pair can expose the permutation.
+printf 'AAA\n' >"$d/$C1"; printf 'BBB\n' >"$d/$C2"
+export WL_C1="$C1" WL_C2="$C2"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task collision-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+      --actor-cmd 'printf "BBB\n" > "$WL_CHECKOUT/$WL_C1"; printf "AAA\n" > "$WL_CHECKOUT/$WL_C2"; awk "/^turn: /&&!d{print \"turn: broken\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+expect_rc 15 "$RC" "70g — malformed post-hop state exits 15" "$OUT"
+# Both files really did change: the swap is a real pair of content edits, so a
+# reader that misses it is reporting a falsehood, not merely being terse.
+[ "$(cat "$d/$C1")" = "BBB" ] && [ "$(cat "$d/$C2")" = "AAA" ] \
+  && ok "70g — the actor really did swap the two files' contents" \
+  || bad "70g — the actor really did swap the two files' contents" \
+         "C1=$(cat "$d/$C1") C2=$(cat "$d/$C2")"
+[ "$(partial_section "$OUT" | grep -Fc "$DC")" = "2" ] \
+  && ok "70g — both swapped paths are reported as partial effects" \
+  || bad "70g — both swapped paths are reported as partial effects" \
+         "partial block: $(partial_section "$OUT")"
+R70G="$d/runs/$(run_id_of "$OUT").result"
+[ "$(res_field "$R70G" changed_paths_since_launch)" = "3" ] \
+  && ok "70g — changed_paths_since_launch counts both swaps plus the state file" \
+  || bad "70g — changed_paths_since_launch counts both swaps plus the state file" \
+         "got: $(res_field "$R70G" changed_paths_since_launch)"
+# The display form must still be the ONLY thing printed: the lossless identity is
+# internal, so no raw control byte may reach the operator through it.
+printf '%s\n' "$OUT" | grep -qE '^d\.md' \
+  && bad "70g — no raw control byte leaked into operator output" \
+         "$(printf '%s\n' "$OUT" | grep -nE '^d\.md')" \
+  || ok "70g — no raw control byte leaked into operator output"
+unset WL_C1 WL_C2
+
 # ==================================================================== done
 echo
 echo "-----------------------------------------------"

@@ -63,6 +63,46 @@ Stop and hand back if Bash cannot preserve the required raw paths without a new 
 
 ## Latest result
 
+### Correction round — finding 1: RESOLVED
+
+**Reproduced first, both ways.** By inspection: `worktree_entries()` emitted `<oid>` as field 2 and `<XY> <display path>` as field 4, and `allowlisted_dirty_snapshot()` projected exactly those two into the record it compares across a hop — so the record's identity was the display form, and `disp_path()` maps every control byte to the same `?`. By execution, new case 70g against the accepted Unit 22 commit `4730569b`:
+
+```
+  PASS  70g — the actor really did swap the two files' contents
+  FAIL  70g — both swapped paths are reported as partial effects
+        partial block: PARTIAL FILE EFFECTS — since launch, the hop changed these ALLOWED paths and left them modified and uncommitted:
+  FAIL  70g — changed_paths_since_launch counts both swaps plus the state file
+        got: 1
+```
+
+Two allowed files, `logs/hostile-c<TAB>d.md` and `logs/hostile-c<NEWLINE>d.md`, both rendering as `logs/hostile-c?d.md`, both already dirty at launch, contents swapped by the actor. The swap demonstrably happened, and the run reported the state file alone.
+
+**Why a swap and not an edit.** Each file's oid does move, so neither path looks unchanged on its own. The comparison is `comm(1)` over the **sorted** records, and swapping two contents between two same-display paths permutes that multiset back onto itself — before and after compare equal, and two real content changes vanish from the partial-effect block and from `changed_paths_since_launch`.
+
+**The correction, one seam.** Field 2 of the snapshot record now carries `<oid>.<16-hex digest of the RAW pathname>`. A digest, not an encoding: bounded, line-safe by construction, one-way, so it keys the comparison without putting a raw control byte anywhere a person or a parser reads. `shasum -a 256` is already this script's hashing primitive (`RUN_DISCRIMINATOR`), so no dependency is added. It is carried **inside** field 2 rather than as a new column because both consumers project the record with `cut -f2-` and never parse the first field — verified at `dispatch.sh:3247` and `:3282`/`:3284` — so no consumer, no operator-facing output and no terminal-result field changes.
+
+The display form is untouched and still does all matching and all printing. Nothing else was opened: NUL ingestion, allowlist policy, rename handling, the untracked-mode asymmetry and every other deferral are as they were.
+
+**Evidence.**
+
+| Check | Pre-correction (`4730569b`) | Corrected |
+|---|---|---|
+| Focused cases 70a–70g | `pass=21 fail=2` | **`pass=23 fail=0`** |
+| Directly affected legacy cases 40–50b | `pass=157 fail=6` | **`pass=157 fail=6`, `diff`-identical failure set** |
+
+Both closure questions:
+
+1. **Finding 1 resolved** — 70g's two failing assertions now pass: both swapped paths appear in the partial-effect block, and `changed_paths_since_launch` reports `3` (the pair plus the state file) rather than `1`. A fourth assertion confirms no raw control byte reached operator output through the new identity.
+2. **Nothing already accepted broke** — every Unit 22 case 70a–70f still passes, including the M16 mutation control, which continues to hide 70a's evidence when the fingerprint is taken from the display path. The legacy extract's six failures are the same six as at Unit 22 acceptance (cases 40/40b, nested-actor deny and fake `claude` binary — extract artifacts, no path-accounting assertion among them), compared line by line rather than by count.
+
+Newly noticed during the correction and **not implemented**, recorded as a candidate deferral: the digest bounds the identity at 16 hex characters, so distinct raw pathnames could in principle collide there. It is a 64-bit space against filenames the actor would have to author deliberately, and widening it is a one-character change if Codex judges it worth doing — but it is outside the frozen finding, so it was left alone.
+
+Only `dispatch.sh`, `dispatch.test.sh` and this state file changed. `logs/friction-log.md` left unstaged.
+
+---
+
+### Unit 22 implementation record (accepted at `4730569b`, retained for context)
+
 Inspected (2026-08-19):
 
 - Claim (1): HOLDS — `git show --stat --name-only 02c1f747b5faa0dec82b21e36b6304a1ccaf3409` lists exactly one file, `logs/work-loop/work-loop-v2-dispatcher-supervised-semi-agentic-use.md`. State-only, as Unit 21 reported; discovery not rerun.
@@ -136,4 +176,12 @@ None.
 
 ## Next action
 
-Codex: assess Unit 22 — the lossless boundary is in place with a targeted mutation control, the directly affected legacy extract is unchanged at an identical failure set, and one adjacent untracked-mode asymmetry is recorded as a deferral rather than implemented. Decide whether Change set A's path clause is now met, or what remains.
+Codex: closure check on frozen finding 1 only — the snapshot record now carries a lossless digest of the raw pathname alongside the oid, the collision case 70g is red at `4730569b` and green after, and the accepted Unit 22 cases plus the legacy extract are unchanged at an identical failure set. One out-of-scope observation (the 16-hex identity bound) is recorded as a candidate deferral, not implemented.
+
+<!-- superseded — the frozen findings this round answered are kept below for the closure check -->
+
+Correct once — frozen findings:
+
+1. The internal snapshot identity is still lossy even though Git ingestion is now raw. `worktree_entries()` fingerprints file contents from raw `$p`, but emits only `<oid> + <lossy display path>` into `allowlisted_dirty_snapshot`; `disp_path()` maps every control byte to the same `?`. Two distinct allowed filenames that differ only by control byte can therefore produce identical snapshot identities. If their contents are swapped during a hop, the sorted before/after snapshots can be identical and the effect disappears from `partial_effect_paths()` and `changed_paths_since_launch`. Correct this one seam by carrying a bounded, line-safe, lossless identity derived from the raw pathname in the internal snapshot comparison while retaining the deliberately lossy display form only for matching and operator output. Do not print raw control bytes, write a general encoder/parser, change the terminal-result schema, or reopen NUL ingestion, allowlist policy, rename handling, untracked-mode asymmetry, or other deferred work. Add one focused collision case with two allowed paths whose display forms are identical but raw names differ, and a content swap (or equally small discriminator) that is invisible under the current `<oid> + display>` representation and visible after the correction.
+
+Closure check: answer only whether finding 1 is resolved and whether its correction broke any already-accepted Unit 22 behavior. Report the correction commit, focused before/after evidence and exact focused counts; set `turn: codex` and stop.

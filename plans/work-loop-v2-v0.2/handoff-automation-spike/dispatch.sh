@@ -3160,6 +3160,28 @@ worktree_entries() { # untracked-mode want-oid
       else
         oid="ABSENT"
       fi
+      # WHICH FILE THIS IS, losslessly — and the display form cannot say.
+      # disp_path() maps EVERY control byte to the same `?`, so two allowed names
+      # differing only by a control byte render alike and, keyed on the display
+      # form alone, produced the same snapshot record. That is not merely
+      # ambiguous, it is a hiding place: each file's oid still moves under a
+      # content SWAP, but comm(1) compares the SORTED multiset of records, and
+      # swapping two contents between two same-display paths permutes that
+      # multiset back onto itself. Before and after compare equal, and two real
+      # content changes disappear from the partial-effect block and from
+      # changed_paths_since_launch.
+      #
+      # A DIGEST OF THE RAW NAME, not an encoding of it. It is bounded (16 hex
+      # characters), line-safe by construction, and one-way — so it can key the
+      # comparison without ever putting a raw control byte anywhere a person or a
+      # parser will read. `shasum -a 256` is already this script's hashing
+      # primitive (RUN_DISCRIMINATOR), so no dependency is added.
+      #
+      # CARRIED INSIDE FIELD 2 rather than as a new column, deliberately: both
+      # consumers of this record project it with `cut -f2-` and never parse the
+      # first field, so widening the identity changes no consumer, no output the
+      # operator sees, and nothing in the terminal-result schema.
+      oid="$oid.$(printf '%s' "$p" | shasum -a 256 | cut -c1-16)"
     fi
     printf '%s\t%s\t%s\t%s\n' "$allowed" "$oid" "$d_p" "$disp"
   done < <(git -C "$CHECKOUT" status --porcelain --untracked-files="$utmode" -z 2>/dev/null)
