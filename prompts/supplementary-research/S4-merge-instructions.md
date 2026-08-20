@@ -2,17 +2,17 @@
 
 > **Sub-workflow step:** S.4 — Merge Supplementary Evidence
 > **Execution environment:** Claude (project)
-> **Required inputs:** Research Extracts (current versions); QC-approved supplementary results (MERGE items from S.3 verdicts); Answer Specs for affected questions
+> **Required inputs:** Research Extracts (current versions); QC-approved evidence-executor-verified supplementary results (MERGE items from S.3 verdicts); Answer Specs for affected questions
 > **Output:** Updated Research Extracts — one per affected question, complete and self-contained, replacing the previous version
 
 ---
 
-You are integrating QC-approved supplementary research results into existing Research Extracts. The goal is to produce updated Research Extracts where original and supplementary evidence are combined into a single coherent artifact, with supplementary sources clearly tagged.
+You are integrating QC-approved, evidence-executor-verified supplementary research results into existing Research Extracts. The goal is to produce updated Research Extracts where original and supplementary evidence are combined into a single coherent artifact, with supplementary sources clearly tagged. Raw lead-provider output is ineligible for merge.
 
 **Inputs required:**
 
 1. Research Extracts for all affected questions (current versions)
-2. QC-approved supplementary results (the MERGE items from the S.2-QC verdicts, with the specific claims identified for merging)
+2. QC-approved evidence-executor-verified supplementary results (the MERGE items from the S.3 verdicts, with the specific claims identified for merging and a source-access audit locator for every claim)
 3. Answer Specs for the affected questions (needed for coverage verdict recalculation)
 
 **Step 1: Add supplementary claims**
@@ -22,9 +22,9 @@ For each MERGE item from the QC results:
 - Create new claims under the appropriate Answer Spec component in the Research Extract.
 - Assign Claim IDs that continue the existing sequence for that question (e.g., if the last existing claim is Q3-C08, new supplementary claims start at Q3-C09).
 - For each new claim:
-  - Write the claim statement in your own words (do not copy verbatim from Perplexity output)
-  - **Sources:** carry over source name(s) and URL(s) from the Perplexity results
-  - **Source locator:** "Supplementary research, Pass [1/2], Query [#]"
+  - Write the claim statement in your own words (do not copy verbatim from the executor report)
+  - **Sources:** carry over source name(s) and URL(s) from the evidence-executor-verified report only
+  - **Source locator:** "Supplementary research, Pass [1/2], Query [#], evidence-executor audit [entry]"
   - **Strength:** assign H/M/L per the standard rubric
   - **Independence:** count independent sources, including assessment of independence from sources already in the extract
   - **Notes:** include `[SUPPLEMENTARY]` tag. Add linkage type and caveats as normal.

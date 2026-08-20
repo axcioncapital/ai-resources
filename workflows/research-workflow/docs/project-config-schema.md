@@ -1,6 +1,6 @@
 # Project Config Schema — Research Workflow Canonical
 
-> **Status — partially live (FX-B1 landed 2026-05-28; FX-D1 landing 2026-05-28).** This schema declares 13 declarative project values consumed by canonical Stage 5 commands and other workflow consumers. Field #13 (`Document model`) is live via FX-B1; the threshold-class field documented in `reference/stage-5-paths.md § Default-value semantics for Mechanical trigger threshold:` lives in the stage-5 path-config file rather than this schema (path-config is the canonical site for per-project Stage 5 tunables — see § Where Stage 5 tunables live below).
+> **Status — live.** This schema declares 16 declarative project values consumed by canonical workflow commands and skills. Field #13 (`Document model`) drives Stage 5 dispatch. Fields #14–16 are the one project authority for Stage 2 executor routing.
 >
 > **Rollback rule:** if FX-B1 does not land within the current fix-phase plan window (`plans/fix-phase-plan-v1.md` Work Unit 4), the schema either gets a live consumer or gets reverted — it does not sit idle indefinitely (`principles.md § DR-7` — no speculative generalization without a downstream consumer).
 >
@@ -38,7 +38,7 @@ All consumers MUST parse the schema using ONE pattern so the contract surface is
 
 ---
 
-## The 12 fields
+## The 16 fields
 
 | # | Field | Type | Example | Description | Reads (future consumers) |
 |---|---|---|---|---|---|
@@ -55,6 +55,9 @@ All consumers MUST parse the schema using ONE pattern so the contract surface is
 | 11 | `Current period` | string | `"2025-2026"` | Project's "current" time band. Parameterizes the freshness classes (CURRENT / RECENT / BASELINE) used by source-class-hierarchy.md and verify-chapter. | `reference/source-class-hierarchy.md` (freshness-class formula); `verify-chapter` (date-range gates); `reference/known-limits.md` (freshness-date calibration) |
 | 12 | `Delivery vault` | string (optional) | `"pe-kb"` | Optional. Name of the Obsidian knowledge-base vault the project's chapter outputs should be deployed into. Default: no-op (skip vault deploy step). | `produce-knowledge-file` (vault target); `/deploy-kb` (target vault resolution) |
 | 13 | `Document model` | enum | `"report"` | One of: `report` / `section`. Declares the project's document architecture for Stage 5 consumers. Canonical Stage 5 commands read this first; arg-shape is validated against the declared mode (`report` → `r[N]`; `section` → `N.M`). No default — halt loudly when missing or malformed (see § Default-value semantics for `Document model:` below). | `produce-prose-draft` (mode validation + Phase 0 dispatch); `produce-formatting` (mode validation + Phase 0 dispatch); `produce-jargon-gloss` (mode validation + Phase 0 dispatch) |
+| 14 | `Evidence executor` | string | `"Codex"` | Required for Stage 2. The project-approved product or tool responsible for producing evidence of record. This is a binding, not a universal default: Codex, a CustomGPT, or another executor is valid only when the project declares it and its capabilities satisfy the session. Missing or blank halts manifest creation. | `run-execution`; `execution-manifest-creator`; `research-prompt-creator`; `reference/stage-instructions.md` |
+| 15 | `Evidence executor capabilities` | list of enum tokens | `[full-source-access, lossless-artifact-handoff, native-language-search, audit-log, required-output-schema]` | Required for Stage 2. Declares capabilities verified for the configured evidence executor. Allowed tokens: `full-source-access`, `lossless-artifact-handoff`, `native-language-search`, `audit-log`, `required-output-schema`. Baseline evidence work requires every token except `native-language-search`; that token means the executor can run load-bearing searches in every language declared by Project Config `Languages` and becomes mandatory when a session needs any such pass. If only some declared languages are supported, do not claim the token; resolve the executor limitation before Stage 2. Missing required capability halts rather than triggering an undeclared fallback. | `run-execution`; `execution-manifest-creator` |
+| 16 | `Supplementary lead provider` | string | `"Perplexity"` | Optional. Product or tool approved to surface candidate URLs, freshness leads, or discovery leads. Use `"none"` when absent. Its output is never evidence of record: the configured evidence executor must open the underlying source and log access before use. | `run-execution`; `execution-manifest-creator`; `research-prompt-creator`; `reference/stage-instructions.md` |
 
 ---
 
@@ -65,14 +68,14 @@ All consumers MUST parse the schema using ONE pattern so the contract surface is
 | `produce-prose-draft` | `Document model`, `Report set`, `Section IDs`, `Verification posture` |
 | `produce-formatting` | `Document model`, `Report set`, `Section IDs` |
 | `produce-jargon-gloss` | `Document model`, `Report set`, `Section IDs`, `Domain` |
-| `research-prompt-creator` skill | `Country set`, `Country superset`, `Languages`, `Source-availability` |
-| `execution-manifest-creator` skill | `Section IDs` |
+| `research-prompt-creator` skill | `Country set`, `Country superset`, `Languages`, `Source-availability`; `Evidence executor` and `Supplementary lead provider` via the approved manifest |
+| `execution-manifest-creator` skill | `Section IDs`, `Evidence executor`, `Evidence executor capabilities`, `Supplementary lead provider` |
 | `transaction-table-builder` skill | `Section IDs` |
 | `country-parity-checker` skill | `Country set`, `Country superset` |
 | `verify-chapter` | `Verification posture`, `Current period` |
 | `evidence-to-report-writer` (via Stage 3/4) | `Verification posture` |
-| `run-execution.md` | `Research-area-phrase` |
-| `reference/stage-instructions.md` | `Research-area-phrase` |
+| `run-execution.md` | `Research-area-phrase`, `Evidence executor`, `Evidence executor capabilities`, `Supplementary lead provider` |
+| `reference/stage-instructions.md` | `Research-area-phrase`, `Evidence executor`, `Supplementary lead provider` |
 | `reference/source-class-hierarchy.md` | `Country set` (mirror); `Source-availability`; `Current period` |
 | `reference/known-limits.md` | `Current period` |
 | `reference/quality-standards.md` | `Verification posture` |
@@ -85,18 +88,20 @@ This table is the per-field-fan-out view; the "Reads" column in the field table 
 
 ## Field naming + value convention
 
-- Field labels use **Title-Case-Hyphen-or-Space** (e.g., `Report set`, `Country superset`, `Verification posture`). Existing 12 labels are normative; do not change capitalization or punctuation without updating every consumer.
+- Field labels use **Title-Case-Hyphen-or-Space** (e.g., `Report set`, `Country superset`, `Verification posture`). Existing 16 labels are normative; do not change capitalization or punctuation without updating every consumer.
 - List values are bracket-delimited, comma-separated, with one space after each comma: `[r1, r2, r3]`. No quoting for short identifiers.
 - String values are double-quoted: `"private equity"`. Always quote strings even when they don't contain spaces, so consumers can use the same parse path for all string fields.
 - Enum values are double-quoted strings matching one of the documented enumeration members exactly. Case-sensitive.
 - The trailing `  # ` comment is operator-facing only — consumers must strip and discard.
 - Omitting an optional field (e.g., `Delivery vault`) is allowed; consumers default to no-op behavior.
 
+For Stage 2, `Evidence executor` and `Evidence executor capabilities` have no default. Missing, blank, malformed, or insufficient values halt manifest creation with the failed field or capability named. `Supplementary lead provider` is optional in effect but must be explicitly resolved to a product name or `"none"`; this prevents an undeclared tool from silently becoming a research lane.
+
 ---
 
 ## Default-value semantics for `Document model`
 
-`Document model` (field #13) has **no default — halt loudly when missing or malformed.** This is the only schema field with required-by-rule semantics. Stage 5 consumers must observe these halt rules verbatim (see `principles.md § OP-3` — loud failure over silent continuation; `principles.md § AP-1` — silent conflict resolution is the failure mode this rule prevents):
+`Document model` (field #13) has **no default — halt loudly when missing or malformed.** Stage 5 consumers must observe these halt rules verbatim (see `principles.md § OP-3` — loud failure over silent continuation; `principles.md § AP-1` — silent conflict resolution is the failure mode this rule prevents). Stage 2 fields #14–16 have their own fail-visible semantics in § Field naming + value convention above.
 
 | Field state | Behavior |
 |---|---|
@@ -133,7 +138,7 @@ The promotion rule: if a Stage 5 tunable in `stage-5-paths.md` later acquires a 
 
 The `## Project Config` block lives in canonical CLAUDE.md per Pass 5 §3.3 reasoning (always-loaded, operator-readable, mirror-compatible with existing `reference/source-class-hierarchy.md § Project Country Set`). Migrate the schema to a separate `.project-config.yml` (or similar) when ANY of the following triggers fires:
 
-1. **Field count exceeds ~20.** A 12-field block in CLAUDE.md is operator-scannable; 25 fields is not. Cost is operator cognitive load on every session start.
+1. **Field count exceeds ~20.** A 16-field block in CLAUDE.md remains operator-scannable; 25 fields does not. Cost is operator cognitive load on every session start.
 2. **Machine-parsed consumers extend beyond Claude.** If non-Claude tooling (CI scripts, external orchestration) needs to read the schema, YAML or JSON beats markdown for those readers.
 3. **Non-Axcíon operators fork the workflow.** If a non-Axcíon project deploys this template and needs to maintain a config layer independently, a separate file is easier to merge / diff than CLAUDE.md edits.
 

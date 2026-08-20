@@ -40,7 +40,7 @@ The gate-clearance verdict is the load-bearing contract between Pass 3 and Pass 
 3. Write checkpoint to `/analysis/checkpoints/{section}/{section}-step-2-gap-assessment-checkpoint.md` from the sub-agent's returned summary. Include: gap count, per-gap path classification (A/B), affected clusters.
 4. ▸ /compact — skill content and memo content no longer needed; checkpoint carries forward.
 5. PAUSE — Present gap assessment to the operator. **The halt is unconditional — no timeout, no auto-approve.** For each gap:
-   - Path B (non-blocking): propose lightweight Perplexity queries
+   - Path B (non-blocking): propose lightweight queries for the configured supplementary lead provider
    - Path A (blocking): flag for full Stage 2 re-execution on affected questions
    - The operator approves routing.
 
@@ -264,7 +264,9 @@ After editorial decisions are approved, log and hand off.
 
 **Trigger:** Gap assessment identifies Path B (non-blocking) gaps, and operator approves routing.
 
-**Prompt files:** All prompts live in `/ai-resources/prompts/supplementary-research/`. Claude Code reads each prompt file, substitutes project inputs into the placeholders, and executes. The operator's only manual step is S.2 (Perplexity queries).
+**Prompt files:** All prompts live in `/ai-resources/prompts/supplementary-research/`. Claude Code reads each prompt file, substitutes project inputs into the placeholders, and executes. The operator's only manual step is S.2 (running queries in the configured supplementary lead provider, then running the configured evidence executor).
+
+**Provider pre-flight:** Re-read `Supplementary lead provider` and `Evidence executor` from Project Config. If the lead provider is `none`, halt this path for an operator decision. Provider output is leads only; it cannot be QC'd or merged as evidence.
 
 **Inputs:**
 - Path B gap items from `/analysis/gap-assessment/{section}/{section}-gap-assessment.md`
@@ -275,16 +277,16 @@ After editorial decisions are approved, log and hand off.
 Read `/ai-resources/prompts/supplementary-research/S0-extract-failed-components.md`. Execute against the gap assessment report from `/analysis/gap-assessment/{section}/{section}-gap-assessment.md`, scoped to Path B items only. Write output to `/analysis/gap-supplementary/cluster-NN-failed-components.md`.
 
 **S.1 — Draft Query Brief [Claude Code]**
-Read `/ai-resources/prompts/supplementary-research/S1-query-brief-pass1.md` (or `S1-query-brief-pass2.md` for pass 2). Execute using: the failed components extraction, relevant Research Extracts from `/execution/research-extracts/{section}/`, and cluster memos. For pass 2, also include: the pass 1 Query Brief and pass 1 raw Perplexity output. Write output to `/analysis/gap-supplementary/cluster-NN-query-brief-pass-N.md`.
+Read `/ai-resources/prompts/supplementary-research/S1-query-brief-pass1.md` (or `S1-query-brief-pass2.md` for pass 2). Execute using: the configured supplementary lead provider, the failed components extraction, relevant Research Extracts from `/execution/research-extracts/{section}/`, and cluster memos. For pass 2, also include the pass 1 Query Brief and pass 1 evidence-executor-verified report. Write output to `/analysis/gap-supplementary/cluster-NN-query-brief-pass-N.md`.
 
-**PAUSE — S.2 — Execute in Perplexity [Operator]**
-Present the query brief's Section B (Execution Sheet) to the operator. He runs queries manually in Perplexity Pro Search (no API). The operator pastes raw Perplexity output back into Claude Code. Write raw output to `/analysis/gap-supplementary/cluster-NN-perplexity-raw-pass-N.md`.
+**PAUSE — S.2 — Gather and Verify Leads [Operator]**
+Present the query brief's Section B (Execution Sheet) to the operator. The operator runs the queries in the configured supplementary lead provider and returns its output. Write that raw lead output to `/analysis/gap-supplementary/cluster-NN-perplexity-raw-pass-N.md`; this historical filename is retained for compatibility and does not select the provider. Then give the configured evidence executor the target gaps and candidate URLs. It must perform its own sweep, reopen the underlying full pages/PDFs, discard inaccessible or snippet-only leads, and log source access using the normal evidence schema. Write its audited report to `/analysis/gap-supplementary/cluster-NN-executor-verified-pass-N.md`.
 
-**S.3 — QC Results [Claude Code]**
-Read `/ai-resources/prompts/supplementary-research/S3-qc-supplementary-results.md`. Execute against: the raw Perplexity output, Research Extracts, and Query Brief Section A. Write QC report to `/analysis/gap-supplementary/cluster-NN-qc-pass-N.md`. PAUSE for operator to confirm merge/skip verdicts.
+**S.3 — QC Executor-Verified Results [Claude Code]**
+Read `/ai-resources/prompts/supplementary-research/S3-qc-supplementary-results.md`. Execute against: the evidence-executor-verified report, Research Extracts, and Query Brief Section A. Raw lead-provider output is not an input. Write QC report to `/analysis/gap-supplementary/cluster-NN-qc-pass-N.md`. PAUSE for operator to confirm merge/skip verdicts.
 
 **S.4 — Integrate into cluster memos [Claude Code]**
-Read `/ai-resources/prompts/supplementary-research/S4-merge-instructions.md`. For each MERGE-approved finding:
+Read `/ai-resources/prompts/supplementary-research/S4-merge-instructions.md`. Refuse to proceed unless every MERGE-approved finding comes from the evidence-executor-verified report and carries a source-access audit locator. For each eligible finding:
    - Add to the relevant cluster memo's evidence base
    - Tag supplementary sources with `[SUPPLEMENTARY-PASS-N]`
    - Include **Route Out editorial instructions** where gaps could not be fully resolved: specify hedging language, scope caveats, or proxy framing that the cluster memo should carry forward to section directives and report prose.

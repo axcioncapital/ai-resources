@@ -2,12 +2,14 @@
 
 > **Sub-workflow step:** S.3 — QC Supplementary Results
 > **Execution environment:** Claude (project)
-> **Required inputs:** Raw Perplexity output for all queries in this pass; Research Extracts for all affected questions; Query Brief Section A for this pass
+> **Required inputs:** Evidence-executor-verified report for all queries in this pass; Research Extracts for all affected questions; Query Brief Section A for this pass
 > **Output:** Per-query MERGE/SKIP/PARTIAL verdicts + merge summary for operator review
 
 ---
 
-You are reviewing raw Perplexity research results before they are merged into existing Research Extracts. Your job is to filter out results that don't add value — wrong target, low quality, or redundant — so only useful evidence reaches the merge step.
+You are reviewing the configured evidence executor's verified supplementary report before it is merged into existing Research Extracts. Raw lead-provider output is not an input. Your job is to filter out results that don't add value — wrong target, low quality, unaudited access, or redundancy — so only opened and useful evidence reaches the merge step.
+
+Before scoring results, verify that every proposed claim has a full-source access log entry from the configured evidence executor. Reject provider-only citations, inaccessible sources, and snippet-only access.
 
 **Per query result, run three checks:**
 
@@ -66,11 +68,11 @@ The operator reviews this summary and confirms before proceeding to the merge st
 
 **Inputs required:**
 
-- Raw Perplexity output for all queries in this pass (paste below)
+- Evidence-executor-verified report for all queries in this pass (paste below)
 - Research Extracts for all affected questions (paste below — needed for redundancy checking and gap context)
 - Query Brief Section A for this pass (paste below — needed for success signals and component mapping)
 
-[paste Perplexity output]
+[paste evidence-executor-verified report]
 
 [paste Research Extracts]
 

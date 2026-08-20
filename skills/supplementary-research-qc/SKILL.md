@@ -1,14 +1,14 @@
 ---
 name: supplementary-research-qc
 description: >
-  QC gate for raw Perplexity supplementary research results. Filters results
+  QC gate for executor-verified supplementary research results. Filters results
   before merge into Research Extracts by running three checks per query result:
   gap closure assessment, source quality screen, and redundancy check. Produces
   per-query MERGE/SKIP/PARTIAL verdicts and a merge summary for operator review.
 
-  Step 2.S3 in Stage 2 Subworkflow 2.S. Use when operator has executed Perplexity
-  queries from the supplementary query brief and provides raw output for QC.
-  Triggered by "QC supplementary results," "review Perplexity output," "run
+  Step 2.S3 in Stage 2 Subworkflow 2.S. Use after the supplementary lead
+  provider has returned candidate URLs and the configured evidence executor has
+  reopened and logged the underlying sources. Triggered by "QC supplementary results," "run
   step 2.S3," or similar.
 
   Do NOT use for QC of Deep Research reports (that's research-extract-verifier).
@@ -20,9 +20,9 @@ effort: medium
 
 # Supplementary Research QC
 
-Review raw Perplexity research results before they are merged into existing Research Extracts. Filter out results that don't add value — wrong target, low quality, or redundant — so only useful evidence reaches the merge step.
+Review the evidence executor's verified supplementary report before it is merged into existing Research Extracts. Filter out results that do not add value so only opened, audited, non-redundant evidence reaches the merge step.
 
-**Workflow position:** Step 2.S3 in Subworkflow 2.S. Receives raw Perplexity output from Step 2.S2. MERGE/PARTIAL verdicts flow to Step 2.S4. SKIP verdicts are documented and dropped.
+**Workflow position:** Step 2.S3 in Subworkflow 2.S. Receives the executor-verified report from Step 2.S2. Raw lead-provider output is not an input. MERGE/PARTIAL verdicts flow to Step 2.S4. SKIP verdicts are documented and dropped.
 
 ## Calibration
 
@@ -32,7 +32,7 @@ Be selective but not punitive. The purpose is to prevent bad evidence from enter
 
 Three items, provided together:
 
-1. **Raw Perplexity output** — for all queries in this pass, organized by query number
+1. **Executor-verified supplementary report** — underlying sources opened in full and accompanied by the evidence executor's source-access log, organized by query number
 2. **Research Extracts** — for all affected questions (needed for redundancy checking and gap context)
 3. **Query Brief Section A** — for this pass (needed for success signals, component mapping, and the Already Searched inventory used in Check 3)
 
@@ -40,7 +40,8 @@ Three items, provided together:
 
 Before proceeding:
 - If fewer than three input items are provided, state which are missing and request them
-- Verify query numbers in the Perplexity output match the Execution Sheet
+- Verify query numbers in the executor-verified report match the Execution Sheet
+- Verify every proposed claim has an opened-source audit entry; reject provider-only citations and snippet-only access
 - If queries are missing from the output, note which are absent and proceed with available results
 
 ## QC Checks
@@ -66,7 +67,7 @@ Is the source credible enough to merit inclusion?
 - **Recency:** Flag sources older than 5 years unless the claim is structural/definitional (not market data or practice descriptions).
 - **Attribution clarity:** Can you identify the author, institution, or publication? If the source is unattributable, reject.
 - **Bias indicators:** Is the source selling something related to the claim? If yes, flag as vendor/advocacy — acceptable only as Low-strength corroboration, not as primary evidence.
-- **Citation reliability:** Perplexity can hallucinate or misattribute URLs. If a citation URL looks structurally implausible (broken domain, path that doesn't match the claimed source, or generic URL for a specific claim), flag it as `[CITATION UNVERIFIED]`. A claim with an unverified citation is not automatically rejected — it can still merge if the factual content is corroborated by another result with a credible citation. But a single-source claim with an unverified citation should be downgraded to Low strength regardless of its apparent quality. Note: the operator can verify flagged URLs during execution; this check flags the risk, it does not require verification at QC time.
+- **Citation reliability:** Lead providers can hallucinate or misattribute URLs. The evidence executor must have reopened the underlying source. A missing, structurally implausible, inaccessible, or snippet-only audit entry fails this check; provider citation text alone never qualifies.
 
 ### Check 3 — Redundancy Check
 
@@ -84,7 +85,7 @@ Runs once per QC pass — after the per-query verdicts, not per query — and on
 Why it exists: the supplementary flow otherwise self-certifies "scarcity" — the same agent judges both the original gap and whether its own second attempt was a genuinely different angle. A too-quick scarcity verdict closes the search and lets existing proxies stand as the de-facto answer. This check puts an independent eye on the scarcity call. Sampled, cheap, high-signal.
 
 - **Sample 1–2 confirmed-scarcity components** from this pass (prioritize load-bearing components — those feeding claims a chapter depends on).
-- **Fresh-context re-attempt:** for each sampled component, a fresh context (a subagent given only the original component topic and the project lens — NOT the prior query brief, its wording, or its exclusion lists) drafts one search attempt from scratch. The attempt executes through the pipeline's standard search path (operator-run Perplexity query, same as Step 2.S2).
+- **Fresh-context re-attempt:** for each sampled component, a fresh context (a subagent given only the original component topic and the project lens — NOT the prior query brief, its wording, or its exclusion lists) drafts one search attempt from scratch. The attempt executes through the standard Step 2.S2 lead-provider → evidence-executor verification path.
 - **If the fresh attempt finds credible in-lens evidence:** the scarcity verdict was an under-search, not a ceiling. Route the component **back to re-extraction** — it re-enters the supplementary flow with the new evidence; do NOT record it in the scarcity register this pass.
 - **If the fresh attempt finds nothing:** the scarcity verdict stands, now independently confirmed. Note the confirmation in the QC report.
 

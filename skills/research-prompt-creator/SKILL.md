@@ -3,9 +3,9 @@ name: research-prompt-creator
 description: >
   Transform an Execution Manifest, Research Plan, and Answer Specs into a
   Research Execution Prompts document — per-session execution prompts, session
-  plan table, and operational notes, primarily for Research GPT sessions.
-  Perplexity sessions may appear in the manifest but use simpler prompt
-  formats; CustomGPT sessions follow Research GPT patterns. Session groupings and tool assignments come
+  plan table, and operational notes for the project-configured evidence executor.
+  Session groupings, executor assignment, capability eligibility, and optional
+  supplementary lead passes come
   from the Execution Manifest (produced by execution-manifest-creator); this
   skill writes the prompts, not the routing. Trigger when an Execution
   Manifest exists and the operator needs execution prompts, or on requests
@@ -24,7 +24,7 @@ effort: medium
 ## Input Requirements
 
 **Required:**
-1. **Execution Manifest** — produced by `execution-manifest-creator`. Contains session groupings, tool assignments (Research GPT vs. Perplexity), dependencies, and parallel execution opportunities. Accept the manifest's routing and grouping decisions as given — do not re-cluster or re-route questions.
+1. **Execution Manifest** — produced by `execution-manifest-creator`. Contains session groupings, the assigned evidence executor, capability eligibility, search mode, dependencies, optional supplementary lead passes, and parallel execution opportunities. Accept the approved manifest as given — do not re-cluster, re-route, or substitute another product.
 2. **Research Plan** — research questions with scope, key terms, source preferences, search terminology guidance
 3. **Answer Specs** — per-question specifications defining required evidence components, evidence rules, and completion gates
 4. **Source-class hierarchy** — `reference/source-class-hierarchy.md` (project-level). Declares the best-available source class per evidence type, the source-exhaustion ladder when best-class evidence is unavailable, and named-source paths. Consumed by Step 2b element 4a (per-directive source-class targeting). If the file is absent, halt — prompts cannot meet the source-class targeting requirement without it.
@@ -37,17 +37,20 @@ All provided by the operator. Do not generate these.
 
 **Information boundary:** Accept session groupings, dependencies, and tool assignments from the Execution Manifest without modification. Base prompt construction decisions (priority allocation, depth signals, format choices) on the provided inputs. Domain knowledge is acceptable for search term selection, keyword seeding, and steering note context — these benefit from the model knowing the field.
 
-## Platform Context
+## Executor-Neutral Prompt Contract
 
-Research GPT (GPT-5.2-based) has characteristics that constrain prompt design:
+Write for the assigned evidence executor named in the approved manifest. Product
+names do not change the evidence, audit, source-opening, or output-schema rules.
+Do not assume a particular UI, clarification step, context window, or built-in
+research mode unless the manifest explicitly supplies that operating detail.
 
-- **No clarification step** — research starts immediately from the prompt. Prompt quality is the single biggest lever on output quality.
-- **Keyword-driven search** — the model uses keywords from the prompt as search seeds. Embed domain-specific terms, proper nouns, and technical terminology explicitly.
-- **Session capacity** — overloaded prompts produce shallow coverage on later questions. Session groupings come from the Execution Manifest; focus on writing prompts that work well within the given session sizes.
-- **Structured output** — tables, headers, and format instructions are well-followed. Leverage this.
+- **Self-contained instructions** — each prompt must be executable without hidden context.
+- **Keyword-driven discovery** — embed domain-specific terms, proper nouns, and technical terminology explicitly.
+- **Session capacity** — overloaded prompts produce shallow later coverage; respect the approved session sizes.
+- **Structured output** — specify the governed headings, tables, audit fields, and gap labels explicitly.
 - **Context pack** — a compact, section-level project summary embedded in each execution prompt for orientation. Identical across all sessions in a section. Contains only universal context: project background, one-line section objective, analytical framework, scope reference. No hypotheses, no content map areas, no prior findings from other sections — those belong in the session intro paragraph (the free text between the context pack and the first directive), where they are naturally session-specific. This separation prevents attention dilution: the context pack orients, the session intro focuses.
 - **Finite search budget** — execution tools have a limited number of searches per question or session. Generic seeds burn budget on shallow results, leaving nothing for harder components. Prompt design must account for this: prioritize high-specificity seeds for difficult components, and keep broad seeds to a minimum for well-documented topics.
-- **Site restrictions** — the operator can restrict or prioritize specific sites per session via the ChatGPT UI.
+- **Source boundaries** — express required or prioritized domains in the prompt. Platform-specific settings belong in operator notes only when they are known for the assigned executor.
 
 ## Planning Protocol
 
@@ -147,7 +150,7 @@ Rules are grouped by priority. Structural decisions shape the prompt architectur
   - (b) proxy evidence found, clearly downgraded (claim tagged `PROXY-DOWNGRADE` and the proxy nature named explicitly — e.g., "above-lens deal used as illustration," "pan-Nordic aggregate cited for country-specific claim");
   - (c) no evidence found (claim tagged `NO-EVIDENCE`).
   The prompt must instruct the tool: *if no in-lens evidence is found, do not broaden the claim — broaden the source only and downgrade the conclusion.* When a substitution is made, the prompt must require the tool to name the substitution explicitly in its output (e.g., "evidence for Finland not found; substituted Nordic aggregate"). This is a hard requirement and directly couples to `research-extract-creator`'s tag-emission rule and `cluster-memo-refiner`'s Check 9.
-- **Per-country search ordering (S-03 — Country-Parity Enforcement Gate):** For country-relevant directives (those targeting evidence about Sweden, Norway, and/or Finland specifically), the prompt must specify per-country search ordering: **Sweden block → Norway block → Finland block → pan-Nordic synthesis last, NOT first.** Pan-Nordic-first ordering biases the claim toward three-country framing before per-country evidence is known. The directive must list per-country source-class targets separately (e.g., "Sweden: SVCA + Bolagsverket; Norway: NVCA + Brønnøysund; Finland: FVCA + PRH; pan-Nordic synthesis: Invest Europe/EDC only AFTER per-country pass") so the execution tool surfaces per-country evidence before any pan-Nordic claim is constructed.
+- **Per-country search ordering (S-03 — Country-Parity Enforcement Gate):** For country-relevant directives, create one search block per member of Project Config `Country set`, in the declared order, then perform any regional synthesis last rather than first. Populate each block's source-class targets from the project `reference/source-class-hierarchy.md`; never inherit another project's country list or institutions. This makes country-level evidence visible before a regional claim is constructed.
 - **Local-language search blocks (S-04 — Mandatory Local-Language Search Pass):** For country-specific directives, the prompt must include a local-language search block alongside (not as fallback to) the English-language block. The local-language block runs in parallel with the English block, not as a fallback — English-only sessions over-represent large-cap deals; local-language coverage is the primary remediation for "non-English-market evidence thin because English-only." Per-language search-term sets are loaded from `reference/language-search-blocks.md` (project-fillable, instantiated from `ai-resources/workflows/research-workflow/reference/language-search-blocks.template.md`); per-language iteration is driven by the Project Config `Languages:` field (see `docs/project-config-schema.md` field 5). The loader applies a **3-case absent-file contract** — do not collapse the cases into a single fallback:
   - (1) `Languages:` absent or `[]` → emit English-only directives, no warning. Correct posture for monolingual projects.
   - (2) `Languages:` populated AND `reference/language-search-blocks.md` absent → **HALT with a clear error** naming the declared `Languages:` codes. Do NOT fall back to English-only — silent fallback for a project that explicitly declared multi-language coverage degrades evidence integrity.
@@ -219,7 +222,7 @@ Before delivering the document, verify every item in the Self-Check list below. 
 - **Scope conflict between Research Plan and Answer Specs** — flag as `[CONFLICT]` with both versions quoted, do not silently resolve
 - **Missing source preferences** — generate defaults based on question domain, label as `[inferred]`
 - **Missing reference file** (`references/prompt-construction-guide.md`) — proceed using the inline fallback guidance provided at each reference point in this skill. Do not halt.
-- **Unknown execution tool** — if the Execution Manifest routes a session to a tool not covered by this skill's platform context, flag as `[UNSUPPORTED TOOL]`, produce a best-effort prompt using the Research GPT format, and note that the operator should review for platform compatibility.
+- **Executor mismatch or ineligible session** — halt and return to `execution-manifest-creator`. Do not write prompts for a product other than the assigned evidence executor and do not convert an ineligible session into a best-effort prompt.
 
 If provided information is insufficient to make a confident decision, say so. It is acceptable to leave gaps and flag them rather than invent plausible-sounding defaults. If the operator's inputs contain an error or questionable assumption, flag it constructively.
 
@@ -246,7 +249,7 @@ Before delivering, verify:
 - Each session has specific steering notes (not generic)
 - If scope parameters include known data gap risks, a proxy fallback chain is included in the prompt
 - Every directive declares an explicit in-lens evidence target AND a proxy-source fallback path; the prompt requires the execution tool to return one of `IN-LENS` / `PROXY-DOWNGRADE` / `NO-EVIDENCE` per directive (S-02)
-- For country-relevant directives: per-country search ordering is specified (Sweden → Norway → Finland → pan-Nordic synthesis last) with per-country source-class targets listed separately (S-03)
+- For country-relevant directives: every Project Config `Country set` member has a separate search block in declared order, with regional synthesis last and project-specific source-class targets (S-03)
 - For country-specific directives: local-language search blocks are included alongside the English-language block (not as fallback), iterated over the Project Config `Languages:` field with per-language term content loaded from `reference/language-search-blocks.md` per the 3-case absent-file contract (S-04). Self-check is N/A when `Languages:` is absent or `[]` (monolingual project); otherwise enforces a present block for every code in `Languages:`.
 - Every session-level prompt declares a target stop condition (one of the 4 per `reference/quality-standards.md § Research Stop Conditions`) in the Steering Notes section (S-13)
 - For any need the manifest classified `public-gated`: the directive matches the need's risk-tier route (#5) — Tier A → full deep search; Tier B/C → bounded scarcity audit (5–8 proxy searches + #24 register check + residual `Proprietary`/`Gated`/`Opaque` classification, then stop unless operator override); Tier D → not pursued; unreadable tier → bounded audit with `[inferred]` flag. A Tier-B/C gated directive does NOT commission an open-ended deep search, requires the residual to be recorded with one of the three scarcity labels, and — when the #24 register is absent — carries the best-effort/search-only note

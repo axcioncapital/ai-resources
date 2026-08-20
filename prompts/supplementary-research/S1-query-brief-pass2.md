@@ -2,12 +2,12 @@
 
 > **Sub-workflow step:** S.1 — Draft Supplementary Query Brief (Pass 2)
 > **Execution environment:** Claude (project)
-> **Required inputs:** Updated Research Extracts (post-pass 1 merge); Answer Specs for all affected questions; Pass 1 Query Brief; Pass 1 raw Perplexity output
+> **Required inputs:** Configured supplementary lead provider; Updated Research Extracts (post-pass 1 merge); Answer Specs for all affected questions; Pass 1 Query Brief; Pass 1 evidence-executor-verified report
 > **Output:** Two-section Query Brief: Section A (diagnosis + revised analysis) + Section B (paste-ready Execution Sheet with different search strategies)
 
 ---
 
-Here are the Research Extracts still showing THIN or MISSING coverage verdicts after supplementary pass 1, along with the pass 1 materials. Your job is to diagnose why pass 1 didn't close the remaining gaps and produce a revised Perplexity Query Brief with different search strategies.
+Here are the Research Extracts still showing THIN or MISSING coverage verdicts after supplementary pass 1, along with the pass 1 materials. Your job is to diagnose why pass 1 didn't close the remaining gaps and produce a revised Query Brief for the configured supplementary lead provider with different search strategies.
 
 **Step 1: Diagnose pass 1**
 
@@ -28,11 +28,11 @@ For remaining groups (this becomes Section A of the output):
 
 - Maintain or re-group based on shared source universe (groups may have changed if some components closed in pass 1).
 - Review existing source types now in evidence (original Deep Research sources + pass 1 supplementary sources). Identify source types that are plausible for this topic but still absent from evidence. These become the targeting basis.
-- Draft 3–5 Perplexity queries per group ranked by expected yield. Each query must be:
-  - Self-contained (Perplexity has no cross-query memory and no knowledge of prior research)
+- Draft 3–5 lead-provider queries per group ranked by expected yield. Each query must be:
+  - Self-contained (the provider must not need cross-query memory or knowledge of prior research)
   - Non-overlapping with other queries in this brief AND with pass 1 queries
   - Using a **different search strategy** than pass 1 — different source types, terminology, framing, or angle
-  - Written as the literal text to paste into Perplexity — include source targeting directly in the query wording
+  - Written as the literal text to paste into the configured provider — include source targeting directly in the query wording
 - Per query, note: success signal (what a good result looks like), which components it could satisfy, and how the strategy differs from pass 1.
 
 **Step 3: Budget check**
@@ -72,12 +72,12 @@ Group: [Group name]
 
 ```
 Query 1:
-[Literal text to paste into Perplexity]
+[Literal text to paste into the configured supplementary lead provider]
 ```
 
 ```
 Query 2:
-[Literal text to paste into Perplexity]
+[Literal text to paste into the configured supplementary lead provider]
 ```
 
 ...and so on through all queries.
@@ -98,7 +98,8 @@ The operator works from Section B during execution. Section A is reference mater
 - Updated Research Extracts (post-pass 1 merge, with current coverage verdicts)
 - Answer Specs for all affected questions
 - Pass 1 Query Brief (needed to diagnose what was already tried)
-- Pass 1 raw Perplexity output (needed to assess what was returned)
+- Pass 1 evidence-executor-verified report (needed to assess what was actually opened, audited, and returned)
+- Configured supplementary lead provider (needed only to format executable queries; its output remains leads, not evidence)
 
 [paste updated Research Extracts]
 
@@ -106,4 +107,6 @@ The operator works from Section B during execution. Section A is reference mater
 
 [paste pass 1 Query Brief]
 
-[paste pass 1 raw Perplexity output]
+[paste pass 1 evidence-executor-verified report]
+
+[paste configured supplementary lead provider]

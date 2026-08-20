@@ -1,7 +1,7 @@
 ---
 model: opus
 ---
-Intake raw research reports from Research Execution GPT or Perplexity sessions. Files and names them, checks dependencies, then hands off to `/run-execution` for extract creation and verification.
+Intake raw research reports from the evidence executor assigned in the approved Execution Manifest. Files and names them, checks dependencies, then hands off to `/run-execution` for extract creation and verification.
 
 This command owns Step 2.2b (filing) and Step 2.2a (dependency injection) only. It does NOT run Steps 2.3–2.4 or any downstream processing — those belong to `/run-execution`.
 
@@ -48,4 +48,4 @@ After filing and dependency injection are complete, report status and suggest ne
 
 - If all sessions are now filed and no dependencies remain: **"Ready for extract creation. Run `/run-execution` to continue with Steps 2.3–2.4."**
 - If some sessions are still missing: **"Sessions [X, Y] still outstanding. Run `/intake-reports` again when they're ready. Sessions [A, B, C] can proceed — run `/run-execution` to create extracts for available sessions."**
-- If dependency injection was performed: **"Session [F] prompt updated with prior research output. Execute Session [F] in Research Execution GPT, then run `/intake-reports` again to file that report."**
+- If dependency injection was performed: **"Session [F] prompt updated with prior research output. Execute Session [F] in the assigned evidence executor, then run `/intake-reports` again to file that report."**

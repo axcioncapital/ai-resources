@@ -2,12 +2,12 @@
 
 > **Sub-workflow step:** S.1 — Draft Supplementary Query Brief (Pass 1)
 > **Execution environment:** Claude (project)
-> **Required inputs:** Research Extracts for all affected questions (with THIN/MISSING verdicts); Answer Specs for all affected questions
-> **Output:** Two-section Query Brief: Section A (analysis and reasoning) + Section B (paste-ready Execution Sheet of Perplexity queries)
+> **Required inputs:** Configured supplementary lead provider; Research Extracts for all affected questions (with THIN/MISSING verdicts); Answer Specs for all affected questions
+> **Output:** Two-section Query Brief: Section A (analysis and reasoning) + Section B (paste-ready Execution Sheet for the configured supplementary lead provider)
 
 ---
 
-Here are the Research Extracts with THIN or MISSING coverage verdicts, confirmed by the operator as warranting supplementary research. Your job is to produce a Perplexity Query Brief — a set of self-contained search queries that resolve the identified gaps.
+Here are the Research Extracts with THIN or MISSING coverage verdicts, confirmed by the operator as warranting supplementary research. Your job is to produce a Query Brief for the configured supplementary lead provider — a set of self-contained search queries that can surface candidate sources for the configured evidence executor to reopen and verify.
 
 **Step 1: Triage and group**
 
@@ -21,10 +21,10 @@ For each group, work through this analysis (this becomes Section A of the output
 - State which components (Question ID + component name) the group covers and the coverage verdict (THIN or MISSING) from the Research Extract.
 - Review the existing claims in the Research Extracts for these components. List the source types already represented (e.g., "US-focused academic surveys, practitioner training sites, industry reports from Bain/McKinsey").
 - Identify source types that are plausible for this topic but absent from existing evidence. These become the targeting basis.
-- Draft 3–5 Perplexity queries ranked by expected yield. Each query must be:
-  - Self-contained (Perplexity has no cross-query memory and no knowledge of prior research)
+- Draft 3–5 lead-provider queries ranked by expected yield. Each query must be:
+  - Self-contained (the provider must not need cross-query memory or knowledge of prior research)
   - Non-overlapping with other queries in the group
-  - Written as the literal text to paste into Perplexity — include source targeting directly in the query wording (e.g., "Focus on Nordic PE association reports and European mid-market advisory publications")
+  - Written as the literal text to paste into the configured provider — include source targeting directly in the query wording (e.g., "Focus on Nordic PE association reports and European mid-market advisory publications")
 - Per query, note: success signal (what a good result looks like), and which components it could satisfy.
 
 **Step 3: Budget check**
@@ -64,12 +64,12 @@ Group: [Group name]
 
 ```
 Query 1:
-[Literal text to paste into Perplexity]
+[Literal text to paste into the configured supplementary lead provider]
 ```
 
 ```
 Query 2:
-[Literal text to paste into Perplexity]
+[Literal text to paste into the configured supplementary lead provider]
 ```
 
 ```
@@ -78,7 +78,7 @@ Group: [Next group name]
 
 ```
 Query 3:
-[Literal text to paste into Perplexity]
+[Literal text to paste into the configured supplementary lead provider]
 ```
 
 ...and so on through all queries.
@@ -98,7 +98,10 @@ The operator works from Section B during execution. Section A is reference mater
 
 - Research Extracts for all affected questions (paste below — needed to identify existing source types and avoid duplicate sourcing)
 - Answer Specs for all affected questions (paste below — needed to understand what a complete answer requires)
+- Configured supplementary lead provider (paste below — needed only to format executable queries; its output remains leads, not evidence)
 
 [paste Research Extracts]
 
 [paste Answer Specs]
+
+[paste configured supplementary lead provider]

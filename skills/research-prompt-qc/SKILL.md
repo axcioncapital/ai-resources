@@ -1,8 +1,8 @@
 ---
 name: research-prompt-qc
 description: >
-  Automated quality check on Research Execution Prompts before operator
-  uses them in Research GPT. Verifies coverage, session integrity, prompt
+  Automated quality check on Research Execution Prompts before the operator
+  uses them in the assigned evidence executor. Verifies coverage, session integrity, prompt
   quality, dependency correctness, and format compliance. Run immediately after
   research-prompt-creator (Step 2.1) completes. Produces per-session
   verdicts (PASS / FLAG) and a batch verdict. Do NOT use for prompt creation
@@ -14,7 +14,7 @@ effort: medium
 
 # Research Prompt QC
 
-Automated gate between prompt creation (Step 2.1) and prompt execution (Step 2.2). Catches prompt defects before the operator pastes them into Research GPT — where errors are expensive (each session costs time and cannot be partially re-run).
+Automated gate between prompt creation (Step 2.1) and prompt execution (Step 2.2). Catches prompt defects before the operator runs them in the assigned evidence executor, where errors are expensive because a session cannot be partially re-run.
 
 **Position:** Step 2.1b — immediately after `research-prompt-creator`, before operator executes sessions.
 

@@ -192,7 +192,7 @@ Session [X] results will define the scope for this question. If Session [X] hasn
 
 ## Site Restriction Guidance
 
-Research GPT supports site-level restrictions (restrict to specific sites, or prioritize specific sites while allowing broader search).
+When the assigned evidence executor supports site-level restrictions, use them to restrict or prioritize specific domains. If that capability is not established, express the domain list inside the prompt and flag the platform setting for operator review rather than assuming it exists.
 
 ### When to Restrict
 

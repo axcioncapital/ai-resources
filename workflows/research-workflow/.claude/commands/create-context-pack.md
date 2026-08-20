@@ -3,13 +3,13 @@ model: sonnet
 ---
 Build a research context pack. The section identifier follows this prompt (e.g., "1.1").
 
-**Standalone command — external consumer.** This command's output (`/execution/context-packs/{section}-context-pack.md`) is consumed externally by Research Execution GPT (CustomGPT) or Perplexity research sessions — not by an in-pipeline Claude Code command. The operator manually loads or pastes the context pack into the external research session. There is no internal `/intake-context-pack` or downstream pipeline command that reads this output.
+**Standalone command — external consumer.** This command's output (`/execution/context-packs/{section}-context-pack.md`) is consumed by the evidence executor assigned in the approved Execution Manifest — not by an in-pipeline Claude Code command. The operator supplies the pack through that executor's lossless handoff path. There is no internal `/intake-context-pack` or downstream pipeline command that reads this output.
 
 ## Instructions
 
 1. Read `/ai-resources/skills/context-pack-builder/SKILL.md` and follow its principles.
 2. Read the approved Task Plan for the specified section from `/preparation/`.
-3. Build a context pack for GPT-5 research execution using the Task Plan as source material.
+3. Build an executor-neutral context pack using the Task Plan as source material.
 4. Write output to `/execution/context-packs/{section}-context-pack.md`. Create the folder if it doesn't exist.
 5. Filename must follow the project naming convention: section number first (e.g., `1.1-context-pack.md`).
 
@@ -27,8 +27,8 @@ Do not duplicate or anticipate Answer Spec content in the context pack.
 ## Required Sections
 
 1. **Purpose statement** — what this pack is (and isn't)
-2. **Project background** — enough for GPT to orient its searches
-3. **Key terminology** — short definitions of domain-specific terms that GPT needs to interpret correctly (e.g., "boutique PE fund", "Nordic PE", "mid-market"). Extract from the Task Plan and Research Plan. Define only terms where the project uses a specific or narrower meaning than the general usage.
+2. **Project background** — enough for the assigned evidence executor to orient its searches
+3. **Key terminology** — short definitions of domain-specific terms that the evidence executor needs to interpret correctly (e.g., terms the project uses more narrowly than general usage). Extract from the Task Plan and Research Plan. Define only terms where the project uses a specific or narrower meaning than the general usage.
 4. **Content map** — the parts/chapters structure so GPT understands where each batch sits
 5. **Scope boundaries** — what's in and out of scope at the project level
 

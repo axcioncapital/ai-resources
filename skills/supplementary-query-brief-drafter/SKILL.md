@@ -1,7 +1,7 @@
 ---
 name: supplementary-query-brief-drafter
 description: >
-  Drafts Perplexity query briefs for supplementary research on THIN or MISSING
+  Drafts query briefs for the configured supplementary lead provider on THIN or MISSING
   extract components. Analyzes existing evidence, identifies absent source types,
   and produces grouped, paste-ready queries (max 12) with success signals,
   minimum yield thresholds, and contingency flags for overlapping queries.
@@ -11,11 +11,11 @@ description: >
   Step 2.S1 in Stage 2 Subworkflow 2.S. Use when Research Extracts have approved
   but show THIN or MISSING coverage verdicts that the operator has confirmed
   warrant supplementary research. Triggered by "/run-supplementary" or operator
-  requests like "draft supplementary queries," "prepare Perplexity queries for
+  requests like "draft supplementary queries," "prepare lead-provider queries for
   thin components," "run step 2.S1," or similar.
 
   Do NOT use for initial research execution (that's Stage 2 Steps 2.0–2.2 via
-  Research Execution GPT). Do NOT use for extract creation or verification
+  the configured evidence executor). Do NOT use for extract creation or verification
   (Steps 2.3–2.4). Do NOT use for Stage 3 gap resolution (Subworkflow 3.S).
 model: opus
 effort: high
@@ -23,26 +23,28 @@ effort: high
 
 # Supplementary Query Brief Drafter
 
-Draft targeted Perplexity search queries to resolve THIN or MISSING coverage in approved Research Extracts. Produces a two-section output: Section A (analysis and reasoning) and Section B (paste-ready execution sheet).
+Draft targeted searches for the configured supplementary lead provider to resolve THIN or MISSING coverage in approved Research Extracts. Produces a two-section output: Section A (analysis and reasoning) and Section B (paste-ready execution sheet). Provider output remains leads; the configured evidence executor reopens and logs underlying sources in Step 2.S2 before QC.
 
-**Workflow position:** Step 2.S1 in Subworkflow 2.S. Receives failed component list from Step 2.S0. Output feeds operator execution in Perplexity at Step 2.S2.
+**Workflow position:** Step 2.S1 in Subworkflow 2.S. Receives the configured supplementary lead provider and failed component list from Step 2.S0. Output feeds operator execution and evidence-executor verification at Step 2.S2.
 
 ## Calibration
 
-Not every THIN verdict requires supplementary research — some reflect genuine evidence scarcity that no amount of Perplexity queries will resolve. Focus queries on components where plausible but untapped source types exist. If a component's gap is structural (the data simply isn't published), say so in the analysis rather than drafting low-yield queries. Each query's minimum yield threshold should reflect this judgment — set realistic thresholds based on what evidence plausibly exists, not what would be ideal.
+Not every THIN verdict requires supplementary research — some reflect genuine evidence scarcity that no lead-provider query will resolve. Focus queries on components where plausible but untapped source types exist. If a component's gap is structural, say so instead of drafting low-yield queries.
 
 ## Input
 
-Three items, provided together:
+Four items, provided together:
 
-1. **Failed Component Extraction** — structured list from Step 2.S0 (components with THIN or MISSING verdicts, grouped by Question ID)
-2. **Research Extracts** — for all affected questions (needed to identify existing source types and avoid duplicate sourcing)
-3. **Answer Specs** — for all affected questions (needed to understand what a complete answer requires)
+1. **Supplementary lead provider** — the resolved Project Config value; `none` halts this skill
+2. **Failed Component Extraction** — structured list from Step 2.S0 (components with THIN or MISSING verdicts, grouped by Question ID)
+3. **Research Extracts** — for all affected questions (needed to identify existing source types and avoid duplicate sourcing)
+4. **Answer Specs** — for all affected questions (needed to understand what a complete answer requires)
 
 ### Input Validation
 
 Before proceeding:
-- If fewer than three input items are provided, state which are missing and request them
+- If fewer than four input items are provided, state which are missing and request them
+- If the provider is `none`, halt; do not invent a supplementary lane
 - Verify component IDs in the failed extraction match components in the Answer Specs
 - If mismatched: state the mismatch, request correction, do not proceed
 
@@ -66,15 +68,15 @@ For each group, work through this analysis (this becomes Section A of the output
 
 **Pass 1 breadth principle:** Start with queries targeting high-yield, well-documented source types — these validate whether evidence exists before narrowing to harder-to-reach angles. Save narrow, institution-specific queries for Pass 2, where they are guided by Pass 1's failure patterns. Apply this broad-before-narrow ordering when ranking queries below.
 
-- Draft 3–5 Perplexity queries ranked by expected yield. Each query must be:
-  - **Single-intent** — one clear question per query. If you find yourself using "and" or "additionally" to connect distinct questions, split them. A query like "What frameworks exist for X, and what academic research supports Y?" is two queries. Perplexity latches onto the easiest sub-question and gives shallow coverage on the rest.
-  - Self-contained (Perplexity has no cross-query memory and no knowledge of prior research)
+- Draft 3–5 lead-provider queries ranked by expected yield. Each query must be:
+  - **Single-intent** — one clear question per query. If you find yourself using "and" or "additionally" to connect distinct questions, split them. A query like "What frameworks exist for X, and what academic research supports Y?" is two queries. Lead providers tend to answer the easiest sub-question and leave the rest shallow.
+  - Self-contained (treat provider queries as stateless and without prior-research context)
   - Non-overlapping with other queries in the group. After drafting, check for **source overlap** across groups: if two queries target the same institutions, databases, or publication types, flag the second as **contingent** — execute only if the first doesn't return that source type. Mark contingent queries in both Section A and Section B.
   - **Excludes already-searched angles.** Each query must not re-target source types, institutions, or search angles listed in the Already Searched inventory unless the query explicitly uses a different entry point (e.g., searching for a specific report by name rather than by topic, or targeting a secondary publication that cites the primary source). If a query's success depends on a source type that was already searched and returned nothing, either reframe it to target a genuinely different source type or flag it as low-probability with a note explaining why this angle might work despite prior failure.
-  - Written as the literal text to paste into Perplexity — include source targeting directly in the query wording
-  - **Context prefix must match the target source universe.** If the group targets practitioner content (blogs, podcasts, LinkedIn commentary, conference talks), frame the query accordingly — do not default to "professional advisory report" framing, which biases Perplexity toward formal publications. Match the register to what you're looking for: informal framing for informal sources, academic framing for academic sources.
-  - **Include native-language terminology** when the target sources are in a non-English language. Include key domain terms as they appear in those sources — even if the workflow is conducted in English. Use the pattern: `local term (English translation)`. Without native terminology, Perplexity searches in the wrong semantic space and returns English-language international results instead of local-language primary sources where the data lives.
-  - **Name primary sources explicitly** when you know the authoritative source for a data point (regulator website, provider domain, official database). Include the domain or institution name in the query text — e.g., `site:energiavirasto.fi` or naming the specific publication. Without explicit source routing, Perplexity defaults to aggregators and news articles that outrank primary sources due to higher indexing.
+  - Written as the literal text to submit to the configured provider — include source targeting directly in the query wording
+  - **Context prefix must match the target source universe.** If the group targets practitioner content (blogs, podcasts, LinkedIn commentary, conference talks), frame the query accordingly — do not default to "professional advisory report" framing, which biases retrieval toward formal publications. Match the register to what you're looking for: informal framing for informal sources, academic framing for academic sources.
+  - **Include native-language terminology** when the target sources are in a non-English language. Include key domain terms as they appear in those sources — even if the workflow is conducted in English. Use the pattern: `local term (English translation)`. Without native terminology, the provider searches in the wrong semantic space and returns English-language international results instead of local-language primary sources where the data lives.
+  - **Name primary sources explicitly** when you know the authoritative source for a data point (regulator website, provider domain, official database). Include the domain or institution name in the query text — e.g., `site:energiavirasto.fi` or naming the specific publication. Without explicit source routing, lead providers default to aggregators and news articles that outrank primary sources due to higher indexing.
 - Per query, note:
   - **Success signal** — what a good result looks like (source type, specificity, geographic relevance)
   - **Minimum yield threshold** — the minimum evidence that would move the component's verdict. Be concrete: "At least 2 independent sources with quantitative data" or "One practitioner account with specific deal examples." If a query returns results below this threshold, the component remains at its current verdict — the operator should not re-run the same angle.
@@ -120,17 +122,17 @@ Group: [Group name]
 
 ```
 Query 1 [recency: month]:
-[Literal text to paste into Perplexity]
+[Literal text to submit to the configured provider]
 ```
 
 ```
 Query 2 [recency: week]:
-[Literal text to paste into Perplexity]
+[Literal text to submit to the configured provider]
 ```
 
 ```
 Query 3 [CONTINGENT — skip if Query 1 returns [source type]] [recency: month]:
-[Literal text to paste into Perplexity]
+[Literal text to submit to the configured provider]
 ```
 
 ```
@@ -139,7 +141,7 @@ Group: [Next group name]
 
 ```
 Query 4:
-[Literal text to paste into Perplexity]
+[Literal text to submit to the configured provider]
 ```
 
 ...and so on through all queries.
@@ -160,7 +162,7 @@ The operator works from Section B during execution. Section A is reference mater
 Use this variant when pass 1 didn't close remaining gaps. Requires additional inputs:
 
 4. **Pass 1 Query Brief** — needed to diagnose what was already tried
-5. **Pass 1 raw Perplexity output** — needed to assess what was returned
+5. **Pass 1 raw lead-provider output** — needed to assess what was returned
 6. **Updated Research Extracts** — post-pass 1 merge, with current coverage verdicts
 
 ### Step 1: Diagnose Pass 1
@@ -181,15 +183,15 @@ Components classified as **confirmed scarcity** exit here. List them under **ROU
 For remaining groups (this becomes Section A of the output):
 
 - Maintain or re-group based on shared source universe (groups may have changed if some components closed in pass 1).
-- **Update the Already Searched inventory** to include pass 1 queries and their outcomes — both sources found and sources that returned nothing useful. The pass 1 Query Brief and raw Perplexity output are the inputs for this update. The inventory now covers: (a) sources from original Research Execution GPT sessions, (b) sources from pass 1 supplementary queries (both found and empty), (c) structural scarcity notes. Include this updated inventory in Section A under **"Already Searched (found + empty)"** for each group.
+- **Update the Already Searched inventory** to include pass 1 queries and their outcomes — both sources found and sources that returned nothing useful. The pass 1 Query Brief and raw lead-provider output are the inputs for this update. The inventory now covers: (a) sources from original evidence-executor sessions, (b) sources from pass 1 supplementary queries (both found and empty), (c) structural scarcity notes. Include this updated inventory in Section A under **"Already Searched (found + empty)"** for each group.
 - Review existing source types now in evidence (original Deep Research sources + pass 1 supplementary sources). Identify source types that are plausible for this topic but absent from both evidence AND the updated Already Searched inventory. These become the targeting basis. Do not re-target source types that pass 1 already tried and that returned nothing, unless you can articulate a specific reason why a different query angle would reach different results.
-- Draft 3–5 Perplexity queries per group ranked by expected yield. Each query must be:
+- Draft 3–5 lead-provider queries per group ranked by expected yield. Each query must be:
   - **Single-intent** — one clear question per query. Do not bundle sub-questions. This is even more important in pass 2 where precision matters — broad queries already failed in pass 1.
   - **Narrow and targeted (breadth rule):** Pass 1 established coverage at broad source types. Pass 2 queries should target the specific source types and angles Pass 1 didn't reach. Avoid re-running broad sweeps — if a source type yielded nothing in Pass 1, repeating it in Pass 2 wastes the final pass.
-  - Self-contained (Perplexity has no cross-query memory and no knowledge of prior research)
+  - Self-contained (treat provider queries as stateless and without prior-research context)
   - Non-overlapping with other queries in this brief AND with pass 1 queries. Check for **source overlap** across groups and with pass 1 queries — if two queries target the same institutions or publication types, flag the second as **contingent**.
   - Using a **different search strategy** than pass 1 — different source types, terminology, framing, or angle
-  - Written as the literal text to paste into Perplexity — include source targeting directly in the query wording
+  - Written as the literal text to submit to the configured provider — include source targeting directly in the query wording
   - **Context prefix must match the target source universe.** Do not reuse the same framing as pass 1 if pass 1's framing biased results toward the wrong source types.
   - **Include native-language terminology** when the target sources are in a non-English language (same rule as pass 1). If pass 1 used only English terms and returned thin results, this is a prime candidate for the "different strategy" requirement.
   - **Name primary sources explicitly** when you know the authoritative source (same rule as pass 1). In pass 2, check whether pass 1 results cited primary sources that weren't directly targeted — if so, name those domains in pass 2 queries.

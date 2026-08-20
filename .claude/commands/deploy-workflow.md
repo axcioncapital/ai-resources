@@ -321,7 +321,7 @@ Ensure `{PROJECT_DIR}/.claude/settings.local.json` is gitignored (Claude Code co
 
 **The deploy-time placeholder set is DECLARED, not discovered.** The registry in 5b is the authority. A regex scan is used only as a drift cross-check (5d) — never to decide what gets filled.
 
-**Why (verified by execution, 2026-07-13 — mission `research-workflow-deploy-fitness` thread 2).** The template holds **128** distinct `{{...}}` tokens, but only **30** are resolved at deployment. Of the rest, **94** live *only* inside the six `reference/*.template.md` files — deferred templates the operator instantiates later — and the remainder are notation inside documentation tables. The old scan-and-fill-everything approach was wrong in both directions at once: its `{{[A-Z_]*}}` pattern **missed 65** real placeholders (every digit-bearing one, including `{{CONFIDENTIAL_IDENTIFIER_1/2}}`), while **demanding values for template-internal tokens** it had no business touching — and then `sed`-rewriting the template files, destroying the shapes the operator needs later.
+**Why (baseline verified by execution, 2026-07-13 — mission `research-workflow-deploy-fitness` thread 2; executor fields added 2026-08-20).** The template holds **131** distinct `{{...}}` tokens, but only **33** are resolved at deployment. Of the rest, **94** live *only* inside the seven `reference/*.template.md` files — deferred templates the operator instantiates later — and the remainder are notation inside documentation tables. The old scan-and-fill-everything approach was wrong in both directions at once: its `{{[A-Z_]*}}` pattern **missed 65** real placeholders (every digit-bearing one, including `{{CONFIDENTIAL_IDENTIFIER_1/2}}`), while **demanding values for template-internal tokens** it had no business touching — and then `sed`-rewriting the template files, destroying the shapes the operator needs later.
 
 **Do NOT "fix" this by widening the regex.** A wider pattern finds the missing 65 *and* sweeps in the 94 template-internal ones. The regex is not the mechanism; the registry is.
 
@@ -331,13 +331,13 @@ FILL SCOPE = every `*.md` and `*.json` under `{PROJECT_DIR}/`, **excluding**:
 
 | Excluded | Why |
 |---|---|
-| `reference/*.template.md` (6 files) | Deferred templates. The operator instantiates these per-project later. **Must survive deployment byte-identical.** |
+| `reference/*.template.md` (7 files) | Deferred templates. The operator instantiates these per-project later. **Must survive deployment byte-identical.** |
 | `SETUP.md` | The operator checklist. It *documents* placeholders — its tables name them literally — so filling it would corrupt its own reference table. Removed at Step 10 regardless. |
 | `.claude/commands/produce-architecture.md` | **Only when the project does not use the parts-based document model** — see 5c. Its 4 placeholders are an unused optional component and must stay unfilled. |
 
 ### 5b. Deploy-time placeholder registry — the authority
 
-**Class A — required (26).** Every deployment resolves all of these.
+**Class A — required (29).** Every deployment resolves all of these.
 
 | Placeholder | Lives in | Purpose |
 |---|---|---|
@@ -363,6 +363,9 @@ FILL SCOPE = every `*.md` and `*.json` under `{PROJECT_DIR}/`, **excluding**:
 | `{{CURRENT_PERIOD}}` | CLAUDE.md § Project Config | Config field 11 |
 | `{{DELIVERY_VAULT}}` | CLAUDE.md § Project Config | Config field 12 (optional value, but must still be resolved — write `none` if unused) |
 | `{{DOCUMENT_MODEL}}` | CLAUDE.md § Project Config | Config field 13 — enum `report` \| `section`; **required, halt on missing** |
+| `{{EVIDENCE_EXECUTOR}}` | CLAUDE.md § Project Config | Config field 14 — required Stage-2 evidence executor; no product default |
+| `{{EVIDENCE_EXECUTOR_CAPABILITIES}}` | CLAUDE.md § Project Config | Config field 15 — verified capability tokens |
+| `{{SUPPLEMENTARY_LEAD_PROVIDER}}` | CLAUDE.md § Project Config | Config field 16 — lead provider or `none` |
 | `{{SECTION_SEQUENCE}}` | reference/stage-instructions.md | Section ordering constraints |
 | `{{CLUSTER_BLOCK_THRESHOLD}}` | reference/quality-standards.md | Cluster-level QC threshold |
 | `{{SECTION_BLOCK_THRESHOLD}}` | reference/quality-standards.md | Section-level QC threshold |
@@ -417,11 +420,11 @@ Then display the fill plan:
 
 ```
 Deploy-time placeholders to fill: N
-  Class A (required):     26
+  Class A (required):     29
   Class B (conditional):   4  [included | excluded — parts-based model not in use]
 Preserved untouched:
   Class C (notation):      3
-  Class D (template-internal, in 6 *.template.md files): 94
+  Class D (template-internal, in 7 *.template.md files): 94
 ```
 
 ## Step 6: Collect placeholder values [Operator]
@@ -432,6 +435,9 @@ Ask the user for values for the **Class A** set (plus **Class B** if 5c selected
 - `{{CONFIDENTIAL_IDENTIFIER_1/2}}` — if the project has no confidentiality constraints, the CLAUDE.md section itself says to replace the list with `No confidentiality constraints for this project.` Offer that as the default for both.
 - `{{DOCUMENT_MODEL}}` — enum `report` | `section`. **Halt if the user cannot supply it**; downstream Stage-5 dispatch reads it first.
 - `{{DELIVERY_VAULT}}` — optional in effect, but must still be *resolved*. Default `none`.
+- `{{EVIDENCE_EXECUTOR}}` — no default. Ask which approved product/tool will produce Stage-2 evidence of record; halt if unresolved.
+- `{{EVIDENCE_EXECUTOR_CAPABILITIES}}` — collect only capabilities already verified for that executor. Baseline tokens and conditional native-language semantics are defined in `workflows/research-workflow/docs/project-config-schema.md`.
+- `{{SUPPLEMENTARY_LEAD_PROVIDER}}` — optional in effect, but must still be resolved. Default `none`.
 
 Never prompt for Class C or Class D tokens.
 
@@ -510,7 +516,7 @@ Empty output = pass. Any hit = a value was collected but not applied; report the
 
 ### Step 7 preservation check — deferred templates must be byte-identical
 
-The six `reference/*.template.md` files are deferred templates the operator instantiates later. They must survive deployment **byte-for-byte**. This check fails the deployment if any of them changed or went missing.
+The seven `reference/*.template.md` files are deferred templates the operator instantiates later. They must survive deployment **byte-for-byte**. This check fails the deployment if any of them changed or went missing.
 
 **Two defects were repaired here (2026-07-27, Change 1). Do not reintroduce either.**
 
@@ -609,8 +615,8 @@ git commit -m "remove setup checklist (setup complete)"
 
 Run a quick validation:
 
-1. Confirm no **deploy-time** placeholder remains in fill scope — i.e. re-run the Step 7 verification (`REGISTRY_RE` over `$SCOPE_LIST`). **Do not assert that zero `{{...}}` tokens remain anywhere:** the six `reference/*.template.md` files legitimately retain 94 Class-D placeholders and `reference/quality-standards.md` retains 3 Class-C notation tokens. A correct deploy *must* leave those in place — asserting otherwise fails every clean deployment by ~97 counts and trains the operator to ignore the check.
-2. Confirm the six `reference/*.template.md` files are **byte-identical** to the source template. Re-run the Step 7 preservation check verbatim — the `find -print0` / `read -r -d ''` / `cmp -s` loop, with `TEMPLATE_PATH`, `PROJECT_DIR` and `PROJECT_NAME` re-established in this block. This is the deferred-template preservation guarantee. **Do not substitute `diff -r … --include="*.template.md"`:** `--include` is not a `diff` option, so that form never compared anything (repaired 2026-07-27, Change 1).
+1. Confirm no **deploy-time** placeholder remains in fill scope — i.e. re-run the Step 7 verification (`REGISTRY_RE` over `$SCOPE_LIST`). **Do not assert that zero `{{...}}` tokens remain anywhere:** the seven `reference/*.template.md` files legitimately retain 94 Class-D placeholders and `reference/quality-standards.md` retains 3 Class-C notation tokens. A correct deploy *must* leave those in place — asserting otherwise fails every clean deployment by ~97 counts and trains the operator to ignore the check.
+2. Confirm the seven `reference/*.template.md` files are **byte-identical** to the source template. Re-run the Step 7 preservation check verbatim — the `find -print0` / `read -r -d ''` / `cmp -s` loop, with `TEMPLATE_PATH`, `PROJECT_DIR` and `PROJECT_NAME` re-established in this block. This is the deferred-template preservation guarantee. **Do not substitute `diff -r … --include="*.template.md"`:** `--include` is not a `diff` option, so that form never compared anything (repaired 2026-07-27, Change 1).
 3. Confirm all symlinks in `reference/skills/` resolve (if the directory exists).
 4. Confirm `CLAUDE.md` exists and has at least one heading, **and that no `CLAUDE.md.template` remains** in the project — the Step 3a activation must have both renamed the file and left no inert copy behind.
 5. Confirm `.claude/settings.json` is valid JSON (if it exists).

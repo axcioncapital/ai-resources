@@ -1,10 +1,12 @@
 # Canonical Research Workflow Executor Routing — Investigation Report
 
 **Date:** 2026-08-18  
-**Status:** Deferred fix input — investigate now, change only after the currently planned canonical Research Workflow improvements are complete  
+**Status:** Canonical repair implemented and locally verified on branch `session/2026-08-19-rw-l4-integration` on 2026-08-20; overall acceptance remains open pending consumer deployment (criteria 11 and 13)
 **Primary target:** `ai-resources` canonical Research Workflow  
 **First known consumer exposing the defect:** `projects/axcion-sector-intelligence`  
-**Change authorization:** None. This report records the problem and bounds a later repair; it does not authorize implementation.
+**Change authorization:** Operator instruction on 2026-08-20: “Fix the research router.”
+
+> **Implementation update (2026-08-20).** The deferral condition cleared after the planned canonical improvements landed. The canonical repair now uses three existing Project Config fields as the single routing authority: `Evidence executor`, `Evidence executor capabilities`, and `Supplementary lead provider`. The manifest routes by execution role and capability, not a universal product default; supplementary leads cannot become evidence of record; missing capabilities stop visibly; and the operator approval gate remains. No autonomous dispatcher, API relay, queue, or second planning layer was added. The deterministic contract check is `workflows/research-workflow/tests/executor-routing/check-executor-routing-contract.test.sh`. Existing consumers still require deliberate reconciliation after this branch is integrated.
 
 ## Executive conclusion
 
@@ -313,6 +315,6 @@ Use a small table-driven test set rather than a new benchmark programme:
 
 ## Final disposition
 
-**DEFERRED, DOCUMENTED, AND BOUNDED.**
+**CANONICAL CORE IMPLEMENTED; OVERALL ACCEPTANCE NOT YET CLOSED.**
 
-Do not build an autonomous router. After the current canonical Research Workflow plan is complete, repair the canonical manifest-routing contract so projects can declare qualified execution roles and tools once, every Stage-2 surface agrees, supplementary discovery is distinguished from evidence execution, and incompatible or unavailable tools fail visibly.
+The canonical manifest-routing contract now lets a project declare its evidence executor, verified capabilities, and optional supplementary lead provider once. Stage 2 consumes that mapping, separates supplementary discovery from evidence execution, refuses stale manifests, fails visibly when the configured executor is ineligible, and preserves the operator approval gate. The remaining acceptance work is deployment rather than router design: run the full fresh-deployment proof and reconcile Sector Intelligence and other live consumers deliberately after this branch is integrated (criteria 11 and 13).

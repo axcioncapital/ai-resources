@@ -18,7 +18,7 @@
 
 ## Project Config
 
-> **Forward contract — Stage 5 commands are the first live consumers (as of canonical landing 2026-05-28).** The 13 fields below are the declarative project values that ~6 downstream consumers (Stage 5 commands, three Stage-2 skills, `country-parity-checker`, Bundle-2 reference docs) are *intended* to read at runtime. The Stage 5 commands (`produce-prose-draft`, `produce-formatting`, `produce-jargon-gloss`) are wired to read this block as part of the FX-B1 Path A landing — they parse `Document model:` (field #13) first for mode dispatch, then read the mode-relevant fields. Other consumers remain forward-contract until separately wired. When you read this section, assume only the wired consumers parse the block unless you've separately verified additional consumer parsers exist. Full schema documentation, per-consumer field-fan-out, single-source-of-truth rules, canonical parse format, default-value semantics for `Document model`, and migration-trigger conditions live at `docs/project-config-schema.md`.
+> **Forward contract — Stage 5 commands and Stage 2 executor routing are live consumers.** The 16 fields below are declarative project values. Stage 5 commands parse `Document model:` (field #13) first for mode dispatch. Stage 2's `run-execution` command and `execution-manifest-creator` consume fields #14–16 as the one authority for executor routing. Full schema documentation, per-consumer field fan-out, canonical parse format, failure semantics, and migration triggers live at `docs/project-config-schema.md`.
 
 ```markdown
 **Report set:** [{{REPORT_SET}}]  # parameterizes Stage 5 commands; report-count derived from list length
@@ -34,6 +34,9 @@
 **Current period:** "{{CURRENT_PERIOD}}"  # parameterizes freshness classes (CURRENT, RECENT, BASELINE)
 **Delivery vault:** "{{DELIVERY_VAULT}}"  # optional; consumed by produce-knowledge-file; default no-op
 **Document model:** "{{DOCUMENT_MODEL}}"  # enum: "report" | "section"; required (halt on missing); discriminates Stage 5 dispatch
+**Evidence executor:** "{{EVIDENCE_EXECUTOR}}"  # required for Stage 2; product/tool approved to produce evidence of record
+**Evidence executor capabilities:** [{{EVIDENCE_EXECUTOR_CAPABILITIES}}]  # declared eligibility controls; see docs/project-config-schema.md
+**Supplementary lead provider:** "{{SUPPLEMENTARY_LEAD_PROVIDER}}"  # optional; use "none" when no lead provider is approved
 ```
 
 For full field documentation (types, examples, canonical parse format, consumer fan-out, GR-2 migration triggers), read `docs/project-config-schema.md`.
@@ -78,9 +81,9 @@ research-plan-creator → answer-spec-generator → [external: GPT-5 execution]
 
 ## Cross-Model Rules
 
-- Research Execution GPT produces evidence (Stage 2) — Claude does not substitute its own research
-- Research Execution GPT verifies Claude's prose for fact-checking (Stage 4) — Claude does not fact-check its own writing
-- Perplexity handles factual retrieval and gap-filling — Claude routes queries, does not guess answers
+- The configured `Evidence executor` produces Stage 2 evidence of record; no other tool silently substitutes for it.
+- A configured `Supplementary lead provider` may surface candidate URLs or freshness leads only. The evidence executor must open the underlying source before it becomes evidence of record.
+- Independent Stage 4 fact verification remains separate from evidence gathering; Claude does not fact-check its own writing.
 
 ## Autonomy Rules
 

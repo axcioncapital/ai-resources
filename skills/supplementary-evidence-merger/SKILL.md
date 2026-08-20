@@ -1,7 +1,7 @@
 ---
 name: supplementary-evidence-merger
 description: >
-  Merges QC-approved supplementary Perplexity research results into existing
+  Merges QC-approved, evidence-executor-verified supplementary results into existing
   Research Extracts. Adds new claims with [SUPPLEMENTARY] tags, recalculates
   coverage verdicts, updates component syntheses, and maintains gap/conflict
   sections. Produces updated extracts that replace originals.
@@ -34,7 +34,7 @@ Do not overstate what supplementary evidence adds. If it moved a component from 
 Three items, provided together:
 
 1. **Research Extracts** — current versions for all affected questions
-2. **QC-approved supplementary results** — the MERGE items from Step 2.S3 verdicts, with specific claims identified for merging
+2. **QC-approved executor-verified supplementary results** — the MERGE items from Step 2.S3 verdicts, with specific claims identified for merging and a source-access log from the configured evidence executor. Raw lead-provider output is ineligible.
 3. **Answer Specs** — for the affected questions (needed for coverage verdict recalculation)
 
 ### Input Validation
@@ -42,6 +42,7 @@ Three items, provided together:
 Before proceeding:
 - If fewer than three input items are provided, state which are missing and request them
 - Verify MERGE items reference valid query numbers from the QC report
+- Verify every MERGE/PARTIAL claim has an evidence-executor source-access entry; refuse provider-only citations
 - For PARTIAL items, verify the specific claims approved for merging are identified
 - If mismatched: state the mismatch, request correction, do not proceed
 
@@ -63,9 +64,9 @@ For each MERGE item from the QC results:
 - Create new claims under the appropriate Answer Spec component in the Research Extract.
 - Assign Claim IDs that continue the existing sequence for that question (e.g., if the last existing claim is Q3-C08, new supplementary claims start at Q3-C09).
 - For each new claim:
-  - Write the claim statement in your own words (do not copy verbatim from Perplexity output)
-  - **Sources:** carry over source name(s) and URL(s) from the Perplexity results
-  - **Source locator:** "Supplementary research, Pass [1/2], Query [#]"
+  - Write the claim statement in your own words (do not copy verbatim from the executor report)
+  - **Sources:** carry over source names and URLs from the executor-verified report only
+  - **Source locator:** "Supplementary research, Pass [1/2], Query [#], evidence-executor audit [entry]"
   - **Strength:** assign H/M/L per the standard rubric
   - **Independence:** count independent sources, including assessment of independence from sources already in the extract
   - **Notes:** include `[SUPPLEMENTARY]` tag. Add linkage type and caveats as normal.

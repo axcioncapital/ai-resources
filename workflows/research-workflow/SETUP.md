@@ -151,7 +151,7 @@ Open `reference/sops/fact-verification-prompt.md` and fill the `{{FACT_VERIFICAT
 
 ## 8c. Optional: Customize SOPs
 
-Review and adjust `reference/sops/` if the project uses different API configurations or system prompts for Research Execution GPT or Perplexity.
+Review and adjust `reference/sops/` for the products declared in Project Config as the evidence executor and supplementary lead provider. Product-specific SOPs do not override the role and capability contract.
 
 ## 9. Write initial task plan draft
 
@@ -192,10 +192,10 @@ If either fails, check:
 > **both** — `/deploy-workflow` Step 5d cross-checks the template against the registry and will
 > **stop the deploy** on an unregistered placeholder rather than silently skip it.
 >
-> The template contains **128** distinct `{{...}}` tokens. Only the **30** below are resolved at
+> The template contains **131** distinct `{{...}}` tokens. Only the **33** below are resolved at
 > deployment. The other 98 are deliberately preserved — see *What is NOT filled at deploy time*.
 
-### Class A — required at deployment (26)
+### Class A — required at deployment (29)
 
 | Placeholder | Files | Purpose |
 |------------|-------|---------|
@@ -221,6 +221,9 @@ If either fails, check:
 | `{{CURRENT_PERIOD}}` | CLAUDE.md § Project Config | Config 11 — parameterizes freshness classes |
 | `{{DELIVERY_VAULT}}` | CLAUDE.md § Project Config | Config 12 — optional in effect, but **must still be resolved**; write `none` if unused |
 | `{{DOCUMENT_MODEL}}` | CLAUDE.md § Project Config | Config 13 — enum `report` \| `section`. **Required; halt on missing** — Stage-5 dispatch reads it first |
+| `{{EVIDENCE_EXECUTOR}}` | CLAUDE.md § Project Config | Config 14 — required Stage-2 evidence-of-record executor; no canonical product default |
+| `{{EVIDENCE_EXECUTOR_CAPABILITIES}}` | CLAUDE.md § Project Config | Config 15 — comma-separated verified capability tokens; see `docs/project-config-schema.md` |
+| `{{SUPPLEMENTARY_LEAD_PROVIDER}}` | CLAUDE.md § Project Config | Config 16 — optional lead provider; write `none` if unused |
 | `{{SECTION_SEQUENCE}}` | reference/stage-instructions.md | Section ordering constraints |
 | `{{CLUSTER_BLOCK_THRESHOLD}}` | reference/quality-standards.md | Cluster-level QC block threshold |
 | `{{SECTION_BLOCK_THRESHOLD}}` | reference/quality-standards.md | Section-level QC block threshold |
@@ -246,6 +249,6 @@ Fill **only** if this project uses the parts-based document model (`/produce-arc
 ### What is NOT filled at deploy time (98 tokens — preserved by design)
 
 - **Class C — notation (3).** `{{Country_1}}`, `{{Country_2}}`, `{{Country_N}}` in `reference/quality-standards.md` are column headers in an *example* Country Coverage Table. They illustrate a format; they are not values. Never fill, never prompt.
-- **Class D — template-internal (94).** Every `{{...}}` inside the six `reference/*.template.md` files. Those templates are **deferred** — you instantiate each one per-project *after* deployment, and the deploy leaves them **byte-identical**. `/deploy-workflow` Step 11 verifies this with a `diff`.
+- **Class D — template-internal (94).** Every `{{...}}` inside the seven `reference/*.template.md` files. Those templates are **deferred** — you instantiate each one per-project *after* deployment, and the deploy leaves them **byte-identical**. `/deploy-workflow` Step 11 verifies this with a `diff`.
 
 A deployed project therefore still contains ~97 `{{...}}` tokens, and that is **correct**. Do not "clean them up" with a blanket find-and-replace — you would destroy the deferred templates.

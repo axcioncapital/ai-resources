@@ -4,7 +4,7 @@ model: sonnet
 ---
 Execute the Stage 2 research pipeline for the current section (Pass 1 — Source Discovery + Pass 2 — Evidence Extraction).
 
-Research execution happens in the Research Execution GPT (primary) and Perplexity (secondary), both operated manually by the operator. This command handles manifest creation (Step 2.0), source-class mapping (Step 2.0b — invocable when project provides `reference/source-class-hierarchy.md`), prompt creation (Step 2.1), extract creation (Step 2.3), transaction-table build (Step 2.3b — conditionally invocable when the project has named-transaction content in scope), and extract verification (Step 2.4). Step 2.2 (research execution itself) is manual.
+Research execution happens in the project-configured evidence executor. An optional supplementary lead provider may surface candidate URLs but never produces evidence of record. Both remain operator-run; this command does not dispatch external tools. It handles manifest creation (Step 2.0), source-class mapping (Step 2.0b — invocable when the project provides `reference/source-class-hierarchy.md`), prompt creation (Step 2.1), extract creation (Step 2.3), transaction-table build (Step 2.3b — conditionally invocable when the project has named-transaction content in scope), and extract verification (Step 2.4). Step 2.2 (research execution itself) is manual.
 
 **Four-pass model anchor.** This command produces facts-only extracts. No synthesis or claim-permission verdicts in Stages 2; those happen in Pass 3 (`/run-cluster` + `/run-sufficiency`) and Pass 4 (`/run-analysis` + `/run-synthesis`). See `reference/stage-instructions.md` § Stage 2 + § Stage 3 for the principle and pass sequence.
 
@@ -22,29 +22,31 @@ Skill loading: For each skill step below, read the skill file from the ai-resour
 
 ### Step 2.0: Create Execution Manifest [delegate]
 
-1. Read the Research Plan from `/preparation/research-plans/`.
-2. Read all approved Answer Specs from `/preparation/answer-specs/{section}/`.
-3. Read the `execution-manifest-creator` skill (`/ai-resources/skills/execution-manifest-creator/SKILL.md`).
-4. Launch a general-purpose sub-agent. Pass it: the skill content, the Research Plan content, and all Answer Spec content. Task: execute the skill logic to route each question to an execution tool (Research Execution GPT or Perplexity), design session groupings, and plan execution waves. Write output to `/execution/manifest/{section}/{section}-execution-manifest.md`.
-   Return: routing table (question ID → tool → rationale), session groupings, execution wave plan.
-5. Write checkpoint to `/execution/checkpoints/{section}/{section}-step-2.0-checkpoint.md`. Include: routing decisions, session count, wave plan.
-6. ▸ /compact — skill content no longer needed; checkpoint carries forward.
-7. PAUSE — Present the routing table and budget summary to the operator for approval. He may override individual routing decisions before proceeding.
+1. Read the `## Project Config` executor-routing fields from `CLAUDE.md`: `Evidence executor`, `Evidence executor capabilities`, and `Supplementary lead provider`. Preserve the values verbatim. Halt if either required field is missing, blank, malformed, or still a placeholder; halt if the supplementary field is unresolved rather than a product name or `none`.
+2. Read the Research Plan from `/preparation/research-plans/`.
+3. Read all approved Answer Specs from `/preparation/answer-specs/{section}/`.
+4. Read the `execution-manifest-creator` skill (`/ai-resources/skills/execution-manifest-creator/SKILL.md`).
+5. Launch a general-purpose sub-agent. Pass it: the skill content, the three Project Config executor-routing values, the Research Plan content, and all Answer Spec content. Task: execute the skill logic to classify execution role and search mode, test the configured evidence executor against required capabilities, keep supplementary leads separate, design session groupings, and plan execution waves. Write output to `/execution/manifest/{section}/{section}-execution-manifest.md`.
+   Return: routing table (question ID → role → executor → supplementary leads → rationale), capability verdicts, session groupings, execution wave plan.
+6. If the skill returns `No qualifying evidence executor`, halt before writing an executable checkpoint or prompts. Present the failed capabilities and affected questions to the operator; do not substitute another tool.
+7. Write checkpoint to `/execution/checkpoints/{section}/{section}-step-2.0-checkpoint.md`. Include: the three executor-routing values, routing decisions, capability verdicts, session count, and wave plan.
+8. ▸ /compact — skill content no longer needed; checkpoint carries forward.
+9. PAUSE — Present the routing table and budget summary to the operator for approval. He may override question roles or supplementary-pass decisions. An executor or capability change requires an explicit operator decision applied to Project Config before the manifest is regenerated; the manifest does not become a second authority.
 
 ---
 
 ### Step 2.1: Create Execution Prompts [delegate]
 
-1. Read the approved Execution Manifest from `/execution/manifest/{section}/{section}-execution-manifest.md`.
+1. Read the approved Execution Manifest from `/execution/manifest/{section}/{section}-execution-manifest.md`. Re-read `Evidence executor`, `Evidence executor capabilities`, and `Supplementary lead provider` from the current `CLAUDE.md` Project Config and compare them verbatim with the manifest's `## Executor Contract`. If any value differs or the block is missing, halt with `STALE MANIFEST — regenerate Step 2.0`; do not create prompts from an obsolete mapping.
 2. Read the Research Plan from `/preparation/research-plans/`.
 3. Resolve all approved Answer Specs from `/preparation/answer-specs/{section}/` to project-root-relative paths only — verify the section's approved spec set is present and non-empty, and do not read their contents into the main session.
 4. Verify the project reference docs the skill consumes: `reference/source-class-hierarchy.md` (required — `research-prompt-creator` halts if absent per its Input Requirements #4) and `reference/quality-standards.md` (Evidence-First preamble source, Country Coverage Table, No-Source-Substitution Rule, Research Stop Conditions) are present, then carry their paths only into step 6 — never load them into this session; the sub-agent reads each itself at runtime.
 5. Read the `research-prompt-creator` skill (`/ai-resources/skills/research-prompt-creator/SKILL.md`).
-6. Launch a general-purpose sub-agent. Pass it: the skill content, the Research Plan content, the approved Answer Specs as the project-root-relative paths resolved in step 3 — which the sub-agent reads itself, every approved spec for the section in full and component by component, before applying the skill — the Execution Manifest content, and the two project reference docs by PATH (sub-agent reads each directly): `reference/source-class-hierarchy.md` and `reference/quality-standards.md`. Task: execute the skill logic to create session prompts for all routed questions, following the manifest's session groupings. Research Execution GPT sessions: target 2 questions per session (1 or 3 acceptable with justification), no hard session cap. Each prompt must include an inline context pack (compact summary of the Research Plan — project background, section objective, scope boundaries — NOT individual question listings). Write output to `/execution/research-prompts/{section}/` as individual files:
-   - `session-plan.md` — How to Use, Session Plan table (including tool assignment per session), Dependency Map, Recommended Execution Order, Post-Execution Notes.
-   - One `session-{letter}.md` per session — each self-contained with: session title, questions covered, **execution tool** (Research Execution GPT or Perplexity), Settings (site restrictions, recency), Execution Prompt (code-fenced), and Steering Notes.
-   Return: the session plan table (session letters, question assignments, tool assignment, rationale).
-7. Write checkpoint to `/execution/checkpoints/{section}/{section}-step-2.1-checkpoint.md` from the sub-agent's returned summary. Include: session count by tool, question-to-session mapping, output folder path.
+6. Launch a general-purpose sub-agent. Pass it: the skill content, the Research Plan content, the approved Answer Specs as the project-root-relative paths resolved in step 3 — which the sub-agent reads itself, every approved spec for the section in full and component by component, before applying the skill — the approved Execution Manifest content, and the two project reference docs by PATH (sub-agent reads each directly): `reference/source-class-hierarchy.md` and `reference/quality-standards.md`. Task: execute the skill logic to create platform-neutral session prompts for the assigned evidence executor, following the manifest's session groupings and capability verdicts. Target 2 questions per session (1 or 3 acceptable with justification), with no hard session cap. Each prompt must include an inline context pack (compact summary of the Research Plan — project background, section objective, scope boundaries — NOT individual question listings). Write output to `/execution/research-prompts/{section}/` as individual files:
+   - `session-plan.md` — How to Use, Session Plan table (including assigned evidence executor and supplementary lead-pass status per session), Dependency Map, Recommended Execution Order, Post-Execution Notes.
+   - One `session-{letter}.md` per session — each self-contained with: session title, questions covered, assigned evidence executor, search mode, source boundaries, recency, Execution Prompt (code-fenced), and Steering Notes.
+   Return: the session plan table (session letters, question assignments, executor, lead-pass status, rationale).
+7. Write checkpoint to `/execution/checkpoints/{section}/{section}-step-2.1-checkpoint.md` from the sub-agent's returned summary. Include: session count by executor, question-to-session mapping, output folder path.
 8. ▸ /compact — skill content and raw inputs no longer needed; checkpoint carries forward.
 
 ### Step 2.1b: QC Execution Prompts [delegate-qc]
@@ -59,13 +61,13 @@ Skill loading: For each skill step below, read the skill file from the ai-resour
 8. If REVISE with only Moderate findings: apply fixes to the prompt files, re-run QC (one retry). If second pass APPROVED, proceed. If still FLAG, pause for operator.
 9. If REVISE with Critical findings, follow the skill's mechanical-vs-judgment classification (`research-prompt-qc` SKILL.md § Autonomy Rules; operator-facing mirror: `reference/quality-standards.md` § Critical Finding Classification): all-mechanical Criticals (one correct fix, no editorial judgment) → apply fixes and re-run QC once, pausing if still FLAG; any judgment Critical, any ambiguous classification, or any mechanical/judgment mix → pause for operator review before proceeding.
 10. ▸ /compact — QC context no longer needed.
-11. PAUSE — Present the session plan table to the operator, organized by execution tool. **Explicitly flag any inter-session dependencies** (e.g., "Session D depends on Session A — do not run D until A completes"). List each dependency clearly so execution order is unambiguous. Note which sessions run in Research Execution GPT vs Perplexity. He will execute sessions manually (Step 2.2) and return with raw reports.
+11. PAUSE — Present the session plan table to the operator, naming the configured evidence executor and any supplementary lead passes. **Explicitly flag any inter-session dependencies** (e.g., "Session D depends on Session A — do not run D until A completes"). The operator executes sessions manually (Step 2.2) and returns with raw reports.
 
 ---
 
 ### Step 2.2b: Intake Raw Reports [Claude Code]
 
-**Trigger:** The operator returns with raw research output (from Research Execution GPT or Perplexity), pasted directly into the chat. This may happen multiple times (once per wave or per session).
+**Trigger:** The operator returns with raw research output from the configured evidence executor, pasted directly into the chat or already written to the agreed project path. This may happen multiple times (once per wave or per session).
 
 1. Read the session plan from `/execution/research-prompts/{section}/session-plan.md` to recover the session letters, question assignments, and dependency map.
 2. For each pasted report, identify which session it belongs to by matching its content against the session plan's question assignments (look for the research questions addressed, topic alignment, and any session identifiers in the output).
@@ -139,6 +141,8 @@ After all extracts are produced:
 
 **Trigger:** After all extracts are APPROVED (Step 2.4 gate passed), operator reviews coverage verdicts across extracts and judges that THIN or MISSING components warrant supplementary research before entering Stage 3. Skip this subworkflow if coverage is acceptable.
 
+**Provider pre-flight:** Re-read `Supplementary lead provider` and `Evidence executor` from Project Config. If the lead provider is `none`, do not start 2.S; report that no supplementary lane is configured and let the operator accept scarcity or update Project Config. Provider output is leads only and cannot enter an extract directly.
+
 Skill loading: For each skill step below, read the skill file from the ai-resources repo at `/ai-resources/skills/[skill-name]/SKILL.md` and follow its instructions.
 
 **Step 2.S0 — Extract Failed Components [Claude Code]**
@@ -156,26 +160,29 @@ Tag each component's route in the failed-components output (`register-hit-ceilin
 2. Read all Research Extracts from `/execution/research-extracts/{section}/`.
 3. Read all Answer Specs from `/preparation/answer-specs/{section}/`.
 4. Read the `supplementary-query-brief-drafter` skill.
-5. Launch a general-purpose sub-agent. Pass it: the skill content, failed components, Research Extracts, and Answer Specs. Task: execute the skill logic (pass 1 or pass 2 as appropriate). Write output to `/execution/supplementary/{section}/{section}-query-brief-pass-[1/2].md`.
+5. Launch a general-purpose sub-agent. Pass it: the skill content, the configured supplementary lead provider, failed components, Research Extracts, and Answer Specs. Task: execute the skill logic (pass 1 or pass 2 as appropriate). Write output to `/execution/supplementary/{section}/{section}-query-brief-pass-[1/2].md`.
    Return: number of groups, number of queries, any components routed out.
 6. GATE: Operator reviews query brief before execution.
 
-**Step 2.S2 — Execute Queries in Perplexity [Operator]**
-Present the query brief's Section B (Execution Sheet) to the operator. He runs queries manually in Perplexity Pro Search. Prefix each query with: `I'm researching {{RESEARCH_AREA_PHRASE}} for a professional advisory report.` The operator pastes raw Perplexity output back into Claude Code. Write raw output to `/execution/supplementary/{section}/{section}-perplexity-raw-pass-[1/2].md`.
+**Step 2.S2 — Gather and Verify Supplementary Leads [Operator]**
+1. Present the query brief's Section B to the operator for execution in the configured supplementary lead provider. Save the provider output to `/execution/supplementary/{section}/{section}-perplexity-raw-pass-[1/2].md`; the historical filename is retained for compatibility and does not select the provider.
+2. Treat every returned citation as a candidate URL, not evidence. Build one bounded verification prompt for the configured evidence executor containing the target components, provider-origin tags, and candidate URLs.
+3. The evidence executor runs and logs its own sweep first, then opens the candidate URLs as a separate pass. Full-page/PDF access and the normal audit/output schema remain mandatory. Unsupported, inaccessible, or snippet-only leads are discarded.
+4. Save only the evidence executor's verified report to `/execution/supplementary/{section}/{section}-executor-verified-pass-[1/2].md`. This is the sole supplementary evidence input to Step 2.S3.
 
-**Step 2.S3 — QC Perplexity Results [delegate-qc]**
-1. Read the raw Perplexity output from Step 2.S2.
+**Step 2.S3 — QC Executor-Verified Supplementary Evidence [delegate-qc]**
+1. Read the evidence executor's verified report from Step 2.S2. Do not pass raw lead-provider output into QC as evidence.
 2. Read all Research Extracts from `/execution/research-extracts/{section}/`.
 3. Read the Query Brief Section A from Step 2.S1.
 4. Read the `supplementary-research-qc` skill.
-5. Launch a qc-gate sub-agent. Pass it: the skill content, raw Perplexity output, Research Extracts, and Query Brief Section A. Task: run the three checks per query and return per-query verdicts.
-6. If this pass produces confirmed-scarcity outcomes, run the skill's Check 4 (sampled scarcity-verdict independence check): a fresh-context sub-agent — given only the sampled component's topic and the project lens, NOT the query brief — drafts one from-scratch verification query per sampled component (1–2 max); the operator executes it via the Step 2.S2 path. In-lens evidence found → route that component back to re-extraction instead of the scarcity register.
+5. Launch a qc-gate sub-agent. Pass it: the skill content, executor-verified supplementary report, Research Extracts, and Query Brief Section A. Task: run the three checks per query and return per-query verdicts.
+6. If this pass produces confirmed-scarcity outcomes, run the skill's Check 4 (sampled scarcity-verdict independence check): a fresh-context sub-agent — given only the sampled component's topic and the project lens, NOT the query brief — drafts one from-scratch verification query per sampled component (1–2 max); the operator executes it through the lead-provider and evidence-executor verification path in Step 2.S2. In-lens verified evidence found → route that component back to re-extraction instead of the scarcity register.
 7. Write QC report to `/execution/supplementary/{section}/{section}-supplementary-qc-pass-[1/2].md` (including the Scarcity Independence Check block when Check 4 ran).
 8. GATE: Operator confirms merge summary before proceeding.
 
 **Step 2.S4 — Merge Supplementary Evidence [delegate]**
 1. Read all Research Extracts from `/execution/research-extracts/{section}/`.
-2. Read the QC-approved supplementary results (MERGE/PARTIAL items from Step 2.S3).
+2. Read the QC-approved executor-verified supplementary results (MERGE/PARTIAL items from Step 2.S3). Refuse any item that exists only in the raw lead-provider output or lacks the evidence executor's source-access log.
 3. Read all Answer Specs from `/preparation/answer-specs/{section}/`.
 4. Read the `supplementary-evidence-merger` skill.
 5. Launch a general-purpose sub-agent. Pass it: the skill content, Research Extracts, QC-approved results, and Answer Specs. Task: execute the skill logic. Write updated extracts to `/execution/research-extracts/`, replacing originals.
