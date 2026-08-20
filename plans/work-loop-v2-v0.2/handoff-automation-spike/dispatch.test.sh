@@ -311,6 +311,23 @@ tree_manifest() { # checkout -> "<sha>  <relative path>" per line, sorted
       done )
 }
 
+res_field() { # file key -> value
+  sed -n "s/^$2=//p" "$1" 2>/dev/null | head -1
+}
+# The run-bound result path, derived from the run log line the dispatcher printed
+# rather than from anything this harness composes. If the two ever disagree, the
+# record is not run-bound and every assertion below should fail — which is why the
+# id is READ, not reconstructed.
+run_id_of() { # dispatcher output -> run id
+  printf '%s\n' "$1" | sed -n 's/^run=\([^ ]*\) .*/\1/p' | head -1
+}
+res_count() { # runs dir -> number of finalized results
+  ls "$1"/*.result 2>/dev/null | wc -l | tr -d ' '
+}
+part_count() { # runs dir -> number of UNfinalized temporary artifacts
+  ls "$1"/*.result.partial 2>/dev/null | wc -l | tr -d ' '
+}
+
 expect_rc() { # want got label [detail]
   if [ "$2" -eq "$1" ]; then ok "$3"; else bad "$3" "expected exit $1, got $2 — ${4:-}"; fi
 }
@@ -378,6 +395,61 @@ done
 [ "$untouched" -eq 1 ] && ok "all three decoy files still hold their original turn" \
                        || bad "all three decoy files still hold their original turn"
 
+# ------------------------- shared by cases 2 and 4: initial state-validation
+# THE THREE INITIAL STATE-VALIDATION TERMINALS ARE ADMITTED RUNS. `validate_state`
+# is first called well below the point where the run id, the evidence location and
+# BOTH leases already exist, and above the ownership check — so codes 13, 14 and the
+# initial 15 are post-admission terminals, and the approved plan requires each to
+# "atomically finalize exactly one terminal result" with truthful facts. Until this
+# helper, cases 2 and 4 proved only the exit and the absence of a launch, which a
+# dispatcher that published nothing at all would satisfy.
+#
+# ONE LOCAL HELPER, and the two conditions for having one are met: these fifteen
+# assertions genuinely repeat across three fixtures, and it introduces no contract —
+# it asserts only the half the three SHARE and takes the half that distinguishes
+# them (outcome, code) as arguments. Anything a fixture must prove on its own stays
+# at its own call site.
+#
+# `unavailable` AND `unchecked` ARE THE TRUTHFUL VALUES HERE, not placeholders, and
+# they are the reason this helper asserts them rather than skipping them. The run
+# died inside `validate_state` before `ST_TURN` or `ST_CLASS` was assigned, so the
+# dispatcher genuinely does not know the turn or the classification — and production
+# says so out loud one branch further down, refusing to guess at state. `owner_check`
+# is `unchecked` because the ownership check runs BELOW this terminal; dispatch.sh
+# marks that value as deliberately NOT a synonym for `unavailable`, which is reserved
+# for the check being unrunnable. What is being pinned is that the record reports
+# what it could not observe as unobserved, instead of inventing it.
+assert_state_terminal() { # label runs-dir result-path want-outcome want-code
+  local lbl="$1" runs="$2" r="$3" want_outcome="$4" want_code="$5" pair k want got lt lc
+  [ "$(res_count "$runs")" = "1" ] && [ "$(part_count "$runs")" = "0" ] \
+    && ok "$lbl — exactly one finalized result, no unfinalized temporary beside it" \
+    || bad "$lbl — exactly one finalized result, no unfinalized temporary beside it" \
+           "results=$(res_count "$runs") partials=$(part_count "$runs"): $(ls "$runs" 2>&1 | tr '\n' ' ')"
+  [ "$(tail -1 "$r" 2>/dev/null)" = "result_complete=yes" ] \
+    && ok "$lbl — the record is complete to its sentinel" \
+    || bad "$lbl — the record is complete to its sentinel" "last line: $(tail -1 "$r" 2>/dev/null)"
+  for pair in "outcome:$want_outcome" "code:$want_code" "stage:pre-hop" "actor:none" \
+              "actor_launched:no" "model_request_started:no" "hop:0" \
+              "next_action:operator-repair-state-file-then-rerun" \
+              "turn_at_terminal:unavailable" "state_class:unavailable" \
+              "state_sha256_before:unavailable" "state_sha256_after:unavailable" \
+              "owner_check:unchecked" \
+              "lease_task_at_finalization:held-by-this-run" \
+              "lease_checkout_at_finalization:held-by-this-run"; do
+    k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$r" "$k")"
+    [ "$got" = "$want" ] && ok "$lbl — $k=$want" || bad "$lbl — $k=$want" "got: ${got:-<absent>}"
+  done
+  # HELD AT FINALIZATION AND GONE AFTERWARDS, read from the filesystem rather than
+  # inferred from the two fields above.
+  lt="$(res_field "$r" lease_task_dir)"; lc="$(res_field "$r" lease_checkout_dir)"
+  if [ -n "$lt" ] && [ -n "$lc" ] && [ ! -d "$lt" ] && [ ! -d "$lc" ]; then
+    ok "$lbl — and both leases it reported holding were released on the way out"
+  else
+    bad "$lbl — and both leases it reported holding were released on the way out" \
+        "task=${lt:-<absent>} ($([ -d "$lt" ] && echo present || echo gone)) checkout=${lc:-<absent>} ($([ -d "$lc" ] && echo present || echo gone))"
+  fi
+}
+
 # ================================================================== case 2
 echo
 echo "Case 2 — filename / frontmatter identity mismatch is rejected read-only"
@@ -389,6 +461,19 @@ after="$(shasum -a 256 "$d/logs/work-loop/decoy-mismatch.md" | cut -d' ' -f1)"
 [ "$before" = "$after" ] && ok "the mismatched file is byte-identical afterwards" \
                          || bad "the mismatched file is byte-identical afterwards"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched" || bad "no actor was launched" "calls=$(calls "$d")"
+# THE DURABLE RESULT. Read-only toward the state file is what the assertions above
+# prove; this proves the run still said, durably and once, how it ended. A mutant
+# that suppresses the funnel still exits 14 and still leaves the file byte-identical,
+# so every assertion above it passes while the record is gone.
+RID2="$(run_id_of "$OUT")"
+[ -n "$RID2" ] && ok "  and the run announced a run id" || bad "  and the run announced a run id" "$OUT"
+assert_state_terminal "  case 2" "$d/runs" "$d/runs/$RID2.result" IDENTITY_MISMATCH 14
+# The record points at the file the operator has to repair — the fact that makes
+# `operator-repair-state-file-then-rerun` actionable rather than merely correct.
+[ "$(res_field "$d/runs/$RID2.result" state_file)" = "$(cd "$d" && pwd -P)/logs/work-loop/decoy-mismatch.md" ] \
+  && ok "  case 2 — and the record names the mismatched state file itself" \
+  || bad "  case 2 — and the record names the mismatched state file itself" \
+         "got: $(res_field "$d/runs/$RID2.result" state_file)"
 
 # ================================================================== case 3
 echo
@@ -399,16 +484,153 @@ expect_rc 12 "$RC" "exits 12 on a traversal task id" "$OUT"
 run_dispatch "$d" "live task" --actor-cmd "$FLIP"
 expect_rc 12 "$RC" "exits 12 on an illegal-character task id" "$OUT"
 
+# ================================================================= case 3a
+echo
+echo "Case 3a — a task id longer than the derived maximum is refused BEFORE admission; the maximum itself stays legal"
+# WHY A LENGTH BOUND EXISTS AT ALL. Case 3 above proves the CHARACTER grammar, and
+# until this case that was the whole of it: an id built only from legal characters
+# was accepted at ANY length. The task id is the LAST field of the run id
+# (dispatch.sh, RUN_ID), and every piece of run evidence is that run id plus a
+# suffix — so a long enough id did not produce a refusal, it produced an ADMITTED
+# run that could not name its own artifacts. Measured against the unmodified
+# dispatcher, a 129-character id ran all four hops, launched four actors, took both
+# leases, mutated the working tree and published a terminal result. The approved
+# plan's hostile-input boundary asks for "strict length and character grammars to
+# task IDs"; this case is the length half of it.
+#
+# THE DERIVATION, from the current naming formats and nothing else:
+#   run id            <timestamp 15> "-" <lock key <=8> "-" <pid> "-" <task>
+#   longest filename  <run id> ".unattended-settings.json"        (25 bytes)
+#   NAME_MAX          255
+# The fixed prefix is 15+1+8+1+7+1 = 33 bytes at the widest pid Linux allots, so
+# the hard ceiling is 255-33-25 = 197. The enforced maximum is 128, which keeps 69
+# bytes in hand: the hop-capture suffixes ".hop<N>.<actor>.out" and ".tree" grow
+# with the caller's --max-hops digits, and bounds for the other token classes are
+# deferred, so the margin is what keeps one fixed number safe while that stays
+# true. 128 is also more than twice the longest task id this repository has ever
+# committed (54 characters), so the bound relabels nothing legal.
+#
+# THE TWO IDS ARE GENERATED AND DIFFER BY EXACTLY ONE CHARACTER. A 129-character
+# literal could not be checked by eye, and building the over-length id as "the
+# legal one plus one 'a'" is what makes the pair a boundary rather than two
+# unrelated strings.
+ID3A_OK="L$(printf '%*s' 127 '' | tr ' ' 'a')"
+ID3A_BAD="${ID3A_OK}a"
+[ "${#ID3A_OK}" -eq 128 ] && [ "${#ID3A_BAD}" -eq 129 ] \
+  && ok "3a — the fixture ids are exactly the maximum and the maximum plus one" \
+  || bad "3a — the fixture ids are exactly the maximum and the maximum plus one" \
+         "ok=${#ID3A_OK} bad=${#ID3A_BAD}"
+
+D3A="$(new_sandbox)"
+# BOTH state files exist, so "it was refused" cannot be explained away by a missing
+# record. The refusal has to come from the id itself.
+state_file "$D3A" "$ID3A_BAD" codex
+state_file "$D3A" "$ID3A_OK"  codex
+rm -f "$D3A.calls"
+LR3A="$(lock_root_for "$D3A")"
+HEAD3A="$(git -C "$D3A" rev-parse HEAD)"
+TREE3A="$(tree_manifest "$D3A")"
+# --actor-cmd, not --dry-run, and that is deliberate: a dry-run launches nothing
+# whatever the verdict, so "no actor was launched" could not fail. With a simulated
+# actor available, an admitted run WOULD call it — and against the unmodified
+# dispatcher it called it four times.
+run_dispatch "$D3A" "$ID3A_BAD" --actor-cmd "$FLIP"
+expect_rc 12 "$RC" "3a — the over-length task id is refused as an invalid task id" "$OUT"
+out_has "STOP [12]" "$OUT" "3a — the refusal names itself on stderr"
+out_has "too long: 129 characters, maximum 128" "$OUT" \
+  "3a — the refusal names LENGTH and both numbers, not characters"
+# THE PRE-ADMISSION CONTRACT, as the four absences the approved plan names: no owner
+# or lease, no evidence, no actor, no mutation.
+[ ! -e "$LR3A" ] \
+  && ok "3a — no lease was ever acquired: the shared lease root was never created" \
+  || bad "3a — no lease was ever acquired: the shared lease root was never created" \
+         "$(ls -a "$LR3A" 2>&1 | tr '\n' ' ')"
+[ ! -e "$D3A/runs" ] \
+  && ok "3a — it wrote no run evidence: the evidence directory was never created" \
+  || bad "3a — it wrote no run evidence: the evidence directory was never created" \
+         "$(ls -a "$D3A/runs" 2>&1 | tr '\n' ' ')"
+[ "$(calls "$D3A")" = "0" ] \
+  && ok "3a — no actor was launched" || bad "3a — no actor was launched" "calls=$(calls "$D3A")"
+[ "$(git -C "$D3A" rev-parse HEAD)" = "$HEAD3A" ] \
+  && ok "3a — it committed nothing" || bad "3a — it committed nothing" "HEAD moved from $HEAD3A"
+[ "$TREE3A" = "$(tree_manifest "$D3A")" ] \
+  && ok "3a — every byte of the checkout's working tree is unchanged" \
+  || bad "3a — every byte of the checkout's working tree is unchanged" "the tree moved"
+
+# THE POSITIVE CONTROL, through the narrowest safe mode. Without it the bound could
+# be satisfied by refusing everything, and an off-by-one would be invisible.
+run_dispatch "$D3A" "$ID3A_OK" --dry-run
+expect_rc 0 "$RC" "3a — an otherwise identical id at exactly the maximum is still admitted" "$OUT"
+# AND THE BOUND'S ARITHMETIC, CHECKED AGAINST THE RUN THIS CASE JUST PRODUCED
+# rather than against the comment above it. Take the result filename the admitted
+# run actually wrote, swap its 7-byte ".result" for the 25-byte longest suffix the
+# dispatcher builds, and require the answer to still fit NAME_MAX. This is the
+# assertion that would go red if the maximum were ever raised past what the naming
+# formats can carry. Exactly ONE result is required in the same breath, because the
+# refusal above must have published none — the two runs share this sandbox.
+if [ "$(res_count "$D3A/runs")" = 1 ]; then
+  N3A="$(basename "$(ls "$D3A/runs"/*.result)")"
+  W3A=$(( ${#N3A} - 7 + 25 ))
+  [ "$W3A" -le 255 ] \
+    && ok "3a — at the maximum, even the longest run-evidence filename fits NAME_MAX ($W3A <= 255)" \
+    || bad "3a — at the maximum, even the longest run-evidence filename fits NAME_MAX" "$W3A > 255"
+else
+  bad "3a — the admitted run at the maximum published exactly one result, and the refusal published none" \
+      "results=$(res_count "$D3A/runs")"
+fi
+
 # ================================================================== case 4
 echo
 echo "Case 4 — missing and malformed state"
 d="$(new_sandbox)"
 run_dispatch "$d" no-such-task --actor-cmd "$FLIP"
 expect_rc 13 "$RC" "exits 13 when the state file is missing" "$OUT"
+# ASSERTED HERE, BEFORE THE SANDBOX IS REUSED. The next line rebinds `d`, so the
+# missing-state record has to be read now or it becomes unreachable.
+RID4A="$(run_id_of "$OUT")"
+[ -n "$RID4A" ] && ok "  and the missing-state run announced a run id" \
+                || bad "  and the missing-state run announced a run id" "$OUT"
+assert_state_terminal "  code 13" "$d/runs" "$d/runs/$RID4A.result" STATE_MISSING 13
+# A MISSING FILE STILL HAS A PATH, and naming it is the whole content of the repair
+# instruction: the record has to say which file was not there.
+[ "$(res_field "$d/runs/$RID4A.result" state_file)" = "$(cd "$d" && pwd -P)/logs/work-loop/no-such-task.md" ] \
+  && ok "  code 13 — and the record names the state file that was missing" \
+  || bad "  code 13 — and the record names the state file that was missing" \
+         "got: $(res_field "$d/runs/$RID4A.result" state_file)"
+# CARRIED OUT OF THIS SANDBOX BEFORE `d` IS REBOUND, so the two branches can be
+# compared against each other further down. Read now, or not at all.
+OUTCOME_13="$(res_field "$d/runs/$RID4A.result" outcome)"
+CODE_13="$(res_field "$d/runs/$RID4A.result" code)"
 d="$(new_sandbox)"; state_file "$d" "bad-turn" "robot"
 run_dispatch "$d" bad-turn --actor-cmd "$FLIP"
 expect_rc 15 "$RC" "exits 15 on an out-of-domain turn: value" "$OUT"
 [ "$(calls "$d")" = "0" ] && ok "no actor launched for malformed state" || bad "no actor launched for malformed state"
+# The third of the three, and the one that shows `state_class=unavailable` is a real
+# observation rather than a constant: here the file EXISTS and is readable, and the
+# dispatcher still refuses to name a classification, because the validator never
+# returned one it recognises.
+RID4B="$(run_id_of "$OUT")"
+[ -n "$RID4B" ] && ok "  and the malformed-turn run announced a run id" \
+                || bad "  and the malformed-turn run announced a run id" "$OUT"
+assert_state_terminal "  code 15" "$d/runs" "$d/runs/$RID4B.result" BAD_TURN 15
+[ "$(res_field "$d/runs/$RID4B.result" state_file)" = "$(cd "$d" && pwd -P)/logs/work-loop/bad-turn.md" ] \
+  && ok "  code 15 — and the record names the malformed state file" \
+  || bad "  code 15 — and the record names the malformed state file" \
+         "got: $(res_field "$d/runs/$RID4B.result" state_file)"
+# THE TWO BRANCHES ARE DISTINCT, compared against each other rather than only against
+# their own literals — the check a producer emitting one constant outcome would fail
+# while both per-fixture assertions still passed. Both values must also be non-empty,
+# or two absent reads would compare equal and this would report distinctness for a
+# pair of records that were never written.
+OUTCOME_15="$(res_field "$d/runs/$RID4B.result" outcome)"
+CODE_15="$(res_field "$d/runs/$RID4B.result" code)"
+if [ -n "$OUTCOME_13" ] && [ -n "$OUTCOME_15" ] &&
+   [ "$OUTCOME_13" != "$OUTCOME_15" ] && [ "$CODE_13" != "$CODE_15" ]; then
+  ok "  and the two case-4 branches recorded DIFFERENT outcomes and codes"
+else
+  bad "  and the two case-4 branches recorded DIFFERENT outcomes and codes" \
+      "missing-state: ${OUTCOME_13:-<absent>}/${CODE_13:-<absent>} malformed-turn: ${OUTCOME_15:-<absent>}/${CODE_15:-<absent>}"
+fi
 
 # ================================================================== case 5
 echo
@@ -610,6 +832,50 @@ esac
 [ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
   && ok "no commit was made with the check unavailable" \
   || bad "no commit was made with the check unavailable"
+# THE DURABLE RESULT, which this case did not assert at all before this unit. Both
+# code-35 branches are raised from the ownership block (dispatch.sh, `die 35`), which
+# sits AFTER run identity, after the evidence location and after both leases — so
+# each is an admitted-run terminal, not a pre-admission refusal, and the approved plan
+# requires it to "Atomically finalize exactly one terminal result for … invalid state
+# or ownership". Exit 35 and a silent run directory would have satisfied every
+# assertion above this line.
+#
+# `owner_check` IS THE HALF THAT SEPARATES THE TWO BRANCHES. Absent helper reports
+# `unavailable`; the broken helper below reports `check-failed`. They share the
+# outcome token because the operator's situation is the same — ownership is
+# unestablished — but the observed verdict is not, and a record that collapsed them
+# would be reporting the code path rather than what was seen.
+RID12DA="$(run_id_of "$OUT")"
+[ -n "$RID12DA" ] && ok "  and the run announced a run id" \
+                  || bad "  and the run announced a run id" "$OUT"
+R12DA="$d/runs/$RID12DA.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  and exactly one finalized result, with no unfinalized temporary beside it" \
+  || bad "  and exactly one finalized result, with no unfinalized temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs"): $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(tail -1 "$R12DA" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  and the record is complete to its sentinel" \
+  || bad "  and the record is complete to its sentinel" "last line: $(tail -1 "$R12DA" 2>/dev/null)"
+for pair in "outcome:OWNERSHIP_UNAVAILABLE" "code:35" "stage:pre-hop" \
+            "owner_check:unavailable" "actor:none" "actor_launched:no" \
+            "model_request_started:no" "hop:0" \
+            "next_action:operator-resolve-ownership" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R12DA" "$k")"
+  [ "$got" = "$want" ] && ok "  absent-helper result: $k=$want" \
+                       || bad "  absent-helper result: $k=$want" "got: ${got:-<absent>}"
+done
+# HELD AT FINALIZATION AND GONE AFTERWARDS — the ordering Change set A states, read
+# from the filesystem rather than inferred from the two fields above.
+LT12DA="$(res_field "$R12DA" lease_task_dir)"; LC12DA="$(res_field "$R12DA" lease_checkout_dir)"
+if [ -n "$LT12DA" ] && [ -n "$LC12DA" ] && [ ! -d "$LT12DA" ] && [ ! -d "$LC12DA" ]; then
+  ok "  and both leases it reported holding were released on the way out"
+else
+  bad "  and both leases it reported holding were released on the way out" \
+      "task=${LT12DA:-<absent>} ($([ -d "$LT12DA" ] && echo present || echo gone)) checkout=${LC12DA:-<absent>} ($([ -d "$LC12DA" ] && echo present || echo gone))"
+fi
 
 # The control. Same fixture recipe, same command, helper PRESENT — it must
 # proceed and must launch. Without it, case 12d would pass just as well for a
@@ -639,6 +905,91 @@ expect_rc 35 "$RC" "a BROKEN ownership helper refuses with exit 35 too" "$OUT"
 [ -s "$d.calls" ] && bad "no actor was launched with a broken check" \
                          "actors ran: $(tr '\n' ';' <"$d.calls")" \
                       || ok "no actor was launched with a broken check"
+# The same durable-result proof for the second branch, and the same reason for it.
+# What must differ from the branch above is `owner_check`: the helper RAN here and
+# returned an exit the dispatcher does not recognise, which is `check-failed`, not
+# `unavailable`. If both branches reported one value, the record would be naming the
+# exit code it produced instead of the check it observed.
+RID12DB="$(run_id_of "$OUT")"
+[ -n "$RID12DB" ] && ok "  and the broken-helper run announced a run id" \
+                  || bad "  and the broken-helper run announced a run id" "$OUT"
+R12DB="$d/runs/$RID12DB.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  and exactly one finalized result for the broken helper, no temporary beside it" \
+  || bad "  and exactly one finalized result for the broken helper, no temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs"): $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(tail -1 "$R12DB" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  and that record is complete to its sentinel" \
+  || bad "  and that record is complete to its sentinel" "last line: $(tail -1 "$R12DB" 2>/dev/null)"
+for pair in "outcome:OWNERSHIP_UNAVAILABLE" "code:35" "stage:pre-hop" \
+            "owner_check:check-failed" "actor:none" "actor_launched:no" \
+            "model_request_started:no" "hop:0" \
+            "next_action:operator-resolve-ownership" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R12DB" "$k")"
+  [ "$got" = "$want" ] && ok "  broken-helper result: $k=$want" \
+                       || bad "  broken-helper result: $k=$want" "got: ${got:-<absent>}"
+done
+# THE TWO BRANCHES REALLY DID OBSERVE DIFFERENT THINGS, asserted against each other
+# rather than only against their own literals — the check a shared constant of the
+# right shape would pass.
+[ "$(res_field "$R12DA" owner_check)" != "$(res_field "$R12DB" owner_check)" ] \
+  && ok "  and the two branches recorded DIFFERENT owner_check verdicts" \
+  || bad "  and the two branches recorded DIFFERENT owner_check verdicts" \
+         "both: $(res_field "$R12DB" owner_check)"
+LT12DB="$(res_field "$R12DB" lease_task_dir)"; LC12DB="$(res_field "$R12DB" lease_checkout_dir)"
+if [ -n "$LT12DB" ] && [ -n "$LC12DB" ] && [ ! -d "$LT12DB" ] && [ ! -d "$LC12DB" ]; then
+  ok "  and the broken-helper run released both leases it reported holding"
+else
+  bad "  and the broken-helper run released both leases it reported holding" \
+      "task=${LT12DB:-<absent>} ($([ -d "$LT12DB" ] && echo present || echo gone)) checkout=${LC12DB:-<absent>} ($([ -d "$LC12DB" ] && echo present || echo gone))"
+fi
+
+# M41 — the mutation control for every ownership-result assertion above, and for
+# case 50e's code-33 assertions, which rest on the same guarantee. ONE mutation, not
+# a matrix: the ownership stops publish through the shared die funnel, so removing
+# that one action is what falsifies the claim for all three ownership codes at once.
+#
+# It is M1's construction reused verbatim rather than a new technique — same marker
+# line, matched whole, occurrences counted, mutant required to differ and to parse —
+# because the seam under test is the same one and a second way of cutting it would
+# only add a way for the two controls to disagree.
+MUTOWN="$SANDBOX_ROOT/mutants-ownership"; mkdir -p "$MUTOWN"
+M41_LINE='  finalize_terminal_result "$code" || die_funnel_unprovable "$code" # die funnel failure transfer'
+M41_HITS="$(grep -Fxc -- "$M41_LINE" "$DISPATCH_BIN" 2>/dev/null)"
+awk -v want="$M41_LINE" '$0 == want { print "  :"; next } { print }' "$DISPATCH_BIN" >"$MUTOWN/m41.sh"
+M41_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUTOWN/m41.sh" || M41_DIFFERS=yes
+M41_PARSES=no; bash -n "$MUTOWN/m41.sh" 2>/dev/null && M41_PARSES=yes
+if [ "$M41_HITS" = "1" ] && [ "$M41_DIFFERS" = yes ] && [ "$M41_PARSES" = yes ]; then
+  ok "  M41 mutant differs from the dispatcher and still parses (the one funnel call site was found)"
+  dm="$(new_sandbox)"; state_file "$dm" "fc-mut" "codex"
+  git -C "$dm" rm -q --cached logs/scripts/work-loop-owner.sh >/dev/null 2>&1
+  rm -f "$dm/logs/scripts/work-loop-owner.sh"
+  git -C "$dm" commit -qm "remove the ownership helper" >/dev/null 2>&1
+  OUTM="$(bash "$MUTOWN/m41.sh" --checkout "$dm" --task fc-mut --log-dir "$dm/runs" \
+        --timeout 20 --actor-cmd "$FLIP_TO_OPERATOR" 2>&1)"; RCM=$?
+  # THE EXIT CODE IS UNCHANGED AT 35, and that is the point of the control: a case
+  # asserting only the code would have passed against this mutant and proved nothing
+  # about the record. What disappears is the record itself.
+  if [ "$RCM" -eq 35 ] && [ "$(res_count "$dm/runs")" = "0" ]; then
+    ok "  M41: the ownership stop still exits 35 but publishes NO result (the assertions above are fail-capable)"
+  else
+    bad "  M41: the ownership stop still exits 35 but publishes NO result" \
+        "rc=$RCM results=$(res_count "$dm/runs")"
+  fi
+  # And with no record, every field assertion above has nothing to read — shown on
+  # the one field a supervised-use claim leans on hardest.
+  RIDM41="$(run_id_of "$OUTM")"
+  [ -z "$(res_field "$dm/runs/$RIDM41.result" model_request_started)" ] \
+    && ok "  M41: and model_request_started reads as absent, not as 'no'" \
+    || bad "  M41: and model_request_started reads as absent, not as 'no'" \
+           "got: $(res_field "$dm/runs/$RIDM41.result" model_request_started)"
+else
+  bad "  M41 mutant differs from the dispatcher and still parses (the one funnel call site was found)" \
+      "matched ${M41_HITS:-0} lines, want exactly 1; differs=$M41_DIFFERS parses=$M41_PARSES — the control cannot run"
+fi
 
 # ---------------------------------------------------------------- case 12e
 # CROSS-TRANSPORT CONTENTION — the attended carrier against the unattended
@@ -1276,6 +1627,24 @@ rm -rf "$(checkout_lock_for "$d")" "$(task_lock_for "$d" label-task)"
 #   4. the refusal names that record's path, so an operator can find it;
 #   5. no actor started, so the record describes a refusal and not a run.
 #
+# HALF OF THAT WAS SUPERSEDED BY THE OPERATOR'S SHRINK DECISION, and this case
+# was rewritten rather than deleted. Points 1 and 2 rested on a boundary the
+# approved revised plan moved: winning the lease is no longer what admits a run.
+# Task, checkout and evidence location are established and trusted well above the
+# lease, so a run refused at 17 is an ADMITTED run reaching an enumerated terminal
+# class, and it owes exactly one run-bound terminal result written into its own
+# evidence location. Point 3's standalone `.refusal` store was the workaround for
+# a run that could not write one, and it is gone: two durable records for one
+# ending can disagree, and nothing here may choose between them.
+#
+# WHAT SURVIVES UNCHANGED IS THE REAL PROTECTION. A refused run may write its own
+# evidence and NOTHING ELSE — not the state file, not a commit, not any other
+# path in the working tree — and the manifest below still asserts exactly that,
+# with the run's own evidence directory excluded and case 64a asserting what goes
+# into it. Points 4 and 5 also survive verbatim, re-pointed at the terminal
+# result. The `--status` half at the end is untouched: it is read-only whatever
+# the boundary says.
+#
 # THE HOLDER'S OWN LOG DIRECTORY IS OUTSIDE THE CHECKOUT. It is admitted, so it
 # is entitled to write wherever it was asked to — but its writes would land in
 # the same working tree the loser is being measured against, and the manifest
@@ -1285,13 +1654,19 @@ rm -rf "$(checkout_lock_for "$d")" "$(task_lock_for "$d" label-task)"
 # is a stop taken on the live acquisition path, and a planted directory would
 # reach the same branch without proving the ordering that caused the defect.
 echo
-echo "Case 12h — a pre-admission exit-17 refusal writes durable evidence, and not into the checkout"
+echo "Case 12h — an exit-17 refusal writes durable evidence into its OWN log dir, and nowhere else in the checkout"
 d="$(new_sandbox)"; state_file "$d" "record-task" "codex"
 rm -f "$d.calls" "$d.holder"
-LOSER_LOGS="$d/refused-runs"                    # INSIDE the checkout, and must stay absent
+LOSER_LOGS="$d/refused-runs"                    # INSIDE the checkout: this run's own evidence location
 HOLDER_LOGS="$SANDBOX_ROOT/12h-holder-runs"     # outside it, so only the loser can move the bytes
 REFUSALS="$(lock_root_for "$d")/refusals"
 BEFORE="$(git -C "$d" rev-parse HEAD)"
+# Everything in the working tree EXCEPT the loser's own evidence directory. The
+# exclusion is the boundary this case now draws: writes there are the run's own
+# and are asserted by case 64a; a moved byte anywhere else is a trespass.
+tree_outside_logs() { # -> manifest with ./refused-runs/ removed
+  tree_manifest "$1" | grep -v '  \./refused-runs/' || true
+}
 ( bash "$DISPATCH_BIN" --checkout "$d" --task record-task --log-dir "$HOLDER_LOGS" \
     --timeout 90 \
     --actor-cmd 'printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.holder"; sleep 30; exit 0' \
@@ -1307,80 +1682,71 @@ for _ in $(seq 1 120); do [ -f "$d.holder" ] && break; sleep 0.5; done
   && ok "12h setup — the holding dispatcher is admitted and inside its actor" \
   || bad "12h setup — the holding dispatcher is admitted and inside its actor" "no $d.holder marker"
 
-TREE_BEFORE="$(tree_manifest "$d")"
-STATUS_BEFORE="$(git -C "$d" status --porcelain)"
+TREE_BEFORE="$(tree_outside_logs "$d")"
+STATUS_BEFORE="$(git -C "$d" status --porcelain | grep -v 'refused-runs' || true)"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task record-task \
         --log-dir "$LOSER_LOGS" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
-TREE_AFTER="$(tree_manifest "$d")"
-STATUS_AFTER="$(git -C "$d" status --porcelain)"
+TREE_AFTER="$(tree_outside_logs "$d")"
+STATUS_AFTER="$(git -C "$d" status --porcelain | grep -v 'refused-runs' || true)"
 expect_rc 17 "$RC" "the second dispatcher is refused at 17 by a REAL held lease" "$OUT"
 
-# THE CHECKOUT IS UNTOUCHED. This is the assertion the previous implementation
-# failed, and it fails LOUDLY rather than by absence: the diff names the file.
-[ ! -e "$LOSER_LOGS" ] \
-  && ok "  and the requested --log-dir inside the checkout was never created" \
-  || bad "  and the requested --log-dir inside the checkout was never created" \
-         "$(ls -a "$LOSER_LOGS" 2>&1 | tr '\n' ' ')"
+# THE REST OF THE CHECKOUT IS UNTOUCHED, and it fails LOUDLY rather than by
+# absence: the diff names the file. This is the half of the original claim the
+# approved boundary change does NOT relax — a refused run writes its own evidence
+# and nothing else.
 if [ "$TREE_BEFORE" = "$TREE_AFTER" ]; then
-  ok "  and every byte of the checkout's working tree is unchanged"
+  ok "  and every byte of the checkout OUTSIDE its own evidence directory is unchanged"
 else
-  bad "  and every byte of the checkout's working tree is unchanged" \
+  bad "  and every byte of the checkout OUTSIDE its own evidence directory is unchanged" \
       "$(diff <(printf '%s\n' "$TREE_BEFORE") <(printf '%s\n' "$TREE_AFTER") | head -10 | tr '\n' ' ')"
 fi
 [ "$STATUS_BEFORE" = "$STATUS_AFTER" ] \
-  && ok "  and git status is unchanged" \
-  || bad "  and git status is unchanged" "before [$STATUS_BEFORE] after [$STATUS_AFTER]"
+  && ok "  and git status is unchanged outside it" \
+  || bad "  and git status is unchanged outside it" "before [$STATUS_BEFORE] after [$STATUS_AFTER]"
 
-# THE RECORD STILL EXISTS, somewhere the loser is entitled to write.
-RR="$(ls -t "$REFUSALS"/*.refusal 2>/dev/null | head -1)"
-if [ -n "$RR" ]; then
-  ok "  and a durable refusal record was written under the shared lease root"
+# THE DURABLE RECORD IS THE RUN'S OWN TERMINAL RESULT, in the directory the
+# operator pointed --log-dir at. Case 64a asserts its fields; what 12h keeps is
+# that it exists, that it is the only durable record of this ending, and that the
+# refusal says where it is.
+RID12="$(run_id_of "$OUT")"
+RR="$LOSER_LOGS/$RID12.result"
+if [ -n "$RID12" ] && [ -f "$RR" ]; then
+  ok "  and a durable terminal result was written into the requested --log-dir"
 else
-  bad "  and a durable refusal record was written under the shared lease root" \
-      "nothing matching $REFUSALS/*.refusal: $(ls -a "$REFUSALS" 2>&1 | tr '\n' ' ')"
+  bad "  and a durable terminal result was written into the requested --log-dir" \
+      "run id '${RID12:-<none>}'; $(ls -a "$LOSER_LOGS" 2>&1 | tr '\n' ' ')"
 fi
-# Named against the Git common directory rather than against "not $d": a record
-# under $d/.git would satisfy the negative and still be the wrong place, because
-# the point is that every linked worktree of this repository can read it.
-case "${RR:-<none>}" in
-  "$(lock_root_for "$d")"/refusals/*)
-    ok "    and it lives in the Git common directory, outside every worktree" ;;
-  *)
-    bad "    and it lives in the Git common directory, outside every worktree" \
-        "got: ${RR:-<none>}" ;;
-esac
-if [ -n "$RR" ] && grep -q '^STOP \[17\]' "$RR"; then
-  ok "    and it carries the human refusal, not only the terminal did"
+# THE COMPETING STORE IS GONE. One ending, one durable record — a `refusals/`
+# entry alongside the result would be the second authority this unit removed.
+[ ! -e "$REFUSALS" ] \
+  && ok "    and no standalone refusal store was created beside the lease directories" \
+  || bad "    and no standalone refusal store was created beside the lease directories" \
+         "$(ls -a "$REFUSALS" 2>&1 | tr '\n' ' ')"
+if [ -f "$RR" ] && grep -q '^code=17$' "$RR"; then
+  ok "    and it records the refusal's own exit code"
 else
-  bad "    and it carries the human refusal, not only the terminal did" "record: ${RR:-none}"
+  bad "    and it records the refusal's own exit code" "record: ${RR:-none}"
 fi
-# The machine-readable half, field by field. A record that says "refused" without
-# the code, the task or the holder is not something a later reader can act on.
-TR="$(grep '^terminal-record ' "$RR" 2>/dev/null | tail -1)"
-if [ -n "$TR" ]; then
-  ok "    and a stable terminal record line is present"
-else
-  bad "    and a stable terminal record line is present" "record: ${RR:-none}"
-fi
-for field in 'outcome=refused' 'code=17' 'task=record-task' 'holder_program=dispatch' \
-             'resource=task' 'refusal=held' 'actor_launched=no'; do
-  case "$TR" in
-    *"$field"*) ok "      the terminal record carries $field" ;;
-    *)          bad "      the terminal record carries $field" "got: ${TR:-<no record>}" ;;
-  esac
-done
-# The holder's checkout is named, so an operator reading the losing transport's
-# evidence alone can find the winning one.
-case "$TR" in
-  *"holder_checkout=$(cd "$d" && pwd -P)"*) ok "      and names the holder's checkout" ;;
-  *) bad "      and names the holder's checkout" "got: ${TR:-<no record>}" ;;
-esac
-# EVIDENCE NOBODY CAN FIND IS NOT EVIDENCE. The record now lives somewhere the
-# operator did not choose, so the refusal has to say where it went.
-if [ -n "$RR" ]; then
-  out_has "$RR" "$OUT" "  and the refusal prints the record's path on the terminal"
+# EVIDENCE NOBODY CAN FIND IS NOT EVIDENCE.
+#
+# Matched in the CANONICAL form since case 69 collapsed the evidence directory to
+# one value. The file assertions above still use $LOSER_LOGS because opening a
+# path follows symlinks and the two forms name the same file; only the printed
+# STRING has to agree with what the dispatcher now reports, and on a host whose
+# sandbox root is reached through a symlink the raw form is not what it prints.
+RR_SHOWN="$(cd "$LOSER_LOGS" && pwd -P)/$RID12.result"
+if [ -f "$RR" ]; then
+  out_has "$RR_SHOWN" "$OUT" "  and the refusal prints the record's path on the terminal"
 else
   bad "  and the refusal prints the record's path on the terminal" "no record to name"
+fi
+# THE HUMAN REFUSAL IS STILL ON BOTH CHANNELS — stderr and the run log the result
+# points at. That was open_refusal_record's job and is now die()'s.
+if [ -f "$LOSER_LOGS/$RID12.log" ] && grep -q '^STOP \[17\]' "$LOSER_LOGS/$RID12.log"; then
+  ok "  and the human refusal reached the run log, not only the terminal"
+else
+  bad "  and the human refusal reached the run log, not only the terminal" \
+      "$(ls -a "$LOSER_LOGS" 2>&1 | tr '\n' ' ')"
 fi
 
 # NO ACTOR RAN. Three independent handles, because the record's whole value is
@@ -1388,10 +1754,10 @@ fi
 # launch" from "launched and then failed".
 [ -s "$d.calls" ] && bad "  and no actor was launched" "actors ran: $(tr '\n' ';' <"$d.calls")" \
                   || ok "  and no actor was launched"
-if [ -n "$RR" ] && grep -qE '^hop=[0-9]+ actor=' "$RR"; then
-  bad "  and the record shows no hop" "$(grep -E '^hop=' "$RR")"
-else
+if [ -f "$RR" ] && [ "$(sed -n 's/^hop=//p' "$RR" | head -1)" = "0" ]; then
   ok "  and the record shows no hop"
+else
+  bad "  and the record shows no hop" "hop=$(sed -n 's/^hop=//p' "$RR" 2>/dev/null | head -1)"
 fi
 [ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
   && ok "  and committed nothing" || bad "  and committed nothing" "HEAD moved from $BEFORE"
@@ -1400,43 +1766,66 @@ fi
 # requested log directory, a log directory that does not exist, and the refusal
 # store. It takes no lease, so it can never be refused, so it must never file a
 # refusal — a record written by a read-only command would be a false one.
-n_ref_before="$(ls -1 "$REFUSALS" 2>/dev/null | wc -l | tr -d ' ')"
+# --status STAYS NO-WRITE whatever the admission boundary says, and the surfaces
+# it is tested against are now the ones that exist: the requested log directory
+# (which the refused run legitimately created, so the claim is that --status adds
+# nothing to it), a log directory that does not exist at all, and the terminal
+# result store. It takes no lease, so it can never be refused, so it must never
+# finalize a result — a record written by a read-only command would be a false one.
+n_res_before="$(res_count "$LOSER_LOGS")"
+LOGS_BEFORE="$(ls -1 "$LOSER_LOGS" 2>/dev/null | LC_ALL=C sort)"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task record-task \
         --log-dir "$LOSER_LOGS" --status 2>&1)"; RC=$?
 expect_rc 0 "$RC" "  --status still exits 0 over a held lease" "$OUT"
-[ ! -e "$LOSER_LOGS" ] \
-  && ok "  --status created no log directory it was pointed at" \
-  || bad "  --status created no log directory it was pointed at" "$(ls -a "$LOSER_LOGS" 2>&1 | tr '\n' ' ')"
+[ "$LOGS_BEFORE" = "$(ls -1 "$LOSER_LOGS" 2>/dev/null | LC_ALL=C sort)" ] \
+  && ok "  --status added nothing to the log directory it was pointed at" \
+  || bad "  --status added nothing to the log directory it was pointed at" \
+         "$(diff <(printf '%s\n' "$LOGS_BEFORE") <(ls -1 "$LOSER_LOGS" | LC_ALL=C sort) | tr '\n' ' ')"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task record-task \
         --log-dir "$d/status-only-runs" --status 2>&1)"; RC=$?
 expect_rc 0 "$RC" "  --status exits 0 for a log directory that does not exist" "$OUT"
 [ ! -d "$d/status-only-runs" ] \
   && ok "  --status created no log directory" \
   || bad "  --status created no log directory" "$d/status-only-runs exists"
-[ "$n_ref_before" = "$(ls -1 "$REFUSALS" 2>/dev/null | wc -l | tr -d ' ')" ] \
-  && ok "  --status filed no refusal record" \
-  || bad "  --status filed no refusal record" "refusal count moved from $n_ref_before"
+[ "$n_res_before" = "$(res_count "$LOSER_LOGS")" ] \
+  && ok "  --status finalized no terminal result" \
+  || bad "  --status finalized no terminal result" "result count moved from $n_res_before"
+[ ! -e "$REFUSALS" ] \
+  && ok "  --status created no refusal store either" \
+  || bad "  --status created no refusal store either" "$(ls -a "$REFUSALS" 2>&1 | tr '\n' ' ')"
 
 wait "$holder" 2>/dev/null
 rm -rf "$(task_lock_for "$d" record-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
 # ---------------------------------------------------------------- case 12h-ok
 # THE POSITIVE CONTROL, and without it 12h passes against a dispatcher that never
-# writes a run log at all. Everything above is an absence — no directory, no
-# bytes, no actor — and a program that had simply lost the ability to open its
-# run evidence would satisfy every one of those assertions. This is the run that
-# WINS admission, and it must produce exactly what the losing one must not.
+# writes a run log at all. Everything above is about one directory and one
+# record, and a program that had simply lost the ability to open its run evidence
+# would still satisfy the "nowhere else in the checkout" half. This is the run
+# that WINS the lease, and it must reach the actor the refused one never did.
+#
+# IT USES THE SAME --log-dir AS THE REFUSED RUN, and that is now load-bearing
+# rather than incidental. The refused run legitimately created its evidence
+# directory inside this checkout, and a dispatcher only allowlists the log
+# directory IT was pointed at — so a following run aimed at a DIFFERENT --log-dir
+# reads the first one's evidence as out-of-allowlist litter and stops at 18
+# before launching. That consequence is real and is now the DOCUMENTED CONTRACT
+# rather than a deferral: one stable evidence location per checkout, proven by
+# case 65a, with 65c the refusal that fires when a run is aimed somewhere else.
+# Pointing both runs at one evidence location is what an operator does, and it is
+# what this control has always measured.
 echo
 echo "Case 12h-ok — an ADMITTED run still creates and uses the requested run log"
 rm -f "$d.calls"
 n_ref_before="$(ls -1 "$REFUSALS" 2>/dev/null | wc -l | tr -d ' ')"
-run_dispatch "$d" record-task --max-hops 1 --actor-cmd "$FLIP"
-AL="$(ls -t "$d"/runs/*.log 2>/dev/null | head -1)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task record-task --log-dir "$LOSER_LOGS" \
+      --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+AL="$(ls -t "$LOSER_LOGS"/*.log 2>/dev/null | head -1)"
 if [ -n "$AL" ]; then
   ok "the requested --log-dir received a run log once both leases were held"
 else
   bad "the requested --log-dir received a run log once both leases were held" \
-      "nothing under $d/runs: $(ls -a "$d/runs" 2>&1 | tr '\n' ' ')"
+      "nothing under $LOSER_LOGS: $(ls -a "$LOSER_LOGS" 2>&1 | tr '\n' ' ')"
 fi
 # Created is not the same claim as used. The run header only exists because the
 # log was open when the run reported itself.
@@ -1453,6 +1842,97 @@ fi
   || bad "  and an admitted run files no refusal record" "refusal count moved from $n_ref_before"
 rm -rf "$(task_lock_for "$d" record-task)" "$(checkout_lock_for "$d")" 2>/dev/null
 
+# ---------------------------------------------------------------- case 12i
+echo
+echo "Case 12i — the run id's checkout discriminator is populated, stable per checkout/task, and different across checkouts"
+# WHAT THE SECOND FIELD IS FOR. A run id is
+# <timestamp>-<discriminator>-<pid>-<task>, and every piece of run evidence is that
+# id plus a suffix. Two runs of the SAME task, started in the SAME second, from
+# DIFFERENT checkouts, writing into ONE shared --log-dir agree on the timestamp and
+# on the task — so without the second field they compute the same id and silently
+# overwrite each other's run log, hop captures and unattended profile. Case 12h
+# proved evidence lands in the log dir it was asked for; this case proves two
+# checkouts sharing one log dir stay distinguishable inside it.
+#
+# WHY IT NEEDED RESTORING, and why this is a regression rather than a new feature.
+# The discriminator was computed in the original spike (94b440b2) as
+# sha256("$CHECKOUT|$TASK") and deleted by 0d9e3355 (2026-08-11), the two-lease
+# refactor. That deletion was right about the LOCK key — a composite enforces
+# neither resource on its own, which is why there are now two independent leases —
+# but RUN_ID was left still reading ${LOCK_KEY:0:8}, of a variable nothing assigned
+# any more. The run logs on disk from before that refactor carry a populated field
+# (`-d571444e-`, `-bb64bbd9-`); every run id produced after it carried two adjacent
+# hyphens instead.
+#
+# THE FIELD IS READ OUT OF A REAL RUN ID, never reconstructed by this harness. It is
+# field 2 on "-", which is unambiguous: the timestamp, the discriminator and the pid
+# contain no hyphen, and the task id is last.
+disc_of() { # dispatcher output -> the run id's discriminator field
+  printf '%s' "$(run_id_of "$1")" | cut -d- -f2
+}
+DA="$(new_sandbox)"; DB="$(new_sandbox)"
+SHARED12I="$SANDBOX_ROOT/shared-evidence-12i"; mkdir -p "$SHARED12I"
+state_file "$DA" disc-task codex
+state_file "$DB" disc-task codex
+# --dry-run is the narrowest mode that still claims a run id and publishes evidence,
+# and it launches no actor. The SAME task id and the SAME shared log dir are used
+# throughout: the checkout is the only thing that varies, which is the only way the
+# distinction assertion can be about the checkout.
+run12i() { # checkout -> writes $OUT/$RC
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$1" --task disc-task \
+        --log-dir "$SHARED12I" --timeout 20 --dry-run 2>&1)"; RC=$?
+}
+run12i "$DA"; expect_rc 0 "$RC" "12i — checkout A is admitted" "$OUT"
+RID_A1="$(run_id_of "$OUT")"; DISC_A1="$(disc_of "$OUT")"
+run12i "$DA"; expect_rc 0 "$RC" "12i — checkout A is admitted a second time" "$OUT"
+RID_A2="$(run_id_of "$OUT")"; DISC_A2="$(disc_of "$OUT")"
+run12i "$DB"; expect_rc 0 "$RC" "12i — checkout B is admitted for the same task" "$OUT"
+RID_B1="$(run_id_of "$OUT")"; DISC_B1="$(disc_of "$OUT")"
+
+# (1) POPULATED, and within the bounded grammar the field reserves. Eight lowercase
+# hex characters — the width the run-id format allots and the alphabet a truncated
+# sha256 can produce. This is the assertion that was red while nothing assigned it.
+if printf '%s' "$DISC_A1" | grep -qE '^[0-9a-f]{8}$'; then
+  ok "12i — the discriminator is populated and within its bounded 8-hex grammar ($DISC_A1)"
+else
+  bad "12i — the discriminator is populated and within its bounded 8-hex grammar" \
+      "got '${DISC_A1}' from run id '${RID_A1}'"
+fi
+# (2) STABLE for one canonical checkout/task pair. Derived identity, not a nonce: two
+# runs from the same checkout for the same task must agree, or evidence from one
+# checkout could not be recognised as a set.
+[ -n "$DISC_A1" ] && [ "$DISC_A1" = "$DISC_A2" ] \
+  && ok "12i — the same checkout/task pair yields the same discriminator across runs" \
+  || bad "12i — the same checkout/task pair yields the same discriminator across runs" \
+         "A1='$DISC_A1' A2='$DISC_A2'"
+# (3) DIFFERENT when the canonical checkout changes and the task does not. This is
+# the collision the field exists to prevent, and it is proved without manufacturing
+# a same-second/same-pid coincidence: if the field itself differs, the ids cannot
+# collide whatever the clock and the pid do.
+[ -n "$DISC_A1" ] && [ -n "$DISC_B1" ] && [ "$DISC_A1" != "$DISC_B1" ] \
+  && ok "12i — a different checkout running the SAME task yields a different discriminator" \
+  || bad "12i — a different checkout running the SAME task yields a different discriminator" \
+         "A='$DISC_A1' B='$DISC_B1'"
+# (4) AND THE EVIDENCE REALLY IS SEPARATE in the one shared directory: three distinct
+# run ids, three run logs, three results. Overwriting would show up as a short count.
+if [ "$RID_A1" != "$RID_A2" ] && [ "$RID_A1" != "$RID_B1" ] && [ "$RID_A2" != "$RID_B1" ]; then
+  ok "12i — all three runs claimed distinct run ids"
+else
+  bad "12i — all three runs claimed distinct run ids" "A1='$RID_A1' A2='$RID_A2' B1='$RID_B1'"
+fi
+N_LOG12I="$(ls -1 "$SHARED12I"/*.log 2>/dev/null | wc -l | tr -d ' ')"
+[ "$N_LOG12I" = 3 ] && [ "$(res_count "$SHARED12I")" = 3 ] \
+  && ok "12i — the shared log dir holds all three runs' evidence, none overwritten" \
+  || bad "12i — the shared log dir holds all three runs' evidence, none overwritten" \
+         "logs=$N_LOG12I results=$(res_count "$SHARED12I")"
+# (5) THE TASK-LAST LOOKUP CONTRACT IS UNCHANGED. --status globs "*-$TASK.log", and
+# the discriminator sits in field 2, so populating it must not hide a run from the
+# lookup. Asserted through the real --status, not by re-globbing here.
+OUT="$(bash "$DISPATCH_BIN" --checkout "$DA" --task disc-task \
+      --log-dir "$SHARED12I" --status 2>&1)"; RC=$?
+expect_rc 0 "$RC" "12i — --status still exits 0 over the shared evidence dir" "$OUT"
+out_has "logs: $SHARED12I/" "$OUT" "12i — --status still finds a run log by the task-last glob"
+out_lacks "no run log for this task" "$OUT" "12i — and it does not report the task as unseen"
 # ================================================================= case 13
 # Regression for the gap the 2026-08-05 live run exposed: a Claude hop killed
 # between editing and committing left a partial state file, and nothing stopped.
@@ -1520,24 +2000,60 @@ grep -q '^turn: claude$' "$d/logs/work-loop/approval-task.md" \
   && ok "the state file did not move" || bad "the state file did not move"
 
 # ================================================================= case 15
-# Cluster 2. A crash BEFORE the actor changed anything is retried once from
-# repository truth. A crash AFTER it changed something is not.
+# Cluster 2. NO AUTOMATIC REPLAY ONCE AN ACTOR HAS LAUNCHED.
+#
+# This cluster used to say the opposite for the pre-edit shape: a crash that left
+# the repository provably unchanged was relaunched once. The premise under that
+# was that an unchanged repository proves no model request started, and it does
+# not. Repository immutability, a nonzero exit and a missing capture are all
+# equally consistent with a request that ran, cost money, and left no effect —
+# and this dispatcher does not read the child's stream events, which is the only
+# place the answer lives. Its own terminal record says so in the field:
+# `model_request_started=unavailable` on every live launch.
+#
+# So the rule is now the launch, not the diff. Once launch_actor() has forked,
+# any nonzero exit ends the run. 15 covers the pre-edit crash (which used to be
+# replayed), 15b the partial effect (which never was), and 15c proves the
+# operator's own explicit re-run is still the recovery — a separate admitted run,
+# not something the stopped run does for itself.
 echo
-echo "Case 15 — a pre-edit crash is retried exactly once"
+echo "Case 15 — a pre-edit crash is NOT replayed: exactly one launch"
 d="$(new_sandbox)"; state_file "$d" "retry-task" "claude"
-RETRY_ONCE='if [ ! -f "$WL_CHECKOUT.attempt" ]; then touch "$WL_CHECKOUT.attempt"; exit 7; fi;
+# Counts EVERY launch, before deciding whether to crash. `.calls` cannot do this
+# job: the flip that writes it is never reached by a crashing attempt, so a
+# replay of one is invisible to it — which is why the old case could assert
+# "exactly one successful actor call" while two actors had run.
+NO_REPLAY='printf "%s\n" "$WL_HOP" >> "$WL_CHECKOUT.launches";
+      if [ ! -f "$WL_CHECKOUT.attempt" ]; then touch "$WL_CHECKOUT.attempt"; exit 7; fi;
       '"$FLIP_TO_OPERATOR"
-run_dispatch "$d" retry-task --actor-cmd "$RETRY_ONCE"
-expect_rc 0 "$RC" "the retried hop completes and reaches turn: operator" "$OUT"
+run_dispatch "$d" retry-task --actor-cmd "$NO_REPLAY"
+expect_rc 20 "$RC" "the crashed hop ends the run instead of replaying it" "$OUT"
+launches15="$(wc -l <"$d.launches" 2>/dev/null | tr -d ' ')"; launches15="${launches15:-0}"
+[ "$launches15" = "1" ] && ok "the actor was launched exactly once" \
+                        || bad "the actor was launched exactly once" "launches=$launches15"
 printf '%s' "$OUT" | grep -q "retrying this hop once" \
-  && ok "the run log says it retried, and why" || bad "the run log says it retried, and why"
-if [ "$(ls "$d/runs/" 2>/dev/null | grep -c '\.hop1r\.claude\.out$')" = "1" ]; then
-  ok "the first attempt's output was kept as separate evidence"
-else
-  bad "the first attempt's output was kept as separate evidence" "no hop1r capture in $d/runs/"
-fi
-[ "$(calls "$d")" = "1" ] && ok "exactly one successful actor call was recorded" \
-                          || bad "exactly one successful actor call was recorded" "calls=$(calls "$d")"
+  && bad "the run log claims no retry" "$OUT" \
+  || ok "the run log claims no retry"
+printf '%s' "$OUT" | grep -q "NOT retried" \
+  && ok "the stop says the request was not retried, and why" \
+  || bad "the stop says the request was not retried, and why" "$OUT"
+[ "$(ls "$d/runs/" 2>/dev/null | grep -c '\.hop1r\.')" = "0" ] \
+  && ok "no retry capture was written" \
+  || bad "no retry capture was written" "a hop1r capture is present in $d/runs/"
+[ "$(calls "$d")" = "0" ] && ok "nothing ran after the crash — the flip was never reached" \
+                          || bad "nothing ran after the crash — the flip was never reached" "calls=$(calls "$d")"
+grep -q '^turn: claude$' "$d/logs/work-loop/retry-task.md" \
+  && ok "the turn is exactly where the actor left it" \
+  || bad "the turn is exactly where the actor left it"
+R15="$(ls "$d/runs"/*.result 2>/dev/null | head -1)"
+{ [ "$(res_field "$R15" actor_launched)" = "yes" ] && [ "$(res_field "$R15" stage)" = "post-hop" ]; } \
+  && ok "the terminal result records the single launch that did happen" \
+  || bad "the terminal result records the single launch that did happen" \
+         "launched=$(res_field "$R15" actor_launched) stage=$(res_field "$R15" stage)"
+# Held for case 15c, which re-enters THIS sandbox. Captured here rather than
+# there because case 15b reassigns $d to a fresh one in between, and reading $d
+# after it would have silently pointed 15c at the wrong checkout.
+D15C="$d"; R15C_FIRST="$(res_field "$R15" run)"
 
 echo
 echo "Case 15b — a crash AFTER a repository change is not retried"
@@ -1549,6 +2065,35 @@ printf '%s' "$OUT" | grep -q "not retried" \
   && ok "the stop names the partial effect as the reason" || bad "the stop names the partial effect as the reason"
 [ "$(calls "$d")" = "1" ] && ok "the failed actor was launched once, not twice" \
                           || bad "the failed actor was launched once, not twice" "calls=$(calls "$d")"
+
+echo
+echo "Case 15c — recovery after a no-replay stop is an explicit NEW run"
+# The other half of case 15, and the half that keeps "no replay" from meaning
+# "no recovery". Removing the automatic retry must not remove the operator's way
+# back in — it moves it to where the plan puts it: a separate invocation, through
+# the ordinary admission path, with its own run identity. The sandbox from case
+# 15 is reused deliberately — $D15C and $R15C_FIRST were captured there — so this
+# starts from exactly the repository the stopped run left behind.
+run_dispatch "$D15C" retry-task --actor-cmd "$NO_REPLAY"
+expect_rc 0 "$RC" "the explicitly started second run completes the hop" "$OUT"
+launches15c="$(wc -l <"$D15C.launches" 2>/dev/null | tr -d ' ')"
+[ "$launches15c" = "2" ] && ok "two launches in total — one per run, never two in one run" \
+                         || bad "two launches in total — one per run, never two in one run" "launches=$launches15c"
+[ "$(res_count "$D15C/runs")" = "2" ] \
+  && ok "and two terminal results: the stop and the recovery are separate runs" \
+  || bad "and two terminal results: the stop and the recovery are separate runs" "count=$(res_count "$D15C/runs")"
+R15C_SECOND=''
+for f in "$D15C/runs"/*.result; do
+  [ "$(res_field "$f" run)" = "$R15C_FIRST" ] || R15C_SECOND="$f"
+done
+{ [ -n "$R15C_SECOND" ] && [ -n "$R15C_FIRST" ] \
+  && [ "$(res_field "$R15C_SECOND" run)" != "$R15C_FIRST" ]; } \
+  && ok "the recovery carries a distinct run identity — not a replay of the failed request" \
+  || bad "the recovery carries a distinct run identity — not a replay of the failed request" \
+         "first=${R15C_FIRST:-<none>} second=$(res_field "${R15C_SECOND:-/dev/null}" run)"
+grep -q '^turn: operator$' "$D15C/logs/work-loop/retry-task.md" \
+  && ok "and it moved the turn, continuing from the state the stopped run left" \
+  || bad "and it moved the turn, continuing from the state the stopped run left"
 
 # ================================================================= case 16
 # Cluster 3. Foreign work that was ALREADY in the working tree. The before/after
@@ -1699,7 +2244,14 @@ Unit 1 pro
 EOF
 git -C "$d" add logs/work-loop/partial-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: partial-task" >/dev/null 2>&1
-run_dispatch "$d" partial-task
+# --deadline 300 IS NOT WHAT THIS CASE IS ABOUT, and it is required anyway: this
+# is a live run (no --actor-cmd) at the default hop ceiling of 4, so it is a live
+# multi-hop invocation and case 28e's requirement binds it. 300s against
+# run_dispatch's --timeout 20 clamps nothing, so the behaviour under test is
+# unchanged — the flag is here to satisfy the new usage gate, not to bound
+# anything. The same one-line addition appears at every other live multi-hop call
+# site in this suite, for the same reason.
+run_dispatch "$d" partial-task --deadline 300
 expect_rc 26 "$RC" "stops 26 on a turn: operator file that is neither shape" "$OUT"
 printf '%s' "$OUT" | grep -q 'CLOSED' \
   && bad "a malformed record is not announced as closed" "it printed CLOSED for a partial file" \
@@ -1708,6 +2260,56 @@ printf '%s' "$OUT" | grep -q 'Recoverable next action' \
   && ok "the stop names a recoverable next action" || bad "the stop names a recoverable next action" "$OUT"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched on the malformed terminal record" \
                           || bad "no actor was launched on the malformed terminal record" "calls=$(calls "$d")"
+# THE DURABLE RESULT for MALFORMED_TERMINAL, on the representative of the four.
+# Code 26 is the validator's BAD_BODY landing on this dispatcher's "neither shape"
+# code, and it is raised INSIDE validate_state — the same funnel as codes 13, 14
+# and the initial 15, below the run id and both leases and above the ownership
+# check. So it is an admitted-run terminal the plan requires to finalize exactly
+# one truthful record, and assert_state_terminal's pre-hop contract is its contract
+# unchanged: nothing was launched, no state hash was taken, the validator returned
+# no classification to carry, and the ownership check never ran.
+RID22="$(run_id_of "$OUT")"
+[ -n "$RID22" ] && ok "  and the malformed-terminal run announced a run id" \
+                || bad "  and the malformed-terminal run announced a run id" "$OUT"
+assert_state_terminal "  code 26" "$d/runs" "$d/runs/$RID22.result" MALFORMED_TERMINAL 26
+[ "$(res_field "$d/runs/$RID22.result" state_file)" = "$(cd "$d" && pwd -P)/logs/work-loop/partial-task.md" ] \
+  && ok "  code 26 — and the record names the half-written file the operator must repair" \
+  || bad "  code 26 — and the record names the half-written file the operator must repair" \
+         "got: $(res_field "$d/runs/$RID22.result" state_file)"
+
+# THE SIBLINGS BELOW ARE CONVERGENCE CONTROLS, NOT FOUR COPIES OF THE BLOCK ABOVE.
+# All four malformations are different fixtures and the same terminal: each is a
+# distinct validator BAD_BODY verdict, and the dispatcher has exactly ONE place
+# that turns that verdict into an exit — so a full record block on each would be
+# the same eighteen assertions about one branch, four times over.
+#
+# The convergence is ASSERTED rather than asserted-in-prose, in two halves, and
+# both are needed. This half pins the branch count: a second `die 26` site would
+# mean the siblings could stop somewhere the representative never proves. The
+# per-sibling half below pins that each fixture really reaches it.
+# NOT ANCHORED AT THE LINE START, and the anchor is what a first cut of this got
+# wrong: the code-26 site sits inside a `case` arm, so the line begins `16) die 26`
+# and an anchored pattern counted zero producers — a control that reports "the
+# branch has moved" about a branch that has not.
+DIE26_HITS="$(grep -cE '(^|[^[:alnum:]_])die(_hop)? 26 ' "$DISPATCH_BIN" 2>/dev/null || printf '0')"
+[ "$DIE26_HITS" = "1" ] \
+  && ok "  code 26 — the dispatcher has exactly one producer for this terminal, so the siblings converge on the block above" \
+  || bad "  code 26 — the dispatcher has exactly one producer for this terminal" \
+         "found $DIE26_HITS call sites; a representative no longer answers for the siblings"
+
+# Two assertions per sibling: it finalized a record at all, and that record carries
+# the SAME pair. A sibling that reached some other terminal fails here rather than
+# passing on its exit code alone.
+assert_26_sibling() { # label runs-dir result-path
+  local lbl="$1" runs="$2" r="$3"
+  [ "$(res_count "$runs")" = "1" ] \
+    && ok "$lbl — finalized exactly one result" \
+    || bad "$lbl — finalized exactly one result" "found $(res_count "$runs")"
+  [ "$(res_field "$r" outcome)/$(res_field "$r" code)" = "MALFORMED_TERMINAL/26" ] \
+    && ok "$lbl — converges on the same outcome/code pair as the representative" \
+    || bad "$lbl — converges on the same outcome/code pair as the representative" \
+           "got: $(res_field "$r" outcome)/$(res_field "$r" code)"
+}
 
 # A closing record whose four headings are present but joined by a FIFTH surviving
 # section is also not a closing record — core § 4 says nothing else survives.
@@ -1736,8 +2338,9 @@ This active field should not have survived the reduction.
 EOF
 git -C "$d" add logs/work-loop/extra-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: extra-task" >/dev/null 2>&1
-run_dispatch "$d" extra-task
+run_dispatch "$d" extra-task --deadline 300
 expect_rc 26 "$RC" "stops 26 when an active field survived the reduction" "$OUT"
+assert_26_sibling "  code 26 sibling (surviving active field)" "$d/runs" "$d/runs/$(run_id_of "$OUT").result"
 
 # The four headings present with nothing else, but SHUFFLED. Core § 4 names the
 # closing record as an exact shape; "the right sections in some order" is a
@@ -1764,8 +2367,9 @@ None.
 EOF
 git -C "$d" add logs/work-loop/shuffled-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: shuffled-task" >/dev/null 2>&1
-run_dispatch "$d" shuffled-task
+run_dispatch "$d" shuffled-task --deadline 300
 expect_rc 26 "$RC" "stops 26 when the four headings are out of core § 4 order" "$OUT"
+assert_26_sibling "  code 26 sibling (out of order)" "$d/runs" "$d/runs/$(run_id_of "$OUT").result"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched on the out-of-order record" \
                           || bad "no actor was launched on the out-of-order record" "calls=$(calls "$d")"
 
@@ -1796,8 +2400,9 @@ None.
 EOF
 git -C "$d" add logs/work-loop/dup-task.md >/dev/null 2>&1
 git -C "$d" commit -qm "fixture: dup-task" >/dev/null 2>&1
-run_dispatch "$d" dup-task
+run_dispatch "$d" dup-task --deadline 300
 expect_rc 26 "$RC" "stops 26 when a closing section appears twice" "$OUT"
+assert_26_sibling "  code 26 sibling (duplicated section)" "$d/runs" "$d/runs/$(run_id_of "$OUT").result"
 [ "$(calls "$d")" = "0" ] && ok "no actor was launched on the duplicated-section record" \
                           || bad "no actor was launched on the duplicated-section record" "calls=$(calls "$d")"
 
@@ -2875,6 +3480,682 @@ fi
 
 fi   # python3 available
 
+# ================================================================ case 27r
+#
+# THE INTERRUPTION TERMINAL'S EVIDENCE (Unit 23). Cases 27–27q above prove the
+# signal path STOPS things: the actor dies, its descendants die, the exit is 28,
+# an unverified teardown pins. None of them asks the question this one does —
+# whether the run left behind anything a later reader can point at.
+#
+# Before this unit it did not. on_signal() reported on screen, released the lease
+# and exited 28 with no run-bound terminal result, which is the same
+# unproven-ending hole units 8, 11 and 12 closed at the operator, funnel and
+# dry-run seams. This is the launched-actor half of the remaining one; a signal
+# arriving BEFORE an actor was forked is deliberately still on the old path and
+# is asserted as such in 27r-deferred below, so this case cannot be read as
+# "every interruption is now covered".
+#
+# THE ACTOR IS SIMULATED, so model_request_started must stay `no`. That is not
+# incidental: it is the field a supervised-use claim rests on, and a terminal
+# that started reporting `yes` because a fixture hung would be the false claim
+# the whole change set exists to remove.
+# WAITS ONLY. The dispatcher is backgrounded by the CALLER, in the main shell,
+# because `wait` can only reap its own children: backgrounding it inside a
+# `$(...)` helper put the job in a subshell and every `wait` returned 127, which
+# reads as an exit code the dispatcher never produced.
+sig27_actor_pid() { # root -> pid of the hung simulated actor, once it exists
+  local root="$1" _
+  for _ in $(seq 1 40); do [ -f "$root/actor.pid" ] && break; sleep 0.5; done
+  sleep 1
+  cat "$root/actor.pid" 2>/dev/null
+}
+
+echo
+echo "Case 27r — an interruption AFTER a launched actor publishes and consumes one trusted result BEFORE release"
+d="$(new_sandbox)"; state_file "$d" "sig-evidence-task" "claude"
+R27R="$SANDBOX_ROOT/sig27r"; mkdir -p "$R27R"
+SIG27R_ACTOR='echo $$ > "'"$R27R"'/actor.pid"; sleep 300'
+bash "$DISPATCH_BIN" --checkout "$d" --task sig-evidence-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$SIG27R_ACTOR" >"$R27R/out" 2>&1 &
+D27R=$!
+A27R="$(sig27_actor_pid "$R27R")"
+LK27R="$(task_lock_for "$d" sig-evidence-task)"
+if [ -z "$A27R" ]; then
+  bad "27r — the simulated actor started" "no actor pid file; case 27r is inconclusive"
+else
+  ok "27r — the simulated actor started (pid $A27R)"
+  kill -TERM "$D27R" 2>/dev/null
+  wait "$D27R" 2>/dev/null; RC27R=$?
+  OUT27R="$(cat "$R27R/out")"
+  expect_rc 28 "$RC27R" "27r — still exits 28 INTERRUPTED, unchanged" "$OUT27R"
+  ROOT27R="$(cd "$d/runs" && pwd -P)"
+  RID27R="$(run_id_of "$OUT27R")"
+  RES27R="$ROOT27R/$RID27R.result"
+  # THE RED THIS UNIT EXISTS TO TURN: before the edit there is no result at all.
+  if [ "$(res_count "$ROOT27R")" = "1" ] && [ "$(part_count "$ROOT27R")" = "0" ]; then
+    ok "27r — exactly one finalized result, no partial left behind"
+  else
+    bad "27r — exactly one finalized result, no partial left behind" \
+        "results=$(res_count "$ROOT27R") partials=$(part_count "$ROOT27R")"
+  fi
+  for pair in "outcome:INTERRUPTED" "code:28" "stage:post-hop" "actor_launched:yes" \
+              "model_request_started:no" "task:sig-evidence-task"; do
+    k27="${pair%%:*}"; w27="${pair#*:}"
+    if [ "$(res_field "$RES27R" "$k27")" = "$w27" ]; then
+      ok "27r — the record carries $k27=$w27"
+    else
+      bad "27r — the record carries $k27=$w27" "got: $(res_field "$RES27R" "$k27")"
+    fi
+  done
+  [ "$(tail -1 "$RES27R" 2>/dev/null)" = "result_complete=yes" ] \
+    && ok "27r — the record ends with its completion sentinel" \
+    || bad "27r — the record ends with its completion sentinel" "last: $(tail -1 "$RES27R" 2>/dev/null)"
+  # CONSUMPTION IS OBSERVED BY ITS ABSENCE OF REFUSAL. Every consumer refusal
+  # leaves through die_terminal_untrusted, which exits 38 and pins; an exit of 28
+  # with the promised artifact present and no scratch file left is the accepted
+  # gate having run and returned. The scratch check is what separates "consumed"
+  # from "never called".
+  ls "$ROOT27R"/*.consume >/dev/null 2>&1 \
+    && bad "27r — the consumer left no scratch file behind" "$(ls "$ROOT27R"/*.consume 2>&1 | tr '\n' ' ')" \
+    || ok "27r — the consumer left no scratch file behind"
+  # MATCHED ON THE RUN ID, not on the full path. The dispatcher prints
+  # "$LOG_DIR/$RUN_ID.result" from the --log-dir argument exactly as passed, while
+  # this harness canonicalizes with `pwd -P`; on macOS those are the same file
+  # spelled two ways (/var/... and /private/var/...). Asserting the literal string
+  # would fail on the spelling and prove nothing about the behaviour. What matters
+  # is that the operator is pointed at THIS run's result.
+  printf '%s\n' "$OUT27R" | grep -q "  terminal result: .*/$RID27R\.result$" \
+    && ok "27r — the operator is told where the evidence is" \
+    || bad "27r — the operator is told where the evidence is" "$OUT27R"
+  # RELEASED ONLY AFTER CONSUMPTION. Teardown was clean here, so the lease must
+  # be gone — and it may only be gone because the two lines above returned.
+  [ -d "$LK27R" ] \
+    && bad "27r — a clean teardown releases the lease after consumption" "$LK27R still held" \
+    || ok "27r — a clean teardown releases the lease after consumption"
+  # UNCHANGED BEHAVIOUR, asserted rather than assumed: the wording and the
+  # no-retry promise are what cases 27–27q rely on.
+  printf '%s\n' "$OUT27R" | grep -q "STOP \[28\]" \
+    && ok "27r — the interruption wording is unchanged" \
+    || bad "27r — the interruption wording is unchanged" "$OUT27R"
+  printf '%s\n' "$OUT27R" | grep -q "Nothing is retried" \
+    && ok "27r — the no-retry promise is unchanged" \
+    || bad "27r — the no-retry promise is unchanged" "$OUT27R"
+  kill -KILL "$A27R" 2>/dev/null
+fi
+
+# ================================================================ case 27u
+#
+# THE PRE-LAUNCH HALF OF THE SAME TERMINAL (Unit 25). This case was 27r-deferred:
+# it asserted that an interruption arriving before any fork still exited 28 with
+# NO result, and that assertion was honest for Unit 23's scope. It was also the
+# measurement that showed the boundary was drawn at the wrong fact. By the time
+# the signal lands here the run has taken BOTH leases, claimed its RUN_ID and
+# opened its run log — it has already changed the shared world — and it was
+# exiting 28 having published nothing a later reader could point at.
+#
+# THE FIXTURE IS UNCHANGED FROM THE DEFERRAL, deliberately: same slow ownership
+# helper, same 3-second signal, same window. Only the expectation moved, so the
+# red this turned is the exact behaviour the deferral recorded.
+#
+# THE SIGNAL IS DELIVERED TO A DISPATCHER HELD BEFORE ITS FIRST LAUNCH by a slow
+# ownership helper, which is the one seam that can be stalled from outside
+# without touching the signal path itself. A busy git dir is not needed and would
+# not model this: --actor-cmd is never reached, so the run stops pre-hop.
+#
+# TWO FOREIGN PATHS ARE PLANTED ON PURPOSE, and they are what makes the hoist
+# fail-capable rather than merely stated. finalize_terminal_result() counts them
+# through foreign_worktree(), which — before this unit — was defined BELOW the
+# block that raises RUN_ID. A record published from this window against that
+# ordering would report `worktree_foreign_paths=0`: not an absent field but a
+# positive, plausible, false claim that the working tree was clean, written by a
+# function that did not exist. Asserting the count against an independently
+# computed ground truth is what turns that into a failure instead of a pass.
+#
+# THEY DO NOT DISTURB THE RUN. The pre-hop foreign-path guard that refuses to
+# launch on a dirty tree sits BELOW the ownership check, so the signal lands
+# first and the guard is never reached.
+echo
+echo "Case 27u — an interruption AFTER run evidence exists but BEFORE any fork publishes one trusted result"
+d="$(new_sandbox)"; state_file "$d" "sig-prelaunch-task" "claude"
+R27U="$SANDBOX_ROOT/sig27u"; mkdir -p "$R27U"
+printf 'planted\n' >"$d/foreign-a.txt"
+printf 'planted\n' >"$d/foreign-b.txt"
+# The ground truth, computed by this harness from git rather than from the record
+# under test: porcelain entries whose path is outside the three allowlist
+# prefixes the dispatcher was given (--allow-path defaults plus the run dir it
+# adds for --log-dir "$d/runs").
+foreign_truth() { # checkout -> count of out-of-allowlist porcelain entries
+  git -C "$1" status --porcelain 2>/dev/null |
+    while IFS= read -r l; do
+      p="${l:3}"; p="${p%\"}"; p="${p#\"}"
+      case "$p" in
+        runs/*|logs/work-loop/*|plans/work-loop-v2-v0.2/handoff-automation-spike/*) ;;
+        *) printf 'x\n' ;;
+      esac
+    done | grep -c . || true
+}
+cat >"$d/logs/scripts/work-loop-owner.sh" <<'SLOWOWN'
+#!/bin/bash
+sleep 30
+exit 0
+SLOWOWN
+chmod +x "$d/logs/scripts/work-loop-owner.sh"
+# COMPUTED AFTER THE STALL IS INSTALLED, and that ordering is not cosmetic:
+# overwriting the tracked ownership helper is itself an out-of-allowlist working
+# tree change, so a ground truth taken before it would be short by one and would
+# disagree with a record that is right. The run directory is excluded because the
+# dispatcher adds it to its own allowlist for --log-dir inside the checkout.
+FG27U="$(foreign_truth "$d")"
+CO27U="$(cd "$d" && pwd -P)"
+LK27U="$(task_lock_for "$d" sig-prelaunch-task)"
+CL27U="$(checkout_lock_for "$d")"
+bash "$DISPATCH_BIN" --checkout "$d" --task sig-prelaunch-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$NOOP" >"$R27U/out" 2>&1 &
+D27U=$!
+sleep 3
+# BOTH LEASES ARE OBSERVED HELD AT THE MOMENT OF THE SIGNAL, before it is sent.
+# This is the fact that makes the window worth an artifact at all: the run is not
+# merely "started", it is holding the two things that keep every other dispatcher
+# out. Read here rather than inferred from the record afterwards.
+[ -d "$LK27U" ] && [ -d "$CL27U" ] \
+  && ok "27u — both leases are held at the moment the signal is delivered" \
+  || bad "27u — both leases are held at the moment the signal is delivered" \
+         "task=$([ -d "$LK27U" ] && echo held || echo absent) checkout=$([ -d "$CL27U" ] && echo held || echo absent)"
+kill -TERM "$D27U" 2>/dev/null
+wait "$D27U" 2>/dev/null; RC27U=$?
+OUT27U="$(cat "$R27U/out")"
+expect_rc 28 "$RC27U" "27u — a pre-launch interruption still exits 28, unchanged" "$OUT27U"
+ROOT27U="$(cd "$d/runs" && pwd -P)"
+RID27U="$(run_id_of "$OUT27U")"
+RES27U="$ROOT27U/$RID27U.result"
+# THE RED THIS UNIT EXISTS TO TURN: before the edit this window published nothing.
+if [ "$(res_count "$ROOT27U")" = "1" ] && [ "$(part_count "$ROOT27U")" = "0" ]; then
+  ok "27u — exactly one finalized result, no partial left behind"
+else
+  bad "27u — exactly one finalized result, no partial left behind" \
+      "results=$(res_count "$ROOT27U") partials=$(part_count "$ROOT27U")"
+fi
+# NOTHING WAS LAUNCHED, asserted on three independent surfaces: the record's own
+# tuple, the teardown line the handler prints only when a pgid exists, and the
+# actor's own call log. A record claiming pre-hop while an actor had in fact run
+# would be the exact false claim this field exists to prevent.
+for pair in "outcome:INTERRUPTED" "code:28" "stage:pre-hop" "actor_launched:no" \
+            "model_request_started:no" "actor:none" "hop:0" "mode:simulated" \
+            "task:sig-prelaunch-task"; do
+  k27="${pair%%:*}"; w27="${pair#*:}"
+  if [ "$(res_field "$RES27U" "$k27")" = "$w27" ]; then
+    ok "27u — the record carries $k27=$w27"
+  else
+    bad "27u — the record carries $k27=$w27" "got: $(res_field "$RES27U" "$k27")"
+  fi
+done
+printf '%s\n' "$OUT27U" | grep -q 'terminating actor descendant tree' \
+  && bad "27u — no actor descendant tree was torn down" "$OUT27U" \
+  || ok "27u — no actor descendant tree was torn down"
+[ -f "$d.calls" ] \
+  && bad "27u — the simulated actor was never invoked" "$(cat "$d.calls")" \
+  || ok "27u — the simulated actor was never invoked"
+# TRUST IS ASSERTED AGAINST FIXTURE FACTS, not read back off the record. Each
+# expectation below is a value this harness knows independently — the sandbox
+# path, the run id parsed from the dispatcher's own first line, the state file it
+# was pointed at, the declaration the sandbox does NOT carry, and the two lease
+# directories this harness computed before the run started.
+# run_log is expected in the CANONICAL form, like checkout and state_file beside
+# it. The dispatcher used to report this one path in whatever form the operator
+# typed while reporting the promised result path canonically; case 69 is why
+# there is now one evidence-directory value and it is the canonical one. On a
+# host where the sandbox root is reached through a symlink — macOS /var, most
+# obviously — $d and $CO27U differ, and that difference is exactly what this
+# expectation used to encode.
+for pair in "checkout:$CO27U" "run:$RID27U" "run_log:$CO27U/runs/$RID27U.log" \
+            "state_file:$CO27U/logs/work-loop/sig-prelaunch-task.md" \
+            "owner_declared:none" "owner_check:unchecked" \
+            "lease_task_dir:$LK27U" "lease_checkout_dir:$CL27U" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run" \
+            "turn_at_terminal:claude" "state_class:ACTIVE_CLAUDE"; do
+  k27="${pair%%:*}"; w27="${pair#*:}"
+  if [ "$(res_field "$RES27U" "$k27")" = "$w27" ]; then
+    ok "27u — $k27 matches the fixture fact"
+  else
+    bad "27u — $k27 matches the fixture fact" "want: $w27 — got: $(res_field "$RES27U" "$k27")"
+  fi
+done
+# THE ANTI-FABRICATION ASSERTION. A `0` here is what a record written against the
+# un-hoisted ordering reports, and it is indistinguishable from a clean tree
+# unless the expected value is known independently and is NOT zero.
+if [ "$FG27U" -gt 0 ] 2>/dev/null && [ "$(res_field "$RES27U" worktree_foreign_paths)" = "$FG27U" ]; then
+  ok "27u — worktree_foreign_paths=$FG27U was counted, not fabricated"
+else
+  bad "27u — worktree_foreign_paths was counted, not fabricated" \
+      "git ground truth=$FG27U — record says $(res_field "$RES27U" worktree_foreign_paths)"
+fi
+# THE PRE-HOP FIELDS THAT MUST BE EXPLICITLY UNAVAILABLE RATHER THAN GUESSED.
+# There is no launch baseline, so there is no delta to report; no --deadline was
+# given, so there is no remainder. Both are bounded tokens, and neither is empty.
+for pair in "changed_paths_since_launch:unavailable" "deadline_seconds:none" \
+            "deadline_remaining_seconds:none" "permission_mode_requested:none"; do
+  k27="${pair%%:*}"; w27="${pair#*:}"
+  if [ "$(res_field "$RES27U" "$k27")" = "$w27" ]; then
+    ok "27u — $k27 is the bounded token $w27, not a guess"
+  else
+    bad "27u — $k27 is the bounded token $w27, not a guess" "got: $(res_field "$RES27U" "$k27")"
+  fi
+done
+[ "$(tail -1 "$RES27U" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "27u — the record ends with its completion sentinel" \
+  || bad "27u — the record ends with its completion sentinel" "last: $(tail -1 "$RES27U" 2>/dev/null)"
+# CONSUMED, not merely written — the same observation 27r makes, for the same
+# reason: every consumer refusal leaves through die_terminal_untrusted with exit
+# 38, so an exit of 28 with the promised artifact present and no scratch file
+# left is the accepted gate having run and returned.
+ls "$ROOT27U"/*.consume >/dev/null 2>&1 \
+  && bad "27u — the consumer left no scratch file behind" "$(ls "$ROOT27U"/*.consume 2>&1 | tr '\n' ' ')" \
+  || ok "27u — the consumer left no scratch file behind"
+printf '%s\n' "$OUT27U" | grep -q "  terminal result: .*/$RID27U\.result$" \
+  && ok "27u — the operator is told where the evidence is" \
+  || bad "27u — the operator is told where the evidence is" "$OUT27U"
+# RELEASED ONLY AFTER CONSUMPTION. Nothing was launched, so nothing could pin;
+# the leases may only be gone because both integration lines returned.
+if [ -d "$LK27U" ] || [ -d "$CL27U" ]; then
+  bad "27u — a clean pre-launch stop releases both leases after consumption" \
+      "task=$([ -d "$LK27U" ] && echo held || echo gone) checkout=$([ -d "$CL27U" ] && echo held || echo gone)"
+else
+  ok "27u — a clean pre-launch stop releases both leases after consumption"
+fi
+# THE WORDING IS TRUE OF WHAT HAPPENED. The launched-actor message claims a hop
+# was interrupted and may have left a partial effect; printed here it sends the
+# operator to reconcile a hop against effects that cannot exist, because no actor
+# was ever forked. The no-retry promise is unchanged in both wordings.
+out_has  'before the first hop launched' "$OUT27U" "27u — the stop names the pre-launch window"
+out_has  'no actor was ever launched by this run' "$OUT27U" "27u — the message says nothing was launched"
+out_lacks 'the actor was killed mid-hop' "$OUT27U" "27u — it does not claim a hop was interrupted"
+out_has  'Nothing is retried' "$OUT27U" "27u — the no-retry promise is unchanged"
+out_has  'STOP [28]' "$OUT27U" "27u — the interruption wording is unchanged"
+
+# ================================================================ case 27s
+#
+# THE FAIL-CLOSED HALF. A publication that cannot be written must not buy a lease
+# release with an ordinary exit 28 — the same rule units 8 and 11 set at the other
+# seams. The evidence directory is made unwritable while the actor hangs, so the
+# finalizer's atomic write fails on a real failed write rather than on a stub.
+echo
+echo "Case 27s — an interruption whose result CANNOT be published exits 38 and keeps the lease"
+d="$(new_sandbox)"; state_file "$d" "sig-unprovable-task" "claude"
+R27S="$SANDBOX_ROOT/sig27s"; mkdir -p "$R27S"
+SIG27S_ACTOR='echo $$ > "'"$R27S"'/actor.pid"; sleep 300'
+bash "$DISPATCH_BIN" --checkout "$d" --task sig-unprovable-task --log-dir "$d/runs" \
+  --timeout 300 --actor-cmd "$SIG27S_ACTOR" >"$R27S/out" 2>&1 &
+D27S=$!
+A27S="$(sig27_actor_pid "$R27S")"
+LK27S="$(task_lock_for "$d" sig-unprovable-task)"
+if [ -z "$A27S" ]; then
+  bad "27s — the simulated actor started" "no actor pid file; case 27s is inconclusive"
+else
+  ok "27s — the simulated actor started (pid $A27S)"
+  chmod a-w "$d/runs"
+  kill -TERM "$D27S" 2>/dev/null
+  wait "$D27S" 2>/dev/null; RC27S=$?
+  OUT27S="$(cat "$R27S/out")"
+  chmod u+w "$d/runs" 2>/dev/null
+  expect_rc 38 "$RC27S" "27s — an unprovable interruption exits 38, NOT an ordinary 28" "$OUT27S"
+  [ -d "$LK27S" ] \
+    && ok "27s — the lease is retained, so a second dispatcher is refused" \
+    || bad "27s — the lease is retained, so a second dispatcher is refused" "$LK27S was released"
+  printf '%s\n' "$OUT27S" | grep -q 'must not report that it ended' \
+    && ok "27s — the operator is told the ending could not be proved" \
+    || bad "27s — the operator is told the ending could not be proved" "$OUT27S"
+  kill -KILL "$A27S" 2>/dev/null
+fi
+
+# ================================================================ case 27t
+#
+# THE MUTATION CONTROL (M29). Removes ONLY the two new integration lines from a
+# throwaway copy of the dispatcher and re-runs 27r's fixture. If the case still
+# passed without them, it would be proving something other than the integration.
+#
+# The selector matches each production line whole and FAILS CLOSED: absence,
+# duplication, a mutant that does not differ, or one that does not parse all stop
+# the control rather than letting it report a pass it did not earn. Both lines go
+# together because they are one seam — deleting only the finalization would leave
+# the consumer gating a promised artifact that was never written, which exits 38
+# for a different reason and would not isolate the publication.
+echo
+echo "Case 27t — M29: with the interruption integration removed, 27r's evidence disappears and the exit stays 28"
+M29_SRC="$SANDBOX_ROOT/dispatch-M29.sh"
+M29_FIN='# interruption terminal finalization'
+M29_CON='# interruption terminal consumption'
+# `grep -c` prints its count AND exits 1 on zero matches, so a `|| printf 0`
+# fallback would emit the count twice and the guard below would compare against
+# "0\n0". head -1 takes grep's own answer, which is already correct at zero.
+M29_HF="$(grep -cF "$M29_FIN" "$DISPATCH_BIN" 2>/dev/null | head -1)"
+M29_HC="$(grep -cF "$M29_CON" "$DISPATCH_BIN" 2>/dev/null | head -1)"
+if [ "$M29_HF" = "1" ] && [ "$M29_HC" = "1" ]; then
+  grep -vF "$M29_FIN" "$DISPATCH_BIN" | grep -vF "$M29_CON" >"$M29_SRC"
+  M29_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$M29_SRC" || M29_DIFFERS=yes
+  M29_PARSES=no; bash -n "$M29_SRC" 2>/dev/null && M29_PARSES=yes
+else
+  M29_DIFFERS=no; M29_PARSES=no
+fi
+if [ "$M29_HF" = "1" ] && [ "$M29_HC" = "1" ] && [ "$M29_DIFFERS" = yes ] && [ "$M29_PARSES" = yes ]; then
+  ok "27t — M29 matched each integration line exactly once, differs, and still parses"
+  d="$(new_sandbox)"; state_file "$d" "sig-mutant-task" "claude"
+  R27T="$SANDBOX_ROOT/sig27t"; mkdir -p "$R27T"
+  M29_ACTOR='echo $$ > "'"$R27T"'/actor.pid"; sleep 300'
+  bash "$M29_SRC" --checkout "$d" --task sig-mutant-task --log-dir "$d/runs" \
+    --timeout 300 --actor-cmd "$M29_ACTOR" >"$R27T/out" 2>&1 &
+  D27T=$!
+  for _ in $(seq 1 40); do [ -f "$R27T/actor.pid" ] && break; sleep 0.5; done
+  sleep 1
+  A27T="$(cat "$R27T/actor.pid" 2>/dev/null)"
+  if [ -z "$A27T" ]; then
+    bad "27t — the mutant launched its actor" "no actor pid file; M29 is inconclusive"
+  else
+    kill -TERM "$D27T" 2>/dev/null
+    wait "$D27T" 2>/dev/null; RC27T=$?
+    OUT27T="$(cat "$R27T/out")"
+    expect_rc 28 "$RC27T" "27t — the mutant still reaches exit 28, so the fixture is not merely broken" "$OUT27T"
+    if [ "$(res_count "$d/runs" 2>/dev/null)" = "0" ]; then
+      ok "27t — with the integration removed, NO terminal result is published"
+    else
+      bad "27t — with the integration removed, NO terminal result is published" \
+          "results=$(res_count "$d/runs") — the control cannot distinguish the seam"
+    fi
+    [ -d "$(task_lock_for "$d" sig-mutant-task)" ] \
+      && bad "27t — the mutant released the lease on an unproven ending" "lease retained" \
+      || ok "27t — the mutant released the lease on an unproven ending, which is the hole 27r closes"
+    kill -KILL "$A27T" 2>/dev/null
+  fi
+else
+  bad "27t — M29 matched each integration line exactly once, differs, and still parses" \
+      "finalization matches=$M29_HF consumption matches=$M29_HC differs=$M29_DIFFERS parses=$M29_PARSES — the control cannot run"
+fi
+
+# ================================================================ case 27v
+#
+# THE MUTATION CONTROL FOR THE WIDENING (M31). Case 27t deletes both integration
+# lines and proves the seam exists at all. It cannot prove what THIS unit added,
+# because both windows now travel through those same two lines: deleting them
+# takes 27r's evidence away as well, and a control that removes the launched-actor
+# path too is not isolating the pre-launch one.
+#
+# SO THIS MUTANT REVERTS RATHER THAN DELETES. Each guard is rewritten from the
+# run-evidence condition back to Unit 23's fork condition — the exact edit this
+# unit made, and nothing else. The integration lines stay, the finalizer and the
+# consumer stay, and the launched-actor path is left fully present. If 27u still
+# passed against that mutant, it would be proving something other than the
+# widening.
+#
+# BOTH HALVES ARE MEASURED, on the same mutant: the pre-launch fixture must lose
+# its result and fall back to a bare exit 28, and 27r's launched fixture must
+# still publish exactly one. A mutant that broke both would satisfy the first
+# assertion while telling us nothing.
+#
+# LITERAL, NOT REGEX. The guard text is full of `[`, `$`, `{` and `}`; awk's
+# index/substr replaces the exact bytes with no pattern interpretation, and the
+# count guard below fails closed on absence, on a single match, or on three.
+echo
+echo "Case 27v — M31: with the guard reverted to the fork fact, 27u's evidence disappears and 27r's remains"
+M31_SRC="$SANDBOX_ROOT/dispatch-M31.sh"
+M31_OLD='[ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] &&'
+M31_NEW='[ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] &&'
+M31_HITS="$(grep -cF "$M31_OLD" "$DISPATCH_BIN" 2>/dev/null | head -1)"
+if [ "$M31_HITS" = "2" ]; then
+  awk -v old="$M31_OLD" -v new="$M31_NEW" '
+    { i = index($0, old)
+      if (i > 0) $0 = substr($0, 1, i-1) new substr($0, i + length(old))
+      print }' "$DISPATCH_BIN" >"$M31_SRC"
+  M31_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$M31_SRC" || M31_DIFFERS=yes
+  M31_PARSES=no; bash -n "$M31_SRC" 2>/dev/null && M31_PARSES=yes
+  # The launched-actor path must survive the mutation, or the control is a
+  # deletion wearing a different name.
+  M31_KEPT=no
+  [ "$(grep -cF '# interruption terminal finalization' "$M31_SRC" | head -1)" = "1" ] &&
+    [ "$(grep -cF '# interruption terminal consumption' "$M31_SRC" | head -1)" = "1" ] && M31_KEPT=yes
+else
+  M31_DIFFERS=no; M31_PARSES=no; M31_KEPT=no
+fi
+if [ "$M31_HITS" = "2" ] && [ "$M31_DIFFERS" = yes ] && [ "$M31_PARSES" = yes ] && [ "$M31_KEPT" = yes ]; then
+  ok "27v — M31 matched the widened guard exactly twice, differs, still parses, and kept both integration lines"
+
+  # HALF ONE — the pre-launch window loses its evidence.
+  d="$(new_sandbox)"; state_file "$d" "sig-m31-pre-task" "claude"
+  R27V="$SANDBOX_ROOT/sig27v"; mkdir -p "$R27V"
+  cat >"$d/logs/scripts/work-loop-owner.sh" <<'SLOWM31'
+#!/bin/bash
+sleep 30
+exit 0
+SLOWM31
+  chmod +x "$d/logs/scripts/work-loop-owner.sh"
+  bash "$M31_SRC" --checkout "$d" --task sig-m31-pre-task --log-dir "$d/runs" \
+    --timeout 300 --actor-cmd "$NOOP" >"$R27V/out" 2>&1 &
+  D27V=$!
+  sleep 3
+  kill -TERM "$D27V" 2>/dev/null
+  wait "$D27V" 2>/dev/null; RC27V=$?
+  OUT27V="$(cat "$R27V/out")"
+  expect_rc 28 "$RC27V" "27v — the mutant still reaches exit 28, so the fixture is not merely broken" "$OUT27V"
+  if [ "$(res_count "$d/runs" 2>/dev/null)" = "0" ]; then
+    ok "27v — with the guard reverted, the pre-launch window publishes NO result"
+  else
+    bad "27v — with the guard reverted, the pre-launch window publishes NO result" \
+        "results=$(res_count "$d/runs") — the control cannot distinguish the widening"
+  fi
+
+  # HALF TWO — the launched-actor window keeps its evidence, on the same mutant.
+  d="$(new_sandbox)"; state_file "$d" "sig-m31-post-task" "claude"
+  R27W="$SANDBOX_ROOT/sig27w"; mkdir -p "$R27W"
+  M31_ACTOR='echo $$ > "'"$R27W"'/actor.pid"; sleep 300'
+  bash "$M31_SRC" --checkout "$d" --task sig-m31-post-task --log-dir "$d/runs" \
+    --timeout 300 --actor-cmd "$M31_ACTOR" >"$R27W/out" 2>&1 &
+  D27W=$!
+  A27W="$(sig27_actor_pid "$R27W")"
+  if [ -z "$A27W" ]; then
+    bad "27v — the mutant launched its actor" "no actor pid file; the second half is inconclusive"
+  else
+    kill -TERM "$D27W" 2>/dev/null
+    wait "$D27W" 2>/dev/null; RC27W=$?
+    if [ "$(res_count "$d/runs" 2>/dev/null)" = "1" ]; then
+      ok "27v — and the launched-actor window still publishes exactly one (the mutation is not a deletion)"
+    else
+      bad "27v — and the launched-actor window still publishes exactly one" \
+          "rc=$RC27W results=$(res_count "$d/runs") — M31 broke more than the widening"
+    fi
+    kill -KILL "$A27W" 2>/dev/null
+  fi
+else
+  bad "27v — M31 matched the widened guard exactly twice, differs, still parses, and kept both integration lines" \
+      "matches=$M31_HITS want 2; differs=$M31_DIFFERS parses=$M31_PARSES kept=$M31_KEPT — the control cannot run"
+fi
+
+# ================================================================ case 27w
+#
+# THE FOURTH AND LAST PRODUCTION CONSUMER (Unit 30). 27r and 27u proved this
+# terminal publishes and consumes the artifact it promised, in both windows;
+# nothing proved the artifact said what this run actually did. Measured on the
+# fixtures below before the edit: a record altered after successful finalization
+# to `outcome=COMPLETED` — the word for a task driven to its end, over a run a
+# signal stopped mid-hop — exited 28, was advertised as this run's terminal
+# result and released both leases after a clean teardown; so did one altered to
+# `code=22`. Path, structure and identity have nothing to object to; only meaning
+# does.
+#
+# SAME FORCING TECHNIQUE, SAME WINDOW as 56b, 58e, 60j and 62b: one altering line
+# injected after this seam's own finalization marker, between publication and
+# consumption. It is GUARDED on RESULT_FILE, unlike the other four, because
+# on_signal() also runs in windows where no record exists — an unguarded fixture
+# would act outside the window under test and stop being a control on it.
+#
+# THE LAUNCHED-ACTOR WINDOW IS WHERE THE RED IS TAKEN, because it is the one an
+# operator actually meets: a hop in flight, stopped by a signal. The pre-launch
+# window shares the identical expectation — code 28 has no branch in
+# result_outcome() — and 27u remains its green.
+echo
+echo "Case 27w — an interrupted record altered ONLY in outcome, or ONLY in code, is refused before release"
+MUT27W="$SANDBOX_ROOT/mutants27w"; mkdir -p "$MUT27W"
+
+mk_int_alter27() { # outfile sed-script [source] -> 0 when the fixture differs and parses
+  awk -v s="$2" '{print} /# interruption terminal finalization/ {
+    printf "  [ -n \"$RESULT_FILE\" ] && { sed %c%s%c \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\"; } # harness interruption alteration\n", 39, s, 39 }' \
+    "${3:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${3:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# One real launched-actor interruption against a forcing fixture, run the way 27r
+# runs its own: backgrounded by THIS shell so `wait` can reap it, actor pid file
+# polled, SIGTERM to the dispatcher. Returns the sandbox and the captured output
+# through globals rather than stdout, because the caller needs the sandbox to
+# inspect leases afterwards.
+int_run27w() { # fixture task -> sets V27W and O27W, or leaves V27W empty
+  local fx="$1" t="$2" dir pid apid
+  V27W=""; O27W=""; RC27W=0
+  dir="$(new_sandbox)"; state_file "$dir" "$t" claude
+  local scratch="$MUT27W/$t.d"; mkdir -p "$scratch"
+  bash "$fx" --checkout "$dir" --task "$t" --log-dir "$dir/runs" --timeout 300 \
+    --actor-cmd 'echo $$ > "'"$scratch"'/actor.pid"; sleep 300' >"$scratch/out" 2>&1 &
+  pid=$!
+  apid="$(sig27_actor_pid "$scratch")"
+  if [ -z "$apid" ]; then
+    kill -KILL "$pid" 2>/dev/null; wait "$pid" 2>/dev/null
+    return 1
+  fi
+  kill -TERM "$pid" 2>/dev/null
+  wait "$pid" 2>/dev/null; RC27W=$?
+  O27W="$(cat "$scratch/out")"
+  kill -KILL "$apid" 2>/dev/null
+  V27W="$dir"
+  return 0
+}
+
+# The full refusal contract for one forced interruption mismatch, asserted as
+# 58e, 60j and 62b assert theirs: exit 38, nothing advertised, the truthful
+# terminal named, both leases retained with the bounded token, next dispatcher
+# refused.
+expect_int_refusal27() { # fixture task expected-token label-prefix
+  local TL CL
+  if ! int_run27w "$1" "$2"; then
+    bad "$4 — the simulated actor started" "no actor pid file; the case is inconclusive"
+    return 0
+  fi
+  expect_rc 38 "$RC27W" "$4 — refused with exit 38, never 28" "$O27W"
+  out_lacks "  terminal result:" "$O27W" "$4 — the refused artifact is not advertised as this run's result"
+  # The dynamic label from Unit 23/25 still names the window this refusal fired
+  # in, and the shared exit's operator-terminal default stays absent.
+  out_has "reached the interruption terminal after a launched actor" "$O27W" \
+    "$4 — the refusal names the launched-actor interruption terminal it actually reached"
+  out_lacks "reached a real operator terminal" "$O27W" \
+    "$4 — the refusal claims no operator terminal"
+  # THE SAME TERMINAL-NEUTRAL SENTENCE (Unit 31), asserted over the consumer that
+  # makes the old wording plainly false: this run was ending at code 28, so
+  # "refusing to exit 0" describes an ending it was never going to have. 58e
+  # asserts the identical phrases over a code-0 consumer; one clause has to be
+  # true for both, which is why neither assertion may be code-specific.
+  out_has "did not pass the consumer gate" "$O27W" \
+    "$4 — the refusal says the promised artifact did not pass the consumer gate"
+  out_has "refused as this run's reported ending" "$O27W" \
+    "$4 — the refusal refuses the artifact as this run's reported ending"
+  out_lacks "failed this run's own consumer gate" "$O27W" \
+    "$4 — the refusal does not offer the gate as proof of the artifact's provenance"
+  out_lacks "refusing to exit 0" "$O27W" \
+    "$4 — the refusal assumes no exit-0 ending"
+  TL="$(task_lock_for "$V27W" "$2")"; CL="$(checkout_lock_for "$V27W")"
+  # NOT a finalization story and NOT a teardown story: the record published
+  # perfectly well (27s owns the publication failure) and the teardown was clean
+  # (27r owns that release). What failed here is what the record says.
+  if [ -d "$TL" ] && [ -d "$CL" ] &&
+     grep -q '^terminal result unprovable: ' "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$CL/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL/survivors" 2>/dev/null; then
+    ok "$4 — both leases retained, both pins carrying the bounded '$3' cause"
+  else
+    bad "$4 — both leases retained, both pins carrying the bounded '$3' cause" \
+        "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V27W" "$2" --dry-run
+  expect_rc 17 "$RC" "$4 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+if mk_int_alter27 "$MUT27W/outonly.sh" 's/^outcome=.*/outcome=COMPLETED/'; then
+  ok "27w — the outcome-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_int_refusal27 "$MUT27W/outonly.sh" sig-sem-out-task outcome-mismatch \
+    "27w — an interruption whose record claims COMPLETED"
+else
+  bad "27w — the outcome-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+if mk_int_alter27 "$MUT27W/codeonly.sh" 's/^code=.*/code=22/'; then
+  ok "27w — the code-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_int_refusal27 "$MUT27W/codeonly.sh" sig-sem-code-task code-mismatch \
+    "27w — an interruption whose record claims code 22"
+else
+  bad "27w — the code-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+# INDEPENDENCE, structurally, the same assertion 60j and 62c make for their own
+# seams: this call site must derive its expected symbol through the sole mapping
+# owner and state its expected code as a literal. A call site that passed a field
+# out of the record would compare it with itself, and the two refusals above
+# would go green on a forgery.
+CALL27W="$(grep -n '# interruption terminal consumption' "$DISPATCH_BIN" | grep -v ':[[:space:]]*#' | cut -d: -f2-)"
+if printf '%s\n' "$CALL27W" | grep -q 'result_outcome 28' &&
+   ! printf '%s\n' "$CALL27W" | grep -qE 'RESULT_FILE|TR_OUTCOME|TR_CODE|res_field|\.result'; then
+  ok "27w — the interruption seam derives its expected pair through result_outcome and reads nothing from the artifact"
+else
+  bad "27w — the interruption seam derives its expected pair through result_outcome and reads nothing from the artifact" \
+      "call site: $CALL27W"
+fi
+
+# ================================================================ case 27x
+echo
+echo "Case 27x — mutation control: remove ONLY the interruption expected pair and both mismatches release again"
+# M37 — the fourth in the M33/M34/M36 line. It strips exactly the two expectation
+# arguments from the interruption call, leaving that call, its DYNAMIC label, its
+# run-evidence eligibility guard, the path gate, the parse and the identity
+# boundary in place, AND leaving the operator, dry-run and carry-one pairs
+# untouched — which is what proves the four migrated seams are separately
+# fail-capable rather than one shared switch. Fails closed: unless the selector
+# matched exactly once and the mutant differs and parses, the control does not run.
+sed 's/ "$term_label" "$(result_outcome 28)" 28 # interruption terminal consumption/ "$term_label" # interruption terminal consumption/' \
+  "$DISPATCH_BIN" >"$MUT27W/m37.sh" 2>/dev/null
+M37_HITS="$(grep -c ' "\$term_label" "\$(result_outcome 28)" 28 # interruption terminal consumption' "$DISPATCH_BIN" 2>/dev/null | head -1)"
+M37_LEFT="$(grep -c ' "\$term_label" "\$(result_outcome 28)" 28 # interruption terminal consumption' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_KEPT="$(grep -c 'consume_terminal_result "\$term_label" # interruption terminal consumption' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_GUARD="$(grep -cF '[ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] &&' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_OP="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_DRY="$(grep -c ' "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_CARRY="$(grep -c ' "\$(result_outcome 0)" 0 # carry-one terminal consumption' "$MUT27W/m37.sh" 2>/dev/null | head -1)"
+M37_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT27W/m37.sh" || M37_DIFFERS=yes
+M37_PARSES=no; bash -n "$MUT27W/m37.sh" 2>/dev/null && M37_PARSES=yes
+if [ "$M37_HITS" = 1 ] && [ "$M37_LEFT" = 0 ] && [ "$M37_KEPT" = 1 ] && [ "$M37_GUARD" = 2 ] &&
+   [ "$M37_OP" = 1 ] && [ "$M37_DRY" = 1 ] && [ "$M37_CARRY" = 1 ] &&
+   [ "$M37_DIFFERS" = yes ] && [ "$M37_PARSES" = yes ]; then
+  ok "27x — M37 removed exactly the interruption pair, kept its labelled guarded consumer call and the other three pairs, differs, and parses"
+  for f27 in outcome:COMPLETED code:22; do
+    FLD27="${f27%%:*}"; VAL27="${f27##*:}"
+    if mk_int_alter27 "$MUT27W/m37-$FLD27.sh" "s/^$FLD27=.*/$FLD27=$VAL27/" "$MUT27W/m37.sh"; then
+      if int_run27w "$MUT27W/m37-$FLD27.sh" "sig-m37-$FLD27-task"; then
+        if [ "$RC27W" -eq 28 ] && [ ! -d "$(task_lock_for "$V27W" "sig-m37-$FLD27-task")" ] &&
+           [ ! -d "$(checkout_lock_for "$V27W")" ]; then
+          ok "27x — M37: without the expected pair the $FLD27-only mismatch exits 28 and releases (27w is fail-capable)"
+        else
+          bad "27x — M37: without the expected pair the $FLD27-only mismatch exits 28 and releases (27w is fail-capable)" \
+              "rc=$RC27W task-lease=$([ -d "$(task_lock_for "$V27W" "sig-m37-$FLD27-task")" ] && echo held || echo released)"
+        fi
+      else
+        bad "27x — M37: the $FLD27-only mutant launched its actor" "no actor pid file; the control is inconclusive"
+      fi
+    else
+      bad "27x — M37: the $FLD27-only fixture over the mutant differs and parses" \
+          "the injection matched nothing, or the fixture does not parse — the control cannot run"
+    fi
+  done
+else
+  bad "27x — M37 removed exactly the interruption pair, kept its labelled guarded consumer call and the other three pairs, differs, and parses" \
+      "matched=$M37_HITS left=$M37_LEFT kept=$M37_KEPT guards=$M37_GUARD operator=$M37_OP dry-run=$M37_DRY carry-one=$M37_CARRY differs=$M37_DIFFERS parses=$M37_PARSES — the control cannot run"
+fi
+
 # ================================================================= case 28
 echo
 echo "Case 28 — --deadline is a deadline, not a start gate"
@@ -2911,6 +4192,55 @@ printf '%s' "$OUT" | grep -q "THIS IS NOT COMPLETION" \
   && ok "refuses to be read as completion" || bad "refuses to be read as completion" "$OUT"
 printf '%s' "$OUT" | grep -qi "resumable\|re-run this dispatcher" \
   && ok "says the work is resumable" || bad "says the work is resumable" "$OUT"
+# THE DURABLE RESULT for the FIRST of the two budget shapes: the clock ran out
+# WHILE an actor was in flight and the actor was terminated. Everything asserted
+# here is a fact of that shape and not of the other one below — the actor is named
+# because it was still in flight at the stop, and the after-facts are `unavailable`
+# because the run died on the 124 branch before after_hash and after_head were
+# ever taken. Two shapes, one exit code, and neither record proves the other.
+RID28="$(run_id_of "$OUT")"
+[ -n "$RID28" ] && ok "  and the budget stop announced a run id" \
+                || bad "  and the budget stop announced a run id" "$OUT"
+R28="$d/runs/$RID28.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  code 29 (in flight) — exactly one finalized result, no unfinalized temporary beside it" \
+  || bad "  code 29 (in flight) — exactly one finalized result, no unfinalized temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs")"
+[ "$(tail -1 "$R28" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  code 29 (in flight) — the record is complete to its sentinel" \
+  || bad "  code 29 (in flight) — the record is complete to its sentinel" "last line: $(tail -1 "$R28" 2>/dev/null)"
+for pair in "outcome:BUDGET_EXHAUSTED" "code:29" "stage:post-hop" "actor:claude" \
+            "actor_launched:yes" "model_request_started:no" "hop:1" \
+            "state_sha256_after:unavailable" "head_after:unavailable" \
+            "deadline_seconds:3" "deadline_remaining_seconds:0" \
+            "worktree_foreign_paths:0" "worktree_allowlisted_dirty_paths:0" \
+            "changed_paths_since_launch:0" \
+            "next_action:operator-rerun-with-larger-budget" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R28" "$k")"
+  [ "$got" = "$want" ] && ok "  code 29 (in flight) — $k=$want" \
+                       || bad "  code 29 (in flight) — $k=$want" "got: ${got:-<absent>}"
+done
+# The before-facts ARE established here, which is what keeps the four unavailable
+# values above from reading as "this record knows nothing". A killed hop still
+# knows what it started from.
+SB28="$(res_field "$R28" state_sha256_before)"
+{ [ -n "$SB28" ] && [ "$SB28" != unavailable ] && \
+  [ "$SB28" = "$(shasum -a 256 "$d/logs/work-loop/budget-task.md" | cut -d' ' -f1)" ]; } \
+  && ok "  code 29 (in flight) — and the state hash it started from is the file's real hash" \
+  || bad "  code 29 (in flight) — and the state hash it started from is the file's real hash" "got: ${SB28:-<absent>}"
+[ "$(res_field "$R28" head_before)" = "$(git -C "$d" rev-parse HEAD)" ] \
+  && ok "  code 29 (in flight) — and head_before is the real commit, read from Git" \
+  || bad "  code 29 (in flight) — and head_before is the real commit, read from Git" "got: $(res_field "$R28" head_before)"
+LT28="$(res_field "$R28" lease_task_dir)"; LC28="$(res_field "$R28" lease_checkout_dir)"
+{ [ -n "$LT28" ] && [ -n "$LC28" ] && [ ! -d "$LT28" ] && [ ! -d "$LC28" ]; } \
+  && ok "  code 29 (in flight) — and both leases it reported holding were released on the way out" \
+  || bad "  code 29 (in flight) — and both leases it reported holding were released on the way out" \
+         "task=${LT28:-<absent>} checkout=${LC28:-<absent>}"
+# Carried out of this sandbox: `d` is rebound below, and the two shapes are
+# compared against each other after the second one has run.
+ACTOR_29_INFLIGHT="$(res_field "$R28" actor)"
 
 echo
 echo "Case 28b — an expired clock REFUSES the next hop rather than starting it"
@@ -2941,6 +4271,81 @@ fi
 printf '%s' "$OUT" | grep -q "THIS IS NOT COMPLETION" \
   && ok "the refuse branch also refuses to be read as completion" \
   || bad "the refuse branch also refuses to be read as completion" "$OUT"
+# THE DURABLE RESULT for the SECOND budget shape. Same exit code, different
+# lifecycle: no actor is in flight, because this stop is the pre-launch check
+# declining to start the next one. `actor` is the field that says so and it is
+# stable across BOTH ways this branch can be reached — the hop-over line clears
+# CUR_ACTOR when a hop finishes, and nothing has set it when no hop has run.
+#
+# WHAT IS DELIBERATELY NOT ASSERTED HERE is everything the case's own comment
+# above says is timing-dependent: the hop count, and with it whether a hop had
+# completed at all. Pinning those is what made an earlier version of this case
+# fail intermittently. The two admissible shapes are named explicitly further
+# down instead, so a record matching NEITHER still fails.
+RID28B="$(run_id_of "$OUT")"
+[ -n "$RID28B" ] && ok "  and the refuse-to-launch stop announced a run id" \
+                 || bad "  and the refuse-to-launch stop announced a run id" "$OUT"
+R28B="$d/runs/$RID28B.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  code 29 (refused launch) — exactly one finalized result, no unfinalized temporary beside it" \
+  || bad "  code 29 (refused launch) — exactly one finalized result, no unfinalized temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs")"
+[ "$(tail -1 "$R28B" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  code 29 (refused launch) — the record is complete to its sentinel" \
+  || bad "  code 29 (refused launch) — the record is complete to its sentinel" "last line: $(tail -1 "$R28B" 2>/dev/null)"
+for pair in "outcome:BUDGET_EXHAUSTED" "code:29" "actor:none" \
+            "model_request_started:no" \
+            "deadline_seconds:1" "deadline_remaining_seconds:0" \
+            "worktree_foreign_paths:0" \
+            "next_action:operator-rerun-with-larger-budget" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R28B" "$k")"
+  [ "$got" = "$want" ] && ok "  code 29 (refused launch) — $k=$want" \
+                       || bad "  code 29 (refused launch) — $k=$want" "got: ${got:-<absent>}"
+done
+# The two admissible shapes, named rather than skipped. Either a hop completed and
+# the NEXT launch was refused — in which case the after-facts of that hop are
+# recorded — or the clock was already gone at the first check, in which case
+# nothing launched and there is no after-state to record. The first line of the
+# case is the contradiction: a hop that ran and left no after-hash behind.
+case "$(res_field "$R28B" actor_launched):$(res_field "$R28B" stage):$(res_field "$R28B" state_sha256_after)" in
+  yes:post-hop:unavailable)
+    bad "  code 29 (refused launch) — the record matches one of the two admissible shapes" \
+        "it reports a completed hop and no after-hash, which is neither" ;;
+  yes:post-hop:*)
+    ok "  code 29 (refused launch) — a hop had completed and the NEXT launch was refused" ;;
+  no:pre-hop:unavailable)
+    ok "  code 29 (refused launch) — the clock was already gone before any hop began" ;;
+  *)
+    bad "  code 29 (refused launch) — the record matches one of the two admissible shapes" \
+        "launched=$(res_field "$R28B" actor_launched) stage=$(res_field "$R28B" stage) after=$(res_field "$R28B" state_sha256_after)" ;;
+esac
+LT28B="$(res_field "$R28B" lease_task_dir)"; LC28B="$(res_field "$R28B" lease_checkout_dir)"
+{ [ -n "$LT28B" ] && [ -n "$LC28B" ] && [ ! -d "$LT28B" ] && [ ! -d "$LC28B" ]; } \
+  && ok "  code 29 (refused launch) — and both leases it reported holding were released on the way out" \
+  || bad "  code 29 (refused launch) — and both leases it reported holding were released on the way out" \
+         "task=${LT28B:-<absent>} checkout=${LC28B:-<absent>}"
+# THE TWO SHAPES ARE COMPARED AGAINST EACH OTHER, not only against their own
+# literals — the check a producer that reported one constant actor would fail
+# while both per-shape blocks still passed. This is also why neither shape was
+# allowed to stand as proof of the other.
+{ [ -n "${ACTOR_29_INFLIGHT:-}" ] && [ "$ACTOR_29_INFLIGHT" = "claude" ] && \
+  [ "$(res_field "$R28B" actor)" = "none" ]; } \
+  && ok "  code 29 — the two budget shapes record DIFFERENT actors in flight" \
+  || bad "  code 29 — the two budget shapes record DIFFERENT actors in flight" \
+         "in-flight: ${ACTOR_29_INFLIGHT:-<absent>} refused-launch: $(res_field "$R28B" actor)"
+# THE TWO SHAPES ABOVE ARE NOW THE WHOLE OF code 29. There used to be four sites:
+# these two plus their retry variants, the deadline expiring before or during a
+# replayed hop. Case 15 removed the replay, and with it the only two budget
+# terminals a second launch could reach. Counted so that a genuinely new producer
+# — or a returning retry branch — shows up here as a failure rather than as
+# silent uncovered ground.
+DIE29_HITS="$(grep -cE '(^|[^[:alnum:]_])die(_hop)? 29 ' "$DISPATCH_BIN" 2>/dev/null || printf '0')"
+[ "$DIE29_HITS" = "2" ] \
+  && ok "  code 29 — the two producer sites are exactly the two shapes proved above" \
+  || bad "  code 29 — the two producer sites are exactly the two shapes proved above" \
+         "found $DIE29_HITS; a new budget terminal has appeared and is unproved"
 
 echo
 echo "Case 28c — no --deadline keeps the old unbounded-by-clock behaviour"
@@ -2957,6 +4362,100 @@ run_dispatch "$d" badbudget --deadline abc --actor-cmd "$FLIP"
 expect_rc 10 "$RC" "rejects a non-numeric --deadline" "$OUT"
 run_dispatch "$d" badbudget --deadline 0 --actor-cmd "$FLIP"
 expect_rc 10 "$RC" "rejects --deadline 0" "$OUT"
+
+echo
+echo "Case 28e — a LIVE multi-hop run REQUIRES --deadline, refused before admission"
+# The approved plan's minimum release contract item 2: "Require a finite whole-run
+# deadline for every live multi-hop run." Case 28c above proves the OLD behaviour
+# — no deadline, run proceeds — and it stays green, because it is simulated. That
+# is not an oversight: the requirement binds the live path only, so 28c and this
+# case together are what say where the boundary is.
+#
+# THE REFUSAL IS AN INVOCATION-INPUT REFUSAL, and this case asserts the boundary
+# as hard as it asserts the exit code. Deadline presence is decided from argv, so
+# it belongs with the other usage checks — above admission, where the accepted
+# Change set A contract requires an invalid invocation to launch no actor, take no
+# owner or lease, create no run identity, mutate nothing and write no evidence. A
+# check that produced exit 10 while filing a terminal result would satisfy the
+# code and break the contract, so the code alone is not the assertion.
+#
+# LIVE, NOT SIMULATED, is the discriminator that makes this case possible at all.
+# --actor-cmd sets MODE=simulated, so it cannot exercise the requirement; the
+# sanctioned route to the live path without a real model is a stub binary passed
+# with --claude-bin, which is how case 50i reaches the same seam.
+d="$(new_sandbox)"; state_file "$d" "needs-deadline" "claude"
+FK28E="$SANDBOX_ROOT/fake-claude-28e.sh"
+cat >"$FK28E" <<'FK28EEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.219 (Claude Code)"; exit 0; fi
+printf '%s\n' "$@" >> "$WL28E_ARGV"
+exit 0
+FK28EEOF
+chmod +x "$FK28E"
+export WL28E_ARGV="$SANDBOX_ROOT/argv-28e.txt"; rm -f "$WL28E_ARGV"
+
+# The whole checkout before the refusal, so "mutated nothing" is proved against
+# every file rather than against the two this case happened to think of.
+M28E_BEFORE="$(tree_manifest "$d")"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task needs-deadline --log-dir "$d/runs" \
+      --timeout 20 --max-hops 2 --claude-bin "$FK28E" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "28e — a live run with --max-hops 2 and no --deadline is refused" "$OUT"
+printf '%s' "$OUT" | grep -q -- '--deadline' \
+  && ok "28e — the refusal names the missing option" \
+  || bad "28e — the refusal names the missing option" "$OUT"
+[ -f "$WL28E_ARGV" ] \
+  && bad "28e — no actor was launched" "the child ran: $(tr '\n' ' ' <"$WL28E_ARGV")" \
+  || ok "28e — no actor was launched"
+[ -z "$(run_id_of "$OUT")" ] \
+  && ok "28e — no run identity was created" \
+  || bad "28e — no run identity was created" "run=$(run_id_of "$OUT")"
+[ -d "$d/runs" ] \
+  && bad "28e — the evidence directory was never created" "$d/runs exists" \
+  || ok "28e — the evidence directory was never created"
+if [ -d "$(task_lock_for "$d" needs-deadline)" ] || [ -d "$(checkout_lock_for "$d")" ]; then
+  bad "28e — neither lease was taken" "a lock directory survives the refusal"
+else
+  ok "28e — neither lease was taken"
+fi
+[ "$(tree_manifest "$d")" = "$M28E_BEFORE" ] \
+  && ok "28e — the checkout is byte-for-byte unchanged" \
+  || bad "28e — the checkout is byte-for-byte unchanged" \
+         "$(diff <(printf '%s\n' "$M28E_BEFORE") <(tree_manifest "$d") | head -5)"
+
+# THE CONTROLS. Without them every assertion above is equally satisfied by a
+# dispatcher that refuses everything with exit 10, which would be the same green.
+# Each control asserts only `not 10`: what happens after the usage gate is other
+# cases' business, and pinning an exact downstream code here would make this case
+# fail whenever unrelated behaviour moved.
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task needs-deadline --log-dir "$d/runs" \
+      --timeout 20 --max-hops 2 --deadline 60 --claude-bin "$FK28E" 2>&1)"; RC=$?
+[ "$RC" -ne 10 ] \
+  && ok "28e — control: the same live multi-hop run WITH a deadline clears the gate (exit $RC)" \
+  || bad "28e — control: the same live multi-hop run WITH a deadline clears the gate" "$OUT"
+# Single-hop live carry is outside "multi-hop" and must be untouched — the two
+# spellings of one hop are asserted separately because they are set in different
+# places: --carry-one pins MAX_HOPS after validation, --max-hops 1 is the operator
+# saying it directly.
+d2="$(new_sandbox)"; state_file "$d2" "carry-nodeadline" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task carry-nodeadline --log-dir "$d2/runs" \
+      --timeout 20 --carry-one --claude-bin "$FK28E" 2>&1)"; RC=$?
+[ "$RC" -ne 10 ] \
+  && ok "28e — control: --carry-one is single-hop, so it still needs no deadline (exit $RC)" \
+  || bad "28e — control: --carry-one is single-hop, so it still needs no deadline" "$OUT"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task carry-nodeadline --log-dir "$d2/runs" \
+      --timeout 20 --max-hops 1 --claude-bin "$FK28E" 2>&1)"; RC=$?
+[ "$RC" -ne 10 ] \
+  && ok "28e — control: an explicit --max-hops 1 is single-hop too (exit $RC)" \
+  || bad "28e — control: an explicit --max-hops 1 is single-hop too" "$OUT"
+# A preflight is not a run. --dry-run launches no actor, so requiring a whole-run
+# clock of it would refuse the one invocation an operator makes precisely to find
+# out what a run WOULD do before committing to it.
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task carry-nodeadline --log-dir "$d2/runs" \
+      --timeout 20 --max-hops 2 --dry-run --claude-bin "$FK28E" 2>&1)"; RC=$?
+[ "$RC" -ne 10 ] \
+  && ok "28e — control: --dry-run is a preflight, not a live run (exit $RC)" \
+  || bad "28e — control: --dry-run is a preflight, not a live run" "$OUT"
+unset WL28E_ARGV
 
 # ================================================================= case 29
 # Phase 1c. Established fact 5 of the plan: foreign_worktree() reads
@@ -4067,17 +5566,28 @@ if [ -f "$WL_ARGV_FILE" ]; then
       && bad "no $f without --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
       || ok "no $f without --unattended"
   done
-  # The stream-json switch is scoped to the contained path and nowhere else.
-  # Attended and courier hops keep the compact single-object capture they have
-  # always had, so required outcome 3 stays true after this change.
-  argv_has "$WL_ARGV_FILE" "json" \
-    && ok "an attended hop still uses --output-format json" \
-    || bad "an attended hop still uses --output-format json" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
+  # INVERTED AT UNIT 26, and it is a replacement rather than a relaxation. These
+  # three assertions used to read "an attended hop still uses --output-format
+  # json" and "no stream-json / no --verbose without --unattended", and they were
+  # correct while the contained profile was the only reason to pay for a stream.
+  # It is not any more: `system/init` is the only surface carrying the permission
+  # mode the child ACTUALLY ran under, so the attended path needs the same format
+  # for a reason of its own. The opposite claim is now asserted, and the plain
+  # json format must be gone from this argv entirely.
+  #
+  # WHAT THE INVERSION MUST NOT SWALLOW is asserted immediately below: the
+  # contained profile's four flags are still absent here (the loop above), and the
+  # explicit permission request is still present. A format change that also
+  # dragged --settings or --tools onto the attended path would be the widening
+  # case 32 exists to refuse, wearing a capture fix's name.
   for f in "stream-json" "--verbose"; do
     argv_has "$WL_ARGV_FILE" "$f" \
-      && bad "no $f without --unattended" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
-      || ok "no $f without --unattended"
+      && ok "an attended hop now uses $f (the capture must carry system/init)" \
+      || bad "an attended hop now uses $f" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")"
   done
+  argv_has "$WL_ARGV_FILE" "json" \
+    && bad "the plain json output format is gone from the attended launch" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE")" \
+    || ok "the plain json output format is gone from the attended launch"
   # "Unchanged" now means unchanged EXCEPT the explicit permission mode (P0-F).
   # The attended correction is a Claude permission policy; --unattended is OS
   # containment. This case is where the two are kept distinct, so the attended
@@ -4203,6 +5713,9 @@ echo "Case 32n — the stream-json assertions can actually fail"
 #
 # So this builds a dispatcher that has --unattended and has REGRESSED the output
 # format back to --output-format json, and asserts case 32's three checks flip.
+# Since Unit 26 the sed matches BOTH launch branches, so the mutant regresses the
+# attended path too. That is harmless here — every assertion below reads the
+# UNATTENDED argv — and it is stated rather than left to be rediscovered.
 # That regression matters more than it looks: without stream-json the hop capture
 # carries no system/init event, and the live probe loses the only surface on
 # which the effective tool roster and MCP absence can be measured rather than
@@ -4469,6 +5982,10 @@ echo "Case 43 — O3: a permission denial becomes its own stop, naming tool and 
 d="$(new_sandbox)"; state_file "$d" "denial-task" "claude"
 DENIAL_JSON='{"type":"result","subtype":"success","is_error":false,"permission_denials":[{"tool_name":"Bash","tool_use_id":"toolu_fixture01","tool_input":{"command":"git add logs/work-loop/denial-task.md && git commit -m wip"}},{"tool_name":"Edit","tool_use_id":"toolu_fixture02","tool_input":{"file_path":"/sandbox/logs/work-loop/denial-task.md"}}],"result":"I was denied permission to commit."}'
 printf '%s' "$DENIAL_JSON" > "$SANDBOX_ROOT/denial.json"
+# Read BEFORE the hop, because the hop moves both of them and the record's claim is
+# precisely that it observed the before-state rather than the after-state twice.
+SB43="$(shasum -a 256 "$d/logs/work-loop/denial-task.md" | cut -d' ' -f1)"
+HB43="$(git -C "$d" rev-parse HEAD)"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task denial-task --log-dir "$d/runs" \
       --carry-one \
       --actor-cmd 'awk "/^turn: /&&!d{print \"turn: codex\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; cat "'"$SANDBOX_ROOT"'/denial.json"' 2>&1)"; RC=$?
@@ -4485,6 +6002,70 @@ printf '%s' "$OUT" | grep -q "Edit :: " \
 printf '%s' "$OUT" | grep -q "capability question" \
   && ok "the stop frames it as an operator capability decision, not a transport failure" \
   || bad "the stop frames it as an operator capability decision" "$OUT"
+# THE DURABLE RESULT for PERMISSION_DENIED. Everything above is about the stop the
+# operator READS; this is about the record that survives them closing the terminal.
+# The distinguishing half of it is the pair at the end: `next_action` is the only
+# terminal in this dispatcher that sends the operator to a capability decision
+# rather than to a repair, a clean-up or a rerun, and `capture` is the file the
+# stop's own last line points them at. A record naming a capture that is not there
+# would send them to the same dead end exit 37 exists to remove.
+RID43="$(run_id_of "$OUT")"
+[ -n "$RID43" ] && ok "  and the permission stop announced a run id" \
+                || bad "  and the permission stop announced a run id" "$OUT"
+R43="$d/runs/$RID43.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  code 37 — exactly one finalized result, no unfinalized temporary beside it" \
+  || bad "  code 37 — exactly one finalized result, no unfinalized temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs")"
+[ "$(tail -1 "$R43" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  code 37 — the record is complete to its sentinel" \
+  || bad "  code 37 — the record is complete to its sentinel" "last line: $(tail -1 "$R43" 2>/dev/null)"
+# The child exits 0 on a denial, so this is a hop that RAN, FINISHED and moved the
+# file — the record has every post-hop fact, and each of them is the observation
+# that separates 37 from the bare 25 it used to arrive as.
+for pair in "outcome:PERMISSION_DENIED" "code:37" "stage:post-hop" "actor:claude" \
+            "actor_launched:yes" "model_request_started:no" "hop:1" \
+            "turn_at_terminal:codex" "state_class:ACTIVE_CODEX" \
+            "state_sha256_before:$SB43" "head_before:$HB43" "head_after:$HB43" \
+            "worktree_foreign_paths:0" "worktree_allowlisted_dirty_paths:1" \
+            "changed_paths_since_launch:1" \
+            "permission_mode_requested:none" "permission_mode_effective:unavailable" \
+            "owner_check:proceed" "owner_declared:none" \
+            "next_action:operator-decide-capability-grant" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R43" "$k")"
+  [ "$got" = "$want" ] && ok "  code 37 — $k=$want" || bad "  code 37 — $k=$want" "got: ${got:-<absent>}"
+done
+# The denial's whole shape is "the file was edited and could not be committed", so
+# the state hash must have MOVED while HEAD stood still. Asserted as a difference
+# rather than as a literal: the after-value is whatever the child wrote, and
+# pinning it would be pinning the fixture's text instead of the observation.
+SA43="$(res_field "$R43" state_sha256_after)"
+{ [ -n "$SA43" ] && [ "$SA43" != unavailable ] && [ "$SA43" != "$SB43" ]; } \
+  && ok "  code 37 — and the state file really moved across the hop while HEAD did not" \
+  || bad "  code 37 — and the state file really moved across the hop while HEAD did not" \
+         "before=$SB43 after=${SA43:-<absent>}"
+CAP43="$(res_field "$R43" capture)"
+{ [ -f "$CAP43" ] && grep -Fq 'permission_denials' "$CAP43"; } \
+  && ok "  code 37 — and the capture it names is on disk and carries the denials the stop reported" \
+  || bad "  code 37 — and the capture it names is on disk and carries the denials the stop reported" \
+         "capture=${CAP43:-<absent>}"
+LT43="$(res_field "$R43" lease_task_dir)"; LC43="$(res_field "$R43" lease_checkout_dir)"
+{ [ -n "$LT43" ] && [ -n "$LC43" ] && [ ! -d "$LT43" ] && [ ! -d "$LC43" ]; } \
+  && ok "  code 37 — and both leases it reported holding were released on the way out" \
+  || bad "  code 37 — and both leases it reported holding were released on the way out" \
+         "task=${LT43:-<absent>} checkout=${LC43:-<absent>}"
+# 43c and 43d are the SAME terminal reached with a different denial payload — a
+# long target, and a host without a usable jq. Both are parser cases, and the
+# dispatcher has exactly one place that turns a parsed denial into an exit, so the
+# block above answers for them. Counted rather than asserted in prose: a second
+# producer would mean those two could stop somewhere this record never proves.
+DIE37_HITS="$(grep -cE '(^|[^[:alnum:]_])die(_hop)? 37 ' "$DISPATCH_BIN" 2>/dev/null || printf '0')"
+[ "$DIE37_HITS" = "1" ] \
+  && ok "  code 37 — the dispatcher has exactly one producer for this terminal, so 43c and 43d converge on the block above" \
+  || bad "  code 37 — the dispatcher has exactly one producer for this terminal" \
+         "found $DIE37_HITS call sites; the parser cases are no longer covered by this record"
 
 echo
 echo "Case 43c — O3: a target LONGER THAN 200 CHARACTERS is carried whole"
@@ -4704,6 +6285,10 @@ d="$(new_sandbox)"; state_file "$d" "notes-partial-task" "claude"
 printf '# Session Notes\n' >"$d/logs/session-notes.md"
 git -C "$d" add logs/session-notes.md >/dev/null 2>&1
 git -C "$d" commit -qm "seed session notes" >/dev/null 2>&1
+# Read before the hop: the actor corrupts the turn, so the file's pre-hop hash
+# cannot be recovered afterwards.
+SB49="$(shasum -a 256 "$d/logs/work-loop/notes-partial-task.md" | cut -d' ' -f1)"
+HB49="$(git -C "$d" rev-parse HEAD)"
 OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task notes-partial-task --log-dir "$d/runs" \
       --carry-one \
       --allow-path '^logs/work-loop/' --allow-path '^logs/session-notes\.md$' \
@@ -4712,6 +6297,6829 @@ expect_rc 15 "$RC" "49 — malformed post-hop state exits 15" "$OUT"
 partial_section "$OUT" | grep -Fq "logs/session-notes.md" \
   && ok "49 — the uncommitted session-notes.md edit is reported as a partial effect" \
   || bad "49 — the uncommitted session-notes.md edit is reported as a partial effect" "$(partial_section "$OUT")"
+# THE DURABLE RESULT for the POST-HOP code 15, and it is a different terminal from
+# the pre-hop code 15 cases 2 and 4 pin — same exit, opposite lifecycle. There the
+# run died inside the FIRST validate_state, before a launch, a hash or a
+# classification existed. Here an actor ran, finished, corrupted the turn on its
+# way out, and the SECOND validate_state refused what it left. So the record has a
+# real before-hash, a real head_before and a real changed-path count, and its
+# after-facts are unavailable because the run died above the line that takes them.
+#
+# CHOSEN OVER CASE 47's fixture, which reaches the same branch: this one carries
+# TWO allowlisted dirty paths rather than one — the corrupted state file and an
+# edit the operator put in scope by hand — so the changed-path count is a count
+# rather than a value that could be a constant.
+RID49="$(run_id_of "$OUT")"
+[ -n "$RID49" ] && ok "49 — the post-hop state failure announced a run id" \
+                || bad "49 — the post-hop state failure announced a run id" "$OUT"
+R49="$d/runs/$RID49.result"
+[ "$(res_count "$d/runs")" = "1" ] && [ "$(part_count "$d/runs")" = "0" ] \
+  && ok "  post-hop code 15 — exactly one finalized result, no unfinalized temporary beside it" \
+  || bad "  post-hop code 15 — exactly one finalized result, no unfinalized temporary beside it" \
+         "results=$(res_count "$d/runs") partials=$(part_count "$d/runs")"
+[ "$(tail -1 "$R49" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "  post-hop code 15 — the record is complete to its sentinel" \
+  || bad "  post-hop code 15 — the record is complete to its sentinel" "last line: $(tail -1 "$R49" 2>/dev/null)"
+for pair in "outcome:BAD_TURN" "code:15" "stage:post-hop" "actor:claude" \
+            "actor_launched:yes" "model_request_started:no" "hop:1" \
+            "turn_at_terminal:unavailable" "state_class:unavailable" \
+            "state_sha256_before:$SB49" "state_sha256_after:unavailable" \
+            "head_before:$HB49" "head_after:unavailable" \
+            "worktree_foreign_paths:0" "worktree_allowlisted_dirty_paths:2" \
+            "changed_paths_since_launch:2" \
+            "owner_check:proceed" "owner_declared:none" \
+            "next_action:operator-repair-state-file-then-rerun" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R49" "$k")"
+  [ "$got" = "$want" ] && ok "  post-hop code 15 — $k=$want" \
+                       || bad "  post-hop code 15 — $k=$want" "got: ${got:-<absent>}"
+done
+[ "$(res_field "$R49" state_file)" = "$(cd "$d" && pwd -P)/logs/work-loop/notes-partial-task.md" ] \
+  && ok "  post-hop code 15 — and the record names the state file the operator must repair" \
+  || bad "  post-hop code 15 — and the record names the state file the operator must repair" \
+         "got: $(res_field "$R49" state_file)"
+LT49="$(res_field "$R49" lease_task_dir)"; LC49="$(res_field "$R49" lease_checkout_dir)"
+{ [ -n "$LT49" ] && [ -n "$LC49" ] && [ ! -d "$LT49" ] && [ ! -d "$LC49" ]; } \
+  && ok "  post-hop code 15 — and both leases it reported holding were released on the way out" \
+  || bad "  post-hop code 15 — and both leases it reported holding were released on the way out" \
+         "task=${LT49:-<absent>} checkout=${LC49:-<absent>}"
+# THE TWO UNAVAILABLE FIELDS IN THE LIST ABOVE ARE THIS CASE'S SHARPEST PAIR, and
+# they are the reason validate_state clears ST_TURN and ST_CLASS on entry. Both are
+# set only by a SUCCESSFUL validator return, and this terminal is a validator that
+# did not return one. Without the clear they held the PRE-hop call's reading, so
+# the record said `turn_at_terminal=claude` and `state_class=ACTIVE_CLAUDE` — a
+# legal turn and a valid classification, published by the very stop whose meaning
+# is that neither was obtained.
+#
+# THIS IS WHERE THAT IS CAUGHT AND NOWHERE ELSE IN THE SUITE. The pre-hop code 15
+# in case 4 asserts the same two values and passes either way: nothing has ever run
+# there, so there is no earlier reading to carry. Only a terminal reached AFTER a
+# successful validation can tell a cleared variable from an uncleared one, which is
+# what makes these two lines the regression protection for that clear rather than
+# two more fields in a list.
+
+# ==================================================================== case 50
+#
+# Change set A, items 3 and 4: the die() funnel finalizes exactly ONE versioned,
+# run-bound, complete terminal result before it releases the lease.
+#
+# SCOPE OF THIS CASE, stated so a later reader does not over-read it. It covers
+# the terminal families that already converge on die()/die_hop() — the nine
+# post-admission nonzero families D–L. It deliberately does NOT cover the
+# families that reach their exit by another route: usage/argument refusal and
+# checkout/lease-infrastructure failure exit directly before a run id exists,
+# lease refusal has its own producer (refuse_17), the signal handler exits on its
+# own path, and the five zero-exit sites are not terminals this producer owns.
+# Those are separate integrations and asserting them here would claim coverage
+# the dispatcher does not yet have.
+#
+# There is no reader in this case either. Every assertion below reads the
+# artifact with `sed`/`grep` from the harness, which is exactly the point: the
+# record has to be consumable without a parser shipped alongside it.
+
+# One field out of a result file. `head -1` because a duplicate singleton field is
+# a defect the grammar assertion below catches separately — this helper must not
+# quietly paper over it by concatenating.
+# res_field(), run_id_of(), res_count() and part_count() MOVED UP to the
+# fixtures block at the top of this file. Case 12h now reads a terminal
+# result too, and a helper defined at line ~5400 does not exist yet at
+# line ~1300 — the definitions have to precede their FIRST caller, not
+# their most frequent one.
+
+echo
+echo "Case 50a — a post-hop nonzero terminal (22) finalizes exactly one complete run-bound result"
+# Modelled on case 6 — the narrowest existing post-hop terminal in this suite. The
+# actor ALSO plants two lookalike results: one at a name it invented, and one at
+# the exact run-bound path it derived by globbing the run log. Both are the
+# "actor-created lookalike" the trusted-field-ownership contract forbids from
+# supplying the result framing.
+NOOP_PLANT='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
+      for f in "$WL_CHECKOUT"/runs/*.log; do
+        [ -e "$f" ] || continue
+        printf "terminal_result_version=1\noutcome=SUCCESS\ncode=0\nactor_launched=no\nresult_complete=yes\n" > "${f%.log}.result";
+      done;
+      printf "terminal_result_version=1\noutcome=SUCCESS\ncode=0\nresult_complete=yes\n" > "$WL_CHECKOUT/runs/actor-planted.result";
+      exit 0'
+d="$(new_sandbox)"; state_file "$d" "result-post-task" "codex"
+run_dispatch "$d" result-post-task --actor-cmd "$NOOP_PLANT"
+expect_rc 22 "$RC" "50a — exits 22 on no observable transition" "$OUT"
+RID="$(run_id_of "$OUT")"
+[ -n "$RID" ] && ok "50a — the run announced a run id" \
+              || bad "50a — the run announced a run id" "$OUT"
+R50="$d/runs/$RID.result"
+if [ -f "$R50" ]; then
+  ok "50a — a terminal result exists at the run-bound path"
+else
+  bad "50a — a terminal result exists at the run-bound path" \
+      "missing $R50; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+fi
+# NO PARTIAL ARTIFACT SURVIVES. The producer writes to a temporary and renames, so
+# a leftover .partial means the finalization did not complete atomically.
+[ "$(part_count "$d/runs")" = "0" ] \
+  && ok "50a — no unfinalized temporary artifact was left behind" \
+  || bad "50a — no unfinalized temporary artifact was left behind" "$(ls "$d/runs"/*.result.partial 2>&1)"
+# EXACTLY ONE finalization, not two. Counted as version lines inside the artifact:
+# a producer that appended instead of replacing would carry two.
+NV="$(grep -c '^terminal_result_version=' "$R50" 2>/dev/null || printf '0')"
+[ "$NV" = "1" ] && ok "50a — the artifact carries exactly one version line" \
+                || bad "50a — the artifact carries exactly one version line" "found $NV"
+[ "$(head -1 "$R50" 2>/dev/null)" = "terminal_result_version=1" ] \
+  && ok "50a — the first line is the recognized schema version" \
+  || bad "50a — the first line is the recognized schema version" "$(head -1 "$R50" 2>/dev/null)"
+# THE COMPLETENESS SENTINEL, last line. Together with the atomic rename this is
+# what separates "a complete result" from "a result that was being written".
+[ "$(tail -1 "$R50" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "50a — the last line is the completeness sentinel" \
+  || bad "50a — the last line is the completeness sentinel" "$(tail -1 "$R50" 2>/dev/null)"
+# BOUNDED GRAMMAR. Every line is one key=value pair, so a value carrying a newline
+# — a path, a git status line, an operator-supplied argument — cannot inject a
+# field. The check is the complement: no line that fails the shape.
+if [ -z "$(grep -vE '^[a-z][a-z0-9_]*=' "$R50" 2>/dev/null)" ]; then
+  ok "50a — every line matches the bounded key=value grammar"
+else
+  bad "50a — every line matches the bounded key=value grammar" "$(grep -vnE '^[a-z][a-z0-9_]*=' "$R50" | head -3 | tr '\n' ';')"
+fi
+# THE TRUTHFUL REQUIRED FIELDS, checked against what the dispatcher observed
+# rather than against what the actor claimed.
+for pair in "outcome:NO_TRANSITION" "code:22" "task:result-post-task" \
+            "stage:post-hop" "actor:codex" "actor_launched:yes" \
+            "model_request_started:no" "mode:simulated" "hop:1" \
+            "owner_check:proceed" "owner_declared:none" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50" "$k")"
+  [ "$got" = "$want" ] && ok "50a — $k=$want" || bad "50a — $k=$want" "got: ${got:-<absent>}"
+done
+[ "$(res_field "$R50" run)" = "$RID" ] \
+  && ok "50a — the result names its own run id" \
+  || bad "50a — the result names its own run id" "got: $(res_field "$R50" run)"
+[ "$(res_field "$R50" checkout)" = "$(cd "$d" && pwd -P)" ] \
+  && ok "50a — the result names the canonical checkout" \
+  || bad "50a — the result names the canonical checkout" "got: $(res_field "$R50" checkout)"
+# Exit 22 is precisely "the bytes did not move", so before and after must be equal
+# AND present. Equal-and-absent would satisfy a naive comparison, which is why the
+# non-emptiness is asserted separately.
+SB="$(res_field "$R50" state_sha256_before)"; SA="$(res_field "$R50" state_sha256_after)"
+if [ -n "$SB" ] && [ "$SB" != "unavailable" ] && [ "$SB" = "$SA" ]; then
+  ok "50a — state hashes are recorded and equal, matching the 22 it reported"
+else
+  bad "50a — state hashes are recorded and equal, matching the 22 it reported" "before=$SB after=$SA"
+fi
+HB="$(res_field "$R50" head_before)"
+[ -n "$HB" ] && [ "$HB" = "$(git -C "$d" rev-parse HEAD)" ] \
+  && ok "50a — head_before is the real commit, read from Git" \
+  || bad "50a — head_before is the real commit, read from Git" "got: $HB"
+[ -f "$(res_field "$R50" run_log)" ] \
+  && ok "50a — the named run log exists on disk" \
+  || bad "50a — the named run log exists on disk" "got: $(res_field "$R50" run_log)"
+[ -n "$(res_field "$R50" next_action)" ] \
+  && ok "50a — a next required action is recorded" \
+  || bad "50a — a next required action is recorded"
+# THE UNAVAILABLE FACTS ARE STATED, NOT OMITTED AND NOT GUESSED. The first two are
+# not established anywhere in this dispatcher today. The third is establishable
+# since Unit 26 but not HERE: this row is a SIMULATED hop, and a stub's output is
+# not the product's own system/init event, so `unavailable` is the truthful answer
+# rather than a placeholder. Case 72g asserts that same guard deliberately.
+for k in recorded_usage actor_session_id permission_mode_effective; do
+  [ "$(res_field "$R50" "$k")" = "unavailable" ] \
+    && ok "50a — $k is explicitly unavailable" \
+    || bad "50a — $k is explicitly unavailable" "got: $(res_field "$R50" "$k")"
+done
+# THE ACTOR CANNOT SUPPLY THE FRAMING. It wrote SUCCESS/0 over the exact run-bound
+# path before exiting; the dispatcher's finalization replaced it with what the
+# dispatcher observed. Asserted on the field values, not on file count, because a
+# lookalike that survived would still be exactly one file.
+case "$(res_field "$R50" outcome):$(res_field "$R50" code)" in
+  NO_TRANSITION:22) ok "50a — the actor's planted SUCCESS result did not become the trusted result" ;;
+  *) bad "50a — the actor's planted SUCCESS result did not become the trusted result" \
+         "got outcome=$(res_field "$R50" outcome) code=$(res_field "$R50" code)" ;;
+esac
+[ -f "$d/runs/actor-planted.result" ] \
+  && ok "50a — the actor's invented lookalike is still on disk and is simply not run-bound" \
+  || bad "50a — the actor's invented lookalike is still on disk and is simply not run-bound"
+
+echo
+echo "Case 50b — a PRE-HOP die() family (18) finalizes once, with the unavailable fields explicit"
+# The control for the half of the funnel where no actor ran. Nothing observed
+# after a launch exists here, and the producer must say so rather than abort under
+# `set -u` or invent a post-hop fact. Exit 18 is chosen because it is a pre-hop
+# die() reached AFTER the run id exists and BEFORE before_hash/before_head are
+# assigned — the narrowest place where unset state is reachable.
+d="$(new_sandbox)"; state_file "$d" "result-pre-task" "codex"
+printf 'out of allowlist\n' >>"$d/other.txt"
+run_dispatch "$d" result-pre-task --actor-cmd "$NOOP"
+expect_rc 18 "$RC" "50b — exits 18 on pre-existing out-of-allowlist changes" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "50b — no actor was launched" || bad "50b — no actor was launched" "calls=$(calls "$d")"
+RIDB="$(run_id_of "$OUT")"
+R50B="$d/runs/$RIDB.result"
+[ -f "$R50B" ] && ok "50b — a terminal result exists for the pre-hop stop" \
+              || bad "50b — a terminal result exists for the pre-hop stop" "missing $R50B; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(res_count "$d/runs")" = "1" ] \
+  && ok "50b — exactly one result was finalized" \
+  || bad "50b — exactly one result was finalized" "found $(res_count "$d/runs")"
+[ "$(part_count "$d/runs")" = "0" ] \
+  && ok "50b — no unfinalized temporary artifact was left behind" \
+  || bad "50b — no unfinalized temporary artifact was left behind" "$(ls "$d/runs"/*.result.partial 2>&1)"
+[ "$(tail -1 "$R50B" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "50b — the pre-hop result is complete" \
+  || bad "50b — the pre-hop result is complete" "$(tail -1 "$R50B" 2>/dev/null)"
+for pair in "outcome:FOREIGN_UNSTAGED" "code:18" "stage:pre-hop" "actor:none" \
+            "actor_launched:no" "model_request_started:no" "hop:0"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50B" "$k")"
+  [ "$got" = "$want" ] && ok "50b — $k=$want" || bad "50b — $k=$want" "got: ${got:-<absent>}"
+done
+# THE UNSET-STATE FIELDS. Each is a fact that only a launched hop establishes, and
+# each must carry the explicit bounded token rather than an empty value, an
+# omitted key, or a value carried over from somewhere else.
+for k in state_sha256_before state_sha256_after head_after capture; do
+  got="$(res_field "$R50B" "$k")"
+  case "$got" in
+    unavailable|none) ok "50b — $k is explicitly '$got', not omitted or guessed" ;;
+    *) bad "50b — $k is explicitly unavailable/none" "got: ${got:-<absent>}" ;;
+  esac
+done
+# The one fact this terminal DID establish, so the case cannot pass by marking
+# everything unavailable. 18 fires precisely because a foreign path was seen.
+[ "$(res_field "$R50B" worktree_foreign_paths)" = "1" ] \
+  && ok "50b — the foreign path it stopped on is counted, not blanked" \
+  || bad "50b — the foreign path it stopped on is counted, not blanked" "got: $(res_field "$R50B" worktree_foreign_paths)"
+[ "$(res_field "$R50B" state_class)" = "ACTIVE_CODEX" ] \
+  && ok "50b — the validator's classification is carried, not re-derived" \
+  || bad "50b — the validator's classification is carried, not re-derived" "got: $(res_field "$R50B" state_class)"
+
+echo
+echo "Case 50c — mutation controls: the assertions above go red when the producer is broken"
+# Three mutants of the real dispatcher, each breaking one property case 50a
+# asserts. A green suite against a mutant means the assertion proves nothing.
+MUT_DIR="$SANDBOX_ROOT/mutants"; mkdir -p "$MUT_DIR"
+
+# M1 — finalization SKIPPED. Since Unit 11 this seam carries its own failure
+# transfer, so the WHOLE action has to go — the publish and the unprovability exit
+# it falls to. Cutting only the call would leave `|| die_funnel_unprovable "$code"`
+# dangling, which changes the syntax rather than the behaviour under test. The line
+# is matched whole and its occurrences counted, so a seam that moves, changes shape
+# or appears twice stops the control rather than silently mutating something else
+# or testing a script that was never changed.
+M1_LINE='  finalize_terminal_result "$code" || die_funnel_unprovable "$code" # die funnel failure transfer'
+M1_HITS="$(grep -Fxc -- "$M1_LINE" "$DISPATCH_BIN" 2>/dev/null)"
+awk -v want="$M1_LINE" '$0 == want { print "  :"; next } { print }' "$DISPATCH_BIN" >"$MUT_DIR/m1.sh"
+M1_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT_DIR/m1.sh" || M1_DIFFERS=yes
+M1_PARSES=no; bash -n "$MUT_DIR/m1.sh" 2>/dev/null && M1_PARSES=yes
+if [ "$M1_HITS" = "1" ] && [ "$M1_DIFFERS" = yes ] && [ "$M1_PARSES" = yes ]; then
+  ok "50c — M1 mutant differs from the dispatcher and still parses (the one call site was found)"
+  d="$(new_sandbox)"; state_file "$d" "m1-task" "codex"
+  OUT="$(bash "$MUT_DIR/m1.sh" --checkout "$d" --task m1-task --log-dir "$d/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+  [ "$RC" -eq 22 ] && [ "$(res_count "$d/runs")" = "0" ] \
+    && ok "50c — M1: with finalization skipped, no result is produced (assertion is fail-capable)" \
+    || bad "50c — M1: with finalization skipped, no result is produced" "rc=$RC results=$(res_count "$d/runs")"
+else
+  bad "50c — M1 mutant differs from the dispatcher and still parses (the one call site was found)" \
+      "matched ${M1_HITS:-0} lines, want exactly 1; differs=$M1_DIFFERS parses=$M1_PARSES — the control cannot run"
+fi
+
+# M2 — the atomic publish removed, so the temporary is never renamed.
+sed 's|^  mv -f "\$tmp" "\$final" .*$|  true|' "$DISPATCH_BIN" >"$MUT_DIR/m2.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m2.sh"; then
+  ok "50c — M2 mutant differs from the dispatcher (the rename was found)"
+  d="$(new_sandbox)"; state_file "$d" "m2-task" "codex"
+  OUT="$(bash "$MUT_DIR/m2.sh" --checkout "$d" --task m2-task --log-dir "$d/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+  if [ "$(res_count "$d/runs")" = "0" ] && [ "$(part_count "$d/runs")" = "1" ]; then
+    ok "50c — M2: without the rename, a partial artifact is exposed and no final one exists"
+  else
+    bad "50c — M2: without the rename, a partial artifact is exposed and no final one exists" \
+        "rc=$RC final=$(res_count "$d/runs") partial=$(part_count "$d/runs")"
+  fi
+else
+  bad "50c — M2 mutant differs from the dispatcher (the rename was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M3 — the result path stops being run-bound, so two runs in one evidence
+# directory finalize over each other and the second overwrites the first.
+sed 's|^  local final="\$LOG_DIR/\$RUN_ID.result"$|  local final="$LOG_DIR/terminal.result"|' \
+    "$DISPATCH_BIN" >"$MUT_DIR/m3.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m3.sh"; then
+  ok "50c — M3 mutant differs from the dispatcher (the run-bound path was found)"
+  d="$(new_sandbox)"; state_file "$d" "m3-task" "codex"
+  bash "$MUT_DIR/m3.sh" --checkout "$d" --task m3-task --log-dir "$d/runs" \
+       --timeout 20 --actor-cmd "$NOOP" >/dev/null 2>&1
+  bash "$MUT_DIR/m3.sh" --checkout "$d" --task m3-task --log-dir "$d/runs" \
+       --timeout 20 --actor-cmd "$NOOP" >/dev/null 2>&1
+  [ "$(res_count "$d/runs")" = "1" ] \
+    && ok "50c — M3: two runs collapse onto one result (run-binding is what prevents it)" \
+    || bad "50c — M3: two runs collapse onto one result" "found $(res_count "$d/runs")"
+  # The unmutated control, same shape: two runs, two results.
+  d="$(new_sandbox)"; state_file "$d" "m3-control-task" "codex"
+  run_dispatch "$d" m3-control-task --actor-cmd "$NOOP"
+  run_dispatch "$d" m3-control-task --actor-cmd "$NOOP"
+  [ "$(res_count "$d/runs")" = "2" ] \
+    && ok "50c — and the real dispatcher keeps both runs' results apart" \
+    || bad "50c — and the real dispatcher keeps both runs' results apart" "found $(res_count "$d/runs")"
+else
+  bad "50c — M3 mutant differs from the dispatcher (the run-bound path was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+echo
+echo "Case 50d — a die() BEFORE any child is forked reports no launch and no model request"
+# The correction control for the launch fields. launch_actor() dies four ways
+# before run_bounded() forks anything — a non-executable codex binary, an
+# unresolvable claude binary, a checkout it cannot enter, an unknown actor name —
+# and every one of them is reached AFTER HOP_BASELINE_READY is raised. While that
+# flag was the source of actor_launched, all four reported a launch, and in live
+# mode a model request, that never happened.
+#
+# STILL NO LIVE PRODUCT TRANSPORT. The run is in live mode because no --actor-cmd
+# is given, and it stops on a binary path that does not exist: nothing is
+# executed, no model is contacted, and the case is controller evidence like every
+# other one here.
+d="$(new_sandbox)"; state_file "$d" "pre-fork-task" "codex"
+run_dispatch "$d" pre-fork-task --codex-bin "$d/no-such-codex-binary" --deadline 300
+expect_rc 20 "$RC" "50d — exits 20 when the actor binary is not executable" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "50d — no actor process ran" || bad "50d — no actor process ran" "calls=$(calls "$d")"
+RIDD="$(run_id_of "$OUT")"
+R50D="$d/runs/$RIDD.result"
+[ -f "$R50D" ] && ok "50d — the pre-fork stop still finalizes one result" \
+              || bad "50d — the pre-fork stop still finalizes one result" "missing $R50D; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(res_count "$d/runs")" = "1" ] \
+  && ok "50d — exactly one result was finalized" \
+  || bad "50d — exactly one result was finalized" "found $(res_count "$d/runs")"
+[ "$(tail -1 "$R50D" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "50d — the pre-fork result is complete" \
+  || bad "50d — the pre-fork result is complete" "$(tail -1 "$R50D" 2>/dev/null)"
+# THE LOAD-BEARING ASSERTIONS. `no` here is established-and-absent, not
+# unavailable: nothing forked, so nothing could have requested a model. `launch`
+# is the third stage value — the baseline was live and the fork never happened,
+# which is neither pre-hop nor post-hop.
+for pair in "outcome:ACTOR_FAILED" "code:20" "mode:live" "actor:codex" \
+            "actor_launched:no" "model_request_started:no" "stage:launch" \
+            "hop:1" "permission_mode_requested:none"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50D" "$k")"
+  [ "$got" = "$want" ] && ok "50d — $k=$want" || bad "50d — $k=$want" "got: ${got:-<absent>}"
+done
+
+# The same stop on the CLAUDE path, which is the one that names a permission
+# mode. A mode is only requested by an argv handed to a child, so a run that
+# never forked one requested nothing — reporting the launch path's constant here
+# would be the same false-launch claim wearing a different field name.
+d="$(new_sandbox)"; state_file "$d" "pre-fork-claude-task" "claude"
+run_dispatch "$d" pre-fork-claude-task --claude-bin "$d/no-such-claude-binary" --deadline 300
+expect_rc 20 "$RC" "50d — exits 20 when the claude binary is not resolvable" "$OUT"
+RIDD2="$(run_id_of "$OUT")"
+R50D2="$d/runs/$RIDD2.result"
+for pair in "actor:claude" "actor_launched:no" "stage:launch" \
+            "permission_mode_requested:none" "permission_mode_effective:unavailable"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50D2" "$k")"
+  [ "$got" = "$want" ] && ok "50d — claude path: $k=$want" || bad "50d — claude path: $k=$want" "got: ${got:-<absent>}"
+done
+
+echo
+echo "Case 50e — owner and lease status are OBSERVED, and an ownership refusal says so"
+# The correction control for finding 2. Case 50a already pins the clean values
+# (owner_check=proceed, owner_declared=none, both leases held-by-this-run); this
+# case is the other observation, so neither field can be a constant that happens
+# to look right. A checkout that declares a DIFFERENT open task is refused at
+# admission (33), which is inside the covered funnel, so the record exists and
+# has to carry what the check actually returned.
+d="$(new_sandbox)"; state_file "$d" "owner-refused-task" "codex"
+printf 'decoy-alpha\n' >"$d/logs/work-loop/.owner"
+run_dispatch "$d" owner-refused-task --actor-cmd "$NOOP"
+expect_rc 33 "$RC" "50e — exits 33 when the checkout declares another task" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "50e — nothing was launched" || bad "50e — nothing was launched" "calls=$(calls "$d")"
+RIDE="$(run_id_of "$OUT")"
+R50E="$d/runs/$RIDE.result"
+[ -f "$R50E" ] && ok "50e — the ownership refusal finalizes a result" \
+              || bad "50e — the ownership refusal finalizes a result" "missing $R50E; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+for pair in "outcome:OWNERSHIP_REFUSED" "code:33" \
+            "owner_check:refused" "owner_declared:decoy-alpha" \
+            "actor_launched:no" "stage:pre-hop"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50E" "$k")"
+  [ "$got" = "$want" ] && ok "50e — $k=$want" || bad "50e — $k=$want" "got: ${got:-<absent>}"
+done
+# The lease is taken before admission runs, so a refusal is finalized holding
+# both — read from the lease directories, not asserted from that ordering.
+for k in lease_task_at_finalization lease_checkout_at_finalization; do
+  [ "$(res_field "$R50E" "$k")" = "held-by-this-run" ] \
+    && ok "50e — $k=held-by-this-run" \
+    || bad "50e — $k=held-by-this-run" "got: $(res_field "$R50E" "$k")"
+done
+# The recorded pid is what separates "held by this run" from "held": the value is
+# only reachable by reading the holder file the library wrote.
+LTD="$(res_field "$R50E" lease_task_dir)"
+[ -n "$LTD" ] && [ ! -d "$LTD" ] \
+  && ok "50e — and the lease it reported holding was released on the way out" \
+  || bad "50e — and the lease it reported holding was released on the way out" "still present: $LTD"
+# COMPLETING THE CODE-33 RESULT PROOF. Everything above asserts what the record
+# SAYS; these assert that there is exactly one record and that it is whole. The
+# approved plan asks for both — "Atomically finalize exactly one terminal result
+# for … invalid state or ownership" — and "a result exists" is the weakest of those
+# claims: an appending or double-publishing producer satisfies it. Counted the three
+# ways 67a counts them for code 34, so the two ownership siblings prove the same
+# thing about their own terminals.
+[ "$(res_count "$d/runs")" = "1" ] \
+  && ok "50e — exactly one finalized result" \
+  || bad "50e — exactly one finalized result" "found $(res_count "$d/runs"): $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(part_count "$d/runs")" = "0" ] \
+  && ok "50e — no unfinalized temporary artifact was left behind" \
+  || bad "50e — no unfinalized temporary artifact was left behind" "$(ls "$d/runs"/*.result.partial 2>&1)"
+NV50E="$(grep -c '^terminal_result_version=' "$R50E" 2>/dev/null || printf '0')"
+[ "$NV50E" = "1" ] && ok "50e — the artifact carries exactly one version line" \
+                   || bad "50e — the artifact carries exactly one version line" "found $NV50E"
+[ "$(tail -1 "$R50E" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "50e — the last line is the completeness sentinel" \
+  || bad "50e — the last line is the completeness sentinel" "$(tail -1 "$R50E" 2>/dev/null)"
+# The two fields the refusal's own semantics turn on that this case did not pin.
+# `model_request_started=no` is the one a supervised-use claim rests on — an
+# ownership refusal must not have reached the model — and it is a separate fact from
+# `actor_launched`, which 50e already had. `next_action` is the bounded token, shared
+# with codes 34 and 35 (`result_next_action()` maps 33|34|35 to one instruction).
+for pair in "model_request_started:no" "next_action:operator-resolve-ownership"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50E" "$k")"
+  [ "$got" = "$want" ] && ok "50e — $k=$want" || bad "50e — $k=$want" "got: ${got:-<absent>}"
+done
+# BOTH leases, not one. The record above says both were held at finalization; the
+# assertion above this only proved the TASK lease was released afterwards, so the
+# checkout lease could have survived and nothing here would have noticed.
+LCD="$(res_field "$R50E" lease_checkout_dir)"
+[ -n "$LCD" ] && [ ! -d "$LCD" ] \
+  && ok "50e — and the CHECKOUT lease it reported holding was released too" \
+  || bad "50e — and the CHECKOUT lease it reported holding was released too" \
+         "reported: ${LCD:-<absent>} ($([ -d "$LCD" ] && echo present || echo gone))"
+
+echo
+echo "Case 50f — mutation controls for the corrected launch and lease observations"
+# M4 and M5 are to case 50d and 50e what M1–M3 were to 50a: without them, an
+# assertion that the fields are OBSERVED proves nothing, because a constant of
+# the right shape would satisfy it.
+
+# M4 — the launch fields go back to being derived from the intent flag, which is
+# the defect this correction removed. The 50d scenario must then claim a launch.
+sed 's|^  if \[ "\$ACTOR_PROCESS_STARTED" -eq 1 \]; then$|  if [ "${HOP_BASELINE_READY:-0}" -eq 1 ]; then|' \
+    "$DISPATCH_BIN" >"$MUT_DIR/m4.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m4.sh"; then
+  ok "50f — M4 mutant differs from the dispatcher (the observed-fork branch was found)"
+  d="$(new_sandbox)"; state_file "$d" "m4-task" "codex"
+  # --deadline 300 for case 28e's requirement, which the MUTANT inherits: m4.sh is
+  # a copy of the dispatcher with one unrelated branch rewritten, so it is a live
+  # multi-hop program too and refuses without a clock. Without this the mutant
+  # would stop at the usage gate, publish no result, and the control would report
+  # "the correction is not fail-capable" when what actually happened is that the
+  # mutant never ran. 300s against --timeout 20 clamps nothing.
+  OUT="$(bash "$MUT_DIR/m4.sh" --checkout "$d" --task m4-task --log-dir "$d/runs" \
+        --timeout 20 --deadline 300 --codex-bin "$d/no-such-codex-binary" 2>&1)"; RC=$?
+  RIDM4="$(run_id_of "$OUT")"
+  [ "$(res_field "$d/runs/$RIDM4.result" actor_launched)" = "yes" ] \
+    && ok "50f — M4: with the intent flag restored, a pre-fork stop claims a launch (50d is fail-capable)" \
+    || bad "50f — M4: with the intent flag restored, a pre-fork stop claims a launch" \
+           "rc=$RC actor_launched=$(res_field "$d/runs/$RIDM4.result" actor_launched)"
+else
+  bad "50f — M4 mutant differs from the dispatcher (the observed-fork branch was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M5 — the reported task lease points somewhere the lease is not. A status READ
+# from the filesystem changes; a hard-coded one cannot. Only the reporting path
+# is redirected: the library acquires and releases through its own variables.
+sed 's|^LOCK_DIR="\$WL_LEASE_TASK_DIR"$|LOCK_DIR="$WL_LEASE_TASK_DIR.absent"|' \
+    "$DISPATCH_BIN" >"$MUT_DIR/m5.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m5.sh"; then
+  ok "50f — M5 mutant differs from the dispatcher (the reported lease path was found)"
+  d="$(new_sandbox)"; state_file "$d" "m5-task" "codex"
+  OUT="$(bash "$MUT_DIR/m5.sh" --checkout "$d" --task m5-task --log-dir "$d/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+  RIDM5="$(run_id_of "$OUT")"
+  [ "$(res_field "$d/runs/$RIDM5.result" lease_task_at_finalization)" = "missing" ] \
+    && ok "50f — M5: with the lease directory absent, the status tracks the filesystem" \
+    || bad "50f — M5: with the lease directory absent, the status tracks the filesystem" \
+           "rc=$RC lease_task_at_finalization=$(res_field "$d/runs/$RIDM5.result" lease_task_at_finalization)"
+
+  # M6 — the same absent lease, plus the observation replaced by the constant the
+  # field used to be. It reports a held lease that is not there, which is exactly
+  # what M5 catches and what a hard-coded field would have gone on doing.
+  sed 's|^  lease_task="\$(result_lease_status .*$|  lease_task=held-by-this-run|' \
+      "$MUT_DIR/m5.sh" >"$MUT_DIR/m6.sh"
+  if ! cmp -s "$MUT_DIR/m5.sh" "$MUT_DIR/m6.sh"; then
+    ok "50f — M6 mutant differs from M5 (the lease observation was found)"
+    d="$(new_sandbox)"; state_file "$d" "m6-task" "codex"
+    OUT="$(bash "$MUT_DIR/m6.sh" --checkout "$d" --task m6-task --log-dir "$d/runs" \
+          --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+    RIDM6="$(run_id_of "$OUT")"
+    [ "$(res_field "$d/runs/$RIDM6.result" lease_task_at_finalization)" = "held-by-this-run" ] \
+      && ok "50f — M6: hard-coded, it claims a lease that is not on disk (M5's assertion is fail-capable)" \
+      || bad "50f — M6: hard-coded, it claims a lease that is not on disk" \
+             "rc=$RC lease_task_at_finalization=$(res_field "$d/runs/$RIDM6.result" lease_task_at_finalization)"
+  else
+    bad "50f — M6 mutant differs from M5 (the lease observation was found)" \
+        "the sed matched nothing — the control cannot run"
+  fi
+else
+  bad "50f — M5 mutant differs from the dispatcher (the reported lease path was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+echo
+echo "Case 50g — a lease whose HOLDER cannot be established is not reported as another holder"
+# The residual half of the observed-lease contract. wl_lease__read_holder() `cat`s
+# the holder files and returns empty for any it cannot read, so an absent or
+# unreadable pid record reaches the classifier looking exactly like a pid that is
+# not ours. Falling through to `held-by-other` would assert a second holder that
+# nothing observed — the same class of unobserved claim as the `held` constant
+# this whole field replaced, one branch further in.
+#
+# The condition is staged the way M5 stages its own: only the REPORTED task-lease
+# path is redirected, at a directory this case creates with no holder metadata in
+# it. Acquisition and release still run through the library's own variables, so
+# the run is otherwise an ordinary one.
+sed 's|^LOCK_DIR="\$WL_LEASE_TASK_DIR"$|LOCK_DIR="$WL_LEASE_TASK_DIR.holderless"|' \
+    "$DISPATCH_BIN" >"$MUT_DIR/m7.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT_DIR/m7.sh"; then
+  ok "50g — M7 mutant differs from the dispatcher (the reported lease path was found)"
+  d="$(new_sandbox)"; state_file "$d" "m7-task" "codex"
+  # An existing lease directory with NO pid file — the observable shape of holder
+  # metadata that cannot be established. `-p` because the lease root is created by
+  # the library on acquire and does not exist yet.
+  HOLDERLESS="$(task_lock_for "$d" m7-task).holderless"
+  mkdir -p "$HOLDERLESS"
+  [ -d "$HOLDERLESS" ] && [ ! -e "$HOLDERLESS/pid" ] \
+    && ok "50g — the staged lease directory exists and carries no holder record" \
+    || bad "50g — the staged lease directory exists and carries no holder record" "$HOLDERLESS"
+  OUT="$(bash "$MUT_DIR/m7.sh" --checkout "$d" --task m7-task --log-dir "$d/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+  RIDM7="$(run_id_of "$OUT")"
+  G7="$(res_field "$d/runs/$RIDM7.result" lease_task_at_finalization)"
+  [ "$G7" = "held-holder-unavailable" ] \
+    && ok "50g — an unreadable holder is reported as explicitly unavailable" \
+    || bad "50g — an unreadable holder is reported as explicitly unavailable" "rc=$RC got: ${G7:-<absent>}"
+  # Stated as its own assertion rather than left implied by the one above: the two
+  # values this must never take are the two that would each assert a fact — that
+  # someone else holds it, or that this run does.
+  case "$G7" in
+    held-by-other|held-by-this-run)
+      bad "50g — it is neither 'held-by-other' nor 'held-by-this-run'" "got: $G7" ;;
+    *)
+      ok "50g — it is neither 'held-by-other' nor 'held-by-this-run'" ;;
+  esac
+
+  # M8 — the same staged directory with the unavailable branch removed, which is
+  # the classification as it stood before this fix. It reports another holder for
+  # a lease whose holder was never read, so 50g's assertions are fail-capable.
+  sed "s|^  if \[ -z \"\$pid\" \]; then printf 'held-holder-unavailable'; return 0; fi\$|  :|" \
+      "$MUT_DIR/m7.sh" >"$MUT_DIR/m8.sh"
+  if ! cmp -s "$MUT_DIR/m7.sh" "$MUT_DIR/m8.sh"; then
+    ok "50g — M8 mutant differs from M7 (the unavailable branch was found)"
+    d="$(new_sandbox)"; state_file "$d" "m8-task" "codex"
+    HOLDERLESS8="$(task_lock_for "$d" m8-task).holderless"
+    mkdir -p "$HOLDERLESS8"
+    OUT="$(bash "$MUT_DIR/m8.sh" --checkout "$d" --task m8-task --log-dir "$d/runs" \
+          --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC=$?
+    RIDM8="$(run_id_of "$OUT")"
+    [ "$(res_field "$d/runs/$RIDM8.result" lease_task_at_finalization)" = "held-by-other" ] \
+      && ok "50g — M8: without the branch it claims another holder it never read (50g is fail-capable)" \
+      || bad "50g — M8: without the branch it claims another holder it never read" \
+             "rc=$RC got: $(res_field "$d/runs/$RIDM8.result" lease_task_at_finalization)"
+  else
+    bad "50g — M8 mutant differs from M7 (the unavailable branch was found)" \
+        "the sed matched nothing — the control cannot run"
+  fi
+else
+  bad "50g — M7 mutant differs from the dispatcher (the reported lease path was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+echo
+echo "Case 50h — the EARLIEST finalizing terminal reports worktree facts it actually collected"
+# Unit 21, and it is the terminal this suite could not previously see. The
+# --unattended version gate exits 31 from six places, and until this unit every
+# one of them finalized BEFORE foreign_worktree() and allowlisted_dirty() were
+# defined: bash printed `command not found` twice, the command substitutions came
+# back empty, and count_lines() turned each into `0`.
+#
+# `0` IS WHY THIS NEEDED A CASE AND NOT A GLANCE. An absent field is a question an
+# operator asks; `0` is an answer they act on — "the working tree held nothing
+# foreign and nothing uncommitted" — produced by a check that never ran. Case 50b
+# already pins these two fields at a LATER pre-hop terminal, where the helpers do
+# exist, so the defect lived precisely in the gap no case reached.
+#
+# THE FIXTURE MAKES `0` FALSIFIABLE, which is the whole point: it dirties one
+# TRACKED file on each side of the allowlist, so the truthful answers are 1 and 1
+# and the pre-repair value is provably wrong rather than coincidentally right. A
+# clean-tree fixture would have reported 0 and passed against the broken build.
+# Tracked, not new, because `git status --porcelain` collapses an untracked
+# directory to a single `?? plans/` line and the expected count would then depend
+# on which directories the sandbox happens to have materialised.
+#
+# NO MODEL AND NO ACTOR. The gate refuses on the version the fake binary reports,
+# before any launch — the same route case 32f already drives.
+V50H="$(new_sandbox)"; state_file "$V50H" "gate-facts-task" "claude"
+FK50H="$SANDBOX_ROOT/fake-claude-50h.sh"
+cat >"$FK50H" <<'FK50HEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.218 (Claude Code)"; exit 0; fi
+printf '%s\n' "$@" > "$WL50H_ARGV"
+exit 0
+FK50HEOF
+chmod +x "$FK50H"
+export WL50H_ARGV="$SANDBOX_ROOT/argv-50h.txt"; rm -f "$WL50H_ARGV"
+printf 'edited by the fixture\n' >>"$V50H/other.txt"
+printf '\nfixture edit\n' >>"$V50H/logs/work-loop/gate-facts-task.md"
+# Ground truth, read from git rather than assumed, so the expectations below are
+# anchored to the repository and not to this comment.
+G50H_FOREIGN="$(git -C "$V50H" status --porcelain 2>/dev/null | grep -c 'other\.txt' || true)"
+G50H_ALLOWED="$(git -C "$V50H" status --porcelain 2>/dev/null | grep -c 'logs/work-loop/' || true)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V50H" --task gate-facts-task --log-dir "$V50H/runs" \
+      --carry-one --claude-bin "$FK50H" --unattended 2>&1)"; RC=$?
+expect_rc 31 "$RC" "50h — the version gate still refuses with its accepted code" "$OUT"
+[ -f "$WL50H_ARGV" ] \
+  && bad "50h — nothing was launched" "the child ran: $(tr '\n' ' ' <"$WL50H_ARGV")" \
+  || ok "50h — nothing was launched"
+# THE DIAGNOSTIC ITSELF IS AN ASSERTION. A repair that produced the right numbers
+# while still calling undefined functions would be papering over the cause.
+printf '%s\n' "$OUT" | grep -q 'command not found' \
+  && bad "50h — finalization emits no undefined-function diagnostic" \
+         "$(printf '%s\n' "$OUT" | grep 'command not found' | tr '\n' ' ')" \
+  || ok "50h — finalization emits no undefined-function diagnostic"
+R50H="$V50H/runs/$(run_id_of "$OUT").result"
+if [ "$(res_count "$V50H/runs")" = "1" ] && [ "$(part_count "$V50H/runs")" = "0" ] &&
+   [ "$(tail -1 "$R50H" 2>/dev/null)" = "result_complete=yes" ]; then
+  ok "50h — exactly one complete result, no partial"
+else
+  bad "50h — exactly one complete result, no partial" \
+      "results=$(res_count "$V50H/runs") partials=$(part_count "$V50H/runs") last=$(tail -1 "$R50H" 2>/dev/null)"
+fi
+# THE TWO FIELDS UNDER REPAIR, compared against git rather than against a literal.
+if [ "$(res_field "$R50H" worktree_foreign_paths)" = "$G50H_FOREIGN" ] &&
+   [ "$(res_field "$R50H" worktree_allowlisted_dirty_paths)" = "$G50H_ALLOWED" ] &&
+   [ "$G50H_FOREIGN" != "0" ] && [ "$G50H_ALLOWED" != "0" ]; then
+  ok "50h — both worktree facts match the dirty tree git reports ($G50H_FOREIGN foreign, $G50H_ALLOWED allowed)"
+else
+  bad "50h — both worktree facts match the dirty tree git reports" \
+      "git says foreign=$G50H_FOREIGN allowed=$G50H_ALLOWED; the record says foreign=$(res_field "$R50H" worktree_foreign_paths) allowed=$(res_field "$R50H" worktree_allowlisted_dirty_paths)"
+fi
+# THE REFUSAL IS UNCHANGED. The repair is evidence hygiene, so every other value
+# this terminal already carried has to be exactly what it was — including that no
+# model request and no launch happened, which is what keeps this a supervised-use
+# terminal rather than a Gate U claim.
+for pair in "outcome:UNATTENDED_UNAVAILABLE" "code:31" "stage:pre-hop" \
+            "actor_launched:no" "model_request_started:no" \
+            "next_action:operator-restore-contained-profile-prerequisites"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R50H" "$k")"
+  [ "$got" = "$want" ] && ok "50h — $k=$want" || bad "50h — $k=$want" "got: ${got:-<absent>}"
+done
+unset WL50H_ARGV
+
+# =================================================================== case 50i
+#
+# THE SAME EARLIEST TERMINAL, WITH A CLOCK (Unit 24). Case 50h proved this
+# terminal collects the worktree facts it reports. It runs without --deadline, so
+# `deadline_remaining_seconds` is the honest literal `none` and the row cannot see
+# the defect this case exists for: with a deadline supplied, the finalizer at
+# dispatch.sh:796 asks remaining_seconds() for the fact, and the sole definition
+# of that function used to sit BELOW the die 31 that reaches finalization. Bash
+# reported `command not found`, the command substitution produced an empty string,
+# and the record went out carrying `deadline_remaining_seconds=` beside
+# `result_complete=yes`.
+#
+# THE SYMPTOM IS AN EMPTY REQUIRED FIELD, not a wrong number, which is why the
+# assertions below check GRAMMAR AND BOUNDS rather than a second count. An empty
+# value and a truthful one are distinguishable without being timing-sensitive:
+# the deadline is 600s and the run takes a few, so the only requirement is a
+# non-negative integer no greater than the deadline. The lower bound of 1 is what
+# separates a real reading from the two failure modes that would otherwise slip
+# through — an empty string, and a `0` that would claim the budget was already
+# spent. The upper bound rules out the no-deadline sentinel (2147483647).
+echo
+echo "Case 50i — the earliest finalizing terminal reports a TRUTHFUL remaining deadline, not an empty field"
+V50I="$(new_sandbox)"; state_file "$V50I" "gate-clock-task" "claude"
+FK50I="$SANDBOX_ROOT/fake-claude-50i.sh"
+cat >"$FK50I" <<'FK50IEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.218 (Claude Code)"; exit 0; fi
+printf '%s\n' "$@" > "$WL50I_ARGV"
+exit 0
+FK50IEOF
+chmod +x "$FK50I"
+export WL50I_ARGV="$SANDBOX_ROOT/argv-50i.txt"; rm -f "$WL50I_ARGV"
+# The same dirty tree 50h uses, so the worktree facts this unit must NOT disturb
+# are asserted against git here too rather than assumed from that case.
+printf 'edited by the fixture\n' >>"$V50I/other.txt"
+printf '\nfixture edit\n' >>"$V50I/logs/work-loop/gate-clock-task.md"
+G50I_FOREIGN="$(git -C "$V50I" status --porcelain 2>/dev/null | grep -c 'other\.txt' || true)"
+G50I_ALLOWED="$(git -C "$V50I" status --porcelain 2>/dev/null | grep -c 'logs/work-loop/' || true)"
+D50I=600
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V50I" --task gate-clock-task --log-dir "$V50I/runs" \
+      --carry-one --claude-bin "$FK50I" --unattended --deadline "$D50I" 2>&1)"; RC=$?
+expect_rc 31 "$RC" "50i — the version gate still refuses with its accepted code" "$OUT"
+[ -f "$WL50I_ARGV" ] \
+  && bad "50i — nothing was launched" "the child ran: $(tr '\n' ' ' <"$WL50I_ARGV")" \
+  || ok "50i — nothing was launched"
+# THE DIAGNOSTIC IS AN ASSERTION, exactly as in 50h: a repair that produced a
+# number while still calling an undefined function would be papering over the cause.
+printf '%s\n' "$OUT" | grep -q 'command not found' \
+  && bad "50i — finalization emits no undefined-function diagnostic" \
+         "$(printf '%s\n' "$OUT" | grep 'command not found' | tr '\n' ' ')" \
+  || ok "50i — finalization emits no undefined-function diagnostic"
+R50I="$V50I/runs/$(run_id_of "$OUT").result"
+if [ "$(res_count "$V50I/runs")" = "1" ] && [ "$(part_count "$V50I/runs")" = "0" ] &&
+   [ "$(tail -1 "$R50I" 2>/dev/null)" = "result_complete=yes" ]; then
+  ok "50i — exactly one complete result, no partial"
+else
+  bad "50i — exactly one complete result, no partial" \
+      "results=$(res_count "$V50I/runs") partials=$(part_count "$V50I/runs") last=$(tail -1 "$R50I" 2>/dev/null)"
+fi
+# THE SUPPLIED DEADLINE, which must be carried through unchanged.
+[ "$(res_field "$R50I" deadline_seconds)" = "$D50I" ] \
+  && ok "50i — deadline_seconds carries the supplied $D50I" \
+  || bad "50i — deadline_seconds carries the supplied $D50I" "got: $(res_field "$R50I" deadline_seconds)"
+# THE FIELD UNDER REPAIR. Grammar first, then bounds — an empty value fails the
+# grammar check, which is the red this unit turns.
+REM50I="$(res_field "$R50I" deadline_remaining_seconds)"
+case "${REM50I:-}" in
+  ''|*[!0-9]*)
+    bad "50i — deadline_remaining_seconds is a bounded non-negative integer" \
+        "got: '${REM50I:-<empty>}' — not an integer; the fact producer was unavailable at this terminal" ;;
+  *)
+    if [ "$REM50I" -ge 1 ] && [ "$REM50I" -le "$D50I" ]; then
+      ok "50i — deadline_remaining_seconds is a bounded truthful integer ($REM50I of $D50I)"
+    else
+      bad "50i — deadline_remaining_seconds is a bounded truthful integer" \
+          "got: $REM50I, want 1..$D50I — outside the supplied budget"
+    fi ;;
+esac
+# UNIT 21'S FACTS ARE UNDISTURBED, checked against git rather than against 50h.
+if [ "$(res_field "$R50I" worktree_foreign_paths)" = "$G50I_FOREIGN" ] &&
+   [ "$(res_field "$R50I" worktree_allowlisted_dirty_paths)" = "$G50I_ALLOWED" ] &&
+   [ "$G50I_FOREIGN" != "0" ] && [ "$G50I_ALLOWED" != "0" ]; then
+  ok "50i — the Unit 21 worktree facts still match git ($G50I_FOREIGN foreign, $G50I_ALLOWED allowed)"
+else
+  bad "50i — the Unit 21 worktree facts still match git" \
+      "git says foreign=$G50I_FOREIGN allowed=$G50I_ALLOWED; the record says foreign=$(res_field "$R50I" worktree_foreign_paths) allowed=$(res_field "$R50I" worktree_allowlisted_dirty_paths)"
+fi
+# THE REFUSAL IS UNCHANGED. This unit changes fact availability, not policy.
+for pair in "outcome:UNATTENDED_UNAVAILABLE" "code:31" "stage:pre-hop" \
+            "actor_launched:no" "model_request_started:no" \
+            "next_action:operator-restore-contained-profile-prerequisites"; do
+  k50i="${pair%%:*}"; w50i="${pair#*:}"
+  g50i="$(res_field "$R50I" "$k50i")"
+  [ "$g50i" = "$w50i" ] && ok "50i — $k50i=$w50i" || bad "50i — $k50i=$w50i" "got: ${g50i:-<absent>}"
+done
+unset WL50I_ARGV
+
+# =================================================================== case 50j
+#
+# M30 — THE RELOCATION IS WHAT MATTERS, not the function. This control does not
+# delete remaining_seconds(): it moves the definition back BELOW the terminal that
+# needs it, which is exactly the pre-repair topology. The mutant therefore still
+# holds one syntactically valid definition and still parses, and every later
+# caller inside the hop loop would still resolve — only the early terminal loses
+# the fact, which is the precise claim under test.
+#
+# Fails closed on all four ways the selector could be wrong: no definition found,
+# more than one, a mutant that does not differ, or one that does not parse.
+echo
+echo "Case 50j — M30: with the clock fact defined below the terminal again, 50i's field goes empty and the refusal still finalizes"
+M30_SRC="$SANDBOX_ROOT/dispatch-M30.sh"
+M30_DEFS="$(grep -c '^remaining_seconds() {$' "$DISPATCH_BIN" 2>/dev/null | head -1)"
+if [ "$M30_DEFS" = "1" ]; then
+  # Cut the definition block (its opening line to the next column-0 brace) and
+  # re-append it verbatim at end of file — below every top-level statement.
+  awk '
+    /^remaining_seconds\(\) \{$/ { infn=1; blk=$0 ORS; next }
+    infn==1 { blk=blk $0 ORS; if ($0 ~ /^\}/) infn=0; next }
+    { print }
+    END { printf "%s", blk }
+  ' "$DISPATCH_BIN" >"$M30_SRC"
+  M30_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$M30_SRC" || M30_DIFFERS=yes
+  M30_PARSES=no; bash -n "$M30_SRC" 2>/dev/null && M30_PARSES=yes
+  M30_STILL="$(grep -c '^remaining_seconds() {$' "$M30_SRC" 2>/dev/null | head -1)"
+else
+  M30_DIFFERS=no; M30_PARSES=no; M30_STILL=0
+fi
+if [ "$M30_DEFS" = "1" ] && [ "$M30_DIFFERS" = yes ] && [ "$M30_PARSES" = yes ] && [ "$M30_STILL" = "1" ]; then
+  ok "50j — M30 found exactly one definition, moved it, still parses, and still has exactly one"
+  V50J="$(new_sandbox)"; state_file "$V50J" "gate-clock-mutant" "claude"
+  FK50J="$SANDBOX_ROOT/fake-claude-50j.sh"
+  cp "$FK50I" "$FK50J" 2>/dev/null || true
+  export WL50I_ARGV="$SANDBOX_ROOT/argv-50j.txt"; rm -f "$WL50I_ARGV"
+  OUTM30="$(bash "$M30_SRC" --checkout "$V50J" --task gate-clock-mutant --log-dir "$V50J/runs" \
+        --carry-one --claude-bin "$FK50J" --unattended --deadline 600 2>&1)"; RCM30=$?
+  expect_rc 31 "$RCM30" "50j — the mutant still refuses with code 31, so the fixture is not merely broken" "$OUTM30"
+  RM30="$V50J/runs/$(run_id_of "$OUTM30").result"
+  [ "$(tail -1 "$RM30" 2>/dev/null)" = "result_complete=yes" ] \
+    && ok "50j — the mutant still finalizes a complete result" \
+    || bad "50j — the mutant still finalizes a complete result" "last: $(tail -1 "$RM30" 2>/dev/null)"
+  REMM30="$(res_field "$RM30" deadline_remaining_seconds)"
+  case "${REMM30:-}" in
+    ''|*[!0-9]*) ok "50j — with the definition moved back down, the field is NOT a truthful integer ('${REMM30:-<empty>}')" ;;
+    *)           bad "50j — with the definition moved back down, the field is NOT a truthful integer" \
+                     "got: $REMM30 — the control cannot distinguish the relocation" ;;
+  esac
+  printf '%s\n' "$OUTM30" | grep -q 'remaining_seconds: command not found' \
+    && ok "50j — and the mutant names the undefined fact producer, which is the cause 50i removes" \
+    || bad "50j — and the mutant names the undefined fact producer" "$(printf '%s\n' "$OUTM30" | grep 'command not found' | tr '\n' ' ')"
+  unset WL50I_ARGV
+else
+  bad "50j — M30 found exactly one definition, moved it, still parses, and still has exactly one" \
+      "definitions=$M30_DEFS after=$M30_STILL differs=$M30_DIFFERS parses=$M30_PARSES — the control cannot run"
+fi
+
+# =================================================================== case 50k
+#
+# THE FIFTH AND LAST PRODUCTION CONSUMER (Unit 32), and the one that covers the
+# most terminals: the shared nonzero die() funnel. 50a and 50b proved it
+# FINALIZES a truthful run-bound record at a post-hop 22 and a pre-hop 18; 57b
+# proved a failed publication transfers instead of falling through. Nothing
+# proved the artifact it goes on to advertise still says what this run did.
+# Measured on the fixtures below before the edit: a record altered after
+# successful finalization to `outcome=COMPLETED` still exited 22, was advertised
+# as this run's terminal result and released both leases, and so did one altered
+# to `code=0` at the pre-hop 18. Path, structure and identity have nothing to
+# object to; only meaning does.
+#
+# SAME FORCING TECHNIQUE, SAME WINDOW as 56b, 58e, 60j, 62b and 27w: one altering
+# line injected after this seam's own finalization marker, between publication and
+# consumption. It is GUARDED on RESULT_FILE, like 27w's and for the same reason —
+# die() is also reached from terminals outside the run-evidence coverage guard,
+# where no record exists and an unguarded fixture would act outside the window.
+#
+# BOTH HALVES OF THE FUNNEL ARE EXERCISED, because they are different runs and
+# not two spellings of one: the post-hop 22 has a launched actor and observed
+# state hashes behind it, the pre-hop 18 stops before any launch with its
+# unavailable fields explicit. One consumer covers both without a per-code call
+# site, which is the claim these two fixtures together carry.
+echo
+echo "Case 50k — a nonzero funnel record altered ONLY in outcome, or ONLY in code, is refused before release"
+MUT50K="$SANDBOX_ROOT/mutants50k"; mkdir -p "$MUT50K"
+
+mk_funnel_alter50() { # outfile sed-script [source] -> 0 when the fixture differs and parses
+  awk -v s="$2" '{print} /# die funnel failure transfer/ {
+    printf "  [ -n \"$RESULT_FILE\" ] && { sed %c%s%c \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\"; } # harness die-funnel alteration\n", 39, s, 39 }' \
+    "${3:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${3:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# One run through a forcing fixture at whichever half of the funnel the caller
+# names. `foreign` is what separates them: a path outside the allowlist stops the
+# run at the pre-hop 18 before any launch, and its absence lets the simulated
+# actor run and reach the post-hop 22.
+funnel_run50() { # fixture task foreign? -> sets V50K and O50K
+  V50K="$(new_sandbox)"; state_file "$V50K" "$2" codex
+  [ "${3:-no}" = yes ] && printf 'out of allowlist\n' >>"$V50K/other.txt"
+  O50K="$(bash "$1" --checkout "$V50K" --task "$2" --log-dir "$V50K/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC50K=$?
+}
+
+# The full refusal contract for one forced funnel mismatch, asserted exactly as
+# the four migrated seams assert theirs — plus the one assertion only this seam
+# needs. The refusal re-enters die() to exit 38, so "it refused" is not enough:
+# it has to have refused ONCE.
+expect_funnel_refusal50() { # fixture task expected-token label-prefix original-code foreign?
+  local TL CL N
+  funnel_run50 "$1" "$2" "${6:-no}"
+  expect_rc 38 "$RC50K" "$4 — refused with exit 38, never $5" "$O50K"
+  out_lacks "  terminal result:" "$O50K" "$4 — the refused artifact is not advertised as this run's result"
+  out_has "reached the shared nonzero terminal for code $5" "$O50K" \
+    "$4 — the refusal names the shared nonzero terminal it actually reached, and the code it was ending with"
+  out_lacks "reached a real operator terminal" "$O50K" \
+    "$4 — the refusal claims no operator terminal"
+  # TERMINATION, and this is the assertion the other four seams do not need. They
+  # refuse from a terminal that exits directly; this one refuses from INSIDE the
+  # funnel, and the refusal's own `die 38` re-enters it. A consumer that ran again
+  # on re-entry would refuse the same artifact against TERMINAL_UNPROVABLE/38 and
+  # never stop. Counted rather than reasoned about: exactly one STOP [38] line.
+  N="$(printf '%s\n' "$O50K" | grep -c '^STOP \[38\]' || true)"
+  [ "$N" = 1 ] && ok "$4 — the refusal fired exactly once and did not re-enter the consumer" \
+               || bad "$4 — the refusal fired exactly once and did not re-enter the consumer" \
+                      "STOP [38] lines: $N"
+  TL="$(task_lock_for "$V50K" "$2")"; CL="$(checkout_lock_for "$V50K")"
+  # NOT a finalization story: the record published perfectly well (57b owns the
+  # publication failure). What failed here is what it says.
+  if [ -d "$TL" ] && [ -d "$CL" ] &&
+     grep -q '^terminal result unprovable: ' "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$CL/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL/survivors" 2>/dev/null; then
+    ok "$4 — both leases retained, both pins carrying the bounded '$3' cause"
+  else
+    bad "$4 — both leases retained, both pins carrying the bounded '$3' cause" \
+        "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  # THE ACCEPTED CAUSE-RECORDED WORDING, on the ordinary path where no earlier pin
+  # exists. Unit 34 makes this sentence conditional, so the unpinned case has to
+  # keep saying it — otherwise "preserve the first cause" would have been
+  # implemented as "stop recording consumer causes at all", which is the opposite
+  # failure and would look identical from the exit code alone.
+  out_has "Both run leases are retained with that cause recorded" "$O50K" \
+    "$4 — with no earlier pin, the refusal still states that its own cause was recorded"
+  run_dispatch "$V50K" "$2" --dry-run
+  expect_rc 17 "$RC" "$4 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+if mk_funnel_alter50 "$MUT50K/outonly.sh" 's/^outcome=.*/outcome=COMPLETED/'; then
+  ok "50k — the outcome-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_funnel_refusal50 "$MUT50K/outonly.sh" funnel-out-task outcome-mismatch \
+    "50k — a post-hop 22 whose record claims COMPLETED" 22
+else
+  bad "50k — the outcome-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+if mk_funnel_alter50 "$MUT50K/codeonly.sh" 's/^code=.*/code=0/'; then
+  ok "50k — the code-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_funnel_refusal50 "$MUT50K/codeonly.sh" funnel-code-task code-mismatch \
+    "50k — a pre-hop 18 whose record claims code 0" 18 yes
+else
+  bad "50k — the code-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+# THE CLEAN CONTROLS, on the same two halves and through the same runner. Without
+# these the refusals above could be satisfied by a seam that refuses everything,
+# which would break every ordinary nonzero terminal in the dispatcher.
+for c50 in 22:funnel-clean-post-task:NO_TRANSITION:no 18:funnel-clean-pre-task:FOREIGN_UNSTAGED:yes; do
+  WANT50="${c50%%:*}"; REST50="${c50#*:}"
+  T50K="${REST50%%:*}"; REST50="${REST50#*:}"
+  SYM50="${REST50%%:*}"; FGN50="${REST50##*:}"
+  funnel_run50 "$DISPATCH_BIN" "$T50K" "$FGN50"
+  RID50K="$(run_id_of "$O50K")"
+  R50K="$V50K/runs/$RID50K.result"
+  if [ "$RC50K" = "$WANT50" ] && [ "$(res_count "$V50K/runs")" = 1 ] &&
+     [ "$(res_field "$R50K" outcome)" = "$SYM50" ] && [ "$(res_field "$R50K" code)" = "$WANT50" ] &&
+     [ "$(tail -1 "$R50K" 2>/dev/null)" = "result_complete=yes" ] &&
+     printf '%s\n' "$O50K" | grep -qF "  terminal result: $R50K" &&
+     [ ! -d "$(task_lock_for "$V50K" "$T50K")" ] && [ ! -d "$(checkout_lock_for "$V50K")" ]; then
+    ok "50k — a clean $WANT50 still exits $WANT50, advertises its one complete $SYM50 result, and releases both leases"
+  else
+    bad "50k — a clean $WANT50 still exits $WANT50, advertises its one complete $SYM50 result, and releases both leases" \
+        "rc=$RC50K results=$(res_count "$V50K/runs") outcome=$(res_field "$R50K" outcome) code=$(res_field "$R50K" code) task-lease=$([ -d "$(task_lock_for "$V50K" "$T50K")" ] && echo held || echo released)"
+  fi
+done
+
+# INDEPENDENCE, structurally, the same assertion 60j, 62c and 27w make for their
+# own seams: this call site must derive its expected symbol through the sole
+# mapping owner and state its expected code from the funnel's own dispatcher-owned
+# parameter. A call site that passed a field out of the record would compare it
+# with itself, and both refusals above would go green on a forgery.
+CALL50K="$(grep -n '# die-funnel terminal consumption' "$DISPATCH_BIN" | grep -v ':[[:space:]]*#' | cut -d: -f2-)"
+if printf '%s\n' "$CALL50K" | grep -q 'result_outcome "\$code"' &&
+   ! printf '%s\n' "$CALL50K" | grep -qE 'RESULT_FILE|TR_OUTCOME|TR_CODE|res_field|\.result'; then
+  ok "50k — the funnel seam derives its expected pair through result_outcome and the funnel's own code, and reads nothing from the artifact"
+else
+  bad "50k — the funnel seam derives its expected pair through result_outcome and the funnel's own code, and reads nothing from the artifact" \
+      "call site: $CALL50K"
+fi
+
+# =================================================================== case 50L
+echo
+echo "Case 50L — mutation control: remove ONLY the new funnel consumer and both mismatches release again"
+# M39 — the fifth in the M33/M34/M36/M37 line, and the first that addresses the
+# funnel itself. It strips exactly the consumer call, leaving the finalization
+# line, its failure transfer, the advertisement, the release and the exit in
+# place, AND leaving the other four consumers untouched — which is what proves
+# this seam is separately fail-capable rather than sharing a switch with them.
+# Fails closed: unless the selector matched exactly once and the mutant differs
+# and parses, the control does not run.
+sed '/# die-funnel terminal consumption$/d' "$DISPATCH_BIN" >"$MUT50K/m39.sh" 2>/dev/null
+M39_HITS="$(grep -c '# die-funnel terminal consumption$' "$DISPATCH_BIN" 2>/dev/null || true)"
+M39_LEFT="$(grep -c '# die-funnel terminal consumption$' "$MUT50K/m39.sh" 2>/dev/null || true)"
+M39_FINAL="$(grep -c '# die funnel failure transfer$' "$MUT50K/m39.sh" 2>/dev/null || true)"
+M39_OTHERS=0
+for m39 in operator dry-run carry-one interruption; do
+  M39_OTHERS=$((M39_OTHERS + $(grep -c "# $m39 terminal consumption\$" "$MUT50K/m39.sh" 2>/dev/null || true)))
+done
+M39_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT50K/m39.sh" || M39_DIFFERS=yes
+M39_PARSES=no; bash -n "$MUT50K/m39.sh" 2>/dev/null && M39_PARSES=yes
+if [ "$M39_HITS" = 1 ] && [ "$M39_LEFT" = 0 ] && [ "$M39_FINAL" = 1 ] && [ "$M39_OTHERS" = 4 ] &&
+   [ "$M39_DIFFERS" = yes ] && [ "$M39_PARSES" = yes ]; then
+  ok "50L — M39 removed exactly the funnel consumer, kept its finalization transfer and the other four consumers, differs, and parses"
+  for f50 in out:22:funnel-m39-out-task:no code:18:funnel-m39-code-task:yes; do
+    FLD50="${f50%%:*}"; REST39="${f50#*:}"
+    WANT39="${REST39%%:*}"; REST39="${REST39#*:}"
+    T39="${REST39%%:*}"; FGN39="${REST39##*:}"
+    if [ "$FLD50" = out ]; then S39='s/^outcome=.*/outcome=COMPLETED/'; else S39='s/^code=.*/code=0/'; fi
+    if mk_funnel_alter50 "$MUT50K/m39-$FLD50.sh" "$S39" "$MUT50K/m39.sh"; then
+      funnel_run50 "$MUT50K/m39-$FLD50.sh" "$T39" "$FGN39"
+      if [ "$RC50K" = "$WANT39" ] &&
+         printf '%s\n' "$O50K" | grep -q '  terminal result: ' &&
+         [ ! -d "$(task_lock_for "$V50K" "$T39")" ] && [ ! -d "$(checkout_lock_for "$V50K")" ]; then
+        ok "50L — M39: without the consumer the $FLD50-only mismatch exits $WANT39, advertises the altered artifact and releases (50k is fail-capable)"
+      else
+        bad "50L — M39: without the consumer the $FLD50-only mismatch exits $WANT39, advertises the altered artifact and releases (50k is fail-capable)" \
+            "rc=$RC50K advertised=$(printf '%s\n' "$O50K" | grep -c '  terminal result: ') task-lease=$([ -d "$(task_lock_for "$V50K" "$T39")" ] && echo held || echo released)"
+      fi
+    else
+      bad "50L — M39: the $FLD50-only fixture over the mutant differs and parses" \
+          "the injection matched nothing, or the fixture does not parse — the control cannot run"
+    fi
+  done
+else
+  bad "50L — M39 removed exactly the funnel consumer, kept its finalization transfer and the other four consumers, differs, and parses" \
+      "matched=$M39_HITS left=$M39_LEFT finalization=$M39_FINAL others=$M39_OTHERS differs=$M39_DIFFERS parses=$M39_PARSES — the control cannot run"
+fi
+
+# =================================================================== case 50m
+#
+# THE DURABLE CAUSE OUTLIVES THE RUN, and that is what makes this a defect rather
+# than a wording preference. Unit 33 measured the nested path with a temporary
+# probe: a terminal-specific finalization fails, die_terminal_unprovable pins the
+# finalization-failure cause and re-enters `die 38`, that retry SUCCEEDS, and the
+# funnel consumer added at Unit 32 then refuses an altered artifact and pins
+# again. Measured on the fixture below before the edit: both leases stayed held,
+# but their surviving cause said only `outcome-mismatch` — the finalization
+# failure that actually started the incident was gone, and the later refusal told
+# the operator its own cause had been recorded on both leases when it had just
+# overwritten the one that mattered. The recovery actions differ: the surviving
+# record sent the operator to repair an interfering artifact when the real cause
+# was a write that failed.
+#
+# WHY THE OPERATOR TERMINAL. It is the seam whose finalization failure is already
+# an accepted case (55e/57), and it reaches the funnel with no actor, no signal
+# and no carried hop to confound what is being observed.
+#
+# THE FIXTURE FORCES BY CODE, NOT BY COUNTER, which is what keeps it readable and
+# fail-closed at the same time: the operator terminal finalizes at code 0 and the
+# re-entry finalizes at code 38, so failing exactly the code-0 attempt forces the
+# first failure and lets the retry through without any counter state to get wrong.
+# RESULT_FILE is cleared exactly as the production failure paths clear it.
+echo
+echo "Case 50m — a consumer refusal that arrives AFTER an earlier pin does not overwrite the first durable cause"
+MUT50M="$SANDBOX_ROOT/mutants50m"; mkdir -p "$MUT50M"
+
+mk_nested_alter50() { # outfile [source] -> 0 when the fixture differs and parses
+  awk '
+    {print}
+    index($0, "[ \"$RESULT_FINALIZED\" -eq 1 ] && return 0") {
+      print "  [ \"$1\" = 0 ] && { RESULT_FILE=\"\"; return 1; } # harness nested first-finalization failure" }
+    /# die funnel failure transfer/ {
+      print "  [ -n \"$RESULT_FILE\" ] && { sed '\''s/^outcome=.*/outcome=COMPLETED/'\'' \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\"; } # harness nested retry-result alteration" }
+  ' "${2:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${2:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# Both selectors must have matched, or the fixture is not modelling the nested
+# path at all and every assertion below would be vacuous.
+if mk_nested_alter50 "$MUT50M/nested.sh"; then
+  NEST_FIN="$(grep -c '# harness nested first-finalization failure$' "$MUT50M/nested.sh" 2>/dev/null || true)"
+  NEST_ALT="$(grep -c '# harness nested retry-result alteration$' "$MUT50M/nested.sh" 2>/dev/null || true)"
+else
+  NEST_FIN=0; NEST_ALT=0
+fi
+if [ "$NEST_FIN" = 1 ] && [ "$NEST_ALT" = 1 ]; then
+  ok "50m — the nested forcing fixture injected both the first-finalization failure and the retry alteration, differs, and parses"
+else
+  bad "50m — the nested forcing fixture injected both the first-finalization failure and the retry alteration, differs, and parses" \
+      "finalization-injections=$NEST_FIN alteration-injections=$NEST_ALT — the case cannot run"
+fi
+
+nested_probe50() { # fixture task -> sets V50M and O50M
+  V50M="$(new_sandbox)"; state_file "$V50M" "$2" operator
+  O50M="$(bash "$1" --checkout "$V50M" --task "$2" --log-dir "$V50M/runs" \
+        --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC50M=$?
+}
+
+expect_nested_preservation50() { # fixture task label-prefix
+  local TL CL S T U REC LOG
+  nested_probe50 "$1" "$2"
+  expect_rc 38 "$RC50M" "$3 — the nested refusal still exits 38" "$O50M"
+  # THE RETRY-SUCCESS PATH IS STILL THE ONE UNDER TEST. Unit 33's counters are not
+  # available here, so the observable stands in for them: the record on disk is the
+  # code-38 one the RETRY wrote, which only exists if the first attempt failed and
+  # the second succeeded.
+  REC="$V50M/runs/$(run_id_of "$O50M").result"
+  [ "$(res_field "$REC" code)" = 38 ] \
+    && ok "$3 — the surviving record is the retry's own code-38 result" \
+    || bad "$3 — the surviving record is the retry's own code-38 result" "code=$(res_field "$REC" code)"
+  # ONE OF EACH REFUSAL, NOT ONE REPEATED. Two distinct sentences, one nested in
+  # the other; a third of either would be the recursion Unit 32's one-shot bound
+  # exists to prevent.
+  U="$(printf '%s\n' "$O50M" | grep -cF 'could not be finalized under' || true)"
+  T="$(printf '%s\n' "$O50M" | grep -cF 'did not pass the consumer gate' || true)"
+  if [ "$U" = 1 ] && [ "$T" = 1 ]; then
+    ok "$3 — both refusals are reported exactly once, and neither recurred"
+  else
+    bad "$3 — both refusals are reported exactly once, and neither recurred" \
+        "finalization-failure sentences=$U consumer-gate sentences=$T"
+  fi
+  out_lacks "  terminal result:" "$O50M" "$3 — the refused artifact is not advertised as this run's result"
+  # THE LATER REFUSAL IS STILL VISIBLE where the operator reads this run — both
+  # channels. Preserving the earlier cause must not cost the later evidence.
+  LOG="$V50M/runs/$(run_id_of "$O50M").log"
+  if grep -qF 'did not pass the consumer gate' "$LOG" 2>/dev/null &&
+     grep -qF 'outcome-mismatch' "$LOG" 2>/dev/null; then
+    ok "$3 — the later mismatch is still recorded in the run log, not only on stderr"
+  else
+    bad "$3 — the later mismatch is still recorded in the run log, not only on stderr" \
+        "run log: $(tr '\n' '|' <"$LOG" 2>&1 | tail -c 200)"
+  fi
+  # THE DURABLE HALF. Both leases must still carry the FIRST cause, byte-for-byte,
+  # and must not carry the later one.
+  TL="$(task_lock_for "$V50M" "$2")"; CL="$(checkout_lock_for "$V50M")"
+  S=ok
+  for d50 in "$TL" "$CL"; do
+    [ -d "$d50" ] || { S="missing $d50"; break; }
+    grep -q 'could not finalize its terminal result' "$d50/survivors" 2>/dev/null \
+      || { S="first cause absent in $d50"; break; }
+    grep -q 'was refused before release' "$d50/survivors" 2>/dev/null \
+      && { S="later cause overwrote $d50"; break; }
+  done
+  [ "$S" = ok ] \
+    && ok "$3 — both leases are retained still carrying the FIRST finalization-failure cause, not the later mismatch" \
+    || bad "$3 — both leases are retained still carrying the FIRST finalization-failure cause, not the later mismatch" \
+           "$S; task cause: $(tr '\n' '|' <"$TL/survivors" 2>&1)"
+  # THE WORDING HALF, and it is a separate claim: the durable record can be right
+  # while the message still tells the operator this refusal's cause was written to
+  # the leases. Counted rather than matched, because the FIRST refusal says the
+  # accepted sentence legitimately — exactly one of them may.
+  S="$(printf '%s\n' "$O50M" | grep -cF 'Both run leases are retained with that cause recorded' || true)"
+  if [ "$S" = 1 ] &&
+     printf '%s\n' "$O50M" | grep -qF 'remain retained under the cause recorded before this refusal'; then
+    ok "$3 — only the earlier refusal claims its cause was recorded; the later one says the earlier evidence is preserved"
+  else
+    bad "$3 — only the earlier refusal claims its cause was recorded; the later one says the earlier evidence is preserved" \
+        "cause-recorded claims=$S preserved-wording=$(printf '%s\n' "$O50M" | grep -cF 'remain retained under the cause recorded before this refusal' || true)"
+  fi
+  run_dispatch "$V50M" "$2" --dry-run
+  expect_rc 17 "$RC" "$3 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+if [ "$NEST_FIN" = 1 ] && [ "$NEST_ALT" = 1 ]; then
+  expect_nested_preservation50 "$MUT50M/nested.sh" nested-pin-task \
+    "50m — a consumer refusal after a finalization-failure pin"
+fi
+
+# =================================================================== case 50n
+echo
+echo "Case 50n — mutation control: remove ONLY the pin precedence and the first durable cause is overwritten again"
+# M40 — it neutralizes exactly the new precedence test and nothing else: the pin
+# call, its bounded cause, the cleared RESULT_FILE, the exit, the retention and
+# the refusal sentence all stay. So the run must still refuse identically, while
+# the durable record goes back to carrying only the later mismatch AND the later
+# message goes back to claiming that cause was recorded. Both halves are asserted,
+# because the defect was both. Fails closed: unless the selector matched exactly
+# once and the mutant differs and parses, the control does not run.
+sed 's/if \[ "${WL_LEASE_PINNED:-0}" -eq 0 \]; then # consumer retention precedence/if true; then # consumer retention precedence/' \
+  "$DISPATCH_BIN" >"$MUT50M/m40.sh" 2>/dev/null
+M40_HITS="$(grep -c '# consumer retention precedence$' "$DISPATCH_BIN" 2>/dev/null || true)"
+M40_LEFT="$(grep -c 'WL_LEASE_PINNED:-0.*# consumer retention precedence$' "$MUT50M/m40.sh" 2>/dev/null || true)"
+M40_KEPT="$(grep -c '# consumer retention precedence$' "$MUT50M/m40.sh" 2>/dev/null || true)"
+M40_PIN="$(grep -c '# operator consumer retention$' "$MUT50M/m40.sh" 2>/dev/null || true)"
+M40_FUNNEL="$(grep -c 'WL_LEASE_PINNED:-0' "$MUT50M/m40.sh" 2>/dev/null || true)"
+M40_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT50M/m40.sh" || M40_DIFFERS=yes
+M40_PARSES=no; bash -n "$MUT50M/m40.sh" 2>/dev/null && M40_PARSES=yes
+if [ "$M40_HITS" = 1 ] && [ "$M40_LEFT" = 0 ] && [ "$M40_KEPT" = 1 ] && [ "$M40_PIN" = 1 ] &&
+   [ "$M40_FUNNEL" = 1 ] && [ "$M40_DIFFERS" = yes ] && [ "$M40_PARSES" = yes ]; then
+  ok "50n — M40 neutralized exactly the consumer pin precedence, kept the pin call and the funnel's own precedence, differs, and parses"
+  if mk_nested_alter50 "$MUT50M/m40-nested.sh" "$MUT50M/m40.sh"; then
+    nested_probe50 "$MUT50M/m40-nested.sh" nested-m40-task
+    TL40="$(task_lock_for "$V50M" nested-m40-task)"
+    if [ "$RC50M" -eq 38 ] && [ -d "$TL40" ] &&
+       grep -q 'was refused before release' "$TL40/survivors" 2>/dev/null &&
+       ! grep -q 'could not finalize its terminal result' "$TL40/survivors" 2>/dev/null &&
+       [ "$(printf '%s\n' "$O50M" | grep -cF 'Both run leases are retained with that cause recorded' || true)" = 2 ]; then
+      ok "50n — M40: without the precedence the later cause overwrites the first and the refusal claims it was recorded (50m is fail-capable)"
+    else
+      bad "50n — M40: without the precedence the later cause overwrites the first and the refusal claims it was recorded (50m is fail-capable)" \
+          "rc=$RC50M claims=$(printf '%s\n' "$O50M" | grep -cF 'Both run leases are retained with that cause recorded' || true) cause: $(tr '\n' '|' <"$TL40/survivors" 2>&1 | head -c 160)"
+    fi
+  else
+    bad "50n — M40: the nested fixture over the mutant differs and parses" \
+        "the injection matched nothing, or the fixture does not parse — the control cannot run"
+  fi
+else
+  bad "50n — M40 neutralized exactly the consumer pin precedence, kept the pin call and the funnel's own precedence, differs, and parses" \
+      "matched=$M40_HITS left=$M40_LEFT kept=$M40_KEPT pin=$M40_PIN funnel-precedence=$M40_FUNNEL differs=$M40_DIFFERS parses=$M40_PARSES — the control cannot run"
+fi
+
+# ==================================================================== case 51
+# THE STANDALONE STRUCTURAL VALIDATOR for the v1 terminal result case 50 proves
+# the dispatcher produces. Case 50 read that artifact with harness `sed`/`grep`
+# on purpose — to show it is consumable without a parser shipped alongside it.
+# This case adds the parser the DISPATCHER itself owns, and the two claims are
+# different: "a careful reader can extract a field" is not "this program refuses
+# a record it must not trust".
+#
+# THERE IS NO CONSUMER HERE, and that is this unit's boundary. Nothing below
+# makes a valid result advance a loop, choose a path, wait for a record, or infer
+# a semantic fact from a structure that validated. The validator answers exactly
+# one question — is this artifact structurally the v1 record this dispatcher
+# writes — and returns one bounded token saying why not. Meaning, run/task/path
+# identity and first-consumer integration are separate units.
+#
+# HOW IT IS EXERCISED, and why that route. dispatch.sh parses its arguments and
+# exits at load, so it cannot be sourced; and this unit may not add a CLI, status
+# or transition route to reach the function, because that route would be the
+# consumer the boundary above excludes. So the harness lifts the
+# marker-delimited validator region out of the dispatcher UNDER TEST and sources
+# that. It is not a second implementation: the text executed below is
+# dispatch.sh's own production text, and 51c proves it by mutating dispatch.sh
+# and watching these assertions go red.
+
+VAL_BEGIN='# --- wl2:terminal-result-validator:begin ---'
+VAL_END='# --- wl2:terminal-result-validator:end ---'
+
+extract_validator() { # dispatcher-path outfile -> 0 when a non-empty region came out
+  awk -v b="$VAL_BEGIN" -v e="$VAL_END" '
+    $0 == b { f=1; next } $0 == e { f=0; next } f' "$1" >"$2" 2>/dev/null
+  [ -s "$2" ]
+}
+
+# One validation, in its own subshell. The isolation is the point twice over:
+# nothing the extracted text defines leaks into the harness, and nothing the
+# harness already holds can stand in for a definition the dispatcher failed to
+# ship — an undefined function exits 127 here rather than silently resolving.
+val_run() { # lib artifact -> "<rc> <token>"
+  ( . "$1" >/dev/null 2>&1 || { printf '99 lib-unsourceable\n'; exit 0; }
+    tok="$(validate_terminal_result "$2" 2>/dev/null)"; rc=$?
+    printf '%s %s\n' "$rc" "$tok" )
+}
+
+# want-rc want-token label
+val_expect() { # lib artifact want-rc want-token label
+  local got; got="$(val_run "$1" "$2")"
+  if [ "$got" = "$3 $4" ]; then ok "$5"; else bad "$5" "expected '$3 $4', got '$got'"; fi
+}
+
+echo
+echo "Case 51a — the dispatcher's own validator accepts the artifact its producer really writes"
+VAL_LIB="$SANDBOX_ROOT/wl2-validator-lib.sh"
+if extract_validator "$DISPATCH_BIN" "$VAL_LIB"; then
+  ok "51a — a marker-delimited validator region exists in the dispatcher"
+else
+  bad "51a — a marker-delimited validator region exists in the dispatcher" \
+      "no region between the markers in $DISPATCH_BIN — there is no production validator to exercise"
+  : >"$VAL_LIB"
+fi
+
+# THE VALID CONTROL IS A REAL RUN'S OUTPUT, not a hand-built happy-path sample.
+# A validator agreeing with a fixture the same author wrote proves only that the
+# two agree; agreeing with what finalize_terminal_result() actually emitted is
+# what makes it compatible with the artifact in the field.
+V51D="$(new_sandbox)"; state_file "$V51D" "validator-task" "codex"
+run_dispatch "$V51D" validator-task --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "51a — the producing run reaches a nonzero terminal (22)" "$OUT"
+RID51="$(run_id_of "$OUT")"
+REAL51="$V51D/runs/$RID51.result"
+if [ -f "$REAL51" ]; then
+  ok "51a — the producing run left a terminal result to validate"
+else
+  bad "51a — the producing run left a terminal result to validate" \
+      "missing $REAL51; runs/ holds: $(ls "$V51D/runs" 2>&1 | tr '\n' ' ')"
+fi
+val_expect "$VAL_LIB" "$REAL51" 0 ok "51a — the unchanged real producer result is accepted"
+
+# THE DECLARED SET IS THE PRODUCED SET. Two key lists in one file is how a
+# reader drifts from its writer without either side looking wrong, so the
+# validator's required set is compared against the keys the producer actually
+# emitted rather than against a list this harness restates.
+PRODUCED_KEYS="$(sed -n 's/^\([a-z][a-z0-9_]*\)=.*/\1/p' "$REAL51" 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')"
+DECLARED_KEYS="$( ( . "$VAL_LIB" >/dev/null 2>&1 &&
+                    printf '%s\n' $TERMINAL_RESULT_REQUIRED ) 2>/dev/null | LC_ALL=C sort | tr '\n' ' ')"
+if [ -n "$PRODUCED_KEYS" ] && [ "$PRODUCED_KEYS" = "$DECLARED_KEYS" ]; then
+  ok "51a — the validator's required set is exactly the set the producer writes"
+else
+  bad "51a — the validator's required set is exactly the set the producer writes" \
+      "produced: ${PRODUCED_KEYS:-<none>} / declared: ${DECLARED_KEYS:-<none>}"
+fi
+
+echo
+echo "Case 51b — every structural defect is REJECTED with one bounded reason token"
+V51="$SANDBOX_ROOT/v51"; mkdir -p "$V51"
+
+# A duplicate singleton. The brief's named case: two `outcome=` lines, everything
+# else intact and the sentinel still last, so nothing but the duplication can
+# explain a rejection.
+awk '/^outcome=/{print} {print}' "$REAL51" >"$V51/dup" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/dup" 1 duplicate-field "51b — a duplicated singleton is rejected"
+
+# An unrecognized version. The record is otherwise this producer's own bytes,
+# which is the case a later v2 would present.
+sed '1s/^terminal_result_version=1$/terminal_result_version=2/' "$REAL51" >"$V51/ver2" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/ver2" 1 unknown-version "51b — an unrecognized version is rejected"
+
+# The version line PRESENT BUT NOT FIRST. A validator that merely grepped for the
+# expected version string would accept this; the structural claim is that the
+# record announces its version before anything else can be read.
+{ sed -n '2p' "$REAL51"; sed -n '1p' "$REAL51"; sed -n '3,$p' "$REAL51"; } >"$V51/vermoved" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/vermoved" 1 bad-version-line "51b — a version line that is not the first line is rejected"
+
+sed 's|^schema=.*|schema=work-loop-v2-something-else|' "$REAL51" >"$V51/schema" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/schema" 1 unknown-schema "51b — an unrecognized schema name is rejected"
+
+sed '/^owner_check=/d' "$REAL51" >"$V51/missing" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/missing" 1 missing-field "51b — a missing required singleton is rejected"
+
+awk 'NR==5{print "NOT_A_PAIR"} {print}' "$REAL51" >"$V51/nopair" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/nopair" 1 malformed-line "51b — a line outside the key=value grammar is rejected"
+
+awk 'NR==5{print "bad-key=x"} {print}' "$REAL51" >"$V51/badkey" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/badkey" 1 malformed-line "51b — a key outside the bounded key charset is rejected"
+
+awk 'NR==5{print "surprise_field=x"} {print}' "$REAL51" >"$V51/extra" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/extra" 1 unknown-field "51b — a field this version does not define is rejected"
+
+# TRUNCATED, the crash-boundary shape: a record that was being written when the
+# writer stopped. It has no sentinel and it is missing most of its fields, and
+# the token names the more specific of the two.
+head -20 "$REAL51" >"$V51/trunc" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/trunc" 1 incomplete "51b — a truncated record with no sentinel is rejected"
+
+# THE SENTINEL PRESENT BUT NOT LAST — the second half of the not-merely-grepping
+# claim. Every required field is here exactly once and the grammar is clean; the
+# only defect is that `result_complete=yes` is not the final line, which is
+# precisely what separates a finished record from one still being written.
+{ sed -n '1p' "$REAL51"; grep '^result_complete=' "$REAL51"
+  sed '1d;/^result_complete=/d' "$REAL51"; } >"$V51/midsentinel" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/midsentinel" 1 incomplete "51b — a sentinel that is not the last line is rejected"
+
+sed 's|^result_complete=yes$|result_complete=no|' "$REAL51" >"$V51/notyes" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/notyes" 1 incomplete "51b — a negated completion sentinel is rejected"
+
+# THE FINITE ARTIFACT BOUND. A reader with no size bound is a reader an actor can
+# make run for as long as it likes by planting a large file at the path.
+PAD70K="$(head -c 70000 /dev/zero 2>/dev/null | tr '\0' 'x')"
+{ cat "$REAL51"; printf 'next_action=%s\n' "$PAD70K"; } >"$V51/big" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/big" 1 too-large "51b — an artifact past the declared byte bound is rejected"
+
+PAD600="$(head -c 600 /dev/zero 2>/dev/null | tr '\0' 'y')"
+sed "s|^next_action=.*|next_action=$PAD600|" "$REAL51" >"$V51/longval" 2>/dev/null
+val_expect "$VAL_LIB" "$V51/longval" 1 value-too-long "51b — a value past the declared value bound is rejected"
+
+: >"$V51/empty"
+val_expect "$VAL_LIB" "$V51/empty" 1 empty "51b — an empty artifact is rejected"
+val_expect "$VAL_LIB" "$V51/does-not-exist" 1 unreadable "51b — an absent artifact is rejected"
+
+# READ-ONLY, PROVED AGAINST THE WHOLE CHECKOUT rather than against the artifact
+# alone. The claim is not just "it did not rewrite the record" but "it touched no
+# state file, no lease, no ownership declaration, no log and no capture", and a
+# tree manifest is the only assertion that covers all of them at once.
+BEFORE51="$(tree_manifest "$V51D")"
+val_run "$VAL_LIB" "$REAL51" >/dev/null 2>&1
+val_run "$VAL_LIB" "$V51/dup" >/dev/null 2>&1
+AFTER51="$(tree_manifest "$V51D")"
+if [ "$BEFORE51" = "$AFTER51" ]; then
+  ok "51b — validating changes nothing in the checkout (artifact, state, leases, logs)"
+else
+  bad "51b — validating changes nothing in the checkout (artifact, state, leases, logs)" \
+      "$(printf '%s\n' "$BEFORE51" >"$V51/before"; printf '%s\n' "$AFTER51" >"$V51/after"
+         diff "$V51/before" "$V51/after" | head -4 | tr '\n' ';')"
+fi
+
+# IT NEITHER SOURCES NOR EVALUATES WHAT IT READS, asserted twice. The static half
+# is what the production text may not contain; the live half plants a value that
+# WOULD have an effect if any of those constructs were reached.
+#
+# WHOLE-LINE COMMENTS ARE STRIPPED FIRST, and that sharpens the claim rather than
+# softening it: a comment cannot execute, so a prose line mentioning `eval` would
+# be a false positive about the one thing this control exists to catch.
+VAL_CODE="$SANDBOX_ROOT/wl2-validator-code.sh"
+NOEXEC_RE='(^|[^[:alnum:]_])(eval|source)[[:space:]]|^[[:space:]]*\.[[:space:]]|`|\$\(<'
+sed 's/^[[:space:]]*#.*$//' "$VAL_LIB" >"$VAL_CODE" 2>/dev/null
+if [ -s "$VAL_LIB" ] && ! grep -nE "$NOEXEC_RE" "$VAL_CODE" >/dev/null 2>&1; then
+  ok "51b — the validator's executable text contains no eval, source, dot-source or backtick"
+else
+  bad "51b — the validator's executable text contains no eval, source, dot-source or backtick" \
+      "$(grep -nE "$NOEXEC_RE" "$VAL_CODE" 2>/dev/null | head -3 | tr '\n' ';')"
+fi
+CANARY51="$V51D/CANARY"
+sed "s|^next_action=.*|next_action=\$(touch $CANARY51)|" "$REAL51" >"$V51/inject" 2>/dev/null
+val_run "$VAL_LIB" "$V51/inject" >/dev/null 2>&1
+if [ ! -e "$CANARY51" ]; then
+  ok "51b — a command substitution inside a value is data, not code"
+else
+  bad "51b — a command substitution inside a value is data, not code" "the canary at $CANARY51 was created"
+fi
+
+echo
+echo "Case 51c — mutation controls: the rejections above go green when the validator is broken"
+MUT51="$SANDBOX_ROOT/mutants51"; mkdir -p "$MUT51"
+
+# M9 — remove the duplicate-detection line from the DISPATCHER, then extract the
+# validator from the mutant. If 51b's duplicate rejection were satisfied by
+# anything other than that line, this control would still reject and the
+# assertion above would not be evidence.
+sed "/printf 'duplicate-field/d" "$DISPATCH_BIN" >"$MUT51/m9.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT51/m9.sh"; then
+  ok "51c — M9 mutant differs from the dispatcher (the duplicate check was found)"
+  if extract_validator "$MUT51/m9.sh" "$MUT51/m9.lib"; then
+    val_expect "$MUT51/m9.lib" "$V51/dup" 0 ok \
+      "51c — M9: without the duplicate check the duplicate is accepted (51b is fail-capable)"
+  else
+    bad "51c — M9: without the duplicate check the duplicate is accepted (51b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "51c — M9 mutant differs from the dispatcher (the duplicate check was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M10 — remove the sentinel-is-last line. Without it the validator still finds
+# every required field exactly once in the reordered record, so it accepts a
+# record that was never finalized. That is exactly the failure a grep for
+# `result_complete=yes` would have shipped.
+sed "/printf 'incomplete/d" "$DISPATCH_BIN" >"$MUT51/m10.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT51/m10.sh"; then
+  ok "51c — M10 mutant differs from the dispatcher (the sentinel check was found)"
+  if extract_validator "$MUT51/m10.sh" "$MUT51/m10.lib"; then
+    val_expect "$MUT51/m10.lib" "$V51/midsentinel" 0 ok \
+      "51c — M10: without the sentinel check a non-final record is accepted (51b is fail-capable)"
+  else
+    bad "51c — M10: without the sentinel check a non-final record is accepted (51b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "51c — M10 mutant differs from the dispatcher (the sentinel check was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# ==================================================================== case 52
+# EXPECTED-IDENTITY BINDING for the artifact case 51 proved is structurally a v1
+# record. The two questions are different, and case 51 says so in its own words:
+# "is this the shape this dispatcher writes" is not "is this the result promised
+# for THIS task, THIS checkout and THIS run". A structurally perfect record is
+# exactly what a copied, replayed or planted one looks like.
+#
+# WHAT THE BOUNDARY COMPARES, and the constraint that makes it worth having: only
+# the artifact against values the CALLER supplied. It never reads an expectation
+# out of the artifact, never scans a directory for a candidate, and never takes a
+# path from actor prose. An identity check that sourced either side of its own
+# comparison from the thing under test would confirm the record agrees with
+# itself, which every forgery also does.
+#
+# STILL NOT A CONSUMER. Nothing below makes a validated result advance a loop,
+# choose a route, wait for a record, or settle a semantic fact. Outcome/code
+# agreement and first-consumer integration remain later units.
+#
+# SAME EXERCISE ROUTE as case 51, for the same reason: the marker-delimited region
+# is lifted out of the dispatcher under test and sourced, so the text executed
+# here is dispatch.sh's own production text, and 52d proves it by mutating
+# dispatch.sh and watching these assertions go red.
+
+# THE THREE CHECKS IN THE ONE ORDER THAT IS CORRECT, in a single subshell: gate
+# the path while nothing is open, parse the bytes exactly once, then compare
+# identity against that pinned snapshot.
+#
+# THE GATE SHORT-CIRCUITS, and that is the behaviour under test rather than a
+# convenience of the harness. A refused path must stop here, before the parser is
+# ever handed the name — case 53a asserts that nothing was parsed by looking at
+# what the parse would have published.
+# THE TOKENS GO THROUGH A FILE, NOT THROUGH `$(...)`, and that is a correctness
+# requirement rather than a style choice. Command substitution runs its command in
+# a subshell, so the three checks hand each other their state — which path the gate
+# cleared, what the parse published — through globals that a subshell would
+# discard. Capturing the first two that way would silently break the chain and
+# make every precondition below look unmet. The scratch file sits in
+# SANDBOX_ROOT, outside any checkout, so it cannot disturb a tree manifest.
+ident_run() { # lib artifact task checkout run root -> "<rc> <token>"
+  ( . "$1" >/dev/null 2>&1 || { printf '99 lib-unsourceable\n'; exit 0; }
+    t="$SANDBOX_ROOT/.ident-token"
+    validate_terminal_result_path "$2" "$3" "$4" "$5" "$6" >"$t" 2>/dev/null; rc=$?
+    [ "$rc" -eq 0 ] || { printf '%s %s\n' "$rc" "$(cat "$t")"; exit 0; }
+    validate_terminal_result "$2" >"$t" 2>/dev/null; rc=$?
+    [ "$rc" -eq 0 ] || { printf '%s %s\n' "$rc" "$(cat "$t")"; exit 0; }
+    validate_terminal_result_identity "$2" "$3" "$4" "$5" "$6" >"$t" 2>/dev/null; rc=$?
+    printf '%s %s\n' "$rc" "$(cat "$t")" )
+}
+
+ident_expect() { # lib artifact task checkout run root want-rc want-token label
+  local got; got="$(ident_run "$1" "$2" "$3" "$4" "$5" "$6")"
+  if [ "$got" = "$7 $8" ]; then ok "$9"; else bad "$9" "expected '$7 $8', got '$got'"; fi
+}
+
+echo
+echo "Case 52a — a real result at its promised path is accepted for the identity it was written under"
+V52D="$(new_sandbox)"; state_file "$V52D" "identity-task" "codex"
+run_dispatch "$V52D" identity-task --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "52a — the producing run reaches a nonzero terminal (22)" "$OUT"
+RID52="$(run_id_of "$OUT")"
+# The dispatcher canonicalizes both --checkout and --log-dir, so the harness must
+# compare against the canonical forms or every assertion below would fail on
+# macOS for the wrong reason: $TMPDIR resolves through /private.
+CO52="$(cd "$V52D" && pwd -P)"
+ROOT52="$(cd "$V52D/runs" && pwd -P)"
+REAL52="$ROOT52/$RID52.result"
+if [ -f "$REAL52" ]; then
+  ok "52a — the producing run left a terminal result at its promised path"
+else
+  bad "52a — the producing run left a terminal result at its promised path" \
+      "missing $REAL52; runs/ holds: $(ls "$ROOT52" 2>&1 | tr '\n' ' ')"
+fi
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 0 ok \
+  "52a — the real result is accepted for its own task, checkout, run and promised path"
+
+echo
+echo "Case 52b — a structurally valid record is REJECTED when any expected field or the path disagrees"
+V52="$SANDBOX_ROOT/v52"; mkdir -p "$V52"
+
+# THE CENTRAL CASE, and the one this unit exists for. A byte-identical copy of a
+# real result, placed at the plausible promised path of a DIFFERENT run in the
+# same evidence root, presented as that run. Structure cannot tell these apart —
+# 52c asserts that in so many words — so only the identity comparison can.
+OTHER52="20260101T000000-deadbeef-9999-identity-task"
+COPY52="$ROOT52/$OTHER52.result"
+cp "$REAL52" "$COPY52"
+ident_expect "$VAL_LIB" "$COPY52" identity-task "$CO52" "$OTHER52" "$ROOT52" 1 run-mismatch \
+  "52b — a valid result copied to another run's promised path is rejected as that run"
+
+# The same copy presented under the ORIGINAL run's expectations. Now the record's
+# own run field matches, and the defect is that the artifact is not sitting where
+# the promised path for that run says it must be.
+ident_expect "$VAL_LIB" "$COPY52" identity-task "$CO52" "$RID52" "$ROOT52" 1 path-not-promised \
+  "52b — a result read from anywhere but the promised path for the expected run is rejected"
+
+ident_expect "$VAL_LIB" "$REAL52" a-different-task "$CO52" "$RID52" "$ROOT52" 1 task-mismatch \
+  "52b — a task the caller did not expect is rejected"
+
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$SANDBOX_ROOT/not-this-checkout" "$RID52" "$ROOT52" \
+  1 checkout-mismatch "52b — a checkout the caller did not expect is rejected"
+
+# A SYMLINK AT THE PROMISED PATH — Unit 6's deferred observation, owned here.
+#
+# THE LINK POINTS AT THE RIGHT RESULT, and that is what makes this the sharp case
+# rather than a soft one. Its name is the promised path for the expected run, and
+# its target is the genuine result for that very run, so the task, the checkout
+# and the run all match and NO field comparison can explain a rejection. The only
+# defect left is that the dispatcher promised a file at that path and found a
+# pointer — which is the whole claim: a link is not the file it names, however
+# right the file it names happens to be.
+#
+# An earlier draft of this fixture pointed the link at a DIFFERENT run's result,
+# and M12 caught it: the run comparison rejected that one first, so the assertion
+# was never evidence about the symlink refusal at all.
+SYM52D="$SANDBOX_ROOT/v52-symroot"; mkdir -p "$SYM52D"
+SYM52ROOT="$(cd "$SYM52D" && pwd -P)"
+ln -s "$REAL52" "$SYM52ROOT/$RID52.result"
+ident_expect "$VAL_LIB" "$SYM52ROOT/$RID52.result" identity-task "$CO52" "$RID52" "$SYM52ROOT" \
+  1 symlinked-path "52b — a symlink standing at the promised path is refused, not followed"
+
+# AN EVIDENCE ROOT THAT IS ITSELF A LINK. The final component is a real file and
+# the promised path matches literally, so only resolving the directory catches
+# that the admitted root is not the directory actually being read.
+LINKROOT52="$SANDBOX_ROOT/v52-linkroot"
+ln -s "$ROOT52" "$LINKROOT52"
+ident_expect "$VAL_LIB" "$LINKROOT52/$RID52.result" identity-task "$CO52" "$RID52" "$LINKROOT52" \
+  1 outside-evidence-root "52b — a promised path whose evidence root resolves elsewhere is rejected"
+
+# HOSTILE PATH SHAPES ARE REFUSED, NOT NORMALIZED. A traversal segment, a leading
+# dash that a later command would read as an option, and an embedded newline are
+# each refused outright rather than cleaned up into something trusted.
+ident_expect "$VAL_LIB" "$ROOT52/../runs/$RID52.result" identity-task "$CO52" "$RID52" "$ROOT52" \
+  1 unsafe-path "52b — a traversal segment in the artifact path is refused, not resolved"
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "-$ROOT52" \
+  1 unsafe-path "52b — an evidence root that could be read as an option is refused"
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$(printf 'a\nb')" "$ROOT52" \
+  1 unsafe-path "52b — an expected value carrying a control character is refused"
+
+# AN EMPTY EXPECTATION IS NOT A WILDCARD. A caller that has not established one of
+# the four values must be refused, never quietly matched against whatever the
+# artifact happens to say.
+ident_expect "$VAL_LIB" "$REAL52" "" "$CO52" "$RID52" "$ROOT52" 1 no-expectation \
+  "52b — an unsupplied expected task is refused rather than treated as any task"
+
+# BOTH PRECONDITIONS ARE PRECONDITIONS, NOT ASSUMPTIONS, and they are separate
+# failures with separate tokens. Asked cold, identity has neither a gate decision
+# nor a parse to consume, and it names the earlier of the two — the path was never
+# vetted, which is the more serious of the two things missing.
+NOGATE52="$( . "$VAL_LIB" >/dev/null 2>&1
+             tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+             printf '%s %s\n' "$?" "$tok" )"
+if [ "$NOGATE52" = "1 path-unchecked" ]; then
+  ok "52b — identity refuses an artifact whose path the safety gate never cleared"
+else
+  bad "52b — identity refuses an artifact whose path the safety gate never cleared" \
+      "expected '1 path-unchecked', got '$NOGATE52'"
+fi
+
+# THE PARSE RAN, BUT NOT ON THIS ARTIFACT. The gate cleared this path and a parse
+# did happen after it — so the ordering precondition is satisfied — but what that
+# parse read was a different file, so the published fields belong to something
+# else. This is the state `unvalidated` names, and reaching it takes a parse:
+# an artifact with no parse at all stops one check earlier, at `path-unchecked`,
+# which is what the assertion above covers. The two are distinguishable, and
+# neither stands in for the other.
+UNVAL52="$( . "$VAL_LIB" >/dev/null 2>&1
+            validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+            validate_terminal_result "$COPY52" >/dev/null 2>&1
+            tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+            printf '%s %s\n' "$?" "$tok" )"
+if [ "$UNVAL52" = "1 unvalidated" ]; then
+  ok "52b — identity refuses an artifact when the parse that ran read a different file"
+else
+  bad "52b — identity refuses an artifact when the parse that ran read a different file" \
+      "expected '1 unvalidated', got '$UNVAL52'"
+fi
+
+echo
+echo "Case 52c — the boundary reads only what the caller supplied, and changes nothing"
+
+# THE FRAMING CLAIM, asserted rather than assumed: the copied result 52b rejects
+# is structurally FLAWLESS. If structure alone could catch it, this whole case
+# would be redundant — and this assertion is what would say so.
+val_expect "$VAL_LIB" "$COPY52" 0 ok \
+  "52c — the copied result is structurally valid, so only identity can reject it"
+
+# READ-ONLY ACROSS THE WHOLE CHECKOUT, on the same argument case 51b makes: the
+# claim covers state files, leases, ownership, logs and captures, not just the
+# artifact.
+BEFORE52="$(tree_manifest "$V52D")"
+ident_run "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+ident_run "$VAL_LIB" "$COPY52" identity-task "$CO52" "$OTHER52" "$ROOT52" >/dev/null 2>&1
+AFTER52="$(tree_manifest "$V52D")"
+if [ "$BEFORE52" = "$AFTER52" ]; then
+  ok "52c — identity validation changes nothing in the checkout"
+else
+  bad "52c — identity validation changes nothing in the checkout" \
+      "$(printf '%s\n' "$BEFORE52" >"$V52/before"; printf '%s\n' "$AFTER52" >"$V52/after"
+         diff "$V52/before" "$V52/after" | head -4 | tr '\n' ';')"
+fi
+
+# IT DOES NOT GO LOOKING FOR A RESULT. A boundary that could enumerate the
+# evidence root could pick its own candidate, which is the consumer behaviour this
+# unit excludes. Comments are stripped first, for the reason 51b gives.
+IDENT_CODE="$SANDBOX_ROOT/wl2-identity-code.sh"
+awk '/^validate_terminal_result_identity\(\)/{f=1} f' "$VAL_LIB" 2>/dev/null |
+  sed 's/^[[:space:]]*#.*$//' >"$IDENT_CODE" 2>/dev/null
+SCAN_RE='(^|[^[:alnum:]_])(ls|find|glob|shopt)[[:space:]]|\*\.result|\$\(ls|\$\(find'
+if [ -s "$IDENT_CODE" ] && ! grep -nE "$SCAN_RE" "$IDENT_CODE" >/dev/null 2>&1; then
+  ok "52c — the identity boundary's text contains no directory scan for a candidate result"
+else
+  bad "52c — the identity boundary's text contains no directory scan for a candidate result" \
+      "${IDENT_CODE} empty, or: $(grep -nE "$SCAN_RE" "$IDENT_CODE" 2>/dev/null | head -3 | tr '\n' ';')"
+fi
+
+echo
+echo "Case 52d — mutation controls: the rejections above go green when the identity check is broken"
+MUT52="$SANDBOX_ROOT/mutants52"; mkdir -p "$MUT52"
+
+# M11 — remove the run comparison from the DISPATCHER. Without it the copied
+# result presented as another run is accepted, which is precisely the forgery
+# 52b's central assertion claims to catch. If 52b passed for any other reason,
+# this control would still reject and 52b would not be evidence.
+sed "/printf 'run-mismatch/d" "$DISPATCH_BIN" >"$MUT52/m11.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT52/m11.sh"; then
+  ok "52d — M11 mutant differs from the dispatcher (the run comparison was found)"
+  if extract_validator "$MUT52/m11.sh" "$MUT52/m11.lib"; then
+    ident_expect "$MUT52/m11.lib" "$COPY52" identity-task "$CO52" "$OTHER52" "$ROOT52" 0 ok \
+      "52d — M11: without the run comparison the copied result is accepted (52b is fail-capable)"
+  else
+    bad "52d — M11: without the run comparison the copied result is accepted (52b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "52d — M11 mutant differs from the dispatcher (the run comparison was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M12 — remove the symlink refusal. Without it the link is followed to a real,
+# structurally valid, field-matching result and ACCEPTED, which is exactly the
+# outcome Unit 6 deferred and this unit owns. This control is also what proved the
+# fixture above had to point at the matching run: while it pointed elsewhere, the
+# mutant still rejected — on the run comparison — and the assertion it was meant
+# to underwrite was not evidence.
+sed "/printf 'symlinked-path/d" "$DISPATCH_BIN" >"$MUT52/m12.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT52/m12.sh"; then
+  ok "52d — M12 mutant differs from the dispatcher (the symlink refusal was found)"
+  if extract_validator "$MUT52/m12.sh" "$MUT52/m12.lib"; then
+    ident_expect "$MUT52/m12.lib" "$SYM52ROOT/$RID52.result" identity-task "$CO52" "$RID52" "$SYM52ROOT" \
+      0 ok "52d — M12: without the symlink refusal the planted link is followed (52b is fail-capable)"
+  else
+    bad "52d — M12: without the symlink refusal the planted link is followed (52b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "52d — M12 mutant differs from the dispatcher (the symlink refusal was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# ==================================================================== case 53
+# THE TWO CORRECTION FINDINGS AGAINST UNIT 7, and both are about WHEN a check
+# happens rather than whether it exists.
+#
+# 53a — REFUSED BEFORE READ, not read and rejected afterwards. Unit 7 put the
+# symlink and resolved-root refusals in the identity boundary, which runs after
+# the structural parse. Every rejection token was correct and the artifact had
+# already been opened, sized and read to its end through the hostile path first. A
+# reader that has followed a planted link has done the thing the refusal was for,
+# and returning the right word afterwards does not undo it.
+#
+# 53b — THE ACCEPTED FIELDS ARE PINNED TO BYTES, not to a pathname. Unit 7 recorded
+# `TR_SOURCE="$f"`, which proves which NAME was parsed and nothing about what is at
+# that name now. A structurally valid record could be parsed and then replaced at
+# the same promised path by another structurally valid record, and identity would
+# still answer from the first one's fields.
+#
+# HOW "BEFORE" IS OBSERVED, since a token alone cannot say when. The parse is the
+# only thing that publishes TR_SOURCE and TR_SHA, so those staying empty after a
+# refusal is direct evidence that no parse happened. 53c breaks each check in the
+# dispatcher and watches that evidence flip.
+
+echo
+echo "Case 53a — an unsafe path is refused BEFORE the artifact is opened"
+
+# The probe returns the token AND what the parse would have published. A refusal
+# that reports `symlinked-path` with an empty TR_SOURCE was decided on the name;
+# the same token with TR_SOURCE set would mean the bytes were read first and the
+# refusal came too late.
+gate_probe() { # lib artifact task checkout run root -> "<token>|<TR_SOURCE>|<TR_SHA>"
+  ( . "$1" >/dev/null 2>&1 || { printf 'lib-unsourceable||\n'; exit 0; }
+    t="$SANDBOX_ROOT/.gate-token"
+    validate_terminal_result_path "$2" "$3" "$4" "$5" "$6" >"$t" 2>/dev/null
+    if [ "$(cat "$t")" = ok ]; then validate_terminal_result "$2" >"$t" 2>/dev/null; fi
+    printf '%s|%s|%s\n' "$(cat "$t")" "${TR_SOURCE:-}" "${TR_SHA:-}" )
+}
+
+GATE53="$(gate_probe "$VAL_LIB" "$SYM52ROOT/$RID52.result" identity-task "$CO52" "$RID52" "$SYM52ROOT")"
+if [ "$GATE53" = "symlinked-path||" ]; then
+  ok "53a — a symlinked promised path is refused with nothing parsed (TR_SOURCE and TR_SHA stay empty)"
+else
+  bad "53a — a symlinked promised path is refused with nothing parsed (TR_SOURCE and TR_SHA stay empty)" \
+      "expected 'symlinked-path||', got '$GATE53'"
+fi
+
+GATE53R="$(gate_probe "$VAL_LIB" "$LINKROOT52/$RID52.result" identity-task "$CO52" "$RID52" "$LINKROOT52")"
+if [ "$GATE53R" = "outside-evidence-root||" ]; then
+  ok "53a — an evidence root that resolves elsewhere is refused with nothing parsed"
+else
+  bad "53a — an evidence root that resolves elsewhere is refused with nothing parsed" \
+      "expected 'outside-evidence-root||', got '$GATE53R'"
+fi
+
+# THE POSITIVE HALF, so the two assertions above cannot pass by the probe simply
+# never parsing anything. A safe path clears the gate and the parse then publishes
+# both values.
+GATE53OK="$(gate_probe "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52")"
+case "$GATE53OK" in
+  "ok|$REAL52|"?*) ok "53a — a safe path clears the gate and the parse then publishes the snapshot" ;;
+  *) bad "53a — a safe path clears the gate and the parse then publishes the snapshot" \
+         "expected 'ok|$REAL52|<sha>', got '$GATE53OK'" ;;
+esac
+
+# GATING AFTER PARSING IS NOT GATING. Both globals end up naming this artifact, so
+# a check that only asked "has the gate cleared this path" would be satisfied —
+# while the bytes were read through a path nothing had vetted at the time.
+LATE53="$( . "$VAL_LIB" >/dev/null 2>&1
+           validate_terminal_result "$REAL52" >/dev/null 2>&1
+           validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+           tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+           printf '%s %s\n' "$?" "$tok" )"
+if [ "$LATE53" = "1 path-unchecked" ]; then
+  ok "53a — parsing first and gating afterwards is refused, not retroactively blessed"
+else
+  bad "53a — parsing first and gating afterwards is refused, not retroactively blessed" \
+      "expected '1 path-unchecked', got '$LATE53'"
+fi
+
+echo
+echo "Case 53b — acceptance is bound to the validated bytes, not to the pathname"
+V53="$SANDBOX_ROOT/v53"; mkdir -p "$V53"
+
+# THE REPLACEMENT CARRIES THE SAME task, checkout AND run, and that is what makes
+# this the sharp case. Every field comparison passes on either record, so no
+# identity comparison can explain a rejection — only the snapshot binding can. The
+# fields that DO differ are the ones a caller would go on to act upon.
+SWAP53="$V53/swapped.result"
+sed 's|^next_action=.*|next_action=something-else-entirely|' "$REAL52" >"$SWAP53" 2>/dev/null
+val_expect "$VAL_LIB" "$SWAP53" 0 ok \
+  "53b — the replacement is itself a structurally valid v1 record"
+if ! cmp -s "$REAL52" "$SWAP53"; then
+  ok "53b — the replacement differs in bytes from the validated result"
+else
+  bad "53b — the replacement differs in bytes from the validated result" "the sed matched nothing"
+fi
+
+# Gate, parse, THEN swap the file at the same promised path, THEN ask identity.
+SWAP53RUN="$( . "$VAL_LIB" >/dev/null 2>&1
+              cp "$REAL52" "$V53/original.result"
+              validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+              validate_terminal_result "$REAL52" >/dev/null 2>&1
+              cp "$SWAP53" "$REAL52"
+              tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+              rc=$?
+              cp "$V53/original.result" "$REAL52"
+              printf '%s %s\n' "$rc" "$tok" )"
+if [ "$SWAP53RUN" = "1 artifact-changed" ]; then
+  ok "53b — a record replaced at the promised path after validation is rejected"
+else
+  bad "53b — a record replaced at the promised path after validation is rejected" \
+      "expected '1 artifact-changed', got '$SWAP53RUN'"
+fi
+
+# THE ORIGINAL IS STILL ACCEPTED, so the assertion above is not passing because the
+# checkout was left in a state where everything fails.
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 0 ok \
+  "53b — the restored original result is still accepted"
+
+echo
+echo "Case 53c — mutation controls: the corrections above go green when each check is broken"
+MUT53="$SANDBOX_ROOT/mutants53"; mkdir -p "$MUT53"
+
+# M13 — remove the snapshot comparison. Without it the swapped record is accepted
+# from the first parse's stale fields, which is finding 2 exactly as it was
+# reported.
+sed "/printf 'artifact-changed/d" "$DISPATCH_BIN" >"$MUT53/m13.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT53/m13.sh"; then
+  ok "53c — M13 mutant differs from the dispatcher (the snapshot comparison was found)"
+  if extract_validator "$MUT53/m13.sh" "$MUT53/m13.lib"; then
+    M13="$( . "$MUT53/m13.lib" >/dev/null 2>&1
+            cp "$REAL52" "$V53/original.result"
+            validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+            validate_terminal_result "$REAL52" >/dev/null 2>&1
+            cp "$SWAP53" "$REAL52"
+            tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+            rc=$?
+            cp "$V53/original.result" "$REAL52"
+            printf '%s %s\n' "$rc" "$tok" )"
+    if [ "$M13" = "0 ok" ]; then
+      ok "53c — M13: without the snapshot comparison the swapped record is accepted (53b is fail-capable)"
+    else
+      bad "53c — M13: without the snapshot comparison the swapped record is accepted (53b is fail-capable)" \
+          "expected '0 ok', got '$M13'"
+    fi
+  else
+    bad "53c — M13: without the snapshot comparison the swapped record is accepted (53b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "53c — M13 mutant differs from the dispatcher (the snapshot comparison was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M14 — remove the ordering precondition. Without it, parsing first and gating
+# afterwards is accepted, which is the retroactive blessing 53a refuses.
+sed "/printf 'path-unchecked/d" "$DISPATCH_BIN" >"$MUT53/m14.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT53/m14.sh"; then
+  ok "53c — M14 mutant differs from the dispatcher (the ordering precondition was found)"
+  if extract_validator "$MUT53/m14.sh" "$MUT53/m14.lib"; then
+    M14="$( . "$MUT53/m14.lib" >/dev/null 2>&1
+            validate_terminal_result "$REAL52" >/dev/null 2>&1
+            validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+            tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+            printf '%s %s\n' "$?" "$tok" )"
+    if [ "$M14" = "0 ok" ]; then
+      ok "53c — M14: without the ordering precondition a late gate is accepted (53a is fail-capable)"
+    else
+      bad "53c — M14: without the ordering precondition a late gate is accepted (53a is fail-capable)" \
+          "expected '0 ok', got '$M14'"
+    fi
+  else
+    bad "53c — M14: without the ordering precondition a late gate is accepted (53a is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "53c — M14 mutant differs from the dispatcher (the ordering precondition was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M15 — remove the gate's symlink refusal. The gate then clears the planted link,
+# the parse follows it and publishes a snapshot — which is 53a's "nothing was
+# parsed" evidence going the other way, and is exactly the pre-correction
+# behaviour finding 1 reported.
+sed "/printf 'symlinked-path/d" "$DISPATCH_BIN" >"$MUT53/m15.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT53/m15.sh"; then
+  ok "53c — M15 mutant differs from the dispatcher (the gate's symlink refusal was found)"
+  if extract_validator "$MUT53/m15.sh" "$MUT53/m15.lib"; then
+    M15="$(gate_probe "$MUT53/m15.lib" "$SYM52ROOT/$RID52.result" identity-task "$CO52" "$RID52" "$SYM52ROOT")"
+    case "$M15" in
+      "ok|$SYM52ROOT/$RID52.result|"?*)
+        ok "53c — M15: without the gate's symlink refusal the link is followed and parsed (53a is fail-capable)" ;;
+      *)
+        bad "53c — M15: without the gate's symlink refusal the link is followed and parsed (53a is fail-capable)" \
+            "expected the link to be parsed, got '$M15'" ;;
+    esac
+  else
+    bad "53c — M15: without the gate's symlink refusal the link is followed and parsed (53a is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "53c — M15 mutant differs from the dispatcher (the gate's symlink refusal was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# ==================================================================== case 54
+# THE TWO RESIDUALS the correction round left on the same findings. Both are the
+# same shape as the originals: a check that exists but does not cover the case it
+# is supposed to.
+#
+# 54a — THE READER DID NOT DEFEND ITS OWN READ. The correction put a pre-read gate
+# in front of the parser and had identity refuse when the gate had not cleared the
+# artifact. But the PARSER still opened, sized, hashed and read anything it was
+# handed: it recorded the gate's decision and then ignored it. Nothing stops a
+# caller invoking the parser directly, and Unit 6's standalone structural contract
+# positively allows it — so the late-refusal defect survived one function over.
+#
+# 54b — THE SNAPSHOT SAW BYTES, NOT FILES. `TR_SHA` catches a record replaced by a
+# DIFFERENT record. It cannot catch a replacement by a byte-identical file, whose
+# digest is equal by construction, nor a regular file swapped for a symlink to
+# byte-identical content — where both hashes cheerfully follow the link. The frozen
+# requirement is content OR file identity, and only content was bound.
+#
+# THE GATE STAYS OPTIONAL, and that is a boundary rather than an omission. Case 51
+# calls the parser with no gate at all on a dozen fixtures, and that is accepted
+# Unit 6 behaviour. What 54a fixes is the parser following an UNSAFE path, and a
+# gate clearance that names a DIFFERENT artifact; a plain ungated regular file is
+# still parsed, exactly as before.
+
+echo
+echo "Case 54a — the parser refuses an unsafe path itself, with no gate in front of it"
+
+# Straight at the parser, no gate anywhere. The published snapshot is the witness:
+# only the parse sets TR_SOURCE, so an empty one proves the artifact was never read.
+parse_probe() { # lib artifact -> "<token>|<TR_SOURCE>"
+  ( . "$1" >/dev/null 2>&1 || { printf 'lib-unsourceable|\n'; exit 0; }
+    t="$SANDBOX_ROOT/.parse-token"
+    validate_terminal_result "$2" >"$t" 2>/dev/null
+    printf '%s|%s\n' "$(cat "$t")" "${TR_SOURCE:-}" )
+}
+
+PARSE54="$(parse_probe "$VAL_LIB" "$SYM52ROOT/$RID52.result")"
+if [ "$PARSE54" = "symlinked-path|" ]; then
+  ok "54a — the parser refuses a symlinked artifact before opening it, with nothing published"
+else
+  bad "54a — the parser refuses a symlinked artifact before opening it, with nothing published" \
+      "expected 'symlinked-path|', got '$PARSE54'"
+fi
+
+# THE ACCEPTED UNGATED CASE, asserted so the fix above cannot have been made by
+# refusing everything the gate did not clear. Case 51 depends on this and so does
+# Unit 6's standalone structural contract.
+PARSE54OK="$(parse_probe "$VAL_LIB" "$REAL52")"
+if [ "$PARSE54OK" = "ok|$REAL52" ]; then
+  ok "54a — an ungated regular artifact is still parsed, as Unit 6's standalone contract requires"
+else
+  bad "54a — an ungated regular artifact is still parsed, as Unit 6's standalone contract requires" \
+      "expected 'ok|$REAL52', got '$PARSE54OK'"
+fi
+
+# A GATE CLEARANCE FOR SOME OTHER ARTIFACT IS NOT A CLEARANCE FOR THIS ONE.
+STALE54="$( . "$VAL_LIB" >/dev/null 2>&1
+            validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+            tok="$(validate_terminal_result "$COPY52" 2>/dev/null)"
+            printf '%s %s\n' "$?" "$tok" )"
+if [ "$STALE54" = "1 path-unchecked" ]; then
+  ok "54a — a gate clearance naming a different artifact does not cover this one"
+else
+  bad "54a — a gate clearance naming a different artifact does not cover this one" \
+      "expected '1 path-unchecked', got '$STALE54'"
+fi
+
+echo
+echo "Case 54b — acceptance is bound to WHICH FILE, not only to which bytes"
+V54="$SANDBOX_ROOT/v54"; mkdir -p "$V54"
+
+# A BYTE-IDENTICAL REPLACEMENT, swapped in atomically the way a real one would be.
+# Same name, same content, same digest — a different file. The digest cannot see
+# this by construction, which is exactly why file identity has to be pinned too.
+SWAP54="$( . "$VAL_LIB" >/dev/null 2>&1
+           cp "$REAL52" "$V54/keep.result"
+           validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+           validate_terminal_result "$REAL52" >/dev/null 2>&1
+           cp "$REAL52" "$V54/twin.result"; mv -f "$V54/twin.result" "$REAL52"
+           tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+           rc=$?
+           cp "$V54/keep.result" "$REAL52"
+           printf '%s %s\n' "$rc" "$tok" )"
+if [ "$SWAP54" = "1 artifact-replaced" ]; then
+  ok "54b — a byte-identical file substituted at the promised path is rejected"
+else
+  bad "54b — a byte-identical file substituted at the promised path is rejected" \
+      "expected '1 artifact-replaced', got '$SWAP54'"
+fi
+
+# THE SAME BYTES, REACHED THROUGH A LINK. The gate cleared this name while it was a
+# regular file; it is a symlink by the time identity looks. Both digests would
+# follow it happily to valid, matching content.
+LINK54="$( . "$VAL_LIB" >/dev/null 2>&1
+           cp "$REAL52" "$V54/target.result"
+           validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+           validate_terminal_result "$REAL52" >/dev/null 2>&1
+           cp "$REAL52" "$V54/keep2.result"
+           rm -f "$REAL52"; ln -s "$V54/target.result" "$REAL52"
+           tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+           rc=$?
+           rm -f "$REAL52"; cp "$V54/keep2.result" "$REAL52"
+           printf '%s %s\n' "$rc" "$tok" )"
+if [ "$LINK54" = "1 symlinked-path" ]; then
+  ok "54b — a promised path that became a symlink after the gate is rejected"
+else
+  bad "54b — a promised path that became a symlink after the gate is rejected" \
+      "expected '1 symlinked-path', got '$LINK54'"
+fi
+
+# THE UNDISTURBED ARTIFACT IS STILL ACCEPTED, so neither assertion above is passing
+# because the fixture was left broken.
+ident_expect "$VAL_LIB" "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 0 ok \
+  "54b — the untouched original result is still accepted"
+
+echo
+echo "Case 54c — mutation controls: the final fixes go green when each binding is broken"
+MUT54="$SANDBOX_ROOT/mutants54"; mkdir -p "$MUT54"
+
+# M16 — remove the file-identity comparison. The byte-identical substitute is then
+# accepted on its matching digest, which is residual 2 exactly as reported.
+sed "/printf 'artifact-replaced/d" "$DISPATCH_BIN" >"$MUT54/m16.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT54/m16.sh"; then
+  ok "54c — M16 mutant differs from the dispatcher (the file-identity comparison was found)"
+  if extract_validator "$MUT54/m16.sh" "$MUT54/m16.lib"; then
+    M16="$( . "$MUT54/m16.lib" >/dev/null 2>&1
+            cp "$REAL52" "$V54/keep3.result"
+            validate_terminal_result_path "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" >/dev/null 2>&1
+            validate_terminal_result "$REAL52" >/dev/null 2>&1
+            cp "$REAL52" "$V54/twin3.result"; mv -f "$V54/twin3.result" "$REAL52"
+            tok="$(validate_terminal_result_identity "$REAL52" identity-task "$CO52" "$RID52" "$ROOT52" 2>/dev/null)"
+            rc=$?
+            cp "$V54/keep3.result" "$REAL52"
+            printf '%s %s\n' "$rc" "$tok" )"
+    if [ "$M16" = "0 ok" ]; then
+      ok "54c — M16: without the file-identity binding the byte-identical swap is accepted (54b is fail-capable)"
+    else
+      bad "54c — M16: without the file-identity binding the byte-identical swap is accepted (54b is fail-capable)" \
+          "expected '0 ok', got '$M16'"
+    fi
+  else
+    bad "54c — M16: without the file-identity binding the byte-identical swap is accepted (54b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "54c — M16 mutant differs from the dispatcher (the file-identity comparison was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# M17 — remove ONLY the reader's own pre-open refusal. The gate keeps its identical
+# refusal, so deleting by token would remove both and prove nothing about which one
+# does the work; the trailing marker comment is what makes this control address the
+# reader's line alone.
+sed "/# reader pre-open path refusal/d" "$DISPATCH_BIN" >"$MUT54/m17.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT54/m17.sh"; then
+  ok "54c — M17 mutant differs from the dispatcher (the reader's own refusal was found)"
+  if extract_validator "$MUT54/m17.sh" "$MUT54/m17.lib"; then
+    M17="$(parse_probe "$MUT54/m17.lib" "$SYM52ROOT/$RID52.result")"
+    if [ "$M17" = "ok|$SYM52ROOT/$RID52.result" ]; then
+      ok "54c — M17: without the reader's own refusal the parser follows the link again (54a is fail-capable)"
+    else
+      bad "54c — M17: without the reader's own refusal the parser follows the link again (54a is fail-capable)" \
+          "expected 'ok|$SYM52ROOT/$RID52.result', got '$M17'"
+    fi
+  else
+    bad "54c — M17: without the reader's own refusal the parser follows the link again (54a is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "54c — M17 mutant differs from the dispatcher (the reader's own refusal was found)" \
+      "the sed matched nothing — the control cannot run"
+fi
+
+# ==================================================================== case 55
+# THE REAL OPERATOR TERMINAL, which is where the result boundary Units 5-7 built
+# finally has to be used rather than merely to exist.
+#
+# WHAT WAS WRONG. Every nonzero terminal in the D-L families funnels through die()
+# and finalizes a run-bound record. The two SUCCESSFUL ends of a loop did not: a
+# task that reached `turn: operator` — whether closed or blocked — said its piece
+# on screen, released its lease and exited 0 with no terminal result at all. Those
+# are the two outcomes an operator most wants durable evidence of, and they were
+# the two with none.
+#
+# COMPLETION AND TAKEOVER ARE NOT THE SAME OUTCOME, and this is the distinction
+# the unit exists to make durable. `CLOSED` means the work finished.
+# `BLOCKED_OPERATOR` means it stopped and is waiting for a person. Both exit 0
+# because neither is a failure, so the exit code cannot tell them apart and a
+# record that collapsed them would be actively misleading — 55c is the control
+# that would catch exactly that collapse.
+#
+# THE CLASSIFICATION IS NOT RE-DERIVED HERE. `validate_state()` already asked the
+# canonical validator and set ST_CLASS before the loop began; this seam reads that
+# and nothing else. No second lifecycle parser, no body-shape inference, no
+# reconstruction from state prose, Git or logs.
+
+echo
+echo "Case 55a — a loop-mode CLOSED terminal finalizes exactly one truthful completion result"
+V55C="$(new_sandbox)"; state_file "$V55C" closed-task operator
+CO55C="$(cd "$V55C" && pwd -P)"
+run_dispatch "$V55C" closed-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "55a — a CLOSED record is not a failure and still exits 0" "$OUT"
+RID55C="$(run_id_of "$OUT")"
+ROOT55C="$(cd "$V55C/runs" && pwd -P)"
+REAL55C="$ROOT55C/$RID55C.result"
+
+# THE RED THE UNIT BEGINS FROM. Before the seam existed this file was simply not
+# there, and everything below it could only report that absence.
+if [ -f "$REAL55C" ]; then
+  ok "55a — the CLOSED terminal left the promised run-bound result"
+else
+  bad "55a — the CLOSED terminal left the promised run-bound result" \
+      "missing $REAL55C; runs/ holds: $(ls "$ROOT55C" 2>&1 | tr '\n' ' ')"
+fi
+
+# EXACTLY ONE, and no half-written temporary left behind.
+if [ "$(res_count "$ROOT55C")" = 1 ] && [ "$(part_count "$ROOT55C")" = 0 ]; then
+  ok "55a — exactly one finalized result and no leftover partial"
+else
+  bad "55a — exactly one finalized result and no leftover partial" \
+      "results=$(res_count "$ROOT55C") partials=$(part_count "$ROOT55C")"
+fi
+
+# It is the accepted boundary that judges it, not this harness reading fields with
+# sed — that is the whole point of having shipped a parser and an identity check.
+val_expect   "$VAL_LIB" "$REAL55C" 0 ok "55a — the CLOSED result is structurally valid v1"
+ident_expect "$VAL_LIB" "$REAL55C" closed-task "$CO55C" "$RID55C" "$ROOT55C" 0 ok \
+  "55a — the CLOSED result is identity-valid for this task, checkout, run and promised path"
+
+if [ "$(res_field "$REAL55C" code)" = 0 ] &&
+   [ "$(res_field "$REAL55C" state_class)" = CLOSED ] &&
+   [ "$(res_field "$REAL55C" result_complete)" = yes ]; then
+  ok "55a — it truthfully carries code 0, the canonical CLOSED classification and the sentinel"
+else
+  bad "55a — it truthfully carries code 0, the canonical CLOSED classification and the sentinel" \
+      "code=$(res_field "$REAL55C" code) state_class=$(res_field "$REAL55C" state_class) complete=$(res_field "$REAL55C" result_complete)"
+fi
+
+# NOTHING LAUNCHED. The operator terminal is reached before any hop in this
+# iteration, and finalizing must not have changed that.
+if [ "$(calls "$V55C")" = 0 ] && [ "$(res_field "$REAL55C" actor_launched)" = no ]; then
+  ok "55a — no actor launched, and the record says so"
+else
+  bad "55a — no actor launched, and the record says so" \
+      "calls=$(calls "$V55C") actor_launched=$(res_field "$REAL55C" actor_launched)"
+fi
+
+echo
+echo "Case 55b — a loop-mode BLOCKED_OPERATOR terminal finalizes a DISTINCT takeover result"
+V55B="$(new_sandbox)"; state_file "$V55B" blocked-task operator blocked-task blocked
+CO55B="$(cd "$V55B" && pwd -P)"
+run_dispatch "$V55B" blocked-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "55b — a blocked record is a stop, not a failure, and exits 0" "$OUT"
+RID55B="$(run_id_of "$OUT")"
+ROOT55B="$(cd "$V55B/runs" && pwd -P)"
+REAL55B="$ROOT55B/$RID55B.result"
+
+if [ -f "$REAL55B" ]; then
+  ok "55b — the BLOCKED_OPERATOR terminal left the promised run-bound result"
+else
+  bad "55b — the BLOCKED_OPERATOR terminal left the promised run-bound result" \
+      "missing $REAL55B; runs/ holds: $(ls "$ROOT55B" 2>&1 | tr '\n' ' ')"
+fi
+
+val_expect   "$VAL_LIB" "$REAL55B" 0 ok "55b — the takeover result is structurally valid v1"
+ident_expect "$VAL_LIB" "$REAL55B" blocked-task "$CO55B" "$RID55B" "$ROOT55B" 0 ok \
+  "55b — the takeover result is identity-valid for its own run"
+
+if [ "$(res_field "$REAL55B" code)" = 0 ] &&
+   [ "$(res_field "$REAL55B" state_class)" = BLOCKED_OPERATOR ]; then
+  ok "55b — it truthfully carries code 0 and the canonical BLOCKED_OPERATOR classification"
+else
+  bad "55b — it truthfully carries code 0 and the canonical BLOCKED_OPERATOR classification" \
+      "code=$(res_field "$REAL55B" code) state_class=$(res_field "$REAL55B" state_class)"
+fi
+
+echo
+echo "Case 55c — completion and takeover cannot collapse into one outcome"
+OUT55C="$(res_field "$REAL55C" outcome)";     OUT55B="$(res_field "$REAL55B" outcome)"
+NXT55C="$(res_field "$REAL55C" next_action)"; NXT55B="$(res_field "$REAL55B" next_action)"
+
+# Asserted as a DIFFERENCE, not against two hard-coded words. A test that pinned
+# the exact strings would go green on a rename that quietly made both the same;
+# what matters to an operator reading two records is that they can tell which one
+# finished and which one is waiting for them.
+if [ -n "$OUT55C" ] && [ -n "$OUT55B" ] && [ "$OUT55C" != "$OUT55B" ]; then
+  ok "55c — the two terminals record different outcomes ($OUT55C vs $OUT55B)"
+else
+  bad "55c — the two terminals record different outcomes" \
+      "closed='$OUT55C' blocked='$OUT55B'"
+fi
+if [ -n "$NXT55C" ] && [ -n "$NXT55B" ] && [ "$NXT55C" != "$NXT55B" ]; then
+  ok "55c — the two terminals record different next actions ($NXT55C vs $NXT55B)"
+else
+  bad "55c — the two terminals record different next actions" \
+      "closed='$NXT55C' blocked='$NXT55B'"
+fi
+
+# NEITHER IS THE FALLBACK. `UNCLASSIFIED` is what an unmapped code produces, so a
+# seam that forgot to map code 0 would still satisfy "they are both non-empty" on
+# one of them. This is what separates "mapped" from "merely present".
+if [ "$OUT55C" != UNCLASSIFIED ] && [ "$OUT55B" != UNCLASSIFIED ]; then
+  ok "55c — neither outcome fell through to the unmapped-code fallback"
+else
+  bad "55c — neither outcome fell through to the unmapped-code fallback" \
+      "closed='$OUT55C' blocked='$OUT55B'"
+fi
+
+echo
+echo "Case 55d — mutation controls: the terminal seam and its distinction are fail-capable"
+MUT55="$SANDBOX_ROOT/mutants55"; mkdir -p "$MUT55"
+
+# M18 — remove the finalization call from the operator block. Before Unit 10 the
+# run then exited 0 with no result — the pre-unit behaviour exactly. The consumer
+# now stands between that hole and release_lock: the promised result is absent at
+# consumption, so the run refuses at 38 and the only record left is die()'s own
+# code-38 one. 55a stays fail-capable either way — no code-0 completion with a
+# valid completion result can come out of a seam with no finalization in it.
+# Addressed by its marker comment: deleting by function name would also remove
+# die()'s call and prove something else entirely.
+sed "/# operator terminal finalization/d" "$DISPATCH_BIN" >"$MUT55/m18.sh"
+chmod +x "$MUT55/m18.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT55/m18.sh" && bash -n "$MUT55/m18.sh" 2>/dev/null; then
+  ok "55d — M18 mutant differs from the dispatcher and is valid bash"
+  V55M="$(new_sandbox)"; state_file "$V55M" closed-task operator
+  OUT="$(bash "$MUT55/m18.sh" --checkout "$V55M" --task closed-task \
+        --log-dir "$V55M/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCM=$?
+  RIDM="$(run_id_of "$OUT")"
+  if [ "$RCM" -eq 38 ] && [ "$(res_field "$V55M/runs/$RIDM.result" code)" = 38 ]; then
+    ok "55d — M18: without the finalization call the consumer refuses the absent result at 38 (55a is fail-capable)"
+  else
+    bad "55d — M18: without the finalization call the consumer refuses the absent result at 38 (55a is fail-capable)" \
+        "rc=$RCM code=$(res_field "$V55M/runs/$RIDM.result" code)"
+  fi
+else
+  bad "55d — M18 mutant differs from the dispatcher and is valid bash" \
+      "the sed matched nothing, or the mutant does not parse — the control cannot run"
+fi
+
+# M19 — collapse the two classifications onto one outcome. Everything else stays:
+# both records are still produced, still valid, still code 0. Only the distinction
+# goes, and 55c is what must notice.
+sed 's/OPERATOR_TAKEOVER/COMPLETED/' "$DISPATCH_BIN" >"$MUT55/m19.sh"
+chmod +x "$MUT55/m19.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT55/m19.sh" && bash -n "$MUT55/m19.sh" 2>/dev/null; then
+  ok "55d — M19 mutant differs from the dispatcher and is valid bash"
+  V55X="$(new_sandbox)"; state_file "$V55X" closed-task operator
+  OUT="$(bash "$MUT55/m19.sh" --checkout "$V55X" --task closed-task \
+        --log-dir "$V55X/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"
+  RIDX="$(run_id_of "$OUT")"
+  V55Y="$(new_sandbox)"; state_file "$V55Y" blocked-task operator blocked-task blocked
+  OUT="$(bash "$MUT55/m19.sh" --checkout "$V55Y" --task blocked-task \
+        --log-dir "$V55Y/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"
+  RIDY="$(run_id_of "$OUT")"
+  MX="$(res_field "$V55X/runs/$RIDX.result" outcome)"
+  MY="$(res_field "$V55Y/runs/$RIDY.result" outcome)"
+  if [ -n "$MX" ] && [ "$MX" = "$MY" ]; then
+    ok "55d — M19: with the classifications collapsed both terminals report '$MX' (55c is fail-capable)"
+  else
+    bad "55d — M19: with the classifications collapsed both terminals report the same outcome (55c is fail-capable)" \
+        "closed='$MX' blocked='$MY'"
+  fi
+else
+  bad "55d — M19 mutant differs from the dispatcher and is valid bash" \
+      "the sed matched nothing, or the mutant does not parse — the control cannot run"
+fi
+
+# M20 — FORCE FINALIZATION TO FAIL, by pointing the operator seam at a finalizer
+# that does not exist. This is the fail-closed requirement and it is the one that
+# matters most: a run that could not produce its evidence must not be able to
+# report success. The exit code must not be 0 and no completion may be claimed.
+sed 's/finalize_terminal_result 0 ||/wl2_absent_finalizer 0 ||/' "$DISPATCH_BIN" >"$MUT55/m20.sh"
+chmod +x "$MUT55/m20.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT55/m20.sh" && bash -n "$MUT55/m20.sh" 2>/dev/null; then
+  ok "55d — M20 mutant differs from the dispatcher and is valid bash"
+  V55Z="$(new_sandbox)"; state_file "$V55Z" closed-task operator
+  OUT="$(bash "$MUT55/m20.sh" --checkout "$V55Z" --task closed-task \
+        --log-dir "$V55Z/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCZ=$?
+  RIDZ="$(run_id_of "$OUT")"
+  ZOUT="$(res_field "$V55Z/runs/$RIDZ.result" outcome)"
+  # THE SPECIFIC TERMINAL, not merely "not zero". An assertion that only required a
+  # nonzero exit would be satisfied by the run failing for some unrelated reason,
+  # which is not the claim: the claim is that this exact condition is recognised
+  # and reported as itself.
+  if [ "$RCZ" -eq 38 ] && [ "$ZOUT" = TERMINAL_UNPROVABLE ]; then
+    ok "55d — M20: a finalization that cannot be proven exits 38 and reports TERMINAL_UNPROVABLE, never completion"
+  else
+    bad "55d — M20: a finalization that cannot be proven exits 38 and reports TERMINAL_UNPROVABLE, never completion" \
+        "rc=$RCZ outcome='$ZOUT'"
+  fi
+  # AND THE OWNERSHIP DECLARATION IS UNTOUCHED. The dispatcher never clears it on
+  # any path — that is the actor's move at closure — so a run that failed to prove
+  # its terminal cannot have quietly handed the checkout on.
+  if [ ! -e "$V55Z/logs/work-loop/.owner" ]; then
+    ok "55d — M20: the failed terminal did not clear or forge an ownership declaration"
+  else
+    bad "55d — M20: the failed terminal did not clear or forge an ownership declaration" \
+        "declaration present: $(cat "$V55Z/logs/work-loop/.owner" 2>&1 | tr '\n' ' ')"
+  fi
+else
+  bad "55d — M20 mutant differs from the dispatcher and is valid bash" \
+      "the sed matched nothing, or the mutant does not parse — the control cannot run"
+fi
+
+echo
+echo "Case 55e — a terminal that cannot be proven RETAINS both leases with its truthful cause"
+# THE CORRECTION'S FINDING, WHOLE. Exit 38 already refused to claim success, but
+# it still RELEASED both run leases — die() releases, and the EXIT trap releases
+# again — so the one run whose ending is unproven was also the one run that
+# handed its checkout straight to the next dispatcher. Retention is the missing
+# half of fail-closed: the leases must survive this process, carry a cause that
+# is TRUE (no descendant story — nothing survived a teardown here), and refuse
+# the next dispatcher until an operator has looked.
+sed 's/finalize_terminal_result 0 ||/wl2_absent_finalizer 0 ||/' "$DISPATCH_BIN" >"$MUT55/m21-force.sh"
+chmod +x "$MUT55/m21-force.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT55/m21-force.sh" && bash -n "$MUT55/m21-force.sh" 2>/dev/null; then
+  ok "55e — the forcing mutant differs from the dispatcher and is valid bash"
+  V55R="$(new_sandbox)"; state_file "$V55R" closed-task operator
+  OUT="$(bash "$MUT55/m21-force.sh" --checkout "$V55R" --task closed-task \
+        --log-dir "$V55R/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCR=$?
+  TL55="$(task_lock_for "$V55R" closed-task)"; CL55="$(checkout_lock_for "$V55R")"
+  expect_rc 38 "$RCR" "55e — the unprovable terminal still exits 38, never 0" "$OUT"
+  if [ -d "$TL55" ] && [ -d "$CL55" ]; then
+    ok "55e — BOTH owned lease directories survived die() and the EXIT trap"
+  else
+    bad "55e — BOTH owned lease directories survived die() and the EXIT trap" \
+        "task=$([ -d "$TL55" ] && echo present || echo absent) checkout=$([ -d "$CL55" ] && echo present || echo absent)"
+  fi
+  if grep -q '^PINNED by pid ' "$TL55/survivors" 2>/dev/null &&
+     grep -q '^PINNED by pid ' "$CL55/survivors" 2>/dev/null; then
+    ok "55e — each retained lease carries the durable pin marker a later run recognises"
+  else
+    bad "55e — each retained lease carries the durable pin marker" \
+        "task: $(head -1 "$TL55/survivors" 2>&1); checkout: $(head -1 "$CL55/survivors" 2>&1)"
+  fi
+  if grep -q '^terminal result unprovable: ' "$TL55/survivors" 2>/dev/null &&
+     ! grep -q '^descendants still running:' "$TL55/survivors" 2>/dev/null &&
+     ! grep -q 'descendant of the stopped actor' "$TL55/survivors" 2>/dev/null; then
+    ok "55e — the recorded cause is terminal-result unprovability, not an actor-teardown story"
+  else
+    bad "55e — the recorded cause is terminal-result unprovability, not a teardown story" \
+        "$(cat "$TL55/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V55R" closed-task --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "55e — a second dispatcher is refused by the retained lease" "$OUT"
+
+  # M21 — remove ONLY the retention call, by its own marker comment. Forced
+  # failure then reverts to the pre-correction behaviour — exit 38 with both
+  # leases RELEASED by the EXIT path — which is what proves the retention call
+  # is doing the work rather than some other part of the seam.
+  sed -e 's/finalize_terminal_result 0 ||/wl2_absent_finalizer 0 ||/' \
+      -e '/# operator terminal retention/d' "$DISPATCH_BIN" >"$MUT55/m21.sh"
+  chmod +x "$MUT55/m21.sh"
+  if ! cmp -s "$MUT55/m21-force.sh" "$MUT55/m21.sh" && bash -n "$MUT55/m21.sh" 2>/dev/null; then
+    ok "55e — M21 mutant differs from the forcing mutant and is valid bash"
+    V55S="$(new_sandbox)"; state_file "$V55S" closed-task operator
+    OUT="$(bash "$MUT55/m21.sh" --checkout "$V55S" --task closed-task \
+          --log-dir "$V55S/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCS=$?
+    TL55S="$(task_lock_for "$V55S" closed-task)"; CL55S="$(checkout_lock_for "$V55S")"
+    if [ "$RCS" -eq 38 ] && [ ! -d "$TL55S" ] && [ ! -d "$CL55S" ]; then
+      ok "55e — M21: without the retention call the EXIT path releases both leases (retention is fail-capable)"
+    else
+      bad "55e — M21: without the retention call the EXIT path releases both leases" \
+          "rc=$RCS task=$([ -d "$TL55S" ] && echo present || echo absent) checkout=$([ -d "$CL55S" ] && echo present || echo absent)"
+    fi
+  else
+    bad "55e — M21 mutant differs from the forcing mutant and is valid bash" \
+        "the retention marker was not found, or the mutant does not parse"
+  fi
+else
+  bad "55e — the forcing mutant differs from the dispatcher and is valid bash" \
+      "the sed matched nothing, or the mutant does not parse — the case cannot run"
+fi
+
+echo
+echo "Case 55f — the ordinary operator terminals still finalize once and release normally"
+# The other half of the closure check: retention must not leak into the
+# successful paths. 55a and 55b each finalized exactly one result above; here
+# their leases must be GONE — released, not pinned — so the next run is admitted.
+if [ ! -d "$(task_lock_for "$V55C" closed-task)" ] && [ ! -d "$(checkout_lock_for "$V55C")" ]; then
+  ok "55f — the CLOSED terminal released both leases once its result existed"
+else
+  bad "55f — the CLOSED terminal released both leases once its result existed" \
+      "task=$([ -d "$(task_lock_for "$V55C" closed-task)" ] && echo present || echo absent) checkout=$([ -d "$(checkout_lock_for "$V55C")" ] && echo present || echo absent)"
+fi
+if [ ! -d "$(task_lock_for "$V55B" blocked-task)" ] && [ ! -d "$(checkout_lock_for "$V55B")" ]; then
+  ok "55f — the BLOCKED_OPERATOR terminal released both leases once its result existed"
+else
+  bad "55f — the BLOCKED_OPERATOR terminal released both leases once its result existed" \
+      "task=$([ -d "$(task_lock_for "$V55B" blocked-task)" ] && echo present || echo absent) checkout=$([ -d "$(checkout_lock_for "$V55B")" ] && echo present || echo absent)"
+fi
+
+# ============================== case 56: the operator terminal CONSUMES first
+#
+# Unit 10. Finalization proves a record was written; it does not prove the record
+# at the promised path is the one this run wrote. Before this seam consumed, a
+# swap or removal landing between finalize_terminal_result and release_lock — the
+# exact window the forcing fixtures below occupy — still exited 0, released both
+# leases and admitted the next dispatcher: a lease release bought with evidence
+# nothing checked. The consumer composes the three accepted boundaries (path gate,
+# structural reader, identity) at the release seam; every refusal takes the
+# existing exit-38 retention route with the gate's bounded token as its cause.
+#
+# THE FIXTURES FORCE, THE DISPATCHER DECIDES — same technique as 55e's forcing
+# mutant: awk appends one hostile line after the finalization marker, inside the
+# window under test, and everything asserted afterwards is the unmodified seam's
+# own behaviour.
+
+echo
+echo "Case 56a — valid completion and takeover results pass the consumer and release normally"
+# 55a/55b already proved exit 0 and one finalized result each; what is new here is
+# that the SAME paths now run through the consumer gate — so a regression that
+# refused valid evidence would surface as a 38 here — and that the released lease
+# really admits a subsequent dispatcher.
+V56A="$(new_sandbox)"; state_file "$V56A" closed-task operator
+run_dispatch "$V56A" closed-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "56a — a valid CLOSED result passes the composed consumer and still exits 0" "$OUT"
+ROOT56A="$(cd "$V56A/runs" && pwd -P)"
+if [ "$(res_count "$ROOT56A")" = 1 ] && [ "$(part_count "$ROOT56A")" = 0 ] &&
+   [ "$(ls "$ROOT56A"/*.consume 2>/dev/null | wc -l | tr -d ' ')" = 0 ]; then
+  ok "56a — exactly one finalized result, no partial, and no consumer scratch left behind"
+else
+  bad "56a — exactly one finalized result, no partial, and no consumer scratch left behind" \
+      "results=$(res_count "$ROOT56A") partials=$(part_count "$ROOT56A") scratch=$(ls "$ROOT56A"/*.consume 2>&1 | tr '\n' ' ')"
+fi
+if [ ! -d "$(task_lock_for "$V56A" closed-task)" ] && [ ! -d "$(checkout_lock_for "$V56A")" ]; then
+  ok "56a — the accepted CLOSED terminal released both leases"
+else
+  bad "56a — the accepted CLOSED terminal released both leases" "a lease survived"
+fi
+run_dispatch "$V56A" closed-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "56a — a subsequent dispatcher is admitted after the verified release" "$OUT"
+
+V56B="$(new_sandbox)"; state_file "$V56B" blocked-task operator blocked-task blocked
+run_dispatch "$V56B" blocked-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "56a — a valid BLOCKED_OPERATOR result passes the composed consumer and still exits 0" "$OUT"
+if [ ! -d "$(task_lock_for "$V56B" blocked-task)" ] && [ ! -d "$(checkout_lock_for "$V56B")" ]; then
+  ok "56a — the accepted takeover terminal released both leases"
+else
+  bad "56a — the accepted takeover terminal released both leases" "a lease survived"
+fi
+
+echo
+echo "Case 56b — a wrong-identity result at the promised path is refused BEFORE release"
+MUT56="$SANDBOX_ROOT/mutants56"; mkdir -p "$MUT56"
+# The unit's red fixture: a structurally flawless record whose run identity is
+# another run's, swapped in after successful finalization. Structure cannot see
+# it (52c proved that in so many words); only the identity boundary can.
+awk '{print} /# operator terminal finalization/ {print "    sed \047s/^run=.*/run=20990101T000000-deadbeef-1-swapped/\047 \"$RESULT_FILE\" >\"$RESULT_FILE.swapped\" && mv -f \"$RESULT_FILE.swapped\" \"$RESULT_FILE\" # harness identity swap"}' \
+  "$DISPATCH_BIN" >"$MUT56/swap.sh"
+chmod +x "$MUT56/swap.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT56/swap.sh" && bash -n "$MUT56/swap.sh" 2>/dev/null; then
+  ok "56b — the swap-forcing fixture differs from the dispatcher and is valid bash"
+  V56S="$(new_sandbox)"; state_file "$V56S" closed-task operator
+  OUT="$(bash "$MUT56/swap.sh" --checkout "$V56S" --task closed-task \
+        --log-dir "$V56S/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC56=$?
+  expect_rc 38 "$RC56" "56b — the wrong-identity result is refused with exit 38, never 0" "$OUT"
+  # NO COMPLETION IS CLAIMED. The refused artifact is deliberately not advertised
+  # as this run's terminal result — that line names the run's own evidence, and
+  # this run just proved it has none it can trust.
+  out_lacks "  terminal result:" "$OUT" "56b — the refused artifact is not advertised as this run's result"
+  TL56="$(task_lock_for "$V56S" closed-task)"; CL56="$(checkout_lock_for "$V56S")"
+  if [ -d "$TL56" ] && [ -d "$CL56" ]; then
+    ok "56b — BOTH leases survived die() and the EXIT trap"
+  else
+    bad "56b — BOTH leases survived die() and the EXIT trap" \
+        "task=$([ -d "$TL56" ] && echo present || echo absent) checkout=$([ -d "$CL56" ] && echo present || echo absent)"
+  fi
+  # The truthful cause, with the IDENTITY token — not a finalization story and
+  # not a teardown story: the record finalized fine and no descendant survived.
+  if grep -q '^terminal result unprovable: ' "$TL56/survivors" 2>/dev/null &&
+     grep -q 'run-mismatch' "$TL56/survivors" 2>/dev/null &&
+     grep -q 'run-mismatch' "$CL56/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL56/survivors" 2>/dev/null &&
+     ! grep -q '^descendants still running:' "$TL56/survivors" 2>/dev/null; then
+    ok "56b — both pins carry the bounded identity token as their truthful cause"
+  else
+    bad "56b — both pins carry the bounded identity token as their truthful cause" \
+        "task: $(cat "$TL56/survivors" 2>&1 | tr '\n' '|'); checkout: $(cat "$CL56/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V56S" closed-task --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "56b — the next dispatcher is refused by the retained lease" "$OUT"
+else
+  bad "56b — the swap-forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+echo
+echo "Case 56c — a MISSING promised result is refused the same way"
+awk '{print} /# operator terminal finalization/ {print "    rm -f \"$RESULT_FILE\" # harness result removal"}' \
+  "$DISPATCH_BIN" >"$MUT56/gone.sh"
+chmod +x "$MUT56/gone.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT56/gone.sh" && bash -n "$MUT56/gone.sh" 2>/dev/null; then
+  ok "56c — the removal-forcing fixture differs from the dispatcher and is valid bash"
+  V56G="$(new_sandbox)"; state_file "$V56G" closed-task operator
+  OUT="$(bash "$MUT56/gone.sh" --checkout "$V56G" --task closed-task \
+        --log-dir "$V56G/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RC56=$?
+  expect_rc 38 "$RC56" "56c — a missing promised result is refused with exit 38, never 0" "$OUT"
+  TL56G="$(task_lock_for "$V56G" closed-task)"; CL56G="$(checkout_lock_for "$V56G")"
+  # `unreadable` is the structural reader's bounded token for a path it cannot
+  # open — which is what "missing" is to a reader that never goes looking for
+  # substitutes. The gate passes the name; the read refuses; the cause records it.
+  if [ -d "$TL56G" ] && [ -d "$CL56G" ] &&
+     grep -q '^terminal result unprovable: ' "$TL56G/survivors" 2>/dev/null &&
+     grep -q 'unreadable' "$TL56G/survivors" 2>/dev/null; then
+    ok "56c — both leases retained, with the bounded missing-result cause recorded"
+  else
+    bad "56c — both leases retained, with the bounded missing-result cause recorded" \
+        "task=$([ -d "$TL56G" ] && echo present || echo absent) checkout=$([ -d "$CL56G" ] && echo present || echo absent) cause: $(cat "$TL56G/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V56G" closed-task --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "56c — the next dispatcher is refused by the retained lease" "$OUT"
+else
+  bad "56c — the removal-forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+echo
+echo "Case 56d — mutation control: remove ONLY the consumer call and the wrong-identity path releases again"
+# Addressed by its own marker, exactly like M18/M21: deleting by function name
+# would take the definition too and prove something else. With the one call gone,
+# the swap that 56b refused must sail through — exit 0, both leases released, the
+# next dispatcher admitted — which is what proves the consumer gate alone, not
+# some other part of the seam, is doing the refusing.
+sed '/# operator terminal consumption/d' "$DISPATCH_BIN" >"$MUT56/noconsume.sh"
+awk '{print} /# operator terminal finalization/ {print "    sed \047s/^run=.*/run=20990101T000000-deadbeef-1-swapped/\047 \"$RESULT_FILE\" >\"$RESULT_FILE.swapped\" && mv -f \"$RESULT_FILE.swapped\" \"$RESULT_FILE\" # harness identity swap"}' \
+  "$MUT56/noconsume.sh" >"$MUT56/m22.sh"
+chmod +x "$MUT56/m22.sh"
+if ! cmp -s "$MUT56/swap.sh" "$MUT56/m22.sh" && bash -n "$MUT56/m22.sh" 2>/dev/null; then
+  ok "56d — M22 mutant differs from the swap fixture and is valid bash"
+  V56M="$(new_sandbox)"; state_file "$V56M" closed-task operator
+  OUT="$(bash "$MUT56/m22.sh" --checkout "$V56M" --task closed-task \
+        --log-dir "$V56M/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCM=$?
+  TL56M="$(task_lock_for "$V56M" closed-task)"; CL56M="$(checkout_lock_for "$V56M")"
+  if [ "$RCM" -eq 0 ] && [ ! -d "$TL56M" ] && [ ! -d "$CL56M" ]; then
+    ok "56d — M22: without the consumer call the wrong-identity result exits 0 and releases (56b is fail-capable)"
+  else
+    bad "56d — M22: without the consumer call the wrong-identity result exits 0 and releases (56b is fail-capable)" \
+        "rc=$RCM task=$([ -d "$TL56M" ] && echo present || echo absent) checkout=$([ -d "$CL56M" ] && echo present || echo absent)"
+  fi
+  run_dispatch "$V56M" closed-task --actor-cmd "$NOOP"
+  expect_rc 0 "$RC" "56d — M22: the next dispatcher is admitted after the unverified release" "$OUT"
+else
+  bad "56d — M22 mutant differs from the swap fixture and is valid bash" \
+      "the consumption marker was not found, or the mutant does not parse"
+fi
+
+echo
+echo "Case 56e — the production composition is the four accepted boundaries, in order, one call each"
+# Structural, against the shipped text — the same style as 51a's key-set check.
+# The behavioural half lives in 56a-d; this half pins the SHAPE the brief
+# requires: gate -> parse -> identity -> meaning, one production call site, no
+# second parser and no waiting.
+#
+# THE FOURTH IS ASSERTED HERE, IN THE COMPOSITION, AND NOWHERE ELSE. It is
+# present in this function for every caller; whether a given terminal seam is
+# SUBJECT to it depends on that seam supplying an expected pair, which is a
+# call-site fact and is asserted at 62c. Reading this assertion as "every
+# terminal is now semantically gated" is exactly the overclaim 62c exists to
+# prevent — the deferred seams supply no pair and are unchanged.
+BODY56="$(sed -n '/^consume_terminal_result()/,/^}/p' "$DISPATCH_BIN")"
+N_GATE="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result_path "')"
+N_PARSE="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result "')"
+N_IDENT="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result_identity "')"
+N_SEM="$(printf '%s\n' "$BODY56" | grep -c 'validate_terminal_result_semantics "')"
+L_GATE="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result_path "' | cut -d: -f1 | head -1)"
+L_PARSE="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result "' | cut -d: -f1 | head -1)"
+L_IDENT="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result_identity "' | cut -d: -f1 | head -1)"
+L_SEM="$(printf '%s\n' "$BODY56" | grep -n 'validate_terminal_result_semantics "' | cut -d: -f1 | head -1)"
+if [ "$N_GATE" = 1 ] && [ "$N_PARSE" = 1 ] && [ "$N_IDENT" = 1 ] && [ "$N_SEM" = 1 ] &&
+   [ -n "$L_GATE" ] && [ "$L_GATE" -lt "$L_PARSE" ] && [ "$L_PARSE" -lt "$L_IDENT" ] &&
+   [ "$L_IDENT" -lt "$L_SEM" ]; then
+  ok "56e — path gate, structural reader, identity and meaning: one call each, in that order"
+else
+  bad "56e — path gate, structural reader, identity and meaning: one call each, in that order" \
+      "gate=$N_GATE@$L_GATE parse=$N_PARSE@$L_PARSE identity=$N_IDENT@$L_IDENT meaning=$N_SEM@$L_SEM"
+fi
+# THE COMPOSED BOUNDARY OWNS NO MAPPING EITHER. 61c proves the semantic boundary
+# itself knows no symbols; this proves the function that now calls it did not
+# acquire a second table on the way — the expected pair passes straight through
+# from the caller's arguments.
+if ! printf '%s\n' "$BODY56" | sed 's/^[[:space:]]*#.*$//' | grep -qE 'COMPLETED|OPERATOR_TAKEOVER|result_outcome'; then
+  ok "56e — the consumer carries no outcome symbols and no second code-to-outcome mapping"
+else
+  bad "56e — the consumer carries no outcome symbols and no second code-to-outcome mapping" \
+      "$(printf '%s\n' "$BODY56" | sed 's/^[[:space:]]*#.*$//' | grep -nE 'COMPLETED|OPERATOR_TAKEOVER|result_outcome' | head -3 | tr '\n' ';')"
+fi
+if [ "$(grep -c '# operator terminal consumption' "$DISPATCH_BIN")" = 1 ]; then
+  ok "56e — exactly one production consumer call sits at the operator-terminal seam"
+else
+  bad "56e — exactly one production consumer call sits at the operator-terminal seam" \
+      "marker count: $(grep -c '# operator terminal consumption' "$DISPATCH_BIN")"
+fi
+if ! printf '%s\n' "$BODY56" | grep -q 'sleep' &&
+   ! printf '%s\n' "$BODY56" | grep -q 'ls '; then
+  ok "56e — the consumer neither waits nor searches: no sleep, no listing"
+else
+  bad "56e — the consumer neither waits nor searches: no sleep, no listing" "$BODY56"
+fi
+
+# ===================== case 57: the die() funnel honors finalizer failure
+#
+# Unit 11. Every D–L terminal publishes its result through the one die() funnel,
+# which invoked the accepted finalizer and IGNORED its return: a run whose
+# publication failed still exited with its original code and released both
+# leases — the unproven-ending hole the operator seam closed at Unit 8,
+# reachable from every other terminal. The funnel now transfers a failed
+# publication to its own unprovability exit: pin both owned leases with the
+# truthful finalization-failure cause, exit 38, release nothing.
+#
+# THE INDUCTION IS RUNTIME, NOT A MUTANT: the actor removes write permission
+# from the evidence directory, so the atomic producer cannot create its
+# temporary at publication time. Everything asserted afterwards is the
+# unmodified funnel's own behaviour on a real failed write.
+
+BREAK_PUBLISH='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls"; chmod a-w "$WL_CHECKOUT/runs"; exit 0'
+
+echo
+echo "Case 57a — a representative D–L terminal still publishes once and releases normally"
+# The no-transition terminal (22) — the same representative path 51a produces
+# from. The success branch must be byte-for-byte the old behaviour: original
+# code, one valid result, normal release, next acquire admitted.
+V57A="$(new_sandbox)"; state_file "$V57A" die-task codex
+run_dispatch "$V57A" die-task --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "57a — the no-transition terminal keeps its original code 22" "$OUT"
+RID57="$(run_id_of "$OUT")"
+ROOT57="$(cd "$V57A/runs" && pwd -P)"
+if [ "$(res_count "$ROOT57")" = 1 ] && [ "$(res_field "$ROOT57/$RID57.result" code)" = 22 ]; then
+  ok "57a — exactly one finalized result, truthfully carrying code 22"
+else
+  bad "57a — exactly one finalized result, truthfully carrying code 22" \
+      "results=$(res_count "$ROOT57") code=$(res_field "$ROOT57/$RID57.result" code)"
+fi
+if [ ! -d "$(task_lock_for "$V57A" die-task)" ] && [ ! -d "$(checkout_lock_for "$V57A")" ]; then
+  ok "57a — both leases released once the result existed"
+else
+  bad "57a — both leases released once the result existed" "a lease survived"
+fi
+run_dispatch "$V57A" die-task --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "57a — the next dispatcher is admitted after the proven exit" "$OUT"
+
+echo
+echo "Case 57b — a FAILED publication transfers to the unprovability exit instead of the original code"
+V57B="$(new_sandbox)"; state_file "$V57B" die-task codex
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V57B" --task die-task \
+      --log-dir "$V57B/runs" --timeout 20 --actor-cmd "$BREAK_PUBLISH" 2>&1)"; RC57=$?
+expect_rc 38 "$RC57" "57b — the induced finalizer failure exits 38, not the original 22" "$OUT"
+if [ "$(res_count "$V57B/runs")" = 0 ]; then
+  ok "57b — no terminal result exists and none is claimed"
+else
+  bad "57b — no terminal result exists and none is claimed" "results=$(res_count "$V57B/runs")"
+fi
+out_lacks "  terminal result:" "$OUT" "57b — no terminal result is advertised"
+TL57="$(task_lock_for "$V57B" die-task)"; CL57="$(checkout_lock_for "$V57B")"
+if [ -d "$TL57" ] && [ -d "$CL57" ]; then
+  ok "57b — BOTH owned leases survived die() and the EXIT trap"
+else
+  bad "57b — BOTH owned leases survived die() and the EXIT trap" \
+      "task=$([ -d "$TL57" ] && echo present || echo absent) checkout=$([ -d "$CL57" ] && echo present || echo absent)"
+fi
+# The truthful cause: a finalization failure, through the one shared lease
+# writer — not a teardown story (nothing survived) and not a consumer-refusal
+# story (nothing was published to refuse).
+if grep -q '^terminal result unprovable: ' "$TL57/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$TL57/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$CL57/survivors" 2>/dev/null &&
+   ! grep -q 'was refused before release' "$TL57/survivors" 2>/dev/null &&
+   ! grep -q '^descendants still running:' "$TL57/survivors" 2>/dev/null; then
+  ok "57b — both pins carry the bounded finalization-failure cause"
+else
+  bad "57b — both pins carry the bounded finalization-failure cause" \
+      "task: $(cat "$TL57/survivors" 2>&1 | tr '\n' '|'); checkout: $(cat "$CL57/survivors" 2>&1 | tr '\n' '|')"
+fi
+chmod u+w "$V57B/runs" 2>/dev/null
+run_dispatch "$V57B" die-task --actor-cmd "$NOOP"
+expect_rc 17 "$RC" "57b — the next dispatcher is refused by the retained lease" "$OUT"
+
+echo
+echo "Case 57c — mutation control: remove ONLY the failure transfer and the unsafe fall-through returns"
+MUT57="$SANDBOX_ROOT/mutants57"; mkdir -p "$MUT57"
+# Addressed by the transfer's own marker text, replace-not-delete: the finalizer
+# call on the same line must survive, or the mutant would prove the absence of
+# finalization rather than the absence of the transfer.
+sed 's/ || die_funnel_unprovable "$code" # die funnel failure transfer//' "$DISPATCH_BIN" >"$MUT57/m23.sh"
+chmod +x "$MUT57/m23.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT57/m23.sh" && bash -n "$MUT57/m23.sh" 2>/dev/null &&
+   grep -q 'finalize_terminal_result "$code"' "$MUT57/m23.sh"; then
+  ok "57c — M23 mutant differs, parses, and keeps the finalizer call itself"
+  V57M="$(new_sandbox)"; state_file "$V57M" die-task codex
+  OUT="$(bash "$MUT57/m23.sh" --checkout "$V57M" --task die-task \
+        --log-dir "$V57M/runs" --timeout 20 --actor-cmd "$BREAK_PUBLISH" 2>&1)"; RCM=$?
+  TL57M="$(task_lock_for "$V57M" die-task)"; CL57M="$(checkout_lock_for "$V57M")"
+  if [ "$RCM" -eq 22 ] && [ ! -d "$TL57M" ] && [ ! -d "$CL57M" ]; then
+    ok "57c — M23: without the transfer the failed publication exits 22 and releases (57b is fail-capable)"
+  else
+    bad "57c — M23: without the transfer the failed publication exits 22 and releases (57b is fail-capable)" \
+        "rc=$RCM task=$([ -d "$TL57M" ] && echo present || echo absent) checkout=$([ -d "$CL57M" ] && echo present || echo absent)"
+  fi
+  chmod u+w "$V57M/runs" 2>/dev/null
+  run_dispatch "$V57M" die-task --actor-cmd "$NOOP"
+  expect_rc 22 "$RC" "57c — M23: the next dispatcher is admitted after the unproven exit" "$OUT"
+else
+  bad "57c — M23 mutant differs, parses, and keeps the finalizer call itself" \
+      "the transfer marker was not found, or the mutant does not parse"
+fi
+
+echo
+echo "Case 57d — the funnel publishes once and the transfer neither retries nor adds a writer"
+# Structural, against the shipped text — 56e's style. The behavioural half is
+# 57a-c; this half pins the shape: one finalizer invocation in die(), one
+# transfer, one pin call in the transfer, no second attempt and no waiting.
+DIE57="$(sed -n '/^die() {/,/^}/p' "$DISPATCH_BIN")"
+XFER57="$(sed -n '/^die_funnel_unprovable()/,/^}/p' "$DISPATCH_BIN")"
+if [ "$(printf '%s\n' "$DIE57" | grep -c 'finalize_terminal_result ')" = 1 ] &&
+   [ "$(grep -c '# die funnel failure transfer' "$DISPATCH_BIN")" = 1 ]; then
+  ok "57d — die() invokes the accepted finalizer once, with exactly one failure transfer"
+else
+  bad "57d — die() invokes the accepted finalizer once, with exactly one failure transfer" \
+      "finalize calls: $(printf '%s\n' "$DIE57" | grep -c 'finalize_terminal_result '); markers: $(grep -c '# die funnel failure transfer' "$DISPATCH_BIN")"
+fi
+if [ "$(printf '%s\n' "$XFER57" | grep -c 'pin_lock_terminal')" = 1 ] &&
+   ! printf '%s\n' "$XFER57" | grep -q 'finalize_terminal_result' &&
+   ! printf '%s\n' "$XFER57" | grep -q 'sleep' &&
+   printf '%s\n' "$XFER57" | grep -q 'exit 38'; then
+  ok "57d — the transfer pins once through the shared owner, never re-finalizes, never waits, exits 38"
+else
+  bad "57d — the transfer pins once through the shared owner, never re-finalizes, never waits, exits 38" "$XFER57"
+fi
+
+echo
+echo "Case 57e — ALREADY-PINNED leases + failed publication is still observably unprovable (exit 38)"
+# The Unit 11 correction's frozen finding: with a teardown cause already pinned,
+# a failed publication used to keep its original exit and record the failure
+# nowhere — a non-38 terminal indistinguishable from one whose result exists.
+# The forcing fixture plants a teardown-style pin at the top of die() (through
+# the shared library's own pin writer — no new writer), and the actor makes the
+# evidence directory unwritable, so the pinned + failed-finalize conjunction is
+# real when the funnel reaches it.
+awk '{print} /^die\(\) { # code, message/ {print "  wl_lease_pin \"424242\" \"\" \"die-task\" 2>/dev/null # harness forced teardown pin"}' \
+  "$DISPATCH_BIN" >"$MUT57/prepin.sh"
+chmod +x "$MUT57/prepin.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT57/prepin.sh" && bash -n "$MUT57/prepin.sh" 2>/dev/null; then
+  ok "57e — the pre-pin forcing fixture differs from the dispatcher and is valid bash"
+  V57P="$(new_sandbox)"; state_file "$V57P" die-task codex
+  OUT="$(bash "$MUT57/prepin.sh" --checkout "$V57P" --task die-task \
+        --log-dir "$V57P/runs" --timeout 20 --actor-cmd "$BREAK_PUBLISH" 2>&1)"; RCP=$?
+  expect_rc 38 "$RCP" "57e — the already-pinned failed publication exits 38, not the original 22" "$OUT"
+  out_has "exiting 38 instead" "$OUT" "57e — the failed publication is recorded on the output channels"
+  TL57P="$(task_lock_for "$V57P" die-task)"; CL57P="$(checkout_lock_for "$V57P")"
+  # THE STRONGER CAUSE SURVIVES. The teardown pin's survivor-pid evidence must
+  # still be the recorded cause — a transfer that re-pinned would have replaced
+  # it with the weaker finalization story, which is the half of the old guard
+  # that was right and must stay.
+  if [ -d "$TL57P" ] && [ -d "$CL57P" ] &&
+     grep -q 'descendants still running: 424242' "$TL57P/survivors" 2>/dev/null &&
+     ! grep -q '^terminal result unprovable: ' "$TL57P/survivors" 2>/dev/null; then
+    ok "57e — both leases stay pinned under the earlier teardown cause, preserved unchanged"
+  else
+    bad "57e — both leases stay pinned under the earlier teardown cause, preserved unchanged" \
+        "task=$([ -d "$TL57P" ] && echo present || echo absent) cause: $(cat "$TL57P/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  if [ "$(res_count "$V57P/runs")" = 0 ]; then
+    ok "57e — no terminal result exists and none is claimed"
+  else
+    bad "57e — no terminal result exists and none is claimed" "results=$(res_count "$V57P/runs")"
+  fi
+  chmod u+w "$V57P/runs" 2>/dev/null
+  run_dispatch "$V57P" die-task --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "57e — the next dispatcher is refused by the retained lease" "$OUT"
+
+  # M24 — restore ONLY the old early return, by the coverage guard's marker: the
+  # pinned conjunction then keeps the original exit again, which is the finding
+  # itself and proves this case can fail.
+  awk '{print} /# die funnel coverage guard/ {print "  [ \"${WL_LEASE_PINNED:-0}\" -eq 0 ] || return 0 # harness restored early return"}' \
+    "$MUT57/prepin.sh" >"$MUT57/m24.sh"
+  chmod +x "$MUT57/m24.sh"
+  if ! cmp -s "$MUT57/prepin.sh" "$MUT57/m24.sh" && bash -n "$MUT57/m24.sh" 2>/dev/null; then
+    ok "57e — M24 mutant differs from the forcing fixture and is valid bash"
+    V57Q="$(new_sandbox)"; state_file "$V57Q" die-task codex
+    OUT="$(bash "$MUT57/m24.sh" --checkout "$V57Q" --task die-task \
+          --log-dir "$V57Q/runs" --timeout 20 --actor-cmd "$BREAK_PUBLISH" 2>&1)"; RCQ=$?
+    if [ "$RCQ" -eq 22 ]; then
+      ok "57e — M24: with the early return restored the pinned failure exits 22 again (57e is fail-capable)"
+    else
+      bad "57e — M24: with the early return restored the pinned failure exits 22 again (57e is fail-capable)" \
+          "rc=$RCQ"
+    fi
+    chmod u+w "$V57Q/runs" 2>/dev/null
+  else
+    bad "57e — M24 mutant differs from the forcing fixture and is valid bash" \
+        "the coverage-guard marker was not found, or the mutant does not parse"
+  fi
+else
+  bad "57e — the pre-pin forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+# ===================== case 58: --dry-run finalizes and consumes before release
+#
+# Unit 12. A dry-run is an ADMITTED run — both leases held, run evidence
+# initialized — and it was the last N-family success that released and exited 0
+# leaving no run-bound terminal result. It now goes through the same accepted
+# boundary as the operator terminal: finalize exactly one truthful no-model
+# code-0 record, consume that exact promised artifact (path gate -> one
+# structural parse -> expected identity), and only then release. Failure takes
+# the accepted exit-38 pin routes unchanged.
+
+echo
+echo "Case 58a — a valid admitted --dry-run publishes, consumes, reports, and releases"
+V58A="$(new_sandbox)"; state_file "$V58A" dry-task codex
+run_dispatch "$V58A" dry-task --dry-run
+expect_rc 0 "$RC" "58a — the admitted dry-run still exits 0" "$OUT"
+out_has "dry-run: would launch actor 'codex'" "$OUT" "58a — the operator-visible dry-run report is preserved"
+if [ "$(calls "$V58A")" = 0 ]; then
+  ok "58a — no actor launched"
+else
+  bad "58a — no actor launched" "calls=$(calls "$V58A")"
+fi
+RID58="$(run_id_of "$OUT")"
+CO58="$(cd "$V58A" && pwd -P)"
+ROOT58="$(cd "$V58A/runs" && pwd -P)"
+REAL58="$ROOT58/$RID58.result"
+if [ "$(res_count "$ROOT58")" = 1 ] && [ "$(part_count "$ROOT58")" = 0 ] &&
+   [ "$(ls "$ROOT58"/*.consume 2>/dev/null | wc -l | tr -d ' ')" = 0 ]; then
+  ok "58a — exactly one finalized result, no partial, no consumer scratch"
+else
+  bad "58a — exactly one finalized result, no partial, no consumer scratch" \
+      "results=$(res_count "$ROOT58") partials=$(part_count "$ROOT58")"
+fi
+val_expect   "$VAL_LIB" "$REAL58" 0 ok "58a — the dry-run result is structurally valid v1"
+ident_expect "$VAL_LIB" "$REAL58" dry-task "$CO58" "$RID58" "$ROOT58" 0 ok \
+  "58a — the dry-run result is identity-valid for this task, checkout, run and promised path"
+# TRUTHFUL NO-MODEL FACTS, from the dispatcher's own state: nothing was launched
+# and nothing spoke to a model, and the record must say so rather than inherit a
+# post-hop story.
+if [ "$(res_field "$REAL58" code)" = 0 ] && [ "$(res_field "$REAL58" mode)" = dry-run ] &&
+   [ "$(res_field "$REAL58" actor_launched)" = no ] &&
+   [ "$(res_field "$REAL58" model_request_started)" = no ] &&
+   [ "$(res_field "$REAL58" stage)" = pre-hop ]; then
+  ok "58a — the record truthfully carries code 0, mode dry-run, no actor, no model request, pre-hop"
+else
+  bad "58a — the record truthfully carries code 0, mode dry-run, no actor, no model request, pre-hop" \
+      "code=$(res_field "$REAL58" code) mode=$(res_field "$REAL58" mode) launched=$(res_field "$REAL58" actor_launched) model=$(res_field "$REAL58" model_request_started) stage=$(res_field "$REAL58" stage)"
+fi
+if [ ! -d "$(task_lock_for "$V58A" dry-task)" ] && [ ! -d "$(checkout_lock_for "$V58A")" ]; then
+  ok "58a — both leases released once the result was consumed"
+else
+  bad "58a — both leases released once the result was consumed" "a lease survived"
+fi
+run_dispatch "$V58A" dry-task --dry-run
+expect_rc 0 "$RC" "58a — the next dispatcher is admitted after the verified release" "$OUT"
+
+echo
+echo "Case 58b — an unwritable evidence directory is refused BEFORE admission: no lease, no evidence, exit 10"
+# WHY THIS CASE CHANGED ITS SUBJECT, and why that is not a weakening. Until the
+# 2026-08-18 revision this fixture was the dry-run's PUBLICATION-FAILURE case: it
+# expected the run to be admitted, take both leases, fail to write its result and
+# exit 38. That expectation was correct under the plan content approved
+# 2026-08-16, whose terminal classes owing one durable result included `usage or
+# argument refusal`. The revised plan (blob c7857d5f, approved 2026-08-18) DELETED
+# that class and moved the evidence location into the admission boundary: "a run
+# exists only after argument parsing has supplied syntactically valid task,
+# checkout and evidence-location inputs … Such a refusal is not a run terminal
+# class and needs no durable result."
+#
+# So this exact input is now a PRE-ADMISSION refusal, and the case asserts that
+# contract instead. The publication-failure invariant it used to carry did not go
+# with it — 58g below reaches that branch after admission, which is the only place
+# the revised plan still puts it.
+#
+# THE INPUT IS UNCHANGED ON PURPOSE: an existing directory that refuses new
+# entries is the one `check_evidence_location()` branch (`[ -w "$want" ]`) that no
+# other case reaches — 63a and 63a(2) both drive the ancestor-not-a-directory
+# branch instead. Keeping the fixture keeps that branch covered.
+#
+# The old `out_lacks "  terminal result:"` assertion is deliberately NOT carried
+# forward. It passed under both contracts — an exit-10 refusal advertises nothing
+# either way — so it could not fail for the right reason and was proving nothing.
+V58B="$(new_sandbox)"; mkdir -p "$V58B/runs"; chmod a-w "$V58B/runs"
+state_file "$V58B" dry-task codex
+rm -f "$V58B.calls"
+LR58B="$(lock_root_for "$V58B")"
+HEAD58B="$(git -C "$V58B" rev-parse HEAD)"
+TREE58B="$(tree_manifest "$V58B")"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V58B" --task dry-task \
+      --log-dir "$V58B/runs" --timeout 20 --dry-run 2>&1)"; RC58=$?
+expect_rc 10 "$RC58" "58b — the unwritable evidence directory is refused as usage, never admitted" "$OUT"
+out_has "STOP [10]" "$OUT" "58b — the refusal names itself on stderr"
+out_has "not writable" "$OUT" "58b — the refusal names writability as the reason"
+out_has "$V58B/runs" "$OUT" "58b — the refusal names the location it refused"
+# THE PRE-ADMISSION CONTRACT, asserted as the four absences the revised plan
+# names: no owner or lease, no evidence, no actor, no mutation.
+[ ! -e "$LR58B" ] \
+  && ok "58b — no lease was ever acquired: the shared lease root was never created" \
+  || bad "58b — no lease was ever acquired: the shared lease root was never created" \
+         "$(ls -a "$LR58B" 2>&1 | tr '\n' ' ')"
+if [ "$(res_count "$V58B/runs")" = 0 ] && [ "$(part_count "$V58B/runs")" = 0 ] &&
+   [ "$(ls -1 "$V58B/runs" 2>/dev/null | wc -l | tr -d ' ')" = 0 ]; then
+  ok "58b — it wrote no evidence at all into the location it refused"
+else
+  bad "58b — it wrote no evidence at all into the location it refused" \
+      "$(ls -a "$V58B/runs" 2>&1 | tr '\n' ' ')"
+fi
+[ "$(calls "$V58B")" = "0" ] \
+  && ok "58b — no actor was launched" || bad "58b — no actor was launched" "calls=$(calls "$V58B")"
+[ "$(git -C "$V58B" rev-parse HEAD)" = "$HEAD58B" ] \
+  && ok "58b — it committed nothing" || bad "58b — it committed nothing" "HEAD moved from $HEAD58B"
+[ "$TREE58B" = "$(tree_manifest "$V58B")" ] \
+  && ok "58b — every byte of the checkout's working tree is unchanged" \
+  || bad "58b — every byte of the checkout's working tree is unchanged" "the tree moved"
+# THE SUCCESSOR IS ADMITTED, and this is the half that makes the four absences
+# above mean something. A refusal that had quietly half-acquired a lease would
+# refuse the next run at 17 for a reason that never existed — which is exactly
+# what this case asserted, correctly, under the old contract.
+chmod u+w "$V58B/runs" 2>/dev/null
+run_dispatch "$V58B" dry-task --dry-run
+expect_rc 0 "$RC" "58b — the next dispatcher is admitted: the refusal left no lease behind" "$OUT"
+
+echo
+echo "Case 58g — an ADMITTED dry-run whose publication fails pins both leases and exits 38"
+# THE INVARIANT 58b USED TO CARRY, at the boundary the revised plan still puts it
+# behind. Gate SA requires that "every terminal path after run admission produces
+# one durable atomic result", and Change set A's durable ordering requires that a
+# lease be released "only after the terminal result exists and teardown is proven
+# safe", with uncertain teardown pinning it. The dry-run terminal has its OWN
+# finalization call site — `finalize_terminal_result 0 || die_terminal_unprovable
+# # dry-run terminal finalization` — so the proof at the other three sites (27s
+# interruption, 57b die funnel, 60e carry-one) does not reach it, and 58c's M25
+# control deletes the finalizer call TOGETHER WITH its failure handoff, so it
+# cannot see the handoff go missing on its own. 58h below is that missing control.
+#
+# THE INDUCTION IS DETERMINISTIC AND HAS NO ACTOR TO USE. 57b and 60e break
+# publication from inside the actor's own command; a dry-run launches nothing, so
+# that door does not exist here, and an external chmod raced against the run would
+# be a coin toss rather than a case. The one point where test-controlled code runs
+# at a FIXED place in an admitted dry-run's control flow is the checkout's own
+# ownership helper (dispatch.sh 4047-4049), which the dispatcher invokes after run
+# evidence and BOTH leases exist and roughly fifty lines above the seam. Cases 27u
+# and 31 already substitute that helper for their own timing; this one substitutes
+# it to remove write permission and then hands straight on to the real helper, so
+# the ownership answer under test is still the shipped helper's own.
+#
+# It is COMMITTED in the sandbox, like case 12f's removal, because the tracked
+# helper is outside the dispatcher's allowlist and an uncommitted rewrite would be
+# a foreign working-tree change rather than a fixture.
+V58G="$(new_sandbox)"; state_file "$V58G" dry-fail-task codex
+REAL58G="$SANDBOX_ROOT/owner58g-real.sh"
+cp "$V58G/logs/scripts/work-loop-owner.sh" "$REAL58G"
+cat >"$V58G/logs/scripts/work-loop-owner.sh" <<BREAK58G
+#!/bin/bash
+chmod a-w "$V58G/runs" 2>/dev/null
+exec bash "$REAL58G" "\$@"
+BREAK58G
+chmod +x "$V58G/logs/scripts/work-loop-owner.sh"
+git -C "$V58G" commit -qam "fixture: the evidence directory refuses new entries at the ownership check" >/dev/null 2>&1
+if [ -z "$(git -C "$V58G" status --porcelain)" ]; then
+  ok "58g — the fixture is committed, so the run sees a clean tree and not a foreign change"
+else
+  bad "58g — the fixture is committed, so the run sees a clean tree and not a foreign change" \
+      "$(git -C "$V58G" status --porcelain | tr '\n' '|')"
+fi
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V58G" --task dry-fail-task \
+      --log-dir "$V58G/runs" --timeout 20 --dry-run 2>&1)"; RC58G=$?
+expect_rc 38 "$RC58G" "58g — the unprovable admitted dry-run exits 38, never 0" "$OUT"
+out_lacks "  terminal result:" "$OUT" "58g — no terminal result is advertised"
+out_has "could not be finalized" "$OUT" \
+  "58g — the operator is told the ending could not be proved, not that it ended well"
+if [ "$(res_count "$V58G/runs")" = 0 ] && [ "$(part_count "$V58G/runs")" = 0 ]; then
+  ok "58g — no result and no half-written partial survive the failed publication"
+else
+  bad "58g — no result and no half-written partial survive the failed publication" \
+      "results=$(res_count "$V58G/runs") partials=$(part_count "$V58G/runs")"
+fi
+# IT REACHED THE SEAM RATHER THAN A REFUSAL BEFORE IT. Only an ADMITTED run owns
+# these, so their presence is what separates this case from 58b above.
+TL58G="$(task_lock_for "$V58G" dry-fail-task)"; CL58G="$(checkout_lock_for "$V58G")"
+if [ -d "$TL58G" ] && [ -d "$CL58G" ]; then
+  ok "58g — both leases were held and survived die() and the EXIT trap"
+else
+  bad "58g — both leases were held and survived die() and the EXIT trap" \
+      "task=$([ -d "$TL58G" ] && echo present || echo absent) checkout=$([ -d "$CL58G" ] && echo present || echo absent)"
+fi
+# THE CAUSE IS THE DISCRIMINATOR, not the exit code — 57b's distinction exactly.
+# Dropping the failure handoff still exits 38, via the consumer gate one line
+# below, so a case that asserted only the code could not tell the two apart. The
+# finalization story and the consumer-refusal story are different sentences, and
+# 58h proves this assertion flips to the other one.
+if grep -q '^terminal result unprovable: ' "$TL58G/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$TL58G/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$CL58G/survivors" 2>/dev/null &&
+   ! grep -q 'was refused before release' "$TL58G/survivors" 2>/dev/null; then
+  ok "58g — both pins carry the truthful FINALIZATION-failure cause, not a consumer refusal"
+else
+  bad "58g — both pins carry the truthful FINALIZATION-failure cause, not a consumer refusal" \
+      "task: $(cat "$TL58G/survivors" 2>&1 | tr '\n' '|'); checkout: $(cat "$CL58G/survivors" 2>&1 | tr '\n' '|')"
+fi
+chmod u+w "$V58G/runs" 2>/dev/null
+run_dispatch "$V58G" dry-fail-task --dry-run
+expect_rc 17 "$RC" "58g — the next dispatcher is refused by the retained lease" "$OUT"
+
+echo
+echo "Case 58h — mutation control: remove ONLY the dry-run failure handoff and the cause stops being true"
+MUT58H="$SANDBOX_ROOT/mutants58h"; mkdir -p "$MUT58H"
+# REPLACE, NOT DELETE, and only the handoff: `finalize_terminal_result 0` must
+# survive on the same line, or the mutant would prove the absence of finalization
+# — which is M25's job — instead of the absence of the failure transfer. The
+# operator and carry-one seams keep their own handoffs, which is what proves this
+# control addresses the dry-run one alone.
+sed 's/ || die_terminal_unprovable # dry-run terminal finalization/ # dry-run terminal finalization/' \
+  "$DISPATCH_BIN" >"$MUT58H/m30.sh"
+chmod +x "$MUT58H/m30.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT58H/m30.sh" && bash -n "$MUT58H/m30.sh" 2>/dev/null &&
+   grep -q 'finalize_terminal_result 0 # dry-run terminal finalization' "$MUT58H/m30.sh" &&
+   grep -q 'die_terminal_unprovable # operator terminal finalization' "$MUT58H/m30.sh" &&
+   grep -q 'die_terminal_unprovable "the carry-one terminal after one carried hop"' "$MUT58H/m30.sh"; then
+  ok "58h — M30 mutant differs, parses, keeps the dry-run finalizer call, and leaves the other two seams intact"
+  V58H="$(new_sandbox)"; state_file "$V58H" dry-fail-task codex
+  REAL58H="$SANDBOX_ROOT/owner58h-real.sh"
+  cp "$V58H/logs/scripts/work-loop-owner.sh" "$REAL58H"
+  cat >"$V58H/logs/scripts/work-loop-owner.sh" <<BREAK58H
+#!/bin/bash
+chmod a-w "$V58H/runs" 2>/dev/null
+exec bash "$REAL58H" "\$@"
+BREAK58H
+  chmod +x "$V58H/logs/scripts/work-loop-owner.sh"
+  git -C "$V58H" commit -qam "fixture" >/dev/null 2>&1
+  OUT="$(bash "$MUT58H/m30.sh" --checkout "$V58H" --task dry-fail-task \
+        --log-dir "$V58H/runs" --timeout 20 --dry-run 2>&1)"; RCM=$?
+  TL58H="$(task_lock_for "$V58H" dry-fail-task)"
+  # WITHOUT THE HANDOFF the run still exits 38 — the consumer gate one line below
+  # catches the missing artifact — so the exit code alone proves nothing here.
+  # What changes is the sentence the operator and the lease are given: a record
+  # that was never written is reported as one that was written and then refused.
+  if grep -q 'was refused before release' "$TL58H/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL58H/survivors" 2>/dev/null; then
+    ok "58h — M30: the pin now tells the consumer-refusal story instead (58g's cause assertion is fail-capable)"
+  else
+    bad "58h — M30: the pin now tells the consumer-refusal story instead (58g's cause assertion is fail-capable)" \
+        "rc=$RCM cause: $(cat "$TL58H/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  chmod u+w "$V58H/runs" 2>/dev/null
+else
+  bad "58h — M30 mutant differs, parses, keeps the dry-run finalizer call, and leaves the other two seams intact" \
+      "the dry-run handoff marker was not found, or the mutant does not parse"
+fi
+
+echo
+echo "Case 58c — mutation control: remove ONLY the dry-run boundary and the result-less release returns"
+MUT58="$SANDBOX_ROOT/mutants58"; mkdir -p "$MUT58"
+# Both marked lines go, and only them — the operator-terminal seam keeps its own
+# markers, which is what proves the two seams are separately fail-capable.
+sed -e '/# dry-run terminal finalization/d' -e '/# dry-run terminal consumption/d' \
+  "$DISPATCH_BIN" >"$MUT58/m25.sh"
+chmod +x "$MUT58/m25.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT58/m25.sh" && bash -n "$MUT58/m25.sh" 2>/dev/null &&
+   grep -q '# operator terminal finalization' "$MUT58/m25.sh"; then
+  ok "58c — M25 mutant differs, parses, and leaves the operator-terminal seam intact"
+  V58M="$(new_sandbox)"; state_file "$V58M" dry-task codex
+  OUT="$(bash "$MUT58/m25.sh" --checkout "$V58M" --task dry-task \
+        --log-dir "$V58M/runs" --timeout 20 --dry-run 2>&1)"; RCM=$?
+  if [ "$RCM" -eq 0 ] && [ "$(res_count "$V58M/runs")" = 0 ] &&
+     [ ! -d "$(task_lock_for "$V58M" dry-task)" ]; then
+    ok "58c — M25: without the boundary the dry-run releases result-less again (58a is fail-capable)"
+  else
+    bad "58c — M25: without the boundary the dry-run releases result-less again (58a is fail-capable)" \
+        "rc=$RCM results=$(res_count "$V58M/runs") task-lock=$([ -d "$(task_lock_for "$V58M" dry-task)" ] && echo present || echo absent)"
+  fi
+else
+  bad "58c — M25 mutant differs, parses, and leaves the operator-terminal seam intact" \
+      "a dry-run marker was not found, or the mutant does not parse"
+fi
+
+echo
+echo "Case 58e — a dry-run record altered ONLY in outcome, or ONLY in code, is refused before release"
+# Unit 28. The seam's second half. 58a-c proved the dry-run publishes and consumes
+# the artifact it promised; nothing proved the artifact said what this run
+# actually did. Measured on these fixtures before the edit: a record altered to
+# `outcome=COMPLETED` — over a preflight that launched no actor and started no
+# model request — exited 0, released both leases and was advertised as this run's
+# terminal result, and so did one altered to `code=22`. Path, structure and
+# identity have nothing to object to; only meaning does.
+#
+# SAME FORCING TECHNIQUE, SAME WINDOW as 56b and 62b: one altering line injected
+# after the dry-run finalization marker, between publication and consumption.
+# Everything asserted afterwards is the unmodified seam's own behaviour.
+MUT58E="$SANDBOX_ROOT/mutants58e"; mkdir -p "$MUT58E"
+
+mk_dry_alter58() { # outfile sed-script [source] -> 0 when the fixture differs and parses
+  awk -v s="$2" '{print} /# dry-run terminal finalization/ {
+    printf "  sed %c%s%c \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\" # harness dry-run alteration\n", 39, s, 39 }' \
+    "${3:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${3:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# The full refusal contract for one forced dry-run mismatch, asserted exactly as
+# 58b asserts the publication failure: exit 38, nothing advertised, both leases
+# retained with the bounded token as their cause, next dispatcher refused.
+expect_dry_refusal58() { # fixture expected-token label-prefix
+  local V O R TL CL
+  V="$(new_sandbox)"; state_file "$V" dry-task codex
+  O="$(bash "$1" --checkout "$V" --task dry-task --log-dir "$V/runs" --timeout 20 --dry-run 2>&1)"; R=$?
+  expect_rc 38 "$R" "$3 — refused with exit 38, never 0" "$O"
+  out_lacks "  terminal result:" "$O" "$3 — the refused artifact is not advertised as this run's result"
+  # THE REFUSAL NAMES THE TERMINAL IT ACTUALLY REACHED. The shared exit's default
+  # sentence belongs to the OPERATOR terminal, and a bare call here inherited it —
+  # so this seam told an operator who launched nothing that a loop terminal had
+  # been reached. Both halves are asserted: naming the preflight is not enough if
+  # the operator-terminal claim is also present somewhere in the output.
+  out_has "reached the admitted dry-run preflight terminal" "$O" \
+    "$3 — the refusal names the preflight terminal it actually reached"
+  out_lacks "reached a real operator terminal" "$O" \
+    "$3 — the refusal claims no operator terminal"
+  # THE SENTENCE IS TERMINAL-NEUTRAL (Unit 31). One shared clause is read by
+  # consumers whose run was ending at code 0 and by consumers whose run was
+  # ending at code 28, so it may not assume the ending it interrupted was exit 0
+  # — for the interruption that is simply false. Nor may it offer the gate as
+  # proof of the artifact's provenance: the gate is the check that FAILED, and
+  # calling it "this run's own" reads as though passing it had established
+  # ownership. Both halves are asserted here and in 27w, over the two consumers
+  # that differ in exactly that intended code.
+  out_has "did not pass the consumer gate" "$O" \
+    "$3 — the refusal says the promised artifact did not pass the consumer gate"
+  out_has "refused as this run's reported ending" "$O" \
+    "$3 — the refusal refuses the artifact as this run's reported ending"
+  out_lacks "failed this run's own consumer gate" "$O" \
+    "$3 — the refusal does not offer the gate as proof of the artifact's provenance"
+  out_lacks "refusing to exit 0" "$O" \
+    "$3 — the refusal assumes no exit-0 ending"
+  TL="$(task_lock_for "$V" dry-task)"; CL="$(checkout_lock_for "$V")"
+  # NOT a finalization story, and that distinction is the point: the record
+  # published perfectly well. What failed is what it says.
+  if [ -d "$TL" ] && [ -d "$CL" ] &&
+     grep -q '^terminal result unprovable: ' "$TL/survivors" 2>/dev/null &&
+     grep -q "$2" "$TL/survivors" 2>/dev/null &&
+     grep -q "$2" "$CL/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL/survivors" 2>/dev/null; then
+    ok "$3 — both leases retained, both pins carrying the bounded '$2' cause"
+  else
+    bad "$3 — both leases retained, both pins carrying the bounded '$2' cause" \
+        "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V" dry-task --dry-run
+  expect_rc 17 "$RC" "$3 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+if mk_dry_alter58 "$MUT58E/outonly.sh" 's/^outcome=.*/outcome=COMPLETED/'; then
+  ok "58e — the outcome-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_dry_refusal58 "$MUT58E/outonly.sh" outcome-mismatch \
+    "58e — a preflight whose record claims COMPLETED"
+else
+  bad "58e — the outcome-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+if mk_dry_alter58 "$MUT58E/codeonly.sh" 's/^code=.*/code=22/'; then
+  ok "58e — the code-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_dry_refusal58 "$MUT58E/codeonly.sh" code-mismatch \
+    "58e — a preflight whose record claims code 22"
+else
+  bad "58e — the code-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+# THE EXPECTATION IS MODE'S ANSWER, NOT THE TASK'S, and that is what lets ONE
+# call cover a preflight over any lifecycle class. 59a already proves the RECORD
+# carries DRY_RUN_COMPLETE over active, closed and blocked tasks; this proves the
+# seam's EXPECTATION tracks it, by running a real dry-run over each and requiring
+# the accepted release. A seam that had derived its expectation from ST_CLASS
+# would refuse two of these three.
+for t58 in dry-task:codex closed-task:operator blocked-task:operator; do
+  T58="${t58%%:*}"; TU58="${t58##*:}"
+  V58L="$(new_sandbox)"
+  if [ "$T58" = blocked-task ]; then state_file "$V58L" "$T58" "$TU58" "$T58" blocked
+  else state_file "$V58L" "$T58" "$TU58"; fi
+  run_dispatch "$V58L" "$T58" --dry-run
+  R58L="$RC"; RID58L="$(run_id_of "$OUT")"
+  if [ "$R58L" -eq 0 ] &&
+     [ "$(res_field "$V58L/runs/$RID58L.result" outcome)" = DRY_RUN_COMPLETE ] &&
+     [ "$(res_field "$V58L/runs/$RID58L.result" code)" = 0 ] &&
+     [ ! -d "$(task_lock_for "$V58L" "$T58")" ]; then
+    ok "58e — a real dry-run over $T58 expects and accepts DRY_RUN_COMPLETE/0, and releases"
+  else
+    bad "58e — a real dry-run over $T58 expects and accepts DRY_RUN_COMPLETE/0, and releases" \
+        "rc=$R58L outcome=$(res_field "$V58L/runs/$RID58L.result" outcome) code=$(res_field "$V58L/runs/$RID58L.result" code)"
+  fi
+done
+
+echo
+echo "Case 58f — mutation control: remove ONLY the dry-run expected pair and both mismatches release again"
+# M34 — the mirror of M33 one seam over. It strips exactly the two expectation
+# arguments from the dry-run call, leaving that call, the path gate, the parse
+# and the identity boundary in place, AND leaving the operator terminal's own
+# pair untouched — which is what proves the two migrated seams are separately
+# fail-capable rather than one shared switch. Fails closed.
+sed 's/ "$(result_outcome 0)" 0 # dry-run terminal consumption/ # dry-run terminal consumption/' \
+  "$DISPATCH_BIN" >"$MUT58E/m34.sh" 2>/dev/null
+M34_HITS="$(grep -c ' "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$DISPATCH_BIN" 2>/dev/null || true)"
+M34_LEFT="$(grep -c ' "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$MUT58E/m34.sh" 2>/dev/null || true)"
+M34_KEPT="$(grep -c '# dry-run terminal consumption' "$MUT58E/m34.sh" 2>/dev/null || true)"
+M34_OTHER="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$MUT58E/m34.sh" 2>/dev/null || true)"
+M34_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT58E/m34.sh" || M34_DIFFERS=yes
+M34_PARSES=no; bash -n "$MUT58E/m34.sh" 2>/dev/null && M34_PARSES=yes
+if [ "$M34_HITS" = 1 ] && [ "$M34_LEFT" = 0 ] && [ "$M34_KEPT" = 1 ] && [ "$M34_OTHER" = 1 ] &&
+   [ "$M34_DIFFERS" = yes ] && [ "$M34_PARSES" = yes ]; then
+  ok "58f — M34 removed exactly the dry-run pair, kept its consumer call and the operator pair, differs, and parses"
+  for f58 in outcome:COMPLETED code:22; do
+    FLD58="${f58%%:*}"; VAL58="${f58##*:}"
+    if mk_dry_alter58 "$MUT58E/m34-$FLD58.sh" "s/^$FLD58=.*/$FLD58=$VAL58/" "$MUT58E/m34.sh"; then
+      V58F="$(new_sandbox)"; state_file "$V58F" dry-task codex
+      OUT="$(bash "$MUT58E/m34-$FLD58.sh" --checkout "$V58F" --task dry-task \
+            --log-dir "$V58F/runs" --timeout 20 --dry-run 2>&1)"; RCM=$?
+      if [ "$RCM" -eq 0 ] && [ ! -d "$(task_lock_for "$V58F" dry-task)" ] &&
+         [ ! -d "$(checkout_lock_for "$V58F")" ]; then
+        ok "58f — M34: without the expected pair the $FLD58-only mismatch exits 0 and releases (58e is fail-capable)"
+      else
+        bad "58f — M34: without the expected pair the $FLD58-only mismatch exits 0 and releases (58e is fail-capable)" \
+            "rc=$RCM task-lease=$([ -d "$(task_lock_for "$V58F" dry-task)" ] && echo held || echo released)"
+      fi
+    else
+      bad "58f — M34: the $FLD58-only fixture over the mutant differs and parses" \
+          "the injection matched nothing, or the fixture does not parse — the control cannot run"
+    fi
+  done
+else
+  bad "58f — M34 removed exactly the dry-run pair, kept its consumer call and the operator pair, differs, and parses" \
+      "matched=$M34_HITS left=$M34_LEFT kept=$M34_KEPT operator-pair=$M34_OTHER differs=$M34_DIFFERS parses=$M34_PARSES — the control cannot run"
+fi
+
+# M35 — the label's own control, and it is separate from M34 on purpose: M34
+# proves the semantic REFUSAL is real, this proves the refusal's WORDING is. It
+# restores exactly the empty label the bare call used to pass, leaving the
+# expected pair and every boundary in place, so the run still refuses with the
+# same token and the same retention — and the sentence goes back to claiming a
+# real operator terminal was reached over a preflight. Without this, 58e's two
+# wording assertions could pass against a message that was never at risk.
+sed 's/consume_terminal_result "the admitted dry-run preflight terminal" /consume_terminal_result "" /' \
+  "$DISPATCH_BIN" >"$MUT58E/m35.sh" 2>/dev/null
+M35_HITS="$(grep -c 'consume_terminal_result "the admitted dry-run preflight terminal" ' "$DISPATCH_BIN" 2>/dev/null || true)"
+M35_LEFT="$(grep -c 'consume_terminal_result "the admitted dry-run preflight terminal" ' "$MUT58E/m35.sh" 2>/dev/null || true)"
+M35_PAIR="$(grep -c ' "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$MUT58E/m35.sh" 2>/dev/null || true)"
+M35_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT58E/m35.sh" || M35_DIFFERS=yes
+M35_PARSES=no; bash -n "$MUT58E/m35.sh" 2>/dev/null && M35_PARSES=yes
+if [ "$M35_HITS" = 1 ] && [ "$M35_LEFT" = 0 ] && [ "$M35_PAIR" = 1 ] &&
+   [ "$M35_DIFFERS" = yes ] && [ "$M35_PARSES" = yes ]; then
+  ok "58f — M35 restored the empty label, kept the expected pair, differs, and parses"
+  if mk_dry_alter58 "$MUT58E/m35-out.sh" 's/^outcome=.*/outcome=COMPLETED/' "$MUT58E/m35.sh"; then
+    V58G="$(new_sandbox)"; state_file "$V58G" dry-task codex
+    OUT="$(bash "$MUT58E/m35-out.sh" --checkout "$V58G" --task dry-task \
+          --log-dir "$V58G/runs" --timeout 20 --dry-run 2>&1)"; RCM=$?
+    if [ "$RCM" -eq 38 ] &&
+       printf '%s\n' "$OUT" | grep -q 'reached a real operator terminal' &&
+       ! printf '%s\n' "$OUT" | grep -q 'reached the admitted dry-run preflight terminal'; then
+      ok "58f — M35: with the empty label the preflight refusal claims an operator terminal again (58e's wording is fail-capable)"
+    else
+      bad "58f — M35: with the empty label the preflight refusal claims an operator terminal again (58e's wording is fail-capable)" \
+          "rc=$RCM message: $(printf '%s\n' "$OUT" | grep -m1 '^STOP')"
+    fi
+  else
+    bad "58f — M35: the outcome-only fixture over the mutant differs and parses" \
+        "the injection matched nothing, or the fixture does not parse — the control cannot run"
+  fi
+else
+  bad "58f — M35 restored the empty label, kept the expected pair, differs, and parses" \
+      "matched=$M35_HITS left=$M35_LEFT pair=$M35_PAIR differs=$M35_DIFFERS parses=$M35_PARSES — the control cannot run"
+fi
+
+# M38 — the SHARED SENTENCE's own control, and the third distinct thing this seam
+# can get wrong. M34 proves the semantic refusal is real; M35 proves the terminal
+# LABEL is; this proves the rest of the sentence is. It restores exactly the two
+# clauses the wording carried before Unit 31 — "failed this run's own consumer
+# gate" and "refusing to exit 0" — and changes nothing else: the consumer call,
+# its expected pair, the dynamic labels, the bounded token, the pin-first order,
+# exit 38 and the recovery paragraph all stay as they are. So the run must still
+# refuse exactly as before, while the wording assertions in 58e AND 27w go red.
+#
+# ONE CONTROL COVERS BOTH CASES because there is one production clause: 27w
+# asserts the identical phrases over the code-28 consumer, and a per-case control
+# would only re-prove the same line twice. The exit-0 count is asserted at 2 in
+# the mutant rather than 1, which is what shows die_terminal_unprovable's own
+# separate sentence was left alone and the restored phrase went into this one.
+# Fails closed: unless both selectors matched exactly once and the mutant differs
+# and parses, the control does not run.
+sed -e "s/did not pass the consumer gate/failed this run's own consumer gate/" \
+    -e "s/so it is refused as this run's reported ending/refusing to exit 0/" \
+  "$DISPATCH_BIN" >"$MUT58E/m38.sh" 2>/dev/null
+M38_A="$(grep -cF 'did not pass the consumer gate' "$DISPATCH_BIN" 2>/dev/null || true)"
+M38_B="$(grep -cF "so it is refused as this run's reported ending" "$DISPATCH_BIN" 2>/dev/null || true)"
+M38_A_LEFT="$(grep -cF 'did not pass the consumer gate' "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_B_LEFT="$(grep -cF "so it is refused as this run's reported ending" "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_OLD="$(grep -cF "failed this run's own consumer gate" "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_ZERO="$(grep -cF 'refusing to exit 0' "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_PAIRS=0
+for m38 in operator dry-run carry-one interruption; do
+  M38_PAIRS=$((M38_PAIRS + $(grep -cF "# $m38 terminal consumption" "$MUT58E/m38.sh" 2>/dev/null || true)))
+done
+M38_LABEL="$(grep -cF 'consume_terminal_result "the admitted dry-run preflight terminal" ' "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_RECOVERY="$(grep -cF 'remove or repair the interfering artifact' "$MUT58E/m38.sh" 2>/dev/null || true)"
+M38_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT58E/m38.sh" || M38_DIFFERS=yes
+M38_PARSES=no; bash -n "$MUT58E/m38.sh" 2>/dev/null && M38_PARSES=yes
+if [ "$M38_A" = 1 ] && [ "$M38_B" = 1 ] && [ "$M38_A_LEFT" = 0 ] && [ "$M38_B_LEFT" = 0 ] &&
+   [ "$M38_OLD" = 1 ] && [ "$M38_ZERO" = 2 ] && [ "$M38_PAIRS" = 4 ] && [ "$M38_LABEL" = 1 ] &&
+   [ "$M38_RECOVERY" = 1 ] && [ "$M38_DIFFERS" = yes ] && [ "$M38_PARSES" = yes ]; then
+  ok "58f — M38 restored exactly the former shared clause, left the four consumers, labels, token and recovery text intact, differs, and parses"
+  if mk_dry_alter58 "$MUT58E/m38-out.sh" 's/^outcome=.*/outcome=COMPLETED/' "$MUT58E/m38.sh"; then
+    V58H="$(new_sandbox)"; state_file "$V58H" dry-task codex
+    OUT="$(bash "$MUT58E/m38-out.sh" --checkout "$V58H" --task dry-task \
+          --log-dir "$V58H/runs" --timeout 20 --dry-run 2>&1)"; RCM=$?
+    # The BEHAVIOURAL half must stay green — that is what makes this a wording
+    # control rather than a second copy of M34. Same exit, same retention, same
+    # truthful terminal label; only the shared clause moved.
+    if [ "$RCM" -eq 38 ] && [ -d "$(task_lock_for "$V58H" dry-task)" ] &&
+       [ -d "$(checkout_lock_for "$V58H")" ] &&
+       printf '%s\n' "$OUT" | grep -qF 'reached the admitted dry-run preflight terminal' &&
+       printf '%s\n' "$OUT" | grep -qF "failed this run's own consumer gate" &&
+       printf '%s\n' "$OUT" | grep -qF 'refusing to exit 0' &&
+       ! printf '%s\n' "$OUT" | grep -qF 'did not pass the consumer gate' &&
+       ! printf '%s\n' "$OUT" | grep -qF "refused as this run's reported ending"; then
+      ok "58f — M38: with the former clause restored the refusal still refuses, and the shared sentence claims provenance and an exit-0 ending again (58e's and 27w's wording is fail-capable)"
+    else
+      bad "58f — M38: with the former clause restored the refusal still refuses, and the shared sentence claims provenance and an exit-0 ending again (58e's and 27w's wording is fail-capable)" \
+          "rc=$RCM task-lease=$([ -d "$(task_lock_for "$V58H" dry-task)" ] && echo held || echo released) message: $(printf '%s\n' "$OUT" | grep -m1 '^STOP')"
+    fi
+  else
+    bad "58f — M38: the outcome-only fixture over the mutant differs and parses" \
+        "the injection matched nothing, or the fixture does not parse — the control cannot run"
+  fi
+else
+  bad "58f — M38 restored exactly the former shared clause, left the four consumers, labels, token and recovery text intact, differs, and parses" \
+      "neutral-a=$M38_A neutral-b=$M38_B left-a=$M38_A_LEFT left-b=$M38_B_LEFT restored=$M38_OLD exit0=$M38_ZERO pairs=$M38_PAIRS label=$M38_LABEL recovery=$M38_RECOVERY differs=$M38_DIFFERS parses=$M38_PARSES — the control cannot run"
+fi
+
+echo
+echo "Case 58d — the boundary reuses the accepted owners and --status stays read-only"
+if [ "$(grep -c '# dry-run terminal finalization' "$DISPATCH_BIN")" = 1 ] &&
+   [ "$(grep -c '# dry-run terminal consumption' "$DISPATCH_BIN")" = 1 ]; then
+  ok "58d — exactly one dry-run finalization and one dry-run consumption call site"
+else
+  bad "58d — exactly one dry-run finalization and one dry-run consumption call site" \
+      "finalize markers: $(grep -c '# dry-run terminal finalization' "$DISPATCH_BIN"); consume markers: $(grep -c '# dry-run terminal consumption' "$DISPATCH_BIN")"
+fi
+# Behavioural read-only proof for --status, the same observable the contract
+# names: it publishes no terminal result and holds no lease afterwards.
+V58S="$(new_sandbox)"; state_file "$V58S" dry-task codex
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V58S" --task dry-task \
+      --log-dir "$V58S/runs" --timeout 20 --status 2>&1)"; RCS=$?
+if [ "$RCS" -eq 0 ] && [ "$(res_count "$V58S/runs" 2>/dev/null)" = 0 ] &&
+   [ ! -d "$(task_lock_for "$V58S" dry-task)" ]; then
+  ok "58d — --status still exits 0, writes no terminal result, and holds no lease"
+else
+  bad "58d — --status still exits 0, writes no terminal result, and holds no lease" \
+      "rc=$RCS results=$(res_count "$V58S/runs" 2>/dev/null)"
+fi
+
+# ============== case 59: a dry-run's code-zero outcome is its own, not the task's
+#
+# Unit 14. The code-zero vocabulary read the task's lifecycle class first, so one
+# terminal class produced three symbols: UNCLASSIFIED over an active task, and —
+# worse — COMPLETED over a closed one and OPERATOR_TAKEOVER over a blocked one.
+# A preflight that launched nothing wore the symbols of runs that actually
+# finished or were actually handed over, and only the separate mode field told
+# them apart. Dispatcher-owned MODE is now read first at the same single owner.
+#
+# THE CLAIM IS SAMENESS ACROSS LIFECYCLE, NOT A HARD-CODED STRING, for the reason
+# 55c states one case over: pinning exact words would go green on a rename that
+# quietly re-collapsed the classes. The pair is asserted equal across all three
+# states, distinct from both loop-terminal pairs, and not the unmapped fallback.
+
+# Reads the record a dry-run leaves, through the run id the dispatcher printed.
+dry_pair() { # sandbox task [status] -> "<outcome> <next_action>"
+  local d="$1" t="$2" s="${3:-}" r
+  if [ -n "$s" ]; then state_file "$d" "$t" operator "$t" "$s"; else state_file "$d" "$t" codex; fi
+  run_dispatch "$d" "$t" --dry-run
+  r="$d/runs/$(run_id_of "$OUT").result"
+  printf '%s %s' "$(res_field "$r" outcome)" "$(res_field "$r" next_action)"
+}
+
+echo
+echo "Case 59a — one dry-run outcome and next action across active, closed and blocked tasks"
+V59A="$(new_sandbox)"; P59A="$(dry_pair "$V59A" dry-active)"
+V59C="$(new_sandbox)"; P59C="$(dry_pair "$V59C" dry-closed closed)"
+V59B="$(new_sandbox)"; P59B="$(dry_pair "$V59B" dry-blocked blocked)"
+if [ -n "$P59A" ] && [ "$P59A" = "$P59C" ] && [ "$P59C" = "$P59B" ]; then
+  ok "59a — the same pair on all three lifecycle states ($P59A)"
+else
+  bad "59a — the same pair on all three lifecycle states" \
+      "active='$P59A' closed='$P59C' blocked='$P59B'"
+fi
+# NOT THE FALLBACK. A mode branch that printed the unmapped symbol would satisfy
+# sameness above while classifying nothing — the same "mapped, not merely
+# present" distinction 55c draws.
+case "$P59A" in
+  *UNCLASSIFIED*|*operator-read-run-log*)
+    bad "59a — the dry-run pair is a real classification, not the unmapped fallback" "$P59A" ;;
+  *) ok "59a — the dry-run pair is a real classification, not the unmapped fallback" ;;
+esac
+
+echo
+echo "Case 59b — the two real loop terminals keep their accepted meanings"
+# The regression half. These are 55a/55b's records, re-read for the two fields
+# this unit touched: a mode branch that leaked into live mode would show here.
+V59L="$(new_sandbox)"; state_file "$V59L" closed-task operator
+run_dispatch "$V59L" closed-task --actor-cmd "$NOOP"
+R59L="$V59L/runs/$(run_id_of "$OUT").result"
+V59K="$(new_sandbox)"; state_file "$V59K" blocked-task operator blocked-task blocked
+run_dispatch "$V59K" blocked-task --actor-cmd "$NOOP"
+R59K="$V59K/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R59L" outcome)" = COMPLETED ] &&
+   [ "$(res_field "$R59L" next_action)" = none-task-closed ]; then
+  ok "59b — a real CLOSED terminal still reports COMPLETED / none-task-closed"
+else
+  bad "59b — a real CLOSED terminal still reports COMPLETED / none-task-closed" \
+      "$(res_field "$R59L" outcome) / $(res_field "$R59L" next_action)"
+fi
+if [ "$(res_field "$R59K" outcome)" = OPERATOR_TAKEOVER ] &&
+   [ "$(res_field "$R59K" next_action)" = operator-answer-the-blocking-question ]; then
+  ok "59b — a real BLOCKED_OPERATOR terminal still reports OPERATOR_TAKEOVER / its question"
+else
+  bad "59b — a real BLOCKED_OPERATOR terminal still reports OPERATOR_TAKEOVER / its question" \
+      "$(res_field "$R59K" outcome) / $(res_field "$R59K" next_action)"
+fi
+# And the dry-run pair is neither of theirs — the distinction this unit exists for.
+if [ "$P59A" != "COMPLETED none-task-closed" ] &&
+   [ "$P59A" != "OPERATOR_TAKEOVER operator-answer-the-blocking-question" ]; then
+  ok "59b — the dry-run pair borrows neither loop terminal's meaning"
+else
+  bad "59b — the dry-run pair borrows neither loop terminal's meaning" "$P59A"
+fi
+
+echo
+echo "Case 59c — mutation control: remove ONLY the mode-derived branches"
+MUT59="$SANDBOX_ROOT/mutants59"; mkdir -p "$MUT59"
+# Both mode branches go and nothing else: the lifecycle cases below them are
+# untouched, so the mutant reverts to exactly the pre-unit derivation.
+sed -e '/dry-run) printf .DRY_RUN_COMPLETE.; return 0 ;;/d' \
+    -e '/dry-run) printf .none-dry-run-preflight-complete.; return 0 ;;/d' \
+    "$DISPATCH_BIN" >"$MUT59/m26.sh"
+chmod +x "$MUT59/m26.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT59/m26.sh" && bash -n "$MUT59/m26.sh" 2>/dev/null; then
+  ok "59c — M26 mutant differs from the dispatcher and is valid bash"
+  SAVE_BIN="$DISPATCH_BIN"; DISPATCH_BIN="$MUT59/m26.sh"
+  V59MA="$(new_sandbox)"; M59A="$(dry_pair "$V59MA" dry-active)"
+  V59MC="$(new_sandbox)"; M59C="$(dry_pair "$V59MC" dry-closed closed)"
+  DISPATCH_BIN="$SAVE_BIN"
+  if [ "$M59A" != "$M59C" ] && [ "$M59C" = "COMPLETED none-task-closed" ]; then
+    ok "59c — M26: without the branches the lifecycle-borrowed pairs return (59a is fail-capable)"
+  else
+    bad "59c — M26: without the branches the lifecycle-borrowed pairs return (59a is fail-capable)" \
+        "active='$M59A' closed='$M59C'"
+  fi
+else
+  bad "59c — M26 mutant differs from the dispatcher and is valid bash" \
+      "a mode branch was not found, or the mutant does not parse"
+fi
+
+# ========= case 60: a carried --carry-one hop publishes its own terminal result
+#
+# Unit 16. Cases 55 and 58 closed the two pre-hop code-zero terminals; this was
+# the remaining one, and it is the only POST-hop terminal in the dispatcher that
+# released its lease and exited 0 with nothing on disk. Every nonzero post-hop
+# terminal funnels through die() and finalizes; a carried hop — the outcome a
+# courier exists to produce — left only prose in the run log.
+#
+# THE OUTCOME NAMES THE RUN, NOT THE TASK, for exactly the reason case 59 gives
+# one seam over. Read through the lifecycle first, a carried hop wore three
+# symbols: UNCLASSIFIED when it handed on to an active actor, and — worse —
+# COMPLETED or OPERATOR_TAKEOVER when it handed on to the operator, which are the
+# full loop's words for a run that drove the task to its end. The task's own
+# lifecycle is not lost: state_class and turn_at_terminal are required fields and
+# carry it exactly.
+#
+# NEXT ACTION STAYS SPLIT, because the required action genuinely differs. A hop
+# that handed on to an actor needs that actor named; one that handed on to a
+# blocked task must still say a person owns an unanswered question. Collapsing
+# all four into one completion token would re-hide precisely what code 0 was
+# split to protect.
+#
+# BOTH HALVES OF THE CONDITION ARE LOAD-BEARING. --carry-one over a task that is
+# ALREADY operator-terminal carries no hop at all: it reaches the accepted
+# pre-hop operator terminal before any actor starts. Keying on the flag alone
+# would relabel that as a carried hop, which is why 60c is a control and not a
+# courtesy.
+
+# A handback that blocks on the operator. The mirror of FLIP_TO_OPERATOR above:
+# that one closes, this one stops for a question, and the two produce the two
+# different operator-terminal classes the next-action split turns on.
+FLIP_TO_BLOCKED='printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.calls";
+      d=$(sed -n "s/^task: //p" "$WL_STATE_FILE" | head -1);
+      printf -- "---\ntask: %s\nstatus: blocked\nturn: operator\n---\n\n## Objective and scope\nSandbox fixture for the dispatcher harness. No real work.\n\n## Lane and unit\nStandard. Unit 1 — harness fixture.\n\n## Latest result\nNot started.\n\n## Blocker\nThe fixture actor raised a question the operator owns.\n\n## Next action\nThe operator decides.\n" "$d" > "$WL_STATE_FILE.tmp";
+      mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"'"$COMMIT_IF_CLAUDE"
+
+# Reads the record a carried hop leaves, through the run id the dispatcher
+# printed. Same shape as dry_pair above, one flag over.
+carry_pair() { # sandbox task start-turn actor -> "<outcome> <next_action>"
+  local d="$1" t="$2" turn="$3" a="$4" r
+  state_file "$d" "$t" "$turn"
+  run_dispatch "$d" "$t" --carry-one --actor-cmd "$a"
+  r="$d/runs/$(run_id_of "$OUT").result"
+  printf '%s %s' "$(res_field "$r" outcome)" "$(res_field "$r" next_action)"
+}
+
+echo
+echo "Case 60a — a validated carried hop publishes, consumes, reports, and releases"
+V60A="$(new_sandbox)"; state_file "$V60A" carry-pub claude
+run_dispatch "$V60A" carry-pub --carry-one --actor-cmd "$FLIP"
+expect_rc 0 "$RC" "60a — the carried hop still exits 0" "$OUT"
+out_has "carry-one: the turn moved claude -> codex" "$OUT" \
+  "60a — the operator-visible carry report is preserved"
+RID60="$(run_id_of "$OUT")"
+CO60="$(cd "$V60A" && pwd -P)"
+ROOT60="$(cd "$V60A/runs" && pwd -P)"
+REAL60="$ROOT60/$RID60.result"
+# THE TARGETED FAILING CASE. Before this unit the seam released and exited 0 with
+# runs/ holding only the hop capture, the process-tree marker and the run log.
+if [ -f "$REAL60" ]; then
+  ok "60a — a terminal result exists at the run-bound path"
+else
+  bad "60a — a terminal result exists at the run-bound path" \
+      "missing $REAL60; runs/ holds: $(ls "$ROOT60" 2>&1 | tr '\n' ' ')"
+fi
+if [ "$(res_count "$ROOT60")" = 1 ] && [ "$(part_count "$ROOT60")" = 0 ] &&
+   [ "$(ls "$ROOT60"/*.consume 2>/dev/null | wc -l | tr -d ' ')" = 0 ]; then
+  ok "60a — exactly one finalized result, no partial, no consumer scratch"
+else
+  bad "60a — exactly one finalized result, no partial, no consumer scratch" \
+      "results=$(res_count "$ROOT60") partials=$(part_count "$ROOT60")"
+fi
+val_expect   "$VAL_LIB" "$REAL60" 0 ok "60a — the carry-one result is structurally valid v1"
+ident_expect "$VAL_LIB" "$REAL60" carry-pub "$CO60" "$RID60" "$ROOT60" 0 ok \
+  "60a — the carry-one result is identity-valid for this task, checkout, run and promised path"
+# TRUTHFUL POST-HOP FACTS. An actor really ran, so this record must carry the
+# post-hop story — the mirror of 58a's no-model assertions.
+#
+# `actor` IS `none` HERE, AND THAT IS THE FIELD'S OWN MEANING, not a gap this
+# case papers over. It names the actor IN FLIGHT, and the hop-over line clears it
+# once no process is running — the same line that keeps a signal arriving between
+# hops from claiming a process group it could not terminate. What proves an actor
+# ran is asserted below instead: post-hop stage, actor_launched, hop 1, and the
+# capture path the record names. That this seam is the first terminal to produce
+# the pair `actor=none` with `actor_launched=yes` is recorded as a deferral, not
+# repaired here: moving the clear would trade this reading for a false one in the
+# signal handler, which is an accepted invariant.
+if [ "$(res_field "$REAL60" code)" = 0 ] &&
+   [ "$(res_field "$REAL60" stage)" = post-hop ] &&
+   [ "$(res_field "$REAL60" actor)" = none ] &&
+   [ "$(res_field "$REAL60" actor_launched)" = yes ] &&
+   [ "$(res_field "$REAL60" hop)" = 1 ] &&
+   [ "$(res_field "$REAL60" turn_at_terminal)" = codex ] &&
+   [ "$(res_field "$REAL60" state_class)" = ACTIVE_CODEX ]; then
+  ok "60a — the record truthfully carries code 0, post-hop, a launched actor, hop 1, and the validated post-hop turn"
+else
+  bad "60a — the record truthfully carries code 0, post-hop, a launched actor, hop 1, and the validated post-hop turn" \
+      "code=$(res_field "$REAL60" code) stage=$(res_field "$REAL60" stage) actor=$(res_field "$REAL60" actor) launched=$(res_field "$REAL60" actor_launched) hop=$(res_field "$REAL60" hop) turn=$(res_field "$REAL60" turn_at_terminal) class=$(res_field "$REAL60" state_class)"
+fi
+if [ ! -d "$(task_lock_for "$V60A" carry-pub)" ] && [ ! -d "$(checkout_lock_for "$V60A")" ]; then
+  ok "60a — both leases released once the result was consumed"
+else
+  bad "60a — both leases released once the result was consumed" "a lease survived"
+fi
+run_dispatch "$V60A" carry-pub --dry-run
+expect_rc 0 "$RC" "60a — the next dispatcher is admitted after the verified release" "$OUT"
+
+echo
+echo "Case 60b — all four reachable carried transitions publish one outcome, with the next action keyed on the validated post-hop class"
+V60B1="$(new_sandbox)"; P60B1="$(carry_pair "$V60B1" carry-cc claude "$FLIP")"
+V60B2="$(new_sandbox)"; P60B2="$(carry_pair "$V60B2" carry-xc codex  "$FLIP")"
+V60B3="$(new_sandbox)"; P60B3="$(carry_pair "$V60B3" carry-cl claude "$FLIP_TO_OPERATOR")"
+V60B4="$(new_sandbox)"; P60B4="$(carry_pair "$V60B4" carry-xb codex  "$FLIP_TO_BLOCKED")"
+for row in "claude->codex:$P60B1" "codex->claude:$P60B2" \
+           "claude->operator/CLOSED:$P60B3" "codex->operator/BLOCKED:$P60B4"; do
+  lbl="${row%%:*}"; got="${row#*:}"
+  case "$got" in
+    "CARRY_ONE_COMPLETE "*) ok "60b — $lbl reports CARRY_ONE_COMPLETE" ;;
+    *) bad "60b — $lbl reports CARRY_ONE_COMPLETE" "got: ${got:-<no record>}" ;;
+  esac
+done
+# The next action is the half that must NOT collapse. Four rows, four required
+# meanings: two naming the actor that owns the next move, and the two accepted
+# operator tokens kept verbatim so a blocked task still announces its question.
+if [ "$P60B1" = "CARRY_ONE_COMPLETE operator-carry-turn-to-codex" ] &&
+   [ "$P60B2" = "CARRY_ONE_COMPLETE operator-carry-turn-to-claude" ] &&
+   [ "$P60B3" = "CARRY_ONE_COMPLETE none-task-closed" ] &&
+   [ "$P60B4" = "CARRY_ONE_COMPLETE operator-answer-the-blocking-question" ]; then
+  ok "60b — each row's next action names the validated next owner"
+else
+  bad "60b — each row's next action names the validated next owner" \
+      "cc='$P60B1' xc='$P60B2' cl='$P60B3' xb='$P60B4'"
+fi
+# NOT THE UNMAPPED FALLBACK, the same "mapped, not merely present" distinction
+# 55c and 59a draw: a branch printing the catch-all would satisfy a laxer check.
+case "$P60B1$P60B2" in
+  *UNCLASSIFIED*|*operator-read-run-log*)
+    bad "60b — the carried rows are real classifications, not the unmapped fallback" "$P60B1 / $P60B2" ;;
+  *) ok "60b — the carried rows are real classifications, not the unmapped fallback" ;;
+esac
+
+echo
+echo "Case 60c — the carry-one classification does not over-fire"
+# THE CONTROL THAT JUSTIFIES THE SECOND HALF OF THE CONDITION. --carry-one over a
+# task already at an operator terminal carries nothing: it stops pre-hop, and it
+# must keep the accepted loop-terminal meaning rather than claim a hop it never ran.
+V60C="$(new_sandbox)"; state_file "$V60C" carry-already operator
+run_dispatch "$V60C" carry-already --carry-one --actor-cmd "$FLIP"
+R60C="$V60C/runs/$(run_id_of "$OUT").result"
+if [ "$(calls "$V60C")" = 0 ] &&
+   [ "$(res_field "$R60C" outcome)" = COMPLETED ] &&
+   [ "$(res_field "$R60C" next_action)" = none-task-closed ] &&
+   [ "$(res_field "$R60C" stage)" = pre-hop ] &&
+   [ "$(res_field "$R60C" actor_launched)" = no ]; then
+  ok "60c — --carry-one with no hop to carry keeps the pre-hop operator terminal"
+else
+  bad "60c — --carry-one with no hop to carry keeps the pre-hop operator terminal" \
+      "calls=$(calls "$V60C") outcome=$(res_field "$R60C" outcome) next=$(res_field "$R60C" next_action) stage=$(res_field "$R60C" stage) launched=$(res_field "$R60C" actor_launched)"
+fi
+# And the dry-run branch still wins over the carry-one one — case 26 launches
+# nothing, so there is no carried hop for this unit to claim.
+V60D="$(new_sandbox)"; state_file "$V60D" carry-dry codex
+run_dispatch "$V60D" carry-dry --carry-one --dry-run
+R60D="$V60D/runs/$(run_id_of "$OUT").result"
+if [ "$(calls "$V60D")" = 0 ] &&
+   [ "$(res_field "$R60D" outcome)" = DRY_RUN_COMPLETE ] &&
+   [ "$(res_field "$R60D" next_action)" = none-dry-run-preflight-complete ]; then
+  ok "60c — --carry-one --dry-run still reports the accepted dry-run terminal (Unit 14 unchanged)"
+else
+  bad "60c — --carry-one --dry-run still reports the accepted dry-run terminal (Unit 14 unchanged)" \
+      "calls=$(calls "$V60D") outcome=$(res_field "$R60D" outcome) next=$(res_field "$R60D" next_action)"
+fi
+
+echo
+echo "Case 60e — a carried hop whose publication FAILS pins both leases and exits 38, naming its own terminal"
+# Induced AFTER the hop, by the actor itself: it hands the turn on and then makes
+# the evidence directory refuse new entries, so the run log stays appendable and
+# only the producer's temporary cannot be created. A codex actor, so no commit and
+# no permission-denial probe stands between the hop and the seam under test.
+V60E="$(new_sandbox)"; state_file "$V60E" carry-fail codex
+run_dispatch "$V60E" carry-fail --carry-one \
+  --actor-cmd "$FLIP_BODY"'; chmod a-w "$WL_CHECKOUT/runs"'
+expect_rc 38 "$RC" "60e — the unprovable carried hop exits 38, never 0" "$OUT"
+out_lacks "  terminal result:" "$OUT" "60e — no terminal result is advertised"
+# FINDING F1. The accepted fail-closed exit hardcoded "a real operator terminal",
+# which is false here: this run carried a hop between two actors. The wording has
+# to name the terminal it actually reached, and the operator seam's own default
+# has to be untouched — 55d and 58b assert that half.
+out_lacks "reached a real operator terminal" "$OUT" \
+  "60e — the failure does not falsely claim an operator terminal"
+out_has "carry-one terminal" "$OUT" \
+  "60e — the failure names the carry-one terminal it actually reached"
+TL60="$(task_lock_for "$V60E" carry-fail)"; CL60="$(checkout_lock_for "$V60E")"
+if [ -d "$TL60" ] && [ -d "$CL60" ] &&
+   grep -q '^terminal result unprovable: ' "$TL60/survivors" 2>/dev/null &&
+   grep -q 'could not finalize' "$TL60/survivors" 2>/dev/null; then
+  ok "60e — both leases retained with the truthful finalization-failure cause"
+else
+  bad "60e — both leases retained with the truthful finalization-failure cause" \
+      "task=$([ -d "$TL60" ] && echo present || echo absent) checkout=$([ -d "$CL60" ] && echo present || echo absent) cause: $(cat "$TL60/survivors" 2>&1 | tr '\n' '|')"
+fi
+chmod u+w "$V60E/runs" 2>/dev/null
+run_dispatch "$V60E" carry-fail --dry-run
+expect_rc 17 "$RC" "60e — the next dispatcher is refused by the retained lease" "$OUT"
+
+echo
+echo "Case 60f — mutation control: remove ONLY the carry-one vocabulary branches"
+MUT60="$SANDBOX_ROOT/mutants60"; mkdir -p "$MUT60"
+# Addressed by their own markers, exactly like M25/M26. The lifecycle cases below
+# them are untouched, so the mutant reverts to the pre-unit derivation and nothing
+# else: the seam that publishes the record stays in place, which is what makes
+# this a control on the VOCABULARY rather than on the boundary.
+sed -e '/# carry-one code-zero outcome/d' -e '/# carry-one code-zero next action/d' \
+  "$DISPATCH_BIN" >"$MUT60/m27.sh"
+chmod +x "$MUT60/m27.sh"
+if ! cmp -s "$DISPATCH_BIN" "$MUT60/m27.sh" && bash -n "$MUT60/m27.sh" 2>/dev/null &&
+   grep -q '# carry-one terminal finalization' "$MUT60/m27.sh"; then
+  ok "60f — M27 mutant differs, parses, and leaves the carry-one publication seam intact"
+  # ALL FOUR ROWS, because all four are what 60b asserts. A control covering two
+  # of them leaves the other two proven by nothing: the ACTIVE_CLAUDE fallback and
+  # the BLOCKED_OPERATOR borrow are separate branches of the pre-unit derivation,
+  # and a mutant that only ever reaches ACTIVE_CODEX and CLOSED would stay green
+  # with either of them wired wrong. Each row is asserted on its own so a failure
+  # names which one, and the four expectations are exactly the pre-unit behaviour:
+  # both active classes fall through to the unmapped pair, and the two operator
+  # classes borrow the loop terminals 60b proves they no longer wear.
+  SAVE60="$DISPATCH_BIN"; DISPATCH_BIN="$MUT60/m27.sh"
+  V60M1="$(new_sandbox)"; M60A="$(carry_pair "$V60M1" carry-cc claude "$FLIP")"
+  V60M2="$(new_sandbox)"; M60B="$(carry_pair "$V60M2" carry-xc codex  "$FLIP")"
+  V60M3="$(new_sandbox)"; M60C="$(carry_pair "$V60M3" carry-cl claude "$FLIP_TO_OPERATOR")"
+  V60M4="$(new_sandbox)"; M60D="$(carry_pair "$V60M4" carry-xb codex  "$FLIP_TO_BLOCKED")"
+  DISPATCH_BIN="$SAVE60"
+  for mrow in "claude->codex/ACTIVE_CODEX:$M60A:UNCLASSIFIED operator-read-run-log" \
+              "codex->claude/ACTIVE_CLAUDE:$M60B:UNCLASSIFIED operator-read-run-log" \
+              "claude->operator/CLOSED:$M60C:COMPLETED none-task-closed" \
+              "codex->operator/BLOCKED:$M60D:OPERATOR_TAKEOVER operator-answer-the-blocking-question"; do
+    mlbl="${mrow%%:*}"; mrest="${mrow#*:}"; mgot="${mrest%%:*}"; mwant="${mrest#*:}"
+    [ "$mgot" = "$mwant" ] \
+      && ok "60f — M27: $mlbl falls back to '$mwant' without the branches" \
+      || bad "60f — M27: $mlbl falls back to '$mwant' without the branches" "got: ${mgot:-<no record>}"
+  done
+  # And the mutant's four rows are not all the same value — the pre-unit defect
+  # was precisely that ONE terminal class produced several symbols, so a control
+  # in which they had collapsed would be measuring something else.
+  if [ "$M60A" != "$M60C" ] && [ "$M60C" != "$M60D" ]; then
+    ok "60f — M27: the mutant splits one terminal class across lifecycle symbols again (60b is fail-capable)"
+  else
+    bad "60f — M27: the mutant splits one terminal class across lifecycle symbols again (60b is fail-capable)" \
+        "cc='$M60A' xc='$M60B' cl='$M60C' xb='$M60D'"
+  fi
+else
+  bad "60f — M27 mutant differs, parses, and leaves the carry-one publication seam intact" \
+      "a carry-one marker was not found, or the mutant does not parse"
+fi
+
+echo
+echo "Case 60g — the seam reuses the accepted owners, one call site each"
+for m in 'carry-one terminal finalization' 'carry-one terminal consumption' \
+         'carry-one code-zero outcome' 'carry-one code-zero next action'; do
+  n="$(grep -c "# $m" "$DISPATCH_BIN")"
+  [ "$n" = 1 ] && ok "60g — exactly one '$m' site" \
+                || bad "60g — exactly one '$m' site" "found $n"
+done
+# The seams closed by units 8, 12 and 14 keep their own markers: four separately
+# addressable boundaries, which is what makes each one separately fail-capable.
+if [ "$(grep -c '# operator terminal finalization' "$DISPATCH_BIN")" = 1 ] &&
+   [ "$(grep -c '# dry-run terminal finalization' "$DISPATCH_BIN")" = 1 ]; then
+  ok "60g — the operator and dry-run seams are untouched and still separately addressable"
+else
+  bad "60g — the operator and dry-run seams are untouched and still separately addressable" \
+      "operator: $(grep -c '# operator terminal finalization' "$DISPATCH_BIN"); dry-run: $(grep -c '# dry-run terminal finalization' "$DISPATCH_BIN")"
+fi
+
+# ========= case 60h: the requested permission mode survives to a carried terminal
+#
+# Unit 19. `permission_mode_requested` was produced from CUR_ACTOR, and the
+# hop-over line clears CUR_ACTOR between the transition table and the --carry-one
+# block. Every FAILURE terminal finalizes ABOVE that clear and reported `default`;
+# the one SUCCESSFUL post-hop terminal finalizes BELOW it and reported `none` —
+# "no permission mode was requested" about a launch whose argv carried
+# `--permission-mode default`, which case 31b asserts reaches the child verbatim.
+#
+# LIVE, NOT SIMULATED, and that distinction is the whole case. --actor-cmd sets
+# MODE=live -> simulated, which the producer's SECOND guard already answers `none`
+# at, so a simulated row cannot tell the defect from correct behaviour. A fake
+# claude BINARY keeps MODE=live and forks a real child while contacting no model —
+# the technique cases 31 and 32 already use for the argv assertions.
+#
+# THE FOUR ROWS ARE NOT REDUNDANT. Each one is answered by a DIFFERENT guard in
+# result_permission_mode_requested(), so a repair that collapsed the function to a
+# constant would be caught by whichever row it stopped answering: the live codex
+# row by the actor guard, the simulated row by the mode guard, the unattended row
+# by the contained-profile guard, and the pre-fork row by the fork guard.
+echo
+echo "Case 60h — a carried live attended Claude terminal reports the mode it actually requested"
+
+# Stands in for the claude binary on the LIVE branch: answers --version, hands the
+# turn on, commits. It contacts nothing — a real fork is the point, not a model.
+#
+# THE VERSION IS NOT DECORATION. --unattended is gated on claude >= 2.1.219 and
+# refuses at 31 below it, which is a PRE-fork stop: a double reporting 0.0.0 would
+# make row 4 assert `none` about a launch that never happened, and pass for the
+# wrong reason. Same value case 32 uses, for the same gate.
+FAKE60H="$SANDBOX_ROOT/fake-claude-60h.sh"
+cat >"$FAKE60H" <<'F60HEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.220 (Claude Code)"; exit 0; fi
+sf="$WL60H_SF"
+awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+git -C "$WL60H_CO" add "$sf" >/dev/null 2>&1
+git -C "$WL60H_CO" commit -qm "fake claude hop" >/dev/null 2>&1
+exit 0
+F60HEOF
+chmod +x "$FAKE60H"
+
+# The same double, refusing to move the file at all. It drives the FAILURE
+# terminal that finalizes above the hop-over clear (22, no observable transition),
+# which is the row that must NOT change: it already reported the requested mode
+# truthfully, and a repair that moved the clear instead of preserving the fact
+# would break it.
+FAKE60HN="$SANDBOX_ROOT/fake-claude-60h-noop.sh"
+cat >"$FAKE60HN" <<'F60HNEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.220 (Claude Code)"; exit 0; fi
+exit 0
+F60HNEOF
+chmod +x "$FAKE60HN"
+
+# The codex mirror. NO COMMIT: Codex never runs git (core § 4), and the post-hop
+# guard dies 24 on a codex hop that moved HEAD.
+FAKE60HX="$SANDBOX_ROOT/fake-codex-60h.sh"
+cat >"$FAKE60HX" <<'F60HXEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "0.0.0-fake-codex (test double)"; exit 0; fi
+sf="$WL60H_SF"
+awk '/^turn: /&&!d{print "turn: claude"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+exit 0
+F60HXEOF
+chmod +x "$FAKE60HX"
+
+# --- row 1: THE TARGETED FAILING ROW ----------------------------------------
+V60H="$(new_sandbox)"; state_file "$V60H" carry-perm claude
+export WL60H_SF="$V60H/logs/work-loop/carry-perm.md"
+export WL60H_CO="$V60H"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V60H" --task carry-perm --log-dir "$V60H/runs" \
+      --carry-one --claude-bin "$FAKE60H" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "60h — the live attended Claude hop is carried" "$OUT"
+R60H="$V60H/runs/$(run_id_of "$OUT").result"
+[ -f "$R60H" ] && ok "60h — the carried terminal finalized a result" \
+              || bad "60h — the carried terminal finalized a result" \
+                     "missing $R60H; runs/ holds: $(ls "$V60H/runs" 2>&1 | tr '\n' ' ')"
+# The preconditions, asserted separately from the field under test so a row that
+# never reached the live branch cannot pass by reporting the right token for the
+# wrong reason.
+if [ "$(res_field "$R60H" mode)" = live ] &&
+   [ "$(res_field "$R60H" outcome)" = CARRY_ONE_COMPLETE ] &&
+   [ "$(res_field "$R60H" stage)" = post-hop ] &&
+   [ "$(res_field "$R60H" actor_launched)" = yes ] &&
+   [ "$(res_field "$R60H" hop)" = 1 ] &&
+   [ "$(res_field "$R60H" turn_at_terminal)" = codex ]; then
+  ok "60h — the row really is a live, carried, post-hop Claude terminal"
+else
+  bad "60h — the row really is a live, carried, post-hop Claude terminal" \
+      "mode=$(res_field "$R60H" mode) outcome=$(res_field "$R60H" outcome) stage=$(res_field "$R60H" stage) launched=$(res_field "$R60H" actor_launched) hop=$(res_field "$R60H" hop) turn=$(res_field "$R60H" turn_at_terminal)"
+fi
+[ "$(res_field "$R60H" permission_mode_requested)" = default ] \
+  && ok "60h — the carried terminal reports the requested mode: default" \
+  || bad "60h — the carried terminal reports the requested mode: default" \
+         "got: $(res_field "$R60H" permission_mode_requested) — the launch argv carried --permission-mode default (case 31b)"
+# ACCEPTED SEMANTICS, PRESERVED. `actor` names the actor IN FLIGHT and the
+# hop-over clear is what makes `none` true here (60a). The repair must preserve
+# the launch fact WITHOUT reinstating an in-flight actor that no longer exists.
+[ "$(res_field "$R60H" actor)" = none ] \
+  && ok "60h — and actor stays none: no process is in flight at the carried terminal" \
+  || bad "60h — and actor stays none" "got: $(res_field "$R60H" actor)"
+# Requested is never promoted to effective. Since Unit 26 the dispatcher DOES read
+# the child's own system/init event — but FAKE60H emits nothing on stdout, so this
+# hop's capture carries no init event and the honest answer is still the bounded
+# unavailable token. That is the assertion: a reader that fell back to the request
+# on an absent event would report `default` here, which is exactly the promotion
+# the field exists to refuse. Case 72d covers the same guard across every
+# unresolvable capture shape.
+[ "$(res_field "$R60H" permission_mode_effective)" = unavailable ] \
+  && ok "60h — the effective mode is still unavailable, not derived from the request" \
+  || bad "60h — the effective mode is still unavailable" "got: $(res_field "$R60H" permission_mode_effective)"
+
+# --- row 2: live CODEX carries, and requests no permission mode ---------------
+# Answered by the ACTOR guard, at MODE=live, so it is not the simulated row again.
+V60HX="$(new_sandbox)"; state_file "$V60HX" carry-perm-codex codex
+export WL60H_SF="$V60HX/logs/work-loop/carry-perm-codex.md"
+export WL60H_CO="$V60HX"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V60HX" --task carry-perm-codex --log-dir "$V60HX/runs" \
+      --carry-one --codex-bin "$FAKE60HX" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "60h — the live Codex hop is carried" "$OUT"
+R60HX="$V60HX/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R60HX" mode)" = live ] &&
+   [ "$(res_field "$R60HX" actor_launched)" = yes ] &&
+   [ "$(res_field "$R60HX" permission_mode_requested)" = none ]; then
+  ok "60h — a live carried Codex terminal still requests no permission mode"
+else
+  bad "60h — a live carried Codex terminal still requests no permission mode" \
+      "mode=$(res_field "$R60HX" mode) launched=$(res_field "$R60HX" actor_launched) perm=$(res_field "$R60HX" permission_mode_requested)"
+fi
+
+# --- row 3: a SIMULATED Claude carry requests nothing -------------------------
+# Answered by the MODE guard. --actor-cmd never builds a claude argv at all.
+V60HS="$(new_sandbox)"; state_file "$V60HS" carry-perm-sim claude
+run_dispatch "$V60HS" carry-perm-sim --carry-one --actor-cmd "$FLIP"
+expect_rc 0 "$RC" "60h — the simulated Claude hop is carried" "$OUT"
+R60HS="$V60HS/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R60HS" mode)" = simulated ] &&
+   [ "$(res_field "$R60HS" actor_launched)" = yes ] &&
+   [ "$(res_field "$R60HS" permission_mode_requested)" = none ]; then
+  ok "60h — a simulated carried Claude terminal requests no permission mode"
+else
+  bad "60h — a simulated carried Claude terminal requests no permission mode" \
+      "mode=$(res_field "$R60HS" mode) launched=$(res_field "$R60HS" actor_launched) perm=$(res_field "$R60HS" permission_mode_requested)"
+fi
+
+# --- row 4: the contained profile carries no permission mode of its own -------
+# Answered by the UNATTENDED guard, on the live branch with a real fork.
+V60HU="$(new_sandbox)"; state_file "$V60HU" carry-perm-unatt claude
+export WL60H_SF="$V60HU/logs/work-loop/carry-perm-unatt.md"
+export WL60H_CO="$V60HU"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V60HU" --task carry-perm-unatt --log-dir "$V60HU/runs" \
+      --carry-one --claude-bin "$FAKE60H" --unattended 2>&1)"; RC=$?
+expect_rc 0 "$RC" "60h — the unattended Claude hop is carried" "$OUT"
+R60HU="$V60HU/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R60HU" mode)" = live ] &&
+   [ "$(res_field "$R60HU" actor_launched)" = yes ] &&
+   [ "$(res_field "$R60HU" permission_mode_requested)" = none ]; then
+  ok "60h — a carried --unattended terminal still requests no permission mode"
+else
+  bad "60h — a carried --unattended terminal still requests no permission mode" \
+      "mode=$(res_field "$R60HU" mode) launched=$(res_field "$R60HU" actor_launched) perm=$(res_field "$R60HU" permission_mode_requested)"
+fi
+
+# --- row 5: the FAILURE terminal above the clear is unchanged -----------------
+# The same live attended launch, stopped at 22 instead of carried. It finalizes
+# while the actor is still named in flight, and it ALREADY reported `default`.
+# Asserting it here is what makes the repair provably a preservation rather than a
+# move of the hop-over clear: this row and row 1 must now agree, and the clear
+# must still be the thing that separates `actor=claude` from `actor=none`.
+V60HF="$(new_sandbox)"; state_file "$V60HF" carry-perm-fail claude
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V60HF" --task carry-perm-fail --log-dir "$V60HF/runs" \
+      --carry-one --claude-bin "$FAKE60HN" 2>&1)"; RC=$?
+expect_rc 22 "$RC" "60h — a live Claude hop that changes nothing stops at 22" "$OUT"
+R60HF="$V60HF/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R60HF" permission_mode_requested)" = default ] &&
+   [ "$(res_field "$R60HF" actor)" = claude ]; then
+  ok "60h — the failure terminal above the clear still reports default, with the actor still in flight"
+else
+  bad "60h — the failure terminal above the clear still reports default, with the actor still in flight" \
+      "perm=$(res_field "$R60HF" permission_mode_requested) actor=$(res_field "$R60HF" actor)"
+fi
+
+# --- row 6: a pre-fork stop requests nothing, even after an earlier fork ------
+# THE ROW THAT DECIDES WHERE THE FACT MAY BE RECORDED. Case 50d proves a FIRST-hop
+# pre-fork stop reports `none`, but it is protected there only by the run-level
+# ACTOR_PROCESS_STARTED flag. Once any hop has forked, that flag is 1 for the rest
+# of the run, so a launched-actor fact recorded on ENTRY to launch_actor() — before
+# the binary checks — would make hop 2's unresolvable claude binary report
+# `default` for an argv no child ever received. Hop 1 is a live codex fork that
+# hands on to claude; hop 2 stops on a claude binary that does not exist.
+V60HP="$(new_sandbox)"; state_file "$V60HP" prefork-after-fork codex
+export WL60H_SF="$V60HP/logs/work-loop/prefork-after-fork.md"
+export WL60H_CO="$V60HP"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$V60HP" --task prefork-after-fork --log-dir "$V60HP/runs" \
+      --max-hops 3 --deadline 300 --codex-bin "$FAKE60HX" --claude-bin "$V60HP/no-such-claude-binary" 2>&1)"; RC=$?
+expect_rc 20 "$RC" "60h — hop 2 stops on the unresolvable claude binary" "$OUT"
+R60HP="$V60HP/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R60HP" hop)" = 2 ] &&
+   [ "$(res_field "$R60HP" actor_launched)" = yes ] &&
+   [ "$(res_field "$R60HP" permission_mode_requested)" = none ]; then
+  ok "60h — a pre-fork stop after an earlier fork requests no permission mode"
+else
+  bad "60h — a pre-fork stop after an earlier fork requests no permission mode" \
+      "hop=$(res_field "$R60HP" hop) launched=$(res_field "$R60HP" actor_launched) perm=$(res_field "$R60HP" permission_mode_requested)"
+fi
+unset WL60H_SF WL60H_CO
+
+echo
+echo "Case 60i — mutation control: neutralize ONLY the launched-actor publication"
+# Unit 20, and it is the half Unit 19 deliberately left out. 60h proves the
+# carried terminal REPORTS `default`; on its own it cannot prove that
+# LAUNCHED_ACTOR is what makes it do so — a producer that had simply been
+# hard-coded to `default` for live Claude would satisfy every row above.
+#
+# THE PUBLICATION, NOT THE READ, is the site. Neutralizing the read would delete
+# the guard and make the function answer `default` for Codex too, which fails 60h
+# for a reason that is not the one under test. Removing the one line that records
+# WHICH actor was forked leaves every other guard standing and reverts exactly the
+# Unit 19 behaviour: the fact is never published, so the producer's third guard
+# sees an empty value and falls to `none` — the pre-unit answer.
+#
+# MATCHED WHOLE AND COUNTED, the M1 discipline. A seam that moved, changed shape,
+# or appears twice stops the control rather than silently mutating something else
+# or testing a script that was never changed. The three conditions are separate
+# variables and are reported separately, so a control that could not run is never
+# confused with one that ran and found nothing.
+MUT60I="$SANDBOX_ROOT/mutants60i"; mkdir -p "$MUT60I"
+M28_LINE='  LAUNCHED_ACTOR="${CUR_ACTOR:-}"'
+M28_HITS="$(grep -Fxc -- "$M28_LINE" "$DISPATCH_BIN" 2>/dev/null)"
+awk -v want="$M28_LINE" '$0 == want { print "  :"; next } { print }' "$DISPATCH_BIN" >"$MUT60I/m28.sh"
+M28_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT60I/m28.sh" || M28_DIFFERS=yes
+M28_PARSES=no; bash -n "$MUT60I/m28.sh" 2>/dev/null && M28_PARSES=yes
+
+# THE GUARD'S OWN FALSIFIABILITY, three one-shot checks before the control runs.
+# Each shows one of the three conditions above actually rejects something, so a
+# later edit cannot leave the control passing vacuously against an unmutated,
+# doubly-mutated or unparseable script. They are cheap: no dispatcher runs.
+M28_NOOP_LINE='  LAUNCHED_ACTOR="${CUR_ACTOR:-}" # a suffix the dispatcher does not carry'
+M28_NOOP_HITS="$(grep -Fxc -- "$M28_NOOP_LINE" "$DISPATCH_BIN" 2>/dev/null || true)"
+awk -v want="$M28_NOOP_LINE" '$0 == want { print "  :"; next } { print }' \
+    "$DISPATCH_BIN" >"$MUT60I/m28-noop.sh"
+if [ "${M28_NOOP_HITS:-0}" = "0" ] && cmp -s "$DISPATCH_BIN" "$MUT60I/m28-noop.sh"; then
+  ok "60i — a selector matching nothing yields an UNMUTATED script, which hits==1 and differs==yes both reject"
+else
+  bad "60i — a selector matching nothing yields an UNMUTATED script" \
+      "hits=${M28_NOOP_HITS:-0}, and the 'mutant' $(cmp -s "$DISPATCH_BIN" "$MUT60I/m28-noop.sh" && echo 'is' || echo 'is not') identical"
+fi
+awk -v want="$M28_LINE" '{ print } $0 == want { print }' "$DISPATCH_BIN" >"$MUT60I/m28-dup.sh"
+[ "$(grep -Fxc -- "$M28_LINE" "$MUT60I/m28-dup.sh" 2>/dev/null)" = "2" ] \
+  && ok "60i — a duplicated seam counts 2, which the hits==1 test rejects (the counter is real)" \
+  || bad "60i — a duplicated seam counts 2, which the hits==1 test rejects" \
+         "counted $(grep -Fxc -- "$M28_LINE" "$MUT60I/m28-dup.sh" 2>/dev/null)"
+awk -v want="$M28_LINE" '$0 == want { print "  if"; next } { print }' \
+    "$DISPATCH_BIN" >"$MUT60I/m28-broken.sh"
+bash -n "$MUT60I/m28-broken.sh" 2>/dev/null \
+  && bad "60i — an unparseable replacement is rejected by the parses test" "bash -n accepted a dangling 'if'" \
+  || ok "60i — an unparseable replacement is rejected by the parses test, separately from any behaviour"
+
+if [ "$M28_HITS" = "1" ] && [ "$M28_DIFFERS" = yes ] && [ "$M28_PARSES" = yes ]; then
+  ok "60i — M28 mutant matched the publication exactly once, differs, and still parses"
+
+  # The fixture is 60h row 1 verbatim: a live fake-Claude fork, no external model
+  # request, carried to the post-hop terminal 60h asserts.
+  M28FAKE="$SANDBOX_ROOT/fake-claude-60i.sh"
+  cat >"$M28FAKE" <<'M28EOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.220 (Claude Code)"; exit 0; fi
+sf="$WL60I_SF"
+awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+git -C "$WL60I_CO" add "$sf" >/dev/null 2>&1
+git -C "$WL60I_CO" commit -qm "fake claude hop" >/dev/null 2>&1
+exit 0
+M28EOF
+  chmod +x "$M28FAKE"
+
+  V60I="$(new_sandbox)"; state_file "$V60I" carry-mut claude
+  export WL60I_SF="$V60I/logs/work-loop/carry-mut.md"
+  export WL60I_CO="$V60I"
+  OUT="$(bash "$MUT60I/m28.sh" --checkout "$V60I" --task carry-mut --log-dir "$V60I/runs" \
+        --carry-one --claude-bin "$M28FAKE" 2>&1)"; RC=$?
+  R60I="$V60I/runs/$(run_id_of "$OUT").result"
+  # CAUSAL FAILURE, NOT FIXTURE BREAKAGE. Asserted as one condition so the control
+  # cannot pass on a mutant that merely crashed: the run must still carry the hop
+  # and still finalize a live, post-hop, carried record — everything 60h's
+  # precondition assertion checks — and differ from it in the ONE field under test.
+  if [ "$RC" -eq 0 ] &&
+     [ "$(res_field "$R60I" mode)" = live ] &&
+     [ "$(res_field "$R60I" outcome)" = CARRY_ONE_COMPLETE ] &&
+     [ "$(res_field "$R60I" stage)" = post-hop ] &&
+     [ "$(res_field "$R60I" actor_launched)" = yes ] &&
+     [ "$(res_field "$R60I" permission_mode_requested)" = none ]; then
+    ok "60i — M28: the carried terminal still runs, and reports none instead of default (60h is fail-capable)"
+  else
+    bad "60i — M28: the carried terminal still runs, and reports none instead of default" \
+        "rc=$RC mode=$(res_field "$R60I" mode) outcome=$(res_field "$R60I" outcome) stage=$(res_field "$R60I" stage) launched=$(res_field "$R60I" actor_launched) perm=$(res_field "$R60I" permission_mode_requested)"
+  fi
+
+  # THE PAIRED UNMUTATED RUN, same fixture, same flags, one line of source apart.
+  # Without it the row above would be satisfied by a fixture that reports `none`
+  # for some reason of its own, and the mutation would be proving nothing.
+  V60IC="$(new_sandbox)"; state_file "$V60IC" carry-mut-control claude
+  export WL60I_SF="$V60IC/logs/work-loop/carry-mut-control.md"
+  export WL60I_CO="$V60IC"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$V60IC" --task carry-mut-control --log-dir "$V60IC/runs" \
+        --carry-one --claude-bin "$M28FAKE" 2>&1)"; RC=$?
+  R60IC="$V60IC/runs/$(run_id_of "$OUT").result"
+  if [ "$RC" -eq 0 ] && [ "$(res_field "$R60IC" permission_mode_requested)" = default ]; then
+    ok "60i — and the unmodified dispatcher reports default on the identical fixture"
+  else
+    bad "60i — and the unmodified dispatcher reports default on the identical fixture" \
+        "rc=$RC perm=$(res_field "$R60IC" permission_mode_requested)"
+  fi
+  unset WL60I_SF WL60I_CO
+else
+  bad "60i — M28 mutant matched the publication exactly once, differs, and still parses" \
+      "matched ${M28_HITS:-0} lines, want exactly 1; differs=$M28_DIFFERS parses=$M28_PARSES — the control cannot run"
+fi
+
+echo
+echo "Case 60j — a carried record altered ONLY in outcome, or ONLY in code, is refused before release"
+# Unit 29. The third production consumer, and the seam's last unproven half.
+# 60a-b proved a carried hop publishes and consumes the artifact it promised and
+# that the artifact says CARRY_ONE_COMPLETE/0; nothing proved the artifact the
+# CONSUMER accepted said that. Measured on these fixtures before the edit: a
+# record altered after successful finalization to `outcome=COMPLETED` — the full
+# loop's word for a run that drove the task to its end, over a run that carried
+# exactly one hop — exited 0, was advertised as this run's terminal result and
+# released both leases; so did one altered to `code=22`, the code for a hop that
+# made no transition, over a run whose transition table had just passed. Path,
+# structure and identity have nothing to object to; only meaning does.
+#
+# SAME FORCING TECHNIQUE, SAME WINDOW as 56b, 58e and 62b: one altering line
+# injected after this seam's own finalization marker, between publication and
+# consumption. Everything asserted afterwards is the unmodified seam's behaviour.
+#
+# A CODEX ACTOR, for 60e's reason unchanged: no commit and no permission-denial
+# probe stands between the hop and the seam under test.
+#
+# THE ACCEPTED ROWS ARE NOT RE-RUN HERE. 60a and 60b already exercise a real
+# carried hop's post-hop facts, release, and all four lifecycle rows' outcome and
+# next-action meanings — against this integrated dispatcher, so they are this
+# unit's green for the accepted behaviour rather than a second matrix.
+MUT60J="$SANDBOX_ROOT/mutants60j"; mkdir -p "$MUT60J"
+
+mk_carry_alter60() { # outfile sed-script [source] -> 0 when the fixture differs and parses
+  awk -v s="$2" '{print} /# carry-one terminal finalization/ {
+    printf "    sed %c%s%c \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\" # harness carry-one alteration\n", 39, s, 39 }' \
+    "${3:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${3:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# The full refusal contract for one forced carried mismatch, asserted exactly as
+# 58e asserts the preflight's: exit 38, nothing advertised, the truthful terminal
+# named, both leases retained with the bounded token as their cause, and the next
+# dispatcher refused.
+expect_carry_refusal60() { # fixture expected-token label-prefix
+  local V O R TL CL
+  V="$(new_sandbox)"; state_file "$V" carry-sem codex
+  O="$(bash "$1" --checkout "$V" --task carry-sem --log-dir "$V/runs" --timeout 20 \
+        --carry-one --actor-cmd "$FLIP" 2>&1)"; R=$?
+  expect_rc 38 "$R" "$3 — refused with exit 38, never 0" "$O"
+  out_lacks "  terminal result:" "$O" "$3 — the refused artifact is not advertised as this run's result"
+  # The accepted label from Unit 16 (finding F1) still names the terminal this run
+  # really reached, and the operator terminal's default sentence stays absent.
+  out_has "reached the carry-one terminal after one carried hop" "$O" \
+    "$3 — the refusal names the carry-one terminal it actually reached"
+  out_lacks "reached a real operator terminal" "$O" \
+    "$3 — the refusal claims no operator terminal"
+  TL="$(task_lock_for "$V" carry-sem)"; CL="$(checkout_lock_for "$V")"
+  # NOT a finalization story: the record published perfectly well, and 60e owns
+  # the case where it does not. What failed here is what the record says.
+  if [ -d "$TL" ] && [ -d "$CL" ] &&
+     grep -q '^terminal result unprovable: ' "$TL/survivors" 2>/dev/null &&
+     grep -q "$2" "$TL/survivors" 2>/dev/null &&
+     grep -q "$2" "$CL/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL/survivors" 2>/dev/null; then
+    ok "$3 — both leases retained, both pins carrying the bounded '$2' cause"
+  else
+    bad "$3 — both leases retained, both pins carrying the bounded '$2' cause" \
+        "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V" carry-sem --dry-run
+  expect_rc 17 "$RC" "$3 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+if mk_carry_alter60 "$MUT60J/outonly.sh" 's/^outcome=.*/outcome=COMPLETED/'; then
+  ok "60j — the outcome-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_carry_refusal60 "$MUT60J/outonly.sh" outcome-mismatch \
+    "60j — a carried hop whose record claims COMPLETED"
+else
+  bad "60j — the outcome-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+if mk_carry_alter60 "$MUT60J/codeonly.sh" 's/^code=.*/code=22/'; then
+  ok "60j — the code-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_carry_refusal60 "$MUT60J/codeonly.sh" code-mismatch \
+    "60j — a carried hop whose record claims code 22"
+else
+  bad "60j — the code-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+# INDEPENDENCE, structurally, on the same argument 62c makes for the operator
+# seam: the call site must derive its expected symbol through the sole mapping
+# owner and state its expected code as a literal. A call site that passed a field
+# out of the record would compare it with itself, and the two refusals above
+# would go green on a forgery.
+CALL60J="$(grep -n '# carry-one terminal consumption' "$DISPATCH_BIN" | grep -v ':[[:space:]]*#' | cut -d: -f2-)"
+if printf '%s\n' "$CALL60J" | grep -q 'result_outcome 0' &&
+   ! printf '%s\n' "$CALL60J" | grep -qE 'RESULT_FILE|TR_OUTCOME|TR_CODE|res_field|\.result'; then
+  ok "60j — the carry-one seam derives its expected pair through result_outcome and reads nothing from the artifact"
+else
+  bad "60j — the carry-one seam derives its expected pair through result_outcome and reads nothing from the artifact" \
+      "call site: $CALL60J"
+fi
+
+echo
+echo "Case 60k — mutation control: remove ONLY the carry-one expected pair and both mismatches release again"
+# M36 — the mirror of M33 and M34 one seam over. It strips exactly the two
+# expectation arguments from the carry-one call, leaving that call, its truthful
+# label, the path gate, the parse and the identity boundary in place, AND leaving
+# the operator and dry-run pairs untouched — which is what proves the three
+# migrated seams are separately fail-capable rather than one shared switch. Fails
+# closed: unless the selector matched exactly once and the mutant differs and
+# parses, the control does not run.
+sed 's/ "$(result_outcome 0)" 0 # carry-one terminal consumption/ # carry-one terminal consumption/' \
+  "$DISPATCH_BIN" >"$MUT60J/m36.sh" 2>/dev/null
+M36_HITS="$(grep -c ' "\$(result_outcome 0)" 0 # carry-one terminal consumption' "$DISPATCH_BIN" 2>/dev/null || true)"
+M36_LEFT="$(grep -c ' "\$(result_outcome 0)" 0 # carry-one terminal consumption' "$MUT60J/m36.sh" 2>/dev/null || true)"
+M36_KEPT="$(grep -c 'consume_terminal_result "the carry-one terminal after one carried hop" # carry-one terminal consumption' "$MUT60J/m36.sh" 2>/dev/null || true)"
+M36_OP="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$MUT60J/m36.sh" 2>/dev/null || true)"
+M36_DRY="$(grep -c ' "\$(result_outcome 0)" 0 # dry-run terminal consumption' "$MUT60J/m36.sh" 2>/dev/null || true)"
+M36_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT60J/m36.sh" || M36_DIFFERS=yes
+M36_PARSES=no; bash -n "$MUT60J/m36.sh" 2>/dev/null && M36_PARSES=yes
+if [ "$M36_HITS" = 1 ] && [ "$M36_LEFT" = 0 ] && [ "$M36_KEPT" = 1 ] &&
+   [ "$M36_OP" = 1 ] && [ "$M36_DRY" = 1 ] &&
+   [ "$M36_DIFFERS" = yes ] && [ "$M36_PARSES" = yes ]; then
+  ok "60k — M36 removed exactly the carry-one pair, kept its labelled consumer call and the other two pairs, differs, and parses"
+  for f60 in outcome:COMPLETED code:22; do
+    FLD60="${f60%%:*}"; VAL60="${f60##*:}"
+    if mk_carry_alter60 "$MUT60J/m36-$FLD60.sh" "s/^$FLD60=.*/$FLD60=$VAL60/" "$MUT60J/m36.sh"; then
+      V60J="$(new_sandbox)"; state_file "$V60J" carry-sem codex
+      OUT="$(bash "$MUT60J/m36-$FLD60.sh" --checkout "$V60J" --task carry-sem \
+            --log-dir "$V60J/runs" --timeout 20 --carry-one --actor-cmd "$FLIP" 2>&1)"; RCM=$?
+      if [ "$RCM" -eq 0 ] && [ ! -d "$(task_lock_for "$V60J" carry-sem)" ] &&
+         [ ! -d "$(checkout_lock_for "$V60J")" ]; then
+        ok "60k — M36: without the expected pair the $FLD60-only mismatch exits 0 and releases (60j is fail-capable)"
+      else
+        bad "60k — M36: without the expected pair the $FLD60-only mismatch exits 0 and releases (60j is fail-capable)" \
+            "rc=$RCM task-lease=$([ -d "$(task_lock_for "$V60J" carry-sem)" ] && echo held || echo released)"
+      fi
+    else
+      bad "60k — M36: the $FLD60-only fixture over the mutant differs and parses" \
+          "the injection matched nothing, or the fixture does not parse — the control cannot run"
+    fi
+  done
+else
+  bad "60k — M36 removed exactly the carry-one pair, kept its labelled consumer call and the other two pairs, differs, and parses" \
+      "matched=$M36_HITS left=$M36_LEFT kept=$M36_KEPT operator-pair=$M36_OP dry-run-pair=$M36_DRY differs=$M36_DIFFERS parses=$M36_PARSES — the control cannot run"
+fi
+
+# ==================================================================== case 61
+# THE THIRD TRUST QUESTION, and the gap cases 51-54 leave open by design.
+#
+# WHAT WAS MISSING. The accepted composition answers path safety, structure and
+# task/checkout/run identity. All three can pass on a record whose `outcome` and
+# `code` describe a DIFFERENT ending than the one the caller is finalizing: a
+# genuine record of another terminal, structurally perfect and correctly
+# addressed. 61b asserts that gap directly — the same fixtures the semantic
+# boundary rejects are shown being ACCEPTED by the three-gate composition, so the
+# assertion below is evidence about what identity does not cover rather than a
+# claim that it is broken.
+#
+# THE EXPECTATION IS ESTABLISHED WITHOUT THE ARTIFACT, and 61a proves it by
+# deriving the pair while the record is moved out of the way. Reading either
+# expected value out of the record under test would compare it with itself, which
+# is the one comparison a forgery passes by construction.
+#
+# NO SECOND TABLE. The expected symbol comes from the dispatcher's own
+# `result_outcome()`, lifted as production text, driven by the exit status this
+# harness OBSERVED from the producing process. The boundary itself knows no
+# symbols — 61c asserts that against its shipped text.
+#
+# STILL NOT A CONSUMER. Nothing below makes a validated result advance a loop,
+# release a lease, choose a route or wait for a record. Integration into
+# `consume_terminal_result()` is a later unit.
+#
+# SAME EXERCISE ROUTE as cases 51-54: the marker-delimited region is lifted out of
+# the dispatcher under test and sourced, so the text executed here is dispatch.sh's
+# own production text, and 61d proves it by mutating dispatch.sh and watching these
+# assertions go green.
+
+# The four checks in the one order that is correct, in a single subshell, for the
+# reason ident_run() states: the boundaries hand each other state through globals
+# that a command substitution would discard.
+sem_run() { # lib artifact task checkout run root want-outcome want-code -> "<rc> <token>"
+  ( . "$1" >/dev/null 2>&1 || { printf '99 lib-unsourceable\n'; exit 0; }
+    t="$SANDBOX_ROOT/.sem-token"
+    validate_terminal_result_path "$2" "$3" "$4" "$5" "$6" >"$t" 2>/dev/null; rc=$?
+    [ "$rc" -eq 0 ] || { printf '%s %s\n' "$rc" "$(cat "$t")"; exit 0; }
+    validate_terminal_result "$2" >"$t" 2>/dev/null; rc=$?
+    [ "$rc" -eq 0 ] || { printf '%s %s\n' "$rc" "$(cat "$t")"; exit 0; }
+    validate_terminal_result_identity "$2" "$3" "$4" "$5" "$6" >"$t" 2>/dev/null; rc=$?
+    [ "$rc" -eq 0 ] || { printf '%s %s\n' "$rc" "$(cat "$t")"; exit 0; }
+    validate_terminal_result_semantics "$2" "$7" "$8" >"$t" 2>/dev/null; rc=$?
+    printf '%s %s\n' "$rc" "$(cat "$t")" )
+}
+
+sem_expect() { # lib artifact task checkout run root want-outcome want-code want-rc want-token label
+  local got; got="$(sem_run "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8")"
+  if [ "$got" = "${9} ${10}" ]; then ok "${11}"; else bad "${11}" "expected '${9} ${10}', got '$got'"; fi
+}
+
+echo
+echo "Case 61a — the expected pair is established WITHOUT the artifact, and the real result is accepted"
+V61D="$(new_sandbox)"; state_file "$V61D" "semantic-task" "codex"
+V61="$SANDBOX_ROOT/v61"; mkdir -p "$V61"
+run_dispatch "$V61D" semantic-task --actor-cmd "$NOOP"
+expect_rc 22 "$RC" "61a — the producing run reaches a nonzero terminal (22)" "$OUT"
+# THE OBSERVED PROCESS FACT, not a field. This is the exit status the producing
+# run really returned to this harness, captured before anything opened the record.
+X_CODE61="$RC"
+RID61="$(run_id_of "$OUT")"
+CO61="$(cd "$V61D" && pwd -P)"
+ROOT61="$(cd "$V61D/runs" && pwd -P)"
+REAL61="$ROOT61/$RID61.result"
+if [ -f "$REAL61" ]; then
+  ok "61a — the producing run left a terminal result at its promised path"
+else
+  bad "61a — the producing run left a terminal result at its promised path" \
+      "missing $REAL61; runs/ holds: $(ls "$ROOT61" 2>&1 | tr '\n' ' ')"
+fi
+
+# THE SOLE CODE-TO-SYMBOL OWNER, lifted as production text rather than restated.
+# A symbol table written here would be a second authority on what an exit code
+# means, and the two would drift the first time either changed.
+OUTFN61="$SANDBOX_ROOT/wl2-outcome-fn.sh"
+sed -n '/^result_outcome() {/,/^}/p' "$DISPATCH_BIN" >"$OUTFN61" 2>/dev/null
+if [ -s "$OUTFN61" ] && [ "$(grep -c '^result_outcome() {' "$DISPATCH_BIN")" = 1 ]; then
+  ok "61a — the dispatcher still defines exactly one code-to-outcome map, and it was lifted"
+else
+  bad "61a — the dispatcher still defines exactly one code-to-outcome map, and it was lifted" \
+      "definitions: $(grep -c '^result_outcome() {' "$DISPATCH_BIN"), lifted bytes: $(wc -c <"$OUTFN61" 2>/dev/null)"
+fi
+
+# INDEPENDENCE, PROVED RATHER THAN ASSERTED. The pair is derived with the record
+# moved out of the way entirely: a derivation that read the artifact could not
+# survive its absence. Restored immediately, so every assertion below runs against
+# the unchanged producer artifact at its promised path.
+mv "$REAL61" "$V61/hidden.result" 2>/dev/null
+X_OUTCOME61="$( . "$OUTFN61" >/dev/null 2>&1; result_outcome "$X_CODE61" )"
+X_ABSENT61="$([ -f "$REAL61" ] && printf 'present' || printf 'absent')"
+mv "$V61/hidden.result" "$REAL61" 2>/dev/null
+if [ -n "$X_OUTCOME61" ] && [ "$X_ABSENT61" = absent ]; then
+  ok "61a — the expected outcome/code pair is derived with the artifact absent ($X_OUTCOME61/$X_CODE61)"
+else
+  bad "61a — the expected outcome/code pair is derived with the artifact absent ($X_OUTCOME61/$X_CODE61)" \
+      "outcome='$X_OUTCOME61' artifact-was='$X_ABSENT61'"
+fi
+
+sem_expect "$VAL_LIB" "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" "$X_OUTCOME61" "$X_CODE61" \
+  0 ok "61a — the unchanged real producer result is accepted for the terminal the caller expected"
+
+echo
+echo "Case 61b — a structurally valid, correctly ADDRESSED record is rejected when its meaning disagrees"
+# ONE FIELD APART FROM THE GENUINE RECORD, and placed at the promised path of an
+# evidence root of its own so task, checkout, run and path all still match. Only
+# the meaning differs, which is what makes these the sharp fixtures rather than
+# soft ones: no other boundary has anything left to object to.
+WRONG_OUT61="$SANDBOX_ROOT/v61-outroot"; mkdir -p "$WRONG_OUT61"
+WRONG_OUT61="$(cd "$WRONG_OUT61" && pwd -P)"
+sed 's/^outcome=.*/outcome=COMPLETED/' "$REAL61" >"$WRONG_OUT61/$RID61.result" 2>/dev/null
+WRONG_CODE61="$SANDBOX_ROOT/v61-coderoot"; mkdir -p "$WRONG_CODE61"
+WRONG_CODE61="$(cd "$WRONG_CODE61" && pwd -P)"
+sed 's/^code=.*/code=0/' "$REAL61" >"$WRONG_CODE61/$RID61.result" 2>/dev/null
+
+sem_expect "$VAL_LIB" "$WRONG_OUT61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_OUT61" \
+  "$X_OUTCOME61" "$X_CODE61" 1 outcome-mismatch \
+  "61b — a record claiming another terminal's OUTCOME is rejected"
+sem_expect "$VAL_LIB" "$WRONG_CODE61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_CODE61" \
+  "$X_OUTCOME61" "$X_CODE61" 1 code-mismatch \
+  "61b — a record claiming another terminal's CODE is rejected with a DISTINCT token"
+
+# THE GAP, ASSERTED IN SO MANY WORDS. If path, structure and identity could catch
+# either fixture, this whole boundary would be redundant — and these two
+# assertions are what would say so.
+ident_expect "$VAL_LIB" "$WRONG_OUT61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_OUT61" 0 ok \
+  "61b — the wrong-outcome record passes path, structure and identity, so only meaning can reject it"
+ident_expect "$VAL_LIB" "$WRONG_CODE61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_CODE61" 0 ok \
+  "61b — the wrong-code record passes path, structure and identity, so only meaning can reject it"
+
+echo
+echo "Case 61c — the comparison is bound to the one parse, and the boundary owns no table"
+
+# ASKED COLD. No gate decision and no parse, so there is nothing to compare and it
+# names the earlier of the two missing preconditions.
+COLD61="$( . "$VAL_LIB" >/dev/null 2>&1
+           tok="$(validate_terminal_result_semantics "$REAL61" "$X_OUTCOME61" "$X_CODE61" 2>/dev/null)"
+           printf '%s %s\n' "$?" "$tok" )"
+if [ "$COLD61" = "1 path-unchecked" ]; then
+  ok "61c — the semantic check refuses an artifact whose path the safety gate never cleared"
+else
+  bad "61c — the semantic check refuses an artifact whose path the safety gate never cleared" \
+      "expected '1 path-unchecked', got '$COLD61'"
+fi
+
+# THE PARSE RAN ON A DIFFERENT FILE. The ordering precondition is satisfied and
+# fields ARE published — they just belong to something else, which is exactly the
+# stale-field reuse this refusal exists to prevent.
+OTHER61="$WRONG_OUT61/$RID61.result"
+UNVAL61="$( . "$VAL_LIB" >/dev/null 2>&1
+            validate_terminal_result_path "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" >/dev/null 2>&1
+            validate_terminal_result "$OTHER61" >/dev/null 2>&1
+            tok="$(validate_terminal_result_semantics "$REAL61" "$X_OUTCOME61" "$X_CODE61" 2>/dev/null)"
+            printf '%s %s\n' "$?" "$tok" )"
+if [ "$UNVAL61" = "1 unvalidated" ]; then
+  ok "61c — the semantic check refuses when the parse that ran read a different file"
+else
+  bad "61c — the semantic check refuses when the parse that ran read a different file" \
+      "expected '1 unvalidated', got '$UNVAL61'"
+fi
+
+# REPLACED AFTER THE PARSE. A different file at the same promised path, carrying
+# the wrong-outcome record: without the file-identity pin the comparison would
+# answer from the first record's captured outcome and ACCEPT it.
+SWAP61="$( . "$VAL_LIB" >/dev/null 2>&1
+           cp "$REAL61" "$V61/original.result"
+           validate_terminal_result_path "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" >/dev/null 2>&1
+           validate_terminal_result "$REAL61" >/dev/null 2>&1
+           rm -f "$REAL61"; cp "$OTHER61" "$REAL61"
+           tok="$(validate_terminal_result_semantics "$REAL61" "$X_OUTCOME61" "$X_CODE61" 2>/dev/null)"
+           rc=$?
+           rm -f "$REAL61"; cp "$V61/original.result" "$REAL61"
+           printf '%s %s\n' "$rc" "$tok" )"
+if [ "$SWAP61" = "1 artifact-replaced" ]; then
+  ok "61c — a record replaced after the parse is refused, not answered from captured fields"
+else
+  bad "61c — a record replaced after the parse is refused, not answered from captured fields" \
+      "expected '1 artifact-replaced', got '$SWAP61'"
+fi
+
+# REWRITTEN IN PLACE. Same file, different bytes — which the identity pin cannot
+# see and the digest can. Both are required, and each names its own event.
+APPEND61="$( . "$VAL_LIB" >/dev/null 2>&1
+             cp "$REAL61" "$V61/original2.result"
+             validate_terminal_result_path "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" >/dev/null 2>&1
+             validate_terminal_result "$REAL61" >/dev/null 2>&1
+             printf 'next_action=appended\n' >>"$REAL61"
+             tok="$(validate_terminal_result_semantics "$REAL61" "$X_OUTCOME61" "$X_CODE61" 2>/dev/null)"
+             rc=$?
+             cp "$V61/original2.result" "$REAL61"
+             printf '%s %s\n' "$rc" "$tok" )"
+if [ "$APPEND61" = "1 artifact-changed" ]; then
+  ok "61c — a record rewritten in place after the parse is refused"
+else
+  bad "61c — a record rewritten in place after the parse is refused" \
+      "expected '1 artifact-changed', got '$APPEND61'"
+fi
+
+# AN UNSUPPLIED EXPECTATION IS NOT A WILDCARD, the same rule the two accepted
+# boundaries state.
+sem_expect "$VAL_LIB" "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" "" "$X_CODE61" \
+  1 no-expectation "61c — an unsupplied expected outcome is refused rather than treated as any outcome"
+sem_expect "$VAL_LIB" "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" "$X_OUTCOME61" "" \
+  1 no-expectation "61c — an unsupplied expected code is refused rather than treated as any code"
+
+# THE BOUNDARY KNOWS NO SYMBOLS. A code-to-outcome table here would be a second
+# authority on what an exit code means. Whole-line comments are stripped first,
+# for the reason 51b gives: a comment cannot execute, so prose naming a symbol
+# would be a false positive about the one thing this control exists to catch.
+SEM_CODE="$SANDBOX_ROOT/wl2-semantic-code.sh"
+awk '/^validate_terminal_result_semantics\(\)/{f=1} f' "$VAL_LIB" 2>/dev/null |
+  sed 's/^[[:space:]]*#.*$//' >"$SEM_CODE" 2>/dev/null
+TABLE_RE='NO_TRANSITION|COMPLETED|OPERATOR_TAKEOVER|UNCLASSIFIED|result_outcome|^[[:space:]]*case '
+if [ -s "$SEM_CODE" ] && ! grep -nE "$TABLE_RE" "$SEM_CODE" >/dev/null 2>&1; then
+  ok "61c — the semantic boundary's text carries no outcome symbols and no second mapping"
+else
+  bad "61c — the semantic boundary's text carries no outcome symbols and no second mapping" \
+      "${SEM_CODE} empty, or: $(grep -nE "$TABLE_RE" "$SEM_CODE" 2>/dev/null | head -3 | tr '\n' ';')"
+fi
+
+# READ-ONLY ACROSS THE WHOLE CHECKOUT, on the argument case 51b makes: the claim
+# covers state files, leases, ownership, logs and captures, not just the artifact.
+BEFORE61="$(tree_manifest "$V61D")"
+sem_run "$VAL_LIB" "$REAL61" semantic-task "$CO61" "$RID61" "$ROOT61" "$X_OUTCOME61" "$X_CODE61" >/dev/null 2>&1
+sem_run "$VAL_LIB" "$WRONG_OUT61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_OUT61" \
+  "$X_OUTCOME61" "$X_CODE61" >/dev/null 2>&1
+AFTER61="$(tree_manifest "$V61D")"
+if [ "$BEFORE61" = "$AFTER61" ]; then
+  ok "61c — semantic validation changes nothing in the checkout"
+else
+  bad "61c — semantic validation changes nothing in the checkout" \
+      "$(printf '%s\n' "$BEFORE61" >"$V61/before"; printf '%s\n' "$AFTER61" >"$V61/after"
+         diff "$V61/before" "$V61/after" | head -4 | tr '\n' ';')"
+fi
+
+echo
+echo "Case 61d — mutation control: remove ONLY the two semantic comparisons and both mismatches are accepted"
+MUT61="$SANDBOX_ROOT/mutants61"; mkdir -p "$MUT61"
+
+# M32 — delete exactly the two comparison lines from the DISPATCHER, leaving path
+# safety, structure, identity and every precondition above them untouched. Without
+# them the records one field apart from the genuine one are ACCEPTED, which is the
+# pre-edit behaviour 61b exists to catch. Fails closed: unless the selector matched
+# exactly one of each line, the mutant differs and still parses, the control does
+# not run and says so.
+sed "/printf 'outcome-mismatch/d; /printf 'code-mismatch/d" "$DISPATCH_BIN" >"$MUT61/m32.sh" 2>/dev/null
+# `|| true` INSIDE the substitution, not a `printf` fallback after it: `grep -c`
+# already prints its count and exits 1 when that count is zero, so a fallback
+# appends a SECOND zero and the comparison below can never match.
+M32_HITS="$(grep -c "printf 'outcome-mismatch\|printf 'code-mismatch" "$DISPATCH_BIN" 2>/dev/null || true)"
+M32_LEFT="$(grep -c "printf 'outcome-mismatch\|printf 'code-mismatch" "$MUT61/m32.sh" 2>/dev/null || true)"
+M32_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT61/m32.sh" || M32_DIFFERS=yes
+M32_PARSES=no; bash -n "$MUT61/m32.sh" 2>/dev/null && M32_PARSES=yes
+if [ "$M32_HITS" = 2 ] && [ "$M32_LEFT" = 0 ] && [ "$M32_DIFFERS" = yes ] && [ "$M32_PARSES" = yes ]; then
+  ok "61d — M32 matched exactly the two comparisons, differs from the dispatcher, and still parses"
+  if extract_validator "$MUT61/m32.sh" "$MUT61/m32.lib"; then
+    sem_expect "$MUT61/m32.lib" "$WRONG_OUT61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_OUT61" \
+      "$X_OUTCOME61" "$X_CODE61" 0 ok \
+      "61d — M32: without the comparisons the wrong-outcome record is accepted (61b is fail-capable)"
+    sem_expect "$MUT61/m32.lib" "$WRONG_CODE61/$RID61.result" semantic-task "$CO61" "$RID61" "$WRONG_CODE61" \
+      "$X_OUTCOME61" "$X_CODE61" 0 ok \
+      "61d — M32: without the comparisons the wrong-code record is accepted (61b is fail-capable)"
+  else
+    bad "61d — M32: without the comparisons both mismatched records are accepted (61b is fail-capable)" \
+        "no validator region in the mutant"
+  fi
+else
+  bad "61d — M32 matched exactly the two comparisons, differs from the dispatcher, and still parses" \
+      "matched=$M32_HITS left=$M32_LEFT differs=$M32_DIFFERS parses=$M32_PARSES — the control cannot run"
+fi
+
+# ==================================================================== case 62
+# THE FIRST PRODUCTION CONSUMER OF THE THIRD TRUST QUESTION.
+#
+# WHAT WAS MISSING. Case 61 proved the semantic boundary works standalone and
+# proved, at 61b, that path/structure/identity cannot see a one-field meaning
+# change. Nothing consumed it: the loop-mode operator terminal — the one seam
+# where release IS the advance decision — composed only the three, so a record
+# altered after finalization in `outcome` alone or in `code` alone still bought
+# the lease release. Measured before this unit's edit, on the fixtures below:
+# both exited 0, released both leases, and were advertised as the run's terminal
+# result.
+#
+# THE FIXTURES FORCE, THE DISPATCHER DECIDES — case 56's technique unchanged.
+# awk appends one altering line after the finalization marker, inside the window
+# between publication and consumption, and everything asserted afterwards is the
+# unmodified seam's own behaviour.
+#
+# WHICH SEAMS ARE MIGRATED, AND THE CASE SAYS SO. 62c names them: at Unit 27
+# this terminal was the only one, Unit 28 added the dry-run terminal (case 58e),
+# Unit 29 the post-hop carry-one terminal (case 60j), and Unit 30 the interruption
+# terminal (case 27w) — which is all four consumer call sites.
+#
+# WHAT IS STILL NOT CLAIMED, now that the deferred list is empty. The shared
+# nonzero die() funnel consumes nothing at all: it is not a consumer call site,
+# so "every consumer supplies a pair" is not "every terminal is gated". 62c is
+# updated each time a seam migrates, and that distinction is what stops the
+# empty deferred list reading as coverage the dispatcher does not have.
+
+MUT62="$SANDBOX_ROOT/mutants62"; mkdir -p "$MUT62"
+
+# One altering injection, parameterised by the sed script it plants. Written as a
+# builder rather than four copies so the four fixtures below cannot drift apart
+# in anything except the field they alter.
+mk_alter62() { # outfile sed-script marker -> 0 when the fixture differs and parses
+  awk -v s="$2" -v m="$3" '{print} /# operator terminal finalization/ {
+    printf "    sed %c%s%c \"$RESULT_FILE\" >\"$RESULT_FILE.x\" && mv -f \"$RESULT_FILE.x\" \"$RESULT_FILE\" # %s\n", 39, s, 39, m }' \
+    "${4:-$DISPATCH_BIN}" >"$1"
+  ! cmp -s "${4:-$DISPATCH_BIN}" "$1" && bash -n "$1" 2>/dev/null
+}
+
+# The full refusal contract for one forced mismatch, asserted the same way 56b
+# asserts the identity refusal: exit 38, nothing advertised, both leases retained
+# with the bounded token as their truthful cause, next dispatcher refused.
+expect_sem_refusal62() { # fixture task expected-token label-prefix
+  local V O R TL CL
+  V="$(new_sandbox)"; state_file "$V" "$2" operator
+  [ "$2" = blocked-task ] && state_file "$V" "$2" operator "$2" blocked
+  O="$(bash "$1" --checkout "$V" --task "$2" --log-dir "$V/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; R=$?
+  expect_rc 38 "$R" "$4 — refused with exit 38, never 0" "$O"
+  out_lacks "  terminal result:" "$O" "$4 — the refused artifact is not advertised as this run's result"
+  TL="$(task_lock_for "$V" "$2")"; CL="$(checkout_lock_for "$V")"
+  if [ -d "$TL" ] && [ -d "$CL" ] &&
+     grep -q '^terminal result unprovable: ' "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$TL/survivors" 2>/dev/null &&
+     grep -q "$3" "$CL/survivors" 2>/dev/null &&
+     ! grep -q 'could not finalize' "$TL/survivors" 2>/dev/null; then
+    ok "$4 — both leases retained, both pins carrying the bounded '$3' cause"
+  else
+    bad "$4 — both leases retained, both pins carrying the bounded '$3' cause" \
+        "task=$([ -d "$TL" ] && echo present || echo absent) checkout=$([ -d "$CL" ] && echo present || echo absent) cause: $(cat "$TL/survivors" 2>&1 | tr '\n' '|')"
+  fi
+  run_dispatch "$V" "$2" --actor-cmd "$NOOP"
+  expect_rc 17 "$RC" "$4 — the next dispatcher is refused by the retained lease" "$OUT"
+}
+
+echo
+echo "Case 62a — real CLOSED and BLOCKED_OPERATOR results still pass the composed consumer and release"
+# 56a already proved this for the three-boundary composition; what is new is that
+# the SAME two real producer artifacts now also have to agree with the ending the
+# caller independently expected. A regression that derived the expectation wrongly
+# — or derived it from the record and then compared it back — would surface here
+# as a 38 on a run that did nothing wrong.
+V62A="$(new_sandbox)"; state_file "$V62A" closed-task operator
+run_dispatch "$V62A" closed-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "62a — a real CLOSED result passes the semantic boundary and still exits 0" "$OUT"
+RID62A="$(run_id_of "$OUT")"
+ROOT62A="$(cd "$V62A/runs" && pwd -P)"
+if [ "$(res_field "$ROOT62A/$RID62A.result" outcome)" = COMPLETED ] &&
+   [ "$(res_field "$ROOT62A/$RID62A.result" code)" = 0 ] &&
+   [ ! -d "$(task_lock_for "$V62A" closed-task)" ] && [ ! -d "$(checkout_lock_for "$V62A")" ]; then
+  ok "62a — the accepted CLOSED terminal carries COMPLETED/0 and released both leases"
+else
+  bad "62a — the accepted CLOSED terminal carries COMPLETED/0 and released both leases" \
+      "outcome=$(res_field "$ROOT62A/$RID62A.result" outcome) code=$(res_field "$ROOT62A/$RID62A.result" code) leases held"
+fi
+run_dispatch "$V62A" closed-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "62a — a subsequent dispatcher is admitted after the verified release" "$OUT"
+
+V62B="$(new_sandbox)"; state_file "$V62B" blocked-task operator blocked-task blocked
+run_dispatch "$V62B" blocked-task --actor-cmd "$NOOP"
+expect_rc 0 "$RC" "62a — a real BLOCKED_OPERATOR result passes the semantic boundary and still exits 0" "$OUT"
+RID62B="$(run_id_of "$OUT")"
+ROOT62B="$(cd "$V62B/runs" && pwd -P)"
+# THE SECOND CANONICAL ENDING, AND THE REASON ONE CALL COVERS BOTH. The seam
+# passes result_outcome's answer for code 0; ST_CLASS is what makes that answer
+# OPERATOR_TAKEOVER here and COMPLETED above, with no symbol at the call site.
+if [ "$(res_field "$ROOT62B/$RID62B.result" outcome)" = OPERATOR_TAKEOVER ] &&
+   [ "$(res_field "$ROOT62B/$RID62B.result" code)" = 0 ] &&
+   [ ! -d "$(task_lock_for "$V62B" blocked-task)" ] && [ ! -d "$(checkout_lock_for "$V62B")" ]; then
+  ok "62a — the accepted takeover terminal carries OPERATOR_TAKEOVER/0 and released both leases"
+else
+  bad "62a — the accepted takeover terminal carries OPERATOR_TAKEOVER/0 and released both leases" \
+      "outcome=$(res_field "$ROOT62B/$RID62B.result" outcome) code=$(res_field "$ROOT62B/$RID62B.result" code) leases held"
+fi
+
+echo
+echo "Case 62b — a record altered ONLY in outcome, or ONLY in code, is refused before release"
+# The unit's red. Each fixture leaves task, checkout, run, path and structure
+# exactly as the producer wrote them — 61b already proved the other three
+# boundaries accept precisely this — so only meaning can reject it, and the two
+# rejections must be distinguishable.
+if mk_alter62 "$MUT62/outonly.sh" 's/^outcome=.*/outcome=OPERATOR_TAKEOVER/' 'harness outcome-only alteration'; then
+  ok "62b — the outcome-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_sem_refusal62 "$MUT62/outonly.sh" closed-task outcome-mismatch \
+    "62b — a CLOSED run whose record claims OPERATOR_TAKEOVER"
+else
+  bad "62b — the outcome-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+if mk_alter62 "$MUT62/codeonly.sh" 's/^code=.*/code=22/' 'harness code-only alteration'; then
+  ok "62b — the code-only forcing fixture differs from the dispatcher and is valid bash"
+  expect_sem_refusal62 "$MUT62/codeonly.sh" closed-task code-mismatch \
+    "62b — a CLOSED run whose record claims code 22"
+else
+  bad "62b — the code-only forcing fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+# THE OTHER CANONICAL ENDING IS GATED TOO, not merely the one the fixtures were
+# written against. A takeover record claiming COMPLETED is the mirror image of
+# 62b's first fixture, and it is the one an operator would most be misled by:
+# "finished" printed over a task still waiting on them.
+if mk_alter62 "$MUT62/outonly-blocked.sh" 's/^outcome=.*/outcome=COMPLETED/' 'harness outcome-only alteration'; then
+  ok "62b — the takeover outcome-only fixture differs from the dispatcher and is valid bash"
+  expect_sem_refusal62 "$MUT62/outonly-blocked.sh" blocked-task outcome-mismatch \
+    "62b — a BLOCKED_OPERATOR run whose record claims COMPLETED"
+else
+  bad "62b — the takeover outcome-only fixture differs from the dispatcher and is valid bash" \
+      "the awk injection matched nothing, or the fixture does not parse — the case cannot run"
+fi
+
+echo
+echo "Case 62c — the expectation is the caller's, and all four seams supply one"
+# Structural, against the shipped text, and it carries the unit's scope claim.
+#
+# INDEPENDENCE FIRST. The call site must derive its expected symbol through the
+# sole mapping owner and state its expected code as a literal — never read either
+# from the artifact. A call site that passed a field out of the record would
+# compare it with itself, and 62b would go green on a forgery.
+CALL62="$(grep -n '# operator terminal consumption' "$DISPATCH_BIN" | cut -d: -f2-)"
+if printf '%s\n' "$CALL62" | grep -q 'result_outcome 0' &&
+   ! printf '%s\n' "$CALL62" | grep -qE 'RESULT_FILE|TR_OUTCOME|TR_CODE|res_field|\.result'; then
+  ok "62c — the seam derives its expected pair through result_outcome and reads nothing from the artifact"
+else
+  bad "62c — the seam derives its expected pair through result_outcome and reads nothing from the artifact" \
+      "call site: $CALL62"
+fi
+# WHICH CONSUMERS ARE MIGRATED, NAMED RATHER THAN COUNTED LOOSELY. Every
+# consume_terminal_result call site is enumerated from the shipped text and
+# classified by whether it supplies a pair. All five must now — the operator
+# terminal (Unit 27), the dry-run terminal (Unit 28), the post-hop carry-one
+# terminal (Unit 29, case 60j), the interruption terminal (Unit 30, case 27w) and
+# the shared nonzero die() funnel (Unit 32, case 50k). Asserting the exact NAMES,
+# not just a count, is what stops a later unit migrating one seam while silently
+# dropping another and still satisfying "five".
+#
+# COMPARED AS SORTED SETS, because the enumeration follows the order the call
+# sites happen to appear in the dispatcher. Spelling out every permutation was
+# already awkward at two names and is the wrong assertion at three: what is being
+# claimed is which seams, not where they sit in the file.
+#
+# THE DEFERRED SIDE IS THE HALF THAT MATTERS HERE. This assertion is the honest
+# limit on 56e: the composed boundary exists for every caller, and this case says
+# which callers are actually subject to it. With Unit 32 that list includes the
+# shared nonzero die() funnel, so no marked consumer remains deferred. It still
+# makes no claim about the direct pre-run exits that never reach the funnel, or
+# about the finalization-failure transfer, which exits without an artifact to
+# consume — neither is a call site here.
+SUPPLY62=''; NOSUPPLY62=''
+# CALL SITES ONLY, and the selection is deliberately narrow twice over. Comment
+# lines are dropped because prose that names the function is not a call — the
+# dry-run seam's own note cites `consume_terminal_result` and was miscounted as a
+# deferred consumer until this filter existed. The end-of-line marker is what
+# identifies the rest: every production call site carries `# <seam> terminal
+# consumption`, which is also the handle every mutation control addresses them
+# by, so a call site without one would be invisible to those controls too and is
+# correctly treated as not existing here.
+while IFS= read -r l; do
+  if printf '%s\n' "$l" | grep -q 'result_outcome'; then
+    SUPPLY62="$SUPPLY62$(printf '%s\n' "$l" | sed 's/.*# //;s/ .*//');"
+  else
+    NOSUPPLY62="$NOSUPPLY62$(printf '%s\n' "$l" | sed 's/.*# //;s/ .*//');"
+  fi
+done <<EOF
+$(grep -n 'consume_terminal_result' "$DISPATCH_BIN" |
+  grep -v 'consume_terminal_result()' |
+  grep -v '^[0-9]*:[[:space:]]*#' |
+  grep ' terminal consumption$')
+EOF
+sort62() { printf '%s' "$1" | tr ';' '\n' | grep -v '^$' | LC_ALL=C sort | tr '\n' ';'; }
+if [ "$(sort62 "$SUPPLY62")" = 'carry-one;die-funnel;dry-run;interruption;operator;' ]; then
+  ok "62c — all five call sites supply an expected pair: the operator, dry-run, carry-one, interruption and shared nonzero die() funnel terminals"
+else
+  bad "62c — all five call sites supply an expected pair: the operator, dry-run, carry-one, interruption and shared nonzero die() funnel terminals" \
+      "supplying='$SUPPLY62'"
+fi
+# THE EMPTY SIDE IS ASSERTED, NOT DROPPED. With the last consumer migrated this
+# list must be empty, and saying so is a different claim from deleting the
+# assertion: a sixth call site added later without a pair would land here, and a
+# case that had stopped looking would not see it.
+if [ -z "$(sort62 "$NOSUPPLY62")" ]; then
+  ok "62c — no consumer call site is left without an expected pair"
+else
+  bad "62c — no consumer call site is left without an expected pair" \
+      "not-supplying='$NOSUPPLY62'"
+fi
+# THE MIGRATED SEAM, BEHAVIOURALLY. This line predates Unit 29, when it asserted
+# that the then-deferred carry-one terminal was untouched by the shared boundary.
+# It is kept and re-read rather than deleted: the same run now has to stay green
+# with that seam MIGRATED, which is what would catch an expectation derived
+# wrongly at the new call site — it would surface here as a 38 on a carried hop
+# that did nothing wrong. The deferred seam that remains is interruption, and
+# the structural assertion above is what carries that claim.
+V62D="$(new_sandbox)"; state_file "$V62D" carry-defer-task codex
+run_dispatch "$V62D" carry-defer-task --carry-one --actor-cmd "$FLIP"
+expect_rc 0 "$RC" "62c — the migrated carry-one terminal still exits 0 and releases on a genuine carried hop" "$OUT"
+
+echo
+echo "Case 62d — mutation control: remove ONLY the expected pair and both mismatches release again"
+# M33 — strip exactly the two expectation arguments from the operator-terminal
+# call, leaving the consume call, the path gate, the structural parse and the
+# identity boundary all in place. That is the narrowest possible removal of THIS
+# integration: with no pair supplied, the composed semantic boundary is skipped
+# and the pre-edit behaviour returns. Fails closed — unless the selector matched
+# exactly once and the mutant differs and parses, the control does not run.
+sed 's/ "" "$(result_outcome 0)" 0 # operator terminal consumption/ # operator terminal consumption/' \
+  "$DISPATCH_BIN" >"$MUT62/m33.sh" 2>/dev/null
+M33_HITS="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$DISPATCH_BIN" 2>/dev/null || true)"
+M33_LEFT="$(grep -c ' "" "\$(result_outcome 0)" 0 # operator terminal consumption' "$MUT62/m33.sh" 2>/dev/null || true)"
+M33_KEPT="$(grep -c '# operator terminal consumption' "$MUT62/m33.sh" 2>/dev/null || true)"
+M33_DIFFERS=no; cmp -s "$DISPATCH_BIN" "$MUT62/m33.sh" || M33_DIFFERS=yes
+M33_PARSES=no; bash -n "$MUT62/m33.sh" 2>/dev/null && M33_PARSES=yes
+if [ "$M33_HITS" = 1 ] && [ "$M33_LEFT" = 0 ] && [ "$M33_KEPT" = 1 ] &&
+   [ "$M33_DIFFERS" = yes ] && [ "$M33_PARSES" = yes ]; then
+  ok "62d — M33 removed exactly the expected pair, kept the consumer call, differs, and parses"
+  for f in outonly:OPERATOR_TAKEOVER:outcome codeonly:22:code; do
+    m="${f%%:*}"; rest="${f#*:}"; v="${rest%%:*}"; fld="${rest##*:}"
+    if mk_alter62 "$MUT62/m33-$m.sh" "s/^$fld=.*/$fld=$v/" "harness $fld-only alteration" "$MUT62/m33.sh"; then
+      V62M="$(new_sandbox)"; state_file "$V62M" closed-task operator
+      OUT="$(bash "$MUT62/m33-$m.sh" --checkout "$V62M" --task closed-task \
+            --log-dir "$V62M/runs" --timeout 20 --actor-cmd "$NOOP" 2>&1)"; RCM=$?
+      if [ "$RCM" -eq 0 ] && [ ! -d "$(task_lock_for "$V62M" closed-task)" ] &&
+         [ ! -d "$(checkout_lock_for "$V62M")" ]; then
+        ok "62d — M33: without the expected pair the $fld-only mismatch exits 0 and releases (62b is fail-capable)"
+      else
+        bad "62d — M33: without the expected pair the $fld-only mismatch exits 0 and releases (62b is fail-capable)" \
+            "rc=$RCM leases: task=$([ -d "$(task_lock_for "$V62M" closed-task)" ] && echo present || echo absent)"
+      fi
+    else
+      bad "62d — M33: the $fld-only fixture over the mutant differs and parses" \
+          "the injection matched nothing, or the fixture does not parse — the control cannot run"
+    fi
+  done
+else
+  bad "62d — M33 removed exactly the expected pair, kept the consumer call, differs, and parses" \
+      "matched=$M33_HITS left=$M33_LEFT kept=$M33_KEPT differs=$M33_DIFFERS parses=$M33_PARSES — the control cannot run"
+fi
+
+
+# =================================================================== case 63a
+# THE ADMISSION BOUNDARY REACHES THE EVIDENCE LOCATION, NOT ONLY THE TASK AND
+# THE CHECKOUT.
+#
+# The approved plan admits a run only once task, checkout AND the evidence
+# location have been supplied and established as trusted; before that point an
+# invalid invocation must launch no actor, take no owner or lease, mutate
+# nothing and write no evidence. Task and checkout already cleared that bar
+# (dispatch.sh, the task-id and checkout blocks). The evidence location did not:
+# its directory was created and canonicalized far BELOW acquire_lock, so an
+# invocation naming a location it could never write to still took both leases
+# first — and, where another run already held one, filed a refusal record — for
+# a run that was never admissible in the first place.
+#
+# THE DETECTOR IS THE LEASE ROOT, and it is chosen because the leases themselves
+# are released by the EXIT trap. Once the process is gone, "no lease directory"
+# is true whether the lease was taken or not, so asserting on the two lease
+# directories alone would pass against the very defect under test. The lease
+# ROOT is created by wl_lease_acquire (logs/scripts/work-loop-lease.sh) and is
+# NOT removed by release, which removes only the two lease directories — so in a
+# sandbox that has never admitted a run, its existence is a durable one-way
+# record that acquire_lock ran. That is the assertion that is red before the fix
+# and green after it.
+echo
+echo "Case 63a — an unusable evidence location is refused BEFORE admission: no lease, no evidence, no actor"
+d="$(new_sandbox)"; state_file "$d" "evidence-loc-task" "codex"
+rm -f "$d.calls"
+# Unusable because a REGULAR FILE sits where a parent directory would have to
+# be: mkdir -p can never succeed under it, so this invocation could never have
+# written one line of its own run evidence.
+printf 'not a directory\n' >"$d/blocked-runs"
+BAD_LOGS="$d/blocked-runs/inside"
+LEASE_ROOT="$(lock_root_for "$d")"
+[ ! -e "$LEASE_ROOT" ] \
+  && ok "63a setup — this sandbox has never admitted a run (no shared lease root yet)" \
+  || bad "63a setup — this sandbox has never admitted a run (no shared lease root yet)" \
+         "$(ls -a "$LEASE_ROOT" 2>&1 | tr '\n' ' ')"
+BEFORE="$(git -C "$d" rev-parse HEAD)"
+TREE_BEFORE="$(tree_manifest "$d")"
+STATUS_BEFORE="$(git -C "$d" status --porcelain)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task evidence-loc-task \
+      --log-dir "$BAD_LOGS" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+TREE_AFTER="$(tree_manifest "$d")"
+STATUS_AFTER="$(git -C "$d" status --porcelain)"
+expect_rc 10 "$RC" "the unusable evidence location is refused as usage" "$OUT"
+out_has "STOP [10]" "$OUT" "  and the refusal names itself on stderr"
+out_has "$BAD_LOGS" "$OUT" "  and names the location it refused"
+# THE ASSERTION THAT FAILS AGAINST THE DEFECT.
+[ ! -e "$LEASE_ROOT" ] \
+  && ok "  and no lease was ever acquired — the shared lease root was never created" \
+  || bad "  and no lease was ever acquired — the shared lease root was never created" \
+         "$(ls -a "$LEASE_ROOT" 2>&1 | tr '\n' ' ')"
+[ ! -e "$BAD_LOGS" ] \
+  && ok "  and the evidence location itself was not created" \
+  || bad "  and the evidence location itself was not created" "$BAD_LOGS exists"
+[ -f "$d/blocked-runs" ] && [ "$(cat "$d/blocked-runs")" = "not a directory" ] \
+  && ok "  and the file standing in its way is byte-identical" \
+  || bad "  and the file standing in its way is byte-identical" \
+         "$(ls -la "$d/blocked-runs" 2>&1 | tr '\n' ' ')"
+if [ "$TREE_BEFORE" = "$TREE_AFTER" ]; then
+  ok "  and every byte of the checkout's working tree is unchanged"
+else
+  bad "  and every byte of the checkout's working tree is unchanged" \
+      "$(diff <(printf '%s\n' "$TREE_BEFORE") <(printf '%s\n' "$TREE_AFTER") | head -10 | tr '\n' ' ')"
+fi
+[ "$STATUS_BEFORE" = "$STATUS_AFTER" ] \
+  && ok "  and git status is unchanged" \
+  || bad "  and git status is unchanged" "before [$STATUS_BEFORE] after [$STATUS_AFTER]"
+[ "$(calls "$d")" = "0" ] \
+  && ok "  and no actor was launched" || bad "  and no actor was launched" "calls=$(calls "$d")"
+[ "$(git -C "$d" rev-parse HEAD)" = "$BEFORE" ] \
+  && ok "  and committed nothing" || bad "  and committed nothing" "HEAD moved from $BEFORE"
+
+# ------------------------------------------------------------ case 63a, part 2
+# THE OTHER HALF OF THE SAME BOUNDARY: writes no evidence for a non-run.
+#
+# Part 1 proves no lease is taken when no lease is contended. It cannot prove
+# the evidence half, because with nothing holding the lease there is no refusal
+# record to write either way. So this half puts a REAL second dispatcher on the
+# lease, and the two outcomes are then distinguishable:
+#
+#   before the fix — the invalid invocation reaches acquire_lock, loses, exits
+#                    17, and files a refusal record for a run that was never
+#                    admissible;
+#   after  the fix — it never reaches the lease at all, exits 10 over its own
+#                    unusable evidence location, and files nothing.
+#
+# The lease is HELD BY A REAL DISPATCHER rather than planted, for the reason
+# case 12h gives: what is under test is an ORDERING, and only a live holder puts
+# the acquisition path where the ordering can be observed.
+echo
+echo "Case 63a (2) — the same refusal files no evidence, even with the lease already held"
+d2="$(new_sandbox)"; state_file "$d2" "evidence-held-task" "codex"
+rm -f "$d2.calls" "$d2.holder"
+HOLDER2_LOGS="$SANDBOX_ROOT/63a-holder-runs"   # OUTSIDE the checkout, so only the loser can move its bytes
+BAD_LOGS2="$d2/blocked-runs/inside"
+REFUSALS2="$(lock_root_for "$d2")/refusals"
+( bash "$DISPATCH_BIN" --checkout "$d2" --task evidence-held-task --log-dir "$HOLDER2_LOGS" \
+    --timeout 90 \
+    --actor-cmd 'printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.holder"; sleep 30; exit 0' \
+    >/dev/null 2>&1 ) &
+holder2=$!
+# Waited on the ACTOR, not on the lease — case 12h's reason exactly: the holder
+# still touches the checkout between taking the lease and launching.
+for _ in $(seq 1 120); do [ -f "$d2.holder" ] && break; sleep 0.5; done
+[ -f "$d2.holder" ] \
+  && ok "63a(2) setup — the holding dispatcher is admitted and inside its actor" \
+  || bad "63a(2) setup — the holding dispatcher is admitted and inside its actor" "no $d2.holder marker"
+# PLANTED ONLY NOW, and the ordering is load-bearing: an untracked file present
+# before the holder launched would stop the HOLDER at 18 (out-of-allowlist
+# working-tree changes) and there would be no held lease to test against.
+printf 'not a directory\n' >"$d2/blocked-runs"
+n_ref_before="$(ls -1 "$REFUSALS2" 2>/dev/null | wc -l | tr -d ' ')"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task evidence-held-task \
+      --log-dir "$BAD_LOGS2" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "  it refuses on its own evidence location, not at the held lease (17)" "$OUT"
+[ "$n_ref_before" = "$(ls -1 "$REFUSALS2" 2>/dev/null | wc -l | tr -d ' ')" ] \
+  && ok "  and filed no refusal record — a non-run leaves no durable record" \
+  || bad "  and filed no refusal record — a non-run leaves no durable record" \
+         "refusal count moved from $n_ref_before to $(ls -1 "$REFUSALS2" 2>/dev/null | wc -l | tr -d ' ')"
+[ ! -e "$BAD_LOGS2" ] \
+  && ok "  and still created no evidence directory" \
+  || bad "  and still created no evidence directory" "$BAD_LOGS2 exists"
+[ "$(calls "$d2")" = "0" ] \
+  && ok "  and still launched no actor" || bad "  and still launched no actor" "calls=$(calls "$d2")"
+wait "$holder2" 2>/dev/null
+rm -rf "$(task_lock_for "$d2" evidence-held-task)" "$(checkout_lock_for "$d2")" 2>/dev/null
+
+# =================================================================== case 63b
+# THE POSITIVE CONTROL, and without it 63a passes against a dispatcher that
+# refuses every evidence location it is given. Everything asserted above is an
+# absence — no lease, no directory, no record, no actor — and a boundary that
+# had simply become "refuse always" would satisfy all of it. This is the
+# ORDINARY invocation, and it must still reach the admitted-run path.
+#
+# The requested directory DELIBERATELY DOES NOT EXIST. That is what a first run
+# looks like, and it is the case a naive "the directory must already be there"
+# check would break — so it is the one the control has to make.
+echo
+echo "Case 63b — a legitimate invocation still reaches the admitted-run path, requested and default"
+d3="$(new_sandbox)"; state_file "$d3" "evidence-ok-task" "codex"
+rm -f "$d3.calls"
+FRESH_LOGS="$d3/fresh-runs"
+[ ! -e "$FRESH_LOGS" ] \
+  && ok "63b setup — the requested evidence directory does not exist yet" \
+  || bad "63b setup — the requested evidence directory does not exist yet" "$FRESH_LOGS already exists"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d3" --task evidence-ok-task \
+      --log-dir "$FRESH_LOGS" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+if [ "$RC" -ne 10 ]; then
+  ok "the boundary did not refuse a creatable evidence location (exit $RC, not 10)"
+else
+  bad "the boundary did not refuse a creatable evidence location" "exited 10: $OUT"
+fi
+AL3="$(ls -t "$FRESH_LOGS"/*.log 2>/dev/null | head -1)"
+if [ -n "$AL3" ] && grep -q '^run=' "$AL3"; then
+  ok "  and the admitted run created the requested directory and wrote its own header into it"
+else
+  bad "  and the admitted run created the requested directory and wrote its own header into it" \
+      "$(ls -a "$FRESH_LOGS" 2>&1 | tr '\n' ' ')"
+fi
+[ "$(calls "$d3")" = "1" ] \
+  && ok "  and the actor really launched — this is an admitted run, not another refusal" \
+  || bad "  and the actor really launched" "calls=$(calls "$d3")"
+rm -rf "$(task_lock_for "$d3" evidence-ok-task)" "$(checkout_lock_for "$d3")" 2>/dev/null
+# THE DEFAULT LOCATION IS COVERED TOO. The boundary validates the requested
+# location OR the default one, and only an invocation that passes no --log-dir
+# exercises the second.
+#
+# This leg asserts the run's own header rather than a completed hop. The default
+# location sits under plans/, which new_sandbox creates and never commits, so
+# `git status` reports the whole `plans/` directory as untracked and the pre-hop
+# gate stops at 18 for a reason that has nothing to do with this boundary. The
+# header is written by the run-evidence block itself, so it is the exact fact
+# this leg needs: the default location was accepted and used.
+d4="$(new_sandbox)"; state_file "$d4" "evidence-default-task" "codex"
+rm -f "$d4.calls"
+DEF_LOGS="$d4/plans/work-loop-v2-v0.2/handoff-automation-spike/runs"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d4" --task evidence-default-task \
+      --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+if [ "$RC" -ne 10 ]; then
+  ok "  and the DEFAULT evidence location is not refused either (exit $RC, not 10)"
+else
+  bad "  and the DEFAULT evidence location is not refused either" "exited 10: $OUT"
+fi
+AL4="$(ls -t "$DEF_LOGS"/*.log 2>/dev/null | head -1)"
+if [ -n "$AL4" ] && grep -q '^run=' "$AL4"; then
+  ok "  and the default directory received the run's own header"
+else
+  bad "  and the default directory received the run's own header" \
+      "$(ls -a "$DEF_LOGS" 2>&1 | tr '\n' ' ')"
+fi
+rm -rf "$(task_lock_for "$d4" evidence-default-task)" "$(checkout_lock_for "$d4")" 2>/dev/null
+
+# =============================================================== cases 63c-63e
+# The three refusal branches of check_evidence_location() (dispatch.sh 1598-1628)
+# that no permanent case reached. 58b covers existing-directory-not-writable;
+# 63a and 63a(2) cover ancestor-not-a-directory; these three cover the rest.
+#
+# All five share one call site (dispatch.sh 1635), above the evidence directory,
+# the lease, the ownership check and the actor — so all three assert the same
+# pre-admission absences, and 63a(2)'s lease-held ordering is not repeated here.
+# All five also print `STOP [10]`, so each case asserts its own branch wording:
+# on the code alone a case would pass while reaching an already-covered branch.
+
+# The six absences all three inputs share. Before-values are passed in because
+# the caller is the only place that can read them before the run.
+evidence_refusal_invariants() { # sandbox label want-log-dir head-before tree-before status-before
+  local d="$1" lab="$2" want="$3" head_b="$4" tree_b="$5" status_b="$6" lease_root
+  lease_root="$(lock_root_for "$d")"
+  # The lease ROOT, not the two lease directories — 63a's reason: release removes
+  # the directories, so their absence is true whether a lease was taken or not,
+  # while the root is created by acquire and never removed.
+  [ ! -e "$lease_root" ] \
+    && ok "$lab — and took no owner or lease: the shared lease root was never created" \
+    || bad "$lab — and took no owner or lease: the shared lease root was never created" \
+           "$(ls -a "$lease_root" 2>&1 | tr '\n' ' ')"
+  [ "$(calls "$d")" = "0" ] \
+    && ok "$lab — and launched no actor" \
+    || bad "$lab — and launched no actor" "calls=$(calls "$d")"
+  [ ! -d "$want" ] \
+    && ok "$lab — and wrote no run evidence: the location never became a directory" \
+    || bad "$lab — and wrote no run evidence: the location never became a directory" \
+           "$(ls -a "$want" 2>&1 | tr '\n' ' ')"
+  [ "$(git -C "$d" rev-parse HEAD)" = "$head_b" ] \
+    && ok "$lab — and committed nothing" \
+    || bad "$lab — and committed nothing" "HEAD moved from $head_b"
+  if [ "$tree_b" = "$(tree_manifest "$d")" ]; then
+    ok "$lab — and every byte of the checkout's working tree is unchanged"
+  else
+    bad "$lab — and every byte of the checkout's working tree is unchanged" \
+        "$(diff <(printf '%s\n' "$tree_b") <(printf '%s\n' "$(tree_manifest "$d")") | head -10 | tr '\n' ' ')"
+  fi
+  [ "$status_b" = "$(git -C "$d" status --porcelain)" ] \
+    && ok "$lab — and git status is unchanged" \
+    || bad "$lab — and git status is unchanged" \
+           "before [$status_b] after [$(git -C "$d" status --porcelain)]"
+}
+
+# =================================================================== case 63c
+# Distinct from 63a's ancestor branch: `-e` is false for a dangling link, so
+# without this branch the ancestor walk climbs past it to a usable parent.
+echo
+echo "Case 63c — an evidence location that is a symlink resolving to nothing is refused BEFORE admission"
+d="$(new_sandbox)"; state_file "$d" "evidence-symlink-task" "codex"
+rm -f "$d.calls"
+LINKTGT63C="$d/no-such-target"
+LINK63C="$d/linked-runs"
+ln -s "$LINKTGT63C" "$LINK63C"
+if [ -L "$LINK63C" ] && [ ! -e "$LINK63C" ]; then
+  ok "63c setup — the evidence location is a symlink and it resolves to nothing"
+else
+  bad "63c setup — the evidence location is a symlink and it resolves to nothing" \
+      "$(ls -la "$LINK63C" 2>&1 | tr '\n' ' ')"
+fi
+HEAD63C="$(git -C "$d" rev-parse HEAD)"
+TREE63C="$(tree_manifest "$d")"
+STATUS63C="$(git -C "$d" status --porcelain)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task evidence-symlink-task \
+      --log-dir "$LINK63C" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "63c — the dangling symlink is refused as usage, never admitted" "$OUT"
+out_has "STOP [10]" "$OUT" "63c — the refusal names itself on stderr"
+out_has "is a symlink that does not resolve to a directory" "$OUT" \
+  "63c — and names THIS branch's reason, not one of the four others"
+out_has "$LINK63C" "$OUT" "63c — and names the location it refused"
+evidence_refusal_invariants "$d" "63c" "$LINK63C" "$HEAD63C" "$TREE63C" "$STATUS63C"
+if [ -L "$LINK63C" ] && [ "$(readlink "$LINK63C")" = "$LINKTGT63C" ] && [ ! -e "$LINKTGT63C" ]; then
+  ok "63c — and the link it refused is untouched: same link, same target, target still absent"
+else
+  bad "63c — and the link it refused is untouched: same link, same target, target still absent" \
+      "$(ls -la "$LINK63C" "$LINKTGT63C" 2>&1 | tr '\n' ' ')"
+fi
+
+# =================================================================== case 63d
+# Distinct from 63a: 63a plants the regular file at an ANCESTOR of the requested
+# location; this plants it at the requested location itself.
+echo
+echo "Case 63d — an evidence location that exists and is not a directory is refused BEFORE admission"
+d="$(new_sandbox)"; state_file "$d" "evidence-file-task" "codex"
+rm -f "$d.calls"
+FILE63D="$d/runs-is-a-file"
+printf 'not a directory\n' >"$FILE63D"
+if [ -e "$FILE63D" ] && [ ! -d "$FILE63D" ] && [ ! -L "$FILE63D" ]; then
+  ok "63d setup — the evidence location exists, is not a directory, and is not a link"
+else
+  bad "63d setup — the evidence location exists, is not a directory, and is not a link" \
+      "$(ls -la "$FILE63D" 2>&1 | tr '\n' ' ')"
+fi
+HEAD63D="$(git -C "$d" rev-parse HEAD)"
+TREE63D="$(tree_manifest "$d")"
+STATUS63D="$(git -C "$d" status --porcelain)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task evidence-file-task \
+      --log-dir "$FILE63D" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "63d — the non-directory evidence location is refused as usage, never admitted" "$OUT"
+out_has "STOP [10]" "$OUT" "63d — the refusal names itself on stderr"
+out_has "exists and is not a directory" "$OUT" \
+  "63d — and names THIS branch's reason, not the ancestor branch's 'cannot be created'"
+out_has "$FILE63D" "$OUT" "63d — and names the location it refused"
+evidence_refusal_invariants "$d" "63d" "$FILE63D" "$HEAD63D" "$TREE63D" "$STATUS63D"
+if [ -f "$FILE63D" ] && [ "$(cat "$FILE63D")" = "not a directory" ]; then
+  ok "63d — and the file standing at that path is byte-identical"
+else
+  bad "63d — and the file standing at that path is byte-identical" \
+      "$(ls -la "$FILE63D" 2>&1 | tr '\n' ' ')"
+fi
+
+# =================================================================== case 63e
+# Distinct from 63a and from 58b: 63a's ancestor is not a DIRECTORY and 58b's
+# unwritable path already EXISTS; here the ancestor is a directory that exists
+# and will not accept a new entry.
+echo
+echo "Case 63e — a missing evidence location under an unwritable ancestor is refused BEFORE admission"
+d="$(new_sandbox)"; state_file "$d" "evidence-ancestor-task" "codex"
+rm -f "$d.calls"
+RO63E="$d/readonly-parent"
+WANT63E="$RO63E/deeper/runs"
+mkdir -p "$RO63E"
+chmod a-w "$RO63E"
+# The setup assertion is load-bearing: run as a user who can write anywhere —
+# root in a container — chmod a-w does not bite, the run is rightly admitted, and
+# every absence below would pass for a reason unrelated to the branch.
+if [ -d "$RO63E" ] && [ ! -w "$RO63E" ] && [ ! -e "$WANT63E" ]; then
+  ok "63e setup — the nearest existing ancestor is a directory this user cannot write to"
+else
+  bad "63e setup — the nearest existing ancestor is a directory this user cannot write to" \
+      "$(ls -lad "$RO63E" 2>&1 | tr '\n' ' ') want-exists=$([ -e "$WANT63E" ] && echo yes || echo no)"
+fi
+HEAD63E="$(git -C "$d" rev-parse HEAD)"
+TREE63E="$(tree_manifest "$d")"
+STATUS63E="$(git -C "$d" status --porcelain)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task evidence-ancestor-task \
+      --log-dir "$WANT63E" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 10 "$RC" "63e — the uncreatable evidence location is refused as usage, never admitted" "$OUT"
+out_has "STOP [10]" "$OUT" "63e — the refusal names itself on stderr"
+out_has "cannot be created" "$OUT" \
+  "63e — and names THIS branch's reason: the location could not be created"
+out_has "$RO63E is not writable" "$OUT" \
+  "63e — and names the ANCESTOR that blocked it, not 58b's already-existing directory"
+out_has "$WANT63E" "$OUT" "63e — and names the location it refused"
+evidence_refusal_invariants "$d" "63e" "$WANT63E" "$HEAD63E" "$TREE63E" "$STATUS63E"
+if [ -d "$RO63E" ] && [ ! -w "$RO63E" ] && [ -z "$(ls -A "$RO63E" 2>/dev/null)" ]; then
+  ok "63e — and the ancestor it refused is unchanged: still a directory, still unwritable, still empty"
+else
+  bad "63e — and the ancestor it refused is unchanged: still a directory, still unwritable, still empty" \
+      "$(ls -lad "$RO63E" 2>&1 | tr '\n' ' ') contents=$(ls -A "$RO63E" 2>&1 | tr '\n' ' ')"
+fi
+chmod u+w "$RO63E" 2>/dev/null
+
+# =================================================================== case 64a
+# A LEASE REFUSAL IS A TERMINAL OF AN ADMITTED RUN, AND OWES ONE RESULT.
+#
+# Under the revised plan a run exists once task, checkout and evidence location
+# are supplied and trusted — all of which happen long before the lease is asked
+# for. So an invocation refused at the lease is not a run that "lost admission";
+# it is an admitted run reaching one of Change set A's enumerated terminal
+# classes, and it must finalize exactly one run-bound terminal result through the
+# same producer/consumer contract every other terminal uses.
+#
+# BEFORE THIS UNIT it could not. finalize_terminal_result() refuses to write
+# without RUN_ID and LOG_DIR, and both were created BELOW acquire_lock, so the
+# refusal had neither — which is why it carried a standalone `.refusal` record of
+# its own under the shared lease root. That record is the competing second
+# authority this case also asserts is gone: one ending, one durable record.
+#
+# THE LEASE IS HELD BY A REAL SECOND DISPATCHER, for case 12h's reason: what is
+# under test is an ordering on the live acquisition path, and a planted directory
+# would reach the same branch without exercising it.
+echo
+echo "Case 64a — an admitted run refused at the lease finalizes exactly ONE run-bound terminal result"
+d="$(new_sandbox)"; state_file "$d" "lease-result-task" "codex"
+rm -f "$d.calls" "$d.holder"
+LOSER64="$d/runs"                              # the loser's OWN evidence location, inside its checkout
+HOLDER64="$SANDBOX_ROOT/64a-holder-runs"       # outside it, so the two runs' evidence cannot be confused
+REFUSALS64="$(lock_root_for "$d")/refusals"
+STATE64="$d/logs/work-loop/lease-result-task.md"
+ST64_BEFORE="$(shasum -a 256 "$STATE64" | cut -d' ' -f1)"
+HEAD64="$(git -C "$d" rev-parse HEAD)"
+( bash "$DISPATCH_BIN" --checkout "$d" --task lease-result-task --log-dir "$HOLDER64" \
+    --timeout 90 \
+    --actor-cmd 'printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.holder"; sleep 30; exit 0' \
+    >/dev/null 2>&1 ) &
+holder64=$!
+for _ in $(seq 1 120); do [ -f "$d.holder" ] && break; sleep 0.5; done
+[ -f "$d.holder" ] \
+  && ok "64a setup — the holding dispatcher is admitted and inside its actor" \
+  || bad "64a setup — the holding dispatcher is admitted and inside its actor" "no $d.holder marker"
+n_ref64="$(ls -1 "$REFUSALS64" 2>/dev/null | wc -l | tr -d ' ')"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task lease-result-task \
+      --log-dir "$LOSER64" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 17 "$RC" "the second dispatcher is refused at 17 by a REAL held lease" "$OUT"
+# THE ID IS READ FROM THE RUN'S OWN HEADER, never reconstructed here. A refusal
+# that finalized a result under an id this harness invented would not be
+# run-bound, and every assertion below has to fail in that case.
+RID64="$(run_id_of "$OUT")"
+if [ -n "$RID64" ]; then
+  ok "  and the refused run announced a run identity of its own"
+else
+  bad "  and the refused run announced a run identity of its own" \
+      "no run= header in the refusal output: $OUT"
+fi
+R64="$LOSER64/$RID64.result"
+
+# EXACTLY ONE, and the count is the assertion. Zero is the pre-unit behaviour;
+# two would mean a second producer appeared alongside the funnel.
+[ "$(res_count "$LOSER64")" = "1" ] \
+  && ok "  and finalized exactly one terminal result" \
+  || bad "  and finalized exactly one terminal result" \
+         "count=$(res_count "$LOSER64") in $(ls -a "$LOSER64" 2>&1 | tr '\n' ' ')"
+[ "$(part_count "$LOSER64")" = "0" ] \
+  && ok "  and left no unfinalized temporary artifact behind" \
+  || bad "  and left no unfinalized temporary artifact behind" "$(ls "$LOSER64"/*.result.partial 2>&1)"
+[ -n "$RID64" ] && [ -f "$R64" ] \
+  && ok "  and it is the run-bound path the run announced" \
+  || bad "  and it is the run-bound path the run announced" "expected $R64"
+printf '%s\n' "$OUT" | grep -q "  terminal result: .*/$RID64\.result$" \
+  && ok "  and the refusal prints that exact path — evidence nobody can find is not evidence" \
+  || bad "  and the refusal prints that exact path" "$(printf '%s\n' "$OUT" | grep 'terminal result' || printf '<no line>')"
+
+# THE MEANING, field by field. A record that exists but says the wrong thing is
+# worse than none: it is a durable false statement about how the run ended.
+for pair in outcome:LOCK_HELD code:17 result_complete:yes \
+            actor_launched:no model_request_started:no stage:pre-hop \
+            next_action:wait-for-lease-holder lease_task_at_finalization:held-by-other; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R64" "$k")"
+  [ "$got" = "$want" ] \
+    && ok "    the result carries $k=$want" \
+    || bad "    the result carries $k=$want" "got: ${got:-<absent>}"
+done
+# IDENTITY-BOUND, all three ways. A result that names another run, another task
+# or another checkout is not this run's proof of how it ended.
+[ "$(res_field "$R64" task)" = "lease-result-task" ] \
+  && ok "    and names this task" || bad "    and names this task" "got: $(res_field "$R64" task)"
+[ "$(res_field "$R64" checkout)" = "$(cd "$d" && pwd -P)" ] \
+  && ok "    and names this checkout" || bad "    and names this checkout" "got: $(res_field "$R64" checkout)"
+# Guarded on RID64 being non-empty, or the comparison is `"" = ""` and passes
+# against a run that announced no identity at all — which is precisely the
+# pre-unit behaviour this case exists to catch.
+[ -n "$RID64" ] && [ "$(res_field "$R64" run)" = "$RID64" ] \
+  && ok "    and names this run" || bad "    and names this run" "got: '$(res_field "$R64" run)' want: '$RID64'"
+
+# THE COMPETING RECORD IS GONE. This is the "not two authorities" half, and it
+# fails loudly against the pre-unit dispatcher, which filed one here.
+[ "$n_ref64" = "$(ls -1 "$REFUSALS64" 2>/dev/null | wc -l | tr -d ' ')" ] \
+  && ok "  and filed no standalone refusal record alongside it" \
+  || bad "  and filed no standalone refusal record alongside it" \
+         "refusal count moved from $n_ref64 to $(ls -1 "$REFUSALS64" 2>/dev/null | wc -l | tr -d ' ')"
+
+# NOTHING WAS LAUNCHED AND NOTHING WAS DECIDED. The record's whole value is that
+# it describes a refusal, so an actor start or a state edit would make it false.
+[ "$(calls "$d")" = "0" ] \
+  && ok "  and launched no actor" || bad "  and launched no actor" "calls=$(calls "$d")"
+[ "$(shasum -a 256 "$STATE64" | cut -d' ' -f1)" = "$ST64_BEFORE" ] \
+  && ok "  and left the state file byte-identical" || bad "  and left the state file byte-identical"
+[ "$(git -C "$d" rev-parse HEAD)" = "$HEAD64" ] \
+  && ok "  and committed nothing" || bad "  and committed nothing" "HEAD moved from $HEAD64"
+wait "$holder64" 2>/dev/null
+rm -rf "$(task_lock_for "$d" lease-result-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# =================================================================== case 64b
+# THE NO-CONTENTION CONTROL, and without it 64a passes against a dispatcher that
+# refuses at the lease unconditionally. Moving the lease call below the
+# run-evidence block is exactly the kind of change that can leave a run holding
+# its own evidence and never getting past acquisition, so the control has to be
+# the ordinary uncontended run: it must still take both leases, launch, and
+# release.
+echo
+echo "Case 64b — with no contention an admitted run still gets past lease acquisition and launches"
+d5="$(new_sandbox)"; state_file "$d5" "lease-clear-task" "codex"
+rm -f "$d5.calls"
+run_dispatch "$d5" lease-clear-task --max-hops 1 --actor-cmd "$FLIP"
+if [ "$RC" -ne 17 ]; then
+  ok "the uncontended run was not refused at the lease (exit $RC, not 17)"
+else
+  bad "the uncontended run was not refused at the lease" "exited 17 with nothing holding: $OUT"
+fi
+[ "$(calls "$d5")" = "1" ] \
+  && ok "  and the actor really launched past acquisition" \
+  || bad "  and the actor really launched past acquisition" "calls=$(calls "$d5")"
+RID64B="$(run_id_of "$OUT")"
+[ -n "$RID64B" ] && [ "$(res_field "$d5/runs/$RID64B.result" lease_task_at_finalization)" = "held-by-this-run" ] \
+  && ok "  and its own result records the lease as held by this run, not by another" \
+  || bad "  and its own result records the lease as held by this run, not by another" \
+         "got: $(res_field "$d5/runs/$RID64B.result" lease_task_at_finalization)"
+# RELEASED, not leaked. The lease call moved; the release path must still run.
+[ ! -d "$(task_lock_for "$d5" lease-clear-task)" ] && [ ! -d "$(checkout_lock_for "$d5")" ] \
+  && ok "  and both leases were released on the way out" \
+  || bad "  and both leases were released on the way out" \
+         "task=$([ -d "$(task_lock_for "$d5" lease-clear-task)" ] && echo present || echo absent) checkout=$([ -d "$(checkout_lock_for "$d5")" ] && echo present || echo absent)"
+rm -rf "$(task_lock_for "$d5" lease-clear-task)" "$(checkout_lock_for "$d5")" 2>/dev/null
+# =================================================================== case 65a
+# ONE STABLE EVIDENCE LOCATION IS THE SUPPORTED PATH, AND IT MUST NOT BE BROKEN
+# BY KEEPING THE FOREIGN-WORK GATE STRICT.
+#
+# THE HISTORY MATTERS HERE, because this case used to assert the opposite claim.
+# Case 12h-ok recorded a deferral: a dispatcher allowlists only the log directory
+# IT was pointed at, so a later run aimed at a DIFFERENT --log-dir read the
+# earlier run's evidence as out-of-allowlist litter and stopped at 18 before
+# launching anything. The first repair taught the gate to recognise a prior run's
+# own evidence by reading the run log header its artifacts were written under.
+# That recognition was removed: the receipt lives in the working tree, anything
+# with write access to the checkout can write one, and freezing the answer before
+# the first launch closes the hole against THIS run's actors but not against
+# content that was already there (case 65d). What replaces it is an operating
+# rule — one stable evidence location per checkout — and this case is the half
+# that proves the rule actually works.
+#
+# THE SHARPEST FORM OF THE SEQUENCE IS A LEASE-REFUSED FIRST RUN. Since Unit 2 a
+# refusal at the lease is a terminal of an ADMITTED run and finalizes a real
+# result inside its own evidence directory (case 64a) — so the very artifact
+# Unit 2 made the dispatcher write is the one most likely to obstruct the next
+# run. Pointed at the same stable location, it must not: that directory is this
+# run's allowlisted evidence location too, so the gate never sees it.
+#
+# WHAT THIS CASE MUST NOT BECOME. "The second run no longer exits 18" is
+# satisfied by deleting the foreign-work gate, so it is not the claim on its own:
+# 65b, 65c and 65d below are the other half, and they must still stop.
+echo
+echo "Case 65a — two sequential runs sharing ONE stable evidence location both reach their intended terminal"
+d="$(new_sandbox)"; state_file "$d" "sequential-evidence-task" "codex"
+rm -f "$d.calls" "$d.holder"
+DIR65="$d/runs-stable"                     # the ONE evidence location, INSIDE the checkout, used by both runs
+HOLDER65="$SANDBOX_ROOT/65a-holder-runs"   # the lease holder's, OUTSIDE it, so only run A's evidence lands in the tree
+( bash "$DISPATCH_BIN" --checkout "$d" --task sequential-evidence-task --log-dir "$HOLDER65" \
+    --timeout 90 \
+    --actor-cmd 'printf "%s\n" "$WL_TASK" >> "$WL_CHECKOUT.holder"; sleep 12; exit 0' \
+    >/dev/null 2>&1 ) &
+holder65=$!
+for _ in $(seq 1 120); do [ -f "$d.holder" ] && break; sleep 0.5; done
+[ -f "$d.holder" ] \
+  && ok "65a setup — the holding dispatcher is admitted and inside its actor" \
+  || bad "65a setup — the holding dispatcher is admitted and inside its actor" "no $d.holder marker"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task sequential-evidence-task \
+      --log-dir "$DIR65" --timeout 20 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 17 "$RC" "65a setup — run A is refused at the lease and is therefore an admitted run" "$OUT"
+[ "$(res_count "$DIR65")" = "1" ] \
+  && ok "65a setup — run A left exactly one terminal result in the stable location" \
+  || bad "65a setup — run A left exactly one terminal result in the stable location" \
+         "count=$(res_count "$DIR65") in $(ls -a "$DIR65" 2>&1 | tr '\n' ' ')"
+wait "$holder65" 2>/dev/null
+rm -rf "$(task_lock_for "$d" sequential-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# NOW THE SECOND RUN, aimed at the SAME location. Nothing contends with it, the
+# state file is untouched and committed, and the only dispatcher-written thing in
+# the working tree is run A's evidence — sitting in the directory run B was
+# itself pointed at, which is why the gate never has an opinion about it.
+rm -f "$d.calls"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task sequential-evidence-task \
+      --log-dir "$DIR65" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+if [ "$RC" -ne 18 ]; then
+  ok "run B is not refused as foreign work (exit $RC, not 18)"
+else
+  bad "run B is not refused as foreign work" "exited 18 over run A's own evidence: $OUT"
+fi
+# NOT REFUSED IS NOT THE SAME CLAIM AS RAN. Exit 18 is taken before the launch,
+# so the launch is what proves the stop is gone rather than moved.
+[ "$(calls "$d")" = "1" ] \
+  && ok "  and its actor really launched past the pre-hop gate" \
+  || bad "  and its actor really launched past the pre-hop gate" "calls=$(calls "$d")"
+RID65B="$(run_id_of "$OUT")"
+[ -n "$RID65B" ] && [ -f "$DIR65/$RID65B.result" ] \
+  && ok "  and run B wrote its own run-bound result into the same stable location" \
+  || bad "  and run B wrote its own run-bound result into the same stable location" \
+         "expected $DIR65/$RID65B.result; it holds $(ls -a "$DIR65" 2>&1 | tr '\n' ' ')"
+# BOTH RESULTS, not one overwritten by the other. Sharing a location is only a
+# supported path if the earlier run's durable terminal survives the later run.
+[ "$(res_count "$DIR65")" = "2" ] \
+  && ok "  and run A's terminal result is still there beside it — two results, neither overwritten" \
+  || bad "  and run A's terminal result is still there beside it" "count=$(res_count "$DIR65")"
+[ -z "$(git -C "$d" diff --cached --name-only 2>/dev/null)" ] \
+  && ok "  and nothing of run A's was staged on the way past" \
+  || bad "  and nothing of run A's was staged" "$(git -C "$d" diff --cached --name-only)"
+# NOTHING IS EXCUSED ANY MORE, and this is the line that says so. The removed
+# mechanism announced every path it dropped from the gate's view; a run that
+# still printed that announcement would still be carrying the mechanism.
+out_lacks "prior_run_evidence" "$OUT" "  and no path was excused from the gate to achieve it"
+rm -rf "$(task_lock_for "$d" sequential-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# =================================================================== case 65b
+# THE NEGATIVE CONTROL: A GENUINELY FOREIGN PATH STILL STOPS THE RUN.
+#
+# 65a is satisfied by any change that stops looking at the working tree, so this
+# is the half that keeps it honest. A prior run's evidence sits in the shared
+# stable location exactly as in 65a, and an unrelated untracked path sits beside
+# it — the pre-hop gate must still take exit 18, and the message must name the
+# foreign path rather than the run's own evidence directory, or an operator sent
+# to "commit, stash or revert the paths above" is sent to the wrong files.
+#
+# Run A here is an ORDINARY admitted run rather than a lease-refused one. What
+# 65b needs is real dispatcher evidence in the tree, which either shape produces;
+# the refused shape is 65a's subject and costs a live holder to arrange.
+echo
+echo "Case 65b — an unrelated untracked path beside the stable evidence location still stops the next run"
+d="$(new_sandbox)"; state_file "$d" "foreign-control-task" "codex"
+rm -f "$d.calls"
+DIR65B="$d/runs-stable"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task foreign-control-task \
+      --log-dir "$DIR65B" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+[ "$(res_count "$DIR65B")" = "1" ] \
+  && ok "65b setup — run A left its evidence in the stable location" \
+  || bad "65b setup — run A left its evidence in the stable location" \
+         "rc=$RC count=$(res_count "$DIR65B") in $(ls -a "$DIR65B" 2>&1 | tr '\n' ' ')"
+rm -rf "$(task_lock_for "$d" foreign-control-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+mkdir -p "$d/actor-scratch"
+printf 'notes an actor left behind\n' >"$d/actor-scratch/notes.md"
+rm -f "$d.calls"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task foreign-control-task \
+      --log-dir "$DIR65B" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 18 "$RC" "the unrelated untracked path still stops the run at 18" "$OUT"
+[ "$(calls "$d")" = "0" ] \
+  && ok "  and no actor was launched over it" || bad "  and no actor was launched over it" "calls=$(calls "$d")"
+# THE STOP MESSAGE, not the whole run — the same scoping the earlier revision
+# used, kept because the assertion below is a negative one and the run log
+# legitimately mentions its own evidence directory elsewhere.
+STOP65B="$(printf '%s\n' "$OUT" | awk '/^STOP \[18\]/{f=1} f{print} /^Recoverable next action/{f=0}')"
+out_has   "actor-scratch" "$STOP65B" "  and the stop names the foreign path"
+out_lacks "runs-stable"   "$STOP65B" "  and the stop does NOT send the operator at this run's own evidence location"
+rm -rf "$(task_lock_for "$d" foreign-control-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# =================================================================== case 65c
+# THE CONTRACT ITSELF: AIMING A LATER RUN SOMEWHERE ELSE IS A REFUSAL, NOT A
+# MIGRATION.
+#
+# This is the case that states the price of removing the recognition mechanism,
+# and it is written as an assertion rather than left implicit so that nobody
+# reintroduces the mechanism believing this behaviour was an accident. Run A used
+# directory A. Run B is pointed at directory B while A is still untracked, so A
+# is out-of-allowlist content run B was not pointed at — indistinguishable, from
+# inside the checkout, from anything else somebody left lying there.
+#
+# THE REFUSAL HAS TO BE ACTIONABLE, which is the second half of the assertion.
+# Naming the path and giving the existing recoverable-next-action guidance is
+# what makes this a one-off operator step rather than a dead end.
+echo
+echo "Case 65c — a run aimed at a DIFFERENT evidence directory stops at 18 and names the old one"
+d="$(new_sandbox)"; state_file "$d" "switched-evidence-task" "codex"
+rm -f "$d.calls"
+DIR_A65C="$d/runs-a"; DIR_B65C="$d/runs-b"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task switched-evidence-task \
+      --log-dir "$DIR_A65C" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+[ "$(res_count "$DIR_A65C")" = "1" ] \
+  && ok "65c setup — run A left its evidence under directory A" \
+  || bad "65c setup — run A left its evidence under directory A" \
+         "rc=$RC count=$(res_count "$DIR_A65C") in $(ls -a "$DIR_A65C" 2>&1 | tr '\n' ' ')"
+rm -rf "$(task_lock_for "$d" switched-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+rm -f "$d.calls"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task switched-evidence-task \
+      --log-dir "$DIR_B65C" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 18 "$RC" "switching evidence directories while the old one is untracked stops at 18" "$OUT"
+[ "$(calls "$d")" = "0" ] \
+  && ok "  and no actor was launched over it" || bad "  and no actor was launched over it" "calls=$(calls "$d")"
+STOP65C="$(printf '%s\n' "$OUT" | awk '/^STOP \[18\]/{f=1} f{print} /^Recoverable next action/{f=0}')"
+out_has "runs-a"                   "$STOP65C" "  and the stop names the old evidence directory"
+out_has "Recoverable next action"  "$STOP65C" "  and gives the operator the existing actionable guidance"
+# THE OLD DIRECTORY IS LEFT ALONE. A refusal that tidied the path away would be
+# doing the migration it just refused to do, and silently.
+[ "$(res_count "$DIR_A65C")" = "1" ] \
+  && ok "  and directory A is untouched — refused, not tidied away" \
+  || bad "  and directory A is untouched" "count=$(res_count "$DIR_A65C")"
+rm -rf "$(task_lock_for "$d" switched-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# =================================================================== case 65d
+# THE CASE THAT DECIDED THE DESIGN: CONTENT ALREADY IN THE TREE CANNOT BE TRUSTED.
+#
+# The removed mechanism recognised a directory as an earlier run's own evidence
+# by reading the run log header its artifacts were written under. That header is
+# a file in the working tree, and this case writes one — a directory, a lookalike
+# log naming an id it invented, and a payload file named after that id — BEFORE
+# the dispatcher starts. No actor of this run existed, so freezing the answer
+# before the first launch cannot help: at the moment of the freeze the forgery is
+# already there and satisfies the classifier exactly as a real receipt would.
+#
+# THIS IS NOT A HYPOTHETICAL SHAPE. A hop killed mid-write, a crashed previous
+# run, or any other process with write access to the checkout can leave content
+# behind, and the dispatcher restarts into a tree it did not write. Trusting it
+# would let actor-writable content change what the foreign-work gate believes on
+# the next start, which is the one thing the gate exists to prevent.
+#
+# Red before the removal: the run was excused, announced "prior_run_evidence=1",
+# and launched its actor. Green after it: the path is out-of-allowlist like any
+# other, and the run stops before anything is launched.
+echo
+echo "Case 65d — evidence-shaped content already in the tree before the run starts is not trusted"
+d="$(new_sandbox)"; state_file "$d" "pre-existing-forgery-task" "codex"
+rm -f "$d.calls"
+FID65D='20260101T000000-forged'
+mkdir -p "$d/runs-preexisting"
+printf 'run=%s mode=simulated task=forged\n' "$FID65D" >"$d/runs-preexisting/$FID65D.log"
+printf 'payload the operator was never shown\n'        >"$d/runs-preexisting/$FID65D.out"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task pre-existing-forgery-task \
+      --log-dir "$d/runs" --timeout 20 --max-hops 1 --actor-cmd "$FLIP" 2>&1)"; RC=$?
+expect_rc 18 "$RC" "content that merely LOOKS like a prior run's evidence still stops the run at 18" "$OUT"
+[ "$(calls "$d")" = "0" ] \
+  && ok "  and no actor was launched over it" || bad "  and no actor was launched over it" "calls=$(calls "$d")"
+STOP65D="$(printf '%s\n' "$OUT" | awk '/^STOP \[18\]/{f=1} f{print} /^Recoverable next action/{f=0}')"
+out_has "runs-preexisting" "$STOP65D" "  and the stop names the forged path"
+out_lacks "prior_run_evidence" "$OUT" "  and nothing in the run claims to have recognised it as earlier evidence"
+rm -rf "$(task_lock_for "$d" pre-existing-forgery-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# =================================================================== case 66a
+# THE POST-HOP HALF: AN ACTOR THAT MINTS DISPATCHER-SHAPED EVIDENCE IS CAUGHT.
+#
+# 65a-65d are all about the PRE-HOP gate — refusing to run OVER somebody else's
+# work. This is the post-hop delta, which catches the actor DOING something it
+# was not allowed to, and it is the assertion that would have gone quiet first if
+# the recognition mechanism had been kept: an actor that could mint the receipt
+# could put its own work somewhere the delta no longer looked.
+#
+# It is unchanged by the removal and must stay green either way — which is the
+# point. The mechanism was never what made this work; the allowlist is.
+echo
+echo "Case 66a — an actor that MINTS dispatcher-shaped evidence mid-hop is still caught"
+d="$(new_sandbox)"; state_file "$d" "forged-evidence-task" "codex"
+rm -f "$d.calls"
+FORGE66='mkdir -p "$WL_CHECKOUT/runs-forged";
+      printf "run=20260101T000000-forged mode=simulated task=forged\n" > "$WL_CHECKOUT/runs-forged/20260101T000000-forged.log";
+      printf "work the operator was never shown\n" > "$WL_CHECKOUT/runs-forged/20260101T000000-forged.out";'
+run_dispatch "$d" forged-evidence-task --max-hops 1 --actor-cmd "$FORGE66$FLIP"
+expect_rc 24 "$RC" "the run stops at 24 when the actor mints a dispatcher-shaped directory" "$OUT"
+[ "$(calls "$d")" = "1" ] \
+  && ok "  and the actor really ran, so the stop is about what it did" \
+  || bad "  and the actor really ran" "calls=$(calls "$d")"
+out_has "runs-forged" "$OUT" "  and the stop names the minted directory"
+[ -f "$d/runs-forged/20260101T000000-forged.out" ] \
+  && ok "  and the minted files are left in place for the operator to look at" \
+  || bad "  and the minted files are left in place" "$(ls -a "$d/runs-forged" 2>&1 | tr '\n' ' ')"
+rm -rf "$(task_lock_for "$d" forged-evidence-task)" "$(checkout_lock_for "$d")" 2>/dev/null
+
+# ------------------------------------------------------------- 66b, 66c: gone
+# RETIRED WITH THE MECHANISM THEY POLICED, and named here rather than deleted
+# silently so the gap is a decision on the record.
+#
+# 66b asserted that an actor writing INSIDE a legitimately excused evidence
+# directory was still caught at 24. 66c was its positive control: with the actor
+# behaving, the same excused directory still let the run through. Both sentences
+# begin "the excused directory", and after this unit no directory is excused —
+# 66b's setup now stops at 18 before the actor it needs is ever launched, and
+# 66c's claim is 65a's claim with a second directory it no longer needs.
+#
+# WHAT COVERS THEM NOW. 66a keeps the post-hop delta honest against an actor that
+# builds evidence shapes from nothing, which is 66b's real subject once the
+# excuse is gone; 65a keeps the sequential path working, which is 66c's.
+
+# =================================================================== case 67a
+#
+# THE LAST ADMITTED TERMINAL WITH NO TEST AT ALL. Every other nonzero code in this
+# dispatcher has at least an `expect_rc` pinning its exit; code 34
+# OWNERSHIP_AMBIGUOUS had nothing — not a result assertion, not an exit assertion,
+# nothing. It is reachable (work-loop-owner.sh returns AMBIGUOUS at exit 4, and
+# dispatch.sh branches on that), it is post-admission, and the approved plan's
+# Change set A requires exactly one atomically finalized terminal result for the
+# invalid-state-or-ownership class it belongs to. So the gap was release proof,
+# not polish.
+#
+# THE SIBLING IS 50e, which does the same job for OWNERSHIP_REFUSED (33) — a
+# checkout declaring a DIFFERENT open task. This case is the other verdict the
+# same helper can return, and it is a different route: 33 is a decision the helper
+# reached, 34 is the helper reporting it could not reach one.
+#
+# THROUGH THE REAL HELPER, and that is the point of the fixture rather than an
+# incidental detail. The declaration is made genuinely ambiguous — two task ids in
+# one `.owner` file, which is the helper's own documented "holds more than one
+# task id" row — so the AMBIGUOUS verdict is produced by the shipped helper's own
+# logic. Nothing here calls finalize_terminal_result directly, stubs the helper,
+# or plants a verdict.
+echo
+echo "Case 67a — an admitted OWNERSHIP_AMBIGUOUS refusal finalizes exactly one complete run-bound result"
+d="$(new_sandbox)"; state_file "$d" "owner-ambiguous-task" "codex"
+# TWO ids, one declaration. `marker_holder` collapses any multi-id or unreadable
+# declaration to `?`, which check_local turns into AMBIGUOUS.
+printf 'owner-ambiguous-task\nsome-other-task\n' >"$d/logs/work-loop/.owner"
+# THE FIXTURE PROVES ITSELF FIRST. Without this, a case that stopped reaching the
+# ambiguity route would keep asserting against whatever terminal it reached
+# instead, and the ownership half of the claim would quietly stop being tested.
+bash "$OWNER_BIN" check --checkout "$d" --task owner-ambiguous-task --depth repo >/dev/null 2>&1
+expect_rc 4 "$?" "67a — the real ownership helper returns AMBIGUOUS for this declaration" ""
+run_dispatch "$d" owner-ambiguous-task --actor-cmd "$NOOP"
+expect_rc 34 "$RC" "67a — exits 34 when ownership is ambiguous" "$OUT"
+[ "$(calls "$d")" = "0" ] && ok "67a — nothing was launched" \
+                          || bad "67a — nothing was launched" "calls=$(calls "$d")"
+# The refusal has to be THIS one. Exit 34 has a single production site, but the
+# wording is what shows the helper's own verdict reached the operator.
+out_has "ownership is AMBIGUOUS for task owner-ambiguous-task" "$OUT" \
+  "67a — the stop names the ambiguity the helper reported"
+RID67="$(run_id_of "$OUT")"
+[ -n "$RID67" ] && ok "67a — the run announced a run id" \
+                || bad "67a — the run announced a run id" "$OUT"
+R67="$d/runs/$RID67.result"
+[ -f "$R67" ] && ok "67a — a terminal result exists at the run-bound path" \
+              || bad "67a — a terminal result exists at the run-bound path" \
+                     "missing $R67; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+# EXACTLY ONE, counted three ways, because "a result exists" is the weakest of the
+# claims Change set A makes: one file, no unfinalized temporary beside it, and one
+# version line inside it (an appending producer would carry two).
+[ "$(res_count "$d/runs")" = "1" ] \
+  && ok "67a — exactly one finalized result" \
+  || bad "67a — exactly one finalized result" "found $(res_count "$d/runs"): $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(part_count "$d/runs")" = "0" ] \
+  && ok "67a — no unfinalized temporary artifact was left behind" \
+  || bad "67a — no unfinalized temporary artifact was left behind" "$(ls "$d/runs"/*.result.partial 2>&1)"
+NV67="$(grep -c '^terminal_result_version=' "$R67" 2>/dev/null || printf '0')"
+[ "$NV67" = "1" ] && ok "67a — the artifact carries exactly one version line" \
+                  || bad "67a — the artifact carries exactly one version line" "found $NV67"
+# PROTOCOL COMPLETENESS, the same three checks 50a makes: the recognized version
+# first, the completeness sentinel last, and the bounded grammar throughout.
+[ "$(head -1 "$R67" 2>/dev/null)" = "terminal_result_version=1" ] \
+  && ok "67a — the first line is the recognized schema version" \
+  || bad "67a — the first line is the recognized schema version" "$(head -1 "$R67" 2>/dev/null)"
+[ "$(tail -1 "$R67" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "67a — the last line is the completeness sentinel" \
+  || bad "67a — the last line is the completeness sentinel" "$(tail -1 "$R67" 2>/dev/null)"
+if [ -z "$(grep -vE '^[a-z][a-z0-9_]*=' "$R67" 2>/dev/null)" ]; then
+  ok "67a — every line matches the bounded key=value grammar"
+else
+  bad "67a — every line matches the bounded key=value grammar" \
+      "$(grep -vnE '^[a-z][a-z0-9_]*=' "$R67" | head -3 | tr '\n' ';')"
+fi
+# THE SEMANTICS OF THIS TERMINAL. `owner_check:ambiguous` is the ownership fact —
+# the observed verdict, not the fact that the code got here — and the launch and
+# stage fields are what keep this a refusal that stopped before any actor rather
+# than a failure after one.
+for pair in "outcome:OWNERSHIP_AMBIGUOUS" "code:34" "task:owner-ambiguous-task" \
+            "owner_check:ambiguous" "stage:pre-hop" "actor:none" \
+            "actor_launched:no" "model_request_started:no" "hop:0" \
+            "next_action:operator-resolve-ownership" \
+            "lease_task_at_finalization:held-by-this-run" \
+            "lease_checkout_at_finalization:held-by-this-run"; do
+  k="${pair%%:*}"; want="${pair#*:}"
+  got="$(res_field "$R67" "$k")"
+  [ "$got" = "$want" ] && ok "67a — $k=$want" || bad "67a — $k=$want" "got: ${got:-<absent>}"
+done
+# RUN-BINDING, asserted from inside the artifact as well as from its name: the
+# path proves where it was written, these prove what it says about itself.
+[ "$(res_field "$R67" run)" = "$RID67" ] \
+  && ok "67a — the result names its own run id" \
+  || bad "67a — the result names its own run id" "got: $(res_field "$R67" run)"
+[ "$(res_field "$R67" checkout)" = "$(cd "$d" && pwd -P)" ] \
+  && ok "67a — the result names the canonical checkout" \
+  || bad "67a — the result names the canonical checkout" "got: $(res_field "$R67" checkout)"
+# owner_declared IS ASSERTED NON-EMPTY AND NOT PINNED TO A VALUE, deliberately.
+# owner_declaration() reports the first non-empty line, so a two-id declaration
+# reports one of the two ids beside `owner_check=ambiguous`. That pairing is
+# defensible — the field's contract is "a declaration that exists" and the stop
+# message carries the helper's full reason — but it is arguably a field that
+# should read `unavailable` when the declaration cannot be resolved to one owner.
+# That question is open and is recorded as a deferral, so pinning the current
+# value here would freeze one side of it into a regression.
+[ -n "$(res_field "$R67" owner_declared)" ] \
+  && ok "67a — owner_declared records the observed declaration" \
+  || bad "67a — owner_declared records the observed declaration" "empty"
+# THE LEASE ORDER, which is the durable-ordering rule Change set A states: the
+# record above says both leases were held AT finalization, and both are gone
+# afterwards — so release happened after a valid result existed, not before.
+LT67="$(res_field "$R67" lease_task_dir)"; LC67="$(res_field "$R67" lease_checkout_dir)"
+if [ -n "$LT67" ] && [ -n "$LC67" ] && [ ! -d "$LT67" ] && [ ! -d "$LC67" ]; then
+  ok "67a — both leases it reported holding were released on the way out"
+else
+  bad "67a — both leases it reported holding were released on the way out" \
+      "task=$LT67 ($([ -d "$LT67" ] && echo present || echo gone)) checkout=$LC67 ($([ -d "$LC67" ] && echo present || echo gone))"
+fi
+# =================================================================== case 68a
+#
+# RC 124 means the run had to be killed at the bound — the old non-terminating
+# parse — so a regression reads as 124 instead of hanging the whole suite.
+run_bounded_argv() { # seconds argv... -> sets RC (124 if it had to be killed) and OUT
+  local secs="$1"; shift
+  local o="$SANDBOX_ROOT/argv68.out" pid i
+  : >"$o"
+  bash "$DISPATCH_BIN" "$@" >"$o" 2>&1 &
+  pid=$!
+  for i in $(seq 1 $((secs * 4))); do kill -0 "$pid" 2>/dev/null || break; sleep 0.25; done
+  if kill -0 "$pid" 2>/dev/null; then
+    kill -KILL "$pid" 2>/dev/null; wait "$pid" 2>/dev/null; RC=124
+  else
+    wait "$pid"; RC=$?
+  fi
+  OUT="$(cat "$o")"
+}
+
+echo
+echo "Case 68a — every value-taking option refuses promptly when its value is absent"
+d="$(new_sandbox)"; state_file "$d" "argv-arity-task" "claude"
+rm -f "$d.calls"
+# Derived from the parser, not copied beside it: a hand-written list would leave
+# exactly the next option added unproven.
+VALOPTS68="$(grep -E '^[[:space:]]+--[a-z-]+\).*shift 2' "$DISPATCH_BIN" | sed -E 's/^[[:space:]]*(--[a-z-]+)\).*/\1/')"
+N68="$(printf '%s\n' "$VALOPTS68" | grep -c .)"
+[ "$N68" -ge 11 ] \
+  && ok "68a setup — the parser's value-taking options were read from the dispatcher ($N68 found)" \
+  || bad "68a setup — the parser's value-taking options were read from the dispatcher" "found $N68"
+HEAD68="$(git -C "$d" rev-parse HEAD)"
+TREE68="$(tree_manifest "$d")"
+STATUS68="$(git -C "$d" status --porcelain)"
+# --checkout is supplied first for the others so the refusal asserted is the
+# missing value, not the missing-checkout error one layer down.
+for OPT68 in $VALOPTS68; do
+  if [ "$OPT68" = "--checkout" ]; then
+    run_bounded_argv 8 "$OPT68"
+  else
+    run_bounded_argv 8 --checkout "$d" "$OPT68"
+  fi
+  if [ "$RC" -eq 124 ]; then
+    bad "68a — $OPT68 with no value refuses promptly" \
+        "the run had to be killed after 8s — the parser is not terminating"
+  else
+    expect_rc 10 "$RC" "68a — $OPT68 with no value refuses promptly" "$OUT"
+  fi
+  out_has "STOP [10]" "$OUT" "68a — $OPT68 names itself on stderr"
+  out_has "$OPT68 requires a value" "$OUT" "68a — $OPT68 names the missing-value condition and the option"
+done
+# Once, after all of them: every option refuses at the same shared boundary, so
+# these are properties of that boundary rather than of each option.
+[ ! -e "$(lock_root_for "$d")" ] \
+  && ok "68a — and no invocation took an owner or lease: the shared lease root was never created" \
+  || bad "68a — and no invocation took an owner or lease: the shared lease root was never created" \
+         "$(ls -a "$(lock_root_for "$d")" 2>&1 | tr '\n' ' ')"
+[ "$(calls "$d")" = "0" ] \
+  && ok "68a — and launched no actor" || bad "68a — and launched no actor" "calls=$(calls "$d")"
+[ ! -d "$d/runs" ] \
+  && ok "68a — and wrote no run evidence" \
+  || bad "68a — and wrote no run evidence" "$(ls -a "$d/runs" 2>&1 | tr '\n' ' ')"
+[ "$(git -C "$d" rev-parse HEAD)" = "$HEAD68" ] \
+  && ok "68a — and committed nothing" || bad "68a — and committed nothing" "HEAD moved from $HEAD68"
+[ "$TREE68" = "$(tree_manifest "$d")" ] \
+  && ok "68a — and every byte of the checkout's working tree is unchanged" \
+  || bad "68a — and every byte of the checkout's working tree is unchanged" \
+         "$(diff <(printf '%s\n' "$TREE68") <(printf '%s\n' "$(tree_manifest "$d")") | head -10 | tr '\n' ' ')"
+[ "$STATUS68" = "$(git -C "$d" status --porcelain)" ] \
+  && ok "68a — and git status is unchanged" \
+  || bad "68a — and git status is unchanged" "before [$STATUS68] after [$(git -C "$d" status --porcelain)]"
+# Both supply a real argv element, so both must reach today's meaning rather than
+# the new refusal.
+run_bounded_argv 8 --checkout "$d" --task ""
+expect_rc 10 "$RC" "68a — an explicitly EMPTY value is still a value, not a missing one" "$OUT"
+out_has "--task is required" "$OUT" "68a — and reaches the existing required-value refusal, not the arity one"
+run_bounded_argv 8 --checkout "$d" --task -foo
+expect_rc 12 "$RC" "68a — a value beginning with a dash is still a value" "$OUT"
+out_has "task id rejected" "$OUT" "68a — and reaches the existing task-id grammar, not the arity one"
+
+# =================================================================== case 68b
+# One case, not a matrix: the branch is a single `*)`.
+echo
+echo "Case 68b — an unrecognised option name is refused"
+run_bounded_argv 8 --checkout "$d" --not-an-option
+expect_rc 10 "$RC" "68b — an unknown option is refused as usage" "$OUT"
+out_has "STOP [10]" "$OUT" "68b — the refusal names itself on stderr"
+out_has "unknown argument" "$OUT" "68b — and names the condition"
+out_has "--not-an-option" "$OUT" "68b — and names the rejected option"
+
+# =================================================================== case 69
+# THE EVIDENCE DIRECTORY IS ONE VALUE, AND IT IS DATA.
+#
+# Two separate defects share this seam, which is why they share a case rather
+# than getting a punctuation patch each:
+#
+#   1. `--log-dir -runs` was not a path at all. `mkdir -p "$LOG_DIR"` handed a
+#      leading-dash operand straight into option position, so a perfectly legal
+#      directory name was refused as an illegal option.
+#   2. The value was then kept TWICE. `LOG_DIR` stayed exactly as typed while
+#      `LOG_DIR_ABS` held the canonical form, and the two had different
+#      consumers: finalize_terminal_result() wrote `$LOG_DIR/$RUN_ID.result`
+#      while consume_terminal_result() validated `$LOG_DIR_ABS/$RUN_ID.result`.
+#      Any operand where those two forms differ makes an admitted run write its
+#      durable result to one path and look for it at another.
+#
+# RUN FROM INSIDE THE SANDBOX, deliberately. An absolute --log-dir can never
+# begin with a dash, so the defect is unreachable without a relative operand,
+# and a test that passed an absolute path would be green against the old code.
+echo
+echo "Case 69 — a leading-dash evidence directory is admitted and used as ONE canonical location"
+d="$(new_sandbox)"; state_file "$d" "dashdir-task" "claude"
+OUT="$( cd "$d" && bash "$DISPATCH_BIN" --checkout "$d" --task dashdir-task \
+        --log-dir -runs --carry-one --actor-cmd "$FLIP" 2>&1 )"; RC=$?
+expect_rc 0 "$RC" "69 — the run completes with a leading-dash evidence directory" "$OUT"
+# Not blanket-rejected: a legal directory name that happens to start with `-` is
+# a path, per the clause. This is the half that must NOT become a refusal.
+[ -d "$d/-runs" ] \
+  && ok "69 — the operand was treated as a directory name, not as an option" \
+  || bad "69 — the operand was treated as a directory name, not as an option" \
+         "no directory at $d/-runs"
+# rc 0 already proves the write path and the consume path agree — a divergence
+# stops at 38 or at the untrusted-result funnel — but the artifacts are asserted
+# co-located as well, because "exit 0" alone would not say WHERE.
+R69="$d/-runs/$(run_id_of "$OUT").result"
+[ -f "$R69" ] && ok "69 — the terminal result was finalized inside that directory" \
+              || bad "69 — the terminal result was finalized inside that directory" \
+                     "missing $R69; -runs/ holds: $(ls "$d/-runs" 2>&1 | tr '\n' ' ')"
+[ -f "$d/-runs/$(run_id_of "$OUT").log" ] \
+  && ok "69 — and so was the run log" \
+  || bad "69 — and so was the run log" "-runs/ holds: $(ls "$d/-runs" 2>&1 | tr '\n' ' ')"
+[ -f "$d/-runs/$(run_id_of "$OUT").hop1.claude.out" ] \
+  && ok "69 — and so was the hop capture" \
+  || bad "69 — and so was the hop capture" "-runs/ holds: $(ls "$d/-runs" 2>&1 | tr '\n' ' ')"
+# THE DIVERGENCE ASSERTION PROPER. `run_log` is written from the same variable
+# the hop captures and the result file are named from, so an absolute value here
+# is what says the raw form is gone rather than merely canonicalized alongside.
+case "$(res_field "$R69" run_log)" in
+  /*-runs/*) ok "69 — the operator-facing run_log path is the canonical absolute one" ;;
+  *) bad "69 — the operator-facing run_log path is the canonical absolute one" \
+         "got: $(res_field "$R69" run_log)" ;;
+esac
+[ -d "$d/plans/work-loop-v2-v0.2/handoff-automation-spike/runs" ] \
+  && bad "69 — the default location was NOT used as well" "the default runs/ directory was created too" \
+  || ok "69 — the default location was NOT used as well"
+
+# ================================================================== case 69a
+# THE ONE OPERAND THAT IS NOT A PATH.
+#
+# `-` is refused rather than terminated, because `--` does not settle it: bash's
+# `cd -` means OLDPWD whatever quoting it is given, so a directory genuinely
+# named `-` and the shell's previous-directory token are the same eight bits at
+# every consumer. That ambiguity cannot be resolved downstream, only refused up
+# front — and up front means BEFORE admission, so the refusal takes no lease,
+# launches no actor and leaves no evidence behind. Asserted as effects, not just
+# as an exit code: the pre-change code created the directory before failing.
+echo
+echo "Case 69a — the exact operand \`-\` is refused BEFORE admission, with no effects"
+d="$(new_sandbox)"; state_file "$d" "dashonly-task" "claude"
+OUT="$( cd "$d" && bash "$DISPATCH_BIN" --checkout "$d" --task dashonly-task \
+        --log-dir - --carry-one --actor-cmd "$FLIP" 2>&1 )"; RC=$?
+expect_rc 10 "$RC" "69a — the run is refused as usage" "$OUT"
+out_has "STOP [10]" "$OUT" "69a — the refusal names itself on stderr"
+out_has "run evidence location" "$OUT" "69a — and names the boundary it was refused at"
+[ -e "$d/-" ] \
+  && bad "69a — no evidence directory was created" "a directory named '-' exists at $d/-" \
+  || ok "69a — no evidence directory was created"
+[ -e "$d/plans/work-loop-v2-v0.2/handoff-automation-spike/runs" ] \
+  && bad "69a — and the default location was not created either" "the default runs/ directory exists" \
+  || ok "69a — and the default location was not created either"
+[ -e "$d/.git/work-loop-dispatch-locks" ] \
+  && bad "69a — no task or checkout lease was taken" "a lease root exists at $d/.git/work-loop-dispatch-locks" \
+  || ok "69a — no task or checkout lease was taken"
+[ -e "$d.calls" ] \
+  && bad "69a — no actor was launched" "the actor recorded a call at $d.calls" \
+  || ok "69a — no actor was launched"
+
+# =================================================================== case 70
+# THE ONE ACTOR-CONTROLLED OPERAND IN THE WHOLE DISPATCHER.
+#
+# Every other non-literal operand comes from strict task grammar, a canonical
+# checkout, or a commit hash. `$p` in allowlisted_dirty_snapshot() comes from
+# `git status --porcelain`, which means the actor names it by creating the file.
+# `git hash-object -- "$p"` already terminates options there; nothing proved it.
+#
+# WHY THE ASSERTION IS ABOUT THE HASH AND NOT ABOUT THE PATH APPEARING. The file
+# is dirty BEFORE the hop and dirty AFTER it, so its porcelain line is
+# byte-identical at both snapshots. Only the blob hash changes. If hash-object
+# refuses the operand, both snapshots read `UNHASHABLE`, the two lines match,
+# and comm -13 drops the path — the actor's edit becomes invisible. That is the
+# failure this case detects, and the mutation control below is what proves the
+# case can detect it.
+echo
+echo "Case 70 — an actor-controlled path beginning with a dash is hashed as data"
+dash_case() { # dispatcher-binary -> writes $OUT, sets $RC
+  DASH_D="$(new_sandbox)"; state_file "$DASH_D" "dashpath-task" "claude"
+  # Dirty before launch, and untracked so its porcelain line stays `?? -note.md`
+  # across the hop. Same line before and after is the whole point.
+  printf 'before\n' >"$DASH_D/-note.md"
+  OUT="$(bash "$1" --checkout "$DASH_D" --task dashpath-task --log-dir "$DASH_D/runs" \
+        --carry-one \
+        --allow-path '^logs/work-loop/' --allow-path '^-note\.md$' \
+        --actor-cmd 'printf "after\n" >> "$WL_CHECKOUT/-note.md"; printf "out-of-scope\n" >> "$WL_CHECKOUT/other.txt"' 2>&1)"
+  RC=$?
+}
+dash_case "$DISPATCH_BIN"
+expect_rc 24 "$RC" "70 — the out-of-allowlist edit still stops the run" "$OUT"
+printf '%s' "$OUT" | grep -q "PARTIAL FILE EFFECTS" \
+  && ok "70 — the stop carries a partial-effects section" \
+  || bad "70 — the stop carries a partial-effects section" "$OUT"
+partial_section "$OUT" | grep -Fq -- "-note.md" \
+  && ok "70 — the dash-named path the actor edited is named inside that section" \
+  || bad "70 — the dash-named path the actor edited is named inside that section" "$OUT"
+
+# --- the mutation control ----------------------------------------------------
+# A green case is not evidence until the thing it is about can be taken away.
+# ONLY the option terminator is removed, and the diff is asserted to be exactly
+# that one line — a mutation that failed to apply would otherwise "pass" by
+# reproducing the unmutated result.
+echo
+echo "Case 70a — CONTROL: case 70 fails when only the \`--\` is removed"
+MUT70="$SANDBOX_ROOT/dispatch-no-optterm.sh"
+sed 's|hash-object -- "\$p"|hash-object "$p"|' "$DISPATCH_BIN" >"$MUT70"
+MUT70_DELTA="$(diff "$DISPATCH_BIN" "$MUT70" | grep -c '^[<>]')"
+[ "$MUT70_DELTA" = "2" ] \
+  && ok "70a — the mutation changed exactly one line" \
+  || bad "70a — the mutation changed exactly one line" "changed-line markers: $MUT70_DELTA"
+grep -q 'hash-object -- "\$p"' "$MUT70" \
+  && bad "70a — the option terminator is gone from the mutant" "it is still present" \
+  || ok "70a — the option terminator is gone from the mutant"
+dash_case "$MUT70"
+partial_section "$OUT" | grep -Fq -- "-note.md" \
+  && bad "70a — without \`--\` the actor's edit to the dash-named path goes UNREPORTED" \
+         "the mutant still reported it, so case 70 is not testing the terminator" \
+  || ok "70a — without \`--\` the actor's edit to the dash-named path goes UNREPORTED"
+
+# ================================================================== case 69b
+# THE ORDERING, NOT THE SPELLING.
+#
+# Case 69 proved the evidence directory ends up as one canonical value. It did
+# not constrain WHEN that value is chosen, and the answer used to be "after the
+# first filesystem effect": check_evidence_location() judged the raw operand,
+# `mkdir -p` created from that same raw operand, and only then did `cd && pwd -P`
+# work out what had been created.
+#
+# `ghost/../runs` is the smallest operand that tells those two apart. Its
+# canonical target is `<cwd>/runs` and nothing else, but mkdir -p walks the
+# SPELLING and creates `ghost` on the way through — a directory inside the
+# checkout, written by an invocation that had not been admitted, and never used
+# by the run that created it. The approved admission boundary says an invalid
+# pre-admission invocation mutates nothing, and a stray directory is a mutation.
+#
+# ASSERTED ON THE STRAY PATH, not only on the exit code. A refusal that still
+# created `ghost` would pass an exit-code-only test while leaving exactly the
+# effect this case exists to remove.
+echo
+echo "Case 69b — a non-canonical evidence operand creates nothing before it is normalized"
+d="$(new_sandbox)"; state_file "$d" "ghostdir-task" "claude"
+OUT="$( cd "$d" && bash "$DISPATCH_BIN" --checkout "$d" --task ghostdir-task \
+        --log-dir ghost/../runs --carry-one --actor-cmd "$FLIP" 2>&1 )"; RC=$?
+expect_rc 10 "$RC" "69b — the unresolvable spelling is refused as usage" "$OUT"
+out_has "STOP [10]" "$OUT" "69b — the refusal names itself on stderr"
+out_has "run evidence location" "$OUT" "69b — and names the boundary it was refused at"
+[ -e "$d/ghost" ] \
+  && bad "69b — no stray directory was created on the way to the refusal" \
+         "a directory named 'ghost' exists at $d/ghost" \
+  || ok "69b — no stray directory was created on the way to the refusal"
+[ -e "$d/runs" ] \
+  && bad "69b — and the resolved target was not created either" "$d/runs exists" \
+  || ok "69b — and the resolved target was not created either"
+[ -e "$d/.git/work-loop-dispatch-locks" ] \
+  && bad "69b — no lease was taken" "a lease root exists" \
+  || ok "69b — no lease was taken"
+[ -e "$d.calls" ] \
+  && bad "69b — no actor was launched" "the actor recorded a call" \
+  || ok "69b — no actor was launched"
+
+# THE OTHER HALF, and it is what keeps 69b from being a blanket ban on `..`.
+# When every component exists the kernel resolves the whole path, so the same
+# spelling is admitted and normalized to the one directory it names.
+echo
+echo "Case 69c — the same spelling is ADMITTED once its components exist"
+d="$(new_sandbox)"; state_file "$d" "ghostreal-task" "claude"
+mkdir -p "$d/ghost" "$d/runs"
+OUT="$( cd "$d" && bash "$DISPATCH_BIN" --checkout "$d" --task ghostreal-task \
+        --log-dir ghost/../runs --carry-one --actor-cmd "$FLIP" 2>&1 )"; RC=$?
+expect_rc 0 "$RC" "69c — the run completes when the spelling resolves" "$OUT"
+R69C="$d/runs/$(run_id_of "$OUT").result"
+[ -f "$R69C" ] \
+  && ok "69c — its evidence went to the resolved directory" \
+  || bad "69c — its evidence went to the resolved directory" \
+         "missing $R69C; runs/ holds: $(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+# The `..` is gone from the reported path: normalized, not merely accepted.
+case "$(res_field "$R69C" run_log)" in
+  *..*) bad "69c — the reported path carries no unresolved \`..\`" \
+            "got: $(res_field "$R69C" run_log)" ;;
+  /*/runs/*) ok "69c — the reported path carries no unresolved \`..\`" ;;
+  *) bad "69c — the reported path carries no unresolved \`..\`" \
+         "got: $(res_field "$R69C" run_log)" ;;
+esac
+[ -e "$d/ghost/runs" ] \
+  && bad "69c — and nothing was created under the traversed component" "$d/ghost/runs exists" \
+  || ok "69c — and nothing was created under the traversed component"
+
+# ============================================== Case 70 — lossless Git paths
+#
+# Unit 22. Git reports paths in two shapes and the dispatcher used to read the
+# wrong one. In the LINE-delimited forms Git C-quotes any name containing `"`,
+# `\`, a control byte or (default core.quotePath) a non-ASCII byte; the readers
+# stripped the outer quotes and never decoded what was inside, so
+# `logs/work-loop/tåsk.md` arrived as the literal text
+# `logs/work-loop/t\303\245sk.md`. That text is not a path, which broke two
+# separate decisions in opposite directions:
+#
+#   allowlisted_dirty_snapshot()  `[ -e ]` on the escaped text is false, so the
+#                                 fingerprint was ABSENT before AND after a hop.
+#                                 Two equal snapshots means no delta, so an
+#                                 actor's second edit to an ALREADY-DIRTY file
+#                                 vanished from the partial-effect block and
+#                                 from changed_paths_since_launch. It HID work.
+#   committed_foreign()           stripped nothing, so the leading `"` defeated
+#                                 its own `^`-anchored allowlist and legitimate
+#                                 in-allowlist commits FALSE-STOPPED at 30.
+#
+# ONE COMBINED HOSTILE NAME rather than a per-character matrix: it carries a
+# double quote, a backslash, a tab and a non-ASCII byte at once, so a single
+# fixture exercises every class Git quotes for. The tab matters twice over — it
+# is what makes the display form differ from the raw form, which is what the
+# mutation control at 70f pivots on.
+#
+# THE ALLOWLIST VERDICT IS DELIBERATELY STABLE ACROSS THE FIX. `^logs/hostile-`
+# matches the escaped text and the raw path alike, so classification is NOT the
+# variable under test here; the fingerprint and the reporting are. A fixture
+# whose allowlist verdict also moved could not tell the two apart.
+
+echo
+echo "Case 70a — an already-dirty allowlisted hostile path, edited again by the actor, is REPORTED"
+d="$(new_sandbox)"; state_file "$d" "hostile-path-task" "claude"
+H70=$'logs/hostile-a"b\\c\tdåe.md'
+D70='logs/hostile-a"b\c?dåe.md'
+printf 'seed\n' >"$d/$H70"
+git -C "$d" add -- "$H70" >/dev/null 2>&1
+git -C "$d" commit -qm "seed hostile path" >/dev/null 2>&1
+# ALREADY DIRTY BEFORE LAUNCH. This is the whole condition: a file that is clean
+# at launch gets a brand-new snapshot entry either way and is reported even by
+# the broken reader, so only a pre-existing dirty path can expose the hiding.
+printf 'pre-existing operator edit\n' >>"$d/$H70"
+SB70="$(shasum -a 256 "$d/logs/work-loop/hostile-path-task.md" | cut -d' ' -f1)"
+HB70="$(git -C "$d" rev-parse HEAD)"
+# Passed through the environment, not interpolated into --actor-cmd: the name
+# contains a double quote and a backslash, and quoting it into a shell string
+# would be testing the harness's escaping rather than the dispatcher's reading.
+export WL_H70="$H70"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task hostile-path-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+      --actor-cmd 'printf "actor edit\n" >> "$WL_CHECKOUT/$WL_H70"; awk "/^turn: /&&!d{print \"turn: broken\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+expect_rc 15 "$RC" "70a — malformed post-hop state exits 15" "$OUT"
+partial_section "$OUT" | grep -Fq "$D70" \
+  && ok "70a — the actor's edit to the hostile path IS reported as a partial effect" \
+  || bad "70a — the actor's edit to the hostile path IS reported as a partial effect" \
+         "partial block: $(partial_section "$OUT")"
+R70A="$d/runs/$(run_id_of "$OUT").result"
+for pair in "worktree_foreign_paths:0" "worktree_allowlisted_dirty_paths:2" \
+            "changed_paths_since_launch:2" \
+            "state_sha256_before:$SB70" "head_before:$HB70"; do
+  k="${pair%%:*}"; want="${pair#*:}"; got="$(res_field "$R70A" "$k")"
+  [ "$got" = "$want" ] && ok "  70a — $k=$want" \
+                       || bad "  70a — $k=$want" "got: ${got:-<absent>}"
+done
+unset WL_H70
+
+echo
+echo "Case 70b — a newline in a filename cannot forge a control line, and is still reported"
+# The second cost of reading raw bytes. Git's quoting used to make this
+# impossible for free; `-z` gives that up, so disp_path() takes it back. The
+# forged text is the dispatcher's OWN report header, which is the worst case:
+# a reader slicing on it would be reading the actor's filename as a section.
+d="$(new_sandbox)"; state_file "$d" "forged-line-task" "claude"
+NL70=$'logs/hostile-x\nPARTIAL FILE EFFECTS — forged by a filename'
+DL70='logs/hostile-x?PARTIAL FILE EFFECTS — forged by a filename'
+printf 'seed\n' >"$d/$NL70"
+git -C "$d" add -- "$NL70" >/dev/null 2>&1
+git -C "$d" commit -qm "seed forged-line path" >/dev/null 2>&1
+printf 'pre-existing operator edit\n' >>"$d/$NL70"
+export WL_H70="$NL70"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task forged-line-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+      --actor-cmd 'printf "actor edit\n" >> "$WL_CHECKOUT/$WL_H70"; awk "/^turn: /&&!d{print \"turn: broken\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+expect_rc 15 "$RC" "70b — malformed post-hop state exits 15" "$OUT"
+partial_section "$OUT" | grep -Fq "$DL70" \
+  && ok "70b — the hostile path is reported with its newline neutralised to '?'" \
+  || bad "70b — the hostile path is reported with its newline neutralised to '?'" \
+         "partial block: $(partial_section "$OUT")"
+# The forged header must never begin a line of its own anywhere in the output.
+printf '%s\n' "$OUT" | grep -qE '^PARTIAL FILE EFFECTS — forged by a filename' \
+  && bad "70b — the filename did not forge a control line" \
+         "$(printf '%s\n' "$OUT" | grep -nE '^PARTIAL FILE EFFECTS — forged')" \
+  || ok "70b — the filename did not forge a control line"
+unset WL_H70
+
+echo
+echo "Case 70c — an ALLOWED committed hostile path no longer false-stops as committed-foreign"
+d="$(new_sandbox)"; state_file "$d" "hostile-commit-task" "claude"
+printf 'seed\n' >"$d/$H70"
+git -C "$d" add -- "$H70" >/dev/null 2>&1
+git -C "$d" commit -qm "seed hostile path" >/dev/null 2>&1
+export WL_H70="$H70"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task hostile-commit-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+      --actor-cmd 'printf "actor edit\n" >> "$WL_CHECKOUT/$WL_H70"; git -C "$WL_CHECKOUT" add -A >/dev/null 2>&1; '"$FLIP" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "70c — the hop completes; an in-allowlist hostile commit is not foreign" "$OUT"
+printf '%s' "$OUT" | grep -q 'COMMITTED paths outside the allowlist' \
+  && bad "70c — no committed-foreign stop was raised" "$OUT" \
+  || ok "70c — no committed-foreign stop was raised"
+unset WL_H70
+
+echo
+echo "Case 70d — a genuinely FOREIGN committed hostile path still stops at 30"
+# The control for 70c. Without it, 70c would be satisfied by a committed_foreign()
+# that had simply stopped classifying anything.
+d="$(new_sandbox)"; state_file "$d" "hostile-foreign-task" "claude"
+F70=$'outside-a"b\\c\tdåe.md'
+printf 'seed\n' >"$d/$F70"
+git -C "$d" add -- "$F70" >/dev/null 2>&1
+git -C "$d" commit -qm "seed foreign hostile path" >/dev/null 2>&1
+export WL_H70="$F70"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task hostile-foreign-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' \
+      --actor-cmd 'printf "actor edit\n" >> "$WL_CHECKOUT/$WL_H70"; git -C "$WL_CHECKOUT" add -A >/dev/null 2>&1; '"$FLIP" 2>&1)"; RC=$?
+expect_rc 30 "$RC" "70d — a foreign hostile commit still stops at 30" "$OUT"
+unset WL_H70
+
+echo
+echo "Case 70e — a staged rename is read in its NUL shape and its FOREIGN origin is still classified"
+# `-z` moves the rename's second path into its own record AND REVERSES THE ORDER:
+# the line form was `R  old -> new`, the -z form is `R  new<NUL>old<NUL>`. A
+# reader that kept the line-form assumption would read the origin as the next
+# entry's status line. Here the ORIGIN is foreign and the DESTINATION is allowed,
+# so a reader that classified only the destination would call this allowed work
+# and let a foreign path be laundered into the allowlist by renaming it.
+d="$(new_sandbox)"; state_file "$d" "hostile-rename-task" "claude"
+printf 'seed\n' >"$d/$F70"
+git -C "$d" add -- "$F70" >/dev/null 2>&1
+git -C "$d" commit -qm "seed foreign hostile path" >/dev/null 2>&1
+#
+# FLIP_BODY, NOT FLIP, and that is the point of the case rather than a detail:
+# the committed variant would commit the rename, which routes it to
+# committed_foreign() — a different reader that runs `--no-renames` and never
+# sees a rename record at all. Leaving it STAGED is what puts it in front of
+# worktree_entries(), which is where the `R  new<NUL>old<NUL>` shape is read.
+# The post-hop foreign check (24) runs before the uncommitted-state guards, so
+# the deliberately uncommitted handback does not pre-empt it.
+export WL_H70="$F70" WL_D70="$H70"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task hostile-rename-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+      --actor-cmd 'git -C "$WL_CHECKOUT" mv -- "$WL_H70" "$WL_D70" >/dev/null 2>&1; '"$FLIP_BODY" 2>&1)"; RC=$?
+expect_rc 24 "$RC" "70e — the rename's foreign origin still stops the hop at 24" "$OUT"
+printf '%s' "$OUT" | grep -Fq "$D70" \
+  && ok "70e — the reported entry names the rename destination" \
+  || bad "70e — the reported entry names the rename destination" "$OUT"
+unset WL_H70 WL_D70
+
+echo
+echo "Case 70f — mutation control: fingerprint the DISPLAY path and 70a's evidence disappears"
+# The narrowest possible mutation of the repair. `disp_path` differs from the raw
+# path for exactly the bytes this unit is about — the tab in the fixture name —
+# so hashing the display form puts the pre-change failure back: hash-object fails,
+# the oid becomes a constant on BOTH sides of the hop, the snapshots compare equal,
+# and the actor's edit vanishes again. Everything else about the dispatcher,
+# including the -z reads and the allowlist verdict, is left exactly as shipped.
+MUT70="$SANDBOX_ROOT/mut70"; mkdir -p "$MUT70"
+sed 's|hash-object -- "$p"|hash-object -- "$d_p"|' "$DISPATCH_BIN" >"$MUT70/m16.sh"
+if ! cmp -s "$MUT70/m16.sh" "$DISPATCH_BIN"; then
+  ok "70f — M16 mutant differs from the dispatcher (the raw-path fingerprint was found)"
+  d="$(new_sandbox)"; state_file "$d" "hostile-path-task" "claude"
+  printf 'seed\n' >"$d/$H70"
+  git -C "$d" add -- "$H70" >/dev/null 2>&1
+  git -C "$d" commit -qm "seed hostile path" >/dev/null 2>&1
+  printf 'pre-existing operator edit\n' >>"$d/$H70"
+  export WL_H70="$H70"
+  OUT="$(bash "$MUT70/m16.sh" --checkout "$d" --task hostile-path-task --log-dir "$d/runs" \
+        --carry-one \
+        --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+        --actor-cmd 'printf "actor edit\n" >> "$WL_CHECKOUT/$WL_H70"; awk "/^turn: /&&!d{print \"turn: broken\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"
+  partial_section "$OUT" | grep -Fq "$D70" \
+    && bad "70f — M16: the hostile path's edit is hidden again (70a is fail-capable)" \
+           "the mutant still reported it: $(partial_section "$OUT")" \
+    || ok "70f — M16: the hostile path's edit is hidden again (70a is fail-capable)"
+  R70F="$d/runs/$(run_id_of "$OUT").result"
+  [ "$(res_field "$R70F" changed_paths_since_launch)" = "1" ] \
+    && ok "70f — M16: changed_paths_since_launch drops back to 1" \
+    || bad "70f — M16: changed_paths_since_launch drops back to 1" \
+           "got: $(res_field "$R70F" changed_paths_since_launch)"
+  unset WL_H70
+else
+  bad "70f — M16 mutant differs from the dispatcher (the raw-path fingerprint was found)" \
+      "sed matched nothing; the fingerprint site was renamed or removed"
+fi
+
+echo
+echo "Case 70g — two allowed paths with the SAME display form keep separate snapshot identities"
+# Unit 22 correction. Reading raw bytes fixed Git INGESTION, but the snapshot
+# record the dispatcher compares across a hop was still keyed on the display
+# form, and disp_path() maps EVERY control byte to the same `?`. So two distinct
+# allowed filenames differing only by a control byte produced the same snapshot
+# key, and the pair `<oid> + <display>` was not a unique identity.
+#
+# THE FAILURE IS A SWAP, not an edit. Each file's oid still moves, so neither
+# path looks unchanged on its own — but the SORTED multiset of records is what
+# comm(1) compares, and swapping two contents between two same-display paths
+# permutes that multiset back onto itself. Before and after compare equal, the
+# delta is empty, and two real content changes vanish from both the operator's
+# partial-effect block and changed_paths_since_launch.
+#
+# The correction adds a bounded, line-safe, LOSSLESS identity — a digest of the
+# RAW pathname — to the record's first field. The display form is untouched and
+# still does all matching and all printing, so no raw control byte reaches the
+# operator and the terminal-result schema is unchanged.
+d="$(new_sandbox)"; state_file "$d" "collision-task" "claude"
+C1=$'logs/hostile-c\td.md'
+C2=$'logs/hostile-c\nd.md'
+DC='logs/hostile-c?d.md'
+printf 'base\n' >"$d/$C1"; printf 'base\n' >"$d/$C2"
+git -C "$d" add -- "$C1" "$C2" >/dev/null 2>&1
+git -C "$d" commit -qm "seed collision pair" >/dev/null 2>&1
+# BOTH ALREADY DIRTY BEFORE LAUNCH. Clean files would each arrive as a brand-new
+# after-snapshot entry and be reported even by the broken key, so only a
+# pre-existing pair can expose the permutation.
+printf 'AAA\n' >"$d/$C1"; printf 'BBB\n' >"$d/$C2"
+export WL_C1="$C1" WL_C2="$C2"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task collision-task --log-dir "$d/runs" \
+      --carry-one \
+      --allow-path '^logs/work-loop/' --allow-path '^logs/hostile-' \
+      --actor-cmd 'printf "BBB\n" > "$WL_CHECKOUT/$WL_C1"; printf "AAA\n" > "$WL_CHECKOUT/$WL_C2"; awk "/^turn: /&&!d{print \"turn: broken\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"' 2>&1)"; RC=$?
+expect_rc 15 "$RC" "70g — malformed post-hop state exits 15" "$OUT"
+# Both files really did change: the swap is a real pair of content edits, so a
+# reader that misses it is reporting a falsehood, not merely being terse.
+[ "$(cat "$d/$C1")" = "BBB" ] && [ "$(cat "$d/$C2")" = "AAA" ] \
+  && ok "70g — the actor really did swap the two files' contents" \
+  || bad "70g — the actor really did swap the two files' contents" \
+         "C1=$(cat "$d/$C1") C2=$(cat "$d/$C2")"
+[ "$(partial_section "$OUT" | grep -Fc "$DC")" = "2" ] \
+  && ok "70g — both swapped paths are reported as partial effects" \
+  || bad "70g — both swapped paths are reported as partial effects" \
+         "partial block: $(partial_section "$OUT")"
+R70G="$d/runs/$(run_id_of "$OUT").result"
+[ "$(res_field "$R70G" changed_paths_since_launch)" = "3" ] \
+  && ok "70g — changed_paths_since_launch counts both swaps plus the state file" \
+  || bad "70g — changed_paths_since_launch counts both swaps plus the state file" \
+         "got: $(res_field "$R70G" changed_paths_since_launch)"
+# The display form must still be the ONLY thing printed: the lossless identity is
+# internal, so no raw control byte may reach the operator through it.
+printf '%s\n' "$OUT" | grep -qE '^d\.md' \
+  && bad "70g — no raw control byte leaked into operator output" \
+         "$(printf '%s\n' "$OUT" | grep -nE '^d\.md')" \
+  || ok "70g — no raw control byte leaked into operator output"
+unset WL_C1 WL_C2
+
+# ==================================== Case 71 — attended permission selection
+#
+# Unit 24, Change set B. The attended Claude launch passed the LITERAL
+# `--permission-mode default`, so there was no way to request `acceptEdits` for
+# one invocation, and `permission_mode_requested` restated the same literal
+# rather than reporting what the argv carried.
+#
+# WHAT MUST NOT CHANGE, and is asserted here rather than assumed: the mode is
+# still EXPLICIT on every attended launch. P0-F's finding was never about the
+# word `default` — it was that an inherited mode let a child run under this
+# checkout's `defaultMode: bypassPermissions`. A selection whose two values are
+# both fixed before admission keeps that property; a selection that fell back to
+# "whatever settings say" would silently undo it.
+#
+# These cases reuse FAKE2 and argv_has() rather than adding a harness: FAKE2 is
+# already the attended-capable stub with an argv recorder, which is exactly the
+# nearest existing mechanism.
+
+echo
+echo "Case 71a — omitting the flag still requests default, on the argv and in the record"
+d="$(new_sandbox)"; state_file "$d" "perm-default-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-perm-default.txt"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-perm-default.txt"
+export WL_SF="$d/logs/work-loop/perm-default-task.md"
+export WL_CO="$d"
+export WL_FAKE_VERSION="2.1.220 (Claude Code)"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-default-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "71a — the hop completes with no --permission-mode flag" "$OUT"
+argv_has "$WL_ARGV_FILE" "--permission-mode" \
+  && ok "71a — the attended argv still states a permission mode explicitly" \
+  || bad "71a — the attended argv still states a permission mode explicitly" \
+         "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE" 2>/dev/null)"
+argv_has "$WL_ARGV_FILE" "default" \
+  && ok "71a — and the stated mode is default" \
+  || bad "71a — and the stated mode is default" "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE" 2>/dev/null)"
+R71A="$d/runs/$(run_id_of "$OUT").result"
+[ "$(res_field "$R71A" permission_mode_requested)" = "default" ] \
+  && ok "71a — permission_mode_requested=default" \
+  || bad "71a — permission_mode_requested=default" "got: $(res_field "$R71A" permission_mode_requested)"
+
+echo
+echo "Case 71b — an explicit acceptEdits selection reaches the argv and the record"
+d="$(new_sandbox)"; state_file "$d" "perm-accept-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-perm-accept.txt"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-perm-accept.txt"
+export WL_SF="$d/logs/work-loop/perm-accept-task.md"
+export WL_CO="$d"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-accept-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --permission-mode acceptEdits 2>&1)"; RC=$?
+expect_rc 0 "$RC" "71b — the hop completes with --permission-mode acceptEdits" "$OUT"
+argv_has "$WL_ARGV_FILE" "acceptEdits" \
+  && ok "71b — the child's argv carries acceptEdits" \
+  || bad "71b — the child's argv carries acceptEdits" \
+         "argv: $(tr '\n' ' ' <"$WL_ARGV_FILE" 2>/dev/null)"
+R71B="$d/runs/$(run_id_of "$OUT").result"
+[ "$(res_field "$R71B" permission_mode_requested)" = "acceptEdits" ] \
+  && ok "71b — permission_mode_requested=acceptEdits" \
+  || bad "71b — permission_mode_requested=acceptEdits" "got: $(res_field "$R71B" permission_mode_requested)"
+# THE HONEST HALF. Requesting a mode is not observing one. FAKE2 emits no stream,
+# so there is no system/init event to read here even after Unit 26 added the
+# reader — and a record that promoted the request to an effective grant would be
+# the single most tempting false statement available. Case 72 is where the reader
+# is exercised against captures that do carry the event.
+[ "$(res_field "$R71B" permission_mode_effective)" = "unavailable" ] \
+  && ok "71b — permission_mode_effective stays honestly unavailable" \
+  || bad "71b — permission_mode_effective stays honestly unavailable" \
+         "got: $(res_field "$R71B" permission_mode_effective)"
+
+echo
+echo "Case 71c — explicit default is accepted and behaves exactly like omission"
+d="$(new_sandbox)"; state_file "$d" "perm-explicit-task" "claude"
+export WL_ARGV_FILE="$SANDBOX_ROOT/argv-perm-explicit.txt"
+export WL_ENV_FILE="$SANDBOX_ROOT/env-perm-explicit.txt"
+export WL_SF="$d/logs/work-loop/perm-explicit-task.md"
+export WL_CO="$d"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-explicit-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --permission-mode default 2>&1)"; RC=$?
+expect_rc 0 "$RC" "71c — the hop completes with an explicit default" "$OUT"
+R71C="$d/runs/$(run_id_of "$OUT").result"
+[ "$(res_field "$R71C" permission_mode_requested)" = "default" ] \
+  && ok "71c — permission_mode_requested=default" \
+  || bad "71c — permission_mode_requested=default" "got: $(res_field "$R71C" permission_mode_requested)"
+
+echo
+echo "Case 71d — invalid modes are refused BEFORE admission, with no effect of any kind"
+# The no-effect half is the point, not the exit code. A refusal that had already
+# taken a lease or written evidence would be a run that happened for an authority
+# request the dispatcher then rejected.
+for bad_mode in bypassPermissions sudo '' ; do
+  d="$(new_sandbox)"; state_file "$d" "perm-refuse-task" "claude"
+  HB="$(git -C "$d" rev-parse HEAD)"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-refuse-task --log-dir "$d/runs" \
+        --carry-one --claude-bin "$FAKE2" --permission-mode "$bad_mode" 2>&1)"; RC=$?
+  label="${bad_mode:-<empty>}"
+  expect_rc 10 "$RC" "71d — --permission-mode $label is refused as usage (10)" "$OUT"
+  [ ! -d "$d/runs" ] \
+    && ok "71d — $label: no evidence directory was created" \
+    || bad "71d — $label: no evidence directory was created" "$(ls "$d/runs" 2>&1 | tr '\n' ' ')"
+  [ "$(git -C "$d" rev-parse HEAD)" = "$HB" ] && [ -z "$(git -C "$d" status --porcelain)" ] \
+    && ok "71d — $label: the repository is untouched" \
+    || bad "71d — $label: the repository is untouched" "$(git -C "$d" status --porcelain)"
+  [ ! -e "$d/logs/work-loop/.owner" ] \
+    && ok "71d — $label: no ownership declaration was taken" \
+    || bad "71d — $label: no ownership declaration was taken" "$(cat "$d/logs/work-loop/.owner" 2>/dev/null)"
+done
+# bypassPermissions is named in its own message, because it is the value an
+# operator actually reaches for and a generic "unknown mode" would bury it.
+d="$(new_sandbox)"; state_file "$d" "perm-bypass-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-bypass-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --permission-mode bypassPermissions 2>&1)"
+printf '%s' "$OUT" | grep -q 'never requests bypass authority' \
+  && ok "71d — bypassPermissions is refused by name, not as a generic unknown token" \
+  || bad "71d — bypassPermissions is refused by name" "$OUT"
+
+echo
+echo "Case 71e — a mode the launch cannot carry is refused, not silently dropped"
+# --unattended and --actor-cmd both pass NO permission mode to anything. Accepting
+# acceptEdits alongside either would let the operator request an elevation that is
+# then quietly not applied, which is the same falsification the existing
+# --unattended/--actor-cmd guard refuses one flag over.
+d="$(new_sandbox)"; state_file "$d" "perm-unatt-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-unatt-task --log-dir "$d/runs" \
+      --carry-one --claude-bin "$FAKE2" --unattended --permission-mode acceptEdits 2>&1)"; RC=$?
+expect_rc 10 "$RC" "71e — --unattended with acceptEdits is refused (10)" "$OUT"
+d="$(new_sandbox)"; state_file "$d" "perm-sim-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-sim-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd "$FLIP" --permission-mode acceptEdits 2>&1)"; RC=$?
+expect_rc 10 "$RC" "71e — --actor-cmd with acceptEdits is refused (10)" "$OUT"
+# The compatible pairing still works: `default` changes nothing, so it must not
+# be caught by the guard above.
+d="$(new_sandbox)"; state_file "$d" "perm-sim-ok-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task perm-sim-ok-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd "$FLIP" --permission-mode default 2>&1)"; RC=$?
+expect_rc 0 "$RC" "71e — --actor-cmd with an explicit default is still allowed" "$OUT"
+
+echo
+echo "Case 71f — mutation control: hard-code the launch back to default and 71b fails"
+MUT71="$SANDBOX_ROOT/mut71"; mkdir -p "$MUT71"
+sed 's|--permission-mode "$PERMISSION_MODE" \\|--permission-mode default \\|' "$DISPATCH_BIN" >"$MUT71/m17.sh"
+if ! cmp -s "$MUT71/m17.sh" "$DISPATCH_BIN"; then
+  ok "71f — M17 mutant differs from the dispatcher (the launch reads the selection)"
+  d="$(new_sandbox)"; state_file "$d" "perm-accept-task" "claude"
+  export WL_ARGV_FILE="$SANDBOX_ROOT/argv-perm-mut.txt"
+  export WL_ENV_FILE="$SANDBOX_ROOT/env-perm-mut.txt"
+  export WL_SF="$d/logs/work-loop/perm-accept-task.md"
+  export WL_CO="$d"
+  OUT="$(bash "$MUT71/m17.sh" --checkout "$d" --task perm-accept-task --log-dir "$d/runs" \
+        --carry-one --claude-bin "$FAKE2" --permission-mode acceptEdits 2>&1)"
+  argv_has "$WL_ARGV_FILE" "acceptEdits" \
+    && bad "71f — M17: the child's argv falls back to default (71b is fail-capable)" \
+           "the mutant still carried acceptEdits" \
+    || ok "71f — M17: the child's argv falls back to default (71b is fail-capable)"
+else
+  bad "71f — M17 mutant differs from the dispatcher (the launch reads the selection)" \
+      "sed matched nothing; the launch argv site was renamed or removed"
+fi
+unset WL_ARGV_FILE WL_ENV_FILE WL_SF WL_CO WL_FAKE_VERSION
+
+# ============================ Case 72 — the EFFECTIVE attended permission mode
+#
+# Unit 26, Change set B. `permission_mode_requested` became truthful at Unit 24,
+# but `permission_mode_effective` was the literal `unavailable` on every path — so
+# the record could say what was ASKED FOR and never whether it was HONOURED, which
+# is the question a supervised-use claim actually turns on.
+#
+# WHAT THESE CASES PROVE, and the boundary is worth stating because it is narrow:
+# that the dispatcher reads the RUNTIME-AUTHORED `system/init` event out of the hop
+# capture, reports it as the effective mode, and refuses every shape it cannot
+# resolve. They do NOT prove that the real Claude Code runtime reports `acceptEdits`
+# there — that needs a live paid launch and is deferred by the brief. Unit 25's
+# committed evidence is what stands behind the field's meaning; these cases stand
+# behind this dispatcher's handling of it.
+#
+# THE TWO NEGATIVE CONTROLS ARE THE FIXTURE GROUPS THEMSELVES, so no mutation
+# harness is built here:
+#   * a dispatcher that IGNORED system/init fails 72a, 72b and 72c — all three
+#     would report `unavailable` where a mode is present in the stream;
+#   * a dispatcher that FELL BACK to the requested mode fails every row of 72d,
+#     each of which is launched with --permission-mode acceptEdits precisely so
+#     that `unavailable` and the request are distinguishable tokens.
+# 72c is the sharpest of the three: the stream says `default` while the argv says
+# `acceptEdits`, so a record that conflated the two cannot pass it in either
+# direction.
+#
+# The stub is the FAKE60H technique — a live fake BINARY, so MODE stays `live` and
+# a real child is forked while no model is contacted — extended by the one thing
+# these cases need: it emits a stream on stdout, which becomes the hop capture.
+
+FAKE72="$SANDBOX_ROOT/fake-claude-72.sh"
+cat >"$FAKE72" <<'F72EOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.220 (Claude Code)"; exit 0; fi
+printf '%s\n' "$@" > "$WL72_ARGV"
+sf="$WL72_SF"
+awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+git -C "$WL72_CO" add "$sf" >/dev/null 2>&1
+git -C "$WL72_CO" commit -qm "fake claude hop" >/dev/null 2>&1
+# THE CAPTURE. Written last, so it cannot be mistaken for something the dispatcher
+# composed: this is the child's own stdout, exactly as a real stream-json hop
+# produces it, and $WL72_STREAM is the only thing that varies between rows.
+[ -n "${WL72_STREAM:-}" ] && [ -f "$WL72_STREAM" ] && cat "$WL72_STREAM"
+exit 0
+F72EOF
+chmod +x "$FAKE72"
+
+# One `system/init` line in the shape the committed probe recorded — see
+# runs/probes/unattended-effective-policy-2026-08-07.raw.txt line 271, whose key
+# set this mirrors. The argument is the RAW JSON value of permissionMode, so a row
+# can hand it a string, a number, null, an object or nothing at all.
+init72() { printf '{"type":"system","subtype":"init","cwd":"/x","session_id":"s72","model":"claude-x","tools":["Bash","Skill"],"mcp_servers":[],"permissionMode":%s,"uuid":"u72"}\n' "$1"; }
+# The stream's terminal event, key-for-key what --output-format json used to emit
+# as its single object. Its presence in every row is the compatibility claim.
+res72()  { printf '{"type":"result","subtype":"success","is_error":false,"session_id":"s72","result":"done","permission_denials":%s,"usage":{"input_tokens":1}}\n' "${1:-[]}"; }
+
+run72() { # sandbox task stream-file [extra dispatcher args...] -> $OUT, $RC
+  local d="$1" t="$2" s="$3"; shift 3
+  export WL72_SF="$d/logs/work-loop/$t.md" WL72_CO="$d" WL72_STREAM="$s"
+  export WL72_ARGV="$SANDBOX_ROOT/argv72-$t.txt"; rm -f "$WL72_ARGV"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task "$t" --log-dir "$d/runs" \
+        --carry-one --claude-bin "$FAKE72" "$@" 2>&1)"; RC=$?
+}
+eff72() { res_field "$1" permission_mode_effective; }
+
+echo
+echo "Case 72a — a runtime-authored acceptEdits reaches the record as the EFFECTIVE mode"
+# THE TARGETED FAILING CASE the brief names: before the edit this row reported
+# `unavailable` while the stream said `acceptEdits`.
+d="$(new_sandbox)"; state_file "$d" "eff-accept-task" "claude"
+S72A="$SANDBOX_ROOT/stream-72a.jsonl"; { init72 '"acceptEdits"'; res72; } >"$S72A"
+run72 "$d" eff-accept-task "$S72A" --permission-mode acceptEdits
+expect_rc 0 "$RC" "72a — the live attended hop is carried" "$OUT"
+R72A="$d/runs/$(run_id_of "$OUT").result"
+# The preconditions, asserted apart from the field under test so a row that never
+# reached the live attended branch cannot pass for the wrong reason.
+if [ "$(res_field "$R72A" mode)" = live ] &&
+   [ "$(res_field "$R72A" stage)" = post-hop ] &&
+   [ "$(res_field "$R72A" actor_launched)" = yes ]; then
+  ok "72a — the row really is a live, post-hop, attended Claude terminal"
+else
+  bad "72a — the row really is a live, post-hop, attended Claude terminal" \
+      "mode=$(res_field "$R72A" mode) stage=$(res_field "$R72A" stage) launched=$(res_field "$R72A" actor_launched)"
+fi
+[ "$(eff72 "$R72A")" = acceptEdits ] \
+  && ok "72a — permission_mode_effective=acceptEdits, read from system/init" \
+  || bad "72a — permission_mode_effective=acceptEdits, read from system/init" \
+         "got: $(eff72 "$R72A") — the capture at $(res_field "$R72A" capture) carries permissionMode acceptEdits"
+[ "$(res_field "$R72A" permission_mode_requested)" = acceptEdits ] \
+  && ok "72a — and the requested mode is still reported independently" \
+  || bad "72a — and the requested mode is still reported independently" \
+         "got: $(res_field "$R72A" permission_mode_requested)"
+
+echo
+echo "Case 72b — a runtime-authored default reaches the record too"
+d="$(new_sandbox)"; state_file "$d" "eff-default-task" "claude"
+S72B="$SANDBOX_ROOT/stream-72b.jsonl"; { init72 '"default"'; res72; } >"$S72B"
+run72 "$d" eff-default-task "$S72B"
+expect_rc 0 "$RC" "72b — the live attended hop is carried with no --permission-mode" "$OUT"
+R72B="$d/runs/$(run_id_of "$OUT").result"
+[ "$(eff72 "$R72B")" = default ] \
+  && ok "72b — permission_mode_effective=default" \
+  || bad "72b — permission_mode_effective=default" "got: $(eff72 "$R72B")"
+[ "$(res_field "$R72B" permission_mode_requested)" = default ] \
+  && ok "72b — permission_mode_requested=default" \
+  || bad "72b — permission_mode_requested=default" "got: $(res_field "$R72B" permission_mode_requested)"
+
+echo
+echo "Case 72c — the two fields are independently sourced, and disagree when reality does"
+# The load-bearing row. The argv asks for acceptEdits; the runtime reports it ran
+# under default. A dispatcher that derived either field from the other CANNOT pass
+# this in either direction, which is what makes 72a and 72b more than tautologies.
+d="$(new_sandbox)"; state_file "$d" "eff-split-task" "claude"
+S72C="$SANDBOX_ROOT/stream-72c.jsonl"; { init72 '"default"'; res72; } >"$S72C"
+run72 "$d" eff-split-task "$S72C" --permission-mode acceptEdits
+expect_rc 0 "$RC" "72c — the hop is carried" "$OUT"
+R72C="$d/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R72C" permission_mode_requested)" = acceptEdits ] &&
+   [ "$(eff72 "$R72C")" = default ]; then
+  ok "72c — requested=acceptEdits while effective=default: neither field is derived from the other"
+else
+  bad "72c — requested=acceptEdits while effective=default" \
+      "requested=$(res_field "$R72C" permission_mode_requested) effective=$(eff72 "$R72C")"
+fi
+
+echo
+echo "Case 72d — every unresolvable capture shape fails closed to unavailable"
+# EVERY ROW IS LAUNCHED WITH --permission-mode acceptEdits, so `unavailable` and
+# the requested mode are different tokens and a silent fallback is visible.
+# Each shape is a different branch of the reader, not the same one restated.
+i=0
+while IFS='|' read -r label body; do
+  [ -n "$label" ] || continue
+  i=$((i+1))
+  d="$(new_sandbox)"; state_file "$d" "eff-neg-task" "claude"
+  S="$SANDBOX_ROOT/stream-72d-$i.jsonl"
+  case "$label" in
+    absent-init)    res72 >"$S" ;;
+    absent-key)     { printf '{"type":"system","subtype":"init","cwd":"/x","uuid":"u72"}\n'; res72; } >"$S" ;;
+    conflicting)    { init72 '"default"'; init72 '"acceptEdits"'; res72; } >"$S" ;;
+    unparseable)    { printf 'not json at all\n'; res72; } >"$S" ;;
+    empty-capture)  : >"$S" ;;
+    *)              { init72 "$body"; res72; } >"$S" ;;
+  esac
+  run72 "$d" eff-neg-task "$S" --permission-mode acceptEdits
+  R="$d/runs/$(run_id_of "$OUT").result"
+  if [ "$(eff72 "$R")" = unavailable ] &&
+     [ "$(res_field "$R" permission_mode_requested)" = acceptEdits ]; then
+    ok "72d — $label: effective=unavailable while requested stays acceptEdits"
+  else
+    bad "72d — $label: effective=unavailable while requested stays acceptEdits" \
+        "effective=$(eff72 "$R") requested=$(res_field "$R" permission_mode_requested)"
+  fi
+done <<'NEG72'
+absent-init|
+absent-key|
+non-string-number|7
+non-string-null|null
+non-string-bool|true
+non-string-object|{"mode":"acceptEdits"}
+non-string-array|["acceptEdits"]
+empty-string|""
+conflicting|
+unparseable|
+empty-capture|
+NEG72
+
+echo
+echo "Case 72e — the new format preserves denial extraction and the final result"
+# The compatibility claim, and the one the brief says to hand back on if it fails:
+# stream-json is a SUPERSET of the json object the attended path used to capture,
+# so the two things already read out of a capture must still be readable.
+d="$(new_sandbox)"; state_file "$d" "eff-denial-task" "claude"
+S72E="$SANDBOX_ROOT/stream-72e.jsonl"
+{ init72 '"default"'
+  res72 '[{"tool_name":"Bash","tool_use_id":"toolu_72","tool_input":{"command":"git commit -m wip"}}]'
+} >"$S72E"
+run72 "$d" eff-denial-task "$S72E"
+expect_rc 37 "$RC" "72e — a denial in the STREAM's result event still exits 37" "$OUT"
+printf '%s' "$OUT" | grep -Fq "git commit -m wip" \
+  && ok "72e — the exact denied target survives the format change" \
+  || bad "72e — the exact denied target survives the format change" "$OUT"
+R72E="$d/runs/$(run_id_of "$OUT").result"
+[ "$(tail -1 "$R72E" 2>/dev/null)" = "result_complete=yes" ] \
+  && ok "72e — the 37 terminal still finalizes a complete record" \
+  || bad "72e — the 37 terminal still finalizes a complete record" "last line: $(tail -1 "$R72E" 2>/dev/null)"
+# And the effective mode is recorded at that terminal too — a stop is still a
+# terminal, and the observation exists by the time it is written.
+[ "$(eff72 "$R72E")" = default ] \
+  && ok "72e — and the denial terminal still records the effective mode" \
+  || bad "72e — and the denial terminal still records the effective mode" "got: $(eff72 "$R72E")"
+# The clean control: without denials the same stream carries the hop normally and
+# the named capture is really on disk.
+d="$(new_sandbox)"; state_file "$d" "eff-clean-task" "claude"
+run72 "$d" eff-clean-task "$S72B"
+expect_rc 0 "$RC" "72e — a clean stream carries the hop with no denial stop" "$OUT"
+R72E2="$d/runs/$(run_id_of "$OUT").result"
+[ -f "$(res_field "$R72E2" capture)" ] \
+  && ok "72e — the record names a capture that exists on disk" \
+  || bad "72e — the record names a capture that exists on disk" "got: $(res_field "$R72E2" capture)"
+
+echo
+echo "Case 72f — the attended argv carries the new format and nothing else moved"
+argv_has "$WL72_ARGV" "stream-json" \
+  && ok "72f — the attended launch uses --output-format stream-json" \
+  || bad "72f — the attended launch uses --output-format stream-json" \
+         "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)"
+argv_has "$WL72_ARGV" "--verbose" \
+  && ok "72f — --verbose accompanies it (required under --print)" \
+  || bad "72f — --verbose accompanies it" "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)"
+argv_has "$WL72_ARGV" "json" \
+  && bad "72f — the plain json output format is gone from the attended launch" \
+         "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)" \
+  || ok "72f — the plain json output format is gone from the attended launch"
+# THE PROPERTIES THE BRIEF SAYS MUST BE PRESERVED. A format change that also
+# dropped the permission request or the nested-actor denies would be a widening
+# wearing a capture fix's name.
+argv_pair "$WL72_ARGV" "--permission-mode" "default" \
+  && ok "72f — the explicit permission request is untouched" \
+  || bad "72f — the explicit permission request is untouched" \
+         "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)"
+argv_has "$WL72_ARGV" "--disallowedTools" \
+  && ok "72f — the nested-actor deny set is untouched" \
+  || bad "72f — the nested-actor deny set is untouched" \
+         "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)"
+grep -q -- "dangerously-skip-permissions" "$WL72_ARGV" \
+  && bad "72f — no bypass flag appears on the new attended argv" \
+         "argv: $(tr '\n' ' ' <"$WL72_ARGV" 2>/dev/null)" \
+  || ok "72f — no bypass flag appears on the new attended argv"
+
+echo
+echo "Case 72g — the three guards that keep the observation attended, live and Claude's"
+# Each row is answered by a DIFFERENT guard in result_permission_mode_effective(),
+# so a repair that collapsed the function to a constant is caught by whichever row
+# it stopped answering. All three hand the dispatcher a capture that DOES contain a
+# readable system/init event, so the guard is what produces `unavailable` — not an
+# absent fixture.
+d="$(new_sandbox)"; state_file "$d" "eff-unatt-task" "claude"
+run72 "$d" eff-unatt-task "$S72B" --unattended
+expect_rc 0 "$RC" "72g — the unattended hop is carried" "$OUT"
+R72G1="$d/runs/$(run_id_of "$OUT").result"
+[ "$(eff72 "$R72G1")" = unavailable ] \
+  && ok "72g — unattended: the contained profile is untouched by this unit" \
+  || bad "72g — unattended: the contained profile is untouched by this unit" "got: $(eff72 "$R72G1")"
+d="$(new_sandbox)"; state_file "$d" "eff-sim-task" "claude"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task eff-sim-task --log-dir "$d/runs" \
+      --carry-one --actor-cmd 'awk "/^turn: /&&!d{print \"turn: codex\"; d=1; next}{print}" "$WL_STATE_FILE" > "$WL_STATE_FILE.tmp"; mv "$WL_STATE_FILE.tmp" "$WL_STATE_FILE"; git -C "$WL_CHECKOUT" add -A >/dev/null 2>&1; git -C "$WL_CHECKOUT" commit -qm sim >/dev/null 2>&1; cat "'"$S72B"'"' 2>&1)"; RC=$?
+expect_rc 0 "$RC" "72g — the simulated hop is carried" "$OUT"
+R72G2="$d/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R72G2" mode)" = simulated ] && [ "$(eff72 "$R72G2")" = unavailable ]; then
+  ok "72g — simulated: a stub's stream is not the product's own init event"
+else
+  bad "72g — simulated: a stub's stream is not the product's own init event" \
+      "mode=$(res_field "$R72G2" mode) effective=$(eff72 "$R72G2")"
+fi
+d="$(new_sandbox)"; state_file "$d" "eff-codex-task" "codex"
+export WL72_SF="$d/logs/work-loop/eff-codex-task.md" WL72_CO="$d"
+FAKE72X="$SANDBOX_ROOT/fake-codex-72.sh"
+cat >"$FAKE72X" <<'F72XEOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "0.0.0-fake-codex (test double)"; exit 0; fi
+sf="$WL72_SF"
+awk '/^turn: /&&!d{print "turn: claude"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+cat "$WL72_STREAM"
+exit 0
+F72XEOF
+chmod +x "$FAKE72X"
+export WL72_STREAM="$S72B"
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task eff-codex-task --log-dir "$d/runs" \
+      --carry-one --codex-bin "$FAKE72X" 2>&1)"; RC=$?
+expect_rc 0 "$RC" "72g — the live Codex hop is carried" "$OUT"
+R72G3="$d/runs/$(run_id_of "$OUT").result"
+if [ "$(res_field "$R72G3" mode)" = live ] && [ "$(eff72 "$R72G3")" = unavailable ]; then
+  ok "72g — live Codex: no permission mode is observed for an actor that has none"
+else
+  bad "72g — live Codex: no permission mode is observed for an actor that has none" \
+      "mode=$(res_field "$R72G3" mode) effective=$(eff72 "$R72G3")"
+fi
+unset WL72_SF WL72_CO WL72_STREAM WL72_ARGV
+
+# ========= Case 73 — the permission-denial takeover / approved-resume corridor
+#
+# Unit 28, minimum-release-contract item 1. Two dispatcher invocations, and the
+# claim is about the SEAM BETWEEN THEM: a denial must stop read-only and leave a
+# handoff that tells the operator exactly how to restart, and the operator's
+# explicit restart must be a genuinely new run that continues from the unchanged
+# task state rather than a replay of the failed request.
+#
+# READ-ONLY IS THE POINT, not an implementation detail. Unit 27 established that
+# the dispatcher may not write canonical task state, so this corridor has to work
+# with the state file byte-identical across the stop. Every assertion below that
+# looks like bookkeeping — the sha256 pair, the HEAD pair, the launch count — is
+# really asserting that no state writer was smuggled in to make the corridor work.
+#
+# WHAT IS ALREADY TRUE AT UNIT 27, and is therefore asserted as a precondition
+# rather than claimed as this unit's work: exit 37 already fires, already names
+# the denied target, and already finalizes one complete durable result (case 72e).
+# The brief is explicit that already-working pieces must not be re-reported as
+# gaps, so the rows below separate the two.
+#
+# The stub is the FAKE72 technique — a live fake BINARY, so MODE stays `live` and
+# a real child is forked while no model is contacted — with one addition: it
+# behaves differently on the two runs, selected by $WL73_MODE, and it appends to a
+# call file so a second launch inside one process cannot hide.
+
+FAKE73="$SANDBOX_ROOT/fake-claude-73.sh"
+cat >"$FAKE73" <<'F73EOF'
+#!/bin/bash
+if [ "${1:-}" = "--version" ]; then echo "2.1.220 (Claude Code)"; exit 0; fi
+printf 'launch\n' >> "$WL73_CALLS"
+printf '%s\n' "$@" > "$WL73_ARGV.$(wc -l <"$WL73_CALLS" | tr -d ' ')"
+printf '%s\n' "$@" > "$WL73_ARGV"
+sf="$WL73_SF"
+if [ "${WL73_MODE:-deny}" = approve ]; then
+  # The APPROVED run does the work: it transitions the turn and commits, exactly
+  # as a real Claude hop would once the capability it needed was granted.
+  awk '/^turn: /&&!d{print "turn: codex"; d=1; next}{print}' "$sf" > "$sf.tmp" && mv "$sf.tmp" "$sf"
+  git -C "$WL73_CO" add "$sf" >/dev/null 2>&1
+  git -C "$WL73_CO" commit -qm "fake claude hop (approved)" >/dev/null 2>&1
+  printf '{"type":"system","subtype":"init","cwd":"/x","session_id":"s73b","model":"claude-x","tools":["Bash"],"mcp_servers":[],"permissionMode":"acceptEdits","uuid":"u73b"}\n'
+  printf '{"type":"result","subtype":"success","is_error":false,"session_id":"s73b","result":"done","permission_denials":[]}\n'
+else
+  # THE DENIED RUN TOUCHES NOTHING. It could not commit, so it did not edit —
+  # which is the clean half of the brief's two denial shapes and the one that
+  # makes the byte-identical assertions below meaningful.
+  printf '{"type":"system","subtype":"init","cwd":"/x","session_id":"s73a","model":"claude-x","tools":["Bash"],"mcp_servers":[],"permissionMode":"default","uuid":"u73a"}\n'
+  printf '{"type":"result","subtype":"success","is_error":false,"session_id":"s73a","result":"blocked","permission_denials":[{"tool_name":"Bash","tool_use_id":"toolu_73","tool_input":{"command":"git commit -m unit-28"}}]}\n'
+fi
+exit 0
+F73EOF
+chmod +x "$FAKE73"
+
+run73() { # sandbox task [extra dispatcher args...] -> $OUT, $RC
+  local d="$1" t="$2"; shift 2
+  export WL73_SF="$d/logs/work-loop/$t.md" WL73_CO="$d"
+  OUT="$(bash "$DISPATCH_BIN" --checkout "$d" --task "$t" --log-dir "$d/runs" \
+        --carry-one --claude-bin "$FAKE73" "$@" 2>&1)"; RC=$?
+}
+
+echo
+echo "Case 73a — the denial stops read-only: one result, canonical state untouched"
+d="$(new_sandbox)"; state_file "$d" "denial-corridor" "claude"
+export WL73_CALLS="$SANDBOX_ROOT/calls-73.txt"; : >"$WL73_CALLS"
+export WL73_ARGV="$SANDBOX_ROOT/argv-73.txt"; rm -f "$WL73_ARGV" "$WL73_ARGV".*
+SF73="$d/logs/work-loop/denial-corridor.md"
+SHA73_BEFORE="$(shasum -a 256 "$SF73" | cut -d' ' -f1)"
+HEAD73_BEFORE="$(git -C "$d" rev-parse HEAD)"
+export WL73_MODE=deny
+run73 "$d" denial-corridor
+expect_rc 37 "$RC" "73a — the denied hop stops at 37" "$OUT"
+RID73A="$(run_id_of "$OUT")"
+R73A="$d/runs/$RID73A.result"
+# PRECONDITIONS — already true at Unit 27 (case 72e). Asserted so a row that never
+# reached the live attended denial branch cannot pass for the wrong reason.
+if [ "$(res_field "$R73A" mode)" = live ] &&
+   [ "$(res_field "$R73A" stage)" = post-hop ] &&
+   [ "$(tail -1 "$R73A" 2>/dev/null)" = "result_complete=yes" ]; then
+  ok "73a — precondition: a live post-hop denial terminal with one complete record"
+else
+  bad "73a — precondition: a live post-hop denial terminal with one complete record" \
+      "mode=$(res_field "$R73A" mode) stage=$(res_field "$R73A" stage) last=$(tail -1 "$R73A" 2>/dev/null)"
+fi
+# THE READ-ONLY CLAIM. Three independent witnesses, because one of them alone
+# could be satisfied by a writer that happened to rewrite identical bytes.
+[ "$(shasum -a 256 "$SF73" | cut -d' ' -f1)" = "$SHA73_BEFORE" ] \
+  && ok "73a — canonical task state is byte-identical across the stop" \
+  || bad "73a — canonical task state is byte-identical across the stop" \
+         "before=$SHA73_BEFORE after=$(shasum -a 256 "$SF73" | cut -d' ' -f1)"
+[ "$(git -C "$d" rev-parse HEAD)" = "$HEAD73_BEFORE" ] \
+  && ok "73a — and the dispatcher made no commit" \
+  || bad "73a — and the dispatcher made no commit" "HEAD moved from $HEAD73_BEFORE"
+[ -z "$(git -C "$d" status --porcelain -- "logs/work-loop/denial-corridor.md")" ] \
+  && ok "73a — and it left the state file clean, not half-written" \
+  || bad "73a — and it left the state file clean, not half-written" \
+         "$(git -C "$d" status --porcelain -- "logs/work-loop/denial-corridor.md")"
+[ "$(wc -l <"$WL73_CALLS" | tr -d ' ')" = 1 ] \
+  && ok "73a — exactly one actor launch: the stop launched nothing further" \
+  || bad "73a — exactly one actor launch: the stop launched nothing further" \
+         "launches: $(wc -l <"$WL73_CALLS" | tr -d ' ')"
+[ "$(res_count "$d/runs")" = 1 ] \
+  && ok "73a — exactly one terminal result exists" \
+  || bad "73a — exactly one terminal result exists" "count: $(res_count "$d/runs")"
+[ "$(res_field "$R73A" turn_at_terminal)" = claude ] \
+  && ok "73a — the record says the canonical turn is still claude's" \
+  || bad "73a — the record says the canonical turn is still claude's" \
+         "got: $(res_field "$R73A" turn_at_terminal)"
+
+echo
+echo "Case 73b — the takeover names the EXACT approved restart invocation"
+# THE TARGETED FAILING BEHAVIOUR. Before this unit the 37 message said "grant the
+# capability deliberately and re-run", which is a description of an action rather
+# than the action: it never named --permission-mode acceptEdits, so the operator
+# had to know the flag existed and that this dispatcher would honour it. The plan
+# calls for the exact decision and resume action, and that is a command line.
+printf '%s' "$OUT" | grep -Fq -- "--permission-mode acceptEdits" \
+  && ok "73b — the stop names --permission-mode acceptEdits explicitly" \
+  || bad "73b — the stop names --permission-mode acceptEdits explicitly" "$OUT"
+printf '%s' "$OUT" | grep -Fq -- "--task denial-corridor" \
+  && ok "73b — and the restart line is a runnable invocation for THIS task" \
+  || bad "73b — and the restart line is a runnable invocation for THIS task" "$OUT"
+printf '%s' "$OUT" | grep -Fq "git commit -m unit-28" \
+  && ok "73b — and it still names the exact denied target" \
+  || bad "73b — and it still names the exact denied target" "$OUT"
+# NOT A MENU, and not an inference. The plan cut multi-choice recommendation logic,
+# and a denial must never read as approval.
+printf '%s' "$OUT" | grep -Eqi "option 2|choice 2|recommend(ed|ation)" \
+  && bad "73b — the takeover offers no recovery menu" "$OUT" \
+  || ok "73b — the takeover offers no recovery menu"
+printf '%s' "$OUT" | grep -Fq "NOT retried" \
+  && ok "73b — and it still says the request was not retried" \
+  || bad "73b — and it still says the request was not retried" "$OUT"
+
+echo
+echo "Case 73c — read-only status answers from the terminal result, not the raw log"
+OUT73S="$(bash "$DISPATCH_BIN" --checkout "$d" --task denial-corridor --log-dir "$d/runs" --status 2>&1)"; RC73S=$?
+expect_rc 0 "$RC73S" "73c — status exits 0" "$OUT73S"
+printf '%s' "$OUT73S" | grep -Fq "PERMISSION_DENIED" \
+  && ok "73c — status names the last terminal outcome" \
+  || bad "73c — status names the last terminal outcome" "$OUT73S"
+printf '%s' "$OUT73S" | grep -Fq "$RID73A.result" \
+  && ok "73c — and names the terminal-result path the operator can read" \
+  || bad "73c — and names the terminal-result path the operator can read" "$OUT73S"
+printf '%s' "$OUT73S" | grep -Fq -- "--permission-mode acceptEdits" \
+  && ok "73c — and repeats the exact required operator action" \
+  || bad "73c — and repeats the exact required operator action" "$OUT73S"
+# Status stays read-only across the addition.
+[ "$(shasum -a 256 "$SF73" | cut -d' ' -f1)" = "$SHA73_BEFORE" ] &&
+  [ "$(res_count "$d/runs")" = 1 ] \
+  && ok "73c — status wrote nothing: state and result count unchanged" \
+  || bad "73c — status wrote nothing: state and result count unchanged" \
+         "sha=$(shasum -a 256 "$SF73" | cut -d' ' -f1) results=$(res_count "$d/runs")"
+
+echo
+echo "Case 73d — the operator's explicit acceptEdits restart is a NEW run that continues"
+export WL73_MODE=approve
+run73 "$d" denial-corridor --permission-mode acceptEdits
+expect_rc 0 "$RC" "73d — the approved restart carries the hop" "$OUT"
+RID73B="$(run_id_of "$OUT")"
+R73B="$d/runs/$RID73B.result"
+[ -n "$RID73B" ] && [ "$RID73B" != "$RID73A" ] \
+  && ok "73d — it has a distinct run identity: no replay of the failed request" \
+  || bad "73d — it has a distinct run identity: no replay of the failed request" \
+         "first=$RID73A second=$RID73B"
+[ -f "$R73A" ] && [ -f "$R73B" ] && [ "$(res_count "$d/runs")" = 2 ] \
+  && ok "73d — both terminal results survive: the stopped run's evidence is durable" \
+  || bad "73d — both terminal results survive: the stopped run's evidence is durable" \
+         "count: $(res_count "$d/runs")"
+if [ "$(res_field "$R73B" permission_mode_requested)" = acceptEdits ] &&
+   [ "$(res_field "$R73B" permission_mode_effective)" = acceptEdits ]; then
+  ok "73d — requested AND runtime-observed effective mode are both acceptEdits"
+else
+  bad "73d — requested AND runtime-observed effective mode are both acceptEdits" \
+      "requested=$(res_field "$R73B" permission_mode_requested) effective=$(res_field "$R73B" permission_mode_effective)"
+fi
+argv_pair "$WL73_ARGV" "--permission-mode" "acceptEdits" \
+  && ok "73d — the child was actually asked for acceptEdits" \
+  || bad "73d — the child was actually asked for acceptEdits" \
+         "argv: $(tr '\n' ' ' <"$WL73_ARGV" 2>/dev/null)"
+grep -q -- "dangerously-skip-permissions" "$WL73_ARGV" \
+  && bad "73d — and no interactive bypass was used to get there" \
+         "argv: $(tr '\n' ' ' <"$WL73_ARGV" 2>/dev/null)" \
+  || ok "73d — and no interactive bypass was used to get there"
+# CONTINUATION, not replay: the second run started from the SAME task state the
+# first one left, and moved it on.
+[ "$(res_field "$R73B" state_sha256_before)" = "$SHA73_BEFORE" ] \
+  && ok "73d — it continued from the unchanged state the denial left behind" \
+  || bad "73d — it continued from the unchanged state the denial left behind" \
+         "before=$(res_field "$R73B" state_sha256_before) expected=$SHA73_BEFORE"
+grep -qx "turn: codex" "$SF73" \
+  && ok "73d — and reached a valid handback: turn is now codex" \
+  || bad "73d — and reached a valid handback: turn is now codex" \
+         "got: $(grep -m1 '^turn: ' "$SF73")"
+[ "$(wc -l <"$WL73_CALLS" | tr -d ' ')" = 2 ] \
+  && ok "73d — exactly two launches across the whole corridor, one per run" \
+  || bad "73d — exactly two launches across the whole corridor, one per run" \
+         "launches: $(wc -l <"$WL73_CALLS" | tr -d ' ')"
+
+echo
+echo "Case 73e — the controls: a clean run and a pre-admission refusal are unchanged"
+d2="$(new_sandbox)"; state_file "$d2" "clean-control" "claude"
+export WL73_CALLS="$SANDBOX_ROOT/calls-73e.txt"; : >"$WL73_CALLS"
+export WL73_ARGV="$SANDBOX_ROOT/argv-73e.txt"; rm -f "$WL73_ARGV" "$WL73_ARGV".*
+export WL73_MODE=approve
+run73 "$d2" clean-control
+expect_rc 0 "$RC" "73e — a no-denial run is carried exactly as before" "$OUT"
+R73E="$d2/runs/$(run_id_of "$OUT").result"
+printf '%s' "$OUT" | grep -Fq -- "--permission-mode acceptEdits" \
+  && bad "73e — a successful run does NOT print the denial restart line" "$OUT" \
+  || ok "73e — a successful run does NOT print the denial restart line"
+[ "$(res_field "$R73E" outcome)" != PERMISSION_DENIED ] \
+  && ok "73e — and its outcome is not a denial" \
+  || bad "73e — and its outcome is not a denial" "got: $(res_field "$R73E" outcome)"
+# THE NEGATIVE CONTROL FOR 73c, and the row that makes it more than a tautology.
+# A status branch that printed the restart line unconditionally would pass every
+# 73c assertion while telling an operator whose run succeeded to go and elevate
+# permissions. The line has to be gated on the RECORD's own outcome, so a clean
+# run's status must not carry it — while still rendering its own last terminal.
+OUT73T="$(bash "$DISPATCH_BIN" --checkout "$d2" --task clean-control --log-dir "$d2/runs" --status 2>&1)"
+printf '%s' "$OUT73T" | grep -Fq -- "--permission-mode acceptEdits" \
+  && bad "73e — status after a CLEAN run does not offer the elevation line" "$OUT73T" \
+  || ok "73e — status after a CLEAN run does not offer the elevation line"
+printf '%s' "$OUT73T" | grep -Fq "last terminal:" \
+  && ok "73e — but it still renders that run's own terminal record" \
+  || bad "73e — but it still renders that run's own terminal record" "$OUT73T"
+# The pre-admission boundary is untouched: an invalid task id still refuses before
+# a run exists, writing no evidence at all.
+OUT="$(bash "$DISPATCH_BIN" --checkout "$d2" --task "../escape" --log-dir "$d2/runs" --status 2>&1)"; RC=$?
+expect_rc 12 "$RC" "73e — a traversal task id is still refused pre-admission" "$OUT"
+[ "$(res_count "$d2/runs")" = 1 ] \
+  && ok "73e — and the refusal wrote no terminal result" \
+  || bad "73e — and the refusal wrote no terminal result" "count: $(res_count "$d2/runs")"
+unset WL73_SF WL73_CO WL73_MODE WL73_CALLS WL73_ARGV
 
 # ==================================================================== done
 echo

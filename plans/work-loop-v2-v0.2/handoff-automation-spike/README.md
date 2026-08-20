@@ -36,7 +36,7 @@ built from it.
 | `--carry-one` | off — carry exactly one hop, then exit `0` (see below) |
 | `--max-hops N` | `4` — absolute hop limit; forced to `1` by `--carry-one` |
 | `--timeout S` | `900` — per-actor wall-clock seconds |
-| `--deadline S` | none — whole-run wall-clock budget (see below) |
+| `--deadline S` | none — whole-run wall-clock budget, **required for a live multi-hop run** and optional for every other shape (see below) |
 | `--codex-bin PATH` | `/Applications/ChatGPT.app/Contents/Resources/codex` |
 | `--claude-bin PATH` | `claude` resolved from `PATH` |
 | `--allow-path RE` | `^logs/work-loop/` and `^plans/work-loop-v2-v0\.2/handoff-automation-spike/` (repeatable; supplying any replaces both defaults) |
@@ -46,6 +46,25 @@ built from it.
 | `--dry-run` | off |
 | `--status` | off — read-only report; takes no lock, writes nothing; answers IN FLIGHT / STALE LOCK / UNKNOWN — CANNOT INSPECT |
 | `--actor-cmd CMD` | none |
+
+### One stable evidence location per checkout
+
+**Use the default `--log-dir`, or one chosen directory, and keep using it.** The run's own evidence
+location is allowlisted for that run, so sequential runs aimed at the same location are the ordinary
+supported path: each writes its own run log, hop captures and terminal result there, and none of them
+reads the others' files as foreign work.
+
+**Switching a checkout to a different evidence directory is a one-off operator step, not something
+the dispatcher does for you.** The old directory is untracked content the new run was not pointed at,
+so it is out-of-allowlist exactly like any other untracked path, and the run stops at exit `18`
+before launching anything, naming the old path. Resolve that path first — commit it, move it out of
+the checkout, or delete it — then run against the new location.
+
+That refusal is deliberate. Recognising a directory as "an earlier run's own evidence" would mean
+trusting a receipt that lives in the working tree, and anything with write access to the checkout can
+write one — including a killed previous hop. There is no secret this dispatcher holds and an actor
+cannot forge, and the approved plan excludes the persistent authority store that would be one. So the
+guard stays strict and the operating rule carries the convenience instead.
 
 ### The two locks, and the declaration they do not replace
 
@@ -182,10 +201,31 @@ a walk-away invocation of `--max-hops 12 --timeout 900` makes it **three hours**
 for someone expecting to be back in forty minutes, so the dispatcher now prints the bound it is
 actually running under at startup either way.
 
+**It is required for a live multi-hop run.** A live run (`--max-hops` above `1`, no `--actor-cmd`, no
+`--dry-run`, no `--status`) with no `--deadline` is refused with exit `10` before admission — no
+actor, no run id, no lease, no evidence, nothing written. Printing the three-hour figure at startup
+turned out not to be enough: it told the operator the bound only once they were already committed to
+it, and the invocation most in need of a clock is the one whose operator forgot the flag.
+
+Four shapes stay exempt, because none of them can burn an afternoon:
+
+| Shape | Why no deadline is required |
+|---|---|
+| `--carry-one`, or `--max-hops 1` | one hop, already bounded by `--timeout` |
+| `--actor-cmd` | simulated: no model is launched |
+| `--dry-run` | a preflight, run precisely to find out what a run *would* do |
+| `--status` | a read-only query, not a run |
+
+The refusal is an **invocation-input** refusal, decided from the command line alone, so it sits with
+the other usage checks above the admission boundary and deliberately files no terminal result — the
+durable record belongs to admitted runs. Test case `28e` asserts both halves; `28c` holds the
+simulated no-deadline path unchanged, and the two together are what pin where the boundary is.
+
 `--deadline` is a deadline, not a start gate. The clock starts at the **first statement of the
-script**, before argument parsing or any setup. Before every launch — including a retry — the actor's
-effective timeout is clamped to `min(--timeout, time remaining)`, and an actor still running when the
-clock expires is terminated through the same path as an interruption. The run then exits `29`.
+script**, before argument parsing or any setup. Before every launch the actor's effective timeout is
+clamped to `min(--timeout, time remaining)`, and an actor still running when the clock expires is
+terminated through the same path as an interruption. The run then exits `29`. One launch per hop is
+all there is to clamp — no hop is replayed once its actor has started.
 
 **The honest worst case**, because a deadline is worth what its bound is:
 
@@ -247,8 +287,11 @@ the mechanism were settled and proven first, in `runs/probe-contained-authority-
 flag is the part that ships them.
 
 ```
-dispatch.sh --checkout <abs-path> --task <task-id> --unattended
+dispatch.sh --checkout <abs-path> --task <task-id> --unattended --deadline <seconds>
 ```
+
+`--deadline` appears here because this shape is a live multi-hop run and is refused without one; it
+is not part of what `--unattended` itself delivers.
 
 What the child gets:
 
@@ -576,7 +619,7 @@ where the code's meaning actually differs.
 | Code | Name | Modes | Meaning |
 |---|---|---|---|
 | `0` | — | all three | See the note below — it does **not** mean one thing. |
-| `10` | `BAD_USAGE` | all after `--help` | Unknown argument, missing `--checkout`/`--task`, non-integer or `< 1` `--max-hops`, non-integer `--timeout`, or the log directory could not be created. |
+| `10` | `BAD_USAGE` | all after `--help` | Unknown argument, missing `--checkout`/`--task`, non-integer or `< 1` `--max-hops`, non-integer `--timeout`, a missing `--deadline` on a live multi-hop run, or the log directory could not be created. |
 | `11` | `BAD_CHECKOUT` | dry-run, loop | `--checkout` is not a directory, cannot be canonicalized, or is not a Git checkout. |
 | `12` | `BAD_TASK_ID` | dry-run, loop | Task id contains a path separator, traversal or illegal characters; or the resolved state file does not sit directly inside `logs/work-loop/`. |
 | `13` | `STATE_MISSING` | dry-run, loop | The state file is absent or unreadable. |
@@ -586,7 +629,7 @@ where the code's meaning actually differs.
 | `17` | `LOCK_HELD` | dry-run, loop | Another dispatcher already holds this **task**, or is already running in this **checkout**. Two locks are checked, both under the repository's Git common directory; either one being held refuses the run, and the message names the conflicting task or checkout. |
 | `18` | `FOREIGN_UNSTAGED` | loop only | Out-of-allowlist working-tree changes were **already present** before a hop. The before/after delta cannot see these — both snapshots contain them — so they used to pass straight through. `--dry-run` reports them instead of failing. |
 | `19` | `GIT_HAZARD` | loop only | The checkout holds a Git `index.lock`, or a merge, rebase, cherry-pick or revert is in progress. A second writer would compound it. `--dry-run` reports instead of failing. |
-| `20` | `ACTOR_FAILED` | loop only | The actor exited non-zero, or the Codex/Claude binary was not executable or not resolvable. A failure that left the repository **provably unchanged** (state `sha256`, `HEAD`, foreign working tree and the state file's committed-ness all identical) is retried **once** first; a failure after any change is never retried. |
+| `20` | `ACTOR_FAILED` | loop only | The actor exited non-zero, or the Codex/Claude binary was not executable or not resolvable. **Never retried once the actor has launched** — not even when the repository is provably unchanged (state `sha256`, `HEAD`, foreign working tree and committed-ness all identical), because that proves nothing about whether the model request started: a request that ran and left no edit looks identical from here. The dispatcher does not read the child's stream events, and says so in its own record (`model_request_started=unavailable` on a live launch). The stop names which of the two shapes it is — unchanged repository, or a partial effect — and both tell the operator to inspect and start a **new** run. |
 | `21` | `ACTOR_TIMEOUT` | loop only | The actor exceeded `--timeout` and was killed (`TERM`, then `KILL`). |
 | `22` | `NO_TRANSITION` | loop only | The actor exited cleanly but left the state file byte-identical, left `turn:` unchanged, or moved it in a direction that is not allowed. |
 | `23` | `HOP_LIMIT` | loop only | `--max-hops` was reached with `turn:` still on an actor. |
@@ -722,8 +765,9 @@ Cases 14–20 are the safety gates added on 2026-08-05:
 | Case | What it pins |
 |---|---|
 | `14` | An actor blocked on an approval nobody will give is killed on the clock, the capture shows it stopped *on* the prompt, and no permission surface was touched to get past it. |
-| `15` | A crash **before** any repository change is retried exactly once, and the first attempt's output is kept as separate evidence (`.hop1r.` capture). |
+| `15` | A crash **before** any repository change is **not** replayed: exactly one launch, no `.hop1r.` capture, exit `20`, and the turn left where the actor left it. |
 | `15b` | A crash **after** a repository change is never retried — a retry would run over a partial effect. |
+| `15c` | Recovery from that stop is an explicit **new** run: two launches across two runs with distinct identities and two terminal results, never two launches inside one run. |
 | `16` | Foreign **unstaged** work (tracked-modified and untracked) stops the run before any launch; the expected uncommitted Codex handoff still launches. |
 | `17` | A held Git `index.lock` stops the run before any launch. |
 | `18` | `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `rebase-merge/` and `rebase-apply/` each stop the run before any launch. |
@@ -908,9 +952,15 @@ Three scripts exist for the two-worktree proof and are not used by the single-ch
 - **Hazardous Git states stop the run before any launch** (`19`) — a held `index.lock`, or a merge,
   rebase, cherry-pick or revert in progress. Checked before *every* hop, not once at startup, so a
   restart re-enters the same gate.
-- **One retry, and only from proven repository truth.** A failed actor is relaunched once when the
-  state file, `HEAD`, the foreign working tree and the state file's committed-ness are all exactly
-  where they were. Any doubt is treated as a partial side effect and stops.
+- **No automatic replay once an actor has launched.** A failed actor is never relaunched by the run
+  that launched it — on any exit code, timeout, missing result, denial or partial effect. This used
+  to be one retry "from proven repository truth", and the premise under it was wrong: an unchanged
+  state file, `HEAD`, working tree and committed-ness do not prove the model request never started.
+  A request that ran to completion and produced no edit is indistinguishable from here, and the only
+  record of what actually happened is in the child's stream events, which this dispatcher does not
+  read — its own terminal record publishes `model_request_started=unavailable` on every live launch.
+  Recovery is the operator's and is a **separate invocation**: a new run, new identity, everything
+  revalidated, continuing from the state file rather than replaying the failed request.
 - **Asymmetric restart safety.** An uncommitted state file with `turn: claude` is the *expected*
   Codex handoff, because Codex writes the file and never runs Git. An uncommitted file with
   `turn: codex` or `turn: operator` means a Claude hop died between editing and committing, and the

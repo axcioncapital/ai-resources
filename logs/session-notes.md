@@ -2,160 +2,6 @@
 
 > Archive: [session-notes-archive-2026-08.md](session-notes-archive-2026-08.md)
 
-## 2026-08-13 — Replacement Normal Trial 1: 3.1a regression repaired, run not accepted as the trial
-
-### Summary
-Ran the replacement candidate for Axcíon Harness v0.2 Normal Trial 1 end to end through
-`/work-loop-v2` against `logs/work-loop/axcion-harness-v0-2-normal-trial-1-replacement.md`: Claude
-implemented Unit 1, Codex assessed and closed with no correction round. The `3.1a` block in
-`logs/scripts/work-loop-v2-slice-1.test.sh` no longer reddens on ordinary repository growth — it is
-now scoped to the single commit that performed the direct fix rather than the whole live
-`logs/work-loop/` directory — while the unexpected-state-file failure signal it exists to protect
-stays durable and provably fail-capable by path. Suite moved 292 passed / 3 failed → 299 passed / 1
-failed (the remaining failure is the pre-existing, unrelated `ridx` line-count ceiling). Codex's close
-verdict explicitly rules this execution does not count as Normal Trial 1: the canonical attended
-carrier was not used and process freshness could not be verified.
-
-### Decisions Made
-- **Rejected the improvement-log entry's proposed `fixture-`-prefix mechanism** as the repair
-  mechanism. Checked by inspection: 4 of the 29 entries in the old closed set carried no `fixture-`
-  prefix, and adopting the prefix rule would ignore every non-fixture file — including
-  `logs/work-loop/arbitrary-state.md`, the exact unexpected-state-file case the `3.1a` block was
-  strengthened to catch. Scoped the check to the direct-fix commit instead.
-- **Codex's close decision:** accept the implementation without a correction round, but rule the
-  execution does not count as Normal Trial 1 — a framing limitation on this run, not an implementation
-  finding, and explicitly not repairable by a correction round.
-- Routine: both closing writes (Claude's Unit 1 hand-back, the final closing-record reduction) ran the
-  Step 1.5 ownership check first; both returned PROCEED.
-
-### Outcome
-Outcome check skipped (not requested).
-
-### Session Value Audit — 80/20 Review
-Skipped (not requested).
-
-### Risky actions
-None. Both commits were preceded by a passing ownership check; no gate was skipped; no destructive or
-external action was taken.
-
-### Session Assessment
-Feedback collection skipped (not requested).
-
-### Findings Declined
-- Broader per-scenario stray-state-file coverage (the removed whole-directory `3.1a` inventory
-  incidentally noticed a stray state file opened by any Slice-3 scenario, not only Direct Work) — not
-  queued. Already recorded as a deferral with its reason in the closed task's Decisions that matter;
-  it is optional future scope, not a defect, and has no named consequence today.
-
-### Next Steps
-Continue the pilot toward Phase 3 adoption evidence: the next Normal Trial 1 attempt should run
-through the canonical attended carrier (`scripts/axcion-harness-v0.2/carry-turn.sh`) rather than a
-direct `/work-loop-v2` invocation, so process freshness and reduced manual transport can actually be
-demonstrated. `plans/axcion-harness-v0.2/mvp-plan.md` still needs three to five representative tasks
-before the adopt/shrink/stop decision.
-
-### Open Questions
-None.
-
-## 2026-08-13 — Close axcion-harness-v0-2-readiness-fixes: Units 1-6 accepted, no successful live trial
-
-### Summary
-Ran the Claude half of the final Work Loop v2 unit on `axcion-harness-v0-2-readiness-fixes`. The
-state file's `## Next action` carried Codex's close verdict, so this was a closing write: checked
-file identity, ran the repo-depth ownership check (PROCEED), verified every commit reference and the
-Unit 7 evidence path resolve on disk, reduced the file to the closing record, cleared the checkout's
-ownership declaration, and committed. The task is now closed.
-
-### Decisions Made
-None made this turn — the close verdict was Codex's, recorded in the inherited `## Next action`.
-Writing the closing record was execution of that verdict, not a new decision.
-
-### Outcome
-Outcome check skipped (not requested).
-
-### Risky actions
-None.
-
-### Findings Declined
-- `logs/friction-log.md` dirty again — not queued. Already an accepted deferral on the readiness
-  task's own list ("hook-owned `logs/friction-log.md` dirt"); no new consequence surfaced this
-  session.
-
-### Next Steps
-No follow-on unit is open for this task. A future push on the attended carrier's supervised
-readiness — closing the authoritative-current-position refusal gap, or running a real live trial —
-starts as a fresh admission decision (Direct Work or a new Work Loop v2 task), not a reopening of
-this closed file.
-
-### Open Questions
-None.
-
-## 2026-08-13 — Merged 59 commits into ai-resources, resolved the improvement-log conflict, pushed
-
-### Summary
-
-Unplanned session, opened by a question relayed out of a concurrent `axcion-si-worktrees` session:
-ai-resources had unpushed commits it had not authored and would not push blind. Investigated all of
-them (7 at first look, 8 after that session committed a ninth finding mid-investigation) — all
-operator-authored, all but one touching `logs/improvement-log.md` only, all pure appends. The material
-finding was one the concurrent session had not surfaced: after `git fetch`, the repo was **8 ahead and
-59 behind**, so any push would have been rejected as non-fast-forward.
-
-The concurrent session recommended deferring the whole merge to Friday, reasoning from `.gitattributes`
-(which deliberately excludes `improvement-log.md` from `merge=union` because that file takes prepend
-writes and in-place status flips). Measuring the actual range showed the hazard was absent from it:
-remote +207/−0, local +177/−0 — pure additions on both sides, no overlapping entries, so "keep both
-sides" was mechanical rather than judged. That measurement was relayed back, independently verified by
-the concurrent session, and its recommendation withdrawn. Merged as `b2a7032`, verified against both
-parents, pushed `375e61d..b2a7032`. Repo is now 0 ahead / 0 behind.
-
-Also traced the improvement-log heading-level divergence the concurrent session flagged. Its stated
-premise — that `/prime` builds its task menu by grepping these entries — was wrong; `/prime` touches the
-file only as a `git status` pathspec. The real consumers, and the real (smaller) impact, are queued as a
-finding.
-
-### Decisions Made
-
-- **Merge now rather than defer to Friday**, against the concurrent session's recommendation — on the
-  grounds that the drop risk was measurable and measured at zero, and that deferring only raises the
-  cost (the next in-place status flip on either side turns a mechanical resolution into a hand-resolved
-  one). Logged to `logs/decisions.md`.
-- **Split the deferral rather than accept or reject it whole** — the analytical half (reading the 59
-  merged commits for retirements bearing on today's findings) stays deferred to Friday; only the
-  mechanical half was pulled forward.
-- **Resolved the conflict by removing the three marker lines and nothing else** — no reflow, no
-  reordering, no heading normalisation folded in — so the merge commit stays exactly verifiable against
-  a stated line count.
-- **Did not fix the heading divergence in-session**, though it was diagnosed here: it is an in-place
-  edit to the one file with a live concurrent writer, which is the hazard `.gitattributes` excludes it
-  for. Queued instead.
-- **Used the correct local path for the Step 6.6 promotion sweep** rather than the command's hardcoded
-  literal, which points at a non-existent account on this machine. Queued as a finding.
-
-### Risky actions
-
-Pushed to `origin/main` (operator-approved, explicit `y`). Merge touched a log file with a live
-concurrent writer in another checkout — mitigated by resolving mechanically and verifying against both
-parents before committing. No force-push, no history rewrite, no deletion. The Step 6.6 promotion sweep
-would have failed silently on the documented path; it was run on the corrected path instead and
-promoted 4 findings that would otherwise have stayed unreachable.
-
-### Findings Declined
-
-- **Six untracked July files in `audits/`** (one lean-repo report, five risk-checks) — surfaced to the
-  operator twice this session. This is an operator housekeeping decision (commit or gitignore), not a
-  system defect, and the only consequence is `git status` noise. Declined rather than queued.
-
-### Next Steps
-
-1. `/fix-repo-issues` or a dedicated session for the two findings queued today — heading normalisation
-   (run only when ai-resources has no other live writer) and the `wrap-session.md` hardcoded path.
-2. Friday: read the 59 merged commits for retirements bearing on the `/qc-pass`, `/risk-check`,
-   `/resolve`, `/refinement-deep` follow-through findings logged today by the concurrent session.
-3. Decide on the six untracked `audits/` files.
-
-### Open Questions
-
 ## 2026-08-14 — Closed eval-v0-3-restart via /work-loop-v2
 
 ### Summary
@@ -465,6 +311,50 @@ Operator's landing decision on `session/2026-08-14-durable-state` is still the n
 ### Open Questions
 None.
 
+## 2026-08-18 — Unit 36 discovery resolves a plan/interface conflict; task closes on operator SHRINK
+
+### Summary
+Ran `/work-loop-v2 work-loop-v2-dispatcher-reliable-supervised-use` for Unit 36 (Discovery mode):
+resolved the pre-run terminal-result boundary for usage/argument refusals in
+`plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`. Verdict: `PLAN/INTERFACE CONFLICT` —
+early argument refusals exit before `RUN_ID`/`LOG_DIR` exist, and no bounded seam can give that class
+one durable run-bound terminal result without either trusting a rejected value or building a second
+evidence mechanism. Handed the finding back to Codex; Codex framed the decision and Patrik then chose
+`SHRINK`, closing the task with a narrowed accepted boundary rather than continuing toward Gate SA.
+
+### Decisions Made
+- **Unit 36 discovery accepted as-is** — no correction round. The four brief premises (call order,
+  parser/schema surfaces, absence of a reusable pre-parse identity primitive, lease refusal kept
+  separate) all held on inspection.
+- **Patrik's SHRINK**: invalid pre-run invocations (bad `--checkout`/`--task`/`--log-dir`) may refuse
+  via stderr + nonzero exit with no durable terminal-result file; the durable-result guarantee begins
+  only once checkout, task and evidence location are all trusted. Chosen over building a
+  dispatcher-global evidence root, an independent pre-parse run identity, and matching schema/consumer
+  changes solely to cover malformed non-runs. Accepted cost: those early refusals have no durable
+  record, only stderr.
+  - **Alternatives considered:** re-scoping the plan clause to only the sub-class with an admitted
+    root and recording the rest as a limitation (kept as a live option, not taken); accepting the
+    architecture change (new evidence root + weaker consumer identity contract) as an operator-owned
+    decision (would have kept Gate SA reachable but at materially higher cost); accepting
+    stderr-only evidence for the whole class with a plan amendment to item 7 (closer to what was
+    chosen, but formalized as a plan edit rather than a task-level SHRINK).
+- **Task closed**, not continued. No integrated candidate passed Gate SA and no independent review
+  returned `ADOPT`; the release label **Reliable supervised semi-autonomous dispatcher** is explicitly
+  NOT authorized. Any future work on the narrowed envelope needs a new or materially revised
+  content-bound plan/task — the old Gate SA authority does not carry over.
+- Routine: both writes this session (Unit 36 hand-back, the closing-record reduction) ran the Step 1.5
+  ownership check first; both returned `PROCEED`. Checkout declaration (`logs/work-loop/.owner`)
+  cleared only after the closing commit landed, per the required ordering.
+
+### Risky actions
+None.
+
+### Next Steps
+No live Work Loop v2 task remains open in this checkout. If dispatcher work resumes, it needs a fresh
+content-bound plan reflecting the SHRINK-narrowed boundary — do not reopen the closed task or continue
+under the old plan's Gate SA authority. The dead `RUN_ID` checkout discriminator
+(`dispatch.sh:3141` reads `${LOCK_KEY:0:8}`, never assigned since `0d9e3355`) is a good candidate first
+fix, either inside that future plan or as standalone Direct Work if judged small and reversible.
 ## 2026-08-18 — Work Loop v2: post-compaction-recovery-repair closed
 
 ### Summary
@@ -518,3 +408,28 @@ The next real action is the operator's, not a Claude command: decide whether to 
 
 ### Open Questions
 None.
+
+## 2026-08-20 — Integrated current main into the experimental dispatcher candidate (Work Loop task closed)
+
+### Summary
+Ran one Work Loop v2 task end to end — `experimental-dispatcher-main-integration` — opened, corrected once, and closed. Current `main` is now integrated into `session/2026-08-16-dispatcher-last-fixes` at merge commit `7617add7`, a normal two-parent merge with no rebase or history rewrite, so both histories and the accepted dispatcher work through Unit 31 are preserved. Three conflicts were resolved individually and one integration-exposed regression (a `SKILL.md` word-budget breach) was corrected at `ae96abf4`. The task closed at `da945118`; `main` is fully contained (`0 100`) and the branch is ready for an operator-authorized merge that was deliberately not performed here.
+
+### Decisions Made
+- **Unit 1 — hand back rather than touch the excluded file.** The merge was blocked by the frozen `logs/friction-log.md` working-tree modification, which the brief excluded and forbade touching. Every route around it wrote to that path, so it was handed back to Codex with three costed routes rather than resolved unilaterally. Codex chose the reversible stash route.
+- **Conflict resolutions, each on a governing source or verified behaviour (not by side):** `improvement-log.md` kept both entries in verified ascending-date order; `SKILL.md` adopted main's `references/` extraction with mechanical non-loss proof; `work-loop-v2-slice-1.test.sh` kept the session branch's discovery sweep because main's hard-coded live-task pointer targets a now-closed record and would have gone red on contact.
+- **Unit 2 — refused to accept the word-budget regression.** slice-1 went 362/0 → 409/1. Rather than paper over it or raise the threshold, it was handed back as a genuine architectural conflict; Codex selected route 1 (condense the duplicated block, relocate the changelog entry), which closed it at 410/0 with the threshold untouched.
+- **Dispatcher failures attributed, not assumed.** The 3 `dispatch.test.sh` failures were proved merge-neutral by dependency (all six of its inputs byte-identical either side of the merge) instead of being reported as ambiguous or silently cleared.
+- **Routine:** committed Codex's incoming brief separately so the merge commit stayed purely integration; scratch resolver scripts written to the session scratchpad, never into the repo.
+
+### Risky actions
+`git stash push` on the frozen `logs/friction-log.md` — reversible by construction, verified byte-identical in the stash (`sha256 59623e32…`) before proceeding, and left unapplied. It was the only mutation of an excluded path, and it was performed only after Codex explicitly authorized it. No merge into `main`, no push, no rebase, no history rewrite, no branch or worktree deletion, no stash pop/drop. The `/wrap-session` Work Loop preflight correctly STOPped an earlier wrap attempt while the task was still open; that STOP was honoured, not worked around — and it turned out to be pointing at an unread Codex close verdict.
+
+### Findings Declined
+- **This checkout's `log-write-activity.sh` / `friction-log-auto.sh` lacked the freeze guard**, so a frozen log was appended to twice during Unit 1. Declined — already fixed: merging `main` brought the three-line guard in, and the working tree stayed clean for the rest of the session. No residual defect to queue.
+- **The friction-log modification held in stash `da189ef0` is undecided.** Declined as an improvement finding — it is an operator decision about content, not a defect with a named consequence. It is recorded in the closing record, in `### Next Steps` and in `### Open Questions`, which is the right home for it.
+
+### Next Steps
+Decide whether to merge `session/2026-08-16-dispatcher-last-fixes` into `main` — it is ready and fully contains `main`, but the merge is operator-authorized and was not performed. Note the branch has **no upstream configured**, so pushing needs one set first. Before or alongside that, decide the fate of the friction-log modification held in stash `da189ef02b22382e57734120ff85838842ddd5c3` — it lives outside the branch, so a stash prune would lose it. The three pre-existing dispatcher-suite failures remain open for whoever owns that spike next.
+
+### Open Questions
+Whether the friction-log stash should be applied, dropped, or left indefinitely — it was excluded from the task's scope, so the task closed without deciding it.

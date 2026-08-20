@@ -64,11 +64,17 @@ Core § 4 defines the interface between you and Claude, and places the operator 
 
 | `turn:` you set | The Next line says |
 |---|---|
-| `claude` | **Next:** run `/work-loop-v2` in Claude. |
+| `claude` | **Next:** for **{brief name}** (`{task-id}`), run `/work-loop-v2 {task-id}` in Claude. |
 | `operator` | **Next:** {the decision or information you need from them}. |
 | — (Direct Work, no file) | **Next:** have Claude do this directly — no loop task. |
 | — (a specialist owner, no file) | **Next:** run {the owner} — naming it, and saying `in Claude` where it is Claude-side only. |
 | `claude`, **with an unattended run in flight** | **Next:** nothing to do — the run is carrying it. Name the deadline and where the evidence will be. See *Unattended runs*. |
+
+For an open unit, **{brief name}** is the exact text after the dash in `## Lane and unit` (core
+§ 3). Carry it verbatim, together with the task id, every time the inline Claude instruction is
+written — opening, continuing, correcting or closing. An older state file with no usable brief name
+does not justify the bare instruction: use the task id as the temporary label and say that the brief
+name is missing.
 
 **The carve-out in the last row matters.** "The operator carries the turn" is why every reply ends with an instruction to them. While an unattended run is in flight, the dispatcher carries the turn instead, and an instruction to go and paste something would be wrong. The Next line then reports rather than directs.
 
@@ -155,6 +161,11 @@ Where a checkout carries `logs/scripts/work-loop-owner.sh`, `check --depth local
 
 Claude hands back with `turn: codex`. Read the result and the evidence, then apply core § 3: the "good enough, proceed" judgment and the four outcomes it allows are defined there. Yours is the executive call, not a hunt for more to improve.
 
+**Make status unmistakable in every operator-facing assessment.** Immediately before the `Next`
+line, write all three of `Progress`, `Implementation` and `Merge readiness`. Core § 3
+*Operator-facing progress, completion and merge readiness* owns what each may say — including why a
+completed unit is not a completed implementation. Follow it there; it is not restated here.
+
 **Claude runs the checks and reports the evidence. You assess that evidence.** Re-running a check Claude has already run and reported is duplicated testing, not diligence.
 
 You may reproduce a check only under one of these four conditions, and you say which one applies when you do:
@@ -184,7 +195,7 @@ If Claude handed back a **false premise**, that is a correct outcome, not a fail
 
 The closing decision is yours (core § 3 step 5); the closed file is not. Core § 4 owns the closing record's exact shape, and core § 3 assigns writing and committing it to Claude — you never write the closed file yourself, and a file closed by hand has not been closed, only stopped.
 
-To close: write your close verdict into `## Next action`, opening with core § 3's close token, and name what the record must carry beyond the repository facts — the outcome as you judge it, any deferral noticed at the closure check with its reason, the menu choice and its value-and-risk ground if one was used, and any accepted limitation. Set `status: active` and `turn: claude`, and end your reply with the Next instruction: run `/work-loop-v2` in Claude. Claude reduces the file to core § 4's closing record — the active fields do not survive the reduction — sets `status: closed` and `turn: operator` in that same write, commits it, and only then clears the checkout's declaration.
+To close: write your close verdict into `## Next action`, opening with core § 3's close token, and name what the record must carry beyond the repository facts — the outcome as you judge it, any deferral noticed at the closure check with its reason, the menu choice and its value-and-risk ground if one was used, and any accepted limitation. Set `status: active` and `turn: claude`, and end your reply with the named Next instruction from § *The seam*, including the brief name and task id. Claude reduces the file to core § 4's closing record — the active fields do not survive the reduction — sets `status: closed` and `turn: operator` in that same write, commits it, and only then clears the checkout's declaration.
 
 ---
 
@@ -219,5 +230,7 @@ The intake router (2026-08-06) generalises that section from a "continue" router
 The mode contract (2026-08-06) makes Discovery, Implementation and Adoption operational. Core § 3 *The unit's mode* owns the definitions; you classify at routing step 4 and record the mode inside `## Lane and unit`. No state field, lane, unit kind or project phase was added.
 
 The bounded-execution outcomes (2026-08-11) answer two failures on the same transport one day apart — a unit that left the bounded path, and a unit that could not fit inside it. They add § *Size the unit against the clock* (now in [Unit framing](references/unit-framing.md)), the five recovery clauses in § *Three outcomes* (now in [Courier operation](references/courier-operation.md)), and two entries in § *What you never do*. **No state field, artifact or stage was added**, and the dispatcher's side is a repair plus one deny set rather than a new mechanism. Both additions here are written guidance and carry that limit honestly: guidance depends on being remembered, and the only structural backstop remains the actor timeout — which is why raising it is refused above.
+
+The packaging outcomes (2026-08-14) are recorded beside the rules they added, in § *Size the unit against the clock* (now in [Unit framing](references/unit-framing.md)). **No state field, artifact or stage was added.**
 
 Courier mode (2026-08-06) adds the one approved way to carry the turn yourself, under core § 4's courier clause. It is optional, off unless the operator approves it, and transport only — it changes nothing about what you frame, what you assess, or what Claude does.

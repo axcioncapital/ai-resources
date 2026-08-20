@@ -6,7 +6,7 @@ argument-hint: "[the task id whose state file to act on — required; this comma
 
 Run Claude's half of one Work Loop v2 unit: read the task-state file, check the brief's premises against the live repository, then either hand back a false premise or implement the unit and hand back evidence. Codex frames and assesses; Claude owns repository reality and makes every commit. Not for small reversible fixes — those are Direct Work and open no state file (core § 2).
 
-Input: `$ARGUMENTS` — **exactly one task id, and it is required.** An empty invocation selects nothing: this command does not scan `logs/work-loop/` for a candidate and does not pick a task on your behalf. If `$ARGUMENTS` is empty, say so, name that a task id is required, and stop without reading or changing any state file.
+Input: `$ARGUMENTS` — **exactly one task id, and it is required.** An empty invocation selects nothing: this command does not scan `logs/work-loop/` for a candidate and does not pick a task on your behalf. If `$ARGUMENTS` is empty, say so, name that a task id is required, and stop without reading or changing any state file. The operator shorthands `y` and `ur turn` (core § 4) are not task ids and do not select one: they carry the turn the operator already holds, so an invocation that arrives with one of them and nothing else is an empty invocation and stops here.
 
 This command requires the executable core on every invocation. Apply the resolver contract below,
 then read the one absolute path it prints **before any other Work Loop action**.
@@ -121,7 +121,7 @@ Where this resource and the core disagree, the core wins; report the disagreemen
 
 This command is not a session lifecycle command. It does not invoke `/prime`, `/session-start` or `/session-plan`.
 
-**Scope of this version — Slices 1–3, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below), and admission discipline: the admission test (Admission below), de-escalation (De-escalating below), and mid-unit deferrals (Step 4). Plus the unit's mode (2026-08-06 — The unit's mode below), which Codex classifies and you execute against.
+**Scope of this version — Slices 1–3, Claude side.** Behaviours 1.2, 1.3, the fresh-session pickup (2.1), file-identity rejection (2.2), Claude's half of the bounded correction (2.3, 2.4 — the Correction rounds section below), and admission discipline: the admission test (Admission below), de-escalation (De-escalating below), and mid-unit deferrals (Step 4). Plus the unit's mode (2026-08-06 — The unit's mode below), which Codex classifies and you execute against. Plus the hop-termination contract (2026-08-14 — Ending the hop below) and the `Dominant deliverable` check, which answer a hop that ended on a progress note and a unit packaged too large for one hop.
 
 Context Engineering is live on the Codex side. This command **consumes** the engineered brief — checking its claims against the repository and acting on it — and never performs Codex's preparation, authority or selection judgments itself. The governing autonomy rule over that consumption is core § 8; read it there rather than restating it here.
 
@@ -392,8 +392,16 @@ Core § 3's close token in `## Next action` is Codex's close verdict; core § 4 
    bash logs/scripts/work-loop-owner.sh clear --checkout "$(git rev-parse --show-toplevel)" --task {task-id}
    ```
 
-   Leaving it in place is the failure this step exists to prevent: the next task in that checkout would be refused by a task that has already finished. `clear` refuses to remove another task's declaration, and a checkout that has none is a no-op, so running it is always safe. `logs/work-loop/.owner` is gitignored, so this changes nothing that gets committed — which is also why it cannot be part of the commit in step 2.
+   Leaving it in place is the failure this step exists to prevent: the next task in that checkout would be refused by a task that has already finished. `clear` refuses to remove another task's declaration, and a checkout that has none is a no-op, so running it is always safe. `logs/work-loop/.owner` is gitignored, so this changes nothing that gets committed — which is also why it cannot be part of the commit in step 2. Then report the final repository state under Step 6 and stop.
 
-## Step 6 — Report in one line
+## Step 6 — Report clearly
 
-Say what happened, in plain words: which task, whether a premise failed, what was committed. Then stop. Assessment is Codex's move, not yours.
+For an ordinary hand-back, say in one plain-language line which brief and task ran, whether a premise
+failed, and what was committed. Then stop. Assessment is Codex's move, not yours.
+
+For a closing invocation, report the whole-task result after the closing commit in exactly these
+terms: `Implementation: COMPLETE`, followed by one merge state —
+`READY FOR OPERATOR-AUTHORIZED MERGE INTO MAIN` with the branch and closing commit;
+`ALREADY ON MAIN — NO MERGE REQUIRED` with the closing commit; or `NOT READY` with the specific
+repository blocker. Do not describe a completed unit or an uncommitted close verdict as a completed
+implementation, and do not merge or authorize the merge yourself.

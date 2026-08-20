@@ -224,3 +224,37 @@ closure check subsequently accepted the correction on independent grounds anyway
 bound on the wait, and the correction's own fail-capable evidence was already strong). Killing the
 subagent and self-certifying the correction as reviewed (rejected — would have violated the "independent
 reviewer, never the author" rule the Work Loop QC framework requires).
+
+## 2026-08-18 — SHRINK the dispatcher-reliability task at the pre-run terminal-result boundary
+
+**Context.** Unit 36 of `work-loop-v2-dispatcher-reliable-supervised-use` established a
+`PLAN/INTERFACE CONFLICT`: plan § 5 Change set A requires every dispatcher termination — including
+usage and argument refusal — to produce one durable, run-bound terminal result. Every input to run
+identity and evidence location (`--checkout`, `--task`, `--log-dir`) is itself an argument that class
+of refusal rejects or lacks, so the requirement is uncoverable for early refusals inside the current
+interface without either trusting a rejected value (unsafe) or adding a second evidence mechanism
+(a new argument-free evidence root, an independent pre-parse run identity, and matching schema/consumer
+changes).
+
+**Decision.** Patrik chose `SHRINK`. Invalid pre-run invocations may refuse with clear stderr and a
+nonzero exit without a durable terminal result; the durable-result guarantee begins only once
+checkout, task and evidence location are all trusted. The task closes under this narrowed boundary. No
+integrated candidate passed Gate SA and no independent review returned `ADOPT`; the release label
+**Reliable supervised semi-autonomous dispatcher** is not authorized. Any future implementation of the
+narrowed envelope requires a new or materially revised content-bound plan/task — not a resumption of
+the closed task under the old Gate SA authority.
+
+**Rationale.** The architecture change needed to close the gap (dispatcher-global evidence root +
+independent pre-parse identity + weakened consumer identity contract) exists solely to describe
+malformed non-runs — invocations that never became a real dispatcher run in the first place. Its cost
+(new state surface, a second identity path, schema changes) was judged disproportionate to the value of
+durable evidence for inputs that were already rejected and already visible on stderr.
+
+**Alternatives considered.** Re-scoping the plan clause to cover only the sub-class with an admitted
+evidence root (late-stage refusals after leases are held) and recording the earlier sub-class as an
+accepted limitation — left as a live option, not taken, because it would have required a formal plan
+amendment rather than settling the question at the task level. Accepting the full architecture change
+as an operator-owned decision to keep Gate SA reachable — rejected on cost/value grounds above. Amending
+plan item 7 to explicitly accept stderr-only evidence for the whole class — functionally close to what
+was chosen, but as a plan edit rather than a task-level SHRINK; the SHRINK path was preferred because it
+closes the task cleanly without touching the content-bound plan's own text.

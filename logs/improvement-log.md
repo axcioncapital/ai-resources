@@ -4178,3 +4178,94 @@ rewrite immediately after it).
 **The two resolutions, neither applied.** Either add `reference/quality-standards.md` to Part B's permitted artifact table, or drop the citation from judgment 6 and state the standard inline. Codex accepted this as a non-blocking deferral at S1 closure.
 
 **Target files:** `workflows/research-workflow/tests/s1-representative/rubric.md` (Part B — the artifact table and judgment 6).
+### 2026-08-18 — `dispatch.sh`'s `RUN_ID` checkout discriminator has been silently empty since `0d9e3355`
+
+- **Status:** logged (pending)
+- **Severity:** medium — the field exists specifically to prevent two runs of the same task, started in
+  the same second from different checkouts, from silently overwriting each other's run log, hop captures
+  and unattended profile. That collision protection has been dead since the commit that introduced it, in
+  a script whose own header still reads "SPIKE, not production." No incident has been observed yet.
+- **Category:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` — run identity.
+- **Source:** `/work-loop-v2 work-loop-v2-dispatcher-reliable-supervised-use` Unit 36 discovery, 2026-08-18.
+
+**What happened.** `dispatch.sh:3141` composes `RUN_ID="$(date '+%Y%m%dT%H%M%S')-${LOCK_KEY:0:8}-$$-$TASK"`.
+`LOCK_KEY` is meant to be `sha256(checkout|task)` — the discriminator that separates two same-second,
+same-task runs from *different* checkouts, since the pid alone does not (a same-checkout collision is
+already refused earlier at exit 17 by the lease). `grep -rn 'LOCK_KEY=' --include='*.sh' .` finds no
+assignment anywhere in `dispatch.sh`; the only two matches repo-wide are unrelated local variables in
+`plans/work-loop-v2-v0.2/handoff-automation-spike/runs/probes/*.sh`. Commit `0d9e3355` ("land
+work-loop-v2 concurrent-task-isolation mechanism") both introduced the `${LOCK_KEY:0:8}` reference and
+removed the prior inline lease implementation (and its `LOCK_KEY` assignment) when the lease moved into
+`logs/scripts/work-loop-lease.sh` — that library exposes `WL_LEASE_TASK_DIR`, `WL_LEASE_CHECKOUT_DIR` etc.
+but no `LOCK_KEY` equivalent, and nothing at the call site (`dispatch.sh:1706-1708`, where `LOCK_ROOT` /
+`LOCK_DIR` / `CHECKOUT_LOCK_DIR` are aliased from the library) fills the gap. Under `set -uo pipefail`,
+`${LOCK_KEY:0:8}` on an unset variable expands to an empty string rather than erroring — confirmed live:
+`bash -c 'set -uo pipefail; TASK=demo; printf "%s\n" "$(date "+%Y%m%dT%H%M%S")-${LOCK_KEY:0:8}-$$-$TASK"'`
+prints `20260818T114719--51274-demo`, the empty field visible between two dashes. Committed run logs from
+before `0d9e3355` (e.g. `20260811T100947-d571444e-81459-…`) carry a populated field, so the regression is
+real and dated to that commit, not an artifact of the isolated check.
+
+**Consequence.** Two dispatcher runs of the same task, launched in the same second from two different
+checkouts against a shared `--log-dir`, would currently collide on `RUN_ID` and silently overwrite each
+other's run log, hop captures and unattended-settings file — exactly the failure `0d9e3355`'s own commit
+message says it fixed. Nothing in the existing 299-passing `dispatch.test.sh` suite exercises this path
+(searched for `LOCK_KEY` and cross-checkout same-second collision cases; none found), so the regression
+was invisible to the accepted regression gate.
+
+**Shape of the fix (not built; explicitly deferred by Unit 36, out of that unit's discovery scope).**
+Either restore a `LOCK_KEY`-equivalent computed at the same point the library resolves `WL_LEASE_ROOT`
+(`sha256(checkout|task)`, matching the pre-`0d9e3355` semantics), or expose one from
+`logs/scripts/work-loop-lease.sh` itself (e.g. as part of `wl_lease_init`'s output) so both the dispatcher
+and any other consumer of the shared library compose `RUN_ID` from the same value rather than each
+re-deriving it. Add a focused test asserting the field is non-empty and distinguishes two different
+checkouts for the same task.
+
+**Target files:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh` (~L3141, and
+~L1706-1708 where the library's values are aliased); `logs/scripts/work-loop-lease.sh` (if the fix adds a
+library-exposed key); `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` (new focused
+case).
+
+### 2026-08-20 — `dispatch.test.sh` has been red at 1843/3 with no entry naming the three failures
+
+- **Status:** logged (pending)
+- **Severity:** medium
+- **Category:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh` — regression gate.
+- **Source:** `/work-loop-v2 experimental-dispatcher-main-integration` Unit 2, 2026-08-20.
+
+**What happened.** A full run of the dispatcher suite during the main-integration task returned `1843 passed, 3 failed` (exit 1). The three are `the --settings argument points at the written profile`, `50k — a clean 22 still exits 22, advertises its one complete NO_TRANSITION result, and releases both leases`, and `50k — a clean 18 still exits 18, advertises its one complete FOREIGN_UNSTAGED result, and releases both leases`. They are **pre-existing and merge-neutral**, proved by dependency rather than assumed: the suite seeds each sandbox by copying exactly three helpers (`dispatch.test.sh:135,138,140`), and the only checkout paths either program reads are `work-loop-lease.sh`, `work-loop-state.sh`, `work-loop-owner.sh` and `prime-session-entry.sh` — all four, plus `dispatch.sh` and `dispatch.test.sh` themselves, are byte-identical either side of merge `7617add7`.
+
+**Consequence.** The accepted regression gate for the dispatcher is red, and until now that fact lived only inside a closed task's `## Accepted limitations`, which no scanner reads. A gate that is habitually red stops discriminating: the next real regression arrives as a fourth failure in an already-failing suite.
+
+**Why it is logged rather than fixed.** Patrik's 2026-08-19 `SHRINK` decision scoped the candidate to an explicitly experimental supervised deployment, and repairing these was outside the integration task's objective. This entry exists so the three are reachable from `/prime` and `/open-items` rather than only from a closed record.
+
+**Target files:** `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.test.sh`, `plans/work-loop-v2-v0.2/handoff-automation-spike/dispatch.sh`.
+
+### 2026-08-20 — `work-loop-v2-tracer-6`'s S3 control asserts a retry rule Unit 31 deliberately removed
+
+- **Status:** logged (pending)
+- **Severity:** medium
+- **Category:** `logs/scripts/work-loop-v2-tracer-6.test.sh` — stale assertion.
+- **Source:** `/work-loop-v2 experimental-dispatcher-main-integration` Units 1–2, 2026-08-20.
+
+**What happened.** `work-loop-v2-tracer-6.test.sh` fails at `S3 control: but it IS retried once, so the retry rule is real`, inside `unexpected actor termination preserves partial effects and does not relaunch`. The commit that closed the prior dispatcher task (`7b5efd12`) states the opposite rule as the accepted behaviour: "a hop is never automatically replayed once its actor has launched, and recovery is an explicitly started new run." The control therefore pins retired behaviour and is **red on correct behaviour**. `work-loop-v2-tracer-7` is separately red at S5 and S8 (163/2). All three were name-matched identically before and after the merge, so none is integration damage.
+
+**Consequence.** Two tracer suites are permanently red for reasons unrelated to any current change, which is the same discrimination loss as the entry above and makes "did my change break a tracer?" unanswerable without a per-failure diff every time — exactly the manual step this task had to perform twice.
+
+**Shape of the fix (not built).** Retire or invert the tracer-6 S3 control to assert the no-automatic-replay rule `7b5efd12` accepted, and triage tracer-7's S5/S8 separately — they were not investigated here.
+
+**Target files:** `logs/scripts/work-loop-v2-tracer-6.test.sh`, `logs/scripts/work-loop-v2-tracer-7.test.sh`.
+
+### 2026-08-20 — the Codex skill body sits 26 words under its enforced word budget, so the next addition re-breaks it
+
+- **Status:** logged (pending)
+- **Severity:** medium
+- **Category:** `.agents/skills/work-loop-v2/SKILL.md` — architecture budget headroom.
+- **Source:** `/work-loop-v2 experimental-dispatcher-main-integration` Unit 2 + correction, 2026-08-20.
+
+**What happened.** The progressive-disclosure split gave `SKILL.md` a hard `<500` line and `<5000` word budget (`logs/scripts/work-loop-v2-slice-1.test.sh:1838-1840`). Post-split, `main`'s body measured 4,802 words — **197 words of headroom**. Merging the session branch's accepted additions to body sections (74 + 113 + 131 words) took it to 5,133 and turned the check red; the correction at `ae96abf4` brought it to **4,974 — 26 words of headroom**.
+
+**Consequence.** The budget is now breached by roughly one added sentence. The failure mode is not the red check — that works — it is *when* it fires: at merge time, on someone else's integration, as a conflict between two independently-accepted pieces of work, which is precisely how it consumed a hand-back and a correction round this session. Every future addition to `## The seam`, `## Assessing the result`, `## Closing the task` or `## Scope of this version` inherits that.
+
+**Shape of the fix (not built).** Either give the body real headroom by moving a further body section to a reference (the changelog `## Scope of this version` is the obvious candidate — it is pure history and the largest non-operative block), or make the constraint visible before merge time rather than at it. Not attempted here: choosing what leaves the always-loaded body is an architecture decision about that skill, and this session's authority was integration.
+
+**Target files:** `.agents/skills/work-loop-v2/SKILL.md`, `.agents/skills/work-loop-v2/references/`.

@@ -22,7 +22,14 @@
 #   --max-hops N        absolute hop limit (default 4)
 #   --timeout S         per-actor wall-clock seconds (default 900)
 #   --deadline S        WHOLE-RUN wall-clock budget in seconds, measured from
-#                       startup. Unset by default. This is a real deadline, not a
+#                       startup. REQUIRED for a live multi-hop run — a live run
+#                       with a hop ceiling above 1 is refused (exit 10) before
+#                       admission when it is absent, because max_hops * timeout
+#                       is a consequence rather than a budget. Still optional,
+#                       and unset by default, for the shapes that cannot burn an
+#                       afternoon: --carry-one or --max-hops 1 (bounded by
+#                       --timeout), --actor-cmd, --dry-run and --status.
+#                       This is a real deadline, not a
 #                       start gate: before every launch the actor's effective
 #                       timeout is clamped to min(--timeout, time remaining), and
 #                       a run still going when the clock expires has its actor
@@ -49,9 +56,25 @@
 #                       It does NOT buy network isolation: denying WebFetch just
 #                       sends the child to curl. See the same record.
 #
-# ATTENDED PERMISSION POLICY (P0-F, 2026-08-09). Every attended Claude hop is
-# launched with `--permission-mode default`, with or without --claude-deny. It is
-# not an option and there is no flag to turn it off. Before this, the child
+#   --permission-mode M attended permission mode for THIS invocation only:
+#                       `default` (the default) or `acceptEdits`. Nothing else is
+#                       accepted, `bypassPermissions` least of all. It is not
+#                       inherited from settings, environment or a previous run,
+#                       and it is refused before admission — so an invalid or
+#                       over-broad request launches nothing and takes no lease.
+#                       Incompatible with --unattended and --actor-cmd, neither
+#                       of which can carry a mode: requesting an elevation those
+#                       paths would silently drop is refused, not dropped.
+#                       Recorded as permission_mode_requested. The EFFECTIVE mode
+#                       is recorded separately as permission_mode_effective, read
+#                       from the child's own system/init event and NEVER from this
+#                       request; a hop whose capture does not establish it reports
+#                       `unavailable` rather than restating what was asked for.
+#
+# ATTENDED PERMISSION POLICY (P0-F, 2026-08-09; selection added 2026-08-19).
+# Every attended Claude hop is launched with an EXPLICIT `--permission-mode`,
+# with or without --claude-deny, and the value is stated on this dispatcher's own
+# command line rather than inherited. Before this, the child
 # INHERITED this checkout's `defaultMode: bypassPermissions` — measured off the
 # runtime's own system/init event — so the dispatcher was handing an actor bypass
 # authority nobody had asked for. Stating the mode at launch fixes that without
@@ -151,7 +174,9 @@
 #                              not necessarily another dispatcher.
 #   18  FOREIGN_UNSTAGED       out-of-allowlist working-tree changes already present
 #   19  GIT_HAZARD             index.lock held, or a merge/rebase/cherry-pick in progress
-#   20  ACTOR_FAILED           non-zero exit (retried once when nothing changed)
+#   20  ACTOR_FAILED           non-zero exit. NEVER retried: the actor had
+#                              already launched, and nothing readable from here
+#                              proves the model request did not start.
 #   21  ACTOR_TIMEOUT
 #   22  NO_TRANSITION          state did not move in an allowed direction
 #   23  HOP_LIMIT
@@ -188,6 +213,19 @@
 #                              (32 is also a gap, retired at Tracer bullet 4
 #                              with the legacy session-identity init. See the
 #                              RETIRED block below. Do not reuse either number.)
+#   38  TERMINAL_UNPROVABLE    the run reached a real operator terminal — CLOSED or
+#                              BLOCKED_OPERATOR — but its terminal result could not
+#                              be finalized, so there is no durable evidence of the
+#                              outcome. Deliberately NOT 26: that one says the state
+#                              file is malformed and sends the operator to repair
+#                              it, which is the wrong instrument here — the state
+#                              file is fine and the WRITE is what failed. A run that
+#                              cannot prove how it ended must not exit 0 saying it
+#                              ended well, which is the whole reason this code
+#                              exists rather than a silent success. Both run leases
+#                              are RETAINED on this exit — pinned with the cause
+#                              recorded inside them — so a second dispatcher is
+#                              refused (exit 17) until the operator clears them.
 #   33  OWNERSHIP_REFUSED      logs/scripts/work-loop-owner.sh refused this task
 #                              in this checkout: either the checkout is claimed
 #                              by a different open task, or this task is claimed
@@ -293,6 +331,17 @@ DEADLINE=""
 CODEX_BIN="/Applications/ChatGPT.app/Contents/Resources/codex"
 CLAUDE_BIN=""
 LOG_DIR=""
+# The one canonical absolute evidence directory, chosen read-only at admission by
+# check_evidence_location() and copied into LOG_DIR/LOG_DIR_ABS there. Declared
+# beside LOG_DIR because it replaces it: after admission the two are the same
+# value, and this one is where that value is decided.
+LOG_DIR_SELECTED=""
+# The permission mode requested for THIS invocation's attended Claude hops, and
+# nothing wider. `default` unless the operator names the other value on this
+# command line: there is no settings key, no environment variable, no state-file
+# prose and no memory of a previous run that can raise it, because an authority
+# that can be inherited is one nobody decided to grant.
+PERMISSION_MODE="default"
 DRY_RUN=0
 STATUS_MODE=0
 CARRY_ONE=0
@@ -378,6 +427,16 @@ CUR_ACTOR=""
 # The capture file the most recent launch_actor() actually wrote (O3).
 LAST_CAPTURE=""
 
+# DECLARED HERE, NOT ONLY WHERE IT IS COMPOSED (Unit 25). The run-evidence block
+# assigns RUN_ID and RUN_LOG on two ADJACENT lines, and from Unit 25 the signal
+# handler publishes as soon as RUN_ID exists — so a signal landing in the one
+# statement between them would reach finalize_terminal_result(), which reads
+# `$RUN_LOG` unguarded, with the name never assigned. Under `set -u` that is not
+# an empty field but an immediate shell exit carrying neither 28 nor a record.
+# The window is one assignment wide and it is real; an empty default closes it
+# without adding a guard anyone downstream has to remember.
+RUN_LOG=""
+
 # The allowlisted working-tree snapshot taken immediately before the most recent
 # actor launch. Once set, it remains the comparison point until the next launch,
 # so a post-hop guard (including a malformed state file or hop limit) can still
@@ -385,10 +444,1174 @@ LAST_CAPTURE=""
 HOP_BASELINE_READY=0
 HOP_ALLOWED_SNAPSHOT=""
 
+# Was a child process for an actor ever actually FORKED in this run? Set in
+# run_bounded(), the one place a process is started, and never inferred from an
+# intent flag.
+#
+# HOP_BASELINE_READY was doing this job and cannot: it is raised immediately
+# BEFORE launch_actor(), and launch_actor() carries four die() paths of its own
+# that run before any fork — a non-executable codex binary, an unresolvable
+# claude binary, a checkout it cannot enter, an unrecognised actor name. Every
+# one of those reported a launch, and in live mode a model request, that never
+# happened. A terminal result that says a model ran when none did is the exact
+# false statement the trusted-field contract exists to remove.
+#
+# MONOTONIC, deliberately. It answers "did an actor process run at some point in
+# this run", which is what a reader of a terminal record needs: a hop-2 pre-fork
+# stop after a completed hop 1 really did launch an actor, and resetting per
+# attempt would deny it — the mirror-image falsehood.
+ACTOR_PROCESS_STARTED=0
+
+# WHICH actor the most recent fork was for. The companion to the flag above, and
+# deliberately NOT monotonic with it: the flag answers "did any actor ever run in
+# this run", this answers "which actor is the launch THIS terminal relates to".
+#
+# WHY IT EXISTS AT ALL. `permission_mode_requested` used to read CUR_ACTOR, which
+# names the actor IN FLIGHT and is cleared the moment a hop is over. Every failure
+# terminal finalizes above that clear and reported the requested mode correctly;
+# the successful carry-one terminal finalizes below it and reported `none` — "no
+# mode was requested" about a launch whose argv carried --permission-mode default.
+# The in-flight reading is right for `actor` and for the signal handler, which may
+# only name a process that is actually terminable; it is wrong for a durable fact
+# about the launch. Two questions, so two variables.
+#
+# CLEARED ON ENTRY TO launch_actor(), SET AT THE FORK. Both halves are
+# load-bearing and neither is redundant. Setting it at the fork is what keeps a
+# launch that died on its binary from claiming a mode no child ever received;
+# clearing it on entry is what keeps the PREVIOUS hop's fork from answering for
+# this one. ACTOR_PROCESS_STARTED alone cannot do either job — it is 1 for the
+# rest of the run after the first fork, so from hop 2 onward it stops
+# distinguishing a launch that happened from one that did not.
+LAUNCHED_ACTOR=""
+
+# The ownership admission verdict, recorded where that check actually runs so a
+# terminal reports what was OBSERVED rather than what the code's ordering
+# implies. `unchecked` is the honest value for a terminal reached before the
+# check — validate_state() dies above it — and it is NOT a synonym for
+# `unavailable`, which is reserved for the check being unrunnable.
+OWNER_STATUS=unchecked
+
 # The log directory's path relative to the checkout, when it sits inside one.
 # Set where the allowlist is extended to cover it, and read by allowlisted_dirty()
 # so the dispatcher's own evidence is not reported back as the actor's work (O2).
 LOG_REL=""
+
+# --------------------------------------------------- terminal result (set A)
+#
+# ONE bounded, versioned, run-bound, machine-readable record per terminal stop,
+# finalized atomically before the lease is released. Plan § 5 Change set A,
+# required behaviour items 2, 3 and 4, and the durable-ordering rule that a lease
+# is released only after the terminal result exists.
+#
+# WHAT THIS COVERS TODAY, and the boundary is the point. This producer hangs off
+# die(), which is the shared funnel for the nine post-admission nonzero families
+# (missing runtime/auth, invalid state/identity/turn, ownership, the pre-hop
+# repository guards, shutdown/hop-limit, actor failure/timeout/budget, unexpected
+# effect/commit, permission denial, and missing-handback/no-transition). It does
+# NOT cover the families that exit by another route: usage and argument refusal
+# and checkout/lease-infrastructure failure exit directly before a run id exists;
+# on_signal() exits on its own
+# path; and the five zero-exit sites are not this producer's terminals. Wiring
+# those is separate work with its own evidence — quietly extending the funnel here
+# would claim coverage that has not been proven.
+#
+# THE FIELDS ARE THE DISPATCHER'S, NOT THE ACTOR'S. Every value below comes from
+# a variable this script assigned from its own observation of the process, the
+# repository or the lease, or from a constant defined here. No actor prose, no raw
+# capture content, and no line of the STOP message is copied into the record: the
+# human wording lives in the run log, which the record names. An actor that writes
+# a lookalike file cannot supply the framing, because finalization happens after
+# the actor is gone and replaces whatever is at the run-bound path.
+#
+# ONE FIELD IS READ OUT OF THE HOP CAPTURE, and the sentence above still holds
+# because of what it reads and how. permission_mode_effective comes from the
+# RUNTIME-AUTHORED `system/init` event — a statement the product makes about its
+# own resolved configuration, not prose the model wrote — and the reader accepts
+# only a single short token of a fixed shape, rejecting everything else to
+# `unavailable`. So no capture byte outside that shape can reach the record, and
+# the actor still cannot supply a value of its own choosing. The distinction and
+# its limits are argued at attended_effective_permission_mode().
+#
+# A FACT THAT IS NOT ESTABLISHED IS STATED, NEVER OMITTED AND NEVER GUESSED. Two
+# bounded tokens carry that, and they are not synonyms:
+#   unavailable — this dispatcher cannot establish the fact at this terminal
+#   none        — the fact is established, and it is absent
+# So a pre-hop stop reports state_sha256_after=unavailable (no hop ran to observe
+# it) while a run with no --deadline reports deadline_seconds=none (the operator
+# asked for none). Reading one as the other would turn "we did not look" into "we
+# looked and there was nothing", which is the false statement this whole change
+# set exists to remove.
+TERMINAL_RESULT_VERSION=1
+RESULT_FILE=""
+RESULT_FINALIZED=0
+# THE FUNNEL'S CONSUMPTION IS ONE-SHOT, and this flag is what makes it so. It is
+# a separate fact from RESULT_FINALIZED, which answers "was a record written";
+# this answers "has the funnel already checked one". The four terminal seams that
+# consume do not set it, and must not: they exit directly and never re-enter
+# die(), so nothing they do can be undone by a flag they never read.
+RESULT_CONSUMED=0
+
+# Bound one value to a single line. Newlines, carriage returns and tabs become
+# spaces and the value is truncated. This is what makes the grammar safe: a path,
+# a git status line or an operator-supplied argument cannot inject a second
+# key=value pair into the record. Pure parameter expansion, so it is UTF-8 safe —
+# a `tr` character-class filter would mangle the non-ASCII that appears in real
+# checkout paths.
+tr_val() { # value -> one bounded single-line value
+  local v="${1-}"
+  v="${v//$'\n'/ }"; v="${v//$'\r'/ }"; v="${v//$'\t'/ }"
+  printf '%s' "${v:0:512}"
+}
+
+tr_kv() { # key value -> one record line
+  printf '%s=%s\n' "$1" "$(tr_val "${2-}")"
+}
+
+# A value, or the bounded token that says why there is none. Written as a helper
+# rather than inline `${x:-unavailable}` so that an empty string can never reach
+# the record as an empty value — an absent value and an unavailable fact look
+# identical to a reader, and only one of them is honest.
+tr_kv_or() { # key value fallback-token
+  local v="${2-}"
+  [ -n "$v" ] || v="$3"
+  tr_kv "$1" "$v"
+}
+
+# Exit code -> the symbolic outcome an operator and a later reader both key on.
+# A CONSTANT TABLE, mirroring the header's exit-code list. Deliberately not derived
+# from the STOP message: the message is prose that interpolates git and child
+# output, and reading an outcome out of it would be the prose-authority contract
+# plan § 5 forbids.
+result_outcome() { # code -> symbol
+  case "$1" in
+    # CODE 0 IS TWO DIFFERENT ENDS, and the exit code cannot tell them apart
+    # because neither is a failure. A task that CLOSED is finished; one that is
+    # BLOCKED_OPERATOR has stopped and is waiting for a person. Collapsing them
+    # would be the single most misleading thing this table could do — the operator
+    # reading two identical records would have no way to know which run still
+    # needs them.
+    #
+    # ST_CLASS, NOT A FRESH READING. validate_state() already asked the canonical
+    # validator and set it before the loop began; this reads that decision and
+    # never re-derives one from the body, the turn, or anything an actor wrote.
+    # Anything else at code 0 falls through to UNCLASSIFIED rather than guessing.
+    # WHAT THIS RUN DID, BEFORE WHAT THE TASK IS. A dry-run inspects and launches
+    # nothing, so its ending is its own class — and reading the task's lifecycle
+    # first made it wear the loop terminals' symbols: a preflight over a closed
+    # task reported COMPLETED, one over a blocked task reported OPERATOR_TAKEOVER,
+    # and one over an active task fell through to UNCLASSIFIED. Three symbols for
+    # one terminal class, two of them belonging to runs that actually finished or
+    # were actually handed over.
+    #
+    # MODE IS DISPATCHER-OWNED and settled at argument parse, so this reads no
+    # state, re-derives no lifecycle, and adds no second owner — it is one branch
+    # ahead of the existing one. `live` falls through unchanged, which is what
+    # keeps the two real loop terminals exactly as accepted.
+    #
+    # AND A CARRIED HOP IS ITS OWN CLASS TOO, for the same reason one branch on.
+    # --carry-one stops after one validated hop BY DESIGN, so reading the task's
+    # lifecycle here made it wear three symbols as well: UNCLASSIFIED when it
+    # handed on to an active actor, and COMPLETED or OPERATOR_TAKEOVER when it
+    # handed on to the operator — the full loop's words for a run that drove the
+    # task to its end. Nothing is lost by naming the run instead: `state_class`
+    # and `turn_at_terminal` are required fields and carry the lifecycle exactly.
+    #
+    # BOTH HALVES ARE LOAD-BEARING. `CARRY_ONE` alone is true of a --carry-one
+    # invocation over a task that is ALREADY operator-terminal, which carries no
+    # hop at all — it stops at the pre-hop operator terminal before any actor
+    # starts. `ACTOR_PROCESS_STARTED` is the fork this run really performed, the
+    # same fact the record's `stage` is derived from, so the pair says "carrying
+    # mode, and a hop actually happened". Ordered AFTER the dry-run branch: a
+    # --carry-one --dry-run launches nothing and stays a preflight.
+    0)  case "${MODE:-}" in
+          dry-run) printf 'DRY_RUN_COMPLETE'; return 0 ;;
+        esac
+        [ "${CARRY_ONE:-0}" -eq 1 ] && [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] && { printf 'CARRY_ONE_COMPLETE'; return 0; } # carry-one code-zero outcome
+        case "${ST_CLASS:-}" in
+          CLOSED)           printf 'COMPLETED' ;;
+          BLOCKED_OPERATOR) printf 'OPERATOR_TAKEOVER' ;;
+          *)                printf 'UNCLASSIFIED' ;;
+        esac ;;
+    38) printf 'TERMINAL_UNPROVABLE' ;;
+    10) printf 'BAD_USAGE' ;;              11) printf 'BAD_CHECKOUT' ;;
+    12) printf 'BAD_TASK_ID' ;;            13) printf 'STATE_MISSING' ;;
+    14) printf 'IDENTITY_MISMATCH' ;;      15) printf 'BAD_TURN' ;;
+    16) printf 'FOREIGN_STAGED' ;;         17) printf 'LOCK_HELD' ;;
+    18) printf 'FOREIGN_UNSTAGED' ;;       19) printf 'GIT_HAZARD' ;;
+    20) printf 'ACTOR_FAILED' ;;           21) printf 'ACTOR_TIMEOUT' ;;
+    22) printf 'NO_TRANSITION' ;;          23) printf 'HOP_LIMIT' ;;
+    24) printf 'UNEXPECTED_EFFECT' ;;      25) printf 'UNCOMMITTED_HANDBACK' ;;
+    26) printf 'MALFORMED_TERMINAL' ;;     28) printf 'INTERRUPTED' ;;
+    29) printf 'BUDGET_EXHAUSTED' ;;       30) printf 'UNEXPECTED_COMMIT' ;;
+    31) printf 'UNATTENDED_UNAVAILABLE' ;; 33) printf 'OWNERSHIP_REFUSED' ;;
+    34) printf 'OWNERSHIP_AMBIGUOUS' ;;    35) printf 'OWNERSHIP_UNAVAILABLE' ;;
+    36) printf 'STATE_UNCHANGED_HANDBACK' ;; 37) printf 'PERMISSION_DENIED' ;;
+    *)  printf 'UNCLASSIFIED' ;;
+  esac
+}
+
+# Exit code -> the next required action, as a bounded token. Same argument as
+# above: the operator's recoverable-next-action sentences stay in the STOP message
+# and the run log, and this is the machine-readable summary of them. A reader that
+# needs the wording reads the run log the record names.
+result_next_action() { # code -> token
+  case "$1" in
+    # Split for the same reason the outcome above is: "you have nothing to do" and
+    # "this is waiting on you" are opposite instructions, and code 0 alone cannot
+    # carry the difference.
+    # Mode first, for the same reason and in the same shape as the outcome above.
+    # The misdirection here was the sharper half: a dry-run over a closed task
+    # told the operator "none — task closed" about a run whose entire point was
+    # to preview a launch, and one over an active task sent them to read a log
+    # that says the preflight passed. Neither is the action a completed preflight
+    # actually calls for, which is none.
+    # A carried hop, same condition and same position as the outcome above — but
+    # NOT one collapsed token, and that asymmetry is deliberate. The outcome names
+    # one terminal class; the next action is an instruction, and the instruction
+    # genuinely differs. Handing on to an actor needs that actor NAMED, which is
+    # what the courier does next. Handing on to the operator keeps the two
+    # accepted tokens verbatim, because "the task is closed" and "a person owes an
+    # answer" are exactly what a full loop would say and are the distinction code
+    # 0 was split to protect — a single completion token would re-hide the
+    # unanswered question. So only the two active classes branch here; CLOSED and
+    # BLOCKED_OPERATOR fall through to the lifecycle case below, unchanged.
+    0)  case "${MODE:-}" in
+          dry-run) printf 'none-dry-run-preflight-complete'; return 0 ;;
+        esac
+        [ "${CARRY_ONE:-0}" -eq 1 ] && [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] && case "${ST_CLASS:-}" in ACTIVE_CLAUDE) printf 'operator-carry-turn-to-claude'; return 0 ;; ACTIVE_CODEX) printf 'operator-carry-turn-to-codex'; return 0 ;; esac # carry-one code-zero next action
+        case "${ST_CLASS:-}" in
+          CLOSED)           printf 'none-task-closed' ;;
+          BLOCKED_OPERATOR) printf 'operator-answer-the-blocking-question' ;;
+          *)                printf 'operator-read-run-log' ;;
+        esac ;;
+    38)          printf 'operator-inspect-run-log-terminal-not-finalized' ;;
+    10|11|12)    printf 'operator-correct-invocation' ;;
+    13|14|15|26) printf 'operator-repair-state-file-then-rerun' ;;
+    16|18|19)    printf 'operator-clean-checkout-then-rerun' ;;
+    17)          printf 'wait-for-lease-holder' ;;
+    20|21)       printf 'operator-inspect-hop-capture-then-decide-rerun' ;;
+    22)          printf 'operator-inspect-state-file-no-transition' ;;
+    23)          printf 'operator-decide-whether-to-continue-with-more-hops' ;;
+    24|30)       printf 'operator-inspect-out-of-allowlist-effects' ;;
+    25|36)       printf 'operator-resolve-uncommitted-state-file' ;;
+    28)          printf 'operator-inspect-after-interruption' ;;
+    29)          printf 'operator-rerun-with-larger-budget' ;;
+    31)          printf 'operator-restore-contained-profile-prerequisites' ;;
+    33|34|35)    printf 'operator-resolve-ownership' ;;
+    37)          printf 'operator-decide-capability-grant' ;;
+    *)           printf 'operator-read-run-log' ;;
+  esac
+}
+
+# ------------------------------------------- the approved restart, as a command
+#
+# Unit 28, minimum-release-contract item 1. The plan asks the takeover to carry
+# "the exact decision and resume action required from Patrik", and until this
+# existed the 37 stop said "grant the capability deliberately and re-run" — which
+# names a decision but not an action. The operator was left to know that
+# `--permission-mode acceptEdits` exists, that this dispatcher honours it, and
+# that a restart is a NEW run rather than a resumed one. That is three pieces of
+# recall standing between a stopped run and the one command that continues it.
+#
+# WHY A COMMAND LINE RATHER THAN A MENU. The plan cut multi-choice recovery menus
+# and recommendation logic on 2026-08-19: choosing among alternatives is the
+# operator's, and the dispatcher's job is to make the chosen one runnable. So
+# there is exactly one line here, and it is the one that grants the capability.
+# Declining is not rendered as an option because declining needs no command.
+#
+# THIS IS NOT AN APPROVAL, and the distinction is the whole safety property. The
+# dispatcher is printing what the operator WOULD run; nothing here elevates the
+# stopped run, retries it, or records a decision. The elevation happens only when
+# a person types it, and it produces a new run identity that revalidates from
+# scratch — which is exactly what makes reprinting it safe.
+#
+# Quoted with %q so a checkout or log directory containing spaces yields a line
+# that can be pasted and run rather than one that looks right and splits.
+approved_restart_invocation() { # log-dir -> one runnable command line
+  printf 'bash %q --checkout %q --task %q --log-dir %q --permission-mode acceptEdits' \
+    "${BASH_SOURCE[0]}" "$CHECKOUT" "$TASK" "$1"
+}
+
+# The permission mode this dispatcher REQUESTED for the launch this terminal
+# relates to. It is fixed before admission and read back here rather than stored
+# at launch, because PERMISSION_MODE is the single value that both this field and
+# the attended Claude argv read — so the record cannot name a mode the child was
+# not asked for.
+#
+# THE EFFECTIVE MODE IS NEVER DERIVED FROM THIS. Only the child's own system/init
+# event establishes what it actually ran under, and the reader that consumes that
+# event (attended_effective_permission_mode(), below) has no path back to this
+# variable, this argv, the settings layers or the terminal `result` event. The two
+# fields are independently sourced, and a hop whose capture does not establish the
+# effective mode reports `unavailable` rather than this value.
+# Promoting a requested property to an effective one is the single most tempting
+# false statement available here, and recording the request is evidence reporting
+# — not authorization, and not Change set B's transport work.
+# GATED ON THE OBSERVED FORK, not on the baseline flag. A mode is only requested
+# by an argv that was actually handed to a child; a run that stopped on an
+# unresolvable binary requested nothing, and reporting `default` there would be
+# the same false-launch claim actor_launched carried.
+#
+# THE ACTOR GUARD READS LAUNCHED_ACTOR, NOT CUR_ACTOR, and the difference is the
+# whole of Unit 19. CUR_ACTOR names the actor IN FLIGHT, so it is empty at every
+# terminal that finalizes after the hop-over clear — which is exactly the
+# successful carry-one terminal, the one outcome a courier exists to produce. It
+# reported `none` there: no mode requested, about a launch whose argv carried
+# --permission-mode default. LAUNCHED_ACTOR is the durable fact about the launch
+# instead of the liveness fact about the process, so the answer no longer depends
+# on whether the child happens to still be running when the record is written.
+# `actor` still reports CUR_ACTOR and the signal handler still reads it: the
+# in-flight reading is correct for both, and neither is touched here.
+result_permission_mode_requested() {
+  [ "$ACTOR_PROCESS_STARTED" -eq 1 ] || { printf 'none'; return 0; }
+  [ "$MODE" = "live" ] || { printf 'none'; return 0; }
+  [ "${LAUNCHED_ACTOR:-}" = "claude" ] || { printf 'none'; return 0; }
+  # The contained profile deliberately carries no permission mode of its own.
+  [ "$UNATTENDED" -eq 1 ] && { printf 'none'; return 0; }
+  # THE VALUE THAT WAS ACTUALLY ON THE ARGV, not a literal restated here. Both
+  # this line and the launch read one variable fixed before admission, so the
+  # record cannot claim a mode the child was not asked for — which is the only
+  # way this field earns its place next to the honest `unavailable` effective
+  # mode below.
+  printf '%s' "$PERMISSION_MODE"
+}
+
+# ---------------------------- the EFFECTIVE attended permission mode (Unit 26)
+#
+# WHAT THIS ANSWERS. Which permission mode the attended child's runtime ACTUALLY
+# resolved for the hop — as distinct from the mode this dispatcher asked for one
+# function up. Until now the record stated `unavailable` unconditionally, which was
+# honest and useless: `permission_mode_requested` alone cannot tell an operator
+# whether the request was honoured, and that is the whole question a supervised-use
+# claim turns on.
+#
+# THE ONE ADMISSIBLE SOURCE, and why it is admissible. `permissionMode` is a
+# top-level key of the child's own `system/init` event — the first line the Claude
+# Code runtime emits under `--output-format stream-json`. Two committed proofs make
+# it an observation rather than an echo of our own argv (Unit 25):
+#
+#   * runs/probes/unattended-effective-policy-2026-08-07.raw.txt line 271 reports
+#     `"permissionMode":"default"` on the UNATTENDED branch, which passes no
+#     --permission-mode at all. There was no argv for it to copy.
+#   * The P0-F record read the same field as `bypassPermissions` BEFORE the
+#     explicit flag existed and `default` after it — the red half being the
+#     checkout's inherited settings default, which an argv restatement could not
+#     have produced.
+#
+# WHAT IT MUST NEVER READ, stated as a list because each one is a plausible repair
+# that would silently turn this field back into the request: PERMISSION_MODE, the
+# launch argv, any settings layer, the actor's prose, and the terminal `result`
+# event. The event selector below is `type == "system" and subtype == "init"`, so
+# the terminal result is excluded structurally rather than by convention.
+#
+# IT FAILS CLOSED, IN THE REPORTING DIRECTION. Absent init event, absent key,
+# non-string value, conflicting values across two events, an unreadable capture,
+# no usable parser — every one of them yields `unavailable`. Falling back to the
+# requested mode on any of those paths is the exact promotion the function above
+# forbids, and it is the failure this unit's negative fixtures are aimed at.
+#
+# DEFINED HERE, WITH THE TERMINAL-RESULT DEPENDENCIES, and not beside
+# permission_denials_in() where the other capture reader lives. The reason is the
+# one remaining_seconds() states in full further down: finalize_terminal_result()
+# calls this, and a producer defined below the run-evidence block does not yet
+# exist at the terminals that finalize above it — which sends the field out EMPTY
+# beside `result_complete=yes`, a record certifying itself complete while missing a
+# required field.
+
+# One line per `system/init` event in the capture: the event's `permissionMode`
+# where it is a JSON string, and the single character `-` where the key is absent,
+# null, or any non-string type. `-` cannot be mistaken for a real answer because
+# the resolver below accepts only a value that STARTS WITH A LETTER — so a capture
+# holding one readable and one unreadable init event is two distinct lines, and
+# resolves to `unavailable` rather than to whichever one happened to parse.
+#
+# `jq -s` slurps a one-object capture and a line-per-event stream alike, exactly as
+# denials_via_jq() does, so this reader is not tied to the format of the moment.
+init_modes_via_jq() { # capture -> lines on stdout; NONZERO if jq itself is unusable
+  command -v jq >/dev/null 2>&1 || return 1
+  jq -r -s '
+    .[]
+    | select(type == "object")
+    | select(.type == "system" and .subtype == "init")
+    | if (.permissionMode | type) == "string" then .permissionMode else "-" end
+  ' "$1" 2>/dev/null
+}
+
+# The same extraction without jq. Kept behaviourally identical line for line —
+# including the `-` sentinel and the treatment of a boolean as a non-string — so
+# the two tiers cannot report the same capture differently. Deliberately a real
+# JSON parse rather than a regex: a pattern-matched "mode" read out of a capture
+# that also carries arbitrary tool input would be a worse answer than `unavailable`.
+init_modes_via_python() { # capture -> lines on stdout; NONZERO if python3 is unusable
+  command -v python3 >/dev/null 2>&1 || return 1
+  python3 - "$1" <<'PYEOF' 2>/dev/null
+import json, sys
+
+raw = open(sys.argv[1], encoding="utf-8", errors="replace").read()
+
+docs = []
+try:
+    docs.append(json.loads(raw))                  # --output-format json
+except ValueError:
+    for line in raw.splitlines():                 # --output-format stream-json
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            docs.append(json.loads(line))
+        except ValueError:
+            pass                                  # fails safe, as the jq filter does
+
+for d in docs:
+    if not isinstance(d, dict):
+        continue
+    if d.get("type") != "system" or d.get("subtype") != "init":
+        continue
+    v = d.get("permissionMode")
+    print(v if isinstance(v, str) and not isinstance(v, bool) else "-")
+PYEOF
+}
+
+# The capture -> one bounded token. This is the whole of the trust boundary.
+attended_effective_permission_mode() { # capture-path -> mode | unavailable
+  local cap="${1:-}" raw v
+  [ -n "$cap" ] && [ -f "$cap" ] && [ -r "$cap" ] && [ -s "$cap" ] \
+    || { printf 'unavailable'; return 0; }
+
+  # A parser that FAILS falls through to the next rather than being trusted for
+  # its empty output — the same distinction permission_denials_in() draws, and for
+  # the same reason: jq exits 0 with no output when a capture genuinely holds no
+  # init event, and non-zero when it cannot read the file at all. Reading the
+  # second as the first would report `unavailable` for a broken parser and for a
+  # missing event alike, which is true here but only by accident; when the tiers
+  # differ it matters, so the fall-through is explicit.
+  if raw="$(init_modes_via_jq "$cap")"; then :
+  elif raw="$(init_modes_via_python "$cap")"; then :
+  else printf 'unavailable'; return 0
+  fi
+
+  # ONE CONSISTENT VALUE OR NOTHING. Repeats of the same value are one fact; two
+  # different values are a capture this dispatcher cannot resolve. A first-wins
+  # reading was the available alternative and it is worse: it would let a second
+  # init event disagree with the recorded answer and leave no trace of it.
+  v="$(printf '%s\n' "$raw" | grep -v '^[[:space:]]*$' | LC_ALL=C sort -u)"
+  case "$v" in
+    '')      printf 'unavailable'; return 0 ;;   # no system/init event at all
+    *$'\n'*) printf 'unavailable'; return 0 ;;   # conflicting or multi-line values
+  esac
+
+  # A BOUNDED TOKEN, NOT RAW CAPTURE CONTENT. The record's own contract is that no
+  # capture bytes reach it (see the note above finalize_terminal_result), and this
+  # is what keeps that true while still reading a value: a mode is a short
+  # identifier, so anything that is not one is refused whole rather than truncated
+  # into the record. tr_val() would bound the length anyway; this bounds the SHAPE,
+  # which is the part tr_val cannot judge.
+  case "$v" in
+    [[:alpha:]]*) ;;
+    *) printf 'unavailable'; return 0 ;;
+  esac
+  case "$v" in
+    *[![:alnum:]_-]*) printf 'unavailable'; return 0 ;;
+  esac
+  [ "${#v}" -le 32 ] || { printf 'unavailable'; return 0; }
+
+  printf '%s' "$v"
+}
+
+# The field. Its guards mirror result_permission_mode_requested()'s, deliberately:
+# the two fields must agree about WHICH LAUNCH they are describing, or the record
+# would pair a request from one hop with an observation from another.
+#
+# THE FOUR GUARDS, each answering a different terminal:
+#   no fork          nothing was launched, so nothing ran under any mode
+#   not live         a simulated actor is not the product and emits no init event
+#   not claude       Codex's --json stream has no equivalent field; probing it for
+#                    one would be inventing a contract rather than reading one
+#   unattended       the contained profile is deliberately untouched by this unit.
+#                    Its capture DOES carry system/init, so this guard is the only
+#                    thing keeping the change inside its scope; widening it is a
+#                    separate decision with its own evidence, not a tidy-up.
+result_permission_mode_effective() {
+  [ "$ACTOR_PROCESS_STARTED" -eq 1 ] || { printf 'unavailable'; return 0; }
+  [ "$MODE" = "live" ] || { printf 'unavailable'; return 0; }
+  [ "${LAUNCHED_ACTOR:-}" = "claude" ] || { printf 'unavailable'; return 0; }
+  [ "$UNATTENDED" -eq 1 ] && { printf 'unavailable'; return 0; }
+  attended_effective_permission_mode "${LAST_CAPTURE:-}"
+}
+
+# Count lines without letting an empty string count as one. `grep -c .` rather
+# than `wc -l`, which reports 1 for a single empty line.
+count_lines() { printf '%s\n' "${1-}" | grep -c . || true; }
+
+# The checkout's open-task declaration, as one bounded token. Read-only.
+#
+# ONE READER FOR TWO CONSUMERS — the --status branch and the terminal record —
+# because the same awk written out twice is exactly the drift plan § 8 forbids,
+# and the record must report the same declaration an operator is shown.
+#
+# The three answers are distinct facts, not shades of one: a task id is a
+# declaration that exists, `none` is a checkout that declares nobody (established
+# and absent), `unavailable` is a declaration this dispatcher could not read.
+owner_declaration() { # -> declared task id | none | unavailable
+  local f line
+  [ -n "${CHECKOUT:-}" ] || { printf 'unavailable'; return 0; }
+  f="$CHECKOUT/logs/work-loop/.owner"
+  [ -e "$f" ] || { printf 'none'; return 0; }
+  [ -f "$f" ] && [ -r "$f" ] || { printf 'unavailable'; return 0; }
+  line="$(awk 'NF {print; exit}' "$f" 2>/dev/null)"
+  if [ -n "$line" ]; then printf '%s' "$line"; else printf 'unavailable'; fi
+}
+
+# The lease this run stands on, as OBSERVED at finalization.
+#
+# die() finalizes before release_lock, so `held-by-this-run` is the answer this
+# ordering predicts — and a predicted answer written as a constant is not
+# evidence. The field said `held` unconditionally, which would have kept saying
+# `held` for a lease that had been pinned by a teardown, reclaimed by another
+# run, or never taken at all. The point of the field is to record which of those
+# is true at the moment the record is written.
+#
+# The holder globals are saved and restored around the library's own reader,
+# which is the single reader of a lease directory's metadata (plan § 8).
+# Finalization runs after the refusal and pin wording is already composed, so
+# nothing downstream reads them today; a reporting function that silently
+# rewrote shared state would still be a trap set for the next edit.
+result_lease_status() { # lease-dir owned-flag -> one bounded token
+  local dir="${1:-}" owned="${2:-0}" pid s_pid s_task s_co s_prog
+  [ -n "$dir" ] && [ -n "${WL_LEASE_ROOT:-}" ] || { printf 'unavailable'; return 0; }
+  if [ ! -d "$dir" ]; then
+    # `missing` and `free` are different findings: the first is a lease this run
+    # believes it holds and the filesystem does not have, which is a fault worth
+    # seeing; the second is an honest absence.
+    if [ "$owned" -eq 1 ]; then printf 'missing'; else printf 'free'; fi
+    return 0
+  fi
+  [ -f "$dir/survivors" ] && { printf 'pinned'; return 0; }
+  s_pid="${WL_LEASE_HOLDER_PID:-}";      s_task="${WL_LEASE_HOLDER_TASK:-}"
+  s_co="${WL_LEASE_HOLDER_CHECKOUT:-}";  s_prog="${WL_LEASE_HOLDER_PROGRAM:-}"
+  wl_lease__read_holder "$dir"
+  pid="${WL_LEASE_HOLDER_PID:-}"
+  WL_LEASE_HOLDER_PID="$s_pid";          WL_LEASE_HOLDER_TASK="$s_task"
+  WL_LEASE_HOLDER_CHECKOUT="$s_co";      WL_LEASE_HOLDER_PROGRAM="$s_prog"
+  # AN UNESTABLISHED HOLDER IS NOT ANOTHER HOLDER. wl_lease__read_holder() `cat`s
+  # the four metadata files and returns empty for any it cannot read, so an
+  # absent, unreadable or empty pid file arrives here indistinguishable from a
+  # pid that simply is not ours — and falling through would report `held-by-other`,
+  # which asserts a second holder nothing observed. The lease directory's
+  # existence IS established, so this is not `free` either: what is unavailable is
+  # who holds it. Checked before the ownership comparison, unconditionally: a run
+  # that believes it owns the lease still cannot read a holder record that is gone.
+  if [ -z "$pid" ]; then printf 'held-holder-unavailable'; return 0; fi
+  if [ "$owned" -eq 1 ] && [ "$pid" = "$$" ]; then printf 'held-by-this-run'; return 0; fi
+  printf 'held-by-other'
+}
+
+finalize_terminal_result() { # code -> 0 when a complete record exists
+  [ "$RESULT_FINALIZED" -eq 1 ] && return 0
+  # No run identity means this terminal is outside the covered funnel — an
+  # argument refusal or a lease-infrastructure failure. Those exit directly and
+  # never reach here; the guard is what keeps that true if a later edit moves a
+  # die() above the run-evidence block.
+  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] || return 1
+
+  local code="$1"
+  local final="$LOG_DIR/$RUN_ID.result"
+  local tmp="$final.partial"
+  RESULT_FILE="$final"
+
+  # OBSERVED, NOT IMPLIED. `launched` is the fork run_bounded() actually
+  # performed, and `stage` names which of three places this terminal sits in:
+  #   pre-hop   no hop baseline yet — nothing was ever about to launch
+  #   launch    the baseline is live but no child was forked; launch_actor()
+  #             stopped on the binary, the checkout or the actor name
+  #   post-hop  an actor process really ran in this run
+  # The middle value is what this correction added: it used to be reported as
+  # post-hop with actor_launched=yes, which is a launch that did not happen.
+  local launched=no started=no stage=pre-hop
+  if [ "$ACTOR_PROCESS_STARTED" -eq 1 ]; then
+    launched=yes; stage=post-hop
+    # A simulated actor is not a model request, and saying it was would falsify
+    # exactly the field a supervised-use claim rests on.
+    #
+    # A LIVE FORK IS NOT ONE EITHER, and this is the second half of the same
+    # correction. Forking the product's CLI is not evidence that the CLI went on
+    # to issue a model request: whether it did is in the child's own stream
+    # events, and nothing in this dispatcher reads them (the reader is deferred,
+    # and reading the capture for framing is forbidden here anyway). So the live
+    # answer is the bounded unavailable token. `yes` would be the same guess this
+    # correction just removed from actor_launched, one field over.
+    [ "$MODE" = "live" ] && started=unavailable
+  elif [ "${HOP_BASELINE_READY:-0}" -eq 1 ]; then
+    stage=launch
+  fi
+
+  local foreign_n dirty_n delta_n
+  foreign_n="$(count_lines "$(foreign_worktree)")"
+  dirty_n="$(count_lines "$(allowlisted_dirty)")"
+  if [ "${HOP_BASELINE_READY:-0}" -eq 1 ]; then
+    delta_n="$(count_lines "$(partial_effect_paths)")"
+  else
+    delta_n=unavailable
+  fi
+
+  local remaining=none
+  [ -n "${DEADLINE_AT:-}" ] && remaining="$(remaining_seconds)"
+
+  # Read once, on their own lines, before the record block. Two reasons, and the
+  # second is the load-bearing one: the ownership and lease observations are what
+  # a mutation control has to be able to replace with a constant to prove they
+  # are not one already, and a control cannot address half of a wrapped line.
+  local owner_decl lease_task lease_checkout
+  owner_decl="$(owner_declaration)"
+  lease_task="$(result_lease_status "${LOCK_DIR:-}" "${WL_LEASE_TASK_OWNED:-0}")"
+  lease_checkout="$(result_lease_status "${CHECKOUT_LOCK_DIR:-}" "${WL_LEASE_CHECKOUT_OWNED:-0}")"
+
+  # Written to a temporary in the SAME directory and renamed. rename(2) within one
+  # filesystem is atomic, so a reader sees the complete record or no record at all
+  # — never the half-written one a direct `>` would expose. The sentinel last line
+  # is the second, independent handle on that: a record whose final line is
+  # missing was not finalized by this function.
+  {
+    tr_kv terminal_result_version "$TERMINAL_RESULT_VERSION"
+    tr_kv schema                  work-loop-v2-dispatcher-terminal-result
+    tr_kv outcome                 "$(result_outcome "$code")"
+    tr_kv code                    "$code"
+    tr_kv task                    "$TASK"
+    tr_kv checkout                "$CHECKOUT"
+    tr_kv run                     "$RUN_ID"
+    tr_kv mode                    "$MODE"
+    tr_kv stage                   "$stage"
+    tr_kv_or actor                "${CUR_ACTOR:-}" none
+    tr_kv actor_launched          "$launched"
+    tr_kv model_request_started   "$started"
+    tr_kv hop                     "${CUR_HOP:-0}"
+    tr_kv max_hops                "$MAX_HOPS"
+    tr_kv state_file              "$STATE_FILE"
+    tr_kv_or turn_at_terminal     "${ST_TURN:-}"    unavailable
+    tr_kv_or state_class          "${ST_CLASS:-}"   unavailable
+    tr_kv_or state_sha256_before  "${before_hash:-}" unavailable
+    tr_kv_or state_sha256_after   "${after_hash:-}"  unavailable
+    tr_kv_or head_before          "${before_head:-}" unavailable
+    tr_kv_or head_after           "${after_head:-}"  unavailable
+    tr_kv worktree_foreign_paths          "$foreign_n"
+    tr_kv worktree_allowlisted_dirty_paths "$dirty_n"
+    tr_kv changed_paths_since_launch      "$delta_n"
+    tr_kv permission_mode_requested "$(result_permission_mode_requested)"
+    # Never derived from the requested mode above. See that function's note, and
+    # attended_effective_permission_mode() for the one source this is allowed to
+    # read and the shape it is bounded to.
+    tr_kv permission_mode_effective "$(result_permission_mode_effective)"
+    tr_kv_or deadline_seconds     "${DEADLINE:-}"   none
+    tr_kv deadline_remaining_seconds "$remaining"
+    tr_kv actor_timeout_seconds   "$ACTOR_TIMEOUT"
+    # Never extracted from any capture by this dispatcher. The three readers that
+    # touch a capture are narrow by construction: permission_denials_in() reads
+    # only `.permission_denials`, and the init pair reads only `system/init`'s
+    # `permissionMode`. Neither goes near usage. Change set B territory, stated as
+    # absent.
+    tr_kv recorded_usage          unavailable
+    # The legacy session identity was retired at Tracer bullet 4 and nothing
+    # replaced it, so there is no identifier to record.
+    tr_kv actor_session_id        unavailable
+    tr_kv run_log                 "$RUN_LOG"
+    tr_kv_or capture              "${LAST_CAPTURE:-}" none
+    # WHO OWNS THE TASK and WHO HOLDS THE LEASE are two questions, and both are
+    # read from what this dispatcher observed rather than from what the ordering
+    # implies. The admission verdict is recorded at the check; the declaration and
+    # both lease directories are inspected here, at the moment of writing.
+    tr_kv owner_check             "$OWNER_STATUS"
+    tr_kv owner_declared          "$owner_decl"
+    tr_kv lease_task_dir          "${LOCK_DIR:-}"
+    tr_kv lease_checkout_dir      "${CHECKOUT_LOCK_DIR:-}"
+    tr_kv lease_task_at_finalization     "$lease_task"
+    tr_kv lease_checkout_at_finalization "$lease_checkout"
+    tr_kv next_action             "$(result_next_action "$code")"
+    tr_kv result_complete         yes
+  } >"$tmp" 2>/dev/null || { rm -f "$tmp" 2>/dev/null; RESULT_FILE=""; return 1; }
+
+  mv -f "$tmp" "$final" 2>/dev/null || { rm -f "$tmp" 2>/dev/null; RESULT_FILE=""; return 1; }
+  RESULT_FINALIZED=1
+  return 0
+}
+
+# ------------------------------------- the terminal result's structural reader
+#
+# ONE PRODUCTION OWNER for reading what finalize_terminal_result() writes, placed
+# next to the producer so the pair is edited together. Before this there was no
+# reader at all: the harness picked fields out with `sed`, which proved the record
+# is consumable but is not the same claim as "this program refuses a record it
+# must not trust".
+#
+# WHAT IT ANSWERS, and only this: is the artifact at this path structurally the
+# version 1 record this dispatcher writes? It returns 0 and the token `ok`, or 1
+# and exactly one bounded token naming the first structural reason it refused.
+#
+# WHAT IT DELIBERATELY DOES NOT ANSWER. It says nothing about whether the values
+# are TRUE — that the run id is this run's, that the checkout is this checkout,
+# that the outcome matches the exit code, that the path was not a symlink planted
+# somewhere else. Structure and meaning are separate questions and they are
+# separate units; a caller that read a passing verdict as "these facts are mine"
+# would have invented exactly the trust the trusted-field-ownership contract
+# forbids. Nothing in this dispatcher calls it yet, and that is deliberate: the
+# first consumer — which must also settle identity — is its own unit.
+#
+# REJECT, NEVER NORMALIZE. There is no repair path, no "close enough", no partial
+# acceptance. A record this function does not fully recognize is refused whole,
+# because a half-accepted terminal result is how a reader ends up reporting a
+# field that was never written.
+#
+# IT NEITHER EXECUTES NOR SOURCES THE ARTIFACT. The content is read as data by
+# `read`, never evaluated: an actor that plants a lookalike gets its bytes
+# compared, not run. That is why the bounds below exist as well — a reader with
+# no size bound is a reader anyone who can write the path can make run for as
+# long as they like.
+# --- wl2:terminal-result-validator:begin ---
+TERMINAL_RESULT_SCHEMA='work-loop-v2-dispatcher-terminal-result'
+# Finite, and generous against the real artifact rather than tight against it:
+# the producer emits 41 lines whose values `tr_val` already truncates at 512, so
+# a record anywhere near these bounds is not one this dispatcher wrote.
+TERMINAL_RESULT_MAX_BYTES=65536
+TERMINAL_RESULT_MAX_LINES=200
+TERMINAL_RESULT_MAX_VALUE=512
+# THE COMPLETE v1 SINGLETON SET, in the producer's own order. Two key lists in
+# one file is how a reader silently drifts from its writer, so the harness
+# compares this set against the keys a real run actually emitted rather than
+# against a list it restates — a field added to the producer and not to this line
+# fails that assertion rather than passing unnoticed.
+TERMINAL_RESULT_REQUIRED='terminal_result_version schema outcome code task checkout run mode stage actor actor_launched model_request_started hop max_hops state_file turn_at_terminal state_class state_sha256_before state_sha256_after head_before head_after worktree_foreign_paths worktree_allowlisted_dirty_paths changed_paths_since_launch permission_mode_requested permission_mode_effective deadline_seconds deadline_remaining_seconds actor_timeout_seconds recorded_usage actor_session_id run_log capture owner_check owner_declared lease_task_dir lease_checkout_dir lease_task_at_finalization lease_checkout_at_finalization next_action result_complete'
+
+# THE THREE IDENTITY FIELDS, captured by the structural pass that already reads
+# every line, and consumed by the identity boundary below. Two readers over one
+# artifact is how a program comes to disagree with itself about what it read, so
+# the record is parsed ONCE and these carry what that parse saw.
+#
+# `TR_SOURCE` is which artifact they came from, and it is what makes them safe to
+# consume: the identity boundary refuses to answer about any other path, so a
+# caller cannot validate one record and then ask about a second one.
+#
+# THEY ARE SET ONLY ON ACCEPTANCE. A rejected record leaves all four empty rather
+# than leaving whichever fields were read before the refusal — half a parse is not
+# a fact, and an identity check reading one would be comparing against a record
+# this dispatcher just refused.
+TR_SOURCE=''
+TR_TASK=''
+TR_CHECKOUT=''
+TR_RUN=''
+# THE TWO SEMANTIC FIELDS, captured by that SAME single pass and consumed by the
+# semantic boundary below. They are held here for one reason: the record is parsed
+# once, and a boundary that needed them later would otherwise have to open the
+# artifact a second time — two readers over one artifact being the exact failure
+# the identity note above records.
+#
+# CAPTURED IS NOT COMPARED. Holding what the record SAYS its outcome and code are
+# settles nothing about whether either is true; that is the semantic boundary's
+# question, and it answers it against values the caller established elsewhere.
+# Nothing in this file derives an expectation from these two.
+TR_OUTCOME=''
+TR_CODE=''
+# THE SNAPSHOT THE ACCEPTED FIELDS CAME FROM, not merely the pathname they were
+# read through. A pathname is not an artifact: a structurally valid record can be
+# parsed and then REPLACED at that same path by another structurally valid one,
+# and a check that only remembered the name would go on reporting the first
+# record's task, checkout and run for the second record's bytes. This is what
+# lets identity acceptance be tied to the exact bytes that were validated.
+TR_SHA=''
+# The device and inode the accepted bytes were read from. `TR_SHA` alone cannot
+# separate "still the same file" from "a different file holding identical
+# content", and the frozen requirement is content OR file identity — so both are
+# pinned, and a byte-identical stand-in is still a replacement.
+TR_FID=''
+# Which path the pre-read safety gate cleared. The identity boundary refuses to
+# compare anything the gate did not pass first — see that function's note on why
+# the order is a correctness property and not a convention.
+TR_PATH_CLEARED=''
+# WHAT THE GATE HAD CLEARED AT THE MOMENT THE PARSE BEGAN, which is a different
+# fact from what it has cleared by now, and the difference is the whole point.
+# Two globals that merely both ended up naming this artifact would be satisfied by
+# parsing first and gating afterwards — bytes read through a path nothing had
+# vetted, then retroactively blessed. This one is captured at the top of the parse,
+# so it can only name the artifact if the gate genuinely ran first.
+TR_PARSE_GATED=''
+
+# Self-contained on purpose: `file_hash()` exists further down this file, but the
+# marker-delimited region is lifted out and sourced on its own by the focused
+# harness, so a call to anything defined outside these markers would be undefined
+# exactly where the region is under test.
+wl2_tr_sha() { # path -> the artifact's sha256, or empty when it cannot be taken
+  shasum -a 256 "$1" 2>/dev/null | cut -d' ' -f1
+}
+
+# WHICH FILE, as distinct from WHICH BYTES. A digest cannot tell one file from a
+# different file holding identical content, and "the record was replaced" is true
+# in both cases: the promised path is supposed to hold the artifact this run
+# wrote, not an indistinguishable stand-in something else put there.
+#
+# GNU FORM FIRST, DELIBERATELY. BSD `stat -f` takes a format string while GNU
+# `stat -f` reports the FILESYSTEM instead, so probing BSD-first would make GNU
+# emit confident nonsense rather than fail. GNU `-c` simply errors on BSD, which
+# is the unambiguous direction to fall through.
+#
+# NEITHER FORM DEREFERENCES. Both stat the name itself unless given `-L`, so a
+# symlink reports its own identity rather than its target's — which is what lets
+# a regular file swapped for a link be seen as the change it is.
+wl2_tr_fid() { # path -> "<device>:<inode>", or empty when it cannot be taken
+  stat -c '%d:%i' "$1" 2>/dev/null || stat -f '%d:%i' "$1" 2>/dev/null
+}
+
+# ------------------------------- the terminal result's PRE-READ path safety gate
+#
+# THIS RUNS BEFORE A SINGLE BYTE IS OPENED, and that ordering is the whole reason
+# it is a separate function. The path checks used to live at the identity boundary,
+# which runs after the structural parse — so a planted symlink or a symlinked
+# evidence root was opened, sized and read to its end, and only then refused. The
+# refusal token was right and the behaviour was wrong: a reader that has already
+# followed a hostile path has already done the thing the refusal was for.
+#
+# IT OPENS NOTHING. `-L` is an lstat on the name and `cd`+`pwd -P` resolves
+# directories; neither reads the artifact. That is the property the correction's
+# control asserts, and it is why no size bound is needed here.
+#
+# REFUSE, NEVER NORMALIZE. A traversal segment, a leading dash, or a control
+# character is refused outright rather than cleaned up. Deciding what a hostile
+# path "really meant" is how a resolved path becomes a trusted one.
+validate_terminal_result_path() { # artifact task checkout run evidence-root -> 0 and ok, or 1 and one bounded token
+  local f="${1-}" x_task="${2-}" x_checkout="${3-}" x_run="${4-}" x_root="${5-}"
+  local v promised real_root real_dir
+  TR_PATH_CLEARED=''
+
+  [ -n "$f" ] || { printf 'no-path\n'; return 1; }
+  # AN UNSUPPLIED EXPECTATION IS NOT A WILDCARD. A caller that has not established
+  # one of the four is refused, never silently matched against whatever the
+  # artifact happens to say — which is the one way this gate could be made to
+  # clear every path ever presented.
+  [ -n "$x_task" ] && [ -n "$x_checkout" ] && [ -n "$x_run" ] && [ -n "$x_root" ] \
+    || { printf 'no-expectation\n'; return 1; }
+
+  # Applied to the caller's values as well as the path: a dispatcher variable that
+  # has been corrupted is not a safer source than an artifact. The `..` test is
+  # deliberately blunt — refusing every occurrence is a rule with no parser in it,
+  # and a run id or a checkout path that legitimately contains one does not exist.
+  for v in "$f" "$x_task" "$x_checkout" "$x_run" "$x_root"; do
+    case "$v" in
+      -*)            printf 'unsafe-path\n'; return 1 ;;
+      *..*)          printf 'unsafe-path\n'; return 1 ;;
+      *[[:cntrl:]]*) printf 'unsafe-path\n'; return 1 ;;
+    esac
+  done
+
+  # THE PROMISED PATH IS DERIVED, NEVER ACCEPTED. It is built from the admitted
+  # evidence root and the expected run id — the same two values the producer used
+  # — and the artifact's path must equal it literally. This is also what bounds
+  # the artifact to the evidence root: any path outside the root is not equal to
+  # a path inside it, so no separate containment test is needed for the literal
+  # case. The resolved test below covers the case a link makes it non-literal.
+  promised="$x_root/$x_run.result"
+  [ "$f" = "$promised" ] || { printf 'path-not-promised\n'; return 1; }
+
+  # A LINK IS NOT THE FILE IT NAMES. The name matches and the target may be a real,
+  # structurally valid, field-matching result — which is exactly why this is
+  # refused on the name, before anything opens it.
+  if [ -L "$f" ]; then printf 'symlinked-path\n'; return 1; fi
+
+  # The literal check above cannot see a root that is itself a link, or an ancestor
+  # that is: the strings match while the bytes come from somewhere else entirely.
+  real_root="$(cd "$x_root" 2>/dev/null && pwd -P)" || { printf 'outside-evidence-root\n'; return 1; }
+  real_dir="$(cd "$(dirname "$f")" 2>/dev/null && pwd -P)" || { printf 'outside-evidence-root\n'; return 1; }
+  [ "$real_root" = "$x_root" ] || { printf 'outside-evidence-root\n'; return 1; }
+  [ "$real_dir" = "$real_root" ] || { printf 'outside-evidence-root\n'; return 1; }
+
+  TR_PATH_CLEARED="$f"
+  printf 'ok\n'
+  return 0
+}
+
+validate_terminal_result() { # path -> 0 and the ok token, or 1 and one bounded reason token
+  local f="${1-}" bytes line key val n=0 seen=' ' last='' k
+  local got_task='' got_checkout='' got_run='' sha_before='' sha_after=''
+  local got_outcome='' got_code=''
+  local fid_before='' fid_after=''
+  TR_SOURCE=''; TR_TASK=''; TR_CHECKOUT=''; TR_RUN=''; TR_SHA=''; TR_FID=''
+  TR_OUTCOME=''; TR_CODE=''
+  # Read, never written, at the first instruction of the parse. TR_PATH_CLEARED
+  # belongs to the gate and is deliberately not reset here: clearing it would make
+  # this function able to invalidate a gate decision it does not own.
+  TR_PARSE_GATED="${TR_PATH_CLEARED:-}"
+  [ -n "$f" ]                || { printf 'no-path\n';    return 1; }
+
+  # THE READER DEFENDS ITS OWN READ, and this is the correction's point. Recording
+  # what the gate had decided is not the same as acting on it: this function used
+  # to copy that decision and then open the artifact anyway, leaving the refusal to
+  # an identity check that runs after every byte is already read. A caller that
+  # invokes the parser directly — which nothing stops, and which the standalone
+  # structural contract positively allows — got the old late-refusal behaviour back
+  # in full.
+  #
+  # `-L` IS AN LSTAT ON THE NAME. It reads nothing, so it can sit ahead of `-f`,
+  # which follows links and is therefore already a decision to trust one. This is
+  # deliberately NOT delegated to the gate: the gate answers a different question
+  # (is this the promised path for an expected identity) and a reader that cannot
+  # be called safely on its own is a reader whose safety depends on its callers.
+  if [ ! -L "$f" ]; then :; else printf 'symlinked-path\n'; return 1; fi # reader pre-open path refusal
+  # A GATE DECISION ABOUT SOME OTHER ARTIFACT IS A STALE CLEARANCE, not a
+  # clearance. No gate at all stays allowed — Unit 6's structural validator is
+  # callable on its own and case 51 exercises exactly that — but a gate that
+  # cleared a different path must not be read as covering this one.
+  #
+  # ONE LINE, like every other refusal here, and that is a testability property
+  # rather than a formatting choice: the mutation controls delete a refusal by its
+  # token and watch the assertion go green. A multi-line `if` loses its body to
+  # that deletion and leaves `then fi` — a syntax error, which is a mutant that
+  # proves nothing because it cannot run at all.
+  if [ -n "${TR_PATH_CLEARED:-}" ] && [ "${TR_PATH_CLEARED}" != "$f" ]; then printf 'path-unchecked\n'; return 1; fi
+
+  [ -f "$f" ] && [ -r "$f" ] || { printf 'unreadable\n'; return 1; }
+  # The size bound is taken BEFORE a single line is read, so an oversized artifact
+  # costs one stat rather than a walk through however much was planted.
+  bytes="$(wc -c <"$f" 2>/dev/null)" || { printf 'unreadable\n'; return 1; }
+  bytes="${bytes// /}"
+  case "$bytes" in ''|*[!0-9]*) printf 'unreadable\n'; return 1 ;; esac
+  [ "$bytes" -le "$TERMINAL_RESULT_MAX_BYTES" ] || { printf 'too-large\n'; return 1; }
+
+  # TAKEN BEFORE THE PARSE AND AGAIN AFTER IT, and both are required to match. The
+  # obvious version of this takes one snapshot when the parse finishes, which
+  # leaves the parse itself unguarded: a record rewritten between the first line
+  # and the last would have been read as a mixture of two artifacts and reported
+  # as one. Bracketing the read is what makes TR_* the fields of a single,
+  # identifiable set of bytes rather than of whatever happened to be there.
+  #
+  # NO HASH MEANS NO ACCEPTANCE. If the digest cannot be taken the record is
+  # refused, never accepted unbound — an artifact this function cannot pin is
+  # exactly the one a later identity check could not detect a swap of.
+  sha_before="$(wl2_tr_sha "$f")"
+  [ -n "$sha_before" ] || { printf 'unhashable\n'; return 1; }
+  fid_before="$(wl2_tr_fid "$f")"
+  [ -n "$fid_before" ] || { printf 'unidentifiable\n'; return 1; }
+
+  # `|| [ -n "$line" ]` so a final line with no trailing newline is still read and
+  # judged. Dropping it would make a truncated record look like a complete one.
+  while IFS= read -r line || [ -n "$line" ]; do
+    n=$((n+1))
+    [ "$n" -le "$TERMINAL_RESULT_MAX_LINES" ] || { printf 'too-many-lines\n'; return 1; }
+    case "$line" in [a-z]*=*) ;; *) printf 'malformed-line\n'; return 1 ;; esac
+    key="${line%%=*}"
+    val="${line#*=}"
+    case "$key" in *[!a-z0-9_]*) printf 'malformed-line\n'; return 1 ;; esac
+    [ "${#val}" -le "$TERMINAL_RESULT_MAX_VALUE" ] || { printf 'value-too-long\n'; return 1; }
+    # The producer's `tr_val` turns tabs and carriage returns into spaces, so a
+    # value carrying one did not come from it.
+    case "$val" in *$'\t'*|*$'\r'*) printf 'malformed-line\n'; return 1 ;; esac
+    # THE VERSION ANNOUNCES ITSELF FIRST, before anything else is interpreted. A
+    # reader that merely searched for the expected version string would accept a
+    # record that declared something else at the top and buried the match below.
+    if [ "$n" -eq 1 ]; then
+      [ "$key" = terminal_result_version ] || { printf 'bad-version-line\n'; return 1; }
+      [ "$val" = 1 ]                       || { printf 'unknown-version\n';  return 1; }
+    fi
+    if [ "$key" = schema ] && [ "$val" != "$TERMINAL_RESULT_SCHEMA" ]; then
+      printf 'unknown-schema\n'; return 1
+    fi
+    # A field this version does not define is a partial acceptance, not a
+    # harmless extra: the version is exact, so an unrecognized key means the
+    # writer and this reader do not agree about what the record is.
+    case " $TERMINAL_RESULT_REQUIRED " in *" $key "*) ;; *) printf 'unknown-field\n'; return 1 ;; esac
+    case "$seen" in *" $key "*) printf 'duplicate-field\n'; return 1 ;; esac
+    seen="$seen$key "
+    # Held in locals, not published yet. The duplicate check above has already
+    # run, so each of these is captured exactly once per record.
+    case "$key" in
+      task)     got_task="$val" ;;
+      checkout) got_checkout="$val" ;;
+      run)      got_run="$val" ;;
+      outcome)  got_outcome="$val" ;;
+      code)     got_code="$val" ;;
+    esac
+    last="$line"
+  done <"$f"
+
+  [ "$n" -gt 0 ] || { printf 'empty\n'; return 1; }
+  # THE SENTINEL IS CHECKED BEFORE THE MISSING-FIELD SWEEP, so a record cut short
+  # mid-write is named for what it is — unfinished — rather than for whichever
+  # field the truncation happened to remove first.
+  [ "$last" = 'result_complete=yes' ] || { printf 'incomplete\n'; return 1; }
+  for k in $TERMINAL_RESULT_REQUIRED; do
+    case "$seen" in *" $k "*) ;; *) printf 'missing-field\n'; return 1 ;; esac
+  done
+  sha_after="$(wl2_tr_sha "$f")"
+  [ -n "$sha_after" ] || { printf 'unhashable\n'; return 1; }
+  [ "$sha_before" = "$sha_after" ] || { printf 'artifact-changed\n'; return 1; }
+  fid_after="$(wl2_tr_fid "$f")"
+  [ -n "$fid_after" ] || { printf 'unidentifiable\n'; return 1; }
+  [ "$fid_before" = "$fid_after" ] || { printf 'artifact-replaced\n'; return 1; }
+
+  # Published last, after every structural refusal above has had its chance. The
+  # sweep just proved all three keys are present, so none of these is empty, and
+  # the bracketing digests and file identities just proved they all came from one
+  # set of bytes in one file.
+  TR_SOURCE="$f"; TR_TASK="$got_task"; TR_CHECKOUT="$got_checkout"; TR_RUN="$got_run"
+  TR_SHA="$sha_after"; TR_FID="$fid_after"
+  TR_OUTCOME="$got_outcome"; TR_CODE="$got_code"
+  printf 'ok\n'
+  return 0
+}
+
+# --------------------------------- the terminal result's expected-identity reader
+#
+# THE SECOND HALF OF A QUESTION THE VALIDATOR ABOVE DELIBERATELY LEAVES OPEN. That
+# one answers "is this the shape this dispatcher writes". This one answers "is this
+# the result promised for THIS task, THIS checkout and THIS run" — and the gap
+# between them is the whole point: a copied, replayed or planted record is
+# structurally flawless, because it is a real record that belongs to something
+# else.
+#
+# EVERY EXPECTATION COMES FROM THE CALLER, and that constraint is what gives the
+# comparison any value. The four expected values are dispatcher-owned variables
+# passed in as arguments. Nothing here reads an expectation out of the artifact,
+# out of a state file, or out of anything an actor wrote: a check that sourced both
+# sides of its own comparison from the thing under test would confirm the record
+# agrees with itself, which is exactly what a forgery does too.
+#
+# IT DOES NOT GO LOOKING. No directory is scanned, no candidate is chosen, no
+# newest-file is picked. The caller states the path it promised and this function
+# says whether the artifact there is that promise kept. Choosing a path is a
+# consumer's job and consumers are a later unit.
+#
+# REFUSE, NEVER NORMALIZE — the same rule the structural reader states, applied to
+# paths, where it matters more. A traversal segment, a leading dash, a control
+# character or a symlink is refused outright. Resolving any of them would mean
+# deciding what the caller "really meant" about which file to trust, and the
+# answer to a hostile path is never a cleaned-up version of it.
+#
+# STRUCTURE FIRST, ALWAYS. This reads what validate_terminal_result() captured and
+# refuses when that did not run on this exact artifact. It never re-parses the
+# record: one artifact, one parse, one owner.
+validate_terminal_result_identity() { # artifact task checkout run evidence-root -> 0 and ok, or 1 and one bounded token
+  local f="${1-}" x_task="${2-}" x_checkout="${3-}" x_run="${4-}" x_root="${5-}"
+  local sha_now fid_now
+
+  [ -n "$f" ] || { printf 'no-path\n'; return 1; }
+  [ -n "$x_task" ] && [ -n "$x_checkout" ] && [ -n "$x_run" ] && [ -n "$x_root" ] \
+    || { printf 'no-expectation\n'; return 1; }
+
+  # THE TWO PRECONDITIONS, IN THE ORDER THEY MUST HAVE HAPPENED. `TR_PARSE_GATED`
+  # is the load-bearing one, and it is not the same check as "the gate has cleared
+  # this path": it is "the gate had already cleared this path when the parse
+  # opened it". A caller that parsed first and gated afterwards satisfies the
+  # weaker reading while having done exactly the thing the gate exists to prevent.
+  # Checking it before `unvalidated` matters too — if only the parse ran, the bytes
+  # were read through a path nothing vetted, and "unvalidated" would name the
+  # wrong failure.
+  [ "${TR_PARSE_GATED:-}" = "$f" ] || { printf 'path-unchecked\n'; return 1; }
+  [ "${TR_SOURCE:-}" = "$f" ]      || { printf 'unvalidated\n';    return 1; }
+
+  # THE ARTIFACT IS PINNED TO THE BYTES THAT WERE VALIDATED, not to the name they
+  # were read through. Without this, a structurally valid record can be parsed and
+  # then replaced at the same promised path by ANOTHER structurally valid record,
+  # and every comparison below would still be answered from the first record's
+  # fields — a result accepted for bytes nothing ever checked. Fails closed: an
+  # artifact that can no longer be hashed is refused, not waved through.
+  # PATH TOPOLOGY IS RE-ESTABLISHED, NOT REMEMBERED. The gate cleared this name
+  # while it was a regular file; nothing prevents it becoming a link afterwards,
+  # and both hashes would then happily follow that link to byte-identical valid
+  # content. Checked before the digests for exactly that reason — a link is a
+  # changed path, and naming it as a content change would describe the wrong event.
+  if [ ! -L "$f" ]; then :; else printf 'symlinked-path\n'; return 1; fi
+
+  # WHICH FILE, then WHICH BYTES. A byte-identical replacement at the same name has
+  # the same digest by construction, so the digest cannot see it; file identity
+  # can. Both are required, and each names its own event.
+  fid_now="$(wl2_tr_fid "$f")"
+  [ -n "$fid_now" ] || { printf 'unidentifiable\n'; return 1; }
+  [ "$fid_now" = "${TR_FID:-}" ] || { printf 'artifact-replaced\n'; return 1; }
+
+  sha_now="$(wl2_tr_sha "$f")"
+  [ -n "$sha_now" ] || { printf 'unhashable\n'; return 1; }
+  [ "$sha_now" = "${TR_SHA:-}" ] || { printf 'artifact-changed\n'; return 1; }
+
+  # Artifact against caller, one field at a time, each on its own line so a
+  # mutation control can remove exactly one comparison and prove the others are
+  # not standing in for it.
+  [ "$TR_TASK" = "$x_task" ]         || { printf 'task-mismatch\n';     return 1; }
+  [ "$TR_CHECKOUT" = "$x_checkout" ] || { printf 'checkout-mismatch\n'; return 1; }
+  [ "$TR_RUN" = "$x_run" ]           || { printf 'run-mismatch\n';      return 1; }
+
+  printf 'ok\n'
+  return 0
+}
+
+# ------------------------------- the terminal result's expected-MEANING reader
+#
+# THE THIRD QUESTION, and the one the two boundaries above deliberately leave
+# open. The parser asks "is this the shape this dispatcher writes". Identity asks
+# "is this the result promised for THIS task, THIS checkout and THIS run". Both
+# can pass on a record whose `outcome` and `code` say something other than the
+# terminal the caller was expecting — a genuine record of a DIFFERENT ending,
+# structurally perfect and correctly addressed, is the case that gap admits.
+#
+# EVERY EXPECTATION COMES FROM THE CALLER, on the same argument the identity
+# boundary makes and for a sharper reason here. The caller knows which terminal it
+# is finalizing; the artifact merely asserts one. Deriving either expected value
+# from the record under test would compare it with itself, which is a check a
+# forged record passes by construction.
+#
+# NO SECOND CODE-TO-OUTCOME TABLE. `result_outcome()` is the sole owner of that
+# mapping and stays the sole owner: this function compares two values it is given
+# and knows no symbols of its own. A table here would be a second authority on
+# what an exit code means, and the two would drift the first time one changed.
+#
+# IT REOPENS NOTHING. The comparison is against what the single structural pass
+# captured, re-pinned to that pass's exact artifact snapshot — so a caller cannot
+# parse one record and ask about another, and a record replaced or rewritten after
+# the parse is refused rather than answered from stale captured fields.
+#
+# THE EXPECTED VALUES ARE COMPARED, NEVER USED AS PATHS, which is why they carry
+# no traversal or control-character refusal of their own. Identity screens its
+# arguments because they build a promised path; nothing here opens, resolves or
+# executes anything, so a hostile expectation can only fail to match.
+validate_terminal_result_semantics() { # artifact expected-outcome expected-code -> 0 and ok, or 1 and one bounded token
+  local f="${1-}" x_outcome="${2-}" x_code="${3-}"
+  local sha_now fid_now
+
+  [ -n "$f" ] || { printf 'no-path\n'; return 1; }
+  # AN UNSUPPLIED EXPECTATION IS NOT A WILDCARD, exactly as at the two boundaries
+  # above. A caller that has not established what ending it expects is refused,
+  # never matched against whatever the record happens to claim.
+  [ -n "$x_outcome" ] && [ -n "$x_code" ] || { printf 'no-expectation\n'; return 1; }
+
+  # THE SAME TWO PRECONDITIONS, IN THE SAME ORDER, and for the same reason the
+  # identity boundary states: the gate must have cleared this path BEFORE the
+  # parse opened it, and the parse that ran must have read THIS artifact.
+  [ "${TR_PARSE_GATED:-}" = "$f" ] || { printf 'path-unchecked\n'; return 1; }
+  [ "${TR_SOURCE:-}" = "$f" ]      || { printf 'unvalidated\n';    return 1; }
+
+  # A regular file that has become a link since the gate cleared it is a changed
+  # path, and checked first so it is named as one.
+  if [ ! -L "$f" ]; then :; else printf 'symlinked-path\n'; return 1; fi
+
+  # WHICH FILE, then WHICH BYTES — the snapshot binding, re-established here
+  # rather than inherited from whether identity happened to run. This boundary is
+  # callable on its own, so it defends its own answer: without this, a record
+  # could be validated and then replaced at the same name, and the comparison
+  # below would report the first record's outcome for the second record's bytes.
+  fid_now="$(wl2_tr_fid "$f")"
+  [ -n "$fid_now" ] || { printf 'unidentifiable\n'; return 1; }
+  [ "$fid_now" = "${TR_FID:-}" ] || { printf 'artifact-replaced\n'; return 1; }
+
+  sha_now="$(wl2_tr_sha "$f")"
+  [ -n "$sha_now" ] || { printf 'unhashable\n'; return 1; }
+  [ "$sha_now" = "${TR_SHA:-}" ] || { printf 'artifact-changed\n'; return 1; }
+
+  # Artifact against caller, one field per line and one token each, so a mutation
+  # control can remove exactly one comparison and prove the other is not standing
+  # in for it. The two are distinct on purpose: a record carrying the right symbol
+  # for the wrong code and one carrying the wrong symbol for the right code are
+  # different failures, and a shared token would hide which one happened.
+  [ "$TR_OUTCOME" = "$x_outcome" ] || { printf 'outcome-mismatch\n'; return 1; }
+  [ "$TR_CODE" = "$x_code" ]       || { printf 'code-mismatch\n';    return 1; }
+
+  printf 'ok\n'
+  return 0
+}
+# --- wl2:terminal-result-validator:end ---
 
 die() { # code, message
   local code="$1"; shift
@@ -399,6 +1622,56 @@ die() { # code, message
   [ "${HOP_BASELINE_READY:-0}" -eq 1 ] && msg="$msg$(partial_effect_block)"
   printf 'STOP [%s] %s\n' "$code" "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf 'STOP [%s] %s\n' "$code" "$msg" >>"$RUN_LOG"
+  # Ordered deliberately: after the human message is on both channels, so the run
+  # log the record points at already carries the wording; and BEFORE release_lock,
+  # because a lease may only be released once the terminal result exists.
+  # THE PATH IS PRINTED — evidence nobody can find is not evidence. That lesson
+  # was learned by the lease refusal, which now leaves through this funnel too.
+  #
+  # THE RETURN IS HONORED. A failed publication transfers to the funnel's own
+  # unprovability exit — pin, 38, no release — instead of continuing to the
+  # original code below as though the evidence existed. One line, its own
+  # marker, so the mutation control can remove exactly the transfer and prove
+  # the unsafe fall-through comes back without it.
+  finalize_terminal_result "$code" || die_funnel_unprovable "$code" # die funnel failure transfer
+  # THE FIFTH AND LAST CONSUMER, and the one that covers the most terminals. Every
+  # ordinary nonzero ending leaves through here, and until now this funnel
+  # published a record and then advertised and released against it without ever
+  # asking whether the artifact still said what this run did. The gap was real and
+  # measured: a record altered after finalization in `outcome` alone, or in `code`
+  # alone, still returned the original 22 or 18, was advertised as this run's
+  # terminal result and released both leases. Path, structure and identity have
+  # nothing to object to; only meaning does.
+  #
+  # THE EXPECTED PAIR IS THE FUNNEL'S OWN, not the artifact's. `$code` is the
+  # parameter this call was made with and the value `exit "$code"` below returns —
+  # one value, so a reader can see the record is being checked against the ending
+  # actually being reported — and the symbol is `result_outcome()`'s answer for
+  # that same code, the sole code-to-outcome owner. One call therefore covers every
+  # nonzero terminal in the funnel without a per-code call site or a second table.
+  #
+  # RESULT_FILE IS THE COVERAGE GUARD, and it is the right one. It is set only
+  # inside finalize_terminal_result, after that function's own run-evidence check,
+  # and cleared again if the write fails — so a non-empty value means precisely
+  # "this run finalized a record just now". Terminals outside the coverage guard
+  # (argument refusals, lease-infrastructure failures) reach die() with it empty
+  # and are skipped, exactly as they are skipped by the advertisement below.
+  #
+  # AND THE REFUSAL RE-ENTERS THIS FUNNEL, which is why the one-shot flag is not
+  # decoration. die_terminal_untrusted exits through `die 38`, so control arrives
+  # back here with the record already finalized; a consumer that ran again would
+  # compare the same artifact against TERMINAL_UNPROVABLE/38, refuse again, and
+  # never terminate. The flag is set BEFORE the call, not after, because the call
+  # does not return on a refusal. Case 50k counts the STOP [38] lines to prove the
+  # bound holds rather than assuming it.
+  if [ "$RESULT_CONSUMED" -eq 0 ] && [ -n "$RESULT_FILE" ]; then
+    RESULT_CONSUMED=1
+    consume_terminal_result "the shared nonzero terminal for code $code" "$(result_outcome "$code")" "$code" # die-funnel terminal consumption
+  fi
+  if [ -n "$RESULT_FILE" ]; then
+    printf '  terminal result: %s\n' "$RESULT_FILE" >&2
+    printf '  terminal result: %s\n' "$RESULT_FILE" >>"$RUN_LOG"
+  fi
   release_lock
   exit "$code"
 }
@@ -410,7 +1683,15 @@ say() {
 
 # ---------------------------------------------------------------- arguments
 
+# `shift 2` with fewer than two arguments left shifts NOTHING and returns nonzero,
+# and there is no `set -e` here — so a value-taking option passed as the final
+# argument used to leave `$#` unchanged and loop this parser forever. Measuring
+# progress states the invariant every branch already satisfies (each shifts, or
+# exits), so an option added later stays covered with no second list to keep in
+# step. Only the absent element is refused: an empty value, or one beginning with
+# `-`, is a real argv element and keeps its current meaning.
 while [ $# -gt 0 ]; do
+  wl2_argc_before=$#
   case "$1" in
     --checkout)    CHECKOUT="${2:-}"; shift 2 ;;
     --task)        TASK="${2:-}"; shift 2 ;;
@@ -422,6 +1703,7 @@ while [ $# -gt 0 ]; do
     --allow-path)  ALLOW_PATHS+=("${2:-}"); shift 2 ;;
     --claude-deny) CLAUDE_DENY+=("${2:-}"); shift 2 ;;
     --log-dir)     LOG_DIR="${2:-}"; shift 2 ;;
+    --permission-mode) PERMISSION_MODE="${2:-}"; shift 2 ;;
     --actor-cmd)   ACTOR_CMD="${2:-}"; shift 2 ;;
     --dry-run)     DRY_RUN=1; shift ;;
     --status)      STATUS_MODE=1; shift ;;
@@ -432,6 +1714,8 @@ while [ $# -gt 0 ]; do
     -h|--help)     awk 'NR==1{next} /^#/{print; next} {exit}' "${BASH_SOURCE[0]}"; exit 0 ;;
     *)             printf 'STOP [10] unknown argument: %s\n' "$1" >&2; exit 10 ;;
   esac
+  # `$1` is still the offending option: the failed shift consumed nothing.
+  [ $# -lt "$wl2_argc_before" ] || { printf 'STOP [10] %s requires a value, and no argument followed it\n' "$1" >&2; exit 10; } # argv arity boundary
 done
 
 [ -n "$CHECKOUT" ] || { printf 'STOP [10] --checkout is required\n' >&2; exit 10; }
@@ -471,6 +1755,48 @@ if [ "$UNATTENDED" -eq 1 ] && [ -n "$ACTOR_CMD" ]; then
   printf 'STOP [10] --unattended and --actor-cmd are incompatible: a simulated actor cannot be contained, and labelling an uncontained run "unattended" would falsify its evidence\n' >&2; exit 10
 fi
 
+# ------------------------------------------------- attended permission mode
+# REFUSED HERE, WHICH IS BEFORE ADMISSION. Task, checkout and evidence location
+# are established below; this sits with the other usage checks so an invalid or
+# over-broad authority request launches no actor, takes no owner or lease,
+# writes no evidence and mutates nothing. An authority question answered after
+# the leases are held has already had effects taken on its behalf.
+#
+# A CLOSED SET OF TWO, NOT A DENY-LIST. `bypassPermissions` gets its own message
+# because it is the value an operator is most likely to reach for and the one
+# this spike most needs to refuse out loud — but the refusal does not depend on
+# naming it. Anything that is not one of the two accepted values is refused by
+# the same branch, so a third mode invented upstream cannot arrive here as an
+# unrecognised token and be passed through to the child.
+#
+# THE EMPTY VALUE IS REFUSED BY THE SAME CASE. `--permission-mode` followed by
+# nothing at the end of the command line is caught earlier, by the argv arity
+# boundary in the parser; `--permission-mode ''` is a real argv element and
+# reaches here, where it is not one of the two and is refused as such.
+case "$PERMISSION_MODE" in
+  default|acceptEdits) ;;
+  bypassPermissions)
+    printf 'STOP [10] --permission-mode bypassPermissions is refused: this dispatcher never requests bypass authority for a child, on any path. Pass `default` or `acceptEdits`\n' >&2; exit 10 ;;
+  *)
+    printf 'STOP [10] --permission-mode must be `default` or `acceptEdits`, got: %s\n' "$PERMISSION_MODE" >&2; exit 10 ;;
+esac
+
+# A MODE THE LAUNCH CANNOT CARRY IS REFUSED, NOT DROPPED. Neither of these
+# branches passes a permission mode to anything: --actor-cmd replaces the product
+# launch entirely, and the contained --unattended profile deliberately carries no
+# mode of its own. Accepting `acceptEdits` alongside either would let the operator
+# request an authority elevation that is then silently not applied — the same
+# falsification the --unattended/--actor-cmd guard above exists to refuse, one
+# flag over. `default` is compatible with both because it changes nothing.
+if [ "$PERMISSION_MODE" != "default" ]; then
+  if [ "$UNATTENDED" -eq 1 ]; then
+    printf 'STOP [10] --permission-mode %s cannot be honoured under --unattended: the contained profile carries no permission mode, so the elevation would be requested and silently not applied\n' "$PERMISSION_MODE" >&2; exit 10
+  fi
+  if [ -n "$ACTOR_CMD" ]; then
+    printf 'STOP [10] --permission-mode %s cannot be honoured with --actor-cmd: a simulated actor receives no permission mode, so the elevation would be requested and silently not applied\n' "$PERMISSION_MODE" >&2; exit 10
+  fi
+fi
+
 MODE="live"
 [ -n "$ACTOR_CMD" ] && MODE="simulated"
 [ "$DRY_RUN" -eq 1 ] && MODE="dry-run"
@@ -484,6 +1810,36 @@ case "$TASK" in
 esac
 if ! printf '%s' "$TASK" | grep -qE '^[A-Za-z0-9][A-Za-z0-9._-]*$'; then
   printf 'STOP [12] task id rejected (illegal characters): %s\n' "$TASK" >&2; exit 12
+fi
+# LENGTH IS A SEPARATE GRAMMAR FROM CHARACTERS, and only the second one was here.
+# The task id is the LAST field of the run id (see RUN_ID below) and every piece of
+# run evidence is that run id plus a suffix — so an id of legal characters but
+# unbounded length was not refused, it was ADMITTED, and the run then could not
+# name its own artifacts. A clear refusal here replaces an admitted run that cannot
+# publish. This is the task-id half of the approved plan's hostile-input boundary,
+# which asks for "strict length and character grammars to task IDs".
+#
+# WHERE 128 COMES FROM, derived from the naming formats this script already uses
+# and from nothing else:
+#   run id            <timestamp 15> "-" <lock key <=8> "-" <pid> "-" <task>
+#   longest filename  <run id> ".unattended-settings.json"        (25 bytes)
+#   NAME_MAX          255
+# The fixed prefix is 15+1+8+1+7+1 = 33 bytes, taking the widest pid Linux allots
+# and the full lock-key field, so the hard ceiling is 255-33-25 = 197. The maximum
+# enforced below is 128, which keeps 69 bytes in hand deliberately: the hop-capture
+# suffixes ".hop<N>.<actor>.out" and ".tree" grow with the caller's --max-hops
+# digits, and bounds for the other token classes (run ids, outcomes, reason codes,
+# protocol versions, control tokens) are not in place yet. The longest task id this
+# repository has ever used is 54 characters, so nothing legal is relabelled.
+#
+# AFTER THE CHARACTER CHECK, NOT BEFORE IT, and that order is load-bearing:
+# ${#TASK} counts characters, not bytes. The grammar above admits only single-byte
+# ASCII, so once it has passed, characters and bytes are the same number and the
+# arithmetic against NAME_MAX is sound. Reversed, a multi-byte id could pass a
+# character count it would exceed in bytes.
+TASK_ID_MAX=128
+if [ "${#TASK}" -gt "$TASK_ID_MAX" ]; then
+  printf 'STOP [12] task id rejected (too long: %s characters, maximum %s): %s\n' "${#TASK}" "$TASK_ID_MAX" "$TASK" >&2; exit 12
 fi
 
 [ -d "$CHECKOUT" ] || { printf 'STOP [11] checkout is not a directory: %s\n' "$CHECKOUT" >&2; exit 11; }
@@ -516,6 +1872,201 @@ if [ -e "$STATE_FILE" ]; then
   RESOLVED_DIR="$(cd "$(dirname "$STATE_FILE")" && pwd -P)"
   [ "$RESOLVED_DIR" = "$(cd "$STATE_DIR" && pwd -P)" ] \
     || { printf 'STOP [12] resolved state file escapes logs/work-loop/\n' >&2; exit 12; }
+fi
+
+# --------------------------------------- the whole-run deadline is REQUIRED
+#
+# The approved plan's minimum release contract: a finite whole-run deadline for
+# every live multi-hop run. It used to be optional, and `--max-hops * --timeout`
+# was the only thing bounding a run — one hour on the defaults, three on a
+# walk-away shape. That is not a bound anyone can plan around, and the operator
+# who most needs one is exactly the operator least likely to remember the flag.
+#
+# STILL BEFORE ADMISSION, and the position is the contract rather than a
+# convenience. Whether a deadline was supplied is decided from argv alone, so
+# this is an invocation-input question of the same kind as --max-hops or
+# --permission-mode, and the accepted Change set A boundary requires an invalid
+# invocation to launch no actor, take no owner or lease, create no run identity,
+# mutate nothing and write no evidence. That is also why this refusal
+# deliberately produces NO durable terminal result: the terminal record is the
+# post-admission producer's, and reaching it would mean answering an argv
+# question only after both leases were held — the precise defect the admission
+# boundary immediately below was written to remove.
+#
+# WHY IT SITS HERE AND NOT BESIDE THE --deadline SYNTAX CHECK. The syntax of
+# --deadline can be judged the moment it is parsed; whether one is REQUIRED
+# cannot, because it depends on two values settled later — MODE, and MAX_HOPS,
+# which --carry-one pins to 1 after its own validation. Testing it up there would
+# mean recomputing both, and a second definition of "live" or of the hop ceiling
+# is how the two come to disagree.
+#
+# WHY IT SITS BELOW THE TASK-ID GRAMMAR, which is the narrower question of the
+# two orderings. Path safety refuses a hostile task id at 12 before any path is
+# built from it, and a run that supplies both a traversal id and no deadline must
+# still hear about the id: that refusal is about what the invocation could reach,
+# and this one is only about how long it could take. Placing this check above it
+# turned `--task -foo` into a 10, which is the wrong answer to the more dangerous
+# question — case 68a asserts the 12 and is what caught it.
+#
+# "LIVE MULTI-HOP" IS READ FROM THIS SCRIPT'S OWN TWO VALUES, and it is narrow on
+# purpose. A simulated run (--actor-cmd) launches no model; --dry-run is the
+# preflight an operator runs precisely to see what a run WOULD do; --status is a
+# read-only query. None of them can burn an afternoon, so requiring a clock of
+# them would refuse invocations that have nothing to bound. One hop is excluded
+# for the same reason in a different shape: --carry-one and --max-hops 1 are
+# already bounded by --timeout, which IS their whole-run clock. The requirement
+# starts where the second hop does.
+if [ "$MODE" = "live" ] && [ "$MAX_HOPS" -gt 1 ] && [ -z "$DEADLINE" ]; then
+  printf 'STOP [10] --deadline is required for a live multi-hop run (mode=%s, max_hops=%s): without it the only bound is max_hops * timeout = %ss, which is a consequence rather than a budget.\n' \
+    "$MODE" "$MAX_HOPS" "$(( MAX_HOPS * ACTOR_TIMEOUT ))" >&2
+  printf '  Pass --deadline S (whole-run wall-clock seconds), or run a single hop with --carry-one, which --timeout already bounds.\n' >&2
+  exit 10
+fi
+
+# --------------------------------- run-evidence location, BEFORE admission
+#
+# ADMISSION, NOT SETUP. The approved plan admits a run only once task, checkout
+# AND the evidence location have been supplied and established as trusted;
+# before that point an invalid invocation must launch no actor, take no owner or
+# lease, mutate nothing and write no evidence. Task and checkout already cleared
+# that bar, immediately above. The evidence location did not: its directory is
+# created and canonicalized far below, AFTER acquire_lock, so an invocation
+# naming a location it could never write to still took both leases first — and,
+# where another run already held one, filed a refusal record — for a run that
+# was never admissible. Those are effects taken by something that is not a run.
+#
+# CHECKED HERE, CREATED THERE. This block does not move the creation, and must
+# not: a dispatcher that has not won both leases is not entitled to a byte
+# inside the checkout, which is the whole finding case 12h pins. So the question
+# asked here is only whether the location COULD be used, answered from paths
+# that already exist. mkdir -p would build every missing level below the nearest
+# existing ancestor, so that ancestor is the honest thing to test — and testing
+# it costs nothing and leaves nothing behind.
+#
+# --status IS EXCLUDED, for the same reason it skips acquire_lock below: it is a
+# read-only query rather than a run, it never writes evidence, and refusing it
+# over a directory it would never touch would be answering a question nobody
+# asked. --dry-run is NOT excluded — it takes both leases, so it is an admitted
+# run and it is held to the admitted run's boundary.
+check_evidence_location() { # requested-or-default path -> sets LOG_DIR_SELECTED, or exits 10
+  local want="$1" probe parent tail base probe_abs
+  # `-` IS THE ONE OPERAND THAT CANNOT BE MADE INTO A PATH.
+  #
+  # Every other leading-dash value below is a legal directory name that only
+  # LOOKED like syntax, and the option terminators added at the creation and
+  # canonicalization sites settle those. This one is different in kind: bash's
+  # `cd -` means OLDPWD however the argument is quoted, so `mkdir -p -- -`
+  # creates a directory here while `cd -- -`... does not reach it by the same
+  # name at all. The run would create one directory and canonicalize onto
+  # another — or, where OLDPWD is unset, create the directory and then stop,
+  # having already written inside the checkout for a run that never started.
+  #
+  # REFUSED HERE, which is before admission, so the invocation takes no lease,
+  # launches no actor and leaves no directory behind. That is the approved
+  # plan's own bar for an invalid pre-admission invocation, and the pre-change
+  # behaviour missed it by exactly one stray directory.
+  #
+  # `./-` is offered rather than a flat refusal because a directory genuinely
+  # named `-` is legal and the operator may mean it. The prefix is what removes
+  # the ambiguity, and it is the ordinary shell answer to this exact problem.
+  if [ "$want" = '-' ]; then
+    printf 'STOP [10] run evidence location may not be the single character "-": that is the shell'"'"'s previous-directory token rather than a path, so the directory created and the directory canonicalized would not be the same one. Pass ./- if a directory named "-" is genuinely wanted.\n' >&2
+    exit 10
+  fi
+  # A symlink that does not resolve to a directory is refused before anything
+  # else. `-e` is false for a broken one, so the ancestor walk below would climb
+  # straight past it to a perfectly good parent and call the location usable,
+  # while mkdir -p would still fail on the dangling name.
+  if [ -L "$want" ] && [ ! -d "$want" ]; then
+    printf 'STOP [10] run evidence location is a symlink that does not resolve to a directory: %s\n' "$want" >&2
+    exit 10
+  fi
+  # THE SELECTION IS MADE HERE, READ-ONLY, AND NOTHING IS CREATED BY IT.
+  #
+  # It used to be made two ways in two places: this function judged the raw
+  # spelling, `mkdir -p` then took the FIRST FILESYSTEM EFFECT from that same raw
+  # spelling, and only afterwards did `cd … && pwd -P` work out what the location
+  # actually was. So the run created a path derived from text nobody had
+  # normalized. `--log-dir ghost/../runs` is the small discriminator: mkdir -p
+  # walks the spelling and creates BOTH `ghost` and `runs`, while the canonical
+  # target is only `…/runs` — a stray directory inside the checkout, written by
+  # an invocation that had not yet been admitted. The approved plan's admission
+  # boundary asks for the evidence location to be a trusted value BEFORE a run
+  # exists, and a value that has already had a side effect is not that.
+  if [ -e "$want" ]; then
+    [ -d "$want" ] || {
+      printf 'STOP [10] run evidence location exists and is not a directory: %s\n' "$want" >&2; exit 10; }
+    [ -w "$want" ] || {
+      printf 'STOP [10] run evidence directory is not writable: %s\n' "$want" >&2; exit 10; }
+    # The whole path exists, so the kernel resolves every `..` and every symlink
+    # in it. Nothing is left for this function to reason about.
+    LOG_DIR_SELECTED="$(cd -- "$want" && pwd -P)" || {
+      printf 'STOP [10] run evidence directory cannot be resolved: %s\n' "$want" >&2; exit 10; }
+    return 0
+  fi
+  # WALKED WITH PARAMETER EXPANSION, NOT `dirname`. The old walk shelled out, and
+  # `dirname -runs` is `dirname: illegal option -- r` on BSD — the same
+  # leading-dash-in-option-position defect this slice is about, in the very code
+  # that is supposed to be judging the operand. It recovered by accident (the
+  # failed call returned empty, and `dirname ""` is `.`), which is not a property
+  # to keep. These expansions are shell builtins and cannot misread an operand.
+  probe="$want"; tail=""
+  while [ ! -e "$probe" ]; do
+    case "$probe" in
+      */*) parent="${probe%/*}"; [ -n "$parent" ] || parent="/" ;;
+      *)   parent="." ;;
+    esac
+    [ "$parent" = "$probe" ] && break
+    base="${probe##*/}"
+    [ -n "$base" ] && tail="$base${tail:+/$tail}"
+    probe="$parent"
+  done
+  [ -d "$probe" ] || {
+    printf 'STOP [10] run evidence location cannot be created — %s is not a directory: %s\n' "$probe" "$want" >&2
+    exit 10; }
+  [ -w "$probe" ] || {
+    printf 'STOP [10] run evidence location cannot be created — %s is not writable: %s\n' "$probe" "$want" >&2
+    exit 10; }
+  # `.` and `..` BEYOND THE LAST EXISTING DIRECTORY ARE REFUSED, because they
+  # cannot be resolved without inventing the components they refer to. Every such
+  # component is by construction one the filesystem does not have, so there is
+  # nothing to ask and no honest answer to compute — and resolving them lexically
+  # here would be this dispatcher deciding what a path means, which is the path
+  # framework this slice is explicitly not building. Note where this does NOT
+  # bite: `ghost/../runs` with a real `ghost` is fully resolved by the branch
+  # above, and a leading `./` is consumed by the ancestor rather than the tail,
+  # so `./runs` and the documented `./-` escape hatch are unaffected.
+  case "/$tail/" in
+    */../*|*/./*)
+      printf 'STOP [10] run evidence location contains a "." or ".." below the last existing directory (%s), which cannot be resolved without creating the components it refers to: %s\n' "$probe" "$want" >&2
+      exit 10 ;;
+  esac
+  probe_abs="$(cd -- "$probe" && pwd -P)" || {
+    printf 'STOP [10] run evidence location cannot be resolved: %s\n' "$want" >&2; exit 10; }
+  # `/` needs no separator of its own; every other parent does.
+  case "$probe_abs" in
+    /) LOG_DIR_SELECTED="/$tail" ;;
+    *) LOG_DIR_SELECTED="$probe_abs${tail:+/$tail}" ;;
+  esac
+  return 0
+}
+if [ "$STATUS_MODE" -ne 1 ]; then
+  # The same resolution the run-evidence block makes below, and deliberately the
+  # same one: a boundary that validated the request while the run used the
+  # default would be checking a path nothing writes to.
+  LOG_DIR_WANTED="$LOG_DIR"
+  [ -n "$LOG_DIR_WANTED" ] || LOG_DIR_WANTED="$DEFAULT_LOG_DIR"
+  check_evidence_location "$LOG_DIR_WANTED"
+  # ONE VALUE, FROM ADMISSION ONWARD — the point the correction moves.
+  #
+  # Unit 20 collapsed the two forms into one but did it at the creation site,
+  # which left the raw spelling live across run identity, both leases and the
+  # first mkdir. Assigning here means no code between admission and the run ever
+  # sees the unnormalized text — including the die paths, which name $LOG_DIR in
+  # their "check that … is writable" advice and would otherwise quote a path the
+  # run was not using.
+  LOG_DIR="$LOG_DIR_SELECTED"
+  LOG_DIR_ABS="$LOG_DIR_SELECTED"
 fi
 
 # ------------------------------------------- state file reading (read-only)
@@ -729,156 +2280,77 @@ holder_label() { # -> a phrase naming who holds the lease
   esac
 }
 
-# EXIT 17 IS THE ONE REFUSAL THAT USED TO LEAVE NOTHING BEHIND.
+# EXIT 17 NO LONGER KEEPS A DURABLE RECORD OF ITS OWN, and the apparatus that
+# wrote one is gone with it. What stood here — REFUSAL_DIR, open_refusal_record(),
+# r17() and refuse_17() — existed for one reason: exit 17 was taken before this
+# run owned a run identity or an evidence location, so finalize_terminal_result()
+# could not write for it and the refusal would otherwise have reached stderr and
+# nowhere else. That was a real gap, met live on 2026-08-14, and the standalone
+# `.refusal` sibling of the lease directories was the only place a run entitled
+# to nothing could put its evidence.
 #
-# It is taken before this run owns anything, so the refusal reached stderr and
-# nowhere else. That is invisible to an unattended dispatcher whose terminal
-# nobody is watching, which is exactly what the live cross-transport hop of
-# 2026-08-14 met: the dispatcher refused correctly at 17 while the attended
-# carrier held the lease, and the requested --log-dir was never even created, so
-# the losing transport left no evidence at all. The refusal was right and
-# unprovable, which for this spike is the same as missing.
+# THE REVISED PLAN REMOVES THE CONDITION, so it removes the workaround. A lease
+# refusal is now a terminal of an ADMITTED run: task, checkout and evidence
+# location were established and trusted long before the lease was asked for, and
+# run identity and the run log are opened above the lease call. So the refusal
+# writes the ordinary versioned terminal result, through the ordinary funnel,
+# into the run's own evidence location — and Change set A's "exactly one" is met
+# by there being exactly one producer, not two records that must agree.
 #
-# THE FIRST FIX PUT THE RECORD IN THE WRONG PLACE. It moved the run-evidence
-# block above acquire_lock, so the refusal had a run log to write into — inside
-# the checkout the operator had pointed --log-dir at. But a dispatcher that has
-# LOST admission owns neither lease, and a run that owns neither lease is not
-# entitled to a single byte of that working tree. Two runs racing for one
-# checkout would each leave marks in the other's tree, and the whole meaning of
-# losing admission is that the loser changes nothing. It also broke the next run
-# for real: an unstaged `refused-runs/` is an out-of-allowlist change, so the
-# following admitted dispatcher stopped at 18 over litter the refusal left.
-#
-# SO THE RECORD LIVES UNDER THE SHARED LEASE ROOT, in the Git common directory.
-# That location is not a convenience — it is the only one this process is already
-# entitled to write to before it owns anything, because taking a lease means
-# creating a directory there, and it is the one place EVERY linked worktree of
-# the repository can read. No new state store and no new command surface: this is
-# a `refusals/` sibling of the lease directories the same run would have created
-# had it won.
-#
-# Nothing globs the lease root expecting only `*.lock`, so a sibling is additive
-# (logs/scripts/work-loop-lease.sh addresses its two lease directories by exact
-# path; --status does the same).
-REFUSAL_DIR="$WL_LEASE_ROOT/refusals"
-REFUSAL_LOG=""
-REFUSAL_UNAVAILABLE=0
-
-# OPENED LAZILY, on the first line that needs it. An admitted run must file no
-# refusal record at all — a `refusals/` entry from a run that was never refused
-# is a false one, and the harness reads the absence as part of the contract.
-#
-# The name carries timestamp, pid and task, and DELIBERATELY NOT the lock key:
-# LOCK_KEY is unassigned on this path since the lease moved into the shared
-# library, and a name built from it would silently collapse to an empty field.
-# The pid is the discriminator that actually varies, and it is the one a refused
-# run can state about itself without asking the lease for anything.
-#
-# A FAILURE HERE IS ANNOUNCED, never swallowed. Silence would leave the operator
-# reading a refusal that names no record, with no way to tell "no record was
-# written" from "the record is somewhere I did not look".
-open_refusal_record() { # -> 0 with REFUSAL_LOG set, 1 otherwise
-  [ -n "$REFUSAL_LOG" ] && return 0
-  [ "$REFUSAL_UNAVAILABLE" -eq 1 ] && return 1
-  local cand
-  if ! mkdir -p "$REFUSAL_DIR" 2>/dev/null; then
-    REFUSAL_UNAVAILABLE=1
-    printf 'WARNING: cannot create the refusal-record directory %s — this refusal reaches the terminal only.\n' \
-      "$REFUSAL_DIR" >&2
-    return 1
-  fi
-  cand="$REFUSAL_DIR/$(date '+%Y%m%dT%H%M%S')-$$-$TASK.refusal"
-  if ! : >"$cand" 2>/dev/null; then
-    REFUSAL_UNAVAILABLE=1
-    printf 'WARNING: cannot open a refusal record at %s — this refusal reaches the terminal only.\n' \
-      "$cand" >&2
-    return 1
-  fi
-  REFUSAL_LOG="$cand"
-  return 0
-}
-
-# Two functions carry the fix. r17() writes one already-formatted line to BOTH
-# operator channels — the stderr wording below is unchanged, and what is new is
-# that the same bytes also reach the refusal record. refuse_17() writes the
-# machine-readable end of the record, names its path, and exits.
-r17() { # one already-formatted line or block
-  printf '%s\n' "$1" >&2
-  open_refusal_record && printf '%s\n' "$1" >>"$REFUSAL_LOG"
-  return 0
-}
-
-# The machine-readable half. The lines above are what an operator reads; this one
-# is what a later reader — a harness, a grep, the next unit's evidence — can match
-# without parsing prose. Written LAST, so its presence also says the refusal ran
-# to the end rather than dying halfway through reporting itself.
-#
-# `actor_launched=no` is STATED, not left to be inferred. The value of this record
-# is that it is written on a path which provably never reaches launch_actor(), and
-# a reader should not have to know where it came from to know that. Nothing else
-# in this script writes the `terminal-record` prefix, so a match is unambiguous.
-#
-# Empty holder fields render as "unrecorded", never as a free lease — the same
-# rule holder_label() follows, for the same reason.
-#
-# THE PATH IS PRINTED. The record no longer sits where the operator asked for
-# their logs, so a refusal that did not say where it went would be evidence
-# nobody can find — the same defect one directory over.
-refuse_17() { # -> never returns
-  if [ -n "$REFUSAL_LOG" ]; then
-    printf 'terminal-record outcome=refused code=17 task=%s resource=%s refusal=%s holder_program=%s holder_pid=%s holder_task=%s holder_checkout=%s actor_launched=no\n' \
-      "$TASK" \
-      "${WL_LEASE_RESOURCE:-unrecorded}" \
-      "${WL_LEASE_REFUSAL:-unrecorded}" \
-      "${WL_LEASE_HOLDER_PROGRAM:-unrecorded}" \
-      "${WL_LEASE_HOLDER_PID:-unrecorded}" \
-      "${WL_LEASE_HOLDER_TASK:-unrecorded}" \
-      "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}" \
-      >>"$REFUSAL_LOG"
-    printf '  refusal record: %s\n' "$REFUSAL_LOG" >&2
-    printf '  the requested --log-dir was NOT created: this run lost admission and wrote nothing into the checkout.\n' >&2
-  fi
-  exit 17
-}
-
+# DO NOT REINSTATE A SECOND STORE. Two durable records for one ending is the
+# failure this deletion closes: they can disagree, and a reader then has to
+# decide which is authoritative, which is a judgment no consumer of this spike
+# is allowed to make.
 acquire_lock() {
   wl_lease_acquire dispatch "$$"
   case "$?" in
     0) return 0 ;;
+    # STILL A DIRECT EXIT, and deliberately not a die(). An uncreatable lease root
+    # is lease INFRASTRUCTURE failing, not a lease being refused: it is exit 11,
+    # it is not one of Change set A's enumerated terminal classes, and routing it
+    # through the funnel would invent a terminal result for a class the plan does
+    # not list. The four refusals below are the class that moved.
     1) printf 'STOP [11] cannot create the lock root %s\n' "$LOCK_ROOT" >&2; exit 11 ;;
   esac
 
-  local who surv; who="$(holder_label)"
+  # THE FOUR REFUSALS LEAVE THROUGH die 17, the one funnel every other nonzero
+  # terminal already uses, so a lease-refused run finalizes exactly one run-bound
+  # terminal result through the single producer/consumer contract and files no
+  # second durable record of its own. die() prefixes `STOP [17] `, which is why
+  # the wording below no longer carries it; every operator-facing sentence is
+  # otherwise unchanged, and the continuation lines are joined into the one
+  # message so they reach stderr, the run log and the record together.
+  local who surv msg; who="$(holder_label)"
 
   if [ "$WL_LEASE_RESOURCE" = task ]; then
     # The PINNED lines are left program-agnostic on purpose. "the previous run"
     # is true whichever transport pinned it, so there is nothing false to fix
     # here, and the survivor pids inside the lease are what the operator acts on.
     if [ "$WL_LEASE_REFUSAL" = pinned ]; then
-      r17 "$(printf 'STOP [17] the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)' "$TASK" "$LOCK_DIR")"
+      msg="$(printf 'the previous run of %s could not confirm its actor tree was stopped, so this lock is PINNED (%s)' "$TASK" "$LOCK_DIR")"
       surv="$(sed 's/^/  /' "$WL_LEASE_SURVIVORS" 2>/dev/null)"
-      [ -n "$surv" ] && r17 "$surv"
-      refuse_17
+      [ -n "$surv" ] && msg="$msg"$'\n'"$surv"
+      die 17 "$msg"
     fi
-    r17 "$(printf 'STOP [17] %s holds task %s (%s)' "$who" "$TASK" "$LOCK_DIR")"
-    r17 "$(printf '  it is running in checkout: %s' "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}")"
-    refuse_17
+    msg="$(printf '%s holds task %s (%s)' "$who" "$TASK" "$LOCK_DIR")"
+    msg="$msg"$'\n'"$(printf '  it is running in checkout: %s' "${WL_LEASE_HOLDER_CHECKOUT:-unrecorded}")"
+    die 17 "$msg"
   fi
 
   if [ "$WL_LEASE_REFUSAL" = pinned ]; then
-    r17 "$(printf 'STOP [17] a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)' "$CHECKOUT_LOCK_DIR")"
+    msg="$(printf 'a previous run in this checkout could not confirm its actor tree was stopped, so its checkout lock is PINNED (%s)' "$CHECKOUT_LOCK_DIR")"
     surv="$(sed 's/^/  /' "$WL_LEASE_SURVIVORS" 2>/dev/null)"
-    [ -n "$surv" ] && r17 "$surv"
-    refuse_17
+    [ -n "$surv" ] && msg="$msg"$'\n'"$surv"
+    die 17 "$msg"
   fi
-  r17 "$(printf 'STOP [17] %s is already running in this checkout (%s)' "$who" "$CHECKOUT")"
-  r17 "$(printf '  it is running task: %s' "${WL_LEASE_HOLDER_TASK:-an unrecorded task}")"
+  msg="$(printf '%s is already running in this checkout (%s)' "$who" "$CHECKOUT")"
+  msg="$msg"$'\n'"$(printf '  it is running task: %s' "${WL_LEASE_HOLDER_TASK:-an unrecorded task}")"
   # "two Work Loop runs", not "two dispatchers": the hazard is one working tree
   # and one index with two live writers in it, and that is the same hazard
   # whichever transport the other writer arrived by.
-  r17 '  two Work Loop runs in one checkout share a working tree and index, so either could'
-  r17 '  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.'
-  refuse_17
+  msg="$msg"$'\n''  two Work Loop runs in one checkout share a working tree and index, so either could'
+  msg="$msg"$'\n''  sweep the other task'"'"'s paths into a commit. Wait for it, or use another checkout.'
+  die 17 "$msg"
 }
 
 # A pinned lock is NOT released, by anything, including the EXIT trap. It is the
@@ -934,6 +2406,221 @@ pin_lock() { # survivor-pids, unknown-reason
   esac
   printf '%s\n' "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
+  return 0
+}
+
+# The NON-TEARDOWN retention. The run reached a real operator terminal but could
+# not finalize its terminal result, so the leases must outlive this process for a
+# reason that has nothing to do with surviving descendants — pin_lock's evidence
+# would tell the teardown story, which is false here and sends the operator
+# hunting pids that do not exist. The library owns the durable cause text
+# (wl_lease_pin_terminal); what lives here is this dispatcher's wording and its
+# exit 17, exactly as with pin_lock above. Same three library outcomes, same
+# three answers, for the same reasons.
+pin_lock_terminal() { # [cause] -> 0 always; pins every owned lease with the truthful cause
+  local rc=0 msg cause
+  # The default is the finalization-failure cause this function was born with;
+  # the consumer gate below passes its own, because "could not finalize" would be
+  # FALSE there — the record was finalized and then failed this run's own trust
+  # boundary. One emitter, two truthful causes, still one lease writer.
+  cause="${1:-the run could not finalize its terminal result under ${LOG_DIR:-<no log dir>}}"
+  wl_lease_pin_terminal "$cause" "$TASK"; rc=$?
+  case "$rc" in
+    0)
+      msg="  the task lock is PINNED at $LOCK_DIR (and this checkout's lock at $CHECKOUT_LOCK_DIR) — this run could not prove how it ended, so a second dispatcher is refused (exit 17) until the cause is fixed and you clear them by hand." ;;
+    1)
+      return 0 ;;
+    2)
+      msg="  WARNING: the pin RECORD could not be persisted for: ${WL_LEASE_PIN_FAILED:-an unnamed lock}.
+  Those lock directories are deliberately RETAINED and were NOT released ($LOCK_DIR, and this checkout's lock at $CHECKOUT_LOCK_DIR), so a second dispatcher is still refused (exit 17).
+  What is missing is the written reason inside them: this run reached a terminal it could not prove. Do NOT read them as a removable stale lock." ;;
+    *)
+      msg="  WARNING: the lease library returned an UNRECOGNISED pin result ($rc), so this dispatcher cannot tell what was recorded.
+  Treat the lock directories as retained ($LOCK_DIR, and this checkout's lock at $CHECKOUT_LOCK_DIR): they were NOT released, and a second dispatcher is still refused (exit 17). Clear them by hand only after fixing what blocked the terminal result." ;;
+  esac
+  printf '%s\n' "$msg" >&2
+  [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
+  return 0
+}
+
+# The operator terminal's fail-closed exit, in the order that fails safe: pin
+# FIRST, so the leases are already retained before die() and the EXIT trap reach
+# release_lock, then die(38), whose own finalize attempt records the code-38
+# result where the filesystem still permits one. The retention line carries its
+# own marker comment so a mutation control can delete exactly it and prove the
+# EXIT path releases without it.
+#
+# WHICH TERMINAL IT WAS is a parameter, defaulted to the wording this function was
+# born with. Three code-zero seams now share it, and the sentence names the one
+# that was reached: telling an operator their run "reached a real operator
+# terminal" about a hop carried between two actors is a false statement in the
+# one message they read when nothing else can be trusted. A second copy of this
+# function per seam would duplicate the pin-and-exit owner instead, which is the
+# thing that must stay single.
+die_terminal_unprovable() { # [terminal-label]
+  pin_lock_terminal # operator terminal retention
+  die 38 "the run reached ${1:-a real operator terminal} (state_class=${ST_CLASS:-unavailable}) but its terminal result could not be finalized under $LOG_DIR — refusing to exit 0, because a run that cannot prove how it ended must not report that it ended well."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases are retained with that cause recorded, so a second dispatcher is refused (exit 17) until you clear them."
+}
+
+# The CONSUMER's fail-closed exit — same shape, same pin-first order, same exit
+# code as die_terminal_unprovable, for the same reason: a run that cannot prove
+# its terminal result is its own must not buy a lease release with it. What
+# differs is the truthful cause: here the record finalized successfully and then
+# failed the consumer gate, so the pin carries the gate's bounded refusal token
+# rather than a finalization story.
+# The terminal label is the SECOND argument here, for the same reason and with the
+# same default as the finalization exit above; the refusal token stays first
+# because every existing caller passes it there.
+#
+# THE SENTENCE IS TERMINAL-NEUTRAL, and must stay that way. Four consumers share
+# it and they do not share an intended exit code: three were ending at 0, the
+# interruption at 28. Until Unit 31 it named the exit-0 ending as the one being
+# withheld, which is simply false for the interruption — and the nonzero die()
+# funnel that becomes the fifth consumer is nonzero by definition. It also called
+# the gate this run's OWN, which reads as though passing it had established
+# ownership; the gate is the check that FAILED, and offering it as provenance is
+# the very claim this refusal exists to withhold. Neither phrasing may come back,
+# and this sentence must not branch on the code: a per-code branch would make it
+# one message owner per terminal, which is the duplication the single
+# pin-and-exit owner exists to avoid. Case 58f's M38 is the control that holds
+# this, and 58e/27w are the two consumers it is asserted over.
+die_terminal_untrusted() { # bounded-refusal-token [terminal-label]
+  # FIRST CAUSE WINS, because the lease record outlives the run and the operator
+  # reads it long after both messages have scrolled away. This refusal is not
+  # always the first thing that went wrong: where a terminal-specific
+  # finalization already failed, die_terminal_unprovable pinned the real
+  # initiating cause and re-entered die 38, that retry succeeded, and the funnel
+  # consumer then refuses the record the retry wrote. Pinning again there
+  # overwrote the finalization failure with a mismatch — and the two have
+  # different recoveries, so the surviving record sent the operator to repair an
+  # interfering artifact when a write had failed. `wl_lease_pin_terminal` writes
+  # one durable cause per lease rather than a history, so precedence has to be
+  # decided here; it is the same first-cause rule die_funnel_unprovable already
+  # applies below, not a second pin store or a cause stack.
+  #
+  # THE LATER REFUSAL IS NOT LOST, and that is the other half. It still reaches
+  # stderr and the run log in full, with its own bounded token — what changes is
+  # only which cause survives on the leases, and the sentence stops claiming this
+  # refusal's cause was written there when it was not.
+  local held='are retained with that cause recorded'
+  if [ "${WL_LEASE_PINNED:-0}" -eq 0 ]; then # consumer retention precedence
+    pin_lock_terminal "the promised terminal result under ${LOG_DIR:-<no log dir>} was refused before release: ${1:-refused}" # operator consumer retention
+  else
+    held='remain retained under the cause recorded before this refusal — that earlier evidence is preserved unchanged, and this message and the run log are where this refusal is recorded'
+  fi
+  # RESULT_FILE is cleared so die() does not print "terminal result:" pointing at
+  # the very artifact this run just refused to trust — advertising it as this
+  # run's evidence would be the false claim the refusal exists to prevent. The
+  # artifact itself is left in place, untouched, as evidence of what was found.
+  RESULT_FILE=""
+  die 38 "the run reached ${2:-a real operator terminal} (state_class=${ST_CLASS:-unavailable}) and finalized its terminal result, but the promised artifact at $LOG_DIR_ABS/$RUN_ID.result did not pass the consumer gate (${1:-refused}) — so it is refused as this run's reported ending, because a result this run cannot prove is its own must not be reported as how it ended."$'\n'"Recoverable next action: inspect that path against the run log $RUN_LOG, remove or repair the interfering artifact, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases $held, so a second dispatcher is refused (exit 17) until you clear them."
+}
+
+# The SHARED FUNNEL's own failure transfer. die() publishes the terminal result
+# for every D–L terminal; until Unit 11 it invoked the finalizer and IGNORED its
+# return, so a run whose publication failed still exited with its original code
+# and released both leases — the same unproven-ending hole the operator seam
+# closed at Unit 8, reachable from every other terminal.
+#
+# NOT die_terminal_unprovable, and it cannot be: that function calls die(),
+# which is the funnel this transfer sits inside — entering it from here would
+# re-invoke the finalizer that just failed and recurse. This transfer pins and
+# exits DIRECTLY, publishing nothing twice: one finalization attempt, one pin,
+# one exit.
+#
+# ONE RETURN IS DELIBERATE, and it names the only case where the transfer must
+# not fire: a terminal with no run evidence yet (no RUN_ID/LOG_DIR) is outside
+# the covered funnel — the same boundary finalize_terminal_result draws for
+# itself — and keeps its original exit.
+#
+# ALREADY-PINNED STILL EXITS 38. An earlier revision returned here when the
+# leases were already pinned, which kept the original exit code and recorded the
+# publication failure nowhere — a non-38 terminal indistinguishable from one
+# whose result exists (the Unit 11 correction's frozen finding). What survives
+# from that revision is only the part that was right: the pin is NOT repeated,
+# because the cause already on disk (a teardown's survivor pids, or the operator
+# seam's own pin) is stronger evidence than a finalization story and one write
+# would overwrite the other. The failed publication is recorded on both output
+# channels instead, and the exit is 38 either way — an unprovable ending is
+# named as one no matter what pinned the leases first.
+die_funnel_unprovable() { # original-code -> returns 0 only where the transfer must not fire
+  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] || return 0 # die funnel coverage guard
+  local held='are retained with that cause recorded'
+  if [ "${WL_LEASE_PINNED:-0}" -eq 0 ]; then
+    pin_lock_terminal # die funnel retention
+  else
+    held='remain retained under the cause recorded before this failure — that earlier evidence is preserved unchanged, and this message is where the failed publication is recorded'
+  fi
+  local m="STOP [38] the run was ending with terminal code $1 but its terminal result could not be finalized under ${LOG_DIR:-<no log dir>} — exiting 38 instead, because a run that cannot prove how it ended must not report that it ended with $1 and hand its checkout on."$'\n'"Recoverable next action: check that $LOG_DIR is writable and has space, then re-run this dispatcher. The state file is NOT the problem here and needs no repair. Both run leases $held, so a second dispatcher is refused (exit 17) until you clear them."
+  printf '%s\n' "$m" >&2
+  [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$m" >>"$RUN_LOG"
+  release_lock
+  exit 38
+}
+
+# --------------------------------------- the operator terminal's consumer gate
+#
+# THE FIRST PRODUCTION CONSUMER of the terminal result, at the one seam where
+# release is the real advance decision (Unit 9's evidence map). The promised
+# path is DERIVED from two values this dispatcher already owns — the canonical
+# evidence root and this run's id — never accepted from an argument, a scan, or
+# the artifact itself; and every expectation handed to the validators below is a
+# live dispatcher variable. Nothing here reads an expectation out of the record,
+# a state file, Git or a log, and nothing goes looking: no directory listing, no
+# newest-file pick, no wait — the producer's atomic rename completed before this
+# function is reached, so the read is zero-wait by construction.
+#
+# THE CHECKS IN THE ONE ORDER THAT IS CORRECT: gate the path while nothing is
+# open, parse the bytes exactly once, compare identity against that pinned
+# snapshot, and — where the caller has stated what ending it is finalizing —
+# compare meaning against that same snapshot. These are the accepted validators,
+# not a second reader — the composition adds no parser and no lifecycle read.
+# They are called in the CURRENT shell because they hand each other their state
+# through globals (TR_PATH_CLEARED, TR_SOURCE, TR_OUTCOME, TR_CODE) that a
+# $(...) subshell would discard, so each refusal token travels through a scratch
+# file beside the run log instead — the same mechanic, for the same reason, as
+# the harness's own ident_run.
+#
+# ACCEPTANCE IS THE ONLY RETURN. Every refusal — missing, path-refused,
+# structurally refused, identity-refused, meaning-refused — leaves through
+# die_terminal_untrusted with the first bounded token the composed boundary
+# produced.
+#
+# The optional terminal label is CARRIED, not re-derived: this function knows
+# which of its refusals fired, and only its caller knows which terminal it was
+# called from. Passing nothing keeps the accepted operator-terminal wording.
+#
+# THE EXPECTED PAIR IS THE CALLER'S, AND IT IS OPTIONAL HERE ON PURPOSE. A caller
+# that states which outcome and which code it is finalizing gets the semantic
+# boundary as well; a caller that states neither gets exactly the accepted
+# three-boundary composition it had before. That is what lets the first consumer
+# be migrated on its own without changing the release behaviour of any terminal
+# seam still to come — the alternative, making the pair mandatory, would migrate
+# every caller at once and silently change four terminals in a unit that agreed
+# to change one.
+#
+# IT DERIVES NOTHING. The pair arrives as two arguments the caller established
+# from dispatcher-owned facts. Nothing here reads an expectation out of the
+# artifact, and nothing here knows a code-to-outcome mapping — `result_outcome()`
+# remains the sole owner of that, on the argument the semantic boundary states.
+#
+# HALF AN EXPECTATION IS STILL AN EXPECTATION. The guard is "either was stated",
+# not "both were", so a caller that supplies one and loses the other is refused
+# by the boundary's own `no-expectation` rather than quietly skipping the check —
+# which is what an "and" here would do, at exactly the seam where it matters.
+consume_terminal_result() { # [terminal-label] [expected-outcome] [expected-code] -> 0 on acceptance; a refusal never returns
+  local promised cap tok label="${1:-}" x_outcome="${2:-}" x_code="${3:-}"
+  promised="$LOG_DIR_ABS/$RUN_ID.result"
+  cap="$RUN_LOG.consume"
+  validate_terminal_result_path "$promised" "$TASK" "$CHECKOUT" "$RUN_ID" "$LOG_DIR_ABS" >"$cap" 2>/dev/null \
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-path-refused}" "$label"; }
+  validate_terminal_result "$promised" >"$cap" 2>/dev/null \
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-structure-refused}" "$label"; }
+  validate_terminal_result_identity "$promised" "$TASK" "$CHECKOUT" "$RUN_ID" "$LOG_DIR_ABS" >"$cap" 2>/dev/null \
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-identity-refused}" "$label"; }
+  [ -n "$x_outcome" ] || [ -n "$x_code" ] && { validate_terminal_result_semantics "$promised" "$x_outcome" "$x_code" >"$cap" 2>/dev/null \
+    || { tok="$(head -1 "$cap" 2>/dev/null)"; rm -f "$cap"; die_terminal_untrusted "${tok:-semantics-refused}" "$label"; }; } # composed semantic boundary
+  rm -f "$cap"
   return 0
 }
 
@@ -1346,7 +3033,15 @@ on_signal() { # signal name
   SHUTDOWN=1
   trap '' INT TERM   # a second signal must not re-enter mid-teardown
 
+  # THREE PLACES, NOT TWO (Unit 25). `between hops` is true of a run that has
+  # finished at least one hop and false of one that has never launched anything —
+  # and the second is the window this unit brought inside the evidence boundary,
+  # so the wording it is reported under has to stop describing hops that did not
+  # happen. Read from ACTOR_PROCESS_STARTED, the same fork fact the record's own
+  # `stage` and `actor_launched` fields derive from, so the operator's screen and
+  # the machine record cannot describe different runs.
   local where="between hops"
+  [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] || where="before the first hop launched"
   [ -n "$CUR_ACTOR" ] && where="during hop $CUR_HOP (actor '$CUR_ACTOR')"
 
   printf 'STOP [28] interrupted by SIG%s %s — task %s\n' "$sig" "$where" "$TASK" >&2
@@ -1365,9 +3060,22 @@ on_signal() { # signal name
   # An interrupted actor is NEVER retried and this run never resumes: the signal
   # may have landed after an effect nobody observed. The state file and Git are
   # the truth, and they are where the operator has to look.
+  #
+  # THE PRE-LAUNCH VARIANT SAYS SOMETHING DIFFERENT BECAUSE SOMETHING DIFFERENT
+  # HAPPENED (Unit 25). "the actor was killed mid-hop; it may have left a partial
+  # effect" is a claim about a process this run never forked, and it was being
+  # printed for every interruption that arrived before the first launch — sending
+  # the operator to reconcile a hop against effects that cannot exist. The
+  # no-retry promise and the recoverable-next-action shape are unchanged in both,
+  # because both are true in both; only the sentence describing what was stopped
+  # is chosen by the fork fact.
   local msg="  the actor was killed mid-hop; it may have left a partial effect. Nothing is retried.
   Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\`, decide what the
   hop actually completed, then re-run this dispatcher. Run evidence: ${RUN_LOG:-<none>}"
+  [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] || msg="  no actor was ever launched by this run, so no hop was interrupted and nothing it could
+  have left behind exists. Nothing is retried.
+  Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\` to confirm the
+  turn is where you left it, then re-run this dispatcher. Run evidence: ${RUN_LOG:-<none>}"
 
   # O2 reaches the signal path too. This handler already SAID "it may have left
   # a partial effect" and then made the operator go and find out for themselves
@@ -1379,6 +3087,91 @@ on_signal() { # signal name
   printf '%s\n' "$msg" >&2
   [ -n "${RUN_LOG:-}" ] && printf '%s\n' "$msg" >>"$RUN_LOG"
 
+  # TRUSTED EVIDENCE BEFORE RELEASE — the last post-launch terminal that had none
+  # (Unit 23). Everything above this point reports on SCREEN and then released the
+  # lease and exited 28, leaving nothing a later reader could point at: the same
+  # unproven-ending hole closed at the operator seam (Unit 8), the shared die
+  # funnel (Unit 11) and the dry-run and carry-one terminals (Unit 12 onward).
+  # Same boundary, same order, same fail-closed behaviour as those: finalize, then
+  # consume the exact promised artifact, and only then release.
+  #
+  # GUARDED ON RUN EVIDENCE, NOT ON THE FORK (Unit 25). Unit 23 guarded these two
+  # lines on ACTOR_PROCESS_STARTED, which drew the boundary at the wrong fact: a
+  # signal that arrives after this run has taken both leases, claimed its RUN_ID
+  # and opened its run log has ALREADY changed the shared world, and it exited 28
+  # having published nothing a later reader could point at — the same
+  # unproven-ending hole one window earlier. Case 27r-deferred measured exactly
+  # that: leases held, run log on disk, exit 28, zero results.
+  #
+  # THE CONDITION IS THE PRODUCER'S OWN. finalize_terminal_result() refuses to
+  # write without RUN_ID and LOG_DIR; asking the same question here means the two
+  # cannot disagree, and it is why publishing is added without adding an
+  # eligibility flag, a readiness state or a second notion of "far enough along".
+  #
+  # WHAT MAKES IT SAFE IS THE HOIST, NOT THIS LINE. Every fact the record collects
+  # — foreign_worktree(), allowlisted_dirty(), partial_effect_paths(),
+  # remaining_seconds() — is defined ABOVE the block that raises RUN_ID (see that
+  # section's note). Without that ordering this guard would publish records whose
+  # working-tree counts were fabricated `0`s from producers that did not yet
+  # exist, which is the Unit 21 and Unit 24 defect reintroduced one window over.
+  #
+  # THE WINDOW BEFORE RUN IDENTITY IS STILL DELIBERATELY ON THE OLD PATH, and it
+  # is left there rather than approximated: the finalizer would refuse it at its
+  # own guard, and routing that refusal through die_terminal_unprovable would turn
+  # a clean interruption — of a run that had written nothing anywhere — into an
+  # unprovable-ending 38. It is asserted as such rather than merely claimed.
+  #
+  # THE RECORD DISTINGUISHES THE TWO WINDOWS ITSELF. `stage`, `actor_launched` and
+  # `model_request_started` all derive from ACTOR_PROCESS_STARTED, so a pre-launch
+  # interruption publishes pre-hop/no/no and a post-launch one publishes
+  # post-hop/yes/no. Widening the guard therefore adds a record; it does not blur
+  # the distinction Unit 23 established, and the terminal label follows the same
+  # fact so a refusal names the window it actually fired in.
+  #
+  # PINNED BEATS RELEASED, unchanged. report_teardown() above may already have
+  # pinned the lease on an unverified teardown; release_lock() honours that inside
+  # the lease library, so publishing here cannot buy a release the teardown refused.
+  #
+  # One line each with its own marker, so a mutation control can delete either half
+  # without leaving an orphaned block behind (case 27t / M29), or rewrite either
+  # guard back to the fork fact to isolate the widening alone (case 27v / M31).
+  local term_label="the interruption terminal after a launched actor"
+  [ "${ACTOR_PROCESS_STARTED:-0}" -eq 1 ] || term_label="the interruption terminal before any actor launched"
+  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] && { finalize_terminal_result 28 || die_terminal_unprovable "$term_label"; } # interruption terminal finalization
+  # THE EXPECTED PAIR COMES FROM THIS CALLER, the last of the four production
+  # consumers to supply one and the simplest of them. The code is the literal 28
+  # the finalization above published under and the `exit 28` below returns; the
+  # symbol is `result_outcome()`'s answer for that code, the sole code-to-outcome
+  # owner. Code 28 has no branch inside that owner — it is a constant-table entry
+  # — so this expectation depends on no mode flag, no lifecycle class and no fork
+  # fact, and it is identical in both windows this seam serves.
+  #
+  # WHICH IS WHY THE PAIR IS NOT SPLIT BY WINDOW, though the label is. What the
+  # record must AGREE with is the ending; what a refusal must NAME is where it
+  # fired. A pre-launch and a post-launch interruption are the same ending — the
+  # record tells them apart through `stage`, `actor_launched` and
+  # `model_request_started`, which are required fields and not this comparison's
+  # business. Deriving a second expectation per window would invent a distinction
+  # the vocabulary does not have.
+  #
+  # WITHOUT THIS, THE GAP WAS REAL AND MEASURED here too: a record altered after
+  # finalization to `outcome=COMPLETED` — the word for a task driven to its end,
+  # over a run a signal stopped mid-hop — still exited 28, was advertised as this
+  # run's terminal result and released both leases after a clean teardown. So did
+  # one altered to `code=22`. Path, structure and identity have nothing to object
+  # to; only meaning does.
+  #
+  # THE GUARD AND THE LABEL ARE UNCHANGED. The same run-evidence eligibility
+  # condition as the finalization line above it (Unit 25), and the same dynamic
+  # `term_label`, which is simply followed positionally by the pair it now
+  # precedes. Both mutation controls that address this seam still see what they
+  # address: M29 matches the marker, M31 matches the guard.
+  [ -n "${RUN_ID:-}" ] && [ -n "${LOG_DIR:-}" ] && consume_terminal_result "$term_label" "$(result_outcome 28)" 28 # interruption terminal consumption
+  if [ -n "$RESULT_FILE" ]; then
+    printf '  terminal result: %s\n' "$RESULT_FILE" >&2
+    [ -n "${RUN_LOG:-}" ] && printf '  terminal result: %s\n' "$RESULT_FILE" >>"$RUN_LOG"
+  fi
+
   release_lock
   exit 28
 }
@@ -1387,16 +3180,11 @@ trap 'release_lock' EXIT
 trap 'on_signal INT'  INT
 trap 'on_signal TERM' TERM
 
-# --status is read-only by contract: it must not take the lock, because its whole
-# purpose is to be safe to run while another dispatcher holds it.
-#
-# EVERY WRITE THIS RUN MAKES INTO THE CHECKOUT IS BELOW THIS LINE. The run
-# evidence used to be opened above it, so that a refusal at 17 had somewhere to
-# write; that record now goes under the shared lease root instead (see
-# open_refusal_record above), which frees this ordering to say the thing it
-# should always have said — a dispatcher that has not won BOTH leases writes
-# nothing into the working tree it did not win.
-[ "$STATUS_MODE" -eq 1 ] || acquire_lock
+# THE LEASE IS NO LONGER ASKED FOR HERE. It is asked for BELOW the run-evidence
+# block, and the move is the whole of this unit — see the marked call site there
+# for why. What stays true at this point is the --status contract: the read-only
+# branch immediately below exits before any of it, so it still takes no lease,
+# creates no log directory and writes nothing.
 
 # ----------------------------------------------------------------- --status
 # Answers "is it still going?" without touching anything: no lock, no log dir, no
@@ -1415,12 +3203,15 @@ if [ "$STATUS_MODE" -eq 1 ]; then
   # "is a run going?"; ownership says "does this task belong here?". Read-only,
   # like everything else in this branch: the declaration is CAT'd, never written,
   # and no lock is taken.
-  if [ -f "$CHECKOUT/logs/work-loop/.owner" ]; then
-    printf 'owner: this checkout declares %s\n' \
-      "$(awk 'NF {print; exit}' "$CHECKOUT/logs/work-loop/.owner" 2>/dev/null || printf 'an unreadable declaration')"
-  else
-    printf 'owner: this checkout declares no writer (no logs/work-loop/.owner)\n'
-  fi
+  # Through owner_declaration(), the same reader the terminal record uses, so the
+  # operator's screen and the machine-readable record cannot disagree about who
+  # this checkout declares.
+  OWNER_DECL="$(owner_declaration)"
+  case "$OWNER_DECL" in
+    none)        printf 'owner: this checkout declares no writer (no logs/work-loop/.owner)\n' ;;
+    unavailable) printf 'owner: this checkout has a declaration it cannot read (logs/work-loop/.owner)\n' ;;
+    *)           printf 'owner: this checkout declares %s\n' "$OWNER_DECL" ;;
+  esac
   # WHO holds it, not only WHICH TASK. This line named a task and left the
   # holder to be assumed, and the assumption an operator makes from a dispatcher's
   # own output is "a dispatcher" — wrong whenever an attended carry holds the
@@ -1545,43 +3336,466 @@ EOF
     "$(git -C "$CHECKOUT" rev-parse --abbrev-ref HEAD 2>/dev/null)"
 
   st_logdir="$LOG_DIR"; [ -n "$st_logdir" ] || st_logdir="$DEFAULT_LOG_DIR"
-  st_last="$(ls -t "$st_logdir"/*-"$TASK".log 2>/dev/null | head -1)"
+  # `--` HERE TOO, and for the same value. --status runs before the block that
+  # canonicalizes LOG_DIR, deliberately — it takes no lease and creates nothing,
+  # so it must not canonicalize by entering a directory it may not be entitled
+  # to. That leaves the operator's relative operand intact, so a run filed under
+  # `--log-dir -runs` expands this glob to `-runs/...log` and every read below
+  # would otherwise be parsed as options. Terminating is what keeps --status
+  # strictly read-only AND able to find the evidence a real run just wrote.
+  st_last="$(ls -t -- "$st_logdir"/*-"$TASK".log 2>/dev/null | head -1)"
   if [ -n "$st_last" ]; then
     printf 'logs: %s\n' "$st_last"
-    st_hop="$(grep -E '^hop=[0-9]+ actor=' "$st_last" 2>/dev/null | tail -1)"
+    st_hop="$(grep -E '^hop=[0-9]+ actor=' -- "$st_last" 2>/dev/null | tail -1)"
     [ -n "$st_hop" ] && printf '  last hop line: %s\n' "$st_hop"
-    st_stop="$(grep -E '^STOP \[' "$st_last" 2>/dev/null | tail -1)"
+    st_stop="$(grep -E '^STOP \[' -- "$st_last" 2>/dev/null | tail -1)"
     [ -n "$st_stop" ] && printf '  last stop line: %s\n' "$st_stop"
   else
     printf 'logs: no run log for this task under %s\n' "$st_logdir"
+  fi
+
+  # ------------------------------------------ the last terminal, read as a RECORD
+  #
+  # Unit 28. Until this existed, everything --status said about how the previous
+  # run ENDED came from the two greps above: the last `hop=` line and the last
+  # `STOP [` line of the run log. That is raw-log reconstruction, and the plan's
+  # Change set C says status must explain the last result WITHOUT it. The two are
+  # not the same claim: the STOP line is a sentence written for a human mid-run,
+  # while the terminal result is the durable machine-readable record the run
+  # finalized on purpose. Reading the sentence and calling it the outcome is how a
+  # status surface comes to disagree with the evidence it is supposed to render.
+  #
+  # THE RUN LOG LINES STAY. They are not replaced, because they answer a different
+  # question — what the run was doing — and dropping them to make room for this
+  # would trade one gap for another.
+  #
+  # STILL STRICTLY READ-ONLY: `ls` and `sed` over a file the run already wrote.
+  # Same `--` termination as the log glob above, and for the same reason: --status
+  # does not canonicalize LOG_DIR, so a relative operand beginning with `-` must
+  # not be parsed as options.
+  st_res="$(ls -t -- "$st_logdir"/*-"$TASK".result 2>/dev/null | head -1)"
+  if [ -n "$st_res" ] && [ -r "$st_res" ]; then
+    st_outcome="$(sed -n 's/^outcome=//p' -- "$st_res" 2>/dev/null | head -1)"
+    st_code="$(sed -n 's/^code=//p' -- "$st_res" 2>/dev/null | head -1)"
+    st_next="$(sed -n 's/^next_action=//p' -- "$st_res" 2>/dev/null | head -1)"
+    st_started="$(sed -n 's/^model_request_started=//p' -- "$st_res" 2>/dev/null | head -1)"
+    st_complete="$(sed -n 's/^result_complete=//p' -- "$st_res" 2>/dev/null | head -1)"
+    printf 'last terminal: %s [%s]  model_request_started=%s  complete=%s\n' \
+      "${st_outcome:-<unreadable>}" "${st_code:-?}" "${st_started:-unavailable}" "${st_complete:-no}"
+    printf '  result: %s\n' "$st_res"
+    printf '  required action: %s\n' "${st_next:-operator-read-run-log}"
+    # The one outcome whose required action is a specific command rather than an
+    # inspection. Rendered from the RECORD's own outcome field, so status and the
+    # stop that produced it cannot drift into naming different actions.
+    if [ "$st_outcome" = "PERMISSION_DENIED" ]; then
+      printf '  the canonical turn is where the actors left it — this dispatcher wrote no task state.\n'
+      printf '  to grant the capability deliberately and continue in a NEW run:\n'
+      printf '    %s\n' "$(approved_restart_invocation "$st_logdir")"
+      printf '  printing that grants nothing; a denial is never treated as approval.\n'
+    fi
+  else
+    printf 'last terminal: no terminal result for this task under %s\n' "$st_logdir"
   fi
 
   printf 'status is read-only. It launched nothing and wrote nothing. Read %s for the truth (core § 4).\n' "$STATE_FILE"
   exit 0
 fi
 
+# --------------------------------------------------------- repository state
+#
+# HOISTED ABOVE THE RUN-EVIDENCE BLOCK (Unit 25; first hoisted at Unit 21, and
+# again at Unit 24 for remaining_seconds). Everything in this section is a pure
+# function definition, so its position carries no ordering semantics of its own —
+# with one exception, and that exception is why the section sits HERE, above the
+# block that raises RUN_ID and LOG_DIR, rather than anywhere below it.
+#
+# finalize_terminal_result() collects four of its fields by calling
+# foreign_worktree(), allowlisted_dirty(), partial_effect_paths() and
+# remaining_seconds(). RUN_ID and LOG_DIR are what make that function willing to
+# write at all — its own first guard — so the instant the block below raises them,
+# every producer it calls must already exist. While this section came AFTER that
+# block, two separate windows ran finalization against functions that did not yet
+# exist: the --unattended gate's six exit-31 sites (Unit 21, and Unit 24 for the
+# deadline field), and now the signal handler, which from Unit 25 publishes for
+# any interruption arriving after run identity exists.
+#
+# THE SYMPTOM WAS NOT AN ABSENT FIELD. `0` is a positive, checkable claim that the
+# working tree held no foreign paths and no uncommitted allowed paths — written by
+# a check that never ran, and false whenever the tree was in fact dirty. An empty
+# value would have been questioned; a plausible one was not.
+#
+# So the constraint this position encodes is stronger than the one Unit 21 wrote,
+# and it is stated as the stronger rule because the weaker one no longer covers
+# the handler: THIS SECTION MUST PRECEDE THE RUN-EVIDENCE BLOCK BELOW. Every
+# terminal that can finalize — top-level die(), the unattended gate, the signal
+# handler — becomes reachable at or after that block, so preceding it is what
+# makes "the producers exist" true for all of them at once, without a readiness
+# flag any of them could forget to consult. Moving this section back down, or
+# adding a stopping preflight above it, reintroduces the same fabricated fact.
+
+git_head() { git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null; }
+
+# ----------------------------------------------------------- Git path ingestion
+#
+# Every path Git reports is needed in TWO shapes, and they are not interchangeable:
+#
+#   RAW      the actual bytes of the name. Only this may be handed to the
+#            filesystem or to `git hash-object`. Git emits it only through the
+#            `-z` interfaces used below.
+#   DISPLAY  the same name with every byte that could forge a control line
+#            replaced by `?`. Only this may be matched against the allowlist or
+#            printed to the operator.
+#
+# WHAT WAS WRONG. These functions used to read the LINE-delimited forms, where
+# Git C-quotes any path containing `"`, `\`, a control byte, or — under the
+# default core.quotePath — a non-ASCII byte. The reader stripped the outer quotes
+# and never decoded the escapes inside, so `logs/work-loop/tåsk.md` arrived as the
+# literal text `logs/work-loop/t\303\245sk.md`. That text is not a path. `[ -e ]`
+# on it is false and `hash-object` on it fails, so allowlisted_dirty_snapshot()
+# recorded ABSENT both BEFORE and AFTER a hop, the two snapshots compared equal,
+# and the actor's second edit to an already-dirty file disappeared from the
+# partial-effect block and from changed_paths_since_launch — the single thing that
+# accounting exists to make visible. committed_foreign() had the mirror fault: it
+# stripped nothing, so a quoted in-allowlist path arrived with a leading `"`,
+# failed its own `^`-anchored allowlist, and false-stopped legitimate work at 30.
+#
+# THIS IS A REMOVAL, NOT A PARSER. Reversing Git's quoting in shell would be a
+# decoder for hostile input, which is the last thing this spike is entitled to
+# write. The `-z` interfaces hand over the raw bytes, so there is nothing left to
+# decode and the hand-rolled quote-stripping goes away with the ambiguity.
+#
+# WHY DISPLAY HAS TO EXIST, given RAW is the true value. Both reasons are new
+# costs of reading raw, not pre-existing ones — Git's quoting used to cover them
+# for free, and this pays for them deliberately:
+#
+#   1. A raw newline printed into a stop message forges a control line. An actor
+#      that names a file `x<newline>PARTIAL FILE EFFECTS — ...` writes the
+#      operator's own report format into the operator's own report.
+#   2. The allowlist is matched with `grep -E` anchored at `^`, and grep is
+#      line-oriented. A raw newline offers grep a SECOND line to anchor against,
+#      so `foreign/x<newline>logs/work-loop/y` would match `^logs/work-loop/` and
+#      be admitted as allowed work. Matching the display form, which has no
+#      control byte left to break a line on, closes that.
+#
+# DISPLAY IS AN ENCODER AND IS LOSSY ON PURPOSE. It is never fed back to the
+# filesystem, and it never decides anything the raw path should have decided: two
+# different names can render alike, but by then classification has already run and
+# the content fingerprint below still tells them apart. Non-ASCII bytes pass
+# through untouched — they cannot start a line, and the operator gets a filename
+# they can actually read.
+disp_path() { printf '%s' "${1-}" | LC_ALL=C tr '\000-\037\177' '?'; }
+
+# Does the allowlist cover this DISPLAY path? One reader, so the working-tree and
+# committed checks cannot drift into two different answers about one path.
+path_allowed() { # display-path -> 0 when allowed
+  local re
+  for re in "${ALLOW_PATHS[@]}"; do
+    printf '%s' "$1" | grep -qE "$re" && return 0
+  done
+  return 1
+}
+
+# One NUL-delimited scan of the working tree, classified against the allowlist.
+#
+# Emits one line per entry, tab-separated:
+#   <allowed 0|1> <TAB> <oid or -> <TAB> <display path> <TAB> <XY display>
+#
+# THE TABULAR FORM IS SAFE ONLY BECAUSE FIELD 3 AND 4 ARE DISPLAY FORMS. Tab and
+# newline are control bytes, so disp_path() has already replaced both; a raw path
+# carrying either would otherwise have forged a field or a record boundary in this
+# very stream. Raw paths never leave this function.
+#
+# RENAME AND COPY CARRY A SECOND PATH, and `-z` places it in its own record rather
+# than inline. The line form was `R  old -> new`; the `-z` form is
+# `R  new<NUL>old<NUL>` — the delimiter changed AND THE ORDER REVERSED. A reader
+# that kept the line-form assumption would read `old` as the next entry's status
+# line and misclassify both paths. Both sides are classified here, and an entry is
+# allowed only when BOTH are: a rename is a change to the origin as much as to the
+# destination, so a foreign origin cannot be laundered by renaming into the
+# allowlist.
+worktree_entries() { # untracked-mode want-oid
+  local utmode="${1:-normal}" want_oid="${2:-0}"
+  local rec xy p old d_p d_old disp allowed oid
+  while IFS= read -r -d '' rec; do
+    xy="${rec:0:2}"
+    p="${rec:3}"
+    old=''
+    case "$xy" in R?|C?|?R|?C) IFS= read -r -d '' old || old='' ;; esac
+    d_p="$(disp_path "$p")"
+    disp="$xy $d_p"
+    allowed=1
+    path_allowed "$d_p" || allowed=0
+    if [ -n "$old" ]; then
+      d_old="$(disp_path "$old")"
+      disp="$xy $d_old -> $d_p"
+      path_allowed "$d_old" || allowed=0
+    fi
+    oid='-'
+    if [ "$want_oid" -eq 1 ]; then
+      # THE RAW PATH, and this is the whole repair. The display form would fail
+      # `[ -e ]` for exactly the names this unit is about, putting ABSENT back on
+      # both sides of the comparison.
+      if [ -e "$CHECKOUT/$p" ] || [ -L "$CHECKOUT/$p" ]; then
+        oid="$(git -C "$CHECKOUT" hash-object -- "$p" 2>/dev/null || true)"
+        [ -n "$oid" ] || oid="UNHASHABLE"
+      else
+        oid="ABSENT"
+      fi
+      # WHICH FILE THIS IS, losslessly — and the display form cannot say.
+      # disp_path() maps EVERY control byte to the same `?`, so two allowed names
+      # differing only by a control byte render alike and, keyed on the display
+      # form alone, produced the same snapshot record. That is not merely
+      # ambiguous, it is a hiding place: each file's oid still moves under a
+      # content SWAP, but comm(1) compares the SORTED multiset of records, and
+      # swapping two contents between two same-display paths permutes that
+      # multiset back onto itself. Before and after compare equal, and two real
+      # content changes disappear from the partial-effect block and from
+      # changed_paths_since_launch.
+      #
+      # A DIGEST OF THE RAW NAME, not an encoding of it. It is bounded (16 hex
+      # characters), line-safe by construction, and one-way — so it can key the
+      # comparison without ever putting a raw control byte anywhere a person or a
+      # parser will read. `shasum -a 256` is already this script's hashing
+      # primitive (RUN_DISCRIMINATOR), so no dependency is added.
+      #
+      # CARRIED INSIDE FIELD 2 rather than as a new column, deliberately: both
+      # consumers of this record project it with `cut -f2-` and never parse the
+      # first field, so widening the identity changes no consumer, no output the
+      # operator sees, and nothing in the terminal-result schema.
+      oid="$oid.$(printf '%s' "$p" | shasum -a 256 | cut -c1-16)"
+    fi
+    printf '%s\t%s\t%s\t%s\n' "$allowed" "$oid" "$d_p" "$disp"
+  done < <(git -C "$CHECKOUT" status --porcelain --untracked-files="$utmode" -z 2>/dev/null)
+}
+
+# Working-tree lines NOT covered by the allowlist. Any change here during an
+# actor run is an unexpected repository effect.
+#
+# THE ALLOWLIST IS THE ONLY THING THAT EXCUSES A PATH, and that is the whole
+# contract rather than a simplification of one. Between 2026-08-18 and this
+# revision a second question was asked here: is this untracked path nothing but
+# an EARLIER dispatcher run's own evidence, recognised by reading the run log
+# header the artifacts were written under? It was built so that a run aimed at a
+# new --log-dir would not stop over the previous run's evidence, and it was
+# removed because nothing in the working tree can answer it safely.
+#
+# WHY IT CANNOT BE MADE SAFE. The receipt it read is a file in the checkout, and
+# anything with write access to the checkout can write one. Freezing the answer
+# before the first launch closes it against THIS run's actors, and that much
+# worked; it cannot close it against content that was already there — a killed
+# previous hop, another process, or anyone else — because there is nothing to
+# tell a real receipt from a forged one BY. A secret the dispatcher holds and an
+# actor cannot write would be one, and that is the persistent authority store the
+# approved plan excludes.
+#
+# WHAT REPLACES IT IS AN OPERATING RULE, NOT A MECHANISM: one stable evidence
+# location per checkout. Reuse the default, or one chosen --log-dir; that
+# location is allowlisted for the run at the LOG_REL block, so sequential runs
+# aimed at it are the ordinary supported path and never meet this function.
+# Aiming a later run at a different directory while the old one is still
+# untracked stops at 18 and names the old path, which is a safe, actionable
+# refusal the operator resolves once — not an automatic migration. See the
+# README's "One stable evidence location per checkout".
+foreign_worktree() {
+  worktree_entries normal 0 | awk -F'\t' '$1 == 0 { print $4 }' | sort
+}
+
+# DELIBERATELY STILL LINE-DELIMITED, and it is the one reader this unit left
+# alone. Its only consumer asks whether the output is EMPTY (the pre-launch
+# staged-work guard), and emptiness is the one question no amount of quoting can
+# change. The line form is also strictly SAFER for its second job: the guard
+# prints this straight to the operator, and Git's C-quoting already renders a
+# control byte inert there, so converting it to raw bytes would take on the
+# forged-control-line risk disp_path() exists to answer — for no gain. Nothing
+# downstream compares these strings to a path.
+staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort; }
+
+# Working-tree lines that ARE covered by the allowlist — the exact complement of
+# foreign_worktree(), and the blind spot that made incident 2 unreadable (O2).
+#
+# foreign_worktree() answers "did the actor touch something it was not allowed
+# to?". Nothing answered "did the actor touch something it WAS allowed to, and
+# leave it uncommitted?" — so a hop that edited three permitted files and was
+# then killed reported nothing at all, because every check that could have seen
+# those edits was scoped to violations. The three facts a timeout reports today
+# are individually true and collectively misleading: the state file did not
+# change, the branch did not move, no foreign path was touched. All true. Work
+# was still left on the floor, and the operator was not told.
+#
+# THIS IS EXPECTED OUTPUT, NOT A VIOLATION. In-allowlist edits are what the
+# actor was sent to make. Listing them is reporting, never a stop condition —
+# nothing in this dispatcher exits nonzero BECAUSE this function returned
+# something. It only ever adds detail to a stop that had already been decided.
+#
+# ONE PATH IS EXCLUDED, and it is the dispatcher's own bookkeeping rather than
+# the actor's work: the run directory, ADDED to the allowlist by this script at
+# the LOG_REL block. Without that exclusion every stop would report the
+# dispatcher's own evidence files back to the operator as "work the hop did and
+# did not commit". That is not merely noisy: it is the same class of false
+# statement O2 exists to remove.
+#
+# There used to be a SECOND exclusion, logs/session-notes.md, added for the
+# legacy session-identity init this dispatcher no longer performs (Tracer 4).
+# It went out with the init: the dispatcher writes no session note, so an
+# uncommitted session-notes.md in this checkout is now somebody else's work and
+# hiding it from partial-effect accounting would be the false statement rather
+# than the fix. It is not in the allowlist either, so it reaches this function
+# only when the operator passed it explicitly — in which case reporting it is
+# exactly right.
+#
+# DERIVED FROM THE SNAPSHOT NOW, rather than scanning a second time. The two used
+# to run separate loops over separate `git status` invocations and were required
+# to agree about which paths are allowed; one scan with the oid column dropped
+# makes them agree by construction instead of by inspection.
+allowlisted_dirty() { allowlisted_dirty_snapshot | cut -f2-; }
+
+# Fingerprint every currently dirty allowed path. The porcelain status alone is
+# not enough: if a file was already dirty before launch and the actor edits it
+# again, its status line can remain byte-for-byte identical. Pairing that line
+# with the worktree blob hash makes the actor's additional edit observable while
+# leaving untouched pre-existing handoffs out of the report.
+allowlisted_dirty_snapshot() {
+  worktree_entries all 1 \
+  | awk -F'\t' -v logrel="${LOG_REL:-}" '
+      $1 != 1 { next }
+      logrel != "" && ($3 == logrel || index($3, logrel "/") == 1) { next }
+      { print $2 "\t" $4 }
+    ' | sort
+}
+
+# The partial-effect block appended to every post-launch stop (O2).
+#
+# Prints nothing when the working tree is clean, so a stop with no partial
+# effects stays as short as it is now. When it does print, it says explicitly
+# that the paths are NOT a violation — otherwise a reader meeting a file list
+# inside a STOP message reasonably assumes the files are the problem.
+# The delta itself, as lines. Split out of partial_effect_block() so the terminal
+# result can COUNT the same paths the operator is shown, without a second
+# derivation of "what did this hop leave behind" (plan § 8 — one production owner
+# per seam). The prose block below is the only other caller; if these two ever
+# disagreed, the operator's message and the machine record would describe
+# different runs, which is precisely the drift the plan forbids.
+partial_effect_paths() {
+  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
+  local after
+  after="$(allowlisted_dirty_snapshot)"
+  if [ -n "$HOP_ALLOWED_SNAPSHOT" ]; then
+    comm -13 \
+      <(printf '%s\n' "$HOP_ALLOWED_SNAPSHOT") \
+      <(printf '%s\n' "$after") | cut -f2-
+  else
+    printf '%s\n' "$after" | cut -f2-
+  fi
+}
+
+partial_effect_block() {
+  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
+
+  local dirty
+  dirty="$(partial_effect_paths)"
+  [ -n "$dirty" ] || return 0
+  printf '%s' $'\n'"PARTIAL FILE EFFECTS — since launch, the hop changed these ALLOWED paths and left them modified and uncommitted:"$'\n'"$dirty"$'\n'"These are inside --allow-path and are NOT a violation: they are work the hop changed and did not commit. They are still on disk. READ THEM BEFORE DECIDING ANYTHING — do not discard them and do not assume they are absent. \`git -C $CHECKOUT diff\` shows tracked content."
+}
+
+# Compatibility name for call sites that explicitly mean a post-launch stop.
+#
+# die() itself owns the structural guarantee now, so plain-die paths reached
+# after launch (notably validate_state and the hop-limit guard) cannot bypass it.
+die_hop() { # code, message
+  die "$@"
+}
+
+# Seconds left on the whole-run clock. Prints a very large number when no
+# deadline was set, so callers can use min() unconditionally without branching.
+#
+# HOISTED HERE FOR THE SAME REASON THE SECTION ABOVE WAS (Unit 24). This is a
+# pure fact producer, so its position carries no semantics of its own — except
+# that finalize_terminal_result() calls it whenever DEADLINE_AT is set, and the
+# --unattended gate exits 31 in six places. While this definition sat next to its
+# first in-loop caller, every one of those six ran finalization against a function
+# that did not yet exist: bash reported `command not found`, the command
+# substitution produced an empty string, and `deadline_remaining_seconds` went out
+# EMPTY beside `result_complete=yes` — a record certifying itself complete while
+# missing a required field. The empty value is the tell, and it is the same defect
+# class Unit 21 removed one section up; only that section was hoisted then, and
+# this fact was not in it.
+#
+# It travels with that section, and the section's own note above states the
+# constraint both now carry: THIS DEFINITION MUST PRECEDE THE RUN-EVIDENCE BLOCK.
+# Moving it back down, or adding a stopping preflight above it, reintroduces the
+# empty field.
+remaining_seconds() {
+  if [ -z "$DEADLINE_AT" ]; then printf '%s' 2147483647; return 0; fi
+  local left=$(( DEADLINE_AT - $(date '+%s') ))
+  [ "$left" -lt 0 ] && left=0
+  printf '%s' "$left"
+}
+
 # ------------------------------------------------------------ run evidence
 #
-# OPENED ONLY ONCE BOTH LEASES ARE HELD, and the position is the whole point.
-# Everything above this line is admission: argument parsing, the lease library,
-# acquire_lock and the read-only --status branch. Not one of them creates,
-# truncates, allowlists or writes a path inside the requested --log-dir, so a run
-# that is refused at 17 leaves the checkout byte-identical. Its evidence goes to
-# the shared lease root instead (open_refusal_record, above acquire_lock).
+# OPENED BEFORE THE LEASE IS ASKED FOR, and the position is the whole point.
 #
-# `--status` NEEDS NO GUARD HERE, and its absence is stronger than the flag it
-# replaces. The branch above exits 0 on every path, so this block is structurally
+# IT USED TO SIT BELOW acquire_lock, and that was right under the old boundary
+# and wrong under the approved one. The old reading was that winning the lease IS
+# admission, so a run refused at 17 had "lost admission" and was entitled to
+# nothing inside the checkout; its evidence went to a standalone `.refusal` record
+# under the shared lease root instead. The revised plan moves the boundary: a run
+# exists once task, checkout and evidence location are supplied and trusted, all
+# of which happened far above this line. A lease refusal is therefore a terminal
+# of an ADMITTED run, and Change set A requires exactly one run-bound terminal
+# result for it — which cannot exist while run identity and the evidence location
+# are created only after the lease is won. So the lease call moved down past this
+# block rather than this block moving up past the lease: same ordering, expressed
+# as one move, with the read-only --status branch still above both.
+#
+# WHAT IS DELIBERATELY NOT REOPENED. The old arrangement's second reason was
+# real and remains respected: a run must not scribble in a working tree on
+# somebody else's account. It does not apply to a refused run's own evidence
+# location, because that location is this run's, was named by the operator, and
+# is allowlisted below exactly as an admitted run's always was.
+#
+# `--status` NEEDS NO GUARD HERE, and its absence is still stronger than a flag.
+# The branch above exits 0 on every path, so this block stays structurally
 # unreachable in status mode rather than conditionally skipped — the read-only
-# contract case 30 and case 12h assert is now a property of the control flow.
+# contract case 30 and case 12h assert is still a property of the control flow,
+# and it is now the ONLY thing standing between --status and a log directory,
+# since the lease call no longer sits above it.
 # `--dry-run` is NOT excluded: it takes both leases, so it is an admitted run and
 # its evidence belongs where every admitted run's does.
-[ -n "$LOG_DIR" ] || LOG_DIR="$DEFAULT_LOG_DIR"
-mkdir -p "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
+#
+# WHETHER THIS LOCATION IS USABLE WAS SETTLED AT ADMISSION, above
+# check_evidence_location, which refuses an unusable or untrusted one before any
+# lease is asked for. The two lines below are the CREATION, which stays here
+# because only an admitted run may write inside the checkout. The mkdir guard is
+# kept even so: admission proved the location was usable then, and this is where
+# it is actually used — a check that cannot fail is not a check (§ 6 rule 5), and
+# the interval between the two is real.
+# CREATION ONLY. The value was selected, canonicalized and made the single
+# LOG_DIR/LOG_DIR_ABS at admission, above check_evidence_location — so by the
+# time control reaches this line there is nothing left to normalize and no raw
+# spelling to normalize it from. What used to sit here was the reverse order:
+# create from the raw text, then find out what had been created.
+#
+# The two forms this block used to reconcile had DIFFERENT CONSUMERS, which is
+# what made the ordering matter rather than being a tidiness point:
+#
+#   raw LOG_DIR       -> $RUN_LOG, the hop captures, the unattended profile,
+#                        $final in finalize_terminal_result(), and every
+#                        operator-facing "check that ... is writable" message
+#   LOG_DIR_ABS       -> $promised in consume_terminal_result(), the path and
+#                        identity validators, and the LOG_REL allowlist below
+#
+# So an admitted run could write its durable terminal result to one path and
+# then look for it at another — the exact failure the Gate SA claim is about.
+#
+# `--` IS KEPT even though LOG_DIR can no longer begin with a dash here. It
+# costs nothing and it keeps this site's safety local, rather than resting on an
+# assignment fifteen hundred lines away that a later edit could move.
+mkdir -p -- "$LOG_DIR" || { printf 'STOP [10] cannot create log dir\n' >&2; exit 10; }
 # The dispatcher's own evidence directory is not "foreign work". When --log-dir
 # points inside the checkout, the run log this process is about to write would
 # otherwise register as an out-of-allowlist change made by the dispatcher itself,
 # and the pre-hop gate below would stop on it.
-LOG_DIR_ABS="$(cd "$LOG_DIR" && pwd -P)" || { printf 'STOP [10] cannot canonicalize log dir\n' >&2; exit 10; }
 if [ "$LOG_DIR_ABS" != "$CHECKOUT" ] && [ "${LOG_DIR_ABS#"$CHECKOUT"/}" != "$LOG_DIR_ABS" ]; then
   # Assigns the global declared near LAST_CAPTURE — allowlisted_dirty() reads it
   # to keep this directory out of the partial-effect report (O2).
@@ -1596,15 +3810,34 @@ fi
 # unattended profile. The same-checkout case is not the concern — the lock
 # refuses that at exit 17, and this change does not touch the lock.
 #
-# The discriminator is the one already computed: LOCK_KEY is sha256(checkout|task),
-# so within a single task it varies exactly when the checkout does. The pid
-# separates two runs that somehow share both. No new concept is introduced.
+# The discriminator is sha256(checkout|task) over the CANONICAL checkout, so within
+# a single task it varies exactly when the checkout does. The pid separates two runs
+# that somehow share both. No new concept is introduced.
+#
+# COMPUTED HERE, BESIDE ITS ONLY CONSUMER, AND NAMED FOR WHAT IT IS — both of which
+# are the fix for how this field silently emptied. It used to read ${LOCK_KEY:0:8},
+# borrowing the value from the old single composite lock key computed ~1700 lines
+# above. 0d9e3355 (2026-08-11) then replaced that one lock with two independent
+# leases, correctly: a composite checkout|task key enforces neither resource on its
+# own (see the locks block above). The composite was deleted with it — but this line
+# still asked for it, and `${LOCK_KEY:0:8}` on an unset variable is not an error, it
+# is the empty string. So every run id from that commit until this one carried an
+# empty second field, two adjacent hyphens, and the collision the field exists to
+# prevent was unguarded except by pid.
+#
+# A composite remains exactly right HERE while remaining wrong as a lease key, and
+# the distinction is the whole reason this is not a revert: a lease must enforce one
+# named resource, whereas this field only has to DISTINGUISH one checkout's runs
+# from another's. Keeping the derivation next to the format it feeds, under a name
+# that says run identity rather than locking, is what stops a future change to the
+# leases from quietly emptying it again.
+RUN_DISCRIMINATOR="$(printf '%s|%s' "$CHECKOUT" "$TASK" | shasum -a 256 | cut -c1-8)"
 #
 # Field order is load-bearing, both ends:
 #   timestamp FIRST — the directory still sorts chronologically by name;
 #   task id LAST    — --status globs "*-$TASK.log", which stays an exact match
 #                     and keeps matching run logs written before this change.
-RUN_ID="$(date '+%Y%m%dT%H%M%S')-${LOCK_KEY:0:8}-$$-$TASK"
+RUN_ID="$(date '+%Y%m%dT%H%M%S')-$RUN_DISCRIMINATOR-$$-$TASK"
 RUN_LOG="$LOG_DIR/$RUN_ID.log"
 : >"$RUN_LOG"
 
@@ -1622,7 +3855,13 @@ if [ -n "$DEADLINE_AT" ]; then
 else
   # Worth saying out loud. Without a deadline the real upper bound is
   # max_hops * timeout, which is where the plan's three-hour surprise came from.
-  say "deadline=none — upper bound is max_hops * timeout = $(( MAX_HOPS * ACTOR_TIMEOUT ))s"
+  #
+  # ONLY THE EXEMPT SHAPES REACH THIS LINE now that a live multi-hop run is
+  # refused without a deadline: a single hop, a simulated actor, a dry-run
+  # preflight. The figure below is still the honest upper bound for those, and it
+  # is still NOT a whole-run deadline — it is what you get instead of one, which
+  # is the distinction the requirement above exists to enforce.
+  say "deadline=none (not required for this shape: mode=$MODE max_hops=$MAX_HOPS) — no whole-run clock is running; the upper bound is max_hops * timeout = $(( MAX_HOPS * ACTOR_TIMEOUT ))s"
 fi
 say "allow_paths=${ALLOW_PATHS[*]}"
 if [ "${#CLAUDE_DENY[@]}" -gt 0 ]; then
@@ -1635,11 +3874,11 @@ else
   # own base denies — so the old wording ("no tool denied beyond the child's own
   # policy") became false on both paths and is deliberately not restored.
   # Beyond those sets the child's own policy applies, which is no longer this
-  # checkout's bypassPermissions on an attended hop — P0-F states
-  # --permission-mode default at launch — but a permission mode only makes the
+  # checkout's bypassPermissions on an attended hop — P0-F states an explicit
+  # --permission-mode at launch — but a permission mode only makes the
   # child ASK, and network is not coverable this way in any case:
   # runs/probe-unattended-authority-2026-08-07.md.
-  say "claude_deny=none — no EXTRA deny rule was supplied by the operator; this does NOT mean nothing is denied (see the nested_actor_deny line below, and the contained profile's own denies under --unattended). Beyond those, the child's own policy applies (attended hops run --permission-mode default)"
+  say "claude_deny=none — no EXTRA deny rule was supplied by the operator; this does NOT mean nothing is denied (see the nested_actor_deny line below, and the contained profile's own denies under --unattended). Beyond those, the child's own policy applies (attended hops run the explicit --permission-mode this invocation selected)"
 fi
 # Recorded separately from claude_deny, and always. claude_deny is the
 # OPERATOR's set and may legitimately be empty; this one is the dispatcher's own.
@@ -1676,6 +3915,26 @@ elif python3 -c 'import json' >/dev/null 2>&1; then
 else
   say "denial_parser=none — neither jq nor python3 is usable here, so a permission stop (37) CANNOT name the denied tool and target; it will say so rather than guess"
 fi
+
+# ------------------------------------------------------------- the two leases
+#
+# ASKED FOR HERE, once run identity and the evidence location exist, and that
+# order is this seam's whole content. A lease refusal is a terminal of an
+# admitted run under the approved plan, so it owes exactly one run-bound terminal
+# result — and finalize_terminal_result() refuses to write one without RUN_ID and
+# LOG_DIR (see its guard). Asking for the lease first made that guard fire on
+# every refusal, which is why the refusal used to need a durable record of its
+# own. It no longer does: acquire_lock's refusals leave through die 17, the same
+# single funnel every other nonzero terminal uses.
+#
+# STILL ABOVE EVERY MUTATING ACTION. The unattended profile below writes into the
+# run's evidence directory, launch_actor forks a child, and the state file is
+# read and written after that — none of it is reached without both leases. What
+# moved above this line is exactly the run's own identity and its own evidence
+# location, and nothing else.
+#
+# `--status` never reaches here: its branch exits 0 far above.
+[ "$STATUS_MODE" -eq 1 ] || acquire_lock
 
 # ------------------------------------------------- unattended contained profile
 #
@@ -1870,6 +4129,35 @@ fi
 STATE_BIN_REL='logs/scripts/work-loop-state.sh'
 
 validate_state() { # sets ST_TURN and ST_CLASS; dies on any failure. Never mutates.
+  # THIS OBSERVATION HAS NOT BEEN MADE YET. Cleared on entry rather than left
+  # standing, so a stop in any of the die() paths below cannot answer with the
+  # PREVIOUS call's reading. Exactly the move launch_actor() already makes with
+  # LAUNCHED_ACTOR one function over, and for the same reason: a fact about an
+  # event that has not happened must not be carried by a variable that still
+  # holds the last time it did.
+  #
+  # WHAT IT FIXES. This function is called before the loop, again at the top of
+  # every iteration, and again after each actor exits. Only the first of those
+  # can fail with nothing behind it. When a LATER call failed — an actor that
+  # corrupted the turn on its way out is the ordinary case — ST_TURN and ST_CLASS
+  # still held the successful pre-hop reading, and the terminal record published
+  # it: a BAD_TURN/15 result stating `turn_at_terminal=claude` and
+  # `state_class=ACTIVE_CLAUDE`, which is a legal turn and a valid classification
+  # reported by the very stop whose meaning is that neither was obtained. Reached
+  # before a hop the same terminal recorded both as `unavailable`, so one producer
+  # gave two opposite answers to "what did you observe".
+  #
+  # `unavailable` IS THE TRUTHFUL VALUE, not a blanking. The validator is the only
+  # lifecycle authority here and a failed call returns no classification to carry;
+  # the record's job is to say that it could not observe one.
+  #
+  # THE ONE PLACE A VALUE SURVIVES is deliberate and is not stale: the
+  # unrecognised-classification die() below fires AFTER `ST_CLASS="$out"`, so it
+  # still reports what this call's own validator actually printed. That is a fresh
+  # failed observation, and the record should keep it.
+  ST_TURN=""
+  ST_CLASS=""
+
   [ -f "$STATE_FILE" ] || die 13 "state file missing: $STATE_FILE"
   [ -r "$STATE_FILE" ] || die 13 "state file unreadable: $STATE_FILE"
 
@@ -1900,126 +4188,6 @@ Recoverable next action: this dispatcher no longer classifies state itself, so i
   esac
 }
 
-# --------------------------------------------------------- repository state
-
-git_head() { git -C "$CHECKOUT" rev-parse HEAD 2>/dev/null; }
-
-# Working-tree lines NOT covered by the allowlist. Any change here during an
-# actor run is an unexpected repository effect.
-foreign_worktree() {
-  local line p
-  git -C "$CHECKOUT" status --porcelain 2>/dev/null | while IFS= read -r line; do
-    p="${line:3}"
-    p="${p%\"}"; p="${p#\"}"
-    local allowed=0 re
-    for re in "${ALLOW_PATHS[@]}"; do
-      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
-    done
-    [ "$allowed" -eq 0 ] && printf '%s\n' "$line"
-  done | sort
-}
-
-staged_paths() { git -C "$CHECKOUT" diff --cached --name-only 2>/dev/null | sort; }
-
-# Working-tree lines that ARE covered by the allowlist — the exact complement of
-# foreign_worktree(), and the blind spot that made incident 2 unreadable (O2).
-#
-# foreign_worktree() answers "did the actor touch something it was not allowed
-# to?". Nothing answered "did the actor touch something it WAS allowed to, and
-# leave it uncommitted?" — so a hop that edited three permitted files and was
-# then killed reported nothing at all, because every check that could have seen
-# those edits was scoped to violations. The three facts a timeout reports today
-# are individually true and collectively misleading: the state file did not
-# change, the branch did not move, no foreign path was touched. All true. Work
-# was still left on the floor, and the operator was not told.
-#
-# THIS IS EXPECTED OUTPUT, NOT A VIOLATION. In-allowlist edits are what the
-# actor was sent to make. Listing them is reporting, never a stop condition —
-# nothing in this dispatcher exits nonzero BECAUSE this function returned
-# something. It only ever adds detail to a stop that had already been decided.
-#
-# ONE PATH IS EXCLUDED, and it is the dispatcher's own bookkeeping rather than
-# the actor's work: the run directory, ADDED to the allowlist by this script at
-# the LOG_REL block. Without that exclusion every stop would report the
-# dispatcher's own evidence files back to the operator as "work the hop did and
-# did not commit". That is not merely noisy: it is the same class of false
-# statement O2 exists to remove.
-#
-# There used to be a SECOND exclusion, logs/session-notes.md, added for the
-# legacy session-identity init this dispatcher no longer performs (Tracer 4).
-# It went out with the init: the dispatcher writes no session note, so an
-# uncommitted session-notes.md in this checkout is now somebody else's work and
-# hiding it from partial-effect accounting would be the false statement rather
-# than the fix. It is not in the allowlist either, so it reaches this function
-# only when the operator passed it explicitly — in which case reporting it is
-# exactly right.
-allowlisted_dirty() {
-  local line p
-  git -C "$CHECKOUT" status --porcelain --untracked-files=all 2>/dev/null | while IFS= read -r line; do
-    p="${line:3}"
-    p="${p%\"}"; p="${p#\"}"
-    if [ -n "$LOG_REL" ]; then
-      case "$p" in "$LOG_REL"/*|"$LOG_REL") continue ;; esac
-    fi
-    local allowed=0 re
-    for re in "${ALLOW_PATHS[@]}"; do
-      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
-    done
-    [ "$allowed" -eq 1 ] && printf '%s\n' "$line"
-  done | sort
-}
-
-# Fingerprint every currently dirty allowed path. The porcelain status alone is
-# not enough: if a file was already dirty before launch and the actor edits it
-# again, its status line can remain byte-for-byte identical. Pairing that line
-# with the worktree blob hash makes the actor's additional edit observable while
-# leaving untouched pre-existing handoffs out of the report.
-allowlisted_dirty_snapshot() {
-  local line p oid
-  allowlisted_dirty | while IFS= read -r line; do
-    [ -n "$line" ] || continue
-    p="${line:3}"
-    p="${p%\"}"; p="${p#\"}"
-    if [ -e "$CHECKOUT/$p" ] || [ -L "$CHECKOUT/$p" ]; then
-      oid="$(git -C "$CHECKOUT" hash-object -- "$p" 2>/dev/null || true)"
-      [ -n "$oid" ] || oid="UNHASHABLE"
-    else
-      oid="ABSENT"
-    fi
-    printf '%s\t%s\n' "$oid" "$line"
-  done | sort
-}
-
-# The partial-effect block appended to every post-launch stop (O2).
-#
-# Prints nothing when the working tree is clean, so a stop with no partial
-# effects stays as short as it is now. When it does print, it says explicitly
-# that the paths are NOT a violation — otherwise a reader meeting a file list
-# inside a STOP message reasonably assumes the files are the problem.
-partial_effect_block() {
-  [ "${HOP_BASELINE_READY:-0}" -eq 1 ] || return 0
-
-  local after dirty
-  after="$(allowlisted_dirty_snapshot)"
-  if [ -n "$HOP_ALLOWED_SNAPSHOT" ]; then
-    dirty="$(comm -13 \
-      <(printf '%s\n' "$HOP_ALLOWED_SNAPSHOT") \
-      <(printf '%s\n' "$after") | cut -f2-)"
-  else
-    dirty="$(printf '%s\n' "$after" | cut -f2-)"
-  fi
-  [ -n "$dirty" ] || return 0
-  printf '%s' $'\n'"PARTIAL FILE EFFECTS — since launch, the hop changed these ALLOWED paths and left them modified and uncommitted:"$'\n'"$dirty"$'\n'"These are inside --allow-path and are NOT a violation: they are work the hop changed and did not commit. They are still on disk. READ THEM BEFORE DECIDING ANYTHING — do not discard them and do not assume they are absent. \`git -C $CHECKOUT diff\` shows tracked content."
-}
-
-# Compatibility name for call sites that explicitly mean a post-launch stop.
-#
-# die() itself owns the structural guarantee now, so plain-die paths reached
-# after launch (notably validate_state and the hop-limit guard) cannot bypass it.
-die_hop() { # code, message
-  die "$@"
-}
-
 # ------------------------------------------------ permission denials (O3)
 #
 # The hop capture has been written since the first version of this dispatcher
@@ -2030,9 +4198,11 @@ die_hop() { # code, message
 # that unnamed dead end is what the interactive bypass was reaching around.
 #
 # Reads BOTH capture shapes without the caller knowing which one it is on:
-#   --output-format json         one object                  (attended, courier)
-#   --output-format stream-json  one event per line          (--unattended)
-# `jq -s` slurps either into an array, so one filter covers both.
+#   --output-format json         one object                  (courier)
+#   --output-format stream-json  one event per line          (attended, --unattended)
+# `jq -s` slurps either into an array, so one filter covers both. The attended
+# path moved from the first shape to the second at Unit 26 and this function did
+# not have to change — which is the property the two-shape design was for.
 #
 # Fails SAFE, in the reporting direction: a truncated or unparseable capture
 # yields no denials and the run classifies exactly as it does today. This
@@ -2165,18 +4335,23 @@ permission_denials_in() { # capture-path -> one "tool :: target" line per denial
 # describe what the UNIT may legitimately touch, which makes it a per-task input
 # Codex derives when it writes the brief. Too narrow and correct work gets a false
 # stop; too wide and this check means nothing.
+#
+# `--no-renames` IS LOAD-BEARING, and it is not about quoting. With rename
+# detection on — the default — `--name-only` prints ONLY the destination of a
+# rename, so a commit that renamed a foreign path INTO the allowlist showed the
+# allowed destination and the foreign origin vanished from classification
+# altogether. Turning detection off restores both sides as an ordinary delete and
+# add, which is exactly the pair this check has to see. Measured against the
+# installed Git, not assumed.
 committed_foreign() { # before-head after-head
-  local before="$1" after="$2" p re allowed
+  local before="$1" after="$2" p d_p
   [ -n "$before" ] && [ -n "$after" ] || return 0
   [ "$before" = "$after" ] && return 0
-  git -C "$CHECKOUT" diff --name-only "$before" "$after" 2>/dev/null | while IFS= read -r p; do
+  while IFS= read -r -d '' p; do
     [ -n "$p" ] || continue
-    allowed=0
-    for re in "${ALLOW_PATHS[@]}"; do
-      if printf '%s' "$p" | grep -qE "$re"; then allowed=1; break; fi
-    done
-    [ "$allowed" -eq 0 ] && printf '%s\n' "$p"
-  done | sort
+    d_p="$(disp_path "$p")"
+    path_allowed "$d_p" || printf '%s\n' "$d_p"
+  done < <(git -C "$CHECKOUT" diff --name-only -z --no-renames "$before" "$after" 2>/dev/null) | sort
 }
 
 # Is the state file itself uncommitted right now?
@@ -2282,6 +4457,18 @@ run_bounded() { # timeout, logfile, cmd...
   eval "exec ${TREE_MARKER_FD}>\"\$marker\""
   "$@" >>"$out" 2>&1 &
   pid=$!
+  # THE ONE PLACE A CHILD IS FORKED, so the one place that may record it. Every
+  # launch path in launch_actor() funnels through here, and its pre-fork die()s
+  # do not — which is precisely the distinction the terminal record needs.
+  ACTOR_PROCESS_STARTED=1
+  # WHICH actor that fork was for, recorded on the same line for the same reason.
+  # CUR_ACTOR is read rather than passed because at THIS instant it is the actor
+  # being forked by definition: the hop loop sets it immediately before calling
+  # launch_actor() and clears it only once the hop is over, and launch_actor() is
+  # the sole caller of this function. Should a later edit break that, this reads
+  # empty and the permission field falls back to `none` — the fail-closed
+  # direction, never a mode claimed for a launch that did not happen.
+  LAUNCHED_ACTOR="${CUR_ACTOR:-}"
   eval "exec ${TREE_MARKER_FD}>&-"
   set +m
 
@@ -2328,20 +4515,19 @@ You do not run git. Claude commits.
 EOF
 }
 
-# Seconds left on the whole-run clock. Prints a very large number when no
-# deadline was set, so callers can use min() unconditionally without branching.
-remaining_seconds() {
-  if [ -z "$DEADLINE_AT" ]; then printf '%s' 2147483647; return 0; fi
-  local left=$(( DEADLINE_AT - $(date '+%s') ))
-  [ "$left" -lt 0 ] && left=0
-  printf '%s' "$left"
-}
+# remaining_seconds() USED TO BE DEFINED HERE, immediately above its first
+# in-loop caller. It now sits with the terminal-result dependencies further up —
+# see the note at its new position. Nothing else moved, and the clamp below reads
+# it exactly as it always did: a function is resolved when it is CALLED, and every
+# caller in this region runs long after either position.
 
 # The clamp that makes --deadline a deadline rather than a start gate.
 #
 # v0.1 only refused to START an actor past the deadline, which is not a bound: an
 # actor launched at minute 39 with a 900s timeout runs to minute 54. Clamping the
-# per-actor timeout to whatever is left bounds the overrun.
+# per-actor timeout to whatever is left bounds the overrun. It is applied once
+# per hop, before the single launch that hop gets — there is no second launch to
+# re-clamp for, because no hop is replayed after its actor has started.
 #
 # THE HONEST BOUND, since a deadline is only worth what its worst case is:
 #
@@ -2371,11 +4557,19 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
   local actor="$1" hop="$2" limit="$3"
   local out="$LOG_DIR/$RUN_ID.hop$hop.$actor.out"
   : >"$out"
-  # Published so the post-hop checks read the capture that was ACTUALLY written.
-  # Recomputing the path at the call site was the available alternative and it is
-  # wrong on the retry branch, where the hop suffix is "${hop}r" — the denial
-  # check would have silently read the first attempt's capture.
+  # Published so the post-hop checks read the capture that was ACTUALLY written,
+  # rather than a path recomputed at the call site from the hop number. The
+  # difference mattered visibly while a retry branch existed and appended an "r"
+  # to the hop suffix: the denial check would silently have read the first
+  # attempt's capture. That branch is gone, and this stays — the call site should
+  # not have to know how this function names its file.
   LAST_CAPTURE="$out"
+  # THIS ATTEMPT HAS NOT FORKED YET. Cleared here rather than left standing, so a
+  # stop in the four pre-fork die() paths below cannot answer with the PREVIOUS
+  # hop's fork. Re-set by run_bounded() at the moment a child actually exists.
+  # Unlike LAST_CAPTURE above, which names a file this function has already
+  # created, this names an event that has not happened.
+  LAUNCHED_ACTOR=""
 
   if [ -n "$ACTOR_CMD" ]; then
     say "  launch: mode=simulated timeout=${limit}s cmd=$ACTOR_CMD"
@@ -2401,8 +4595,9 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
       [ -n "$cb" ] && [ -x "$cb" ] || die 20 "claude binary not resolvable"
       local vv; vv="$("$cb" --version 2>&1 | head -1)"
       say "  launch: mode=live actor=claude timeout=${limit}s bin=$cb version=$vv"
-      # No --dangerously-skip-permissions, on any path. The attended child asks
-      # for --permission-mode default instead — the opposite flag.
+      # No --dangerously-skip-permissions, on any path. The attended child is
+      # asked for an explicit --permission-mode instead — the opposite flag, and
+      # never wider than acceptEdits.
       #
       # Why the request is explicit (P0-F, 2026-08-09). This checkout's own
       # settings.json declares defaultMode: bypassPermissions, and an attended
@@ -2467,9 +4662,12 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
         # previous capture, not a different one. --verbose is required for
         # stream-json under --print.
         #
-        # Attended and courier hops keep --output-format json. The extra volume
-        # is the price of an auditable roster, and it is only worth paying where
-        # nobody is watching.
+        # The ATTENDED branch below now uses the same format, for a narrower
+        # reason: `system/init` is the only surface on which the permission mode
+        # the child actually ran under can be read. The volume argument that used
+        # to end this paragraph — "only worth paying where nobody is watching" —
+        # was overtaken by that, because an attended hop with an unverifiable
+        # permission mode is exactly what the supervised-use claim cannot rest on.
         say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format stream-json --verbose --settings <profile> --tools Bash,Skill --strict-mcp-config --no-session-persistence --disallowedTools ${u_deny[*]} (cwd=<checkout>, CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1)"
         say "  note: the hop capture's system/init event records the EFFECTIVE tool roster and MCP servers; this log records only what was REQUESTED"
         CLAUDE_CODE_SUBPROCESS_ENV_SCRUB=1 \
@@ -2492,10 +4690,27 @@ launch_actor() { # actor, hop, effective-timeout -> exit status of the launch
         # composition rule the unattended path already used.
         local -a a_deny=("${NESTED_ACTOR_DENY[@]}")
         [ "${#CLAUDE_DENY[@]}" -gt 0 ] && a_deny+=("${CLAUDE_DENY[@]}")
-        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format json --permission-mode default --disallowedTools ${a_deny[*]} (cwd=<checkout>)"
+        say "  cmd: claude -p '/work-loop-v2 $TASK' --output-format stream-json --verbose --permission-mode $PERMISSION_MODE --disallowedTools ${a_deny[*]} (cwd=<checkout>)"
         say "  note: the nested-actor denies are requested policy, NOT containment — a child with shell access can construct paths these rules do not name (see NESTED_ACTOR_DENY)"
-        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" --output-format json \
-          --permission-mode default \
+        say "  note: the hop capture's system/init event records the EFFECTIVE permission mode; this log records only what was REQUESTED"
+        # STILL EXPLICIT, and that is the property P0-F bought rather than the
+        # literal `default` that used to sit here. The point was never the word:
+        # it was that the mode is STATED at launch instead of inherited from
+        # whatever settings.json this checkout happens to declare. A variable
+        # whose only two values were fixed before admission keeps that intact.
+        #
+        # --output-format stream-json --verbose, CHANGED FROM PLAIN json (Unit 26).
+        # Nothing is lost by it: the stream's final `result` event carries the same
+        # keys the single json object did — `permission_denials`, `result`,
+        # `is_error`, `session_id`, `usage` — measured key-for-key against the
+        # committed probe, so this is a superset of the previous capture rather
+        # than a different one, and permission_denials_in() already reads both
+        # shapes. What is gained is the `system/init` event, which is the only
+        # place the EFFECTIVE permission mode exists. --verbose is required for
+        # stream-json under --print.
+        run_bounded "$limit" "$out" "$cb" -p "/work-loop-v2 $TASK" \
+          --output-format stream-json --verbose \
+          --permission-mode "$PERMISSION_MODE" \
           --disallowedTools "${a_deny[@]}"
       fi
       rc_claude=$?
@@ -2568,13 +4783,16 @@ OWNER_HELPER="$CHECKOUT/logs/scripts/work-loop-owner.sh"
 if [ -f "$OWNER_HELPER" ] && [ -r "$OWNER_HELPER" ]; then
   OWNER_OUT="$(bash "$OWNER_HELPER" check --checkout "$CHECKOUT" --task "$TASK" --depth repo 2>&1)"
   OWNER_RC=$?
+  # The verdict is recorded BEFORE it is acted on, so a terminal result reports
+  # the observed admission outcome rather than the fact that the code got here.
   case "$OWNER_RC" in
-    0) say "ownership: PROCEED — $(printf '%s' "$OWNER_OUT" | sed -n 's/^reason: //p')" ;;
-    3) die 33 "ownership refused for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: continue the task in the checkout named above, or close it there first. Nothing was launched." ;;
-    4) die 34 "ownership is AMBIGUOUS for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: this is not a failure to work around — decide which checkout owns the task, remove the copies that are not authoritative, and record the owner with \`work-loop-owner.sh claim\`. Nothing was launched." ;;
-    *) die 35 "the ownership check ran and failed (exit $OWNER_RC) in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: ownership is unestablished, so nothing was launched. Fix or replace $OWNER_HELPER, then re-run." ;;
+    0) OWNER_STATUS=proceed; say "ownership: PROCEED — $(printf '%s' "$OWNER_OUT" | sed -n 's/^reason: //p')" ;;
+    3) OWNER_STATUS=refused; die 33 "ownership refused for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: continue the task in the checkout named above, or close it there first. Nothing was launched." ;;
+    4) OWNER_STATUS=ambiguous; die 34 "ownership is AMBIGUOUS for task $TASK in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: this is not a failure to work around — decide which checkout owns the task, remove the copies that are not authoritative, and record the owner with \`work-loop-owner.sh claim\`. Nothing was launched." ;;
+    *) OWNER_STATUS=check-failed; die 35 "the ownership check ran and failed (exit $OWNER_RC) in $CHECKOUT"$'\n'"$OWNER_OUT"$'\n'"Recoverable next action: ownership is unestablished, so nothing was launched. Fix or replace $OWNER_HELPER, then re-run." ;;
   esac
 else
+  OWNER_STATUS=unavailable
   die 35 "the ownership check is unavailable: $OWNER_HELPER is missing or unreadable in $CHECKOUT"$'\n'"Recoverable next action: ownership cannot be established without it, so nothing was launched and nothing was committed. Copy the helper into this checkout — or run the task in a checkout that carries it — then re-run."
 fi
 
@@ -2606,6 +4824,51 @@ if [ "$DRY_RUN" -eq 1 ]; then
   # the platform check and the profile write have all already run above, so
   # reaching this line means the contained profile is deliverable on this host.
   [ "$UNATTENDED" -eq 1 ] && say "dry-run: the contained profile passed its gate and was written; a live run would launch under it."
+  # PROVEN BEFORE RELEASED — the same producer/consumer boundary as the operator
+  # terminal, at the other successful end of a run. A dry-run is an ADMITTED run:
+  # it holds both leases and owns run evidence, and until Unit 12 it was the last
+  # N-family success that released and exited 0 leaving nothing behind. The
+  # record it publishes truthfully carries mode=dry-run, stage=pre-hop,
+  # actor_launched=no and model_request_started=no from this dispatcher's own
+  # facts — nothing launched, and the record says so. Failure takes the accepted
+  # routes unchanged: unprovable publication pins and exits 38 via
+  # die_terminal_unprovable, an untrusted promised artifact via the consumer's
+  # own die_terminal_untrusted. Each line carries its own marker so a mutation
+  # control can delete exactly one seam and prove the other is not covering it.
+  finalize_terminal_result 0 || die_terminal_unprovable # dry-run terminal finalization
+  # THE EXPECTED PAIR COMES FROM THIS CALLER, exactly as at the operator seam and
+  # for the same reason: the caller knows which terminal it is finalizing, and the
+  # artifact merely asserts one. The code is the literal 0 the finalization above
+  # published under and the `exit 0` below returns; the symbol is
+  # `result_outcome()`'s answer for that code, the sole code-to-outcome owner.
+  #
+  # WHAT MAKES THAT ANSWER DRY_RUN_COMPLETE HERE IS `MODE`, not the task. That
+  # branch is settled at argument parse and read before any lifecycle class, which
+  # is Unit 14's accepted design — so this seam supplies the right expectation over
+  # an active, closed or blocked task alike, without naming a symbol or holding a
+  # second table. A preflight is a preflight whatever the task underneath it is.
+  #
+  # WITHOUT THIS, THE GAP WAS REAL AND MEASURED, and sharper here than anywhere:
+  # a record altered after finalization to say `outcome=COMPLETED` — over a run
+  # that launched nothing and asked nothing of a model — still exited 0, released
+  # both leases and was advertised as this preflight's terminal result. So did one
+  # altered to `code=22`. Structure, path and identity have nothing to object to;
+  # only meaning does.
+  # THE LABEL IS THIS SEAM'S OWN, and it is a correctness fix rather than a
+  # nicety. `die_terminal_untrusted`'s default sentence is the OPERATOR
+  # terminal's — "the run reached a real operator terminal" — and the bare call
+  # that used to sit here inherited it, so every refusal at this seam described a
+  # preflight as a terminal it never reached. That was survivable while the only
+  # refusals here were hostile-path or swapped-record cases; the semantic gate
+  # above makes it the ordinary refusal, printed to an operator who launched
+  # nothing and is being told a loop terminal was reached.
+  #
+  # CARRIED, NOT RE-DERIVED, exactly as consume_terminal_result's own note says:
+  # only this call site knows which terminal it is. The shared exit's wording,
+  # its default, and the accepted operator-terminal sentence are all untouched —
+  # this supplies the argument that was always available and never passed.
+  consume_terminal_result "the admitted dry-run preflight terminal" "$(result_outcome 0)" 0 # dry-run terminal consumption
+  [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
   release_lock
   exit 0
 fi
@@ -2638,6 +4901,60 @@ while :; do
       say "$op_q"
       say "--- end ---"
     fi
+    # THE TWO SUCCESSFUL ENDS OF A LOOP, and until now the only two with no durable
+    # evidence. Every nonzero terminal funnels through die() and finalizes a
+    # run-bound record; these said their piece on screen, released the lease and
+    # exited 0 leaving nothing behind — for precisely the outcomes an operator most
+    # needs to be able to point at afterwards.
+    #
+    # BEFORE release_lock, deliberately, and the same ordering die() uses: a lease
+    # may only be given up once the evidence of what happened exists. Reversing
+    # these two lines would leave a window where the run looks finished and nothing
+    # says how it finished.
+    #
+    # code 0 BECAUSE NEITHER IS A FAILURE. Which of the two it was lives in the
+    # record's outcome and next_action, keyed on the canonical ST_CLASS — see
+    # result_outcome() for why the exit code cannot carry that distinction itself.
+    #
+    # FAILS CLOSED. A terminal whose result cannot be written is a run that cannot
+    # say how it ended, and exiting 0 there would be a success claim with no
+    # evidence — the exact false report this whole change set exists to remove. And
+    # it fails closed HOLDING ITS LEASES: die_terminal_unprovable pins both before
+    # any release path runs, with the truthful cause recorded, so the unproven run
+    # cannot hand its checkout to the next dispatcher. One line, so the mutation
+    # control can delete the seam whole rather than leave an orphaned `fi` that
+    # proves nothing.
+    finalize_terminal_result 0 || die_terminal_unprovable # operator terminal finalization
+    # CONSUMED BEFORE RELEASED. Finalization proves a record was written;
+    # consumption proves the record at the promised path is the one this run
+    # wrote — path-gated, structurally valid, identity-bound to this task,
+    # checkout and run, AND carrying the ending this run is actually finalizing —
+    # before that record is allowed to buy the lease release.
+    # One line, its own marker, same reason as the seam above.
+    #
+    # THE EXPECTED PAIR COMES FROM THIS CALLER, NOT FROM THE RECORD, and both
+    # halves are facts this seam owns before anything is read back. The code is
+    # the literal 0 the finalization above published under and the `exit 0` below
+    # returns — one value, written once on each line, so a reader can see they
+    # are the same ending. The symbol is `result_outcome()`'s answer for that
+    # code, the sole code-to-outcome owner, evaluated here from ST_CLASS and the
+    # dispatcher's own mode flags — which is what makes ONE call cover both
+    # canonical endings this branch serves: CLOSED yields COMPLETED and
+    # BLOCKED_OPERATOR yields OPERATOR_TAKEOVER, without this seam knowing either
+    # symbol or holding a second table.
+    #
+    # WITHOUT THIS, THE GAP WAS REAL AND MEASURED: a record altered after
+    # finalization in `outcome` alone, or in `code` alone, still passed the path,
+    # structure and identity boundaries — it is a genuine, correctly addressed
+    # record of a DIFFERENT ending — exited 0, released both leases and was
+    # advertised as this run's terminal result.
+    #
+    # THE LABEL IS DELIBERATELY EMPTY, not a new wording. It is the same absent
+    # label this call always passed; it is written out only because the expected
+    # pair has to follow it positionally, and die_terminal_untrusted's own
+    # default is what keeps the accepted operator-terminal sentence unchanged.
+    consume_terminal_result "" "$(result_outcome 0)" 0 # operator terminal consumption
+    [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
     release_lock
     exit 0
   fi
@@ -2722,44 +5039,44 @@ while :; do
     die_hop 21 "actor '$before_turn' exceeded ${eff_timeout}s and was killed (hop $hop)"
   fi
 
-  # A crash BEFORE the actor changed anything is retried exactly once, from what
-  # the repository says rather than from anything this process remembers. "Before
-  # edits" is proven, not assumed: the state file, HEAD, the foreign working tree
-  # and the state file's committed-ness must all be byte-for-byte where they were.
-  # Any doubt and this is a partial side effect, which stops (rc 20 / 25) instead.
-  # One retry only — a second failure is a real failure, not a transient one.
+  # NO AUTOMATIC REPLAY ONCE AN ACTOR HAS LAUNCHED (minimum release contract
+  # item 2). A nonzero exit ends the run here, whatever the repository looks like.
+  #
+  # THIS REPLACED A ONE-SHOT RETRY, and the reason is a premise, not a policy
+  # preference. That retry fired when the state file, HEAD, the foreign working
+  # tree and the state file's committed-ness were all byte-for-byte where they
+  # were — reading repository immutability as proof that no model request had
+  # started. It is not proof. A request that ran to completion and produced no
+  # edit looks identical from here, and so does one killed after it was billed.
+  # The only place the answer lives is the child's own stream events, and this
+  # dispatcher does not read them: its own terminal record says so in the field,
+  # publishing `model_request_started=unavailable` on every live launch. Retrying
+  # on the strength of a fact this process has already recorded as unavailable is
+  # the shape of the defect, and no exit status or absent capture repairs it.
+  #
+  # A retry would still be permissible for a condition mechanically PROVEN to
+  # occur before any model request — but that proof has to come from before the
+  # fork, and every such condition here already exits by another path: the four
+  # pre-fork die() sites inside launch_actor(), and the pre-launch guards above.
+  # Nothing that reaches this branch qualifies, so zero automatic retries is the
+  # whole of the correct behaviour rather than a conservative approximation of it.
+  #
+  # Recovery is unchanged and is the operator's: re-running this dispatcher is a
+  # NEW run with its own identity, which revalidates everything and continues
+  # from the state file. That is deliberately not implemented as a replay inside
+  # this stopped run — see the takeover wording below, and case 15c.
+  #
+  # The two branches differ only in what the operator is told to inspect. Both
+  # stop, and both stop on the first failure.
   if [ "$rc" -ne 0 ]; then
     now_dirty=0; state_dirty && now_dirty=1
     if [ "$(file_hash "$STATE_FILE")" = "$before_hash" ] \
        && [ "$(git_head)" = "$before_head" ] \
        && [ "$(foreign_worktree)" = "$before_foreign" ] \
        && [ "$now_dirty" -eq "$before_dirty" ]; then
-      # The retry is a launch like any other, so it obeys the same clock. Without
-      # re-clamping, a hop that failed at minute 39 would get a fresh full-length
-      # timeout and walk straight through the deadline.
-      if [ -n "$DEADLINE_AT" ] && [ "$(remaining_seconds)" -le 0 ]; then
-        die_hop 29 "budget exhausted — the ${DEADLINE}s deadline expired before hop $hop could be retried. THIS IS NOT COMPLETION."$'\n'"The repository was unchanged by the failed attempt, so re-running this dispatcher resumes cleanly from $STATE_FILE."
-      fi
-      eff_timeout="$(effective_timeout)"
-      say "  exit=$rc after ${duration}s, and the repository is unchanged (state sha256, HEAD, working tree, committed-ness all identical) — retrying this hop once."
-      started="$(date '+%s')"
-      launch_actor "$before_turn" "${hop}r" "$eff_timeout"   # separate .out — the first attempt's output is evidence
-      rc=$?
-      duration=$(( $(date '+%s') - started ))
-      if [ "$rc" -eq 124 ]; then
-        if [ -n "$DEADLINE_AT" ] && [ "$(remaining_seconds)" -le 0 ]; then
-          die_hop 29 "budget exhausted — the ${DEADLINE}s deadline expired during the retry of hop $hop and actor '$before_turn' was terminated. THIS IS NOT COMPLETION."$'\n'"Not retried again. Recoverable next action: read $STATE_FILE and \`git -C $CHECKOUT status\`, then re-run this dispatcher."
-        fi
-        die_hop 21 "actor '$before_turn' exceeded ${eff_timeout}s and was killed on the retry (hop $hop)"
-      fi
-      [ "$rc" -eq 0 ] && say "  retry succeeded"
-    else
-      die_hop 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop) AFTER changing the repository — not retried, because a retry would run over a partial effect; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
+      die_hop 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop) and the repository is unchanged (state sha256, HEAD, working tree, committed-ness all identical)."$'\n'"NOT retried: the actor had already launched, and an unchanged repository does not prove the model request never started — a request that ran and left no edit looks exactly like this from here. This dispatcher does not read the child's stream events, so it records that as model_request_started=unavailable rather than guessing."$'\n'"CANONICAL TASK STATE IS UNTOUCHED: this stopped run and its terminal result ARE the takeover."$'\n'"Recoverable next action: read $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out for why the actor exited $rc, then re-run this dispatcher — that starts a NEW run, which revalidates everything and continues from $STATE_FILE."
     fi
-  fi
-
-  if [ "$rc" -ne 0 ]; then
-    die_hop 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop), and the retry failed too; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
+    die_hop 20 "actor '$before_turn' exited $rc after ${duration}s (hop $hop) AFTER changing the repository — not retried, because a retry would run over a partial effect; see $LOG_DIR/$RUN_ID.hop$hop.$before_turn.out"
   fi
   say "  exit=0 duration=${duration}s"
 
@@ -2811,7 +5128,7 @@ while :; do
     if [ -n "$denials" ]; then
       say "  permission denials reported by the child:"
       printf '%s\n' "$denials" | sed 's/^/    /' | tee -a "$RUN_LOG"
-      die_hop 37 "Claude was DENIED PERMISSION during hop $hop and could not complete the turn."$'\n'"Denied (tool :: target):"$'\n'"$denials"$'\n'"The denial happened at the CHILD's permission layer, not here — this dispatcher requested nothing that would have refused these. The child exits 0 when this happens, which is why it used to surface as exit 25 or 22 with no cause named."$'\n'"NOT retried: the same denial would recur."$'\n'"Operator decision required — this is a capability question, not a transport failure. Either grant the capability deliberately and re-run, or narrow the unit so it does not need it. Full capture: $LAST_CAPTURE"
+      die_hop 37 "Claude was DENIED PERMISSION during hop $hop and could not complete the turn."$'\n'"Denied (tool :: target):"$'\n'"$denials"$'\n'"The denial happened at the CHILD's permission layer, not here — this dispatcher requested nothing that would have refused these. The child exits 0 when this happens, which is why it used to surface as exit 25 or 22 with no cause named."$'\n'"NOT retried: the same denial would recur."$'\n'"CANONICAL TASK STATE IS UNTOUCHED: this dispatcher writes no task state and makes no commit, so the turn is still exactly where the actors left it. This stopped run and its terminal result ARE the takeover."$'\n'"Operator decision required — this is a capability question, not a transport failure. Either narrow the unit so it does not need the capability, or grant it deliberately by running this, which starts a NEW run that revalidates everything and continues from the unchanged turn:"$'\n'"  $(approved_restart_invocation "$LOG_DIR")"$'\n'"That command is what the decision looks like; printing it grants nothing. Full capture: $LAST_CAPTURE"
     fi
   fi
 
@@ -2826,7 +5143,8 @@ while :; do
     # "Claude edited the state file" about a file that was byte-identical before
     # and after, and had been dirty before the hop even launched. before_dirty
     # was already being computed here — it was just never consulted outside the
-    # crash-retry guard, so the evidence that would have settled it was in a
+    # nonzero-exit guard above (then a crash-retry, now the no-replay stop), so
+    # the evidence that would have settled it was in a
     # variable the classification did not read.
     #
     # 36 requires BOTH halves: dirty before launch AND byte-identical after. If
@@ -2879,6 +5197,46 @@ while :; do
       say "carry-one: turn is now operator — automation is terminal there (core § 7)."
     fi
     say "carry-one: read turn: from $STATE_FILE. Neither this exit code nor any screen is authoritative over the file (core § 4)."
+    # THE LAST SUCCESSFUL END WITH NO DURABLE EVIDENCE, and the only POST-hop one.
+    # Every nonzero post-hop terminal funnels through die() and finalizes; the two
+    # pre-hop code-zero ends were closed at units 8 and 12. This one — the outcome
+    # a courier exists to produce — said its piece on screen, released the lease
+    # and exited 0 leaving nothing a later reader could point at. Same boundary,
+    # same order, same fail-closed behaviour as the operator seam above: finalize,
+    # then consume the exact promised artifact, and only then release. One line
+    # each with its own marker, so a mutation control can delete either half.
+    finalize_terminal_result 0 || die_terminal_unprovable "the carry-one terminal after one carried hop" # carry-one terminal finalization
+    # THE EXPECTED PAIR COMES FROM THIS CALLER, the third seam to supply one and
+    # the same argument the operator and dry-run seams make: this call site knows
+    # which terminal it is finalizing, and the artifact merely asserts one. The
+    # code is the literal 0 the finalization above published under and the
+    # `exit 0` below returns; the symbol is `result_outcome()`'s answer for that
+    # code, the sole code-to-outcome owner.
+    #
+    # WHAT MAKES THAT ANSWER CARRY_ONE_COMPLETE HERE IS THIS RUN, NOT THE TASK,
+    # and both facts it turns on are the dispatcher's own: `CARRY_ONE`, settled at
+    # argument parse, and `ACTOR_PROCESS_STARTED`, the fork this run really
+    # performed. Both are already true at this line — it is inside the
+    # `CARRY_ONE -eq 1` block, after a hop that launched an actor — which is what
+    # lets ONE call cover all four reachable carried transitions without naming a
+    # symbol or holding a second table. The dry-run branch is ordered ahead of the
+    # carry-one one inside that owner, and a --carry-one --dry-run never reaches
+    # here at all, so the preflight's own expectation is not disturbed.
+    #
+    # WITHOUT THIS, THE GAP WAS REAL AND MEASURED at this seam too: a record
+    # altered after finalization to `outcome=COMPLETED` — the full loop's word for
+    # a run that drove the task to its end, over a run that carried exactly one
+    # hop — still exited 0, was advertised as this run's terminal result and
+    # released both leases. So did one altered to `code=22`, the code for a hop
+    # that made no transition, over a run whose transition table had just passed.
+    # Path, structure and identity have nothing to object to; only meaning does.
+    #
+    # THE LABEL IS THE ACCEPTED ONE, unchanged and simply moved ahead of the pair
+    # it now has to precede positionally. It is this seam's own truthful sentence
+    # (Unit 16, finding F1), and the shared exit's default and wording are
+    # untouched.
+    consume_terminal_result "the carry-one terminal after one carried hop" "$(result_outcome 0)" 0 # carry-one terminal consumption
+    [ -n "$RESULT_FILE" ] && say "  terminal result: $RESULT_FILE"
     release_lock
     exit 0
   fi

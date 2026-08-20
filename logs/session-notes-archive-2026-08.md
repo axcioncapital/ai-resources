@@ -4081,3 +4081,156 @@ Before the pilot: nothing outstanding from this session. Two commits await the w
 
 ### Open Questions
 None.
+## 2026-08-13 — Replacement Normal Trial 1: 3.1a regression repaired, run not accepted as the trial
+
+### Summary
+Ran the replacement candidate for Axcíon Harness v0.2 Normal Trial 1 end to end through
+`/work-loop-v2` against `logs/work-loop/axcion-harness-v0-2-normal-trial-1-replacement.md`: Claude
+implemented Unit 1, Codex assessed and closed with no correction round. The `3.1a` block in
+`logs/scripts/work-loop-v2-slice-1.test.sh` no longer reddens on ordinary repository growth — it is
+now scoped to the single commit that performed the direct fix rather than the whole live
+`logs/work-loop/` directory — while the unexpected-state-file failure signal it exists to protect
+stays durable and provably fail-capable by path. Suite moved 292 passed / 3 failed → 299 passed / 1
+failed (the remaining failure is the pre-existing, unrelated `ridx` line-count ceiling). Codex's close
+verdict explicitly rules this execution does not count as Normal Trial 1: the canonical attended
+carrier was not used and process freshness could not be verified.
+
+### Decisions Made
+- **Rejected the improvement-log entry's proposed `fixture-`-prefix mechanism** as the repair
+  mechanism. Checked by inspection: 4 of the 29 entries in the old closed set carried no `fixture-`
+  prefix, and adopting the prefix rule would ignore every non-fixture file — including
+  `logs/work-loop/arbitrary-state.md`, the exact unexpected-state-file case the `3.1a` block was
+  strengthened to catch. Scoped the check to the direct-fix commit instead.
+- **Codex's close decision:** accept the implementation without a correction round, but rule the
+  execution does not count as Normal Trial 1 — a framing limitation on this run, not an implementation
+  finding, and explicitly not repairable by a correction round.
+- Routine: both closing writes (Claude's Unit 1 hand-back, the final closing-record reduction) ran the
+  Step 1.5 ownership check first; both returned PROCEED.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Session Value Audit — 80/20 Review
+Skipped (not requested).
+
+### Risky actions
+None. Both commits were preceded by a passing ownership check; no gate was skipped; no destructive or
+external action was taken.
+
+### Session Assessment
+Feedback collection skipped (not requested).
+
+### Findings Declined
+- Broader per-scenario stray-state-file coverage (the removed whole-directory `3.1a` inventory
+  incidentally noticed a stray state file opened by any Slice-3 scenario, not only Direct Work) — not
+  queued. Already recorded as a deferral with its reason in the closed task's Decisions that matter;
+  it is optional future scope, not a defect, and has no named consequence today.
+
+### Next Steps
+Continue the pilot toward Phase 3 adoption evidence: the next Normal Trial 1 attempt should run
+through the canonical attended carrier (`scripts/axcion-harness-v0.2/carry-turn.sh`) rather than a
+direct `/work-loop-v2` invocation, so process freshness and reduced manual transport can actually be
+demonstrated. `plans/axcion-harness-v0.2/mvp-plan.md` still needs three to five representative tasks
+before the adopt/shrink/stop decision.
+
+### Open Questions
+None.
+
+## 2026-08-13 — Close axcion-harness-v0-2-readiness-fixes: Units 1-6 accepted, no successful live trial
+
+### Summary
+Ran the Claude half of the final Work Loop v2 unit on `axcion-harness-v0-2-readiness-fixes`. The
+state file's `## Next action` carried Codex's close verdict, so this was a closing write: checked
+file identity, ran the repo-depth ownership check (PROCEED), verified every commit reference and the
+Unit 7 evidence path resolve on disk, reduced the file to the closing record, cleared the checkout's
+ownership declaration, and committed. The task is now closed.
+
+### Decisions Made
+None made this turn — the close verdict was Codex's, recorded in the inherited `## Next action`.
+Writing the closing record was execution of that verdict, not a new decision.
+
+### Outcome
+Outcome check skipped (not requested).
+
+### Risky actions
+None.
+
+### Findings Declined
+- `logs/friction-log.md` dirty again — not queued. Already an accepted deferral on the readiness
+  task's own list ("hook-owned `logs/friction-log.md` dirt"); no new consequence surfaced this
+  session.
+
+### Next Steps
+No follow-on unit is open for this task. A future push on the attended carrier's supervised
+readiness — closing the authoritative-current-position refusal gap, or running a real live trial —
+starts as a fresh admission decision (Direct Work or a new Work Loop v2 task), not a reopening of
+this closed file.
+
+### Open Questions
+None.
+
+## 2026-08-13 — Merged 59 commits into ai-resources, resolved the improvement-log conflict, pushed
+
+### Summary
+
+Unplanned session, opened by a question relayed out of a concurrent `axcion-si-worktrees` session:
+ai-resources had unpushed commits it had not authored and would not push blind. Investigated all of
+them (7 at first look, 8 after that session committed a ninth finding mid-investigation) — all
+operator-authored, all but one touching `logs/improvement-log.md` only, all pure appends. The material
+finding was one the concurrent session had not surfaced: after `git fetch`, the repo was **8 ahead and
+59 behind**, so any push would have been rejected as non-fast-forward.
+
+The concurrent session recommended deferring the whole merge to Friday, reasoning from `.gitattributes`
+(which deliberately excludes `improvement-log.md` from `merge=union` because that file takes prepend
+writes and in-place status flips). Measuring the actual range showed the hazard was absent from it:
+remote +207/−0, local +177/−0 — pure additions on both sides, no overlapping entries, so "keep both
+sides" was mechanical rather than judged. That measurement was relayed back, independently verified by
+the concurrent session, and its recommendation withdrawn. Merged as `b2a7032`, verified against both
+parents, pushed `375e61d..b2a7032`. Repo is now 0 ahead / 0 behind.
+
+Also traced the improvement-log heading-level divergence the concurrent session flagged. Its stated
+premise — that `/prime` builds its task menu by grepping these entries — was wrong; `/prime` touches the
+file only as a `git status` pathspec. The real consumers, and the real (smaller) impact, are queued as a
+finding.
+
+### Decisions Made
+
+- **Merge now rather than defer to Friday**, against the concurrent session's recommendation — on the
+  grounds that the drop risk was measurable and measured at zero, and that deferring only raises the
+  cost (the next in-place status flip on either side turns a mechanical resolution into a hand-resolved
+  one). Logged to `logs/decisions.md`.
+- **Split the deferral rather than accept or reject it whole** — the analytical half (reading the 59
+  merged commits for retirements bearing on today's findings) stays deferred to Friday; only the
+  mechanical half was pulled forward.
+- **Resolved the conflict by removing the three marker lines and nothing else** — no reflow, no
+  reordering, no heading normalisation folded in — so the merge commit stays exactly verifiable against
+  a stated line count.
+- **Did not fix the heading divergence in-session**, though it was diagnosed here: it is an in-place
+  edit to the one file with a live concurrent writer, which is the hazard `.gitattributes` excludes it
+  for. Queued instead.
+- **Used the correct local path for the Step 6.6 promotion sweep** rather than the command's hardcoded
+  literal, which points at a non-existent account on this machine. Queued as a finding.
+
+### Risky actions
+
+Pushed to `origin/main` (operator-approved, explicit `y`). Merge touched a log file with a live
+concurrent writer in another checkout — mitigated by resolving mechanically and verifying against both
+parents before committing. No force-push, no history rewrite, no deletion. The Step 6.6 promotion sweep
+would have failed silently on the documented path; it was run on the corrected path instead and
+promoted 4 findings that would otherwise have stayed unreachable.
+
+### Findings Declined
+
+- **Six untracked July files in `audits/`** (one lean-repo report, five risk-checks) — surfaced to the
+  operator twice this session. This is an operator housekeeping decision (commit or gitignore), not a
+  system defect, and the only consequence is `git status` noise. Declined rather than queued.
+
+### Next Steps
+
+1. `/fix-repo-issues` or a dedicated session for the two findings queued today — heading normalisation
+   (run only when ai-resources has no other live writer) and the `wrap-session.md` hardcoded path.
+2. Friday: read the 59 merged commits for retirements bearing on the `/qc-pass`, `/risk-check`,
+   `/resolve`, `/refinement-deep` follow-through findings logged today by the concurrent session.
+3. Decide on the six untracked `audits/` files.
+
+### Open Questions
