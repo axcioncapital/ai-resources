@@ -1,97 +1,37 @@
 ---
 task: experimental-dispatcher-main-integration
-status: active
-turn: codex
+status: closed
+turn: operator
 ---
 
-## Objective and scope
+## Outcome
 
-Produce one merge-ready experimental dispatcher candidate by integrating current `main` into `session/2026-08-16-dispatcher-last-fixes`, while preserving both histories and the accepted dispatcher work through Unit 31.
+Current `main` was integrated non-destructively into the experimental dispatcher candidate on `session/2026-08-16-dispatcher-last-fixes` at merge commit `7617add7ecbe35b1629719df30891826c45b382b` — a normal two-parent merge (`b1baa91a` + `2bfb82d1`), no rebase and no history rewrite, so both histories and the accepted dispatcher work through Unit 31 are preserved. Three conflicts were resolved: `logs/improvement-log.md` kept both appended entries in the file's verified ascending-date order; `.agents/skills/work-loop-v2/SKILL.md` adopted `main`'s extraction into `references/`, with mechanical proof that the session branch's additions survived; and `logs/scripts/work-loop-v2-slice-1.test.sh` kept the session branch's discovery sweep, because `main`'s hard-coded live-task pointer targets a record that is now closed and would have gone red on contact.
 
-Scope: reversibly isolate the pre-existing frozen friction-log modification, reconcile the two branches in this bound checkout, resolve only real integration conflicts, run proportionate local proof, and commit the integrated candidate. Excluded: updating `main`, push, deployment, Gate SA, the abandoned Unit 32 implementation, full reliability claims, destructive cleanup, and applying or dropping the friction-log stash.
+The frozen word-budget regression that integration exposed was corrected at `ae96abf4` under the one bounded correction round: duplicated assessment mechanics in `SKILL.md` were condensed to a pointer at executable core § 3, and the 2026-08-14 packaging-outcomes history was moved beside the rules it describes in `references/unit-framing.md`. `work-loop-v2-slice-1` is green at 410/0 and `SKILL.md` sits at 236 lines / 4,974 words inside the unchanged `<500` / `<5000` limits.
 
-Task exit condition: the session branch contains current `main` and the accepted experimental candidate in one committed, locally verified integration result ready for the separately authorized update of `main`, or a concrete blocker is handed back.
+The session branch contains both histories and is ready for the separately authorized update of `main` after this closing commit.
 
-## Lane and unit
+## Decisions that matter
 
-Standard. Implementation mode. Unit 2 — integrate main after reversible log isolation
+- **Patrik's 2026-08-19 `SHRINK` decision still governs.** This is an explicitly experimental supervised deployment only. No **Ready for supervised semi-agentic use** label, and no durable-terminal-result, unattended, walk-away or reliable semi-autonomous claim is made or implied by this integration.
+- **The frozen `logs/friction-log.md` working-tree modification was isolated, not resolved.** Unit 1 established that Git had to overwrite that path for the merge to proceed and that every route around it touched a file the brief excluded; Codex chose the reversible route. The modification remains recoverable and unapplied at stash object `da189ef02b22382e57734120ff85838842ddd5c3`. **Deferred:** applying or dropping it, because it was excluded from integration and is not this task's to decide. The pre-existing `stash@{1}` is untouched.
+- **The three conflict resolutions were each made from a governing source or verified repository behaviour**, never by taking one whole side. The `slice-1` resolution in particular was decided on live repository state — the record `main` pins is `status: closed` with no `## Lane and unit`.
+- **Updating `main`, pushing and deployment remain outside this task**, as does Gate SA. Neither actor merges or authorizes its own work.
+- **Side effect, recorded:** the merge brought `main`'s friction-log freeze guard into this checkout's hooks, so `log-write-activity.sh` now exits early and the frozen log is no longer appended to here.
 
-Named reason for the loop: `main` and the candidate have materially divergent histories, integration requires conflict judgment, and the result needs independent assessment before the protected branch is updated.
+## Evidence
 
-## Brief
+- Integration commit `7617add7ecbe35b1629719df30891826c45b382b`; correction commit `ae96abf4`; this closing commit.
+- `git rev-list --left-right --count main...HEAD` returns `0	97` after integration — zero commits unique to `main`. `git merge-base --is-ancestor main HEAD` and `git merge-base --is-ancestor 6cd071ef… HEAD` both succeed, so `main` and the accepted candidate's closing commit are contained.
+- Suite evidence at close: `work-loop-v2-slice-1` 410/0 PASS; `work-loop-state` 100/0; `work-loop-owner` 133/0; `work-loop-capability` 94/0; `work-loop-v2-core-resolver` 5/0; `work-loop-lease` 145/0; `work-loop-session-preflight` 60/0. All 14 changed shell scripts pass `bash -n`.
+- Non-loss proof for the `SKILL.md` resolution: of the 46 substantive lines the session branch added over the merge base, 44 are present verbatim in the merged `SKILL.md` plus `references/`; the two reported misses were checked individually and are `main`'s own superset description line and one capitalisation variant.
+- Unit 32 containment: the dispatcher was untouched by the merge, `dispatch.sh` / `dispatch.test.sh` / `README.md` are unchanged against the accepted candidate, and all eight generated scripts (`b28.sh`, `early.sh`, `focus.sh`, `green.sh`, `green8.sh`, `msgbase.sh`, `red8.sh`, `usage.sh`) remain absent.
+- Friction-log stash recoverability: `git show da189ef0:logs/friction-log.md | shasum -a 256` returns `59623e32a64d9a994a41203c3b8ec9d57fbdadd394a7ceb04535e6b46b43ccb2`, byte-identical to the pre-stash working file.
 
-Patrik chose an explicitly experimental supervised deployment, and the former Gate SA task closed at `6cd071ef0f2e182dc7112ab9b7d6056b53aacffd`. Unit 1 established that integration is ready except for the frozen `logs/friction-log.md` working-tree modification, which Git must overwrite because `main` changed that path. Codex chooses Unit 1's recommended reversible route: stash only that path, leave the stash intact, and proceed with the integration.
+## Accepted limitations
 
-Dominant deliverable: one committed session-branch integration result containing current `main` and the accepted experimental candidate.
-Evidence required in this hop: the friction-log stash identity and proof it remains recoverable and unapplied; exact pre/post branch identities and divergence; every conflict and its disposition; changed paths attributable to integration; proportionate dispatcher and Work Loop checks capable of failing; proof that abandoned Unit 32 edits and generated scripts did not re-enter.
-Evidence explicitly deferred: applying or dropping the friction-log stash; updating `main`; push; deployment; Gate SA; live trials; independent `ADOPT`; the fixed three-hop ceiling, correction corridor, nested-AI control and other accepted experimental limitations.
-Primary edit begins after: verify the live branch heads and unchanged blocker shape, stash only `logs/friction-log.md`, record the resulting stash identity, and confirm the working tree is otherwise ready for integration.
-
-Governing decisions and boundaries:
-
-- Patrik's 2026-08-19 `SHRINK` decision authorizes only an explicitly experimental supervised deployment. Do not add either **Ready for supervised semi-agentic use** label or a durable-terminal-result guarantee.
-- The closed source task at `logs/work-loop/work-loop-v2-dispatcher-supervised-semi-agentic-use.md` is authoritative for accepted work and limitations. Do not reopen or edit it.
-- Unit 1 established that the only merge-blocking dirty path is `logs/friction-log.md`, generated by an obsolete unguarded hook. It also established that `main` carries the freeze guard. Stash only this path; do not pop, apply, drop, edit or commit its contents. Report the durable stash reference and its object identity.
-- Unit 1's read-only merge preview found three conflicts: `.agents/skills/work-loop-v2/SKILL.md`, `logs/improvement-log.md`, and `logs/scripts/work-loop-v2-slice-1.test.sh`. Verify the live conflict set; resolve each minimally from the governing sources and current repository behavior, never by selecting one whole side indiscriminately.
-- Preserve all current-main work and the accepted experimental candidate. Do not update `main`, push, deploy, rewrite history, or perform destructive cleanup in this unit.
-
-Required outcome:
-
-- Create the recoverable friction-log stash, then merge current `main` into `session/2026-08-16-dispatcher-last-fixes` using a normal non-destructive integration commit; do not rebase or rewrite either history.
-- Resolve conflicts minimally and explain each resolution against the relevant governing source or verified repository behavior.
-- Preserve the accepted Unit 28, Unit 30 and Unit 31 dispatcher behavior and the closed experimental limitations. Do not reintroduce the abandoned Unit 32 implementation or its eight generated scripts.
-- Run the existing local checks proportionate to every overlapping or conflicted surface, plus syntax and focused dispatcher proof sufficient to catch integration breakage. Compare against Unit 1's pre-merge baseline: slice-1 `362/0`, state PASS, owner PASS, capability `77/0`, core-resolver `4/0`, lease `145/0`, session-preflight `60/0`; tracer-6 already red at `73/1` and tracer-7 already red at `116/2`. Do not misattribute those three established failures to the merge, and do not accept any additional regression.
-- Commit the integration and this handback, then set `turn: codex`.
-
-Capability subset: read, repository inspection, local tests, `git stash push` limited to `logs/friction-log.md`, conflict edits, a normal merge of current `main` into the current session branch, and local commits by Claude. No stash pop/apply/drop, rebase, history rewrite, update of `main`, push, deployment, credentials, destructive cleanup, or unrelated changes.
-
-Completion condition: one committed integration candidate contains current `main`, retains the accepted experimental dispatcher behavior and limitations, preserves the friction-log modification in a named unapplied stash, passes proportionate fail-capable local checks without regression beyond the recorded baseline, and hands back exact evidence with `turn: codex`.
-
-Stop and hand back on a false premise, a new unrelated dirty path, a conflict requiring operator-owned product or risk judgment, inability to preserve both histories or the stash, required destructive/history-rewriting action, additional regression, or inability to produce proportionate fail-capable proof.
-
-## Latest result
-
-Correction round on the two frozen findings. Route 1, exactly as selected; nothing else was touched.
-
-**Finding 1 reproduced before correcting it.** `bash logs/scripts/work-loop-v2-slice-1.test.sh` returned rc=1 with `FAIL  split main skill body is below 5,000 words` and `passed: 409   failed: 1`, and `SKILL.md` measured 240 lines / **5,133** words against the enforced `<500` / `<5000`. That is Unit 2's regression, unchanged and still live at the start of this hop.
-
-**What was corrected.** Two edits, both inside the route Codex selected:
-
-- **Block B condensed to a pointer, in `.agents/skills/work-loop-v2/SKILL.md` § *Assessing the result*.** 113 words to **54**. The duplicated mechanics — the `X/Y`-versus-labelled-estimate rule, the `Implementation: COMPLETE` definition, the `IN PROGRESS` fallback and the close-verdict `Merge readiness` wording — now defer to core § 3 *Operator-facing progress, completion and merge readiness*, which already owns every one of them. **The operational requirement is retained, not softened:** the paragraph still opens *"Make status unmistakable in every operator-facing assessment"* and still directs that all three of `Progress`, `Implementation` and `Merge readiness` are written immediately before the `Next` line. The one clause most easily lost in a pointer — that a completed unit is not a completed implementation — is named explicitly rather than left to the reader to find.
-- **Block C moved, not copied, into `.agents/skills/work-loop-v2/references/unit-framing.md`.** The 2026-08-14 packaging-outcomes history now sits at the end of § *Size the unit against the clock*, directly beneath the rules it describes, under a `**Where these rules came from.**` lead so it reads as history and not as a further rule. Its full text is preserved, with two adjustments the move required: *"two split triggers"* became *"the two split triggers above"* now that they are on the same page, and its closing cross-reference names where the 2026-08-11 sibling entry still lives. `## Scope of this version` keeps a 31-word pointer in the changelog's own established idiom — the same `(now in [Unit framing](references/unit-framing.md))` shape the 2026-08-11 entry beside it already uses — so the changelog does not silently skip a dated entry. **Moved, not duplicated:** `grep -c '902 seconds'` returns `0` in `SKILL.md` and `1` in `unit-framing.md`.
-
-No new reference file was created, and the budget was not raised — the check at `work-loop-v2-slice-1.test.sh:1840` is untouched at `<5000`.
-
-Result: **finding 1 is resolved and finding 2 is proved.** `SKILL.md` is now 236 lines / **4,974** words, inside both enforced limits with the thresholds unchanged, and `work-loop-v2-slice-1` is green at **410 passed, 0 failed** (rc=0) — 410 rather than 409 because the previously failing assertion now passes, so the count moving up is the finding closing rather than a check disappearing.
-
-Evidence — the checks, what they return now, and what they returned in Unit 2:
-
-| Suite | Unit 2 | After the correction | Verdict |
-|---|---|---|---|
-| `work-loop-v2-slice-1` | 409/**1** red | **410/0 PASS** | **the finding, closed** |
-| `work-loop-state` | 100/0 | 100/0 PASS | unchanged |
-| `work-loop-owner` | 133/0 | 133/0 PASS | unchanged |
-| `work-loop-capability` | 94/0 | 94/0 PASS | unchanged |
-| `work-loop-v2-core-resolver` | 5/0 | 5/0 PASS | unchanged |
-| `work-loop-lease` | 145/0 | 145/0 PASS | unchanged |
-| `work-loop-session-preflight` | 60/0 | 60/0 PASS | unchanged |
-| `work-loop-v2-tracer-6` | 73/1 red | 73/1 red | **same** failure, diffed by name |
-| `work-loop-v2-tracer-7` | 163/2 red | 163/2 red | **same two** failures, diffed by name |
-
-The two red suites were compared by `diff`-ing their `FAIL` lines against Unit 2's captured output rather than by count, so a substituted failure could not hide behind an unchanged total; both diffs are empty.
-
-**The moved-heading and one-owner checks are inside that green 410 and pass** — including `split one owner: size the unit against the clock` (which requires the heading in `unit-framing.md` **and** absent from `SKILL.md`, so a copy rather than a move would fail it), `split no loading chain out of unit-framing.md` (which the moved text could have broken had it carried a sibling-reference path), the four read-condition checks, and both architecture limits. `split main skill body is below 500 lines` and `split main skill body is below 5,000 words` both PASS.
-
-**The dispatcher suite was not re-run, and does not need to be.** This correction changed two Markdown files. Unit 2 established by inspection that `dispatch.sh` and `dispatch.test.sh` read exactly four checkout paths — `work-loop-lease.sh`, `work-loop-state.sh`, `work-loop-owner.sh`, `prime-session-entry.sh` — and re-running that same `grep` now returns the same four. Neither edited file is among them, so its 1843/3 result cannot have moved. Per the frozen scope, those three pre-existing failures remain an accepted limitation of this explicitly experimental candidate and were not touched.
-
-**Nothing else changed.** `git status --porcelain` before the commit listed exactly `.agents/skills/work-loop-v2/SKILL.md`, `.agents/skills/work-loop-v2/references/unit-framing.md` and this state file. The friction-log stash `da189ef02b22382e57734120ff85838842ddd5c3` is intact and still unapplied, `main` was not updated or pushed, and the integration commit `7617add7ecbe35b1629719df30891826c45b382b` stands unamended — the correction sits on top of it, so both histories and the accepted candidate are preserved exactly as assessed.
-
-Nothing new was noticed during this round that would warrant a deferral.
-
-## Blocker
-
-None.
-
-## Next action
-
-Codex: run the closure check on the frozen findings only — is the `work-loop-v2-slice-1` word-budget finding resolved, and did the correction break anything? The evidence for both is in `## Latest result`: slice-1 green at 410/0 with `SKILL.md` at 236 lines / 4,974 words inside unchanged thresholds, and every other suite matching Unit 2's recorded result, with the two red tracers diffed by failure name rather than by count.
+- **All experimental limitations from the closed source task `work-loop-v2-dispatcher-supervised-semi-agentic-use` are retained unchanged** — the fixed three-hop ceiling, the correction corridor, nested-AI control, and the rest recorded there. That record remains authoritative and was not reopened or edited.
+- **Pre-existing test failures, unchanged by this integration and not repaired:** `work-loop-v2-tracer-6` at 73/1 and `work-loop-v2-tracer-7` at 163/2. Both were compared against the pre-merge baseline by failure name rather than by count, and both diffs are empty.
+- **The dispatcher suite stands at 1843/3, and the merge is not the cause.** Its three failures are `the --settings argument points at the written profile`, `50k — a clean 22 still exits 22, advertises its one complete NO_TRANSITION result, and releases both leases`, and `50k — a clean 18 still exits 18, advertises its one complete FOREIGN_UNSTAGED result, and releases both leases`. Merge-neutrality was proved by dependency rather than assumed: `dispatch.sh` and `dispatch.test.sh` read exactly four checkout paths — `work-loop-lease.sh`, `work-loop-state.sh`, `work-loop-owner.sh`, `prime-session-entry.sh` — and all four, plus the two spike files themselves, are byte-identical either side of the merge. They were not repaired because Patrik chose the experimental `SHRINK` scope and they were proven not to be integration regressions.
+- **The friction-log modification is preserved but undecided** — stash object `da189ef02b22382e57734120ff85838842ddd5c3`, unapplied. It survives outside the branch, so a stash prune would lose it.
