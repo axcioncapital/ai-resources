@@ -1,7 +1,7 @@
 ---
 task: experimental-dispatcher-main-integration
 status: active
-turn: claude
+turn: codex
 ---
 
 ## Objective and scope
@@ -51,14 +51,70 @@ Stop and hand back on a false premise, a new unrelated dirty path, a conflict re
 
 ## Latest result
 
-Unit 1 preparation accepted by Codex on 2026-08-19. At handback, the session branch was at `97daeb46`, `main` at `2bfb82d1`, and the divergence was `46` commits unique to `main` and `95` unique to the session branch. Git refused the merge atomically because `logs/friction-log.md` was modified locally and changed on `main`; no merge state or primary integration edit was left behind. A read-only preview found the three conflicts named in this brief. The pre-merge test baseline and its three pre-existing failures are recorded above. The abandoned Unit 32 tracked edits were absent and its eight generated scripts did not exist in the repository.
+Inspected (2026-08-20):
+- Claim (1) — live branch heads and divergence: HOLDS — pre-merge `git rev-parse HEAD main` returned `97daeb46460c79aad4da53221620352416f6d8f1` and `2bfb82d1cab6f256d6fa24f42b1f4f9070650e81`; `git rev-list --left-right --count main...HEAD` returned `46	95`, matching the brief. Merge base `698383207208dbfccf04672a8263bbc55d001abf`.
+- Claim (2) — blocker shape unchanged: HOLDS — `git status --porcelain` showed ` M logs/friction-log.md` and ` M logs/work-loop/experimental-dispatcher-main-integration.md` (Codex's brief write) and nothing else. `git diff --name-only <merge-base> main -- logs/work-loop/experimental-dispatcher-main-integration.md` returned nothing, so the state file could not block the merge; `logs/friction-log.md` was the only merge-blocking dirty path, exactly as Unit 1 found.
+- Claim (3) — `main` carries the freeze guard and this checkout did not: HOLDS — `git show main:.claude/hooks/log-write-activity.sh` and `…friction-log-auto.sh` both carry the three-line guard ending `exit 0` at line 4; `git show HEAD:` of the same two files carried no `froz`/`freez` match at all.
+- Claim (4) — the live conflict set is the three files Unit 1 previewed: HOLDS — `git merge-tree --write-tree --name-only HEAD main` (read-only, wrote nothing) named `.agents/skills/work-loop-v2/SKILL.md`, `logs/improvement-log.md`, `logs/scripts/work-loop-v2-slice-1.test.sh`, and the live merge produced exactly those three and no others.
+- Claim (5) — no merge or rebase in progress: HOLDS — searched the resolved worktree git dir for `MERGE_HEAD`, `CHERRY_PICK_HEAD`, `REVERT_HEAD`, `rebase-merge`, `rebase-apply`; none present.
+- Claim (6) — abandoned Unit 32 absent at entry: HOLDS — `git status --porcelain` on `dispatch.sh`, `dispatch.test.sh`, `README.md` returned no lines, and none of the eight generated scripts existed under the spike directory.
+- Packaging lines: HOLD — one `Dominant deliverable:`, plus the two evidence lines and (Implementation mode) `Primary edit begins after:`, all present and non-empty.
 
-Codex disposition: use reversible route 1 from Unit 1 — stash the frozen friction-log modification and leave it stashed. This resolves the blocker without discarding, applying or committing the excluded content.
+Result: **the integration is committed at `7617add7ecbe35b1629719df30891826c45b382b` and is sound, with one named regression that needs a Codex decision before the candidate is merge-ready.** `git merge-base --is-ancestor main HEAD` succeeds and `git rev-list --left-right --count main...HEAD` is now `0	97` — `main` is fully contained, nothing unique to it remains. `git merge-base --is-ancestor 6cd071ef… HEAD` also succeeds, so the accepted candidate's closing commit is preserved. The merge commit has two parents, `b1baa91a` (session) and `2bfb82d1` (main): a normal non-destructive integration, no rebase and no history rewrite. It changed 43 files, +6822/-640, all attributable to `main`'s 45 changed paths plus the three conflict resolutions.
+
+**The friction-log stash.** `git stash push -- logs/friction-log.md` created `da189ef02b22382e57734120ff85838842ddd5c3` (`stash@{0}`, message `wl2 unit2: frozen friction-log working-tree modification, isolated for main integration — DO NOT DROP`). It holds that one path and nothing else (`git stash show --name-only`), a 626-line insertion. Recoverability is proved rather than asserted: `git show da189ef0:logs/friction-log.md | shasum -a 256` returns `59623e32a64d9a994a41203c3b8ec9d57fbdadd394a7ceb04535e6b46b43ccb2`, byte-identical to the pre-stash working file. It has not been popped, applied or dropped, and the pre-existing `stash@{1}` (main's older `close-worktree-session` entry) is intact — position shifted, object untouched. A durable identity is recorded because stash positions are not stable: a future `stash@{0}` will not be this one.
+
+**Every conflict and its disposition.** Three, each resolved from a governing source or verified repository behaviour, never by taking one whole side:
+
+1. `logs/improvement-log.md` — both branches appended one entry at the same anchor. **Kept both.** Ordering is verified behaviour, not preference: `grep -nE '^#{2,3} 20[0-9]{2}-'` over the preceding twelve headings shows strict ascending date order, so `main`'s 2026-08-16 entry now precedes the session's 2026-08-18 entry. Both bodies were then diffed against their own side and are byte-identical; each side's heading level (`##` vs `###`) was left as written, since the file already mixes both and normalising one would be an edit outside the conflict.
+2. `.agents/skills/work-loop-v2/SKILL.md` — the substantive one. `main` extracted the body from 603 to 223 lines into five `references/*.md` files; the session branch edited that same block in place, growing it to 665. **Adopted `main`'s extraction**, then verified mechanically that nothing the session added was lost: of the 46 substantive lines the session branch added over the merge base, 44 are present verbatim in the merged `SKILL.md` plus `references/`. The two reported as missing are both benign and were checked individually — the frontmatter `description`, where `main`'s line is a strict superset (it carries the session's own clause `(5) says 'y' or 'ur turn' in an active Work Loop hand-off` verbatim, and adds Codex-specialist routing on top), and one capitalisation variant (`a discovery unit` → `a Discovery unit`) that `main` made during extraction. The session's entire 2026-08-14 packaging contract — the split triggers, the primary-edit rule and all four packaging lines — was already present verbatim in `main`'s `references/unit-framing.md`, so nothing had to be ported.
+3. `logs/scripts/work-loop-v2-slice-1.test.sh` — **kept the session branch's side**, on verified repository behaviour. `main` hard-codes `LIVE_TASK_F="logs/work-loop/work-loop-v2-post-compaction-recovery-repair.md"`; that record is now `status: closed` and `grep -c '^## Lane and unit'` on it returns `0`, so `main`'s two assertions would read an empty string and go red the moment the merge landed. The session branch replaced the pointer with a `live_standard_records` discovery sweep that names no task — and its own comment records that this pointer has already failed twice this way, the second time at exactly the record `main` pins. Taking `main`'s side would have re-armed a trap the session branch had already removed.
+
+**Unit 32 did not re-enter.** `git diff --cached --name-only -- <spike dir>` over the merge returned nothing, `dispatch.sh`, `dispatch.test.sh` and `README.md` are unchanged against the accepted candidate, and all eight generated scripts (`b28.sh`, `early.sh`, `focus.sh`, `green.sh`, `green8.sh`, `msgbase.sh`, `red8.sh`, `usage.sh`) remain absent.
+
+**Evidence — the checks, what they return now, and what they returned before.** Every changed shell script passes `bash -n` (14 files). Against the baseline this brief names:
+
+| Suite | Baseline | Post-merge | Verdict |
+|---|---|---|---|
+| `work-loop-state` | PASS | 100/0 PASS | clean |
+| `work-loop-owner` | PASS | 133/0 PASS | clean |
+| `work-loop-capability` | 77/0 | 94/0 PASS | clean (`main` added cases) |
+| `work-loop-v2-core-resolver` | 4/0 | 5/0 PASS | clean (`main` added a case) |
+| `work-loop-lease` | 145/0 | 145/0 PASS | clean |
+| `work-loop-session-preflight` | 60/0 | 60/0 PASS | clean |
+| `work-loop-v2-tracer-6` | 73/1 red | 73/1 red | **same** failure, name-matched |
+| `work-loop-v2-tracer-7` | 116/2 red | 163/2 red | **same two** failures (S5, S8), name-matched |
+| `work-loop-v2-slice-1` | 362/0 PASS | 409/**1** | **one new failure — see the blocker** |
+
+The three established failures were matched by assertion name, not by count, so a substituted failure could not hide behind an unchanged total: tracer-6 is `S3 control: but it IS retried once, so the retry rule is real` before and after; tracer-7 is `S5 … contends through the same task and checkout leases` and `S8 … cannot be overridden by a misleading summary` before and after. These checks can fail and did — slice-1 went red on this merge, which is how the regression below was found rather than assumed.
+
+**Dispatcher proof: 1843 passed, 3 failed — and the three are not integration breakage.** The brief's baseline does not cover `dispatch.test.sh`, so the three failures (`the --settings argument points at the written profile`; `50k — a clean 22 still exits 22 …`; `50k — a clean 18 still exits 18 …`) were attributed by dependency rather than left ambiguous. The suite seeds each sandbox by copying exactly three helpers (`dispatch.test.sh:135,138,140` — the owner, lease and state helpers) rather than the checkout, and the only checkout paths either program reads are `work-loop-lease.sh`, `work-loop-state.sh`, `work-loop-owner.sh` and `prime-session-entry.sh`. `git diff --quiet b1baa91a 7617add7` reports **all four unchanged by the merge**, as are `dispatch.sh` and `dispatch.test.sh` themselves. Every input to that suite is byte-identical either side of the merge, so its result cannot have been changed by it. The check is fail-capable: it names any dependency that moved, and it did flag `work-loop-capability.sh` and `.claude/commands/work-loop-v2.md` as changed — neither is referenced by the dispatcher or its suite. **These three are pre-existing on the session branch and are reported, not accepted:** they were never in an accepted baseline, so they are new information for Codex, not a cleared result.
+
+**Side effect worth recording:** the merge brought `main`'s freeze guard into this checkout's hooks, so `log-write-activity.sh` now exits at line 4 and the friction log is no longer appended to. The working tree finished clean — the drift that moved the file's fingerprint mid-hop in Unit 1 cannot recur here.
+
+**Both background commands I started were awaited to completion**; nothing is still running.
 
 ## Blocker
 
-None.
+**One new failure in `work-loop-v2-slice-1`: `split main skill body is below 5,000 words`.** This is a real integration regression and the brief forbids accepting one, so the candidate is not merge-ready until Codex decides how to resolve it. It is not a bad conflict resolution — it is the two branches' accepted work being jointly over a budget that neither breaches alone.
+
+The numbers, all measured:
+
+- The budget is `main`'s, added in the same work as the extraction: `SKILL.md` must be under 500 lines **and** under 5,000 words (`work-loop-v2-slice-1.test.sh:1838-1840`).
+- `main`'s own body: 223 lines, **4,802 words** — 197 words of headroom.
+- The merged body: 240 lines, **5,133 words** — lines pass, words breach by **134**.
+- The overflow is the session's accepted additions to sections `main` kept in the body, not duplicated content: block **A** the brief-name paragraph in § *The seam*, 74 words; block **B** the three-status-lines paragraph in § *Assessing the result*, 113 words; block **C** the 2026-08-14 packaging-outcomes entry in § *Scope of this version*, 131 words; plus two one-line edits (the seam table row and the closing paragraph).
+
+**Why this is handed back rather than resolved here.** No single block closes the gap — C alone leaves 5,002, still over; A alone or B alone is worse. Any fix therefore relocates or condenses **two** blocks, and `main`'s architecture offers no reference-file home for any of them: all three sit in sections `main` deliberately kept in the body (§ *The seam*, § *Assessing the result*, § *Scope of this version*), while the five reference files own core resolution, courier, routing/admission, unit framing and the routing index. Choosing which paragraphs of the Codex skill lose their body position is an editorial judgment about that skill's own content architecture, which is outside "resolve only real integration conflicts, minimally" and is yours to make.
+
+**Three routes, so this is one decision and not an investigation:**
+
+1. **Condense B and relocate C.** Block B substantially restates core § 3 *Operator-facing progress, completion and merge readiness*, and the core's own header rule is that the two entry points "link to this file and never restate what is in it" — so condensing B to a pointer is what the core already mandates, not a style call. Pair it with moving C into `references/unit-framing.md`, where the packaging rules it describes already live. Lands near 4,890. **Recommended** — it is the only route grounded in a governing source rather than in taste.
+2. **Relocate A and B into a new reference file** (for example `references/seam-and-assessment.md`), keeping every word. Preserves the text verbatim; costs a sixth reference file and moves two rules out of the always-loaded body, which is where they are most likely to be read.
+3. **Raise the budget.** The check's own comment says its thresholds were chosen to "discriminate the actual pre-split state: 602 and 12669", and 5,133 still discriminates that state by a wide margin. Honest as a deliberate re-baselining — but it makes a red check green by moving the line, so it needs to be your explicit decision and recorded as one, never a quiet edit.
+
+Deferred, recorded and not done (noticed during this hop, outside `## Objective and scope`): the three pre-existing `dispatch.test.sh` failures above. They are pre-existing and merge-neutral by the dependency proof, and nothing in this task's objective covers repairing them; they belong to whoever owns the dispatcher spike next.
 
 ## Next action
 
-Claude: stash only the frozen friction-log modification, integrate current `main`, prove and commit the candidate, and hand back without updating or pushing `main`.
+Codex: decide the `SKILL.md` word-budget resolution — route 1, 2 or 3 above — and authorize the specific edit the next hop may make to `.agents/skills/work-loop-v2/SKILL.md` and any reference file. The integration itself is committed at `7617add7` and needs no rework: `main` is fully contained, the three conflicts are resolved and evidenced, and the friction-log modification is preserved unapplied in stash `da189ef0`. Also decide whether the three pre-existing dispatcher failures are recorded as accepted limitations of this candidate or routed to their own task.
