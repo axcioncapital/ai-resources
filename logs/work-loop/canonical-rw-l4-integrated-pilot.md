@@ -24,7 +24,7 @@ evidence retrieval, generic rollout, push, merge, deployment, and automatic foun
 
 ## Lane and unit
 
-Standard. Implementation mode. Unit 21 — produce the precision-components successor proposal.
+Standard. Implementation mode. Unit 22 — independently challenge the precision-components proposal.
 
 Named reason for the loop: the task spans a manual cross-repository integration, a genuine operating
 case and an operator-owned founder gate; its scope must stay bounded, and the result must be assessed
@@ -35,188 +35,181 @@ independently of the executor before it counts as the plan's terminal proof.
 Inspected (2026-08-20):
 
 - Claim (1): HOLDS — integration `git rev-parse HEAD` returns
-  `7b1ac0e88412cae0066245b2445fcedc944bfa27`, the accepted Unit 20 commit. Consumer is on
-  `trial/l1-repeat-precision-components` at `a880495ba98cc76c61d4b69b340e520b11fce7f9`, the accepted
-  transition commit, and `git status --porcelain` returned empty before producing.
-- Claim (2): HOLDS — searched both exact surfaces. `ls -A
-  analysis/judgment/precision-components/` returned `superseded` and nothing else, and a glob for
-  `*-proposed.md`, `*-review*.md` and `*-approved.md` at that base returned no match. `ls -A
-  .../superseded/2026-08-18/` returned all five preserved files. Not inferred from the Unit 20 report.
-- Claim (3): HOLDS — `.claude/commands/run-analysis.md:81` still routes "Branch C — neither form
-  exists → resolve the planning inputs, then dispatch the producer once", and `:90` still requires
-  exactly one `general-purpose` sub-agent at `model: opus`. No auto-approval exists on that path:
-  `:42` makes the gap halt unconditional, `:124`–`:207` make the independent challenge and the
-  operator decision both non-optional, and `:244` shows `promote-judgment-brief.sh` re-runs the
-  challenge gate itself and refuses on exit 11. The producer still binds
-  `reference/unit-judgment-brief.template.md` (`:95`) and writes only the active-base proposed path
-  (`:110`).
-- Claim (4): HOLDS — the permitted surfaces all exist for this unit: six `*-memo-refined.md`, six
-  permission tables, `precision-components-gate-clearance.md` (verdict `OPERATOR-OVERRIDE` from
-  `BLOCKED` on C4, with three `caveats:`), the gap assessment, country-parity and source-conflict log.
-  No scarcity register exists, which the contract admits ("where it exists"). Planning inputs resolve
-  to exactly one file each: `preparation/task-plans/precision-components-task-plan-v1.md` and
-  `preparation/research-plans/precision-components-research-plan-v1.md` — no ambiguity, so no halt.
-  Canonical `Q#-C##` claim IDs are present across the memos, permission tables and the eleven
-  `execution/research-extracts/precision-components/` extracts, so the proposal is supportable from
-  existing evidence with no new retrieval.
+  `f4066541457004dd9a6f2edd2c5f32319a3ae5fd`, the accepted Unit 21 commit. Consumer is on
+  `trial/l1-repeat-precision-components` at `c4e432c4713e329dd2bcc7d83ce440ba4f6578fc`, and
+  `git status --porcelain` in the consumer returned empty before any work. The integration checkout
+  carried only the unrelated `logs/innovation-registry.md` edit and Codex's uncommitted Unit 22 brief
+  in this task file — both expected, neither a repair.
+- Claim (2): HOLDS — `ls -A analysis/judgment/precision-components/` returned exactly
+  `precision-components-unit-judgment-brief-proposed.md` and `superseded`; a glob for `*-review*.md`
+  and `*-approved.md` at that base returned no match; `ls -A .../superseded/2026-08-18/` returned all
+  five preserved legacy files. The installed gate
+  `check-judgment-challenge.sh …-proposed.md --shape-only` returned **exit 3 `NO-CHALLENGE`** before
+  dispatch — the required fail-capable pre-state.
+- Claim (3): HOLDS — `--print-sha` and an independent `shasum -a 256` both returned
+  `ccae0b8c555ccf4e16156231564669bf28b7c153b33a0293475ed96f89dd6d8f`, matching Unit 21.
+  `check-judgment-contract.sh …--allow-proposed` returned exit 0 `verdict: VALID` (5 theses, 31
+  distinct claim IDs, 1070 words, over-target warning only). The same hash re-measured after the
+  review was written is byte-identical, so the proposal was not touched.
+- Claim (4): HOLDS — the live decision set resolved from `logs/decisions.md` by reading every
+  `**Decision …**` entry, not from a shortlist. Seventeen are in force for `precision-components`:
+  unit selection/boundary/lens **6, 10, 13, 14, 19, 21**; evidence permission and structural limits
+  **5, 11, 12, 15**; gate clearance **20**; Stage-4 freeze and judgment-authority succession
+  **22, 26, 35**; project-level policy **B3-29, B3-30**; plus **B3-28**, screened for continuity with
+  the superseded rounds and judged by the reviewer as not bearing on this unit. No conflict among
+  them, so no halt. `logs/decisions.md` carries no `Decision 34` entry — the known bookkeeping
+  deferral, excluded from the reviewer's scope by instruction.
 
-Result: one structurally valid, evidence-traceable current-contract successor proposal now exists at
-the freed installed base, committed in the consumer at
-`c4e432c4713e329dd2bcc7d83ce440ba4f6578fc`; this handback is the integration commit. It was produced
-through the installed `/run-analysis` Step 3a Branch C path — one `general-purpose` sub-agent pinned
-to `model: opus`, briefed with the four visibly separate blocks (standard, shape, evidence bundle,
-Axcíon context) and the mandated wording *context affects relevance, never evidence grade*. The
-producer was instructed not to open the `superseded/2026-08-18/` set at all, so no frontmatter
-conversion or resurrection was mechanically possible; it confirmed it read none of those files and ran
-no git command. Nothing was challenged, revised, approved, rejected, promoted or used downstream.
+Result: the mandatory round-1 independent challenge now exists at
+`analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`,
+committed in the consumer at `099e14e3e0da83a82e9666f91450474c65f17d2e`; this handback is the
+integration commit. It was produced through installed `/run-analysis` Step 3b.1 by exactly one
+fresh-context `general-purpose` sub-agent pinned to `model: opus`, which is not the Unit 21 producer,
+was passed the five separate blocks (standard + shape; evidence bundle; Axcíon context bundle; the
+resolved decision set; the artifact and its binding hash) with the mandated wording *context affects
+relevance, never evidence grade*, and was told to run no git command and edit nothing but the one
+review file. No archive step was needed: this is round 1 at a base whose legacy rounds live under
+`superseded/2026-08-18/` and are outside the gate's round chain.
 
-Before/after active-base inventory: `superseded/` only → `superseded/` plus exactly one
-`precision-components-unit-judgment-brief-proposed.md`. Producer path used:
-`.claude/commands/run-analysis.md` Step 3a Branch C; template
-`reference/unit-judgment-brief.template.md`; standard `reference/analyst-judgment-standard.md`.
+**The ledger — 5 required-change findings, all `disposition: PENDING`:** **F1** `permission-breach`
+(Thesis 1's heading classifies 4/4 buyers as strategic; `Q7-C04` permits three and records Tenuro as
+a compounder at PE status `NO-EVIDENCE` with an explicit "do not classify as PE"); **F2**
+`traceability` ("founder rollover" cited to `Q6-C11`, which does not contain it — it is the uncited
+`Q6-C12`, which carries its own `NO-EVIDENCE` rollover-percentage caveat); **F3** `permission-breach`
+(the Provisional verdict's "the operating model **fits** the asset class" is a fit verdict barred by
+`Q6-C16`, `Q6-C14`'s Notes and gap G15's "inputs, not a fit verdict" — Thesis 2 carries the
+limitation, the verdict drops it); **F4** `permission-ceiling-unresolved` (Thesis 5's "firm regulatory
+line" rests on `C1-claim-03`, which carries a live `[C-CEILING-EXCEEDED — operator review]` flag still
+open as checkpoint item CC-1, dropped entirely by the brief); **F5** `generalization` (plural
+"sellers showing a preference for industrial continuity" from the single attested seller `Q7-C08`).
+Observations requiring no change are under a separate `## Observations` heading and use no `finding:`
+grammar — `grep -c '^finding:'` over the whole review returns exactly 5.
+
+**Per-thesis permission conclusions, all five stated explicitly.** T1 — citations resolve, use **not
+fully permitted** (F1, F5). T2 — resolve, permitted, one mis-cite (F2). T3 — resolve, **permitted**;
+`Q10-C13`'s opacity≠illiquidity guard reproduced exactly and Decision 11 screened clean. T4 —
+resolve, **permitted**; `Q10-C07` carries both disqualifiers in-sentence. T5 — **inspected by hand,
+not via the validator**, per the Unit 21 defect: it *is* cited, six IDs (`Q2-C05`, `Q2-C07`,
+`Q1-C17`, `Q1-C18`, `Q1-C11`, `Q1-C10`), all resolving, so the heading-absorption defect hid nothing
+here; use not fully permitted (F4). All 31 distinct claim IDs exist and none is fabricated; three do
+not say what the citing sentence says (F1, F2, F5). Axcíon-context separation is clean — no Block-4
+material doing evidentiary work.
+
+**Length conclusion: NOT a required change.** 1,070 against the 500–800 band is a validator warning,
+not a gate. Compression would cost load-bearing countercases, the disconfirmation caveat or a change
+condition, and three of the five findings are fixed by *adding* a qualifier, so a revised brief gets
+slightly longer. It is recorded as an observation, deliberately outside the required-change ledger.
 
 Evidence:
 
-- **Installed structural validation, run independently of the producer.**
-  `check-judgment-contract.sh …-proposed.md --allow-proposed` → **exit 0 `verdict: VALID`**,
-  "proposed Unit Judgment Brief for unit 'precision-components', 5 theses, 31 distinct claim IDs,
-  1070 words — structurally sound, and NOT downstream authority". Frontmatter carries
-  `unit: precision-components` and `status: proposed`; a `^section:` grep returns 0 matches, so it is
-  on the canonical contract, not the legacy one. The 1070-word length is a reported warning, which
-  both the template and the script define as a target and never a gate.
-- **That validation can fail.** Four scratchpad fixtures, byte copies of the proposal with one
-  property changed each, were refused: adding a `section:` key beside `unit:` → **exit 6 STRUCTURE**
-  "frontmatter carries both 'unit:' and 'section:'"; moving one claim ID onto the `Context:` line →
-  **exit 6 STRUCTURE** "a 'Context:' statement cites a claim ID (body line 14)"; removing every
-  countercase lead-in → **exit 6 STRUCTURE** "records no countercase, limitation or alternative
-  reading"; stripping the claim IDs from Thesis 3 → **exit 6 STRUCTURE** "thesis 3 cites no claim ID".
-  Fixtures were written only to the session scratchpad, never into either repository.
-- **Thesis-to-evidence map, every ID verified against the repository, not against the producer's
-  report.** All 31 distinct cited IDs were extracted from the file and each was traced by search to a
-  permitted surface; **0 were untraceable**, so none is fabricated. T1 (consolidation is trade-owned)
-  — `[Q7-C04] [Q5-C08] [Q3-C11] [Q7-C08] [Q7-C01]`, countercase `[Q7-C05]`. T2 (the model runs one
-  border away, unverified at Axcíon's size) — `[Q6-C14] [Q6-C09] [Q6-C11] [Q6-C17] [Q6-C13]
-  [Q7-C17]`, limitation `[Q6-C16]`. T3 (supply base supports origination, not underwriting) —
-  `[Q4-C37] [Q4-C39] [Q4-C15] [Q4-C19] [Q10-C11] [Q10-C13]`. T4 (execution risk bounded and dated) —
-  `[Q11-C01] [Q11-C09] [Q11-C21] [Q10-C07]`, alternative reading `[Q10-C05] [Q10-C06]`. T5 (the
-  include-line is an Axcíon construction) — `[Q2-C05] [Q2-C07] [Q1-C17] [Q1-C18] [Q1-C11] [Q1-C10]`.
-  Provisional verdict cites `[Q7-C04] [Q5-C08] [Q7-C01] [Q6-C09] [Q7-C05] [Q7-C17]`.
-- **Permission classes were honoured, and the caveats travelled.** The verdict is *Selective, leaning
-  Avoid* with the size-lens named as genuinely unresolved and the decision it blocks stated — the
-  evidenced negative/thin C4 read Decision 20 requires, not a positive PE thesis. The
-  `[GENERALIZATION-CAPPED]` claims `[Q1-C17] [Q1-C18]` are written as "two attested cases, not a
-  population finding". `disconfirmation_tested: false` is carried explicitly in the verdict. The
-  `-3% YoY` laggard figure is cited nowhere. Defence/dual-use appears only as the regulatory line that
-  makes Decision 14's exclusion drawable.
-- **The proposed state is still non-authoritative.** Deep gate at the approved path → **exit 3
-  MISSING**. Standard adapter → **exit 1 `authority: UNAVAILABLE`**, `contract-exit: 3`. The same
-  validator run on the proposal *without* `--allow-proposed` → **exit 4 NOT-APPROVED**, "must clear
-  the independent challenge and be re-issued as 'approved'". `promote-judgment-brief.sh` against the
-  proposal with a non-approving reply → **exit 4 NOT-AN-APPROVAL**, nothing written.
-- **No review, approval or downstream output exists.** `ls -A` at the active base returns exactly the
-  one proposed file plus `superseded/`. No `-review*.md`, no `-approved.md`, no directive, chapter or
-  prose artifact was created.
-- **Scope.** Consumer `git status --porcelain` before commit showed exactly one `??` entry — the
-  proposed artifact — and is empty after; the staged set was that one path. No script, command,
-  template, evidence file, decision history or `custom-dev-data-ai` file was touched. The unrelated
-  `logs/innovation-registry.md` edit in the integration checkout is left uncommitted and unmodified.
+- **The gate moved, and it can fail.** Before: `--shape-only` → **exit 3 `NO-CHALLENGE`**. After:
+  `--shape-only` → **exit 0 `SHAPE-OK`**, "round 1, bound to the current proposal, structurally
+  sound, and carries 5 required-change finding(s) with 5 still to be disposed of — shape only, NOT a
+  clearance to promote". The unflagged gate returns **exit 6 `UNRESOLVED-FINDING`**, refusing
+  promotion while all five sit `PENDING` — so the new artifact is a genuine barrier, not a rubber
+  stamp. The binding is enforced, not promised: `reviews_sha256` equals the gate's own `--print-sha`
+  output, and any later revision of the proposal breaks it into `STALE-CHALLENGE`.
+- **Downstream authority still does not exist, from both routes.** Deep route:
+  `check-judgment-contract.sh …-approved.md` → **exit 3 `verdict: MISSING`**. Standard adapter:
+  `research-route-judgment-authority.sh --unit precision-components --base … --root .` →
+  **exit 1**, `authority: UNAVAILABLE`, `contract-exit: 3`, `escalate: deep`. Promotion:
+  `promote-judgment-brief.sh …-proposed.md` → **exit 4 `NOT-AN-APPROVAL`**, "approval is never
+  inferred from silence". `ls …/*-approved.md` returns no match.
+- **Nothing but the review changed.** Consumer `git status --porcelain` before the commit showed the
+  single line `?? …-unit-judgment-brief-review.md` and nothing else; after the commit it is empty.
+  Active base is now proposal + review + `superseded/`. The proposal hash is unchanged, and
+  `check-judgment-contract.sh --allow-proposed` still returns exit 0.
 
-Carried deferrals: the missing `Decision 34` entry remains a closure deferral; Unit 17's absence of a
-local suite record must not be read as absence of execution, since Unit 16 records 238/0 consumer-root
-and 213/0 integration-root assertions.
-
-Noticed and not done — **a real defect in the installed validator, worth Codex's attention.**
-Separation 1 splits the body at each `### Thesis ` heading but never terminates the final block at the
-next `## ` heading, so the last thesis's block absorbs `## Provisional verdict` and `## What would
-change the view`. A fixture stripping every claim ID from Thesis 5 therefore **passed at exit 0**,
-while the identical strip on Thesis 3 correctly failed at exit 6. The last thesis in any brief is
-effectively unchecked by the rule whenever the verdict below it cites an ID. This proposal is not
-affected — Thesis 5 genuinely cites six traced IDs — but the check is weaker than its own comment
-claims. Not fixed here: this unit forbids script changes, and the fix belongs in the canonical
-`check-judgment-contract.sh` with its regression suite, not in an installed copy.
+Deferrals recorded, not done: fixing the canonical final-thesis validator defect stays outside the
+live judgment path (Unit 21's accepted limitation) — this unit mitigated it by hand-inspecting Thesis
+5 and did not touch the validator. The missing `Decision 34` entry remains a closure deferral. Unit
+17's absence of a local suite record must not be read as absence of execution — Unit 16 records 238/0
+consumer-root and 213/0 integration-root assertions. Noticed and not implemented in this unit: the
+`decisions_checked:` set here is wider than the superseded rounds' (17 ids vs 10–13), because those
+rounds ran under the legacy contract before Decisions 22/26/35 and the project-level B3-29/B3-30 were
+in force for this base; whether that wider set should be recorded somewhere durable, rather than
+re-derived per round, is a candidate deferral for Codex.
 
 ## Brief
 
-L4 now has one empty installed authority slot and an explicit durable supersession decision. The next
-smallest observable result is one genuine current-contract proposal generated from the existing
-`precision-components` evidence; independent challenge, founder judgment and downstream use remain
-separate gates so no content becomes authority in this unit.
+The L4 case now has one evidence-traceable but non-authoritative successor proposal. The approved
+workflow requires a fresh-context challenge before the operator sees it, so this unit creates only the
+mandatory review ledger and stops; revision, disposition and founder approval or rejection remain
+later gates.
 
-**Required outcome.** Use the bound consumer's installed `/run-analysis precision-components` Stage
-3a producer path and canonical `reference/unit-judgment-brief.template.md` contract to create exactly
-one proposed artifact at
+**Required outcome.** Execute the installed `.claude/commands/run-analysis.md` Step 3b.1 independent
+challenge against
 `analysis/judgment/precision-components/precision-components-unit-judgment-brief-proposed.md`.
-It must carry the current-contract `unit: precision-components` identity and `status: proposed`, draw
-only on the consumer's existing `precision-components` evidence, and preserve the contract's required
-separation of evidence, interpretation and Axcíon context. Stop immediately after the producer and its
-installed structural/content-permission validation complete; do not challenge, revise, approve,
-reject, promote or use the proposal downstream.
+Use exactly one fresh-context reviewer that is not the producer, pass the canonical analyst-judgment
+standard, the same permitted evidence and Axcíon-context bundles, all permission tables, and every
+dated operator decision in force for this unit. Create exactly one current round-1 review ledger at
+`analysis/judgment/precision-components/precision-components-unit-judgment-brief-review.md`, bind it
+to the proposal bytes, validate its shape, and stop without editing the proposal or presenting an
+approval as completed.
 
 **Governing authority and method ownership.** The approved plan at material commit
-`8bf9d0d96ca7796621035e3f83b50c9dfc8055ec` requires one genuine independently reviewed proposal
-before the operator-owned founder decision. Decision 35 and accepted Unit 20 bind the active base,
-supersession and bounded Stage-4 scope. The installed Sector Intelligence `/run-analysis` Stage 3a
-and its judgment producer own the production method; this Work Loop unit only supplies orientation,
-scope and progression and adds no second producer review or state system. The preserved legacy files
-are non-governing evidence history and must not be copied forward as the successor proposal merely
-because their content exists.
+`8bf9d0d96ca7796621035e3f83b50c9dfc8055ec` requires independent semantic review before the
+operator-owned founder gate. Decision 35 and accepted Units 20–21 bind the active path, evidence
+boundary and non-authoritative proposal status. Installed `/run-analysis` Step 3b.1 and
+`check-judgment-challenge.sh` own the challenge method and ledger grammar; this unit adds no second
+review. The reviewer produces findings only, approves nothing and edits nothing except the one review
+artifact.
 
-**Verify before producing:**
+**Verify before challenge:**
 
-1. Confirm the integration task is at accepted Unit 20 commit
-   `7b1ac0e88412cae0066245b2445fcedc944bfa27`, the consumer is on
-   `trial/l1-repeat-precision-components` at accepted transition commit
-   `a880495ba98cc76c61d4b69b340e520b11fce7f9`, and the consumer working tree is clean. A mismatch is
-   a handback, not something to repair.
-2. Confirm the active base has no `-proposed.md`, `-review*.md` or `-approved.md` lifecycle file and
-   that all five preserved legacy files remain under `superseded/2026-08-18/`. Search those two exact
-   surfaces; do not infer absence from the Unit 20 report.
-3. Confirm `.claude/commands/run-analysis.md` still takes Branch C when no lifecycle artifact exists,
-   invokes the installed producer once, and does not authorize automatic approval. Confirm the
-   producer still binds `reference/unit-judgment-brief.template.md` and the active-base proposed path.
-4. Identify the exact existing `precision-components` evidence surfaces the producer contract permits
-   and show that each evidence-bearing thesis or claim in the proposal traces to those sources. No
-   network or new retrieval is authorized; if the required proposal cannot be supported from existing
-   evidence, stop with the exact missing support rather than filling it by inference.
+1. Confirm the integration task is at accepted Unit 21 commit
+   `f4066541457004dd9a6f2edd2c5f32319a3ae5fd`, the consumer is on
+   `trial/l1-repeat-precision-components` at `c4e432c4713e329dd2bcc7d83ce440ba4f6578fc`, and the
+   consumer working tree is clean. A mismatch is a handback, not something to repair.
+2. Confirm the active base contains exactly the proposed artifact plus the preserved `superseded/`
+   subtree, with no current `-review*.md` or `-approved.md`. Run the installed challenge gate
+   `--shape-only` against the proposal and require exit 3 `NO-CHALLENGE` before dispatch; any other
+   result stops the unit.
+3. Confirm the proposal checksum and structural validity still match Unit 21, then keep those bytes
+   unchanged through the unit. The review's `reviews_sha256` must equal the installed gate's
+   `--print-sha` result for those exact bytes.
+4. Resolve every dated operator decision in force for `precision-components` from the consumer's
+   decision surfaces and require the review's `decisions_checked:` field to name them. Do not use a
+   guessed shortlist or `none`; if the live authorities cannot be resolved without conflict, stop.
 
-**Content and authority constraints.** Produce a fresh current-contract House View proposal for the
-same analytical unit, not a frontmatter conversion or verbatim resurrection of the legacy approval.
-Existing legacy judgments may be considered historical context only where the installed producer
-permits it, never cited as evidence or treated as operator-approved successor content. Every thesis,
-confidence statement, countercase and invalidation condition must be grounded and traceable under the
-canonical contract. `status: proposed` is mandatory and must remain non-authoritative to both the deep
-gate and Standard adapter.
+**Challenge requirements.** Apply the installed standard to evidence permission, traceability,
+countercases, confidence, invalidation conditions, Axcíon-context separation, commercial usefulness
+and conflicts with unrevoked decisions. Manually inspect all five thesis citation blocks, especially
+Thesis 5, because Unit 21 proved the automated final-thesis check is incomplete; this is current-case
+mitigation, not a validator fix. Explicitly judge whether the 1,070-word proposal can be compressed
+toward the 500–800 target without losing necessary evidence, countercases, caveats or commercial
+meaning: make it a required-change finding only if change is genuinely needed. Record every required
+change with stable finding id, exact tags, `disposition: PENDING` and a reason; otherwise write the
+literal `findings: none`. Observations that require no change stay outside the required-change ledger.
 
-Dominant deliverable: one structurally valid, evidence-traceable current-contract successor proposal
-at the freed installed base.
-Evidence required in this hop: the consumer and integration commit hashes; before/after active-base
-inventories; the exact installed producer/template path used; a concise mapping from each proposed
-thesis to its existing evidence IDs/sources; installed structural and content-permission validation
-that can fail and passes for the proposal; downstream gate/adapter evidence that the proposed state is
-still non-authoritative; scoped diff/status proving only the single proposed artifact and this task
-handback changed; and explicit confirmation that no review, approval or downstream output exists.
-Evidence explicitly deferred: independent judgment challenge, founder revision/approval/rejection,
-promotion, downstream analysis/prose, independent content QC, full regression suites, representative
-route proof and burden comparison. The missing Decision 34 record remains a closure deferral.
-Primary edit begins after: accepted Unit 20's fail-capable before-state at commits
-`7b1ac0e88412cae0066245b2445fcedc944bfa27` / `a880495ba98cc76c61d4b69b340e520b11fce7f9`,
-where the active base is empty and both consumers fail closed; revalidate the four premises above but
-do not rerun the broader transition proof.
+Dominant deliverable: one fresh-context, proposal-bound independent challenge ledger for round 1.
+Evidence required in this hop: consumer and integration commit hashes; proposal checksum before/after;
+the pre-challenge exit 3 NO-CHALLENGE and post-challenge `--shape-only` result; reviewer independence
+and exact inputs; complete `decisions_checked:` coverage; the required-change ledger and tags or
+literal `findings: none`; explicit review conclusions on all five thesis permissions and on the length
+target; full gate status after the review; downstream gate/adapter evidence that no authority exists;
+and scoped diff/status proving only the review artifact and this task handback changed.
+Evidence explicitly deferred: proposal revision or finding disposition, founder
+revision/approval/rejection, promotion, downstream analysis/prose, independent content QC, the
+canonical final-thesis validator fix, full regression suites, representative route proof and burden
+comparison. The missing Decision 34 record remains a closure deferral.
+Primary edit begins after: the installed challenge gate returns exit 3 NO-CHALLENGE against the exact
+accepted Unit 21 proposal; that fail-capable result establishes the missing mandatory review.
 
-Capability subset: baseline only — read/search the named consumer evidence and installed workflow,
-run targeted local validation, create only the active-base proposed artifact, update this task state,
-and make local commits in the two bound repositories. Pass the full baseline deny set if carried.
-Nothing is selected from the empty pre-authorizable set. No network, new retrieval, push, merge,
-deployment, credentials, destructive shared-state operation or other operator-reserved capability is
-needed.
+Capability subset: baseline only — read/search the named proposal, evidence, context, decisions and
+installed challenge workflow; run targeted local validation; create only the active-base round-1
+review artifact; update this task state; and make local commits in the two bound repositories. Pass
+the full baseline deny set if carried. Nothing is selected from the empty pre-authorizable set. No
+network, new retrieval, proposal edit, push, merge, deployment, credentials, destructive shared-state
+operation or other operator-reserved capability is needed.
 
-**Completion and stop.** On success, commit only the proposed artifact in the consumer, then write the
+**Completion and stop.** On success, commit only the review artifact in the consumer, then write the
 exact result and evidence into `## Latest result`, set `status: active` and `turn: codex`, and commit
 only this task-state handback in the integration checkout while preserving the unrelated
-`logs/innovation-registry.md` edit. Stop and hand back on a false premise, insufficient existing
-evidence, a producer/template contract conflict, any attempt to overwrite preserved history, any need
-for new retrieval or script changes, or any path that would auto-approve, promote or continue beyond
-the proposal.
+`logs/innovation-registry.md` edit. Stop and hand back on a false premise, stale or malformed proposal,
+unresolvable decision set, missing independence, challenge-gate result other than the specified
+pre/post states, any attempted proposal revision, or any path that approves, promotes or proceeds
+downstream.
 
 ## Blocker
 
@@ -224,10 +217,14 @@ None.
 
 ## Next action
 
-Codex: assess Unit 21. One structurally valid, fully traced current-contract proposal exists at the
-freed base, committed at `c4e432c4713e329dd2bcc7d83ce440ba4f6578fc`, still non-authoritative on both
-routes, with nothing challenged or approved. Decide whether that satisfies the unit and open the next
-one — the installed Step 3b independent challenge is the expected next step, and the founder
-revise/approve/reject decision after it stays operator-owned. Two items need a Codex call: whether the
-validator's unchecked-last-thesis defect recorded above is a deferral or its own unit, and whether the
-proposal's 1070 words against the 500–800 target is accepted as written.
+Codex: assess Unit 22. Judge whether the round-1 challenge ledger satisfies the unit's completion
+condition — one fresh-context, proposal-bound, shape-valid review that raises findings and approves
+nothing — and whether five PENDING required-change findings (two `permission-breach`, one
+`traceability`, one `permission-ceiling-unresolved`, one `generalization`) is the correct place for
+this task to stand before the operator sees anything. Then decide progression: the workflow's next
+gates are proposal revision, finding disposition and the operator-owned founder decision, and Codex
+owns which of those opens next and in what order. Note for that decision that F4 names an operator-
+review ceiling flag (`C1-claim-03`, checkpoint item CC-1) that no screened decision resolves, so it
+may not be resolvable by revision alone. Also rule on the candidate deferral recorded above: whether
+the resolved 17-id `decisions_checked:` set should be recorded durably rather than re-derived each
+round.
