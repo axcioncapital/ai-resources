@@ -135,6 +135,16 @@ valid_brief "$TMP/barethesis.md"
 perl -0pi -e 's/(### Thesis 2 .*?)\[Q1-C11\]/$1/s' "$TMP/barethesis.md"
 expect 'V11 a thesis with no claim ID is refused (document-wide count would miss it)' 6 "$TMP/barethesis.md"
 
+# --- V11b separation 1: the FINAL thesis may not borrow later citations ------
+# V11 mutates a middle thesis, so the next '### Thesis ' heading closes its
+# block. The last thesis has no such heading after it: unless the block also
+# closes at the next level-two section, it runs on through
+# '## Provisional verdict' and picks up the citation living there. Five theses
+# with an uncited Thesis 5 and a cited verdict is exactly that position.
+valid_brief "$TMP/barefinal.md"
+perl -0pi -e 's/(?=^## Provisional verdict)/### Thesis 4 — pricing discipline is holding\n\nBid spreads narrowed across the same window [Q2-A03], which leaves little room for an\nopportunistic entry at the current level.\n\n### Thesis 5 — the exit route is untested\n\nNo participant in this set has completed a full exit cycle, so the assumed route out\nrests on nothing that has been observed.\n\n/ms' "$TMP/barefinal.md"
+expect 'V11b an uncited final thesis is refused (it must not borrow the verdict citation)' 6 "$TMP/barefinal.md"
+
 # --- V12 separation 2: context may not carry evidence -----------------------
 valid_brief "$TMP/ctxev.md"
 sed -i.bak 's/^Context: this bears on.*$/Context: this bears on the current priority [Q1-C05]./' "$TMP/ctxev.md"

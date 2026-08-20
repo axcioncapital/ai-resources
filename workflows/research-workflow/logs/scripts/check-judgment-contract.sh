@@ -185,6 +185,11 @@ fi
 # block. Done per thesis rather than document-wide on purpose: a brief where one
 # well-cited thesis carries two uncited ones passes any document-wide count while
 # containing exactly the failure this rule exists to catch.
+#
+# A block ends at the next thesis OR the next level-two section, and the second
+# half is load-bearing: the final thesis has no thesis heading after it, so
+# without it that block runs on into '## Provisional verdict' and borrows the
+# citation living there — an uncited last thesis passing on the verdict's evidence.
 BARE_THESIS="$(printf '%s\n' "$BODY" | awk -v re="$AWK_CLAIM_RE" '
   function close_block() {
     if (n > 0 && !hit) bad = bad (bad ? "; " : "") label
@@ -197,6 +202,7 @@ BARE_THESIS="$(printf '%s\n' "$BODY" | awk -v re="$AWK_CLAIM_RE" '
     sub(/ [—-].*$/, "", label)
     next
   }
+  /^## / { close_block(); n = 0; next }
   n > 0 && $0 ~ re { hit = 1 }
   END { close_block(); print bad }
 ')"
