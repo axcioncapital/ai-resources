@@ -212,7 +212,14 @@ fi
 
 # ------------------------------------------ 6. separation 2: context is not evidence
 # A `Context:` lead-in carrying a claim ID is evidence wearing a context label.
-CTX_EVIDENCE="$(printf '%s\n' "$BODY" | grep -nE "^[[:space:]]*Context:.*$CLAIM_ID_RE" | cut -d: -f1 | tr '\n' ' ')"
+#
+# The lead-in must be recognised through ordinary markdown decoration. Anchoring
+# on leading whitespace alone matched only the bare form, so `- Context: … [Q1-C05]`,
+# `**Context:**` and `> Context:` all passed as VALID — this rule failing open on
+# the exact move it exists to catch. Allow any run of bullet, blockquote or
+# ordered-list markers, then optional emphasis, before the word itself.
+CTX_LEAD='^[[:space:]]*([-*+>][[:space:]]*|[0-9]+[.)][[:space:]]*)*[*_]{0,2}Context:'
+CTX_EVIDENCE="$(printf '%s\n' "$BODY" | grep -nE "$CTX_LEAD.*$CLAIM_ID_RE" | cut -d: -f1 | tr '\n' ' ')"
 if [ -n "$CTX_EVIDENCE" ]; then
   verdict STRUCTURE 6 "a 'Context:' statement cites a claim ID (body line(s): ${CTX_EVIDENCE% }) — Axcíon context may shape relevance and framing, never serve as evidence; move the citation into the thesis it supports"
 fi

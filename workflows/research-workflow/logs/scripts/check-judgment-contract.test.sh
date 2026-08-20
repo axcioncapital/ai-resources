@@ -150,6 +150,16 @@ valid_brief "$TMP/ctxev.md"
 sed -i.bak 's/^Context: this bears on.*$/Context: this bears on the current priority [Q1-C05]./' "$TMP/ctxev.md"
 expect 'V12 a Context: line citing a claim ID is refused' 6 "$TMP/ctxev.md"
 
+# --- V12b separation 2: markdown decoration must not defeat the rule ----------
+# V12 mutates a bare `Context:` line, so it only ever exercised the undecorated
+# form. Real briefs decorate that lead-in — a bullet, bold, a blockquote marker —
+# and a rule anchored on whitespace alone let `- **Context:** … [Q1-C05]` through
+# as VALID. That is the precise move this separation exists to catch, wearing
+# list syntax, and it failed open rather than closed.
+valid_brief "$TMP/ctxbullet.md"
+sed -i.bak 's/^Context: this bears on.*$/- **Context:** this bears on the current priority [Q1-C05]./' "$TMP/ctxbullet.md"
+expect 'V12b a decorated Context: line citing a claim ID is refused' 6 "$TMP/ctxbullet.md"
+
 # --- V13 separation 3: the verdict rests on evidence ------------------------
 valid_brief "$TMP/bareverdict.md"
 perl -0pi -e 's/(## Provisional verdict.*?)\[Q1-C05\]/$1/s' "$TMP/bareverdict.md"
