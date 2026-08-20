@@ -1,7 +1,7 @@
 ---
 name: execution-manifest-creator
 description: >
-  Turn a section's approved Answer Specs and Research Plan into an operator-
+  Turns a section's approved Answer Specs and Research Plan into an operator-
   approved Execution Manifest. Classifies each question by execution role and
   search mode, checks the project-configured evidence executor against required
   capabilities, keeps supplementary leads separate from evidence of record,

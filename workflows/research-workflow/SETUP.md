@@ -217,7 +217,7 @@ If either fails, check:
 | `{{DOMAIN}}` | CLAUDE.md § Project Config, reference/style-guide.md | Config 7 — parameterizes jargon-gloss whitelist |
 | `{{VERIFICATION_POSTURE}}` | CLAUDE.md § Project Config | Config 8 — `per-claim-cited` \| `lighter-than-formal` \| `interpretive-only` |
 | `{{SOURCE_AVAILABILITY}}` | CLAUDE.md § Project Config | Config 9 — `public-only` \| `mixed` \| `paid-databases-allowed` |
-| `{{RESEARCH_AREA_PHRASE}}` | CLAUDE.md § Project Config, .claude/commands/run-execution.md, reference/style-guide.md, reference/stage-instructions.md | Config 10 — Perplexity query prefix |
+| `{{RESEARCH_AREA_PHRASE}}` | CLAUDE.md § Project Config, reference/style-guide.md | Config 10 — research-domain framing |
 | `{{CURRENT_PERIOD}}` | CLAUDE.md § Project Config | Config 11 — parameterizes freshness classes |
 | `{{DELIVERY_VAULT}}` | CLAUDE.md § Project Config | Config 12 — optional in effect, but **must still be resolved**; write `none` if unused |
 | `{{DOCUMENT_MODEL}}` | CLAUDE.md § Project Config | Config 13 — enum `report` \| `section`. **Required; halt on missing** — Stage-5 dispatch reads it first |

@@ -173,7 +173,7 @@ Every session block gets steering notes. They address:
 ```
 [Question X.Y] may return limited results because [reason — e.g., private market data, niche geography, recent phenomenon]. If the research executor finds fewer than [threshold] sources:
 - Try narrowing the geography or expanding the time frame
-- Accept partial coverage and flag for supplementary research via Perplexity
+- Accept partial coverage and flag for research through the configured supplementary lead provider
 ```
 
 **For definitional ambiguity:**

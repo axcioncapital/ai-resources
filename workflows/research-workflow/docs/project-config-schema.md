@@ -51,7 +51,7 @@ All consumers MUST parse the schema using ONE pattern so the contract surface is
 | 7 | `Domain` | string | `"private equity"` | Project's analytical domain. Parameterizes which jargon-gloss whitelist activates (PE-style, M&A-style, macro-style, industry-style). | `produce-jargon-gloss` (whitelist activation); `jargon-gloss-config.md` (config row matching) |
 | 8 | `Verification posture` | enum | `"lighter-than-formal"` | One of: `per-claim-cited` / `lighter-than-formal` / `interpretive-only`. Sets the verification-rigor floor for `verify-chapter` and the source-attribution norm for synthesis. | `verify-chapter` (rigor floor); `evidence-to-report-writer` (citation norm); `reference/quality-standards.md` (Evidence-First calibration row) |
 | 9 | `Source-availability` | enum | `"public-only"` | One of: `public-only` / `mixed` / `paid-databases-allowed`. Defines which source classes the research-prompt-creator may reference. | `research-prompt-creator` (allowed source-class list); `reference/source-class-hierarchy.md` (claim-permission gates) |
-| 10 | `Research-area-phrase` | string | `"Nordic mid-market private equity"` | Plain-English research-domain label. Parameterizes the Perplexity-prefix in run-execution.md (forms the leading clause of every Perplexity query) and the framing line in stage-instructions.md. | `run-execution.md` (Perplexity-prefix); `reference/stage-instructions.md` (intro framing) |
+| 10 | `Research-area-phrase` | string | `"Nordic mid-market private equity"` | Plain-English research-domain label used in deployed research-document framing. | `reference/style-guide.md` |
 | 11 | `Current period` | string | `"2025-2026"` | Project's "current" time band. Parameterizes the freshness classes (CURRENT / RECENT / BASELINE) used by source-class-hierarchy.md and verify-chapter. | `reference/source-class-hierarchy.md` (freshness-class formula); `verify-chapter` (date-range gates); `reference/known-limits.md` (freshness-date calibration) |
 | 12 | `Delivery vault` | string (optional) | `"pe-kb"` | Optional. Name of the Obsidian knowledge-base vault the project's chapter outputs should be deployed into. Default: no-op (skip vault deploy step). | `produce-knowledge-file` (vault target); `/deploy-kb` (target vault resolution) |
 | 13 | `Document model` | enum | `"report"` | One of: `report` / `section`. Declares the project's document architecture for Stage 5 consumers. Canonical Stage 5 commands read this first; arg-shape is validated against the declared mode (`report` → `r[N]`; `section` → `N.M`). No default — halt loudly when missing or malformed (see § Default-value semantics for `Document model:` below). | `produce-prose-draft` (mode validation + Phase 0 dispatch); `produce-formatting` (mode validation + Phase 0 dispatch); `produce-jargon-gloss` (mode validation + Phase 0 dispatch) |
@@ -74,8 +74,8 @@ All consumers MUST parse the schema using ONE pattern so the contract surface is
 | `country-parity-checker` skill | `Country set`, `Country superset` |
 | `verify-chapter` | `Verification posture`, `Current period` |
 | `evidence-to-report-writer` (via Stage 3/4) | `Verification posture` |
-| `run-execution.md` | `Research-area-phrase`, `Evidence executor`, `Evidence executor capabilities`, `Supplementary lead provider` |
-| `reference/stage-instructions.md` | `Research-area-phrase`, `Evidence executor`, `Supplementary lead provider` |
+| `run-execution.md` | `Evidence executor`, `Evidence executor capabilities`, `Supplementary lead provider` |
+| `reference/stage-instructions.md` | `Evidence executor`, `Supplementary lead provider` |
 | `reference/source-class-hierarchy.md` | `Country set` (mirror); `Source-availability`; `Current period` |
 | `reference/known-limits.md` | `Current period` |
 | `reference/quality-standards.md` | `Verification posture` |

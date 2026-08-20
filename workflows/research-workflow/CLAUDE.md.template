@@ -30,7 +30,7 @@
 **Domain:** "{{DOMAIN}}"  # parameterizes jargon-gloss whitelist activation
 **Verification posture:** "{{VERIFICATION_POSTURE}}"  # per-claim-cited | lighter-than-formal | interpretive-only
 **Source-availability:** "{{SOURCE_AVAILABILITY}}"  # public-only | mixed | paid-databases-allowed
-**Research-area-phrase:** "{{RESEARCH_AREA_PHRASE}}"  # parameterizes Perplexity-prefix in run-execution.md and stage-instructions.md
+**Research-area-phrase:** "{{RESEARCH_AREA_PHRASE}}"  # parameterizes research-domain framing in reference/style-guide.md
 **Current period:** "{{CURRENT_PERIOD}}"  # parameterizes freshness classes (CURRENT, RECENT, BASELINE)
 **Delivery vault:** "{{DELIVERY_VAULT}}"  # optional; consumed by produce-knowledge-file; default no-op
 **Document model:** "{{DOCUMENT_MODEL}}"  # enum: "report" | "section"; required (halt on missing); discriminates Stage 5 dispatch

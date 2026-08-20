@@ -31,6 +31,7 @@ config_schema="workflows/research-workflow/docs/project-config-schema.md"
 manifest_skill="skills/execution-manifest-creator/SKILL.md"
 manifest_template="skills/execution-manifest-creator/references/manifest-template.md"
 prompt_skill="skills/research-prompt-creator/SKILL.md"
+prompt_guide="skills/research-prompt-creator/references/prompt-construction-guide.md"
 prompt_qc_skill="skills/research-prompt-qc/SKILL.md"
 supplementary_qc_skill="skills/supplementary-research-qc/SKILL.md"
 supplementary_merge_skill="skills/supplementary-evidence-merger/SKILL.md"
@@ -39,6 +40,7 @@ run_analysis="workflows/research-workflow/.claude/commands/run-analysis.md"
 stage_instructions="workflows/research-workflow/reference/stage-instructions.md"
 setup="workflows/research-workflow/SETUP.md"
 deploy_command=".claude/commands/deploy-workflow.md"
+contract_checker="workflows/research-workflow/scripts/check-executor-contract.sh"
 supplementary_query_pass1="prompts/supplementary-research/S1-query-brief-pass1.md"
 supplementary_query_pass2="prompts/supplementary-research/S1-query-brief-pass2.md"
 supplementary_results_qc="prompts/supplementary-research/S3-qc-supplementary-results.md"
@@ -50,6 +52,7 @@ for file in \
   "$manifest_skill" \
   "$manifest_template" \
   "$prompt_skill" \
+  "$prompt_guide" \
   "$prompt_qc_skill" \
   "$supplementary_qc_skill" \
   "$supplementary_merge_skill" \
@@ -58,6 +61,7 @@ for file in \
   "$stage_instructions" \
   "$setup" \
   "$deploy_command" \
+  "$contract_checker" \
   "$supplementary_query_pass1" \
   "$supplementary_query_pass2" \
   "$supplementary_results_qc" \
@@ -95,6 +99,8 @@ require_literal "$config_schema" '`required-output-schema`' \
 
 require_literal "$manifest_skill" 'Project Config executor-routing fields' \
   "manifest consumes the one project routing authority"
+require_literal "$manifest_skill" "Turns a section's approved Answer Specs" \
+  "manifest skill description uses required third-person form"
 require_literal "$manifest_skill" 'No qualifying evidence executor' \
   "manifest fails visibly when no executor qualifies"
 require_literal "$manifest_skill" 'Supplementary leads are not evidence of record' \
@@ -110,6 +116,8 @@ require_literal "$run_execution" 'Read the `## Project Config` executor-routing 
   "Stage 2 passes the canonical routing authority into manifest creation"
 require_literal "$run_execution" 'STALE MANIFEST — regenerate Step 2.0' \
   "prompt creation refuses a manifest that disagrees with current Project Config"
+require_literal "$run_execution" 'scripts/check-executor-contract.sh' \
+  "prompt creation invokes the executable stale-manifest gate"
 require_literal "$run_execution" 'This is the sole supplementary evidence input to Step 2.S3.' \
   "supplementary provider output must be verified by the evidence executor"
 require_literal "$stage_instructions" 'project-configured evidence executor' \
@@ -171,6 +179,54 @@ forbid_literal "$supplementary_merge_prompt" 'carry over source name(s) and URL(
   "legacy merge prompt no longer accepts provider citations directly"
 forbid_literal "$config_template" 'Research Execution GPT produces evidence (Stage 2)' \
   "project template no longer contradicts its executor config"
+forbid_literal "$prompt_guide" 'supplementary research via Perplexity' \
+  "prompt guidance does not hard-code a supplementary provider"
+forbid_literal "$config_template" 'Perplexity-prefix' \
+  "project template describes the research-area phrase provider-neutrally"
+forbid_literal "$setup" 'Perplexity query prefix' \
+  "setup describes the research-area phrase provider-neutrally"
+forbid_literal "$config_schema" 'forms the leading clause of every Perplexity query' \
+  "config schema describes the research-area phrase provider-neutrally"
+
+if [[ -x "$repo_root/$contract_checker" ]]; then
+  fixture_dir="$(mktemp -d "${TMPDIR:-/tmp}/executor-contract-test.XXXXXX")"
+  config_fixture="$fixture_dir/CLAUDE.md"
+  manifest_fixture="$fixture_dir/manifest.md"
+  prompt_fixture="$fixture_dir/session-a.md"
+
+  printf '%s\n' \
+    '## Project Config' \
+    '**Evidence executor:** "Codex"  # required Stage-2 executor' \
+    '**Evidence executor capabilities:** [full-source-access, lossless-artifact-handoff, audit-log, required-output-schema]  # verified controls' \
+    '**Supplementary lead provider:** "none"  # no supplementary lane' > "$config_fixture"
+
+  printf '%s\n' \
+    '## Executor Contract' \
+    '- **Evidence executor:** Gemini' \
+    '- **Declared capabilities:** [full-source-access, lossless-artifact-handoff, audit-log, required-output-schema]' \
+    '- **Supplementary lead provider:** none' > "$manifest_fixture"
+
+  if "$repo_root/$contract_checker" "$config_fixture" "$manifest_fixture" >/dev/null 2>&1; then
+    : > "$prompt_fixture"
+    mismatch_status=0
+  else
+    mismatch_status=$?
+  fi
+
+  if [[ "$mismatch_status" -ne 3 || -e "$prompt_fixture" ]]; then
+    printf 'FAIL: stale manifest mismatch must exit 3 before prompt creation\n'
+    failures=$((failures + 1))
+  fi
+
+  sed -i.bak 's/Gemini/Codex/' "$manifest_fixture"
+  rm -f "$manifest_fixture.bak"
+  if ! "$repo_root/$contract_checker" "$config_fixture" "$manifest_fixture" >/dev/null; then
+    printf 'FAIL: matching executor contracts must pass\n'
+    failures=$((failures + 1))
+  fi
+
+  rm -rf "$fixture_dir"
+fi
 
 if (( failures > 0 )); then
   printf 'Executor-routing contract: FAIL (%d finding(s))\n' "$failures"
