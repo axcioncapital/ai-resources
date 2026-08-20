@@ -232,12 +232,32 @@ and `Primary edit begins after:` is correctly absent (Discovery mode makes no pr
 
 ---
 
-Result: all three plan-required routes were exercised against the installed consumer entry and all
-three resolved and behaved as required. The classifier resolved Light, Standard-with-one-way-escalation
-and Deep at exit 0 in every case; the Light note completed from local dated evidence with no retrieval;
-the Standard memo completed and passed the installed checker at exit 0 without binding judgment
-authority; the Deep case returned the live command's exact handoff without running any pipeline stage
-or creating any file. Neither repository was mutated.
+Result (corrected 2026-08-20 on Codex's frozen finding): all three plan-required routes were exercised
+against the installed consumer entry and all three resolved and behaved as required. The classifier
+resolved Light, Standard-with-one-way-escalation and Deep at exit 0 in every case; the Light note
+completed from local dated evidence with no retrieval; the Standard memo completed and passed the
+installed checker at exit 0 without binding judgment authority; the Deep case returned the live command's
+exact handoff without running any pipeline stage or creating any file. Neither repository was mutated.
+
+**What the correction changed.** The frozen finding is resolved: my original Standard memo conflated
+*where Unit 16's evidence is recorded* with *where its suites were executed*, and inferred from the
+consumer holding no local copy of the record that the suites had not run in the consumer. Reproducing the
+finding by inspection confirmed it — the accepted Unit 16 `## Latest result` at `78072b3e` carries two
+separately headed tables, "Consumer, run from the consumer root" (eight suites, exit 0, 149 L2 + 89 L3 =
+238 passed, 0 failed) and "Canonical, run from the integration checkout" (eight suites, exit 0, 125 L2 +
+88 L3 = 213 passed, 0 failed), summing to the recorded 451. Both sub-totals were recomputed from the
+per-suite rows and reconcile.
+
+The corrected memo splits the two questions into separate claims — C3 owns *where the suites ran* and what
+passed, C4 owns *where the record is stored* — so neither can be read off the other again. The false
+unknown ("whether the sixteen suites pass when executed from inside this consumer") is removed, and the
+candidate deferral to rerun them is dropped: it existed only because of the conflation. C3 keeps the
+one-role ILLUSTRATIVE-ONLY grade the single accepted record earns, while stating the execution location
+and exact counts that record directly documents — and the memo now also records that the consumer HEAD is
+unchanged (`5a8482c9`) from the one Unit 16 tested, so the execution evidence applies to the current tree.
+
+Scope held: no suite was rerun, the accepted Light and Deep results are untouched, no artifact was
+created, and nothing outside this finding was corrected.
 
 ### Route table
 
@@ -303,10 +323,11 @@ they cover. This repository holds no dated record of any of those suites having 
 
 Light used no retrieval: every source is a local file, a local directory listing or local git history.
 
-### Case 2 — complete checked Standard memo (verbatim)
+### Case 2 — complete checked Standard memo (verbatim, corrected)
 
-Memo checker: `logs/scripts/research-route-memo-check.sh --memo <temp-path>` → **`verdict: PASS`, exit 0.**
-The memo lived at a scratchpad path outside both repositories and was removed after the check.
+Memo checker: `logs/scripts/research-route-memo-check.sh --memo <temp-path>` → **`verdict: PASS`, exit 0**
+on the exact corrected memo below. The memo lived at a scratchpad path outside both repositories and was
+removed after the check.
 
 ```markdown
 # Is the installed L2/L3 integration ready to begin a genuine end-to-end L4 pilot in this consumer?
@@ -327,54 +348,49 @@ Source: three invocations of `logs/scripts/research-route-classify.sh`, resolved
 Source: `.claude/commands/research-route.md` read in full, including the `route-rules:start`/`route-rules:end` block the classifier parses as its single source — Date: 2026-08-19 (commit `231d063`) — Role: published rule specification — Fit: direct
 Rationale: two independent roles — one attests what the helper did, the other attests what it was contracted to do — and the three printed resolutions match the specification's floor rules. Both direct and in scope. No ceiling applied.
 
-### C3 — This consumer holds no dated record of the installed suites having been executed inside this checkout.
-Class: SUPPORTED
-Roles: 2 — full-text search of the consumer's narrative records; enumeration of the consumer's run-artifact directory
-Source: recursive case-insensitive search of `logs/`, `docs/` and `reference/` markdown, excluding `logs/scripts/`, for `research-route|451 assertions|sixteen suites|l3 adapter` — zero matches — Date: 2026-08-19 (searched in this session) — Role: full-text search of the consumer's narrative records — Fit: direct
-Source: enumeration of `logs/runs/`, which contains exactly one artifact, `2026-08-14-S1-dd4.json` — Date: 2026-08-14 (the artifact's own date) — Role: enumeration of the consumer's run-artifact directory — Fit: direct
-Rationale: an evidenced negative. Two independent surfaces were searched and each recorded a true zero for a consumer-side execution record, so this is an ordinary finding rather than an absence of evidence. No ceiling applied.
-
-### C4 — The deterministic proof that these components pass their suites was produced and recorded outside this consumer.
+### C3 — The eight consumer-side suites were executed from the consumer root and passed, and the eight canonical suites were executed from the integration checkout and passed.
 Class: ILLUSTRATIVE-ONLY
-Roles: 1 — the accepted task-state record of the deterministic run
-Source: `logs/work-loop/canonical-rw-l4-integrated-pilot.md` `## Latest result` in the integration checkout, recording sixteen suites exiting 0 with 451 assertions passed and 0 failed at commit `78072b3e25d001896634ac919c20d9a1b71b6f1f` — Date: 2026-08-19 — Role: accepted task-state record of the deterministic run — Fit: direct
-Rationale: exactly one independent evidentiary role. The record attests what it saw and cannot be triangulated from any second source reachable from this project, so it is capped here regardless of how consistent it reads. No ceiling beyond the role count was applied.
+Roles: 1 — the accepted task-state record of the deterministic run, which itself records execution location and per-suite counts
+Source: the accepted Unit 16 `## Latest result` at integration commit `78072b3e25d001896634ac919c20d9a1b71b6f1f`, read from git history. It carries two separately headed tables — "Consumer, run from the consumer root" listing eight suites at exit 0 for 149 L2 plus 89 L3 = **238 passed, 0 failed**, and "Canonical, run from the integration checkout" listing eight suites at exit 0 for 125 L2 plus 88 L3 = **213 passed, 0 failed** — summing to 451 passed and 0 failed — Date: 2026-08-19 — Role: accepted task-state record of the deterministic run — Fit: direct
+Rationale: exactly one independent evidentiary role, so the grade is capped here however precise the record is; a single record cannot be triangulated. The cap is on corroboration, not on specificity: the record directly documents *where each half ran* and the exact per-suite counts, and the eight consumer suites ran from the consumer root rather than from the integration checkout. That execution record applies to the tree as it stands, because the consumer HEAD is `5a8482c959ceaf286fa5601c13d44d25d04a2753` now and Unit 16 recorded the same consumer HEAD when it ran the suites. Its own arithmetic was recomputed from the per-suite rows and reconciles.
+
+### C4 — That execution record is held in the integration checkout's task state, and the consumer's own files carry no copy of it.
+Class: SUPPORTED
+Roles: 2 — full-text search of the consumer's narrative records and run-artifact directory; direct location of the record in the integration checkout
+Source: recursive case-insensitive search of the consumer's `logs/`, `docs/` and `reference/` markdown, excluding `logs/scripts/`, for `research-route|451 assertions|sixteen suites|l3 adapter` — zero matches — together with enumeration of `logs/runs/`, which holds exactly one unrelated artifact, `2026-08-14-S1-dd4.json` — Date: 2026-08-19 (searched in this session) — Role: full-text search of the consumer's narrative records and run-artifact directory — Fit: direct
+Source: `logs/work-loop/canonical-rw-l4-integrated-pilot.md` in the integration checkout at commit `78072b3e`, where the record is actually held — Date: 2026-08-19 — Role: direct location of the record in the integration checkout — Fit: direct
+Rationale: two independent roles establishing a question of storage location only — one surface searched and found nothing, the other opened and found the record. This claim is about where the evidence is written down. It says nothing about where the suites ran, which is C3's subject and which C3's source settles the other way.
 
 ## Answer
-- [C1,C2] The installed routing surface is present at its contracted paths and behaves to its published rules in this consumer, which is what a pilot's entry point has to do before any case is run through it.
-- [C3] This repository reports, on two searched surfaces, no local record of the suites having been executed here.
-- [C4] The deterministic pass illustrates, in one recorded run held outside this project, that the installed components satisfy their suites.
-- [C1,C2,C3,C4] Taken together the evidence points to the integration being ready to begin a genuine end-to-end pilot, with the qualification that the strongest proof of correctness is single-sourced and external to this checkout.
+- [C1,C2] The installed routing surface is present at its contracted paths and behaves to its published rules in this consumer, which establishes that a pilot's entry point is in place before any case is run through it.
+- [C3] One accepted record reports, single-sourced, that the eight consumer-side suites ran from the consumer root at exit 0 for 238 passed and 0 failed, against the same consumer commit this checkout is on now.
+- [C4] The consumer's own files confirm they hold no copy of that execution record, which is a fact about where the evidence is stored and not about whether the suites ran here.
+- [C1,C2,C3] Taken together the evidence reports a consumer whose components are installed, whose entry behaves to contract, and whose own suites have been run from its own root and passed — with the qualification that the execution evidence rests on a single accepted record rather than two independent ones.
 
 ## Inference
-- [INFERENCE] Resting on C1 and C3, the absence of a consumer-side execution record is most likely a consequence of where the deterministic proof was deliberately run rather than a sign of an incomplete install, since every artifact the suites exercise is present here at its contracted path.
-- [INFERENCE] Resting on C2 and C4, a genuine case run in this consumer would itself become the second evidentiary role that C4 currently lacks.
+- [INFERENCE] Resting on C3 and C4, the consumer's lack of a local execution record is a storage-location fact with no bearing on correctness, since the record that does exist documents execution from the consumer root against the identical consumer commit.
+- [INFERENCE] Resting on C1, C2 and C3, the residual weakness is corroboration rather than coverage: the components are installed, behave to contract and have passed their suites from this root, and what is missing is a second independent role for that last fact — which the genuine integrated case will produce as a by-product of exercising the same components, without any suite being run again for its own sake.
 
 ## Unknowns
-- Whether the sixteen suites pass when executed from inside this consumer checkout rather than from the integration checkout; nothing read here settles it.
-- Whether any project-owned specialization in this checkout diverges from the canonical components in a way the suites do not exercise.
+- Whether any project-owned specialization in this checkout diverges from the canonical components in a way the eight consumer suites do not exercise.
 - Whether the legacy `section:`-contract judgment artifacts already in this project interact with the current-contract adapter during a genuine case.
+- Whether the routing behaviour proved here on three fixed representative requests holds on a genuine case whose signals were not chosen in advance.
 
 ## Completion
 Status: COMPLETE
 Deep triggers: none
 ```
 
-**Checker fail-capability.** The PASS is not a rubber stamp. Two deliberately violating copies of the
-same memo were run through the same checker and both were rejected:
+**Checker fail-capability, re-established on the corrected memo.** The verb classes changed in this
+correction, so the probe was rerun against the new text rather than relied on from the previous hop.
+Replacing the ILLUSTRATIVE-ONLY C3 bullet's `reports, single-sourced,` with `demonstrates` → exit 1,
+`reason: the Answer uses a SUPPORTED-only verb for C3, which is ILLUSTRATIVE-ONLY`. The checker still
+discriminates on this memo; the PASS is not a rubber stamp.
 
-- Replacing the ILLUSTRATIVE-ONLY C4 bullet's verb `illustrates` with `demonstrates` → exit 1,
-  `reason: the Answer uses a SUPPORTED-only verb for C4, which is ILLUSTRATIVE-ONLY`.
-- Inserting the reserved authority term into an Answer bullet → exit 1, `reason: the memo names the
-  reserved House View term without contract-valid bound judgment authority — Standard may compare
-  readings, but it cannot represent a governing view except through an approved Unit Judgment Brief
-  consumed under '## Judgment authority'`.
-
-A first attempt at the second probe was mis-constructed — its `sed` pattern matched no text in the memo,
-so it re-ran the unmodified memo and returned PASS. That was my probe error, not a checker pass on a
-violating memo; `diff` confirmed the file was byte-identical to the accepted memo, and the probe was
-rebuilt and then rejected as shown. Recorded because a PASS whose provenance is not stated is exactly
-the evidence a reader should distrust.
+Two probes from the previous hop stand unchanged and are not repeated here: the reserved-authority-term
+rejection, and the disclosure that a first probe attempt was mis-constructed (its pattern matched no
+text, so it re-ran the unmodified memo and returned PASS — my error, not a checker pass on a violating
+memo).
 
 ### Case 3 — complete Deep handoff (verbatim)
 
@@ -460,17 +476,22 @@ consumer remained clean throughout and no tracked consumer surface changed. The 
 two probe copies lived only under the session scratchpad, outside both repositories, and were removed —
 the scratchpad directory is now empty.
 
-### Recommendation
+### Recommendation (updated at the correction)
 
 **PROCEED TO GENUINE INTEGRATED CASE**
 
+Unchanged in direction, and better supported than before the correction. The finding did not weaken the
+readiness case — it strengthened it. My original memo treated the consumer's own suites as unrun in the
+consumer, which understated the evidence; Unit 16's record in fact documents those eight suites executing
+**from the consumer root** at exit 0 for 238 passed and 0 failed, against the identical consumer commit
+this checkout is on now. The residual qualification is therefore corroboration only — that execution fact
+rests on one accepted record rather than two independent roles — not coverage.
+
 Evidence: three classifier runs against the installed helper, exits 0/0/0, printing `route: light` /
-`route: standard` with `preference-overridden: yes` / `route: deep`; the installed memo checker
-returning `verdict: PASS` exit 0 on the exact memo above, and exit 1 with a specific named reason on
-each of two deliberately violating copies of it; `preparation/task-plans/` unchanged and the consumer's
-porcelain status empty after the Deep case. The evidence can fail and did fail where it should: the
-mis-constructed first probe returned PASS on an unmodified memo and is reported as my error rather than
-as a result, and the rebuilt probes were rejected.
+`route: standard` with `preference-overridden: yes` / `route: deep`; the installed memo checker returning
+`verdict: PASS` exit 0 on the exact corrected memo above, and exit 1 with a specific named reason when the
+ILLUSTRATIVE-ONLY C3 bullet is given a SUPPORTED-only verb; `preparation/task-plans/` unchanged and the
+consumer's porcelain status empty after the Deep case. The evidence can fail and did fail where it should.
 
 ## Blocker
 
@@ -478,24 +499,23 @@ None.
 
 ## Next action
 
-Codex: assess Unit 17's three-route consumer operating proof and its
-`PROCEED TO GENUINE INTEGRATED CASE` recommendation, and decide close, continue, correct once, or stop.
+Codex: run the closure check on the frozen finding only — is the where-recorded / where-executed
+conflation resolved, and did the correction break anything?
 
-Two things in the returned evidence warrant Codex's attention rather than being buried:
+What the correction did: the Standard memo now separates the two questions into distinct claims (C3 owns
+execution location and counts; C4 owns storage location), states the 238/0 consumer-root and 213/0
+integration figures Unit 16 directly records, keeps C3 at ILLUSTRATIVE-ONLY on its single accepted role,
+removes the false unknown, and drops the rerun deferral. The corrected memo passes the installed checker
+at exit 0, and a fresh probe on the new text — a SUPPORTED-only verb on the ILLUSTRATIVE-ONLY C3 bullet —
+is rejected at exit 1, so the PASS still discriminates.
 
-1. **A brief characterization that the source does not support.** The brief describes
-   `audits/l3-representative-operating-proof-2026-08-18.md` as explicitly not proving consumer-facing
-   operation. Reading that document directly, its Assessment says no "consumer deployment ... was
-   introduced" — a statement about what L3 did not build, not a disclaimer about what it proved. The
-   distinction does not change this unit's result, but the brief's disposition of that source is
-   slightly stronger than the source's own text. Codex decides whether that matters downstream.
-2. **A probe error, reported rather than hidden.** The first fail-capability probe on the memo checker
-   was mis-constructed — its pattern matched no text, so it re-ran the unmodified memo and returned
-   PASS. It was rebuilt and then correctly rejected. No conclusion rests on the faulty probe.
+Nothing outside the frozen finding was changed: no suite rerun, the accepted Light and Deep results
+untouched, no artifact created, both repositories unmutated.
 
-Candidate deferral noticed and not implemented: this consumer holds no local record of the eight
-installed suites having been executed inside it, so its own evidence of correctness is the external,
-single-sourced Unit 16 record (memo claim C4, ILLUSTRATIVE-ONLY). Running the suites from inside the
-consumer would supply the second evidentiary role. Not done here — Unit 17's brief scopes this hop to
-exercising the installed entry, and the accepted Unit 16 result explicitly instructs that its sixteen
-suites are not to be rerun in this unit.
+One thing noticed during the correction and deliberately not implemented, recorded as a candidate
+deferral for Codex to dispose of: the Light note's `## Gaps` line reads "Whether the eight suites pass
+when run from inside this checkout — this repository records no such run." Within the Light route's own
+stated frame ("based only on this repository's current records") that is accurate, and Codex's finding
+froze the Light result as accepted, so I left it exactly as written. It nonetheless sits adjacent to the
+conflation just corrected, and a later reader taking that line out of its frame could repeat the mistake.
+Flagging rather than editing, because editing it would broaden the correction past the frozen finding.
