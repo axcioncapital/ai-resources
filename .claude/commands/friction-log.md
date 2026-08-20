@@ -13,6 +13,8 @@ Log a friction event or start a new friction log session.
 
 ## Instructions
 
+> **FROZEN (2026-08-17).** The friction log is frozen workspace-wide until further notice — this command writes nothing. Reply exactly: "The friction log is frozen (2026-08-17, operator decision) — entry not logged. Your text is above in chat if you want to keep it elsewhere." Then stop. The steps below resume only when the freeze is lifted (workspace `CLAUDE.md` § Friction Log — FROZEN).
+
 1. Parse $ARGUMENTS:
    - If the first word is "start", go to step 2 (start a session block)
    - If $ARGUMENTS is empty, show the usage lines above and stop

@@ -1,4 +1,7 @@
 #!/bin/bash
+# FRICTION-LOG FREEZE (2026-08-17): all friction-log writes are paused workspace-wide
+# until further notice (operator decision). Remove these three lines to unfreeze.
+exit 0
 # Dual-mode friction-log hook (C6 repair, 2026-06-12):
 #  - PreToolUse on Skill matcher: auto-start a friction log session block when a
 #    command has friction-log: true (original behavior, unchanged).

@@ -27,11 +27,21 @@ ROOT=$(cd "$ROOT" && pwd -P) || exit 2
 cd "$ROOT" || exit 2
 
 CMD_FILE="$ROOT/.claude/commands/work-loop-v2.md"
-SKILL_FILE="$ROOT/.agents/skills/work-loop-v2/SKILL.md"
+# The Codex-side mirror moved out of the always-loaded skill body into its own direct
+# reference (Unit 1, work-loop-v2-post-compaction-recovery-repair): the resolver is
+# conditional detail, read only when the Work Loop owns the move or during $reorient
+# recovery, so it is no longer paid for on every Work Loop turn. Check 4 follows the
+# text — it compares the Claude command with the file that now OWNS the mirror. The
+# assertion is unchanged in strength: two marked blocks, byte-identical or red.
+SKILL_FILE="$ROOT/.agents/skills/work-loop-v2/references/core-resolution.md"
 SEMANTIC_REL='plans/work-loop-v2-mvp/work-loop-v2-executable-core-v0.1.md'
+# The main skill must NOT keep a second copy — one owner, or the parity check is
+# comparing two of three copies and the third is free to drift unobserved.
+MAIN_SKILL="$ROOT/.agents/skills/work-loop-v2/SKILL.md"
 
 [ -f "$CMD_FILE" ]   || { echo "missing $CMD_FILE"; exit 2; }
 [ -f "$SKILL_FILE" ] || { echo "missing $SKILL_FILE"; exit 2; }
+[ -f "$MAIN_SKILL" ] || { echo "missing $MAIN_SKILL"; exit 2; }
 
 PASS=0
 FAIL=0
@@ -118,6 +128,19 @@ if [ -s "$TMP/block-cmd.txt" ] && cmp -s "$TMP/block-cmd.txt" "$TMP/block-skill.
   ok "check 4 — deployed resolver blocks are byte-identical"
 else
   bad "check 4 — deployed resolver blocks are byte-identical" "$(diff "$TMP/block-cmd.txt" "$TMP/block-skill.txt" | head -20)"
+fi
+
+# --- check 5 — the mirror has exactly one owner -----------------------------
+# Parity between two files says nothing about a third. Before the split the main
+# skill held the mirror; if a copy is ever left behind or reintroduced there, check 4
+# still passes while the stale copy drifts unobserved. This is the check that fails
+# on the pre-split tree and on any future re-duplication.
+
+if ! grep -q 'work-loop-v2-core-resolution:' "$MAIN_SKILL"; then
+  ok "check 5 — the always-loaded skill keeps no second copy of the resolver"
+else
+  bad "check 5 — the always-loaded skill keeps no second copy of the resolver" \
+      "$MAIN_SKILL still carries the marker pair; the mirror must live only in $SKILL_FILE"
 fi
 
 # --- verdict ----------------------------------------------------------------

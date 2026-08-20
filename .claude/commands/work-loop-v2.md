@@ -134,8 +134,33 @@ Runs before anything else in this checkout — before admission, before the stat
 Running one unit needs five separate things present in the same checkout, and they arrive by four different routes. A checkout can hold this command and be missing any of them: the command is symlinked into projects by the generic SessionStart sweep, while the two helpers are template-deployed copies, the Reorient skill is a manifest opt-in, and the compact hook needs a registration to fire at all. Discovering that halfway through a unit is the failure this step exists to prevent — by then the state file has been read, the turn is in play, and the missing piece is whichever seam happened to be reached first.
 
 ```bash
-bash logs/scripts/work-loop-capability.sh check --checkout "$(git rev-parse --show-toplevel)"
+CHECKOUT="$(git rev-parse --show-toplevel)"
+
+# Where the canonical copies live, resolved exactly the way the SessionStart
+# sweep (.claude/hooks/auto-sync-shared.sh) resolves it: walk ancestors for the
+# one directory holding the shared command library. The capability helper refuses
+# to discover this itself, on purpose — a script that went looking for "the
+# canonical repository" would be inventing an authority the deployment contract
+# does not give it. The caller supplies it, and this caller uses the same
+# convention that installed the command into this checkout in the first place.
+d="$CHECKOUT"; CANONICAL=""
+while :; do
+  [ -d "$d/ai-resources/.claude/commands" ] && { CANONICAL="$d/ai-resources"; break; }
+  [ "$d" = "/" ] && break
+  d="$(dirname "$d")"
+done
+
+if [ -n "$CANONICAL" ]; then
+  bash logs/scripts/work-loop-capability.sh check --checkout "$CHECKOUT" --canonical "$CANONICAL"
+else
+  printf 'canonical-source: UNRESOLVED — presence checked, drift NOT checked\n'
+  bash logs/scripts/work-loop-capability.sh check --checkout "$CHECKOUT"
+fi
 ```
+
+**`--canonical` is what makes this a drift check rather than a headcount.** Without it the helper only asks whether the five components are *present*; the three copied ones — the state validator, the ownership helper and the compact-recovery hook — are copies, not shims, and a copy that has fallen behind canonical is present and wrong. That is the failure mode this step exists to catch and the one it could not see: a stale ownership helper reports `READY` while carrying a fail-open the current canonical has already fixed.
+
+**`canonical-source: UNRESOLVED` is not a failure and does not stop the unit.** It means the walk found no `ai-resources/` above this checkout, so drift could not be compared and only presence was established. Continue — but say so in the same breath as the verdict, and never report that line as `READY` unqualified. A `READY` earned without `--canonical` is a weaker claim than a `READY` earned with it, and the difference must reach the operator rather than being flattened.
 
 It prints `verdict:` followed by exactly one of these, and acts on nothing else:
 

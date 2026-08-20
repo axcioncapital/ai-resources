@@ -147,6 +147,8 @@ The live file's entry count should be **at least** the baseline count (appends o
 > honest severity, not an inflated one. An over-severe log is as useless as an invisible one, because
 > the operator stops trusting the level.
 
+> **FREEZE (2026-08-17):** `friction-log.md` is frozen workspace-wide until further notice — skip ALL friction-log appends while this notice stands. Report friction signals inline in the Phase 5 summary instead, on the "Not logged" line as `{signal} (friction-log frozen)`. `improvement-log.md` appends are unaffected. Unfreeze reference: workspace `CLAUDE.md` § Friction Log — FROZEN.
+
 `friction-log.md` — append under (or create) a `## Session — {date}` header with a `### Friction Events` subsection, one bullet per friction signal, per your inline copy above (the target file's own `## Schema` block, where present):
 ```
 - **[wrap-collector]** {timestamp or "wrap"} — **Failure mode:** {category} — {friction description + classified type}. **Root cause:** {why it happened}. **Prevention:** {what stops recurrence}. **Owner artifact:** {file/command/checklist/rule/test, or "(none identified)"}.

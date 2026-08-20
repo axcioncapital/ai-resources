@@ -1,8 +1,10 @@
 # Skill Catalog
 
-Quick-reference index for the 80 skills in this library, grouped by domain. Each skill lives in its own folder with a `SKILL.md` file.
+Quick-reference index for the skills in this library, grouped by domain. Each skill lives in its own folder with a `SKILL.md` file.
 
 > **Reconciled 2026-07-12 (W3.2 M-A4)** against the live `skills/` inventory: 20 skills were on disk but absent from this catalog (the header had read "60" since April while the library grew to 80). No dead rows. Ground truth is the set of `skills/*/SKILL.md` files — not this file.
+>
+> **Partial update 2026-08-16:** `axcion-repository-development` added below. The library now holds 83 `SKILL.md` files against 81 catalog rows — `capability-development` and `writing-studio` are on disk with no row. Neither was added here: `writing-studio` is an ordinary catalog gap, and `capability-development` is a stranded Work Loop v1 method document whose disposition is an open operator question (`logs/decisions.md`, 2026-08-11). Counting them in the header without rows would repeat the drift this note exists to record.
 
 ---
 
@@ -99,6 +101,7 @@ Planning and implementing Claude Code projects.
 
 | Skill | Purpose |
 |-------|---------|
+| `axcion-repository-development` | Governing router — choose the minimum sufficient workflow for a repository build, then delegate. Shared verbatim with Codex; see the note under the table |
 | `context-pack-builder` | Transform vague assignments into precise, AI-ready context packs |
 | `spec-writer` | Write technical specifications from context packs |
 | `implementation-project-planner` | Create implementation project plans for Claude Code infrastructure |
@@ -111,6 +114,8 @@ Planning and implementing Claude Code projects.
 | `project-scoping` | Scope a multi-workstream build into a control pack + planning brief |
 | `technical-solution-consultant` | Translate business intent into a justified, build-ready technical plan |
 | `grill-me` | Interview the operator until shared understanding, then emit a mandate brief |
+
+> **`axcion-repository-development` is a shared cross-runtime skill, and the only skill here that carries no `model:` frontmatter.** This folder is the canonical version-controlled source; two runtimes read the same bytes. Codex reads its own install at `~/.codex/skills/axcion-repository-development/` (a real directory, verified byte-identical to this folder on 2026-08-16), and Claude reads `~/.claude/skills/axcion-repository-development`, a symlink pointing here. Edit this folder, never either surface; re-verify Codex with `diff -r`. The absent `model:` field is a deliberate open deviation from the workspace tiering rule, not an oversight — a tier key is meaningless to Codex and would break the byte-identity both surfaces depend on. It has not been ratified; see `logs/improvement-log.md`, 2026-08-16.
 
 ## AI Resource Development
 

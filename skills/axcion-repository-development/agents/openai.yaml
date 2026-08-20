@@ -1,0 +1,4 @@
+interface:
+  display_name: "Axcíon Repository Development"
+  short_description: "Lean routing for Axcíon repository builds"
+  default_prompt: "Use $axcion-repository-development to choose and run the minimum sufficient workflow for this repository change."
