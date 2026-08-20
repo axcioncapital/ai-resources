@@ -32,7 +32,7 @@ pre-approves the L4 case's judgment content, and the later operating unit must s
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 17 — exercise representative consumer routing.
+Standard. Discovery mode. Unit 18 — select the genuine integrated case.
 
 Named reason for the loop: the task spans a manual cross-repository integration, a genuine operating
 case and an operator-owned founder gate; its scope must stay bounded, and the result must be assessed
@@ -40,482 +40,278 @@ independently of the executor before it counts as the plan's terminal proof.
 
 ## Brief
 
-The complete post-install deterministic floor is accepted, so L4 is ready for its first operation in
-the bound consumer. Exercise one representative Light request, one genuinely completed Standard
-assignment with one-way escalation from a Light preference, and one Deep handoff now; this proves the
-installed entry behaves in the consumer before the separate genuine case begins.
+The deterministic floor and representative consumer operation are accepted, but neither the approved
+plan nor current task state selects the genuine L4 case. Identify exactly one live, evidence-ready case
+inside the bound consumer whose current-contract judgment path will not overwrite legacy authority or
+inherit a prior founder decision; if the checkout contains no such case, establish that cleanly before
+any artifact is created.
 
 **Plan justification and current position:** the operator-approved plan at material commit
-`8bf9d0d96ca7796621035e3f83b50c9dfc8055ec` requires L4 to exercise L3 handoff and escalation with real
-representative uses before adoption. Unit 16 is accepted at integration commit
-`78072b3e25d001896634ac919c20d9a1b71b6f1f`: all sixteen capability-scoped suites passed, 451 assertions
-passed and 0 failed, the post-install reconciliation had no exception, and both checkouts remained
-unmutated. Installation and its deterministic proof are complete; representative operation is ready,
-while the genuine integrated case, founder gate, downstream content, QC and burden verdict remain open.
+`8bf9d0d96ca7796621035e3f83b50c9dfc8055ec` requires one genuine case to run evidence → independently
+reviewed proposal → founder revise/approve/reject → approved House View → downstream analysis and prose
+→ independent content QC. Unit 17 is accepted after its frozen correction at integration commit
+`d86fcd9357004db2469bbb7c8ad671825d93be36`: Light, Standard and Deep resolved correctly in the consumer,
+the Standard memo passed its installed checker, and no repository was mutated. The next irreversible
+choice is not judgment content but the case and artifact identity the remaining proof will operate on.
 
 **Governing sources and dispositions:**
 
 - `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`, material
-  content bound to `8bf9d0d9`, governs the L4 representative proof and one-consumer boundary.
-- The accepted Unit 16 result at `78072b3e` governs the green deterministic floor; do not rerun its
-  sixteen suites in this unit.
-- Closed L3 record `logs/work-loop/canonical-rw-lightweight-l3.md` and durable proof
-  `audits/l3-representative-operating-proof-2026-08-18.md` are the canonical comparison: they prove
-  representative semantics but explicitly do not prove consumer-facing operation.
-- The consumer's live `.claude/commands/research-route.md` and its three installed
-  `logs/scripts/research-route-*.sh` helpers are verify-first repository reality and own this unit's
-  behavior.
-- Existing approved `custom-dev-data-ai` and `precision-components` judgment artifacts carry the
-  project's legacy `section:` contract. They are preserved background, not authority to bind in this
-  unit: the installed L3 adapter requires the current `unit:` identity. The new L4 case must create and
-  earn its own current-contract authority later.
+  content bound to `8bf9d0d9`, governs the one-case outcome, founder authority and proof boundary; it
+  does not name the case.
+- The accepted Unit 17 result at `d86fcd93` governs representative readiness; do not rerun its route
+  cases or Unit 16's deterministic suites.
+- Consumer `roadmap/phase-a-batch-slate-v1.md` is operator-owned running-order context. Its dated status
+  cells and the consumer `CLAUDE.md` current-section prose are verify-first background rather than
+  presumed current state where later `logs/decisions.md`, checkpoints or live artifacts disagree.
+- Consumer `docs/judgment-authority-contract.md`, `reference/unit-judgment-brief.template.md`, the three
+  judgment commands and their installed validators govern the current `unit:` lifecycle and downstream
+  authority path.
+- Existing approved `custom-dev-data-ai` and `precision-components` artifacts under
+  `analysis/judgment/` are legacy `section:` authorities and protected project evidence. They may inform
+  candidate suitability but may not be overwritten, renamed, converted, treated as current-contract
+  authority or allowed to pre-approve the L4 case.
+- Live consumer evidence, checkpoint, directive, task-plan, report/output and judgment inventories are
+  verify-first repository reality. Absence must be established on the exact searched surfaces.
 
 **Codex framing decisions:**
 
-1. The three requests below are fixed representative proof cases, not business decisions. They test
-   the installed entry's ordinary Light completion, one-way Light-to-Standard escalation and completed
-   Standard memo, and Deep handoff without starting the pipeline.
-2. Run the live command's steps directly in this Claude session. Do not invoke another Claude/Codex
-   process, a subagent, or a second workflow; no nested actor is needed to operate an instruction
-   command.
-3. The Standard case deliberately does not request governing judgment. This isolates a genuine
-   completed Standard assignment; current-contract House View binding belongs to the later genuine
-   integrated case after founder approval.
-4. The full three outputs are evidence, so return them verbatim in `## Latest result` rather than
-   creating a second audit, report or run-log artifact. A temporary Standard memo used by the checker
-   must live outside both repositories and be removed after the check.
-5. This unit decides only whether representative consumer operation is good enough to proceed. It is
-   not the final Adoption/lifecycle verdict for L4.
+1. Selection is readiness-led, not a new business-priority ranking: choose the case that can genuinely
+   exercise the installed end-to-end contract inside this already-bound consumer with the least
+   collision and no invented evidence. If two candidates remain materially tied on readiness and the
+   choice would instead decide business priority, stop for the operator rather than breaking the tie.
+2. A genuine case uses live research evidence created for a real Sector Intelligence unit. A fixture,
+   synthetic thesis, renamed copy of an approved brief or meta-analysis of the L4 implementation does
+   not qualify.
+3. A selectable case must admit one semantically honest `unit:` identity and one non-colliding artifact
+   base, with no parallel governing authority for the same analytical unit. A new filename alone does
+   not cure two competing approved views over the same unit.
+4. Prior founder approval never transfers. The selected case's proposed judgment content must remain
+   open to independent challenge and an actual operator revise/approve/reject decision.
+5. The evidence need not be gap-free, but it must be sufficient to propose three to five evidence-bound
+   theses and to reach downstream analysis and prose if approved. A live HOLD or frozen stage is
+   acceptable only if existing authority explicitly permits the exact L4 downstream path despite it;
+   do not infer such permission from the pilot objective.
+6. Bound the candidate set to evidence-bearing units actually present in this consumer checkout. Do not
+   inspect sibling worktrees, the historical comparison checkout or any second consumer.
 
-**Dominant deliverable:** one consumer-side representative operating proof covering the plan-required
-Light, Standard and Deep routes.
+**Dominant deliverable:** one repository-grounded case-selection verdict with the exact non-colliding
+identity and handoff contract, or a proved stop if none exists.
 
-**Evidence required in this hop:** the actual classifier inputs and outputs, the complete user-facing
-result of all three cases, Standard checker evidence, route/escalation/handoff assessment, and
-before/after no-mutation proof.
+**Evidence required in this hop:** a complete bounded candidate inventory, per-candidate collision and
+readiness assessment, exact selected identity/base/evidence/downstream seams or exact no-case reason,
+and before/after no-mutation proof.
 
-**Evidence explicitly deferred:** the genuine integrated case and its evidence production; a new
-current-contract proposed brief; independent challenge; founder revise/approve/reject; approved House
-View consumption; downstream analysis, architecture and prose; independent content QC; L4-versus-L1
-burden comparison; and the final adopt/revise/stop verdict.
-
-**The three representative requests:**
-
-1. **Light:** `Based only on this repository's current records, which L2 and L3 capability components
-   are installed in this consumer, and what proof currently shows they work?` Assess the vector from
-   the request rather than assuming the route. The expected evidence posture is a compact factual note
-   from local evidence already at hand, with no retrieval.
-2. **Standard with one-way escalation:** `Quickly assess whether the installed L2/L3 integration is
-   ready to begin a genuine end-to-end L4 pilot in this consumer, using only the accepted task state
-   and local project evidence; keep it internal.` Treat `Quickly` as a Light preference, not permission
-   to lower the floor. Assess the six signals, run the executable classifier, and produce the complete
-   evidence-controlled Standard memo. This is readiness analysis, not a request to choose or consume
-   an authorized thesis; do not bind judgment authority and do not use the reserved House View term in
-   the memo. Run the installed memo checker on the exact memo.
-3. **Deep:** `Produce an external report on 2026–2030 European workforce-management software and its
-   implications for Axcíon's product and positioning.` Assess the vector and run the classifier. Verify
-   the bound consumer's deployed Deep entry and the request's prerequisite state, then return the exact
-   handoff the live command requires. Do not create a task plan, run `/run-preparation`, or execute any
-   pipeline stage.
+**Evidence explicitly deferred:** authoring any proposed brief; routing the genuine case; independent
+challenge; founder revise/approve/reject; promotion; approved-authority consumption; downstream
+analysis, architecture or prose; independent content QC; burden measurement/comparison; and the final
+L4 lifecycle verdict.
 
 **Check against the repositories:**
 
 1. Validate this task and both checkout bindings at repository depth. Integration must begin at exact
-   `78072b3e25d001896634ac919c20d9a1b71b6f1f` on
+   `d86fcd9357004db2469bbb7c8ad671825d93be36` on
    `session/2026-08-19-rw-l4-integration`, with only the unrelated
    `logs/innovation-registry.md` edit plus this Codex brief uncommitted. Consumer must be clean at exact
    `5a8482c959ceaf286fa5601c13d44d25d04a2753` on
    `trial/l1-repeat-precision-components`, with no conflicting owner. Stop on overlap or drift; do not
    clean, switch, rebase or repair either checkout.
-2. Read the consumer's live `research-route.md` in full and verify its executable classifier, Standard
-   memo checker, judgment-authority adapter and local Deep entry exist at the paths the command resolves.
-   Report any copied/symlinked path resolution explicitly.
-3. For each fixed request, record all six assessed signal values and run the installed executable
-   classifier with exactly those values. Capture exit code and complete output. Do not calculate or
-   silently revise a route by hand.
-4. For the Light case, use only dated local sources actually read and return the exact note in the
-   command's required structure. If a heavier signal appears while writing, stop the Light note and
-   report the escalation rather than forcing completion.
-5. For the Standard case, return the exact completed memo and the installed memo checker's exit code
-   and full verdict. Name every source actually opened, preserve evidence/inference separation and
-   claim-level verb permissions, and use no network or authority binding. A checker refusal or live
-   Deep trigger is a valid stop result, not permission to weaken the memo.
-6. For the Deep case, verify whether a matching task plan already exists under
-   `preparation/task-plans/`, verify `.claude/commands/run-preparation.md`, return the local project path,
-   entry and exact prerequisite, and show that no stage ran and no file was created.
+2. Establish the consumer's complete evidence-bearing candidate set from these bounded surfaces:
+   `preparation/task-plans/`, `execution/`, `analysis/`, `report/`, `reports/`, `knowledge-base/`,
+   `roadmap/phase-a-batch-slate-v1.md`, the current-section block in `CLAUDE.md`, and relevant dated
+   decisions in `logs/decisions.md`. Group paths by genuine research-unit slug and state what concrete
+   evidence/output stage each group has reached. Do not treat a slate row without live artifacts as an
+   evidence-ready case.
+3. Inventory every existing judgment artifact and parse its identity key, status, unit/section and base
+   path. For each candidate, test whether the current contract can use a distinct, semantically honest
+   `unit:` identity without overwriting or creating competing authority. Name the exact collision or
+   clean path.
+4. For each evidence-ready candidate, inspect the governing task plan, latest binding checkpoints,
+   HOLD/BLOCKED/frozen decisions, claim IDs and downstream directive/prose surfaces needed to answer:
+   (a) can a current-contract proposal be grounded now; (b) can independent challenge evaluate it;
+   (c) after a future founder approval, can approved authority lawfully reach analysis and prose; and
+   (d) can independent content QC assess the result? Report the exact source for each yes/no/unknown.
+5. Verify the installed producer, challenge, promotion, Standard authority adapter and downstream gate
+   accept the proposed identity/base shape at the contract level without executing them or creating a
+   fixture. A static contract/path walk is sufficient; do not run a case, mutate an artifact or invent
+   content to make a path appear usable.
+6. Rank only candidates that pass checks (2)–(5), by end-to-end readiness and preservation risk. Select
+   exactly one when the evidence determines it; otherwise name the tie, missing authority or collision
+   that makes the next decision operator-owned.
 
 **Post-run evidence:**
 
-1. Report three route rows: request, six-signal vector, preference, classifier exit/output, floor rule,
-   final route and whether one-way escalation occurred.
-2. Include the complete Light note, complete checked Standard memo and complete Deep handoff verbatim.
-   For Standard, include memo-check exit and terminal verdict; for Deep, name the verified entry and
-   matching-task-plan result.
-3. Compare each output to the live command contract and the canonical representative proof, naming any
-   consumer-only difference. Confirm Light used no retrieval, Standard completed without authority
-   binding, and Deep ran no stage.
-4. Show `git status --porcelain --untracked-files=all` and HEAD before and after in both repositories.
-   Integration must retain only the unrelated innovation-registry edit plus this state update;
-   consumer must remain clean. Remove temporary files outside the repositories.
-5. End with exactly one recommendation: `PROCEED TO GENUINE INTEGRATED CASE` only if all three routes
-   resolve and behave as required with no unexplained mutation; otherwise
-   `STOP — REPRESENTATIVE OPERATION NOT PROVED`, naming the failing case. Do not propose or implement a
-   repair.
+1. Return a compact candidate table: slug; live evidence roots; actual phase/state with date/source;
+   existing judgment identity/status; current-contract collision; downstream readiness; disposition.
+2. If selecting, name exactly: genuine case slug and question/outcome boundary; new `unit:` identity;
+   proposed/review/approved base path; evidence inputs and claim-ID families; producer entry; independent
+   challenge entry; founder stop; promotion entry; Standard adapter arguments; downstream commands and
+   output targets; independent QC entry; preservation exclusions; and the first later unit's one
+   dominant deliverable. Make clear that this is a technical handoff contract, not approval of content.
+3. If stopping, prove why every evidence-ready candidate fails or why the surviving choice is genuinely
+   operator-owned, and state the smallest exact decision required. Do not manufacture a candidate.
+4. Show HEAD and `git status --porcelain --untracked-files=all` before and after in both repositories.
+   Integration must retain only the unrelated innovation-registry edit plus this state update; consumer
+   must remain clean. Create no case-selection artifact outside this state file.
+5. End with exactly one verdict: `SELECT {slug} FOR GENUINE L4 CASE` when one candidate satisfies every
+   condition, or `STOP — NO NON-COLLIDING GENUINE CASE AVAILABLE` when none does. A readiness tie that
+   requires business priority uses the stop verdict and names the operator decision.
 6. Commit only this state handback in the integration checkout by explicit pathspec, preserving the
    unrelated innovation-registry edit. Do not create a consumer commit, push or merge.
 
-**Capability subset:** baseline only — read, search, inspect history, run the installed local
-classifier and memo checker, use and remove a temporary memo outside tracked surfaces, update only
-this task state, and make its local integration commit through Claude. Nothing is selected from the
-empty pre-authorizable set; no repository content/configuration edit, network, remote service, push,
-PR, merge, deployment, credential access, destructive operation, branch/worktree creation, checkout
-switch, permission change or policy change is authorized.
+**Capability subset:** baseline only — read, search, inspect history, perform static contract/path
+walks, update only this task state, and make its local integration commit through Claude. Nothing is
+selected from the empty pre-authorizable set; no consumer/canonical content edit, case execution, test
+rerun, network, remote service, push, PR, merge, deployment, credential access, destructive operation,
+branch/worktree creation, checkout switch, permission change or policy change is authorized.
 
 **Stop and hand back if:** either checkout binding changed; the unrelated integration edit overlaps;
-the consumer is not clean; a live command/helper/deep-entry path is missing; any classifier or checker
-cannot produce trustworthy evidence; a request cannot be completed from local evidence inside its
-resolved route; a route must be hand-calculated; the Standard case requires authority binding; the Deep
-case would need a pipeline stage or new task plan; an output cannot be preserved for assessment without
-a second artifact; any tracked consumer surface changes; or work would cross into repair, the genuine
-case or an operator-reserved decision. A false premise or correct fail-closed outcome is valid evidence;
-report it rather than improvising.
+the consumer is not clean; candidate readiness cannot be established on the bounded surfaces; selection
+would overwrite or compete with legacy authority; a case would need evidence retrieval, a second
+consumer or another worktree; a HOLD/frozen state lacks explicit permission for the required downstream
+path; two candidates remain tied on a business priority; the exact current-contract path is not
+statically supportable; or work would cross into case execution or an operator-owned judgment. A false
+premise or no-case result is valid discovery; report it rather than improvising.
 
-**Completion condition:** without changing either implementation, return the complete three-route
-consumer operating proof and one proceed/stop recommendation, then commit only this state handback with
-`status: active`, `turn: codex`. Preserve the unrelated innovation-registry edit and stop before the
-genuine integrated case.
+**Completion condition:** without changing either implementation or creating case content, return the
+complete bounded candidate assessment and exactly one select/stop verdict, then commit only this state
+handback with `status: active`, `turn: codex`. Preserve the unrelated innovation-registry edit and stop
+before authoring the genuine case.
 
 ## Latest result
 
-Inspected (2026-08-19):
+Inspected (2026-08-20):
 
-- Claim (1): HOLDS — ran `git rev-parse HEAD`, `git rev-parse --abbrev-ref HEAD` and
-  `git status --porcelain --untracked-files=all` in both checkouts. Integration is at exact
-  `78072b3e25d001896634ac919c20d9a1b71b6f1f` on `session/2026-08-19-rw-l4-integration` with exactly two
-  modified paths, ` M logs/innovation-registry.md` (the unrelated edit) and
-  ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md` (this Codex brief) — no overlap between them.
-  Consumer is at exact `5a8482c959ceaf286fa5601c13d44d25d04a2753` on
-  `trial/l1-repeat-precision-components` with empty porcelain output. `work-loop-owner.sh check
-  --depth repo` returned PROCEED (this checkout already declares this task); the consumer holds no
-  `logs/work-loop/.owner` file, so no conflicting owner exists. Neither checkout was cleaned, switched,
-  rebased or repaired.
-- Claim (2): HOLDS — read the consumer's `.claude/commands/research-route.md` in full (415 lines).
-  Its own resolution block resolves `research_entry=.claude/commands/research-route.md`, which is a
-  regular file, so the `while [ -L ... ]` loop does not iterate and `research_root` resolves to the
-  consumer root. All four surfaces exist at the paths that resolution computes:
-  `logs/scripts/research-route-classify.sh` (executable classifier),
-  `logs/scripts/research-route-memo-check.sh` (Standard memo checker),
-  `logs/scripts/research-route-judgment-authority.sh` (judgment-authority adapter) and
-  `.claude/commands/run-preparation.md` (local flattened Deep entry). **Path-resolution report: nothing
-  is symlinked.** `ls -la` shows every one as a regular file (`-rw-r--r--` / `-rwxr-xr-x`, no `l` mode
-  bit, no `->` target) — this consumer holds copies, not symlinks, so the entry resolves to the
-  consumer's own helpers rather than reaching back to a canonical repository.
-- Claim (3): HOLDS — all six signal values were assessed per request and passed verbatim to the
-  installed classifier; no route was calculated or revised by hand. Exit codes and complete outputs are
-  in the route table below.
-- Claim (4): HOLDS — the Light note below uses only dated local sources actually opened (consumer git
-  history, consumer directory listings, one recursive grep). No retrieval, web, API or network call was
-  made on the Light route. No heavier signal surfaced while writing, so no mid-note escalation was owed.
-- Claim (5): HOLDS — the exact memo below was run through the installed checker, which returned
-  `verdict: PASS`, exit 0. Every source named was actually opened. Evidence and inference stay separated,
-  claim-level verb permissions are respected, no network was used and no judgment authority was bound.
-- Claim (6): HOLDS — no matching task plan exists. `preparation/task-plans/` holds
-  `custom-dev-data-ai-task-plan-v1.md`, `custom-dev-data-ai-task-plan-v2.md` and
-  `precision-components-task-plan-v1.md`; `grep -riln 'workforce' preparation/` returns no match.
-  `.claude/commands/run-preparation.md` exists and was read — its Step 1 reads a task plan draft loaded
-  by `@` reference and writes `preparation/task-plans/{section}-task-plan-v1.md`. No stage ran and no
-  file was created.
+- Packaging lines: HOLDS — `Dominant deliverable:` names one deliverable; `Evidence required in this
+  hop:` and `Evidence explicitly deferred:` are both filled; `Primary edit begins after:` is correctly
+  absent, the unit being Discovery mode.
+- Claim (1) bindings: HOLDS — integration `git rev-parse HEAD` = `d86fcd9357004db2469bbb7c8ad671825d93be36`
+  on `session/2026-08-19-rw-l4-integration`, `git status --porcelain --untracked-files=all` =
+  ` M logs/innovation-registry.md` + ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md` and nothing
+  else. Consumer `git rev-parse HEAD` = `5a8482c959ceaf286fa5601c13d44d25d04a2753` on
+  `trial/l1-repeat-precision-components`, `git status --porcelain --untracked-files=all` empty; searched
+  `logs/work-loop/.owner` in the consumer — absent, so no conflicting owner. No overlap, no drift.
+- Claim (2) candidate set: HOLDS, and it is exactly two — searched `preparation/`, `execution/`,
+  `analysis/`, `report/`, `reports/`, `knowledge-base/`, `output/`, `final/`,
+  `roadmap/phase-a-batch-slate-v1.md`, `CLAUDE.md:9-11` and `logs/decisions.md`. Every evidence-bearing
+  path groups under `custom-dev-data-ai` or `precision-components`. A filename sweep for each of the ten
+  other slate slugs (`industrial-software`, `vertical-market-saas`, `managed-it-cloud`,
+  `risk-security-compliance-services`, `finance-accounting-bpo`, `architecture-engineering-services`,
+  `technical-industrial-distribution`, `cleantech-equipment`, `building-services-install`,
+  `mobility-forestry-agri-mfg`) returned 0 files each; `knowledge-base/` holds only `README.md` and
+  `output/`, `final/`, `usage/` hold only `.gitkeep`. The slate's "in flight — Stage 3" cell for
+  `industrial-software` (`roadmap/phase-a-batch-slate-v1.md:22`) and `CLAUDE.md:9`'s "Stage 1 IN
+  PROGRESS … Next: Step 3 Research Plan" are both stale against live artifacts and are not used as state.
+- Claim (3) judgment inventory and identity: HOLDS — searched `analysis/judgment/**` and parsed the
+  frontmatter of all eight artifacts. Both units already carry `status: approved`,
+  `approved_by: Patrik Lindeberg`, `as_of: 2026-08-18`, and every one is keyed `section:`, not `unit:`.
+  Under the installed dual-contract validator (`logs/scripts/check-judgment-contract.sh:341,347` and its
+  `legacy_contract()` at 296-338) a `section:` brief is dispatched to the legacy path and, at
+  `status: approved`, is returned as "accepted as downstream authority" — so both are live governing
+  authority for their unit today.
+- Claim (4) downstream readiness: HOLDS as inspected, and both candidates fail it. Sources named per
+  candidate in the table and the two paragraphs below it.
+- Claim (5) static contract/path walk: HOLDS — no script was executed, no artifact created or mutated.
+  `research-route-judgment-authority.sh:120-128` reads `unit:` from `{base}-approved.md` and fails closed
+  when it does not equal `--unit`; a legacy `section:` brief yields `<absent>` there, so neither existing
+  approval can serve the Standard adapter. `promote-judgment-brief.sh:119,126-131` derives
+  `-approved.md` from `-proposed.md` and exits `6 ALREADY-APPROVED` rather than overwrite — so the deep
+  route's own base, `analysis/judgment/{slug}/{slug}-unit-judgment-brief`
+  (`check-judgment-producer.sh:118`), is mechanically closed for both slugs.
+  `check-judgment-challenge.sh` binds on `artifact:` and `reviews_sha256:` only and imposes no identity
+  key; `check-judgment-gate.sh:164` and `check-judgment-propagation.sh:86` anchor on the literal
+  `unit-judgment-brief-approved`. The current-contract shape is therefore statically supportable — but
+  only at a base that is either occupied or parallel.
+- Claim (6) ranking: no candidate passes (2)-(5), so nothing is ranked and nothing is selected.
 
-**Packaging lines:** present and well-formed for Discovery mode — `Dominant deliverable:` names exactly
-one deliverable, `Evidence required in this hop:` and `Evidence explicitly deferred:` are both filled,
-and `Primary edit begins after:` is correctly absent (Discovery mode makes no primary edit).
+Candidate table:
 
----
+| Slug | Live evidence roots | Actual phase/state (date · source) | Existing judgment identity/status | Current-contract collision | Downstream readiness | Disposition |
+|---|---|---|---|---|---|---|
+| `custom-dev-data-ai` | `preparation/{task-plans,research-plans,answer-specs,checkpoints,external-query-packs}`, `execution/{raw-reports,research-extracts,extract-verification,transaction-table,checkpoints}` (Q1-Q14), `analysis/{cluster-memos,claim-permission,gap-assessment,gate-clearance,source-conflicts,stop-conditions,country-parity}`, `analysis/section-directives/.../cluster-01-directive.md` | Stage 3 Pass-4 Step 3a entered **with a live Step-2 HOLD standing** — 47 gaps, 4 Blocking (2026-08-18 · `logs/decisions.md:852-869`, Decision B3-31); Step 4 run for cluster 01 only, no Step-4 checkpoint (`logs/l1-judgment-trial-record.md:36-38`) | `section: custom-dev-data-ai`, `approved`, `approved_by: Patrik Lindeberg`, `as_of: 2026-08-18` | **Yes.** Deep-route base occupied → `promote-judgment-brief.sh` exit 6. A canonical `unit:` brief at any other base is a second approved view of the same analytical unit (framing decision 3) | **No.** Existing authority explicitly withholds the exact L4 downstream path | **Rejected** |
+| `precision-components` | `preparation/*` (task/research plans, 6 checkpoints), `execution/{raw-reports (sessions a-i),research-extracts (Q1-Q11),manifest,extract-verification}`, `analysis/{cluster-memos,chapters,claim-permission,editorial-review,gate-clearance,gap-assessment,source-conflicts,stop-conditions,country-parity}`, `analysis/section-directives/.../cluster-01..06-directive.md`, `report/{architecture,chapters,checkpoints}` | **Frozen mid-Stage-4 at the Chapter-1 operator gate 4.2e** (2026-07-26 · `logs/decisions.md:183,187` Decision 22; re-affirmed 2026-07-26 · `logs/decisions.md:212` Decision 26). Its stated thaw condition — the three parallel units reaching Stage 4 — is unmet: none of them has a single artifact in this checkout | `section: precision-components`, `approved`, `approved_by: Patrik Lindeberg`, `as_of: 2026-08-18`, carrying three preserved challenge rounds and two operator revisions | **Yes.** Same two collisions as above. The approved brief governs the whole unit including Chapter 4 and the §5.9 verdict, so a chapter- or cluster-scoped `unit:` brief is parallel authority, not a distinct unit | **No.** Frozen stage, and no authority permits the L4 path despite it | **Rejected** |
 
-Result (corrected 2026-08-20 on Codex's frozen finding): all three plan-required routes were exercised
-against the installed consumer entry and all three resolved and behaved as required. The classifier
-resolved Light, Standard-with-one-way-escalation and Deep at exit 0 in every case; the Light note
-completed from local dated evidence with no retrieval; the Standard memo completed and passed the
-installed checker at exit 0 without binding judgment authority; the Deep case returned the live command's
-exact handoff without running any pipeline stage or creating any file. Neither repository was mutated.
+Per-candidate answers to (a)-(d), with the exact source for each:
 
-**What the correction changed.** The frozen finding is resolved: my original Standard memo conflated
-*where Unit 16's evidence is recorded* with *where its suites were executed*, and inferred from the
-consumer holding no local copy of the record that the suites had not run in the consumer. Reproducing the
-finding by inspection confirmed it — the accepted Unit 16 `## Latest result` at `78072b3e` carries two
-separately headed tables, "Consumer, run from the consumer root" (eight suites, exit 0, 149 L2 + 89 L3 =
-238 passed, 0 failed) and "Canonical, run from the integration checkout" (eight suites, exit 0, 125 L2 +
-88 L3 = 213 passed, 0 failed), summing to the recorded 451. Both sub-totals were recomputed from the
-per-suite rows and reconcile.
+`custom-dev-data-ai` — (a) a current-contract proposal **can** be grounded now: the evidence bundle is
+complete enough that the L1 trial produced 5 theses and 32 claim IDs from it
+(`logs/l1-judgment-trial-record.md:22`). (b) independent challenge **can** evaluate it: a fresh-context
+reviewer returned 12 findings, 8 requiring change, on this exact bundle (same file, line 23). (c) after a
+future founder approval, approved authority **cannot** lawfully reach analysis and prose: Decision B3-31's
+scope guard states *"this decision governs the trial only. It is **not** clearance to write B3's report"*
+and *"the HOLD itself, which stands on the record"* (`logs/decisions.md:869`), repeated at
+`logs/l1-judgment-trial-record.md:125-127` — *"The Step-2 HOLD stands … This is not clearance to write or
+publish B3's report."* Framing decision 5 forbids inferring that permission from the pilot objective, and
+no other authority grants it. (d) **unknown, and moot** — independent content QC has nothing to assess
+while (c) is no.
 
-The corrected memo splits the two questions into separate claims — C3 owns *where the suites ran* and what
-passed, C4 owns *where the record is stored* — so neither can be read off the other again. The false
-unknown ("whether the sixteen suites pass when executed from inside this consumer") is removed, and the
-candidate deferral to rerun them is dropped: it existed only because of the conflation. C3 keeps the
-one-role ILLUSTRATIVE-ONLY grade the single accepted record earns, while stating the execution location
-and exact counts that record directly documents — and the memo now also records that the consumer HEAD is
-unchanged (`5a8482c9`) from the one Unit 16 tested, so the execution evidence applies to the current tree.
+`precision-components` — (a) **yes**, and it has already been done once on this bundle: proposal, three
+challenge rounds and two operator revisions are on disk under `analysis/judgment/precision-components/`.
+(b) **yes**, by the same evidence. (c) **no**: Decision 22 idled the unit at the Chapter-1 gate with
+*"draft/review/QC/checkpoint all on disk"* and Decision 26 confirmed *"pilot-1 frozen at Stage 4"*; the
+thaw condition it names has not occurred, and no decision in `logs/decisions.md` (searched for
+`HOLD|FROZEN|FREEZE|BLOCKED|STOP|paused|suspend`) permits resuming Stage 4/5 for this unit. (d) **moot**
+for the same reason. Independently of (c), the founder's 2026-08-18 approval already covers this unit's
+theses and its Selective verdict, so a fresh L4 proposal over the same analytical unit could not present
+a genuinely open founder decision without contradicting or superseding that approval — which framing
+decision 4 forbids transferring and framing decision 3 forbids duplicating.
 
-Scope held: no suite was rerun, the accepted Light and Deep results are untouched, no artifact was
-created, and nothing outside this finding was corrected.
+**Why this is a stop and not a tie.** Framing decision 1's tie-break clause does not apply: the two
+candidates are not tied on readiness, they are both independently disqualified — each on a live
+authority-collision *and* on a downstream permission its own governing decision explicitly withholds. No
+third candidate was manufactured, and none exists: the ten remaining slate rows have no live artifacts, so
+under check (2) they are not evidence-ready cases.
 
-### Route table
+**The smallest exact decision required is the operator's**, and it is one of these three — all
+operator-owned, none available to Codex or Claude:
 
-| # | Request | Six-signal vector | Preference | Classifier exit / output | Floor rule | Final route | One-way escalation |
-|---|---|---|---|---|---|---|---|
-| 1 | Light — installed L2/L3 components and their proof | `output=note`, `consequence=internal`, `scope=bounded`, `load_bearing_claim=no`, `thesis_judgment=no` | `none` | exit 0 — `route: light` / `preference-overridden: no` / `floor-set-by: base` | `BASE light` | **light** | no |
-| 2 | Standard — readiness to begin a genuine L4 pilot | `output=analysis`, `consequence=internal`, `scope=bounded`, `load_bearing_claim=yes`, `thesis_judgment=no` | `light` | exit 0 — `route: standard` / `preference-overridden: yes` / `floor-set-by: output=analysis` | `FLOOR standard output=analysis` (also matched by `load_bearing_claim=yes`) | **standard** | **yes — `light` preference raised to `standard`** |
-| 3 | Deep — external 2026–2030 European workforce-management report | `output=report`, `consequence=external`, `scope=broad`, `load_bearing_claim=yes`, `thesis_judgment=yes` | `none` | exit 0 — `route: deep` / `preference-overridden: no` / `floor-set-by: output=report` | `FLOOR deep output=report` (also matched by `scope=broad` and `thesis_judgment=yes consequence=external`) | **deep** | no |
+1. Authorise a **canonical-contract successor House View for `precision-components`** that supersedes the
+   operator's 2026-08-18 legacy `section:` approval for the same unit, with the legacy artifacts preserved
+   unmodified and explicitly demoted, **and** lift the Decision-22/26 Stage-4 freeze far enough for the L4
+   downstream analysis, prose and content QC to run. This is the cheapest route — the unit is the furthest
+   downstream, has all six cluster directives and a QC'd Chapter 1 — but it reopens an operator-settled
+   approval and an operator-set freeze, which § 7 reserves to the operator.
+2. Grant `custom-dev-data-ai` explicit clearance for the L4 downstream path despite the standing Step-2
+   HOLD, naming that clearance as an extension of B3-31's scope guard. Materially worse: it accepts three
+   permission breaches already carried into the approved authority
+   (`logs/l1-judgment-trial-record.md:99-118`) and only cluster 01 has a directive.
+3. Accept that no genuine non-colliding L4 case exists inside the bound consumer, and reframe the plan's
+   terminal proof — which would mean either a new evidence gather or a second consumer, both currently
+   excluded by `## Objective and scope`.
 
-Case 2 is the plan-required one-way escalation: `Quickly` was recorded as a `light` preference, the
-signals set a `standard` floor, and the classifier reported `preference-overridden: yes`. The floor was
-never lowered.
-
-### Case 1 — complete Light note (verbatim)
-
-```markdown
-# Which L2 and L3 capability components are installed in this consumer, and what proof currently shows they work?
-
-## Answer
-Ten dated install commits put both capability sets into this checkout on 2026-08-19: the L3 lightweight
-research entry (one command plus six helper scripts) and the L2 judgment capability (a dual-contract
-validator, a promotion script, a propagation checker, the authority contract and its brief template, and
-judgment-governed edits to three pipeline commands and three reference files). The proof this repository
-itself carries is executable rather than narrative: eight `.test.sh` suites sit beside the components
-they cover. This repository holds no dated record of any of those suites having been run inside it.
-
-## Evidence
-- [EVIDENCE] Ten commits titled `trial: L4 install — …`, `93d5a31` through `5a8482c`, install both
-  capability sets and name every file each one touched.
-  Source: consumer git history, `git log --name-only` over `93d5a31..5a8482c` — Date: 2026-08-19
-- [EVIDENCE] The L3 entry is `.claude/commands/research-route.md` with six helpers under
-  `logs/scripts/`: `research-route-classify.sh`, `research-route-memo-check.sh`,
-  `research-route-judgment-authority.sh`, and three suites `research-route-l3-unit-1.test.sh`,
-  `research-route-l3-unit-2.test.sh` and `research-route-l3-adapter-unit-1.test.sh`. All are regular
-  files, not symlinks.
-  Source: directory listing of `.claude/commands/` and `logs/scripts/` — Date: 2026-08-19 (file mtimes)
-- [EVIDENCE] The L2 components are `logs/scripts/check-judgment-contract.sh`,
-  `logs/scripts/promote-judgment-brief.sh`, `logs/scripts/check-judgment-propagation.sh` with its test
-  suite, `docs/judgment-authority-contract.md`, `reference/unit-judgment-brief.template.md`,
-  `reference/stage-5-paths.md`, `reference/file-conventions.md`, `reference/stage-instructions.md`, and
-  judgment-governed edits to `.claude/commands/run-analysis.md`, `run-report.md` and `run-synthesis.md`.
-  Source: per-commit file lists in the same git history — Date: 2026-08-19
-- [EVIDENCE] Eight `.test.sh` suites are present in `logs/scripts/`: five judgment checkers
-  (`check-judgment-challenge`, `check-judgment-contract`, `check-judgment-gate`,
-  `check-judgment-producer`, `check-judgment-propagation`) and the three L3 suites.
-  Source: directory listing of `logs/scripts/` — Date: 2026-08-19
-- [EVIDENCE] Searching this repository's narrative records — `logs/`, `docs/` and `reference/` markdown,
-  excluding `logs/scripts/` — for `research-route`, `451 assertions`, `sixteen suites` or `l3 adapter`
-  returns no match, and `logs/runs/` holds exactly one artifact, `2026-08-14-S1-dd4.json`.
-  Source: recursive grep and directory listing — Date: 2026-08-14 (the one run artifact's own date)
-
-## Reasoning
-- [INFERENCE] The proof available *inside this repository* is the presence and runnability of the eight
-  suites, not a recorded result. From the last evidence item, nothing here records an execution, so a
-  reader relying only on this repository can confirm the components are installed but cannot confirm
-  they have been shown to pass here.
-
-## Gaps
-- Whether the eight suites pass when run from inside this checkout — this repository records no such run.
-- Where the components came from and whether they match their canonical source; the install commits name
-  files, not provenance.
-```
-
-Light used no retrieval: every source is a local file, a local directory listing or local git history.
-
-### Case 2 — complete checked Standard memo (verbatim, corrected)
-
-Memo checker: `logs/scripts/research-route-memo-check.sh --memo <temp-path>` → **`verdict: PASS`, exit 0**
-on the exact corrected memo below. The memo lived at a scratchpad path outside both repositories and was
-removed after the check.
-
-```markdown
-# Is the installed L2/L3 integration ready to begin a genuine end-to-end L4 pilot in this consumer?
-
-## Claims
-
-### C1 — The consumer checkout carries the installed L2 judgment components and L3 research-entry components at the paths their own command contracts resolve.
-Class: SUPPORTED
-Roles: 2 — installed-state attestation by version history; present-state attestation by direct filesystem inspection
-Source: consumer git history, the ten `trial: L4 install —` commits `93d5a31`..`5a8482c` with their per-commit file lists — Date: 2026-08-19 — Role: installed-state attestation by version history — Fit: direct
-Source: direct listing of the resolved paths `.claude/commands/research-route.md`, the six `logs/scripts/research-route-*.sh` files, `logs/scripts/check-judgment-contract.sh`, `logs/scripts/check-judgment-propagation.sh`, `logs/scripts/promote-judgment-brief.sh`, `docs/judgment-authority-contract.md`, `reference/unit-judgment-brief.template.md`, `reference/stage-5-paths.md` and `.claude/commands/run-preparation.md` — Date: 2026-08-19 (file mtimes) — Role: present-state attestation by direct filesystem inspection — Fit: direct
-Rationale: two independent evidentiary roles. History attests what was installed and when; the filesystem attests what is present now at the exact paths the entry's own resolution block computes. Both are direct and in scope. No ceiling applied.
-
-### C2 — The installed L3 entry resolves its helpers and classifies requests to its published rules inside this consumer.
-Class: SUPPORTED
-Roles: 2 — executed behaviour of the installed helper; the entry's published rule specification
-Source: three invocations of `logs/scripts/research-route-classify.sh`, resolved through the entry's own path-resolution block, each exiting 0 and printing `route:`, `preference-overridden:` and `floor-set-by:` — Date: 2026-08-19 (run in this session) — Role: executed behaviour of the installed helper — Fit: direct
-Source: `.claude/commands/research-route.md` read in full, including the `route-rules:start`/`route-rules:end` block the classifier parses as its single source — Date: 2026-08-19 (commit `231d063`) — Role: published rule specification — Fit: direct
-Rationale: two independent roles — one attests what the helper did, the other attests what it was contracted to do — and the three printed resolutions match the specification's floor rules. Both direct and in scope. No ceiling applied.
-
-### C3 — The eight consumer-side suites were executed from the consumer root and passed, and the eight canonical suites were executed from the integration checkout and passed.
-Class: ILLUSTRATIVE-ONLY
-Roles: 1 — the accepted task-state record of the deterministic run, which itself records execution location and per-suite counts
-Source: the accepted Unit 16 `## Latest result` at integration commit `78072b3e25d001896634ac919c20d9a1b71b6f1f`, read from git history. It carries two separately headed tables — "Consumer, run from the consumer root" listing eight suites at exit 0 for 149 L2 plus 89 L3 = **238 passed, 0 failed**, and "Canonical, run from the integration checkout" listing eight suites at exit 0 for 125 L2 plus 88 L3 = **213 passed, 0 failed** — summing to 451 passed and 0 failed — Date: 2026-08-19 — Role: accepted task-state record of the deterministic run — Fit: direct
-Rationale: exactly one independent evidentiary role, so the grade is capped here however precise the record is; a single record cannot be triangulated. The cap is on corroboration, not on specificity: the record directly documents *where each half ran* and the exact per-suite counts, and the eight consumer suites ran from the consumer root rather than from the integration checkout. That execution record applies to the tree as it stands, because the consumer HEAD is `5a8482c959ceaf286fa5601c13d44d25d04a2753` now and Unit 16 recorded the same consumer HEAD when it ran the suites. Its own arithmetic was recomputed from the per-suite rows and reconciles.
-
-### C4 — That execution record is held in the integration checkout's task state, and the consumer's own files carry no copy of it.
-Class: SUPPORTED
-Roles: 2 — full-text search of the consumer's narrative records and run-artifact directory; direct location of the record in the integration checkout
-Source: recursive case-insensitive search of the consumer's `logs/`, `docs/` and `reference/` markdown, excluding `logs/scripts/`, for `research-route|451 assertions|sixteen suites|l3 adapter` — zero matches — together with enumeration of `logs/runs/`, which holds exactly one unrelated artifact, `2026-08-14-S1-dd4.json` — Date: 2026-08-19 (searched in this session) — Role: full-text search of the consumer's narrative records and run-artifact directory — Fit: direct
-Source: `logs/work-loop/canonical-rw-l4-integrated-pilot.md` in the integration checkout at commit `78072b3e`, where the record is actually held — Date: 2026-08-19 — Role: direct location of the record in the integration checkout — Fit: direct
-Rationale: two independent roles establishing a question of storage location only — one surface searched and found nothing, the other opened and found the record. This claim is about where the evidence is written down. It says nothing about where the suites ran, which is C3's subject and which C3's source settles the other way.
-
-## Answer
-- [C1,C2] The installed routing surface is present at its contracted paths and behaves to its published rules in this consumer, which establishes that a pilot's entry point is in place before any case is run through it.
-- [C3] One accepted record reports, single-sourced, that the eight consumer-side suites ran from the consumer root at exit 0 for 238 passed and 0 failed, against the same consumer commit this checkout is on now.
-- [C4] The consumer's own files confirm they hold no copy of that execution record, which is a fact about where the evidence is stored and not about whether the suites ran here.
-- [C1,C2,C3] Taken together the evidence reports a consumer whose components are installed, whose entry behaves to contract, and whose own suites have been run from its own root and passed — with the qualification that the execution evidence rests on a single accepted record rather than two independent ones.
-
-## Inference
-- [INFERENCE] Resting on C3 and C4, the consumer's lack of a local execution record is a storage-location fact with no bearing on correctness, since the record that does exist documents execution from the consumer root against the identical consumer commit.
-- [INFERENCE] Resting on C1, C2 and C3, the residual weakness is corroboration rather than coverage: the components are installed, behave to contract and have passed their suites from this root, and what is missing is a second independent role for that last fact — which the genuine integrated case will produce as a by-product of exercising the same components, without any suite being run again for its own sake.
-
-## Unknowns
-- Whether any project-owned specialization in this checkout diverges from the canonical components in a way the eight consumer suites do not exercise.
-- Whether the legacy `section:`-contract judgment artifacts already in this project interact with the current-contract adapter during a genuine case.
-- Whether the routing behaviour proved here on three fixed representative requests holds on a genuine case whose signals were not chosen in advance.
-
-## Completion
-Status: COMPLETE
-Deep triggers: none
-```
-
-**Checker fail-capability, re-established on the corrected memo.** The verb classes changed in this
-correction, so the probe was rerun against the new text rather than relied on from the previous hop.
-Replacing the ILLUSTRATIVE-ONLY C3 bullet's `reports, single-sourced,` with `demonstrates` → exit 1,
-`reason: the Answer uses a SUPPORTED-only verb for C3, which is ILLUSTRATIVE-ONLY`. The checker still
-discriminates on this memo; the PASS is not a rubber stamp.
-
-Two probes from the previous hop stand unchanged and are not repeated here: the reserved-authority-term
-rejection, and the disclosure that a first probe attempt was mis-constructed (its pattern matched no
-text, so it re-ran the unmodified memo and returned PASS — my error, not a checker pass on a violating
-memo).
-
-### Case 3 — complete Deep handoff (verbatim)
-
-Matching-task-plan result: **none exists.** `preparation/task-plans/` holds only
-`custom-dev-data-ai-task-plan-v1.md`, `custom-dev-data-ai-task-plan-v2.md` and
-`precision-components-task-plan-v1.md`; `grep -riln 'workforce' preparation/` returns no match. Verified
-Deep entry: `.claude/commands/run-preparation.md`, present in this consumer and read — the local
-flattened entry the live command names for a project that is itself a deployed research project.
+Repository state, before and after this hop — no repository was mutated and no case-selection artifact was
+created outside this state file:
 
 ```
-Route: Deep (floor set by output=report; scope=broad and thesis_judgment=yes with
-consequence=external set the same floor independently).
-
-Route: Deep. This goes to the deployed Research Workflow in
-axcion-sector-intelligence-l1-trial — this project is itself a deployed research project, so
-the entry is local and flattened.
-
-Entry: /run-preparation, run from inside
-  /Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence-l1-trial
-Prerequisite: a filled task plan draft at
-  preparation/task-plans/{section}-task-plan-draft.md
-  — its objective, scope, constraints and audience are what Stage 1 reads.
-  No draft for this request exists yet; the three task plans present cover other sections.
-
-Next: fill that draft, then run /run-preparation there. Stage 1 will pause for your
-approval at the Task Plan and again at the Research Plan.
+integration HEAD  before/after: d86fcd9357004db2469bbb7c8ad671825d93be36 (unchanged this hop)
+integration status before: ' M logs/innovation-registry.md' + ' M logs/work-loop/canonical-rw-l4-integrated-pilot.md'
+integration status after:  the same two paths; only this state file's content changed
+consumer   HEAD  before/after: 5a8482c959ceaf286fa5601c13d44d25d04a2753 (unchanged)
+consumer   status before/after: empty (clean)
 ```
 
-No stage ran and no file was created: `preparation/task-plans/` holds the same three files it held
-before, and the consumer's `git status --porcelain --untracked-files=all` is empty after the run.
+Result: **STOP — NO NON-COLLIDING GENUINE CASE AVAILABLE.** The bound consumer holds exactly two
+evidence-bearing research units, and each is disqualified twice over: both already carry an
+operator-approved judgment authority for the same analytical unit, and each sits behind a live
+authority-imposed stop — a standing Step-2 HOLD explicitly not cleared for report writing
+(`custom-dev-data-ai`) and an unlifted operator freeze mid-Stage-4 (`precision-components`) — that no
+existing source permits the L4 downstream path despite.
 
-### Comparison to contract and to the canonical representative proof
-
-- **Against the live command contract.** All three routes matched it. Step 3's resolution block was run
-  as written rather than reimplemented; the Light note follows the command's five-heading structure with
-  every material claim sourced and dated; the Standard memo follows the memo shape including
-  `Roles:`/`Source:`/`Rationale:` per claim and claim-ID-bound Answer bullets, and omits the
-  `## Judgment authority` section correctly because nothing was bound; the Deep handoff uses the
-  "deployed project already exists" form the command specifies for this project.
-- **Against the canonical representative proof** (`audits/l3-representative-operating-proof-2026-08-18.md`,
-  read directly rather than taken from the brief's description of it). Two findings, one of them a
-  direct corroboration:
-  - **The Deep case is the same request, and it resolved identically.** That record's Deep section uses
-    the same 2026–2030 European workforce-management request and records `Route: Deep`, floor set by
-    `output=report` and independently by `scope=broad`. This run reproduced that resolution exactly, and
-    additionally recorded the third independent Deep floor (`thesis_judgment=yes consequence=external`).
-    Its response likewise "returned the `/run-preparation` handoff and ran no pipeline stage".
-  - **What it states about consumer scope is narrower than a claim about proving consumer operation.**
-    Its Assessment says no "consumer deployment ... was introduced" — a statement about what the L3 work
-    did *not* build, not an explicit disclaimer that consumer-facing operation is unproven. The honest
-    reading is that consumer-facing operation was simply outside what that record covered, and this run
-    is the first evidence of it. I record the distinction because the brief characterizes that document
-    as explicitly not proving consumer-facing operation, and its actual text does not say that.
-  - **One accepted limitation of that record is directly relevant and did not bite here.** It records
-    that "a copied command without its canonical helpers must stop rather than complete Standard work".
-    This consumer holds a copied command *with* its helpers present at the resolved paths, so Standard
-    completed legitimately rather than by evading that stop condition.
-- **Consumer-only difference — one, and it is structural rather than behavioural.** In the canonical
-  repository the entry and helpers are the originals; in this consumer they are **copies, not symlinks**,
-  so the command's `while [ -L ... ]` resolution loop never iterates and `research_root` resolves to the
-  consumer root. Every helper the command needs is nonetheless present at the resolved path, so the two
-  branches the command warns about — "classifier unavailable" and "the command was copied without its
-  helper" — did not fire. No behavioural difference was observed on any of the three routes.
-- **Second consumer-only difference — the Deep handoff target.** The canonical record's Deep case named
-  `projects/axcion-sector-intelligence` as its verify-first target; this run named the bound consumer
-  `projects/axcion-sector-intelligence-l1-trial` and its local flattened `/run-preparation` entry. The
-  handoff form is the same one the command specifies; only the resolved project differs, which is what
-  binding a different consumer is supposed to change.
-- **Confirmations required by the brief:** Light used no retrieval (local files, listings and git only);
-  Standard completed without authority binding (no `## Judgment authority` section, the adapter was never
-  invoked, and the reserved term appears nowhere in the memo — the checker independently rejects both
-  violations, as the probes above show); Deep ran no stage and created no file.
-
-### No-mutation proof
-
-| Repository | HEAD before | HEAD after | `git status --porcelain -uall` before | after |
-|---|---|---|---|---|
-| Integration | `78072b3e25d001896634ac919c20d9a1b71b6f1f` on `session/2026-08-19-rw-l4-integration` | identical | ` M logs/innovation-registry.md`<br>` M logs/work-loop/canonical-rw-l4-integrated-pilot.md` | identical |
-| Consumer | `5a8482c959ceaf286fa5601c13d44d25d04a2753` on `trial/l1-repeat-precision-components` | identical | *(empty)* | *(empty)* |
-
-The integration checkout retains only the unrelated innovation-registry edit plus this state update; the
-consumer remained clean throughout and no tracked consumer surface changed. The temporary memo and the
-two probe copies lived only under the session scratchpad, outside both repositories, and were removed —
-the scratchpad directory is now empty.
-
-### Recommendation (updated at the correction)
-
-**PROCEED TO GENUINE INTEGRATED CASE**
-
-Unchanged in direction, and better supported than before the correction. The finding did not weaken the
-readiness case — it strengthened it. My original memo treated the consumer's own suites as unrun in the
-consumer, which understated the evidence; Unit 16's record in fact documents those eight suites executing
-**from the consumer root** at exit 0 for 238 passed and 0 failed, against the identical consumer commit
-this checkout is on now. The residual qualification is therefore corroboration only — that execution fact
-rests on one accepted record rather than two independent roles — not coverage.
-
-Evidence: three classifier runs against the installed helper, exits 0/0/0, printing `route: light` /
-`route: standard` with `preference-overridden: yes` / `route: deep`; the installed memo checker returning
-`verdict: PASS` exit 0 on the exact corrected memo above, and exit 1 with a specific named reason when the
-ILLUSTRATIVE-ONLY C3 bullet is given a SUPPORTED-only verb; `preparation/task-plans/` unchanged and the
-consumer's porcelain status empty after the Deep case. The evidence can fail and did fail where it should.
+Evidence: the check that could have read the other way is claim (2)'s bounded sweep and claim (3)'s
+frontmatter parse. Had a third slug carried live evidence, or had either existing brief been keyed
+`unit:` or been anything other than `approved`, the verdict would have been a selection. It read the other
+way on both: ten slate slugs returned 0 files each, and all eight judgment artifacts parsed to
+`section:`/`approved`. The collision is mechanical as well as contractual —
+`promote-judgment-brief.sh:126-131` exits `6 ALREADY-APPROVED` at the deep route's own base for both
+slugs, and `research-route-judgment-authority.sh:126-128` fails closed on both existing approvals because
+neither carries a `unit:` key.
 
 ## Blocker
 
-None.
+None. The stop is the unit's discovery result, not an impediment to it: the inspection completed on every
+bounded surface the brief named and returned the proved no-case verdict the brief provides for.
 
 ## Next action
 
-Codex: run the closure check on the frozen finding only — is the where-recorded / where-executed
-conflation resolved, and did the correction break anything?
-
-What the correction did: the Standard memo now separates the two questions into distinct claims (C3 owns
-execution location and counts; C4 owns storage location), states the 238/0 consumer-root and 213/0
-integration figures Unit 16 directly records, keeps C3 at ILLUSTRATIVE-ONLY on its single accepted role,
-removes the false unknown, and drops the rerun deferral. The corrected memo passes the installed checker
-at exit 0, and a fresh probe on the new text — a SUPPORTED-only verb on the ILLUSTRATIVE-ONLY C3 bullet —
-is rejected at exit 1, so the PASS still discriminates.
-
-Nothing outside the frozen finding was changed: no suite rerun, the accepted Light and Deep results
-untouched, no artifact created, both repositories unmutated.
-
-One thing noticed during the correction and deliberately not implemented, recorded as a candidate
-deferral for Codex to dispose of: the Light note's `## Gaps` line reads "Whether the eight suites pass
-when run from inside this checkout — this repository records no such run." Within the Light route's own
-stated frame ("based only on this repository's current records") that is accurate, and Codex's finding
-froze the Light result as accepted, so I left it exactly as written. It nonetheless sits adjacent to the
-conflation just corrected, and a later reader taking that line out of its frame could repeat the mistake.
-Flagging rather than editing, because editing it would broaden the correction past the frozen finding.
+Codex: assess the proved stop. The selection is not Claude's to reframe — decide whether to put the three
+named operator decisions to the operator as the next unit, to reframe L4's terminal proof, or to stop.
