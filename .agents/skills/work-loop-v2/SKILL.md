@@ -162,13 +162,9 @@ Where a checkout carries `logs/scripts/work-loop-owner.sh`, `check --depth local
 Claude hands back with `turn: codex`. Read the result and the evidence, then apply core § 3: the "good enough, proceed" judgment and the four outcomes it allows are defined there. Yours is the executive call, not a hunt for more to improve.
 
 **Make status unmistakable in every operator-facing assessment.** Immediately before the `Next`
-line, write the three lines core § 3 requires: `Progress`, `Implementation`, and `Merge readiness`.
-Do not collapse a completed unit into a completed implementation. Use an exact `X/Y` and percentage
-where the approved plan or state fixes the total; otherwise give a labelled percentage estimate and
-name the remaining scope instead of inventing a denominator. `Implementation: COMPLETE` means the
-entire `## Objective and scope` is accepted and no implementation unit remains. Until then it is
-`IN PROGRESS`. A close verdict still reports `Merge readiness: NOT READY — awaiting Claude's closing
-record and commit`; Claude reports the final merge state after that commit.
+line, write all three of `Progress`, `Implementation` and `Merge readiness`. Core § 3
+*Operator-facing progress, completion and merge readiness* owns what each may say — including why a
+completed unit is not a completed implementation. Follow it there; it is not restated here.
 
 **Claude runs the checks and reports the evidence. You assess that evidence.** Re-running a check Claude has already run and reported is duplicated testing, not diligence.
 
@@ -235,6 +231,6 @@ The mode contract (2026-08-06) makes Discovery, Implementation and Adoption oper
 
 The bounded-execution outcomes (2026-08-11) answer two failures on the same transport one day apart — a unit that left the bounded path, and a unit that could not fit inside it. They add § *Size the unit against the clock* (now in [Unit framing](references/unit-framing.md)), the five recovery clauses in § *Three outcomes* (now in [Courier operation](references/courier-operation.md)), and two entries in § *What you never do*. **No state field, artifact or stage was added**, and the dispatcher's side is a repair plus one deny set rather than a new mechanism. Both additions here are written guidance and carry that limit honestly: guidance depends on being remembered, and the only structural backstop remains the actor timeout — which is why raising it is refused above.
 
-The packaging outcomes (2026-08-14) answer a recurrence of the 2026-08-11 sizing failure after that fix was already in force — a shared-helper-plus-first-consumer unit that timed out at 902 seconds, and a correctly narrowed unit that spent 593 seconds re-establishing accepted baseline evidence and changed nothing. They add two split triggers, the primary-edit-begins-after rule, and the four packaging lines inside `## Brief`. **No state field, artifact or stage was added** — core § 4's ceiling is untouched, and core § 3 step 3 already permits the brief's content to grow. The four lines are the structural half of this fix: they make the packaging decision written rather than remembered, and Claude refuses a `Dominant deliverable` line naming two. The split triggers remain guidance and carry the same limit the 2026-08-11 entry states.
+The packaging outcomes (2026-08-14) are recorded beside the rules they added, in § *Size the unit against the clock* (now in [Unit framing](references/unit-framing.md)). **No state field, artifact or stage was added.**
 
 Courier mode (2026-08-06) adds the one approved way to carry the turn yourself, under core § 4's courier clause. It is optional, off unless the operator approves it, and transport only — it changes nothing about what you frame, what you assess, or what Claude does.
