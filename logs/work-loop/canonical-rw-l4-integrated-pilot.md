@@ -19,299 +19,279 @@ Scope is the integration checkout
 `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/ai-resources-rw-l4-integration` and exactly one
 consumer checkout,
 `/Users/patrik.lindeberg/Claude Code/Axcion AI Repo/projects/axcion-sector-intelligence-l1-trial`,
-on the accepted L1 branch `trial/l1-repeat-precision-components`. The ordinary
-`projects/axcion-sector-intelligence` checkout is historical comparison evidence only, not a second
-consumer or implementation target. Manual reconciliation only; inability to preserve any
-project-owned specialization stops the pilot.
-
-Excluded: a second consumer, generic rollout or propagation/sync machinery, Content Programme
-integration, retrieval/API/statistics work, source products, deep-pipeline redesign, push, merge to
-`main`, production deployment, and any reopening of accepted L1, L2 or L3. Founder
-revise/approve/reject is operator-owned: no plan approval, prior trial, fixture or agent verdict
-pre-approves the L4 case's judgment content, and the later operating unit must stop at that seam.
+on the accepted L1 branch `trial/l1-repeat-precision-components`. Excluded: a second consumer, new
+evidence retrieval, generic rollout, push, merge, deployment, and automatic founder approval.
 
 ## Lane and unit
 
-Standard. Discovery mode. Unit 18 — select the genuine integrated case.
+Standard. Discovery mode. Unit 19 — resolve the precision-components successor path.
 
 Named reason for the loop: the task spans a manual cross-repository integration, a genuine operating
 case and an operator-owned founder gate; its scope must stay bounded, and the result must be assessed
 independently of the executor before it counts as the plan's terminal proof.
 
-## Brief
-
-The deterministic floor and representative consumer operation are accepted, but neither the approved
-plan nor current task state selects the genuine L4 case. Identify exactly one live, evidence-ready case
-inside the bound consumer whose current-contract judgment path will not overwrite legacy authority or
-inherit a prior founder decision; if the checkout contains no such case, establish that cleanly before
-any artifact is created.
-
-**Plan justification and current position:** the operator-approved plan at material commit
-`8bf9d0d96ca7796621035e3f83b50c9dfc8055ec` requires one genuine case to run evidence → independently
-reviewed proposal → founder revise/approve/reject → approved House View → downstream analysis and prose
-→ independent content QC. Unit 17 is accepted after its frozen correction at integration commit
-`d86fcd9357004db2469bbb7c8ad671825d93be36`: Light, Standard and Deep resolved correctly in the consumer,
-the Standard memo passed its installed checker, and no repository was mutated. The next irreversible
-choice is not judgment content but the case and artifact identity the remaining proof will operate on.
-
-**Governing sources and dispositions:**
-
-- `plans/canonical-research-workflow-near-term-strategic-improvements-implementation-plan.md`, material
-  content bound to `8bf9d0d9`, governs the one-case outcome, founder authority and proof boundary; it
-  does not name the case.
-- The accepted Unit 17 result at `d86fcd93` governs representative readiness; do not rerun its route
-  cases or Unit 16's deterministic suites.
-- Consumer `roadmap/phase-a-batch-slate-v1.md` is operator-owned running-order context. Its dated status
-  cells and the consumer `CLAUDE.md` current-section prose are verify-first background rather than
-  presumed current state where later `logs/decisions.md`, checkpoints or live artifacts disagree.
-- Consumer `docs/judgment-authority-contract.md`, `reference/unit-judgment-brief.template.md`, the three
-  judgment commands and their installed validators govern the current `unit:` lifecycle and downstream
-  authority path.
-- Existing approved `custom-dev-data-ai` and `precision-components` artifacts under
-  `analysis/judgment/` are legacy `section:` authorities and protected project evidence. They may inform
-  candidate suitability but may not be overwritten, renamed, converted, treated as current-contract
-  authority or allowed to pre-approve the L4 case.
-- Live consumer evidence, checkpoint, directive, task-plan, report/output and judgment inventories are
-  verify-first repository reality. Absence must be established on the exact searched surfaces.
-
-**Codex framing decisions:**
-
-1. Selection is readiness-led, not a new business-priority ranking: choose the case that can genuinely
-   exercise the installed end-to-end contract inside this already-bound consumer with the least
-   collision and no invented evidence. If two candidates remain materially tied on readiness and the
-   choice would instead decide business priority, stop for the operator rather than breaking the tie.
-2. A genuine case uses live research evidence created for a real Sector Intelligence unit. A fixture,
-   synthetic thesis, renamed copy of an approved brief or meta-analysis of the L4 implementation does
-   not qualify.
-3. A selectable case must admit one semantically honest `unit:` identity and one non-colliding artifact
-   base, with no parallel governing authority for the same analytical unit. A new filename alone does
-   not cure two competing approved views over the same unit.
-4. Prior founder approval never transfers. The selected case's proposed judgment content must remain
-   open to independent challenge and an actual operator revise/approve/reject decision.
-5. The evidence need not be gap-free, but it must be sufficient to propose three to five evidence-bound
-   theses and to reach downstream analysis and prose if approved. A live HOLD or frozen stage is
-   acceptable only if existing authority explicitly permits the exact L4 downstream path despite it;
-   do not infer such permission from the pilot objective.
-6. Bound the candidate set to evidence-bearing units actually present in this consumer checkout. Do not
-   inspect sibling worktrees, the historical comparison checkout or any second consumer.
-
-**Dominant deliverable:** one repository-grounded case-selection verdict with the exact non-colliding
-identity and handoff contract, or a proved stop if none exists.
-
-**Evidence required in this hop:** a complete bounded candidate inventory, per-candidate collision and
-readiness assessment, exact selected identity/base/evidence/downstream seams or exact no-case reason,
-and before/after no-mutation proof.
-
-**Evidence explicitly deferred:** authoring any proposed brief; routing the genuine case; independent
-challenge; founder revise/approve/reject; promotion; approved-authority consumption; downstream
-analysis, architecture or prose; independent content QC; burden measurement/comparison; and the final
-L4 lifecycle verdict.
-
-**Check against the repositories:**
-
-1. Validate this task and both checkout bindings at repository depth. Integration must begin at exact
-   `d86fcd9357004db2469bbb7c8ad671825d93be36` on
-   `session/2026-08-19-rw-l4-integration`, with only the unrelated
-   `logs/innovation-registry.md` edit plus this Codex brief uncommitted. Consumer must be clean at exact
-   `5a8482c959ceaf286fa5601c13d44d25d04a2753` on
-   `trial/l1-repeat-precision-components`, with no conflicting owner. Stop on overlap or drift; do not
-   clean, switch, rebase or repair either checkout.
-2. Establish the consumer's complete evidence-bearing candidate set from these bounded surfaces:
-   `preparation/task-plans/`, `execution/`, `analysis/`, `report/`, `reports/`, `knowledge-base/`,
-   `roadmap/phase-a-batch-slate-v1.md`, the current-section block in `CLAUDE.md`, and relevant dated
-   decisions in `logs/decisions.md`. Group paths by genuine research-unit slug and state what concrete
-   evidence/output stage each group has reached. Do not treat a slate row without live artifacts as an
-   evidence-ready case.
-3. Inventory every existing judgment artifact and parse its identity key, status, unit/section and base
-   path. For each candidate, test whether the current contract can use a distinct, semantically honest
-   `unit:` identity without overwriting or creating competing authority. Name the exact collision or
-   clean path.
-4. For each evidence-ready candidate, inspect the governing task plan, latest binding checkpoints,
-   HOLD/BLOCKED/frozen decisions, claim IDs and downstream directive/prose surfaces needed to answer:
-   (a) can a current-contract proposal be grounded now; (b) can independent challenge evaluate it;
-   (c) after a future founder approval, can approved authority lawfully reach analysis and prose; and
-   (d) can independent content QC assess the result? Report the exact source for each yes/no/unknown.
-5. Verify the installed producer, challenge, promotion, Standard authority adapter and downstream gate
-   accept the proposed identity/base shape at the contract level without executing them or creating a
-   fixture. A static contract/path walk is sufficient; do not run a case, mutate an artifact or invent
-   content to make a path appear usable.
-6. Rank only candidates that pass checks (2)–(5), by end-to-end readiness and preservation risk. Select
-   exactly one when the evidence determines it; otherwise name the tie, missing authority or collision
-   that makes the next decision operator-owned.
-
-**Post-run evidence:**
-
-1. Return a compact candidate table: slug; live evidence roots; actual phase/state with date/source;
-   existing judgment identity/status; current-contract collision; downstream readiness; disposition.
-2. If selecting, name exactly: genuine case slug and question/outcome boundary; new `unit:` identity;
-   proposed/review/approved base path; evidence inputs and claim-ID families; producer entry; independent
-   challenge entry; founder stop; promotion entry; Standard adapter arguments; downstream commands and
-   output targets; independent QC entry; preservation exclusions; and the first later unit's one
-   dominant deliverable. Make clear that this is a technical handoff contract, not approval of content.
-3. If stopping, prove why every evidence-ready candidate fails or why the surviving choice is genuinely
-   operator-owned, and state the smallest exact decision required. Do not manufacture a candidate.
-4. Show HEAD and `git status --porcelain --untracked-files=all` before and after in both repositories.
-   Integration must retain only the unrelated innovation-registry edit plus this state update; consumer
-   must remain clean. Create no case-selection artifact outside this state file.
-5. End with exactly one verdict: `SELECT {slug} FOR GENUINE L4 CASE` when one candidate satisfies every
-   condition, or `STOP — NO NON-COLLIDING GENUINE CASE AVAILABLE` when none does. A readiness tie that
-   requires business priority uses the stop verdict and names the operator decision.
-6. Commit only this state handback in the integration checkout by explicit pathspec, preserving the
-   unrelated innovation-registry edit. Do not create a consumer commit, push or merge.
-
-**Capability subset:** baseline only — read, search, inspect history, perform static contract/path
-walks, update only this task state, and make its local integration commit through Claude. Nothing is
-selected from the empty pre-authorizable set; no consumer/canonical content edit, case execution, test
-rerun, network, remote service, push, PR, merge, deployment, credential access, destructive operation,
-branch/worktree creation, checkout switch, permission change or policy change is authorized.
-
-**Stop and hand back if:** either checkout binding changed; the unrelated integration edit overlaps;
-the consumer is not clean; candidate readiness cannot be established on the bounded surfaces; selection
-would overwrite or compete with legacy authority; a case would need evidence retrieval, a second
-consumer or another worktree; a HOLD/frozen state lacks explicit permission for the required downstream
-path; two candidates remain tied on a business priority; the exact current-contract path is not
-statically supportable; or work would cross into case execution or an operator-owned judgment. A false
-premise or no-case result is valid discovery; report it rather than improvising.
-
-**Completion condition:** without changing either implementation or creating case content, return the
-complete bounded candidate assessment and exactly one select/stop verdict, then commit only this state
-handback with `status: active`, `turn: codex`. Preserve the unrelated innovation-registry edit and stop
-before authoring the genuine case.
-
 ## Latest result
+
+Operator decision (2026-08-20) — option 1 accepted. Use `precision-components`; authorize a
+current-contract successor House View for the same analytical unit that explicitly supersedes, but
+does not alter, the operator-approved 2026-08-18 legacy `section:` authority; and lift the
+Decision-22/26 Stage-4 freeze only far enough to run the bounded L4 downstream analysis, prose and
+independent content-QC proof. This authorizes the successor path, not its judgment content: founder
+revise/approve/reject remains operator-owned and no future proposal is pre-approved.
+
+Carried deferral from Unit 17: its Light note accurately said the consumer contains no local record of
+the suite run, but that sentence must not be read as saying the suites did not execute there; Unit 16
+records 238/0 consumer-root and 213/0 integration-root assertions.
 
 Inspected (2026-08-20):
 
-- Packaging lines: HOLDS — `Dominant deliverable:` names one deliverable; `Evidence required in this
-  hop:` and `Evidence explicitly deferred:` are both filled; `Primary edit begins after:` is correctly
-  absent, the unit being Discovery mode.
-- Claim (1) bindings: HOLDS — integration `git rev-parse HEAD` = `d86fcd9357004db2469bbb7c8ad671825d93be36`
-  on `session/2026-08-19-rw-l4-integration`, `git status --porcelain --untracked-files=all` =
-  ` M logs/innovation-registry.md` + ` M logs/work-loop/canonical-rw-l4-integrated-pilot.md` and nothing
-  else. Consumer `git rev-parse HEAD` = `5a8482c959ceaf286fa5601c13d44d25d04a2753` on
-  `trial/l1-repeat-precision-components`, `git status --porcelain --untracked-files=all` empty; searched
-  `logs/work-loop/.owner` in the consumer — absent, so no conflicting owner. No overlap, no drift.
-- Claim (2) candidate set: HOLDS, and it is exactly two — searched `preparation/`, `execution/`,
-  `analysis/`, `report/`, `reports/`, `knowledge-base/`, `output/`, `final/`,
-  `roadmap/phase-a-batch-slate-v1.md`, `CLAUDE.md:9-11` and `logs/decisions.md`. Every evidence-bearing
-  path groups under `custom-dev-data-ai` or `precision-components`. A filename sweep for each of the ten
-  other slate slugs (`industrial-software`, `vertical-market-saas`, `managed-it-cloud`,
-  `risk-security-compliance-services`, `finance-accounting-bpo`, `architecture-engineering-services`,
-  `technical-industrial-distribution`, `cleantech-equipment`, `building-services-install`,
-  `mobility-forestry-agri-mfg`) returned 0 files each; `knowledge-base/` holds only `README.md` and
-  `output/`, `final/`, `usage/` hold only `.gitkeep`. The slate's "in flight — Stage 3" cell for
-  `industrial-software` (`roadmap/phase-a-batch-slate-v1.md:22`) and `CLAUDE.md:9`'s "Stage 1 IN
-  PROGRESS … Next: Step 3 Research Plan" are both stale against live artifacts and are not used as state.
-- Claim (3) judgment inventory and identity: HOLDS — searched `analysis/judgment/**` and parsed the
-  frontmatter of all eight artifacts. Both units already carry `status: approved`,
-  `approved_by: Patrik Lindeberg`, `as_of: 2026-08-18`, and every one is keyed `section:`, not `unit:`.
-  Under the installed dual-contract validator (`logs/scripts/check-judgment-contract.sh:341,347` and its
-  `legacy_contract()` at 296-338) a `section:` brief is dispatched to the legacy path and, at
-  `status: approved`, is returned as "accepted as downstream authority" — so both are live governing
-  authority for their unit today.
-- Claim (4) downstream readiness: HOLDS as inspected, and both candidates fail it. Sources named per
-  candidate in the table and the two paragraphs below it.
-- Claim (5) static contract/path walk: HOLDS — no script was executed, no artifact created or mutated.
-  `research-route-judgment-authority.sh:120-128` reads `unit:` from `{base}-approved.md` and fails closed
-  when it does not equal `--unit`; a legacy `section:` brief yields `<absent>` there, so neither existing
-  approval can serve the Standard adapter. `promote-judgment-brief.sh:119,126-131` derives
-  `-approved.md` from `-proposed.md` and exits `6 ALREADY-APPROVED` rather than overwrite — so the deep
-  route's own base, `analysis/judgment/{slug}/{slug}-unit-judgment-brief`
-  (`check-judgment-producer.sh:118`), is mechanically closed for both slugs.
-  `check-judgment-challenge.sh` binds on `artifact:` and `reviews_sha256:` only and imposes no identity
-  key; `check-judgment-gate.sh:164` and `check-judgment-propagation.sh:86` anchor on the literal
-  `unit-judgment-brief-approved`. The current-contract shape is therefore statically supportable — but
-  only at a base that is either occupied or parallel.
-- Claim (6) ranking: no candidate passes (2)-(5), so nothing is ranked and nothing is selected.
+- Claim (1) — installed identity, base derivation, lifecycle, collision and downstream selection:
+  HOLDS, and the decisive fact is that the two consumers parameterize differently.
+  `research-route-judgment-authority.sh` (lines 73–96) takes `--unit` and `--base` and reads only
+  `{base}-approved.md`; the base is free, and a base already carrying a contract suffix is a usage
+  error. The deep route does not parameterize: `run-analysis.md:65,75,259`, `run-synthesis.md:59` and
+  `run-report.md:40` each hardcode `analysis/judgment/{section}/{section}-unit-judgment-brief-*.md`,
+  where `{section}` is the sole command argument and also derives all 16 other
+  `*/precision-components/` directories. `run-report.md:44` states the gate is fail-closed with no
+  sentinel and no environment override. `promote-judgment-brief.sh:76,119,131` derives the approved
+  path from `-proposed.md` and refuses ALREADY-APPROVED before building anything;
+  `check-judgment-challenge.sh:177,270–280` derives `{base}-review.md` and requires rounds `1..N-1`
+  archived at `{base}-review-round-{N}.md`. `check-judgment-contract.sh:340–348` dispatches on
+  frontmatter: `unit:` → canonical contract, `section:` → legacy contract, **both keys → STRUCTURE
+  exit 6**.
+- Claim (2) — the current filenames as a reusable successor base: HOLDS, and they do **not** provide
+  one. All five files under `analysis/judgment/precision-components/` are `section:`-keyed (frontmatter
+  read directly, not inferred from names); the approved one is `approved_by: Patrik Lindeberg`,
+  `as_of: 2026-08-18`. A distinct identity can truthfully represent the same analytical unit —
+  `docs/judgment-authority-contract.md:33–35` states `{base}` is resolved by the consuming route and
+  `:58–60` states `unit:` is the routing key, named for meaning rather than the deep route's directory
+  layout.
+- Claim (3) — Decisions 22 and 26 and the record convention: HOLDS. `logs/decisions.md:185` and `:211`
+  idle pilot-1 `precision-components` mid-Stage-4 at the Ch1 gate. Convention is a dated `## ` session
+  heading, then `**Decision N — {ruling} (actor, YYYY-MM-DD).**`, a ruling paragraph, then
+  `- *Rationale:*` / `- *Accepted exposure:*` / `- *Alternatives:*`. Absence checked: searched
+  `logs/decisions.md` for `**Decision <id> ` — global ids run 1–33 and unit-scoped ids `B3-1..B3-31`;
+  there is **no** id 34 in the log, but `Decision 34` is cited as an operator-approved 2026-07-28
+  ruling by `roadmap/pre-batch-propagation-checklist.md:33,80`, `roadmap/unit-entry-protocol.md:36` and
+  `reference/source-class-hierarchy.md:17,165`. **The next free global id is 35, not 34.**
+- Claim (4) — one governing authority at each lifecycle point: HOLDS for the recommended path only;
+  the proof and the one route that fails it are below.
+- Claim (5) — bindings still current: HOLDS. Integration HEAD is
+  `2791dd55dad866ac49aab77ae61272ac596e5119` (Unit 18); plan commit `8bf9d0d9` present; consumer is on
+  `trial/l1-repeat-precision-components` at `5a8482c`, working tree clean before and after every probe.
 
-Candidate table:
+Verdict: **PROCEED WITH the unchanged-base relocation path.** The transition contract follows.
 
-| Slug | Live evidence roots | Actual phase/state (date · source) | Existing judgment identity/status | Current-contract collision | Downstream readiness | Disposition |
-|---|---|---|---|---|---|---|
-| `custom-dev-data-ai` | `preparation/{task-plans,research-plans,answer-specs,checkpoints,external-query-packs}`, `execution/{raw-reports,research-extracts,extract-verification,transaction-table,checkpoints}` (Q1-Q14), `analysis/{cluster-memos,claim-permission,gap-assessment,gate-clearance,source-conflicts,stop-conditions,country-parity}`, `analysis/section-directives/.../cluster-01-directive.md` | Stage 3 Pass-4 Step 3a entered **with a live Step-2 HOLD standing** — 47 gaps, 4 Blocking (2026-08-18 · `logs/decisions.md:852-869`, Decision B3-31); Step 4 run for cluster 01 only, no Step-4 checkpoint (`logs/l1-judgment-trial-record.md:36-38`) | `section: custom-dev-data-ai`, `approved`, `approved_by: Patrik Lindeberg`, `as_of: 2026-08-18` | **Yes.** Deep-route base occupied → `promote-judgment-brief.sh` exit 6. A canonical `unit:` brief at any other base is a second approved view of the same analytical unit (framing decision 3) | **No.** Existing authority explicitly withholds the exact L4 downstream path | **Rejected** |
-| `precision-components` | `preparation/*` (task/research plans, 6 checkpoints), `execution/{raw-reports (sessions a-i),research-extracts (Q1-Q11),manifest,extract-verification}`, `analysis/{cluster-memos,chapters,claim-permission,editorial-review,gate-clearance,gap-assessment,source-conflicts,stop-conditions,country-parity}`, `analysis/section-directives/.../cluster-01..06-directive.md`, `report/{architecture,chapters,checkpoints}` | **Frozen mid-Stage-4 at the Chapter-1 operator gate 4.2e** (2026-07-26 · `logs/decisions.md:183,187` Decision 22; re-affirmed 2026-07-26 · `logs/decisions.md:212` Decision 26). Its stated thaw condition — the three parallel units reaching Stage 4 — is unmet: none of them has a single artifact in this checkout | `section: precision-components`, `approved`, `approved_by: Patrik Lindeberg`, `as_of: 2026-08-18`, carrying three preserved challenge rounds and two operator revisions | **Yes.** Same two collisions as above. The approved brief governs the whole unit including Chapter 4 and the §5.9 verdict, so a chapter- or cluster-scoped `unit:` brief is parallel authority, not a distinct unit | **No.** Frozen stage, and no authority permits the L4 path despite it | **Rejected** |
+**The exact successor-authority transition contract.**
 
-Per-candidate answers to (a)-(d), with the exact source for each:
+*Identity and paths.* Keep the base exactly as installed —
+`analysis/judgment/precision-components/precision-components-unit-judgment-brief` — and free it by
+relocating the whole legacy artifact set (all five files) to a preserved sibling, e.g.
+`analysis/judgment/precision-components/.superseded/…-2026-08-18.md`. The successor is then produced
+by the installed producer at the unchanged base and carries `unit: precision-components` (canonical
+contract), because `run-analysis.md:95` binds the producer to
+`reference/unit-judgment-brief.template.md`, whose template frontmatter is `unit:`.
 
-`custom-dev-data-ai` — (a) a current-contract proposal **can** be grounded now: the evidence bundle is
-complete enough that the L1 trial produced 5 theses and 32 claim IDs from it
-(`logs/l1-judgment-trial-record.md:22`). (b) independent challenge **can** evaluate it: a fresh-context
-reviewer returned 12 findings, 8 requiring change, on this exact bundle (same file, line 23). (c) after a
-future founder approval, approved authority **cannot** lawfully reach analysis and prose: Decision B3-31's
-scope guard states *"this decision governs the trial only. It is **not** clearance to write B3's report"*
-and *"the HOLD itself, which stands on the record"* (`logs/decisions.md:869`), repeated at
-`logs/l1-judgment-trial-record.md:125-127` — *"The Step-2 HOLD stands … This is not clearance to write or
-publish B3's report."* Framing decision 5 forbids inferring that permission from the pilot objective, and
-no other authority grants it. (d) **unknown, and moot** — independent content QC has nothing to assess
-while (c) is no.
+*Why the base must not move.* A distinct successor base is mechanically supported by the Standard
+adapter but invisible to the deep route, which resolves exactly one approved path per section.
+Repointing the three deep-route commands to a templated successor base would break the other live
+unit: `custom-dev-data-ai`'s approved brief also sits at the old base and is `section:`-keyed, so a
+repoint returns exit 3 MISSING for it. Making the repoint section-conditional is a selection mechanism
+this brief forbids, and L4's boundary forbids overwriting a project-owned specialization. That route is
+rejected on repository evidence, not preference.
 
-`precision-components` — (a) **yes**, and it has already been done once on this bundle: proposal, three
-challenge rounds and two operator revisions are on disk under `analysis/judgment/precision-components/`.
-(b) **yes**, by the same evidence. (c) **no**: Decision 22 idled the unit at the Chapter-1 gate with
-*"draft/review/QC/checkpoint all on disk"* and Decision 26 confirmed *"pilot-1 frozen at Stage 4"*; the
-thaw condition it names has not occurred, and no decision in `logs/decisions.md` (searched for
-`HOLD|FROZEN|FREEZE|BLOCKED|STOP|paused|suspend`) permits resuming Stage 4/5 for this unit. (d) **moot**
-for the same reason. Independently of (c), the founder's 2026-08-18 approval already covers this unit's
-theses and its Selective verdict, so a fresh L4 proposal over the same analytical unit could not present
-a genuinely open founder decision without contradicting or superseding that approval — which framing
-decision 4 forbids transferring and framing decision 3 forbids duplicating.
+*Why relocation is not an alteration.* Under the installed mechanics the only two ways a successor can
+supersede are to free the base or to repoint the consumer, and repointing is closed by the paragraph
+above. Reading "does not alter" as "does not move" would leave "supersedes" with no possible effect —
+it would make the 2026-08-20 decision self-defeating. The coherent reading is: the legacy bytes are
+preserved unchanged, its location is freed. **This reading is Claude's, and it is the one interpretive
+dependency in the contract** — Codex should confirm it before the next unit executes. If the operator
+reads it the other way, the verdict converts to `STOP — SUCCESSOR PATH REQUIRES operator confirmation
+that the preserved legacy set may be relocated`.
 
-**Why this is a stop and not a tie.** Framing decision 1's tie-break clause does not apply: the two
-candidates are not tied on readiness, they are both independently disqualified — each on a live
-authority-collision *and* on a downstream permission its own governing decision explicitly withholds. No
-third candidate was manufactured, and none exists: the ten remaining slate rows have no live artifacts, so
-under check (2) they are not evidence-ready cases.
+*Relocate all five, not just the approved one.* Leaving `…-proposed.md` at the base would let
+`promote-judgment-brief.sh` re-promote the legacy text into the successor's slot, and would put
+`run-analysis` Step 3a into Branch B (`run-analysis.md:76–82`), which carries the existing proposal
+forward unchanged and never produces a successor. With all five moved, Step 3a enters Branch C and
+dispatches the producer once.
 
-**The smallest exact decision required is the operator's**, and it is one of these three — all
-operator-owned, none available to Codex or Claude:
+*Invocations, in order.* `/run-analysis precision-components` Step 3a (Branch C) → producer writes
+`{base}-proposed.md` · independent challenge writes `{base}-review.md`, round 1 · founder
+revise/approve/reject at Step 3b · on approval
+`promote-judgment-brief.sh {base}-proposed.md --approval "<verbatim reply>" --approved-by "<identity>"`
+→ `{base}-approved.md`. On rejection, `status: rejected` + `rejected_by:` is set on the proposal, no
+approved form is created, and nothing downstream proceeds.
 
-1. Authorise a **canonical-contract successor House View for `precision-components`** that supersedes the
-   operator's 2026-08-18 legacy `section:` approval for the same unit, with the legacy artifacts preserved
-   unmodified and explicitly demoted, **and** lift the Decision-22/26 Stage-4 freeze far enough for the L4
-   downstream analysis, prose and content QC to run. This is the cheapest route — the unit is the furthest
-   downstream, has all six cluster directives and a QC'd Chapter 1 — but it reopens an operator-settled
-   approval and an operator-set freeze, which § 7 reserves to the operator.
-2. Grant `custom-dev-data-ai` explicit clearance for the L4 downstream path despite the standing Step-2
-   HOLD, naming that clearance as an extension of B3-31's scope guard. Materially worse: it accepts three
-   permission breaches already carried into the approved authority
-   (`logs/l1-judgment-trial-record.md:99-118`) and only cluster 01 has a directive.
-3. Accept that no genuine non-colliding L4 case exists inside the bound consumer, and reframe the plan's
-   terminal proof — which would mean either a new evidence gather or a second consumer, both currently
-   excluded by `## Objective and scope`.
+*Where legacy stops governing.* At the relocation commit. Between that commit and promotion the deep
+route halts fail-closed at exit 3 MISSING (`run-report.md:40`, `run-analysis.md:65`) and the Standard
+adapter prints `authority: UNAVAILABLE / escalate: deep`. That interim is the correct state, not a
+defect.
 
-Repository state, before and after this hop — no repository was mutated and no case-selection artifact was
-created outside this state file:
+*Downstream inputs after approval.* Deep route: `run-report.md` Step 4.0b validates the same path,
+captures the content, and passes it as content — never as a path — into Step 4.1
+(`research-structure-creator`), Step 4.2a (`evidence-to-report-writer`) and Step 4.2c
+(`report-compliance-qc`), which `check-judgment-gate.sh` and `check-judgment-propagation.sh`
+regression-protect. Standard route:
+`research-route-judgment-authority.sh --unit precision-components --base {base}` returns
+`authority: VALID` plus `thesis-ids:`, which the memo's `[C…,T…]` traceability binds to.
 
-```
-integration HEAD  before/after: d86fcd9357004db2469bbb7c8ad671825d93be36 (unchanged this hop)
-integration status before: ' M logs/innovation-registry.md' + ' M logs/work-loop/canonical-rw-l4-integrated-pilot.md'
-integration status after:  the same two paths; only this state file's content changed
-consumer   HEAD  before/after: 5a8482c959ceaf286fa5601c13d44d25d04a2753 (unchanged)
-consumer   status before/after: empty (clean)
-```
+*The four-state single-authority proof.* (1) Before the relocation commit — legacy governs both
+consumers; the Standard adapter claims no authority from it (exit 1, proven below). (2) Successor
+proposed / reviewed / revised — `status: proposed` returns exit 4 NOT-APPROVED, so no consumer can
+rely on it, and the relocated legacy is at a path no consumer reads; **no authority is in force**, and
+both consumers fail closed. (3) After promotion — one approved file at one base, read by both
+consumers. (4) On rejection — no approved form exists; state (2)'s fail-closed condition persists until
+the operator directs a revision or a stop. At no point are two artifacts eligible.
 
-Result: **STOP — NO NON-COLLIDING GENUINE CASE AVAILABLE.** The bound consumer holds exactly two
-evidence-bearing research units, and each is disqualified twice over: both already carry an
-operator-approved judgment authority for the same analytical unit, and each sits behind a live
-authority-imposed stop — a standing Step-2 HOLD explicitly not cleared for report writing
-(`custom-dev-data-ai`) and an unlifted operator freeze mid-Stage-4 (`precision-components`) — that no
-existing source permits the L4 downstream path despite.
+*How a downstream adapter distinguishes the successor from the preserved legacy.* **It does not, and
+under this contract it never has to.** Nothing in either artifact records supersession — the lifecycle
+has no such state — so distinction would otherwise rest entirely on which path a consumer is pointed
+at. Relocation removes the question by leaving exactly one file at the one path any consumer resolves.
+That is the substantive reason to prefer it over a distinct base.
 
-Evidence: the check that could have read the other way is claim (2)'s bounded sweep and claim (3)'s
-frontmatter parse. Had a third slug carried live evidence, or had either existing brief been keyed
-`unit:` or been anything other than `approved`, the verdict would have been a selection. It read the other
-way on both: ten slate slugs returned 0 files each, and all eight judgment artifacts parsed to
-`section:`/`approved`. The collision is mechanical as well as contractual —
-`promote-judgment-brief.sh:126-131` exits `6 ALREADY-APPROVED` at the deep route's own base for both
-slugs, and `research-route-judgment-authority.sh:126-128` fails closed on both existing approvals because
-neither carries a `unit:` key.
+*The required consumer decision record (specified, not written).* A new dated `## ` section in
+`logs/decisions.md` carrying **Decision 35** — not 34, which is already in use — in the convention
+above: the successor supersedes the 2026-08-18 legacy authority for `precision-components` from the
+relocation commit; the legacy artifact set is preserved unmoved in content at its `.superseded/` path;
+Decisions 22 and 26 stand, with the Stage-4 freeze lifted **only** for the bounded L4 downstream
+analysis, prose and independent content-QC proof and pilot 1 not otherwise resuming; founder
+revise/approve/reject stays operator-owned and no proposal is pre-approved. `- *Accepted exposure:*`
+records that the preserved legacy file remains individually valid to any consumer hand-pointed at its
+old path, since nothing in-band marks it superseded. `- *Alternatives:*` records the distinct-base
+repoint, rejected because it returns exit 3 MISSING for `custom-dev-data-ai`.
+
+Result: Unit 19 resolved the successor path as a discovery unit. One supported non-destructive
+transition exists inside the authorized envelope, it needs no new mechanism, no script change and no
+command change, and it is specified end to end above. Nothing in either repository was changed.
+
+Evidence (all probes read-only; consumer `git status --porcelain` empty afterwards):
+
+- Standard adapter against the legacy base → **exit 1**, `authority: UNAVAILABLE`, `contract-exit: 0`,
+  reason `covers unit '<absent>', not the requested unit 'precision-components'`. Reproduces Unit 18.
+- Deep-route gate on the same file (`check-judgment-contract.sh …-approved.md`) → **exit 0**,
+  `verdict: VALID`, "approved Unit Judgment Brief for section 'precision-components', 5 theses, 60
+  distinct claim IDs". The same artifact is authority to one consumer and not to the other — this is
+  the fact the contract has to resolve.
+- `promote-judgment-brief.sh` at the legacy base → **exit 6 ALREADY-APPROVED**, nothing written.
+- Scratchpad fixture, legacy approved with `unit:` added beside `section:` → **exit 6 STRUCTURE**,
+  "frontmatter carries both 'unit:' and 'section:'". Upgrading the legacy file in place is mechanically
+  refused, independently of the operator's no-alteration instruction.
+- Scratchpad fixture, same body rekeyed `section:` → `unit:` → **exit 0**, "approved Unit Judgment
+  Brief for unit 'precision-components', 5 theses, 60 distinct claim IDs". The canonical contract's
+  three separations and its `(Q|GF)` claim-ID form accept this unit's evidence base, so the successor
+  faces no content-contract obstacle.
+- Same fixture at a distinct base in a scratch root, through the Standard adapter → **exit 0**,
+  `authority: VALID`, `thesis-ids: T1 T2 T3 T4 T5`. A distinct base *is* mechanically supported —
+  which is why it is rejected on the `custom-dev-data-ai` collision, not on mechanics.
+- `custom-dev-data-ai`'s approved brief frontmatter read directly: `section: custom-dev-data-ai`,
+  `status: approved`. This is the collision that closes the repoint route.
+
+The probes can fail: three of the seven returned refusals (exits 1, 6, 6), and the two exit-0 fixture
+results would have been STRUCTURE failures had the canonical separations rejected this unit's body.
+
+Fixtures were written only to the session scratchpad, never into either repository, and propose no
+judgment content — they are byte copies used to test path and identity mechanics.
+
+Deferrals noticed and not done: (a) `Decision 34` is cited as operator-approved by four files but has
+no entry in `logs/decisions.md` — a real gap in the decision record, out of scope here; (b) the
+`.superseded/` directory name is a proposal, not a repository convention — nothing comparable exists
+today, and `run-report.md:155` uses `.archive/` for approval markers, which Codex may prefer for
+consistency.
+
+Smallest recommended next implementation unit: Implementation mode — write Decision 35 into the
+consumer's `logs/decisions.md` and relocate the five legacy artifacts to the preserved path, in one
+commit. Failing case first: `check-judgment-contract.sh` at the base returns exit 0 today; after the
+unit it must return exit 3 MISSING, and `promote-judgment-brief.sh` at that base must no longer return
+ALREADY-APPROVED. Nothing else in that unit.
+
+## Brief
+
+L4 now has the operator authority Unit 18 found missing, but authoring judgment content before the
+installed contracts can represent succession could create two competing authorities. This unit
+advances the approved L4 manual proof by resolving that one mechanical uncertainty first, without
+changing either repository's implementation or analytical content.
+
+**Required outcome.** Return one exact, non-destructive successor-authority transition contract for
+`precision-components`, grounded in the installed consumer. It must identify the mechanically valid
+current-contract unit identity and artifact paths, the producer → challenge/revision → founder
+decision → promotion invocations, the point at which the preserved legacy authority stops governing,
+the downstream adapter/gate inputs after approval, and the exact durable consumer decision record
+needed to carry the operator's supersession and bounded freeze lift. If the installed mechanics cannot
+represent that transition without a new general mechanism or another operator decision, return the
+smallest exact implementation seam or authority conflict and stop; do not build around it.
+
+**Governing authority and source disposition.** The current operator decision above is the highest
+authority for case selection, supersession and the bounded freeze lift. The approved plan at material
+commit `8bf9d0d96ca7796621035e3f83b50c9dfc8055ec` governs L4's one-consumer, manual, genuine-case outcome
+and preserves founder revise/approve/reject. Unit 18's commit is accepted current-state evidence, not
+authority to choose a mechanism. The consumer's scripts, commands, judgment artifacts and
+`logs/decisions.md` are verify-first repository reality. The legacy approved artifact remains
+preserved evidence; proposed or reviewed successor content is never authority, and this brief does not
+approve any judgment content.
+
+**Codex framing decisions.** Treat succession as a single-authority transition: do not alter or
+overwrite the legacy files, do not allow a proposed/reviewed artifact to govern, and do not leave two
+approved artifacts concurrently eligible for downstream use. Prefer an already-supported
+parameterized identity/path if the repository proves one; do not add general propagation, a new
+House-View mechanism or a second consumer. Hold outside this unit: writing the consumer decision,
+changing scripts or artifacts, authoring/challenging/approving the successor judgment, downstream
+analysis/prose, content QC, full regressions and the L1 burden comparison.
+
+**Check against the live repositories before concluding:**
+
+1. In the bound consumer, inspect `.claude/commands/run-analysis.md`,
+   `.claude/commands/run-synthesis.md`, `.claude/commands/run-report.md`,
+   `logs/scripts/check-judgment-producer.sh`, `promote-judgment-brief.sh`,
+   `research-route-judgment-authority.sh`, `check-judgment-gate.sh` and
+   `check-judgment-propagation.sh`. Establish their accepted identity arguments, base-path derivation,
+   lifecycle states, collision behavior and downstream authority selection; quote the decisive
+   patterns or safe read-only command results.
+2. Inspect `analysis/judgment/precision-components/` and the validation/promotion rules to establish
+   why the current `*-unit-judgment-brief-*` filenames do or do not provide a reusable successor base,
+   and whether a distinct identity can still truthfully represent the same analytical unit. Do not
+   infer contract currency from filenames.
+3. Inspect `logs/decisions.md` for Decisions 22 and 26 and for the repository's decision-record
+   convention. Specify the exact new record needed to preserve their history while recording this
+   operator supersession and the narrow downstream thaw; do not edit it in this discovery unit.
+4. Prove the proposed transition has one governing authority at each lifecycle point: before a
+   successor approval, while it is only proposed/reviewed/revised, after founder approval, and on
+   rejection. Show how a downstream adapter distinguishes the new approved authority from the
+   preserved legacy file.
+5. Verify the integration task is still bound to the accepted Unit 18 state and the consumer is still
+   the named `trial/l1-repeat-precision-components` checkout before relying on either. If live state
+   conflicts, hand back the exact conflict rather than repairing it.
+
+Dominant deliverable: one exact successor-authority transition contract, or one exact stop proving the
+installed mechanics cannot represent it inside the authorized envelope.
+Evidence required in this hop: decisive installed-contract excerpts or safe read-only results for
+identity, paths, lifecycle, collision and downstream selection; the four-state single-authority proof;
+the required consumer decision-record shape; and a `PROCEED WITH {supported path}` or
+`STOP — SUCCESSOR PATH REQUIRES {exact missing authority or implementation seam}` verdict.
+Evidence explicitly deferred: consumer decision implementation, any script or judgment-artifact
+change, judgment content and review, founder content decision, promotion, downstream operation,
+content QC, regression suites and burden comparison.
+
+Capability subset: baseline read, search, history inspection and safe local read-only command use in
+both bound checkouts; edit and locally commit only this existing task-state handback. No consumer edit,
+network, push, merge, deployment, credentials, destructive action or operator-reserved capability.
+If carried, pass the full baseline deny set; nothing is selected from the empty pre-authorizable set.
+
+**Completion and stop.** Change nothing beyond this task file. Return the verdict, transition contract,
+evidence and the smallest recommended next implementation unit, set `status: active` and
+`turn: codex`, and commit the handback. Stop early on a false premise, a required consumer mutation, a
+need for parallel authority, an unauthorized general mechanism, or an unresolved operator-owned
+authority conflict.
 
 ## Blocker
 
-None. The stop is the unit's discovery result, not an impediment to it: the inspection completed on every
-bounded surface the brief named and returned the proved no-case verdict the brief provides for.
+None.
 
 ## Next action
 
-Codex: assess the proved stop. The selection is not Claude's to reframe — decide whether to put the three
-named operator decisions to the operator as the next unit, to reframe L4's terminal proof, or to stop.
+Codex: assess Unit 19's transition contract. Three things need a decision. (1) Accept or reject
+Claude's reading that "does not alter" preserves the legacy bytes while permitting relocation — this is
+the one interpretive dependency, and if it fails the verdict converts to a stop for the operator.
+(2) Confirm the preserved-path name (`.superseded/` as proposed, or `.archive/` for consistency with
+`run-report.md:155`). (3) Open or reframe the recommended next unit: write Decision 35 and relocate the
+five legacy artifacts in one commit, with the exit-0 → exit-3 transition at the base as its failing
+case. Deferrals to record or reject: the unlogged `Decision 34`, and the `.superseded/` naming.
